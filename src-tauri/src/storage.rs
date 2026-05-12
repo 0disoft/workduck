@@ -6,7 +6,7 @@ use tauri::{AppHandle, Manager};
 const DATABASE_DRIVER: &str = "sqlite";
 const DATABASE_FILE_NAME: &str = "workduck.sqlite3";
 const SQLITE_BUSY_TIMEOUT_MILLIS: u64 = 5_000;
-const CURRENT_SCHEMA_VERSION: i64 = 1;
+const CURRENT_SCHEMA_VERSION: i64 = 2;
 
 struct Migration {
     version: i64,
@@ -15,12 +15,20 @@ struct Migration {
     sql: &'static str,
 }
 
-const MIGRATIONS: &[Migration] = &[Migration {
-    version: 1,
-    name: "001_bootstrap",
-    checksum: "sha256:57d00d3fcf4ee3881a843af9ccbc951345207757a051a3c31163548383bcf2b3",
-    sql: include_str!("../migrations/001_bootstrap.sql"),
-}];
+const MIGRATIONS: &[Migration] = &[
+    Migration {
+        version: 1,
+        name: "001_bootstrap",
+        checksum: "sha256:57d00d3fcf4ee3881a843af9ccbc951345207757a051a3c31163548383bcf2b3",
+        sql: include_str!("../migrations/001_bootstrap.sql"),
+    },
+    Migration {
+        version: 2,
+        name: "002_artifact_blobs",
+        checksum: "sha256:bc2123460f496120770686c32bb28cbaae1038e5f179e56f1dfc1cc5a306db93",
+        sql: include_str!("../migrations/002_artifact_blobs.sql"),
+    },
+];
 
 #[derive(serde::Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -35,6 +43,7 @@ pub struct StorageStatus {
     schema_version: i64,
     applied_migration_count: i64,
     latest_migration: Option<String>,
+    artifact_blob_count: i64,
 }
 
 #[derive(Debug)]
@@ -275,6 +284,7 @@ fn inspect_connection(
         connection,
         "SELECT name FROM schema_migrations ORDER BY version DESC LIMIT 1",
     )?;
+    let artifact_blob_count = query_i64(connection, "SELECT COUNT(*) FROM artifact_blobs")?;
 
     Ok(StorageStatus {
         driver: DATABASE_DRIVER,
@@ -287,6 +297,7 @@ fn inspect_connection(
         schema_version,
         applied_migration_count,
         latest_migration,
+        artifact_blob_count,
     })
 }
 

@@ -61,8 +61,11 @@ The initial migration runner is in place: Rust applies ordered SQL migrations
 transactionally, records applied versions and checksums in `schema_migrations`,
 and refuses checksum drift or newer database versions.
 
-1. JSON artifact blobs.
-2. FTS5 search.
+The initial JSON artifact blob schema is in place: SQLite stores structured
+artifact payloads as validated JSON text with metadata, content hashes, and
+lookup indexes without exposing raw SQL to the UI.
+
+1. FTS5 search.
 
 Defer vector search until there is real artifact and run data to search.
 
