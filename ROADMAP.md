@@ -20,7 +20,9 @@ application logic into SvelteKit server routes.
 
 Install only the UI foundation needed for the first daily-use product surface.
 
-1. Bits UI.
+The initial UI foundation is in place: Tailwind CSS handles styling utilities,
+and Bits UI is declared for headless Svelte primitives when concrete controls
+need it.
 
 Defer `shadcn-svelte` until the app has concrete screens that need copied,
 owned components. Keep the first UI surface focused on Projects, Artifacts,
