@@ -55,8 +55,6 @@ The initial SQLite runtime boundary is in place: the Tauri shell opens a local
 app-data SQLite database through Rust, configures WAL, foreign keys, and a busy
 timeout, and exposes a status command without letting the UI issue raw SQL.
 
-Next add:
-
 The initial migration runner is in place: Rust applies ordered SQL migrations
 transactionally, records applied versions and checksums in `schema_migrations`,
 and refuses checksum drift or newer database versions.
@@ -75,10 +73,11 @@ Defer vector search until there is real artifact and run data to search.
 
 Install these only when the matching product surface is being built.
 
-1. CodeMirror for structured artifacts such as Markdown, JSON, YAML, and
-   generated briefs.
-2. Svelte Flow for artifact dependencies, task graphs, or run handoff graphs.
-3. Tiptap only if rich-text narrative documents need a dedicated editor.
+The initial artifact editor surface is in place: CodeMirror powers the
+`/artifacts` draft editor for Markdown, JSON, and YAML content.
+
+1. Svelte Flow for artifact dependencies, task graphs, or run handoff graphs.
+2. Tiptap only if rich-text narrative documents need a dedicated editor.
 
 Do not install graph or rich-text dependencies before the first artifact and
 brief workflows are working.
@@ -122,7 +121,6 @@ Defer these until the local desktop workflow is useful without them.
 ## Do Not Install Yet
 
 - Svelte Flow before there is a graph screen.
-- CodeMirror before there is an artifact editor.
 - Tiptap before rich-text document editing is clearly needed.
 - shadcn-svelte before concrete component needs exist.
 - Agent adapters before Agent Briefs and Runs exist.
