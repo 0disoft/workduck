@@ -1,11 +1,26 @@
 use std::{fmt, fs, path::PathBuf, time::Duration};
 
-use rusqlite::Connection;
+use rusqlite::{params, Connection, OptionalExtension};
 use tauri::{AppHandle, Manager};
 
 const DATABASE_DRIVER: &str = "sqlite";
 const DATABASE_FILE_NAME: &str = "workduck.sqlite3";
 const SQLITE_BUSY_TIMEOUT_MILLIS: u64 = 5_000;
+const CURRENT_SCHEMA_VERSION: i64 = 1;
+
+struct Migration {
+    version: i64,
+    name: &'static str,
+    checksum: &'static str,
+    sql: &'static str,
+}
+
+const MIGRATIONS: &[Migration] = &[Migration {
+    version: 1,
+    name: "001_bootstrap",
+    checksum: "sha256:57d00d3fcf4ee3881a843af9ccbc951345207757a051a3c31163548383bcf2b3",
+    sql: include_str!("../migrations/001_bootstrap.sql"),
+}];
 
 #[derive(serde::Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -18,6 +33,8 @@ pub struct StorageStatus {
     json_available: bool,
     fts5_available: bool,
     schema_version: i64,
+    applied_migration_count: i64,
+    latest_migration: Option<String>,
 }
 
 #[derive(Debug)]
@@ -30,6 +47,16 @@ pub enum StorageError {
     Sqlite {
         operation: &'static str,
         source: rusqlite::Error,
+    },
+    MigrationChecksumChanged {
+        version: i64,
+        name: &'static str,
+        expected_checksum: &'static str,
+        applied_checksum: String,
+    },
+    IncompatibleSchemaVersion {
+        database_version: i64,
+        current_version: i64,
     },
 }
 
@@ -47,6 +74,22 @@ impl fmt::Display for StorageError {
             Self::Sqlite { operation, source } => {
                 write!(formatter, "SQLite {operation} failed: {source}")
             }
+            Self::MigrationChecksumChanged {
+                version,
+                name,
+                expected_checksum,
+                applied_checksum,
+            } => write!(
+                formatter,
+                "migration {version} ({name}) checksum changed: expected {expected_checksum}, found {applied_checksum}"
+            ),
+            Self::IncompatibleSchemaVersion {
+                database_version,
+                current_version,
+            } => write!(
+                formatter,
+                "database schema version {database_version} is newer than supported version {current_version}"
+            ),
         }
     }
 }
@@ -55,9 +98,10 @@ impl std::error::Error for StorageError {}
 
 pub fn storage_status(app: &AppHandle) -> Result<StorageStatus, StorageError> {
     let database_path = resolve_database_path(app)?;
-    let connection = open_database(&database_path)?;
+    let mut connection = open_database(&database_path)?;
 
     configure_connection(&connection)?;
+    run_migrations(&mut connection)?;
     inspect_connection(&connection, database_path)
 }
 
@@ -116,6 +160,104 @@ fn configure_connection(connection: &Connection) -> Result<(), StorageError> {
     Ok(())
 }
 
+fn run_migrations(connection: &mut Connection) -> Result<(), StorageError> {
+    ensure_migration_table(connection)?;
+
+    let schema_version = query_i64(connection, "PRAGMA user_version")?;
+    if schema_version > CURRENT_SCHEMA_VERSION {
+        return Err(StorageError::IncompatibleSchemaVersion {
+            database_version: schema_version,
+            current_version: CURRENT_SCHEMA_VERSION,
+        });
+    }
+
+    for migration in MIGRATIONS {
+        apply_migration(connection, migration)?;
+    }
+
+    Ok(())
+}
+
+fn ensure_migration_table(connection: &Connection) -> Result<(), StorageError> {
+    connection
+        .execute_batch(
+            "CREATE TABLE IF NOT EXISTS schema_migrations (
+              version INTEGER PRIMARY KEY NOT NULL,
+              name TEXT NOT NULL,
+              checksum TEXT NOT NULL,
+              applied_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+            ) STRICT;",
+        )
+        .map_err(|source| StorageError::Sqlite {
+            operation: "migration table initialization",
+            source,
+        })
+}
+
+fn apply_migration(
+    connection: &mut Connection,
+    migration: &'static Migration,
+) -> Result<(), StorageError> {
+    let applied_checksum = connection
+        .query_row(
+            "SELECT checksum FROM schema_migrations WHERE version = ?1",
+            [migration.version],
+            |row| row.get::<_, String>(0),
+        )
+        .optional()
+        .map_err(|source| StorageError::Sqlite {
+            operation: "migration lookup",
+            source,
+        })?;
+
+    match applied_checksum {
+        Some(checksum) if checksum == migration.checksum => return Ok(()),
+        Some(applied_checksum) => {
+            return Err(StorageError::MigrationChecksumChanged {
+                version: migration.version,
+                name: migration.name,
+                expected_checksum: migration.checksum,
+                applied_checksum,
+            });
+        }
+        None => {}
+    }
+
+    let transaction = connection.transaction().map_err(|source| StorageError::Sqlite {
+        operation: "migration transaction start",
+        source,
+    })?;
+
+    transaction
+        .execute_batch(migration.sql)
+        .map_err(|source| StorageError::Sqlite {
+            operation: "migration SQL execution",
+            source,
+        })?;
+
+    transaction
+        .execute(
+            "INSERT INTO schema_migrations (version, name, checksum) VALUES (?1, ?2, ?3)",
+            params![migration.version, migration.name, migration.checksum],
+        )
+        .map_err(|source| StorageError::Sqlite {
+            operation: "migration record insert",
+            source,
+        })?;
+
+    transaction
+        .pragma_update(None, "user_version", migration.version)
+        .map_err(|source| StorageError::Sqlite {
+            operation: "schema version update",
+            source,
+        })?;
+
+    transaction.commit().map_err(|source| StorageError::Sqlite {
+        operation: "migration transaction commit",
+        source,
+    })
+}
+
 fn inspect_connection(
     connection: &Connection,
     database_path: PathBuf,
@@ -128,6 +270,11 @@ fn inspect_connection(
         "SELECT EXISTS(SELECT 1 FROM pragma_compile_options WHERE compile_options = 'ENABLE_FTS5')",
     )?;
     let schema_version = query_i64(connection, "PRAGMA user_version")?;
+    let applied_migration_count = query_i64(connection, "SELECT COUNT(*) FROM schema_migrations")?;
+    let latest_migration = query_optional_string(
+        connection,
+        "SELECT name FROM schema_migrations ORDER BY version DESC LIMIT 1",
+    )?;
 
     Ok(StorageStatus {
         driver: DATABASE_DRIVER,
@@ -138,6 +285,8 @@ fn inspect_connection(
         json_available,
         fts5_available,
         schema_version,
+        applied_migration_count,
+        latest_migration,
     })
 }
 
@@ -146,6 +295,19 @@ fn query_string(connection: &Connection, sql: &str) -> Result<String, StorageErr
         .query_row(sql, [], |row| row.get::<_, String>(0))
         .map_err(|source| StorageError::Sqlite {
             operation: "string inspection query",
+            source,
+        })
+}
+
+fn query_optional_string(
+    connection: &Connection,
+    sql: &str,
+) -> Result<Option<String>, StorageError> {
+    connection
+        .query_row(sql, [], |row| row.get::<_, String>(0))
+        .optional()
+        .map_err(|source| StorageError::Sqlite {
+            operation: "optional string inspection query",
             source,
         })
 }

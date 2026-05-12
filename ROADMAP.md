@@ -57,9 +57,12 @@ timeout, and exposes a status command without letting the UI issue raw SQL.
 
 Next add:
 
-1. Migrations.
-2. JSON artifact blobs.
-3. FTS5 search.
+The initial migration runner is in place: Rust applies ordered SQL migrations
+transactionally, records applied versions and checksums in `schema_migrations`,
+and refuses checksum drift or newer database versions.
+
+1. JSON artifact blobs.
+2. FTS5 search.
 
 Defer vector search until there is real artifact and run data to search.
 
