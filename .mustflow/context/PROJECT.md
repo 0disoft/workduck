@@ -32,61 +32,60 @@ If a field is unknown, leave it unset; do not assume or invent details.
 
 ## Current Goal
 
-Workduck is planned as an open-source, local-first developer workbench for
-agent-assisted coding.
-
-It is not another coding agent. Workduck should be the control surface that
-helps developers manage local projects, structured artifacts, agent-ready
-briefs, execution records, and verification gates while delegating actual
-coding work to external agents or adapters.
+Workduck is an open-source, local-first developer workbench for agent-assisted
+coding. It is a control surface for projects, repos, artifacts, briefs, runs,
+and gates; coding agents remain adapters or export targets.
 
 The first useful product surface should stay small and daily-use oriented:
 
-- Projects: registered local workspaces and their current operational state.
-- Artifacts: structured project documents, document packs, specifications, and
-  candidate outputs with metadata.
-- Briefs: reusable instructions compiled from artifacts, project rules, and
-  intended agent targets.
-- Runs: recorded execution attempts, referenced artifacts, selected agent or
-  export target, outputs, changed files, and verification results.
-- Gates: pre-run and post-run checks for scope, permission, documentation,
-  tests, security, and regression risk.
+- Projects: multi-repo work units, not single repositories.
+- Repos: local Git repositories or folders with path, remote, branch, and state.
+- Project Folders: logical repo groupings inside a Project.
+- Artifacts: structured documents, specs, packs, and candidate outputs.
+- Catalogs: structured records for repos, services, datastores, providers,
+  budgets, service levels, split triggers, and stack decisions.
+- Briefs: reusable instructions compiled from artifacts and project rules.
+- Runs: execution or export records with inputs, outputs, changes, and checks.
+- Gates: pre-run and post-run checks for scope, permission, docs, tests,
+  security, and regression risk.
 - Settings: local preferences, integrations, and permission profiles.
 
 ## Non-Goals
 
 - Do not start as a SaaS-first project management or Kanban product.
-- Do not make Workduck a replacement for OpenCode, Claude Code, Codex, Cursor,
-  or other coding agents. Treat those systems as adapters or export targets.
-- Do not ship autonomous multi-agent orchestration as the first product layer.
-- Do not let memory, skills, or external agent output modify repository
-  knowledge without an explicit candidate, diff, gate, and human approval path.
-- Do not foreground abstract Recipe/Block/Task Mesh concepts in the initial UI
-  before the practical Projects, Artifacts, Briefs, Runs, and Gates surfaces are
-  useful.
-- Do not add marketing, pitch-deck, tutorial, hero, or demo-only UI to the
-  product surface.
+- Do not replace coding agents; adapt to them.
+- Do not ship autonomous multi-agent orchestration first.
+- Do not promote memory, skills, or agent output without candidate, diff, gate,
+  and human approval.
+- Do not foreground Recipe, Block, or Task Mesh before practical daily surfaces.
+- Do not add marketing, pitch-deck, tutorial, hero, or demo-only UI.
 
 ## Core Promises
 
-- Follow `AGENTS.md` for mandatory operating rules.  
-- Treat `.mustflow/config/commands.toml` as the source of truth for commands.  
-- Treat `.mustflow/config/mustflow.toml` as the source of truth for workflow and document boundaries.  
-- Use `REPO_MAP.md` as a high-level navigation map when a broader repository overview is needed.
+- Follow `AGENTS.md` and `.mustflow/config/*.toml` for workflow and command
+  authority.
+- Use `REPO_MAP.md` only as a generated navigation aid.
 - Keep repository-facing documentation in English for open-source readiness.
-- Prefer local-first storage and execution. Remote services and cloud runs are
-  optional integrations, not the default ownership model.
+- Prefer local-first storage and execution; remote services are integrations.
 - Treat structured artifacts and their metadata as more durable than chat logs.
-- Keep external agents behind explicit adapters, exports, or integrations.
 - Require human approval before promoting memory candidates, skill candidates,
   or generated project knowledge into durable project context.
 
 ## Domain Terms
 
 - Workduck: the local-first developer workbench being built in this repository.
-- Project: a local workspace or repository managed by Workduck.
+- Project: a multi-repo work unit for one product, domain, client, or
+  initiative.
+- Repo: a local Git repository or folder with path, remote, branch, status, and
+  batch-operation state.
+- Project Folder: a logical grouping inside a Project.
+- Project Repo Placement: the mapping that places a Repo inside a Project
+  Folder.
 - Artifact: a structured document or data object that captures product,
   design, architecture, API, run, or verification knowledge.
+- Catalog Artifact: a structured Artifact for architecture catalog data.
+- Service: a logical or deployable unit that may map to a repo, repo module, or
+  future split target.
 - Document Pack: a reusable bundle of artifact templates for a project type or
   planning workflow.
 - Agent Brief: a compiled instruction package intended for a coding agent,
@@ -107,35 +106,39 @@ The first useful product surface should stay small and daily-use oriented:
 
 ## Candidate Architecture
 
-The current direction favors a desktop-first architecture. The repository now
-has an early SvelteKit and Tauri scaffold, but the product data model, storage
-layer, and agent integration layer are still undeclared.
-
 - Preferred product shape: local-first desktop app.
 - Declared shell: Tauri desktop shell.
 - Declared UI: SvelteKit in static SPA mode, not a server-rendered web app.
+- Initial data model direction: separate Projects from Repos. Projects group
+  repos through Project Folders and placement metadata; repos remain the
+  filesystem and Git boundary.
 - Candidate local store: SQLite with migrations, structured artifact records,
   run traces, and full-text search.
 - Candidate core: TypeScript packages for domain models, schemas, artifact
   compilation, brief compilation, and gate evaluation.
 - Declared native boundary: Rust/Tauri commands for local filesystem, Git,
   process, and operating-system interactions.
-- Candidate editor and graph surfaces: CodeMirror for structured artifacts and
-  Svelte Flow for dependency or task graphs when those views become necessary.
+- Candidate editor and graph surfaces: CodeMirror and Svelte Flow when concrete
+  artifact and graph workflows require them.
 - Candidate integration direction: MCP-first where practical, with direct
   adapters for core developer workflows.
+- Candidate catalog direction: structured architecture catalogs should be
+  imported, edited, validated, and searched as data-backed artifacts.
 
-Named systems such as OpenCode, Claude Code, Codex, Cursor, OpenAI Agents SDK,
-ZeroClaw, Hermes Agent, LangGraph, Trigger.dev, Inngest, Docker, E2B, Daytona,
-Langfuse, Phoenix, Promptfoo, Composio, Pipedream, Zapier MCP, Figma, Linear,
-GitHub, Supabase, and getdesign.md are reference points or possible future
-integrations only until this repository declares them in package metadata,
-configuration, source code, or public docs.
+Named tools and services discussed in planning are reference points only until
+declared in package metadata, configuration, source code, or public docs.
 
 ## Extra Care Areas
 
 - Local filesystem, Git, terminal, and process execution surfaces require
   explicit permission modeling and audit trails.
+- Multi-repo batch operations require conservative gates. Clone, fetch, and
+  status checks can be lower-risk, while pull, push, delete, checkout, rebase,
+  and generated-file writes require preview, per-repo state, and explicit
+  approval.
+- Workduck should distinguish logical architecture boundaries from actual Git
+  repositories or deployable units. Reserved or future repos are not clone
+  targets until marked active and configured with a real source.
 - Run logs, prompt snapshots, artifact contents, and memory candidates may
   contain secrets, private code, personal data, or proprietary project context.
 - Generated or imported documents are data until promoted through a review path;
@@ -148,14 +151,6 @@ configuration, source code, or public docs.
 - The repository has only an early application scaffold and package manifest.
   Do not claim storage, agent execution, or full desktop release support before
   those layers exist.
-
-## Read Next
-
-- `AGENTS.md`  
-- `.mustflow/docs/agent-workflow.md`  
-- `.mustflow/config/mustflow.toml`  
-- `.mustflow/config/commands.toml`  
-- `.mustflow/skills/INDEX.md`
 
 ## Staleness Check
 

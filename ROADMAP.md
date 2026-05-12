@@ -26,7 +26,7 @@ need it.
 
 Defer `shadcn-svelte` until the app has concrete screens that need copied,
 owned components. Keep the first UI surface focused on Projects, Artifacts,
-Briefs, Runs, Gates, and Settings.
+Briefs, Runs, Gates, Repos, Catalogs, and Settings.
 
 ### 3. Workspace Package Boundaries
 
@@ -35,12 +35,23 @@ Create package boundaries before adding heavier feature dependencies.
 The initial workspace package boundaries are in place: core vocabulary, shared
 schemas, prompt compilation, and workbench orchestration.
 
-These packages define the initial domain language: Project, Artifact, Agent
-Brief, Run, Gate, and later Recipe and Block.
+These packages define the initial domain language: Project, Repo, Project
+Folder, Artifact, Catalog, Service, Agent Brief, Run, Gate, and later Recipe and
+Block.
 
 ### 4. Local Data Layer
 
 Add persistence after the runtime scaffold and package boundaries exist.
+
+Before installing SQLite, define the smallest data model for:
+
+1. Project as a multi-repository work unit.
+2. Repo as a local Git repository or folder.
+3. Project Folder and Project Repo Placement.
+4. Service and Catalog Artifact records.
+5. Artifact, Brief, Run, and Gate records.
+
+Then add:
 
 1. SQLite.
 2. Migrations.
@@ -104,7 +115,8 @@ Defer these until the local desktop workflow is useful without them.
 - CodeMirror before there is an artifact editor.
 - Tiptap before rich-text document editing is clearly needed.
 - shadcn-svelte before concrete component needs exist.
-- SQLite before the first data model is ready to implement.
+- SQLite before the first Project, Repo, Catalog, Artifact, Brief, Run, and Gate
+  data model is ready to implement.
 - Agent adapters before Agent Briefs and Runs exist.
 - MCP before local artifacts and briefs can be read and written.
 - Observability or evaluation services before local run traces exist.
