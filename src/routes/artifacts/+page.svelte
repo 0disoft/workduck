@@ -13,23 +13,23 @@
 	<title>Artifacts - Workduck</title>
 </svelte:head>
 
-<main class="min-h-[calc(100vh-3.25rem)] p-6">
-	<header class="mb-4 flex flex-wrap items-center justify-between gap-3">
-		<h1 class="text-xl leading-tight font-semibold">Artifacts</h1>
-		<label class="flex items-center gap-2 text-sm text-[#4d524b]">
-			<span>Format</span>
-			<select
-				class="border border-[#c7cec4] bg-white px-2 py-1 text-[#20211f]"
-				bind:value={draftLanguage}
-			>
-				{#each artifactEditorLanguages as editorLanguage}
-					<option value={editorLanguage}>{editorLanguage}</option>
-				{/each}
-			</select>
-		</label>
+<main class="workduck-page workduck-page--editor">
+	<header class="workduck-page-header">
+		<h1 class="workduck-page-title">Artifacts</h1>
+
+		<div class="workduck-page-actions">
+			<label class="workduck-field">
+				<span>Format</span>
+				<select class="workduck-select" bind:value={draftLanguage}>
+					{#each artifactEditorLanguages as editorLanguage}
+						<option value={editorLanguage}>{editorLanguage}</option>
+					{/each}
+				</select>
+			</label>
+		</div>
 	</header>
 
-	<section class="h-[calc(100vh-8.5rem)] min-h-96">
+	<section class="workduck-editor-panel">
 		<ArtifactEditor
 			value={draftContent}
 			language={draftLanguage}

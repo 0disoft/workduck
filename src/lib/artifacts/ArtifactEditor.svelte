@@ -42,8 +42,8 @@
 	const editorTheme = EditorView.theme({
 		'&': {
 			height: '100%',
-			backgroundColor: '#ffffff',
-			color: '#20211f',
+			backgroundColor: '#171b1f',
+			color: '#f5f3e7',
 			fontSize: '0.875rem'
 		},
 		'.cm-scroller': {
@@ -58,16 +58,22 @@
 			padding: '0 0.75rem'
 		},
 		'.cm-gutters': {
-			backgroundColor: '#f7f7f4',
-			borderRight: '1px solid #d8ddd4',
-			color: '#74796f'
+			backgroundColor: '#202020',
+			borderRight: '1px solid #2f3f55',
+			color: '#7d8ca1'
 		},
 		'.cm-activeLine, .cm-activeLineGutter': {
-			backgroundColor: '#f1f4ee'
+			backgroundColor: 'rgba(251, 255, 98, 0.08)'
 		},
 		'&.cm-focused': {
-			outline: '2px solid #3f6f55',
+			outline: '2px solid #fbff62',
 			outlineOffset: '-2px'
+		},
+		'.cm-selectionBackground, &.cm-focused .cm-selectionBackground': {
+			backgroundColor: 'rgba(251, 255, 98, 0.18)'
+		},
+		'.cm-cursor': {
+			borderLeftColor: '#fbff62'
 		}
 	});
 
@@ -169,8 +175,8 @@
 		height: 100%;
 		min-height: 100%;
 		overflow: hidden;
-		border: 1px solid #d8ddd4;
-		background: #ffffff;
+		border: 0;
+		background: #171b1f;
 	}
 
 	:global(.artifact-editor .cm-editor) {
