@@ -1,0 +1,15 @@
+# mustflow:start schema=1
+.mustflow/cache/
+.mustflow/state/
+.mustflow/backups/
+.mustflow/worklogs/
+.mustflow/plans/
+.mustflow/tasks/
+.mustflow/work-items/
+# mustflow:end
+
+node_modules/
+dist/
+build/
+.svelte-kit/
+src-tauri/target/

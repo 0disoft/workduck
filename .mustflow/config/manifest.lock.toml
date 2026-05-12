@@ -1,0 +1,239 @@
+schema_version = "1"
+generated_by = "mustflow"
+
+[template]
+id = "default"
+version = "1.18.14"
+profile = "oss"
+locale = "en"
+agent_lang = "en"
+
+[files."AGENTS.md"]
+source = "template_locale"
+last_action = "overwritten"
+content_hash = "sha256:1503c7578553a1cbafac0bc24344e26deed5243925bbd1b69e7010321a069380"
+
+[files.".mustflow/context/INDEX.md"]
+source = "template_locale"
+last_action = "overwritten"
+content_hash = "sha256:fc114cfc324dac4ba3055749706dc14dabfb4bc9e0245cc40d45f0e26df53286"
+
+[files.".mustflow/context/PROJECT.md"]
+source = "template_locale"
+last_action = "customized"
+content_hash = "sha256:9ff4b34f9b457aae799eadec08ef0e744ec40ff2d7f4d92d7ecc087977f1dffd"
+
+[files.".mustflow/skills/INDEX.md"]
+source = "template_locale"
+last_action = "overwritten"
+content_hash = "sha256:a19045c7be296a61a4d568e413895a25acdc76653a7c3f559331cf65da04dd55"
+
+[files.".mustflow/skills/adapter-boundary/SKILL.md"]
+source = "template_locale"
+last_action = "overwritten"
+content_hash = "sha256:d86dc13431c967b113701facc129da076746781b4ce3daec17232c25ffa16a9b"
+
+[files.".mustflow/skills/artifact-integrity-check/SKILL.md"]
+source = "template_locale"
+last_action = "created"
+content_hash = "sha256:39b809e5e723e2efe655aba822a9e3426602d19a562b1504062a13a256c0d0f7"
+
+[files.".mustflow/skills/behavior-preserving-refactor/SKILL.md"]
+source = "template_locale"
+last_action = "overwritten"
+content_hash = "sha256:31afde7f88f558d8bc9970b3ffb1c82c05c0c264b7577009e185c301f77f35d6"
+
+[files.".mustflow/skills/code-review/SKILL.md"]
+source = "template_locale"
+last_action = "overwritten"
+content_hash = "sha256:631e199a91fc477e7a52a5fc31f63e84884dcb5e97d70f6574a4cff0de31206e"
+
+[files.".mustflow/skills/codebase-orientation/SKILL.md"]
+source = "template_locale"
+last_action = "overwritten"
+content_hash = "sha256:0000036c72b773d5b6b6e44dbe342a14119b487ea9a64a2e9b092a9b22d51499"
+
+[files.".mustflow/skills/command-pattern/SKILL.md"]
+source = "template_locale"
+last_action = "overwritten"
+content_hash = "sha256:750ce0eb61cd44c352cc726de9ea6b3630af3cfe75318231c9fa358e639f022b"
+
+[files.".mustflow/skills/composition-over-inheritance/SKILL.md"]
+source = "template_locale"
+last_action = "overwritten"
+content_hash = "sha256:c0fed6a549160c133cddee10cae06c38f7f6ff15af52039f298b1d053f0a5991"
+
+[files.".mustflow/skills/contract-sync-check/SKILL.md"]
+source = "template_locale"
+last_action = "overwritten"
+content_hash = "sha256:cfad0bf4cbd6844e943d8f27e4ad1e5489f2fa2c5e39492bed5e3b85162d12d4"
+
+[files.".mustflow/skills/date-number-audit/SKILL.md"]
+source = "template_locale"
+last_action = "overwritten"
+content_hash = "sha256:c427fa1405c713faffb0c460fd10ba0a6b573012e3e0801a438ce6b47d6fe700"
+
+[files.".mustflow/skills/database-change-safety/SKILL.md"]
+source = "template_locale"
+last_action = "overwritten"
+content_hash = "sha256:c55c33674abc6f7df0684b534aac3722da00779cc0a32d0a6ec7f031881788b8"
+
+[files.".mustflow/skills/dependency-injection/SKILL.md"]
+source = "template_locale"
+last_action = "overwritten"
+content_hash = "sha256:33cba0645852e451218d923047169e439dd49e50567d3b74dd41c5042294451b"
+
+[files.".mustflow/skills/dependency-reality-check/SKILL.md"]
+source = "template_locale"
+last_action = "overwritten"
+content_hash = "sha256:72ae59e6b0d24a5792c547a5bf793aa550a130154aa64357296242a3c596165e"
+
+[files.".mustflow/skills/diff-risk-review/SKILL.md"]
+source = "template_locale"
+last_action = "overwritten"
+content_hash = "sha256:718922ca23691624db2c33f0ce18fa05e5f1c7ba0292eb97cdf496c718a09595"
+
+[files.".mustflow/skills/pure-core-imperative-shell/SKILL.md"]
+source = "template_locale"
+last_action = "overwritten"
+content_hash = "sha256:38e5e118ee1908b0518ad22560c7d3f6e63b0ca1363ba2d2a4dffaad4ef29a96"
+
+[files.".mustflow/skills/result-option/SKILL.md"]
+source = "template_locale"
+last_action = "overwritten"
+content_hash = "sha256:f1426cd709cdb02234ab3679c297e4c6435298f4896769102019bf1a05ed4ac3"
+
+[files.".mustflow/skills/test-maintenance/SKILL.md"]
+source = "template_locale"
+last_action = "overwritten"
+content_hash = "sha256:070c4945a00def0d75716f4ccd5ed2f3084d146face3199b2f3204ee413b2af2"
+
+[files.".mustflow/skills/external-prompt-injection-defense/SKILL.md"]
+source = "template_locale"
+last_action = "overwritten"
+content_hash = "sha256:a702a7d1c4a392bd27d36dc85b301ab119d3adf915fb9885cc0bc77e61cfca49"
+
+[files.".mustflow/skills/facade-pattern/SKILL.md"]
+source = "template_locale"
+last_action = "overwritten"
+content_hash = "sha256:3a751aa481cb864c64b1dae8d29f146400136454d353d9fef76e2beb488c1830"
+
+[files.".mustflow/skills/instruction-conflict-scope-check/SKILL.md"]
+source = "template_locale"
+last_action = "overwritten"
+content_hash = "sha256:6c7dd256637ea60f706d8936af407e4444f34592f9f225bf6beb0c701a362445"
+
+[files.".mustflow/skills/failure-triage/SKILL.md"]
+source = "template_locale"
+last_action = "overwritten"
+content_hash = "sha256:b5586b8b434b32dbb91ccd3e32348a08514eb4bd5041520d77d6fdb097942ae6"
+
+[files.".mustflow/skills/line-ending-hygiene/SKILL.md"]
+source = "template_locale"
+last_action = "created"
+content_hash = "sha256:216ff6a301704d32ded0bfa62aac056bb3d3e7c4cc1c2f2a082bc50c55437866"
+
+[files.".mustflow/skills/migration-safety-check/SKILL.md"]
+source = "template_locale"
+last_action = "created"
+content_hash = "sha256:8bb2e9f2c97cb295b85e1b19dca6fa6d6bb69385c4e25e8d78ecc75f6870ded2"
+
+[files.".mustflow/skills/null-object-pattern/SKILL.md"]
+source = "template_locale"
+last_action = "overwritten"
+content_hash = "sha256:e3e6ad9a12e2ca4bf6bbfafb6bf58cd60f114575611903c2a6d2bbc1bb2260d6"
+
+[files.".mustflow/skills/pattern-scout/SKILL.md"]
+source = "template_locale"
+last_action = "overwritten"
+content_hash = "sha256:c8d332dd07b0a958bd75cdcc09cdfbe193e9ede3c25467c74e8e58a18f7beeea"
+
+[files.".mustflow/skills/repo-improvement-loop/SKILL.md"]
+source = "template_locale"
+last_action = "created"
+content_hash = "sha256:a16fa3ef879bd66eb950a0f259040e08a2248fe39976873525f91063d7291122"
+
+[files.".mustflow/skills/structure-discovery-gate/SKILL.md"]
+source = "template_locale"
+last_action = "overwritten"
+content_hash = "sha256:09ecad732e4b8f38657f113ab7c6866bf8866dc9537e159a36b7d14787e4d2a3"
+
+[files.".mustflow/skills/readme-authoring/SKILL.md"]
+source = "template_locale"
+last_action = "created"
+content_hash = "sha256:4e91af4bdfde20bf58d6117c48c7791cc06717d75ec5b35b582706ecf8232fab"
+
+[files.".mustflow/skills/requirement-regression-guard/SKILL.md"]
+source = "template_locale"
+last_action = "overwritten"
+content_hash = "sha256:a672e07e0014b82fe3eee46dd7804ae4d6585f30a2a838e0ce2410e44b243b42"
+
+[files.".mustflow/skills/repro-first-debug/SKILL.md"]
+source = "template_locale"
+last_action = "overwritten"
+content_hash = "sha256:b26821502c8b62bd0a9eb1b60442735df80c16d5997ea4f3ad4f813acbc0437e"
+
+[files.".mustflow/skills/source-freshness-check/SKILL.md"]
+source = "template_locale"
+last_action = "overwritten"
+content_hash = "sha256:42c8c6de5e15587d0268a6e85ab3d56b88ca1a26bce01b7542bb080c4baaef80"
+
+[files.".mustflow/skills/state-machine-pattern/SKILL.md"]
+source = "template_locale"
+last_action = "overwritten"
+content_hash = "sha256:fb70a24182b6b326e7abe339798bf67465fa0b9728455968e60e990dbbe0a656"
+
+[files.".mustflow/skills/strategy-pattern/SKILL.md"]
+source = "template_locale"
+last_action = "overwritten"
+content_hash = "sha256:377250e13fe3182efe54633a428aff9ed75594b2cdc3a42bcfb5494c552fdaf3"
+
+[files.".mustflow/skills/docs-prose-review/SKILL.md"]
+source = "template_locale"
+last_action = "created"
+content_hash = "sha256:4c65a4c98564b04ee5132908170c041f6163c4e591d6a577c2a3a22c3cf671e6"
+
+[files.".mustflow/skills/docs-update/SKILL.md"]
+source = "template_locale"
+last_action = "overwritten"
+content_hash = "sha256:1c3f3de703872f883520617ce96856f255c60f55ae1ed65376c05849a2eb07f9"
+
+[files.".mustflow/skills/project-context-authoring/SKILL.md"]
+source = "template_locale"
+last_action = "created"
+content_hash = "sha256:86f68bd8ec3b5fd8f70330b0a3cd6a3af901c87e1e31e8c2b88322f3cfe946b3"
+
+[files.".mustflow/skills/security-privacy-review/SKILL.md"]
+source = "template_locale"
+last_action = "overwritten"
+content_hash = "sha256:ff4a51f0ea5c3019fe9b6274dfb4811cfcee27453977721c75d228121e36fe62"
+
+[files.".mustflow/skills/security-regression-tests/SKILL.md"]
+source = "template_locale"
+last_action = "created"
+content_hash = "sha256:4b5f845fe40fb50427634c2cc93b3831528a90572e05b0a6befcda4739ecb7dc"
+
+[files.".mustflow/skills/skill-authoring/SKILL.md"]
+source = "template_locale"
+last_action = "created"
+content_hash = "sha256:545067825bfdfa824e9f4557005074dcc7b5faa0025632b8129940bb14977818"
+
+[files.".mustflow/docs/agent-workflow.md"]
+source = "template_locale"
+last_action = "overwritten"
+content_hash = "sha256:5467874e9f98c107c6194f0549055a013c1185d2f9306a7629524fab089b33dc"
+
+[files.".mustflow/config/mustflow.toml"]
+source = "template_common"
+last_action = "unchanged"
+content_hash = "sha256:eac25df8b64646b381613a9ff9777df77b71634a806c27b6cab4f67e3497c7ee"
+
+[files.".mustflow/config/commands.toml"]
+source = "template_common"
+last_action = "customized"
+content_hash = "sha256:f0ae648e2cf81af6a03824e1baea970f519cb974cbf883c16cd4732c548d1d33"
+
+[files.".mustflow/config/preferences.toml"]
+source = "template_common"
+last_action = "customized"
+content_hash = "sha256:ffe28968e49edac17c60e1012b2392f88c6eae4d0e8b77195d49e9350330761d"
