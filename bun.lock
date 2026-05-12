@@ -25,7 +25,14 @@
     },
     "packages/core": {
       "name": "@workduck/core",
-      "version": "1.0.5",
+      "version": "1.0.6",
+    },
+    "packages/schemas": {
+      "name": "@workduck/schemas",
+      "version": "1.0.6",
+      "dependencies": {
+        "@workduck/core": "workspace:*",
+      },
     },
   },
   "packages": {
