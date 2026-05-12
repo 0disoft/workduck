@@ -27,10 +27,11 @@
 
 	const { children }: Props = $props();
 
-	const navigationItems = [
+	const primaryNavigationItems = [
 		{ href: '/', label: 'Projects' },
 		{ href: '/artifacts', label: 'Artifacts' }
 	] as const;
+	const settingsNavigationItem = { href: '/settings', label: 'Settings' } as const;
 
 	let sidebarWidthPx = $state(SIDEBAR_DEFAULT_WIDTH_PX);
 	let isDesktop = $state(true);
@@ -352,7 +353,7 @@
 			</div>
 
 			<nav class="workduck-sidebar-nav" aria-label="Primary">
-				{#each navigationItems as item}
+				{#each primaryNavigationItems as item}
 					<a
 						class={page.url.pathname === item.href
 							? 'workduck-nav-link workduck-nav-link-active'
@@ -367,6 +368,22 @@
 						<span class="workduck-nav-label">{item.label}</span>
 					</a>
 				{/each}
+			</nav>
+
+			<nav class="workduck-sidebar-footer" aria-label="Settings">
+				<a
+					class={page.url.pathname === settingsNavigationItem.href
+						? 'workduck-nav-link workduck-nav-link-active'
+						: 'workduck-nav-link'}
+					href={settingsNavigationItem.href}
+					aria-current={page.url.pathname === settingsNavigationItem.href ? 'page' : undefined}
+					aria-label={settingsNavigationItem.label}
+					data-tooltip={settingsNavigationItem.label}
+					onclick={closeSidebarOnMobile}
+				>
+					<span class="workduck-nav-dot"></span>
+					<span class="workduck-nav-label">{settingsNavigationItem.label}</span>
+				</a>
 			</nav>
 		</aside>
 
@@ -549,6 +566,8 @@
 	.workduck-sidebar {
 		position: relative;
 		z-index: 10;
+		display: grid;
+		grid-template-rows: auto minmax(0, 1fr) auto;
 		min-width: 0;
 		height: 100%;
 		overflow: visible;
@@ -612,8 +631,19 @@
 
 	.workduck-sidebar-nav {
 		display: grid;
+		align-content: start;
 		gap: 6px;
+		min-height: 0;
+		overflow: visible;
 		padding: 14px 12px;
+	}
+
+	.workduck-sidebar-footer {
+		display: grid;
+		gap: 6px;
+		min-width: 0;
+		padding: 12px;
+		border-top: 1px solid oklch(var(--workduck-oklch-border) / 0.7);
 	}
 
 	.workduck-nav-link {
