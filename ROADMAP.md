@@ -10,8 +10,7 @@ declared in this repository.
 
 Create the smallest desktop app that can build and run.
 
-1. SvelteKit SPA mode with SSR disabled for the desktop shell.
-2. Rust/Tauri command boundary.
+1. Rust/Tauri command boundary.
 
 The frontend should be a static SvelteKit app loaded by Tauri. Do not put core
 application logic into SvelteKit server routes.
