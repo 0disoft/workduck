@@ -164,17 +164,20 @@
 	}
 
 	function handleTitlebarPointerDown(event: PointerEvent) {
-		if (event.button !== 0 || isWindowControlTarget(event.target)) {
-			return;
-		}
-
-		if (event.detail === 2) {
-			event.preventDefault();
-			void toggleTauriWindowMaximize();
+		if (event.button !== 0 || event.detail > 1 || isWindowControlTarget(event.target)) {
 			return;
 		}
 
 		void startTauriWindowDrag();
+	}
+
+	function handleTitlebarDoubleClick(event: MouseEvent) {
+		if (isWindowControlTarget(event.target)) {
+			return;
+		}
+
+		event.preventDefault();
+		void toggleTauriWindowMaximize();
 	}
 
 	onMount(() => {
@@ -204,7 +207,11 @@
 
 <div class="workduck-window-frame">
 	<!-- svelte-ignore a11y_no_static_element_interactions -->
-	<header class="workduck-titlebar" onpointerdown={handleTitlebarPointerDown}>
+	<header
+		class="workduck-titlebar"
+		onpointerdown={handleTitlebarPointerDown}
+		ondblclick={handleTitlebarDoubleClick}
+	>
 		<div class="workduck-titlebar-brand">
 			<span class="workduck-titlebar-mark">WD</span>
 			<span class="workduck-titlebar-name">Workduck</span>
@@ -218,7 +225,7 @@
 				data-workduck-window-control="true"
 				onclick={() => void minimizeTauriWindow()}
 			>
-				<span aria-hidden="true">-</span>
+				<span class="workduck-window-icon workduck-window-icon-minimize" aria-hidden="true"></span>
 			</button>
 			<button
 				class="workduck-window-control"
@@ -227,7 +234,7 @@
 				data-workduck-window-control="true"
 				onclick={() => void toggleTauriWindowMaximize()}
 			>
-				<span aria-hidden="true">[]</span>
+				<span class="workduck-window-icon workduck-window-icon-maximize" aria-hidden="true"></span>
 			</button>
 			<button
 				class="workduck-window-control workduck-window-control-close"
@@ -236,7 +243,7 @@
 				data-workduck-window-control="true"
 				onclick={() => void closeTauriWindow()}
 			>
-				<span aria-hidden="true">x</span>
+				<span class="workduck-window-icon workduck-window-icon-close" aria-hidden="true"></span>
 			</button>
 		</div>
 	</header>
@@ -278,7 +285,8 @@
 							: 'workduck-nav-link'}
 						href={item.href}
 						aria-current={page.url.pathname === item.href ? 'page' : undefined}
-						title={item.label}
+						aria-label={item.label}
+						data-tooltip={item.label}
 						onclick={closeSidebarOnMobile}
 					>
 						<span class="workduck-nav-dot"></span>
@@ -381,14 +389,57 @@
 
 	.workduck-window-control {
 		display: grid;
-		width: 46px;
+		width: 42px;
 		border: 0;
 		background: transparent;
 		color: var(--workduck-color-muted);
-		font: inherit;
-		font-size: 12px;
-		font-weight: 900;
 		place-items: center;
+	}
+
+	.workduck-window-icon {
+		position: relative;
+		display: block;
+		width: 14px;
+		height: 14px;
+	}
+
+	.workduck-window-icon::before,
+	.workduck-window-icon::after {
+		position: absolute;
+		content: "";
+	}
+
+	.workduck-window-icon-minimize::before {
+		left: 2px;
+		bottom: 3px;
+		width: 10px;
+		height: 1.5px;
+		border-radius: 999px;
+		background: currentColor;
+	}
+
+	.workduck-window-icon-maximize::before {
+		inset: 2px;
+		border: 1.5px solid currentColor;
+		border-radius: 1.5px;
+	}
+
+	.workduck-window-icon-close::before,
+	.workduck-window-icon-close::after {
+		top: 6px;
+		left: 2px;
+		width: 10px;
+		height: 1.5px;
+		border-radius: 999px;
+		background: currentColor;
+	}
+
+	.workduck-window-icon-close::before {
+		transform: rotate(45deg);
+	}
+
+	.workduck-window-icon-close::after {
+		transform: rotate(-45deg);
 	}
 
 	.workduck-window-control:hover {
@@ -422,9 +473,11 @@
 	}
 
 	.workduck-sidebar {
+		position: relative;
+		z-index: 10;
 		min-width: 0;
 		height: 100%;
-		overflow: hidden;
+		overflow: visible;
 		border-right: 1px solid oklch(var(--workduck-oklch-accent) / 0.24);
 		background:
 			linear-gradient(135deg, oklch(var(--workduck-oklch-accent) / 0.06), transparent 36%),
@@ -490,6 +543,7 @@
 	}
 
 	.workduck-nav-link {
+		position: relative;
 		display: flex;
 		min-width: 0;
 		align-items: center;
@@ -502,6 +556,68 @@
 		font-size: 14px;
 		font-weight: 700;
 		text-decoration: none;
+	}
+
+	.workduck-nav-link::before,
+	.workduck-nav-link::after {
+		position: absolute;
+		top: 50%;
+		left: calc(100% + 10px);
+		z-index: 50;
+		opacity: 0;
+		pointer-events: none;
+		transition:
+			opacity 120ms ease,
+			transform 120ms ease;
+	}
+
+	.workduck-nav-link::before {
+		width: 8px;
+		height: 8px;
+		background: var(--workduck-color-panel);
+		border-left: 1px solid oklch(var(--workduck-oklch-accent) / 0.46);
+		border-bottom: 1px solid oklch(var(--workduck-oklch-accent) / 0.46);
+		content: "";
+		transform: translate(5px, -50%) rotate(45deg);
+	}
+
+	.workduck-nav-link::after {
+		width: max-content;
+		max-width: 240px;
+		padding: 7px 9px;
+		border: 1px solid oklch(var(--workduck-oklch-accent) / 0.46);
+		border-radius: 6px;
+		background: var(--workduck-color-panel);
+		box-shadow:
+			0 12px 26px oklch(var(--workduck-oklch-shadow) / 0.36),
+			inset 0 0 0 1px oklch(var(--workduck-oklch-accent) / 0.06);
+		color: var(--workduck-color-text);
+		content: attr(data-tooltip);
+		font-size: 12px;
+		font-weight: 800;
+		line-height: 1;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+		overflow: hidden;
+		transform: translate(9px, -50%);
+	}
+
+	.workduck-nav-link:hover::before,
+	.workduck-nav-link:hover::after,
+	.workduck-nav-link:focus-visible::before,
+	.workduck-nav-link:focus-visible::after {
+		opacity: 1;
+		transition-delay: 520ms;
+	}
+
+	.workduck-nav-link:hover::before,
+	.workduck-nav-link:focus-visible::before {
+		transform: translate(1px, -50%) rotate(45deg);
+	}
+
+	.workduck-nav-link:hover::after,
+	.workduck-nav-link:focus-visible::after {
+		transform: translate(5px, -50%);
 	}
 
 	.workduck-nav-link:hover {
@@ -591,6 +707,7 @@
 			inset: var(--workduck-titlebar-height) auto 0 0;
 			z-index: 30;
 			width: min(320px, 86vw);
+			overflow: hidden;
 			transform: translateX(-100%);
 			transition: transform 160ms ease;
 			box-shadow: 16px 0 36px oklch(var(--workduck-oklch-shadow) / 0.44);
@@ -616,6 +733,11 @@
 		}
 
 		.workduck-sidebar-resizer {
+			display: none;
+		}
+
+		.workduck-nav-link::before,
+		.workduck-nav-link::after {
 			display: none;
 		}
 
