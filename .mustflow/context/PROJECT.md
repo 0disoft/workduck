@@ -107,17 +107,18 @@ The first useful product surface should stay small and daily-use oriented:
 
 ## Candidate Architecture
 
-The current direction favors a desktop-first architecture, but no package
-metadata or application scaffold has been declared yet.
+The current direction favors a desktop-first architecture. The repository now
+has an early SvelteKit and Tauri scaffold, but the product data model, storage
+layer, and agent integration layer are still undeclared.
 
 - Preferred product shape: local-first desktop app.
-- Candidate shell: Tauri desktop shell.
-- Candidate UI: SvelteKit in static SPA mode, not a server-rendered web app.
+- Declared shell: Tauri desktop shell.
+- Declared UI: SvelteKit in static SPA mode, not a server-rendered web app.
 - Candidate local store: SQLite with migrations, structured artifact records,
   run traces, and full-text search.
 - Candidate core: TypeScript packages for domain models, schemas, artifact
   compilation, brief compilation, and gate evaluation.
-- Candidate native boundary: Rust/Tauri commands for local filesystem, Git,
+- Declared native boundary: Rust/Tauri commands for local filesystem, Git,
   process, and operating-system interactions.
 - Candidate editor and graph surfaces: CodeMirror for structured artifacts and
   Svelte Flow for dependency or task graphs when those views become necessary.
@@ -144,8 +145,9 @@ configuration, source code, or public docs.
 - Any future MCP, SaaS, sandbox, or coding-agent integration must preserve clear
   adapter boundaries and should not leak provider-specific assumptions into the
   core model.
-- The repository currently has no application scaffold, package manifest, or
-  declared test/build commands. Do not claim runtime support before it exists.
+- The repository has only an early application scaffold and package manifest.
+  Do not claim storage, agent execution, or full desktop release support before
+  those layers exist.
 
 ## Read Next
 
@@ -159,6 +161,6 @@ configuration, source code, or public docs.
 
 - If this file conflicts with current code, tests, command contracts, or user instructions, treat it as stale and report the conflict.  
 - Update this file only when the project direction, non-goals, or repository-wide promises change.
-- This file reflects owner-provided product direction before the application
-  scaffold exists. Future `README.md`, package metadata, source code, command
+- This file reflects owner-provided product direction and the current early
+  scaffold. Future `README.md`, package metadata, source code, command
   contracts, and tests should override any stale implementation assumptions.

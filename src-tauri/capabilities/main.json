@@ -1,0 +1,6 @@
+{
+  "identifier": "main",
+  "description": "Permissions for the main Workduck window.",
+  "windows": ["main"],
+  "permissions": ["core:default"]
+}

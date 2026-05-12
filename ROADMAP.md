@@ -10,7 +10,8 @@ declared in this repository.
 
 Create the smallest desktop app that can build and run.
 
-1. Rust/Tauri command boundary.
+The initial runtime scaffold is in place: static SvelteKit output is loaded by
+the Tauri desktop shell, and native calls cross a Rust command boundary.
 
 The frontend should be a static SvelteKit app loaded by Tauri. Do not put core
 application logic into SvelteKit server routes.

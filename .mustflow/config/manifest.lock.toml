@@ -21,7 +21,7 @@ content_hash = "sha256:fc114cfc324dac4ba3055749706dc14dabfb4bc9e0245cc40d45f0e26
 [files.".mustflow/context/PROJECT.md"]
 source = "template_locale"
 last_action = "customized"
-content_hash = "sha256:9ff4b34f9b457aae799eadec08ef0e744ec40ff2d7f4d92d7ecc087977f1dffd"
+content_hash = "sha256:0e12dd62f9a28fdbab27097d1521998389426198785533b1a0b9250449eadb7b"
 
 [files.".mustflow/skills/INDEX.md"]
 source = "template_locale"
