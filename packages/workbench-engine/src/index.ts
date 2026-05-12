@@ -5,6 +5,7 @@ import type {
   ProjectRef,
   WorkduckEntityRef
 } from "@workduck/core";
+import { compileAgentBriefPrompt, type AgentBriefPromptInput } from "@workduck/prompts";
 import type { WorkduckSchemaId } from "@workduck/schemas";
 
 export type WorkbenchArtifactRole = "source" | "candidate" | "output";
@@ -22,12 +23,30 @@ export interface WorkbenchRunPlanInput {
   readonly brief?: AgentBriefRef;
 }
 
+export interface WorkbenchRunBriefInput extends WorkbenchRunPlanInput {
+  readonly title: string;
+  readonly instructions?: readonly string[];
+}
+
 export interface WorkbenchRunPlanSummary {
   readonly project: ProjectRef;
   readonly entityRefs: readonly WorkduckEntityRef[];
   readonly schemaIds: readonly WorkduckSchemaId[];
   readonly gateRefs: readonly GateRef[];
   readonly brief?: AgentBriefRef;
+}
+
+export function compileWorkbenchRunBrief(input: WorkbenchRunBriefInput): string {
+  const promptInput: AgentBriefPromptInput = {
+    title: input.title,
+    project: input.project,
+    artifacts: input.artifacts,
+    gates: input.gates,
+    ...(input.brief === undefined ? {} : { brief: input.brief }),
+    ...(input.instructions === undefined ? {} : { instructions: input.instructions })
+  };
+
+  return compileAgentBriefPrompt(promptInput);
 }
 
 export function createEntityRefKey(ref: Pick<WorkduckEntityRef, "kind" | "id">): string {

@@ -5,8 +5,8 @@ generated_by: mustflow
 relative_root: "."
 source_policy: anchors_only
 privacy_mode: minimal
-anchor_count: 61
-source_fingerprint: "sha256:cf6845321225559b39b23b2158966699464a086bd9b21dece52577c83427f9de"
+anchor_count: 64
+source_fingerprint: "sha256:bc4d91a13f310db66b35c467c524428a7c4555495924f4968327ed900d4aecfa"
 ---
 
 # REPO_MAP.md
@@ -204,6 +204,12 @@ Regenerate it with `mf map --write` instead of editing it by hand.
 - `packages/core/package.json`: Node.js package manifest for this directory.
 - `packages/core/README.md`: Directory guide for this area.
 - `packages/core/tsconfig.json`: TypeScript compiler configuration.
+
+### packages/prompts/
+
+- `packages/prompts/package.json`: Node.js package manifest for this directory.
+- `packages/prompts/README.md`: Directory guide for this area.
+- `packages/prompts/tsconfig.json`: TypeScript compiler configuration.
 
 ### packages/schemas/
 

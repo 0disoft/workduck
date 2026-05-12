@@ -5,9 +5,6 @@
       "@workduck/core": [
         "../core/src/index.ts"
       ],
-      "@workduck/prompts": [
-        "../prompts/src/index.ts"
-      ],
       "@workduck/schemas": [
         "../schemas/src/index.ts"
       ]

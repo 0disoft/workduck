@@ -32,10 +32,11 @@ Briefs, Runs, Gates, and Settings.
 
 Create package boundaries before adding heavier feature dependencies.
 
-1. `packages/prompts`
+The initial workspace package boundaries are in place: core vocabulary, shared
+schemas, prompt compilation, and workbench orchestration.
 
-These packages should define the initial domain language: Project, Artifact,
-Agent Brief, Run, Gate, and later Recipe and Block.
+These packages define the initial domain language: Project, Artifact, Agent
+Brief, Run, Gate, and later Recipe and Block.
 
 ### 4. Local Data Layer
 
