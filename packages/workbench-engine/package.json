@@ -1,5 +1,5 @@
 {
-  "name": "@workduck/schemas",
+  "name": "@workduck/workbench-engine",
   "version": "1.0.7",
   "private": true,
   "type": "module",
@@ -12,6 +12,7 @@
   },
   "types": "./src/index.ts",
   "dependencies": {
-    "@workduck/core": "workspace:*"
+    "@workduck/core": "workspace:*",
+    "@workduck/schemas": "workspace:*"
   }
 }

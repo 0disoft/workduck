@@ -32,8 +32,7 @@ Briefs, Runs, Gates, and Settings.
 
 Create package boundaries before adding heavier feature dependencies.
 
-1. `packages/workbench-engine`
-2. `packages/prompts`
+1. `packages/prompts`
 
 These packages should define the initial domain language: Project, Artifact,
 Agent Brief, Run, Gate, and later Recipe and Block.

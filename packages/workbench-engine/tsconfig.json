@@ -1,0 +1,17 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "paths": {
+      "@workduck/core": [
+        "../core/src/index.ts"
+      ],
+      "@workduck/schemas": [
+        "../schemas/src/index.ts"
+      ]
+    },
+    "noEmit": true
+  },
+  "include": [
+    "src/**/*.ts"
+  ]
+}

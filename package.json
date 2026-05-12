@@ -1,6 +1,6 @@
 {
   "name": "workduck",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "private": true,
   "type": "module",
   "workspaces": [
@@ -14,7 +14,7 @@
     "preview": "vite preview",
     "prepare": "svelte-kit sync || echo ''",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json && bun run check:packages",
-    "check:packages": "tsc -p packages/core/tsconfig.json --noEmit && tsc -p packages/schemas/tsconfig.json --noEmit",
+    "check:packages": "tsc -p packages/core/tsconfig.json --noEmit && tsc -p packages/schemas/tsconfig.json --noEmit && tsc -p packages/workbench-engine/tsconfig.json --noEmit",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch"
   },
   "devDependencies": {

@@ -5,8 +5,8 @@ generated_by: mustflow
 relative_root: "."
 source_policy: anchors_only
 privacy_mode: minimal
-anchor_count: 58
-source_fingerprint: "sha256:e076e41d8cd24fcef9e60d859da7737522b2f9e0fc88b24f6e237166385129df"
+anchor_count: 61
+source_fingerprint: "sha256:cf6845321225559b39b23b2158966699464a086bd9b21dece52577c83427f9de"
 ---
 
 # REPO_MAP.md
@@ -210,6 +210,12 @@ Regenerate it with `mf map --write` instead of editing it by hand.
 - `packages/schemas/package.json`: Node.js package manifest for this directory.
 - `packages/schemas/README.md`: Directory guide for this area.
 - `packages/schemas/tsconfig.json`: TypeScript compiler configuration.
+
+### packages/workbench-engine/
+
+- `packages/workbench-engine/package.json`: Node.js package manifest for this directory.
+- `packages/workbench-engine/README.md`: Directory guide for this area.
+- `packages/workbench-engine/tsconfig.json`: TypeScript compiler configuration.
 
 ### src-tauri/
 
