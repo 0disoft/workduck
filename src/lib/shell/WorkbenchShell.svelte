@@ -19,6 +19,7 @@
 		startTauriWindowDrag,
 		toggleTauriWindowMaximize
 	} from './tauri-window';
+	import { hasExceededTitlebarDragThreshold } from './titlebar-interaction';
 
 	interface Props {
 		readonly children: Snippet;
@@ -38,6 +39,10 @@
 	let resizePointerId: number | undefined;
 	let resizeStartX = 0;
 	let resizeStartWidthPx = SIDEBAR_DEFAULT_WIDTH_PX;
+	let titlebarDragElement: HTMLElement | undefined;
+	let titlebarDragPointerId: number | undefined;
+	let titlebarDragStartX = 0;
+	let titlebarDragStartY = 0;
 
 	function persistSidebarWidthPx(nextWidthPx = sidebarWidthPx) {
 		if (typeof window === 'undefined') {
@@ -164,10 +169,55 @@
 	}
 
 	function handleTitlebarPointerDown(event: PointerEvent) {
-		if (event.button !== 0 || event.detail > 1 || isWindowControlTarget(event.target)) {
+		if (event.button !== 0 || isWindowControlTarget(event.target)) {
+			cancelTitlebarDragTracking();
 			return;
 		}
 
+		if (event.detail > 1) {
+			cancelTitlebarDragTracking();
+			return;
+		}
+
+		const target = event.currentTarget;
+
+		if (!(target instanceof HTMLElement)) {
+			return;
+		}
+
+		titlebarDragElement = target;
+		titlebarDragPointerId = event.pointerId;
+		titlebarDragStartX = event.clientX;
+		titlebarDragStartY = event.clientY;
+		target.setPointerCapture(event.pointerId);
+		window.addEventListener('pointermove', handleTitlebarPointerMove);
+		window.addEventListener('pointerup', cancelTitlebarDragTracking);
+		window.addEventListener('pointercancel', cancelTitlebarDragTracking);
+	}
+
+	function handleTitlebarPointerMove(event: PointerEvent) {
+		if (titlebarDragPointerId !== event.pointerId) {
+			return;
+		}
+
+		if ((event.buttons & 1) !== 1) {
+			cancelTitlebarDragTracking();
+			return;
+		}
+
+		if (
+			!hasExceededTitlebarDragThreshold(
+				titlebarDragStartX,
+				titlebarDragStartY,
+				event.clientX,
+				event.clientY
+			)
+		) {
+			return;
+		}
+
+		event.preventDefault();
+		cancelTitlebarDragTracking();
 		void startTauriWindowDrag();
 	}
 
@@ -177,7 +227,30 @@
 		}
 
 		event.preventDefault();
+		cancelTitlebarDragTracking();
 		void toggleTauriWindowMaximize();
+	}
+
+	function cancelTitlebarDragTracking() {
+		const pointerId = titlebarDragPointerId;
+
+		if (
+			titlebarDragElement !== undefined &&
+			pointerId !== undefined &&
+			titlebarDragElement.hasPointerCapture(pointerId)
+		) {
+			try {
+				titlebarDragElement.releasePointerCapture(pointerId);
+			} catch {
+				// The browser may already have released capture after native window handling takes over.
+			}
+		}
+
+		titlebarDragElement = undefined;
+		titlebarDragPointerId = undefined;
+		window.removeEventListener('pointermove', handleTitlebarPointerMove);
+		window.removeEventListener('pointerup', cancelTitlebarDragTracking);
+		window.removeEventListener('pointercancel', cancelTitlebarDragTracking);
 	}
 
 	onMount(() => {
@@ -198,6 +271,7 @@
 		mediaQuery.addEventListener('change', handleMediaChange);
 
 		return () => {
+			cancelTitlebarDragTracking();
 			cancelResize();
 			mediaQuery.removeEventListener('change', handleMediaChange);
 		};
