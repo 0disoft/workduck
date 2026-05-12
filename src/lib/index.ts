@@ -14,3 +14,9 @@ export {
   SIDEBAR_MIN_WIDTH_PX,
   SIDEBAR_WIDTH_STORAGE_KEY
 } from "./shell/sidebar-layout";
+export {
+  closeTauriWindow,
+  minimizeTauriWindow,
+  startTauriWindowDrag,
+  toggleTauriWindowMaximize
+} from "./shell/tauri-window";

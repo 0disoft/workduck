@@ -44,7 +44,7 @@ a {
 
 .workduck-page {
 	display: grid;
-	min-height: 100vh;
+	min-height: 100%;
 	align-content: start;
 	gap: 18px;
 	padding: 28px;
@@ -111,7 +111,7 @@ a {
 
 .workduck-page--editor {
 	grid-template-rows: auto minmax(420px, 1fr);
-	height: 100vh;
+	height: 100%;
 }
 
 .workduck-editor-panel {
@@ -127,7 +127,7 @@ a {
 
 @media (max-width: 759px) {
 	.workduck-page {
-		min-height: calc(100vh - 54px);
+		min-height: calc(100vh - var(--workduck-titlebar-height) - 54px);
 		padding: 18px;
 	}
 
@@ -137,7 +137,7 @@ a {
 	}
 
 	.workduck-page--editor {
-		height: calc(100vh - 54px);
+		height: calc(100vh - var(--workduck-titlebar-height) - 54px);
 		grid-template-rows: auto minmax(320px, 1fr);
 	}
 }

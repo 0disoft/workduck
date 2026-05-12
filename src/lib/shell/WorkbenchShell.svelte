@@ -13,6 +13,12 @@
 		SIDEBAR_MIN_WIDTH_PX,
 		SIDEBAR_WIDTH_STORAGE_KEY
 	} from './sidebar-layout';
+	import {
+		closeTauriWindow,
+		minimizeTauriWindow,
+		startTauriWindowDrag,
+		toggleTauriWindowMaximize
+	} from './tauri-window';
 
 	interface Props {
 		readonly children: Snippet;
@@ -153,6 +159,24 @@
 		}
 	}
 
+	function isWindowControlTarget(target: EventTarget | null) {
+		return target instanceof Element && target.closest('[data-workduck-window-control]') !== null;
+	}
+
+	function handleTitlebarPointerDown(event: PointerEvent) {
+		if (event.button !== 0 || isWindowControlTarget(event.target)) {
+			return;
+		}
+
+		if (event.detail === 2) {
+			event.preventDefault();
+			void toggleTauriWindowMaximize();
+			return;
+		}
+
+		void startTauriWindowDrag();
+	}
+
 	onMount(() => {
 		let storedSidebarWidth: string | null = null;
 
@@ -178,96 +202,219 @@
 
 </script>
 
-<div
-	class={isDragging ? 'workduck-shell workduck-shell-dragging' : 'workduck-shell'}
-	style={`--workduck-sidebar-width: ${sidebarWidthPx}px;`}
->
-	{#if isSidebarOpen}
-		<button
-			class="workduck-sidebar-backdrop"
-			type="button"
-			aria-label="Close sidebar"
-			onclick={() => (isSidebarOpen = false)}
-		></button>
-	{/if}
+<div class="workduck-window-frame">
+	<!-- svelte-ignore a11y_no_static_element_interactions -->
+	<header class="workduck-titlebar" onpointerdown={handleTitlebarPointerDown}>
+		<div class="workduck-titlebar-brand">
+			<span class="workduck-titlebar-mark">WD</span>
+			<span class="workduck-titlebar-name">Workduck</span>
+		</div>
 
-	<aside class={isSidebarOpen ? 'workduck-sidebar workduck-sidebar-open' : 'workduck-sidebar'}>
-		<div class="workduck-sidebar-header">
-			<a class="workduck-brand" href="/" onclick={closeSidebarOnMobile}>
-				<span class="workduck-brand-mark">WD</span>
-				<span class="workduck-brand-name">Workduck</span>
-			</a>
+		<div class="workduck-window-controls" data-workduck-window-control="true">
 			<button
-				class="workduck-sidebar-close"
+				class="workduck-window-control"
+				type="button"
+				aria-label="Minimize window"
+				data-workduck-window-control="true"
+				onclick={() => void minimizeTauriWindow()}
+			>
+				<span aria-hidden="true">-</span>
+			</button>
+			<button
+				class="workduck-window-control"
+				type="button"
+				aria-label="Toggle maximize window"
+				data-workduck-window-control="true"
+				onclick={() => void toggleTauriWindowMaximize()}
+			>
+				<span aria-hidden="true">[]</span>
+			</button>
+			<button
+				class="workduck-window-control workduck-window-control-close"
+				type="button"
+				aria-label="Close window"
+				data-workduck-window-control="true"
+				onclick={() => void closeTauriWindow()}
+			>
+				<span aria-hidden="true">x</span>
+			</button>
+		</div>
+	</header>
+
+	<div
+		class={isDragging ? 'workduck-shell workduck-shell-dragging' : 'workduck-shell'}
+		style={`--workduck-sidebar-width: ${sidebarWidthPx}px;`}
+	>
+		{#if isSidebarOpen}
+			<button
+				class="workduck-sidebar-backdrop"
 				type="button"
 				aria-label="Close sidebar"
 				onclick={() => (isSidebarOpen = false)}
-			>
-				Close
-			</button>
-		</div>
+			></button>
+		{/if}
 
-		<nav class="workduck-sidebar-nav" aria-label="Primary">
-			{#each navigationItems as item}
-				<a
-					class={page.url.pathname === item.href
-						? 'workduck-nav-link workduck-nav-link-active'
-						: 'workduck-nav-link'}
-					href={item.href}
-					aria-current={page.url.pathname === item.href ? 'page' : undefined}
-					title={item.label}
-					onclick={closeSidebarOnMobile}
-				>
-					<span class="workduck-nav-dot"></span>
-					<span class="workduck-nav-label">{item.label}</span>
+		<aside class={isSidebarOpen ? 'workduck-sidebar workduck-sidebar-open' : 'workduck-sidebar'}>
+			<div class="workduck-sidebar-header">
+				<a class="workduck-brand" href="/" onclick={closeSidebarOnMobile}>
+					<span class="workduck-brand-mark">WD</span>
+					<span class="workduck-brand-name">Workduck</span>
 				</a>
-			{/each}
-		</nav>
-	</aside>
+				<button
+					class="workduck-sidebar-close"
+					type="button"
+					aria-label="Close sidebar"
+					onclick={() => (isSidebarOpen = false)}
+				>
+					Close
+				</button>
+			</div>
 
-	<!-- svelte-ignore a11y_no_noninteractive_tabindex, a11y_no_noninteractive_element_interactions -->
-	<div
-		class="workduck-sidebar-resizer"
-		role="separator"
-		aria-label="Resize sidebar"
-		aria-orientation="vertical"
-		aria-valuemin={SIDEBAR_MIN_WIDTH_PX}
-		aria-valuemax={SIDEBAR_MAX_WIDTH_PX}
-		aria-valuenow={sidebarWidthPx}
-		tabindex={isDesktop ? 0 : -1}
-		onpointerdown={handleResizePointerDown}
-		onkeydown={handleResizeKeydown}
-	>
-		<span class="workduck-sidebar-resizer-line"></span>
-	</div>
+			<nav class="workduck-sidebar-nav" aria-label="Primary">
+				{#each navigationItems as item}
+					<a
+						class={page.url.pathname === item.href
+							? 'workduck-nav-link workduck-nav-link-active'
+							: 'workduck-nav-link'}
+						href={item.href}
+						aria-current={page.url.pathname === item.href ? 'page' : undefined}
+						title={item.label}
+						onclick={closeSidebarOnMobile}
+					>
+						<span class="workduck-nav-dot"></span>
+						<span class="workduck-nav-label">{item.label}</span>
+					</a>
+				{/each}
+			</nav>
+		</aside>
 
-	<section class="workduck-main-pane">
-		<div class="workduck-mobile-bar">
-			<button
-				class="workduck-mobile-menu"
-				type="button"
-				aria-label="Open sidebar"
-				onclick={() => (isSidebarOpen = true)}
-			>
-				Menu
-			</button>
-			<span class="workduck-mobile-title">Workduck</span>
+		<!-- svelte-ignore a11y_no_noninteractive_tabindex, a11y_no_noninteractive_element_interactions -->
+		<div
+			class="workduck-sidebar-resizer"
+			role="separator"
+			aria-label="Resize sidebar"
+			aria-orientation="vertical"
+			aria-valuemin={SIDEBAR_MIN_WIDTH_PX}
+			aria-valuemax={SIDEBAR_MAX_WIDTH_PX}
+			aria-valuenow={sidebarWidthPx}
+			tabindex={isDesktop ? 0 : -1}
+			onpointerdown={handleResizePointerDown}
+			onkeydown={handleResizeKeydown}
+		>
+			<span class="workduck-sidebar-resizer-line"></span>
 		</div>
 
-		{@render children()}
-	</section>
+		<section class="workduck-main-pane">
+			<div class="workduck-mobile-bar">
+				<button
+					class="workduck-mobile-menu"
+					type="button"
+					aria-label="Open sidebar"
+					onclick={() => (isSidebarOpen = true)}
+				>
+					Menu
+				</button>
+				<span class="workduck-mobile-title">Workduck</span>
+			</div>
+
+			{@render children()}
+		</section>
+	</div>
 </div>
 
 <style>
-	.workduck-shell {
+	.workduck-window-frame {
+		--workduck-titlebar-height: 34px;
 		--workduck-yellow: #fbff62;
-		--workduck-panel-raised: #202020;
 		--workduck-text: #f5f3e7;
 		--workduck-muted: #a5b5c7;
 
 		display: grid;
+		grid-template-rows: var(--workduck-titlebar-height) minmax(0, 1fr);
+		height: 100vh;
+		overflow: hidden;
+		background: #10120f;
+		color: var(--workduck-text);
+	}
+
+	.workduck-titlebar {
+		display: flex;
+		min-width: 0;
+		align-items: center;
+		border-bottom: 1px solid rgba(47, 63, 85, 0.88);
+		background: #10120f;
+		user-select: none;
+	}
+
+	.workduck-titlebar-brand {
+		display: inline-flex;
+		min-width: 0;
+		align-items: center;
+		gap: 8px;
+		padding: 0 12px;
+		color: var(--workduck-yellow);
+	}
+
+	.workduck-titlebar-mark {
+		display: grid;
+		width: 18px;
+		height: 18px;
+		place-items: center;
+		border: 1px solid rgba(251, 255, 98, 0.72);
+		border-radius: 4px;
+		font-size: 10px;
+		font-weight: 900;
+		line-height: 1;
+	}
+
+	.workduck-titlebar-name {
+		min-width: 0;
+		overflow: hidden;
+		font-size: 13px;
+		font-weight: 800;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	.workduck-window-controls {
+		display: flex;
+		align-self: stretch;
+		margin-left: auto;
+	}
+
+	.workduck-window-control {
+		display: grid;
+		width: 46px;
+		border: 0;
+		background: transparent;
+		color: var(--workduck-muted);
+		font: inherit;
+		font-size: 12px;
+		font-weight: 900;
+		place-items: center;
+	}
+
+	.workduck-window-control:hover {
+		background: rgba(251, 255, 98, 0.1);
+		color: var(--workduck-yellow);
+	}
+
+	.workduck-window-control:focus-visible {
+		outline: 2px solid var(--workduck-yellow);
+		outline-offset: -2px;
+	}
+
+	.workduck-window-control-close:hover {
+		background: #cf3348;
+		color: #ffffff;
+	}
+
+	.workduck-shell {
+		--workduck-panel-raised: #202020;
+
+		display: grid;
 		grid-template-columns: var(--workduck-sidebar-width) 8px minmax(0, 1fr);
-		min-height: 100vh;
+		min-height: 0;
 		overflow: hidden;
 		background: #10120f;
 		color: var(--workduck-text);
@@ -281,6 +428,7 @@
 
 	.workduck-sidebar {
 		min-width: 0;
+		height: 100%;
 		overflow: hidden;
 		border-right: 1px solid rgba(251, 255, 98, 0.24);
 		background:
@@ -418,7 +566,8 @@
 
 	.workduck-main-pane {
 		min-width: 0;
-		min-height: 100vh;
+		height: 100%;
+		min-height: 0;
 		overflow: auto;
 		background: linear-gradient(180deg, #141613 0%, #10120f 100%);
 	}
@@ -434,12 +583,13 @@
 	@media (max-width: 759px) {
 		.workduck-shell {
 			display: block;
-			min-height: 100vh;
+			height: 100%;
+			min-height: 0;
 		}
 
 		.workduck-sidebar {
 			position: fixed;
-			inset: 0 auto 0 0;
+			inset: var(--workduck-titlebar-height) auto 0 0;
 			z-index: 30;
 			width: min(320px, 86vw);
 			transform: translateX(-100%);
@@ -471,7 +621,8 @@
 		}
 
 		.workduck-main-pane {
-			min-height: 100vh;
+			height: 100%;
+			min-height: 0;
 		}
 
 		.workduck-mobile-bar {
@@ -511,7 +662,7 @@
 
 		.workduck-sidebar-backdrop {
 			position: fixed;
-			inset: 0;
+			inset: var(--workduck-titlebar-height) 0 0;
 			z-index: 20;
 			display: block;
 			border: 0;
