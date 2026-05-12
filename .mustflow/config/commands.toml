@@ -133,6 +133,25 @@ network = false
 destructive = false
 required_after = ["build_config_change", "public_api_change"]
 
+[intents.desktop_check]
+status = "configured"
+lifecycle = "oneshot"
+run_policy = "agent_allowed"
+description = "Check the Tauri Rust crate."
+argv = ["cargo", "check", "--manifest-path", "src-tauri/Cargo.toml"]
+cwd = "."
+timeout_seconds = 600
+stdin = "closed"
+success_exit_codes = [0]
+writes = ["src-tauri/Cargo.lock", "src-tauri/target/**"]
+effects = [
+  { type = "write", mode = "write", path = "src-tauri/Cargo.lock", lock = "rust-lockfile", concurrency = "exclusive" },
+  { type = "write", mode = "write", path = "src-tauri/target/**", lock = "rust-build-output", concurrency = "exclusive" },
+]
+network = true
+destructive = false
+required_after = ["rust_code_change", "tauri_config_change", "native_dependency_change"]
+
 [intents.docs_validate]
 status = "unknown"
 description = "Validate full documentation links, examples, generated docs, search index, and sitemap output."

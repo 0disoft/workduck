@@ -51,13 +51,15 @@ The initial in-memory domain model is in place for:
 - Service and Catalog Artifact records.
 - Artifact, Brief, Run, and Gate records.
 
+The initial SQLite runtime boundary is in place: the Tauri shell opens a local
+app-data SQLite database through Rust, configures WAL, foreign keys, and a busy
+timeout, and exposes a status command without letting the UI issue raw SQL.
+
 Next add:
 
-1. SQLite.
-2. Migrations.
-3. WAL configuration.
-4. JSON artifact blobs.
-5. FTS5 search.
+1. Migrations.
+2. JSON artifact blobs.
+3. FTS5 search.
 
 Defer vector search until there is real artifact and run data to search.
 
