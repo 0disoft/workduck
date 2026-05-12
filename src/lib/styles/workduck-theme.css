@@ -1,0 +1,42 @@
+@theme inline {
+	--color-workduck-accent: var(--workduck-color-accent);
+	--color-workduck-background: var(--workduck-color-background);
+	--color-workduck-border: var(--workduck-color-border);
+	--color-workduck-danger: var(--workduck-color-danger);
+	--color-workduck-muted: var(--workduck-color-muted);
+	--color-workduck-panel: var(--workduck-color-panel);
+	--color-workduck-surface: var(--workduck-color-surface);
+	--color-workduck-text: var(--workduck-color-text);
+}
+
+:root {
+	color-scheme: dark;
+
+	--workduck-oklch-background: 17.87% 0.0068 135.02;
+	--workduck-oklch-background-raised: 19.68% 0.0067 135;
+	--workduck-oklch-surface: 21.97% 0.0099 248.28;
+	--workduck-oklch-panel: 24.35% 0 89.88;
+	--workduck-oklch-text: 96.24% 0.016 98.99;
+	--workduck-oklch-text-inverted: 100% 0 89.88;
+	--workduck-oklch-muted: 76.65% 0.0314 251.35;
+	--workduck-oklch-muted-strong: 63.53% 0.0361 256.8;
+	--workduck-oklch-accent: 96.88% 0.175 110.65;
+	--workduck-oklch-border: 36.37% 0.0436 256.47;
+	--workduck-oklch-control: 43.82% 0.0432 257.42;
+	--workduck-oklch-danger: 56.79% 0.1912 18.78;
+	--workduck-oklch-shadow: 0% 0 0;
+
+	--workduck-color-background: oklch(var(--workduck-oklch-background));
+	--workduck-color-background-raised: oklch(var(--workduck-oklch-background-raised));
+	--workduck-color-surface: oklch(var(--workduck-oklch-surface));
+	--workduck-color-panel: oklch(var(--workduck-oklch-panel));
+	--workduck-color-text: oklch(var(--workduck-oklch-text));
+	--workduck-color-text-inverted: oklch(var(--workduck-oklch-text-inverted));
+	--workduck-color-muted: oklch(var(--workduck-oklch-muted));
+	--workduck-color-muted-strong: oklch(var(--workduck-oklch-muted-strong));
+	--workduck-color-accent: oklch(var(--workduck-oklch-accent));
+	--workduck-color-border: oklch(var(--workduck-oklch-border));
+	--workduck-color-control: oklch(var(--workduck-oklch-control));
+	--workduck-color-danger: oklch(var(--workduck-oklch-danger));
+	--workduck-color-shadow: oklch(var(--workduck-oklch-shadow));
+}

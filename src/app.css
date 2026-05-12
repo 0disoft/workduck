@@ -1,18 +1,19 @@
 @import "tailwindcss";
+@import "./lib/styles/workduck-theme.css";
 
 * {
 	box-sizing: border-box;
 }
 
 html {
-	background: #10120f;
+	background: var(--workduck-color-background);
 	color-scheme: dark;
 }
 
 body {
 	margin: 0;
-	background: #10120f;
-	color: #f5f3e7;
+	background: var(--workduck-color-background);
+	color: var(--workduck-color-text);
 	font-family:
 		"JetBrains Mono", "Cascadia Code", "SFMono-Regular", Consolas, "Liberation Mono", Menlo,
 		monospace;
@@ -38,8 +39,8 @@ a {
 }
 
 ::selection {
-	background: rgba(251, 255, 98, 0.24);
-	color: #fbff62;
+	background: oklch(var(--workduck-oklch-accent) / 0.24);
+	color: var(--workduck-color-accent);
 }
 
 .workduck-page {
@@ -57,12 +58,12 @@ a {
 	justify-content: space-between;
 	gap: 16px;
 	padding-bottom: 14px;
-	border-bottom: 1px solid rgba(47, 63, 85, 0.82);
+	border-bottom: 1px solid oklch(var(--workduck-oklch-border) / 0.82);
 }
 
 .workduck-page-title {
 	margin: 0;
-	color: #fbff62;
+	color: var(--workduck-color-accent);
 	font-size: 22px;
 	font-weight: 800;
 	line-height: 1.2;
@@ -81,7 +82,7 @@ a {
 	min-width: 0;
 	align-items: center;
 	gap: 8px;
-	color: #a5b5c7;
+	color: var(--workduck-color-muted);
 	font-size: 13px;
 	font-weight: 700;
 }
@@ -89,23 +90,23 @@ a {
 .workduck-select {
 	min-width: 132px;
 	height: 34px;
-	border: 1px solid rgba(47, 63, 85, 0.94);
+	border: 1px solid oklch(var(--workduck-oklch-border) / 0.94);
 	border-radius: 8px;
-	background: #171b1f;
-	color: #f5f3e7;
+	background: var(--workduck-color-surface);
+	color: var(--workduck-color-text);
 	padding: 0 10px;
 }
 
 .workduck-select:focus-visible {
-	outline: 2px solid #fbff62;
+	outline: 2px solid var(--workduck-color-accent);
 	outline-offset: 2px;
 }
 
 .workduck-empty-state {
 	margin: 0;
 	padding: 16px 0;
-	border-top: 1px solid rgba(47, 63, 85, 0.5);
-	color: #a5b5c7;
+	border-top: 1px solid oklch(var(--workduck-oklch-border) / 0.5);
+	color: var(--workduck-color-muted);
 	font-size: 14px;
 }
 
@@ -117,12 +118,12 @@ a {
 .workduck-editor-panel {
 	min-height: 0;
 	overflow: hidden;
-	border: 1px solid rgba(47, 63, 85, 0.96);
+	border: 1px solid oklch(var(--workduck-oklch-border) / 0.96);
 	border-radius: 8px;
-	background: #171b1f;
+	background: var(--workduck-color-surface);
 	box-shadow:
-		inset 0 0 0 1px rgba(251, 255, 98, 0.04),
-		0 0 0 1px rgba(0, 0, 0, 0.24);
+		inset 0 0 0 1px oklch(var(--workduck-oklch-accent) / 0.04),
+		0 0 0 1px oklch(var(--workduck-oklch-shadow) / 0.24);
 }
 
 @media (max-width: 759px) {

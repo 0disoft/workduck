@@ -42,8 +42,8 @@
 	const editorTheme = EditorView.theme({
 		'&': {
 			height: '100%',
-			backgroundColor: '#171b1f',
-			color: '#f5f3e7',
+			backgroundColor: 'var(--workduck-color-surface)',
+			color: 'var(--workduck-color-text)',
 			fontSize: '0.875rem'
 		},
 		'.cm-scroller': {
@@ -58,22 +58,22 @@
 			padding: '0 0.75rem'
 		},
 		'.cm-gutters': {
-			backgroundColor: '#202020',
-			borderRight: '1px solid #2f3f55',
-			color: '#7d8ca1'
+			backgroundColor: 'var(--workduck-color-panel)',
+			borderRight: '1px solid var(--workduck-color-border)',
+			color: 'var(--workduck-color-muted-strong)'
 		},
 		'.cm-activeLine, .cm-activeLineGutter': {
-			backgroundColor: 'rgba(251, 255, 98, 0.08)'
+			backgroundColor: 'oklch(var(--workduck-oklch-accent) / 0.08)'
 		},
 		'&.cm-focused': {
-			outline: '2px solid #fbff62',
+			outline: '2px solid var(--workduck-color-accent)',
 			outlineOffset: '-2px'
 		},
 		'.cm-selectionBackground, &.cm-focused .cm-selectionBackground': {
-			backgroundColor: 'rgba(251, 255, 98, 0.18)'
+			backgroundColor: 'oklch(var(--workduck-oklch-accent) / 0.18)'
 		},
 		'.cm-cursor': {
-			borderLeftColor: '#fbff62'
+			borderLeftColor: 'var(--workduck-color-accent)'
 		}
 	});
 
@@ -176,7 +176,7 @@
 		min-height: 100%;
 		overflow: hidden;
 		border: 0;
-		background: #171b1f;
+		background: var(--workduck-color-surface);
 	}
 
 	:global(.artifact-editor .cm-editor) {

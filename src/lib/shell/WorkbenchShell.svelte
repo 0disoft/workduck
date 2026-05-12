@@ -325,24 +325,21 @@
 <style>
 	.workduck-window-frame {
 		--workduck-titlebar-height: 34px;
-		--workduck-yellow: #fbff62;
-		--workduck-text: #f5f3e7;
-		--workduck-muted: #a5b5c7;
 
 		display: grid;
 		grid-template-rows: var(--workduck-titlebar-height) minmax(0, 1fr);
 		height: 100vh;
 		overflow: hidden;
-		background: #10120f;
-		color: var(--workduck-text);
+		background: var(--workduck-color-background);
+		color: var(--workduck-color-text);
 	}
 
 	.workduck-titlebar {
 		display: flex;
 		min-width: 0;
 		align-items: center;
-		border-bottom: 1px solid rgba(47, 63, 85, 0.88);
-		background: #10120f;
+		border-bottom: 1px solid oklch(var(--workduck-oklch-border) / 0.88);
+		background: var(--workduck-color-background);
 		user-select: none;
 	}
 
@@ -352,7 +349,7 @@
 		align-items: center;
 		gap: 8px;
 		padding: 0 12px;
-		color: var(--workduck-yellow);
+		color: var(--workduck-color-accent);
 	}
 
 	.workduck-titlebar-mark {
@@ -360,7 +357,7 @@
 		width: 18px;
 		height: 18px;
 		place-items: center;
-		border: 1px solid rgba(251, 255, 98, 0.72);
+		border: 1px solid oklch(var(--workduck-oklch-accent) / 0.72);
 		border-radius: 4px;
 		font-size: 10px;
 		font-weight: 900;
@@ -387,7 +384,7 @@
 		width: 46px;
 		border: 0;
 		background: transparent;
-		color: var(--workduck-muted);
+		color: var(--workduck-color-muted);
 		font: inherit;
 		font-size: 12px;
 		font-weight: 900;
@@ -395,29 +392,27 @@
 	}
 
 	.workduck-window-control:hover {
-		background: rgba(251, 255, 98, 0.1);
-		color: var(--workduck-yellow);
+		background: oklch(var(--workduck-oklch-accent) / 0.1);
+		color: var(--workduck-color-accent);
 	}
 
 	.workduck-window-control:focus-visible {
-		outline: 2px solid var(--workduck-yellow);
+		outline: 2px solid var(--workduck-color-accent);
 		outline-offset: -2px;
 	}
 
 	.workduck-window-control-close:hover {
-		background: #cf3348;
-		color: #ffffff;
+		background: var(--workduck-color-danger);
+		color: var(--workduck-color-text-inverted);
 	}
 
 	.workduck-shell {
-		--workduck-panel-raised: #202020;
-
 		display: grid;
 		grid-template-columns: var(--workduck-sidebar-width) 8px minmax(0, 1fr);
 		min-height: 0;
 		overflow: hidden;
-		background: #10120f;
-		color: var(--workduck-text);
+		background: var(--workduck-color-background);
+		color: var(--workduck-color-text);
 	}
 
 	.workduck-shell-dragging,
@@ -430,10 +425,10 @@
 		min-width: 0;
 		height: 100%;
 		overflow: hidden;
-		border-right: 1px solid rgba(251, 255, 98, 0.24);
+		border-right: 1px solid oklch(var(--workduck-oklch-accent) / 0.24);
 		background:
-			linear-gradient(135deg, rgba(251, 255, 98, 0.06), transparent 36%),
-			var(--workduck-panel-raised);
+			linear-gradient(135deg, oklch(var(--workduck-oklch-accent) / 0.06), transparent 36%),
+			var(--workduck-color-panel);
 	}
 
 	.workduck-sidebar-header {
@@ -444,7 +439,7 @@
 		gap: 12px;
 		height: 64px;
 		padding: 0 16px;
-		border-bottom: 1px solid rgba(47, 63, 85, 0.88);
+		border-bottom: 1px solid oklch(var(--workduck-oklch-border) / 0.88);
 	}
 
 	.workduck-brand {
@@ -452,7 +447,7 @@
 		min-width: 0;
 		align-items: center;
 		gap: 10px;
-		color: var(--workduck-text);
+		color: var(--workduck-color-text);
 		text-decoration: none;
 	}
 
@@ -462,10 +457,10 @@
 		width: 36px;
 		height: 36px;
 		place-items: center;
-		border: 1px solid rgba(251, 255, 98, 0.72);
+		border: 1px solid oklch(var(--workduck-oklch-accent) / 0.72);
 		border-radius: 8px;
-		background: rgba(251, 255, 98, 0.08);
-		color: var(--workduck-yellow);
+		background: oklch(var(--workduck-oklch-accent) / 0.08);
+		color: var(--workduck-color-accent);
 		font-size: 13px;
 		font-weight: 800;
 	}
@@ -479,7 +474,7 @@
 	}
 
 	.workduck-brand-name {
-		color: var(--workduck-yellow);
+		color: var(--workduck-color-accent);
 		font-size: 18px;
 		font-weight: 800;
 	}
@@ -503,23 +498,23 @@
 		padding: 0 12px;
 		border: 1px solid transparent;
 		border-radius: 8px;
-		color: var(--workduck-muted);
+		color: var(--workduck-color-muted);
 		font-size: 14px;
 		font-weight: 700;
 		text-decoration: none;
 	}
 
 	.workduck-nav-link:hover {
-		border-color: rgba(47, 63, 85, 0.92);
-		background: rgba(23, 27, 31, 0.72);
-		color: var(--workduck-text);
+		border-color: oklch(var(--workduck-oklch-border) / 0.92);
+		background: oklch(var(--workduck-oklch-surface) / 0.72);
+		color: var(--workduck-color-text);
 	}
 
 	.workduck-nav-link-active {
-		border-color: rgba(251, 255, 98, 0.92);
-		background: rgba(251, 255, 98, 0.1);
-		color: var(--workduck-yellow);
-		box-shadow: 0 0 0 1px rgba(251, 255, 98, 0.12);
+		border-color: oklch(var(--workduck-oklch-accent) / 0.92);
+		background: oklch(var(--workduck-oklch-accent) / 0.1);
+		color: var(--workduck-color-accent);
+		box-shadow: 0 0 0 1px oklch(var(--workduck-oklch-accent) / 0.12);
 	}
 
 	.workduck-nav-dot {
@@ -527,11 +522,11 @@
 		width: 8px;
 		height: 8px;
 		border-radius: 999px;
-		background: #43536a;
+		background: var(--workduck-color-control);
 	}
 
 	.workduck-nav-link-active .workduck-nav-dot {
-		background: var(--workduck-yellow);
+		background: var(--workduck-color-accent);
 	}
 
 	.workduck-sidebar-resizer {
@@ -542,17 +537,17 @@
 		cursor: col-resize;
 		place-items: stretch center;
 		touch-action: none;
-		background: #10120f;
+		background: var(--workduck-color-background);
 	}
 
 	.workduck-sidebar-resizer:focus-visible {
-		outline: 2px solid var(--workduck-yellow);
+		outline: 2px solid var(--workduck-color-accent);
 		outline-offset: -2px;
 	}
 
 	.workduck-sidebar-resizer-line {
 		width: 1px;
-		background: rgba(251, 255, 98, 0.28);
+		background: oklch(var(--workduck-oklch-accent) / 0.28);
 		transition:
 			background-color 120ms ease,
 			box-shadow 120ms ease;
@@ -560,8 +555,8 @@
 
 	.workduck-sidebar-resizer:hover .workduck-sidebar-resizer-line,
 	.workduck-shell-dragging .workduck-sidebar-resizer-line {
-		background: var(--workduck-yellow);
-		box-shadow: 0 0 10px rgba(251, 255, 98, 0.35);
+		background: var(--workduck-color-accent);
+		box-shadow: 0 0 10px oklch(var(--workduck-oklch-accent) / 0.35);
 	}
 
 	.workduck-main-pane {
@@ -569,7 +564,11 @@
 		height: 100%;
 		min-height: 0;
 		overflow: auto;
-		background: linear-gradient(180deg, #141613 0%, #10120f 100%);
+		background: linear-gradient(
+			180deg,
+			var(--workduck-color-background-raised) 0%,
+			var(--workduck-color-background) 100%
+		);
 	}
 
 	.workduck-mobile-bar {
@@ -594,7 +593,7 @@
 			width: min(320px, 86vw);
 			transform: translateX(-100%);
 			transition: transform 160ms ease;
-			box-shadow: 16px 0 36px rgba(0, 0, 0, 0.44);
+			box-shadow: 16px 0 36px oklch(var(--workduck-oklch-shadow) / 0.44);
 		}
 
 		.workduck-sidebar-open {
@@ -607,10 +606,10 @@
 			justify-content: center;
 			height: 32px;
 			padding: 0 10px;
-			border: 1px solid rgba(47, 63, 85, 0.9);
+			border: 1px solid oklch(var(--workduck-oklch-border) / 0.9);
 			border-radius: 8px;
-			background: #171b1f;
-			color: var(--workduck-text);
+			background: var(--workduck-color-surface);
+			color: var(--workduck-color-text);
 			font: inherit;
 			font-size: 12px;
 			font-weight: 800;
@@ -634,18 +633,18 @@
 			gap: 12px;
 			height: 54px;
 			padding: 0 14px;
-			border-bottom: 1px solid rgba(47, 63, 85, 0.9);
-			background: rgba(16, 18, 15, 0.92);
+			border-bottom: 1px solid oklch(var(--workduck-oklch-border) / 0.9);
+			background: oklch(var(--workduck-oklch-background) / 0.92);
 			backdrop-filter: blur(12px);
 		}
 
 		.workduck-mobile-menu {
 			height: 34px;
 			padding: 0 12px;
-			border: 1px solid rgba(251, 255, 98, 0.82);
+			border: 1px solid oklch(var(--workduck-oklch-accent) / 0.82);
 			border-radius: 8px;
-			background: rgba(251, 255, 98, 0.1);
-			color: var(--workduck-yellow);
+			background: oklch(var(--workduck-oklch-accent) / 0.1);
+			color: var(--workduck-color-accent);
 			font: inherit;
 			font-size: 13px;
 			font-weight: 800;
@@ -654,7 +653,7 @@
 		.workduck-mobile-title {
 			min-width: 0;
 			overflow: hidden;
-			color: var(--workduck-yellow);
+			color: var(--workduck-color-accent);
 			font-weight: 800;
 			text-overflow: ellipsis;
 			white-space: nowrap;
@@ -666,7 +665,7 @@
 			z-index: 20;
 			display: block;
 			border: 0;
-			background: rgba(0, 0, 0, 0.5);
+			background: oklch(var(--workduck-oklch-shadow) / 0.5);
 		}
 	}
 </style>
