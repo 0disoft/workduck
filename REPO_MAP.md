@@ -5,8 +5,8 @@ generated_by: mustflow
 relative_root: "."
 source_policy: anchors_only
 privacy_mode: minimal
-anchor_count: 64
-source_fingerprint: "sha256:bc4d91a13f310db66b35c467c524428a7c4555495924f4968327ed900d4aecfa"
+anchor_count: 67
+source_fingerprint: "sha256:a9cd8c34237a8a24ba395a1ae095cde5ae08101ab88ec409ee434befd11be658"
 ---
 
 # REPO_MAP.md
@@ -198,6 +198,12 @@ Regenerate it with `mf map --write` instead of editing it by hand.
 ### .svelte-kit/
 
 - `.svelte-kit/tsconfig.json`: TypeScript compiler configuration.
+
+### packages/agents/
+
+- `packages/agents/package.json`: Node.js package manifest for this directory.
+- `packages/agents/README.md`: Directory guide for this area.
+- `packages/agents/tsconfig.json`: TypeScript compiler configuration.
 
 ### packages/core/
 

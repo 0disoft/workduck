@@ -12,5 +12,5 @@ Current boundary:
 - Agent Brief prompt inputs
 - prompt-safe formatting helpers for entity, artifact, schema, and gate refs
 
-Agent-specific prompt export, model calls, shell execution, and adapter
-configuration belong outside this package.
+Agent-specific prompt export belongs in `@workduck/agents`. Model calls, shell
+execution, and adapter configuration belong outside this package.

@@ -1,5 +1,5 @@
 {
-  "name": "@workduck/prompts",
+  "name": "@workduck/agents",
   "version": "1.0.15",
   "private": true,
   "type": "module",
@@ -12,7 +12,6 @@
   },
   "types": "./src/index.ts",
   "dependencies": {
-    "@workduck/core": "workspace:*",
-    "@workduck/schemas": "workspace:*"
+    "@workduck/prompts": "workspace:*"
   }
 }

@@ -87,11 +87,14 @@ brief workflows are working.
 Add agent integrations after Artifacts, Briefs, Runs, and Gates have real data
 models.
 
-1. Claude, Codex, Cursor, and OpenCode prompt export.
-2. OpenCode adapter.
-3. Local shell runner with explicit approval.
-4. AGENTS.md generator.
-5. Additional coding-agent adapters only when a real workflow requires them.
+The initial prompt export layer is in place: `@workduck/agents` compiles Agent
+Brief Markdown exports for Claude Code, Codex, Cursor, and OpenCode without
+calling agent SDKs or local execution tools.
+
+1. OpenCode adapter.
+2. Local shell runner with explicit approval.
+3. AGENTS.md generator.
+4. Additional coding-agent adapters only when a real workflow requires them.
 
 Agent systems are adapters or export targets. They are not the Workduck core.
 
