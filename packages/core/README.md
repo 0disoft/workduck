@@ -10,4 +10,6 @@ Current boundary:
 
 - entity kind names
 - lightweight entity references
+- multi-repository project model types
+- service and catalog artifact vocabulary
 - pure helpers for domain vocabulary

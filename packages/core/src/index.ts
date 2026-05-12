@@ -1,12 +1,47 @@
 export const workduckEntityKinds = [
   "project",
+  "repo",
+  "project-folder",
+  "project-repo-placement",
   "artifact",
+  "catalog-artifact",
+  "service",
   "agent-brief",
   "run",
   "gate"
 ] as const;
 
 export type WorkduckEntityKind = (typeof workduckEntityKinds)[number];
+
+export const workduckRecordStatuses = ["reserved", "active", "archived"] as const;
+
+export type WorkduckRecordStatus = (typeof workduckRecordStatuses)[number];
+
+export const workduckRepoKinds = ["git", "folder"] as const;
+
+export type WorkduckRepoKind = (typeof workduckRepoKinds)[number];
+
+export const workduckCatalogArtifactKinds = [
+  "repositories",
+  "services",
+  "datastores",
+  "external-providers",
+  "cost-budgets",
+  "slo-tiers",
+  "split-triggers",
+  "stack-decisions",
+  "service-template"
+] as const;
+
+export type WorkduckCatalogArtifactKind = (typeof workduckCatalogArtifactKinds)[number];
+
+export const workduckRiskLevels = ["low", "medium", "high", "critical"] as const;
+
+export type WorkduckRiskLevel = (typeof workduckRiskLevels)[number];
+
+export const workduckServiceLevels = ["critical", "high", "medium", "low", "lab"] as const;
+
+export type WorkduckServiceLevel = (typeof workduckServiceLevels)[number];
 
 export type WorkduckId = string;
 
@@ -17,11 +52,134 @@ export interface WorkduckEntityRef {
 }
 
 export type ProjectRef = WorkduckEntityRef & { readonly kind: "project" };
+export type RepoRef = WorkduckEntityRef & { readonly kind: "repo" };
+export type ProjectFolderRef = WorkduckEntityRef & { readonly kind: "project-folder" };
+export type ProjectRepoPlacementRef = WorkduckEntityRef & {
+  readonly kind: "project-repo-placement";
+};
 export type ArtifactRef = WorkduckEntityRef & { readonly kind: "artifact" };
+export type CatalogArtifactRef = WorkduckEntityRef & { readonly kind: "catalog-artifact" };
+export type ServiceRef = WorkduckEntityRef & { readonly kind: "service" };
 export type AgentBriefRef = WorkduckEntityRef & { readonly kind: "agent-brief" };
 export type RunRef = WorkduckEntityRef & { readonly kind: "run" };
 export type GateRef = WorkduckEntityRef & { readonly kind: "gate" };
 
+export interface WorkduckComplianceScope {
+  readonly pii: boolean;
+  readonly payment: boolean;
+  readonly crypto: boolean;
+  readonly aiUserData: boolean;
+  readonly pci: boolean;
+}
+
+export interface WorkduckProject {
+  readonly ref: ProjectRef;
+  readonly status: WorkduckRecordStatus;
+  readonly description?: string;
+}
+
+export interface WorkduckRepo {
+  readonly ref: RepoRef;
+  readonly status: WorkduckRecordStatus;
+  readonly kind: WorkduckRepoKind;
+  readonly localPath: string;
+  readonly remoteUrl?: string;
+  readonly defaultBranch?: string;
+}
+
+export interface WorkduckProjectFolder {
+  readonly ref: ProjectFolderRef;
+  readonly project: ProjectRef;
+  readonly path: string;
+  readonly parent?: ProjectFolderRef;
+}
+
+export interface WorkduckProjectRepoPlacement {
+  readonly ref: ProjectRepoPlacementRef;
+  readonly project: ProjectRef;
+  readonly folder: ProjectFolderRef;
+  readonly repo: RepoRef;
+  readonly path: string;
+}
+
+export interface WorkduckArtifact {
+  readonly ref: ArtifactRef;
+  readonly status: WorkduckRecordStatus;
+  readonly project?: ProjectRef;
+  readonly sourcePath?: string;
+}
+
+export interface WorkduckCatalogArtifact {
+  readonly ref: CatalogArtifactRef;
+  readonly status: WorkduckRecordStatus;
+  readonly catalogKind: WorkduckCatalogArtifactKind;
+  readonly project?: ProjectRef;
+  readonly sourcePath?: string;
+}
+
+export interface WorkduckService {
+  readonly ref: ServiceRef;
+  readonly status: WorkduckRecordStatus;
+  readonly project?: ProjectRef;
+  readonly repo?: RepoRef;
+  readonly runtime?: string;
+  readonly framework?: string;
+  readonly dataClasses: readonly string[];
+  readonly datastores: readonly string[];
+  readonly queues: readonly string[];
+  readonly externalDependencies: readonly string[];
+  readonly riskLevel?: WorkduckRiskLevel;
+  readonly serviceLevel?: WorkduckServiceLevel;
+  readonly complianceScope: WorkduckComplianceScope;
+}
+
+export interface WorkduckAgentBrief {
+  readonly ref: AgentBriefRef;
+  readonly status: WorkduckRecordStatus;
+  readonly project: ProjectRef;
+  readonly artifactRefs: readonly ArtifactRef[];
+  readonly catalogArtifactRefs: readonly CatalogArtifactRef[];
+}
+
+export interface WorkduckRun {
+  readonly ref: RunRef;
+  readonly status: WorkduckRecordStatus;
+  readonly project: ProjectRef;
+  readonly repoRefs: readonly RepoRef[];
+  readonly artifactRefs: readonly ArtifactRef[];
+  readonly gateRefs: readonly GateRef[];
+  readonly brief?: AgentBriefRef;
+}
+
+export interface WorkduckGate {
+  readonly ref: GateRef;
+  readonly status: WorkduckRecordStatus;
+  readonly project?: ProjectRef;
+  readonly riskLevel?: WorkduckRiskLevel;
+}
+
 export function isWorkduckEntityKind(value: string): value is WorkduckEntityKind {
   return (workduckEntityKinds as readonly string[]).includes(value);
+}
+
+export function isWorkduckRecordStatus(value: string): value is WorkduckRecordStatus {
+  return (workduckRecordStatuses as readonly string[]).includes(value);
+}
+
+export function isWorkduckRepoKind(value: string): value is WorkduckRepoKind {
+  return (workduckRepoKinds as readonly string[]).includes(value);
+}
+
+export function isWorkduckCatalogArtifactKind(
+  value: string
+): value is WorkduckCatalogArtifactKind {
+  return (workduckCatalogArtifactKinds as readonly string[]).includes(value);
+}
+
+export function isWorkduckRiskLevel(value: string): value is WorkduckRiskLevel {
+  return (workduckRiskLevels as readonly string[]).includes(value);
+}
+
+export function isWorkduckServiceLevel(value: string): value is WorkduckServiceLevel {
+  return (workduckServiceLevels as readonly string[]).includes(value);
 }

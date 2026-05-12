@@ -12,6 +12,8 @@ Current boundary:
 - entity reference collection
 - schema reference collection
 - Agent Brief prompt compilation from run-plan inputs
+- multi-repo project inventory summaries
+- project folder to repo grouping helpers
 
 Storage, command execution, model calls, and desktop APIs belong outside this
 package.

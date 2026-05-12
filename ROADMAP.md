@@ -43,15 +43,15 @@ Block.
 
 Add persistence after the runtime scaffold and package boundaries exist.
 
-Before installing SQLite, define the smallest data model for:
+The initial in-memory domain model is in place for:
 
-1. Project as a multi-repository work unit.
-2. Repo as a local Git repository or folder.
-3. Project Folder and Project Repo Placement.
-4. Service and Catalog Artifact records.
-5. Artifact, Brief, Run, and Gate records.
+- Project as a multi-repository work unit.
+- Repo as a local Git repository or folder.
+- Project Folder and Project Repo Placement.
+- Service and Catalog Artifact records.
+- Artifact, Brief, Run, and Gate records.
 
-Then add:
+Next add:
 
 1. SQLite.
 2. Migrations.
@@ -115,8 +115,6 @@ Defer these until the local desktop workflow is useful without them.
 - CodeMirror before there is an artifact editor.
 - Tiptap before rich-text document editing is clearly needed.
 - shadcn-svelte before concrete component needs exist.
-- SQLite before the first Project, Repo, Catalog, Artifact, Brief, Run, and Gate
-  data model is ready to implement.
 - Agent adapters before Agent Briefs and Runs exist.
 - MCP before local artifacts and briefs can be read and written.
 - Observability or evaluation services before local run traces exist.

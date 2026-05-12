@@ -10,6 +10,8 @@ Current boundary:
 - stable schema identifiers
 - JSON Schema-compatible plain objects
 - schema registries for shared domain shapes
+- multi-repo project, repo, placement, service, catalog, artifact, brief, run,
+  and gate schema surfaces
 
 Runtime validation libraries should be added only when a concrete parsing or
 validation workflow needs them.
