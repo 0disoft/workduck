@@ -4490,7 +4490,7 @@ dependencies = [
 
 [[package]]
 name = "workduck"
-version = "1.0.12"
+version = "1.0.13"
 dependencies = [
  "rusqlite",
  "serde",

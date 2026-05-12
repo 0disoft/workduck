@@ -6,7 +6,7 @@ use tauri::{AppHandle, Manager};
 const DATABASE_DRIVER: &str = "sqlite";
 const DATABASE_FILE_NAME: &str = "workduck.sqlite3";
 const SQLITE_BUSY_TIMEOUT_MILLIS: u64 = 5_000;
-const CURRENT_SCHEMA_VERSION: i64 = 2;
+const CURRENT_SCHEMA_VERSION: i64 = 3;
 
 struct Migration {
     version: i64,
@@ -28,6 +28,12 @@ const MIGRATIONS: &[Migration] = &[
         checksum: "sha256:bc2123460f496120770686c32bb28cbaae1038e5f179e56f1dfc1cc5a306db93",
         sql: include_str!("../migrations/002_artifact_blobs.sql"),
     },
+    Migration {
+        version: 3,
+        name: "003_artifact_blob_search",
+        checksum: "sha256:b1ebed43d0699dbc6c89a6f556c1119163de2797987c645bc0318b6f8f1f2ca1",
+        sql: include_str!("../migrations/003_artifact_blob_search.sql"),
+    },
 ];
 
 #[derive(serde::Serialize)]
@@ -44,6 +50,7 @@ pub struct StorageStatus {
     applied_migration_count: i64,
     latest_migration: Option<String>,
     artifact_blob_count: i64,
+    artifact_search_indexed_row_count: i64,
 }
 
 #[derive(Debug)]
@@ -276,7 +283,7 @@ fn inspect_connection(
     let json_available = query_bool(connection, "SELECT json_valid('{\"workduck\":true}')")?;
     let fts5_available = query_bool(
         connection,
-        "SELECT EXISTS(SELECT 1 FROM pragma_compile_options WHERE compile_options = 'ENABLE_FTS5')",
+        "SELECT EXISTS(SELECT 1 FROM pragma_module_list WHERE name = 'fts5')",
     )?;
     let schema_version = query_i64(connection, "PRAGMA user_version")?;
     let applied_migration_count = query_i64(connection, "SELECT COUNT(*) FROM schema_migrations")?;
@@ -285,6 +292,8 @@ fn inspect_connection(
         "SELECT name FROM schema_migrations ORDER BY version DESC LIMIT 1",
     )?;
     let artifact_blob_count = query_i64(connection, "SELECT COUNT(*) FROM artifact_blobs")?;
+    let artifact_search_indexed_row_count =
+        query_i64(connection, "SELECT COUNT(*) FROM artifact_blob_search")?;
 
     Ok(StorageStatus {
         driver: DATABASE_DRIVER,
@@ -298,6 +307,7 @@ fn inspect_connection(
         applied_migration_count,
         latest_migration,
         artifact_blob_count,
+        artifact_search_indexed_row_count,
     })
 }
 

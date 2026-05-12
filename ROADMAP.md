@@ -65,7 +65,9 @@ The initial JSON artifact blob schema is in place: SQLite stores structured
 artifact payloads as validated JSON text with metadata, content hashes, and
 lookup indexes without exposing raw SQL to the UI.
 
-1. FTS5 search.
+The initial FTS5 search index is in place: SQLite keeps a rebuildable full-text
+index for artifact blob JSON content and metadata through migration-managed
+triggers.
 
 Defer vector search until there is real artifact and run data to search.
 
