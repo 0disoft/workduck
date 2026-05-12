@@ -1,6 +1,6 @@
 {
   "name": "workduck",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "private": true,
   "type": "module",
   "scripts": {
@@ -17,11 +17,13 @@
     "@sveltejs/adapter-static": "^3.0.10",
     "@sveltejs/kit": "^2.57.0",
     "@sveltejs/vite-plugin-svelte": "^7.0.0",
+    "@tailwindcss/vite": "^4.3.0",
     "@tauri-apps/cli": "latest",
     "@types/node": "^25.7.0",
     "mustflow": "latest",
     "svelte": "^5.55.2",
     "svelte-check": "^4.4.6",
+    "tailwindcss": "^4.3.0",
     "typescript": "^6.0.3",
     "vite": "^8.0.7"
   }
