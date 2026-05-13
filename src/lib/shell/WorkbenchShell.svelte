@@ -3,6 +3,18 @@
 	import { onMount, type Snippet } from 'svelte';
 
 	import {
+		createEmptyWorkspaceRegistry,
+		getActiveWorkspace,
+		switchWorkspace,
+		type WorkspaceRegistry
+	} from '$lib/workspaces/workspace-registry';
+	import {
+		readWorkspaceRegistryFromBrowser,
+		subscribeWorkspaceRegistry,
+		writeWorkspaceRegistryToBrowser
+	} from '$lib/workspaces/workspace-storage';
+
+	import {
 		clampSidebarWidthPx,
 		parseStoredSidebarWidthPx,
 		SHELL_MOBILE_BREAKPOINT_PX,
@@ -32,18 +44,30 @@
 		{ href: '/artifacts', label: 'Artifacts' }
 	] as const;
 	const settingsNavigationItem = { href: '/settings', label: 'Settings' } as const;
+	const workspaceMenuId = 'workduck-workspace-menu';
+	const primaryNavigationUnavailableDescriptionId =
+		'workduck-primary-navigation-unavailable-description';
+	const workspaceUnavailableMessage = 'Add a workspace in Settings first.';
 
 	let sidebarWidthPx = $state(SIDEBAR_DEFAULT_WIDTH_PX);
 	let isDesktop = $state(true);
 	let isSidebarOpen = $state(false);
 	let isDragging = $state(false);
+	let workspaceRegistry = $state<WorkspaceRegistry>(createEmptyWorkspaceRegistry());
+	let isWorkspaceMenuOpen = $state(false);
+	let workspaceSwitchError = $state<string | null>(null);
 	let resizePointerId: number | undefined;
 	let resizeStartX = 0;
 	let resizeStartWidthPx = SIDEBAR_DEFAULT_WIDTH_PX;
+	let workspaceSwitcherElement: HTMLElement | undefined;
 	let titlebarDragElement: HTMLElement | undefined;
 	let titlebarDragPointerId: number | undefined;
 	let titlebarDragStartX = 0;
 	let titlebarDragStartY = 0;
+
+	let activeWorkspace = $derived(getActiveWorkspace(workspaceRegistry));
+	let hasWorkspaceChoices = $derived(workspaceRegistry.workspaces.length > 0);
+	let activeWorkspaceName = $derived(activeWorkspace?.name ?? 'No workspace');
 
 	function persistSidebarWidthPx(nextWidthPx = sidebarWidthPx) {
 		if (typeof window === 'undefined') {
@@ -165,6 +189,56 @@
 		}
 	}
 
+	function getPrimaryNavigationClass(href: string) {
+		return [
+			'workduck-nav-link',
+			hasWorkspaceChoices && page.url.pathname === href ? 'workduck-nav-link-active' : '',
+			hasWorkspaceChoices ? '' : 'workduck-nav-link-disabled'
+		]
+			.filter(Boolean)
+			.join(' ');
+	}
+
+	function handlePrimaryNavigationClick(event: MouseEvent) {
+		if (!hasWorkspaceChoices) {
+			event.preventDefault();
+			return;
+		}
+
+		closeSidebarOnMobile();
+	}
+
+	function toggleWorkspaceMenu() {
+		if (!hasWorkspaceChoices) {
+			return;
+		}
+
+		workspaceSwitchError = null;
+		isWorkspaceMenuOpen = !isWorkspaceMenuOpen;
+	}
+
+	function handleWorkspaceSwitch(workspaceId: string) {
+		workspaceSwitchError = null;
+		const result = switchWorkspace(workspaceRegistry, workspaceId);
+
+		if (!result.ok) {
+			workspaceSwitchError = 'Workspace was not found.';
+			return;
+		}
+
+		const writeResult = writeWorkspaceRegistryToBrowser(result.registry);
+		workspaceRegistry = writeResult.registry;
+
+		if (!writeResult.ok) {
+			workspaceSwitchError = 'Workspace switch could not be saved.';
+			isWorkspaceMenuOpen = true;
+			return;
+		}
+
+		isWorkspaceMenuOpen = false;
+		closeSidebarOnMobile();
+	}
+
 	function isWindowControlTarget(target: EventTarget | null) {
 		return target instanceof Element && target.closest('[data-workduck-window-control]') !== null;
 	}
@@ -254,6 +328,50 @@
 		window.removeEventListener('pointercancel', cancelTitlebarDragTracking);
 	}
 
+	$effect(() => {
+		if (hasWorkspaceChoices) {
+			return;
+		}
+
+		isWorkspaceMenuOpen = false;
+		workspaceSwitchError = null;
+	});
+
+	$effect(() => {
+		if (!isWorkspaceMenuOpen || typeof window === 'undefined') {
+			return;
+		}
+
+		function handleGlobalPointerDown(event: PointerEvent) {
+			if (
+				workspaceSwitcherElement !== undefined &&
+				event.target instanceof Node &&
+				workspaceSwitcherElement.contains(event.target)
+			) {
+				return;
+			}
+
+			isWorkspaceMenuOpen = false;
+		}
+
+		function handleGlobalKeydown(event: KeyboardEvent) {
+			if (event.key !== 'Escape') {
+				return;
+			}
+
+			event.preventDefault();
+			isWorkspaceMenuOpen = false;
+		}
+
+		window.addEventListener('pointerdown', handleGlobalPointerDown, true);
+		window.addEventListener('keydown', handleGlobalKeydown);
+
+		return () => {
+			window.removeEventListener('pointerdown', handleGlobalPointerDown, true);
+			window.removeEventListener('keydown', handleGlobalKeydown);
+		};
+	});
+
 	onMount(() => {
 		let storedSidebarWidth: string | null = null;
 
@@ -270,8 +388,13 @@
 
 		updateDesktopMode(mediaQuery.matches);
 		mediaQuery.addEventListener('change', handleMediaChange);
+		workspaceRegistry = readWorkspaceRegistryFromBrowser().registry;
+		const unsubscribeWorkspaceRegistry = subscribeWorkspaceRegistry((nextRegistry) => {
+			workspaceRegistry = nextRegistry;
+		});
 
 		return () => {
+			unsubscribeWorkspaceRegistry();
 			cancelTitlebarDragTracking();
 			cancelResize();
 			mediaQuery.removeEventListener('change', handleMediaChange);
@@ -352,17 +475,65 @@
 				</button>
 			</div>
 
+			<div
+				class="workduck-sidebar-workspace"
+				bind:this={workspaceSwitcherElement}
+			>
+				<button
+					class="workduck-workspace-trigger"
+					type="button"
+					aria-haspopup={hasWorkspaceChoices ? 'menu' : undefined}
+					aria-expanded={hasWorkspaceChoices ? isWorkspaceMenuOpen : undefined}
+					aria-controls={isWorkspaceMenuOpen ? workspaceMenuId : undefined}
+					aria-disabled={!hasWorkspaceChoices}
+					onclick={toggleWorkspaceMenu}
+				>
+					<span class="workduck-workspace-trigger-text">{activeWorkspaceName}</span>
+					<span class="workduck-workspace-trigger-caret" aria-hidden="true"></span>
+				</button>
+
+				{#if isWorkspaceMenuOpen}
+					<div id={workspaceMenuId} class="workduck-workspace-menu" role="menu">
+						{#each workspaceRegistry.workspaces as workspace (workspace.id)}
+							<button
+								class={workspace.id === workspaceRegistry.activeWorkspaceId
+									? 'workduck-workspace-menu-item workduck-workspace-menu-item-active'
+									: 'workduck-workspace-menu-item'}
+								type="button"
+								role="menuitemradio"
+								aria-checked={workspace.id === workspaceRegistry.activeWorkspaceId}
+								onclick={() => handleWorkspaceSwitch(workspace.id)}
+							>
+								<span class="workduck-workspace-menu-name">{workspace.name}</span>
+								<span class="workduck-workspace-menu-path">{workspace.path}</span>
+							</button>
+						{/each}
+
+						{#if workspaceSwitchError !== null}
+							<p class="workduck-workspace-menu-error" aria-live="polite">{workspaceSwitchError}</p>
+						{/if}
+					</div>
+				{/if}
+			</div>
+
 			<nav class="workduck-sidebar-nav" aria-label="Primary">
+				{#if !hasWorkspaceChoices}
+					<span id={primaryNavigationUnavailableDescriptionId} class="workduck-sr-only">
+						{workspaceUnavailableMessage}
+					</span>
+				{/if}
 				{#each primaryNavigationItems as item}
 					<a
-						class={page.url.pathname === item.href
-							? 'workduck-nav-link workduck-nav-link-active'
-							: 'workduck-nav-link'}
+						class={getPrimaryNavigationClass(item.href)}
 						href={item.href}
-						aria-current={page.url.pathname === item.href ? 'page' : undefined}
+						aria-current={hasWorkspaceChoices && page.url.pathname === item.href ? 'page' : undefined}
+						aria-disabled={!hasWorkspaceChoices}
+						aria-describedby={hasWorkspaceChoices
+							? undefined
+							: primaryNavigationUnavailableDescriptionId}
 						aria-label={item.label}
-						data-tooltip={item.label}
-						onclick={closeSidebarOnMobile}
+						data-tooltip={hasWorkspaceChoices ? item.label : workspaceUnavailableMessage}
+						onclick={handlePrimaryNavigationClick}
 					>
 						<span class="workduck-nav-dot"></span>
 						<span class="workduck-nav-label">{item.label}</span>
@@ -431,6 +602,17 @@
 		overflow: hidden;
 		background: var(--workduck-color-background);
 		color: var(--workduck-color-text);
+	}
+
+	.workduck-sr-only {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		padding: 0;
+		overflow: hidden;
+		border: 0;
+		clip: rect(0 0 0 0);
+		white-space: nowrap;
 	}
 
 	.workduck-titlebar {
@@ -567,7 +749,7 @@
 		position: relative;
 		z-index: 10;
 		display: grid;
-		grid-template-rows: auto minmax(0, 1fr) auto;
+		grid-template-rows: auto auto minmax(0, 1fr) auto;
 		min-width: 0;
 		height: 100%;
 		overflow: visible;
@@ -627,6 +809,133 @@
 
 	.workduck-sidebar-close {
 		display: none;
+	}
+
+	.workduck-sidebar-workspace {
+		position: relative;
+		min-width: 0;
+		padding: 10px 12px 0;
+	}
+
+	.workduck-workspace-trigger {
+		display: flex;
+		width: 100%;
+		min-width: 0;
+		height: 34px;
+		align-items: center;
+		justify-content: space-between;
+		gap: 8px;
+		border: 1px solid oklch(var(--workduck-oklch-border) / 0.78);
+		border-radius: 8px;
+		background: oklch(var(--workduck-oklch-surface) / 0.58);
+		color: var(--workduck-color-muted);
+		padding: 0 10px;
+		font-size: 12px;
+		font-weight: 800;
+	}
+
+	.workduck-workspace-trigger:hover:not([aria-disabled="true"]),
+	.workduck-workspace-trigger[aria-expanded="true"] {
+		border-color: oklch(var(--workduck-oklch-accent) / 0.72);
+		background: oklch(var(--workduck-oklch-accent) / 0.08);
+		color: var(--workduck-color-accent);
+	}
+
+	.workduck-workspace-trigger[aria-disabled="true"] {
+		cursor: not-allowed;
+		opacity: 0.72;
+	}
+
+	.workduck-workspace-trigger:focus-visible {
+		outline: 2px solid var(--workduck-color-accent);
+		outline-offset: 2px;
+	}
+
+	.workduck-workspace-trigger-text {
+		min-width: 0;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	.workduck-workspace-trigger-caret {
+		flex: 0 0 auto;
+		width: 7px;
+		height: 7px;
+		border-right: 1.5px solid currentColor;
+		border-bottom: 1.5px solid currentColor;
+		transform: translateY(-2px) rotate(45deg);
+	}
+
+	.workduck-workspace-menu {
+		position: absolute;
+		top: calc(100% + 6px);
+		right: 12px;
+		left: 12px;
+		z-index: 70;
+		display: grid;
+		gap: 4px;
+		max-height: min(320px, calc(100vh - 180px));
+		overflow: auto;
+		padding: 6px;
+		border: 1px solid oklch(var(--workduck-oklch-accent) / 0.42);
+		border-radius: 8px;
+		background: var(--workduck-color-panel);
+		box-shadow:
+			0 18px 38px oklch(var(--workduck-oklch-shadow) / 0.42),
+			inset 0 0 0 1px oklch(var(--workduck-oklch-accent) / 0.06);
+	}
+
+	.workduck-workspace-menu-item {
+		display: grid;
+		width: 100%;
+		min-width: 0;
+		gap: 4px;
+		padding: 9px 10px;
+		border: 1px solid transparent;
+		border-radius: 7px;
+		background: transparent;
+		color: var(--workduck-color-text);
+		text-align: left;
+	}
+
+	.workduck-workspace-menu-item:hover,
+	.workduck-workspace-menu-item:focus-visible {
+		border-color: oklch(var(--workduck-oklch-border) / 0.86);
+		background: oklch(var(--workduck-oklch-surface) / 0.72);
+		outline: 0;
+	}
+
+	.workduck-workspace-menu-item-active {
+		border-color: oklch(var(--workduck-oklch-accent) / 0.78);
+		background: oklch(var(--workduck-oklch-accent) / 0.1);
+		color: var(--workduck-color-accent);
+	}
+
+	.workduck-workspace-menu-name,
+	.workduck-workspace-menu-path {
+		min-width: 0;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	.workduck-workspace-menu-name {
+		font-size: 12px;
+		font-weight: 800;
+	}
+
+	.workduck-workspace-menu-path {
+		color: var(--workduck-color-muted);
+		font-size: 11px;
+		font-weight: 700;
+	}
+
+	.workduck-workspace-menu-error {
+		margin: 2px 4px 4px;
+		color: var(--workduck-color-danger);
+		font-size: 11px;
+		font-weight: 800;
 	}
 
 	.workduck-sidebar-nav {
@@ -728,6 +1037,15 @@
 		border-color: oklch(var(--workduck-oklch-border) / 0.92);
 		background: oklch(var(--workduck-oklch-surface) / 0.72);
 		color: var(--workduck-color-text);
+	}
+
+	.workduck-nav-link-disabled,
+	.workduck-nav-link-disabled:hover {
+		border-color: transparent;
+		background: transparent;
+		color: var(--workduck-color-muted);
+		cursor: not-allowed;
+		opacity: 0.62;
 	}
 
 	.workduck-nav-link-active {

@@ -1,4 +1,5 @@
 mod storage;
+mod workspace_path;
 
 #[derive(serde::Serialize)]
 struct RuntimeStatus {
@@ -23,7 +24,11 @@ fn storage_status(app: tauri::AppHandle) -> Result<storage::StorageStatus, Strin
 
 pub fn run() {
     tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![runtime_status, storage_status])
+        .invoke_handler(tauri::generate_handler![
+            runtime_status,
+            storage_status,
+            workspace_path::validate_workspace_path
+        ])
         .run(tauri::generate_context!())
         .expect("error while running Workduck");
 }
