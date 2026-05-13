@@ -29,18 +29,18 @@
     },
     "packages/agents": {
       "name": "@workduck/agents",
-      "version": "1.0.21",
+      "version": "1.0.27",
       "dependencies": {
         "@workduck/prompts": "workspace:*",
       },
     },
     "packages/core": {
       "name": "@workduck/core",
-      "version": "1.0.21",
+      "version": "1.0.27",
     },
     "packages/prompts": {
       "name": "@workduck/prompts",
-      "version": "1.0.21",
+      "version": "1.0.27",
       "dependencies": {
         "@workduck/core": "workspace:*",
         "@workduck/schemas": "workspace:*",
@@ -48,14 +48,14 @@
     },
     "packages/schemas": {
       "name": "@workduck/schemas",
-      "version": "1.0.21",
+      "version": "1.0.27",
       "dependencies": {
         "@workduck/core": "workspace:*",
       },
     },
     "packages/workbench-engine": {
       "name": "@workduck/workbench-engine",
-      "version": "1.0.21",
+      "version": "1.0.27",
       "dependencies": {
         "@workduck/core": "workspace:*",
         "@workduck/prompts": "workspace:*",
@@ -334,7 +334,7 @@
 
     "mrmime": ["mrmime@2.0.1", "", {}, "sha512-Y3wQdFg2Va6etvQ5I82yUhGdsKrcYox6p7FfL1LbK2J4V01F9TGlepTIhnK24t7koZibmg82KGglhA1XK5IsLQ=="],
 
-    "mustflow": ["mustflow@1.18.14", "", { "dependencies": { "smol-toml": "^1.6.1", "sql.js": "^1.14.1" }, "bin": { "mf": "dist/cli/index.js", "mustflow": "dist/cli/index.js" } }, "sha512-nvmBIjOMPz7UE+cqRB3AmRf3TxVxp9BLStQsqbA1k3dzx8mwtUZciv0D3dJOkqPifw1kvwQJ5rq86Ss/twPs0A=="],
+    "mustflow": ["mustflow@1.18.16", "", { "dependencies": { "smol-toml": "^1.6.1", "sql.js": "^1.14.1" }, "bin": { "mf": "dist/cli/index.js", "mustflow": "dist/cli/index.js" } }, "sha512-IrvwshGslzUdAZhwHpX+Wn3XCdzeIbmvdv6vOW/VPs69wd5Y2SxeMFKZyauAQQgJweE9DRQidfpVhB3nYeYJlQ=="],
 
     "nanoid": ["nanoid@3.3.12", "", { "bin": { "nanoid": "bin/nanoid.cjs" } }, "sha512-ZB9RH/39qpq5Vu6Y+NmUaFhQR6pp+M2Xt76XBnEwDaGcVAqhlvxrl3B2bKS5D3NH3QR76v3aSrKaF/Kiy7lEtQ=="],
 

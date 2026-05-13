@@ -1,6 +1,6 @@
 {
   "name": "workduck",
-  "version": "1.0.21",
+  "version": "1.0.27",
   "private": true,
   "type": "module",
   "workspaces": [
@@ -26,17 +26,17 @@
     "@codemirror/state": "^6.6.0",
     "@codemirror/view": "^6.42.1",
     "@sveltejs/adapter-static": "^3.0.10",
-    "@sveltejs/kit": "^2.57.0",
-    "@sveltejs/vite-plugin-svelte": "^7.0.0",
+    "@sveltejs/kit": "^2.59.1",
+    "@sveltejs/vite-plugin-svelte": "^7.1.2",
     "@tailwindcss/vite": "^4.3.0",
     "@tauri-apps/cli": "latest",
     "@types/node": "^25.7.0",
     "bits-ui": "^2.18.1",
     "mustflow": "latest",
-    "svelte": "^5.55.2",
-    "svelte-check": "^4.4.6",
+    "svelte": "^5.55.5",
+    "svelte-check": "^4.4.8",
     "tailwindcss": "^4.3.0",
     "typescript": "^6.0.3",
-    "vite": "^8.0.7"
+    "vite": "^8.0.12"
   }
 }
