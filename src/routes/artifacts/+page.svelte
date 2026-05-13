@@ -4,6 +4,7 @@
 		artifactEditorLanguages,
 		type ArtifactEditorLanguage
 	} from '$lib/artifacts/editor-languages';
+	import WorkspaceGate from '$lib/workspaces/WorkspaceGate.svelte';
 
 	let draftContent = $state('');
 	let draftLanguage = $state<ArtifactEditorLanguage>('markdown');
@@ -29,12 +30,14 @@
 		</div>
 	</header>
 
-	<section class="workduck-editor-panel">
-		<ArtifactEditor
-			value={draftContent}
-			language={draftLanguage}
-			ariaLabel="Artifact content"
-			onValueChange={(nextValue) => (draftContent = nextValue)}
-		/>
-	</section>
+	<WorkspaceGate>
+		<section class="workduck-editor-panel">
+			<ArtifactEditor
+				value={draftContent}
+				language={draftLanguage}
+				ariaLabel="Artifact content"
+				onValueChange={(nextValue) => (draftContent = nextValue)}
+			/>
+		</section>
+	</WorkspaceGate>
 </main>

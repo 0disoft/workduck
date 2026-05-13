@@ -1,17 +1,29 @@
+import { normalizeWorkspacePathForStorage } from './workspace-path-format';
+
 export const WORKDUCK_WORKSPACE_REGISTRY_STORAGE_KEY = 'workduck.workspaceRegistry.v1';
 export const WORKSPACE_NAME_MAX_LENGTH = 80;
 export const WORKSPACE_PATH_MAX_LENGTH = 1024;
+export const WORKSPACE_PASSWORD_HASH_MAX_LENGTH = 512;
 
 export type WorkspaceRegistryError =
 	| 'workspace-name-required'
 	| 'workspace-path-required'
 	| 'workspace-path-duplicate'
+	| 'workspace-password-hash-invalid'
 	| 'workspace-not-found';
+
+export interface WorkspaceLockRecord {
+	readonly kind: 'password';
+	readonly passwordHash: string;
+	readonly createdAt: string;
+	readonly updatedAt: string;
+}
 
 export interface WorkspaceRecord {
 	readonly id: string;
 	readonly name: string;
 	readonly path: string;
+	readonly lock: WorkspaceLockRecord | null;
 	readonly createdAt: string;
 	readonly updatedAt: string;
 }
@@ -24,6 +36,7 @@ export interface WorkspaceRegistry {
 export interface WorkspaceInput {
 	readonly name: string;
 	readonly path: string;
+	readonly passwordHash?: string | null;
 }
 
 export type WorkspaceAddResult =
@@ -89,6 +102,12 @@ export function addWorkspace(
 		return { ok: false, registry: normalizedRegistry, error: 'workspace-path-required' };
 	}
 
+	const passwordHash = normalizePasswordHash(input.passwordHash ?? null);
+
+	if (passwordHash !== null && passwordHash.length === 0) {
+		return { ok: false, registry: normalizedRegistry, error: 'workspace-password-hash-invalid' };
+	}
+
 	if (
 		normalizedRegistry.workspaces.some(
 			(workspace) => getWorkspacePathKey(workspace.path) === getWorkspacePathKey(path)
@@ -102,6 +121,15 @@ export function addWorkspace(
 		id: createWorkspaceId(),
 		name,
 		path,
+		lock:
+			passwordHash === null
+				? null
+				: {
+						kind: 'password',
+						passwordHash,
+						createdAt: timestamp,
+						updatedAt: timestamp
+					},
 		createdAt: timestamp,
 		updatedAt: timestamp
 	} satisfies WorkspaceRecord;
@@ -218,6 +246,7 @@ function parseWorkspaceRecord(value: unknown): WorkspaceRecord | null {
 	const id = readTrimmedString(value.id);
 	const name = normalizeWorkspaceName(readTrimmedString(value.name));
 	const path = normalizeWorkspacePath(readTrimmedString(value.path));
+	const lock = parseWorkspaceLock(value.lock);
 	const createdAt = readTrimmedString(value.createdAt);
 	const updatedAt = readTrimmedString(value.updatedAt);
 
@@ -229,6 +258,32 @@ function parseWorkspaceRecord(value: unknown): WorkspaceRecord | null {
 		id,
 		name,
 		path,
+		lock,
+		createdAt: createdAt.length === 0 ? updatedAt : createdAt,
+		updatedAt: updatedAt.length === 0 ? createdAt : updatedAt
+	};
+}
+
+function parseWorkspaceLock(value: unknown): WorkspaceLockRecord | null {
+	if (!isObjectRecord(value)) {
+		return null;
+	}
+
+	if (value.kind !== 'password') {
+		return null;
+	}
+
+	const passwordHash = normalizePasswordHash(readTrimmedString(value.passwordHash));
+	const createdAt = readTrimmedString(value.createdAt);
+	const updatedAt = readTrimmedString(value.updatedAt);
+
+	if (passwordHash === null || passwordHash.length === 0) {
+		return null;
+	}
+
+	return {
+		kind: 'password',
+		passwordHash,
 		createdAt: createdAt.length === 0 ? updatedAt : createdAt,
 		updatedAt: updatedAt.length === 0 ? createdAt : updatedAt
 	};
@@ -251,7 +306,15 @@ function normalizeWorkspaceName(value: string) {
 }
 
 function normalizeWorkspacePath(value: string) {
-	return value.trim().slice(0, WORKSPACE_PATH_MAX_LENGTH);
+	return normalizeWorkspacePathForStorage(value).slice(0, WORKSPACE_PATH_MAX_LENGTH);
+}
+
+function normalizePasswordHash(value: string | null) {
+	if (value === null) {
+		return null;
+	}
+
+	return value.trim().slice(0, WORKSPACE_PASSWORD_HASH_MAX_LENGTH);
 }
 
 function readTrimmedString(value: unknown) {

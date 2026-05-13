@@ -1,3 +1,7 @@
+<script lang="ts">
+	import WorkspaceGate from '$lib/workspaces/WorkspaceGate.svelte';
+</script>
+
 <svelte:head>
 	<title>Workduck</title>
 </svelte:head>
@@ -7,5 +11,7 @@
 		<h1 class="workduck-page-title">Projects</h1>
 	</header>
 
-	<p class="workduck-empty-state">No projects yet.</p>
+	<WorkspaceGate>
+		<p class="workduck-empty-state">No projects yet.</p>
+	</WorkspaceGate>
 </main>

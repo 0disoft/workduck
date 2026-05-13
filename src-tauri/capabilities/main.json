@@ -1,12 +1,30 @@
 {
   "identifier": "main",
   "description": "Permissions for the main Workduck window.",
-  "windows": ["main"],
+  "windows": ["main", "tray-menu"],
   "permissions": [
+    "autostart:allow-disable",
+    "autostart:allow-enable",
+    "autostart:allow-is-enabled",
     "core:default",
+    "core:app:allow-default-window-icon",
+    "core:menu:allow-new",
+    "core:tray:allow-get-by-id",
+    "core:tray:allow-new",
+    "core:tray:allow-remove-by-id",
+    "core:tray:allow-set-visible",
     "core:window:allow-close",
+    "core:window:allow-hide",
+    "core:window:allow-inner-size",
+    "core:window:allow-is-maximized",
+    "core:window:allow-maximize",
     "core:window:allow-minimize",
+    "core:window:allow-set-focus",
+    "core:window:allow-set-size",
+    "core:window:allow-show",
     "core:window:allow-start-dragging",
-    "core:window:allow-toggle-maximize"
+    "core:window:allow-toggle-maximize",
+    "core:window:allow-unminimize",
+    "dialog:allow-open"
   ]
 }

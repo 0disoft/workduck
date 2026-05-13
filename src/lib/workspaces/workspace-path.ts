@@ -1,3 +1,7 @@
+import { open } from '@tauri-apps/plugin-dialog';
+
+import { normalizeWorkspacePathForStorage } from './workspace-path-format';
+
 export type WorkspacePathValidationError =
 	| 'workspace-path-required'
 	| 'workspace-path-not-absolute'
@@ -7,6 +11,12 @@ export type WorkspacePathValidationError =
 	| 'workspace-path-unreadable'
 	| 'workspace-path-validation-unavailable';
 
+export type WorkspacePathSelectionError =
+	| 'workspace-path-selection-unavailable'
+	| 'workspace-path-selection-failed';
+
+export type WorkspacePathError = WorkspacePathValidationError | WorkspacePathSelectionError;
+
 export type WorkspacePathValidationResult =
 	| {
 			readonly ok: true;
@@ -15,6 +25,16 @@ export type WorkspacePathValidationResult =
 	| {
 			readonly ok: false;
 			readonly error: WorkspacePathValidationError;
+	  };
+
+export type WorkspacePathSelectionResult =
+	| {
+			readonly ok: true;
+			readonly path: string | null;
+	  }
+	| {
+			readonly ok: false;
+			readonly error: WorkspacePathSelectionError;
 	  };
 
 interface TauriCoreApi {
@@ -31,6 +51,31 @@ interface WorkspacePathValidationResponse {
 	readonly ok: boolean;
 	readonly normalizedPath?: string | null;
 	readonly error?: WorkspacePathValidationError | null;
+}
+
+export async function selectWorkspacePath(
+	defaultPath: string
+): Promise<WorkspacePathSelectionResult> {
+	const trimmedDefaultPath = normalizeWorkspacePathForStorage(defaultPath);
+
+	try {
+		const selectedPath = await open({
+			directory: true,
+			multiple: false,
+			...(trimmedDefaultPath.length > 0 ? { defaultPath: trimmedDefaultPath } : {})
+		});
+
+		if (Array.isArray(selectedPath)) {
+			return { ok: false, error: 'workspace-path-selection-failed' };
+		}
+
+		return {
+			ok: true,
+			path: selectedPath === null ? null : normalizeWorkspacePathForStorage(selectedPath)
+		};
+	} catch {
+		return { ok: false, error: 'workspace-path-selection-unavailable' };
+	}
 }
 
 export async function validateWorkspacePath(
@@ -54,7 +99,7 @@ export async function validateWorkspacePath(
 		});
 
 		if (response.ok) {
-			const normalizedPath = response.normalizedPath?.trim() ?? '';
+			const normalizedPath = normalizeWorkspacePathForStorage(response.normalizedPath ?? '');
 
 			return normalizedPath.length > 0
 				? { ok: true, path: normalizedPath }

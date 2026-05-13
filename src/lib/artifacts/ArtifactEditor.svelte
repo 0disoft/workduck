@@ -6,6 +6,15 @@
 	import { onDestroy, onMount } from 'svelte';
 
 	import {
+		createDefaultAppearanceSettings,
+		type AppearanceSettings
+	} from '$lib/settings/appearance-settings';
+	import {
+		readAppearanceSettingsFromBrowser,
+		subscribeAppearanceSettings
+	} from '$lib/settings/appearance-storage';
+
+	import {
 		loadArtifactEditorLanguageExtension,
 		type ArtifactEditorLanguage
 	} from './editor-languages';
@@ -26,11 +35,14 @@
 
 	let editorHost: HTMLDivElement;
 	let editor: EditorView | undefined;
+	let appearanceSettings = $state<AppearanceSettings>(createDefaultAppearanceSettings());
 	let configuredLanguage: ArtifactEditorLanguage | undefined;
+	let configuredTabSize = createDefaultAppearanceSettings().editorTabSize;
 	let languageLoadId = 0;
 	let lastValue = '';
 
 	const languageCompartment = new Compartment();
+	const tabSizeCompartment = new Compartment();
 	const editorBaseExtensions: Extension[] = [
 		highlightSpecialChars(),
 		history(),
@@ -44,12 +56,12 @@
 			height: '100%',
 			backgroundColor: 'var(--workduck-color-surface)',
 			color: 'var(--workduck-color-text)',
-			fontSize: '0.875rem'
+			fontSize: 'var(--workduck-editor-font-size)'
 		},
 		'.cm-scroller': {
-			fontFamily:
-				'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace',
-			lineHeight: '1.5'
+			fontFamily: 'var(--workduck-editor-font-family)',
+			lineHeight: '1.5',
+			tabSize: 'var(--workduck-editor-tab-size)'
 		},
 		'.cm-content': {
 			padding: '0.75rem 0'
@@ -96,6 +108,7 @@
 				EditorView.contentAttributes.of({ 'aria-label': ariaLabel }),
 				editorTheme,
 				languageCompartment.of([]),
+				tabSizeCompartment.of(EditorState.tabSize.of(appearanceSettings.editorTabSize)),
 				updateListener
 			]
 		});
@@ -139,13 +152,32 @@
 		configuredLanguage = nextLanguage;
 	}
 
+	function reconfigureTabSize(nextTabSize: number) {
+		if (editor === undefined || configuredTabSize === nextTabSize) {
+			return;
+		}
+
+		editor.dispatch({
+			effects: tabSizeCompartment.reconfigure(EditorState.tabSize.of(nextTabSize))
+		});
+		configuredTabSize = nextTabSize;
+	}
+
 	onMount(() => {
+		appearanceSettings = readAppearanceSettingsFromBrowser().settings;
 		lastValue = value;
 		editor = new EditorView({
 			parent: editorHost,
 			state: createEditorState(value)
 		});
+		configuredTabSize = appearanceSettings.editorTabSize;
 		void reconfigureLanguage(language);
+
+		const unsubscribeAppearanceSettings = subscribeAppearanceSettings((nextSettings) => {
+			appearanceSettings = nextSettings;
+		});
+
+		return unsubscribeAppearanceSettings;
 	});
 
 	onDestroy(() => {
@@ -165,6 +197,10 @@
 
 	$effect(() => {
 		void reconfigureLanguage(language);
+	});
+
+	$effect(() => {
+		reconfigureTabSize(appearanceSettings.editorTabSize);
 	});
 </script>
 

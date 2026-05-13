@@ -26,6 +26,22 @@
 	--workduck-oklch-danger: 56.79% 0.1912 18.78;
 	--workduck-oklch-shadow: 0% 0 0;
 
+	--workduck-ui-font-size: 14px;
+	--workduck-control-height: 38px;
+	--workduck-font-size-icon: max(10px, calc(var(--workduck-ui-font-size) - 4px));
+	--workduck-font-size-2xs: max(10px, calc(var(--workduck-ui-font-size) - 3px));
+	--workduck-font-size-xs: max(11px, calc(var(--workduck-ui-font-size) - 2px));
+	--workduck-font-size-sm: max(12px, calc(var(--workduck-ui-font-size) - 1px));
+	--workduck-font-size-md: var(--workduck-ui-font-size);
+	--workduck-font-size-lg: calc(var(--workduck-ui-font-size) + 1px);
+	--workduck-font-size-brand: calc(var(--workduck-ui-font-size) + 4px);
+	--workduck-font-size-title: calc(var(--workduck-ui-font-size) + 8px);
+	--workduck-editor-font-size: 14px;
+	--workduck-editor-font-family:
+		"JetBrains Mono", "Cascadia Code", "SFMono-Regular", Consolas, "Liberation Mono", Menlo,
+		monospace;
+	--workduck-editor-tab-size: 4;
+
 	--workduck-color-background: oklch(var(--workduck-oklch-background));
 	--workduck-color-background-raised: oklch(var(--workduck-oklch-background-raised));
 	--workduck-color-surface: oklch(var(--workduck-oklch-surface));

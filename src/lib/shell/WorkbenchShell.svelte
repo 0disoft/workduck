@@ -3,17 +3,43 @@
 	import { onMount, type Snippet } from 'svelte';
 
 	import {
+		createAppearanceSettingsStyle,
+		createDefaultAppearanceSettings,
+		type AppearanceSettings
+	} from '$lib/settings/appearance-settings';
+	import { shouldShowWorkduckTrayIcon } from '$lib/settings/system-settings';
+	import {
+		readAppearanceSettingsFromBrowser,
+		subscribeAppearanceSettings
+	} from '$lib/settings/appearance-storage';
+	import {
+		readSystemSettingsFromBrowser,
+		subscribeSystemSettings
+	} from '$lib/settings/system-storage';
+	import { syncWorkduckTrayIconEnabled } from '$lib/system/tray';
+	import {
 		createEmptyWorkspaceRegistry,
 		getActiveWorkspace,
 		switchWorkspace,
 		type WorkspaceRegistry
 	} from '$lib/workspaces/workspace-registry';
+	import { formatWorkspacePathForDisplay } from '$lib/workspaces/workspace-path-format';
 	import {
 		readWorkspaceRegistryFromBrowser,
 		subscribeWorkspaceRegistry,
 		writeWorkspaceRegistryToBrowser
 	} from '$lib/workspaces/workspace-storage';
+	import {
+		isWorkspaceUnlocked,
+		subscribeWorkspaceUnlocks,
+		workspaceRequiresUnlock
+	} from '$lib/workspaces/workspace-unlock';
+	import WorkspaceUnlockForm from '$lib/workspaces/WorkspaceUnlockForm.svelte';
 
+	import {
+		subscribeAppOperation,
+		type WorkduckAppOperation
+	} from './app-operation';
 	import {
 		clampSidebarWidthPx,
 		parseStoredSidebarWidthPx,
@@ -27,6 +53,7 @@
 	} from './sidebar-layout';
 	import {
 		closeTauriWindow,
+		initializeTauriWindowState,
 		minimizeTauriWindow,
 		startTauriWindowDrag,
 		toggleTauriWindowMaximize
@@ -41,20 +68,24 @@
 
 	const primaryNavigationItems = [
 		{ href: '/', label: 'Projects' },
-		{ href: '/artifacts', label: 'Artifacts' }
+		{ href: '/artifacts', label: 'Artifacts' },
+		{ href: '/environment', label: 'Environment' }
 	] as const;
 	const settingsNavigationItem = { href: '/settings', label: 'Settings' } as const;
 	const workspaceMenuId = 'workduck-workspace-menu';
 	const primaryNavigationUnavailableDescriptionId =
 		'workduck-primary-navigation-unavailable-description';
-	const workspaceUnavailableMessage = 'Add a workspace in Settings first.';
 
 	let sidebarWidthPx = $state(SIDEBAR_DEFAULT_WIDTH_PX);
 	let isDesktop = $state(true);
 	let isSidebarOpen = $state(false);
 	let isDragging = $state(false);
 	let workspaceRegistry = $state<WorkspaceRegistry>(createEmptyWorkspaceRegistry());
+	let appearanceSettings = $state<AppearanceSettings>(createDefaultAppearanceSettings());
+	let activeAppOperation = $state<WorkduckAppOperation | null>(null);
 	let isWorkspaceMenuOpen = $state(false);
+	let workspaceUnlockId = $state<string | null>(null);
+	let workspaceUnlockRevision = $state(0);
 	let workspaceSwitchError = $state<string | null>(null);
 	let resizePointerId: number | undefined;
 	let resizeStartX = 0;
@@ -67,7 +98,20 @@
 
 	let activeWorkspace = $derived(getActiveWorkspace(workspaceRegistry));
 	let hasWorkspaceChoices = $derived(workspaceRegistry.workspaces.length > 0);
+	let activeWorkspaceIsUsable = $derived(
+		activeWorkspace !== null &&
+			workspaceUnlockRevision >= 0 &&
+			isWorkspaceUnlocked(activeWorkspace)
+	);
 	let activeWorkspaceName = $derived(activeWorkspace?.name ?? 'No workspace');
+	let appIsLocked = $derived(activeAppOperation !== null);
+	let workspaceUnavailableMessage = $derived(
+		hasWorkspaceChoices ? 'Unlock the active workspace.' : 'Add a workspace in Settings first.'
+	);
+	let navigationUnavailableMessage = $derived(
+		appIsLocked ? 'Wait for the current operation to finish.' : workspaceUnavailableMessage
+	);
+	let appearanceSettingsStyle = $derived(createAppearanceSettingsStyle(appearanceSettings));
 
 	function persistSidebarWidthPx(nextWidthPx = sidebarWidthPx) {
 		if (typeof window === 'undefined') {
@@ -98,7 +142,7 @@
 	}
 
 	function handleResizePointerDown(event: PointerEvent) {
-		if (!isDesktop || event.button !== 0) {
+		if (appIsLocked || !isDesktop || event.button !== 0) {
 			return;
 		}
 
@@ -157,7 +201,7 @@
 	}
 
 	function handleResizeKeydown(event: KeyboardEvent) {
-		if (!isDesktop) {
+		if (appIsLocked || !isDesktop) {
 			return;
 		}
 
@@ -184,6 +228,10 @@
 	}
 
 	function closeSidebarOnMobile() {
+		if (appIsLocked) {
+			return;
+		}
+
 		if (!isDesktop) {
 			isSidebarOpen = false;
 		}
@@ -192,15 +240,17 @@
 	function getPrimaryNavigationClass(href: string) {
 		return [
 			'workduck-nav-link',
-			hasWorkspaceChoices && page.url.pathname === href ? 'workduck-nav-link-active' : '',
-			hasWorkspaceChoices ? '' : 'workduck-nav-link-disabled'
+			!appIsLocked && activeWorkspaceIsUsable && page.url.pathname === href
+				? 'workduck-nav-link-active'
+				: '',
+			activeWorkspaceIsUsable && !appIsLocked ? '' : 'workduck-nav-link-disabled'
 		]
 			.filter(Boolean)
 			.join(' ');
 	}
 
 	function handlePrimaryNavigationClick(event: MouseEvent) {
-		if (!hasWorkspaceChoices) {
+		if (appIsLocked || !activeWorkspaceIsUsable) {
 			event.preventDefault();
 			return;
 		}
@@ -209,16 +259,41 @@
 	}
 
 	function toggleWorkspaceMenu() {
-		if (!hasWorkspaceChoices) {
+		if (appIsLocked || !hasWorkspaceChoices) {
 			return;
 		}
 
 		workspaceSwitchError = null;
+		workspaceUnlockId = null;
 		isWorkspaceMenuOpen = !isWorkspaceMenuOpen;
 	}
 
 	function handleWorkspaceSwitch(workspaceId: string) {
+		if (appIsLocked) {
+			return;
+		}
+
 		workspaceSwitchError = null;
+		const workspace = workspaceRegistry.workspaces.find((candidate) => candidate.id === workspaceId);
+
+		if (workspace === undefined) {
+			workspaceSwitchError = 'Workspace was not found.';
+			return;
+		}
+
+		if (workspaceRequiresUnlock(workspace) && !isWorkspaceUnlocked(workspace)) {
+			workspaceUnlockId = workspace.id;
+			return;
+		}
+
+		switchWorkspaceById(workspaceId);
+	}
+
+	function switchWorkspaceById(workspaceId: string) {
+		if (appIsLocked) {
+			return;
+		}
+
 		const result = switchWorkspace(workspaceRegistry, workspaceId);
 
 		if (!result.ok) {
@@ -236,6 +311,7 @@
 		}
 
 		isWorkspaceMenuOpen = false;
+		workspaceUnlockId = null;
 		closeSidebarOnMobile();
 	}
 
@@ -334,6 +410,7 @@
 		}
 
 		isWorkspaceMenuOpen = false;
+		workspaceUnlockId = null;
 		workspaceSwitchError = null;
 	});
 
@@ -388,13 +465,45 @@
 
 		updateDesktopMode(mediaQuery.matches);
 		mediaQuery.addEventListener('change', handleMediaChange);
+		appearanceSettings = readAppearanceSettingsFromBrowser().settings;
+		void syncWorkduckTrayIconEnabled(
+			shouldShowWorkduckTrayIcon(readSystemSettingsFromBrowser().settings)
+		);
+		let disposeWindowState: (() => void) | undefined;
+		let shellIsMounted = true;
+		void initializeTauriWindowState().then((dispose) => {
+			if (shellIsMounted) {
+				disposeWindowState = dispose;
+				return;
+			}
+
+			dispose();
+		});
+		const unsubscribeAppearanceSettings = subscribeAppearanceSettings((nextSettings) => {
+			appearanceSettings = nextSettings;
+		});
+		const unsubscribeSystemSettings = subscribeSystemSettings((nextSettings) => {
+			void syncWorkduckTrayIconEnabled(shouldShowWorkduckTrayIcon(nextSettings));
+		});
+		const unsubscribeAppOperation = subscribeAppOperation((nextOperation) => {
+			activeAppOperation = nextOperation;
+		});
 		workspaceRegistry = readWorkspaceRegistryFromBrowser().registry;
 		const unsubscribeWorkspaceRegistry = subscribeWorkspaceRegistry((nextRegistry) => {
 			workspaceRegistry = nextRegistry;
 		});
+		const unsubscribeWorkspaceUnlocks = subscribeWorkspaceUnlocks(() => {
+			workspaceUnlockRevision += 1;
+		});
 
 		return () => {
+			shellIsMounted = false;
+			disposeWindowState?.();
+			unsubscribeAppearanceSettings();
+			unsubscribeSystemSettings();
+			unsubscribeAppOperation();
 			unsubscribeWorkspaceRegistry();
+			unsubscribeWorkspaceUnlocks();
 			cancelTitlebarDragTracking();
 			cancelResize();
 			mediaQuery.removeEventListener('change', handleMediaChange);
@@ -403,7 +512,7 @@
 
 </script>
 
-<div class="workduck-window-frame">
+<div class="workduck-window-frame" style={appearanceSettingsStyle}>
 	<!-- svelte-ignore a11y_no_static_element_interactions -->
 	<header
 		class="workduck-titlebar"
@@ -459,7 +568,10 @@
 			></button>
 		{/if}
 
-		<aside class={isSidebarOpen ? 'workduck-sidebar workduck-sidebar-open' : 'workduck-sidebar'}>
+		<aside
+			class={isSidebarOpen ? 'workduck-sidebar workduck-sidebar-open' : 'workduck-sidebar'}
+			inert={appIsLocked}
+		>
 			<div class="workduck-sidebar-header">
 				<a class="workduck-brand" href="/" onclick={closeSidebarOnMobile}>
 					<span class="workduck-brand-mark">WD</span>
@@ -485,7 +597,7 @@
 					aria-haspopup={hasWorkspaceChoices ? 'menu' : undefined}
 					aria-expanded={hasWorkspaceChoices ? isWorkspaceMenuOpen : undefined}
 					aria-controls={isWorkspaceMenuOpen ? workspaceMenuId : undefined}
-					aria-disabled={!hasWorkspaceChoices}
+					aria-disabled={!hasWorkspaceChoices || appIsLocked}
 					onclick={toggleWorkspaceMenu}
 				>
 					<span class="workduck-workspace-trigger-text">{activeWorkspaceName}</span>
@@ -495,18 +607,33 @@
 				{#if isWorkspaceMenuOpen}
 					<div id={workspaceMenuId} class="workduck-workspace-menu" role="menu">
 						{#each workspaceRegistry.workspaces as workspace (workspace.id)}
-							<button
-								class={workspace.id === workspaceRegistry.activeWorkspaceId
-									? 'workduck-workspace-menu-item workduck-workspace-menu-item-active'
-									: 'workduck-workspace-menu-item'}
-								type="button"
-								role="menuitemradio"
-								aria-checked={workspace.id === workspaceRegistry.activeWorkspaceId}
-								onclick={() => handleWorkspaceSwitch(workspace.id)}
-							>
-								<span class="workduck-workspace-menu-name">{workspace.name}</span>
-								<span class="workduck-workspace-menu-path">{workspace.path}</span>
-							</button>
+							<div class="workduck-workspace-menu-entry" role="none">
+								<button
+									class={workspace.id === workspaceRegistry.activeWorkspaceId
+										? 'workduck-workspace-menu-item workduck-workspace-menu-item-active'
+										: 'workduck-workspace-menu-item'}
+									type="button"
+									role="menuitemradio"
+									aria-checked={workspace.id === workspaceRegistry.activeWorkspaceId}
+									onclick={() => handleWorkspaceSwitch(workspace.id)}
+								>
+									<span class="workduck-workspace-menu-name">{workspace.name}</span>
+									<span class="workduck-workspace-menu-path">
+										{formatWorkspacePathForDisplay(workspace.path)}
+									</span>
+									{#if workspaceRequiresUnlock(workspace) && !isWorkspaceUnlocked(workspace)}
+										<span class="workduck-workspace-menu-lock">Locked</span>
+									{/if}
+								</button>
+
+								{#if workspaceUnlockId === workspace.id}
+									<WorkspaceUnlockForm
+										workspace={workspace}
+										onUnlocked={() => switchWorkspaceById(workspace.id)}
+										onCancel={() => (workspaceUnlockId = null)}
+									/>
+								{/if}
+							</div>
 						{/each}
 
 						{#if workspaceSwitchError !== null}
@@ -517,22 +644,30 @@
 			</div>
 
 			<nav class="workduck-sidebar-nav" aria-label="Primary">
-				{#if !hasWorkspaceChoices}
-					<span id={primaryNavigationUnavailableDescriptionId} class="workduck-sr-only">
-						{workspaceUnavailableMessage}
-					</span>
-				{/if}
+					{#if appIsLocked || !hasWorkspaceChoices}
+						<span id={primaryNavigationUnavailableDescriptionId} class="workduck-sr-only">
+							{navigationUnavailableMessage}
+						</span>
+					{:else if !activeWorkspaceIsUsable}
+						<span id={primaryNavigationUnavailableDescriptionId} class="workduck-sr-only">
+							{navigationUnavailableMessage}
+						</span>
+					{/if}
 				{#each primaryNavigationItems as item}
 					<a
 						class={getPrimaryNavigationClass(item.href)}
 						href={item.href}
-						aria-current={hasWorkspaceChoices && page.url.pathname === item.href ? 'page' : undefined}
-						aria-disabled={!hasWorkspaceChoices}
-						aria-describedby={hasWorkspaceChoices
+						aria-current={activeWorkspaceIsUsable && page.url.pathname === item.href
+							? 'page'
+							: undefined}
+						aria-disabled={!activeWorkspaceIsUsable || appIsLocked}
+						aria-describedby={activeWorkspaceIsUsable && !appIsLocked
 							? undefined
 							: primaryNavigationUnavailableDescriptionId}
 						aria-label={item.label}
-						data-tooltip={hasWorkspaceChoices ? item.label : workspaceUnavailableMessage}
+						data-tooltip={activeWorkspaceIsUsable && !appIsLocked
+							? item.label
+							: navigationUnavailableMessage}
 						onclick={handlePrimaryNavigationClick}
 					>
 						<span class="workduck-nav-dot"></span>
@@ -543,14 +678,26 @@
 
 			<nav class="workduck-sidebar-footer" aria-label="Settings">
 				<a
-					class={page.url.pathname === settingsNavigationItem.href
+					class={page.url.pathname === settingsNavigationItem.href && !appIsLocked
 						? 'workduck-nav-link workduck-nav-link-active'
-						: 'workduck-nav-link'}
+						: appIsLocked
+							? 'workduck-nav-link workduck-nav-link-disabled'
+							: 'workduck-nav-link'}
 					href={settingsNavigationItem.href}
-					aria-current={page.url.pathname === settingsNavigationItem.href ? 'page' : undefined}
+					aria-current={page.url.pathname === settingsNavigationItem.href && !appIsLocked
+						? 'page'
+						: undefined}
+					aria-disabled={appIsLocked}
 					aria-label={settingsNavigationItem.label}
 					data-tooltip={settingsNavigationItem.label}
-					onclick={closeSidebarOnMobile}
+					onclick={(event) => {
+						if (appIsLocked) {
+							event.preventDefault();
+							return;
+						}
+
+						closeSidebarOnMobile();
+					}}
 				>
 					<span class="workduck-nav-dot"></span>
 					<span class="workduck-nav-label">{settingsNavigationItem.label}</span>
@@ -561,25 +708,27 @@
 		<!-- svelte-ignore a11y_no_noninteractive_tabindex, a11y_no_noninteractive_element_interactions -->
 		<div
 			class="workduck-sidebar-resizer"
+			inert={appIsLocked}
 			role="separator"
 			aria-label="Resize sidebar"
 			aria-orientation="vertical"
 			aria-valuemin={SIDEBAR_MIN_WIDTH_PX}
 			aria-valuemax={SIDEBAR_MAX_WIDTH_PX}
 			aria-valuenow={sidebarWidthPx}
-			tabindex={isDesktop ? 0 : -1}
+			tabindex={isDesktop && !appIsLocked ? 0 : -1}
 			onpointerdown={handleResizePointerDown}
 			onkeydown={handleResizeKeydown}
 		>
 			<span class="workduck-sidebar-resizer-line"></span>
 		</div>
 
-		<section class="workduck-main-pane">
+		<section class="workduck-main-pane" inert={appIsLocked}>
 			<div class="workduck-mobile-bar">
 				<button
 					class="workduck-mobile-menu"
 					type="button"
 					aria-label="Open sidebar"
+					disabled={appIsLocked}
 					onclick={() => (isSidebarOpen = true)}
 				>
 					Menu
@@ -589,6 +738,29 @@
 
 			{@render children()}
 		</section>
+
+		{#if activeAppOperation !== null}
+			<div
+				class="workduck-operation-overlay"
+				role="status"
+				aria-live="polite"
+				aria-atomic="true"
+			>
+				<div class="workduck-operation-panel">
+					<span class="workduck-operation-title">{activeAppOperation.label}</span>
+					{#if activeAppOperation.detail.length > 0}
+						<span class="workduck-operation-detail">{activeAppOperation.detail}</span>
+					{/if}
+					<div
+						class="workduck-operation-progress"
+						role="progressbar"
+						aria-label={activeAppOperation.label}
+					>
+						<span class="workduck-operation-progress-fill"></span>
+					</div>
+				</div>
+			</div>
+		{/if}
 	</div>
 </div>
 
@@ -602,6 +774,7 @@
 		overflow: hidden;
 		background: var(--workduck-color-background);
 		color: var(--workduck-color-text);
+		font-size: var(--workduck-font-size-md);
 	}
 
 	.workduck-sr-only {
@@ -621,6 +794,7 @@
 		align-items: center;
 		border-bottom: 1px solid oklch(var(--workduck-oklch-border) / 0.88);
 		background: var(--workduck-color-background);
+		-webkit-user-select: none;
 		user-select: none;
 	}
 
@@ -640,7 +814,7 @@
 		place-items: center;
 		border: 1px solid oklch(var(--workduck-oklch-accent) / 0.72);
 		border-radius: 4px;
-		font-size: 10px;
+		font-size: var(--workduck-font-size-icon);
 		font-weight: 900;
 		line-height: 1;
 	}
@@ -648,7 +822,7 @@
 	.workduck-titlebar-name {
 		min-width: 0;
 		overflow: hidden;
-		font-size: 13px;
+		font-size: var(--workduck-font-size-sm);
 		font-weight: 800;
 		text-overflow: ellipsis;
 		white-space: nowrap;
@@ -731,6 +905,7 @@
 	}
 
 	.workduck-shell {
+		position: relative;
 		display: grid;
 		grid-template-columns: var(--workduck-sidebar-width) 8px minmax(0, 1fr);
 		min-height: 0;
@@ -757,6 +932,14 @@
 		background:
 			linear-gradient(135deg, oklch(var(--workduck-oklch-accent) / 0.06), transparent 36%),
 			var(--workduck-color-panel);
+		-webkit-user-select: none;
+		user-select: none;
+	}
+
+	.workduck-sidebar :global(input),
+	.workduck-sidebar :global(textarea) {
+		-webkit-user-select: text;
+		user-select: text;
 	}
 
 	.workduck-sidebar-header {
@@ -789,7 +972,7 @@
 		border-radius: 8px;
 		background: oklch(var(--workduck-oklch-accent) / 0.08);
 		color: var(--workduck-color-accent);
-		font-size: 13px;
+		font-size: var(--workduck-font-size-sm);
 		font-weight: 800;
 	}
 
@@ -803,7 +986,7 @@
 
 	.workduck-brand-name {
 		color: var(--workduck-color-accent);
-		font-size: 18px;
+		font-size: var(--workduck-font-size-brand);
 		font-weight: 800;
 	}
 
@@ -830,7 +1013,7 @@
 		background: oklch(var(--workduck-oklch-surface) / 0.58);
 		color: var(--workduck-color-muted);
 		padding: 0 10px;
-		font-size: 12px;
+		font-size: var(--workduck-font-size-xs);
 		font-weight: 800;
 	}
 
@@ -886,6 +1069,12 @@
 			inset 0 0 0 1px oklch(var(--workduck-oklch-accent) / 0.06);
 	}
 
+	.workduck-workspace-menu-entry {
+		display: grid;
+		min-width: 0;
+		gap: 4px;
+	}
+
 	.workduck-workspace-menu-item {
 		display: grid;
 		width: 100%;
@@ -921,20 +1110,47 @@
 	}
 
 	.workduck-workspace-menu-name {
-		font-size: 12px;
+		font-size: var(--workduck-font-size-xs);
 		font-weight: 800;
 	}
 
 	.workduck-workspace-menu-path {
 		color: var(--workduck-color-muted);
-		font-size: 11px;
+		font-size: var(--workduck-font-size-2xs);
 		font-weight: 700;
+	}
+
+	.workduck-workspace-menu-lock {
+		width: max-content;
+		max-width: 100%;
+		overflow: hidden;
+		color: var(--workduck-color-accent);
+		font-size: var(--workduck-font-size-2xs);
+		font-weight: 800;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	.workduck-workspace-menu-entry :global(.workduck-unlock-form) {
+		padding: 8px 10px 10px;
+		border: 1px solid oklch(var(--workduck-oklch-border) / 0.72);
+		border-radius: 7px;
+		background: oklch(var(--workduck-oklch-surface) / 0.54);
+	}
+
+	.workduck-workspace-menu-entry :global(.workduck-unlock-actions) {
+		display: grid;
+		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+
+	.workduck-workspace-menu-entry :global(.workduck-button) {
+		width: 100%;
 	}
 
 	.workduck-workspace-menu-error {
 		margin: 2px 4px 4px;
 		color: var(--workduck-color-danger);
-		font-size: 11px;
+		font-size: var(--workduck-font-size-2xs);
 		font-weight: 800;
 	}
 
@@ -966,7 +1182,7 @@
 		border: 1px solid transparent;
 		border-radius: 8px;
 		color: var(--workduck-color-muted);
-		font-size: 14px;
+		font-size: var(--workduck-font-size-md);
 		font-weight: 700;
 		text-decoration: none;
 	}
@@ -1006,7 +1222,7 @@
 			inset 0 0 0 1px oklch(var(--workduck-oklch-accent) / 0.06);
 		color: var(--workduck-color-text);
 		content: attr(data-tooltip);
-		font-size: 12px;
+		font-size: var(--workduck-font-size-xs);
 		font-weight: 800;
 		line-height: 1;
 		text-overflow: ellipsis;
@@ -1111,10 +1327,87 @@
 
 	.workduck-mobile-bar {
 		display: none;
+		-webkit-user-select: none;
+		user-select: none;
 	}
 
 	.workduck-sidebar-backdrop {
 		display: none;
+	}
+
+	.workduck-operation-overlay {
+		position: absolute;
+		inset: 0;
+		z-index: 120;
+		display: grid;
+		place-items: center;
+		background: oklch(var(--workduck-oklch-background) / 0.62);
+		backdrop-filter: blur(3px);
+		cursor: progress;
+	}
+
+	.workduck-operation-panel {
+		display: grid;
+		width: min(360px, calc(100% - 40px));
+		gap: 10px;
+		padding: 16px;
+		border: 1px solid oklch(var(--workduck-oklch-accent) / 0.54);
+		border-radius: 8px;
+		background: var(--workduck-color-panel);
+		box-shadow:
+			0 18px 42px oklch(var(--workduck-oklch-shadow) / 0.48),
+			inset 0 0 0 1px oklch(var(--workduck-oklch-accent) / 0.08);
+	}
+
+	.workduck-operation-title,
+	.workduck-operation-detail {
+		min-width: 0;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	.workduck-operation-title {
+		color: var(--workduck-color-accent);
+		font-size: var(--workduck-font-size-md);
+		font-weight: 900;
+	}
+
+	.workduck-operation-detail {
+		color: var(--workduck-color-muted);
+		font-size: var(--workduck-font-size-xs);
+		font-weight: 800;
+	}
+
+	.workduck-operation-progress {
+		position: relative;
+		height: 8px;
+		overflow: hidden;
+		border: 1px solid oklch(var(--workduck-oklch-border) / 0.72);
+		border-radius: 999px;
+		background: oklch(var(--workduck-oklch-surface) / 0.72);
+	}
+
+	.workduck-operation-progress-fill {
+		position: absolute;
+		top: 0;
+		bottom: 0;
+		left: 0;
+		width: 42%;
+		border-radius: inherit;
+		background: var(--workduck-color-accent);
+		box-shadow: 0 0 18px oklch(var(--workduck-oklch-accent) / 0.38);
+		animation: workduck-operation-progress 1.15s ease-in-out infinite;
+	}
+
+	@keyframes workduck-operation-progress {
+		0% {
+			transform: translateX(-115%);
+		}
+
+		100% {
+			transform: translateX(255%);
+		}
 	}
 
 	@media (max-width: 759px) {
@@ -1150,7 +1443,7 @@
 			background: var(--workduck-color-surface);
 			color: var(--workduck-color-text);
 			font: inherit;
-			font-size: 12px;
+			font-size: var(--workduck-font-size-xs);
 			font-weight: 800;
 		}
 
@@ -1190,7 +1483,7 @@
 			background: oklch(var(--workduck-oklch-accent) / 0.1);
 			color: var(--workduck-color-accent);
 			font: inherit;
-			font-size: 13px;
+			font-size: var(--workduck-font-size-sm);
 			font-weight: 800;
 		}
 

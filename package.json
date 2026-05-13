@@ -1,7 +1,8 @@
 {
   "name": "workduck",
-  "version": "1.0.27",
+  "version": "1.0.49",
   "private": true,
+  "license": "0BSD",
   "type": "module",
   "workspaces": [
     "packages/*"
@@ -30,6 +31,7 @@
     "@sveltejs/vite-plugin-svelte": "^7.1.2",
     "@tailwindcss/vite": "^4.3.0",
     "@tauri-apps/cli": "latest",
+    "@tauri-apps/plugin-dialog": "^2.7.1",
     "@types/node": "^25.7.0",
     "bits-ui": "^2.18.1",
     "mustflow": "latest",
