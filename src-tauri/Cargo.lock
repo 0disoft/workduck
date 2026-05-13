@@ -4848,7 +4848,7 @@ dependencies = [
 
 [[package]]
 name = "workduck"
-version = "1.0.49"
+version = "1.0.58"
 dependencies = [
  "argon2",
  "base64 0.22.1",

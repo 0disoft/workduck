@@ -1,4 +1,5 @@
 import {
+	createAppearanceSettingsCssVariables,
 	createDefaultAppearanceSettings,
 	normalizeAppearanceSettings,
 	parseAppearanceSettings,
@@ -8,6 +9,7 @@ import {
 } from './appearance-settings';
 
 export const WORKDUCK_APPEARANCE_SETTINGS_CHANGED_EVENT = 'workduck:appearance-settings-changed';
+const WORKDUCK_APPEARANCE_SETTINGS_SCOPE_SELECTOR = '.workduck-window-frame';
 
 export type AppearanceSettingsStorageError = 'appearance-settings-storage-unavailable';
 
@@ -24,6 +26,24 @@ export type AppearanceSettingsStorageResult =
 
 interface AppearanceSettingsChangedDetail {
 	readonly settings: AppearanceSettings;
+}
+
+export function applyAppearanceSettingsToBrowserDocument(settings: AppearanceSettings) {
+	if (typeof document === 'undefined') {
+		return;
+	}
+
+	const cssVariables = createAppearanceSettingsCssVariables(settings);
+	const targets = [
+		document.documentElement,
+		...document.querySelectorAll<HTMLElement>(WORKDUCK_APPEARANCE_SETTINGS_SCOPE_SELECTOR)
+	];
+
+	for (const target of targets) {
+		for (const [name, value] of Object.entries(cssVariables)) {
+			target.style.setProperty(name, value);
+		}
+	}
 }
 
 export function readAppearanceSettingsFromBrowser(): AppearanceSettingsStorageResult {
@@ -61,6 +81,7 @@ export function writeAppearanceSettingsToBrowser(
 			WORKDUCK_APPEARANCE_SETTINGS_STORAGE_KEY,
 			serializeAppearanceSettings(normalizedSettings)
 		);
+		applyAppearanceSettingsToBrowserDocument(normalizedSettings);
 		window.dispatchEvent(
 			new CustomEvent<AppearanceSettingsChangedDetail>(WORKDUCK_APPEARANCE_SETTINGS_CHANGED_EVENT, {
 				detail: { settings: normalizedSettings }
@@ -87,11 +108,17 @@ export function subscribeAppearanceSettings(
 		const detail = (event as CustomEvent<AppearanceSettingsChangedDetail>).detail;
 
 		if (detail === undefined) {
-			callback(readAppearanceSettingsFromBrowser().settings);
+			const storedSettings = readAppearanceSettingsFromBrowser().settings;
+
+			applyAppearanceSettingsToBrowserDocument(storedSettings);
+			callback(storedSettings);
 			return;
 		}
 
-		callback(normalizeAppearanceSettings(detail.settings));
+		const normalizedSettings = normalizeAppearanceSettings(detail.settings);
+
+		applyAppearanceSettingsToBrowserDocument(normalizedSettings);
+		callback(normalizedSettings);
 	}
 
 	function handleStorage(event: StorageEvent) {
@@ -102,7 +129,10 @@ export function subscribeAppearanceSettings(
 			return;
 		}
 
-		callback(parseAppearanceSettings(event.newValue));
+		const storedSettings = parseAppearanceSettings(event.newValue);
+
+		applyAppearanceSettingsToBrowserDocument(storedSettings);
+		callback(storedSettings);
 	}
 
 	window.addEventListener(WORKDUCK_APPEARANCE_SETTINGS_CHANGED_EVENT, handleAppearanceSettingsChanged);

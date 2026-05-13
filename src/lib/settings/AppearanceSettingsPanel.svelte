@@ -2,12 +2,8 @@
 	import { onMount } from 'svelte';
 
 	import {
-		EDITOR_FONT_SIZE_MAX_PX,
-		EDITOR_FONT_SIZE_MIN_PX,
-		EDITOR_TAB_SIZE_MAX,
-		EDITOR_TAB_SIZE_MIN,
-		INTERFACE_FONT_SIZE_MAX_PX,
-		INTERFACE_FONT_SIZE_MIN_PX,
+		EDITOR_TAB_SIZE_STEP_VALUES,
+		FONT_SIZE_STEP_VALUES,
 		createDefaultAppearanceSettings,
 		editorFontOptions,
 		type AppearanceSettings,
@@ -18,6 +14,25 @@
 		subscribeAppearanceSettings,
 		writeAppearanceSettingsToBrowser
 	} from './appearance-storage';
+	import StepRangeField from './StepRangeField.svelte';
+
+	interface StepRangeOption {
+		readonly value: number;
+		readonly label: string;
+	}
+
+	const fontSizeStepOptions: readonly StepRangeOption[] = FONT_SIZE_STEP_VALUES.map(
+		(fontSizePx) => ({
+			value: fontSizePx,
+			label: String(fontSizePx)
+		})
+	);
+	const editorTabSizeStepOptions: readonly StepRangeOption[] = EDITOR_TAB_SIZE_STEP_VALUES.map(
+		(tabSize) => ({
+			value: tabSize,
+			label: `${tabSize} spaces`
+		})
+	);
 
 	let appearanceSettings = $state<AppearanceSettings>(createDefaultAppearanceSettings());
 	let appearanceStorageError = $state<string | null>(null);
@@ -36,29 +51,17 @@
 		appearanceStorageError = result.ok ? null : 'Appearance settings could not be saved.';
 	}
 
-	function handleInterfaceFontSizeChange(event: Event) {
-		const target = event.currentTarget;
-
-		if (!(target instanceof HTMLInputElement)) {
-			return;
-		}
-
+	function handleInterfaceFontSizeChange(fontSizePx: number) {
 		persistAppearanceSettings({
 			...appearanceSettings,
-			fontSizePx: Number(target.value)
+			fontSizePx
 		});
 	}
 
-	function handleEditorFontSizeChange(event: Event) {
-		const target = event.currentTarget;
-
-		if (!(target instanceof HTMLInputElement)) {
-			return;
-		}
-
+	function handleEditorFontSizeChange(editorFontSizePx: number) {
 		persistAppearanceSettings({
 			...appearanceSettings,
-			editorFontSizePx: Number(target.value)
+			editorFontSizePx
 		});
 	}
 
@@ -75,17 +78,19 @@
 		});
 	}
 
-	function handleEditorTabSizeChange(event: Event) {
-		const target = event.currentTarget;
-
-		if (!(target instanceof HTMLInputElement)) {
-			return;
-		}
-
+	function handleEditorTabSizeChange(editorTabSize: number) {
 		persistAppearanceSettings({
 			...appearanceSettings,
-			editorTabSize: Number(target.value)
+			editorTabSize
 		});
+	}
+
+	function formatFontSizeLabel(fontSizePx: number) {
+		return `${fontSizePx} px`;
+	}
+
+	function formatTabSizeLabel(tabSize: number) {
+		return `${tabSize} spaces`;
 	}
 
 	onMount(() => {
@@ -104,34 +109,27 @@
 	class="workduck-settings-section"
 	aria-label="Appearance"
 >
-	<form class="workduck-preferences-form" onsubmit={(event) => event.preventDefault()}>
-		<label class="workduck-form-field" for="interface-font-size">
-			<span>Interface font size</span>
-			<input
-				id="interface-font-size"
-				class="workduck-input"
-				type="number"
-				min={INTERFACE_FONT_SIZE_MIN_PX}
-				max={INTERFACE_FONT_SIZE_MAX_PX}
-				step="1"
-				value={appearanceSettings.fontSizePx}
-				onchange={handleInterfaceFontSizeChange}
-			/>
-		</label>
+	<form
+		class="workduck-preferences-form workduck-appearance-settings-form"
+		onsubmit={(event) => event.preventDefault()}
+	>
+		<StepRangeField
+			id="interface-font-size"
+			label="Interface font size"
+			value={appearanceSettings.fontSizePx}
+			options={fontSizeStepOptions}
+			valueLabel={formatFontSizeLabel(appearanceSettings.fontSizePx)}
+			onValueChange={handleInterfaceFontSizeChange}
+		/>
 
-		<label class="workduck-form-field" for="editor-font-size">
-			<span>Editor font size</span>
-			<input
-				id="editor-font-size"
-				class="workduck-input"
-				type="number"
-				min={EDITOR_FONT_SIZE_MIN_PX}
-				max={EDITOR_FONT_SIZE_MAX_PX}
-				step="1"
-				value={appearanceSettings.editorFontSizePx}
-				onchange={handleEditorFontSizeChange}
-			/>
-		</label>
+		<StepRangeField
+			id="editor-font-size"
+			label="Editor font size"
+			value={appearanceSettings.editorFontSizePx}
+			options={fontSizeStepOptions}
+			valueLabel={formatFontSizeLabel(appearanceSettings.editorFontSizePx)}
+			onValueChange={handleEditorFontSizeChange}
+		/>
 
 		<label class="workduck-form-field" for="editor-font">
 			<span>Editor font</span>
@@ -147,19 +145,14 @@
 			</select>
 		</label>
 
-		<label class="workduck-form-field" for="editor-tab-size">
-			<span>Editor tab size</span>
-			<input
-				id="editor-tab-size"
-				class="workduck-input"
-				type="number"
-				min={EDITOR_TAB_SIZE_MIN}
-				max={EDITOR_TAB_SIZE_MAX}
-				step="1"
-				value={appearanceSettings.editorTabSize}
-				onchange={handleEditorTabSizeChange}
-			/>
-		</label>
+		<StepRangeField
+			id="editor-tab-size"
+			label="Editor tab size"
+			value={appearanceSettings.editorTabSize}
+			options={editorTabSizeStepOptions}
+			valueLabel={formatTabSizeLabel(appearanceSettings.editorTabSize)}
+			onValueChange={handleEditorTabSizeChange}
+		/>
 	</form>
 
 	{#if appearanceStorageError !== null}

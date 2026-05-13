@@ -9,6 +9,7 @@
 	} from '$lib/settings/appearance-settings';
 	import { shouldShowWorkduckTrayIcon } from '$lib/settings/system-settings';
 	import {
+		applyAppearanceSettingsToBrowserDocument,
 		readAppearanceSettingsFromBrowser,
 		subscribeAppearanceSettings
 	} from '$lib/settings/appearance-storage';
@@ -35,6 +36,8 @@
 		workspaceRequiresUnlock
 	} from '$lib/workspaces/workspace-unlock';
 	import WorkspaceUnlockForm from '$lib/workspaces/WorkspaceUnlockForm.svelte';
+
+	import WorkduckMark from '$lib/brand/WorkduckMark.svelte';
 
 	import {
 		subscribeAppOperation,
@@ -466,6 +469,7 @@
 		updateDesktopMode(mediaQuery.matches);
 		mediaQuery.addEventListener('change', handleMediaChange);
 		appearanceSettings = readAppearanceSettingsFromBrowser().settings;
+		applyAppearanceSettingsToBrowserDocument(appearanceSettings);
 		void syncWorkduckTrayIconEnabled(
 			shouldShowWorkduckTrayIcon(readSystemSettingsFromBrowser().settings)
 		);
@@ -481,6 +485,7 @@
 		});
 		const unsubscribeAppearanceSettings = subscribeAppearanceSettings((nextSettings) => {
 			appearanceSettings = nextSettings;
+			applyAppearanceSettingsToBrowserDocument(nextSettings);
 		});
 		const unsubscribeSystemSettings = subscribeSystemSettings((nextSettings) => {
 			void syncWorkduckTrayIconEnabled(shouldShowWorkduckTrayIcon(nextSettings));
@@ -520,7 +525,9 @@
 		ondblclick={handleTitlebarDoubleClick}
 	>
 		<div class="workduck-titlebar-brand">
-			<span class="workduck-titlebar-mark">WD</span>
+			<span class="workduck-titlebar-mark" aria-hidden="true">
+				<WorkduckMark />
+			</span>
 			<span class="workduck-titlebar-name">Workduck</span>
 		</div>
 
@@ -574,7 +581,9 @@
 		>
 			<div class="workduck-sidebar-header">
 				<a class="workduck-brand" href="/" onclick={closeSidebarOnMobile}>
-					<span class="workduck-brand-mark">WD</span>
+					<span class="workduck-brand-mark" aria-hidden="true">
+						<WorkduckMark />
+					</span>
 					<span class="workduck-brand-name">Workduck</span>
 				</a>
 				<button
@@ -812,6 +821,7 @@
 		width: 18px;
 		height: 18px;
 		place-items: center;
+		padding: 2px;
 		border: 1px solid oklch(var(--workduck-oklch-accent) / 0.72);
 		border-radius: 4px;
 		font-size: var(--workduck-font-size-icon);
@@ -968,6 +978,7 @@
 		width: 36px;
 		height: 36px;
 		place-items: center;
+		padding: 5px;
 		border: 1px solid oklch(var(--workduck-oklch-accent) / 0.72);
 		border-radius: 8px;
 		background: oklch(var(--workduck-oklch-accent) / 0.08);
