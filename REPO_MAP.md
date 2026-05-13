@@ -5,8 +5,8 @@ generated_by: mustflow
 relative_root: "."
 source_policy: anchors_only
 privacy_mode: minimal
-anchor_count: 68
-source_fingerprint: "sha256:f6da2ff90cd2e895f26302cc54a9b670298dbe07119ce08a36dce561a0c8fd39"
+anchor_count: 69
+source_fingerprint: "sha256:7dafaea41c1995929a7e49ecea58ba19eec1ce2f819c19c27b59526b691b824b"
 ---
 
 # REPO_MAP.md
@@ -36,6 +36,7 @@ Regenerate it with `mf map --write` instead of editing it by hand.
 
 - `.gitattributes`: Git text, binary, and line-ending policy. Check before normalizing files.
 - `package.json`: Node.js package manifest, binary entry points, and package scripts.
+- `README.md`: Human-facing project overview. Use it as context, not as agent policy.
 - `ROADMAP.md`: Optional project planning, priority, milestone, and non-goal context.
 - `tsconfig.json`: TypeScript compiler configuration.
 
