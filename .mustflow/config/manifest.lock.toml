@@ -3,7 +3,7 @@ generated_by = "mustflow"
 
 [template]
 id = "default"
-version = "1.18.14"
+version = "1.18.16"
 profile = "oss"
 locale = "en"
 agent_lang = "en"
@@ -25,8 +25,8 @@ content_hash = "sha256:faad13856766b6728e80734def3281600ee8f68b19db3fe26614ab7ee
 
 [files.".mustflow/skills/INDEX.md"]
 source = "template_locale"
-last_action = "overwritten"
-content_hash = "sha256:a19045c7be296a61a4d568e413895a25acdc76653a7c3f559331cf65da04dd55"
+last_action = "updated"
+content_hash = "sha256:ad75b18392227c354deb139d09448e6e7869592808e4b1f7baaca0d3aa84d315"
 
 [files.".mustflow/skills/adapter-boundary/SKILL.md"]
 source = "template_locale"
@@ -237,3 +237,8 @@ content_hash = "sha256:de2164ce7fdd52f85a22431583b2be9b6737faf0ff4e0f88af8a39ae0
 source = "template_common"
 last_action = "customized"
 content_hash = "sha256:516ad77bb0284c2087cda4e1911772ecf2b23e13aead525d38045d76a60c3b48"
+
+[files.".mustflow/skills/test-design-guard/SKILL.md"]
+source = "template_locale"
+last_action = "created"
+content_hash = "sha256:70658ba7dcea451addc9189a439cc83b78ec90a19367a487d898994281ccccc1"
