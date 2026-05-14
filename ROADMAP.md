@@ -1,132 +1,90 @@
 # Roadmap
 
-This roadmap records the installation and adoption order for Workduck. It is a
-sequencing document, not proof that a dependency is already installed or
-declared in this repository.
+This roadmap records Workduck's current build order. It should stay grounded in
+working product surfaces and should not list speculative dependencies as active
+work.
 
-## Installation Order
+## In Place
 
-### 1. Runtime Scaffold
+### Runtime And Shell
 
-Create the smallest desktop app that can build and run.
+- Static SvelteKit UI loaded by a Tauri 2 desktop shell.
+- Rust command boundary for filesystem, Git, sync, tray, window, and SQLite
+  operations.
+- Custom title bar, resizable sidebar, tray integration, startup setting, and
+  minimize-to-tray setting.
+- Bundled editor fonts and appearance settings for interface and editor font
+  sizes.
 
-The initial runtime scaffold is in place: static SvelteKit output is loaded by
-the Tauri desktop shell, and native calls cross a Rust command boundary.
+### Workspace And Sync
 
-The frontend should be a static SvelteKit app loaded by Tauri. Do not put core
-application logic into SvelteKit server routes.
+- Workspace profiles with local paths, per-workspace password locking, unlock
+  retry delay, and manual lock.
+- Settings tabs for appearance, workspaces, encrypted sync, and system options.
+- Encrypted workspace, project, group, and repository metadata sync file
+  export/import.
+- Repository local paths are synced as workspace-relative paths when possible;
+  raw repository absolute paths are not written into the sync payload.
+- Optional Git pull and push for the selected encrypted sync folder.
+- Environment variable vault UI for API keys, tokens, accounts, and passwords.
 
-### 2. UI Foundation
+### Projects And Repositories
 
-Install only the UI foundation needed for the first daily-use product surface.
+- Project board organized as Project -> Group -> Repository.
+- Workspace project folders created under `<workspace>/projects/`.
+- Project and group descriptions with edit actions.
+- Project cards show group and repository counts.
+- Group cards show repository counts.
+- Repository cards support local Git detection, clone, Git init, fetch, pull,
+  push, publish, tags, and folder opening.
+- Repository cards show operation status, preserve failure messages on the
+  affected card, and block duplicate clicks during long-running operations.
+- Repository filters for tags, pull-needed repositories, and push-needed
+  repositories.
 
-The initial UI foundation is in place: Tailwind CSS handles styling utilities,
-and Bits UI is declared for headless Svelte primitives when concrete controls
-need it.
+### Data And Packages
 
-Defer `shadcn-svelte` until the app has concrete screens that need copied,
-owned components. Keep the first UI surface focused on Projects, Artifacts,
-Briefs, Runs, Gates, Repos, Catalogs, and Settings.
+- Rust SQLite boundary with WAL, foreign keys, busy timeout, migrations,
+  checksum drift protection, JSON artifact blobs, and FTS5 indexing.
+- Workspace packages for core vocabulary, shared schemas, prompt compilation,
+  agent export, and workbench orchestration.
+- Agent Brief Markdown export targets for Claude Code, Codex, Cursor, and
+  OpenCode.
+- Artifact draft editor powered by CodeMirror for Markdown, JSON, and YAML.
+- Agents menu shell without runtime execution.
 
-### 3. Workspace Package Boundaries
+## Next Work
 
-Create package boundaries before adding heavier feature dependencies.
+1. Move project board metadata from browser storage to the Rust SQLite boundary.
+2. Add persisted operation records for repository actions: clone, init, fetch,
+   pull, push, and publish.
+3. Add a workspace path repair flow for devices where the synced workspace path
+   does not exist locally.
+4. Connect artifact drafts to SQLite artifact tables and the FTS5 search index.
+5. Build the first Agent Brief -> Run -> Gate loop using local data only.
+6. Add an AGENTS.md generator after the brief/run/gate loop exists.
+7. Add a local shell runner with explicit approval after run records can capture
+   command, output, diff, and approval state.
+8. Add OpenCode and other agent adapters only after the local runner boundary is
+   stable.
 
-The initial workspace package boundaries are in place: core vocabulary, shared
-schemas, prompt compilation, and workbench orchestration.
+## Deferred Dependencies
 
-These packages define the initial domain language: Project, Repo, Project
-Folder, Artifact, Catalog, Service, Agent Brief, Run, Gate, and later Recipe and
-Block.
-
-### 4. Local Data Layer
-
-Add persistence after the runtime scaffold and package boundaries exist.
-
-The initial in-memory domain model is in place for:
-
-- Project as a multi-repository work unit.
-- Repo as a local Git repository or folder.
-- Project Folder and Project Repo Placement.
-- Service and Catalog Artifact records.
-- Artifact, Brief, Run, and Gate records.
-
-The initial SQLite runtime boundary is in place: the Tauri shell opens a local
-app-data SQLite database through Rust, configures WAL, foreign keys, and a busy
-timeout, and exposes a status command without letting the UI issue raw SQL.
-
-The initial migration runner is in place: Rust applies ordered SQL migrations
-transactionally, records applied versions and checksums in `schema_migrations`,
-and refuses checksum drift or newer database versions.
-
-The initial JSON artifact blob schema is in place: SQLite stores structured
-artifact payloads as validated JSON text with metadata, content hashes, and
-lookup indexes without exposing raw SQL to the UI.
-
-The initial FTS5 search index is in place: SQLite keeps a rebuildable full-text
-index for artifact blob JSON content and metadata through migration-managed
-triggers.
-
-Defer vector search until there is real artifact and run data to search.
-
-### 5. Artifact Editing And Graph Views
-
-Install these only when the matching product surface is being built.
-
-The initial artifact editor surface is in place: CodeMirror powers the
-`/artifacts` draft editor for Markdown, JSON, and YAML content.
-
-1. Svelte Flow for artifact dependencies, task graphs, or run handoff graphs.
-2. Tiptap only if rich-text narrative documents need a dedicated editor.
-
-Do not install graph or rich-text dependencies before the first artifact and
-brief workflows are working.
-
-### 6. Agent And Execution Layer
-
-Add agent integrations after Artifacts, Briefs, Runs, and Gates have real data
-models.
-
-The initial prompt export layer is in place: `@workduck/agents` compiles Agent
-Brief Markdown exports for Claude Code, Codex, Cursor, and OpenCode without
-calling agent SDKs or local execution tools.
-
-1. OpenCode adapter.
-2. Local shell runner with explicit approval.
-3. AGENTS.md generator.
-4. Additional coding-agent adapters only when a real workflow requires them.
-
-Agent systems are adapters or export targets. They are not the Workduck core.
-
-### 7. Integration And Evaluation Layer
-
-Defer these until the local desktop workflow is useful without them.
-
-1. Workduck MCP server.
-2. MCP client support.
-3. Direct GitHub integration.
-4. Direct Figma and Linear integrations.
-5. Long-tail SaaS integration through Composio, Pipedream, or Zapier MCP.
-6. Local Docker sandbox.
-7. E2B or Daytona sandbox adapter.
-8. Langfuse or Phoenix observability.
-9. Promptfoo evaluation and red-team suites.
-10. Trigger.dev or Inngest for durable remote runs.
+- Svelte Flow: wait until artifact dependency graphs, task graphs, or run
+  handoff graphs are being built.
+- Tiptap: wait until rich-text narrative documents need a dedicated editor.
+- shadcn-svelte: wait until concrete copied component ownership is useful.
+- Runtime agent SDKs: wait until Agent Briefs, Runs, and Gates have real data.
+- MCP server/client: wait until local artifacts and briefs can be read and
+  written through stable commands.
+- Observability and evaluation services: wait until local run traces exist.
+- Cloud runners and sandboxes: wait until local approval-gated execution works.
+- Vector search: wait until there is meaningful artifact and run data.
 
 ## Distribution Order
 
 1. GitHub Releases for early desktop installers.
 2. Tauri updater metadata served from release artifacts or another static host.
 3. npm packages later for CLI, SDK, schemas, or MCP server packages.
-4. Microsoft Store only after the Windows desktop build, signing, offline
-   installer path, and update story are stable.
-
-## Do Not Install Yet
-
-- Svelte Flow before there is a graph screen.
-- Tiptap before rich-text document editing is clearly needed.
-- shadcn-svelte before concrete component needs exist.
-- Agent adapters before Agent Briefs and Runs exist.
-- MCP before local artifacts and briefs can be read and written.
-- Observability or evaluation services before local run traces exist.
-- Cloud runners or sandboxes before local approval-gated execution works.
+4. Microsoft Store only after Windows signing, installer, updater, and support
+   flow are stable.
