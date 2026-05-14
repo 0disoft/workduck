@@ -1,4 +1,6 @@
 mod storage;
+mod project_folder;
+mod project_repository;
 mod secret_vault_crypto;
 mod tray_menu;
 mod workspace_password;
@@ -57,7 +59,19 @@ pub fn run() {
             workspace_sync_git::run_workspace_sync_git,
             workspace_password::create_workspace_password_hash,
             workspace_password::verify_workspace_password,
-            workspace_path::validate_workspace_path
+            workspace_path::validate_workspace_path,
+            project_repository::clone_project_repository,
+            project_repository::fetch_project_repository_git,
+            project_repository::initialize_project_repository_git,
+            project_repository::inspect_project_repository_git,
+            project_repository::pull_project_repository_git,
+            project_repository::publish_project_repository_to_github,
+            project_repository::push_project_repository_git,
+            project_folder::create_project_folder,
+            project_folder::create_project_group_folder,
+            project_folder::ensure_project_folder_path,
+            project_folder::open_project_folder_path,
+            project_folder::open_project_node_folder
         ])
         .run(tauri::generate_context!())
         .expect("error while running Workduck");

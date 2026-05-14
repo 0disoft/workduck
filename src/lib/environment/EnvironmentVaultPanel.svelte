@@ -334,7 +334,6 @@
 		</form>
 	{:else}
 		<div class="workduck-environment-toolbar">
-			<span class="workduck-active-workspace">{workspace.name}</span>
 			<button class="workduck-button workduck-button-secondary" type="button" onclick={handleLockVault}>
 				Lock
 			</button>

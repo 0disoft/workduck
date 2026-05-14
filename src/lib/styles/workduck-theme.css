@@ -6,6 +6,7 @@
 	--color-workduck-muted: var(--workduck-color-muted);
 	--color-workduck-panel: var(--workduck-color-panel);
 	--color-workduck-surface: var(--workduck-color-surface);
+	--color-workduck-success: var(--workduck-color-success);
 	--color-workduck-text: var(--workduck-color-text);
 }
 
@@ -21,6 +22,7 @@
 	--workduck-oklch-muted: 76.65% 0.0314 251.35;
 	--workduck-oklch-muted-strong: 63.53% 0.0361 256.8;
 	--workduck-oklch-accent: 96.88% 0.175 110.65;
+	--workduck-oklch-success: 85.77% 0.2505 145.2;
 	--workduck-oklch-border: 36.37% 0.0436 256.47;
 	--workduck-oklch-control: 43.82% 0.0432 257.42;
 	--workduck-oklch-danger: 56.79% 0.1912 18.78;
@@ -51,6 +53,7 @@
 	--workduck-color-muted: oklch(var(--workduck-oklch-muted));
 	--workduck-color-muted-strong: oklch(var(--workduck-oklch-muted-strong));
 	--workduck-color-accent: oklch(var(--workduck-oklch-accent));
+	--workduck-color-success: oklch(var(--workduck-oklch-success));
 	--workduck-color-border: oklch(var(--workduck-oklch-border));
 	--workduck-color-control: oklch(var(--workduck-oklch-control));
 	--workduck-color-danger: oklch(var(--workduck-oklch-danger));

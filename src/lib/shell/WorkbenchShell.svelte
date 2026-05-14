@@ -24,7 +24,6 @@
 		switchWorkspace,
 		type WorkspaceRegistry
 	} from '$lib/workspaces/workspace-registry';
-	import { formatWorkspacePathForDisplay } from '$lib/workspaces/workspace-path-format';
 	import {
 		readWorkspaceRegistryFromBrowser,
 		subscribeWorkspaceRegistry,
@@ -72,6 +71,7 @@
 	const primaryNavigationItems = [
 		{ href: '/', label: 'Projects' },
 		{ href: '/artifacts', label: 'Artifacts' },
+		{ href: '/agents', label: 'Agents' },
 		{ href: '/environment', label: 'Environment' }
 	] as const;
 	const settingsNavigationItem = { href: '/settings', label: 'Settings' } as const;
@@ -627,9 +627,6 @@
 									onclick={() => handleWorkspaceSwitch(workspace.id)}
 								>
 									<span class="workduck-workspace-menu-name">{workspace.name}</span>
-									<span class="workduck-workspace-menu-path">
-										{formatWorkspacePathForDisplay(workspace.path)}
-									</span>
 									{#if workspaceRequiresUnlock(workspace) && !isWorkspaceUnlocked(workspace)}
 										<span class="workduck-workspace-menu-lock">Locked</span>
 									{/if}
@@ -1112,8 +1109,7 @@
 		color: var(--workduck-color-accent);
 	}
 
-	.workduck-workspace-menu-name,
-	.workduck-workspace-menu-path {
+	.workduck-workspace-menu-name {
 		min-width: 0;
 		overflow: hidden;
 		text-overflow: ellipsis;
@@ -1123,12 +1119,6 @@
 	.workduck-workspace-menu-name {
 		font-size: var(--workduck-font-size-xs);
 		font-weight: 800;
-	}
-
-	.workduck-workspace-menu-path {
-		color: var(--workduck-color-muted);
-		font-size: var(--workduck-font-size-2xs);
-		font-weight: 700;
 	}
 
 	.workduck-workspace-menu-lock {

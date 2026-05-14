@@ -4,7 +4,6 @@
 	import {
 		addWorkspace,
 		createEmptyWorkspaceRegistry,
-		getActiveWorkspace,
 		removeWorkspace,
 		switchWorkspace,
 		WORKSPACE_NAME_MAX_LENGTH,
@@ -30,12 +29,15 @@
 	} from '$lib/workspaces/workspace-storage';
 	import {
 		isWorkspaceUnlocked,
+		markWorkspaceLocked,
 		markWorkspaceUnlocked,
+		subscribeWorkspaceUnlocks,
 		workspaceRequiresUnlock
 	} from '$lib/workspaces/workspace-unlock';
 	import WorkspaceUnlockForm from '$lib/workspaces/WorkspaceUnlockForm.svelte';
 
 	type WorkspaceFormError = WorkspaceRegistryError | WorkspacePathError | WorkspacePasswordError;
+	type WorkspaceUnlockIntent = 'switch' | 'remove';
 
 	let registry = $state<WorkspaceRegistry>(createEmptyWorkspaceRegistry());
 	let workspaceName = $state('');
@@ -43,13 +45,19 @@
 	let workspacePathDisplay = $state('');
 	let workspacePassword = $state('');
 	let workspaceUnlockId = $state<string | null>(null);
+	let workspaceUnlockIntent = $state<WorkspaceUnlockIntent | null>(null);
+	let workspaceRemoveConfirmationId = $state<string | null>(null);
+	let workspaceUnlockRevision = $state(0);
 	let formError = $state<WorkspaceFormError | null>(null);
 	let storageError = $state<string | null>(null);
 	let hasLoaded = $state(false);
 	let isAddingWorkspace = $state(false);
 	let isSelectingWorkspacePath = $state(false);
 
-	let activeWorkspace = $derived(getActiveWorkspace(registry));
+	let workspaceRemoveCandidate = $derived(
+		registry.workspaces.find((workspace) => workspace.id === workspaceRemoveConfirmationId) ??
+			null
+	);
 	let canAddWorkspace = $derived(
 		workspaceName.trim().length > 0 &&
 			workspacePath.trim().length > 0 &&
@@ -118,8 +126,30 @@
 		return error?.startsWith('workspace-path-') ?? false;
 	}
 
+	function workspaceIsUnlocked(workspace: WorkspaceRegistry['workspaces'][number]) {
+		return workspaceUnlockRevision >= 0 && isWorkspaceUnlocked(workspace);
+	}
+
+	function workspaceIsActive(workspace: WorkspaceRegistry['workspaces'][number]) {
+		return registry.activeWorkspaceId === workspace.id && workspaceIsUnlocked(workspace);
+	}
+
 	function clearFormError() {
 		formError = null;
+	}
+
+	function requestWorkspaceUnlock(workspaceId: string, intent: WorkspaceUnlockIntent) {
+		workspaceUnlockId = workspaceId;
+		workspaceUnlockIntent = intent;
+	}
+
+	function clearWorkspaceUnlockRequest() {
+		workspaceUnlockId = null;
+		workspaceUnlockIntent = null;
+	}
+
+	function clearWorkspaceRemoveConfirmation() {
+		workspaceRemoveConfirmationId = null;
 	}
 
 	function handleWorkspacePathInput(event: Event) {
@@ -223,7 +253,7 @@
 		}
 
 		if (workspaceRequiresUnlock(workspace) && !isWorkspaceUnlocked(workspace)) {
-			workspaceUnlockId = workspace.id;
+			requestWorkspaceUnlock(workspace.id, 'switch');
 			return;
 		}
 
@@ -239,11 +269,59 @@
 		}
 
 		persistRegistry(result.registry);
-		workspaceUnlockId = null;
+		clearWorkspaceUnlockRequest();
 	}
 
 	function handleWorkspaceRemove(workspaceId: string) {
 		formError = null;
+		const workspace = registry.workspaces.find((candidate) => candidate.id === workspaceId);
+
+		if (workspace === undefined) {
+			formError = 'workspace-not-found';
+			return;
+		}
+
+		if (workspaceRequiresUnlock(workspace) && !isWorkspaceUnlocked(workspace)) {
+			requestWorkspaceUnlock(workspace.id, 'remove');
+			return;
+		}
+
+		requestWorkspaceRemoveConfirmation(workspaceId);
+	}
+
+	function requestWorkspaceRemoveConfirmation(workspaceId: string) {
+		formError = null;
+		const workspace = registry.workspaces.find((candidate) => candidate.id === workspaceId);
+
+		if (workspace === undefined) {
+			formError = 'workspace-not-found';
+			return;
+		}
+
+		workspaceRemoveConfirmationId = workspace.id;
+	}
+
+	function handleWorkspaceLock(workspaceId: string) {
+		formError = null;
+		const workspace = registry.workspaces.find((candidate) => candidate.id === workspaceId);
+
+		if (workspace === undefined) {
+			formError = 'workspace-not-found';
+			return;
+		}
+
+		if (!workspaceRequiresUnlock(workspace)) {
+			return;
+		}
+
+		markWorkspaceLocked(workspaceId);
+
+		if (workspaceUnlockId === workspaceId) {
+			clearWorkspaceUnlockRequest();
+		}
+	}
+
+	function removeWorkspaceById(workspaceId: string) {
 		const result = removeWorkspace(registry, workspaceId);
 
 		if (!result.ok) {
@@ -251,7 +329,47 @@
 			return;
 		}
 
-		persistRegistry(result.registry);
+		if (persistRegistry(result.registry)) {
+			markWorkspaceLocked(workspaceId);
+
+			if (workspaceUnlockId === workspaceId) {
+				clearWorkspaceUnlockRequest();
+			}
+
+			if (workspaceRemoveConfirmationId === workspaceId) {
+				clearWorkspaceRemoveConfirmation();
+			}
+		}
+	}
+
+	function handleWorkspaceUnlocked(workspaceId: string) {
+		if (workspaceUnlockIntent === 'remove') {
+			clearWorkspaceUnlockRequest();
+			requestWorkspaceRemoveConfirmation(workspaceId);
+			return;
+		}
+
+		switchWorkspaceById(workspaceId);
+	}
+
+	function confirmWorkspaceRemove() {
+		if (workspaceRemoveConfirmationId === null) {
+			return;
+		}
+
+		removeWorkspaceById(workspaceRemoveConfirmationId);
+	}
+
+	function handleWorkspaceRemoveConfirmationBackdropClick(event: MouseEvent) {
+		if (event.target === event.currentTarget) {
+			clearWorkspaceRemoveConfirmation();
+		}
+	}
+
+	function handleWorkspaceRemoveConfirmationKeydown(event: KeyboardEvent) {
+		if (workspaceRemoveConfirmationId !== null && event.key === 'Escape') {
+			clearWorkspaceRemoveConfirmation();
+		}
 	}
 
 	onMount(() => {
@@ -260,23 +378,25 @@
 			registry = nextRegistry;
 			storageError = null;
 		});
+		const unsubscribeWorkspaceUnlocks = subscribeWorkspaceUnlocks(() => {
+			workspaceUnlockRevision += 1;
+		});
 		hasLoaded = true;
 
-		return unsubscribeWorkspaceRegistry;
+		return () => {
+			unsubscribeWorkspaceRegistry();
+			unsubscribeWorkspaceUnlocks();
+		};
 	});
 </script>
+
+<svelte:window onkeydown={handleWorkspaceRemoveConfirmationKeydown} />
 
 <section
 	id="settings-panel-workspaces"
 	class="workduck-settings-section"
 	aria-label="Workspaces"
 >
-	{#if activeWorkspace !== null}
-		<div class="workduck-settings-section-header">
-			<span class="workduck-active-workspace">{activeWorkspace.name}</span>
-		</div>
-	{/if}
-
 	<form class="workduck-workspace-form" onsubmit={handleWorkspaceSubmit}>
 		<label class="workduck-form-field" for="workspace-name">
 			<span>Name</span>
@@ -304,7 +424,7 @@
 					autocomplete="off"
 					spellcheck="false"
 					oninput={handleWorkspacePathInput}
-				aria-invalid={isWorkspacePathError(formError)}
+					aria-invalid={isWorkspacePathError(formError)}
 				/>
 				<button
 					class="workduck-icon-button"
@@ -359,37 +479,54 @@
 						<span class="workduck-workspace-path">
 							{formatWorkspacePathForDisplay(workspace.path)}
 						</span>
-						{#if workspaceRequiresUnlock(workspace) && !isWorkspaceUnlocked(workspace)}
-							<span class="workduck-workspace-lock-state">Locked</span>
+						{#if workspaceIsActive(workspace) || (workspaceRequiresUnlock(workspace) && !workspaceIsUnlocked(workspace))}
+							<span class="workduck-workspace-statuses" aria-label="Workspace status">
+								{#if workspaceIsActive(workspace)}
+									<span class="workduck-status-pill workduck-status-pill-success">Active</span>
+								{/if}
+								{#if workspaceRequiresUnlock(workspace) && !workspaceIsUnlocked(workspace)}
+									<span class="workduck-status-pill workduck-status-pill-locked">Locked</span>
+								{/if}
+							</span>
 						{/if}
 						{#if workspaceUnlockId === workspace.id}
 							<WorkspaceUnlockForm
 								workspace={workspace}
-								onUnlocked={() => switchWorkspaceById(workspace.id)}
-								onCancel={() => (workspaceUnlockId = null)}
+								submitLabel={workspaceUnlockIntent === 'remove' ? 'Remove' : 'Unlock'}
+								onUnlocked={() => handleWorkspaceUnlocked(workspace.id)}
+								onCancel={clearWorkspaceUnlockRequest}
 							/>
 						{/if}
 					</div>
 
 					<div class="workduck-workspace-actions">
-						{#if workspaceRequiresUnlock(workspace) && !isWorkspaceUnlocked(workspace)}
+						{#if workspaceRequiresUnlock(workspace) && !workspaceIsUnlocked(workspace)}
 							<button
 								class="workduck-button workduck-button-secondary"
 								type="button"
-								onclick={() => (workspaceUnlockId = workspace.id)}
+								onclick={() => requestWorkspaceUnlock(workspace.id, 'switch')}
 							>
 								Unlock
 							</button>
-						{:else if registry.activeWorkspaceId === workspace.id}
-							<span class="workduck-status-pill">Active</span>
 						{:else}
-							<button
-								class="workduck-button workduck-button-secondary"
-								type="button"
-								onclick={() => handleWorkspaceSwitch(workspace.id)}
-							>
-								Switch
-							</button>
+							{#if registry.activeWorkspaceId !== workspace.id}
+								<button
+									class="workduck-button workduck-button-secondary"
+									type="button"
+									onclick={() => handleWorkspaceSwitch(workspace.id)}
+								>
+									Switch
+								</button>
+							{/if}
+							{#if workspaceRequiresUnlock(workspace)}
+								<button
+									class="workduck-button workduck-button-secondary"
+									type="button"
+									onclick={() => handleWorkspaceLock(workspace.id)}
+								>
+									Lock
+								</button>
+							{/if}
 						{/if}
 						<button
 							class="workduck-button workduck-button-danger"
@@ -402,5 +539,45 @@
 				</li>
 			{/each}
 		</ul>
+	{/if}
+
+	{#if workspaceRemoveCandidate !== null}
+		<!-- svelte-ignore a11y_no_static_element_interactions -->
+		<div
+			class="workduck-dialog-backdrop"
+			role="presentation"
+			onclick={handleWorkspaceRemoveConfirmationBackdropClick}
+		>
+			<div
+				class="workduck-dialog"
+				role="dialog"
+				aria-modal="true"
+				aria-labelledby="workspace-remove-confirm-title"
+				aria-describedby="workspace-remove-confirm-description"
+			>
+				<h2 id="workspace-remove-confirm-title" class="workduck-dialog-title">
+					Remove workspace
+				</h2>
+				<p id="workspace-remove-confirm-description" class="workduck-dialog-text">
+					Remove {workspaceRemoveCandidate.name}? Local files are not deleted.
+				</p>
+				<div class="workduck-dialog-actions">
+					<button
+						class="workduck-button workduck-button-secondary"
+						type="button"
+						onclick={clearWorkspaceRemoveConfirmation}
+					>
+						Cancel
+					</button>
+					<button
+						class="workduck-button workduck-button-danger"
+						type="button"
+						onclick={confirmWorkspaceRemove}
+					>
+						Remove
+					</button>
+				</div>
+			</div>
+		</div>
 	{/if}
 </section>
