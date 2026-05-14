@@ -6,6 +6,11 @@
 		writeWorkspaceRegistryToBrowser
 	} from '$lib/workspaces/workspace-storage';
 	import {
+		readProjectRegistriesFromBrowser,
+		writeProjectRegistriesToBrowser,
+		type ProjectRegistryStorageError
+	} from '$lib/projects/project-storage';
+	import {
 		readWorkspaceSyncFile,
 		writeWorkspaceSyncFile,
 		isWorkspaceSyncFileNameUsable,
@@ -22,8 +27,8 @@
 		type WorkspaceSyncGitRunOutcome
 	} from '$lib/workspaces/workspace-sync-git';
 	import {
-		decryptWorkspaceRegistryFromSync,
-		encryptWorkspaceRegistryForSync,
+		decryptWorkspaceDataFromSync,
+		encryptWorkspaceDataForSync,
 		parseWorkspaceSyncEnvelope,
 		type WorkspaceSyncRegistryError
 	} from '$lib/workspaces/workspace-sync';
@@ -57,6 +62,7 @@
 	type SyncPanelError =
 		| WorkspaceSyncRegistryError
 		| WorkspaceSyncFileError
+		| ProjectRegistryStorageError
 		| SyncSettingsStorageError
 		| WorkspaceSyncGitRunError;
 
@@ -175,6 +181,10 @@
 			case 'workspace-sync-plaintext-invalid':
 			case 'workspace-sync-registry-invalid':
 				return 'Workspace data is invalid.';
+			case 'project-registry-read-failed':
+				return 'Project metadata could not be loaded.';
+			case 'project-registry-write-failed':
+				return 'Project metadata could not be saved.';
 			case 'workspace-sync-unavailable':
 				return 'Sync encryption is available in the desktop app.';
 			case 'sync-settings-storage-unavailable':
@@ -407,7 +417,21 @@
 			return null;
 		}
 
-		const result = await encryptWorkspaceRegistryForSync(registryResult.registry, syncPassword);
+		const projectRegistriesResult = readProjectRegistriesFromBrowser(
+			registryResult.registry.workspaces.map((workspace) => workspace.id)
+		);
+
+		if (!projectRegistriesResult.ok) {
+			isBusy = false;
+			syncError = projectRegistriesResult.error;
+			return null;
+		}
+
+		const result = await encryptWorkspaceDataForSync(
+			registryResult.registry,
+			projectRegistriesResult.registries,
+			syncPassword
+		);
 
 		isBusy = false;
 
@@ -432,7 +456,7 @@
 		syncError = null;
 		syncStatus = null;
 
-		const result = await decryptWorkspaceRegistryFromSync(envelope, syncPassword);
+		const result = await decryptWorkspaceDataFromSync(envelope, syncPassword);
 
 		isBusy = false;
 
@@ -441,10 +465,17 @@
 			return false;
 		}
 
-		const writeResult = writeWorkspaceRegistryToBrowser(result.registry);
+		const writeResult = writeWorkspaceRegistryToBrowser(result.data.workspaceRegistry);
 
 		if (!writeResult.ok) {
 			syncError = 'workspace-sync-registry-invalid';
+			return false;
+		}
+
+		const projectWriteResult = writeProjectRegistriesToBrowser(result.data.projectRegistries);
+
+		if (!projectWriteResult.ok) {
+			syncError = projectWriteResult.error;
 			return false;
 		}
 
@@ -608,11 +639,7 @@
 	});
 </script>
 
-<section class="workduck-settings-section" id="settings-panel-sync" aria-labelledby="settings-sync-title">
-	<header class="workduck-settings-section-header">
-		<h2 class="workduck-section-title" id="settings-sync-title">Sync</h2>
-	</header>
-
+<section class="workduck-settings-section" id="settings-panel-sync" aria-label="Sync">
 	<div class="workduck-sync-profile-form">
 		<label class="workduck-form-field" for="sync-profile-name">
 			Name

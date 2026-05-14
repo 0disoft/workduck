@@ -1,11 +1,19 @@
 import {
+	normalizeProjectRegistry,
+	WORKDUCK_PROJECT_REGISTRY_VERSION,
+	type ProjectRegistry
+} from '$lib/projects/project-registry';
+import {
 	parseWorkspaceRegistry,
 	serializeWorkspaceRegistry,
 	type WorkspaceRegistry
 } from './workspace-registry';
+import { normalizeWorkspacePathForStorage } from './workspace-path-format';
 
 export const WORKSPACE_SYNC_FORMAT = 'workduck.workspace-sync';
 export const WORKSPACE_SYNC_VERSION = 1;
+export const WORKSPACE_SYNC_PAYLOAD_FORMAT = 'workduck.sync-data';
+export const WORKSPACE_SYNC_PAYLOAD_VERSION = 1;
 
 export type WorkspaceSyncCryptoError =
 	| 'workspace-sync-password-required'
@@ -23,6 +31,13 @@ export type WorkspaceSyncCryptoError =
 export type WorkspaceSyncRegistryError =
 	| WorkspaceSyncCryptoError
 	| 'workspace-sync-registry-invalid';
+
+export interface WorkspaceSyncData {
+	readonly format: typeof WORKSPACE_SYNC_PAYLOAD_FORMAT;
+	readonly version: typeof WORKSPACE_SYNC_PAYLOAD_VERSION;
+	readonly workspaceRegistry: WorkspaceRegistry;
+	readonly projectRegistries: Record<string, ProjectRegistry>;
+}
 
 export interface WorkspaceSyncEnvelope {
 	readonly format: typeof WORKSPACE_SYNC_FORMAT;
@@ -62,6 +77,16 @@ export type WorkspaceSyncRegistryDecryptionResult =
 			readonly error: WorkspaceSyncRegistryError;
 	  };
 
+export type WorkspaceSyncDataDecryptionResult =
+	| {
+			readonly ok: true;
+			readonly data: WorkspaceSyncData;
+	  }
+	| {
+			readonly ok: false;
+			readonly error: WorkspaceSyncRegistryError;
+	  };
+
 interface TauriCoreApi {
 	readonly invoke?: <T>(command: string, args?: Record<string, unknown>) => Promise<T>;
 }
@@ -91,6 +116,17 @@ export async function encryptWorkspaceRegistryForSync(
 	return encryptWorkspaceSyncPayload(serializeWorkspaceRegistry(registry), password);
 }
 
+export async function encryptWorkspaceDataForSync(
+	workspaceRegistry: WorkspaceRegistry,
+	projectRegistries: Record<string, ProjectRegistry>,
+	password: string
+): Promise<WorkspaceSyncEncryptionResult> {
+	return encryptWorkspaceSyncPayload(
+		serializeWorkspaceSyncData(workspaceRegistry, projectRegistries),
+		password
+	);
+}
+
 export async function decryptWorkspaceRegistryFromSync(
 	envelope: WorkspaceSyncEnvelope,
 	password: string
@@ -110,6 +146,23 @@ export async function decryptWorkspaceRegistryFromSync(
 	return { ok: true, registry };
 }
 
+export async function decryptWorkspaceDataFromSync(
+	envelope: WorkspaceSyncEnvelope,
+	password: string
+): Promise<WorkspaceSyncDataDecryptionResult> {
+	const result = await decryptWorkspaceSyncPayload(envelope, password);
+
+	if (!result.ok) {
+		return result;
+	}
+
+	const data = parseWorkspaceSyncData(result.plaintext);
+
+	return data === null
+		? { ok: false, error: 'workspace-sync-registry-invalid' }
+		: { ok: true, data };
+}
+
 export function parseWorkspaceSyncEnvelope(serializedEnvelope: string): WorkspaceSyncEnvelope | null {
 	try {
 		const value: unknown = JSON.parse(serializedEnvelope);
@@ -118,6 +171,196 @@ export function parseWorkspaceSyncEnvelope(serializedEnvelope: string): Workspac
 	} catch {
 		return null;
 	}
+}
+
+function serializeWorkspaceSyncData(
+	workspaceRegistry: WorkspaceRegistry,
+	projectRegistries: Record<string, ProjectRegistry>
+) {
+	const normalizedWorkspaceRegistry = parseWorkspaceRegistry(serializeWorkspaceRegistry(workspaceRegistry));
+	const workspacePathById = new Map(
+		normalizedWorkspaceRegistry.workspaces.map((workspace) => [workspace.id, workspace.path])
+	);
+
+	return JSON.stringify({
+		format: WORKSPACE_SYNC_PAYLOAD_FORMAT,
+		version: WORKSPACE_SYNC_PAYLOAD_VERSION,
+		workspaceRegistry: normalizedWorkspaceRegistry,
+		projectRegistries: Object.fromEntries(
+			normalizedWorkspaceRegistry.workspaces.map((workspace) => [
+				workspace.id,
+				createProjectRegistrySyncSnapshot(
+					normalizeProjectRegistry(projectRegistries[workspace.id], workspace.id),
+					workspacePathById.get(workspace.id) ?? ''
+				)
+			])
+		)
+	});
+}
+
+function parseWorkspaceSyncData(plaintext: string): WorkspaceSyncData | null {
+	try {
+		const value: unknown = JSON.parse(plaintext);
+
+		if (looksLikeWorkspaceRegistryValue(value)) {
+			const workspaceRegistry = parseWorkspaceRegistry(JSON.stringify(value));
+
+			return {
+				format: WORKSPACE_SYNC_PAYLOAD_FORMAT,
+				version: WORKSPACE_SYNC_PAYLOAD_VERSION,
+				workspaceRegistry,
+				projectRegistries: {}
+			};
+		}
+
+		if (
+			!isObjectRecord(value) ||
+			value.format !== WORKSPACE_SYNC_PAYLOAD_FORMAT ||
+			value.version !== WORKSPACE_SYNC_PAYLOAD_VERSION ||
+			!isObjectRecord(value.projectRegistries)
+		) {
+			return null;
+		}
+
+		const projectRegistrySnapshots = value.projectRegistries;
+		const workspaceRegistry = parseWorkspaceRegistry(JSON.stringify(value.workspaceRegistry));
+		const workspacePathById = new Map(
+			workspaceRegistry.workspaces.map((workspace) => [workspace.id, workspace.path])
+		);
+		const projectRegistries = Object.fromEntries(
+			workspaceRegistry.workspaces.map((workspace) => [
+				workspace.id,
+				restoreProjectRegistrySyncSnapshot(
+					projectRegistrySnapshots[workspace.id],
+					workspace.id,
+					workspacePathById.get(workspace.id) ?? ''
+				)
+			])
+		);
+
+		return {
+			format: WORKSPACE_SYNC_PAYLOAD_FORMAT,
+			version: WORKSPACE_SYNC_PAYLOAD_VERSION,
+			workspaceRegistry,
+			projectRegistries
+		};
+	} catch {
+		return null;
+	}
+}
+
+function createProjectRegistrySyncSnapshot(registry: ProjectRegistry, workspacePath: string) {
+	return {
+		version: WORKDUCK_PROJECT_REGISTRY_VERSION,
+		workspaceId: registry.workspaceId,
+		updatedAt: registry.updatedAt,
+		nodes: registry.nodes.map((node) => ({
+			...node,
+			repositories: node.repositories.map((repository) => ({
+				...repository,
+				path: null,
+				localPath: repository.path === null
+					? null
+					: createWorkspaceRelativePath(workspacePath, repository.path)
+			}))
+		}))
+	};
+}
+
+function restoreProjectRegistrySyncSnapshot(
+	value: unknown,
+	workspaceId: string,
+	workspacePath: string
+) {
+	if (!isObjectRecord(value)) {
+		return normalizeProjectRegistry(null, workspaceId);
+	}
+
+	const nodes = Array.isArray(value.nodes)
+		? value.nodes.map((node) => {
+				if (!isObjectRecord(node)) {
+					return node;
+				}
+
+				const repositories = Array.isArray(node.repositories)
+					? node.repositories.map((repository) => {
+							if (!isObjectRecord(repository)) {
+								return repository;
+							}
+
+							const localPath = readOptionalString(repository.localPath);
+							const safeLocalPath = normalizeSyncedLocalPath(localPath);
+
+							return {
+								...repository,
+								path:
+									safeLocalPath === null
+										? null
+										: createWorkspaceChildPath(workspacePath, safeLocalPath)
+							};
+						})
+					: [];
+
+				return {
+					...node,
+					repositories
+				};
+			})
+		: [];
+
+	return normalizeProjectRegistry(
+		{
+			...value,
+			version: WORKDUCK_PROJECT_REGISTRY_VERSION,
+			workspaceId,
+			nodes
+		},
+		workspaceId
+	);
+}
+
+function createWorkspaceRelativePath(workspacePath: string, childPath: string) {
+	const workspacePathKey = createPathBoundaryKey(workspacePath);
+	const childPathKey = createPathBoundaryKey(childPath);
+	const workspacePathValue = createPathBoundaryValue(workspacePath);
+	const childPathValue = createPathBoundaryValue(childPath);
+
+	if (workspacePathKey.length === 0 || childPathKey.length === 0) {
+		return null;
+	}
+
+	if (childPathKey === workspacePathKey) {
+		return '';
+	}
+
+	if (!childPathKey.startsWith(`${workspacePathKey}/`)) {
+		return null;
+	}
+
+	return childPathValue.slice(workspacePathValue.length + 1);
+}
+
+function createWorkspaceChildPath(workspacePath: string, relativePath: string) {
+	const normalizedWorkspacePath = normalizeWorkspacePathForStorage(workspacePath).replace(/[\\/]+$/u, '');
+	const normalizedRelativePath = relativePath
+		.trim()
+		.replaceAll('\\', '/')
+		.replace(/^\/+|\/+$/gu, '');
+
+	return normalizedRelativePath.length === 0
+		? normalizedWorkspacePath
+		: `${normalizedWorkspacePath}\\${normalizedRelativePath.replaceAll('/', '\\')}`;
+}
+
+function createPathBoundaryKey(path: string) {
+	return createPathBoundaryValue(path).toLocaleLowerCase('en-US');
+}
+
+function createPathBoundaryValue(path: string) {
+	return normalizeWorkspacePathForStorage(path)
+		.replaceAll('\\', '/')
+		.replace(/^\/\/\?\//u, '')
+		.replace(/\/+$/u, '');
 }
 
 async function encryptWorkspaceSyncPayload(
@@ -253,10 +496,36 @@ function looksLikeWorkspaceRegistryPlaintext(plaintext: string) {
 	try {
 		const value: unknown = JSON.parse(plaintext);
 
-		return isObjectRecord(value) && Array.isArray(value.workspaces);
+		return looksLikeWorkspaceRegistryValue(value);
 	} catch {
 		return false;
 	}
+}
+
+function looksLikeWorkspaceRegistryValue(value: unknown) {
+	return isObjectRecord(value) && Array.isArray(value.workspaces);
+}
+
+function readOptionalString(value: unknown) {
+	return typeof value === 'string' ? value.trim() : null;
+}
+
+function normalizeSyncedLocalPath(value: string | null) {
+	if (value === null) {
+		return null;
+	}
+
+	const normalizedValue = value.trim().replaceAll('\\', '/').replace(/^\/+|\/+$/gu, '');
+
+	if (normalizedValue.length === 0) {
+		return '';
+	}
+
+	const segments = normalizedValue.split('/').filter(Boolean);
+
+	return segments.length > 0 && segments.every((segment) => segment !== '.' && segment !== '..')
+		? segments.join('/')
+		: null;
 }
 
 function isObjectRecord(value: unknown): value is Record<string, unknown> {
