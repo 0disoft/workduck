@@ -20,13 +20,19 @@ work.
 
 - Workspace profiles with local paths, per-workspace password locking, unlock
   retry delay, and manual lock.
+- Workspace path repair for synced workspace metadata that points to a missing
+  local folder on the current device.
 - Settings tabs for appearance, workspaces, encrypted sync, and system options.
 - Encrypted workspace, project, group, and repository metadata sync file
   export/import.
 - Repository local paths are synced as workspace-relative paths when possible;
   raw repository absolute paths are not written into the sync payload.
 - Optional Git pull and push for the selected encrypted sync folder.
-- Environment variable vault UI for API keys, tokens, accounts, and passwords.
+- Environment variable vault UI for API keys, tokens, accounts, passwords, and
+  tags.
+- Queue menu with workspace `queue/reports` and `queue/work-orders` folder
+  creation, queued JSON listing, structured result-report review, internal
+  work-order rendering, and follow-up work-order JSON creation.
 
 ### Projects And Repositories
 
@@ -35,10 +41,17 @@ work.
 - Project and group descriptions with edit actions.
 - Project cards show group and repository counts.
 - Group cards show repository counts.
+- Delete confirmation can remove metadata only, or also remove the matching
+  local folder when it is under `<workspace>/projects/`.
 - Repository cards support local Git detection, clone, Git init, fetch, pull,
   push, publish, tags, and folder opening.
+- Projects, groups, and repositories can reference GitHub token entries from
+  the Environment vault, with repository-level selection overriding group and
+  project defaults.
 - Repository cards show operation status, preserve failure messages on the
   affected card, and block duplicate clicks during long-running operations.
+- Repository operation records for clone, init, fetch, pull, push, and publish
+  are stored in SQLite.
 - Repository filters for tags, pull-needed repositories, and push-needed
   repositories.
 - Project board metadata is stored in SQLite by workspace, with legacy
@@ -53,20 +66,19 @@ work.
 - Agent Brief Markdown export targets for Claude Code, Codex, Cursor, and
   OpenCode.
 - Artifact draft editor powered by CodeMirror for Markdown, JSON, and YAML.
-- Agents menu shell without runtime execution.
+- Queue result-report and work-order JSON contracts in the shared core and
+  schema packages.
+- Agents menu with workspace-local agent cards that reference `llm` API keys
+  from the Environment vault without copying secret values.
 
 ## Next Work
 
-1. Add persisted operation records for repository actions: clone, init, fetch,
-   pull, push, and publish.
-2. Add a workspace path repair flow for devices where the synced workspace path
-   does not exist locally.
-3. Connect artifact drafts to SQLite artifact tables and the FTS5 search index.
-4. Build the first Agent Brief -> Run -> Gate loop using local data only.
-5. Add an AGENTS.md generator after the brief/run/gate loop exists.
-6. Add a local shell runner with explicit approval after run records can capture
+1. Connect artifact drafts to SQLite artifact tables and the FTS5 search index.
+2. Build the first Agent Brief -> Run -> Gate loop using local data only.
+3. Add an AGENTS.md generator after the brief/run/gate loop exists.
+4. Add a local shell runner with explicit approval after run records can capture
    command, output, diff, and approval state.
-7. Add OpenCode and other agent adapters only after the local runner boundary is
+5. Add OpenCode and other agent adapters only after the local runner boundary is
    stable.
 
 ## Deferred Dependencies

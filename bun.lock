@@ -35,18 +35,18 @@
     },
     "packages/agents": {
       "name": "@workduck/agents",
-      "version": "1.0.94",
+      "version": "1.0.108",
       "dependencies": {
         "@workduck/prompts": "workspace:*",
       },
     },
     "packages/core": {
       "name": "@workduck/core",
-      "version": "1.0.94",
+      "version": "1.0.108",
     },
     "packages/prompts": {
       "name": "@workduck/prompts",
-      "version": "1.0.94",
+      "version": "1.0.108",
       "dependencies": {
         "@workduck/core": "workspace:*",
         "@workduck/schemas": "workspace:*",
@@ -54,14 +54,14 @@
     },
     "packages/schemas": {
       "name": "@workduck/schemas",
-      "version": "1.0.94",
+      "version": "1.0.108",
       "dependencies": {
         "@workduck/core": "workspace:*",
       },
     },
     "packages/workbench-engine": {
       "name": "@workduck/workbench-engine",
-      "version": "1.0.94",
+      "version": "1.0.108",
       "dependencies": {
         "@workduck/core": "workspace:*",
         "@workduck/prompts": "workspace:*",

@@ -13,20 +13,34 @@ Workduck is still in early development, but the current desktop surface already
 includes:
 
 - Workspace management with per-workspace password locking.
+- Workspace path repair when synced workspace metadata points to a folder that
+  does not exist on the current device.
 - Workspace and project metadata import/export through encrypted sync files.
 - Optional Git pull and push for the encrypted sync file.
 - Appearance settings for interface and editor font sizing.
 - System settings for startup and tray behavior.
-- Environment variable vault UI for API keys, tokens, accounts, and passwords.
+- Environment variable vault UI for API keys, tokens, accounts, passwords, and
+  tags.
 - Projects board with project, group, and repository cards.
-- Project and group descriptions, nested counts, and deletion confirmation.
+- GitHub credentials can be selected from Environment token entries tagged
+  `github`; projects store only the selected secret ID, not the token value.
+- Queue menu that creates workspace `queue/reports` and `queue/work-orders`
+  folders, renders structured result reports and work orders inside Workduck,
+  and writes follow-up work-order JSON files.
+- Project and group descriptions, nested counts, and deletion confirmation with
+  optional local folder removal under the workspace projects folder.
 - Repository folder creation, URL registration, clone, Git init, fetch, pull,
   push, publish, card-level operation status, tags, tag filtering, and
   pull/push-needed filtering.
+- Repository Git operations can use an Environment GitHub token instead of
+  depending only on a globally authenticated `gh` or Git credential setup.
+- Repository operation records for clone, init, fetch, pull, push, and publish
+  stored in SQLite.
 - Project board metadata stored in the local SQLite database, with legacy
   browser-stored project metadata promoted on first read.
 - Artifact draft editing with CodeMirror for Markdown, JSON, and YAML.
-- Agents menu shell without runtime agent execution.
+- Agents menu with workspace-local agent cards that reference `llm` API keys
+  from the Environment vault without copying secret values.
 - Custom title bar, sidebar resizing, tray integration, and bundled editor
   fonts.
 
@@ -41,6 +55,9 @@ absolute paths.
 
 - `src/`: SvelteKit static app code.
 - `src/lib/projects/`: project, group, repository, folder, and Git UI logic.
+- `src/lib/agents/`: workspace-local agent registry UI and storage.
+- `src/lib/queue/`: queue folder UI, report review, work-order creation, and
+  Tauri command adapter.
 - `src/lib/settings/`: workspace, sync, appearance, and system settings UI.
 - `src/lib/environment/`: environment variable vault UI.
 - `src-tauri/`: Tauri desktop shell, Rust commands, migrations, tray, Git,
@@ -95,12 +112,8 @@ mf run mustflow_check
 
 The next product work should keep the daily workbench path tight:
 
-1. Add persisted operation records for repository actions: clone, init, fetch,
-   pull, push, and publish.
-2. Add a workspace path repair flow for devices where the synced workspace path
-   does not exist locally.
-3. Connect artifact drafts to the SQLite artifact tables and search index.
-4. Build the first Agent Brief, Run, and Gate loop before adding runtime agent
+1. Connect artifact drafts to the SQLite artifact tables and search index.
+2. Build the first Agent Brief, Run, and Gate loop before adding runtime agent
    adapters.
 
 ## Agent Workflow
