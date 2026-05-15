@@ -60,6 +60,12 @@ export type ProjectRepositoryGitError =
 	| 'project-repository-github-create-failed';
 
 export type ProjectRepositoryGithubVisibility = 'private' | 'public';
+export type ProjectRepositoryGitCredentialKind = 'github-token';
+
+export interface ProjectRepositoryGitCredentialInput {
+	readonly kind: ProjectRepositoryGitCredentialKind;
+	readonly value: string;
+}
 
 export type ProjectRepositoryCloneResult =
 	| {
@@ -99,6 +105,7 @@ interface ProjectRepositoryCloneInput {
 	readonly groupRelativePath: string;
 	readonly repositoryName: string;
 	readonly remoteUrl: string;
+	readonly credential?: ProjectRepositoryGitCredentialInput | null;
 }
 
 interface ProjectRepositoryGithubPublishInput {
@@ -106,6 +113,7 @@ interface ProjectRepositoryGithubPublishInput {
 	readonly repositoryName: string;
 	readonly commitMessage: string;
 	readonly visibility: ProjectRepositoryGithubVisibility;
+	readonly credential?: ProjectRepositoryGitCredentialInput | null;
 }
 
 interface TauriCoreApi {
@@ -153,7 +161,8 @@ export async function cloneProjectRepository(
 			workspacePath: normalizeWorkspacePathForStorage(input.workspacePath),
 			groupRelativePath: input.groupRelativePath,
 			repositoryName: input.repositoryName,
-			remoteUrl: input.remoteUrl
+			remoteUrl: input.remoteUrl,
+			...createCredentialCommandArgs(input.credential ?? null)
 		});
 
 		if (response.ok && typeof response.path === 'string') {
@@ -221,26 +230,38 @@ export async function initializeProjectRepositoryGit(
 }
 
 export async function fetchProjectRepositoryGit(
-	path: string
+	path: string,
+	credential: ProjectRepositoryGitCredentialInput | null = null
 ): Promise<ProjectRepositoryGitMutationResult> {
-	return runProjectRepositoryGitMutation('fetch_project_repository_git', path);
+	return runProjectRepositoryGitMutation('fetch_project_repository_git', path, credential);
 }
 
 export async function pullProjectRepositoryGit(
-	path: string
+	path: string,
+	credential: ProjectRepositoryGitCredentialInput | null = null
 ): Promise<ProjectRepositoryGitMutationResult> {
-	return runProjectRepositoryGitMutation('pull_project_repository_git', path);
+	return runProjectRepositoryGitMutation('pull_project_repository_git', path, credential);
 }
 
 export async function pushProjectRepositoryGit(
-	path: string
+	path: string,
+	credential: ProjectRepositoryGitCredentialInput | null = null
 ): Promise<ProjectRepositoryGitMutationResult> {
-	return runProjectRepositoryGitMutation('push_project_repository_git', path);
+	return runProjectRepositoryGitMutation('push_project_repository_git', path, credential);
 }
 
 export async function publishProjectRepositoryToGithub(
 	input: ProjectRepositoryGithubPublishInput
 ): Promise<ProjectRepositoryGitMutationResult> {
+	const credential = input.credential ?? null;
+
+	if (credential?.kind === 'github-token') {
+		return publishProjectRepositoryToGithubWithToken({
+			...input,
+			credential
+		});
+	}
+
 	const invoke = getTauriInvoke();
 
 	if (invoke === undefined) {
@@ -255,6 +276,97 @@ export async function publishProjectRepositoryToGithub(
 				repositoryName: input.repositoryName,
 				commitMessage: input.commitMessage,
 				visibility: input.visibility
+			}
+		);
+
+		return response.ok
+			? { ok: true }
+			: {
+					ok: false,
+					error: isProjectRepositoryGitError(response.error)
+						? response.error
+						: 'project-repository-github-create-failed'
+				};
+	} catch {
+		return { ok: false, error: 'project-repository-github-create-failed' };
+	}
+}
+
+async function publishProjectRepositoryToGithubWithToken(
+	input: ProjectRepositoryGithubPublishInput & {
+		readonly credential: ProjectRepositoryGitCredentialInput;
+	}
+): Promise<ProjectRepositoryGitMutationResult> {
+	const invoke = getTauriInvoke();
+
+	if (invoke === undefined) {
+		return { ok: false, error: 'project-repository-github-create-failed' };
+	}
+
+	const parsedRepositoryName = parseGithubRepositoryName(input.repositoryName);
+
+	if (parsedRepositoryName === null) {
+		return { ok: false, error: 'project-repository-github-repo-name-invalid' };
+	}
+
+	const prepareResult = await prepareProjectRepositoryForGithubPublish(
+		input.path,
+		input.commitMessage
+	);
+
+	if (!prepareResult.ok) {
+		return prepareResult;
+	}
+
+	const createResult = await createGithubRepositoryWithToken({
+		repository: parsedRepositoryName,
+		visibility: input.visibility,
+		token: input.credential.value
+	});
+
+	if (!createResult.ok) {
+		return createResult;
+	}
+
+	try {
+		const response = await invoke<ProjectRepositoryGitMutationResponse>(
+			'push_project_repository_to_github',
+			{
+				path: normalizeWorkspacePathForStorage(input.path),
+				remoteUrl: createResult.remoteUrl,
+				...createCredentialCommandArgs(input.credential)
+			}
+		);
+
+		return response.ok
+			? { ok: true }
+			: {
+					ok: false,
+					error: isProjectRepositoryGitError(response.error)
+						? response.error
+						: 'project-repository-git-push-failed'
+				};
+	} catch {
+		return { ok: false, error: 'project-repository-git-push-failed' };
+	}
+}
+
+async function prepareProjectRepositoryForGithubPublish(
+	path: string,
+	commitMessage: string
+): Promise<ProjectRepositoryGitMutationResult> {
+	const invoke = getTauriInvoke();
+
+	if (invoke === undefined) {
+		return { ok: false, error: 'project-repository-github-create-failed' };
+	}
+
+	try {
+		const response = await invoke<ProjectRepositoryGitMutationResponse>(
+			'prepare_project_repository_for_github_publish',
+			{
+				path: normalizeWorkspacePathForStorage(path),
+				commitMessage
 			}
 		);
 
@@ -306,7 +418,8 @@ export function formatRepositoryRemoteUrlForDisplay(remoteUrl: string | null) {
 
 async function runProjectRepositoryGitMutation(
 	command: string,
-	path: string
+	path: string,
+	credential: ProjectRepositoryGitCredentialInput | null = null
 ): Promise<ProjectRepositoryGitMutationResult> {
 	const invoke = getTauriInvoke();
 
@@ -316,7 +429,8 @@ async function runProjectRepositoryGitMutation(
 
 	try {
 		const response = await invoke<ProjectRepositoryGitMutationResponse>(command, {
-			path: normalizeWorkspacePathForStorage(path)
+			path: normalizeWorkspacePathForStorage(path),
+			...createCredentialCommandArgs(credential)
 		});
 
 		return response.ok
@@ -330,6 +444,163 @@ async function runProjectRepositoryGitMutation(
 	} catch {
 		return { ok: false, error: 'project-repository-git-command-failed' };
 	}
+}
+
+interface GithubRepositoryNameParts {
+	readonly owner: string | null;
+	readonly name: string;
+}
+
+interface GithubRepositoryCreateInput {
+	readonly repository: GithubRepositoryNameParts;
+	readonly visibility: ProjectRepositoryGithubVisibility;
+	readonly token: string;
+}
+
+type GithubRepositoryCreateResult =
+	| {
+			readonly ok: true;
+			readonly remoteUrl: string;
+	  }
+	| {
+			readonly ok: false;
+			readonly error: ProjectRepositoryGitError;
+	  };
+
+async function createGithubRepositoryWithToken(
+	input: GithubRepositoryCreateInput
+): Promise<GithubRepositoryCreateResult> {
+	try {
+		const userResult = await readGithubUserLogin(input.token);
+
+		if (!userResult.ok) {
+			return userResult;
+		}
+
+		const endpoint =
+			input.repository.owner === null || input.repository.owner === userResult.login
+				? 'https://api.github.com/user/repos'
+				: `https://api.github.com/orgs/${encodeURIComponent(input.repository.owner)}/repos`;
+		const response = await fetch(endpoint, {
+			method: 'POST',
+			headers: createGithubApiHeaders(input.token),
+			body: JSON.stringify({
+				name: input.repository.name,
+				private: input.visibility === 'private'
+			})
+		});
+
+		if (!response.ok) {
+			return { ok: false, error: mapGithubApiFailure(response.status) };
+		}
+
+		const body: unknown = await response.json();
+
+		if (!isObjectRecord(body) || typeof body.clone_url !== 'string') {
+			return { ok: false, error: 'project-repository-github-create-failed' };
+		}
+
+		return { ok: true, remoteUrl: body.clone_url };
+	} catch {
+		return { ok: false, error: 'project-repository-github-create-failed' };
+	}
+}
+
+async function readGithubUserLogin(
+	token: string
+): Promise<
+	| {
+			readonly ok: true;
+			readonly login: string;
+	  }
+	| {
+			readonly ok: false;
+			readonly error: ProjectRepositoryGitError;
+	  }
+> {
+	const response = await fetch('https://api.github.com/user', {
+		headers: createGithubApiHeaders(token)
+	});
+
+	if (!response.ok) {
+		return { ok: false, error: mapGithubApiFailure(response.status) };
+	}
+
+	const body: unknown = await response.json();
+
+	if (!isObjectRecord(body) || typeof body.login !== 'string' || body.login.length === 0) {
+		return { ok: false, error: 'project-repository-github-auth-required' };
+	}
+
+	return { ok: true, login: body.login };
+}
+
+function createGithubApiHeaders(token: string) {
+	return {
+		Accept: 'application/vnd.github+json',
+		Authorization: `Bearer ${token}`,
+		'Content-Type': 'application/json',
+		'X-GitHub-Api-Version': '2022-11-28'
+	};
+}
+
+function mapGithubApiFailure(status: number): ProjectRepositoryGitError {
+	if (status === 401 || status === 403) {
+		return 'project-repository-github-auth-required';
+	}
+
+	if (status === 422) {
+		return 'project-repository-github-create-failed';
+	}
+
+	return 'project-repository-github-create-failed';
+}
+
+function parseGithubRepositoryName(repositoryName: string): GithubRepositoryNameParts | null {
+	const trimmedName = repositoryName.trim().replace(/\.git$/iu, '');
+
+	if (trimmedName.length === 0 || trimmedName.length > 100) {
+		return null;
+	}
+
+	const parts = trimmedName.split('/');
+
+	if (parts.length > 2 || parts.some((part) => !isValidGithubRepositoryNamePart(part))) {
+		return null;
+	}
+
+	const name = parts.at(-1);
+
+	if (name === undefined) {
+		return null;
+	}
+
+	if (parts.length === 1) {
+		return { owner: null, name };
+	}
+
+	const owner = parts.at(0);
+
+	return owner === undefined ? null : { owner, name };
+}
+
+function isValidGithubRepositoryNamePart(value: string) {
+	return (
+		value.length > 0 &&
+		value !== '.' &&
+		value !== '..' &&
+		!value.startsWith('.') &&
+		/^[A-Za-z0-9_.-]+$/u.test(value)
+	);
+}
+
+function createCredentialCommandArgs(credential: ProjectRepositoryGitCredentialInput | null) {
+	return credential === null
+		? {}
+		: {
+				credentialKind: credential.kind,
+				credentialValue: credential.value
+			};
 }
 
 function formatRemoteParts(host: string, path: string) {
@@ -414,4 +685,8 @@ function isProjectRepositoryCloneError(value: unknown): value is ProjectReposito
 		value === 'project-repository-clone-auth-required' ||
 		value === 'project-repository-clone-failed'
 	);
+}
+
+function isObjectRecord(value: unknown): value is Record<string, unknown> {
+	return typeof value === 'object' && value !== null && !Array.isArray(value);
 }

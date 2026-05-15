@@ -23,6 +23,13 @@ export type ProjectFolderError =
 	| 'project-folder-open-path-not-directory'
 	| 'project-folder-open-path-permission-denied'
 	| 'project-folder-open-failed'
+	| 'project-folder-delete-path-required'
+	| 'project-folder-delete-path-not-absolute'
+	| 'project-folder-delete-path-not-found'
+	| 'project-folder-delete-path-not-directory'
+	| 'project-folder-delete-path-outside-workspace'
+	| 'project-folder-delete-path-permission-denied'
+	| 'project-folder-delete-failed'
 	| 'project-folder-unavailable';
 
 export type ProjectFolderCreateResult =
@@ -37,6 +44,15 @@ export type ProjectFolderCreateResult =
 	  };
 
 export type ProjectFolderOpenResult =
+	| {
+			readonly ok: true;
+	  }
+	| {
+			readonly ok: false;
+			readonly error: ProjectFolderError;
+	  };
+
+export type ProjectFolderDeleteResult =
 	| {
 			readonly ok: true;
 	  }
@@ -63,6 +79,11 @@ interface ProjectFolderCreateResponse {
 }
 
 interface ProjectFolderOpenResponse {
+	readonly ok: boolean;
+	readonly error?: ProjectFolderError | null;
+}
+
+interface ProjectFolderDeleteResponse {
 	readonly ok: boolean;
 	readonly error?: ProjectFolderError | null;
 }
@@ -112,6 +133,26 @@ export async function openProjectNodeFolder(
 	return openProjectFolderFromCommand('open_project_node_folder', {
 		workspacePath: normalizeWorkspacePathForStorage(workspacePath),
 		relativePath
+	});
+}
+
+export async function deleteProjectNodeFolder(
+	workspacePath: string,
+	relativePath: string
+): Promise<ProjectFolderDeleteResult> {
+	return deleteProjectFolderFromCommand('delete_project_node_folder', {
+		workspacePath: normalizeWorkspacePathForStorage(workspacePath),
+		relativePath
+	});
+}
+
+export async function deleteProjectRepositoryFolder(
+	workspacePath: string,
+	path: string
+): Promise<ProjectFolderDeleteResult> {
+	return deleteProjectFolderFromCommand('delete_project_repository_folder', {
+		workspacePath: normalizeWorkspacePathForStorage(workspacePath),
+		path: normalizeWorkspacePathForStorage(path)
 	});
 }
 
@@ -183,6 +224,34 @@ async function openProjectFolderFromCommand(
 	}
 }
 
+async function deleteProjectFolderFromCommand(
+	command: 'delete_project_node_folder' | 'delete_project_repository_folder',
+	args: Record<string, unknown>
+): Promise<ProjectFolderDeleteResult> {
+	const invoke = getTauriInvoke();
+
+	if (invoke === undefined) {
+		return { ok: false, error: 'project-folder-unavailable' };
+	}
+
+	try {
+		const response = await invoke<ProjectFolderDeleteResponse>(command, args);
+
+		if (response.ok) {
+			return { ok: true };
+		}
+
+		return {
+			ok: false,
+			error: isProjectFolderError(response.error)
+				? response.error
+				: 'project-folder-delete-failed'
+		};
+	} catch {
+		return { ok: false, error: 'project-folder-delete-failed' };
+	}
+}
+
 function getTauriInvoke() {
 	if (typeof window === 'undefined') {
 		return undefined;
@@ -215,6 +284,13 @@ function isProjectFolderError(value: unknown): value is ProjectFolderError {
 		value === 'project-folder-open-path-not-directory' ||
 		value === 'project-folder-open-path-permission-denied' ||
 		value === 'project-folder-open-failed' ||
+		value === 'project-folder-delete-path-required' ||
+		value === 'project-folder-delete-path-not-absolute' ||
+		value === 'project-folder-delete-path-not-found' ||
+		value === 'project-folder-delete-path-not-directory' ||
+		value === 'project-folder-delete-path-outside-workspace' ||
+		value === 'project-folder-delete-path-permission-denied' ||
+		value === 'project-folder-delete-failed' ||
 		value === 'project-folder-unavailable'
 	);
 }

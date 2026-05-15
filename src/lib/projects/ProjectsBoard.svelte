@@ -1,10 +1,27 @@
 	<script lang="ts">
 	import { tick } from 'svelte';
+	import {
+		parseEnvironmentVault,
+		type EnvironmentSecretKind,
+		type EnvironmentSecretRecord,
+		type EnvironmentVault
+	} from '$lib/environment/environment-vault';
+	import {
+		readEnvironmentVaultEnvelope,
+		subscribeEnvironmentVaultEnvelope
+	} from '$lib/environment/environment-vault-storage';
+	import {
+		decryptSecretVaultPayload,
+		type SecretVaultCryptoError,
+		type SecretVaultEnvelope
+	} from '$lib/environment/secret-vault-crypto';
 	import type { WorkspaceRecord } from '$lib/workspaces/workspace-registry';
 	import { normalizeWorkspacePathForStorage } from '$lib/workspaces/workspace-path-format';
 	import {
 		createProjectFolder,
 		createProjectGroupFolder,
+		deleteProjectNodeFolder,
+		deleteProjectRepositoryFolder,
 		ensureProjectFolderPath,
 		openProjectFolderPath,
 		openProjectNodeFolder,
@@ -19,6 +36,7 @@
 		pullProjectRepositoryGit,
 		pushProjectRepositoryGit,
 		type ProjectRepositoryCloneError,
+		type ProjectRepositoryGitCredentialInput,
 		type ProjectRepositoryGithubVisibility,
 		type ProjectRepositoryGitError
 	} from './project-repository';
@@ -37,7 +55,9 @@
 		removeProjectNode,
 		removeProjectRepositoryLink,
 		setProjectNodeDescription,
+		setProjectNodeGithubCredential,
 		setProjectNodeTags,
+		setProjectRepositoryGithubCredential,
 		setProjectRepositoryTags,
 		setProjectRepositoryLocalPath,
 		type ProjectNodeKind,
@@ -53,6 +73,13 @@
 		writeProjectRegistry,
 		type ProjectRegistryStorageError
 	} from './project-storage';
+	import {
+		readLatestProjectRepositoryOperationRecords,
+		writeProjectRepositoryOperationRecord,
+		type ProjectRepositoryOperationName,
+		type ProjectRepositoryOperationState,
+		type ProjectRepositoryOperationStorageError
+	} from './project-operation-storage';
 
 	interface Props {
 		readonly workspace: WorkspaceRecord;
@@ -61,15 +88,19 @@
 	type ProjectDialogMode = 'project' | 'group' | 'repository';
 	type ProjectRepositorySourceMode = 'folder' | 'remote';
 	type ProjectRepositoryGitAction = 'fetch' | 'pull' | 'push';
-	type ProjectRepositoryOperationName = 'clone' | 'init' | 'fetch' | 'pull' | 'push' | 'publish';
-	type ProjectRepositoryOperationState = 'running' | 'succeeded' | 'failed';
 	type ProjectRepositorySyncFilter = 'all' | 'pull' | 'push';
+	type ProjectCredentialError =
+		| 'project-github-credential-vault-locked'
+		| 'project-github-credential-missing'
+		| 'project-github-credential-invalid';
 	type ProjectFormError =
 		| ProjectRegistryError
 		| ProjectFolderError
 		| ProjectRepositoryCloneError
 		| ProjectRepositoryGitError
-		| ProjectRegistryStorageError;
+		| ProjectRegistryStorageError
+		| ProjectRepositoryOperationStorageError
+		| ProjectCredentialError;
 
 	type ProjectContextMenuTarget =
 		| {
@@ -104,6 +135,17 @@
 				readonly repository: ProjectRepositoryLinkRecord;
 		  };
 
+	type ProjectGithubCredentialEditorTarget =
+		| {
+				readonly type: 'node';
+				readonly node: ProjectNodeRecord;
+		  }
+		| {
+				readonly type: 'repository';
+				readonly node: ProjectNodeRecord;
+				readonly repository: ProjectRepositoryLinkRecord;
+		  };
+
 	interface ProjectContextMenuState {
 		readonly x: number;
 		readonly y: number;
@@ -125,9 +167,19 @@
 	}
 
 	interface ProjectRepositoryOperation {
+		readonly id: string;
 		readonly name: ProjectRepositoryOperationName;
 		readonly state: ProjectRepositoryOperationState;
-		readonly error: ProjectFormError | null;
+		readonly error: string | null;
+		readonly startedAt: string;
+		readonly finishedAt: string | null;
+	}
+
+	interface GithubCredentialOption {
+		readonly id: string;
+		readonly name: string;
+		readonly kind: EnvironmentSecretKind;
+		readonly value: string;
 	}
 
 	const CONTEXT_MENU_MARGIN_PX = 12;
@@ -141,6 +193,7 @@
 	let contextMenu = $state<ProjectContextMenuState | null>(null);
 	let dialog = $state<ProjectDialogState | null>(null);
 	let deleteCandidate = $state<ProjectDeleteCandidate | null>(null);
+	let shouldDeleteLocalFolder = $state(false);
 	let formName = $state('');
 	let formDescription = $state('');
 	let formTags = $state('');
@@ -148,6 +201,13 @@
 	let repositorySyncFilter = $state<ProjectRepositorySyncFilter>('all');
 	let tagEditor = $state<ProjectTagEditorTarget | null>(null);
 	let tagInput = $state('');
+	let githubCredentialEditor = $state<ProjectGithubCredentialEditorTarget | null>(null);
+	let selectedGithubCredentialSecretId = $state('');
+	let environmentVaultEnvelope = $state<SecretVaultEnvelope | null>(null);
+	let environmentVault = $state<EnvironmentVault | null>(null);
+	let environmentVaultPassword = $state('');
+	let isEnvironmentVaultBusy = $state(false);
+	let environmentVaultError = $state<string | null>(null);
 	let descriptionEditor = $state<ProjectNodeRecord | null>(null);
 	let descriptionInput = $state('');
 	let repositorySourceMode = $state<ProjectRepositorySourceMode>('folder');
@@ -155,6 +215,7 @@
 	let formError = $state<ProjectFormError | null>(null);
 	let status = $state<string | null>(null);
 	let storageError = $state<ProjectRegistryStorageError | null>(null);
+	let operationStorageError = $state<ProjectRepositoryOperationStorageError | null>(null);
 	let folderRepairError = $state<ProjectFolderError | null>(null);
 	let folderRepairSignature = $state('');
 	let repositoryGitInspectionSignature = $state('');
@@ -198,11 +259,15 @@
 	let dialogTargetNode = $derived(getDialogTargetNode());
 	let contextMenuRepository = $derived(getContextMenuRepository());
 	let contextMenuNode = $derived(getContextMenuNode());
-	let boardError = $derived(folderRepairError ?? storageError);
+	let boardError = $derived(folderRepairError ?? storageError ?? operationStorageError);
 	let standaloneError = $derived(formError ?? boardError);
 	let contextMenuRepositoryGitStatus = $derived(getContextMenuRepositoryGitStatus());
 	let canOpenContextFolder = $derived(canOpenContextMenuFolder());
 	let canSaveTags = $derived(tagEditor !== null && !isSavingTags);
+	let githubCredentialOptions = $derived(getGithubCredentialOptions(environmentVault));
+	let canSaveGithubCredential = $derived(
+		githubCredentialEditor !== null && !isSubmitting && environmentVault !== null
+	);
 	let canSaveDescription = $derived(descriptionEditor !== null && !isSavingDescription);
 	let canSubmitDialog = $derived(
 		dialog !== null &&
@@ -210,6 +275,7 @@
 			!isSubmitting
 	);
 	let canConfirmDelete = $derived(deleteCandidate !== null && !isDeleting);
+	let canDeleteLocalFolder = $derived(isDeleteLocalFolderAvailable());
 	let canCloneContextRepository = $derived(
 		contextMenuRepository !== null &&
 			contextMenuRepository.repository.remoteUrl !== null &&
@@ -242,6 +308,30 @@
 
 		registry = result.registry;
 		storageError = result.ok ? null : result.error;
+	}
+
+	async function readRepositoryOperationRecordsFromStorage(workspaceId: string) {
+		const result = await readLatestProjectRepositoryOperationRecords(workspaceId);
+
+		if (!result.ok) {
+			operationStorageError = result.error;
+			return;
+		}
+
+		operationStorageError = null;
+		repositoryOperationById = Object.fromEntries(
+			Object.entries(result.recordsByRepositoryId).map(([repositoryId, record]) => [
+				repositoryId,
+				{
+					id: record.id,
+					name: record.name,
+					state: record.state,
+					error: record.error,
+					startedAt: record.startedAt,
+					finishedAt: record.finishedAt
+				}
+			])
+		);
 	}
 
 	async function persistRegistry(nextRegistry: ProjectRegistry) {
@@ -373,6 +463,37 @@
 		openTagEditor({ type: 'repository', ...targetRepository });
 	}
 
+	function openContextGithubCredentialEditor() {
+		const target = contextMenu?.target ?? null;
+
+		closeContextMenu();
+
+		if (target === null) {
+			return;
+		}
+
+		if (target.type === 'node') {
+			const node = registry.nodes.find((candidateNode) => candidateNode.id === target.nodeId);
+
+			if (node === undefined) {
+				formError = 'project-node-not-found';
+				return;
+			}
+
+			openGithubCredentialEditor({ type: 'node', node });
+			return;
+		}
+
+		const targetRepository = getRepositoryTarget(target.nodeId, target.repositoryId);
+
+		if (targetRepository === null) {
+			formError = 'project-repository-not-found';
+			return;
+		}
+
+		openGithubCredentialEditor({ type: 'repository', ...targetRepository });
+	}
+
 	function openContextDescriptionEditor() {
 		const target = contextMenu?.target ?? null;
 
@@ -430,6 +551,12 @@
 			return;
 		}
 
+		const credential = resolveRepositoryGithubCredentialOrSetError(target.node, target.repository);
+
+		if (credential === undefined) {
+			return;
+		}
+
 		startRepositoryOperation(target.repository.id, 'clone');
 		cloneTarget = {
 			type: 'repository',
@@ -444,12 +571,13 @@
 				workspacePath: workspace.path,
 				groupRelativePath: target.node.path,
 				repositoryName: target.repository.name,
-				remoteUrl: target.repository.remoteUrl
+				remoteUrl: target.repository.remoteUrl,
+				credential
 			});
 
 			if (!cloneResult.ok) {
 				formError = cloneResult.error;
-				failRepositoryOperation(target.repository.id, 'clone', cloneResult.error);
+				await failRepositoryOperation(target.node, target.repository, 'clone', cloneResult.error);
 				status = null;
 				return;
 			}
@@ -462,17 +590,22 @@
 
 			if (!updateResult.ok) {
 				formError = updateResult.error;
-				failRepositoryOperation(target.repository.id, 'clone', updateResult.error);
+				await failRepositoryOperation(target.node, target.repository, 'clone', updateResult.error);
 				status = null;
 				return;
 			}
 
 			if (await persistRegistry(updateResult.registry)) {
 				selectedGroupId = target.node.id;
-				succeedRepositoryOperation(target.repository.id, 'clone');
+				await succeedRepositoryOperation(target.node, target.repository, 'clone');
 				status = 'Repository cloned.';
 			} else {
-				failRepositoryOperation(target.repository.id, 'clone', 'project-registry-write-failed');
+				await failRepositoryOperation(
+					target.node,
+					target.repository,
+					'clone',
+					'project-registry-write-failed'
+				);
 			}
 		} finally {
 			cloneTarget = null;
@@ -517,7 +650,12 @@
 
 		if (!isRepositoryPathInsideWorkspace(target.repository.path)) {
 			formError = 'project-repository-path-outside-workspace';
-			failRepositoryOperation(target.repository.id, 'init', 'project-repository-path-outside-workspace');
+			await failRepositoryOperation(
+				target.node,
+				target.repository,
+				'init',
+				'project-repository-path-outside-workspace'
+			);
 			return;
 		}
 
@@ -539,13 +677,13 @@
 
 			if (!result.ok) {
 				formError = result.error;
-				failRepositoryOperation(target.repository.id, 'init', result.error);
+				await failRepositoryOperation(target.node, target.repository, 'init', result.error);
 				status = null;
 				return;
 			}
 
 			await refreshRepositoryGitStatus(target.repository.id, target.repository.path);
-			succeedRepositoryOperation(target.repository.id, 'init');
+			await succeedRepositoryOperation(target.node, target.repository, 'init');
 			status = 'Git repository initialized.';
 		} finally {
 			gitActionTarget = null;
@@ -563,7 +701,12 @@
 
 		if (!isRepositoryPathInsideWorkspace(repository.path)) {
 			formError = 'project-repository-path-outside-workspace';
-			failRepositoryOperation(repository.id, 'publish', 'project-repository-path-outside-workspace');
+			void failRepositoryOperation(
+				node,
+				repository,
+				'publish',
+				'project-repository-path-outside-workspace'
+			);
 			return;
 		}
 
@@ -620,11 +763,21 @@
 
 		if (!isRepositoryPathInsideWorkspace(publishTarget.repository.path)) {
 			formError = 'project-repository-path-outside-workspace';
-			failRepositoryOperation(
-				publishTarget.repository.id,
+			await failRepositoryOperation(
+				publishTarget.node,
+				publishTarget.repository,
 				'publish',
 				'project-repository-path-outside-workspace'
 			);
+			return;
+		}
+
+		const credential = resolveRepositoryGithubCredentialOrSetError(
+			publishTarget.node,
+			publishTarget.repository
+		);
+
+		if (credential === undefined) {
 			return;
 		}
 
@@ -643,18 +796,19 @@
 				path: publishTarget.repository.path,
 				repositoryName: githubRepositoryName,
 				commitMessage: githubRepositoryCommitMessage,
-				visibility: githubRepositoryVisibility
+				visibility: githubRepositoryVisibility,
+				credential
 			});
 
 			if (!result.ok) {
 				formError = result.error;
-				failRepositoryOperation(publishTarget.repository.id, 'publish', result.error);
+				await failRepositoryOperation(publishTarget.node, publishTarget.repository, 'publish', result.error);
 				status = null;
 				return;
 			}
 
 			await refreshRepositoryGitStatus(publishTarget.repository.id, publishTarget.repository.path);
-			succeedRepositoryOperation(publishTarget.repository.id, 'publish');
+			await succeedRepositoryOperation(publishTarget.node, publishTarget.repository, 'publish');
 			status = 'Repository published.';
 			closePublishRepositoryDialog();
 		} finally {
@@ -674,11 +828,22 @@
 
 		if (!isRepositoryPathInsideWorkspace(target.repository.path)) {
 			formError = 'project-repository-path-outside-workspace';
-			failRepositoryOperation(target.repository.id, action, 'project-repository-path-outside-workspace');
+			await failRepositoryOperation(
+				target.node,
+				target.repository,
+				action,
+				'project-repository-path-outside-workspace'
+			);
 			return;
 		}
 
 		if (isRepositoryBusy(target.repository.id)) {
+			return;
+		}
+
+		const credential = resolveRepositoryGithubCredentialOrSetError(target.node, target.repository);
+
+		if (credential === undefined) {
 			return;
 		}
 
@@ -692,33 +857,37 @@
 		status = `${getRepositoryGitActionProgressLabel(action)} repository.`;
 
 		try {
-			const result = await runProjectRepositoryGitMutation(action, target.repository.path);
+			const result = await runProjectRepositoryGitMutation(action, target.repository.path, credential);
 
 			if (!result.ok) {
 				formError = result.error;
-				failRepositoryOperation(target.repository.id, action, result.error);
+				await failRepositoryOperation(target.node, target.repository, action, result.error);
 				status = null;
 				return;
 			}
 
 			await refreshRepositoryGitStatus(target.repository.id, target.repository.path);
-			succeedRepositoryOperation(target.repository.id, action);
+			await succeedRepositoryOperation(target.node, target.repository, action);
 			status = `Repository ${getRepositoryGitActionDoneLabel(action)}.`;
 		} finally {
 			gitActionTarget = null;
 		}
 	}
 
-	function runProjectRepositoryGitMutation(action: ProjectRepositoryGitAction, path: string) {
+	function runProjectRepositoryGitMutation(
+		action: ProjectRepositoryGitAction,
+		path: string,
+		credential: ProjectRepositoryGitCredentialInput | null
+	) {
 		if (action === 'fetch') {
-			return fetchProjectRepositoryGit(path);
+			return fetchProjectRepositoryGit(path, credential);
 		}
 
 		if (action === 'pull') {
-			return pullProjectRepositoryGit(path);
+			return pullProjectRepositoryGit(path, credential);
 		}
 
-		return pushProjectRepositoryGit(path);
+		return pushProjectRepositoryGit(path, credential);
 	}
 
 	function getRepositoryGitActionProgressLabel(action: ProjectRepositoryGitAction) {
@@ -749,37 +918,77 @@
 		repositoryOperationById = {
 			...repositoryOperationById,
 			[repositoryId]: {
+				id: createRepositoryOperationRecordId(),
 				name,
 				state: 'running',
-				error: null
+				error: null,
+				startedAt: new Date().toISOString(),
+				finishedAt: null
 			}
 		};
 	}
 
-	function succeedRepositoryOperation(repositoryId: string, name: ProjectRepositoryOperationName) {
-		repositoryOperationById = {
-			...repositoryOperationById,
-			[repositoryId]: {
-				name,
-				state: 'succeeded',
-				error: null
-			}
-		};
+	async function succeedRepositoryOperation(
+		node: ProjectNodeRecord,
+		repository: ProjectRepositoryLinkRecord,
+		name: ProjectRepositoryOperationName
+	) {
+		await finishRepositoryOperation(node, repository, name, 'succeeded', null);
 	}
 
-	function failRepositoryOperation(
-		repositoryId: string,
+	async function failRepositoryOperation(
+		node: ProjectNodeRecord,
+		repository: ProjectRepositoryLinkRecord,
 		name: ProjectRepositoryOperationName,
 		error: ProjectFormError
 	) {
+		await finishRepositoryOperation(node, repository, name, 'failed', error);
+	}
+
+	async function finishRepositoryOperation(
+		node: ProjectNodeRecord,
+		repository: ProjectRepositoryLinkRecord,
+		name: ProjectRepositoryOperationName,
+		state: Exclude<ProjectRepositoryOperationState, 'running'>,
+		error: string | null
+	) {
+		const runningOperation = repositoryOperationById[repository.id];
+		const operation = {
+			id: runningOperation?.id ?? createRepositoryOperationRecordId(),
+			name,
+			state,
+			error,
+			startedAt: runningOperation?.startedAt ?? new Date().toISOString(),
+			finishedAt: new Date().toISOString()
+		} satisfies ProjectRepositoryOperation;
+
 		repositoryOperationById = {
 			...repositoryOperationById,
-			[repositoryId]: {
-				name,
-				state: 'failed',
-				error
-			}
+			[repository.id]: operation
 		};
+
+		const writeResult = await writeProjectRepositoryOperationRecord({
+			id: operation.id,
+			workspaceId: workspace.id,
+			nodeId: node.id,
+			repositoryId: repository.id,
+			repositoryName: repository.name,
+			name,
+			state,
+			error,
+			startedAt: operation.startedAt,
+			finishedAt: operation.finishedAt
+		});
+
+		operationStorageError = writeResult.ok ? null : writeResult.error;
+	}
+
+	function createRepositoryOperationRecordId() {
+		if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+			return crypto.randomUUID();
+		}
+
+		return `operation-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 	}
 
 	function getRepositoryOperation(repositoryId: string) {
@@ -810,7 +1019,7 @@
 
 		return operation.error === null
 			? `${getRepositoryOperationLabel(operation.name)} failed.`
-			: getFormErrorMessage(operation.error);
+			: (getFormErrorMessage(operation.error as ProjectFormError) ?? 'Repository operation failed.');
 	}
 
 	function getRepositoryOperationProgressLabel(name: ProjectRepositoryOperationName) {
@@ -950,6 +1159,7 @@
 			type: 'node',
 			node
 		};
+		shouldDeleteLocalFolder = false;
 		formError = null;
 		status = null;
 		closeContextMenu();
@@ -997,6 +1207,7 @@
 			node,
 			repository
 		};
+		shouldDeleteLocalFolder = false;
 		formError = null;
 		status = null;
 		closeContextMenu();
@@ -1004,6 +1215,7 @@
 
 	function closeDeleteDialog() {
 		deleteCandidate = null;
+		shouldDeleteLocalFolder = false;
 		isDeleting = false;
 	}
 
@@ -1083,6 +1295,107 @@
 		tagEditor = null;
 		tagInput = '';
 		isSavingTags = false;
+	}
+
+	function openGithubCredentialEditor(target: ProjectGithubCredentialEditorTarget) {
+		githubCredentialEditor = target;
+		selectedGithubCredentialSecretId =
+			target.type === 'repository'
+				? target.repository.githubCredentialSecretId ?? ''
+				: target.node.githubCredentialSecretId ?? '';
+		formError = null;
+		status = null;
+		deleteCandidate = null;
+		descriptionEditor = null;
+		tagEditor = null;
+		publishTarget = null;
+		dialog = null;
+	}
+
+	function closeGithubCredentialEditor() {
+		githubCredentialEditor = null;
+		selectedGithubCredentialSecretId = '';
+		isSubmitting = false;
+	}
+
+	function handleGithubCredentialEditorBackdropClick(event: MouseEvent) {
+		if (event.target === event.currentTarget && !isSubmitting && !isEnvironmentVaultBusy) {
+			closeGithubCredentialEditor();
+		}
+	}
+
+	async function handleUnlockProjectEnvironmentVault(event: SubmitEvent) {
+		event.preventDefault();
+
+		if (environmentVaultEnvelope === null || isEnvironmentVaultBusy || environmentVaultPassword.length === 0) {
+			return;
+		}
+
+		isEnvironmentVaultBusy = true;
+		environmentVaultError = null;
+		formError = null;
+
+		try {
+			const decryptResult = await decryptSecretVaultPayload(
+				environmentVaultEnvelope,
+				environmentVaultPassword
+			);
+
+			if (!decryptResult.ok) {
+				environmentVaultError = createSecretVaultErrorMessage(decryptResult.error);
+				return;
+			}
+
+			const parsedVault = parseEnvironmentVault(decryptResult.plaintext, workspace.id);
+
+			if (parsedVault === null) {
+				environmentVaultError = 'Environment vault could not be read.';
+				return;
+			}
+
+			environmentVault = parsedVault;
+			environmentVaultPassword = '';
+		} finally {
+			isEnvironmentVaultBusy = false;
+		}
+	}
+
+	async function handleGithubCredentialSubmit(event: SubmitEvent) {
+		event.preventDefault();
+
+		if (githubCredentialEditor === null || isSubmitting || environmentVault === null) {
+			return;
+		}
+
+		isSubmitting = true;
+		formError = null;
+		status = null;
+
+		const result =
+			githubCredentialEditor.type === 'repository'
+				? setProjectRepositoryGithubCredential(registry, {
+						nodeId: githubCredentialEditor.node.id,
+						repositoryId: githubCredentialEditor.repository.id,
+						githubCredentialSecretId: selectedGithubCredentialSecretId || null
+					})
+				: setProjectNodeGithubCredential(registry, {
+						nodeId: githubCredentialEditor.node.id,
+						githubCredentialSecretId: selectedGithubCredentialSecretId || null
+					});
+
+		if (!result.ok) {
+			formError = result.error;
+			isSubmitting = false;
+			return;
+		}
+
+		if (await persistRegistry(result.registry)) {
+			status = 'GitHub credential saved.';
+			closeGithubCredentialEditor();
+			return;
+		}
+
+		isSubmitting = false;
 	}
 
 	function handleTagInput() {
@@ -1445,7 +1758,40 @@
 				? deleteCandidate.repository.name
 				: deleteCandidate?.node.name ?? 'this item';
 
-		return `Remove ${name}? Local folders and repository files are not deleted.`;
+		return `Remove ${name} from Workduck?`;
+	}
+
+	function getDeleteLocalFolderLabel() {
+		if (deleteCandidate?.type === 'repository') {
+			return 'Also delete this repository folder';
+		}
+
+		return deleteCandidate?.node.kind === 'project'
+			? 'Also delete this project folder'
+			: 'Also delete this group folder';
+	}
+
+	function getDeleteLocalFolderUnavailableText() {
+		if (deleteCandidate?.type === 'repository') {
+			return 'Local folder deletion is only available for repository folders under this workspace.';
+		}
+
+		return 'Local folder deletion is only available for folders under this workspace.';
+	}
+
+	function isDeleteLocalFolderAvailable() {
+		if (deleteCandidate === null) {
+			return false;
+		}
+
+		if (deleteCandidate.type === 'node') {
+			return deleteCandidate.node.path.trim().length > 0;
+		}
+
+		return (
+			deleteCandidate.repository.path !== null &&
+			isRepositoryPathInsideProjectsFolder(deleteCandidate.repository.path)
+		);
 	}
 
 	function handleNameInput() {
@@ -1632,6 +1978,22 @@
 		formError = null;
 		status = null;
 
+		if (shouldDeleteLocalFolder) {
+			if (!canDeleteLocalFolder) {
+				formError = 'project-folder-delete-path-outside-workspace';
+				isDeleting = false;
+				return;
+			}
+
+			const deleteFolderResult = await deleteSelectedLocalFolder(deleteCandidate);
+
+			if (!deleteFolderResult.ok) {
+				formError = deleteFolderResult.error;
+				isDeleting = false;
+				return;
+			}
+		}
+
 		const result =
 			deleteCandidate.type === 'repository'
 				? removeProjectRepositoryLink(registry, {
@@ -1649,10 +2011,16 @@
 		if (await persistRegistry(result.registry)) {
 			status =
 				deleteCandidate.type === 'repository'
-					? 'Repository removed.'
+					? shouldDeleteLocalFolder
+						? 'Repository and local folder removed.'
+						: 'Repository removed.'
 					: deleteCandidate.node.kind === 'project'
-						? 'Project removed.'
-						: 'Group removed.';
+						? shouldDeleteLocalFolder
+							? 'Project and local folder removed.'
+							: 'Project removed.'
+						: shouldDeleteLocalFolder
+							? 'Group and local folder removed.'
+							: 'Group removed.';
 			closeDeleteDialog();
 			return;
 		}
@@ -1660,14 +2028,35 @@
 		isDeleting = false;
 	}
 
+	async function deleteSelectedLocalFolder(candidate: ProjectDeleteCandidate) {
+		if (candidate.type === 'repository') {
+			if (candidate.repository.path === null) {
+				return {
+					ok: false,
+					error: 'project-folder-delete-path-required'
+				} as const;
+			}
+
+			return deleteProjectRepositoryFolder(workspace.path, candidate.repository.path);
+		}
+
+		return deleteProjectNodeFolder(workspace.path, candidate.node.path);
+	}
+
 	function handleDeleteConfirmationBackdropClick(event: MouseEvent) {
-		if (event.target === event.currentTarget) {
+		if (event.target === event.currentTarget && !isDeleting) {
 			closeDeleteDialog();
 		}
 	}
 
 	function getFormErrorMessage(error: ProjectFormError) {
 		switch (error) {
+			case 'project-github-credential-vault-locked':
+				return 'Unlock Environment to use the selected GitHub credential.';
+			case 'project-github-credential-missing':
+				return 'Selected GitHub credential was not found.';
+			case 'project-github-credential-invalid':
+				return 'Selected GitHub credential must be a GitHub token.';
 			case 'project-name-required':
 				return 'Name is required.';
 			case 'project-name-duplicate':
@@ -1728,6 +2117,20 @@
 				return 'Folder path could not be opened.';
 			case 'project-folder-open-failed':
 				return 'Folder could not be opened.';
+			case 'project-folder-delete-path-required':
+				return 'Folder path is required.';
+			case 'project-folder-delete-path-not-absolute':
+				return 'Folder path must be absolute.';
+			case 'project-folder-delete-path-not-found':
+				return 'Folder path was not found.';
+			case 'project-folder-delete-path-not-directory':
+				return 'Folder path must be a folder.';
+			case 'project-folder-delete-path-outside-workspace':
+				return 'Only folders under this workspace projects folder can be deleted here.';
+			case 'project-folder-delete-path-permission-denied':
+				return 'Folder path could not be deleted.';
+			case 'project-folder-delete-failed':
+				return 'Folder could not be deleted.';
 			case 'project-folder-unavailable':
 				return 'Project folders are available in the desktop app.';
 			case 'project-repository-name-required':
@@ -1846,7 +2249,23 @@
 				return 'Projects could not be loaded.';
 			case 'project-registry-write-failed':
 				return 'Projects could not be saved.';
+			case 'project-repository-operation-read-failed':
+				return 'Repository operation records could not be loaded.';
+			case 'project-repository-operation-write-failed':
+				return 'Repository operation record could not be saved.';
 		}
+	}
+
+	function createSecretVaultErrorMessage(nextError: SecretVaultCryptoError) {
+		if (nextError === 'secret-vault-password-required') {
+			return 'Environment vault password is required.';
+		}
+
+		if (nextError === 'secret-vault-unavailable') {
+			return 'Environment vault is available in the desktop app.';
+		}
+
+		return 'Environment vault password did not match.';
 	}
 
 	function getVisibleFormErrorMessage() {
@@ -1926,6 +2345,115 @@
 		return gitStatus === undefined ? 'Checking' : 'Folder';
 	}
 
+	function getGithubCredentialOptions(vault: EnvironmentVault | null): readonly GithubCredentialOption[] {
+		if (vault === null) {
+			return [];
+		}
+
+		return vault.secrets
+			.filter(isGithubTokenSecret)
+			.map((secret) => ({
+				id: secret.id,
+				name: secret.name,
+				kind: secret.kind,
+				value: secret.value
+			}));
+	}
+
+	function isGithubTokenSecret(secret: EnvironmentSecretRecord) {
+		return secret.kind === 'token' && secret.tags.includes('github');
+	}
+
+	function getGithubCredentialName(secretId: string | null) {
+		if (secretId === null || secretId.length === 0) {
+			return 'System Git';
+		}
+
+		if (environmentVault === null) {
+			return 'GitHub credential';
+		}
+
+		return githubCredentialOptions.find((option) => option.id === secretId)?.name ?? 'Missing credential';
+	}
+
+	function getNodeGithubCredentialName(node: ProjectNodeRecord) {
+		return getGithubCredentialName(node.githubCredentialSecretId);
+	}
+
+	function getRepositoryGithubCredentialName(
+		node: ProjectNodeRecord,
+		repository: ProjectRepositoryLinkRecord
+	) {
+		const credentialSecretId = resolveRepositoryGithubCredentialSecretId(node, repository);
+
+		return getGithubCredentialName(credentialSecretId);
+	}
+
+	function resolveRepositoryGithubCredentialSecretId(
+		node: ProjectNodeRecord,
+		repository: ProjectRepositoryLinkRecord
+	) {
+		if (repository.githubCredentialSecretId !== null) {
+			return repository.githubCredentialSecretId;
+		}
+
+		if (node.githubCredentialSecretId !== null) {
+			return node.githubCredentialSecretId;
+		}
+
+		const project =
+			node.parentId === null
+				? null
+				: registry.nodes.find((candidateNode) => candidateNode.id === node.parentId) ?? null;
+
+		return project?.githubCredentialSecretId ?? null;
+	}
+
+	function resolveRepositoryGithubCredential(
+		node: ProjectNodeRecord,
+		repository: ProjectRepositoryLinkRecord
+	): ProjectRepositoryGitCredentialInput | ProjectCredentialError | null {
+		const credentialSecretId = resolveRepositoryGithubCredentialSecretId(node, repository);
+
+		if (credentialSecretId === null) {
+			return null;
+		}
+
+		if (environmentVault === null) {
+			return 'project-github-credential-vault-locked';
+		}
+
+		const credential = githubCredentialOptions.find((option) => option.id === credentialSecretId);
+
+		if (credential === undefined) {
+			return 'project-github-credential-missing';
+		}
+
+		if (credential.kind !== 'token') {
+			return 'project-github-credential-invalid';
+		}
+
+		return {
+			kind: 'github-token',
+			value: credential.value
+		};
+	}
+
+	function resolveRepositoryGithubCredentialOrSetError(
+		node: ProjectNodeRecord,
+		repository: ProjectRepositoryLinkRecord
+	) {
+		const credential = resolveRepositoryGithubCredential(node, repository);
+
+		if (typeof credential === 'string') {
+			formError = credential;
+			status = null;
+			return undefined;
+		}
+
+		return credential;
+	}
+
 	function isRepositoryCloneTarget(nodeId: string, repositoryId: string) {
 		return cloneTarget?.type === 'repository' &&
 			cloneTarget.nodeId === nodeId &&
@@ -1988,6 +2516,18 @@
 			workspacePathKey.length > 0 &&
 			(repositoryPathKey === workspacePathKey ||
 				repositoryPathKey.startsWith(`${workspacePathKey}/`))
+		);
+	}
+
+	function isRepositoryPathInsideProjectsFolder(repositoryPath: string) {
+		const workspacePathKey = createLocalPathBoundaryKey(workspace.path);
+		const repositoryPathKey = createLocalPathBoundaryKey(repositoryPath);
+		const projectsPathKey = `${workspacePathKey}/projects`;
+
+		return (
+			workspacePathKey.length > 0 &&
+			(repositoryPathKey === projectsPathKey ||
+				repositoryPathKey.startsWith(`${projectsPathKey}/`))
 		);
 	}
 
@@ -2210,23 +2750,46 @@
 			return;
 		}
 
+		if (githubCredentialEditor !== null) {
+			if (!isSubmitting && !isEnvironmentVaultBusy) {
+				closeGithubCredentialEditor();
+			}
+			return;
+		}
+
 		closeContextMenu();
 	}
 
 	$effect(() => {
 		const workspaceId = workspace.id;
+		const readEnvironmentVaultResult = readEnvironmentVaultEnvelope(workspaceId);
 
 		folderRepairError = null;
+		operationStorageError = null;
 		folderRepairSignature = '';
 		selectedProjectId = null;
 		selectedGroupId = null;
+		environmentVaultEnvelope = readEnvironmentVaultResult.envelope;
+		environmentVault = null;
+		environmentVaultPassword = '';
+		environmentVaultError = null;
 		void readRegistryFromStorage(workspaceId);
+		void readRepositoryOperationRecordsFromStorage(workspaceId);
 		const unsubscribeProjectRegistry = subscribeProjectRegistry(workspaceId, (nextRegistry) => {
 			registry = nextRegistry;
 			storageError = null;
 		});
+		const unsubscribeEnvironmentVault = subscribeEnvironmentVaultEnvelope(workspaceId, (nextEnvelope) => {
+			environmentVaultEnvelope = nextEnvelope;
+			environmentVault = null;
+			environmentVaultPassword = '';
+			environmentVaultError = null;
+		});
 
-		return unsubscribeProjectRegistry;
+		return () => {
+			unsubscribeProjectRegistry();
+			unsubscribeEnvironmentVault();
+		};
 	});
 
 	$effect(() => {
@@ -2380,6 +2943,9 @@
 						<div class="workduck-project-card-stats" aria-label={`${node.name} totals`}>
 							<span>{formatCountLabel(getProjectGroupCount(node.id), 'group', 'groups')}</span>
 							<span>{formatCountLabel(getProjectRepositoryCount(node.id), 'repo', 'repos')}</span>
+							{#if node.githubCredentialSecretId !== null}
+								<span>GitHub: {getNodeGithubCredentialName(node)}</span>
+							{/if}
 						</div>
 					</button>
 				{/each}
@@ -2416,6 +2982,9 @@
 								{/if}
 								<div class="workduck-project-card-stats" aria-label={`${node.name} totals`}>
 									<span>{formatCountLabel(node.repositories.length, 'repo', 'repos')}</span>
+									{#if node.githubCredentialSecretId !== null}
+										<span>GitHub: {getNodeGithubCredentialName(node)}</span>
+									{/if}
 								</div>
 							</button>
 						{/each}
@@ -2440,6 +3009,10 @@
 							{@const repositoryBusy = isRepositoryBusy(repository.id)}
 							{@const repositoryPathOutsideWorkspace =
 								repository.path !== null && !isRepositoryPathInsideWorkspace(repository.path)}
+							{@const repositoryGithubCredentialName = getRepositoryGithubCredentialName(
+								selectedGroup,
+								repository
+							)}
 							<!-- svelte-ignore a11y_no_static_element_interactions -->
 							<article
 								class="workduck-project-card workduck-repository-card"
@@ -2458,6 +3031,11 @@
 											<span class="workduck-project-tag">{tag}</span>
 										{/each}
 									</div>
+								{/if}
+								{#if repositoryGithubCredentialName !== 'System Git'}
+									<p class="workduck-project-card-description">
+										GitHub: {repositoryGithubCredentialName}
+									</p>
 								{/if}
 								{#if repositoryPathOutsideWorkspace}
 									<p class="workduck-repository-operation-status workduck-repository-operation-status-failed">
@@ -2553,7 +3131,7 @@
 	</div>
 </section>
 
-{#if standaloneError !== null && dialog === null && deleteCandidate === null && tagEditor === null && descriptionEditor === null && publishTarget === null}
+{#if standaloneError !== null && dialog === null && deleteCandidate === null && tagEditor === null && descriptionEditor === null && githubCredentialEditor === null && publishTarget === null}
 	<p class="workduck-inline-error" aria-live="polite">{getFormErrorMessage(standaloneError)}</p>
 {/if}
 
@@ -2583,6 +3161,14 @@
 				onclick={openContextDescriptionEditor}
 			>
 				Edit description
+			</button>
+			<button
+				class="workduck-context-menu-item"
+				type="button"
+				role="menuitem"
+				onclick={openContextGithubCredentialEditor}
+			>
+				GitHub credential
 			</button>
 			<button
 				class="workduck-context-menu-item"
@@ -2650,6 +3236,14 @@
 				Edit tags
 			</button>
 			<button
+				class="workduck-context-menu-item"
+				type="button"
+				role="menuitem"
+				onclick={openContextGithubCredentialEditor}
+			>
+				GitHub credential
+			</button>
+			<button
 				class="workduck-context-menu-item workduck-context-menu-item-danger"
 				type="button"
 				role="menuitem"
@@ -2681,6 +3275,24 @@
 			<p id="project-remove-confirm-description" class="workduck-dialog-text">
 				{getDeleteDialogText()}
 			</p>
+			<label
+				class="workduck-danger-option"
+				class:workduck-danger-option-disabled={!canDeleteLocalFolder}
+			>
+				<input
+					class="workduck-checkbox"
+					type="checkbox"
+					bind:checked={shouldDeleteLocalFolder}
+					disabled={!canDeleteLocalFolder || isDeleting}
+				/>
+				<span>{getDeleteLocalFolderLabel()}</span>
+			</label>
+			{#if !canDeleteLocalFolder}
+				<p class="workduck-dialog-note">{getDeleteLocalFolderUnavailableText()}</p>
+			{/if}
+			{#if formError !== null}
+				<p class="workduck-inline-error" aria-live="polite">{getFormErrorMessage(formError)}</p>
+			{/if}
 			<div class="workduck-dialog-actions">
 				<button
 					class="workduck-button workduck-button-secondary"
@@ -2825,6 +3437,126 @@
 					</button>
 				</div>
 			</form>
+		</div>
+	</div>
+{/if}
+
+{#if githubCredentialEditor !== null}
+	<!-- svelte-ignore a11y_no_static_element_interactions -->
+	<div
+		class="workduck-dialog-backdrop"
+		role="presentation"
+		onclick={handleGithubCredentialEditorBackdropClick}
+	>
+		<div
+			class="workduck-dialog workduck-project-dialog"
+			role="dialog"
+			aria-modal="true"
+			aria-labelledby="project-github-credential-dialog-title"
+		>
+			<h2 id="project-github-credential-dialog-title" class="workduck-dialog-title">
+				GitHub credential
+			</h2>
+
+			<span class="workduck-dialog-kicker">
+				{githubCredentialEditor.type === 'repository'
+					? githubCredentialEditor.repository.name
+					: githubCredentialEditor.node.name}
+			</span>
+
+			{#if environmentVaultEnvelope === null}
+				<p class="workduck-dialog-text">Create an Environment vault and add a GitHub token.</p>
+				<div class="workduck-dialog-actions">
+					<button
+						class="workduck-button workduck-button-secondary"
+						type="button"
+						onclick={closeGithubCredentialEditor}
+					>
+						Close
+					</button>
+				</div>
+			{:else if environmentVault === null}
+				<form class="workduck-project-dialog-form" onsubmit={handleUnlockProjectEnvironmentVault}>
+					<label class="workduck-form-field" for="project-environment-vault-password">
+						<span>Password</span>
+						<input
+							id="project-environment-vault-password"
+							class="workduck-input"
+							type="password"
+							bind:value={environmentVaultPassword}
+							autocomplete="current-password"
+							disabled={isEnvironmentVaultBusy}
+						/>
+					</label>
+
+					{#if environmentVaultError !== null}
+						<p class="workduck-inline-error" aria-live="polite">{environmentVaultError}</p>
+					{/if}
+
+					<div class="workduck-dialog-actions">
+						<button
+							class="workduck-button workduck-button-secondary"
+							type="button"
+							disabled={isEnvironmentVaultBusy}
+							onclick={closeGithubCredentialEditor}
+						>
+							Cancel
+						</button>
+						<button
+							class="workduck-button workduck-button-primary"
+							type="submit"
+							disabled={environmentVaultPassword.length === 0 || isEnvironmentVaultBusy}
+						>
+							{isEnvironmentVaultBusy ? 'Unlocking' : 'Unlock'}
+						</button>
+					</div>
+				</form>
+			{:else}
+				<form class="workduck-project-dialog-form" onsubmit={handleGithubCredentialSubmit}>
+					<label class="workduck-form-field" for="project-github-credential-select">
+						<span>Credential</span>
+						<select
+							id="project-github-credential-select"
+							class="workduck-input"
+							bind:value={selectedGithubCredentialSecretId}
+							disabled={isSubmitting}
+						>
+							<option value="">System Git</option>
+							{#each githubCredentialOptions as option (option.id)}
+								<option value={option.id}>{option.name}</option>
+							{/each}
+						</select>
+					</label>
+
+					{#if githubCredentialOptions.length === 0}
+						<p class="workduck-dialog-note">Add a token with the GitHub tag in Environment.</p>
+					{/if}
+
+					{#if formError !== null || storageError !== null}
+						<p class="workduck-inline-error" aria-live="polite">
+							{getVisibleFormErrorMessage()}
+						</p>
+					{/if}
+
+					<div class="workduck-dialog-actions">
+						<button
+							class="workduck-button workduck-button-secondary"
+							type="button"
+							disabled={isSubmitting}
+							onclick={closeGithubCredentialEditor}
+						>
+							Cancel
+						</button>
+						<button
+							class="workduck-button workduck-button-primary"
+							type="submit"
+							disabled={!canSaveGithubCredential}
+						>
+							{isSubmitting ? 'Saving' : 'Save'}
+						</button>
+					</div>
+				</form>
+			{/if}
 		</div>
 	</div>
 {/if}

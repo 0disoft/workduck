@@ -53,6 +53,20 @@ pub enum ProjectFolderError {
     OpenPathPermissionDenied,
     #[serde(rename = "project-folder-open-failed")]
     OpenFailed,
+    #[serde(rename = "project-folder-delete-path-required")]
+    DeletePathRequired,
+    #[serde(rename = "project-folder-delete-path-not-absolute")]
+    DeletePathNotAbsolute,
+    #[serde(rename = "project-folder-delete-path-not-found")]
+    DeletePathNotFound,
+    #[serde(rename = "project-folder-delete-path-not-directory")]
+    DeletePathNotDirectory,
+    #[serde(rename = "project-folder-delete-path-outside-workspace")]
+    DeletePathOutsideWorkspace,
+    #[serde(rename = "project-folder-delete-path-permission-denied")]
+    DeletePathPermissionDenied,
+    #[serde(rename = "project-folder-delete-failed")]
+    DeleteFailed,
 }
 
 #[derive(serde::Serialize)]
@@ -70,6 +84,14 @@ pub struct ProjectFolderCreate {
 #[derive(serde::Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ProjectFolderOpen {
+    ok: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    error: Option<ProjectFolderError>,
+}
+
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ProjectFolderDelete {
     ok: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
     error: Option<ProjectFolderError>,
@@ -182,6 +204,55 @@ pub fn open_project_node_folder(
     open_folder(&folder_path)
 }
 
+#[tauri::command]
+pub fn delete_project_node_folder(
+    workspace_path: String,
+    relative_path: String,
+) -> ProjectFolderDelete {
+    let workspace_root = match validate_workspace_root(&workspace_path) {
+        Ok(workspace_root) => workspace_root,
+        Err(error) => return invalid_delete(error),
+    };
+    let projects_root = match validate_existing_projects_root(&workspace_root) {
+        Ok(projects_root) => projects_root,
+        Err(error) => return invalid_delete(error),
+    };
+    let relative_segments = match validate_project_relative_path(&relative_path) {
+        Ok(relative_segments) => relative_segments,
+        Err(error) => return invalid_delete(error),
+    };
+    let folder_path = match resolve_deletable_project_folder_path(
+        &projects_root,
+        &relative_segments,
+    ) {
+        Ok(folder_path) => folder_path,
+        Err(error) => return invalid_delete(error),
+    };
+
+    delete_folder_tree(&folder_path)
+}
+
+#[tauri::command]
+pub fn delete_project_repository_folder(
+    workspace_path: String,
+    path: String,
+) -> ProjectFolderDelete {
+    let workspace_root = match validate_workspace_root(&workspace_path) {
+        Ok(workspace_root) => workspace_root,
+        Err(error) => return invalid_delete(error),
+    };
+    let projects_root = match validate_existing_projects_root(&workspace_root) {
+        Ok(projects_root) => projects_root,
+        Err(error) => return invalid_delete(error),
+    };
+    let folder_path = match validate_deletable_absolute_folder_path(&projects_root, &path) {
+        Ok(folder_path) => folder_path,
+        Err(error) => return invalid_delete(error),
+    };
+
+    delete_folder_tree(&folder_path)
+}
+
 fn validate_workspace_root(path: &str) -> Result<PathBuf, ProjectFolderError> {
     let trimmed_path = path.trim();
 
@@ -230,6 +301,24 @@ fn ensure_projects_root(workspace_root: &Path) -> Result<PathBuf, ProjectFolderE
     }
 
     fs::read_dir(&normalized_projects_root).map_err(map_workspace_error)?;
+
+    Ok(normalized_projects_root)
+}
+
+fn validate_existing_projects_root(workspace_root: &Path) -> Result<PathBuf, ProjectFolderError> {
+    let projects_root = workspace_root.join(PROJECTS_DIRECTORY_NAME);
+    let metadata = fs::symlink_metadata(&projects_root).map_err(map_delete_path_error)?;
+
+    if metadata.file_type().is_symlink() || !metadata.is_dir() {
+        return Err(ProjectFolderError::RootInvalid);
+    }
+
+    let normalized_projects_root =
+        fs::canonicalize(&projects_root).map_err(map_delete_path_error)?;
+
+    if !normalized_projects_root.starts_with(workspace_root) {
+        return Err(ProjectFolderError::RootInvalid);
+    }
 
     Ok(normalized_projects_root)
 }
@@ -335,6 +424,60 @@ fn resolve_project_folder_path(
 
     if !normalized_folder_path.starts_with(projects_root) {
         return Err(ProjectFolderError::OpenFailed);
+    }
+
+    Ok(normalized_folder_path)
+}
+
+fn resolve_deletable_project_folder_path(
+    projects_root: &Path,
+    relative_segments: &[String],
+) -> Result<PathBuf, ProjectFolderError> {
+    let mut folder_path = projects_root.to_path_buf();
+
+    for segment in relative_segments.iter().skip(1) {
+        folder_path.push(segment);
+    }
+
+    validate_deletable_folder_path(projects_root, &folder_path)
+}
+
+fn validate_deletable_absolute_folder_path(
+    projects_root: &Path,
+    path: &str,
+) -> Result<PathBuf, ProjectFolderError> {
+    let trimmed_path = path.trim();
+
+    if trimmed_path.is_empty() {
+        return Err(ProjectFolderError::DeletePathRequired);
+    }
+
+    let folder_path = PathBuf::from(trimmed_path);
+
+    if !folder_path.is_absolute() {
+        return Err(ProjectFolderError::DeletePathNotAbsolute);
+    }
+
+    validate_deletable_folder_path(projects_root, &folder_path)
+}
+
+fn validate_deletable_folder_path(
+    projects_root: &Path,
+    folder_path: &Path,
+) -> Result<PathBuf, ProjectFolderError> {
+    let metadata = fs::symlink_metadata(folder_path).map_err(map_delete_path_error)?;
+
+    if metadata.file_type().is_symlink() || !metadata.is_dir() {
+        return Err(ProjectFolderError::DeletePathNotDirectory);
+    }
+
+    let normalized_folder_path =
+        fs::canonicalize(folder_path).map_err(map_delete_path_error)?;
+
+    if normalized_folder_path == projects_root
+        || !normalized_folder_path.starts_with(projects_root)
+    {
+        return Err(ProjectFolderError::DeletePathOutsideWorkspace);
     }
 
     Ok(normalized_folder_path)
@@ -520,6 +663,16 @@ fn open_folder(path: &Path) -> ProjectFolderOpen {
     }
 }
 
+fn delete_folder_tree(path: &Path) -> ProjectFolderDelete {
+    match fs::remove_dir_all(path) {
+        Ok(()) => ProjectFolderDelete {
+            ok: true,
+            error: None,
+        },
+        Err(error) => invalid_delete(map_delete_error(error)),
+    }
+}
+
 #[cfg(target_os = "windows")]
 fn create_open_folder_command(path: &Path) -> Command {
     let mut command = Command::new("explorer.exe");
@@ -557,6 +710,13 @@ fn invalid_open(error: ProjectFolderError) -> ProjectFolderOpen {
     }
 }
 
+fn invalid_delete(error: ProjectFolderError) -> ProjectFolderDelete {
+    ProjectFolderDelete {
+        ok: false,
+        error: Some(error),
+    }
+}
+
 fn map_workspace_error(error: io::Error) -> ProjectFolderError {
     match error.kind() {
         io::ErrorKind::NotFound => ProjectFolderError::WorkspaceNotFound,
@@ -586,6 +746,22 @@ fn map_open_path_error(error: io::Error) -> ProjectFolderError {
         io::ErrorKind::NotFound => ProjectFolderError::OpenPathNotFound,
         io::ErrorKind::PermissionDenied => ProjectFolderError::OpenPathPermissionDenied,
         _ => ProjectFolderError::OpenFailed,
+    }
+}
+
+fn map_delete_path_error(error: io::Error) -> ProjectFolderError {
+    match error.kind() {
+        io::ErrorKind::NotFound => ProjectFolderError::DeletePathNotFound,
+        io::ErrorKind::PermissionDenied => ProjectFolderError::DeletePathPermissionDenied,
+        _ => ProjectFolderError::DeleteFailed,
+    }
+}
+
+fn map_delete_error(error: io::Error) -> ProjectFolderError {
+    match error.kind() {
+        io::ErrorKind::NotFound => ProjectFolderError::DeletePathNotFound,
+        io::ErrorKind::PermissionDenied => ProjectFolderError::DeletePathPermissionDenied,
+        _ => ProjectFolderError::DeleteFailed,
     }
 }
 

@@ -30,7 +30,7 @@
 	<title>Projects - Workduck</title>
 </svelte:head>
 
-<main class="workduck-page">
+<main class="workduck-page workduck-page--projects">
 	<header class="workduck-page-header">
 		<h1 class="workduck-page-title">Projects</h1>
 	</header>

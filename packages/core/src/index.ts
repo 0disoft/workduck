@@ -8,7 +8,9 @@ export const workduckEntityKinds = [
   "service",
   "agent-brief",
   "run",
-  "gate"
+  "gate",
+  "queue-work-order",
+  "queue-result-report"
 ] as const;
 
 export type WorkduckEntityKind = (typeof workduckEntityKinds)[number];
@@ -43,6 +45,19 @@ export const workduckServiceLevels = ["critical", "high", "medium", "low", "lab"
 
 export type WorkduckServiceLevel = (typeof workduckServiceLevels)[number];
 
+export const workduckQueueItemKinds = ["work-order", "result-report"] as const;
+
+export type WorkduckQueueItemKind = (typeof workduckQueueItemKinds)[number];
+
+export const workduckQueueReviewDecisions = [
+  "pending",
+  "approved",
+  "needs-work",
+  "rollback"
+] as const;
+
+export type WorkduckQueueReviewDecision = (typeof workduckQueueReviewDecisions)[number];
+
 export type WorkduckId = string;
 
 export interface WorkduckEntityRef {
@@ -63,6 +78,8 @@ export type ServiceRef = WorkduckEntityRef & { readonly kind: "service" };
 export type AgentBriefRef = WorkduckEntityRef & { readonly kind: "agent-brief" };
 export type RunRef = WorkduckEntityRef & { readonly kind: "run" };
 export type GateRef = WorkduckEntityRef & { readonly kind: "gate" };
+export type QueueWorkOrderRef = WorkduckEntityRef & { readonly kind: "queue-work-order" };
+export type QueueResultReportRef = WorkduckEntityRef & { readonly kind: "queue-result-report" };
 
 export interface WorkduckComplianceScope {
   readonly pii: boolean;
@@ -158,6 +175,40 @@ export interface WorkduckGate {
   readonly riskLevel?: WorkduckRiskLevel;
 }
 
+export interface WorkduckQueueWorkOrderTask {
+  readonly id: WorkduckId;
+  readonly title: string;
+  readonly body: string;
+  readonly sourceReportTaskId?: WorkduckId;
+  readonly decision?: Exclude<WorkduckQueueReviewDecision, "pending" | "approved">;
+}
+
+export interface WorkduckQueueWorkOrder {
+  readonly schemaVersion: "workduck.queue-work-order/v1";
+  readonly ref: QueueWorkOrderRef;
+  readonly status: WorkduckRecordStatus;
+  readonly createdAt: string;
+  readonly sourceReport?: QueueResultReportRef;
+  readonly tasks: readonly WorkduckQueueWorkOrderTask[];
+}
+
+export interface WorkduckQueueResultReportTask {
+  readonly id: WorkduckId;
+  readonly title: string;
+  readonly summary: string;
+  readonly filesChanged: readonly string[];
+  readonly verification: readonly string[];
+  readonly risks: readonly string[];
+}
+
+export interface WorkduckQueueResultReport {
+  readonly schemaVersion: "workduck.queue-result-report/v1";
+  readonly ref: QueueResultReportRef;
+  readonly status: WorkduckRecordStatus;
+  readonly createdAt: string;
+  readonly tasks: readonly WorkduckQueueResultReportTask[];
+}
+
 export function isWorkduckEntityKind(value: string): value is WorkduckEntityKind {
   return (workduckEntityKinds as readonly string[]).includes(value);
 }
@@ -182,4 +233,14 @@ export function isWorkduckRiskLevel(value: string): value is WorkduckRiskLevel {
 
 export function isWorkduckServiceLevel(value: string): value is WorkduckServiceLevel {
   return (workduckServiceLevels as readonly string[]).includes(value);
+}
+
+export function isWorkduckQueueItemKind(value: string): value is WorkduckQueueItemKind {
+  return (workduckQueueItemKinds as readonly string[]).includes(value);
+}
+
+export function isWorkduckQueueReviewDecision(
+  value: string
+): value is WorkduckQueueReviewDecision {
+  return (workduckQueueReviewDecisions as readonly string[]).includes(value);
 }

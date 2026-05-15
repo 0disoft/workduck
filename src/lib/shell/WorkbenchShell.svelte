@@ -70,6 +70,7 @@
 
 	const primaryNavigationItems = [
 		{ href: '/', label: 'Projects' },
+		{ href: '/queue', label: 'Queue' },
 		{ href: '/artifacts', label: 'Artifacts' },
 		{ href: '/agents', label: 'Agents' },
 		{ href: '/environment', label: 'Environment' }

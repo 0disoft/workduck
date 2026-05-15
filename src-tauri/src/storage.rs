@@ -6,7 +6,7 @@ use tauri::{AppHandle, Manager};
 const DATABASE_DRIVER: &str = "sqlite";
 const DATABASE_FILE_NAME: &str = "workduck.sqlite3";
 const SQLITE_BUSY_TIMEOUT_MILLIS: u64 = 5_000;
-const CURRENT_SCHEMA_VERSION: i64 = 4;
+const CURRENT_SCHEMA_VERSION: i64 = 5;
 
 struct Migration {
     version: i64,
@@ -40,6 +40,12 @@ const MIGRATIONS: &[Migration] = &[
         checksum: "sha256:c8e4a20810854e4346391bc0293ea625b9f0b8ad0399a5afaa69eb8630fccdae",
         sql: include_str!("../migrations/004_project_registries.sql"),
     },
+    Migration {
+        version: 5,
+        name: "005_project_repository_operation_records",
+        checksum: "sha256:5520fa1eac7cd4babb8eb593ede697b69b41c8a1f8a2fda2c604c61619b37018",
+        sql: include_str!("../migrations/005_project_repository_operation_records.sql"),
+    },
 ];
 
 #[derive(serde::Serialize)]
@@ -58,6 +64,7 @@ pub struct StorageStatus {
     artifact_blob_count: i64,
     artifact_search_indexed_row_count: i64,
     project_registry_count: i64,
+    project_repository_operation_record_count: i64,
 }
 
 #[derive(Debug)]
@@ -314,6 +321,10 @@ fn inspect_connection(
     let artifact_search_indexed_row_count =
         query_i64(connection, "SELECT COUNT(*) FROM artifact_blob_search")?;
     let project_registry_count = query_i64(connection, "SELECT COUNT(*) FROM project_registries")?;
+    let project_repository_operation_record_count = query_i64(
+        connection,
+        "SELECT COUNT(*) FROM project_repository_operation_records",
+    )?;
 
     Ok(StorageStatus {
         driver: DATABASE_DRIVER,
@@ -329,6 +340,7 @@ fn inspect_connection(
         artifact_blob_count,
         artifact_search_indexed_row_count,
         project_registry_count,
+        project_repository_operation_record_count,
     })
 }
 

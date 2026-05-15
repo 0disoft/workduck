@@ -3,10 +3,12 @@ import {
   type WorkduckEntityKind,
   type WorkduckRecordStatus,
   type WorkduckRepoKind,
+  type WorkduckQueueReviewDecision,
   type WorkduckRiskLevel,
   type WorkduckServiceLevel,
   workduckCatalogArtifactKinds,
   workduckEntityKinds,
+  workduckQueueReviewDecisions,
   workduckRecordStatuses,
   workduckRepoKinds,
   workduckRiskLevels,
@@ -24,6 +26,8 @@ export const workduckSchemaIds = {
   project: "urn:workduck:schema:project:v1",
   projectFolder: "urn:workduck:schema:project-folder:v1",
   projectRepoPlacement: "urn:workduck:schema:project-repo-placement:v1",
+  queueResultReport: "urn:workduck:schema:queue-result-report:v1",
+  queueWorkOrder: "urn:workduck:schema:queue-work-order:v1",
   repo: "urn:workduck:schema:repo:v1",
   run: "urn:workduck:schema:run:v1",
   service: "urn:workduck:schema:service:v1"
@@ -69,6 +73,8 @@ const workduckCatalogArtifactKindEnum: readonly WorkduckCatalogArtifactKind[] =
   workduckCatalogArtifactKinds;
 const workduckRiskLevelEnum: readonly WorkduckRiskLevel[] = workduckRiskLevels;
 const workduckServiceLevelEnum: readonly WorkduckServiceLevel[] = workduckServiceLevels;
+const workduckQueueReviewDecisionEnum: readonly WorkduckQueueReviewDecision[] =
+  workduckQueueReviewDecisions;
 
 const entityRefReference = {
   $ref: workduckSchemaIds.entityRef
@@ -336,6 +342,77 @@ export const workduckGateSchema = {
   }
 } satisfies WorkduckObjectJsonSchema;
 
+export const workduckQueueResultReportSchema = {
+  $schema: workduckJsonSchemaDraft,
+  $id: workduckSchemaIds.queueResultReport,
+  title: "Workduck queue result report",
+  type: "object",
+  additionalProperties: false,
+  required: ["schemaVersion", "ref", "status", "createdAt", "tasks"],
+  properties: {
+    schemaVersion: {
+      type: "string",
+      enum: ["workduck.queue-result-report/v1"]
+    },
+    ref: entityRefReference,
+    status: recordStatus,
+    createdAt: nonEmptyString,
+    tasks: {
+      type: "array",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: ["id", "title", "summary", "filesChanged", "verification", "risks"],
+        properties: {
+          id: nonEmptyString,
+          title: nonEmptyString,
+          summary: nonEmptyString,
+          filesChanged: stringArray,
+          verification: stringArray,
+          risks: stringArray
+        }
+      }
+    }
+  }
+} satisfies WorkduckObjectJsonSchema;
+
+export const workduckQueueWorkOrderSchema = {
+  $schema: workduckJsonSchemaDraft,
+  $id: workduckSchemaIds.queueWorkOrder,
+  title: "Workduck queue work order",
+  type: "object",
+  additionalProperties: false,
+  required: ["schemaVersion", "ref", "status", "createdAt", "tasks"],
+  properties: {
+    schemaVersion: {
+      type: "string",
+      enum: ["workduck.queue-work-order/v1"]
+    },
+    ref: entityRefReference,
+    status: recordStatus,
+    createdAt: nonEmptyString,
+    sourceReport: entityRefReference,
+    tasks: {
+      type: "array",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: ["id", "title", "body"],
+        properties: {
+          id: nonEmptyString,
+          title: nonEmptyString,
+          body: nonEmptyString,
+          sourceReportTaskId: nonEmptyString,
+          decision: {
+            type: "string",
+            enum: workduckQueueReviewDecisionEnum
+          }
+        }
+      }
+    }
+  }
+} satisfies WorkduckObjectJsonSchema;
+
 export const workduckSchemas = {
   [workduckSchemaIds.agentBrief]: workduckAgentBriefSchema,
   [workduckSchemaIds.artifact]: workduckArtifactSchema,
@@ -345,6 +422,8 @@ export const workduckSchemas = {
   [workduckSchemaIds.project]: workduckProjectSchema,
   [workduckSchemaIds.projectFolder]: workduckProjectFolderSchema,
   [workduckSchemaIds.projectRepoPlacement]: workduckProjectRepoPlacementSchema,
+  [workduckSchemaIds.queueResultReport]: workduckQueueResultReportSchema,
+  [workduckSchemaIds.queueWorkOrder]: workduckQueueWorkOrderSchema,
   [workduckSchemaIds.repo]: workduckRepoSchema,
   [workduckSchemaIds.run]: workduckRunSchema,
   [workduckSchemaIds.service]: workduckServiceSchema

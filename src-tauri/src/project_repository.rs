@@ -6,6 +6,9 @@ use std::{
     time::{Duration, Instant},
 };
 
+use base64::{engine::general_purpose::STANDARD, Engine as _};
+use zeroize::Zeroize;
+
 #[cfg(target_os = "windows")]
 use std::os::windows::process::CommandExt;
 
@@ -176,12 +179,18 @@ struct GitCommandFailure {
     error: ProjectRepositoryGitError,
 }
 
+enum GitCredential {
+    GithubToken(String),
+}
+
 #[tauri::command]
 pub fn clone_project_repository(
     workspace_path: String,
     group_relative_path: String,
     repository_name: String,
     remote_url: String,
+    credential_kind: Option<String>,
+    credential_value: Option<String>,
 ) -> ProjectRepositoryClone {
     let workspace_root = match validate_workspace_root(&workspace_path) {
         Ok(workspace_root) => workspace_root,
@@ -209,7 +218,9 @@ pub fn clone_project_repository(
         return invalid(ProjectRepositoryCloneError::CloneTargetExists);
     }
 
-    match run_git_clone(&group_path, &remote_url, &clone_target) {
+    let credential = parse_git_credential(credential_kind, credential_value);
+
+    match run_git_clone(&group_path, &remote_url, &clone_target, credential.as_ref()) {
         Ok(()) => {
             let normalized_clone_target =
                 fs::canonicalize(&clone_target).unwrap_or_else(|_| clone_target.clone());
@@ -253,7 +264,12 @@ pub fn initialize_project_repository_git(path: String) -> ProjectRepositoryGitMu
         Err(failure) => return invalid_git_mutation(failure.error),
     }
 
-    let output = match run_git_command(&repository_path, &["init"], PROJECT_REPOSITORY_GIT_ACTION_TIMEOUT) {
+    let output = match run_git_command(
+        &repository_path,
+        &["init"],
+        PROJECT_REPOSITORY_GIT_ACTION_TIMEOUT,
+        None,
+    ) {
         Ok(output) => output,
         Err(failure) => return invalid_git_mutation(failure.error),
     };
@@ -266,29 +282,44 @@ pub fn initialize_project_repository_git(path: String) -> ProjectRepositoryGitMu
 }
 
 #[tauri::command]
-pub fn fetch_project_repository_git(path: String) -> ProjectRepositoryGitMutation {
+pub fn fetch_project_repository_git(
+    path: String,
+    credential_kind: Option<String>,
+    credential_value: Option<String>,
+) -> ProjectRepositoryGitMutation {
     run_remote_project_repository_git_command(
         path,
         &["fetch", "--all", "--prune"],
         classify_git_fetch_failure,
+        parse_git_credential(credential_kind, credential_value).as_ref(),
     )
 }
 
 #[tauri::command]
-pub fn pull_project_repository_git(path: String) -> ProjectRepositoryGitMutation {
+pub fn pull_project_repository_git(
+    path: String,
+    credential_kind: Option<String>,
+    credential_value: Option<String>,
+) -> ProjectRepositoryGitMutation {
     run_remote_project_repository_git_command(
         path,
         &["pull", "--ff-only"],
         classify_git_pull_failure,
+        parse_git_credential(credential_kind, credential_value).as_ref(),
     )
 }
 
 #[tauri::command]
-pub fn push_project_repository_git(path: String) -> ProjectRepositoryGitMutation {
+pub fn push_project_repository_git(
+    path: String,
+    credential_kind: Option<String>,
+    credential_value: Option<String>,
+) -> ProjectRepositoryGitMutation {
     run_remote_project_repository_git_command(
         path,
         &["push", "-u", "origin", "HEAD"],
         classify_git_push_failure,
+        parse_git_credential(credential_kind, credential_value).as_ref(),
     )
 }
 
@@ -298,6 +329,8 @@ pub fn publish_project_repository_to_github(
     repository_name: String,
     commit_message: String,
     visibility: String,
+    credential_kind: Option<String>,
+    credential_value: Option<String>,
 ) -> ProjectRepositoryGitMutation {
     let repository_path = match validate_repository_path(&path) {
         Ok(repository_path) => repository_path,
@@ -338,7 +371,13 @@ pub fn publish_project_repository_to_github(
         Err(failure) => return invalid_git_mutation(failure.error),
     }
 
-    let output = match run_gh_repo_create(&repository_path, &repository_name, visibility_flag) {
+    let credential = parse_git_credential(credential_kind, credential_value);
+    let output = match run_gh_repo_create(
+        &repository_path,
+        &repository_name,
+        visibility_flag,
+        credential.as_ref(),
+    ) {
         Ok(output) => output,
         Err(failure) => return invalid_git_mutation(failure.error),
     };
@@ -350,10 +389,107 @@ pub fn publish_project_repository_to_github(
     }
 }
 
+#[tauri::command]
+pub fn prepare_project_repository_for_github_publish(
+    path: String,
+    commit_message: String,
+) -> ProjectRepositoryGitMutation {
+    let repository_path = match validate_repository_path(&path) {
+        Ok(repository_path) => repository_path,
+        Err(error) => return invalid_git_mutation(error),
+    };
+    let commit_message = match validate_commit_message(&commit_message) {
+        Ok(commit_message) => commit_message,
+        Err(error) => return invalid_git_mutation(error),
+    };
+
+    match is_git_repository(&repository_path) {
+        Ok(true) => {}
+        Ok(false) => return invalid_git_mutation(ProjectRepositoryGitError::NotRepository),
+        Err(failure) => return invalid_git_mutation(failure.error),
+    }
+
+    match has_git_remote(&repository_path) {
+        Ok(false) => {}
+        Ok(true) => return invalid_git_mutation(ProjectRepositoryGitError::GithubRemoteExists),
+        Err(failure) => return invalid_git_mutation(failure.error),
+    }
+
+    match repository_has_head_commit(&repository_path) {
+        Ok(true) => valid_git_mutation(),
+        Ok(false) => match create_initial_repository_commit(&repository_path, &commit_message) {
+            Ok(()) => valid_git_mutation(),
+            Err(error) => invalid_git_mutation(error),
+        },
+        Err(failure) => invalid_git_mutation(failure.error),
+    }
+}
+
+#[tauri::command]
+pub fn push_project_repository_to_github(
+    path: String,
+    remote_url: String,
+    credential_kind: Option<String>,
+    credential_value: Option<String>,
+) -> ProjectRepositoryGitMutation {
+    let repository_path = match validate_repository_path(&path) {
+        Ok(repository_path) => repository_path,
+        Err(error) => return invalid_git_mutation(error),
+    };
+    let remote_url = match validate_remote_url(&remote_url) {
+        Ok(remote_url) => remote_url,
+        Err(_) => return invalid_git_mutation(ProjectRepositoryGitError::GithubCreateFailed),
+    };
+    let credential = parse_git_credential(credential_kind, credential_value);
+
+    match is_git_repository(&repository_path) {
+        Ok(true) => {}
+        Ok(false) => return invalid_git_mutation(ProjectRepositoryGitError::NotRepository),
+        Err(failure) => return invalid_git_mutation(failure.error),
+    }
+
+    match has_git_remote(&repository_path) {
+        Ok(false) => {}
+        Ok(true) => return invalid_git_mutation(ProjectRepositoryGitError::GithubRemoteExists),
+        Err(failure) => return invalid_git_mutation(failure.error),
+    }
+
+    let add_remote_output = match run_git_command(
+        &repository_path,
+        &["remote", "add", "origin", &remote_url],
+        PROJECT_REPOSITORY_GIT_ACTION_TIMEOUT,
+        None,
+    ) {
+        Ok(output) => output,
+        Err(failure) => return invalid_git_mutation(failure.error),
+    };
+
+    if !add_remote_output.status.success() {
+        return invalid_git_mutation(ProjectRepositoryGitError::GithubCreateFailed);
+    }
+
+    let push_output = match run_git_command(
+        &repository_path,
+        &["push", "-u", "origin", "HEAD"],
+        PROJECT_REPOSITORY_GIT_ACTION_TIMEOUT,
+        credential.as_ref(),
+    ) {
+        Ok(output) => output,
+        Err(failure) => return invalid_git_mutation(failure.error),
+    };
+
+    if push_output.status.success() {
+        valid_git_mutation()
+    } else {
+        invalid_git_mutation(classify_git_push_failure(&push_output))
+    }
+}
+
 fn run_remote_project_repository_git_command(
     path: String,
     args: &[&str],
     classify_failure: fn(&Output) -> ProjectRepositoryGitError,
+    credential: Option<&GitCredential>,
 ) -> ProjectRepositoryGitMutation {
     let repository_path = match validate_repository_path(&path) {
         Ok(repository_path) => repository_path,
@@ -372,8 +508,12 @@ fn run_remote_project_repository_git_command(
         Err(failure) => return invalid_git_mutation(failure.error),
     }
 
-    let output = match run_git_command(&repository_path, args, PROJECT_REPOSITORY_GIT_ACTION_TIMEOUT)
-    {
+    let output = match run_git_command(
+        &repository_path,
+        args,
+        PROJECT_REPOSITORY_GIT_ACTION_TIMEOUT,
+        credential,
+    ) {
         Ok(output) => output,
         Err(failure) => return invalid_git_mutation(failure.error),
     };
@@ -638,6 +778,7 @@ fn run_git_clone(
     group_path: &Path,
     remote_url: &str,
     clone_target: &Path,
+    credential: Option<&GitCredential>,
 ) -> Result<(), CloneFailure> {
     let mut command = Command::new("git");
     command
@@ -651,6 +792,7 @@ fn run_git_clone(
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped());
+    apply_git_credential(&mut command, credential);
 
     #[cfg(target_os = "windows")]
     command.creation_flags(CREATE_NO_WINDOW);
@@ -777,6 +919,7 @@ fn is_git_repository(repository_path: &Path) -> Result<bool, GitCommandFailure> 
         repository_path,
         &["rev-parse", "--is-inside-work-tree"],
         PROJECT_REPOSITORY_GIT_ACTION_TIMEOUT,
+        None,
     )?;
 
     Ok(output.status.success() && String::from_utf8_lossy(&output.stdout).trim() == "true")
@@ -787,6 +930,7 @@ fn has_git_remote(repository_path: &Path) -> Result<bool, GitCommandFailure> {
         repository_path,
         &["remote", "get-url", "origin"],
         PROJECT_REPOSITORY_GIT_ACTION_TIMEOUT,
+        None,
     )?;
 
     Ok(output.status.success() && !String::from_utf8_lossy(&output.stdout).trim().is_empty())
@@ -797,6 +941,7 @@ fn read_git_branch(repository_path: &Path) -> Result<Option<String>, GitCommandF
         repository_path,
         &["branch", "--show-current"],
         PROJECT_REPOSITORY_GIT_ACTION_TIMEOUT,
+        None,
     )?;
 
     if !output.status.success() {
@@ -813,6 +958,7 @@ fn read_git_ahead_behind_counts(repository_path: &Path) -> Result<(u32, u32), Gi
         repository_path,
         &["rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{upstream}"],
         PROJECT_REPOSITORY_GIT_ACTION_TIMEOUT,
+        None,
     )?;
 
     if !upstream_output.status.success() {
@@ -823,6 +969,7 @@ fn read_git_ahead_behind_counts(repository_path: &Path) -> Result<(u32, u32), Gi
         repository_path,
         &["rev-list", "--left-right", "--count", "HEAD...@{upstream}"],
         PROJECT_REPOSITORY_GIT_ACTION_TIMEOUT,
+        None,
     )?;
 
     if !output.status.success() {
@@ -851,6 +998,7 @@ fn repository_has_head_commit(repository_path: &Path) -> Result<bool, GitCommand
         repository_path,
         &["rev-parse", "--verify", "HEAD"],
         PROJECT_REPOSITORY_GIT_ACTION_TIMEOUT,
+        None,
     )?;
 
     Ok(output.status.success())
@@ -864,6 +1012,7 @@ fn create_initial_repository_commit(
         repository_path,
         &["add", "--all"],
         PROJECT_REPOSITORY_GIT_ACTION_TIMEOUT,
+        None,
     )
     .map_err(|failure| failure.error)?;
 
@@ -875,6 +1024,7 @@ fn create_initial_repository_commit(
         repository_path,
         &["commit", "--allow-empty", "-m", commit_message],
         PROJECT_REPOSITORY_GIT_ACTION_TIMEOUT,
+        None,
     )
     .map_err(|failure| failure.error)?;
 
@@ -883,6 +1033,48 @@ fn create_initial_repository_commit(
     } else {
         Err(classify_github_initial_commit_failure(&commit_output))
     }
+}
+
+fn parse_git_credential(
+    credential_kind: Option<String>,
+    credential_value: Option<String>,
+) -> Option<GitCredential> {
+    let kind = credential_kind?.trim().to_ascii_lowercase();
+    let value = credential_value?;
+    let trimmed_value = value.trim();
+
+    if kind != "github-token"
+        || trimmed_value.is_empty()
+        || trimmed_value.chars().any(char::is_control)
+    {
+        return None;
+    }
+
+    Some(GitCredential::GithubToken(trimmed_value.to_owned()))
+}
+
+fn apply_git_credential(command: &mut Command, credential: Option<&GitCredential>) {
+    let Some(GitCredential::GithubToken(token)) = credential else {
+        return;
+    };
+
+    let mut basic_source = format!("x-access-token:{token}");
+    let mut authorization_value = format!("AUTHORIZATION: basic {}", STANDARD.encode(&basic_source));
+    basic_source.zeroize();
+
+    command
+        .env("GIT_CONFIG_COUNT", "1")
+        .env("GIT_CONFIG_KEY_0", "http.https://github.com/.extraheader")
+        .env("GIT_CONFIG_VALUE_0", &authorization_value);
+    authorization_value.zeroize();
+}
+
+fn apply_github_cli_credential(command: &mut Command, credential: Option<&GitCredential>) {
+    let Some(GitCredential::GithubToken(token)) = credential else {
+        return;
+    };
+
+    command.env("GH_TOKEN", token);
 }
 
 fn classify_github_initial_commit_failure(output: &Output) -> ProjectRepositoryGitError {
@@ -911,6 +1103,7 @@ fn run_git_command(
     repository_path: &Path,
     args: &[&str],
     timeout: Duration,
+    credential: Option<&GitCredential>,
 ) -> Result<Output, GitCommandFailure> {
     let mut command = Command::new("git");
     command
@@ -921,6 +1114,7 @@ fn run_git_command(
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped());
+    apply_git_credential(&mut command, credential);
 
     #[cfg(target_os = "windows")]
     command.creation_flags(CREATE_NO_WINDOW);
@@ -966,6 +1160,7 @@ fn run_gh_repo_create(
     repository_path: &Path,
     repository_name: &str,
     visibility_flag: &str,
+    credential: Option<&GitCredential>,
 ) -> Result<Output, GitCommandFailure> {
     let mut command = Command::new("gh");
     command
@@ -985,6 +1180,7 @@ fn run_gh_repo_create(
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped());
+    apply_github_cli_credential(&mut command, credential);
 
     #[cfg(target_os = "windows")]
     command.creation_flags(CREATE_NO_WINDOW);

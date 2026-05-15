@@ -35,6 +35,7 @@ export interface ProjectRepositoryLinkRecord {
 	readonly name: string;
 	readonly path: string | null;
 	readonly remoteUrl: string | null;
+	readonly githubCredentialSecretId: string | null;
 	readonly tags: readonly string[];
 	readonly createdAt: string;
 	readonly updatedAt: string;
@@ -47,6 +48,7 @@ export interface ProjectNodeRecord {
 	readonly name: string;
 	readonly description: string;
 	readonly path: string;
+	readonly githubCredentialSecretId: string | null;
 	readonly tags: readonly string[];
 	readonly repositories: readonly ProjectRepositoryLinkRecord[];
 	readonly createdAt: string;
@@ -66,6 +68,7 @@ export interface ProjectNodeInput {
 	readonly name: string;
 	readonly description?: string;
 	readonly path: string;
+	readonly githubCredentialSecretId?: string | null;
 	readonly tags?: readonly string[];
 }
 
@@ -74,6 +77,7 @@ export interface ProjectRepositoryLinkInput {
 	readonly name: string;
 	readonly path?: string | null;
 	readonly remoteUrl?: string | null;
+	readonly githubCredentialSecretId?: string | null;
 	readonly tags?: readonly string[];
 }
 
@@ -102,6 +106,17 @@ export interface ProjectRepositoryTagsUpdateInput {
 	readonly nodeId: string;
 	readonly repositoryId: string;
 	readonly tags: readonly string[];
+}
+
+export interface ProjectNodeGithubCredentialUpdateInput {
+	readonly nodeId: string;
+	readonly githubCredentialSecretId: string | null;
+}
+
+export interface ProjectRepositoryGithubCredentialUpdateInput {
+	readonly nodeId: string;
+	readonly repositoryId: string;
+	readonly githubCredentialSecretId: string | null;
 }
 
 export type ProjectRegistryMutationResult =
@@ -179,6 +194,7 @@ export function addProjectNode(
 	const name = normalizeProjectName(input.name);
 	const description = normalizeProjectDescription(input.description ?? '');
 	const path = normalizeProjectPath(input.path);
+	const githubCredentialSecretId = normalizeRecordId(input.githubCredentialSecretId ?? null);
 	const tags = normalizeProjectTags(input.tags ?? []);
 	const timestamp = now.toISOString();
 
@@ -223,6 +239,7 @@ export function addProjectNode(
 		name,
 		description,
 		path,
+		githubCredentialSecretId,
 		tags,
 		repositories: [],
 		createdAt: timestamp,
@@ -248,6 +265,7 @@ export function addProjectRepositoryLink(
 	const name = normalizeRepositoryName(input.name);
 	const path = normalizeRepositoryPath(input.path ?? '');
 	const remoteUrl = normalizeRepositoryRemoteUrl(input.remoteUrl ?? '');
+	const githubCredentialSecretId = normalizeRecordId(input.githubCredentialSecretId ?? null);
 	const tags = normalizeProjectTags(input.tags ?? []);
 	const targetNode = normalizedRegistry.nodes.find((node) => node.id === input.nodeId);
 
@@ -310,6 +328,7 @@ export function addProjectRepositoryLink(
 		name,
 		path: path.length === 0 ? null : path,
 		remoteUrl: remoteUrl.length === 0 ? null : remoteUrl,
+		githubCredentialSecretId,
 		tags,
 		createdAt: timestamp,
 		updatedAt: timestamp
@@ -518,6 +537,88 @@ export function setProjectRepositoryLocalPath(
 	};
 }
 
+export function setProjectNodeGithubCredential(
+	registry: ProjectRegistry,
+	input: ProjectNodeGithubCredentialUpdateInput,
+	now = new Date()
+): ProjectRegistryMutationResult {
+	const normalizedRegistry = normalizeProjectRegistry(registry, registry.workspaceId);
+	const targetNode = normalizedRegistry.nodes.find((node) => node.id === input.nodeId);
+
+	if (targetNode === undefined) {
+		return { ok: false, registry: normalizedRegistry, error: 'project-node-not-found' };
+	}
+
+	const timestamp = now.toISOString();
+	const githubCredentialSecretId = normalizeRecordId(input.githubCredentialSecretId);
+
+	return {
+		ok: true,
+		registry: {
+			...normalizedRegistry,
+			nodes: normalizedRegistry.nodes.map((node) =>
+				node.id === targetNode.id
+					? {
+							...node,
+							githubCredentialSecretId,
+							updatedAt: timestamp
+						}
+					: node
+			),
+			updatedAt: timestamp
+		}
+	};
+}
+
+export function setProjectRepositoryGithubCredential(
+	registry: ProjectRegistry,
+	input: ProjectRepositoryGithubCredentialUpdateInput,
+	now = new Date()
+): ProjectRegistryMutationResult {
+	const normalizedRegistry = normalizeProjectRegistry(registry, registry.workspaceId);
+	const targetNode = normalizedRegistry.nodes.find((node) => node.id === input.nodeId);
+
+	if (targetNode === undefined) {
+		return { ok: false, registry: normalizedRegistry, error: 'project-node-not-found' };
+	}
+
+	if (targetNode.kind !== 'group') {
+		return { ok: false, registry: normalizedRegistry, error: 'project-repository-target-invalid' };
+	}
+
+	if (!targetNode.repositories.some((repository) => repository.id === input.repositoryId)) {
+		return { ok: false, registry: normalizedRegistry, error: 'project-repository-not-found' };
+	}
+
+	const timestamp = now.toISOString();
+	const githubCredentialSecretId = normalizeRecordId(input.githubCredentialSecretId);
+
+	return {
+		ok: true,
+		registry: {
+			...normalizedRegistry,
+			nodes: normalizedRegistry.nodes.map((node) =>
+				node.id === targetNode.id
+					? {
+							...node,
+							repositories: node.repositories.map((repository) =>
+								repository.id === input.repositoryId
+									? {
+											...repository,
+											githubCredentialSecretId,
+											updatedAt: timestamp
+										}
+									: repository
+							),
+							updatedAt: timestamp
+						}
+					: node
+			),
+			updatedAt: timestamp
+		}
+	};
+}
+
 export function removeProjectNode(
 	registry: ProjectRegistry,
 	nodeId: string,
@@ -647,6 +748,7 @@ function normalizeProjectNodes(nodes: readonly ProjectNodeRecord[]): readonly Pr
 			...node,
 			description: normalizeProjectDescription(node.description),
 			path,
+			githubCredentialSecretId: normalizeRecordId(node.githubCredentialSecretId),
 			tags: normalizeProjectTags(node.tags),
 			repositories: filterUniqueRepositories(
 				node.repositories,
@@ -692,6 +794,7 @@ function normalizeProjectNodes(nodes: readonly ProjectNodeRecord[]): readonly Pr
 			...node,
 			description: normalizeProjectDescription(node.description),
 			path,
+			githubCredentialSecretId: normalizeRecordId(node.githubCredentialSecretId),
 			tags: normalizeProjectTags(node.tags),
 			repositories: filterUniqueRepositories(
 				node.repositories,
@@ -735,6 +838,7 @@ function filterUniqueRepositories(
 
 		uniqueRepositories.push({
 			...repository,
+			githubCredentialSecretId: normalizeRecordId(repository.githubCredentialSecretId),
 			tags: normalizeProjectTags(repository.tags)
 		});
 	}
@@ -753,6 +857,7 @@ function parseProjectNodeRecord(value: unknown): ProjectNodeRecord | null {
 	const name = normalizeProjectName(readTrimmedString(value.name));
 	const description = normalizeProjectDescription(readTrimmedString(value.description));
 	const path = normalizeProjectPath(readTrimmedString(value.path));
+	const githubCredentialSecretId = normalizeRecordId(value.githubCredentialSecretId);
 	const tags = normalizeProjectTags(readStringArray(value.tags));
 	const rawRepositories = Array.isArray(value.repositories) ? value.repositories : [];
 	const repositories = rawRepositories.flatMap((rawRepository) => {
@@ -774,6 +879,7 @@ function parseProjectNodeRecord(value: unknown): ProjectNodeRecord | null {
 		name,
 		description,
 		path,
+		githubCredentialSecretId,
 		tags,
 		repositories,
 		createdAt: createdAt.length === 0 ? updatedAt : createdAt,
@@ -790,6 +896,7 @@ function parseRepositoryLinkRecord(value: unknown): ProjectRepositoryLinkRecord 
 	const name = normalizeRepositoryName(readTrimmedString(value.name));
 	const path = normalizeRepositoryPath(readTrimmedString(value.path));
 	const remoteUrl = normalizeRepositoryRemoteUrl(readTrimmedString(value.remoteUrl));
+	const githubCredentialSecretId = normalizeRecordId(value.githubCredentialSecretId);
 	const tags = normalizeProjectTags(readStringArray(value.tags));
 	const createdAt = readTrimmedString(value.createdAt);
 	const updatedAt = readTrimmedString(value.updatedAt);
@@ -803,6 +910,7 @@ function parseRepositoryLinkRecord(value: unknown): ProjectRepositoryLinkRecord 
 		name,
 		path: path.length === 0 ? null : path,
 		remoteUrl: remoteUrl.length === 0 ? null : remoteUrl,
+		githubCredentialSecretId,
 		tags,
 		createdAt: createdAt.length === 0 ? updatedAt : createdAt,
 		updatedAt: updatedAt.length === 0 ? createdAt : updatedAt

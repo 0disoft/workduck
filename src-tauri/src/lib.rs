@@ -1,6 +1,8 @@
 mod storage;
 mod project_folder;
+mod project_repository_operation_store;
 mod project_registry_store;
+mod queue_folder;
 mod project_repository;
 mod secret_vault_crypto;
 mod tray_menu;
@@ -66,17 +68,28 @@ pub fn run() {
             project_repository::initialize_project_repository_git,
             project_repository::inspect_project_repository_git,
             project_repository::pull_project_repository_git,
+            project_repository::prepare_project_repository_for_github_publish,
             project_repository::publish_project_repository_to_github,
+            project_repository::push_project_repository_to_github,
             project_repository::push_project_repository_git,
+            project_repository_operation_store::read_project_repository_operation_records,
+            project_repository_operation_store::write_project_repository_operation_record,
             project_registry_store::read_project_registries,
             project_registry_store::read_project_registry,
             project_registry_store::write_project_registries,
             project_registry_store::write_project_registry,
             project_folder::create_project_folder,
             project_folder::create_project_group_folder,
+            project_folder::delete_project_node_folder,
+            project_folder::delete_project_repository_folder,
             project_folder::ensure_project_folder_path,
             project_folder::open_project_folder_path,
-            project_folder::open_project_node_folder
+            project_folder::open_project_node_folder,
+            queue_folder::ensure_queue_folder,
+            queue_folder::list_queue_files,
+            queue_folder::open_queue_folder,
+            queue_folder::read_queue_file,
+            queue_folder::write_queue_work_order_file
         ])
         .run(tauri::generate_context!())
         .expect("error while running Workduck");

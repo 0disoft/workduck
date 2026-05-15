@@ -1,16 +1,28 @@
 export const ENVIRONMENT_VAULT_VERSION = 1;
 export const ENVIRONMENT_SECRET_NAME_MAX_LENGTH = 120;
 export const ENVIRONMENT_SECRET_VALUE_MAX_LENGTH = 16_384;
+export const ENVIRONMENT_SECRET_TAGS_MAX_COUNT = 8;
 
 export const environmentSecretKindOptions = [
 	{ id: 'api-key', label: 'API key' },
 	{ id: 'token', label: 'Token' },
+	{ id: 'ssh-key', label: 'SSH key' },
 	{ id: 'account', label: 'Account' },
 	{ id: 'password', label: 'Password' },
 	{ id: 'other', label: 'Other' }
 ] as const;
 
+export const environmentSecretTagOptions = [
+	{ id: 'llm', label: 'LLM' },
+	{ id: 'github', label: 'GitHub' },
+	{ id: 'cloud', label: 'Cloud' },
+	{ id: 'database', label: 'Database' },
+	{ id: 'auth', label: 'Auth' },
+	{ id: 'sync', label: 'Sync' }
+] as const;
+
 export type EnvironmentSecretKind = (typeof environmentSecretKindOptions)[number]['id'];
+export type EnvironmentSecretTag = (typeof environmentSecretTagOptions)[number]['id'];
 
 export type EnvironmentVaultError =
 	| 'environment-secret-name-required'
@@ -23,6 +35,7 @@ export interface EnvironmentSecretRecord {
 	readonly id: string;
 	readonly name: string;
 	readonly kind: EnvironmentSecretKind;
+	readonly tags: readonly EnvironmentSecretTag[];
 	readonly value: string;
 	readonly createdAt: string;
 	readonly updatedAt: string;
@@ -39,6 +52,7 @@ export interface EnvironmentSecretInput {
 	readonly id?: string | null;
 	readonly name: string;
 	readonly kind: EnvironmentSecretKind;
+	readonly tags: readonly EnvironmentSecretTag[];
 	readonly value: string;
 }
 
@@ -89,6 +103,7 @@ export function upsertEnvironmentSecret(
 	const name = normalizeSecretName(input.name);
 	const value = normalizeSecretValue(input.value);
 	const kind = normalizeSecretKind(input.kind);
+	const tags = normalizeSecretTags(input.tags);
 	const secretId = normalizeRecordId(input.id ?? null);
 
 	if (name.length === 0) {
@@ -118,6 +133,7 @@ export function upsertEnvironmentSecret(
 		id: secretId ?? createSecretId(),
 		name,
 		kind,
+		tags,
 		value,
 		createdAt: matchingSecret?.createdAt ?? timestamp,
 		updatedAt: timestamp
@@ -212,6 +228,7 @@ function parseSecretRecord(value: unknown): EnvironmentSecretRecord | null {
 	const id = normalizeRecordId(value.id);
 	const name = normalizeSecretName(readTrimmedString(value.name));
 	const kind = normalizeSecretKind(value.kind);
+	const tags = normalizeSecretTags(value.tags);
 	const secretValue = normalizeSecretValue(readRawString(value.value));
 	const createdAt = readTrimmedString(value.createdAt);
 	const updatedAt = readTrimmedString(value.updatedAt);
@@ -224,6 +241,7 @@ function parseSecretRecord(value: unknown): EnvironmentSecretRecord | null {
 		id,
 		name,
 		kind,
+		tags,
 		value: secretValue,
 		createdAt: createdAt.length === 0 ? updatedAt : createdAt,
 		updatedAt: updatedAt.length === 0 ? createdAt : updatedAt
@@ -248,6 +266,33 @@ function normalizeSecretKind(value: unknown): EnvironmentSecretKind {
 	return environmentSecretKindOptions.some((option) => option.id === value)
 		? (value as EnvironmentSecretKind)
 		: 'api-key';
+}
+
+function normalizeSecretTags(value: unknown): EnvironmentSecretTag[] {
+	if (!Array.isArray(value)) {
+		return [];
+	}
+
+	const allowedTags = new Set(environmentSecretTagOptions.map((option) => option.id));
+	const tags: EnvironmentSecretTag[] = [];
+
+	for (const item of value) {
+		if (typeof item !== 'string' || !allowedTags.has(item as EnvironmentSecretTag)) {
+			continue;
+		}
+
+		const tag = item as EnvironmentSecretTag;
+
+		if (!tags.includes(tag)) {
+			tags.push(tag);
+		}
+
+		if (tags.length >= ENVIRONMENT_SECRET_TAGS_MAX_COUNT) {
+			break;
+		}
+	}
+
+	return tags;
 }
 
 function normalizeRecordId(value: unknown) {

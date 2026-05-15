@@ -22,6 +22,7 @@
 		type WorkspacePathError
 	} from '$lib/workspaces/workspace-path';
 	import { formatWorkspacePathForDisplay } from '$lib/workspaces/workspace-path-format';
+	import { getWorkspacePathErrorMessage } from '$lib/workspaces/workspace-path-messages';
 	import {
 		readWorkspaceRegistryFromBrowser,
 		subscribeWorkspaceRegistry,
@@ -34,10 +35,11 @@
 		subscribeWorkspaceUnlocks,
 		workspaceRequiresUnlock
 	} from '$lib/workspaces/workspace-unlock';
+	import WorkspacePathRepairForm from '$lib/workspaces/WorkspacePathRepairForm.svelte';
 	import WorkspaceUnlockForm from '$lib/workspaces/WorkspaceUnlockForm.svelte';
 
 	type WorkspaceFormError = WorkspaceRegistryError | WorkspacePathError | WorkspacePasswordError;
-	type WorkspaceUnlockIntent = 'switch' | 'remove';
+	type WorkspaceUnlockIntent = 'switch' | 'remove' | 'repair';
 
 	let registry = $state<WorkspaceRegistry>(createEmptyWorkspaceRegistry());
 	let workspaceName = $state('');
@@ -47,6 +49,7 @@
 	let workspaceUnlockId = $state<string | null>(null);
 	let workspaceUnlockIntent = $state<WorkspaceUnlockIntent | null>(null);
 	let workspaceRemoveConfirmationId = $state<string | null>(null);
+	let workspacePathRepairId = $state<string | null>(null);
 	let workspaceUnlockRevision = $state(0);
 	let formError = $state<WorkspaceFormError | null>(null);
 	let storageError = $state<string | null>(null);
@@ -86,23 +89,15 @@
 			case 'workspace-name-required':
 				return 'Workspace name is required.';
 			case 'workspace-path-required':
-				return 'Workspace path is required.';
 			case 'workspace-path-not-absolute':
-				return 'Workspace path must be an absolute folder path.';
 			case 'workspace-path-not-found':
-				return 'Workspace path does not exist.';
 			case 'workspace-path-not-directory':
-				return 'Workspace path must be a folder.';
 			case 'workspace-path-permission-denied':
-				return 'Workspace path is not readable.';
 			case 'workspace-path-unreadable':
-				return 'Workspace path could not be checked.';
 			case 'workspace-path-validation-unavailable':
-				return 'Workspace path can only be checked in the desktop app.';
 			case 'workspace-path-selection-unavailable':
-				return 'Workspace folder picker is unavailable.';
 			case 'workspace-path-selection-failed':
-				return 'Workspace folder could not be selected.';
+				return getWorkspacePathErrorMessage(error);
 			case 'workspace-path-duplicate':
 				return 'Workspace path is already registered.';
 			case 'workspace-password-required':
@@ -150,6 +145,10 @@
 
 	function clearWorkspaceRemoveConfirmation() {
 		workspaceRemoveConfirmationId = null;
+	}
+
+	function clearWorkspacePathRepair() {
+		workspacePathRepairId = null;
 	}
 
 	function handleWorkspacePathInput(event: Event) {
@@ -289,6 +288,23 @@
 		requestWorkspaceRemoveConfirmation(workspaceId);
 	}
 
+	function handleWorkspaceRepair(workspaceId: string) {
+		formError = null;
+		const workspace = registry.workspaces.find((candidate) => candidate.id === workspaceId);
+
+		if (workspace === undefined) {
+			formError = 'workspace-not-found';
+			return;
+		}
+
+		if (workspaceRequiresUnlock(workspace) && !isWorkspaceUnlocked(workspace)) {
+			requestWorkspaceUnlock(workspace.id, 'repair');
+			return;
+		}
+
+		workspacePathRepairId = workspace.id;
+	}
+
 	function requestWorkspaceRemoveConfirmation(workspaceId: string) {
 		formError = null;
 		const workspace = registry.workspaces.find((candidate) => candidate.id === workspaceId);
@@ -349,6 +365,12 @@
 			return;
 		}
 
+		if (workspaceUnlockIntent === 'repair') {
+			clearWorkspaceUnlockRequest();
+			workspacePathRepairId = workspaceId;
+			return;
+		}
+
 		switchWorkspaceById(workspaceId);
 	}
 
@@ -377,6 +399,13 @@
 		const unsubscribeWorkspaceRegistry = subscribeWorkspaceRegistry((nextRegistry) => {
 			registry = nextRegistry;
 			storageError = null;
+
+			if (
+				workspacePathRepairId !== null &&
+				!nextRegistry.workspaces.some((workspace) => workspace.id === workspacePathRepairId)
+			) {
+				clearWorkspacePathRepair();
+			}
 		});
 		const unsubscribeWorkspaceUnlocks = subscribeWorkspaceUnlocks(() => {
 			workspaceUnlockRevision += 1;
@@ -497,44 +526,97 @@
 								onCancel={clearWorkspaceUnlockRequest}
 							/>
 						{/if}
+						{#if workspacePathRepairId === workspace.id}
+							<WorkspacePathRepairForm
+								workspace={workspace}
+								onRepaired={clearWorkspacePathRepair}
+								onCancel={clearWorkspacePathRepair}
+							/>
+						{/if}
 					</div>
 
 					<div class="workduck-workspace-actions">
 						{#if workspaceRequiresUnlock(workspace) && !workspaceIsUnlocked(workspace)}
-							<button
-								class="workduck-button workduck-button-secondary"
-								type="button"
-								onclick={() => requestWorkspaceUnlock(workspace.id, 'switch')}
+							<span
+								class="workduck-tooltip-anchor"
+								data-tooltip="Enter this workspace password to make it available on this device."
 							>
-								Unlock
-							</button>
-						{:else}
-							{#if registry.activeWorkspaceId !== workspace.id}
 								<button
 									class="workduck-button workduck-button-secondary"
 									type="button"
-									onclick={() => handleWorkspaceSwitch(workspace.id)}
+									onclick={() => requestWorkspaceUnlock(workspace.id, 'switch')}
 								>
-									Switch
+									Unlock
 								</button>
+							</span>
+						{:else}
+							<span
+								class="workduck-tooltip-anchor"
+								data-tooltip="Choose a local folder again when this workspace was synced from another device."
+							>
+								<button
+									class="workduck-button workduck-button-secondary"
+									type="button"
+									onclick={() => handleWorkspaceRepair(workspace.id)}
+								>
+									Reconnect
+								</button>
+							</span>
+							{#if registry.activeWorkspaceId !== workspace.id}
+								<span
+									class="workduck-tooltip-anchor"
+									data-tooltip="Make this workspace the current working area."
+								>
+									<button
+										class="workduck-button workduck-button-secondary"
+										type="button"
+										onclick={() => handleWorkspaceSwitch(workspace.id)}
+									>
+										Switch
+									</button>
+								</span>
 							{/if}
 							{#if workspaceRequiresUnlock(workspace)}
+								<span
+									class="workduck-tooltip-anchor"
+									data-tooltip="Lock this workspace again until its password is entered."
+								>
+									<button
+										class="workduck-button workduck-button-secondary"
+										type="button"
+										onclick={() => handleWorkspaceLock(workspace.id)}
+									>
+										Lock
+									</button>
+								</span>
+							{/if}
+						{/if}
+						{#if workspaceRequiresUnlock(workspace) && !workspaceIsUnlocked(workspace)}
+							<span
+								class="workduck-tooltip-anchor"
+								data-tooltip="Choose a local folder again when this workspace was synced from another device."
+							>
 								<button
 									class="workduck-button workduck-button-secondary"
 									type="button"
-									onclick={() => handleWorkspaceLock(workspace.id)}
+									onclick={() => handleWorkspaceRepair(workspace.id)}
 								>
-									Lock
+									Reconnect
 								</button>
-							{/if}
+							</span>
 						{/if}
-						<button
-							class="workduck-button workduck-button-danger"
-							type="button"
-							onclick={() => handleWorkspaceRemove(workspace.id)}
+						<span
+							class="workduck-tooltip-anchor"
+							data-tooltip="Remove this workspace from Workduck. Local files are not deleted."
 						>
-							Remove
-						</button>
+							<button
+								class="workduck-button workduck-button-danger"
+								type="button"
+								onclick={() => handleWorkspaceRemove(workspace.id)}
+							>
+								Remove
+							</button>
+						</span>
 					</div>
 				</li>
 			{/each}

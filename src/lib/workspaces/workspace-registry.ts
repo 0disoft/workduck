@@ -188,6 +188,53 @@ export function removeWorkspace(
 	};
 }
 
+export function updateWorkspacePath(
+	registry: WorkspaceRegistry,
+	workspaceId: string,
+	nextPath: string,
+	now = new Date()
+): WorkspaceRegistryResult {
+	const normalizedRegistry = normalizeWorkspaceRegistry(registry);
+	const path = normalizeWorkspacePath(nextPath);
+
+	if (path.length === 0) {
+		return { ok: false, registry: normalizedRegistry, error: 'workspace-path-required' };
+	}
+
+	const workspace = normalizedRegistry.workspaces.find((candidate) => candidate.id === workspaceId);
+
+	if (workspace === undefined) {
+		return { ok: false, registry: normalizedRegistry, error: 'workspace-not-found' };
+	}
+
+	const pathKey = getWorkspacePathKey(path);
+
+	if (
+		normalizedRegistry.workspaces.some(
+			(candidate) =>
+				candidate.id !== workspaceId && getWorkspacePathKey(candidate.path) === pathKey
+		)
+	) {
+		return { ok: false, registry: normalizedRegistry, error: 'workspace-path-duplicate' };
+	}
+
+	return {
+		ok: true,
+		registry: {
+			...normalizedRegistry,
+			workspaces: normalizedRegistry.workspaces.map((candidate) =>
+				candidate.id === workspaceId
+					? {
+							...candidate,
+							path,
+							updatedAt: now.toISOString()
+						}
+					: candidate
+			)
+		}
+	};
+}
+
 export function getActiveWorkspace(registry: WorkspaceRegistry): WorkspaceRecord | null {
 	const normalizedRegistry = normalizeWorkspaceRegistry(registry);
 

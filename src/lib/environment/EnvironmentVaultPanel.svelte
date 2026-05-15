@@ -5,12 +5,14 @@
 		createEmptyEnvironmentVault,
 		createMaskedSecretValue,
 		environmentSecretKindOptions,
+		environmentSecretTagOptions,
 		parseEnvironmentVault,
 		removeEnvironmentSecret,
 		serializeEnvironmentVault,
 		upsertEnvironmentSecret,
 		type EnvironmentSecretKind,
 		type EnvironmentSecretRecord,
+		type EnvironmentSecretTag,
 		type EnvironmentVault,
 		type EnvironmentVaultError
 	} from './environment-vault';
@@ -42,6 +44,7 @@
 	let vaultPassword = $state('');
 	let secretName = $state('');
 	let secretKind = $state<EnvironmentSecretKind>('api-key');
+	let secretTags = $state<EnvironmentSecretTag[]>([]);
 	let secretValue = $state('');
 	let editingSecretId = $state<string | null>(null);
 	let visibleSecretIds = $state<ReadonlySet<string>>(new Set());
@@ -62,6 +65,7 @@
 		vaultPassword = '';
 		secretName = '';
 		secretKind = 'api-key';
+		secretTags = [];
 		secretValue = '';
 		editingSecretId = null;
 		visibleSecretIds = new Set();
@@ -133,6 +137,7 @@
 			id: editingSecretId,
 			name: secretName,
 			kind: secretKind,
+			tags: secretTags,
 			value: secretValue
 		});
 
@@ -167,6 +172,7 @@
 		editingSecretId = secret.id;
 		secretName = secret.name;
 		secretKind = secret.kind;
+		secretTags = [...secret.tags];
 		secretValue = secret.value;
 		error = null;
 		status = null;
@@ -203,6 +209,7 @@
 		editingSecretId = null;
 		secretName = '';
 		secretKind = 'api-key';
+		secretTags = [];
 		secretValue = '';
 		error = null;
 	}
@@ -366,6 +373,21 @@
 				</select>
 			</label>
 
+			<label class="workduck-form-field" for="environment-secret-tags">
+				<span>Tags</span>
+				<select
+					id="environment-secret-tags"
+					class="workduck-select workduck-environment-tag-select"
+					multiple
+					bind:value={secretTags}
+					disabled={isBusy}
+				>
+					{#each environmentSecretTagOptions as tagOption}
+						<option value={tagOption.id}>{tagOption.label}</option>
+					{/each}
+				</select>
+			</label>
+
 			<label class="workduck-form-field" for="environment-secret-value">
 				<span>Value</span>
 				<input
@@ -408,6 +430,13 @@
 						<div class="workduck-environment-details">
 							<span class="workduck-environment-name">{secret.name}</span>
 							<span class="workduck-environment-kind">{getSecretKindLabel(secret.kind)}</span>
+							{#if secret.tags.length > 0}
+								<span class="workduck-environment-tags">
+									{#each secret.tags as tag (tag)}
+										<span class="workduck-project-tag">{tag}</span>
+									{/each}
+								</span>
+							{/if}
 							<code class="workduck-environment-value">
 								{visibleSecretIds.has(secret.id)
 									? secret.value
