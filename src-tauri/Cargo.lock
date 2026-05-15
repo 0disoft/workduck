@@ -4848,13 +4848,14 @@ dependencies = [
 
 [[package]]
 name = "workduck"
-version = "1.0.92"
+version = "1.0.94"
 dependencies = [
  "argon2",
  "base64 0.22.1",
  "chacha20poly1305",
  "rusqlite",
  "serde",
+ "serde_json",
  "tauri",
  "tauri-build",
  "tauri-plugin-autostart",

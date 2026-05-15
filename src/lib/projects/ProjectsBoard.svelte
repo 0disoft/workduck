@@ -48,9 +48,9 @@
 		type ProjectTreeRow
 	} from './project-registry';
 	import {
-		readProjectRegistryFromBrowser,
+		readProjectRegistry,
 		subscribeProjectRegistry,
-		writeProjectRegistryToBrowser,
+		writeProjectRegistry,
 		type ProjectRegistryStorageError
 	} from './project-storage';
 
@@ -237,15 +237,15 @@
 			!isRepositoryBusy(publishTarget.repository.id)
 	);
 
-	function readRegistryFromStorage(workspaceId: string) {
-		const result = readProjectRegistryFromBrowser(workspaceId);
+	async function readRegistryFromStorage(workspaceId: string) {
+		const result = await readProjectRegistry(workspaceId);
 
 		registry = result.registry;
 		storageError = result.ok ? null : result.error;
 	}
 
-	function persistRegistry(nextRegistry: ProjectRegistry) {
-		const result = writeProjectRegistryToBrowser(nextRegistry);
+	async function persistRegistry(nextRegistry: ProjectRegistry) {
+		const result = await writeProjectRegistry(nextRegistry);
 
 		registry = result.registry;
 		storageError = result.ok ? null : result.error;
@@ -467,7 +467,7 @@
 				return;
 			}
 
-			if (persistRegistry(updateResult.registry)) {
+			if (await persistRegistry(updateResult.registry)) {
 				selectedGroupId = target.node.id;
 				succeedRepositoryOperation(target.repository.id, 'clone');
 				status = 'Repository cloned.';
@@ -1035,7 +1035,7 @@
 		}
 	}
 
-	function handleDescriptionEditorSubmit(event: SubmitEvent) {
+	async function handleDescriptionEditorSubmit(event: SubmitEvent) {
 		event.preventDefault();
 
 		if (descriptionEditor === null || isSavingDescription) {
@@ -1057,7 +1057,7 @@
 			return;
 		}
 
-		if (persistRegistry(result.registry)) {
+		if (await persistRegistry(result.registry)) {
 			status = 'Description saved.';
 			closeDescriptionEditor();
 			return;
@@ -1105,7 +1105,7 @@
 		}
 	}
 
-	function handleTagEditorSubmit(event: SubmitEvent) {
+	async function handleTagEditorSubmit(event: SubmitEvent) {
 		event.preventDefault();
 
 		if (tagEditor === null || isSavingTags) {
@@ -1135,7 +1135,7 @@
 			return;
 		}
 
-		if (persistRegistry(result.registry)) {
+		if (await persistRegistry(result.registry)) {
 			status = 'Tags saved.';
 			closeTagEditor();
 			return;
@@ -1507,7 +1507,7 @@
 				return;
 			}
 
-			if (persistRegistry(result.registry)) {
+			if (await persistRegistry(result.registry)) {
 				const createdNode =
 					result.registry.nodes.find((node) => node.path === folderResult.relativePath) ?? null;
 
@@ -1564,7 +1564,7 @@
 		}
 
 		if (repositorySourceMode === 'remote') {
-			submitRemoteRepositoryLink(targetNodeId);
+			await submitRemoteRepositoryLink(targetNodeId);
 			return;
 		}
 
@@ -1588,14 +1588,14 @@
 			return;
 		}
 
-		if (persistRegistry(result.registry)) {
+		if (await persistRegistry(result.registry)) {
 			selectedGroupId = targetNode.id;
 			status = 'Repository folder created.';
 			closeDialog();
 		}
 	}
 
-	function submitRemoteRepositoryLink(targetNodeId: string) {
+	async function submitRemoteRepositoryLink(targetNodeId: string) {
 		const repositoryName = createRepositoryNameFromRemoteUrl(repositoryRemoteUrl);
 
 		if (repositoryName.length === 0) {
@@ -1616,14 +1616,14 @@
 			return;
 		}
 
-		if (persistRegistry(result.registry)) {
+		if (await persistRegistry(result.registry)) {
 			selectedGroupId = targetNodeId;
 			status = 'Repository registered.';
 			closeDialog();
 		}
 	}
 
-	function handleDeleteConfirm() {
+	async function handleDeleteConfirm() {
 		if (deleteCandidate === null || isDeleting) {
 			return;
 		}
@@ -1646,7 +1646,7 @@
 			return;
 		}
 
-		if (persistRegistry(result.registry)) {
+		if (await persistRegistry(result.registry)) {
 			status =
 				deleteCandidate.type === 'repository'
 					? 'Repository removed.'
@@ -2103,7 +2103,7 @@
 		}
 
 		folderRepairError = null;
-		persistRegistry(registrySnapshot);
+		await persistRegistry(registrySnapshot);
 	}
 
 	function createRepositoryGitInspectionSignature(
@@ -2220,7 +2220,7 @@
 		folderRepairSignature = '';
 		selectedProjectId = null;
 		selectedGroupId = null;
-		readRegistryFromStorage(workspaceId);
+		void readRegistryFromStorage(workspaceId);
 		const unsubscribeProjectRegistry = subscribeProjectRegistry(workspaceId, (nextRegistry) => {
 			registry = nextRegistry;
 			storageError = null;

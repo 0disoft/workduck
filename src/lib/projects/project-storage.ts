@@ -6,7 +6,8 @@ import {
 	type ProjectRegistry
 } from './project-registry';
 
-export const WORKDUCK_PROJECT_REGISTRIES_STORAGE_KEY = 'workduck.projectRegistries.v1';
+const LEGACY_PROJECT_REGISTRIES_STORAGE_KEY = 'workduck.projectRegistries.v1';
+const PROJECT_REGISTRY_SQLITE_MIGRATION_STORAGE_KEY = 'workduck.projectRegistries.sqliteMigrated.v1';
 export const WORKDUCK_PROJECT_REGISTRY_CHANGED_EVENT = 'workduck:project-registry-changed';
 
 export type ProjectRegistryStorageError =
@@ -45,95 +46,201 @@ interface ProjectRegistryChangedDetail {
 	readonly registry: ProjectRegistry;
 }
 
-export function readProjectRegistryFromBrowser(
-	workspaceId: string
-): ProjectRegistryStorageResult {
-	if (typeof window === 'undefined') {
-		return { ok: true, registry: createEmptyProjectRegistry(workspaceId) };
-	}
-
-	try {
-		const storage = readStorageRecord();
-
-		return {
-			ok: true,
-			registry: normalizeProjectRegistry(storage.registries[workspaceId], workspaceId)
-		};
-	} catch {
-		return {
-			ok: false,
-			registry: createEmptyProjectRegistry(workspaceId),
-			error: 'project-registry-read-failed'
-		};
-	}
+interface TauriCoreApi {
+	readonly invoke?: <T>(command: string, args?: Record<string, unknown>) => Promise<T>;
 }
 
-export function writeProjectRegistryToBrowser(
-	registry: ProjectRegistry
-): ProjectRegistryStorageResult {
+interface TauriGlobalWindow {
+	readonly __TAURI__?: {
+		readonly core?: TauriCoreApi;
+	};
+}
+
+interface ProjectRegistryReadResponse {
+	readonly ok: boolean;
+	readonly registryJson?: string | null;
+	readonly error?: ProjectRegistryStorageError | null;
+}
+
+interface ProjectRegistriesReadResponse {
+	readonly ok: boolean;
+	readonly registries?: Record<string, string> | null;
+	readonly error?: ProjectRegistryStorageError | null;
+}
+
+interface ProjectRegistryWriteResponse {
+	readonly ok: boolean;
+	readonly error?: ProjectRegistryStorageError | null;
+}
+
+export async function readProjectRegistry(workspaceId: string): Promise<ProjectRegistryStorageResult> {
+	const emptyRegistry = createEmptyProjectRegistry(workspaceId);
+	const legacyRegistry = readLegacyProjectRegistry(workspaceId);
+
 	if (typeof window === 'undefined') {
-		return { ok: false, registry, error: 'project-registry-write-failed' };
+		return { ok: true, registry: emptyRegistry };
 	}
 
+	if (getTauriInvoke() === undefined) {
+		return { ok: true, registry: legacyRegistry };
+	}
+
+	const sqliteResult = await readProjectRegistryFromSqlite(workspaceId);
+
+	if (!sqliteResult.ok) {
+		return {
+			ok: false,
+			registry: legacyRegistry,
+			error: sqliteResult.error
+		};
+	}
+
+	const sqliteRegistry =
+		sqliteResult.registryJson === null
+			? emptyRegistry
+			: parseProjectRegistryJson(sqliteResult.registryJson, workspaceId);
+
+	if (shouldPromoteLegacyRegistry(workspaceId, sqliteRegistry, legacyRegistry)) {
+		const writeResult = await writeProjectRegistryToSqlite(legacyRegistry);
+
+		if (!writeResult.ok) {
+			return {
+				ok: false,
+				registry: legacyRegistry,
+				error: writeResult.error
+			};
+		}
+
+		markWorkspaceRegistryMigrated(workspaceId);
+		return { ok: true, registry: legacyRegistry };
+	}
+
+	if (sqliteResult.registryJson !== null) {
+		markWorkspaceRegistryMigrated(workspaceId);
+	}
+
+	return { ok: true, registry: sqliteRegistry };
+}
+
+export async function writeProjectRegistry(
+	registry: ProjectRegistry
+): Promise<ProjectRegistryStorageResult> {
 	const normalizedRegistry = normalizeProjectRegistry(registry, registry.workspaceId);
 
-	try {
-		const storage = readStorageRecord();
-		const nextStorage = {
-			version: WORKDUCK_PROJECT_REGISTRY_VERSION,
-			registries: {
-				...storage.registries,
-				[normalizedRegistry.workspaceId]: normalizedRegistry
-			}
-		} satisfies ProjectRegistryStorageRecord;
+	if (typeof window === 'undefined') {
+		return { ok: false, registry: normalizedRegistry, error: 'project-registry-write-failed' };
+	}
 
-		writeStorageRecord(nextStorage);
-		dispatchProjectRegistryChanged(normalizedRegistry.workspaceId, normalizedRegistry);
-		return { ok: true, registry: normalizedRegistry };
-	} catch {
+	if (getTauriInvoke() === undefined) {
+		try {
+			writeLegacyProjectRegistries({
+				...readLegacyStorageRecord().registries,
+				[normalizedRegistry.workspaceId]: normalizedRegistry
+			});
+			dispatchProjectRegistryChanged(normalizedRegistry.workspaceId, normalizedRegistry);
+			return { ok: true, registry: normalizedRegistry };
+		} catch {
+			return { ok: false, registry: normalizedRegistry, error: 'project-registry-write-failed' };
+		}
+	}
+
+	const writeResult = await writeProjectRegistryToSqlite(normalizedRegistry);
+
+	if (!writeResult.ok) {
 		return {
 			ok: false,
 			registry: normalizedRegistry,
-			error: 'project-registry-write-failed'
+			error: writeResult.error
 		};
 	}
+
+	markWorkspaceRegistryMigrated(normalizedRegistry.workspaceId);
+	dispatchProjectRegistryChanged(normalizedRegistry.workspaceId, normalizedRegistry);
+	return { ok: true, registry: normalizedRegistry };
 }
 
-export function readProjectRegistriesFromBrowser(
+export async function readProjectRegistries(
 	workspaceIds: readonly string[]
-): ProjectRegistriesStorageResult {
-	const registries = Object.fromEntries(
-		workspaceIds.map((workspaceId) => [workspaceId, createEmptyProjectRegistry(workspaceId)])
+): Promise<ProjectRegistriesStorageResult> {
+	const fallbackRegistries: Record<string, ProjectRegistry> = Object.fromEntries(
+		workspaceIds.map((workspaceId) => [workspaceId, readLegacyProjectRegistry(workspaceId)])
 	);
 
 	if (typeof window === 'undefined') {
-		return { ok: true, registries };
+		return { ok: true, registries: fallbackRegistries };
 	}
 
-	try {
-		const storage = readStorageRecord();
+	if (getTauriInvoke() === undefined) {
+		return { ok: true, registries: fallbackRegistries };
+	}
+
+	const sqliteResult = await readProjectRegistriesFromSqlite(workspaceIds);
+
+	if (!sqliteResult.ok) {
+		return {
+			ok: false,
+			registries: fallbackRegistries,
+			error: sqliteResult.error
+		};
+	}
+
+	const registries: Record<string, ProjectRegistry> = {};
+	const registriesToPromote: Record<string, ProjectRegistry> = {};
+
+	for (const workspaceId of workspaceIds) {
+		const sqliteRegistryJson = sqliteResult.registries[workspaceId];
+		const registry =
+			sqliteRegistryJson === undefined
+				? createEmptyProjectRegistry(workspaceId)
+				: parseProjectRegistryJson(sqliteRegistryJson, workspaceId);
+		const fallbackRegistry = fallbackRegistries[workspaceId] ?? createEmptyProjectRegistry(workspaceId);
+
+		registries[workspaceId] = registry;
+
+		if (shouldPromoteLegacyRegistry(workspaceId, registry, fallbackRegistry)) {
+			registriesToPromote[workspaceId] = fallbackRegistry;
+		}
+	}
+
+	if (Object.keys(registriesToPromote).length > 0) {
+		const writeResult = await writeProjectRegistriesToSqlite(registriesToPromote);
+
+		if (!writeResult.ok) {
+			return {
+				ok: false,
+				registries: {
+					...registries,
+					...registriesToPromote
+				},
+				error: writeResult.error
+			};
+		}
+
+		for (const workspaceId of Object.keys(registriesToPromote)) {
+			markWorkspaceRegistryMigrated(workspaceId);
+		}
 
 		return {
 			ok: true,
-			registries: Object.fromEntries(
-				workspaceIds.map((workspaceId) => [
-					workspaceId,
-					normalizeProjectRegistry(storage.registries[workspaceId], workspaceId)
-				])
-			)
-		};
-	} catch {
-		return {
-			ok: false,
-			registries,
-			error: 'project-registry-read-failed'
+			registries: {
+				...registries,
+				...registriesToPromote
+			}
 		};
 	}
+
+	for (const workspaceId of workspaceIds) {
+		if (sqliteResult.registries[workspaceId] !== undefined) {
+			markWorkspaceRegistryMigrated(workspaceId);
+		}
+	}
+
+	return { ok: true, registries };
 }
 
-export function writeProjectRegistriesToBrowser(
+export async function writeProjectRegistries(
 	registries: Record<string, ProjectRegistry>
-): ProjectRegistriesStorageResult {
+): Promise<ProjectRegistriesStorageResult> {
 	const normalizedRegistries = Object.fromEntries(
 		Object.entries(registries).map(([workspaceId, registry]) => [
 			workspaceId,
@@ -149,30 +256,43 @@ export function writeProjectRegistriesToBrowser(
 		};
 	}
 
-	try {
-		const storage = readStorageRecord();
-		const nextStorage = {
-			version: WORKDUCK_PROJECT_REGISTRY_VERSION,
-			registries: {
-				...storage.registries,
+	if (getTauriInvoke() === undefined) {
+		try {
+			writeLegacyProjectRegistries({
+				...readLegacyStorageRecord().registries,
 				...normalizedRegistries
+			});
+
+			for (const registry of Object.values(normalizedRegistries)) {
+				dispatchProjectRegistryChanged(registry.workspaceId, registry);
 			}
-		} satisfies ProjectRegistryStorageRecord;
 
-		writeStorageRecord(nextStorage);
-
-		for (const registry of Object.values(normalizedRegistries)) {
-			dispatchProjectRegistryChanged(registry.workspaceId, registry);
+			return { ok: true, registries: normalizedRegistries };
+		} catch {
+			return {
+				ok: false,
+				registries: normalizedRegistries,
+				error: 'project-registry-write-failed'
+			};
 		}
+	}
 
-		return { ok: true, registries: normalizedRegistries };
-	} catch {
+	const writeResult = await writeProjectRegistriesToSqlite(normalizedRegistries);
+
+	if (!writeResult.ok) {
 		return {
 			ok: false,
 			registries: normalizedRegistries,
-			error: 'project-registry-write-failed'
+			error: writeResult.error
 		};
 	}
+
+	for (const registry of Object.values(normalizedRegistries)) {
+		markWorkspaceRegistryMigrated(registry.workspaceId);
+		dispatchProjectRegistryChanged(registry.workspaceId, registry);
+	}
+
+	return { ok: true, registries: normalizedRegistries };
 }
 
 export function subscribeProjectRegistry(
@@ -196,12 +316,14 @@ export function subscribeProjectRegistry(
 	function handleStorageChanged(event: StorageEvent) {
 		if (
 			event.storageArea !== window.localStorage ||
-			event.key !== WORKDUCK_PROJECT_REGISTRIES_STORAGE_KEY
+			event.key !== LEGACY_PROJECT_REGISTRIES_STORAGE_KEY
 		) {
 			return;
 		}
 
-		callback(readProjectRegistryFromBrowser(workspaceId).registry);
+		void readProjectRegistry(workspaceId).then((result) => {
+			callback(result.registry);
+		});
 	}
 
 	window.addEventListener(WORKDUCK_PROJECT_REGISTRY_CHANGED_EVENT, handleRegistryChanged);
@@ -213,22 +335,196 @@ export function subscribeProjectRegistry(
 	};
 }
 
-function readStorageRecord(): ProjectRegistryStorageRecord {
-	if (typeof window === 'undefined') {
-		return createEmptyStorageRecord();
+async function readProjectRegistryFromSqlite(workspaceId: string) {
+	const invoke = getTauriInvoke();
+
+	if (invoke === undefined) {
+		return { ok: true, registryJson: getLegacyRegistryJson(workspaceId) } as const;
 	}
 
-	const serializedStorage = window.localStorage.getItem(WORKDUCK_PROJECT_REGISTRIES_STORAGE_KEY);
+	try {
+		const response = await invoke<ProjectRegistryReadResponse>('read_project_registry', {
+			workspaceId
+		});
+
+		if (response.ok) {
+			return {
+				ok: true,
+				registryJson: typeof response.registryJson === 'string' ? response.registryJson : null
+			} as const;
+		}
+
+		return {
+			ok: false,
+			error: isProjectRegistryStorageError(response.error)
+				? response.error
+				: 'project-registry-read-failed'
+		} as const;
+	} catch {
+		return { ok: false, error: 'project-registry-read-failed' } as const;
+	}
+}
+
+async function readProjectRegistriesFromSqlite(workspaceIds: readonly string[]) {
+	const invoke = getTauriInvoke();
+
+	if (invoke === undefined) {
+		return {
+			ok: true,
+			registries: Object.fromEntries(
+				workspaceIds.flatMap((workspaceId) => {
+					const registryJson = getLegacyRegistryJson(workspaceId);
+
+					return registryJson === null ? [] : [[workspaceId, registryJson]];
+				})
+			)
+		} as const;
+	}
+
+	try {
+		const response = await invoke<ProjectRegistriesReadResponse>('read_project_registries', {
+			workspaceIds
+		});
+
+		if (response.ok && isStringRecord(response.registries)) {
+			return { ok: true, registries: response.registries } as const;
+		}
+
+		return {
+			ok: false,
+			error: isProjectRegistryStorageError(response.error)
+				? response.error
+				: 'project-registry-read-failed'
+		} as const;
+	} catch {
+		return { ok: false, error: 'project-registry-read-failed' } as const;
+	}
+}
+
+async function writeProjectRegistryToSqlite(registry: ProjectRegistry) {
+	const invoke = getTauriInvoke();
+
+	if (invoke === undefined) {
+		try {
+			writeLegacyProjectRegistries({
+				...readLegacyStorageRecord().registries,
+				[registry.workspaceId]: registry
+			});
+			return { ok: true } as const;
+		} catch {
+			return { ok: false, error: 'project-registry-write-failed' } as const;
+		}
+	}
+
+	try {
+		const response = await invoke<ProjectRegistryWriteResponse>('write_project_registry', {
+			workspaceId: registry.workspaceId,
+			registryJson: serializeProjectRegistry(registry),
+			updatedAt: registry.updatedAt
+		});
+
+		return response.ok
+			? ({ ok: true } as const)
+			: ({
+					ok: false,
+					error: isProjectRegistryStorageError(response.error)
+						? response.error
+						: 'project-registry-write-failed'
+				} as const);
+	} catch {
+		return { ok: false, error: 'project-registry-write-failed' } as const;
+	}
+}
+
+async function writeProjectRegistriesToSqlite(registries: Record<string, ProjectRegistry>) {
+	const invoke = getTauriInvoke();
+
+	if (invoke === undefined) {
+		try {
+			writeLegacyProjectRegistries({
+				...readLegacyStorageRecord().registries,
+				...registries
+			});
+			return { ok: true } as const;
+		} catch {
+			return { ok: false, error: 'project-registry-write-failed' } as const;
+		}
+	}
+
+	try {
+		const response = await invoke<ProjectRegistryWriteResponse>('write_project_registries', {
+			registries: Object.fromEntries(
+				Object.entries(registries).map(([workspaceId, registry]) => [
+					workspaceId,
+					{
+						registryJson: serializeProjectRegistry(registry),
+						updatedAt: registry.updatedAt
+					}
+				])
+			)
+		});
+
+		return response.ok
+			? ({ ok: true } as const)
+			: ({
+					ok: false,
+					error: isProjectRegistryStorageError(response.error)
+						? response.error
+						: 'project-registry-write-failed'
+				} as const);
+	} catch {
+		return { ok: false, error: 'project-registry-write-failed' } as const;
+	}
+}
+
+function shouldPromoteLegacyRegistry(
+	workspaceId: string,
+	sqliteRegistry: ProjectRegistry,
+	legacyRegistry: ProjectRegistry
+) {
+	return (
+		!workspaceRegistryWasMigrated(workspaceId) &&
+		sqliteRegistry.nodes.length === 0 &&
+		legacyRegistry.nodes.length > 0
+	);
+}
+
+function parseProjectRegistryJson(registryJson: string, workspaceId: string) {
+	try {
+		return normalizeProjectRegistry(JSON.parse(registryJson), workspaceId);
+	} catch {
+		return createEmptyProjectRegistry(workspaceId);
+	}
+}
+
+function readLegacyProjectRegistry(workspaceId: string) {
+	const storage = readLegacyStorageRecord();
+
+	return normalizeProjectRegistry(storage.registries[workspaceId], workspaceId);
+}
+
+function getLegacyRegistryJson(workspaceId: string) {
+	const registry = readLegacyProjectRegistry(workspaceId);
+
+	return registry.nodes.length === 0 ? null : serializeProjectRegistry(registry);
+}
+
+function readLegacyStorageRecord(): ProjectRegistryStorageRecord {
+	if (typeof window === 'undefined') {
+		return createEmptyLegacyStorageRecord();
+	}
+
+	const serializedStorage = window.localStorage.getItem(LEGACY_PROJECT_REGISTRIES_STORAGE_KEY);
 
 	if (serializedStorage === null) {
-		return createEmptyStorageRecord();
+		return createEmptyLegacyStorageRecord();
 	}
 
 	try {
 		const value: unknown = JSON.parse(serializedStorage);
 
 		if (!isObjectRecord(value) || value.version !== WORKDUCK_PROJECT_REGISTRY_VERSION) {
-			return createEmptyStorageRecord();
+			return createEmptyLegacyStorageRecord();
 		}
 
 		const rawRegistries = isObjectRecord(value.registries) ? value.registries : {};
@@ -244,21 +540,21 @@ function readStorageRecord(): ProjectRegistryStorageRecord {
 			registries
 		};
 	} catch {
-		return createEmptyStorageRecord();
+		return createEmptyLegacyStorageRecord();
 	}
 }
 
-function writeStorageRecord(record: ProjectRegistryStorageRecord) {
+function writeLegacyProjectRegistries(registries: Record<string, ProjectRegistry>) {
 	if (typeof window === 'undefined') {
 		return;
 	}
 
 	window.localStorage.setItem(
-		WORKDUCK_PROJECT_REGISTRIES_STORAGE_KEY,
+		LEGACY_PROJECT_REGISTRIES_STORAGE_KEY,
 		JSON.stringify({
 			version: WORKDUCK_PROJECT_REGISTRY_VERSION,
 			registries: Object.fromEntries(
-				Object.entries(record.registries).map(([workspaceId, registry]) => [
+				Object.entries(registries).map(([workspaceId, registry]) => [
 					workspaceId,
 					JSON.parse(serializeProjectRegistry(registry))
 				])
@@ -279,11 +575,65 @@ function dispatchProjectRegistryChanged(workspaceId: string, registry: ProjectRe
 	);
 }
 
-function createEmptyStorageRecord(): ProjectRegistryStorageRecord {
+function createEmptyLegacyStorageRecord(): ProjectRegistryStorageRecord {
 	return {
 		version: WORKDUCK_PROJECT_REGISTRY_VERSION,
 		registries: {}
 	};
+}
+
+function getTauriInvoke() {
+	if (typeof window === 'undefined') {
+		return undefined;
+	}
+
+	return (window as unknown as TauriGlobalWindow).__TAURI__?.core?.invoke;
+}
+
+function workspaceRegistryWasMigrated(workspaceId: string) {
+	return readMigratedWorkspaceIds().has(workspaceId);
+}
+
+function markWorkspaceRegistryMigrated(workspaceId: string) {
+	if (typeof window === 'undefined') {
+		return;
+	}
+
+	const workspaceIds = readMigratedWorkspaceIds();
+	workspaceIds.add(workspaceId);
+	window.localStorage.setItem(
+		PROJECT_REGISTRY_SQLITE_MIGRATION_STORAGE_KEY,
+		JSON.stringify([...workspaceIds])
+	);
+}
+
+function readMigratedWorkspaceIds() {
+	if (typeof window === 'undefined') {
+		return new Set<string>();
+	}
+
+	try {
+		const value: unknown = JSON.parse(
+			window.localStorage.getItem(PROJECT_REGISTRY_SQLITE_MIGRATION_STORAGE_KEY) ?? '[]'
+		);
+
+		return new Set(
+			Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : []
+		);
+	} catch {
+		return new Set<string>();
+	}
+}
+
+function isProjectRegistryStorageError(value: unknown): value is ProjectRegistryStorageError {
+	return value === 'project-registry-read-failed' || value === 'project-registry-write-failed';
+}
+
+function isStringRecord(value: unknown): value is Record<string, string> {
+	return (
+		isObjectRecord(value) &&
+		Object.values(value).every((item): item is string => typeof item === 'string')
+	);
 }
 
 function isObjectRecord(value: unknown): value is Record<string, unknown> {

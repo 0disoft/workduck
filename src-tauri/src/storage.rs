@@ -6,7 +6,7 @@ use tauri::{AppHandle, Manager};
 const DATABASE_DRIVER: &str = "sqlite";
 const DATABASE_FILE_NAME: &str = "workduck.sqlite3";
 const SQLITE_BUSY_TIMEOUT_MILLIS: u64 = 5_000;
-const CURRENT_SCHEMA_VERSION: i64 = 3;
+const CURRENT_SCHEMA_VERSION: i64 = 4;
 
 struct Migration {
     version: i64,
@@ -34,6 +34,12 @@ const MIGRATIONS: &[Migration] = &[
         checksum: "sha256:b1ebed43d0699dbc6c89a6f556c1119163de2797987c645bc0318b6f8f1f2ca1",
         sql: include_str!("../migrations/003_artifact_blob_search.sql"),
     },
+    Migration {
+        version: 4,
+        name: "004_project_registries",
+        checksum: "sha256:c8e4a20810854e4346391bc0293ea625b9f0b8ad0399a5afaa69eb8630fccdae",
+        sql: include_str!("../migrations/004_project_registries.sql"),
+    },
 ];
 
 #[derive(serde::Serialize)]
@@ -51,6 +57,7 @@ pub struct StorageStatus {
     latest_migration: Option<String>,
     artifact_blob_count: i64,
     artifact_search_indexed_row_count: i64,
+    project_registry_count: i64,
 }
 
 #[derive(Debug)]
@@ -114,11 +121,14 @@ impl std::error::Error for StorageError {}
 
 pub fn storage_status(app: &AppHandle) -> Result<StorageStatus, StorageError> {
     let database_path = resolve_database_path(app)?;
-    let mut connection = open_database(&database_path)?;
-
-    configure_connection(&connection)?;
-    run_migrations(&mut connection)?;
+    let connection = connect_database(&database_path)?;
     inspect_connection(&connection, database_path)
+}
+
+pub(crate) fn app_connection(app: &AppHandle) -> Result<Connection, StorageError> {
+    let database_path = resolve_database_path(app)?;
+
+    connect_database(&database_path)
 }
 
 fn resolve_database_path(app: &AppHandle) -> Result<PathBuf, StorageError> {
@@ -142,6 +152,15 @@ fn open_database(database_path: &PathBuf) -> Result<Connection, StorageError> {
         operation: "open",
         source,
     })
+}
+
+fn connect_database(database_path: &PathBuf) -> Result<Connection, StorageError> {
+    let mut connection = open_database(database_path)?;
+
+    configure_connection(&connection)?;
+    run_migrations(&mut connection)?;
+
+    Ok(connection)
 }
 
 fn configure_connection(connection: &Connection) -> Result<(), StorageError> {
@@ -294,6 +313,7 @@ fn inspect_connection(
     let artifact_blob_count = query_i64(connection, "SELECT COUNT(*) FROM artifact_blobs")?;
     let artifact_search_indexed_row_count =
         query_i64(connection, "SELECT COUNT(*) FROM artifact_blob_search")?;
+    let project_registry_count = query_i64(connection, "SELECT COUNT(*) FROM project_registries")?;
 
     Ok(StorageStatus {
         driver: DATABASE_DRIVER,
@@ -308,6 +328,7 @@ fn inspect_connection(
         latest_migration,
         artifact_blob_count,
         artifact_search_indexed_row_count,
+        project_registry_count,
     })
 }
 

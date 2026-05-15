@@ -6,8 +6,8 @@
 		writeWorkspaceRegistryToBrowser
 	} from '$lib/workspaces/workspace-storage';
 	import {
-		readProjectRegistriesFromBrowser,
-		writeProjectRegistriesToBrowser,
+		readProjectRegistries,
+		writeProjectRegistries,
 		type ProjectRegistryStorageError
 	} from '$lib/projects/project-storage';
 	import {
@@ -417,7 +417,7 @@
 			return null;
 		}
 
-		const projectRegistriesResult = readProjectRegistriesFromBrowser(
+		const projectRegistriesResult = await readProjectRegistries(
 			registryResult.registry.workspaces.map((workspace) => workspace.id)
 		);
 
@@ -472,7 +472,7 @@
 			return false;
 		}
 
-		const projectWriteResult = writeProjectRegistriesToBrowser(result.data.projectRegistries);
+		const projectWriteResult = await writeProjectRegistries(result.data.projectRegistries);
 
 		if (!projectWriteResult.ok) {
 			syncError = projectWriteResult.error;

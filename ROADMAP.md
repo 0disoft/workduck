@@ -41,6 +41,8 @@ work.
   affected card, and block duplicate clicks during long-running operations.
 - Repository filters for tags, pull-needed repositories, and push-needed
   repositories.
+- Project board metadata is stored in SQLite by workspace, with legacy
+  browser-stored metadata promoted on first read.
 
 ### Data And Packages
 
@@ -55,17 +57,16 @@ work.
 
 ## Next Work
 
-1. Move project board metadata from browser storage to the Rust SQLite boundary.
-2. Add persisted operation records for repository actions: clone, init, fetch,
+1. Add persisted operation records for repository actions: clone, init, fetch,
    pull, push, and publish.
-3. Add a workspace path repair flow for devices where the synced workspace path
+2. Add a workspace path repair flow for devices where the synced workspace path
    does not exist locally.
-4. Connect artifact drafts to SQLite artifact tables and the FTS5 search index.
-5. Build the first Agent Brief -> Run -> Gate loop using local data only.
-6. Add an AGENTS.md generator after the brief/run/gate loop exists.
-7. Add a local shell runner with explicit approval after run records can capture
+3. Connect artifact drafts to SQLite artifact tables and the FTS5 search index.
+4. Build the first Agent Brief -> Run -> Gate loop using local data only.
+5. Add an AGENTS.md generator after the brief/run/gate loop exists.
+6. Add a local shell runner with explicit approval after run records can capture
    command, output, diff, and approval state.
-8. Add OpenCode and other agent adapters only after the local runner boundary is
+7. Add OpenCode and other agent adapters only after the local runner boundary is
    stable.
 
 ## Deferred Dependencies

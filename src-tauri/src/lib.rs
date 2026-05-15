@@ -1,5 +1,6 @@
 mod storage;
 mod project_folder;
+mod project_registry_store;
 mod project_repository;
 mod secret_vault_crypto;
 mod tray_menu;
@@ -67,6 +68,10 @@ pub fn run() {
             project_repository::pull_project_repository_git,
             project_repository::publish_project_repository_to_github,
             project_repository::push_project_repository_git,
+            project_registry_store::read_project_registries,
+            project_registry_store::read_project_registry,
+            project_registry_store::write_project_registries,
+            project_registry_store::write_project_registry,
             project_folder::create_project_folder,
             project_folder::create_project_group_folder,
             project_folder::ensure_project_folder_path,

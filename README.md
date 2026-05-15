@@ -23,14 +23,15 @@ includes:
 - Repository folder creation, URL registration, clone, Git init, fetch, pull,
   push, publish, card-level operation status, tags, tag filtering, and
   pull/push-needed filtering.
+- Project board metadata stored in the local SQLite database, with legacy
+  browser-stored project metadata promoted on first read.
 - Artifact draft editing with CodeMirror for Markdown, JSON, and YAML.
 - Agents menu shell without runtime agent execution.
 - Custom title bar, sidebar resizing, tray integration, and bundled editor
   fonts.
 
-The main unfinished product boundary is persistence. Project board metadata
-currently uses the browser-side registry path, while the Rust SQLite boundary is
-already in place for local application data and artifact storage.
+The main unfinished product boundary is now connecting artifact drafts, briefs,
+runs, and gates to durable local data.
 
 Encrypted sync includes project, group, and repository metadata. Repository
 local paths are stored relative to the workspace when possible, not as raw
@@ -94,12 +95,12 @@ mf run mustflow_check
 
 The next product work should keep the daily workbench path tight:
 
-1. Move project board metadata from browser storage to the Rust SQLite boundary.
-2. Add stronger repository operation status and progress handling.
-3. Add a workspace path repair flow for devices where the synced workspace path
+1. Add persisted operation records for repository actions: clone, init, fetch,
+   pull, push, and publish.
+2. Add a workspace path repair flow for devices where the synced workspace path
    does not exist locally.
-4. Connect artifact drafts to the SQLite artifact tables and search index.
-5. Build the first Agent Brief, Run, and Gate loop before adding runtime agent
+3. Connect artifact drafts to the SQLite artifact tables and search index.
+4. Build the first Agent Brief, Run, and Gate loop before adding runtime agent
    adapters.
 
 ## Agent Workflow
