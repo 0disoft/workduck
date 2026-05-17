@@ -12,21 +12,22 @@ commands instead of SvelteKit server routes.
 Workduck is still in early development, but the current desktop surface already
 includes:
 
-- Workspace management with per-workspace password locking.
+- Workspace management with per-workspace password locking, session unlock, and
+  inactivity auto-lock.
 - Workspace path repair when synced workspace metadata points to a folder that
   does not exist on the current device.
 - Workspace and project metadata import/export through encrypted sync files.
 - Optional Git pull and push for the encrypted sync file.
 - Appearance settings for interface and editor font sizing.
-- System settings for startup and tray behavior.
+- System settings for startup, tray behavior, and workspace inactivity locking.
 - Environment variable vault UI for API keys, tokens, accounts, passwords, and
   tags.
 - Projects board with project, group, and repository cards.
 - GitHub credentials can be selected from Environment token entries tagged
   `github`; projects store only the selected secret ID, not the token value.
-- Queue menu that creates workspace `queue/reports` and `queue/work-orders`
-  folders, renders structured result reports and work orders inside Workduck,
-  and writes follow-up work-order JSON files.
+- Queue menu that creates workspace `queue/reports`, `queue/work-orders`, and
+  `queue/proposals` folders, renders structured result reports, work orders,
+  and proposals inside Workduck, and writes follow-up work-order JSON files.
 - Project and group descriptions, nested counts, and deletion confirmation with
   optional local folder removal under the workspace projects folder.
 - Repository folder creation, URL registration, clone, Git init, fetch, pull,
@@ -39,8 +40,11 @@ includes:
 - Project board metadata stored in the local SQLite database, with legacy
   browser-stored project metadata promoted on first read.
 - Artifact draft editing with CodeMirror for Markdown, JSON, and YAML.
+- Skills menu for workspace-local Workduck skills, including a built-in
+  proposal-writing skill.
 - Agents menu with workspace-local agent cards that reference `llm` API keys
-  from the Environment vault without copying secret values.
+  from the Environment vault and selected Workduck skills without copying
+  secret values.
 - Custom title bar, sidebar resizing, tray integration, and bundled editor
   fonts.
 
@@ -56,6 +60,7 @@ absolute paths.
 - `src/`: SvelteKit static app code.
 - `src/lib/projects/`: project, group, repository, folder, and Git UI logic.
 - `src/lib/agents/`: workspace-local agent registry UI and storage.
+- `src/lib/skills/`: workspace-local Workduck skill registry UI and storage.
 - `src/lib/queue/`: queue folder UI, report review, work-order creation, and
   Tauri command adapter.
 - `src/lib/settings/`: workspace, sync, appearance, and system settings UI.

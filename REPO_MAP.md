@@ -5,8 +5,8 @@ generated_by: mustflow
 relative_root: "."
 source_policy: anchors_only
 privacy_mode: minimal
-anchor_count: 73
-source_fingerprint: "sha256:6b1b2e4590ef9f4d8bc23e1bb4b829e85a905627156075f2770c3260b23c3a1f"
+anchor_count: 74
+source_fingerprint: "sha256:a26f841b176c0907552eef72973e32f04f0d1e5651f3e9338361f1565846463a"
 ---
 
 # REPO_MAP.md
@@ -253,6 +253,10 @@ Regenerate it with `mf map --write` instead of editing it by hand.
 ### src-tauri/
 
 - `src-tauri/Cargo.toml`: Rust package manifest and workspace configuration.
+
+### src/lib/i18n/
+
+- `src/lib/i18n/README.md`: Directory guide for this area.
 
 ## Generated Files
 

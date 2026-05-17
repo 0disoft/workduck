@@ -11,15 +11,15 @@ work.
 - Static SvelteKit UI loaded by a Tauri 2 desktop shell.
 - Rust command boundary for filesystem, Git, sync, tray, window, and SQLite
   operations.
-- Custom title bar, resizable sidebar, tray integration, startup setting, and
-  minimize-to-tray setting.
+- Custom title bar, resizable sidebar, tray integration, startup setting,
+  minimize-to-tray setting, and workspace inactivity lock setting.
 - Bundled editor fonts and appearance settings for interface and editor font
   sizes.
 
 ### Workspace And Sync
 
-- Workspace profiles with local paths, per-workspace password locking, unlock
-  retry delay, and manual lock.
+- Workspace profiles with local paths, per-workspace password locking, session
+  unlock, unlock retry delay, manual lock, and inactivity auto-lock.
 - Workspace path repair for synced workspace metadata that points to a missing
   local folder on the current device.
 - Settings tabs for appearance, workspaces, encrypted sync, and system options.
@@ -30,9 +30,10 @@ work.
 - Optional Git pull and push for the selected encrypted sync folder.
 - Environment variable vault UI for API keys, tokens, accounts, passwords, and
   tags.
-- Queue menu with workspace `queue/reports` and `queue/work-orders` folder
-  creation, queued JSON listing, structured result-report review, internal
-  work-order rendering, and follow-up work-order JSON creation.
+- Queue menu with workspace `queue/reports`, `queue/work-orders`, and
+  `queue/proposals` folder creation, queued JSON listing, structured
+  result-report review, internal work-order and proposal rendering, and
+  follow-up work-order JSON creation.
 
 ### Projects And Repositories
 
@@ -66,10 +67,13 @@ work.
 - Agent Brief Markdown export targets for Claude Code, Codex, Cursor, and
   OpenCode.
 - Artifact draft editor powered by CodeMirror for Markdown, JSON, and YAML.
-- Queue result-report and work-order JSON contracts in the shared core and
-  schema packages.
+- Queue result-report, work-order, and proposal JSON contracts in the shared
+  core and schema packages.
+- Skills menu with workspace-local Workduck skills and a built-in proposal
+  writer skill.
 - Agents menu with workspace-local agent cards that reference `llm` API keys
-  from the Environment vault without copying secret values.
+  from the Environment vault and selected Workduck skills without copying
+  secret values.
 
 ## Next Work
 
