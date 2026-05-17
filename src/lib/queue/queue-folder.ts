@@ -18,7 +18,7 @@ export type QueueFolderError =
 	| 'queue-folder-file-already-exists'
 	| 'queue-folder-unavailable';
 
-export type QueueFileKind = 'result-report' | 'work-order';
+export type QueueFileKind = 'result-report' | 'work-order' | 'proposal' | 'unsupported';
 
 export type QueueFolderResult =
 	| {

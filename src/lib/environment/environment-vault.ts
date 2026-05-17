@@ -15,10 +15,18 @@ export const environmentSecretKindOptions = [
 export const environmentSecretTagOptions = [
 	{ id: 'llm', label: 'LLM' },
 	{ id: 'github', label: 'GitHub' },
+	{ id: 'gitlab', label: 'GitLab' },
+	{ id: 'openai', label: 'OpenAI' },
+	{ id: 'anthropic', label: 'Anthropic' },
+	{ id: 'openrouter', label: 'OpenRouter' },
 	{ id: 'cloud', label: 'Cloud' },
 	{ id: 'database', label: 'Database' },
 	{ id: 'auth', label: 'Auth' },
-	{ id: 'sync', label: 'Sync' }
+	{ id: 'sync', label: 'Sync' },
+	{ id: 'deployment', label: 'Deployment' },
+	{ id: 'monitoring', label: 'Monitoring' },
+	{ id: 'payment', label: 'Payment' },
+	{ id: 'storage', label: 'Storage' }
 ] as const;
 
 export type EnvironmentSecretKind = (typeof environmentSecretKindOptions)[number]['id'];
@@ -26,6 +34,8 @@ export type EnvironmentSecretTag = (typeof environmentSecretTagOptions)[number][
 
 export type EnvironmentVaultError =
 	| 'environment-secret-name-required'
+	| 'environment-secret-kind-required'
+	| 'environment-secret-tag-required'
 	| 'environment-secret-name-duplicate'
 	| 'environment-secret-value-required'
 	| 'environment-secret-not-found'
@@ -51,7 +61,7 @@ export interface EnvironmentVault {
 export interface EnvironmentSecretInput {
 	readonly id?: string | null;
 	readonly name: string;
-	readonly kind: EnvironmentSecretKind;
+	readonly kind: EnvironmentSecretKind | '';
 	readonly tags: readonly EnvironmentSecretTag[];
 	readonly value: string;
 }
@@ -102,7 +112,6 @@ export function upsertEnvironmentSecret(
 	const normalizedVault = normalizeEnvironmentVault(vault, vault.workspaceId) ?? vault;
 	const name = normalizeSecretName(input.name);
 	const value = normalizeSecretValue(input.value);
-	const kind = normalizeSecretKind(input.kind);
 	const tags = normalizeSecretTags(input.tags);
 	const secretId = normalizeRecordId(input.id ?? null);
 
@@ -112,6 +121,14 @@ export function upsertEnvironmentSecret(
 
 	if (value.length === 0) {
 		return { ok: false, vault: normalizedVault, error: 'environment-secret-value-required' };
+	}
+
+	if (!isEnvironmentSecretKind(input.kind)) {
+		return { ok: false, vault: normalizedVault, error: 'environment-secret-kind-required' };
+	}
+
+	if (tags.length === 0) {
+		return { ok: false, vault: normalizedVault, error: 'environment-secret-tag-required' };
 	}
 
 	const matchingSecret = normalizedVault.secrets.find((secret) => secret.id === secretId);
@@ -132,7 +149,7 @@ export function upsertEnvironmentSecret(
 	const nextSecret = {
 		id: secretId ?? createSecretId(),
 		name,
-		kind,
+		kind: input.kind,
 		tags,
 		value,
 		createdAt: matchingSecret?.createdAt ?? timestamp,
@@ -263,9 +280,11 @@ function normalizeSecretValue(value: string) {
 }
 
 function normalizeSecretKind(value: unknown): EnvironmentSecretKind {
-	return environmentSecretKindOptions.some((option) => option.id === value)
-		? (value as EnvironmentSecretKind)
-		: 'api-key';
+	return isEnvironmentSecretKind(value) ? value : 'api-key';
+}
+
+function isEnvironmentSecretKind(value: unknown): value is EnvironmentSecretKind {
+	return environmentSecretKindOptions.some((option) => option.id === value);
 }
 
 function normalizeSecretTags(value: unknown): EnvironmentSecretTag[] {

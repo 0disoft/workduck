@@ -26,6 +26,7 @@ export const workduckSchemaIds = {
   project: "urn:workduck:schema:project:v1",
   projectFolder: "urn:workduck:schema:project-folder:v1",
   projectRepoPlacement: "urn:workduck:schema:project-repo-placement:v1",
+  queueProposal: "urn:workduck:schema:queue-proposal:v1",
   queueResultReport: "urn:workduck:schema:queue-result-report:v1",
   queueWorkOrder: "urn:workduck:schema:queue-work-order:v1",
   repo: "urn:workduck:schema:repo:v1",
@@ -357,6 +358,7 @@ export const workduckQueueResultReportSchema = {
     ref: entityRefReference,
     status: recordStatus,
     createdAt: nonEmptyString,
+    agentName: nonEmptyString,
     tasks: {
       type: "array",
       items: {
@@ -391,8 +393,82 @@ export const workduckQueueWorkOrderSchema = {
     ref: entityRefReference,
     status: recordStatus,
     createdAt: nonEmptyString,
+    agentName: nonEmptyString,
     sourceReport: entityRefReference,
     tasks: {
+      type: "array",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: ["id", "title", "body"],
+        properties: {
+          id: nonEmptyString,
+          title: nonEmptyString,
+          body: nonEmptyString,
+          sourceReportTaskId: nonEmptyString,
+          decision: {
+            type: "string",
+            enum: workduckQueueReviewDecisionEnum
+          }
+        }
+      }
+    }
+  }
+} satisfies WorkduckObjectJsonSchema;
+
+export const workduckQueueProposalSchema = {
+  $schema: workduckJsonSchemaDraft,
+  $id: workduckSchemaIds.queueProposal,
+  title: "Workduck queue proposal",
+  type: "object",
+  additionalProperties: false,
+  required: [
+    "schemaVersion",
+    "ref",
+    "status",
+    "createdAt",
+    "question",
+    "summary",
+    "options",
+    "recommendation",
+    "nextWorkOrders"
+  ],
+  properties: {
+    schemaVersion: {
+      type: "string",
+      enum: ["workduck.queue-proposal/v1"]
+    },
+    ref: entityRefReference,
+    status: recordStatus,
+    createdAt: nonEmptyString,
+    agentName: nonEmptyString,
+    question: nonEmptyString,
+    summary: nonEmptyString,
+    options: {
+      type: "array",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: ["id", "name", "summary", "strengths", "risks"],
+        properties: {
+          id: nonEmptyString,
+          name: nonEmptyString,
+          summary: nonEmptyString,
+          strengths: stringArray,
+          risks: stringArray
+        }
+      }
+    },
+    recommendation: {
+      type: ["object", "null"],
+      additionalProperties: false,
+      required: ["optionId", "reason"],
+      properties: {
+        optionId: nonEmptyString,
+        reason: nonEmptyString
+      }
+    },
+    nextWorkOrders: {
       type: "array",
       items: {
         type: "object",
@@ -422,6 +498,7 @@ export const workduckSchemas = {
   [workduckSchemaIds.project]: workduckProjectSchema,
   [workduckSchemaIds.projectFolder]: workduckProjectFolderSchema,
   [workduckSchemaIds.projectRepoPlacement]: workduckProjectRepoPlacementSchema,
+  [workduckSchemaIds.queueProposal]: workduckQueueProposalSchema,
   [workduckSchemaIds.queueResultReport]: workduckQueueResultReportSchema,
   [workduckSchemaIds.queueWorkOrder]: workduckQueueWorkOrderSchema,
   [workduckSchemaIds.repo]: workduckRepoSchema,

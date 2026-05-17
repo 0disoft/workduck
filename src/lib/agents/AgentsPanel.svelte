@@ -1,21 +1,41 @@
 <script lang="ts">
+	import { onMount, untrack } from 'svelte';
+
+	import { getWorkduckMessages } from '$lib/i18n/workduck-language';
 	import {
-		environmentSecretTagOptions,
-		parseEnvironmentVault,
 		type EnvironmentSecretRecord,
 		type EnvironmentVault
 	} from '$lib/environment/environment-vault';
 	import {
-		readEnvironmentVaultEnvelope,
-		subscribeEnvironmentVaultEnvelope
-	} from '$lib/environment/environment-vault-storage';
+		readEnvironmentVaultSession,
+		subscribeEnvironmentVaultSession
+	} from '$lib/environment/environment-vault-session';
+	import { openEnvironmentVaultSessionFromWorkspaceUnlock } from '$lib/environment/environment-vault-session-loader';
 	import {
-		decryptSecretVaultPayload,
-		type SecretVaultCryptoError,
-		type SecretVaultEnvelope
-	} from '$lib/environment/secret-vault-crypto';
+		createDefaultAppearanceSettings,
+		type AppearanceSettings
+	} from '$lib/settings/appearance-settings';
+	import {
+		readAppearanceSettingsFromBrowser,
+		subscribeAppearanceSettings
+	} from '$lib/settings/appearance-storage';
+	import {
+		createEmptyPersonaRegistry,
+		type PersonaRegistry
+	} from '$lib/personas/persona-registry';
+	import {
+		readPersonaRegistry,
+		subscribePersonaRegistry
+	} from '$lib/personas/persona-registry-storage';
+	import { DetailCard, EntityCard, EntityWorkbench } from '$lib/ui';
 	import type { WorkspaceRecord } from '$lib/workspaces/workspace-registry';
 
+	import {
+		agentEvaluationCriteriaDefinitions,
+		getAgentEvaluationAverage,
+		hasAgentEvaluations,
+		type AgentEvaluationCriterionId
+	} from './agent-evaluation';
 	import {
 		createEmptyAgentRegistry,
 		removeAgent,
@@ -42,20 +62,22 @@
 
 	let { workspace }: Props = $props();
 
+	let appearanceSettings = $state<AppearanceSettings>(createDefaultAppearanceSettings());
 	let registry = $state<AgentRegistry>(createEmptyAgentRegistry(''));
-	let vaultEnvelope = $state<SecretVaultEnvelope | null>(null);
+	let personaRegistry = $state<PersonaRegistry>(createEmptyPersonaRegistry(''));
 	let environmentVault = $state<EnvironmentVault | null>(null);
-	let vaultPassword = $state('');
 	let agentName = $state('');
 	let selectedEnvironmentSecretId = $state('');
+	let selectedPersonaId = $state('');
 	let selectedAgentId = $state<string | null>(null);
 	let editingAgentId = $state<string | null>(null);
-	let isVaultBusy = $state(false);
+	let isAgentFormOpen = $state(false);
 	let isSavingAgent = $state(false);
 	let isRemovingAgent = $state(false);
-	let vaultError = $state<string | null>(null);
 	let agentError = $state<AgentRegistryError | AgentRegistryStorageError | null>(null);
 	let status = $state<string | null>(null);
+	let environmentVaultOpenSequence = 0;
+	let messages = $derived(getWorkduckMessages(appearanceSettings.languageId));
 
 	let selectedAgent = $derived(
 		selectedAgentId === null
@@ -66,46 +88,81 @@
 	let selectedAgentApiKeyName = $derived(
 		selectedAgent === null ? null : getApiKeyNameById(selectedAgent.environmentSecretId)
 	);
-	let agentFormLabel = $derived(editingAgentId === null ? 'Add' : 'Save');
+	let selectedAgentPersonaName = $derived(
+		selectedAgent === null ? null : getPersonaNameById(selectedAgent.personaId)
+	);
+	let selectedEnvironmentSecretIsMissing = $derived(
+		selectedEnvironmentSecretId.length > 0 &&
+			!llmApiKeyOptions.some((option) => option.id === selectedEnvironmentSecretId)
+	);
+	let selectedPersonaIsMissing = $derived(
+		selectedPersonaId.length > 0 &&
+			!personaRegistry.personas.some((persona) => persona.id === selectedPersonaId)
+	);
+	let agentFormLabel = $derived(
+		editingAgentId === null ? messages.common.add : messages.common.save
+	);
 	let canSaveAgent = $derived(
 		agentName.trim().length > 0 &&
 			selectedEnvironmentSecretId.length > 0 &&
-			!isSavingAgent &&
-			environmentVault !== null
+			!selectedEnvironmentSecretIsMissing &&
+			!isSavingAgent
 	);
+
+	onMount(() => {
+		appearanceSettings = readAppearanceSettingsFromBrowser().settings;
+		const unsubscribeAppearanceSettings = subscribeAppearanceSettings((nextSettings) => {
+			appearanceSettings = nextSettings;
+		});
+
+		return unsubscribeAppearanceSettings;
+	});
 
 	$effect(() => {
 		const workspaceId = workspace.id;
 
-		registry = createEmptyAgentRegistry(workspaceId);
-		selectedAgentId = null;
-		editingAgentId = null;
-		agentName = '';
-		selectedEnvironmentSecretId = '';
-		environmentVault = null;
-		vaultPassword = '';
-		vaultError = null;
-		agentError = null;
-		status = null;
-
-		readRegistryFromStorage(workspaceId);
-		readVaultEnvelopeFromStorage(workspaceId);
-
-		const unsubscribeRegistry = subscribeAgentRegistry(workspaceId, (nextRegistry) => {
-			registry = nextRegistry;
-			selectedAgentId = resolveSelectedAgentId(selectedAgentId, nextRegistry.agents);
-		});
-		const unsubscribeVault = subscribeEnvironmentVaultEnvelope(workspaceId, (nextEnvelope) => {
-			vaultEnvelope = nextEnvelope;
-			environmentVault = null;
-			vaultPassword = '';
+		return untrack(() => {
+			registry = createEmptyAgentRegistry(workspaceId);
+			personaRegistry = createEmptyPersonaRegistry(workspaceId);
+			selectedAgentId = null;
+			editingAgentId = null;
+			agentName = '';
 			selectedEnvironmentSecretId = '';
-		});
+			selectedPersonaId = '';
+			environmentVault = readEnvironmentVaultSession(workspaceId);
+			agentError = null;
+			status = null;
 
-		return () => {
-			unsubscribeRegistry();
-			unsubscribeVault();
-		};
+			readRegistryFromStorage(workspaceId);
+			readPersonaRegistryFromStorage(workspaceId);
+
+			const unsubscribeRegistry = subscribeAgentRegistry(workspaceId, (nextRegistry) => {
+				registry = nextRegistry;
+				selectedAgentId = resolveSelectedAgentId(selectedAgentId, nextRegistry.agents);
+			});
+			const unsubscribePersonas = subscribePersonaRegistry(workspaceId, (nextRegistry) => {
+				personaRegistry = nextRegistry;
+				if (
+					selectedPersonaId.length > 0 &&
+					!nextRegistry.personas.some((persona) => persona.id === selectedPersonaId)
+				) {
+					selectedPersonaId = '';
+				}
+			});
+			const unsubscribeEnvironmentVault = subscribeEnvironmentVaultSession(
+				workspaceId,
+				(nextVault) => {
+					environmentVault = nextVault;
+				}
+			);
+			void openEnvironmentVaultFromWorkspaceSession(workspaceId);
+
+			return () => {
+				unsubscribeRegistry();
+				unsubscribePersonas();
+				unsubscribeEnvironmentVault();
+			};
+		});
 	});
 
 	function readRegistryFromStorage(workspaceId: string) {
@@ -116,47 +173,19 @@
 		selectedAgentId = resolveSelectedAgentId(selectedAgentId, result.registry.agents);
 	}
 
-	function readVaultEnvelopeFromStorage(workspaceId: string) {
-		const result = readEnvironmentVaultEnvelope(workspaceId);
-
-		vaultEnvelope = result.envelope;
-		environmentVault = null;
-		vaultPassword = '';
-		vaultError = result.ok ? null : 'Environment vault could not be read.';
+	function readPersonaRegistryFromStorage(workspaceId: string) {
+		personaRegistry = readPersonaRegistry(workspaceId).registry;
 	}
 
-	async function handleUnlockEnvironmentVault(event: SubmitEvent) {
-		event.preventDefault();
+	async function openEnvironmentVaultFromWorkspaceSession(workspaceId: string) {
+		const sequence = ++environmentVaultOpenSequence;
+		const result = await openEnvironmentVaultSessionFromWorkspaceUnlock(workspaceId);
 
-		if (vaultEnvelope === null || isVaultBusy || vaultPassword.length === 0) {
+		if (sequence !== environmentVaultOpenSequence || !result.ok) {
 			return;
 		}
 
-		isVaultBusy = true;
-		vaultError = null;
-		status = null;
-
-		try {
-			const decryptResult = await decryptSecretVaultPayload(vaultEnvelope, vaultPassword);
-
-			if (!decryptResult.ok) {
-				vaultError = createSecretVaultErrorMessage(decryptResult.error);
-				return;
-			}
-
-			const parsedVault = parseEnvironmentVault(decryptResult.plaintext, workspace.id);
-
-			if (parsedVault === null) {
-				vaultError = 'Environment vault could not be read.';
-				return;
-			}
-
-			environmentVault = parsedVault;
-			selectedEnvironmentSecretId = getLlmApiKeyOptions(parsedVault)[0]?.id ?? '';
-			vaultPassword = '';
-		} finally {
-			isVaultBusy = false;
-		}
+		environmentVault = result.vault;
 	}
 
 	function selectAgent(agent: AgentRecord) {
@@ -170,18 +199,27 @@
 			return;
 		}
 
+		isAgentFormOpen = true;
 		editingAgentId = selectedAgent.id;
 		agentName = selectedAgent.name;
-		selectedEnvironmentSecretId = selectedAgent.environmentSecretId;
+		selectedEnvironmentSecretId = selectedAgent.environmentSecretId ?? '';
+		selectedPersonaId = selectedAgent.personaId ?? '';
 		status = null;
 		agentError = null;
 	}
 
 	function clearAgentForm() {
+		isAgentFormOpen = false;
 		editingAgentId = null;
 		agentName = '';
-		selectedEnvironmentSecretId = llmApiKeyOptions[0]?.id ?? '';
+		selectedEnvironmentSecretId = '';
+		selectedPersonaId = '';
 		agentError = null;
+	}
+
+	function openNewAgentForm() {
+		clearAgentForm();
+		isAgentFormOpen = true;
 	}
 
 	async function handleAgentSubmit(event: SubmitEvent) {
@@ -199,7 +237,8 @@
 			const mutation = upsertAgent(registry, {
 				id: editingAgentId,
 				name: agentName,
-				environmentSecretId: selectedEnvironmentSecretId
+				environmentSecretId: selectedEnvironmentSecretId,
+				personaId: selectedPersonaId
 			});
 
 			if (!mutation.ok) {
@@ -218,7 +257,7 @@
 
 			selectedAgentId = mutation.registry.agents.find((agent) => agent.name === agentName.trim())?.id ?? null;
 			clearAgentForm();
-			status = 'Saved.';
+			status = messages.agents.saved;
 		} finally {
 			isSavingAgent = false;
 		}
@@ -252,7 +291,7 @@
 
 			selectedAgentId = resolveSelectedAgentId(null, mutation.registry.agents);
 			clearAgentForm();
-			status = 'Removed.';
+			status = messages.agents.removed;
 		} finally {
 			isRemovingAgent = false;
 		}
@@ -275,12 +314,34 @@
 		return secret.kind === 'api-key' && secret.tags.includes('llm');
 	}
 
-	function getApiKeyNameById(secretId: string) {
-		if (environmentVault === null) {
-			return 'Unlock Environment';
+	function getApiKeyNameById(secretId: string | null) {
+		if (secretId === null) {
+			return messages.common.noApiKey;
 		}
 
-		return llmApiKeyOptions.find((option) => option.id === secretId)?.name ?? 'Missing API key';
+		if (environmentVault === null) {
+			return messages.common.linkedApiKey;
+		}
+
+		return llmApiKeyOptions.find((option) => option.id === secretId)?.name ?? messages.common.missingApiKey;
+	}
+
+	function getPersonaNameById(personaId: string | null) {
+		if (personaId === null) {
+			return messages.common.noPersona;
+		}
+
+		return personaRegistry.personas.find((persona) => persona.id === personaId)?.name ?? messages.common.missingPersona;
+	}
+
+	function getEvaluationCriterionMessages(criterionId: AgentEvaluationCriterionId) {
+		return messages.agents.evaluation.criteria[criterionId];
+	}
+
+	function getEvaluationAverageLabel(agent: AgentRecord, criterionId: AgentEvaluationCriterionId) {
+		const average = getAgentEvaluationAverage(agent.evaluationSummary, criterionId);
+
+		return average === null ? messages.agents.evaluation.noScore : average.toFixed(2);
 	}
 
 	function resolveSelectedAgentId(
@@ -297,63 +358,138 @@
 	function createAgentErrorMessage(nextError: AgentRegistryError | AgentRegistryStorageError) {
 		switch (nextError) {
 			case 'agent-name-required':
-				return 'Name is required.';
+				return messages.agents.errors.nameRequired;
+			case 'agent-auth-required':
+				return messages.agents.errors.authRequired;
 			case 'agent-name-duplicate':
-				return 'Name already exists.';
-			case 'agent-api-key-required':
-				return 'API key is required.';
+				return messages.agents.errors.nameDuplicate;
 			case 'agent-not-found':
-				return 'Agent was not found.';
+				return messages.agents.errors.notFound;
 			case 'agent-registry-invalid':
 			case 'agent-registry-storage-read-failed':
-				return 'Agents could not be read.';
+				return messages.agents.errors.readFailed;
 			case 'agent-registry-storage-write-failed':
-				return 'Agents could not be saved.';
+				return messages.agents.errors.saveFailed;
 		}
 	}
 
-	function createSecretVaultErrorMessage(nextError: SecretVaultCryptoError) {
-		if (nextError === 'secret-vault-password-required') {
-			return 'Vault password is required.';
-		}
-
-		if (nextError === 'secret-vault-unavailable') {
-			return 'Vault is available in the desktop app.';
-		}
-
-		return 'Vault password did not match.';
-	}
 </script>
 
-<section class="workduck-agents-board" aria-label="Agents">
-	<section class="workduck-agents-sidebar" aria-label="Agent list">
-		{#if vaultEnvelope === null}
-			<p class="workduck-empty-state">Add an LLM API key in Environment.</p>
-		{:else if environmentVault === null}
-			<form class="workduck-agents-vault-form" onsubmit={handleUnlockEnvironmentVault}>
-				<label class="workduck-form-field" for="agents-vault-password">
-					<span>Environment vault password</span>
-					<input
-						id="agents-vault-password"
-						class="workduck-input"
-						type="password"
-						bind:value={vaultPassword}
-						autocomplete="current-password"
-						disabled={isVaultBusy}
-					/>
-				</label>
-				<button
-					class="workduck-button workduck-button-primary"
-					type="submit"
-					disabled={isVaultBusy || vaultPassword.length === 0}
-				>
-					{isVaultBusy ? 'Working' : 'Unlock'}
-				</button>
-			</form>
-		{:else}
-			<form class="workduck-agents-form" onsubmit={handleAgentSubmit}>
+<EntityWorkbench label={messages.agents.title} sidebarLabel={messages.agents.list} detailLabel={messages.agents.details}>
+	{#snippet sidebar()}
+		<button class="workduck-list-add-card" type="button" onclick={openNewAgentForm}>
+			{messages.agents.newAgent}
+		</button>
+
+		<div class="workduck-entity-list">
+			{#each registry.agents as agent (agent.id)}
+				<EntityCard
+					title={agent.name}
+					kind={messages.common.agent}
+					meta={getApiKeyNameById(agent.environmentSecretId)}
+					selected={selectedAgent?.id === agent.id}
+					onSelect={() => selectAgent(agent)}
+				/>
+			{/each}
+		</div>
+	{/snippet}
+
+	{#snippet detail()}
+		{#if selectedAgent !== null}
+			<DetailCard title={selectedAgent.name} kind={messages.common.agent}>
+				<dl class="workduck-agent-details-list">
+					<div>
+						<dt>{messages.common.apiKey}</dt>
+						<dd>{selectedAgentApiKeyName}</dd>
+					</div>
+					<div>
+						<dt>{messages.common.persona}</dt>
+						<dd>{selectedAgentPersonaName}</dd>
+					</div>
+				</dl>
+
+				<section class="workduck-agent-evaluation" aria-label={messages.agents.evaluation.title}>
+					<header class="workduck-agent-evaluation-header">
+						<strong>{messages.agents.evaluation.title}</strong>
+						{#if hasAgentEvaluations(selectedAgent.evaluationSummary)}
+							<span>
+								{messages.agents.evaluation.count.replace(
+									'{count}',
+									selectedAgent.evaluationSummary.totalCount.toString()
+								)}
+							</span>
+						{/if}
+					</header>
+
+					{#if hasAgentEvaluations(selectedAgent.evaluationSummary)}
+						<div class="workduck-agent-evaluation-list">
+							{#each agentEvaluationCriteriaDefinitions as criterion (criterion.id)}
+								{@const criterionMessages = getEvaluationCriterionMessages(criterion.id)}
+								<div class="workduck-agent-evaluation-row">
+									<div>
+										<strong>{criterionMessages.label}</strong>
+										<span>{criterionMessages.description}</span>
+									</div>
+									<output>{getEvaluationAverageLabel(selectedAgent, criterion.id)}</output>
+								</div>
+							{/each}
+						</div>
+					{:else}
+						<p class="workduck-agent-evaluation-empty">{messages.agents.evaluation.empty}</p>
+					{/if}
+				</section>
+
+				{#snippet actions()}
+					<button
+						class="workduck-button workduck-button-secondary"
+						type="button"
+						onclick={editSelectedAgent}
+					>
+						{messages.common.edit}
+					</button>
+					<button
+						class="workduck-button workduck-button-danger"
+						type="button"
+						disabled={isRemovingAgent}
+						onclick={() => void handleRemoveSelectedAgent()}
+					>
+						{messages.common.remove}
+					</button>
+				{/snippet}
+			</DetailCard>
+		{/if}
+	{/snippet}
+
+	{#snippet status()}
+		{#if agentError !== null}
+			<p class="workduck-inline-error" aria-live="polite">{createAgentErrorMessage(agentError)}</p>
+		{/if}
+
+		{#if status !== null}
+			<p class="workduck-inline-status" aria-live="polite">{status}</p>
+		{/if}
+	{/snippet}
+</EntityWorkbench>
+
+{#if isAgentFormOpen}
+	<div class="workduck-dialog-backdrop" role="presentation" onclick={(event) => {
+		if (event.target === event.currentTarget && !isSavingAgent) {
+			clearAgentForm();
+		}
+	}}>
+		<div
+			class="workduck-dialog workduck-project-dialog"
+			role="dialog"
+			aria-modal="true"
+			aria-labelledby="agent-dialog-title"
+		>
+			<form class="workduck-project-dialog-form" onsubmit={handleAgentSubmit}>
+				<h2 id="agent-dialog-title" class="workduck-dialog-title">
+					{editingAgentId === null ? messages.agents.newAgent : messages.agents.editAgent}
+				</h2>
+
 				<label class="workduck-form-field" for="agent-name">
-					<span>Name</span>
+					<span>{messages.common.name}</span>
 					<input
 						id="agent-name"
 						class="workduck-input"
@@ -365,124 +501,50 @@
 				</label>
 
 				<label class="workduck-form-field" for="agent-api-key">
-					<span>API key</span>
+					<span>{messages.common.apiKey}</span>
 					<select
 						id="agent-api-key"
 						class="workduck-select"
 						bind:value={selectedEnvironmentSecretId}
-						disabled={isSavingAgent || llmApiKeyOptions.length === 0}
+						disabled={isSavingAgent}
 					>
-						<option value="" disabled>Select API key</option>
+						<option value="" disabled>{messages.common.noApiKey}</option>
+						{#if selectedEnvironmentSecretIsMissing}
+							<option value={selectedEnvironmentSecretId}>{messages.common.linkedApiKey}</option>
+						{/if}
 						{#each llmApiKeyOptions as option (option.id)}
 							<option value={option.id}>{option.name}</option>
 						{/each}
 					</select>
 				</label>
 
-				<div class="workduck-agents-form-actions">
-					<button
-						class="workduck-button workduck-button-primary"
-						type="submit"
-						disabled={!canSaveAgent}
+				<label class="workduck-form-field" for="agent-persona">
+					<span>{messages.common.persona}</span>
+					<select
+						id="agent-persona"
+						class="workduck-select"
+						bind:value={selectedPersonaId}
+						disabled={isSavingAgent}
 					>
+						<option value="">{messages.common.noPersona}</option>
+						{#if selectedPersonaIsMissing}
+							<option value={selectedPersonaId}>{messages.common.linkedPersona}</option>
+						{/if}
+						{#each personaRegistry.personas as persona (persona.id)}
+							<option value={persona.id}>{persona.name}</option>
+						{/each}
+					</select>
+				</label>
+
+				<div class="workduck-dialog-actions">
+					<button class="workduck-button workduck-button-secondary" type="button" onclick={clearAgentForm}>
+						{messages.common.cancel}
+					</button>
+					<button class="workduck-button workduck-button-primary" type="submit" disabled={!canSaveAgent}>
 						{agentFormLabel}
 					</button>
-					{#if editingAgentId !== null}
-						<button
-							class="workduck-button workduck-button-secondary"
-							type="button"
-							disabled={isSavingAgent}
-							onclick={clearAgentForm}
-						>
-							Cancel
-						</button>
-					{/if}
 				</div>
 			</form>
-			{#if llmApiKeyOptions.length === 0}
-				<p class="workduck-empty-state">Tag an API key as LLM in Environment.</p>
-			{/if}
-		{/if}
-
-		<div class="workduck-agents-list">
-			{#if registry.agents.length === 0}
-				<p class="workduck-empty-state">No agents yet.</p>
-			{:else}
-				{#each registry.agents as agent (agent.id)}
-					<button
-						class="workduck-project-card workduck-project-card-button workduck-agent-card"
-						class:workduck-project-card-selected={selectedAgent?.id === agent.id}
-						type="button"
-						aria-pressed={selectedAgent?.id === agent.id}
-						onclick={() => selectAgent(agent)}
-					>
-						<div class="workduck-project-card-header">
-							<strong class="workduck-project-card-name">{agent.name}</strong>
-							<span class="workduck-project-card-kind">Agent</span>
-						</div>
-						<span class="workduck-agent-card-key">{getApiKeyNameById(agent.environmentSecretId)}</span>
-					</button>
-				{/each}
-			{/if}
 		</div>
-	</section>
-
-	<section class="workduck-agents-detail" aria-label="Agent details">
-		{#if selectedAgent === null}
-			<p class="workduck-empty-state">Select an agent.</p>
-		{:else}
-			<div class="workduck-agent-detail-card">
-				<div class="workduck-project-card-header">
-					<strong class="workduck-project-card-name">{selectedAgent.name}</strong>
-					<span class="workduck-project-card-kind">Agent</span>
-				</div>
-
-				<dl class="workduck-agent-details-list">
-					<div>
-						<dt>API key</dt>
-						<dd>{selectedAgentApiKeyName}</dd>
-					</div>
-					<div>
-						<dt>Tags</dt>
-						<dd>
-							<span class="workduck-project-tag">
-								{environmentSecretTagOptions.find((option) => option.id === 'llm')?.label ?? 'LLM'}
-							</span>
-						</dd>
-					</div>
-				</dl>
-
-				<div class="workduck-agents-detail-actions">
-					<button
-						class="workduck-button workduck-button-secondary"
-						type="button"
-						disabled={environmentVault === null}
-						onclick={editSelectedAgent}
-					>
-						Edit
-					</button>
-					<button
-						class="workduck-button workduck-button-danger"
-						type="button"
-						disabled={isRemovingAgent}
-						onclick={() => void handleRemoveSelectedAgent()}
-					>
-						Remove
-					</button>
-				</div>
-			</div>
-		{/if}
-	</section>
-
-	{#if vaultError !== null}
-		<p class="workduck-inline-error" aria-live="polite">{vaultError}</p>
-	{/if}
-
-	{#if agentError !== null}
-		<p class="workduck-inline-error" aria-live="polite">{createAgentErrorMessage(agentError)}</p>
-	{/if}
-
-	{#if status !== null}
-		<p class="workduck-inline-status" aria-live="polite">{status}</p>
-	{/if}
-</section>
+	</div>
+{/if}

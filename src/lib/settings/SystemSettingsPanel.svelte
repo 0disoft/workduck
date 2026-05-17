@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 
+	import { getWorkduckMessages } from '$lib/i18n/workduck-language';
 	import {
 		readWorkduckAutostartEnabled,
 		setWorkduckAutostartEnabled,
@@ -10,33 +11,44 @@
 
 	import {
 		createDefaultSystemSettings,
+		WORKSPACE_IDLE_LOCK_MINUTE_OPTIONS,
 		shouldShowWorkduckTrayIcon,
 		type SystemSettings
 	} from './system-settings';
+	import {
+		createDefaultAppearanceSettings,
+		type AppearanceSettings
+	} from './appearance-settings';
+	import {
+		readAppearanceSettingsFromBrowser,
+		subscribeAppearanceSettings
+	} from './appearance-storage';
 	import {
 		readSystemSettingsFromBrowser,
 		subscribeSystemSettings,
 		writeSystemSettingsToBrowser
 	} from './system-storage';
 
+	let appearanceSettings = $state<AppearanceSettings>(createDefaultAppearanceSettings());
 	let systemSettings = $state<SystemSettings>(createDefaultSystemSettings());
 	let systemStorageError = $state<string | null>(null);
 	let autostartEnabled = $state(false);
 	let autostartBusy = $state(false);
 	let autostartError = $state<WorkduckAutostartError | null>(null);
+	let messages = $derived(getWorkduckMessages(appearanceSettings.languageId));
 
 	function readSystemFromStorage() {
 		const result = readSystemSettingsFromBrowser();
 
 		systemSettings = result.settings;
-		systemStorageError = result.ok ? null : 'System settings could not be loaded.';
+		systemStorageError = result.ok ? null : messages.settings.system.loadError;
 	}
 
 	function persistSystemSettings(nextSettings: SystemSettings) {
 		const result = writeSystemSettingsToBrowser(nextSettings);
 
 		systemSettings = result.settings;
-		systemStorageError = result.ok ? null : 'System settings could not be saved.';
+		systemStorageError = result.ok ? null : messages.settings.system.saveError;
 		void syncWorkduckTrayIconEnabled(shouldShowWorkduckTrayIcon(result.settings));
 	}
 
@@ -65,6 +77,19 @@
 			...systemSettings,
 			showTrayIcon: target.checked ? true : systemSettings.showTrayIcon,
 			minimizeToTray: target.checked
+		});
+	}
+
+	function handleWorkspaceIdleLockMinutesChange(event: Event) {
+		const target = event.currentTarget;
+
+		if (!(target instanceof HTMLSelectElement)) {
+			return;
+		}
+
+		persistSystemSettings({
+			...systemSettings,
+			workspaceIdleLockMinutes: Number(target.value)
 		});
 	}
 
@@ -97,34 +122,41 @@
 
 	function createAutostartErrorMessage(error: WorkduckAutostartError) {
 		if (error === 'autostart-unavailable') {
-			return 'Autostart is available in the desktop app.';
+			return messages.settings.system.autostartUnavailable;
 		}
 
 		if (error === 'autostart-read-failed') {
-			return 'Autostart status could not be loaded.';
+			return messages.settings.system.autostartReadFailed;
 		}
 
-		return 'Autostart setting could not be saved.';
+		return messages.settings.system.autostartSaveFailed;
 	}
 
 	onMount(() => {
+		appearanceSettings = readAppearanceSettingsFromBrowser().settings;
 		readSystemFromStorage();
 		void refreshAutostartState();
 
+		const unsubscribeAppearanceSettings = subscribeAppearanceSettings((nextSettings) => {
+			appearanceSettings = nextSettings;
+		});
 		const unsubscribeSystemSettings = subscribeSystemSettings((nextSettings) => {
 			systemSettings = nextSettings;
 			systemStorageError = null;
 			void syncWorkduckTrayIconEnabled(shouldShowWorkduckTrayIcon(nextSettings));
 		});
 
-		return unsubscribeSystemSettings;
+		return () => {
+			unsubscribeAppearanceSettings();
+			unsubscribeSystemSettings();
+		};
 	});
 </script>
 
-<section id="settings-panel-system" class="workduck-settings-section" aria-label="System">
+<section id="settings-panel-system" class="workduck-settings-section" aria-label={messages.settings.system.section}>
 	<form class="workduck-system-settings-form" onsubmit={(event) => event.preventDefault()}>
 		<label class="workduck-toggle-field" for="start-on-sign-in">
-			<span class="workduck-toggle-label">Start on Windows sign-in</span>
+			<span class="workduck-toggle-label">{messages.settings.system.startOnSignIn}</span>
 			<input
 				id="start-on-sign-in"
 				class="workduck-checkbox"
@@ -136,7 +168,7 @@
 		</label>
 
 		<label class="workduck-toggle-field" for="show-tray-icon">
-			<span class="workduck-toggle-label">Show tray icon</span>
+			<span class="workduck-toggle-label">{messages.settings.system.showTrayIcon}</span>
 			<input
 				id="show-tray-icon"
 				class="workduck-checkbox"
@@ -147,7 +179,7 @@
 		</label>
 
 		<label class="workduck-toggle-field" for="minimize-to-tray">
-			<span class="workduck-toggle-label">Minimize to tray</span>
+			<span class="workduck-toggle-label">{messages.settings.system.minimizeToTray}</span>
 			<input
 				id="minimize-to-tray"
 				class="workduck-checkbox"
@@ -155,6 +187,27 @@
 				checked={systemSettings.minimizeToTray}
 				onchange={handleMinimizeToTrayChange}
 			/>
+		</label>
+
+		<label class="workduck-form-field" for="workspace-idle-lock-minutes">
+			<span>{messages.settings.system.workspaceIdleLock}</span>
+			<select
+				id="workspace-idle-lock-minutes"
+				class="workduck-select"
+				value={systemSettings.workspaceIdleLockMinutes}
+				onchange={handleWorkspaceIdleLockMinutesChange}
+			>
+				{#each WORKSPACE_IDLE_LOCK_MINUTE_OPTIONS as minuteOption}
+					<option value={minuteOption}>
+						{minuteOption === 0
+							? messages.settings.system.workspaceIdleLockNever
+							: messages.settings.system.workspaceIdleLockMinutes.replace(
+									'{minutes}',
+									String(minuteOption)
+								)}
+					</option>
+				{/each}
+			</select>
 		</label>
 	</form>
 

@@ -83,6 +83,7 @@
 
 	interface Props {
 		readonly workspace: WorkspaceRecord;
+		readonly title: string;
 	}
 
 	type ProjectDialogMode = 'project' | 'group' | 'repository';
@@ -187,7 +188,7 @@
 	const GITHUB_REPOSITORY_COMMIT_MESSAGE_MAX_LENGTH = 200;
 	const DEFAULT_GITHUB_REPOSITORY_COMMIT_MESSAGE = 'Initial commit';
 
-	let { workspace }: Props = $props();
+	let { workspace, title }: Props = $props();
 
 	let registry = $state<ProjectRegistry>(createEmptyProjectRegistry(''));
 	let contextMenu = $state<ProjectContextMenuState | null>(null);
@@ -2875,43 +2876,46 @@
 	aria-label="Projects"
 	oncontextmenu={openBoardContextMenu}
 >
-	<div class="workduck-project-board-toolbar">
-		<div class="workduck-project-sync-filters" aria-label="Repository sync filters">
-			<button
-				class="workduck-project-sync-filter-button"
-				class:workduck-project-sync-filter-button-active={repositorySyncFilter === 'pull'}
-				type="button"
-				aria-pressed={repositorySyncFilter === 'pull'}
-				onclick={() => selectRepositorySyncFilter('pull')}
-			>
-				Pull needed
-				<span>{repositoryFilterStats.pullNeeded}</span>
-			</button>
-			<button
-				class="workduck-project-sync-filter-button"
-				class:workduck-project-sync-filter-button-active={repositorySyncFilter === 'push'}
-				type="button"
-				aria-pressed={repositorySyncFilter === 'push'}
-				onclick={() => selectRepositorySyncFilter('push')}
-			>
-				Push needed
-				<span>{repositoryFilterStats.pushNeeded}</span>
-			</button>
+	<header class="workduck-page-header">
+		<h1 class="workduck-page-title">{title}</h1>
+		<div class="workduck-page-actions workduck-project-header-actions">
+			<div class="workduck-project-sync-filters" aria-label="Repository sync filters">
+				<button
+					class="workduck-project-sync-filter-button"
+					class:workduck-project-sync-filter-button-active={repositorySyncFilter === 'pull'}
+					type="button"
+					aria-pressed={repositorySyncFilter === 'pull'}
+					onclick={() => selectRepositorySyncFilter('pull')}
+				>
+					Pull needed
+					<span>{repositoryFilterStats.pullNeeded}</span>
+				</button>
+				<button
+					class="workduck-project-sync-filter-button"
+					class:workduck-project-sync-filter-button-active={repositorySyncFilter === 'push'}
+					type="button"
+					aria-pressed={repositorySyncFilter === 'push'}
+					onclick={() => selectRepositorySyncFilter('push')}
+				>
+					Push needed
+					<span>{repositoryFilterStats.pushNeeded}</span>
+				</button>
+			</div>
+			<label class="workduck-project-filter-field" for="project-tag-filter">
+				<input
+					id="project-tag-filter"
+					class="workduck-input"
+					type="text"
+					bind:value={tagFilter}
+					autocomplete="off"
+					spellcheck="false"
+					aria-label="Tag filter"
+					placeholder="tag"
+					oninput={handleTagFilterInput}
+				/>
+			</label>
 		</div>
-		<label class="workduck-project-filter-field" for="project-tag-filter">
-			<span>Tag filter</span>
-			<input
-				id="project-tag-filter"
-				class="workduck-input"
-				type="text"
-				bind:value={tagFilter}
-				autocomplete="off"
-				spellcheck="false"
-				placeholder="tag"
-				oninput={handleTagFilterInput}
-			/>
-		</label>
-	</div>
+	</header>
 
 	<div class="workduck-project-lanes workduck-project-workspace-layout">
 		<section class="workduck-project-lane workduck-project-sidebar-lane" aria-label="Projects">

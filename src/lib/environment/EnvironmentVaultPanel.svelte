@@ -1,5 +1,17 @@
 <script lang="ts">
+	import { onMount, untrack } from 'svelte';
+
+	import { getWorkduckMessages } from '$lib/i18n/workduck-language';
+	import {
+		createDefaultAppearanceSettings,
+		type AppearanceSettings
+	} from '$lib/settings/appearance-settings';
+	import {
+		readAppearanceSettingsFromBrowser,
+		subscribeAppearanceSettings
+	} from '$lib/settings/appearance-storage';
 	import type { WorkspaceRecord } from '$lib/workspaces/workspace-registry';
+	import { readWorkspaceUnlockPasswordSession } from '$lib/workspaces/workspace-unlock';
 
 	import {
 		createEmptyEnvironmentVault,
@@ -22,6 +34,10 @@
 		writeEnvironmentVaultEnvelope
 	} from './environment-vault-storage';
 	import {
+		clearEnvironmentVaultSession,
+		setEnvironmentVaultSession
+	} from './environment-vault-session';
+	import {
 		clearEnvironmentVaultUnlockAttempts,
 		getEnvironmentVaultUnlockLockout,
 		recordEnvironmentVaultUnlockFailure
@@ -35,16 +51,20 @@
 
 	interface Props {
 		readonly workspace: WorkspaceRecord;
+		readonly title: string;
 	}
 
-	let { workspace }: Props = $props();
+	let { workspace, title }: Props = $props();
 
+	let appearanceSettings = $state<AppearanceSettings>(createDefaultAppearanceSettings());
 	let vaultEnvelope = $state<SecretVaultEnvelope | null>(null);
 	let vault = $state<EnvironmentVault | null>(null);
 	let vaultPassword = $state('');
 	let secretName = $state('');
-	let secretKind = $state<EnvironmentSecretKind>('api-key');
-	let secretTags = $state<EnvironmentSecretTag[]>([]);
+	let secretKind = $state<EnvironmentSecretKind | ''>('');
+	let secretTag = $state<EnvironmentSecretTag | ''>('');
+	let secretKindFilter = $state<EnvironmentSecretKind | 'all'>('all');
+	let secretTagFilter = $state<EnvironmentSecretTag | 'all'>('all');
 	let secretValue = $state('');
 	let editingSecretId = $state<string | null>(null);
 	let visibleSecretIds = $state<ReadonlySet<string>>(new Set());
@@ -52,25 +72,94 @@
 	let error = $state<string | null>(null);
 	let status = $state<string | null>(null);
 	let nowMs = $state(Date.now());
+	let autoUnlockPasswordTried = $state<string | null>(null);
 
+	let messages = $derived(getWorkduckMessages(appearanceSettings.languageId));
+	let environmentMessages = $derived(messages.environment);
 	let vaultIsOpen = $derived(vault !== null);
-	let submitLabel = $derived(editingSecretId === null ? 'Add' : 'Save');
-	let unlockLabel = $derived(vaultEnvelope === null ? 'Create vault' : 'Unlock');
+	let submitLabel = $derived(editingSecretId === null ? messages.common.add : messages.common.save);
+	let unlockLabel = $derived(
+		vaultEnvelope === null ? environmentMessages.createVault : environmentMessages.unlockVault
+	);
 	let vaultLockout = $derived(getEnvironmentVaultUnlockLockout(workspace.id, nowMs));
 	let vaultUnlockIsLocked = $derived(vaultEnvelope !== null && vaultLockout.isLocked);
+	let filteredSecrets = $derived(
+		(vault?.secrets ?? []).filter((secret) => {
+			if (secretKindFilter !== 'all' && secret.kind !== secretKindFilter) {
+				return false;
+			}
+
+			if (secretTagFilter !== 'all' && !secret.tags.includes(secretTagFilter)) {
+				return false;
+			}
+
+			return true;
+		})
+	);
 
 	function resetVaultSession(nextEnvelope: SecretVaultEnvelope | null) {
 		vaultEnvelope = nextEnvelope;
 		vault = null;
+		clearEnvironmentVaultSession(workspace.id);
 		vaultPassword = '';
 		secretName = '';
-		secretKind = 'api-key';
-		secretTags = [];
+		secretKind = '';
+		secretTag = '';
+		secretKindFilter = 'all';
+		secretTagFilter = 'all';
 		secretValue = '';
 		editingSecretId = null;
 		visibleSecretIds = new Set();
 		error = null;
 		status = null;
+		autoUnlockPasswordTried = null;
+	}
+
+	async function tryOpenVaultWithWorkspaceSession(nextEnvelope: SecretVaultEnvelope | null) {
+		if (vault !== null || isBusy) {
+			return;
+		}
+
+		const sessionPassword = readWorkspaceUnlockPasswordSession(workspace.id);
+
+		if (sessionPassword === null || autoUnlockPasswordTried === sessionPassword) {
+			return;
+		}
+
+		autoUnlockPasswordTried = sessionPassword;
+		vaultPassword = sessionPassword;
+
+		if (nextEnvelope === null) {
+			await saveVault(createEmptyEnvironmentVault(workspace.id));
+			status = null;
+			return;
+		}
+
+		isBusy = true;
+		error = null;
+		status = null;
+
+		try {
+			const decryptResult = await decryptSecretVaultPayload(nextEnvelope, sessionPassword);
+
+			if (!decryptResult.ok) {
+				vaultPassword = '';
+				return;
+			}
+
+			const parsedVault = parseEnvironmentVault(decryptResult.plaintext, workspace.id);
+
+			if (parsedVault === null) {
+				vaultPassword = '';
+				return;
+			}
+
+			vault = parsedVault;
+			setEnvironmentVaultSession(parsedVault);
+			clearEnvironmentVaultUnlockAttempts(workspace.id);
+		} finally {
+			isBusy = false;
+		}
 	}
 
 	async function handleVaultSubmit(event: SubmitEvent) {
@@ -81,12 +170,15 @@
 		}
 
 		if (vaultPassword.length === 0) {
-			error = 'Vault password is required.';
+			error = environmentMessages.errors.vaultPasswordRequired;
 			return;
 		}
 
 		if (vaultUnlockIsLocked) {
-			error = `Try again in ${vaultLockout.secondsRemaining}s.`;
+			error = environmentMessages.errors.vaultPasswordTryAgain.replace(
+				'{seconds}',
+				vaultLockout.secondsRemaining.toString()
+			);
 			return;
 		}
 
@@ -97,7 +189,7 @@
 		try {
 			if (vaultEnvelope === null) {
 				await saveVault(createEmptyEnvironmentVault(workspace.id));
-				status = 'Vault created.';
+				status = environmentMessages.statuses.created;
 				return;
 			}
 
@@ -106,19 +198,26 @@
 			if (!decryptResult.ok) {
 				const lockout = recordEnvironmentVaultUnlockFailure(workspace.id, Date.now());
 				error = lockout.isLocked
-					? `Try again in ${lockout.secondsRemaining}s.`
-					: `${createSecretVaultErrorMessage(decryptResult.error)} ${lockout.attemptsRemaining} attempts left.`;
+					? environmentMessages.errors.vaultPasswordTryAgain.replace(
+							'{seconds}',
+							lockout.secondsRemaining.toString()
+						)
+					: environmentMessages.errors.vaultPasswordMismatchWithAttempts.replace(
+							'{attemptsRemaining}',
+							lockout.attemptsRemaining.toString()
+						);
 				return;
 			}
 
 			const parsedVault = parseEnvironmentVault(decryptResult.plaintext, workspace.id);
 
 			if (parsedVault === null) {
-				error = 'Vault data could not be read.';
+				error = environmentMessages.errors.vaultInvalid;
 				return;
 			}
 
 			vault = parsedVault;
+			setEnvironmentVaultSession(parsedVault);
 			clearEnvironmentVaultUnlockAttempts(workspace.id);
 			status = null;
 		} finally {
@@ -137,7 +236,7 @@
 			id: editingSecretId,
 			name: secretName,
 			kind: secretKind,
-			tags: secretTags,
+			tags: secretTag === '' ? [] : [secretTag],
 			value: secretValue
 		});
 
@@ -148,7 +247,7 @@
 
 		await saveVault(mutation.vault);
 		clearSecretForm();
-		status = 'Saved.';
+		status = environmentMessages.statuses.saved;
 	}
 
 	async function handleRemoveSecret(secret: EnvironmentSecretRecord) {
@@ -165,14 +264,14 @@
 
 		await saveVault(mutation.vault);
 		visibleSecretIds = createNextVisibleSecretIds(secret.id, false);
-		status = 'Removed.';
+		status = environmentMessages.statuses.removed;
 	}
 
 	function handleEditSecret(secret: EnvironmentSecretRecord) {
 		editingSecretId = secret.id;
 		secretName = secret.name;
 		secretKind = secret.kind;
-		secretTags = [...secret.tags];
+		secretTag = secret.tags[0] ?? '';
 		secretValue = secret.value;
 		error = null;
 		status = null;
@@ -180,16 +279,16 @@
 
 	async function handleCopySecret(secret: EnvironmentSecretRecord) {
 		if (typeof navigator === 'undefined' || navigator.clipboard === undefined) {
-			error = 'Clipboard is not available.';
+			error = environmentMessages.errors.clipboardUnavailable;
 			return;
 		}
 
 		try {
 			await navigator.clipboard.writeText(secret.value);
-			status = 'Copied.';
+			status = environmentMessages.statuses.copied;
 			error = null;
 		} catch {
-			error = 'Copy failed.';
+			error = environmentMessages.errors.copyFailed;
 		}
 	}
 
@@ -202,14 +301,18 @@
 	}
 
 	function getSecretKindLabel(kind: EnvironmentSecretKind) {
-		return environmentSecretKindOptions.find((kindOption) => kindOption.id === kind)?.label ?? 'Other';
+		return environmentMessages.secretKinds[kind] ?? environmentMessages.secretKinds.other;
+	}
+
+	function getSecretTagLabel(tag: EnvironmentSecretTag) {
+		return environmentMessages.secretTags[tag] ?? tag;
 	}
 
 	function clearSecretForm() {
 		editingSecretId = null;
 		secretName = '';
-		secretKind = 'api-key';
-		secretTags = [];
+		secretKind = '';
+		secretTag = '';
 		secretValue = '';
 		error = null;
 	}
@@ -232,12 +335,13 @@
 			const writeResult = writeEnvironmentVaultEnvelope(workspace.id, encryptResult.envelope);
 
 			if (!writeResult.ok) {
-				error = 'Vault could not be saved.';
+				error = environmentMessages.errors.vaultSaveFailed;
 				return;
 			}
 
 			vaultEnvelope = encryptResult.envelope;
 			vault = nextVault;
+			setEnvironmentVaultSession(nextVault);
 		} finally {
 			isBusy = false;
 		}
@@ -258,25 +362,29 @@
 	function createEnvironmentVaultErrorMessage(nextError: EnvironmentVaultError) {
 		switch (nextError) {
 			case 'environment-secret-name-required':
-				return 'Name is required.';
+				return environmentMessages.errors.nameRequired;
+			case 'environment-secret-kind-required':
+				return environmentMessages.errors.kindRequired;
+			case 'environment-secret-tag-required':
+				return environmentMessages.errors.tagRequired;
 			case 'environment-secret-name-duplicate':
-				return 'Name already exists.';
+				return environmentMessages.errors.nameDuplicate;
 			case 'environment-secret-value-required':
-				return 'Value is required.';
+				return environmentMessages.errors.valueRequired;
 			case 'environment-secret-not-found':
-				return 'Entry was not found.';
+				return environmentMessages.errors.notFound;
 			case 'environment-vault-invalid':
-				return 'Vault data could not be read.';
+				return environmentMessages.errors.vaultInvalid;
 		}
 	}
 
 	function createSecretVaultErrorMessage(nextError: SecretVaultCryptoError) {
 		if (nextError === 'secret-vault-password-required') {
-			return 'Vault password is required.';
+			return environmentMessages.errors.vaultPasswordRequired;
 		}
 
 		if (nextError === 'secret-vault-unavailable') {
-			return 'Vault is available in the desktop app.';
+			return environmentMessages.errors.vaultUnavailable;
 		}
 
 		if (
@@ -284,26 +392,46 @@
 			nextError === 'secret-vault-envelope-invalid' ||
 			nextError === 'secret-vault-ciphertext-invalid'
 		) {
-			return 'Vault password did not match.';
+			return environmentMessages.errors.vaultPasswordMismatch;
 		}
 
-		return 'Vault operation failed.';
+		return environmentMessages.errors.vaultOperationFailed;
 	}
+
+	onMount(() => {
+		appearanceSettings = readAppearanceSettingsFromBrowser().settings;
+		const unsubscribeAppearanceSettings = subscribeAppearanceSettings((nextSettings) => {
+			appearanceSettings = nextSettings;
+		});
+
+		return unsubscribeAppearanceSettings;
+	});
 
 	$effect(() => {
 		const workspaceId = workspace.id;
 
-		resetVaultSession(readEnvironmentVaultEnvelope(workspaceId).envelope);
-		const unsubscribeVault = subscribeEnvironmentVaultEnvelope(workspaceId, (nextEnvelope) => {
-			if (vault === null) {
-				resetVaultSession(nextEnvelope);
-				return;
-			}
+		return untrack(() => {
+			const initialEnvelope = readEnvironmentVaultEnvelope(workspaceId).envelope;
 
-			vaultEnvelope = nextEnvelope;
+			resetVaultSession(initialEnvelope);
+			void tryOpenVaultWithWorkspaceSession(initialEnvelope);
+			const unsubscribeVault = subscribeEnvironmentVaultEnvelope(workspaceId, (nextEnvelope) => {
+				if (isBusy) {
+					vaultEnvelope = nextEnvelope;
+					return;
+				}
+
+				if (vault === null) {
+					resetVaultSession(nextEnvelope);
+					void tryOpenVaultWithWorkspaceSession(nextEnvelope);
+					return;
+				}
+
+				vaultEnvelope = nextEnvelope;
+			});
+
+			return unsubscribeVault;
 		});
-
-		return unsubscribeVault;
 	});
 
 	$effect(() => {
@@ -315,40 +443,75 @@
 	});
 </script>
 
-<section class="workduck-environment-vault" aria-label="Environment variables">
+<section class="workduck-environment-vault" aria-label={environmentMessages.ariaLabel}>
+	<header class="workduck-page-header">
+		<h1 class="workduck-page-title">{title}</h1>
+		{#if vaultIsOpen}
+			<div class="workduck-page-actions workduck-environment-header-actions">
+				{#if vault !== null && vault.secrets.length !== 0}
+					<div class="workduck-environment-filters" aria-label={environmentMessages.filters}>
+						<label class="workduck-environment-filter-field" for="environment-kind-filter">
+							<select
+								id="environment-kind-filter"
+								class="workduck-select workduck-environment-filter-select"
+								bind:value={secretKindFilter}
+								aria-label={environmentMessages.kindFilter}
+							>
+								<option value="all">{environmentMessages.allKinds}</option>
+								{#each environmentSecretKindOptions as kindOption}
+									<option value={kindOption.id}>{getSecretKindLabel(kindOption.id)}</option>
+								{/each}
+							</select>
+						</label>
+						<label class="workduck-environment-filter-field" for="environment-tag-filter">
+							<select
+								id="environment-tag-filter"
+								class="workduck-select workduck-environment-filter-select"
+								bind:value={secretTagFilter}
+								aria-label={environmentMessages.tagFilter}
+							>
+								<option value="all">{environmentMessages.allTags}</option>
+								{#each environmentSecretTagOptions as tagOption}
+									<option value={tagOption.id}>{getSecretTagLabel(tagOption.id)}</option>
+								{/each}
+							</select>
+						</label>
+					</div>
+				{/if}
+				<button class="workduck-button workduck-button-secondary" type="button" onclick={handleLockVault}>
+					{environmentMessages.lockVault}
+				</button>
+			</div>
+		{/if}
+	</header>
+
 	{#if !vaultIsOpen}
 		<form class="workduck-environment-unlock-form" onsubmit={handleVaultSubmit}>
 			<label class="workduck-form-field" for="environment-vault-password">
-				<span>Vault password</span>
+				<span>{environmentMessages.vaultPassword}</span>
 				<input
 					id="environment-vault-password"
 					class="workduck-input"
 					type="password"
 					bind:value={vaultPassword}
 					autocomplete="current-password"
-				disabled={isBusy}
-				aria-invalid={error !== null || vaultUnlockIsLocked}
-			/>
-		</label>
+					disabled={isBusy}
+					aria-invalid={error !== null || vaultUnlockIsLocked}
+				/>
+			</label>
 
 			<button
 				class="workduck-button workduck-button-primary"
 				type="submit"
 				disabled={isBusy || vaultPassword.length === 0 || vaultUnlockIsLocked}
 			>
-				{isBusy ? 'Working' : unlockLabel}
+				{isBusy ? messages.common.checking : unlockLabel}
 			</button>
 		</form>
 	{:else}
-		<div class="workduck-environment-toolbar">
-			<button class="workduck-button workduck-button-secondary" type="button" onclick={handleLockVault}>
-				Lock
-			</button>
-		</div>
-
 		<form class="workduck-environment-form" onsubmit={handleSecretSubmit}>
-			<label class="workduck-form-field" for="environment-secret-name">
-				<span>Name</span>
+			<label class="workduck-form-field workduck-environment-form-name" for="environment-secret-name">
+				<span>{messages.common.name}</span>
 				<input
 					id="environment-secret-name"
 					class="workduck-input"
@@ -359,37 +522,38 @@
 				/>
 			</label>
 
-			<label class="workduck-form-field" for="environment-secret-kind">
-				<span>Type</span>
+			<label class="workduck-form-field workduck-environment-form-kind" for="environment-secret-kind">
+				<span>{environmentMessages.kind}</span>
 				<select
 					id="environment-secret-kind"
 					class="workduck-select"
 					bind:value={secretKind}
 					disabled={isBusy}
 				>
+					<option value="">{environmentMessages.select}</option>
 					{#each environmentSecretKindOptions as kindOption}
-						<option value={kindOption.id}>{kindOption.label}</option>
+						<option value={kindOption.id}>{getSecretKindLabel(kindOption.id)}</option>
 					{/each}
 				</select>
 			</label>
 
-			<label class="workduck-form-field" for="environment-secret-tags">
-				<span>Tags</span>
+			<label class="workduck-form-field workduck-environment-form-tags" for="environment-secret-tags">
+				<span>{environmentMessages.tags}</span>
 				<select
 					id="environment-secret-tags"
-					class="workduck-select workduck-environment-tag-select"
-					multiple
-					bind:value={secretTags}
+					class="workduck-select"
+					bind:value={secretTag}
 					disabled={isBusy}
 				>
+					<option value="">{environmentMessages.select}</option>
 					{#each environmentSecretTagOptions as tagOption}
-						<option value={tagOption.id}>{tagOption.label}</option>
+						<option value={tagOption.id}>{getSecretTagLabel(tagOption.id)}</option>
 					{/each}
 				</select>
 			</label>
 
-			<label class="workduck-form-field" for="environment-secret-value">
-				<span>Value</span>
+			<label class="workduck-form-field workduck-environment-form-value" for="environment-secret-value">
+				<span>{environmentMessages.value}</span>
 				<input
 					id="environment-secret-value"
 					class="workduck-input"
@@ -404,7 +568,7 @@
 				<button
 					class="workduck-button workduck-button-primary"
 					type="submit"
-					disabled={isBusy || secretName.length === 0 || secretValue.length === 0}
+					disabled={isBusy || secretName.length === 0 || secretKind === '' || secretTag === '' || secretValue.length === 0}
 				>
 					{submitLabel}
 				</button>
@@ -415,72 +579,80 @@
 						disabled={isBusy}
 						onclick={clearSecretForm}
 					>
-						Cancel
+						{messages.common.cancel}
 					</button>
 				{/if}
 			</div>
 		</form>
 
 		{#if vault?.secrets.length === 0}
-			<p class="workduck-empty-state">No environment variables yet.</p>
+			<p class="workduck-empty-state">{environmentMessages.empty}</p>
 		{:else}
-			<ul class="workduck-environment-list" aria-label="Environment variable entries">
-				{#each vault?.secrets ?? [] as secret (secret.id)}
-					<li class="workduck-environment-row">
-						<div class="workduck-environment-details">
-							<span class="workduck-environment-name">{secret.name}</span>
-							<span class="workduck-environment-kind">{getSecretKindLabel(secret.kind)}</span>
-							{#if secret.tags.length > 0}
-								<span class="workduck-environment-tags">
-									{#each secret.tags as tag (tag)}
-										<span class="workduck-project-tag">{tag}</span>
-									{/each}
-								</span>
-							{/if}
-							<code class="workduck-environment-value">
-								{visibleSecretIds.has(secret.id)
-									? secret.value
-									: createMaskedSecretValue(secret.value)}
-							</code>
-						</div>
+			{#if filteredSecrets.length === 0}
+				<p class="workduck-empty-state">{environmentMessages.noMatches}</p>
+			{:else}
+				<ul class="workduck-environment-list" aria-label={environmentMessages.entries}>
+					{#each filteredSecrets as secret (secret.id)}
+						<li class="workduck-environment-row">
+							<div class="workduck-environment-details">
+								<div class="workduck-environment-heading">
+									<span class="workduck-environment-name">{secret.name}</span>
+									{#if secret.tags.length > 0}
+										<span class="workduck-environment-tags">
+											{#each secret.tags as tag (tag)}
+												<span class="workduck-project-tag">{getSecretTagLabel(tag)}</span>
+											{/each}
+										</span>
+									{/if}
+								</div>
+								<span class="workduck-environment-kind">{getSecretKindLabel(secret.kind)}</span>
+								<code class="workduck-environment-value">
+									{visibleSecretIds.has(secret.id)
+										? secret.value
+										: createMaskedSecretValue(secret.value)}
+								</code>
+							</div>
 
-						<div class="workduck-environment-actions">
-							<button
-								class="workduck-button workduck-button-secondary"
-								type="button"
-								disabled={isBusy}
-								onclick={() => handleCopySecret(secret)}
-							>
-								Copy
-							</button>
-							<button
-								class="workduck-button workduck-button-secondary"
-								type="button"
-								disabled={isBusy}
-								onclick={() => handleToggleSecretVisibility(secret)}
-							>
-								{visibleSecretIds.has(secret.id) ? 'Hide' : 'Show'}
-							</button>
-							<button
-								class="workduck-button workduck-button-secondary"
-								type="button"
-								disabled={isBusy}
-								onclick={() => handleEditSecret(secret)}
-							>
-								Edit
-							</button>
-							<button
-								class="workduck-button workduck-button-danger"
-								type="button"
-								disabled={isBusy}
-								onclick={() => handleRemoveSecret(secret)}
-							>
-								Remove
-							</button>
-						</div>
-					</li>
-				{/each}
-			</ul>
+							<div class="workduck-environment-actions">
+								<button
+									class="workduck-button workduck-button-secondary"
+									type="button"
+									disabled={isBusy}
+									onclick={() => handleCopySecret(secret)}
+								>
+									{environmentMessages.copy}
+								</button>
+								<button
+									class="workduck-button workduck-button-secondary"
+									type="button"
+									disabled={isBusy}
+									onclick={() => handleToggleSecretVisibility(secret)}
+								>
+									{visibleSecretIds.has(secret.id)
+										? environmentMessages.hide
+										: environmentMessages.show}
+								</button>
+								<button
+									class="workduck-button workduck-button-secondary"
+									type="button"
+									disabled={isBusy}
+									onclick={() => handleEditSecret(secret)}
+								>
+									{messages.common.edit}
+								</button>
+								<button
+									class="workduck-button workduck-button-danger"
+									type="button"
+									disabled={isBusy}
+									onclick={() => handleRemoveSecret(secret)}
+								>
+									{messages.common.remove}
+								</button>
+							</div>
+						</li>
+					{/each}
+				</ul>
+			{/if}
 		{/if}
 	{/if}
 

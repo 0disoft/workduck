@@ -8,8 +8,10 @@ use std::{
 const QUEUE_DIRECTORY_NAME: &str = "queue";
 const REPORTS_DIRECTORY_NAME: &str = "reports";
 const WORK_ORDERS_DIRECTORY_NAME: &str = "work-orders";
+const PROPOSALS_DIRECTORY_NAME: &str = "proposals";
 const REPORT_FILE_SUFFIX: &str = ".workduck-report.json";
 const WORK_ORDER_FILE_SUFFIX: &str = ".workduck-work-order.json";
+const PROPOSAL_FILE_SUFFIX: &str = ".workduck-proposal.json";
 
 #[derive(serde::Serialize)]
 pub enum QueueFolderError {
@@ -62,6 +64,8 @@ pub struct QueueFolderResult {
 pub enum QueueFileKind {
     ResultReport,
     WorkOrder,
+    Proposal,
+    Unsupported,
 }
 
 #[derive(serde::Serialize)]
@@ -274,6 +278,7 @@ fn ensure_queue_root(workspace_root: &Path) -> Result<PathBuf, QueueFolderError>
     fs::read_dir(&normalized_queue_root).map_err(map_workspace_error)?;
     ensure_queue_child_dir(&normalized_queue_root, REPORTS_DIRECTORY_NAME)?;
     ensure_queue_child_dir(&normalized_queue_root, WORK_ORDERS_DIRECTORY_NAME)?;
+    ensure_queue_child_dir(&normalized_queue_root, PROPOSALS_DIRECTORY_NAME)?;
 
     Ok(normalized_queue_root)
 }
@@ -301,6 +306,7 @@ fn list_known_queue_files(queue_root: &Path) -> Result<Vec<QueueFileEntry>, Queu
 
     collect_known_queue_files(queue_root, REPORTS_DIRECTORY_NAME, &mut files)?;
     collect_known_queue_files(queue_root, WORK_ORDERS_DIRECTORY_NAME, &mut files)?;
+    collect_known_queue_files(queue_root, PROPOSALS_DIRECTORY_NAME, &mut files)?;
     files.sort_by(|left, right| left.relative_path.cmp(&right.relative_path));
 
     Ok(files)
@@ -323,9 +329,7 @@ fn collect_known_queue_files(
         }
 
         let file_name = entry.file_name().to_string_lossy().into_owned();
-        let Some(kind) = classify_queue_file(child_dir, &file_name) else {
-            continue;
-        };
+        let kind = classify_queue_file(child_dir, &file_name).unwrap_or(QueueFileKind::Unsupported);
 
         files.push(QueueFileEntry {
             relative_path: format!("{child_dir}/{file_name}"),
@@ -344,6 +348,10 @@ fn classify_queue_file(child_dir: &str, file_name: &str) -> Option<QueueFileKind
 
     if child_dir == WORK_ORDERS_DIRECTORY_NAME && file_name.ends_with(WORK_ORDER_FILE_SUFFIX) {
         return Some(QueueFileKind::WorkOrder);
+    }
+
+    if child_dir == PROPOSALS_DIRECTORY_NAME && file_name.ends_with(PROPOSAL_FILE_SUFFIX) {
+        return Some(QueueFileKind::Proposal);
     }
 
     None

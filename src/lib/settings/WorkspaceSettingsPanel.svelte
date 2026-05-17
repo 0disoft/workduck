@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 
+	import { getWorkduckMessages } from '$lib/i18n/workduck-language';
 	import {
 		addWorkspace,
 		createEmptyWorkspaceRegistry,
@@ -22,7 +23,6 @@
 		type WorkspacePathError
 	} from '$lib/workspaces/workspace-path';
 	import { formatWorkspacePathForDisplay } from '$lib/workspaces/workspace-path-format';
-	import { getWorkspacePathErrorMessage } from '$lib/workspaces/workspace-path-messages';
 	import {
 		readWorkspaceRegistryFromBrowser,
 		subscribeWorkspaceRegistry,
@@ -37,10 +37,19 @@
 	} from '$lib/workspaces/workspace-unlock';
 	import WorkspacePathRepairForm from '$lib/workspaces/WorkspacePathRepairForm.svelte';
 	import WorkspaceUnlockForm from '$lib/workspaces/WorkspaceUnlockForm.svelte';
+	import {
+		createDefaultAppearanceSettings,
+		type AppearanceSettings
+	} from './appearance-settings';
+	import {
+		readAppearanceSettingsFromBrowser,
+		subscribeAppearanceSettings
+	} from './appearance-storage';
 
 	type WorkspaceFormError = WorkspaceRegistryError | WorkspacePathError | WorkspacePasswordError;
 	type WorkspaceUnlockIntent = 'switch' | 'remove' | 'repair';
 
+	let appearanceSettings = $state<AppearanceSettings>(createDefaultAppearanceSettings());
 	let registry = $state<WorkspaceRegistry>(createEmptyWorkspaceRegistry());
 	let workspaceName = $state('');
 	let workspacePath = $state('');
@@ -56,6 +65,7 @@
 	let hasLoaded = $state(false);
 	let isAddingWorkspace = $state(false);
 	let isSelectingWorkspacePath = $state(false);
+	let messages = $derived(getWorkduckMessages(appearanceSettings.languageId));
 
 	let workspaceRemoveCandidate = $derived(
 		registry.workspaces.find((workspace) => workspace.id === workspaceRemoveConfirmationId) ??
@@ -73,21 +83,21 @@
 		const result = readWorkspaceRegistryFromBrowser();
 
 		registry = result.registry;
-		storageError = result.ok ? null : 'Workspace settings could not be loaded.';
+		storageError = result.ok ? null : messages.workspace.pathErrors.registryReadFailed;
 	}
 
 	function persistRegistry(nextRegistry: WorkspaceRegistry) {
 		const result = writeWorkspaceRegistryToBrowser(nextRegistry);
 
 		registry = result.registry;
-		storageError = result.ok ? null : 'Workspace settings could not be saved.';
+		storageError = result.ok ? null : messages.workspace.pathErrors.registryWriteFailed;
 		return result.ok;
 	}
 
 	function getWorkspaceErrorMessage(error: WorkspaceFormError) {
 		switch (error) {
 			case 'workspace-name-required':
-				return 'Workspace name is required.';
+				return messages.settings.workspaces.errors.nameRequired;
 			case 'workspace-path-required':
 			case 'workspace-path-not-absolute':
 			case 'workspace-path-not-found':
@@ -99,21 +109,47 @@
 			case 'workspace-path-selection-failed':
 				return getWorkspacePathErrorMessage(error);
 			case 'workspace-path-duplicate':
-				return 'Workspace path is already registered.';
+				return messages.workspace.pathErrors.pathDuplicate;
 			case 'workspace-password-required':
-				return 'Workspace password is required.';
+				return messages.settings.workspaces.errors.passwordRequired;
 			case 'workspace-password-too-short':
-				return `Workspace password must be at least ${WORKSPACE_PASSWORD_MIN_LENGTH} characters.`;
+				return messages.settings.workspaces.errors.passwordTooShort.replace(
+					'{minLength}',
+					String(WORKSPACE_PASSWORD_MIN_LENGTH)
+				);
 			case 'workspace-password-hash-failed':
-				return 'Workspace password could not be protected.';
+				return messages.settings.workspaces.errors.passwordProtectFailed;
 			case 'workspace-password-invalid-hash':
-				return 'Workspace lock data could not be read.';
+				return messages.settings.workspaces.errors.passwordInvalidHash;
 			case 'workspace-password-unavailable':
-				return 'Workspace password can only be protected in the desktop app.';
+				return messages.settings.workspaces.errors.passwordUnavailable;
 			case 'workspace-password-hash-invalid':
-				return 'Workspace lock data could not be saved.';
+				return messages.settings.workspaces.errors.passwordHashInvalid;
 			case 'workspace-not-found':
-				return 'Workspace was not found.';
+				return messages.workspace.pathErrors.workspaceNotFound;
+		}
+	}
+
+	function getWorkspacePathErrorMessage(error: WorkspacePathError) {
+		switch (error) {
+			case 'workspace-path-required':
+				return messages.workspace.pathErrors.pathRequired;
+			case 'workspace-path-not-absolute':
+				return messages.workspace.pathErrors.pathNotAbsolute;
+			case 'workspace-path-not-found':
+				return messages.workspace.pathErrors.pathNotFound;
+			case 'workspace-path-not-directory':
+				return messages.workspace.pathErrors.pathNotDirectory;
+			case 'workspace-path-permission-denied':
+				return messages.workspace.pathErrors.pathPermissionDenied;
+			case 'workspace-path-unreadable':
+				return messages.workspace.pathErrors.pathUnreadable;
+			case 'workspace-path-validation-unavailable':
+				return messages.workspace.pathErrors.pathValidationUnavailable;
+			case 'workspace-path-selection-unavailable':
+				return messages.workspace.pathErrors.pathSelectionUnavailable;
+			case 'workspace-path-selection-failed':
+				return messages.workspace.pathErrors.pathSelectionFailed;
 		}
 	}
 
@@ -229,7 +265,7 @@
 
 			if (persistRegistry(result.registry)) {
 				if (workspaceRequiresUnlock(result.workspace)) {
-					markWorkspaceUnlocked(result.workspace.id);
+					markWorkspaceUnlocked(result.workspace.id, workspacePassword);
 				}
 
 				workspaceName = '';
@@ -395,7 +431,11 @@
 	}
 
 	onMount(() => {
+		appearanceSettings = readAppearanceSettingsFromBrowser().settings;
 		readRegistryFromStorage();
+		const unsubscribeAppearanceSettings = subscribeAppearanceSettings((nextSettings) => {
+			appearanceSettings = nextSettings;
+		});
 		const unsubscribeWorkspaceRegistry = subscribeWorkspaceRegistry((nextRegistry) => {
 			registry = nextRegistry;
 			storageError = null;
@@ -413,6 +453,7 @@
 		hasLoaded = true;
 
 		return () => {
+			unsubscribeAppearanceSettings();
 			unsubscribeWorkspaceRegistry();
 			unsubscribeWorkspaceUnlocks();
 		};
@@ -424,11 +465,11 @@
 <section
 	id="settings-panel-workspaces"
 	class="workduck-settings-section"
-	aria-label="Workspaces"
+	aria-label={messages.settings.tabs.workspaces}
 >
 	<form class="workduck-workspace-form" onsubmit={handleWorkspaceSubmit}>
 		<label class="workduck-form-field" for="workspace-name">
-			<span>Name</span>
+			<span>{messages.common.name}</span>
 			<input
 				id="workspace-name"
 				class="workduck-input"
@@ -442,7 +483,7 @@
 		</label>
 
 		<label class="workduck-form-field" for="workspace-path">
-			<span>Path</span>
+			<span>{messages.workspace.path}</span>
 			<span class="workduck-path-control">
 				<input
 					id="workspace-path"
@@ -459,7 +500,7 @@
 					class="workduck-icon-button"
 					type="button"
 					disabled={!canSelectWorkspacePath}
-					aria-label="Choose workspace folder"
+					aria-label={messages.workspace.chooseFolder}
 					aria-busy={isSelectingWorkspacePath}
 					onclick={handleWorkspacePathSelect}
 				>
@@ -469,7 +510,7 @@
 		</label>
 
 		<label class="workduck-form-field" for="workspace-password">
-			<span>Password</span>
+			<span>{messages.common.password}</span>
 			<input
 				id="workspace-password"
 				class="workduck-input"
@@ -487,7 +528,7 @@
 			disabled={!canAddWorkspace}
 			aria-busy={isAddingWorkspace}
 		>
-			{isAddingWorkspace ? 'Checking' : 'Add'}
+			{isAddingWorkspace ? messages.common.checking : messages.common.add}
 		</button>
 	</form>
 
@@ -498,7 +539,7 @@
 	{/if}
 
 	{#if hasLoaded && registry.workspaces.length === 0}
-		<p class="workduck-empty-state">No workspaces.</p>
+		<p class="workduck-empty-state">{messages.settings.workspaces.noWorkspaces}</p>
 	{:else if registry.workspaces.length > 0}
 		<ul class="workduck-workspace-list">
 			{#each registry.workspaces as workspace (workspace.id)}
@@ -509,19 +550,28 @@
 							{formatWorkspacePathForDisplay(workspace.path)}
 						</span>
 						{#if workspaceIsActive(workspace) || (workspaceRequiresUnlock(workspace) && !workspaceIsUnlocked(workspace))}
-							<span class="workduck-workspace-statuses" aria-label="Workspace status">
+							<span
+								class="workduck-workspace-statuses"
+								aria-label={messages.settings.workspaces.status}
+							>
 								{#if workspaceIsActive(workspace)}
-									<span class="workduck-status-pill workduck-status-pill-success">Active</span>
+									<span class="workduck-status-pill workduck-status-pill-success">
+										{messages.settings.workspaces.active}
+									</span>
 								{/if}
 								{#if workspaceRequiresUnlock(workspace) && !workspaceIsUnlocked(workspace)}
-									<span class="workduck-status-pill workduck-status-pill-locked">Locked</span>
+									<span class="workduck-status-pill workduck-status-pill-locked">
+										{messages.settings.workspaces.locked}
+									</span>
 								{/if}
 							</span>
 						{/if}
 						{#if workspaceUnlockId === workspace.id}
 							<WorkspaceUnlockForm
 								workspace={workspace}
-								submitLabel={workspaceUnlockIntent === 'remove' ? 'Remove' : 'Unlock'}
+								submitLabel={workspaceUnlockIntent === 'remove'
+									? messages.common.remove
+									: messages.workspace.unlock.submit}
 								onUnlocked={() => handleWorkspaceUnlocked(workspace.id)}
 								onCancel={clearWorkspaceUnlockRequest}
 							/>
@@ -539,54 +589,54 @@
 						{#if workspaceRequiresUnlock(workspace) && !workspaceIsUnlocked(workspace)}
 							<span
 								class="workduck-tooltip-anchor"
-								data-tooltip="Enter this workspace password to make it available on this device."
+								data-tooltip={messages.settings.workspaces.tooltips.unlock}
 							>
 								<button
 									class="workduck-button workduck-button-secondary"
 									type="button"
 									onclick={() => requestWorkspaceUnlock(workspace.id, 'switch')}
 								>
-									Unlock
+									{messages.workspace.unlock.submit}
 								</button>
 							</span>
 						{:else}
 							<span
 								class="workduck-tooltip-anchor"
-								data-tooltip="Choose a local folder again when this workspace was synced from another device."
+								data-tooltip={messages.settings.workspaces.tooltips.reconnect}
 							>
 								<button
 									class="workduck-button workduck-button-secondary"
 									type="button"
 									onclick={() => handleWorkspaceRepair(workspace.id)}
 								>
-									Reconnect
+									{messages.settings.workspaces.reconnect}
 								</button>
 							</span>
 							{#if registry.activeWorkspaceId !== workspace.id}
 								<span
 									class="workduck-tooltip-anchor"
-									data-tooltip="Make this workspace the current working area."
+									data-tooltip={messages.settings.workspaces.tooltips.switch}
 								>
 									<button
 										class="workduck-button workduck-button-secondary"
 										type="button"
 										onclick={() => handleWorkspaceSwitch(workspace.id)}
 									>
-										Switch
+										{messages.settings.workspaces.switch}
 									</button>
 								</span>
 							{/if}
 							{#if workspaceRequiresUnlock(workspace)}
 								<span
 									class="workduck-tooltip-anchor"
-									data-tooltip="Lock this workspace again until its password is entered."
+									data-tooltip={messages.settings.workspaces.tooltips.lock}
 								>
 									<button
 										class="workduck-button workduck-button-secondary"
 										type="button"
 										onclick={() => handleWorkspaceLock(workspace.id)}
 									>
-										Lock
+										{messages.settings.workspaces.lock}
 									</button>
 								</span>
 							{/if}
@@ -594,27 +644,27 @@
 						{#if workspaceRequiresUnlock(workspace) && !workspaceIsUnlocked(workspace)}
 							<span
 								class="workduck-tooltip-anchor"
-								data-tooltip="Choose a local folder again when this workspace was synced from another device."
+								data-tooltip={messages.settings.workspaces.tooltips.reconnect}
 							>
 								<button
 									class="workduck-button workduck-button-secondary"
 									type="button"
 									onclick={() => handleWorkspaceRepair(workspace.id)}
 								>
-									Reconnect
+									{messages.settings.workspaces.reconnect}
 								</button>
 							</span>
 						{/if}
 						<span
 							class="workduck-tooltip-anchor"
-							data-tooltip="Remove this workspace from Workduck. Local files are not deleted."
+							data-tooltip={messages.settings.workspaces.tooltips.remove}
 						>
 							<button
 								class="workduck-button workduck-button-danger"
 								type="button"
 								onclick={() => handleWorkspaceRemove(workspace.id)}
 							>
-								Remove
+								{messages.common.remove}
 							</button>
 						</span>
 					</div>
@@ -638,10 +688,13 @@
 				aria-describedby="workspace-remove-confirm-description"
 			>
 				<h2 id="workspace-remove-confirm-title" class="workduck-dialog-title">
-					Remove workspace
+					{messages.settings.workspaces.removeTitle}
 				</h2>
 				<p id="workspace-remove-confirm-description" class="workduck-dialog-text">
-					Remove {workspaceRemoveCandidate.name}? Local files are not deleted.
+					{messages.settings.workspaces.removeDescription.replace(
+						'{name}',
+						workspaceRemoveCandidate.name
+					)}
 				</p>
 				<div class="workduck-dialog-actions">
 					<button
@@ -649,14 +702,14 @@
 						type="button"
 						onclick={clearWorkspaceRemoveConfirmation}
 					>
-						Cancel
+						{messages.common.cancel}
 					</button>
 					<button
 						class="workduck-button workduck-button-danger"
 						type="button"
 						onclick={confirmWorkspaceRemove}
 					>
-						Remove
+						{messages.common.remove}
 					</button>
 				</div>
 			</div>

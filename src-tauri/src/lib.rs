@@ -1,4 +1,5 @@
 mod storage;
+mod developer_processes;
 mod project_folder;
 mod project_repository_operation_store;
 mod project_registry_store;
@@ -6,6 +7,8 @@ mod queue_folder;
 mod project_repository;
 mod secret_vault_crypto;
 mod tray_menu;
+mod terminal_catalog;
+mod terminal_process;
 mod workspace_password;
 mod workspace_path;
 mod workspace_sync_crypto;
@@ -44,9 +47,17 @@ pub fn run() {
             app.set_theme(Some(tauri::Theme::Dark));
             Ok(())
         })
+        .manage(terminal_process::TerminalProcessState::default())
         .invoke_handler(tauri::generate_handler![
             runtime_status,
             storage_status,
+            developer_processes::kill_developer_process,
+            developer_processes::list_developer_processes,
+            terminal_catalog::list_terminal_catalog,
+            terminal_process::read_terminal_session,
+            terminal_process::start_terminal_session,
+            terminal_process::stop_terminal_session,
+            terminal_process::write_terminal_session_input,
             tray_menu::exit_workduck,
             tray_menu::hide_workduck_main_window,
             tray_menu::hide_workduck_tray_menu,

@@ -1,3 +1,9 @@
+import {
+	DEFAULT_WORKDUCK_LANGUAGE_ID,
+	normalizeWorkduckLanguageId,
+	type WorkduckLanguageId
+} from '$lib/i18n/workduck-language';
+
 export const WORKDUCK_APPEARANCE_SETTINGS_STORAGE_KEY = 'workduck.appearanceSettings.v1';
 
 export const FONT_SIZE_STEP_VALUES = [14, 15, 16, 17, 18] as const;
@@ -76,6 +82,7 @@ export const editorFontOptions = [
 export type EditorFontId = (typeof editorFontOptions)[number]['id'];
 
 export interface AppearanceSettings {
+	readonly languageId: WorkduckLanguageId;
 	readonly fontSizePx: number;
 	readonly editorFontSizePx: number;
 	readonly editorFontId: EditorFontId;
@@ -94,6 +101,7 @@ export type AppearanceSettingsCssVariables = Readonly<
 
 export function createDefaultAppearanceSettings(): AppearanceSettings {
 	return {
+		languageId: DEFAULT_WORKDUCK_LANGUAGE_ID,
 		fontSizePx: INTERFACE_FONT_SIZE_DEFAULT_PX,
 		editorFontSizePx: EDITOR_FONT_SIZE_DEFAULT_PX,
 		editorFontId: 'jetbrains-mono',
@@ -107,6 +115,7 @@ export function normalizeAppearanceSettings(value: unknown): AppearanceSettings 
 	}
 
 	return {
+		languageId: normalizeWorkduckLanguageId(value.languageId),
 		fontSizePx: normalizeAllowedInteger(
 			value.fontSizePx,
 			FONT_SIZE_STEP_VALUES,

@@ -1,4 +1,16 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
+
+	import { getWorkduckMessages } from '$lib/i18n/workduck-language';
+	import {
+		createDefaultAppearanceSettings,
+		type AppearanceSettings
+	} from '$lib/settings/appearance-settings';
+	import {
+		readAppearanceSettingsFromBrowser,
+		subscribeAppearanceSettings
+	} from '$lib/settings/appearance-storage';
+
 	import type { WorkspaceRecord } from './workspace-registry';
 	import {
 		getWorkspaceUnlockLockout,
@@ -16,12 +28,13 @@
 
 	let {
 		workspace,
-		submitLabel = 'Unlock',
-		cancelLabel = 'Cancel',
+		submitLabel,
+		cancelLabel,
 		onUnlocked,
 		onCancel
 	}: Props = $props();
 
+	let appearanceSettings = $state<AppearanceSettings>(createDefaultAppearanceSettings());
 	let password = $state('');
 	let error = $state<WorkspaceUnlockError | null>(null);
 	let attemptsRemaining = $state<number | null>(null);
@@ -37,25 +50,46 @@
 			: lockout.secondsRemaining
 	);
 	let canSubmit = $derived(password.length > 0 && !isUnlocking && !isLocked);
+	let messages = $derived(getWorkduckMessages(appearanceSettings.languageId));
+	let effectiveSubmitLabel = $derived(submitLabel ?? messages.workspace.unlock.submit);
+	let effectiveCancelLabel = $derived(cancelLabel ?? messages.common.cancel);
+
+	onMount(() => {
+		appearanceSettings = readAppearanceSettingsFromBrowser().settings;
+		const unsubscribeAppearanceSettings = subscribeAppearanceSettings((nextSettings) => {
+			appearanceSettings = nextSettings;
+		});
+
+		return unsubscribeAppearanceSettings;
+	});
 
 	function getUnlockMessage() {
 		if (isLocked) {
-			return `Try again in ${secondsRemaining}s.`;
+			return messages.workspace.unlock.tryAgainIn.replace(
+				'{seconds}',
+				String(secondsRemaining)
+			);
 		}
 
 		switch (error) {
 			case 'workspace-unlock-password-required':
-				return 'Password is required.';
+				return messages.workspace.unlock.passwordRequired;
 			case 'workspace-unlock-invalid-password':
 				return attemptsRemaining === null
-					? 'Password did not match.'
-					: `Password did not match. ${attemptsRemaining} attempts left.`;
+					? messages.workspace.unlock.passwordMismatch
+					: messages.workspace.unlock.passwordMismatchWithAttempts.replace(
+							'{attemptsRemaining}',
+							String(attemptsRemaining)
+						);
 			case 'workspace-unlock-unavailable':
-				return 'Unlock is available in the desktop app.';
+				return messages.workspace.unlock.unavailable;
 			case 'workspace-unlock-invalid-hash':
-				return 'Workspace lock data could not be read.';
+				return messages.workspace.unlock.invalidHash;
 			case 'workspace-unlock-rate-limited':
-				return `Try again in ${secondsRemaining}s.`;
+				return messages.workspace.unlock.tryAgainIn.replace(
+					'{seconds}',
+					String(secondsRemaining)
+				);
 			case null:
 				return null;
 		}
@@ -109,7 +143,7 @@
 
 <form class="workduck-unlock-form" onsubmit={handleSubmit}>
 	<label class="workduck-form-field" for={`workspace-unlock-password-${workspace.id}`}>
-		<span>Password</span>
+		<span>{messages.common.password}</span>
 		<input
 			id={`workspace-unlock-password-${workspace.id}`}
 			class="workduck-input"
@@ -123,7 +157,7 @@
 
 	<div class="workduck-unlock-actions">
 		<button class="workduck-button workduck-button-primary" type="submit" disabled={!canSubmit}>
-			{isUnlocking ? 'Checking' : submitLabel}
+			{isUnlocking ? messages.common.checking : effectiveSubmitLabel}
 		</button>
 		{#if onCancel !== undefined}
 			<button
@@ -132,7 +166,7 @@
 				disabled={isUnlocking}
 				onclick={handleCancel}
 			>
-				{cancelLabel}
+				{effectiveCancelLabel}
 			</button>
 		{/if}
 	</div>

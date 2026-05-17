@@ -2,12 +2,17 @@
 	import { page } from '$app/state';
 	import { onMount, type Snippet } from 'svelte';
 
+	import { getWorkduckMessages } from '$lib/i18n/workduck-language';
 	import {
 		createAppearanceSettingsStyle,
 		createDefaultAppearanceSettings,
 		type AppearanceSettings
 	} from '$lib/settings/appearance-settings';
-	import { shouldShowWorkduckTrayIcon } from '$lib/settings/system-settings';
+	import {
+		createDefaultSystemSettings,
+		getWorkspaceIdleLockTimeoutMs,
+		shouldShowWorkduckTrayIcon
+	} from '$lib/settings/system-settings';
 	import {
 		applyAppearanceSettingsToBrowserDocument,
 		readAppearanceSettingsFromBrowser,
@@ -17,6 +22,14 @@
 		readSystemSettingsFromBrowser,
 		subscribeSystemSettings
 	} from '$lib/settings/system-storage';
+	import { clearEnvironmentVaultSession } from '$lib/environment/environment-vault-session';
+	import { listQueueFiles } from '$lib/queue/queue-folder';
+	import {
+		countUnreadQueueFiles,
+		readQueueReadFilePaths,
+		subscribeQueueFilesChanged,
+		subscribeQueueReadStateChanged
+	} from '$lib/queue/queue-read-state';
 	import { syncWorkduckTrayIconEnabled } from '$lib/system/tray';
 	import {
 		createEmptyWorkspaceRegistry,
@@ -31,7 +44,9 @@
 	} from '$lib/workspaces/workspace-storage';
 	import {
 		isWorkspaceUnlocked,
+		lockIdleWorkspaceSessions,
 		subscribeWorkspaceUnlocks,
+		touchWorkspaceUnlockSessions,
 		workspaceRequiresUnlock
 	} from '$lib/workspaces/workspace-unlock';
 	import WorkspaceUnlockForm from '$lib/workspaces/WorkspaceUnlockForm.svelte';
@@ -69,13 +84,19 @@
 	const { children }: Props = $props();
 
 	const primaryNavigationItems = [
-		{ href: '/', label: 'Projects' },
-		{ href: '/queue', label: 'Queue' },
-		{ href: '/artifacts', label: 'Artifacts' },
-		{ href: '/agents', label: 'Agents' },
-		{ href: '/environment', label: 'Environment' }
+		{ href: '/', labelKey: 'projects', requiresWorkspace: true },
+		{ href: '/queue', labelKey: 'queue', requiresWorkspace: true },
+		{ href: '/artifacts', labelKey: 'artifacts', requiresWorkspace: true },
+		{ href: '/agents', labelKey: 'agents', requiresWorkspace: true },
+		{ href: '/personas', labelKey: 'personas', requiresWorkspace: true },
+		{ href: '/skills', labelKey: 'skills', requiresWorkspace: true },
+		{ href: '/terminals', labelKey: 'terminals', requiresWorkspace: true },
+		{ href: '/processes', labelKey: 'processes', requiresWorkspace: false },
+		{ href: '/environment', labelKey: 'environment', requiresWorkspace: true }
 	] as const;
-	const settingsNavigationItem = { href: '/settings', label: 'Settings' } as const;
+	type PrimaryNavigationItem = (typeof primaryNavigationItems)[number];
+	const settingsNavigationItem = { href: '/settings', labelKey: 'settings' } as const;
+	const QUEUE_UNREAD_REFRESH_INTERVAL_MS = 5_000;
 	const workspaceMenuId = 'workduck-workspace-menu';
 	const primaryNavigationUnavailableDescriptionId =
 		'workduck-primary-navigation-unavailable-description';
@@ -91,6 +112,8 @@
 	let workspaceUnlockId = $state<string | null>(null);
 	let workspaceUnlockRevision = $state(0);
 	let workspaceSwitchError = $state<string | null>(null);
+	let queueUnreadCount = $state(0);
+	let queueUnreadRefreshSequence = 0;
 	let resizePointerId: number | undefined;
 	let resizeStartX = 0;
 	let resizeStartWidthPx = SIDEBAR_DEFAULT_WIDTH_PX;
@@ -101,19 +124,22 @@
 	let titlebarDragStartY = 0;
 
 	let activeWorkspace = $derived(getActiveWorkspace(workspaceRegistry));
+	let messages = $derived(getWorkduckMessages(appearanceSettings.languageId));
 	let hasWorkspaceChoices = $derived(workspaceRegistry.workspaces.length > 0);
 	let activeWorkspaceIsUsable = $derived(
 		activeWorkspace !== null &&
 			workspaceUnlockRevision >= 0 &&
 			isWorkspaceUnlocked(activeWorkspace)
 	);
-	let activeWorkspaceName = $derived(activeWorkspace?.name ?? 'No workspace');
+	let activeWorkspaceName = $derived(activeWorkspace?.name ?? messages.navigation.noWorkspace);
 	let appIsLocked = $derived(activeAppOperation !== null);
 	let workspaceUnavailableMessage = $derived(
-		hasWorkspaceChoices ? 'Unlock the active workspace.' : 'Add a workspace in Settings first.'
+		hasWorkspaceChoices
+			? messages.navigation.unlockActiveWorkspace
+			: messages.navigation.addWorkspaceFirst
 	);
 	let navigationUnavailableMessage = $derived(
-		appIsLocked ? 'Wait for the current operation to finish.' : workspaceUnavailableMessage
+		appIsLocked ? messages.navigation.waitForOperation : workspaceUnavailableMessage
 	);
 	let appearanceSettingsStyle = $derived(createAppearanceSettingsStyle(appearanceSettings));
 
@@ -241,25 +267,74 @@
 		}
 	}
 
-	function getPrimaryNavigationClass(href: string) {
+	function canUsePrimaryNavigationItem(item: PrimaryNavigationItem) {
+		return !appIsLocked && (!item.requiresWorkspace || activeWorkspaceIsUsable);
+	}
+
+	function getPrimaryNavigationClass(item: PrimaryNavigationItem) {
+		const canUseNavigationItem = canUsePrimaryNavigationItem(item);
+
 		return [
 			'workduck-nav-link',
-			!appIsLocked && activeWorkspaceIsUsable && page.url.pathname === href
+			canUseNavigationItem && page.url.pathname === item.href
 				? 'workduck-nav-link-active'
 				: '',
-			activeWorkspaceIsUsable && !appIsLocked ? '' : 'workduck-nav-link-disabled'
+			canUseNavigationItem ? '' : 'workduck-nav-link-disabled'
 		]
 			.filter(Boolean)
 			.join(' ');
 	}
 
-	function handlePrimaryNavigationClick(event: MouseEvent) {
-		if (appIsLocked || !activeWorkspaceIsUsable) {
+	function handlePrimaryNavigationClick(event: MouseEvent, item: PrimaryNavigationItem) {
+		if (!canUsePrimaryNavigationItem(item)) {
 			event.preventDefault();
 			return;
 		}
 
 		closeSidebarOnMobile();
+	}
+
+	async function refreshQueueUnreadCount() {
+		const workspace = activeWorkspace;
+		const sequence = ++queueUnreadRefreshSequence;
+
+		if (workspace === null || !activeWorkspaceIsUsable) {
+			queueUnreadCount = 0;
+			return;
+		}
+
+		const result = await listQueueFiles(workspace.path);
+
+		if (sequence !== queueUnreadRefreshSequence) {
+			return;
+		}
+
+		if (!result.ok) {
+			queueUnreadCount = 0;
+			return;
+		}
+
+		queueUnreadCount = countUnreadQueueFiles(
+			result.files,
+			readQueueReadFilePaths(workspace.id)
+		);
+	}
+
+	function getPrimaryNavigationAriaLabel(item: PrimaryNavigationItem) {
+		const label = messages.navigation[item.labelKey];
+
+		if (item.labelKey !== 'queue' || queueUnreadCount === 0) {
+			return label;
+		}
+
+		return `${label}, ${messages.queue.unreadCountLabel.replace(
+			'{count}',
+			queueUnreadCount.toString()
+		)}`;
+	}
+
+	function getQueueUnreadBadgeLabel() {
+		return queueUnreadCount > 99 ? '99+' : queueUnreadCount.toString();
 	}
 
 	function toggleWorkspaceMenu() {
@@ -453,8 +528,21 @@
 		};
 	});
 
+	$effect(() => {
+		const workspace = activeWorkspace;
+		const canUseWorkspace = activeWorkspaceIsUsable;
+
+		if (workspace === null || !canUseWorkspace) {
+			queueUnreadCount = 0;
+			return;
+		}
+
+		void refreshQueueUnreadCount();
+	});
+
 	onMount(() => {
 		let storedSidebarWidth: string | null = null;
+		let currentSystemSettings = createDefaultSystemSettings();
 
 		try {
 			storedSidebarWidth = window.localStorage.getItem(SIDEBAR_WIDTH_STORAGE_KEY);
@@ -471,9 +559,8 @@
 		mediaQuery.addEventListener('change', handleMediaChange);
 		appearanceSettings = readAppearanceSettingsFromBrowser().settings;
 		applyAppearanceSettingsToBrowserDocument(appearanceSettings);
-		void syncWorkduckTrayIconEnabled(
-			shouldShowWorkduckTrayIcon(readSystemSettingsFromBrowser().settings)
-		);
+		currentSystemSettings = readSystemSettingsFromBrowser().settings;
+		void syncWorkduckTrayIconEnabled(shouldShowWorkduckTrayIcon(currentSystemSettings));
 		let disposeWindowState: (() => void) | undefined;
 		let shellIsMounted = true;
 		void initializeTauriWindowState().then((dispose) => {
@@ -489,6 +576,7 @@
 			applyAppearanceSettingsToBrowserDocument(nextSettings);
 		});
 		const unsubscribeSystemSettings = subscribeSystemSettings((nextSettings) => {
+			currentSystemSettings = nextSettings;
 			void syncWorkduckTrayIconEnabled(shouldShowWorkduckTrayIcon(nextSettings));
 		});
 		const unsubscribeAppOperation = subscribeAppOperation((nextOperation) => {
@@ -500,7 +588,50 @@
 		});
 		const unsubscribeWorkspaceUnlocks = subscribeWorkspaceUnlocks(() => {
 			workspaceUnlockRevision += 1;
+			for (const workspace of workspaceRegistry.workspaces) {
+				if (workspaceRequiresUnlock(workspace) && !isWorkspaceUnlocked(workspace)) {
+					clearEnvironmentVaultSession(workspace.id);
+				}
+			}
 		});
+		const unsubscribeQueueReadState = subscribeQueueReadStateChanged((workspaceId) => {
+			if (activeWorkspace?.id !== workspaceId) {
+				return;
+			}
+
+			void refreshQueueUnreadCount();
+		});
+		const unsubscribeQueueFiles = subscribeQueueFilesChanged((workspaceId) => {
+			if (activeWorkspace?.id !== workspaceId) {
+				return;
+			}
+
+			void refreshQueueUnreadCount();
+		});
+		const recordUserActivity = () => {
+			touchWorkspaceUnlockSessions();
+		};
+		const lockIdleSessions = () => {
+			const idleTimeoutMs = getWorkspaceIdleLockTimeoutMs(currentSystemSettings);
+
+			if (idleTimeoutMs === null) {
+				return;
+			}
+
+			for (const lockedWorkspaceId of lockIdleWorkspaceSessions(idleTimeoutMs)) {
+				clearEnvironmentVaultSession(lockedWorkspaceId);
+			}
+		};
+		const idleLockIntervalId = window.setInterval(lockIdleSessions, 15_000);
+		const queueUnreadRefreshIntervalId = window.setInterval(
+			() => void refreshQueueUnreadCount(),
+			QUEUE_UNREAD_REFRESH_INTERVAL_MS
+		);
+
+		window.addEventListener('pointerdown', recordUserActivity, true);
+		window.addEventListener('keydown', recordUserActivity, true);
+		window.addEventListener('wheel', recordUserActivity, { passive: true, capture: true });
+		window.addEventListener('focus', recordUserActivity);
 
 		return () => {
 			shellIsMounted = false;
@@ -510,6 +641,14 @@
 			unsubscribeAppOperation();
 			unsubscribeWorkspaceRegistry();
 			unsubscribeWorkspaceUnlocks();
+			unsubscribeQueueReadState();
+			unsubscribeQueueFiles();
+			window.clearInterval(idleLockIntervalId);
+			window.clearInterval(queueUnreadRefreshIntervalId);
+			window.removeEventListener('pointerdown', recordUserActivity, true);
+			window.removeEventListener('keydown', recordUserActivity, true);
+			window.removeEventListener('wheel', recordUserActivity, true);
+			window.removeEventListener('focus', recordUserActivity);
 			cancelTitlebarDragTracking();
 			cancelResize();
 			mediaQuery.removeEventListener('change', handleMediaChange);
@@ -650,8 +789,8 @@
 				{/if}
 			</div>
 
-			<nav class="workduck-sidebar-nav" aria-label="Primary">
-					{#if appIsLocked || !hasWorkspaceChoices}
+			<nav class="workduck-sidebar-nav" aria-label={messages.navigation.primary}>
+					{#if appIsLocked || !activeWorkspaceIsUsable}
 						<span id={primaryNavigationUnavailableDescriptionId} class="workduck-sr-only">
 							{navigationUnavailableMessage}
 						</span>
@@ -662,28 +801,33 @@
 					{/if}
 				{#each primaryNavigationItems as item}
 					<a
-						class={getPrimaryNavigationClass(item.href)}
+						class={getPrimaryNavigationClass(item)}
 						href={item.href}
-						aria-current={activeWorkspaceIsUsable && page.url.pathname === item.href
+						aria-current={canUsePrimaryNavigationItem(item) && page.url.pathname === item.href
 							? 'page'
 							: undefined}
-						aria-disabled={!activeWorkspaceIsUsable || appIsLocked}
-						aria-describedby={activeWorkspaceIsUsable && !appIsLocked
+						aria-disabled={!canUsePrimaryNavigationItem(item)}
+						aria-describedby={canUsePrimaryNavigationItem(item)
 							? undefined
 							: primaryNavigationUnavailableDescriptionId}
-						aria-label={item.label}
-						data-tooltip={activeWorkspaceIsUsable && !appIsLocked
-							? item.label
+						aria-label={getPrimaryNavigationAriaLabel(item)}
+						data-tooltip={canUsePrimaryNavigationItem(item)
+							? messages.navigation[item.labelKey]
 							: navigationUnavailableMessage}
-						onclick={handlePrimaryNavigationClick}
+						onclick={(event) => handlePrimaryNavigationClick(event, item)}
 					>
 						<span class="workduck-nav-dot"></span>
-						<span class="workduck-nav-label">{item.label}</span>
+						<span class="workduck-nav-label">{messages.navigation[item.labelKey]}</span>
+						{#if item.labelKey === 'queue' && queueUnreadCount > 0}
+							<span class="workduck-nav-badge" aria-hidden="true">
+								{getQueueUnreadBadgeLabel()}
+							</span>
+						{/if}
 					</a>
 				{/each}
 			</nav>
 
-			<nav class="workduck-sidebar-footer" aria-label="Settings">
+			<nav class="workduck-sidebar-footer" aria-label={messages.navigation.settingsArea}>
 				<a
 					class={page.url.pathname === settingsNavigationItem.href && !appIsLocked
 						? 'workduck-nav-link workduck-nav-link-active'
@@ -695,8 +839,8 @@
 						? 'page'
 						: undefined}
 					aria-disabled={appIsLocked}
-					aria-label={settingsNavigationItem.label}
-					data-tooltip={settingsNavigationItem.label}
+					aria-label={messages.navigation[settingsNavigationItem.labelKey]}
+					data-tooltip={messages.navigation[settingsNavigationItem.labelKey]}
 					onclick={(event) => {
 						if (appIsLocked) {
 							event.preventDefault();
@@ -707,7 +851,7 @@
 					}}
 				>
 					<span class="workduck-nav-dot"></span>
-					<span class="workduck-nav-label">{settingsNavigationItem.label}</span>
+					<span class="workduck-nav-label">{messages.navigation[settingsNavigationItem.labelKey]}</span>
 				</a>
 			</nav>
 		</aside>
@@ -717,7 +861,7 @@
 			class="workduck-sidebar-resizer"
 			inert={appIsLocked}
 			role="separator"
-			aria-label="Resize sidebar"
+			aria-label={messages.navigation.resizeSidebar}
 			aria-orientation="vertical"
 			aria-valuemin={SIDEBAR_MIN_WIDTH_PX}
 			aria-valuemax={SIDEBAR_MAX_WIDTH_PX}
@@ -991,6 +1135,27 @@
 		overflow: hidden;
 		text-overflow: ellipsis;
 		white-space: nowrap;
+	}
+
+	.workduck-nav-label {
+		flex: 1 1 auto;
+	}
+
+	.workduck-nav-badge {
+		display: inline-flex;
+		flex: 0 0 auto;
+		min-width: 22px;
+		height: 22px;
+		align-items: center;
+		justify-content: center;
+		border: 1px solid oklch(var(--workduck-oklch-accent) / 0.74);
+		border-radius: 999px;
+		background: oklch(var(--workduck-oklch-accent) / 0.14);
+		color: var(--workduck-color-accent);
+		padding: 0 6px;
+		font-size: var(--workduck-font-size-2xs);
+		font-weight: 900;
+		line-height: 1;
 	}
 
 	.workduck-brand-name {

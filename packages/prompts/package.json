@@ -1,6 +1,6 @@
 {
   "name": "@workduck/prompts",
-  "version": "1.0.108",
+  "version": "1.2.0",
   "private": true,
   "license": "0BSD",
   "type": "module",

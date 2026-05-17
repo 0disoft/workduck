@@ -1,17 +1,25 @@
-export const AGENT_REGISTRY_VERSION = 1;
+import {
+	createEmptyAgentEvaluationSummary,
+	normalizeAgentEvaluationSummary,
+	type AgentEvaluationSummary
+} from './agent-evaluation';
+
+export const AGENT_REGISTRY_VERSION = 3;
 export const AGENT_NAME_MAX_LENGTH = 120;
 
 export type AgentRegistryError =
 	| 'agent-name-required'
+	| 'agent-auth-required'
 	| 'agent-name-duplicate'
-	| 'agent-api-key-required'
 	| 'agent-not-found'
 	| 'agent-registry-invalid';
 
 export interface AgentRecord {
 	readonly id: string;
 	readonly name: string;
-	readonly environmentSecretId: string;
+	readonly environmentSecretId: string | null;
+	readonly personaId: string | null;
+	readonly evaluationSummary: AgentEvaluationSummary;
 	readonly createdAt: string;
 	readonly updatedAt: string;
 }
@@ -26,7 +34,8 @@ export interface AgentRegistry {
 export interface AgentInput {
 	readonly id?: string | null;
 	readonly name: string;
-	readonly environmentSecretId: string;
+	readonly environmentSecretId?: string | null;
+	readonly personaId?: string | null;
 }
 
 export type AgentRegistryMutationResult =
@@ -69,6 +78,7 @@ export function upsertAgent(
 	const normalizedRegistry = normalizeAgentRegistry(registry, registry.workspaceId) ?? registry;
 	const name = normalizeAgentName(input.name);
 	const environmentSecretId = normalizeRecordId(input.environmentSecretId);
+	const personaId = normalizeRecordId(input.personaId);
 	const agentId = normalizeRecordId(input.id ?? null);
 
 	if (name.length === 0) {
@@ -76,7 +86,7 @@ export function upsertAgent(
 	}
 
 	if (environmentSecretId === null) {
-		return { ok: false, registry: normalizedRegistry, error: 'agent-api-key-required' };
+		return { ok: false, registry: normalizedRegistry, error: 'agent-auth-required' };
 	}
 
 	const matchingAgent = normalizedRegistry.agents.find((agent) => agent.id === agentId);
@@ -98,6 +108,8 @@ export function upsertAgent(
 		id: agentId ?? createAgentId(),
 		name,
 		environmentSecretId,
+		personaId,
+		evaluationSummary: matchingAgent?.evaluationSummary ?? createEmptyAgentEvaluationSummary(),
 		createdAt: matchingAgent?.createdAt ?? timestamp,
 		updatedAt: timestamp
 	} satisfies AgentRecord;
@@ -140,7 +152,10 @@ export function removeAgent(
 }
 
 function normalizeAgentRegistry(value: unknown, workspaceId: string): AgentRegistry | null {
-	if (!isObjectRecord(value) || value.version !== AGENT_REGISTRY_VERSION) {
+	if (
+		!isObjectRecord(value) ||
+		(value.version !== AGENT_REGISTRY_VERSION && value.version !== 2 && value.version !== 1)
+	) {
 		return null;
 	}
 
@@ -187,10 +202,12 @@ function parseAgentRecord(value: unknown): AgentRecord | null {
 	const id = normalizeRecordId(value.id);
 	const name = normalizeAgentName(readTrimmedString(value.name));
 	const environmentSecretId = normalizeRecordId(value.environmentSecretId);
+	const personaId = normalizeRecordId(value.personaId);
+	const evaluationSummary = normalizeAgentEvaluationSummary(value.evaluationSummary);
 	const createdAt = readTrimmedString(value.createdAt);
 	const updatedAt = readTrimmedString(value.updatedAt);
 
-	if (id === null || name.length === 0 || environmentSecretId === null) {
+	if (id === null || name.length === 0) {
 		return null;
 	}
 
@@ -198,6 +215,8 @@ function parseAgentRecord(value: unknown): AgentRecord | null {
 		id,
 		name,
 		environmentSecretId,
+		personaId,
+		evaluationSummary,
 		createdAt: createdAt.length === 0 ? updatedAt : createdAt,
 		updatedAt: updatedAt.length === 0 ? createdAt : updatedAt
 	};

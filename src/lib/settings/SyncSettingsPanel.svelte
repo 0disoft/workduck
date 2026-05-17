@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 
+	import { getWorkduckMessages } from '$lib/i18n/workduck-language';
 	import {
 		readWorkspaceRegistryFromBrowser,
 		writeWorkspaceRegistryToBrowser
@@ -42,22 +43,19 @@
 		type SyncSettings
 	} from './sync-settings';
 	import {
+		createDefaultAppearanceSettings,
+		type AppearanceSettings
+	} from './appearance-settings';
+	import {
+		readAppearanceSettingsFromBrowser,
+		subscribeAppearanceSettings
+	} from './appearance-storage';
+	import {
 		readSyncSettingsFromBrowser,
 		subscribeSyncSettings,
 		writeSyncSettingsToBrowser,
 		type SyncSettingsStorageError
 	} from './sync-settings-storage';
-
-	const syncTooltips = {
-		folder: 'Choose the folder that stores the sync file.',
-		fetch: 'Check the sync repository remote.',
-		pull: 'Bring remote sync file changes into this folder.',
-		push: 'Commit and upload this sync file.',
-		export: 'Use before copying encrypted data manually.',
-		import: 'Use after pasting encrypted data from another device.',
-		save: 'Use before pushing the sync folder.',
-		load: 'Use after pulling the sync folder.'
-	} as const;
 
 	type SyncPanelError =
 		| WorkspaceSyncRegistryError
@@ -66,6 +64,7 @@
 		| SyncSettingsStorageError
 		| WorkspaceSyncGitRunError;
 
+	let appearanceSettings = $state<AppearanceSettings>(createDefaultAppearanceSettings());
 	let syncSettings = $state<SyncSettings>(createDefaultSyncSettings());
 	let syncFolderPathDisplay = $state('');
 	let syncPassword = $state('');
@@ -76,6 +75,8 @@
 	let isBusy = $state(false);
 	let isInspectingSyncGit = $state(false);
 	let syncGitInspectionRequestId = 0;
+	let messages = $derived(getWorkduckMessages(appearanceSettings.languageId));
+	let syncMessages = $derived(messages.settings.sync);
 
 	let canExport = $derived(syncPassword.length > 0 && !isBusy);
 	let canImport = $derived(syncPassword.length > 0 && syncPayload.trim().length > 0 && !isBusy);
@@ -99,96 +100,96 @@
 	function getSyncErrorMessage(error: SyncPanelError) {
 		switch (error) {
 			case 'workspace-sync-git-action-invalid':
-				return 'Git action is invalid.';
+				return syncMessages.errors.gitActionInvalid;
 			case 'workspace-sync-password-required':
-				return 'Password is required.';
+				return syncMessages.errors.passwordRequired;
 			case 'workspace-sync-folder-required':
-				return 'Folder is required.';
+				return syncMessages.errors.folderRequired;
 			case 'workspace-sync-folder-not-absolute':
-				return 'Folder path must be absolute.';
+				return syncMessages.errors.folderNotAbsolute;
 			case 'workspace-sync-folder-not-found':
-				return 'Folder was not found.';
+				return syncMessages.errors.folderNotFound;
 			case 'workspace-sync-folder-not-directory':
-				return 'Path must be a folder.';
+				return syncMessages.errors.folderNotDirectory;
 			case 'workspace-sync-folder-permission-denied':
-				return 'Folder access was denied.';
+				return syncMessages.errors.folderPermissionDenied;
 			case 'workspace-sync-git-folder-required':
-				return 'Folder is required.';
+				return syncMessages.errors.folderRequired;
 			case 'workspace-sync-git-folder-not-absolute':
-				return 'Folder path must be absolute.';
+				return syncMessages.errors.folderNotAbsolute;
 			case 'workspace-sync-git-folder-not-found':
-				return 'Folder was not found.';
+				return syncMessages.errors.folderNotFound;
 			case 'workspace-sync-git-folder-not-directory':
-				return 'Path must be a folder.';
+				return syncMessages.errors.folderNotDirectory;
 			case 'workspace-sync-git-folder-permission-denied':
-				return 'Folder access was denied.';
+				return syncMessages.errors.folderPermissionDenied;
 			case 'workspace-sync-file-name-required':
-				return 'Sync file is required.';
+				return syncMessages.errors.fileNameRequired;
 			case 'workspace-sync-file-name-invalid':
-				return 'Sync file name is invalid.';
+				return syncMessages.errors.fileNameInvalid;
 			case 'workspace-sync-content-required':
-				return 'Encrypted data is required.';
+				return syncMessages.errors.contentRequired;
 			case 'workspace-sync-file-not-found':
-				return 'Sync file was not found.';
+				return syncMessages.errors.fileNotFound;
 			case 'workspace-sync-file-too-large':
-				return 'Sync file is too large.';
+				return syncMessages.errors.fileTooLarge;
 			case 'workspace-sync-file-target-invalid':
-				return 'Sync file path is not usable.';
+				return syncMessages.errors.fileTargetInvalid;
 			case 'workspace-sync-file-read-failed':
-				return 'Sync file could not be read.';
+				return syncMessages.errors.fileReadFailed;
 			case 'workspace-sync-file-write-failed':
-				return 'Sync file could not be saved.';
+				return syncMessages.errors.fileWriteFailed;
 			case 'workspace-sync-file-unavailable':
-				return 'Sync files are available in the desktop app.';
+				return syncMessages.errors.fileUnavailable;
 			case 'workspace-sync-git-not-repository':
-				return 'Folder is not a Git repository.';
+				return syncMessages.errors.gitNotRepository;
 			case 'workspace-sync-git-remote-missing':
-				return 'Git remote is not set.';
+				return syncMessages.errors.gitRemoteMissing;
 			case 'workspace-sync-git-branch-missing':
-				return 'Git branch was not found.';
+				return syncMessages.errors.gitBranchMissing;
 			case 'workspace-sync-git-command-unavailable':
-				return 'Git is not available.';
+				return syncMessages.errors.gitUnavailable;
 			case 'workspace-sync-git-command-timed-out':
-				return 'Git command timed out.';
+				return syncMessages.errors.gitTimedOut;
 			case 'workspace-sync-git-auth-required':
-				return 'Git authentication is required.';
+				return syncMessages.errors.gitAuthRequired;
 			case 'workspace-sync-git-identity-required':
-				return 'Git user name or email is not set.';
+				return syncMessages.errors.gitIdentityRequired;
 			case 'workspace-sync-git-remote-has-changes':
-				return 'Remote has changes. Pull first.';
+				return syncMessages.errors.gitRemoteHasChanges;
 			case 'workspace-sync-git-fast-forward-required':
-				return 'Pull needs a manual merge.';
+				return syncMessages.errors.gitFastForwardRequired;
 			case 'workspace-sync-git-trust-required':
-				return 'Git repository trust must be configured.';
+				return syncMessages.errors.gitTrustRequired;
 			case 'workspace-sync-git-command-failed':
-				return 'Git command failed.';
+				return syncMessages.errors.gitCommandFailed;
 			case 'workspace-sync-git-read-failed':
-				return 'Git repository could not be read.';
+				return syncMessages.errors.gitReadFailed;
 			case 'workspace-sync-git-unavailable':
-				return 'Git sync is available in the desktop app.';
+				return syncMessages.errors.gitSyncUnavailable;
 			case 'workspace-sync-envelope-invalid':
-				return 'Encrypted data is invalid.';
+				return syncMessages.errors.envelopeInvalid;
 			case 'workspace-sync-salt-invalid':
 			case 'workspace-sync-nonce-invalid':
 			case 'workspace-sync-ciphertext-invalid':
-				return 'Encrypted data is damaged.';
+				return syncMessages.errors.encryptedDataDamaged;
 			case 'workspace-sync-key-derivation-failed':
 			case 'workspace-sync-encryption-failed':
-				return 'Export failed.';
+				return syncMessages.errors.exportFailed;
 			case 'workspace-sync-decryption-failed':
-				return 'Password did not match.';
+				return syncMessages.errors.passwordMismatch;
 			case 'workspace-sync-plaintext-required':
 			case 'workspace-sync-plaintext-invalid':
 			case 'workspace-sync-registry-invalid':
-				return 'Workspace data is invalid.';
+				return syncMessages.errors.workspaceDataInvalid;
 			case 'project-registry-read-failed':
-				return 'Project metadata could not be loaded.';
+				return syncMessages.errors.projectReadFailed;
 			case 'project-registry-write-failed':
-				return 'Project metadata could not be saved.';
+				return syncMessages.errors.projectWriteFailed;
 			case 'workspace-sync-unavailable':
-				return 'Sync encryption is available in the desktop app.';
+				return syncMessages.errors.encryptionUnavailable;
 			case 'sync-settings-storage-unavailable':
-				return 'Sync settings could not be saved.';
+				return syncMessages.errors.settingsSaveFailed;
 		}
 	}
 
@@ -274,23 +275,23 @@
 
 	function getSyncRepositoryDisplay() {
 		if (syncSettings.folderPath.length === 0) {
-			return 'No folder';
+			return syncMessages.noFolder;
 		}
 
 		if (isInspectingSyncGit) {
-			return 'Checking';
+			return syncMessages.checking;
 		}
 
 		if (syncGitInspection === null) {
-			return 'No repository';
+			return syncMessages.noRepository;
 		}
 
 		if (!syncGitInspection.ok) {
-			return 'Unavailable';
+			return syncMessages.unavailable;
 		}
 
 		if (!syncGitInspection.isRepository) {
-			return 'No repository';
+			return syncMessages.noRepository;
 		}
 
 		return formatWorkspaceSyncRemoteForDisplay(syncGitInspection.originUrl);
@@ -301,9 +302,9 @@
 			syncGitInspection === null ||
 			!syncGitInspection.ok ||
 			!syncGitInspection.isRepository ||
-			syncGitInspection.branchName === null
-		) {
-			return 'No branch';
+		syncGitInspection.branchName === null
+	) {
+			return syncMessages.noBranch;
 		}
 
 		return syncGitInspection.branchName;
@@ -490,12 +491,12 @@
 		}
 
 		syncPayload = payload;
-		syncStatus = 'Exported.';
+		syncStatus = syncMessages.statuses.exported;
 	}
 
 	async function handleImport() {
 		if (await importEncryptedRegistryPayload(syncPayload)) {
-			syncStatus = 'Imported.';
+			syncStatus = syncMessages.statuses.imported;
 		}
 	}
 
@@ -526,7 +527,7 @@
 		}
 
 		syncPayload = payload;
-		syncStatus = `Saved ${syncSettings.fileName}.`;
+		syncStatus = syncMessages.statuses.saved.replace('{fileName}', syncSettings.fileName);
 	}
 
 	async function handleLoadFile() {
@@ -550,7 +551,7 @@
 
 		if (await importEncryptedRegistryPayload(readResult.content)) {
 			syncPayload = readResult.content;
-			syncStatus = `Loaded ${syncSettings.fileName}.`;
+			syncStatus = syncMessages.statuses.loaded.replace('{fileName}', syncSettings.fileName);
 		}
 	}
 
@@ -590,40 +591,44 @@
 	function getSyncGitOutcomeMessage(outcome: WorkspaceSyncGitRunOutcome) {
 		switch (outcome) {
 			case 'fetched':
-				return 'Fetched.';
+				return syncMessages.statuses.fetched;
 			case 'pulled':
-				return 'Pulled. Use Load to apply.';
+				return syncMessages.statuses.pulled;
 			case 'pushed':
-				return 'Pushed.';
+				return syncMessages.statuses.pushed;
 			case 'committed-and-pushed':
-				return 'Committed and pushed.';
+				return syncMessages.statuses.committedAndPushed;
 		}
 	}
 
 	function getSyncGitOperationLabel(action: WorkspaceSyncGitRunAction) {
 		switch (action) {
 			case 'fetch':
-				return 'Fetching sync';
+				return syncMessages.operations.fetchLabel;
 			case 'pull':
-				return 'Pulling sync';
+				return syncMessages.operations.pullLabel;
 			case 'push':
-				return 'Pushing sync';
+				return syncMessages.operations.pushLabel;
 		}
 	}
 
 	function getSyncGitOperationDetail(action: WorkspaceSyncGitRunAction) {
 		switch (action) {
 			case 'fetch':
-				return 'Checking remote changes.';
+				return syncMessages.operations.fetchDetail;
 			case 'pull':
-				return 'Updating the sync folder.';
+				return syncMessages.operations.pullDetail;
 			case 'push':
-				return 'Uploading the sync file.';
+				return syncMessages.operations.pushDetail;
 		}
 	}
 
 	onMount(() => {
+		appearanceSettings = readAppearanceSettingsFromBrowser().settings;
 		readSyncSettings();
+		const unsubscribeAppearanceSettings = subscribeAppearanceSettings((nextSettings) => {
+			appearanceSettings = nextSettings;
+		});
 		const unsubscribeSyncSettings = subscribeSyncSettings((nextSettings) => {
 			const previousFolderPath = syncSettings.folderPath;
 
@@ -635,14 +640,17 @@
 			}
 		});
 
-		return unsubscribeSyncSettings;
+		return () => {
+			unsubscribeAppearanceSettings();
+			unsubscribeSyncSettings();
+		};
 	});
 </script>
 
-<section class="workduck-settings-section" id="settings-panel-sync" aria-label="Sync">
+<section class="workduck-settings-section" id="settings-panel-sync" aria-label={syncMessages.section}>
 	<div class="workduck-sync-profile-form">
 		<label class="workduck-form-field" for="sync-profile-name">
-			Name
+			{messages.common.name}
 			<input
 				id="sync-profile-name"
 				class="workduck-input"
@@ -655,7 +663,7 @@
 		</label>
 
 		<label class="workduck-form-field" for="sync-folder">
-			Folder
+			{messages.common.folder}
 			<span class="workduck-path-control">
 				<input
 					id="sync-folder"
@@ -667,24 +675,24 @@
 				/>
 				<span
 					class="workduck-tooltip-anchor"
-					data-tooltip={syncTooltips.folder}
+					data-tooltip={syncMessages.tooltips.folder}
 				>
 					<button
 						class="workduck-icon-button"
 						type="button"
-						aria-label="Choose sync folder"
+						aria-label={syncMessages.tooltips.folder}
 						aria-describedby="sync-folder-tooltip"
 						onclick={handleSyncFolderSelect}
 					>
 						<span class="workduck-folder-icon" aria-hidden="true"></span>
 					</button>
-					<span class="workduck-sr-only" id="sync-folder-tooltip">{syncTooltips.folder}</span>
+					<span class="workduck-sr-only" id="sync-folder-tooltip">{syncMessages.tooltips.folder}</span>
 				</span>
 			</span>
 		</label>
 
 		<label class="workduck-form-field" for="sync-file-name">
-			File
+			{messages.common.file}
 			<input
 				id="sync-file-name"
 				class="workduck-input"
@@ -699,19 +707,19 @@
 		</label>
 	</div>
 
-	<div class="workduck-sync-repository-status" aria-label="Sync repository">
+	<div class="workduck-sync-repository-status" aria-label={messages.common.repository}>
 		<div class="workduck-readonly-field">
-			<span>Repository</span>
+			<span>{messages.common.repository}</span>
 			<span class="workduck-readonly-value">{getSyncRepositoryDisplay()}</span>
 		</div>
 		<div class="workduck-readonly-field">
-			<span>Branch</span>
+			<span>{messages.common.branch}</span>
 			<span class="workduck-readonly-value">{getSyncBranchDisplay()}</span>
 		</div>
 	</div>
 
-	<div class="workduck-sync-remote-actions" aria-label="Sync remote actions">
-		<span class="workduck-tooltip-anchor" data-tooltip={syncTooltips.fetch}>
+	<div class="workduck-sync-remote-actions" aria-label={syncMessages.section}>
+		<span class="workduck-tooltip-anchor" data-tooltip={syncMessages.tooltips.fetch}>
 			<button
 				class="workduck-button"
 				type="button"
@@ -719,11 +727,11 @@
 				aria-describedby="sync-fetch-tooltip"
 				onclick={() => handleGitSyncAction('fetch')}
 			>
-				Fetch
+				{messages.common.fetch}
 			</button>
-			<span class="workduck-sr-only" id="sync-fetch-tooltip">{syncTooltips.fetch}</span>
+			<span class="workduck-sr-only" id="sync-fetch-tooltip">{syncMessages.tooltips.fetch}</span>
 		</span>
-		<span class="workduck-tooltip-anchor" data-tooltip={syncTooltips.pull}>
+		<span class="workduck-tooltip-anchor" data-tooltip={syncMessages.tooltips.pull}>
 			<button
 				class="workduck-button"
 				type="button"
@@ -731,11 +739,11 @@
 				aria-describedby="sync-pull-tooltip"
 				onclick={() => handleGitSyncAction('pull')}
 			>
-				Pull
+				{messages.common.pull}
 			</button>
-			<span class="workduck-sr-only" id="sync-pull-tooltip">{syncTooltips.pull}</span>
+			<span class="workduck-sr-only" id="sync-pull-tooltip">{syncMessages.tooltips.pull}</span>
 		</span>
-		<span class="workduck-tooltip-anchor" data-tooltip={syncTooltips.push}>
+		<span class="workduck-tooltip-anchor" data-tooltip={syncMessages.tooltips.push}>
 			<button
 				class="workduck-button workduck-button-primary"
 				type="button"
@@ -743,15 +751,15 @@
 				aria-describedby="sync-push-tooltip"
 				onclick={() => handleGitSyncAction('push')}
 			>
-				Push
+				{messages.common.push}
 			</button>
-			<span class="workduck-sr-only" id="sync-push-tooltip">{syncTooltips.push}</span>
+			<span class="workduck-sr-only" id="sync-push-tooltip">{syncMessages.tooltips.push}</span>
 		</span>
 	</div>
 
 	<div class="workduck-sync-form">
 		<label class="workduck-form-field" for="sync-password">
-			Password
+			{messages.common.password}
 			<input
 				id="sync-password"
 				class="workduck-input"
@@ -763,7 +771,7 @@
 		</label>
 
 		<div class="workduck-sync-actions">
-			<span class="workduck-tooltip-anchor" data-tooltip={syncTooltips.export}>
+			<span class="workduck-tooltip-anchor" data-tooltip={syncMessages.tooltips.export}>
 				<button
 					class="workduck-button workduck-button-primary"
 					type="button"
@@ -771,11 +779,11 @@
 					aria-describedby="sync-export-tooltip"
 					onclick={handleExport}
 				>
-					Export
+					{messages.common.export}
 				</button>
-				<span class="workduck-sr-only" id="sync-export-tooltip">{syncTooltips.export}</span>
+				<span class="workduck-sr-only" id="sync-export-tooltip">{syncMessages.tooltips.export}</span>
 			</span>
-			<span class="workduck-tooltip-anchor" data-tooltip={syncTooltips.import}>
+			<span class="workduck-tooltip-anchor" data-tooltip={syncMessages.tooltips.import}>
 				<button
 					class="workduck-button"
 					type="button"
@@ -783,11 +791,11 @@
 					aria-describedby="sync-import-tooltip"
 					onclick={handleImport}
 				>
-					Import
+					{messages.common.import}
 				</button>
-				<span class="workduck-sr-only" id="sync-import-tooltip">{syncTooltips.import}</span>
+				<span class="workduck-sr-only" id="sync-import-tooltip">{syncMessages.tooltips.import}</span>
 			</span>
-			<span class="workduck-tooltip-anchor" data-tooltip={syncTooltips.save}>
+			<span class="workduck-tooltip-anchor" data-tooltip={syncMessages.tooltips.save}>
 				<button
 					class="workduck-button"
 					type="button"
@@ -795,11 +803,11 @@
 					aria-describedby="sync-save-tooltip"
 					onclick={handleSaveFile}
 				>
-					Save
+					{messages.common.save}
 				</button>
-				<span class="workduck-sr-only" id="sync-save-tooltip">{syncTooltips.save}</span>
+				<span class="workduck-sr-only" id="sync-save-tooltip">{syncMessages.tooltips.save}</span>
 			</span>
-			<span class="workduck-tooltip-anchor" data-tooltip={syncTooltips.load}>
+			<span class="workduck-tooltip-anchor" data-tooltip={syncMessages.tooltips.load}>
 				<button
 					class="workduck-button"
 					type="button"
@@ -807,15 +815,15 @@
 					aria-describedby="sync-load-tooltip"
 					onclick={handleLoadFile}
 				>
-					Load
+					{messages.common.load}
 				</button>
-				<span class="workduck-sr-only" id="sync-load-tooltip">{syncTooltips.load}</span>
+				<span class="workduck-sr-only" id="sync-load-tooltip">{syncMessages.tooltips.load}</span>
 			</span>
 		</div>
 	</div>
 
 	<label class="workduck-form-field" for="sync-payload">
-		Encrypted data
+		{syncMessages.encryptedData}
 		<textarea
 			id="sync-payload"
 			class="workduck-input workduck-textarea"

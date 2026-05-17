@@ -2,6 +2,11 @@
 	import { onMount } from 'svelte';
 
 	import {
+		getWorkduckMessages,
+		workduckLanguageOptions,
+		type WorkduckLanguageId
+	} from '$lib/i18n/workduck-language';
+	import {
 		EDITOR_TAB_SIZE_STEP_VALUES,
 		FONT_SIZE_STEP_VALUES,
 		createDefaultAppearanceSettings,
@@ -27,28 +32,43 @@
 			label: String(fontSizePx)
 		})
 	);
-	const editorTabSizeStepOptions: readonly StepRangeOption[] = EDITOR_TAB_SIZE_STEP_VALUES.map(
-		(tabSize) => ({
-			value: tabSize,
-			label: `${tabSize} spaces`
-		})
-	);
-
 	let appearanceSettings = $state<AppearanceSettings>(createDefaultAppearanceSettings());
 	let appearanceStorageError = $state<string | null>(null);
+	let messages = $derived(getWorkduckMessages(appearanceSettings.languageId));
+	let editorTabSizeStepOptions = $derived(
+		EDITOR_TAB_SIZE_STEP_VALUES.map((tabSize) => ({
+			value: tabSize,
+			label: formatTabSizeLabel(tabSize)
+		}))
+	);
 
 	function readAppearanceFromStorage() {
 		const result = readAppearanceSettingsFromBrowser();
 
 		appearanceSettings = result.settings;
-		appearanceStorageError = result.ok ? null : 'Appearance settings could not be loaded.';
+		appearanceStorageError = result.ok ? null : messages.settings.appearance.loadError;
 	}
 
 	function persistAppearanceSettings(nextSettings: AppearanceSettings) {
 		const result = writeAppearanceSettingsToBrowser(nextSettings);
 
 		appearanceSettings = result.settings;
-		appearanceStorageError = result.ok ? null : 'Appearance settings could not be saved.';
+		appearanceStorageError = result.ok
+			? null
+			: getWorkduckMessages(result.settings.languageId).settings.appearance.saveError;
+	}
+
+	function handleLanguageChange(event: Event) {
+		const target = event.currentTarget;
+
+		if (!(target instanceof HTMLSelectElement)) {
+			return;
+		}
+
+		persistAppearanceSettings({
+			...appearanceSettings,
+			languageId: target.value as WorkduckLanguageId
+		});
 	}
 
 	function handleInterfaceFontSizeChange(fontSizePx: number) {
@@ -90,7 +110,7 @@
 	}
 
 	function formatTabSizeLabel(tabSize: number) {
-		return `${tabSize} spaces`;
+		return `${tabSize} ${messages.settings.appearance.spaces}`;
 	}
 
 	onMount(() => {
@@ -107,15 +127,29 @@
 <section
 	id="settings-panel-appearance"
 	class="workduck-settings-section"
-	aria-label="Appearance"
+	aria-label={messages.settings.appearance.section}
 >
 	<form
 		class="workduck-preferences-form workduck-appearance-settings-form"
 		onsubmit={(event) => event.preventDefault()}
 	>
+		<label class="workduck-form-field" for="workduck-language">
+			<span>{messages.settings.appearance.language}</span>
+			<select
+				id="workduck-language"
+				class="workduck-select"
+				value={appearanceSettings.languageId}
+				onchange={handleLanguageChange}
+			>
+				{#each workduckLanguageOptions as languageOption}
+					<option value={languageOption.id}>{languageOption.label}</option>
+				{/each}
+			</select>
+		</label>
+
 		<StepRangeField
 			id="interface-font-size"
-			label="Interface font size"
+			label={messages.settings.appearance.interfaceFontSize}
 			value={appearanceSettings.fontSizePx}
 			options={fontSizeStepOptions}
 			valueLabel={formatFontSizeLabel(appearanceSettings.fontSizePx)}
@@ -124,7 +158,7 @@
 
 		<StepRangeField
 			id="editor-font-size"
-			label="Editor font size"
+			label={messages.settings.appearance.editorFontSize}
 			value={appearanceSettings.editorFontSizePx}
 			options={fontSizeStepOptions}
 			valueLabel={formatFontSizeLabel(appearanceSettings.editorFontSizePx)}
@@ -132,7 +166,7 @@
 		/>
 
 		<label class="workduck-form-field" for="editor-font">
-			<span>Editor font</span>
+			<span>{messages.settings.appearance.editorFont}</span>
 			<select
 				id="editor-font"
 				class="workduck-select"
@@ -147,7 +181,7 @@
 
 		<StepRangeField
 			id="editor-tab-size"
-			label="Editor tab size"
+			label={messages.settings.appearance.editorTabSize}
 			value={appearanceSettings.editorTabSize}
 			options={editorTabSizeStepOptions}
 			valueLabel={formatTabSizeLabel(appearanceSettings.editorTabSize)}

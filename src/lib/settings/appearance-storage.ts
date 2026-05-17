@@ -7,6 +7,7 @@ import {
 	WORKDUCK_APPEARANCE_SETTINGS_STORAGE_KEY,
 	type AppearanceSettings
 } from './appearance-settings';
+import { getWorkduckLanguageOption } from '$lib/i18n/workduck-language';
 
 export const WORKDUCK_APPEARANCE_SETTINGS_CHANGED_EVENT = 'workduck:appearance-settings-changed';
 const WORKDUCK_APPEARANCE_SETTINGS_SCOPE_SELECTOR = '.workduck-window-frame';
@@ -34,6 +35,7 @@ export function applyAppearanceSettingsToBrowserDocument(settings: AppearanceSet
 	}
 
 	const cssVariables = createAppearanceSettingsCssVariables(settings);
+	document.documentElement.lang = getWorkduckLanguageOption(settings.languageId).htmlLang;
 	const targets = [
 		document.documentElement,
 		...document.querySelectorAll<HTMLElement>(WORKDUCK_APPEARANCE_SETTINGS_SCOPE_SELECTOR)

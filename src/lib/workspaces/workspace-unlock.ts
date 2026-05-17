@@ -38,7 +38,12 @@ interface WorkspaceUnlockAttemptRecord {
 	readonly lockedUntil: number | null;
 }
 
-const unlockedWorkspaceIds = new Set<string>();
+interface WorkspaceUnlockSession {
+	readonly password: string | null;
+	lastActiveAt: number;
+}
+
+const unlockedWorkspaceSessions = new Map<string, WorkspaceUnlockSession>();
 
 export function workspaceRequiresUnlock(workspace: WorkspaceRecord | null | undefined) {
 	return workspace?.lock !== null && workspace?.lock !== undefined;
@@ -49,17 +54,57 @@ export function isWorkspaceUnlocked(workspace: WorkspaceRecord | null | undefine
 		return true;
 	}
 
-	return workspace !== null && workspace !== undefined && unlockedWorkspaceIds.has(workspace.id);
+	return (
+		workspace !== null &&
+		workspace !== undefined &&
+		unlockedWorkspaceSessions.has(workspace.id)
+	);
 }
 
-export function markWorkspaceUnlocked(workspaceId: string) {
-	unlockedWorkspaceIds.add(workspaceId);
+export function markWorkspaceUnlocked(workspaceId: string, password: string | null = null) {
+	unlockedWorkspaceSessions.set(workspaceId, {
+		password,
+		lastActiveAt: Date.now()
+	});
 	dispatchWorkspaceUnlockChanged();
 }
 
 export function markWorkspaceLocked(workspaceId: string) {
-	unlockedWorkspaceIds.delete(workspaceId);
+	unlockedWorkspaceSessions.delete(workspaceId);
 	dispatchWorkspaceUnlockChanged();
+}
+
+export function readWorkspaceUnlockPasswordSession(workspaceId: string) {
+	return unlockedWorkspaceSessions.get(workspaceId)?.password ?? null;
+}
+
+export function touchWorkspaceUnlockSessions(nowMs = Date.now()) {
+	for (const session of unlockedWorkspaceSessions.values()) {
+		session.lastActiveAt = nowMs;
+	}
+}
+
+export function lockIdleWorkspaceSessions(idleTimeoutMs: number, nowMs = Date.now()) {
+	if (!Number.isFinite(idleTimeoutMs) || idleTimeoutMs <= 0) {
+		return [] as string[];
+	}
+
+	const lockedWorkspaceIds: string[] = [];
+
+	for (const [workspaceId, session] of unlockedWorkspaceSessions.entries()) {
+		if (nowMs - session.lastActiveAt < idleTimeoutMs) {
+			continue;
+		}
+
+		unlockedWorkspaceSessions.delete(workspaceId);
+		lockedWorkspaceIds.push(workspaceId);
+	}
+
+	if (lockedWorkspaceIds.length > 0) {
+		dispatchWorkspaceUnlockChanged();
+	}
+
+	return lockedWorkspaceIds;
 }
 
 export async function unlockWorkspace(
@@ -105,7 +150,7 @@ export async function unlockWorkspace(
 
 	if (verification.matched) {
 		clearWorkspaceUnlockAttempt(workspace.id);
-		markWorkspaceUnlocked(workspace.id);
+		markWorkspaceUnlocked(workspace.id, password);
 		return { ok: true };
 	}
 

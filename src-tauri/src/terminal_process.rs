@@ -1,0 +1,429 @@
+use std::{
+    collections::HashMap,
+    io::{Read, Write},
+    path::Path,
+    process::{Child, ChildStdin, Command, Stdio},
+    sync::{Arc, Mutex},
+    thread,
+};
+
+use tauri::State;
+
+use crate::terminal_catalog;
+
+const POWERSHELL_BOOTSTRAP_COMMAND: &str = "[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; if (Get-Variable -Name PSStyle -ErrorAction SilentlyContinue) { $PSStyle.OutputRendering = 'PlainText'; $PSStyle.FileInfo.Directory = ''; $PSStyle.FileInfo.SymbolicLink = ''; $PSStyle.FileInfo.Executable = '' }";
+
+#[derive(Default)]
+pub(crate) struct TerminalProcessState {
+    sessions: Mutex<HashMap<String, TerminalProcess>>,
+}
+
+struct TerminalProcess {
+    child: Child,
+    stdin: Arc<Mutex<ChildStdin>>,
+    output: Arc<Mutex<String>>,
+}
+
+#[derive(serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct StartTerminalSessionRequest {
+    session_id: String,
+    terminal_id: String,
+    workspace_path: String,
+}
+
+#[derive(serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct TerminalSessionInputRequest {
+    session_id: String,
+    input: String,
+}
+
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct TerminalSessionSnapshot {
+    ok: bool,
+    connected: bool,
+    output: String,
+}
+
+#[tauri::command]
+pub fn start_terminal_session(
+    state: State<'_, TerminalProcessState>,
+    request: StartTerminalSessionRequest,
+) -> Result<TerminalSessionSnapshot, String> {
+    let session_id = normalize_session_id(&request.session_id)?;
+    let terminal_id = normalize_terminal_id(&request.terminal_id)?;
+    let workspace_path = normalize_workspace_path(&request.workspace_path)?;
+    let terminal = terminal_catalog::find_available_terminal_entry(&terminal_id)
+        .ok_or_else(|| "terminal-unavailable".to_string())?;
+    let executable_path = terminal
+        .executable_path
+        .clone()
+        .ok_or_else(|| "terminal-unavailable".to_string())?;
+
+    let mut sessions = state
+        .sessions
+        .lock()
+        .map_err(|_| "terminal-state-unavailable".to_string())?;
+
+    if let Some(existing_session) = sessions.get_mut(&session_id) {
+        if is_child_running(&mut existing_session.child) {
+            return Ok(create_snapshot(true, existing_session));
+        }
+
+        sessions.remove(&session_id);
+    }
+
+    let mut command = Command::new(&executable_path);
+    command
+        .args(create_terminal_args(terminal.id))
+        .env("CLICOLOR", "0")
+        .env("NO_COLOR", "1")
+        .env("TERM", "dumb")
+        .current_dir(workspace_path)
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped());
+
+    let mut child = command
+        .spawn()
+        .map_err(|_| "terminal-start-failed".to_string())?;
+    let stdin = Arc::new(Mutex::new(
+        child
+            .stdin
+            .take()
+            .ok_or_else(|| "terminal-stdin-unavailable".to_string())?,
+    ));
+    let output = Arc::new(Mutex::new(String::new()));
+
+    if let Some(stdout) = child.stdout.take() {
+        spawn_output_reader(stdout, Arc::clone(&output));
+    }
+
+    if let Some(stderr) = child.stderr.take() {
+        spawn_output_reader(stderr, Arc::clone(&output));
+    }
+
+    let process = TerminalProcess {
+        child,
+        stdin,
+        output,
+    };
+    let snapshot = create_snapshot(true, &process);
+    sessions.insert(session_id, process);
+
+    Ok(snapshot)
+}
+
+#[tauri::command]
+pub fn read_terminal_session(
+    state: State<'_, TerminalProcessState>,
+    session_id: String,
+) -> Result<TerminalSessionSnapshot, String> {
+    let session_id = normalize_session_id(&session_id)?;
+    let mut sessions = state
+        .sessions
+        .lock()
+        .map_err(|_| "terminal-state-unavailable".to_string())?;
+    let Some(process) = sessions.get_mut(&session_id) else {
+        return Ok(TerminalSessionSnapshot {
+            ok: true,
+            connected: false,
+            output: String::new(),
+        });
+    };
+
+    let connected = is_child_running(&mut process.child);
+    let snapshot = create_snapshot(connected, process);
+
+    if !connected {
+        sessions.remove(&session_id);
+    }
+
+    Ok(snapshot)
+}
+
+#[tauri::command]
+pub fn write_terminal_session_input(
+    state: State<'_, TerminalProcessState>,
+    request: TerminalSessionInputRequest,
+) -> Result<TerminalSessionSnapshot, String> {
+    let session_id = normalize_session_id(&request.session_id)?;
+    let input = request.input.trim_end_matches(['\r', '\n']);
+
+    let mut sessions = state
+        .sessions
+        .lock()
+        .map_err(|_| "terminal-state-unavailable".to_string())?;
+    let process = sessions
+        .get_mut(&session_id)
+        .ok_or_else(|| "terminal-session-not-connected".to_string())?;
+
+    if !is_child_running(&mut process.child) {
+        sessions.remove(&session_id);
+        return Err("terminal-session-not-connected".to_string());
+    }
+
+    if is_clear_screen_command(input) {
+        clear_process_output(process)?;
+        return Ok(create_snapshot(true, process));
+    }
+
+    {
+        let mut stdin = process
+            .stdin
+            .lock()
+            .map_err(|_| "terminal-stdin-unavailable".to_string())?;
+        stdin
+            .write_all(input.as_bytes())
+            .and_then(|_| stdin.write_all(b"\n"))
+            .and_then(|_| stdin.flush())
+            .map_err(|_| "terminal-write-failed".to_string())?;
+    }
+
+    Ok(create_snapshot(true, process))
+}
+
+#[tauri::command]
+pub fn stop_terminal_session(
+    state: State<'_, TerminalProcessState>,
+    session_id: String,
+) -> Result<TerminalSessionSnapshot, String> {
+    let session_id = normalize_session_id(&session_id)?;
+    let mut sessions = state
+        .sessions
+        .lock()
+        .map_err(|_| "terminal-state-unavailable".to_string())?;
+
+    if let Some(mut process) = sessions.remove(&session_id) {
+        let _ = process.child.kill();
+        let _ = process.child.wait();
+
+        return Ok(create_snapshot(false, &process));
+    }
+
+    Ok(TerminalSessionSnapshot {
+        ok: true,
+        connected: false,
+        output: String::new(),
+    })
+}
+
+fn create_terminal_args(terminal_id: &str) -> Vec<&'static str> {
+    match terminal_id {
+        "powershell-core" | "windows-powershell" => vec![
+            "-NoLogo",
+            "-NoProfile",
+            "-NoExit",
+            "-Command",
+            POWERSHELL_BOOTSTRAP_COMMAND,
+        ],
+        "command-prompt" => vec!["/Q"],
+        _ => Vec::new(),
+    }
+}
+
+fn create_snapshot(connected: bool, process: &TerminalProcess) -> TerminalSessionSnapshot {
+    TerminalSessionSnapshot {
+        ok: true,
+        connected,
+        output: process
+            .output
+            .lock()
+            .map(|output| output.clone())
+            .unwrap_or_default(),
+    }
+}
+
+fn clear_process_output(process: &TerminalProcess) -> Result<(), String> {
+    let mut output = process
+        .output
+        .lock()
+        .map_err(|_| "terminal-output-unavailable".to_string())?;
+
+    output.clear();
+    Ok(())
+}
+
+fn is_clear_screen_command(input: &str) -> bool {
+    matches!(
+        input.trim().to_ascii_lowercase().as_str(),
+        "clear" | "clear-host" | "cls"
+    )
+}
+
+fn spawn_output_reader<R>(mut reader: R, output: Arc<Mutex<String>>)
+where
+    R: Read + Send + 'static,
+{
+    thread::spawn(move || {
+        let mut buffer = [0_u8; 4096];
+        let mut output_state = TerminalOutputState::default();
+
+        loop {
+            match reader.read(&mut buffer) {
+                Ok(0) => break,
+                Ok(length) => {
+                    push_terminal_output(&buffer[..length], &output, &mut output_state);
+                }
+                Err(_) => break,
+            }
+        }
+    });
+}
+
+#[derive(Default)]
+struct TerminalOutputState {
+    ansi_state: AnsiStripState,
+    utf8_pending: Vec<u8>,
+}
+
+#[derive(Clone, Copy)]
+enum AnsiStripState {
+    Ground,
+    Escape,
+    Csi,
+    Utf8CsiStart,
+    Osc,
+    OscEscape,
+}
+
+impl Default for AnsiStripState {
+    fn default() -> Self {
+        Self::Ground
+    }
+}
+
+fn push_terminal_output(
+    bytes: &[u8],
+    output: &Arc<Mutex<String>>,
+    state: &mut TerminalOutputState,
+) {
+    let cleaned = strip_ansi_sequences(bytes, &mut state.ansi_state);
+
+    if cleaned.is_empty() {
+        return;
+    }
+
+    state.utf8_pending.extend_from_slice(&cleaned);
+    let mut decoded = String::new();
+
+    loop {
+        match std::str::from_utf8(&state.utf8_pending) {
+            Ok(text) => {
+                decoded.push_str(text);
+                state.utf8_pending.clear();
+                break;
+            }
+            Err(error) => {
+                let valid_length = error.valid_up_to();
+
+                if valid_length > 0 {
+                    let valid_bytes = state.utf8_pending.drain(..valid_length).collect::<Vec<_>>();
+                    decoded.push_str(&String::from_utf8_lossy(&valid_bytes));
+                    continue;
+                }
+
+                if let Some(error_length) = error.error_len() {
+                    let invalid_bytes =
+                        state.utf8_pending.drain(..error_length).collect::<Vec<_>>();
+                    decoded.push_str(&String::from_utf8_lossy(&invalid_bytes));
+                    continue;
+                }
+
+                break;
+            }
+        }
+    }
+
+    if decoded.is_empty() {
+        return;
+    }
+
+    if let Ok(mut output) = output.lock() {
+        output.push_str(&decoded);
+    }
+}
+
+fn strip_ansi_sequences(bytes: &[u8], state: &mut AnsiStripState) -> Vec<u8> {
+    let mut cleaned = Vec::with_capacity(bytes.len());
+
+    for &byte in bytes {
+        match *state {
+            AnsiStripState::Ground => match byte {
+                0x1b => *state = AnsiStripState::Escape,
+                0x9b => *state = AnsiStripState::Csi,
+                0xc2 => *state = AnsiStripState::Utf8CsiStart,
+                _ => cleaned.push(byte),
+            },
+            AnsiStripState::Escape => match byte {
+                b'[' => *state = AnsiStripState::Csi,
+                b']' => *state = AnsiStripState::Osc,
+                _ => *state = AnsiStripState::Ground,
+            },
+            AnsiStripState::Csi => {
+                if (0x40..=0x7e).contains(&byte) {
+                    *state = AnsiStripState::Ground;
+                }
+            }
+            AnsiStripState::Utf8CsiStart => {
+                if byte == 0x9b {
+                    *state = AnsiStripState::Csi;
+                } else {
+                    cleaned.push(0xc2);
+                    cleaned.push(byte);
+                    *state = AnsiStripState::Ground;
+                }
+            }
+            AnsiStripState::Osc => match byte {
+                0x07 => *state = AnsiStripState::Ground,
+                0x1b => *state = AnsiStripState::OscEscape,
+                _ => {}
+            },
+            AnsiStripState::OscEscape => {
+                *state = if byte == b'\\' {
+                    AnsiStripState::Ground
+                } else {
+                    AnsiStripState::Osc
+                };
+            }
+        }
+    }
+
+    cleaned
+}
+
+fn is_child_running(child: &mut Child) -> bool {
+    matches!(child.try_wait(), Ok(None))
+}
+
+fn normalize_session_id(value: &str) -> Result<String, String> {
+    let session_id = value.trim();
+
+    if session_id.is_empty() {
+        return Err("terminal-session-id-required".to_string());
+    }
+
+    Ok(session_id.to_string())
+}
+
+fn normalize_terminal_id(value: &str) -> Result<String, String> {
+    let terminal_id = value.trim();
+
+    if terminal_id.is_empty() {
+        return Err("terminal-kind-required".to_string());
+    }
+
+    Ok(terminal_id.to_string())
+}
+
+fn normalize_workspace_path(value: &str) -> Result<String, String> {
+    let workspace_path = value.trim();
+
+    if workspace_path.is_empty() || !Path::new(workspace_path).is_dir() {
+        return Err("terminal-workspace-path-invalid".to_string());
+    }
+
+    Ok(workspace_path.to_string())
+}

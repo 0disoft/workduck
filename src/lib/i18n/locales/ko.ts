@@ -1,0 +1,632 @@
+import type { WorkduckMessages } from '../workduck-message-contract';
+
+export const koMessages = {
+	common: {
+		add: '추가',
+		save: '저장',
+		cancel: '취소',
+		edit: '수정',
+		remove: '삭제',
+		refresh: '새로 고침',
+		name: '이름',
+		none: '없음',
+		fetch: '가져오기',
+		pull: '내려받기',
+		push: '올리기',
+		export: '내보내기',
+		import: '가져오기',
+		load: '불러오기',
+		folder: '폴더',
+		file: '파일',
+		password: '암호',
+		repository: '저장소',
+		branch: '브랜치',
+		apiKey: 'API 키',
+		skills: '스킬',
+		output: '출력',
+		description: '설명',
+		instructions: '지시문',
+		agent: '에이전트',
+		persona: '페르소나',
+		skill: '스킬',
+		terminal: '터미널',
+		builtIn: '기본 제공',
+		noApiKey: 'API 키 없음',
+		linkedApiKey: '연결된 API 키',
+		missingApiKey: '찾을 수 없는 API 키',
+		noPersona: '페르소나 없음',
+		linkedPersona: '연결된 페르소나',
+		missingPersona: '찾을 수 없는 페르소나',
+		all: '전체',
+		read: '읽음',
+		unread: '안 읽음',
+		checking: '확인 중',
+		create: '만들기',
+		files: '파일',
+		checks: '검증',
+		risks: '위험',
+		comment: '의견',
+		source: '출처',
+		question: '질문',
+		summary: '요약',
+		recommended: '추천',
+		strengths: '강점',
+		recommendation: '추천안'
+	},
+	navigation: {
+		projects: '프로젝트',
+		queue: '작업 대기열',
+		artifacts: '산출물',
+		agents: '에이전트',
+		personas: '페르소나',
+		skills: '스킬',
+		terminals: '터미널',
+		processes: '프로세스',
+		environment: '환경변수',
+		settings: '설정',
+		noWorkspace: '워크스페이스 없음',
+		unlockActiveWorkspace: '현재 워크스페이스 잠금을 해제하세요.',
+		addWorkspaceFirst: '설정에서 워크스페이스를 먼저 추가하세요.',
+		waitForOperation: '현재 작업이 끝날 때까지 기다리세요.',
+		primary: '기본 메뉴',
+		settingsArea: '설정',
+		resizeSidebar: '사이드바 너비 조절'
+	},
+	workspace: {
+		addWorkspaceInSettings: '설정에서 워크스페이스를 추가하세요.',
+		locked: '워크스페이스 잠김',
+		folderUnavailable: '워크스페이스 폴더를 사용할 수 없음',
+		path: '경로',
+		reconnect: '다시 연결',
+		chooseFolder: '워크스페이스 폴더 선택',
+		unlock: {
+			submit: '잠금 해제',
+			tryAgainIn: '{seconds}초 뒤에 다시 시도하세요.',
+			passwordRequired: '암호를 입력하세요.',
+			passwordMismatch: '암호가 일치하지 않습니다.',
+			passwordMismatchWithAttempts:
+				'암호가 일치하지 않습니다. {attemptsRemaining}번 더 시도할 수 있습니다.',
+			unavailable: '잠금 해제는 데스크톱 앱에서 사용할 수 있습니다.',
+			invalidHash: '워크스페이스 잠금 정보를 읽지 못했습니다.'
+		},
+		pathErrors: {
+			pathRequired: '워크스페이스 경로를 입력하세요.',
+			pathNotAbsolute: '워크스페이스 경로는 절대 폴더 경로여야 합니다.',
+			pathNotFound: '워크스페이스 경로가 없습니다.',
+			pathNotDirectory: '워크스페이스 경로는 폴더여야 합니다.',
+			pathPermissionDenied: '워크스페이스 경로를 읽을 수 없습니다.',
+			pathUnreadable: '워크스페이스 경로를 확인하지 못했습니다.',
+			pathValidationUnavailable: '워크스페이스 경로 확인은 데스크톱 앱에서만 사용할 수 있습니다.',
+			pathSelectionUnavailable: '워크스페이스 폴더 선택기를 사용할 수 없습니다.',
+			pathSelectionFailed: '워크스페이스 폴더를 선택하지 못했습니다.',
+			pathDuplicate: '이미 등록된 워크스페이스 경로입니다.',
+			workspaceNotFound: '워크스페이스를 찾을 수 없습니다.',
+			registryReadFailed: '워크스페이스 설정을 불러오지 못했습니다.',
+			registryWriteFailed: '워크스페이스 설정을 저장하지 못했습니다.'
+		}
+	},
+	queue: {
+		list: '작업 대기열 파일',
+		detail: '작업 대기열 세부 정보',
+		filters: '작업 대기열 필터',
+		readFilters: '읽음 상태 필터',
+		unreadCountLabel: '읽지 않은 작업 대기열 항목 {count}개',
+		resultReportReview: '결과 보고서 검토',
+		workOrderView: '작업 지시서 보기',
+		proposalView: '제안서 보기',
+		empty: '보고서나 작업 지시서 파일을 추가하세요.',
+		noMatches: '조건에 맞는 작업 대기열 파일이 없습니다.',
+		addWork: '작업 추가',
+		newWork: '새 작업',
+		workTitle: '작업 제목',
+		workBody: '작업 내용',
+		createWorkOrder: '작업 지시서 만들기',
+		creating: '만드는 중',
+		noFollowUpSelected: '후속 작업이 선택되지 않았습니다.',
+		createdFile: '{relativePath} 파일을 만들었습니다.',
+		nextWorkOrders: '다음 작업 지시서',
+		fileKinds: {
+			resultReport: '결과 보고서 JSON',
+			workOrder: '작업 지시서',
+			proposal: '제안서',
+			unsupported: '지원하지 않음'
+		},
+		reviewDecisions: {
+			approved: '승인',
+			needsWork: '보완 필요',
+			rollback: '되돌리기'
+		},
+		errors: {
+			workspaceRequired: '워크스페이스 경로를 입력하세요.',
+			workspaceNotAbsolute: '워크스페이스 경로는 절대 경로여야 합니다.',
+			workspaceNotFound: '워크스페이스 경로를 찾을 수 없습니다.',
+			workspaceNotDirectory: '워크스페이스 경로는 폴더여야 합니다.',
+			workspacePermissionDenied: '워크스페이스 경로에 쓸 수 없습니다.',
+			workspaceUnreadable: '워크스페이스 경로를 확인하지 못했습니다.',
+			rootInvalid: '작업 대기열 폴더를 사용할 수 없습니다.',
+			createFailed: '작업 대기열 폴더를 만들지 못했습니다.',
+			openFailed: '작업 대기열 폴더를 열지 못했습니다.',
+			listFailed: '작업 대기열 파일 목록을 불러오지 못했습니다.',
+			fileInvalid: '작업 대기열 파일 경로가 허용되지 않습니다.',
+			fileNotFound: '작업 대기열 파일을 찾을 수 없습니다.',
+			fileReadFailed: '작업 대기열 파일을 읽지 못했습니다.',
+			fileWriteFailed: '작업 대기열 파일을 쓰지 못했습니다.',
+			fileAlreadyExists: '작업 대기열 파일이 이미 있습니다.',
+			unavailable: '작업 대기열 폴더 기능은 데스크톱 앱에서 사용할 수 있습니다.'
+		}
+	},
+	environment: {
+		ariaLabel: '환경변수',
+		vaultPassword: '보관함 암호',
+		createVault: '보관함 만들기',
+		unlockVault: '잠금 해제',
+		lockVault: '잠금',
+		kind: '종류',
+		tags: '태그',
+		value: '값',
+		select: '선택',
+		filters: '환경변수 필터',
+		kindFilter: '종류 필터',
+		tagFilter: '태그 필터',
+		allKinds: '모든 종류',
+		allTags: '모든 태그',
+		empty: '환경변수가 없습니다.',
+		noMatches: '조건에 맞는 환경변수가 없습니다.',
+		entries: '환경변수 항목',
+		copy: '복사',
+		show: '보기',
+		hide: '숨기기',
+		secretKinds: {
+			'api-key': 'API 키',
+			token: '토큰',
+			'ssh-key': 'SSH 키',
+			account: '계정',
+			password: '암호',
+			other: '기타'
+		},
+		secretTags: {
+			llm: 'LLM',
+			github: 'GitHub',
+			gitlab: 'GitLab',
+			openai: 'OpenAI',
+			anthropic: 'Anthropic',
+			openrouter: 'OpenRouter',
+			cloud: '클라우드',
+			database: '데이터베이스',
+			auth: '인증',
+			sync: '동기화',
+			deployment: '배포',
+			monitoring: '모니터링',
+			payment: '결제',
+			storage: '저장소'
+		},
+		statuses: {
+			created: '보관함을 만들었습니다.',
+			saved: '저장했습니다.',
+			removed: '삭제했습니다.',
+			copied: '복사했습니다.'
+		},
+		errors: {
+			vaultPasswordRequired: '보관함 암호를 입력하세요.',
+			vaultPasswordTryAgain: '{seconds}초 뒤에 다시 시도하세요.',
+			vaultPasswordMismatch: '보관함 암호가 일치하지 않습니다.',
+			vaultPasswordMismatchWithAttempts:
+				'보관함 암호가 일치하지 않습니다. {attemptsRemaining}번 더 시도할 수 있습니다.',
+			vaultUnavailable: '보관함은 데스크톱 앱에서 사용할 수 있습니다.',
+			vaultInvalid: '보관함 데이터를 읽지 못했습니다.',
+			vaultSaveFailed: '보관함을 저장하지 못했습니다.',
+			vaultOperationFailed: '보관함 작업이 실패했습니다.',
+			clipboardUnavailable: '클립보드를 사용할 수 없습니다.',
+			copyFailed: '복사하지 못했습니다.',
+			nameRequired: '이름을 입력하세요.',
+			kindRequired: '종류를 선택하세요.',
+			tagRequired: '태그를 선택하세요.',
+			nameDuplicate: '이미 있는 이름입니다.',
+			valueRequired: '값을 입력하세요.',
+			notFound: '항목을 찾을 수 없습니다.'
+		}
+	},
+	settings: {
+		title: '설정',
+		pageTitle: '설정 - Workduck',
+		sections: '설정 섹션',
+		tabs: {
+			appearance: '화면',
+			workspaces: '워크스페이스',
+			sync: '동기화',
+			system: '시스템'
+		},
+		appearance: {
+			section: '화면',
+			language: '언어',
+			interfaceFontSize: '인터페이스 글꼴 크기',
+			editorFontSize: '에디터 글꼴 크기',
+			editorFont: '에디터 글꼴',
+			editorTabSize: '에디터 탭 크기',
+			spaces: '칸',
+			loadError: '화면 설정을 불러오지 못했습니다.',
+			saveError: '화면 설정을 저장하지 못했습니다.'
+		},
+		workspaces: {
+			noWorkspaces: '워크스페이스가 없습니다.',
+			status: '워크스페이스 상태',
+			active: '활성',
+			locked: '잠김',
+			switch: '전환',
+			lock: '잠금',
+			reconnect: '다시 연결',
+			removeTitle: '워크스페이스 삭제',
+			removeDescription: '{name} 워크스페이스를 삭제할까요? 로컬 파일은 삭제하지 않습니다.',
+			errors: {
+				nameRequired: '워크스페이스 이름을 입력하세요.',
+				passwordRequired: '워크스페이스 암호를 입력하세요.',
+				passwordTooShort: '워크스페이스 암호는 최소 {minLength}자여야 합니다.',
+				passwordProtectFailed: '워크스페이스 암호를 보호하지 못했습니다.',
+				passwordInvalidHash: '워크스페이스 잠금 정보를 읽지 못했습니다.',
+				passwordUnavailable: '워크스페이스 암호 보호는 데스크톱 앱에서만 사용할 수 있습니다.',
+				passwordHashInvalid: '워크스페이스 잠금 정보를 저장하지 못했습니다.'
+			},
+			tooltips: {
+				unlock: '이 기기에서 사용할 수 있도록 워크스페이스 암호를 입력합니다.',
+				reconnect: '다른 기기에서 동기화한 워크스페이스라면 로컬 폴더를 다시 선택합니다.',
+				switch: '이 워크스페이스를 현재 작업 공간으로 전환합니다.',
+				lock: '암호를 다시 입력하기 전까지 이 워크스페이스를 잠급니다.',
+				remove: 'Workduck에서 이 워크스페이스를 삭제합니다. 로컬 파일은 삭제하지 않습니다.'
+			}
+		},
+		sync: {
+			section: '동기화',
+			encryptedData: '암호화된 데이터',
+			noFolder: '폴더 없음',
+			checking: '확인 중',
+			noRepository: '저장소 없음',
+			unavailable: '사용할 수 없음',
+			noBranch: '브랜치 없음',
+			tooltips: {
+				folder: '동기화 파일을 저장할 폴더를 선택합니다.',
+				fetch: '동기화 저장소의 원격 변경 사항을 확인합니다.',
+				pull: '원격 동기화 파일 변경 사항을 이 폴더로 내려받습니다.',
+				push: '동기화 파일을 커밋하고 원격 저장소에 올립니다.',
+				export: '암호화된 데이터를 직접 복사하기 전에 사용합니다.',
+				import: '다른 기기에서 복사한 암호화 데이터를 붙여넣은 뒤 사용합니다.',
+				save: '동기화 폴더를 올리기 전에 사용합니다.',
+				load: '동기화 폴더를 내려받은 뒤 적용할 때 사용합니다.'
+			},
+			statuses: {
+				exported: '내보냈습니다.',
+				imported: '가져왔습니다.',
+				saved: '{fileName} 파일을 저장했습니다.',
+				loaded: '{fileName} 파일을 불러왔습니다.',
+				fetched: '원격 변경 사항을 확인했습니다.',
+				pulled: '내려받았습니다. 적용하려면 불러오기를 사용하세요.',
+				pushed: '올렸습니다.',
+				committedAndPushed: '커밋하고 올렸습니다.'
+			},
+			operations: {
+				fetchLabel: '동기화 변경 확인 중',
+				pullLabel: '동기화 내려받는 중',
+				pushLabel: '동기화 올리는 중',
+				fetchDetail: '원격 변경 사항을 확인하고 있습니다.',
+				pullDetail: '동기화 폴더를 업데이트하고 있습니다.',
+				pushDetail: '동기화 파일을 올리고 있습니다.'
+			},
+			errors: {
+				gitActionInvalid: 'Git 작업이 올바르지 않습니다.',
+				passwordRequired: '암호를 입력하세요.',
+				folderRequired: '폴더를 선택하세요.',
+				folderNotAbsolute: '폴더 경로는 절대 경로여야 합니다.',
+				folderNotFound: '폴더를 찾을 수 없습니다.',
+				folderNotDirectory: '경로는 폴더여야 합니다.',
+				folderPermissionDenied: '폴더 접근이 거부되었습니다.',
+				fileNameRequired: '동기화 파일 이름을 입력하세요.',
+				fileNameInvalid: '동기화 파일 이름이 올바르지 않습니다.',
+				contentRequired: '암호화된 데이터를 입력하세요.',
+				fileNotFound: '동기화 파일을 찾을 수 없습니다.',
+				fileTooLarge: '동기화 파일이 너무 큽니다.',
+				fileTargetInvalid: '동기화 파일 경로를 사용할 수 없습니다.',
+				fileReadFailed: '동기화 파일을 읽지 못했습니다.',
+				fileWriteFailed: '동기화 파일을 저장하지 못했습니다.',
+				fileUnavailable: '동기화 파일 기능은 데스크톱 앱에서 사용할 수 있습니다.',
+				gitNotRepository: '폴더가 Git 저장소가 아닙니다.',
+				gitRemoteMissing: 'Git 원격 저장소가 설정되어 있지 않습니다.',
+				gitBranchMissing: 'Git 브랜치를 찾을 수 없습니다.',
+				gitUnavailable: 'Git을 사용할 수 없습니다.',
+				gitTimedOut: 'Git 명령 시간이 초과되었습니다.',
+				gitAuthRequired: 'Git 인증이 필요합니다.',
+				gitIdentityRequired: 'Git 사용자 이름이나 이메일이 설정되어 있지 않습니다.',
+				gitRemoteHasChanges: '원격 저장소에 변경 사항이 있습니다. 먼저 내려받으세요.',
+				gitFastForwardRequired: '수동 병합이 필요합니다.',
+				gitTrustRequired: 'Git 저장소 신뢰 설정이 필요합니다.',
+				gitCommandFailed: 'Git 명령이 실패했습니다.',
+				gitReadFailed: 'Git 저장소를 읽지 못했습니다.',
+				gitSyncUnavailable: 'Git 동기화는 데스크톱 앱에서 사용할 수 있습니다.',
+				envelopeInvalid: '암호화된 데이터가 올바르지 않습니다.',
+				encryptedDataDamaged: '암호화된 데이터가 손상되었습니다.',
+				exportFailed: '내보내기에 실패했습니다.',
+				passwordMismatch: '암호가 일치하지 않습니다.',
+				workspaceDataInvalid: '워크스페이스 데이터가 올바르지 않습니다.',
+				projectReadFailed: '프로젝트 메타정보를 불러오지 못했습니다.',
+				projectWriteFailed: '프로젝트 메타정보를 저장하지 못했습니다.',
+				encryptionUnavailable: '동기화 암호화는 데스크톱 앱에서 사용할 수 있습니다.',
+				settingsSaveFailed: '동기화 설정을 저장하지 못했습니다.'
+			}
+		},
+		system: {
+			section: '시스템',
+			startOnSignIn: 'Windows 로그인 시 시작',
+			showTrayIcon: '트레이 아이콘 표시',
+			minimizeToTray: '트레이로 최소화',
+			workspaceIdleLock: '조작 없을 때 잠금',
+			workspaceIdleLockNever: '잠그지 않음',
+			workspaceIdleLockMinutes: '{minutes}분',
+			loadError: '시스템 설정을 불러오지 못했습니다.',
+			saveError: '시스템 설정을 저장하지 못했습니다.',
+			autostartUnavailable: '자동 시작은 데스크톱 앱에서 사용할 수 있습니다.',
+			autostartReadFailed: '자동 시작 상태를 불러오지 못했습니다.',
+			autostartSaveFailed: '자동 시작 설정을 저장하지 못했습니다.'
+		}
+	},
+	agents: {
+		title: '에이전트',
+		list: '에이전트 목록',
+		details: '에이전트 세부 정보',
+		newAgent: '새 에이전트',
+		editAgent: '에이전트 수정',
+		saved: '저장했습니다.',
+		removed: '삭제했습니다.',
+		evaluation: {
+			title: '평가',
+			empty: '평가 없음',
+			noScore: '-',
+			count: '{count}건',
+			criteria: {
+				problemUnderstanding: {
+					label: '문제 이해력',
+					description: '사용자의 진짜 의도, 제약, 맥락을 파악했는지 봅니다.'
+				},
+				logicalValidity: {
+					label: '논리적 타당성',
+					description: '주장과 결론 사이에 논리 비약이 없는지 봅니다.'
+				},
+				practicalFeasibility: {
+					label: '현실성·실행 가능성',
+					description: '실제 시장, 조직, 기술 조건에서 가능한지 봅니다.'
+				},
+				creativeInsight: {
+					label: '창의성·통찰',
+					description: '뻔한 조합을 넘어 새로운 관점을 제시했는지 봅니다.'
+				},
+				riskDetection: {
+					label: '리스크 감지',
+					description: '실패 가능성, 숨은 비용, 부작용을 짚었는지 봅니다.'
+				}
+			}
+		},
+		errors: {
+			nameRequired: '이름을 입력하세요.',
+			authRequired: 'API 키를 선택하세요.',
+			nameDuplicate: '이미 있는 이름입니다.',
+			notFound: '에이전트를 찾을 수 없습니다.',
+			readFailed: '에이전트를 불러오지 못했습니다.',
+			saveFailed: '에이전트를 저장하지 못했습니다.'
+		}
+	},
+	personas: {
+		title: '페르소나',
+		list: '페르소나 목록',
+		details: '페르소나 세부 정보',
+		newPersona: '새 페르소나',
+		editPersona: '페르소나 수정',
+		randomSpectrums: '랜덤 특성',
+		styles: {
+			title: '응답 방식',
+			items: {
+				responseLength: {
+					label: '응답 길이',
+					options: {
+						short: '짧음',
+						standard: '표준',
+						detailed: '상세'
+					}
+				},
+				emotionalTone: {
+					label: '감정 톤',
+					options: {
+						calm: '차분',
+						neutral: '중립',
+						bright: '밝음'
+					}
+				},
+				judgmentAttitude: {
+					label: '판단 태도',
+					options: {
+						critical: '비판적',
+						balanced: '균형',
+						supportive: '지지적'
+					}
+				},
+				confidenceLevel: {
+					label: '확신 수준',
+					options: {
+						cautious: '신중',
+						realistic: '현실적',
+						decisive: '단정적'
+					}
+				},
+				socialDistance: {
+					label: '사회적 거리감',
+					options: {
+						formal: '공식적',
+						comfortable: '편안함',
+						friendly: '친근함'
+					}
+				}
+			}
+		},
+		spectrums: {
+			title: '특성',
+			items: {
+				developmentApproach: {
+					label: '개발 추진 방식',
+					levels: {
+						1: { name: '사전 설계형', description: '구현 전에 구조, 경계, 데이터 흐름을 먼저 고정합니다.' },
+						2: { name: '설계 중심형', description: '큰 방향과 규칙을 먼저 잡고 구현으로 들어갑니다.' },
+						3: { name: '균형 탐색형', description: '작은 프로토타입과 설계를 반복하며 조정합니다.' },
+						4: { name: '실험 주도형', description: '빠르게 만들어 보고 결과로 방향을 정합니다.' },
+						5: { name: '해커형', description: '동작 우선. 코드가 살아 움직이는 것을 가장 중요하게 봅니다.' }
+					}
+				},
+				qualityStandard: {
+					label: '안정성·품질 기준',
+					levels: {
+						1: { name: '연구실 수준', description: '검증, 타입, 테스트, 보안을 매우 엄격하게 봅니다.' },
+						2: { name: '운영 안정형', description: '실서비스 기준의 안정성을 유지하려 합니다.' },
+						3: { name: '현실 타협형', description: '위험과 속도를 상황에 따라 조절합니다.' },
+						4: { name: '출시 우선형', description: '문제는 운영 중 고치는 편을 선호합니다.' },
+						5: { name: '실험체형', description: '실패 비용보다 속도와 시도를 우선합니다.' }
+					}
+				},
+				structureBias: {
+					label: '구조화 성향',
+					levels: {
+						1: { name: '시스템 설계형', description: '경계, 계층, 모듈 관계를 매우 중요하게 봅니다.' },
+						2: { name: '모듈 선호형', description: '재사용성과 유지보수를 꾸준히 고려합니다.' },
+						3: { name: '실용 구조형', description: '필요한 만큼만 구조화합니다.' },
+						4: { name: '단순 구현형', description: '추상화보다 직접 구현을 선호합니다.' },
+						5: { name: '즉흥 조립형', description: '구조보다 빠른 연결과 결과를 우선합니다.' }
+					}
+				},
+				productivityStrategy: {
+					label: '생산성 전략',
+					levels: {
+						1: { name: '수공예 장인형', description: '의존성과 자동화를 최소화하고 직접 통제합니다.' },
+						2: { name: '절제 자동화형', description: '필요한 도구만 신중히 도입합니다.' },
+						3: { name: '실용 도구형', description: '생산성을 위해 적절히 자동화를 활용합니다.' },
+						4: { name: '자동화 중심형', description: '반복 작업은 가능한 모두 자동화하려 합니다.' },
+						5: { name: '오케스트레이터형', description: '여러 도구, 에이전트, 파이프라인을 조합해 운영합니다.' }
+					}
+				},
+				operationPhilosophy: {
+					label: '운영·배포 철학',
+					levels: {
+						1: { name: '변경 억제형', description: '장애 가능성이 있으면 배포를 미룹니다.' },
+						2: { name: '안정 배포형', description: '검증과 관측을 충분히 확보한 뒤 배포합니다.' },
+						3: { name: '점진 운영형', description: '작은 변경을 자주 배포하며 안정성을 봅니다.' },
+						4: { name: '빠른 대응형', description: '운영 중 수정과 긴급 수정을 적극 활용합니다.' },
+						5: { name: '실시간 진화형', description: '서비스는 계속 바뀌는 생물처럼 운영된다고 봅니다.' }
+					}
+				},
+				collaborationPhilosophy: {
+					label: '협업·컨텍스트 철학',
+					levels: {
+						1: { name: '문서 계약형', description: '문서, 규칙, 계약을 기준으로 협업합니다.' },
+						2: { name: '명시 협업형', description: '의도와 기준을 최대한 드러내려 합니다.' },
+						3: { name: '상황 공유형', description: '핵심 맥락만 공유하고 나머지는 자율에 맡깁니다.' },
+						4: { name: '암묵 협업형', description: '경험과 감각 기반의 빠른 협업을 선호합니다.' },
+						5: { name: '자율 에이전트형', description: '목표만 주고 사람과 AI가 스스로 판단하길 원합니다.' }
+					}
+				}
+			}
+		},
+		saved: '저장했습니다.',
+		removed: '삭제했습니다.',
+		errors: {
+			nameRequired: '이름을 입력하세요.',
+			nameDuplicate: '이미 있는 이름입니다.',
+			instructionsRequired: '지시문을 입력하세요.',
+			notFound: '페르소나를 찾을 수 없습니다.',
+			readFailed: '페르소나를 불러오지 못했습니다.',
+			saveFailed: '페르소나를 저장하지 못했습니다.'
+		}
+	},
+	skills: {
+		title: '스킬',
+		list: '스킬 목록',
+		details: '스킬 세부 정보',
+		newSkill: '새 스킬',
+		editSkill: '스킬 수정',
+		saved: '저장했습니다.',
+		removed: '삭제했습니다.',
+		outputTypes: {
+			'work-order': '작업 지시서',
+			proposal: '제안서',
+			'result-report': '결과 보고서'
+		},
+		builtIn: {
+			proposalWriter: {
+				name: '제안서 작성기',
+				description: '선택지를 비교하고 추천안과 후속 작업을 포함한 제안서를 만듭니다.',
+				instructions:
+					'workduck.queue-proposal/v1 산출물을 반환합니다. 가능한 선택지를 비교하고, 절충점을 밝히고, 하나의 추천안을 고른 뒤 필요한 경우에만 구체적인 후속 작업 지시서를 포함합니다.'
+			}
+		},
+		errors: {
+			nameRequired: '이름을 입력하세요.',
+			nameDuplicate: '이미 있는 이름입니다.',
+			outputTypeRequired: '출력 형식을 선택하세요.',
+			instructionsRequired: '지시문을 입력하세요.',
+			notFound: '스킬을 찾을 수 없습니다.',
+			builtInReadonly: '기본 제공 스킬은 변경할 수 없습니다.',
+			readFailed: '스킬을 불러오지 못했습니다.',
+			saveFailed: '스킬을 저장하지 못했습니다.'
+		}
+	},
+	terminals: {
+		title: '터미널',
+		list: '터미널 목록',
+		details: '터미널 세부 정보',
+		newTerminal: '새 터미널',
+		editTerminal: '터미널 수정',
+		defaultSessionName: '터미널',
+		kind: '종류',
+		command: '명령',
+		status: '상태',
+		screen: '터미널 화면',
+		connected: '연결됨',
+		notConnected: '연결되지 않음',
+		connect: '연결',
+		disconnect: '연결 끊기',
+		send: '전송',
+		inputPlaceholder: '명령 입력',
+		missingTerminal: '찾을 수 없는 터미널',
+		noAvailableTerminal: '사용 가능한 터미널 없음',
+		saved: '저장했습니다.',
+		removed: '삭제했습니다.',
+		errors: {
+			nameRequired: '이름을 입력하세요.',
+			nameDuplicate: '이미 있는 이름입니다.',
+			kindRequired: '터미널 종류를 선택하세요.',
+			notFound: '터미널을 찾을 수 없습니다.',
+			readFailed: '터미널을 불러오지 못했습니다.',
+			saveFailed: '터미널을 저장하지 못했습니다.',
+			catalogUnavailable: '터미널 감지는 데스크톱 앱에서 사용할 수 있습니다.',
+			catalogReadFailed: '터미널 종류를 확인하지 못했습니다.',
+			sessionUnavailable: '터미널 연결은 데스크톱 앱에서 사용할 수 있습니다.',
+			sessionStartFailed: '터미널을 시작하지 못했습니다.',
+			sessionReadFailed: '터미널 출력을 읽지 못했습니다.',
+			sessionWriteFailed: '터미널에 입력하지 못했습니다.',
+			sessionStopFailed: '터미널 연결을 끊지 못했습니다.'
+		}
+	},
+	processes: {
+		title: '프로세스',
+		list: '프로세스 목록',
+		details: '프로세스 세부 정보',
+		pid: 'PID',
+		kind: '종류',
+		command: '명령',
+		ports: '열린 포트',
+		memory: '메모리',
+		forceKill: '강제 종료',
+		forceKillConfirm: '{name} 프로세스를 강제로 종료할까요?',
+		empty: '실행 중인 개발 프로세스가 없습니다.',
+		refreshed: '새로 고침했습니다.',
+		killSucceeded: '프로세스를 종료했습니다.',
+		errors: {
+			unavailable: '프로세스 확인은 데스크톱 앱에서 사용할 수 있습니다.',
+			readFailed: '프로세스 목록을 불러오지 못했습니다.',
+			killDenied: '이 프로세스는 Workduck에서 종료할 수 없습니다.',
+			killFailed: '프로세스를 종료하지 못했습니다.'
+		}
+	}
+} as const satisfies WorkduckMessages;

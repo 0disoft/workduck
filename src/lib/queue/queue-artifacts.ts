@@ -20,6 +20,7 @@ export interface WorkduckQueueResultReport {
 	readonly ref: QueueEntityRef & { readonly kind: 'queue-result-report' };
 	readonly status: 'reserved' | 'active' | 'archived';
 	readonly createdAt: string;
+	readonly agentName?: string;
 	readonly tasks: readonly WorkduckQueueResultReportTask[];
 }
 
@@ -36,8 +37,35 @@ export interface WorkduckQueueWorkOrder {
 	readonly ref: QueueEntityRef & { readonly kind: 'queue-work-order' };
 	readonly status: 'reserved' | 'active' | 'archived';
 	readonly createdAt: string;
+	readonly agentName?: string;
 	readonly sourceReport?: QueueEntityRef & { readonly kind: 'queue-result-report' };
 	readonly tasks: readonly WorkduckQueueWorkOrderTask[];
+}
+
+export interface WorkduckQueueProposalOption {
+	readonly id: string;
+	readonly name: string;
+	readonly summary: string;
+	readonly strengths: readonly string[];
+	readonly risks: readonly string[];
+}
+
+export interface WorkduckQueueProposalRecommendation {
+	readonly optionId: string;
+	readonly reason: string;
+}
+
+export interface WorkduckQueueProposal {
+	readonly schemaVersion: 'workduck.queue-proposal/v1';
+	readonly ref: QueueEntityRef & { readonly kind: 'queue-proposal' };
+	readonly status: 'reserved' | 'active' | 'archived';
+	readonly createdAt: string;
+	readonly agentName?: string;
+	readonly question: string;
+	readonly summary: string;
+	readonly options: readonly WorkduckQueueProposalOption[];
+	readonly recommendation: WorkduckQueueProposalRecommendation | null;
+	readonly nextWorkOrders: readonly WorkduckQueueWorkOrderTask[];
 }
 
 export type QueueResultReportParseResult =
@@ -54,6 +82,16 @@ export type QueueWorkOrderParseResult =
 	| {
 			readonly ok: true;
 			readonly workOrder: WorkduckQueueWorkOrder;
+	  }
+	| {
+			readonly ok: false;
+			readonly message: string;
+	  };
+
+export type QueueProposalParseResult =
+	| {
+			readonly ok: true;
+			readonly proposal: WorkduckQueueProposal;
 	  }
 	| {
 			readonly ok: false;
@@ -96,6 +134,22 @@ export function parseQueueWorkOrder(content: string): QueueWorkOrderParseResult 
 	}
 
 	return { ok: true, workOrder: parsed };
+}
+
+export function parseQueueProposal(content: string): QueueProposalParseResult {
+	let parsed: unknown;
+
+	try {
+		parsed = JSON.parse(content);
+	} catch {
+		return { ok: false, message: 'Proposal JSON could not be parsed.' };
+	}
+
+	if (!isQueueProposal(parsed)) {
+		return { ok: false, message: 'Proposal JSON does not match workduck.queue-proposal/v1.' };
+	}
+
+	return { ok: true, proposal: parsed };
 }
 
 export function createDefaultReportReviews(
@@ -144,19 +198,84 @@ export function createQueueWorkOrderFromReportReview(
 	};
 }
 
+export function createManualQueueWorkOrder(title: string, body: string): WorkduckQueueWorkOrder {
+	const normalizedTitle = normalizeQueueText(title);
+	const normalizedBody = normalizeQueueText(body);
+
+	return {
+		schemaVersion: 'workduck.queue-work-order/v1',
+		ref: {
+			id: createQueueId('work-order'),
+			kind: 'queue-work-order',
+			label: normalizedTitle
+		},
+		status: 'active',
+		createdAt: new Date().toISOString(),
+		tasks: [
+			{
+				id: createQueueId('task'),
+				title: normalizedTitle,
+				body: normalizedBody
+			}
+		]
+	};
+}
+
 export function createQueueWorkOrderFileName(report: WorkduckQueueResultReport) {
+	return createQueueWorkOrderFileNameFromLabel(`${report.ref.label}-review`);
+}
+
+export function createQueueWorkOrderFileNameFromLabel(label: string) {
 	const timestamp = new Date().toISOString().replaceAll(/[:.]/g, '-');
-	const slug = report.ref.label
+	const slug = normalizeQueueText(label)
 		.toLowerCase()
-		.replaceAll(/[^a-z0-9]+/g, '-')
+		.replaceAll(/[^a-z0-9가-힣]+/g, '-')
 		.replaceAll(/^-|-$/g, '')
 		.slice(0, 48);
 
-	return `${timestamp}-${slug || 'report'}-review.workduck-work-order.json`;
+	return `${timestamp}-${slug || 'work-order'}.workduck-work-order.json`;
 }
 
 export function serializeQueueArtifact(artifact: unknown) {
 	return `${JSON.stringify(artifact, null, 2)}\n`;
+}
+
+export function readQueueArtifactAgentName(content: string) {
+	try {
+		const parsed: unknown = JSON.parse(content);
+
+		if (!isRecord(parsed)) {
+			return '';
+		}
+
+		const directAgentName = readOptionalText(parsed.agentName);
+
+		if (directAgentName.length > 0) {
+			return directAgentName;
+		}
+
+		if (isRecord(parsed.agent)) {
+			return readOptionalText(parsed.agent.name);
+		}
+
+		return '';
+	} catch {
+		return '';
+	}
+}
+
+export function readQueueArtifactTitle(content: string) {
+	try {
+		const parsed: unknown = JSON.parse(content);
+
+		if (!isRecord(parsed) || !isRecord(parsed.ref)) {
+			return '';
+		}
+
+		return readOptionalText(parsed.ref.label);
+	} catch {
+		return '';
+	}
 }
 
 function createQueueId(prefix: string) {
@@ -165,6 +284,10 @@ function createQueueId(prefix: string) {
 	}
 
 	return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+}
+
+function normalizeQueueText(value: string) {
+	return value.trim().replace(/\s+/g, ' ');
 }
 
 function isQueueResultReport(value: unknown): value is WorkduckQueueResultReport {
@@ -177,6 +300,7 @@ function isQueueResultReport(value: unknown): value is WorkduckQueueResultReport
 		isEntityRef(value.ref, 'queue-result-report') &&
 		(value.status === 'reserved' || value.status === 'active' || value.status === 'archived') &&
 		typeof value.createdAt === 'string' &&
+		isOptionalText(value.agentName) &&
 		Array.isArray(value.tasks) &&
 		value.tasks.every(isQueueResultReportTask)
 	);
@@ -192,9 +316,31 @@ function isQueueWorkOrder(value: unknown): value is WorkduckQueueWorkOrder {
 		isEntityRef(value.ref, 'queue-work-order') &&
 		(value.status === 'reserved' || value.status === 'active' || value.status === 'archived') &&
 		typeof value.createdAt === 'string' &&
+		isOptionalText(value.agentName) &&
 		(value.sourceReport === undefined || isEntityRef(value.sourceReport, 'queue-result-report')) &&
 		Array.isArray(value.tasks) &&
 		value.tasks.every(isQueueWorkOrderTask)
+	);
+}
+
+function isQueueProposal(value: unknown): value is WorkduckQueueProposal {
+	if (!isRecord(value)) {
+		return false;
+	}
+
+	return (
+		value.schemaVersion === 'workduck.queue-proposal/v1' &&
+		isEntityRef(value.ref, 'queue-proposal') &&
+		(value.status === 'reserved' || value.status === 'active' || value.status === 'archived') &&
+		typeof value.createdAt === 'string' &&
+		isOptionalText(value.agentName) &&
+		typeof value.question === 'string' &&
+		typeof value.summary === 'string' &&
+		Array.isArray(value.options) &&
+		value.options.every(isQueueProposalOption) &&
+		(value.recommendation === null || isQueueProposalRecommendation(value.recommendation)) &&
+		Array.isArray(value.nextWorkOrders) &&
+		value.nextWorkOrders.every(isQueueWorkOrderTask)
 	);
 }
 
@@ -211,6 +357,24 @@ function isQueueResultReportTask(value: unknown) {
 		isStringArray(value.verification) &&
 		isStringArray(value.risks)
 	);
+}
+
+function isQueueProposalOption(value: unknown) {
+	if (!isRecord(value)) {
+		return false;
+	}
+
+	return (
+		typeof value.id === 'string' &&
+		typeof value.name === 'string' &&
+		typeof value.summary === 'string' &&
+		isStringArray(value.strengths) &&
+		isStringArray(value.risks)
+	);
+}
+
+function isQueueProposalRecommendation(value: unknown) {
+	return isRecord(value) && typeof value.optionId === 'string' && typeof value.reason === 'string';
 }
 
 function isQueueWorkOrderTask(value: unknown) {
@@ -240,6 +404,14 @@ function isEntityRef(value: unknown, kind: string) {
 
 function isStringArray(value: unknown): value is string[] {
 	return Array.isArray(value) && value.every((item) => typeof item === 'string');
+}
+
+function isOptionalText(value: unknown) {
+	return value === undefined || typeof value === 'string';
+}
+
+function readOptionalText(value: unknown) {
+	return typeof value === 'string' ? value.trim() : '';
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

@@ -1,4 +1,16 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
+
+	import { getWorkduckMessages } from '$lib/i18n/workduck-language';
+	import {
+		createDefaultAppearanceSettings,
+		type AppearanceSettings
+	} from '$lib/settings/appearance-settings';
+	import {
+		readAppearanceSettingsFromBrowser,
+		subscribeAppearanceSettings
+	} from '$lib/settings/appearance-storage';
+
 	import {
 		updateWorkspacePath,
 		WORKSPACE_PATH_MAX_LENGTH,
@@ -11,7 +23,6 @@
 		type WorkspacePathError
 	} from './workspace-path';
 	import { formatWorkspacePathForDisplay } from './workspace-path-format';
-	import { getWorkspacePathErrorMessage } from './workspace-path-messages';
 	import {
 		readWorkspaceRegistryFromBrowser,
 		writeWorkspaceRegistryToBrowser,
@@ -32,11 +43,12 @@
 
 	let {
 		workspace,
-		submitLabel = 'Reconnect',
+		submitLabel,
 		onRepaired,
 		onCancel
 	}: Props = $props();
 
+	let appearanceSettings = $state<AppearanceSettings>(createDefaultAppearanceSettings());
 	let path = $state('');
 	let pathDisplay = $state('');
 	let error = $state<WorkspacePathRepairError | null>(null);
@@ -46,26 +58,60 @@
 
 	let canSelectPath = $derived(!isSelectingPath && !isSavingPath);
 	let canSavePath = $derived(path.trim().length > 0 && !isSelectingPath && !isSavingPath);
+	let messages = $derived(getWorkduckMessages(appearanceSettings.languageId));
+	let effectiveSubmitLabel = $derived(submitLabel ?? messages.workspace.reconnect);
+
+	onMount(() => {
+		appearanceSettings = readAppearanceSettingsFromBrowser().settings;
+		const unsubscribeAppearanceSettings = subscribeAppearanceSettings((nextSettings) => {
+			appearanceSettings = nextSettings;
+		});
+
+		return unsubscribeAppearanceSettings;
+	});
 
 	function getRepairErrorMessage(nextError: WorkspacePathRepairError) {
 		if (nextError === 'workspace-path-duplicate') {
-			return 'Workspace path is already registered.';
+			return messages.workspace.pathErrors.pathDuplicate;
 		}
 
 		if (isWorkspacePathError(nextError)) {
-			return getWorkspacePathErrorMessage(nextError as WorkspacePathError);
+			return getPathErrorMessage(nextError);
 		}
 
 		switch (nextError) {
 			case 'workspace-not-found':
-				return 'Workspace was not found.';
+				return messages.workspace.pathErrors.workspaceNotFound;
 			case 'workspace-registry-read-failed':
-				return 'Workspace settings could not be loaded.';
+				return messages.workspace.pathErrors.registryReadFailed;
 			case 'workspace-registry-write-failed':
-				return 'Workspace settings could not be saved.';
+				return messages.workspace.pathErrors.registryWriteFailed;
 			case 'workspace-name-required':
 			case 'workspace-password-hash-invalid':
-				return 'Workspace settings could not be saved.';
+				return messages.workspace.pathErrors.registryWriteFailed;
+		}
+	}
+
+	function getPathErrorMessage(nextError: WorkspacePathError) {
+		switch (nextError) {
+			case 'workspace-path-required':
+				return messages.workspace.pathErrors.pathRequired;
+			case 'workspace-path-not-absolute':
+				return messages.workspace.pathErrors.pathNotAbsolute;
+			case 'workspace-path-not-found':
+				return messages.workspace.pathErrors.pathNotFound;
+			case 'workspace-path-not-directory':
+				return messages.workspace.pathErrors.pathNotDirectory;
+			case 'workspace-path-permission-denied':
+				return messages.workspace.pathErrors.pathPermissionDenied;
+			case 'workspace-path-unreadable':
+				return messages.workspace.pathErrors.pathUnreadable;
+			case 'workspace-path-validation-unavailable':
+				return messages.workspace.pathErrors.pathValidationUnavailable;
+			case 'workspace-path-selection-unavailable':
+				return messages.workspace.pathErrors.pathSelectionUnavailable;
+			case 'workspace-path-selection-failed':
+				return messages.workspace.pathErrors.pathSelectionFailed;
 		}
 	}
 
@@ -187,7 +233,7 @@
 
 <form class="workduck-path-repair-form" onsubmit={handleSubmit}>
 	<label class="workduck-form-field" for={`workspace-path-repair-${workspace.id}`}>
-		<span>Path</span>
+		<span>{messages.workspace.path}</span>
 		<span class="workduck-path-control">
 			<input
 				id={`workspace-path-repair-${workspace.id}`}
@@ -204,7 +250,7 @@
 				class="workduck-icon-button"
 				type="button"
 				disabled={!canSelectPath}
-				aria-label="Choose workspace folder"
+				aria-label={messages.workspace.chooseFolder}
 				aria-busy={isSelectingPath}
 				onclick={handlePathSelect}
 			>
@@ -220,7 +266,7 @@
 			disabled={!canSavePath}
 			aria-busy={isSavingPath}
 		>
-			{isSavingPath ? 'Checking' : submitLabel}
+			{isSavingPath ? messages.common.checking : effectiveSubmitLabel}
 		</button>
 		{#if onCancel !== undefined}
 			<button
@@ -229,7 +275,7 @@
 				disabled={isSavingPath || isSelectingPath}
 				onclick={onCancel}
 			>
-				Cancel
+				{messages.common.cancel}
 			</button>
 		{/if}
 	</div>
