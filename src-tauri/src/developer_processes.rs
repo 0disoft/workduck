@@ -314,10 +314,7 @@ fn map_raw_process(
         kind: classify_process_kind(&searchable),
         command: sanitize_command_line(&command_line, &name),
         name,
-        ports: ports_by_pid
-            .get(&process.pid)
-            .cloned()
-            .unwrap_or_default(),
+        ports: ports_by_pid.get(&process.pid).cloned().unwrap_or_default(),
         memory_bytes: process.memory_bytes,
     })
 }

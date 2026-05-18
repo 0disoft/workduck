@@ -18,22 +18,30 @@
 		createQueueWorkOrderFileName,
 		createQueueWorkOrderFileNameFromLabel,
 		createQueueWorkOrderFromReportReview,
+		defaultQueueWorkPriority,
+		normalizeQueueWorkPriority,
 		parseQueueProposal,
 		parseQueueResultReport,
 		parseQueueWorkOrder,
 		readQueueArtifactAgentName,
 		readQueueArtifactTitle,
+		readQueueWorkPriorityLabel,
+		queueWorkPriorities,
 		serializeQueueArtifact,
 		type QueueReportTaskReview,
 		type WorkduckQueueProposal,
 		type WorkduckQueueResultReport,
+		type WorkduckQueueWorkPriority,
 		type WorkduckQueueWorkOrder,
+		type WorkduckQueueWorkOrderTask,
+		updateQueueWorkOrderTask,
 		type WorkduckQueueReviewDecision
 	} from './queue-artifacts';
 	import {
 		ensureQueueFolder,
 		listQueueFiles,
 		readQueueFile,
+		updateQueueWorkOrderFile,
 		writeQueueWorkOrderFile,
 		type QueueFileEntry,
 		type QueueFolderError
@@ -70,7 +78,9 @@
 		readonly isRead: boolean;
 		readonly agentName: string;
 		readonly title: string;
+		readonly priority: WorkduckQueueWorkPriority | null;
 	};
+	type WorkOrderDialogMode = 'create' | 'edit';
 
 	let { workspace, title, refreshSignal = 0 }: Props = $props();
 
@@ -89,13 +99,17 @@
 	let selectedProposalPath = $state<string | null>(null);
 	let reviews = $state<readonly QueueReportTaskReview[]>([]);
 	let isNewWorkOrderDialogOpen = $state(false);
+	let workOrderDialogMode = $state<WorkOrderDialogMode>('create');
+	let editingWorkOrderTaskId = $state<string | null>(null);
 	let manualWorkOrderTitle = $state('');
 	let manualWorkOrderBody = $state('');
+	let manualWorkOrderPriority = $state<WorkduckQueueWorkPriority>(defaultQueueWorkPriority);
 	let isRefreshing = $state(false);
 	let isReading = $state(false);
 	let isWriting = $state(false);
 	let ensureSignature = $state('');
 	let refreshSignature = $state(0);
+	let messages = $derived(getWorkduckMessages(appearanceSettings.languageId));
 	let followUpTaskCount = $derived(
 		reviews.filter((review) => review.decision === 'needs-work' || review.decision === 'rollback')
 			.length
@@ -119,7 +133,12 @@
 	let canCreateManualWorkOrder = $derived(
 		manualWorkOrderTitle.trim().length > 0 && manualWorkOrderBody.trim().length > 0 && !isWriting
 	);
-	let messages = $derived(getWorkduckMessages(appearanceSettings.languageId));
+	let workOrderDialogTitle = $derived(
+		workOrderDialogMode === 'create' ? messages.queue.newWork : messages.queue.editWork
+	);
+	let workOrderDialogSubmitLabel = $derived(
+		workOrderDialogMode === 'create' ? messages.common.add : messages.common.save
+	);
 
 	onMount(() => {
 		appearanceSettings = readAppearanceSettingsFromBrowser().settings;
@@ -360,8 +379,27 @@
 
 	function openNewWorkOrderDialog() {
 		isNewWorkOrderDialogOpen = true;
+		workOrderDialogMode = 'create';
+		editingWorkOrderTaskId = null;
 		manualWorkOrderTitle = '';
 		manualWorkOrderBody = '';
+		manualWorkOrderPriority = defaultQueueWorkPriority;
+		error = null;
+		parseError = null;
+		status = null;
+	}
+
+	function openEditWorkOrderTaskDialog(task: WorkduckQueueWorkOrderTask) {
+		if (selectedWorkOrder === null || selectedWorkOrderPath === null) {
+			return;
+		}
+
+		isNewWorkOrderDialogOpen = true;
+		workOrderDialogMode = 'edit';
+		editingWorkOrderTaskId = task.id;
+		manualWorkOrderTitle = task.title;
+		manualWorkOrderBody = task.body;
+		manualWorkOrderPriority = normalizeQueueWorkPriority(task.priority);
 		error = null;
 		parseError = null;
 		status = null;
@@ -373,8 +411,11 @@
 		}
 
 		isNewWorkOrderDialogOpen = false;
+		workOrderDialogMode = 'create';
+		editingWorkOrderTaskId = null;
 		manualWorkOrderTitle = '';
 		manualWorkOrderBody = '';
+		manualWorkOrderPriority = defaultQueueWorkPriority;
 	}
 
 	function handleQueueCardClick(file: QueueCardEntry) {
@@ -408,7 +449,8 @@
 						...file,
 						isRead: readFilePaths.includes(file.relativePath),
 						agentName: '',
-						title: file.fileName
+						title: file.fileName,
+						priority: null
 					};
 				}
 
@@ -419,7 +461,11 @@
 					...file,
 					isRead: readFilePaths.includes(file.relativePath),
 					agentName: readResult.ok ? readQueueArtifactAgentName(readResult.content) : '',
-					title: artifactTitle.length > 0 ? artifactTitle : file.fileName
+					title: artifactTitle.length > 0 ? artifactTitle : file.fileName,
+					priority:
+						readResult.ok && file.kind === 'work-order'
+							? readQueueWorkPriorityLabel(readResult.content)
+							: null
 				};
 			})
 		);
@@ -532,13 +578,21 @@
 			return;
 		}
 
-		const workOrder = createManualQueueWorkOrder(manualWorkOrderTitle, manualWorkOrderBody);
-
 		isWriting = true;
 		error = null;
 		status = null;
 
 		try {
+			if (workOrderDialogMode === 'edit') {
+				await handleUpdateManualWorkOrder();
+				return;
+			}
+
+			const workOrder = createManualQueueWorkOrder(
+				manualWorkOrderTitle,
+				manualWorkOrderBody,
+				manualWorkOrderPriority
+			);
 			const result = await writeQueueWorkOrderFile(
 				workspace.path,
 				createQueueWorkOrderFileNameFromLabel(workOrder.ref.label),
@@ -550,6 +604,7 @@
 				isNewWorkOrderDialogOpen = false;
 				manualWorkOrderTitle = '';
 				manualWorkOrderBody = '';
+				manualWorkOrderPriority = defaultQueueWorkPriority;
 				await refreshQueueFiles({ silent: true });
 				return;
 			}
@@ -558,6 +613,43 @@
 		} finally {
 			isWriting = false;
 		}
+	}
+
+	async function handleUpdateManualWorkOrder() {
+		if (
+			selectedWorkOrder === null ||
+			selectedWorkOrderPath === null ||
+			editingWorkOrderTaskId === null
+		) {
+			return;
+		}
+
+		const nextWorkOrder = updateQueueWorkOrderTask(selectedWorkOrder, editingWorkOrderTaskId, {
+			title: manualWorkOrderTitle,
+			body: manualWorkOrderBody,
+			priority: manualWorkOrderPriority
+		});
+		const result = await updateQueueWorkOrderFile(
+			workspace.path,
+			selectedWorkOrderPath,
+			serializeQueueArtifact(nextWorkOrder)
+		);
+
+		if (result.ok) {
+			selectedWorkOrder = nextWorkOrder;
+			selectedWorkOrderPath = result.relativePath;
+			status = messages.queue.updatedFile.replace('{relativePath}', result.relativePath);
+			isNewWorkOrderDialogOpen = false;
+			manualWorkOrderTitle = '';
+			manualWorkOrderBody = '';
+			manualWorkOrderPriority = defaultQueueWorkPriority;
+			editingWorkOrderTaskId = null;
+			workOrderDialogMode = 'create';
+			await refreshQueueFiles({ silent: true });
+			return;
+		}
+
+		error = result.error;
 	}
 
 	function getFileKindLabel(kind: QueueFileEntry['kind']) {
@@ -586,6 +678,10 @@
 
 	function getQueueReadStateLabel(isRead: boolean) {
 		return isRead ? messages.common.read : messages.common.unread;
+	}
+
+	function getQueuePriorityLabel(priority: WorkduckQueueWorkPriority) {
+		return messages.queue.priorities[priority];
 	}
 
 	function getReviewDecisionLabel(decision: Exclude<WorkduckQueueReviewDecision, 'pending'>) {
@@ -676,15 +772,21 @@
 
 	<div class="workduck-queue-layout">
 		<section class="workduck-queue-list" aria-label={messages.queue.list}>
-			<button class="workduck-list-add-card" type="button" onclick={openNewWorkOrderDialog}>
+			<button
+				class="workduck-list-add-card"
+				type="button"
+				aria-haspopup="dialog"
+				onclick={(event) => {
+					event.stopPropagation();
+					openNewWorkOrderDialog();
+				}}
+			>
 				{messages.queue.addWork}
 			</button>
 
-			{#if files.length === 0}
-				<p class="workduck-empty-state">{messages.queue.empty}</p>
-			{:else if filteredFiles.length === 0}
+			{#if files.length > 0 && filteredFiles.length === 0}
 				<p class="workduck-empty-state">{messages.queue.noMatches}</p>
-			{:else}
+			{:else if files.length > 0}
 				{#each filteredFiles as file (file.relativePath)}
 					<button
 						class={getQueueCardClass(file)}
@@ -698,6 +800,9 @@
 							<span>{getFileKindLabel(file.kind)}</span>
 							{#if file.agentName.length > 0}
 								<span>{file.agentName}</span>
+							{/if}
+							{#if file.priority !== null}
+								<span>{getQueuePriorityLabel(file.priority)}</span>
 							{/if}
 						</div>
 						<span class="workduck-queue-read-state">{getQueueReadStateLabel(file.isRead)}</span>
@@ -817,9 +922,23 @@
 						<article class="workduck-queue-review-task">
 							<header class="workduck-queue-review-task-header">
 								<strong>{task.title}</strong>
+								<span
+									class="workduck-queue-task-pill workduck-queue-priority-pill"
+									data-priority={normalizeQueueWorkPriority(task.priority)}
+								>
+									{getQueuePriorityLabel(normalizeQueueWorkPriority(task.priority))}
+								</span>
 								{#if task.decision !== undefined}
 									<span class="workduck-queue-task-pill">{task.decision}</span>
 								{/if}
+								<button
+									class="workduck-button workduck-button-secondary workduck-queue-task-edit-button"
+									type="button"
+									disabled={isWriting}
+									onclick={() => openEditWorkOrderTaskDialog(task)}
+								>
+									{messages.common.edit}
+								</button>
 							</header>
 							<p>{task.body}</p>
 
@@ -938,7 +1057,7 @@
 		>
 			<form class="workduck-project-dialog-form" onsubmit={handleCreateManualWorkOrder}>
 				<h2 id="new-work-order-dialog-title" class="workduck-dialog-title">
-					{messages.queue.newWork}
+					{workOrderDialogTitle}
 				</h2>
 
 				<label class="workduck-form-field" for="new-work-order-title">
@@ -951,6 +1070,20 @@
 						autocomplete="off"
 						disabled={isWriting}
 					/>
+				</label>
+
+				<label class="workduck-form-field" for="new-work-order-priority">
+					<span>{messages.queue.workPriority}</span>
+					<select
+						id="new-work-order-priority"
+						class="workduck-select"
+						bind:value={manualWorkOrderPriority}
+						disabled={isWriting}
+					>
+						{#each queueWorkPriorities as priority}
+							<option value={priority}>{getQueuePriorityLabel(priority)}</option>
+						{/each}
+					</select>
 				</label>
 
 				<label class="workduck-form-field" for="new-work-order-body">
@@ -968,7 +1101,7 @@
 						{messages.common.cancel}
 					</button>
 					<button class="workduck-button workduck-button-primary" type="submit" disabled={!canCreateManualWorkOrder}>
-						{isWriting ? messages.queue.creating : messages.common.add}
+						{isWriting ? messages.queue.creating : workOrderDialogSubmitLabel}
 					</button>
 				</div>
 			</form>

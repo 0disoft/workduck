@@ -12,11 +12,24 @@
 	} from '$lib/settings/appearance-storage';
 	import { DetailCard, EntityCard, EntityWorkbench } from '$lib/ui';
 	import type { WorkspaceRecord } from '$lib/workspaces/workspace-registry';
+	import {
+		assignPersonaToAgents,
+		createEmptyAgentRegistry,
+		type AgentRecord,
+		type AgentRegistry
+	} from '$lib/agents/agent-registry';
+	import {
+		readAgentRegistry,
+		subscribeAgentRegistry,
+		writeAgentRegistry,
+		type AgentRegistryStorageError
+	} from '$lib/agents/agent-registry-storage';
 
 	import {
 		createDefaultPersonaStyleValues,
 		createDefaultPersonaSpectrumValues,
 		createEmptyPersonaRegistry,
+		createRandomPersonaStyleValues,
 		createRandomPersonaSpectrumValues,
 		personaStyleDefinitions,
 		personaSpectrumDefinitions,
@@ -47,16 +60,20 @@
 
 	let appearanceSettings = $state<AppearanceSettings>(createDefaultAppearanceSettings());
 	let registry = $state<PersonaRegistry>(createEmptyPersonaRegistry(''));
+	let agentRegistry = $state<AgentRegistry>(createEmptyAgentRegistry(''));
 	let selectedPersonaId = $state<string | null>(null);
 	let editingPersonaId = $state<string | null>(null);
 	let personaName = $state('');
 	let personaDescription = $state('');
 	let personaStyles = $state<PersonaStyleValues>(createDefaultPersonaStyleValues());
 	let personaSpectrums = $state<PersonaSpectrumValues>(createDefaultPersonaSpectrumValues());
+	let selectedUnassignedAgentIds = $state<string[]>([]);
 	let isPersonaFormOpen = $state(false);
 	let isSavingPersona = $state(false);
 	let isRemovingPersona = $state(false);
-	let personaError = $state<PersonaRegistryError | PersonaRegistryStorageError | null>(null);
+	let personaError = $state<
+		PersonaRegistryError | PersonaRegistryStorageError | AgentRegistryStorageError | null
+	>(null);
 	let status = $state<string | null>(null);
 	let messages = $derived(getWorkduckMessages(appearanceSettings.languageId));
 
@@ -68,6 +85,10 @@
 	let personaFormLabel = $derived(
 		editingPersonaId === null ? messages.common.add : messages.common.save
 	);
+	let unassignedAgents = $derived(
+		agentRegistry.agents.filter((agent) => agent.personaId === null)
+	);
+	let agentAssignmentSummary = $derived(createAgentAssignmentSummary());
 	let canSavePersona = $derived(personaName.trim().length > 0 && !isSavingPersona);
 
 	onMount(() => {
@@ -84,26 +105,45 @@
 
 		return untrack(() => {
 			registry = createEmptyPersonaRegistry(workspaceId);
+			agentRegistry = createEmptyAgentRegistry(workspaceId);
 			selectedPersonaId = null;
 			editingPersonaId = null;
 			clearPersonaForm();
-			readRegistryFromStorage(workspaceId);
+			void readRegistryFromStorage(workspaceId, workspace.path);
+			void readAgentRegistryFromStorage(workspaceId, workspace.path);
 
 			const unsubscribeRegistry = subscribePersonaRegistry(workspaceId, (nextRegistry) => {
 				registry = nextRegistry;
 				selectedPersonaId = resolveSelectedPersonaId(selectedPersonaId, nextRegistry.personas);
 			});
+			const unsubscribeAgents = subscribeAgentRegistry(workspaceId, (nextRegistry) => {
+				agentRegistry = nextRegistry;
+				reconcileSelectedUnassignedAgentIds(nextRegistry.agents);
+			});
 
-			return unsubscribeRegistry;
+			return () => {
+				unsubscribeRegistry();
+				unsubscribeAgents();
+			};
 		});
 	});
 
-	function readRegistryFromStorage(workspaceId: string) {
-		const result = readPersonaRegistry(workspaceId);
+	async function readRegistryFromStorage(workspaceId: string, workspacePath: string) {
+		const result = await readPersonaRegistry(workspaceId, workspacePath);
 
 		registry = result.registry;
 		personaError = result.ok ? null : result.error;
 		selectedPersonaId = resolveSelectedPersonaId(selectedPersonaId, result.registry.personas);
+	}
+
+	async function readAgentRegistryFromStorage(workspaceId: string, workspacePath: string) {
+		const result = await readAgentRegistry(workspaceId, workspacePath);
+
+		agentRegistry = result.registry;
+		if (!result.ok) {
+			personaError = result.error;
+		}
+		reconcileSelectedUnassignedAgentIds(result.registry.agents);
 	}
 
 	function selectPersona(persona: PersonaRecord) {
@@ -123,6 +163,7 @@
 		personaDescription = selectedPersona.description;
 		personaStyles = selectedPersona.styles;
 		personaSpectrums = selectedPersona.spectrums;
+		selectedUnassignedAgentIds = [];
 		status = null;
 		personaError = null;
 	}
@@ -134,11 +175,13 @@
 		personaDescription = '';
 		personaStyles = createDefaultPersonaStyleValues();
 		personaSpectrums = createDefaultPersonaSpectrumValues();
+		selectedUnassignedAgentIds = [];
 		personaError = null;
 	}
 
 	function openNewPersonaForm() {
 		clearPersonaForm();
+		personaStyles = createRandomPersonaStyleValues();
 		personaSpectrums = createRandomPersonaSpectrumValues();
 		isPersonaFormOpen = true;
 	}
@@ -168,7 +211,12 @@
 				return;
 			}
 
-			const writeResult = writePersonaRegistry(mutation.registry);
+			const savedPersonaId =
+				mutation.registry.personas.find((persona) => persona.id === editingPersonaId)?.id ??
+				mutation.registry.personas.find((persona) => persona.name === personaName.trim())?.id ??
+				null;
+
+			const writeResult = await writePersonaRegistry(mutation.registry, workspace.path);
 
 			registry = writeResult.registry;
 			personaError = writeResult.ok ? null : writeResult.error;
@@ -177,9 +225,23 @@
 				return;
 			}
 
-			selectedPersonaId = mutation.registry.personas.find(
-				(persona) => persona.name === personaName.trim()
-			)?.id ?? null;
+			if (savedPersonaId !== null && selectedUnassignedAgentIds.length > 0) {
+				const nextAgentRegistry = assignPersonaToAgents(
+					agentRegistry,
+					selectedUnassignedAgentIds,
+					savedPersonaId
+				);
+				const agentWriteResult = await writeAgentRegistry(nextAgentRegistry, workspace.path);
+
+				agentRegistry = agentWriteResult.registry;
+				personaError = agentWriteResult.ok ? null : agentWriteResult.error;
+
+				if (!agentWriteResult.ok) {
+					return;
+				}
+			}
+
+			selectedPersonaId = savedPersonaId;
 			clearPersonaForm();
 			status = messages.personas.saved;
 		} finally {
@@ -204,7 +266,7 @@
 				return;
 			}
 
-			const writeResult = writePersonaRegistry(mutation.registry);
+			const writeResult = await writePersonaRegistry(mutation.registry, workspace.path);
 
 			registry = writeResult.registry;
 			personaError = writeResult.ok ? null : writeResult.error;
@@ -247,7 +309,44 @@
 	}
 
 	function randomizePersonaSpectrums() {
+		personaStyles = createRandomPersonaStyleValues();
 		personaSpectrums = createRandomPersonaSpectrumValues();
+	}
+
+	function toggleUnassignedAgentSelection(agentId: string, checked: boolean) {
+		if (checked) {
+			selectedUnassignedAgentIds = selectedUnassignedAgentIds.includes(agentId)
+				? selectedUnassignedAgentIds
+				: [...selectedUnassignedAgentIds, agentId];
+			return;
+		}
+
+		selectedUnassignedAgentIds = selectedUnassignedAgentIds.filter((id) => id !== agentId);
+	}
+
+	function reconcileSelectedUnassignedAgentIds(agents: readonly AgentRecord[]) {
+		const unassignedAgentIds = new Set(
+			agents.filter((agent) => agent.personaId === null).map((agent) => agent.id)
+		);
+
+		selectedUnassignedAgentIds = selectedUnassignedAgentIds.filter((id) =>
+			unassignedAgentIds.has(id)
+		);
+	}
+
+	function createAgentAssignmentSummary() {
+		if (unassignedAgents.length === 0) {
+			return messages.personas.agentAssignment.none;
+		}
+
+		if (selectedUnassignedAgentIds.length === 0) {
+			return messages.personas.agentAssignment.placeholder;
+		}
+
+		return messages.personas.agentAssignment.selectedCount.replace(
+			'{count}',
+			selectedUnassignedAgentIds.length.toString()
+		);
 	}
 
 	function getSpectrumMessages(spectrumId: PersonaSpectrumId) {
@@ -268,7 +367,9 @@
 		return options[option] ?? option;
 	}
 
-	function createPersonaErrorMessage(nextError: PersonaRegistryError | PersonaRegistryStorageError) {
+	function createPersonaErrorMessage(
+		nextError: PersonaRegistryError | PersonaRegistryStorageError | AgentRegistryStorageError
+	) {
 		switch (nextError) {
 			case 'persona-name-required':
 				return messages.personas.errors.nameRequired;
@@ -281,6 +382,20 @@
 				return messages.personas.errors.readFailed;
 			case 'persona-registry-storage-write-failed':
 				return messages.personas.errors.saveFailed;
+			case 'agent-registry-storage-read-failed':
+				return messages.agents.errors.readFailed;
+			case 'agent-registry-storage-write-failed':
+				return messages.agents.errors.saveFailed;
+			default:
+				if (nextError.startsWith('agent-')) {
+					return nextError.includes('write') || nextError.includes('too-large')
+						? messages.agents.errors.saveFailed
+						: messages.agents.errors.readFailed;
+				}
+
+				return nextError.includes('write') || nextError.includes('too-large')
+					? messages.personas.errors.saveFailed
+					: messages.personas.errors.readFailed;
 		}
 	}
 </script>
@@ -506,6 +621,42 @@
 								</span>
 							</div>
 						{/each}
+
+						<div class="workduck-persona-agent-assignment">
+							<span class="workduck-persona-agent-assignment-label">
+								{messages.personas.agentAssignment.label}
+							</span>
+							{#if unassignedAgents.length > 0}
+								<details class="workduck-persona-agent-select">
+									<summary class="workduck-persona-agent-select-summary">
+										<span>{agentAssignmentSummary}</span>
+									</summary>
+									<div class="workduck-persona-agent-select-options">
+										{#each unassignedAgents as agent (agent.id)}
+											<label class="workduck-persona-agent-option">
+												<input
+													type="checkbox"
+													checked={selectedUnassignedAgentIds.includes(agent.id)}
+													disabled={isSavingPersona}
+													onchange={(event) => {
+														const input = event.currentTarget;
+
+														if (input instanceof HTMLInputElement) {
+															toggleUnassignedAgentSelection(agent.id, input.checked);
+														}
+													}}
+												/>
+												<span>{agent.name}</span>
+											</label>
+										{/each}
+									</div>
+								</details>
+							{:else}
+								<div class="workduck-persona-agent-select-summary workduck-persona-agent-select-summary-disabled">
+									<span>{messages.personas.agentAssignment.none}</span>
+								</div>
+							{/if}
+						</div>
 					</section>
 				</div>
 

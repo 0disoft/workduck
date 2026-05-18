@@ -24,6 +24,10 @@
 	} from '$lib/workspaces/workspace-path';
 	import { formatWorkspacePathForDisplay } from '$lib/workspaces/workspace-path-format';
 	import {
+		setupWorkspaceRepository,
+		type WorkspaceRepositorySetupError
+	} from '$lib/workspaces/workspace-repository-setup';
+	import {
 		readWorkspaceRegistryFromBrowser,
 		subscribeWorkspaceRegistry,
 		writeWorkspaceRegistryToBrowser
@@ -55,21 +59,35 @@
 	let workspacePath = $state('');
 	let workspacePathDisplay = $state('');
 	let workspacePassword = $state('');
+	let useWorkspaceAsRepository = $state(false);
+	let initializeWorkspaceGit = $state(true);
+	let installWorkspaceMustflow = $state(true);
+	let installWorkspaceGitignore = $state(true);
 	let workspaceUnlockId = $state<string | null>(null);
 	let workspaceUnlockIntent = $state<WorkspaceUnlockIntent | null>(null);
 	let workspaceRemoveConfirmationId = $state<string | null>(null);
+	let workspaceRepositorySetupId = $state<string | null>(null);
 	let workspacePathRepairId = $state<string | null>(null);
 	let workspaceUnlockRevision = $state(0);
 	let formError = $state<WorkspaceFormError | null>(null);
+	let repositorySetupError = $state<WorkspaceRepositorySetupError | null>(null);
+	let repositorySetupStatus = $state<string | null>(null);
 	let storageError = $state<string | null>(null);
 	let hasLoaded = $state(false);
 	let isAddingWorkspace = $state(false);
+	let isPreparingWorkspaceRepository = $state(false);
 	let isSelectingWorkspacePath = $state(false);
+	let prepareWorkspaceGit = $state(true);
+	let prepareWorkspaceMustflow = $state(true);
+	let prepareWorkspaceGitignore = $state(true);
 	let messages = $derived(getWorkduckMessages(appearanceSettings.languageId));
 
 	let workspaceRemoveCandidate = $derived(
 		registry.workspaces.find((workspace) => workspace.id === workspaceRemoveConfirmationId) ??
 			null
+	);
+	let workspaceRepositorySetupCandidate = $derived(
+		registry.workspaces.find((workspace) => workspace.id === workspaceRepositorySetupId) ?? null
 	);
 	let canAddWorkspace = $derived(
 		workspaceName.trim().length > 0 &&
@@ -153,6 +171,43 @@
 		}
 	}
 
+	function getWorkspaceRepositorySetupErrorMessage(error: WorkspaceRepositorySetupError) {
+		switch (error) {
+			case 'workspace-repository-workspace-required':
+				return messages.settings.workspaces.errors.repositoryWorkspaceRequired;
+			case 'workspace-repository-workspace-not-absolute':
+				return messages.settings.workspaces.errors.repositoryWorkspaceNotAbsolute;
+			case 'workspace-repository-workspace-not-found':
+				return messages.settings.workspaces.errors.repositoryWorkspaceNotFound;
+			case 'workspace-repository-workspace-not-directory':
+				return messages.settings.workspaces.errors.repositoryWorkspaceNotDirectory;
+			case 'workspace-repository-workspace-permission-denied':
+				return messages.settings.workspaces.errors.repositoryWorkspacePermissionDenied;
+			case 'workspace-repository-workspace-unreadable':
+				return messages.settings.workspaces.errors.repositoryWorkspaceUnreadable;
+			case 'workspace-repository-layout-invalid':
+				return messages.settings.workspaces.errors.repositoryLayoutInvalid;
+			case 'workspace-repository-create-failed':
+				return messages.settings.workspaces.errors.repositoryCreateFailed;
+			case 'workspace-repository-git-unavailable':
+				return messages.settings.workspaces.errors.repositoryGitUnavailable;
+			case 'workspace-repository-git-timed-out':
+				return messages.settings.workspaces.errors.repositoryGitTimedOut;
+			case 'workspace-repository-git-init-failed':
+				return messages.settings.workspaces.errors.repositoryGitInitFailed;
+			case 'workspace-repository-mustflow-unavailable':
+				return messages.settings.workspaces.errors.repositoryMustflowUnavailable;
+			case 'workspace-repository-mustflow-timed-out':
+				return messages.settings.workspaces.errors.repositoryMustflowTimedOut;
+			case 'workspace-repository-mustflow-failed':
+				return messages.settings.workspaces.errors.repositoryMustflowFailed;
+			case 'workspace-repository-gitignore-failed':
+				return messages.settings.workspaces.errors.repositoryGitignoreFailed;
+			case 'workspace-repository-unavailable':
+				return messages.settings.workspaces.errors.repositoryUnavailable;
+		}
+	}
+
 	function isWorkspacePathError(error: WorkspaceFormError | null) {
 		return error?.startsWith('workspace-path-') ?? false;
 	}
@@ -167,6 +222,26 @@
 
 	function clearFormError() {
 		formError = null;
+		repositorySetupError = null;
+		repositorySetupStatus = null;
+	}
+
+	function handleRepositoryUseChange(event: Event) {
+		const target = event.currentTarget;
+
+		if (!(target instanceof HTMLInputElement)) {
+			return;
+		}
+
+		useWorkspaceAsRepository = target.checked;
+
+		if (target.checked) {
+			initializeWorkspaceGit = true;
+			installWorkspaceMustflow = true;
+			installWorkspaceGitignore = true;
+		}
+
+		clearFormError();
 	}
 
 	function requestWorkspaceUnlock(workspaceId: string, intent: WorkspaceUnlockIntent) {
@@ -181,6 +256,14 @@
 
 	function clearWorkspaceRemoveConfirmation() {
 		workspaceRemoveConfirmationId = null;
+	}
+
+	function clearWorkspaceRepositorySetup() {
+		workspaceRepositorySetupId = null;
+		prepareWorkspaceGit = true;
+		prepareWorkspaceMustflow = true;
+		prepareWorkspaceGitignore = true;
+		isPreparingWorkspaceRepository = false;
 	}
 
 	function clearWorkspacePathRepair() {
@@ -268,10 +351,25 @@
 					markWorkspaceUnlocked(result.workspace.id, workspacePassword);
 				}
 
+				if (useWorkspaceAsRepository) {
+					const setupResult = await setupWorkspaceRepository(pathValidation.path, {
+						initializeGit: initializeWorkspaceGit,
+						installMustflow: installWorkspaceMustflow,
+						installGitignore: installWorkspaceGitignore
+					});
+
+					if (setupResult.ok) {
+						repositorySetupStatus = messages.settings.workspaces.repository.setupComplete;
+					} else {
+						repositorySetupError = setupResult.error;
+					}
+				}
+
 				workspaceName = '';
 				workspacePath = '';
 				workspacePathDisplay = '';
 				workspacePassword = '';
+				useWorkspaceAsRepository = false;
 			}
 		} finally {
 			isAddingWorkspace = false;
@@ -339,6 +437,28 @@
 		}
 
 		workspacePathRepairId = workspace.id;
+	}
+
+	function requestWorkspaceRepositorySetup(workspaceId: string) {
+		formError = null;
+		repositorySetupError = null;
+		repositorySetupStatus = null;
+		const workspace = registry.workspaces.find((candidate) => candidate.id === workspaceId);
+
+		if (workspace === undefined) {
+			formError = 'workspace-not-found';
+			return;
+		}
+
+		if (workspaceRequiresUnlock(workspace) && !isWorkspaceUnlocked(workspace)) {
+			requestWorkspaceUnlock(workspace.id, 'switch');
+			return;
+		}
+
+		prepareWorkspaceGit = true;
+		prepareWorkspaceMustflow = true;
+		prepareWorkspaceGitignore = true;
+		workspaceRepositorySetupId = workspace.id;
 	}
 
 	function requestWorkspaceRemoveConfirmation(workspaceId: string) {
@@ -418,6 +538,40 @@
 		removeWorkspaceById(workspaceRemoveConfirmationId);
 	}
 
+	async function confirmWorkspaceRepositorySetup() {
+		if (workspaceRepositorySetupCandidate === null || isPreparingWorkspaceRepository) {
+			return;
+		}
+
+		repositorySetupError = null;
+		repositorySetupStatus = null;
+		isPreparingWorkspaceRepository = true;
+
+		try {
+			const result = await setupWorkspaceRepository(workspaceRepositorySetupCandidate.path, {
+				initializeGit: prepareWorkspaceGit,
+				installMustflow: prepareWorkspaceMustflow,
+				installGitignore: prepareWorkspaceGitignore
+			});
+
+			if (!result.ok) {
+				repositorySetupError = result.error;
+				return;
+			}
+
+			repositorySetupStatus = messages.settings.workspaces.repository.setupComplete;
+			clearWorkspaceRepositorySetup();
+		} finally {
+			isPreparingWorkspaceRepository = false;
+		}
+	}
+
+	function handleWorkspaceRepositorySetupBackdropClick(event: MouseEvent) {
+		if (event.target === event.currentTarget && !isPreparingWorkspaceRepository) {
+			clearWorkspaceRepositorySetup();
+		}
+	}
+
 	function handleWorkspaceRemoveConfirmationBackdropClick(event: MouseEvent) {
 		if (event.target === event.currentTarget) {
 			clearWorkspaceRemoveConfirmation();
@@ -427,6 +581,14 @@
 	function handleWorkspaceRemoveConfirmationKeydown(event: KeyboardEvent) {
 		if (workspaceRemoveConfirmationId !== null && event.key === 'Escape') {
 			clearWorkspaceRemoveConfirmation();
+		}
+
+		if (
+			workspaceRepositorySetupId !== null &&
+			event.key === 'Escape' &&
+			!isPreparingWorkspaceRepository
+		) {
+			clearWorkspaceRepositorySetup();
 		}
 	}
 
@@ -530,12 +692,77 @@
 		>
 			{isAddingWorkspace ? messages.common.checking : messages.common.add}
 		</button>
+
+		<fieldset class="workduck-workspace-repository-options">
+			<legend>{messages.settings.workspaces.repository.section}</legend>
+			<label class="workduck-toggle-field" for="workspace-use-repository">
+				<span class="workduck-toggle-label">
+					{messages.settings.workspaces.repository.useAsRepository}
+				</span>
+				<input
+					id="workspace-use-repository"
+					class="workduck-checkbox"
+					type="checkbox"
+					checked={useWorkspaceAsRepository}
+					onchange={handleRepositoryUseChange}
+				/>
+			</label>
+
+			{#if useWorkspaceAsRepository}
+				<div class="workduck-workspace-repository-option-grid">
+					<label class="workduck-toggle-field" for="workspace-initialize-git">
+						<span class="workduck-toggle-label">
+							{messages.settings.workspaces.repository.initializeGit}
+						</span>
+						<input
+							id="workspace-initialize-git"
+							class="workduck-checkbox"
+							type="checkbox"
+							bind:checked={initializeWorkspaceGit}
+							onchange={clearFormError}
+						/>
+					</label>
+					<label class="workduck-toggle-field" for="workspace-install-mustflow">
+						<span class="workduck-toggle-label">
+							{messages.settings.workspaces.repository.installMustflow}
+						</span>
+						<input
+							id="workspace-install-mustflow"
+							class="workduck-checkbox"
+							type="checkbox"
+							bind:checked={installWorkspaceMustflow}
+							onchange={clearFormError}
+						/>
+					</label>
+					<label class="workduck-toggle-field" for="workspace-install-gitignore">
+						<span class="workduck-toggle-label">
+							{messages.settings.workspaces.repository.installGitignore}
+						</span>
+						<input
+							id="workspace-install-gitignore"
+							class="workduck-checkbox"
+							type="checkbox"
+							bind:checked={installWorkspaceGitignore}
+							onchange={clearFormError}
+						/>
+					</label>
+				</div>
+			{/if}
+		</fieldset>
 	</form>
 
-	{#if formError !== null || storageError !== null}
+	{#if formError !== null || repositorySetupError !== null || storageError !== null}
 		<p class="workduck-inline-error" aria-live="polite">
-			{formError === null ? storageError : getWorkspaceErrorMessage(formError)}
+			{formError !== null
+				? getWorkspaceErrorMessage(formError)
+				: repositorySetupError !== null
+					? `${messages.settings.workspaces.repository.setupFailed} ${getWorkspaceRepositorySetupErrorMessage(repositorySetupError)}`
+					: storageError}
 		</p>
+	{/if}
+
+	{#if repositorySetupStatus !== null}
+		<p class="workduck-inline-status" aria-live="polite">{repositorySetupStatus}</p>
 	{/if}
 
 	{#if hasLoaded && registry.workspaces.length === 0}
@@ -600,6 +827,18 @@
 								</button>
 							</span>
 						{:else}
+							<span
+								class="workduck-tooltip-anchor"
+								data-tooltip={messages.settings.workspaces.tooltips.prepareRepository}
+							>
+								<button
+									class="workduck-button workduck-button-secondary"
+									type="button"
+									onclick={() => requestWorkspaceRepositorySetup(workspace.id)}
+								>
+									{messages.settings.workspaces.repository.prepare}
+								</button>
+							</span>
 							<span
 								class="workduck-tooltip-anchor"
 								data-tooltip={messages.settings.workspaces.tooltips.reconnect}
@@ -671,6 +910,91 @@
 				</li>
 			{/each}
 		</ul>
+	{/if}
+
+	{#if workspaceRepositorySetupCandidate !== null}
+		<!-- svelte-ignore a11y_no_static_element_interactions -->
+		<div
+			class="workduck-dialog-backdrop"
+			role="presentation"
+			onclick={handleWorkspaceRepositorySetupBackdropClick}
+		>
+			<div
+				class="workduck-dialog"
+				role="dialog"
+				aria-modal="true"
+				aria-labelledby="workspace-repository-setup-title"
+			>
+				<h2 id="workspace-repository-setup-title" class="workduck-dialog-title">
+					{messages.settings.workspaces.repository.prepareTitle}
+				</h2>
+				<span class="workduck-dialog-kicker">{workspaceRepositorySetupCandidate.name}</span>
+				<div class="workduck-workspace-repository-option-grid">
+					<label class="workduck-toggle-field" for="prepare-workspace-git">
+						<span class="workduck-toggle-label">
+							{messages.settings.workspaces.repository.initializeGit}
+						</span>
+						<input
+							id="prepare-workspace-git"
+							class="workduck-checkbox"
+							type="checkbox"
+							bind:checked={prepareWorkspaceGit}
+							disabled={isPreparingWorkspaceRepository}
+						/>
+					</label>
+					<label class="workduck-toggle-field" for="prepare-workspace-mustflow">
+						<span class="workduck-toggle-label">
+							{messages.settings.workspaces.repository.installMustflow}
+						</span>
+						<input
+							id="prepare-workspace-mustflow"
+							class="workduck-checkbox"
+							type="checkbox"
+							bind:checked={prepareWorkspaceMustflow}
+							disabled={isPreparingWorkspaceRepository}
+						/>
+					</label>
+					<label class="workduck-toggle-field" for="prepare-workspace-gitignore">
+						<span class="workduck-toggle-label">
+							{messages.settings.workspaces.repository.installGitignore}
+						</span>
+						<input
+							id="prepare-workspace-gitignore"
+							class="workduck-checkbox"
+							type="checkbox"
+							bind:checked={prepareWorkspaceGitignore}
+							disabled={isPreparingWorkspaceRepository}
+						/>
+					</label>
+				</div>
+				{#if repositorySetupError !== null}
+					<p class="workduck-inline-error" aria-live="polite">
+						{`${messages.settings.workspaces.repository.setupFailed} ${getWorkspaceRepositorySetupErrorMessage(repositorySetupError)}`}
+					</p>
+				{/if}
+				<div class="workduck-dialog-actions">
+					<button
+						class="workduck-button workduck-button-secondary"
+						type="button"
+						disabled={isPreparingWorkspaceRepository}
+						onclick={clearWorkspaceRepositorySetup}
+					>
+						{messages.common.cancel}
+					</button>
+					<button
+						class="workduck-button workduck-button-primary"
+						type="button"
+						disabled={isPreparingWorkspaceRepository}
+						aria-busy={isPreparingWorkspaceRepository}
+						onclick={confirmWorkspaceRepositorySetup}
+					>
+						{isPreparingWorkspaceRepository
+							? messages.common.checking
+							: messages.settings.workspaces.repository.prepare}
+					</button>
+				</div>
+			</div>
+		</div>
 	{/if}
 
 	{#if workspaceRemoveCandidate !== null}

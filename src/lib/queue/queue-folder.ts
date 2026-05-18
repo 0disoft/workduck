@@ -203,6 +203,45 @@ export async function writeQueueWorkOrderFile(
 	}
 }
 
+export async function updateQueueWorkOrderFile(
+	workspacePath: string,
+	relativePath: string,
+	content: string
+): Promise<QueueFileReadResult> {
+	const invoke = getTauriInvoke();
+
+	if (invoke === undefined) {
+		return { ok: false, error: 'queue-folder-unavailable' };
+	}
+
+	try {
+		const response = await invoke<QueueFileReadResponse>('update_queue_work_order_file', {
+			workspacePath: normalizeWorkspacePathForStorage(workspacePath),
+			relativePath,
+			content
+		});
+
+		if (
+			response.ok &&
+			typeof response.relativePath === 'string' &&
+			typeof response.content === 'string'
+		) {
+			return {
+				ok: true,
+				relativePath: response.relativePath,
+				content: response.content
+			};
+		}
+
+		return {
+			ok: false,
+			error: isQueueFolderError(response.error) ? response.error : 'queue-folder-file-write-failed'
+		};
+	} catch {
+		return { ok: false, error: 'queue-folder-file-write-failed' };
+	}
+}
+
 export function getQueueFolderErrorMessage(error: QueueFolderError) {
 	switch (error) {
 		case 'queue-folder-workspace-required':

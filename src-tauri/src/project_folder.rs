@@ -221,13 +221,11 @@ pub fn delete_project_node_folder(
         Ok(relative_segments) => relative_segments,
         Err(error) => return invalid_delete(error),
     };
-    let folder_path = match resolve_deletable_project_folder_path(
-        &projects_root,
-        &relative_segments,
-    ) {
-        Ok(folder_path) => folder_path,
-        Err(error) => return invalid_delete(error),
-    };
+    let folder_path =
+        match resolve_deletable_project_folder_path(&projects_root, &relative_segments) {
+            Ok(folder_path) => folder_path,
+            Err(error) => return invalid_delete(error),
+        };
 
     delete_folder_tree(&folder_path)
 }
@@ -293,8 +291,7 @@ fn ensure_projects_root(workspace_root: &Path) -> Result<PathBuf, ProjectFolderE
         Err(error) => return Err(map_workspace_error(error)),
     }
 
-    let normalized_projects_root =
-        fs::canonicalize(&projects_root).map_err(map_workspace_error)?;
+    let normalized_projects_root = fs::canonicalize(&projects_root).map_err(map_workspace_error)?;
 
     if !normalized_projects_root.starts_with(workspace_root) {
         return Err(ProjectFolderError::RootInvalid);
@@ -336,8 +333,7 @@ fn validate_parent_relative_path(path: &str) -> Result<Vec<String>, ProjectFolde
         .map(str::to_owned)
         .collect();
 
-    if segments.len() < 2 || segments.first().map(String::as_str) != Some(PROJECTS_DIRECTORY_NAME)
-    {
+    if segments.len() < 2 || segments.first().map(String::as_str) != Some(PROJECTS_DIRECTORY_NAME) {
         return Err(ProjectFolderError::ParentInvalid);
     }
 
@@ -364,8 +360,7 @@ fn validate_project_relative_path(path: &str) -> Result<Vec<String>, ProjectFold
         .map(str::to_owned)
         .collect();
 
-    if segments.len() < 2 || segments.first().map(String::as_str) != Some(PROJECTS_DIRECTORY_NAME)
-    {
+    if segments.len() < 2 || segments.first().map(String::as_str) != Some(PROJECTS_DIRECTORY_NAME) {
         return Err(ProjectFolderError::PathInvalid);
     }
 
@@ -471,11 +466,9 @@ fn validate_deletable_folder_path(
         return Err(ProjectFolderError::DeletePathNotDirectory);
     }
 
-    let normalized_folder_path =
-        fs::canonicalize(folder_path).map_err(map_delete_path_error)?;
+    let normalized_folder_path = fs::canonicalize(folder_path).map_err(map_delete_path_error)?;
 
-    if normalized_folder_path == projects_root
-        || !normalized_folder_path.starts_with(projects_root)
+    if normalized_folder_path == projects_root || !normalized_folder_path.starts_with(projects_root)
     {
         return Err(ProjectFolderError::DeletePathOutsideWorkspace);
     }
@@ -495,9 +488,12 @@ fn validate_project_folder_name(name: &str) -> Result<String, ProjectFolderError
         || trimmed_name == ".."
         || trimmed_name.ends_with([' ', '.'])
         || is_windows_reserved_name(trimmed_name)
-        || trimmed_name
-            .chars()
-            .any(|character| matches!(character, '/' | '\\' | '<' | '>' | ':' | '"' | '|' | '?' | '*') || character.is_control())
+        || trimmed_name.chars().any(|character| {
+            matches!(
+                character,
+                '/' | '\\' | '<' | '>' | ':' | '"' | '|' | '?' | '*'
+            ) || character.is_control()
+        })
     {
         return Err(ProjectFolderError::NameInvalid);
     }
@@ -518,7 +514,12 @@ fn create_folder(
                 return invalid(ProjectFolderError::Conflict);
             }
 
-            return valid_existing_folder(parent_path, &target_path, relative_segments, folder_name);
+            return valid_existing_folder(
+                parent_path,
+                &target_path,
+                relative_segments,
+                folder_name,
+            );
         }
         Err(error) if error.kind() == io::ErrorKind::NotFound => {}
         Err(error) => return invalid(map_workspace_error(error)),
@@ -554,10 +555,7 @@ fn create_folder(
     }
 }
 
-fn ensure_folder_path(
-    projects_root: &Path,
-    relative_segments: Vec<String>,
-) -> ProjectFolderCreate {
+fn ensure_folder_path(projects_root: &Path, relative_segments: Vec<String>) -> ProjectFolderCreate {
     let folder_name = match relative_segments.last() {
         Some(folder_name) => folder_name.clone(),
         None => return invalid(ProjectFolderError::PathInvalid),

@@ -1,6 +1,4 @@
-use tauri::{
-    Manager, PhysicalPosition, Position, WebviewUrl, WebviewWindowBuilder,
-};
+use tauri::{Manager, PhysicalPosition, Position, WebviewUrl, WebviewWindowBuilder};
 
 const MAIN_WINDOW_LABEL: &str = "main";
 const TRAY_MENU_WINDOW_LABEL: &str = "tray-menu";
@@ -104,7 +102,9 @@ fn calculate_tray_menu_position(
     app: &tauri::AppHandle,
     cursor_position: PhysicalPosition<f64>,
 ) -> Result<tauri::LogicalPosition<f64>, String> {
-    let monitors = app.available_monitors().map_err(|error| error.to_string())?;
+    let monitors = app
+        .available_monitors()
+        .map_err(|error| error.to_string())?;
     let active_monitor = monitors
         .iter()
         .find(|monitor| {

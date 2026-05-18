@@ -1,4 +1,4 @@
-use rusqlite::{params, OptionalExtension};
+use rusqlite::{OptionalExtension, params};
 use tauri::AppHandle;
 
 use crate::storage;
@@ -243,8 +243,10 @@ fn validate_operation_record(
         &record.workspace_id,
         ProjectRepositoryOperationStoreError::WorkspaceIdRequired,
     )?;
-    let node_id =
-        validate_required_text(&record.node_id, ProjectRepositoryOperationStoreError::NodeIdRequired)?;
+    let node_id = validate_required_text(
+        &record.node_id,
+        ProjectRepositoryOperationStoreError::NodeIdRequired,
+    )?;
     let repository_id = validate_required_text(
         &record.repository_id,
         ProjectRepositoryOperationStoreError::RepositoryIdRequired,
@@ -292,9 +294,7 @@ fn validate_required_text(
     Ok(value.to_owned())
 }
 
-fn validate_repository_name(
-    name: &str,
-) -> Result<String, ProjectRepositoryOperationStoreError> {
+fn validate_repository_name(name: &str) -> Result<String, ProjectRepositoryOperationStoreError> {
     let name = validate_required_text(
         name,
         ProjectRepositoryOperationStoreError::RepositoryNameRequired,

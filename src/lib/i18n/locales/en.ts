@@ -54,7 +54,6 @@ export const enMessages = {
 	navigation: {
 		projects: 'Projects',
 		queue: 'Work queue',
-		artifacts: 'Artifacts',
 		agents: 'Agents',
 		personas: 'Personas',
 		skills: 'Skills',
@@ -116,13 +115,22 @@ export const enMessages = {
 		noMatches: 'No matching work queue files.',
 		addWork: 'Add work',
 		newWork: 'New work',
+		editWork: 'Edit work',
 		workTitle: 'Work title',
+		workPriority: 'Priority',
 		workBody: 'Work body',
 		createWorkOrder: 'Create work order',
 		creating: 'Creating',
 		noFollowUpSelected: 'No follow-up selected.',
 		createdFile: 'Created {relativePath}.',
+		updatedFile: 'Updated {relativePath}.',
 		nextWorkOrders: 'Next work orders',
+		priorities: {
+			low: 'Low',
+			normal: 'Normal',
+			high: 'High',
+			urgent: 'Urgent'
+		},
 		fileKinds: {
 			resultReport: 'Report JSON',
 			workOrder: 'Work order',
@@ -224,6 +232,9 @@ export const enMessages = {
 			notFound: 'Entry was not found.'
 		}
 	},
+	projects: {
+		newProject: 'New project'
+	},
 	settings: {
 		title: 'Settings',
 		pageTitle: 'Settings - Workduck',
@@ -238,10 +249,6 @@ export const enMessages = {
 			section: 'Appearance',
 			language: 'Language',
 			interfaceFontSize: 'Interface font size',
-			editorFontSize: 'Editor font size',
-			editorFont: 'Editor font',
-			editorTabSize: 'Editor tab size',
-			spaces: 'spaces',
 			loadError: 'Appearance settings could not be loaded.',
 			saveError: 'Appearance settings could not be saved.'
 		},
@@ -253,6 +260,18 @@ export const enMessages = {
 			switch: 'Switch',
 			lock: 'Lock',
 			reconnect: 'Reconnect',
+			repository: {
+				section: 'Workspace repository',
+				useAsRepository: 'Use this workspace as a repository',
+				prepare: 'Prepare repository',
+				prepareTitle: 'Prepare workspace repository',
+				initializeGit: 'Initialize Git repository',
+				installMustflow: 'Install mustflow',
+				installGitignore: 'Install Workduck .gitignore',
+				setupComplete: 'Workspace repository is ready.',
+				setupPartial: 'Workspace was added, but repository setup failed.',
+				setupFailed: 'Repository setup failed.'
+			},
 			removeTitle: 'Remove workspace',
 			removeDescription: 'Remove {name}? Local files are not deleted.',
 			errors: {
@@ -262,10 +281,28 @@ export const enMessages = {
 				passwordProtectFailed: 'Workspace password could not be protected.',
 				passwordInvalidHash: 'Workspace lock data could not be read.',
 				passwordUnavailable: 'Workspace password can only be protected in the desktop app.',
-				passwordHashInvalid: 'Workspace lock data could not be saved.'
+				passwordHashInvalid: 'Workspace lock data could not be saved.',
+				repositoryWorkspaceRequired: 'Workspace folder is required.',
+				repositoryWorkspaceNotAbsolute: 'Workspace path must be absolute.',
+				repositoryWorkspaceNotFound: 'Workspace folder was not found.',
+				repositoryWorkspaceNotDirectory: 'Workspace path must be a folder.',
+				repositoryWorkspacePermissionDenied: 'Workspace folder access was denied.',
+				repositoryWorkspaceUnreadable: 'Workspace folder could not be read.',
+				repositoryLayoutInvalid: 'Existing workspace file layout is not usable.',
+				repositoryCreateFailed: 'Workspace repository files could not be created.',
+				repositoryGitUnavailable: 'Git is not available.',
+				repositoryGitTimedOut: 'Git initialization timed out.',
+				repositoryGitInitFailed: 'Git repository could not be initialized.',
+				repositoryMustflowUnavailable: 'mustflow command is not available.',
+				repositoryMustflowTimedOut: 'mustflow installation timed out.',
+				repositoryMustflowFailed: 'mustflow installation failed.',
+				repositoryGitignoreFailed: '.gitignore could not be prepared.',
+				repositoryUnavailable: 'Workspace repository setup is available in the desktop app.'
 			},
 			tooltips: {
 				unlock: 'Enter this workspace password to make it available on this device.',
+				prepareRepository:
+					'Prepare Git, mustflow, and the Workduck .gitignore in this workspace.',
 				reconnect: 'Choose a local folder again when this workspace was synced from another device.',
 				switch: 'Make this workspace the current working area.',
 				lock: 'Lock this workspace again until its password is entered.',
@@ -416,6 +453,12 @@ export const enMessages = {
 		newPersona: 'New persona',
 		editPersona: 'Edit persona',
 		randomSpectrums: 'Random traits',
+		agentAssignment: {
+			label: 'Agents without persona',
+			placeholder: 'Select agents',
+			none: 'None',
+			selectedCount: '{count} selected'
+		},
 		styles: {
 			title: 'Response style',
 			items: {

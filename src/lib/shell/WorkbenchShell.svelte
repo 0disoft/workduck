@@ -86,7 +86,6 @@
 	const primaryNavigationItems = [
 		{ href: '/', labelKey: 'projects', requiresWorkspace: true },
 		{ href: '/queue', labelKey: 'queue', requiresWorkspace: true },
-		{ href: '/artifacts', labelKey: 'artifacts', requiresWorkspace: true },
 		{ href: '/agents', labelKey: 'agents', requiresWorkspace: true },
 		{ href: '/personas', labelKey: 'personas', requiresWorkspace: true },
 		{ href: '/skills', labelKey: 'skills', requiresWorkspace: true },
@@ -97,6 +96,7 @@
 	type PrimaryNavigationItem = (typeof primaryNavigationItems)[number];
 	const settingsNavigationItem = { href: '/settings', labelKey: 'settings' } as const;
 	const QUEUE_UNREAD_REFRESH_INTERVAL_MS = 5_000;
+	const QUEUE_UNREAD_REFRESH_DEFER_MS = 250;
 	const workspaceMenuId = 'workduck-workspace-menu';
 	const primaryNavigationUnavailableDescriptionId =
 		'workduck-primary-navigation-unavailable-description';
@@ -114,6 +114,7 @@
 	let workspaceSwitchError = $state<string | null>(null);
 	let queueUnreadCount = $state(0);
 	let queueUnreadRefreshSequence = 0;
+	let queuedUnreadRefreshTimeoutId: number | undefined;
 	let resizePointerId: number | undefined;
 	let resizeStartX = 0;
 	let resizeStartWidthPx = SIDEBAR_DEFAULT_WIDTH_PX;
@@ -318,6 +319,22 @@
 			result.files,
 			readQueueReadFilePaths(workspace.id)
 		);
+	}
+
+	function scheduleQueueUnreadCountRefresh() {
+		if (typeof window === 'undefined') {
+			void refreshQueueUnreadCount();
+			return;
+		}
+
+		if (queuedUnreadRefreshTimeoutId !== undefined) {
+			window.clearTimeout(queuedUnreadRefreshTimeoutId);
+		}
+
+		queuedUnreadRefreshTimeoutId = window.setTimeout(() => {
+			queuedUnreadRefreshTimeoutId = undefined;
+			void refreshQueueUnreadCount();
+		}, QUEUE_UNREAD_REFRESH_DEFER_MS);
 	}
 
 	function getPrimaryNavigationAriaLabel(item: PrimaryNavigationItem) {
@@ -537,7 +554,7 @@
 			return;
 		}
 
-		void refreshQueueUnreadCount();
+		scheduleQueueUnreadCountRefresh();
 	});
 
 	onMount(() => {
@@ -645,6 +662,10 @@
 			unsubscribeQueueFiles();
 			window.clearInterval(idleLockIntervalId);
 			window.clearInterval(queueUnreadRefreshIntervalId);
+			if (queuedUnreadRefreshTimeoutId !== undefined) {
+				window.clearTimeout(queuedUnreadRefreshTimeoutId);
+				queuedUnreadRefreshTimeoutId = undefined;
+			}
 			window.removeEventListener('pointerdown', recordUserActivity, true);
 			window.removeEventListener('keydown', recordUserActivity, true);
 			window.removeEventListener('wheel', recordUserActivity, true);

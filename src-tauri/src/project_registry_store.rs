@@ -1,6 +1,6 @@
 use std::collections::BTreeMap;
 
-use rusqlite::{params, OptionalExtension};
+use rusqlite::{OptionalExtension, params};
 use tauri::AppHandle;
 
 use crate::storage;
@@ -196,7 +196,9 @@ pub fn write_project_registries(
     }
 }
 
-fn validate_workspace_ids(workspace_ids: Vec<String>) -> Result<Vec<String>, ProjectRegistryStoreError> {
+fn validate_workspace_ids(
+    workspace_ids: Vec<String>,
+) -> Result<Vec<String>, ProjectRegistryStoreError> {
     let mut result = Vec::new();
 
     for workspace_id in workspace_ids {

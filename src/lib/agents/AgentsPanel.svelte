@@ -133,8 +133,8 @@
 			agentError = null;
 			status = null;
 
-			readRegistryFromStorage(workspaceId);
-			readPersonaRegistryFromStorage(workspaceId);
+			void readRegistryFromStorage(workspaceId, workspace.path);
+			void readPersonaRegistryFromStorage(workspaceId, workspace.path);
 
 			const unsubscribeRegistry = subscribeAgentRegistry(workspaceId, (nextRegistry) => {
 				registry = nextRegistry;
@@ -165,16 +165,16 @@
 		});
 	});
 
-	function readRegistryFromStorage(workspaceId: string) {
-		const result = readAgentRegistry(workspaceId);
+	async function readRegistryFromStorage(workspaceId: string, workspacePath: string) {
+		const result = await readAgentRegistry(workspaceId, workspacePath);
 
 		registry = result.registry;
 		agentError = result.ok ? null : result.error;
 		selectedAgentId = resolveSelectedAgentId(selectedAgentId, result.registry.agents);
 	}
 
-	function readPersonaRegistryFromStorage(workspaceId: string) {
-		personaRegistry = readPersonaRegistry(workspaceId).registry;
+	async function readPersonaRegistryFromStorage(workspaceId: string, workspacePath: string) {
+		personaRegistry = (await readPersonaRegistry(workspaceId, workspacePath)).registry;
 	}
 
 	async function openEnvironmentVaultFromWorkspaceSession(workspaceId: string) {
@@ -246,7 +246,7 @@
 				return;
 			}
 
-			const writeResult = writeAgentRegistry(mutation.registry);
+			const writeResult = await writeAgentRegistry(mutation.registry, workspace.path);
 
 			registry = writeResult.registry;
 			agentError = writeResult.ok ? null : writeResult.error;
@@ -280,7 +280,7 @@
 				return;
 			}
 
-			const writeResult = writeAgentRegistry(mutation.registry);
+			const writeResult = await writeAgentRegistry(mutation.registry, workspace.path);
 
 			registry = writeResult.registry;
 			agentError = writeResult.ok ? null : writeResult.error;
@@ -370,6 +370,10 @@
 				return messages.agents.errors.readFailed;
 			case 'agent-registry-storage-write-failed':
 				return messages.agents.errors.saveFailed;
+			default:
+				return nextError.includes('write') || nextError.includes('too-large')
+					? messages.agents.errors.saveFailed
+					: messages.agents.errors.readFailed;
 		}
 	}
 

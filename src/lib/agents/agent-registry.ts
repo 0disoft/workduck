@@ -151,6 +151,46 @@ export function removeAgent(
 	};
 }
 
+export function assignPersonaToAgents(
+	registry: AgentRegistry,
+	agentIds: readonly string[],
+	personaId: string,
+	now = new Date()
+): AgentRegistry {
+	const normalizedRegistry = normalizeAgentRegistry(registry, registry.workspaceId) ?? registry;
+	const targetAgentIds = new Set(agentIds.map(normalizeRecordId).filter((id) => id !== null));
+	const normalizedPersonaId = normalizeRecordId(personaId);
+
+	if (targetAgentIds.size === 0 || normalizedPersonaId === null) {
+		return normalizedRegistry;
+	}
+
+	const timestamp = now.toISOString();
+	let changed = false;
+	const agents = normalizedRegistry.agents.map((agent) => {
+		if (!targetAgentIds.has(agent.id) || agent.personaId !== null) {
+			return agent;
+		}
+
+		changed = true;
+		return {
+			...agent,
+			personaId: normalizedPersonaId,
+			updatedAt: timestamp
+		};
+	});
+
+	if (!changed) {
+		return normalizedRegistry;
+	}
+
+	return {
+		...normalizedRegistry,
+		agents: sortAgents(agents),
+		updatedAt: timestamp
+	};
+}
+
 function normalizeAgentRegistry(value: unknown, workspaceId: string): AgentRegistry | null {
 	if (
 		!isObjectRecord(value) ||

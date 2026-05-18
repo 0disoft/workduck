@@ -1,5 +1,5 @@
 use crate::workspace_sync_file::{
-    resolve_sync_file_path, validate_sync_file_target, WorkspaceSyncFileError,
+    WorkspaceSyncFileError, resolve_sync_file_path, validate_sync_file_target,
 };
 
 use std::{
@@ -192,8 +192,11 @@ pub fn run_workspace_sync_git(
 
     match operation {
         WorkspaceSyncGitOperation::Fetch => {
-            match run_git_success(&folder_path, &["fetch", "origin"], WorkspaceSyncGitPhase::Fetch)
-            {
+            match run_git_success(
+                &folder_path,
+                &["fetch", "origin"],
+                WorkspaceSyncGitPhase::Fetch,
+            ) {
                 Ok(()) => valid_run(WorkspaceSyncGitRunOutcome::Fetched),
                 Err(failure) => invalid_run(failure.error, failure.phase),
             }
@@ -281,9 +284,11 @@ fn run_workspace_sync_push(
         return invalid_run(WorkspaceSyncGitRunError::FileNameInvalid, None);
     };
 
-    if let Err(failure) =
-        run_git_success(folder_path, &["add", "--", sync_file_name], WorkspaceSyncGitPhase::Add)
-    {
+    if let Err(failure) = run_git_success(
+        folder_path,
+        &["add", "--", sync_file_name],
+        WorkspaceSyncGitPhase::Add,
+    ) {
         return invalid_run(failure.error, failure.phase);
     }
 
@@ -308,7 +313,13 @@ fn run_workspace_sync_push(
     if has_staged_sync_file_change {
         if let Err(failure) = run_git_success(
             folder_path,
-            &["commit", "-m", WORKSPACE_SYNC_GIT_COMMIT_MESSAGE, "--", sync_file_name],
+            &[
+                "commit",
+                "-m",
+                WORKSPACE_SYNC_GIT_COMMIT_MESSAGE,
+                "--",
+                sync_file_name,
+            ],
             WorkspaceSyncGitPhase::Commit,
         ) {
             return invalid_run(failure.error, failure.phase);
@@ -472,10 +483,12 @@ fn run_git_command(
     loop {
         match child.try_wait() {
             Ok(Some(_)) => {
-                return child.wait_with_output().map_err(|_| WorkspaceSyncGitFailure {
-                    error: WorkspaceSyncGitRunError::CommandFailed,
-                    phase: Some(phase),
-                });
+                return child
+                    .wait_with_output()
+                    .map_err(|_| WorkspaceSyncGitFailure {
+                        error: WorkspaceSyncGitRunError::CommandFailed,
+                        phase: Some(phase),
+                    });
             }
             Ok(None) if started_at.elapsed() >= WORKSPACE_SYNC_GIT_COMMAND_TIMEOUT => {
                 let _ = child.kill();
@@ -561,7 +574,11 @@ fn redact_remote_credentials(remote_url: &str) -> String {
     };
     let user_info_end = authority_start + user_info_end_offset;
 
-    format!("{}{}", &remote_url[..authority_start], &remote_url[user_info_end + 1..])
+    format!(
+        "{}{}",
+        &remote_url[..authority_start],
+        &remote_url[user_info_end + 1..]
+    )
 }
 
 fn invalid_inspection(error: WorkspaceSyncGitError) -> WorkspaceSyncGitInspection {

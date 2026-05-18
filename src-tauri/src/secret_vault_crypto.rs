@@ -1,11 +1,11 @@
 use argon2::{Algorithm, Argon2, Params, Version};
-use base64::{engine::general_purpose::STANDARD as BASE64, Engine as _};
+use base64::{Engine as _, engine::general_purpose::STANDARD as BASE64};
 use chacha20poly1305::{
-    aead::{
-        rand_core::{OsRng, RngCore},
-        Aead, KeyInit, Payload,
-    },
     Key, XChaCha20Poly1305, XNonce,
+    aead::{
+        Aead, KeyInit, Payload,
+        rand_core::{OsRng, RngCore},
+    },
 };
 use zeroize::Zeroize;
 

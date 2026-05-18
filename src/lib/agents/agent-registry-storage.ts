@@ -4,13 +4,21 @@ import {
 	serializeAgentRegistry,
 	type AgentRegistry
 } from './agent-registry';
+import {
+	readWorkspaceDataFile,
+	workspaceDataFilesAreAvailable,
+	writeWorkspaceDataFile,
+	type WorkspaceDataFileError
+} from '$lib/workspaces/workspace-data-file';
 
 export const WORKDUCK_AGENT_REGISTRIES_STORAGE_KEY = 'workduck.agentRegistries.v1';
 export const WORKDUCK_AGENT_REGISTRY_CHANGED_EVENT = 'workduck:agent-registry-changed';
+const AGENT_REGISTRY_FILE_NAME = 'agents.json';
 
 export type AgentRegistryStorageError =
 	| 'agent-registry-storage-read-failed'
-	| 'agent-registry-storage-write-failed';
+	| 'agent-registry-storage-write-failed'
+	| WorkspaceDataFileError;
 
 export type AgentRegistryStorageResult =
 	| {
@@ -33,42 +41,58 @@ interface AgentRegistryChangedDetail {
 	readonly registry: AgentRegistry;
 }
 
-export function readAgentRegistry(workspaceId: string): AgentRegistryStorageResult {
+export async function readAgentRegistry(
+	workspaceId: string,
+	workspacePath = ''
+): Promise<AgentRegistryStorageResult> {
 	const emptyRegistry = createEmptyAgentRegistry(workspaceId);
+	const legacyRegistry = readLegacyAgentRegistry(workspaceId);
 
 	if (typeof window === 'undefined') {
 		return { ok: true, registry: emptyRegistry };
 	}
 
-	try {
-		const storage = readStorageRecord();
-		const serializedRegistry = storage.registries[workspaceId];
+	if (workspacePath.length > 0 && workspaceDataFilesAreAvailable()) {
+		const fileResult = await readWorkspaceDataFile(workspacePath, AGENT_REGISTRY_FILE_NAME);
 
-		if (serializedRegistry === undefined) {
-			return { ok: true, registry: emptyRegistry };
-		}
-
-		const registry = parseAgentRegistry(serializedRegistry, workspaceId);
-
-		if (registry === null) {
+		if (!fileResult.ok) {
 			return {
 				ok: false,
-				registry: emptyRegistry,
-				error: 'agent-registry-storage-read-failed'
+				registry: legacyRegistry,
+				error: fileResult.error
 			};
 		}
 
-		return { ok: true, registry };
-	} catch {
-		return {
-			ok: false,
-			registry: emptyRegistry,
-			error: 'agent-registry-storage-read-failed'
-		};
+		if (fileResult.content !== null) {
+			const registry = parseAgentRegistry(fileResult.content, workspaceId);
+
+			if (registry === null) {
+				return {
+					ok: false,
+					registry: legacyRegistry,
+					error: 'agent-registry-storage-read-failed'
+				};
+			}
+
+			return { ok: true, registry };
+		}
+
+		if (legacyRegistry.agents.length > 0) {
+			const writeResult = await writeAgentRegistry(legacyRegistry, workspacePath);
+
+			return writeResult.ok ? { ok: true, registry: legacyRegistry } : writeResult;
+		}
+
+		return { ok: true, registry: emptyRegistry };
 	}
+
+	return { ok: true, registry: legacyRegistry };
 }
 
-export function writeAgentRegistry(registry: AgentRegistry): AgentRegistryStorageResult {
+export async function writeAgentRegistry(
+	registry: AgentRegistry,
+	workspacePath = ''
+): Promise<AgentRegistryStorageResult> {
 	if (typeof window === 'undefined') {
 		return {
 			ok: false,
@@ -77,17 +101,27 @@ export function writeAgentRegistry(registry: AgentRegistry): AgentRegistryStorag
 		};
 	}
 
-	try {
-		const storage = readStorageRecord();
-		const nextStorage = {
-			version: 1,
-			registries: {
-				...storage.registries,
-				[registry.workspaceId]: serializeAgentRegistry(registry)
-			}
-		} satisfies AgentRegistryStorageRecord;
+	if (workspacePath.length > 0 && workspaceDataFilesAreAvailable()) {
+		const writeResult = await writeWorkspaceDataFile(
+			workspacePath,
+			AGENT_REGISTRY_FILE_NAME,
+			serializeAgentRegistry(registry)
+		);
 
-		writeStorageRecord(nextStorage);
+		if (!writeResult.ok) {
+			return {
+				ok: false,
+				registry,
+				error: writeResult.error
+			};
+		}
+
+		dispatchAgentRegistryChanged(registry);
+		return { ok: true, registry };
+	}
+
+	try {
+		writeLegacyAgentRegistry(registry);
 		dispatchAgentRegistryChanged(registry);
 		return { ok: true, registry };
 	} catch {
@@ -125,7 +159,9 @@ export function subscribeAgentRegistry(
 			return;
 		}
 
-		callback(readAgentRegistry(workspaceId).registry);
+		void readAgentRegistry(workspaceId).then((result) => {
+			callback(result.registry);
+		});
 	}
 
 	window.addEventListener(WORKDUCK_AGENT_REGISTRY_CHANGED_EVENT, handleRegistryChanged);
@@ -174,6 +210,30 @@ function writeStorageRecord(record: AgentRegistryStorageRecord) {
 	}
 
 	window.localStorage.setItem(WORKDUCK_AGENT_REGISTRIES_STORAGE_KEY, JSON.stringify(record));
+}
+
+function readLegacyAgentRegistry(workspaceId: string) {
+	const storage = readStorageRecord();
+	const serializedRegistry = storage.registries[workspaceId];
+
+	if (serializedRegistry === undefined) {
+		return createEmptyAgentRegistry(workspaceId);
+	}
+
+	return parseAgentRegistry(serializedRegistry, workspaceId) ?? createEmptyAgentRegistry(workspaceId);
+}
+
+function writeLegacyAgentRegistry(registry: AgentRegistry) {
+	const storage = readStorageRecord();
+	const nextStorage = {
+		version: 1,
+		registries: {
+			...storage.registries,
+			[registry.workspaceId]: serializeAgentRegistry(registry)
+		}
+	} satisfies AgentRegistryStorageRecord;
+
+	writeStorageRecord(nextStorage);
 }
 
 function dispatchAgentRegistryChanged(registry: AgentRegistry) {

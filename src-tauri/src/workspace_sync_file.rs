@@ -166,9 +166,12 @@ fn validate_sync_file_name(file_name: &str) -> Result<String, WorkspaceSyncFileE
 
     if trimmed_file_name == "."
         || trimmed_file_name == ".."
-        || trimmed_file_name
-            .chars()
-            .any(|character| matches!(character, '/' | '\\' | '<' | '>' | ':' | '"' | '|' | '?' | '*') || character.is_control())
+        || trimmed_file_name.chars().any(|character| {
+            matches!(
+                character,
+                '/' | '\\' | '<' | '>' | ':' | '"' | '|' | '?' | '*'
+            ) || character.is_control()
+        })
     {
         return Err(WorkspaceSyncFileError::FileNameInvalid);
     }

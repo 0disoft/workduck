@@ -1,5 +1,6 @@
 	<script lang="ts">
 	import { tick } from 'svelte';
+	import type { WorkduckMessages } from '$lib/i18n/workduck-message-contract';
 	import {
 		parseEnvironmentVault,
 		type EnvironmentSecretKind,
@@ -84,6 +85,7 @@
 	interface Props {
 		readonly workspace: WorkspaceRecord;
 		readonly title: string;
+		readonly projectMessages: WorkduckMessages['projects'];
 	}
 
 	type ProjectDialogMode = 'project' | 'group' | 'repository';
@@ -188,7 +190,7 @@
 	const GITHUB_REPOSITORY_COMMIT_MESSAGE_MAX_LENGTH = 200;
 	const DEFAULT_GITHUB_REPOSITORY_COMMIT_MESSAGE = 'Initial commit';
 
-	let { workspace, title }: Props = $props();
+	let { workspace, title, projectMessages }: Props = $props();
 
 	let registry = $state<ProjectRegistry>(createEmptyProjectRegistry(''));
 	let contextMenu = $state<ProjectContextMenuState | null>(null);
@@ -1487,7 +1489,7 @@
 			return 'Link repository';
 		}
 
-		return 'New project';
+		return projectMessages.newProject;
 	}
 
 	function getDialogSubmitLabel() {
@@ -2925,7 +2927,7 @@
 					type="button"
 					onclick={() => openDialog('project')}
 				>
-					New project
+					{projectMessages.newProject}
 				</button>
 
 				{#each projectNodes as node (node.id)}

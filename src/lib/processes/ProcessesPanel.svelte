@@ -20,6 +20,7 @@
 	} from './developer-processes';
 
 	const PROCESS_REFRESH_INTERVAL_MS = 10_000;
+	const PROCESS_KILL_REFRESH_DELAY_MS = 350;
 
 	let appearanceSettings = $state<AppearanceSettings>(createDefaultAppearanceSettings());
 	let processes = $state<readonly DeveloperProcessEntry[]>([]);
@@ -29,6 +30,7 @@
 	let isRefreshing = $state(false);
 	let killingProcessId = $state<number | null>(null);
 	let refreshIntervalId: number | null = null;
+	let hasQueuedRefresh = false;
 	let messages = $derived(getWorkduckMessages(appearanceSettings.languageId));
 	let selectedProcess = $derived(
 		selectedProcessId === null
@@ -54,8 +56,14 @@
 		};
 	});
 
-	async function refreshProcesses() {
+	async function refreshProcesses(
+		options: { readonly silent?: boolean; readonly queueIfBusy?: boolean } = {}
+	) {
 		if (isRefreshing) {
+			if (options.queueIfBusy) {
+				hasQueuedRefresh = true;
+			}
+
 			return;
 		}
 
@@ -66,7 +74,7 @@
 
 			processes = result.processes;
 			processError = result.ok ? null : result.error;
-			status = result.ok ? messages.processes.refreshed : null;
+			status = result.ok && !options.silent ? messages.processes.refreshed : null;
 
 			if (
 				selectedProcessId !== null &&
@@ -76,6 +84,11 @@
 			}
 		} finally {
 			isRefreshing = false;
+
+			if (hasQueuedRefresh) {
+				hasQueuedRefresh = false;
+				await refreshProcesses({ silent: true });
+			}
 		}
 	}
 
@@ -144,12 +157,18 @@
 				return;
 			}
 
+			processes = processes.filter((process) => process.pid !== targetPid);
 			selectedProcessId = null;
-			await refreshProcesses();
+			await delay(PROCESS_KILL_REFRESH_DELAY_MS);
+			await refreshProcesses({ silent: true, queueIfBusy: true });
 			status = messages.processes.killSucceeded;
 		} finally {
 			killingProcessId = null;
 		}
+	}
+
+	function delay(milliseconds: number) {
+		return new Promise((resolve) => window.setTimeout(resolve, milliseconds));
 	}
 
 	function createProcessErrorMessage(error: DeveloperProcessError) {

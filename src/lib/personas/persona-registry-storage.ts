@@ -4,13 +4,21 @@ import {
 	serializePersonaRegistry,
 	type PersonaRegistry
 } from './persona-registry';
+import {
+	readWorkspaceDataFile,
+	workspaceDataFilesAreAvailable,
+	writeWorkspaceDataFile,
+	type WorkspaceDataFileError
+} from '$lib/workspaces/workspace-data-file';
 
 export const WORKDUCK_PERSONA_REGISTRIES_STORAGE_KEY = 'workduck.personaRegistries.v1';
 export const WORKDUCK_PERSONA_REGISTRY_CHANGED_EVENT = 'workduck:persona-registry-changed';
+const PERSONA_REGISTRY_FILE_NAME = 'personas.json';
 
 export type PersonaRegistryStorageError =
 	| 'persona-registry-storage-read-failed'
-	| 'persona-registry-storage-write-failed';
+	| 'persona-registry-storage-write-failed'
+	| WorkspaceDataFileError;
 
 export type PersonaRegistryStorageResult =
 	| {
@@ -33,42 +41,58 @@ interface PersonaRegistryChangedDetail {
 	readonly registry: PersonaRegistry;
 }
 
-export function readPersonaRegistry(workspaceId: string): PersonaRegistryStorageResult {
+export async function readPersonaRegistry(
+	workspaceId: string,
+	workspacePath = ''
+): Promise<PersonaRegistryStorageResult> {
 	const emptyRegistry = createEmptyPersonaRegistry(workspaceId);
+	const legacyRegistry = readLegacyPersonaRegistry(workspaceId);
 
 	if (typeof window === 'undefined') {
 		return { ok: true, registry: emptyRegistry };
 	}
 
-	try {
-		const storage = readStorageRecord();
-		const serializedRegistry = storage.registries[workspaceId];
+	if (workspacePath.length > 0 && workspaceDataFilesAreAvailable()) {
+		const fileResult = await readWorkspaceDataFile(workspacePath, PERSONA_REGISTRY_FILE_NAME);
 
-		if (serializedRegistry === undefined) {
-			return { ok: true, registry: emptyRegistry };
-		}
-
-		const registry = parsePersonaRegistry(serializedRegistry, workspaceId);
-
-		if (registry === null) {
+		if (!fileResult.ok) {
 			return {
 				ok: false,
-				registry: emptyRegistry,
-				error: 'persona-registry-storage-read-failed'
+				registry: legacyRegistry,
+				error: fileResult.error
 			};
 		}
 
-		return { ok: true, registry };
-	} catch {
-		return {
-			ok: false,
-			registry: emptyRegistry,
-			error: 'persona-registry-storage-read-failed'
-		};
+		if (fileResult.content !== null) {
+			const registry = parsePersonaRegistry(fileResult.content, workspaceId);
+
+			if (registry === null) {
+				return {
+					ok: false,
+					registry: legacyRegistry,
+					error: 'persona-registry-storage-read-failed'
+				};
+			}
+
+			return { ok: true, registry };
+		}
+
+		if (legacyRegistry.personas.length > 0) {
+			const writeResult = await writePersonaRegistry(legacyRegistry, workspacePath);
+
+			return writeResult.ok ? { ok: true, registry: legacyRegistry } : writeResult;
+		}
+
+		return { ok: true, registry: emptyRegistry };
 	}
+
+	return { ok: true, registry: legacyRegistry };
 }
 
-export function writePersonaRegistry(registry: PersonaRegistry): PersonaRegistryStorageResult {
+export async function writePersonaRegistry(
+	registry: PersonaRegistry,
+	workspacePath = ''
+): Promise<PersonaRegistryStorageResult> {
 	if (typeof window === 'undefined') {
 		return {
 			ok: false,
@@ -77,17 +101,27 @@ export function writePersonaRegistry(registry: PersonaRegistry): PersonaRegistry
 		};
 	}
 
-	try {
-		const storage = readStorageRecord();
-		const nextStorage = {
-			version: 1,
-			registries: {
-				...storage.registries,
-				[registry.workspaceId]: serializePersonaRegistry(registry)
-			}
-		} satisfies PersonaRegistryStorageRecord;
+	if (workspacePath.length > 0 && workspaceDataFilesAreAvailable()) {
+		const writeResult = await writeWorkspaceDataFile(
+			workspacePath,
+			PERSONA_REGISTRY_FILE_NAME,
+			serializePersonaRegistry(registry)
+		);
 
-		writeStorageRecord(nextStorage);
+		if (!writeResult.ok) {
+			return {
+				ok: false,
+				registry,
+				error: writeResult.error
+			};
+		}
+
+		dispatchPersonaRegistryChanged(registry);
+		return { ok: true, registry };
+	}
+
+	try {
+		writeLegacyPersonaRegistry(registry);
 		dispatchPersonaRegistryChanged(registry);
 		return { ok: true, registry };
 	} catch {
@@ -125,7 +159,9 @@ export function subscribePersonaRegistry(
 			return;
 		}
 
-		callback(readPersonaRegistry(workspaceId).registry);
+		void readPersonaRegistry(workspaceId).then((result) => {
+			callback(result.registry);
+		});
 	}
 
 	window.addEventListener(WORKDUCK_PERSONA_REGISTRY_CHANGED_EVENT, handleRegistryChanged);
@@ -174,6 +210,30 @@ function writeStorageRecord(record: PersonaRegistryStorageRecord) {
 	}
 
 	window.localStorage.setItem(WORKDUCK_PERSONA_REGISTRIES_STORAGE_KEY, JSON.stringify(record));
+}
+
+function readLegacyPersonaRegistry(workspaceId: string) {
+	const storage = readStorageRecord();
+	const serializedRegistry = storage.registries[workspaceId];
+
+	if (serializedRegistry === undefined) {
+		return createEmptyPersonaRegistry(workspaceId);
+	}
+
+	return parsePersonaRegistry(serializedRegistry, workspaceId) ?? createEmptyPersonaRegistry(workspaceId);
+}
+
+function writeLegacyPersonaRegistry(registry: PersonaRegistry) {
+	const storage = readStorageRecord();
+	const nextStorage = {
+		version: 1,
+		registries: {
+			...storage.registries,
+			[registry.workspaceId]: serializePersonaRegistry(registry)
+		}
+	} satisfies PersonaRegistryStorageRecord;
+
+	writeStorageRecord(nextStorage);
 }
 
 function dispatchPersonaRegistryChanged(registry: PersonaRegistry) {

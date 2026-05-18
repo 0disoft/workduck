@@ -353,7 +353,6 @@ fn strip_ansi_sequences(bytes: &[u8], state: &mut AnsiStripState) -> Vec<u8> {
         match *state {
             AnsiStripState::Ground => match byte {
                 0x1b => *state = AnsiStripState::Escape,
-                0x9b => *state = AnsiStripState::Csi,
                 0xc2 => *state = AnsiStripState::Utf8CsiStart,
                 _ => cleaned.push(byte),
             },
@@ -426,4 +425,36 @@ fn normalize_workspace_path(value: &str) -> Result<String, String> {
     }
 
     Ok(workspace_path.to_string())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{AnsiStripState, strip_ansi_sequences};
+
+    #[test]
+    fn strip_ansi_sequences_preserves_korean_utf8_bytes() {
+        let mut state = AnsiStripState::default();
+        let input = "d----        2026-05-16 오후 12:33                \x1b[44;1mprojects\x1b[0m";
+        let cleaned = strip_ansi_sequences(input.as_bytes(), &mut state);
+
+        assert_eq!(
+            String::from_utf8(cleaned).expect("terminal output should stay valid UTF-8"),
+            "d----        2026-05-16 오후 12:33                projects"
+        );
+    }
+
+    #[test]
+    fn strip_ansi_sequences_preserves_korean_utf8_across_chunks() {
+        let mut state = AnsiStripState::default();
+        let input = "오후".as_bytes();
+        let mut cleaned = Vec::new();
+
+        cleaned.extend(strip_ansi_sequences(&input[..2], &mut state));
+        cleaned.extend(strip_ansi_sequences(&input[2..], &mut state));
+
+        assert_eq!(
+            String::from_utf8(cleaned).expect("chunked terminal output should stay valid UTF-8"),
+            "오후"
+        );
+    }
 }

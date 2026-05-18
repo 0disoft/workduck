@@ -1,4 +1,8 @@
 export type WorkduckQueueReviewDecision = 'pending' | 'approved' | 'needs-work' | 'rollback';
+export type WorkduckQueueWorkPriority = 'low' | 'normal' | 'high' | 'urgent';
+
+export const defaultQueueWorkPriority = 'normal' satisfies WorkduckQueueWorkPriority;
+export const queueWorkPriorities = ['low', 'normal', 'high', 'urgent'] as const satisfies readonly WorkduckQueueWorkPriority[];
 
 interface QueueEntityRef {
 	readonly id: string;
@@ -28,6 +32,7 @@ export interface WorkduckQueueWorkOrderTask {
 	readonly id: string;
 	readonly title: string;
 	readonly body: string;
+	readonly priority?: WorkduckQueueWorkPriority;
 	readonly sourceReportTaskId?: string;
 	readonly decision?: Exclude<WorkduckQueueReviewDecision, 'pending' | 'approved'>;
 }
@@ -179,6 +184,7 @@ export function createQueueWorkOrderFromReportReview(
 				id: createQueueId('task'),
 				title: `${decisionLabel}: ${title}`,
 				body: comment.length > 0 ? comment : `${decisionLabel} requested for ${title}.`,
+				priority: defaultQueueWorkPriority,
 				sourceReportTaskId: review.taskId,
 				decision
 			};
@@ -198,9 +204,14 @@ export function createQueueWorkOrderFromReportReview(
 	};
 }
 
-export function createManualQueueWorkOrder(title: string, body: string): WorkduckQueueWorkOrder {
+export function createManualQueueWorkOrder(
+	title: string,
+	body: string,
+	priority: WorkduckQueueWorkPriority = defaultQueueWorkPriority
+): WorkduckQueueWorkOrder {
 	const normalizedTitle = normalizeQueueText(title);
 	const normalizedBody = normalizeQueueText(body);
+	const normalizedPriority = normalizeQueueWorkPriority(priority);
 
 	return {
 		schemaVersion: 'workduck.queue-work-order/v1',
@@ -215,10 +226,67 @@ export function createManualQueueWorkOrder(title: string, body: string): Workduc
 			{
 				id: createQueueId('task'),
 				title: normalizedTitle,
-				body: normalizedBody
+				body: normalizedBody,
+				priority: normalizedPriority
 			}
 		]
 	};
+}
+
+export function updateQueueWorkOrderTask(
+	workOrder: WorkduckQueueWorkOrder,
+	taskId: string,
+	input: {
+		readonly title: string;
+		readonly body: string;
+		readonly priority: WorkduckQueueWorkPriority;
+	}
+): WorkduckQueueWorkOrder {
+	const normalizedTitle = normalizeQueueText(input.title);
+	const normalizedBody = normalizeQueueText(input.body);
+	const normalizedPriority = normalizeQueueWorkPriority(input.priority);
+	const tasks = workOrder.tasks.map((task) =>
+		task.id === taskId
+			? {
+					...task,
+					title: normalizedTitle,
+					body: normalizedBody,
+					priority: normalizedPriority
+				}
+			: task
+	);
+
+	return {
+		...workOrder,
+		ref:
+			workOrder.tasks.length === 1
+				? {
+						...workOrder.ref,
+						label: normalizedTitle
+					}
+				: workOrder.ref,
+		tasks
+	};
+}
+
+export function readQueueWorkPriorityLabel(content: string) {
+	try {
+		const parsed: unknown = JSON.parse(content);
+
+		if (!isRecord(parsed)) {
+			return null;
+		}
+
+		const priority = readHighestQueueWorkPriorityFromTasks(parsed.tasks);
+
+		return priority ?? null;
+	} catch {
+		return null;
+	}
+}
+
+export function normalizeQueueWorkPriority(value: unknown): WorkduckQueueWorkPriority {
+	return isQueueWorkPriority(value) ? value : defaultQueueWorkPriority;
 }
 
 export function createQueueWorkOrderFileName(report: WorkduckQueueResultReport) {
@@ -386,10 +454,48 @@ function isQueueWorkOrderTask(value: unknown) {
 		typeof value.id === 'string' &&
 		typeof value.title === 'string' &&
 		typeof value.body === 'string' &&
+		(value.priority === undefined || isQueueWorkPriority(value.priority)) &&
 		(value.sourceReportTaskId === undefined || typeof value.sourceReportTaskId === 'string') &&
 		(value.decision === undefined ||
 			value.decision === 'needs-work' ||
 			value.decision === 'rollback')
+	);
+}
+
+function readHighestQueueWorkPriorityFromTasks(value: unknown) {
+	if (!Array.isArray(value)) {
+		return null;
+	}
+
+	const priorities = value
+		.map((task) => (isRecord(task) ? normalizeQueueWorkPriority(task.priority) : null))
+		.filter((priority) => priority !== null);
+
+	if (priorities.includes('urgent')) {
+		return 'urgent';
+	}
+
+	if (priorities.includes('high')) {
+		return 'high';
+	}
+
+	if (priorities.includes('normal')) {
+		return 'normal';
+	}
+
+	if (priorities.includes('low')) {
+		return 'low';
+	}
+
+	return null;
+}
+
+function isQueueWorkPriority(value: unknown): value is WorkduckQueueWorkPriority {
+	return (
+		value === 'low' ||
+		value === 'normal' ||
+		value === 'high' ||
+		value === 'urgent'
 	);
 }
 

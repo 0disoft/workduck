@@ -1,6 +1,6 @@
 use std::{fmt, fs, path::PathBuf, time::Duration};
 
-use rusqlite::{params, Connection, OptionalExtension};
+use rusqlite::{Connection, OptionalExtension, params};
 use tauri::{AppHandle, Manager};
 
 const DATABASE_DRIVER: &str = "sqlite";
@@ -94,7 +94,10 @@ impl fmt::Display for StorageError {
     fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::ResolveAppLocalDataDir(source) => {
-                write!(formatter, "failed to resolve app local data directory: {source}")
+                write!(
+                    formatter,
+                    "failed to resolve app local data directory: {source}"
+                )
             }
             Self::CreateAppLocalDataDir { path, source } => write!(
                 formatter,
@@ -265,10 +268,12 @@ fn apply_migration(
         None => {}
     }
 
-    let transaction = connection.transaction().map_err(|source| StorageError::Sqlite {
-        operation: "migration transaction start",
-        source,
-    })?;
+    let transaction = connection
+        .transaction()
+        .map_err(|source| StorageError::Sqlite {
+            operation: "migration transaction start",
+            source,
+        })?;
 
     transaction
         .execute_batch(migration.sql)

@@ -1,16 +1,18 @@
-mod storage;
 mod developer_processes;
 mod project_folder;
-mod project_repository_operation_store;
 mod project_registry_store;
-mod queue_folder;
 mod project_repository;
+mod project_repository_operation_store;
+mod queue_folder;
 mod secret_vault_crypto;
-mod tray_menu;
+mod storage;
 mod terminal_catalog;
 mod terminal_process;
+mod tray_menu;
 mod workspace_password;
 mod workspace_path;
+mod workspace_data_file;
+mod workspace_repository_setup;
 mod workspace_sync_crypto;
 mod workspace_sync_file;
 mod workspace_sync_git;
@@ -74,6 +76,9 @@ pub fn run() {
             workspace_password::create_workspace_password_hash,
             workspace_password::verify_workspace_password,
             workspace_path::validate_workspace_path,
+            workspace_data_file::read_workspace_data_file,
+            workspace_data_file::write_workspace_data_file,
+            workspace_repository_setup::setup_workspace_repository,
             project_repository::clone_project_repository,
             project_repository::fetch_project_repository_git,
             project_repository::initialize_project_repository_git,
@@ -100,6 +105,7 @@ pub fn run() {
             queue_folder::list_queue_files,
             queue_folder::open_queue_folder,
             queue_folder::read_queue_file,
+            queue_folder::update_queue_work_order_file,
             queue_folder::write_queue_work_order_file
         ])
         .run(tauri::generate_context!())

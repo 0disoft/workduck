@@ -56,7 +56,6 @@ export const koMessages = {
 	navigation: {
 		projects: '프로젝트',
 		queue: '작업 대기열',
-		artifacts: '산출물',
 		agents: '에이전트',
 		personas: '페르소나',
 		skills: '스킬',
@@ -118,13 +117,22 @@ export const koMessages = {
 		noMatches: '조건에 맞는 작업 대기열 파일이 없습니다.',
 		addWork: '작업 추가',
 		newWork: '새 작업',
+		editWork: '작업 수정',
 		workTitle: '작업 제목',
+		workPriority: '우선순위',
 		workBody: '작업 내용',
 		createWorkOrder: '작업 지시서 만들기',
 		creating: '만드는 중',
 		noFollowUpSelected: '후속 작업이 선택되지 않았습니다.',
 		createdFile: '{relativePath} 파일을 만들었습니다.',
+		updatedFile: '{relativePath} 파일을 수정했습니다.',
 		nextWorkOrders: '다음 작업 지시서',
+		priorities: {
+			low: '낮음',
+			normal: '보통',
+			high: '높음',
+			urgent: '긴급'
+		},
 		fileKinds: {
 			resultReport: '결과 보고서 JSON',
 			workOrder: '작업 지시서',
@@ -226,6 +234,9 @@ export const koMessages = {
 			notFound: '항목을 찾을 수 없습니다.'
 		}
 	},
+	projects: {
+		newProject: '새 프로젝트'
+	},
 	settings: {
 		title: '설정',
 		pageTitle: '설정 - Workduck',
@@ -240,10 +251,6 @@ export const koMessages = {
 			section: '화면',
 			language: '언어',
 			interfaceFontSize: '인터페이스 글꼴 크기',
-			editorFontSize: '에디터 글꼴 크기',
-			editorFont: '에디터 글꼴',
-			editorTabSize: '에디터 탭 크기',
-			spaces: '칸',
 			loadError: '화면 설정을 불러오지 못했습니다.',
 			saveError: '화면 설정을 저장하지 못했습니다.'
 		},
@@ -255,6 +262,18 @@ export const koMessages = {
 			switch: '전환',
 			lock: '잠금',
 			reconnect: '다시 연결',
+			repository: {
+				section: '워크스페이스 저장소',
+				useAsRepository: '이 워크스페이스를 저장소로 사용',
+				prepare: '저장소 준비',
+				prepareTitle: '워크스페이스 저장소 준비',
+				initializeGit: 'Git 저장소 초기화',
+				installMustflow: 'mustflow 설치',
+				installGitignore: 'Workduck .gitignore 설치',
+				setupComplete: '워크스페이스 저장소를 준비했습니다.',
+				setupPartial: '워크스페이스는 추가했지만 저장소 준비에 실패했습니다.',
+				setupFailed: '저장소 준비에 실패했습니다.'
+			},
 			removeTitle: '워크스페이스 삭제',
 			removeDescription: '{name} 워크스페이스를 삭제할까요? 로컬 파일은 삭제하지 않습니다.',
 			errors: {
@@ -264,10 +283,27 @@ export const koMessages = {
 				passwordProtectFailed: '워크스페이스 암호를 보호하지 못했습니다.',
 				passwordInvalidHash: '워크스페이스 잠금 정보를 읽지 못했습니다.',
 				passwordUnavailable: '워크스페이스 암호 보호는 데스크톱 앱에서만 사용할 수 있습니다.',
-				passwordHashInvalid: '워크스페이스 잠금 정보를 저장하지 못했습니다.'
+				passwordHashInvalid: '워크스페이스 잠금 정보를 저장하지 못했습니다.',
+				repositoryWorkspaceRequired: '워크스페이스 폴더를 선택하세요.',
+				repositoryWorkspaceNotAbsolute: '워크스페이스 경로는 절대 경로여야 합니다.',
+				repositoryWorkspaceNotFound: '워크스페이스 폴더를 찾을 수 없습니다.',
+				repositoryWorkspaceNotDirectory: '워크스페이스 경로는 폴더여야 합니다.',
+				repositoryWorkspacePermissionDenied: '워크스페이스 폴더 접근이 거부되었습니다.',
+				repositoryWorkspaceUnreadable: '워크스페이스 폴더를 읽지 못했습니다.',
+				repositoryLayoutInvalid: '워크스페이스 안의 기존 파일 구조를 사용할 수 없습니다.',
+				repositoryCreateFailed: '워크스페이스 저장소 파일을 만들지 못했습니다.',
+				repositoryGitUnavailable: 'Git을 사용할 수 없습니다.',
+				repositoryGitTimedOut: 'Git 초기화 시간이 초과되었습니다.',
+				repositoryGitInitFailed: 'Git 저장소를 초기화하지 못했습니다.',
+				repositoryMustflowUnavailable: 'mustflow 명령을 사용할 수 없습니다.',
+				repositoryMustflowTimedOut: 'mustflow 설치 시간이 초과되었습니다.',
+				repositoryMustflowFailed: 'mustflow 설치에 실패했습니다.',
+				repositoryGitignoreFailed: '.gitignore 파일을 준비하지 못했습니다.',
+				repositoryUnavailable: '워크스페이스 저장소 준비는 데스크톱 앱에서 사용할 수 있습니다.'
 			},
 			tooltips: {
 				unlock: '이 기기에서 사용할 수 있도록 워크스페이스 암호를 입력합니다.',
+				prepareRepository: 'Git, mustflow, Workduck .gitignore를 이 워크스페이스에 준비합니다.',
 				reconnect: '다른 기기에서 동기화한 워크스페이스라면 로컬 폴더를 다시 선택합니다.',
 				switch: '이 워크스페이스를 현재 작업 공간으로 전환합니다.',
 				lock: '암호를 다시 입력하기 전까지 이 워크스페이스를 잠급니다.',
@@ -418,6 +454,12 @@ export const koMessages = {
 		newPersona: '새 페르소나',
 		editPersona: '페르소나 수정',
 		randomSpectrums: '랜덤 특성',
+		agentAssignment: {
+			label: '페르소나 없는 에이전트',
+			placeholder: '에이전트 선택',
+			none: '없음',
+			selectedCount: '{count}개 선택'
+		},
 		styles: {
 			title: '응답 방식',
 			items: {

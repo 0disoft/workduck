@@ -6,7 +6,7 @@ use std::{
     time::{Duration, Instant},
 };
 
-use base64::{engine::general_purpose::STANDARD, Engine as _};
+use base64::{Engine as _, engine::general_purpose::STANDARD};
 use zeroize::Zeroize;
 
 #[cfg(target_os = "windows")]
@@ -364,7 +364,8 @@ pub fn publish_project_repository_to_github(
     match repository_has_head_commit(&repository_path) {
         Ok(true) => {}
         Ok(false) => {
-            if let Err(error) = create_initial_repository_commit(&repository_path, &commit_message) {
+            if let Err(error) = create_initial_repository_commit(&repository_path, &commit_message)
+            {
                 return invalid_git_mutation(error);
             }
         }
@@ -590,8 +591,7 @@ fn validate_group_relative_path(
         .map(str::to_owned)
         .collect();
 
-    if segments.len() < 3 || segments.first().map(String::as_str) != Some(PROJECTS_DIRECTORY_NAME)
-    {
+    if segments.len() < 3 || segments.first().map(String::as_str) != Some(PROJECTS_DIRECTORY_NAME) {
         return Err(ProjectRepositoryCloneError::GroupPathInvalid);
     }
 
@@ -643,8 +643,10 @@ fn validate_repository_folder_name(name: &str) -> Result<String, ProjectReposito
         || trimmed_name.ends_with([' ', '.'])
         || is_windows_reserved_name(trimmed_name)
         || trimmed_name.chars().any(|character| {
-            matches!(character, '/' | '\\' | '<' | '>' | ':' | '"' | '|' | '?' | '*')
-                || character.is_control()
+            matches!(
+                character,
+                '/' | '\\' | '<' | '>' | ':' | '"' | '|' | '?' | '*'
+            ) || character.is_control()
         })
     {
         return Err(ProjectRepositoryCloneError::NameInvalid);
@@ -722,8 +724,9 @@ fn is_valid_github_repository_name_part(part: &str) -> bool {
         && part != ".."
         && !part.starts_with('.')
         && !part.ends_with('.')
-        && part.chars()
-            .all(|character| character.is_ascii_alphanumeric() || matches!(character, '-' | '_' | '.'))
+        && part.chars().all(|character| {
+            character.is_ascii_alphanumeric() || matches!(character, '-' | '_' | '.')
+        })
 }
 
 fn validate_github_visibility(visibility: &str) -> Result<&'static str, ProjectRepositoryGitError> {
@@ -883,7 +886,9 @@ fn cleanup_failed_clone_target(clone_target: &Path) {
     }
 }
 
-fn inspect_git_repository(repository_path: &Path) -> Result<ProjectRepositoryGitInspection, GitCommandFailure> {
+fn inspect_git_repository(
+    repository_path: &Path,
+) -> Result<ProjectRepositoryGitInspection, GitCommandFailure> {
     if !is_git_repository(repository_path)? {
         return Ok(ProjectRepositoryGitInspection {
             ok: true,
@@ -956,7 +961,12 @@ fn read_git_branch(repository_path: &Path) -> Result<Option<String>, GitCommandF
 fn read_git_ahead_behind_counts(repository_path: &Path) -> Result<(u32, u32), GitCommandFailure> {
     let upstream_output = run_git_command(
         repository_path,
-        &["rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{upstream}"],
+        &[
+            "rev-parse",
+            "--abbrev-ref",
+            "--symbolic-full-name",
+            "@{upstream}",
+        ],
         PROJECT_REPOSITORY_GIT_ACTION_TIMEOUT,
         None,
     )?;
@@ -976,7 +986,9 @@ fn read_git_ahead_behind_counts(repository_path: &Path) -> Result<(u32, u32), Gi
         return Ok((0, 0));
     }
 
-    Ok(parse_git_ahead_behind_counts(&String::from_utf8_lossy(&output.stdout)))
+    Ok(parse_git_ahead_behind_counts(&String::from_utf8_lossy(
+        &output.stdout,
+    )))
 }
 
 fn parse_git_ahead_behind_counts(output: &str) -> (u32, u32) {
@@ -1059,7 +1071,8 @@ fn apply_git_credential(command: &mut Command, credential: Option<&GitCredential
     };
 
     let mut basic_source = format!("x-access-token:{token}");
-    let mut authorization_value = format!("AUTHORIZATION: basic {}", STANDARD.encode(&basic_source));
+    let mut authorization_value =
+        format!("AUTHORIZATION: basic {}", STANDARD.encode(&basic_source));
     basic_source.zeroize();
 
     command
@@ -1352,9 +1365,7 @@ fn map_workspace_error(error: io::Error) -> ProjectRepositoryCloneError {
 fn map_group_path_error(error: io::Error) -> ProjectRepositoryCloneError {
     match error.kind() {
         io::ErrorKind::NotFound => ProjectRepositoryCloneError::GroupPathNotFound,
-        io::ErrorKind::PermissionDenied => {
-            ProjectRepositoryCloneError::WorkspacePermissionDenied
-        }
+        io::ErrorKind::PermissionDenied => ProjectRepositoryCloneError::WorkspacePermissionDenied,
         _ => ProjectRepositoryCloneError::WorkspaceUnreadable,
     }
 }

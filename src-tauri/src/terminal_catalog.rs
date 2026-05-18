@@ -85,9 +85,9 @@ fn create_git_bash_entry() -> TerminalCatalogEntry {
         .iter()
         .find(|path| Path::new(path).is_file())
         .map(|path| (*path).to_string())
-        .or_else(|| find_executable("bash.exe").filter(|path| {
-            path.to_ascii_lowercase().contains(r"\git\")
-        }));
+        .or_else(|| {
+            find_executable("bash.exe").filter(|path| path.to_ascii_lowercase().contains(r"\git\"))
+        });
 
     TerminalCatalogEntry {
         id: "git-bash",

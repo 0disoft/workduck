@@ -85,7 +85,7 @@
 			selectedSkillId = null;
 			editingSkillId = null;
 			clearSkillForm();
-			readRegistryFromStorage(workspaceId);
+			void readRegistryFromStorage(workspaceId, workspace.path);
 
 			const unsubscribeRegistry = subscribeSkillRegistry(workspaceId, (nextRegistry) => {
 				registry = nextRegistry;
@@ -96,8 +96,8 @@
 		});
 	});
 
-	function readRegistryFromStorage(workspaceId: string) {
-		const result = readSkillRegistry(workspaceId);
+	async function readRegistryFromStorage(workspaceId: string, workspacePath: string) {
+		const result = await readSkillRegistry(workspaceId, workspacePath);
 
 		registry = result.registry;
 		skillError = result.ok ? null : result.error;
@@ -165,7 +165,7 @@
 				return;
 			}
 
-			const writeResult = writeSkillRegistry(mutation.registry);
+			const writeResult = await writeSkillRegistry(mutation.registry, workspace.path);
 
 			registry = writeResult.registry;
 			skillError = writeResult.ok ? null : writeResult.error;
@@ -199,7 +199,7 @@
 				return;
 			}
 
-			const writeResult = writeSkillRegistry(mutation.registry);
+			const writeResult = await writeSkillRegistry(mutation.registry, workspace.path);
 
 			registry = writeResult.registry;
 			skillError = writeResult.ok ? null : writeResult.error;
@@ -268,6 +268,10 @@
 				return messages.skills.errors.readFailed;
 			case 'skill-registry-storage-write-failed':
 				return messages.skills.errors.saveFailed;
+			default:
+				return nextError.includes('write') || nextError.includes('too-large')
+					? messages.skills.errors.saveFailed
+					: messages.skills.errors.readFailed;
 		}
 	}
 </script>

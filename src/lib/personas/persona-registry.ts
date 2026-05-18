@@ -131,6 +131,17 @@ export function createDefaultPersonaStyleValues(): PersonaStyleValues {
 	};
 }
 
+export function createRandomPersonaStyleValues(): PersonaStyleValues {
+	return personaStyleDefinitions.reduce((values, definition) => {
+		const option = definition.options[Math.floor(Math.random() * definition.options.length)];
+
+		return {
+			...values,
+			[definition.id]: option
+		};
+	}, {} as Record<PersonaStyleId, string>) as PersonaStyleValues;
+}
+
 export function upsertPersona(
 	registry: PersonaRegistry,
 	input: PersonaInput,
