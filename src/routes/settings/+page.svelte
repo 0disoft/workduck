@@ -4,7 +4,6 @@
 	import { onMount } from 'svelte';
 
 	import { getWorkduckMessages } from '$lib/i18n/workduck-language';
-	import AppearanceSettingsPanel from '$lib/settings/AppearanceSettingsPanel.svelte';
 	import {
 		createDefaultAppearanceSettings,
 		type AppearanceSettings
@@ -13,18 +12,55 @@
 		readAppearanceSettingsFromBrowser,
 		subscribeAppearanceSettings
 	} from '$lib/settings/appearance-storage';
-	import SyncSettingsPanel from '$lib/settings/SyncSettingsPanel.svelte';
-	import SystemSettingsPanel from '$lib/settings/SystemSettingsPanel.svelte';
-	import WorkspaceSettingsPanel from '$lib/settings/WorkspaceSettingsPanel.svelte';
 	import {
 		normalizeSettingsTabId,
 		settingsTabs,
 		type SettingsTabId
 	} from '$lib/settings/settings-tabs';
 
+	type SettingsPanelComponent =
+		typeof import('$lib/settings/AppearanceSettingsPanel.svelte').default;
+	type LoadedSettingsPanels = Partial<Record<SettingsTabId, SettingsPanelComponent>>;
+
 	let activeSettingsTab = $derived(normalizeSettingsTabId(page.url.searchParams.get('tab')));
 	let appearanceSettings = $state<AppearanceSettings>(createDefaultAppearanceSettings());
+	let loadedSettingsPanels = $state<LoadedSettingsPanels>({});
 	let messages = $derived(getWorkduckMessages(appearanceSettings.languageId));
+
+	$effect(() => {
+		if (typeof window === 'undefined') {
+			return;
+		}
+
+		void loadSettingsPanel(activeSettingsTab);
+	});
+
+	async function loadSettingsPanel(tabId: SettingsTabId) {
+		if (loadedSettingsPanels[tabId] !== undefined) {
+			return;
+		}
+
+		if (tabId === 'appearance') {
+			const module = await import('$lib/settings/AppearanceSettingsPanel.svelte');
+			loadedSettingsPanels = { ...loadedSettingsPanels, appearance: module.default };
+			return;
+		}
+
+		if (tabId === 'workspaces') {
+			const module = await import('$lib/settings/WorkspaceSettingsPanel.svelte');
+			loadedSettingsPanels = { ...loadedSettingsPanels, workspaces: module.default };
+			return;
+		}
+
+		if (tabId === 'sync') {
+			const module = await import('$lib/settings/SyncSettingsPanel.svelte');
+			loadedSettingsPanels = { ...loadedSettingsPanels, sync: module.default };
+			return;
+		}
+
+		const module = await import('$lib/settings/SystemSettingsPanel.svelte');
+		loadedSettingsPanels = { ...loadedSettingsPanels, system: module.default };
+	}
 
 	function createSettingsTabHref(tabId: SettingsTabId) {
 		const nextUrl = new URL(page.url);
@@ -40,6 +76,7 @@
 			noScroll: true,
 			replaceState: true
 		});
+		void loadSettingsPanel(tabId);
 	}
 
 	onMount(() => {
@@ -77,12 +114,24 @@
 	</nav>
 
 	{#if activeSettingsTab === 'appearance'}
-		<AppearanceSettingsPanel />
+		{@const AppearanceSettingsPanel = loadedSettingsPanels.appearance}
+		{#if AppearanceSettingsPanel !== undefined}
+			<AppearanceSettingsPanel />
+		{/if}
 	{:else if activeSettingsTab === 'workspaces'}
-		<WorkspaceSettingsPanel />
+		{@const WorkspaceSettingsPanel = loadedSettingsPanels.workspaces}
+		{#if WorkspaceSettingsPanel !== undefined}
+			<WorkspaceSettingsPanel />
+		{/if}
 	{:else if activeSettingsTab === 'sync'}
-		<SyncSettingsPanel />
+		{@const SyncSettingsPanel = loadedSettingsPanels.sync}
+		{#if SyncSettingsPanel !== undefined}
+			<SyncSettingsPanel />
+		{/if}
 	{:else if activeSettingsTab === 'system'}
-		<SystemSettingsPanel />
+		{@const SystemSettingsPanel = loadedSettingsPanels.system}
+		{#if SystemSettingsPanel !== undefined}
+			<SystemSettingsPanel />
+		{/if}
 	{/if}
 </main>

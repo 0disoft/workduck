@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 
-	import EnvironmentVaultPanel from '$lib/environment/EnvironmentVaultPanel.svelte';
 	import { getWorkduckMessages } from '$lib/i18n/workduck-language';
 	import {
 		createDefaultAppearanceSettings,
@@ -22,12 +21,19 @@
 		subscribeWorkspaceRegistry
 	} from '$lib/workspaces/workspace-storage';
 
+	type EnvironmentVaultPanelComponent =
+		typeof import('$lib/environment/EnvironmentVaultPanel.svelte').default;
+
 	let appearanceSettings = $state<AppearanceSettings>(createDefaultAppearanceSettings());
 	let registry = $state<WorkspaceRegistry>(createEmptyWorkspaceRegistry());
+	let EnvironmentVaultPanel = $state<EnvironmentVaultPanelComponent | null>(null);
 	let activeWorkspace = $derived(getActiveWorkspace(registry));
 	let messages = $derived(getWorkduckMessages(appearanceSettings.languageId));
 
 	onMount(() => {
+		void import('$lib/environment/EnvironmentVaultPanel.svelte').then((module) => {
+			EnvironmentVaultPanel = module.default;
+		});
 		appearanceSettings = readAppearanceSettingsFromBrowser().settings;
 		registry = readWorkspaceRegistryFromBrowser().registry;
 		const unsubscribeAppearanceSettings = subscribeAppearanceSettings((nextSettings) => {
@@ -50,7 +56,7 @@
 
 <main class="workduck-page">
 	<WorkspaceGate title={messages.navigation.environment}>
-		{#if activeWorkspace !== null}
+		{#if activeWorkspace !== null && EnvironmentVaultPanel !== null}
 			<EnvironmentVaultPanel workspace={activeWorkspace} title={messages.navigation.environment} />
 		{/if}
 	</WorkspaceGate>

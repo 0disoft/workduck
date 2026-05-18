@@ -2,7 +2,6 @@
 	import { onMount } from 'svelte';
 
 	import { getWorkduckMessages } from '$lib/i18n/workduck-language';
-	import ProcessesPanel from '$lib/processes/ProcessesPanel.svelte';
 	import {
 		createDefaultAppearanceSettings,
 		type AppearanceSettings
@@ -12,10 +11,16 @@
 		subscribeAppearanceSettings
 	} from '$lib/settings/appearance-storage';
 
+	type ProcessesPanelComponent = typeof import('$lib/processes/ProcessesPanel.svelte').default;
+
 	let appearanceSettings = $state<AppearanceSettings>(createDefaultAppearanceSettings());
+	let ProcessesPanel = $state<ProcessesPanelComponent | null>(null);
 	let messages = $derived(getWorkduckMessages(appearanceSettings.languageId));
 
 	onMount(() => {
+		void import('$lib/processes/ProcessesPanel.svelte').then((module) => {
+			ProcessesPanel = module.default;
+		});
 		appearanceSettings = readAppearanceSettingsFromBrowser().settings;
 		const unsubscribeAppearanceSettings = subscribeAppearanceSettings((nextSettings) => {
 			appearanceSettings = nextSettings;
@@ -36,5 +41,7 @@
 		<h1 class="workduck-page-title">{messages.navigation.processes}</h1>
 	</header>
 
-	<ProcessesPanel />
+	{#if ProcessesPanel !== null}
+		<ProcessesPanel />
+	{/if}
 </main>

@@ -7,12 +7,9 @@
 		type WorkduckLanguageId
 	} from '$lib/i18n/workduck-language';
 	import {
-		EDITOR_TAB_SIZE_STEP_VALUES,
 		FONT_SIZE_STEP_VALUES,
 		createDefaultAppearanceSettings,
-		editorFontOptions,
-		type AppearanceSettings,
-		type EditorFontId
+		type AppearanceSettings
 	} from './appearance-settings';
 	import {
 		readAppearanceSettingsFromBrowser,
@@ -35,12 +32,6 @@
 	let appearanceSettings = $state<AppearanceSettings>(createDefaultAppearanceSettings());
 	let appearanceStorageError = $state<string | null>(null);
 	let messages = $derived(getWorkduckMessages(appearanceSettings.languageId));
-	let editorTabSizeStepOptions = $derived(
-		EDITOR_TAB_SIZE_STEP_VALUES.map((tabSize) => ({
-			value: tabSize,
-			label: formatTabSizeLabel(tabSize)
-		}))
-	);
 
 	function readAppearanceFromStorage() {
 		const result = readAppearanceSettingsFromBrowser();
@@ -78,39 +69,8 @@
 		});
 	}
 
-	function handleEditorFontSizeChange(editorFontSizePx: number) {
-		persistAppearanceSettings({
-			...appearanceSettings,
-			editorFontSizePx
-		});
-	}
-
-	function handleEditorFontChange(event: Event) {
-		const target = event.currentTarget;
-
-		if (!(target instanceof HTMLSelectElement)) {
-			return;
-		}
-
-		persistAppearanceSettings({
-			...appearanceSettings,
-			editorFontId: target.value as EditorFontId
-		});
-	}
-
-	function handleEditorTabSizeChange(editorTabSize: number) {
-		persistAppearanceSettings({
-			...appearanceSettings,
-			editorTabSize
-		});
-	}
-
 	function formatFontSizeLabel(fontSizePx: number) {
 		return `${fontSizePx} px`;
-	}
-
-	function formatTabSizeLabel(tabSize: number) {
-		return `${tabSize} ${messages.settings.appearance.spaces}`;
 	}
 
 	onMount(() => {
@@ -154,38 +114,6 @@
 			options={fontSizeStepOptions}
 			valueLabel={formatFontSizeLabel(appearanceSettings.fontSizePx)}
 			onValueChange={handleInterfaceFontSizeChange}
-		/>
-
-		<StepRangeField
-			id="editor-font-size"
-			label={messages.settings.appearance.editorFontSize}
-			value={appearanceSettings.editorFontSizePx}
-			options={fontSizeStepOptions}
-			valueLabel={formatFontSizeLabel(appearanceSettings.editorFontSizePx)}
-			onValueChange={handleEditorFontSizeChange}
-		/>
-
-		<label class="workduck-form-field" for="editor-font">
-			<span>{messages.settings.appearance.editorFont}</span>
-			<select
-				id="editor-font"
-				class="workduck-select"
-				value={appearanceSettings.editorFontId}
-				onchange={handleEditorFontChange}
-			>
-				{#each editorFontOptions as editorFontOption}
-					<option value={editorFontOption.id}>{editorFontOption.label}</option>
-				{/each}
-			</select>
-		</label>
-
-		<StepRangeField
-			id="editor-tab-size"
-			label={messages.settings.appearance.editorTabSize}
-			value={appearanceSettings.editorTabSize}
-			options={editorTabSizeStepOptions}
-			valueLabel={formatTabSizeLabel(appearanceSettings.editorTabSize)}
-			onValueChange={handleEditorTabSizeChange}
 		/>
 	</form>
 

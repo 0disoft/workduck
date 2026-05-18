@@ -10,7 +10,6 @@
 		readAppearanceSettingsFromBrowser,
 		subscribeAppearanceSettings
 	} from '$lib/settings/appearance-storage';
-	import SkillsPanel from '$lib/skills/SkillsPanel.svelte';
 	import WorkspaceGate from '$lib/workspaces/WorkspaceGate.svelte';
 	import {
 		createEmptyWorkspaceRegistry,
@@ -22,12 +21,18 @@
 		subscribeWorkspaceRegistry
 	} from '$lib/workspaces/workspace-storage';
 
+	type SkillsPanelComponent = typeof import('$lib/skills/SkillsPanel.svelte').default;
+
 	let appearanceSettings = $state<AppearanceSettings>(createDefaultAppearanceSettings());
 	let registry = $state<WorkspaceRegistry>(createEmptyWorkspaceRegistry());
+	let SkillsPanel = $state<SkillsPanelComponent | null>(null);
 	let activeWorkspace = $derived(getActiveWorkspace(registry));
 	let messages = $derived(getWorkduckMessages(appearanceSettings.languageId));
 
 	onMount(() => {
+		void import('$lib/skills/SkillsPanel.svelte').then((module) => {
+			SkillsPanel = module.default;
+		});
 		appearanceSettings = readAppearanceSettingsFromBrowser().settings;
 		registry = readWorkspaceRegistryFromBrowser().registry;
 		const unsubscribeAppearanceSettings = subscribeAppearanceSettings((nextSettings) => {
@@ -54,7 +59,7 @@
 	</header>
 
 	<WorkspaceGate>
-		{#if activeWorkspace !== null}
+		{#if activeWorkspace !== null && SkillsPanel !== null}
 			<SkillsPanel workspace={activeWorkspace} />
 		{/if}
 	</WorkspaceGate>

@@ -2,7 +2,6 @@
 	import { onMount } from 'svelte';
 
 	import { getWorkduckMessages } from '$lib/i18n/workduck-language';
-	import PersonasPanel from '$lib/personas/PersonasPanel.svelte';
 	import {
 		createDefaultAppearanceSettings,
 		type AppearanceSettings
@@ -22,12 +21,18 @@
 		subscribeWorkspaceRegistry
 	} from '$lib/workspaces/workspace-storage';
 
+	type PersonasPanelComponent = typeof import('$lib/personas/PersonasPanel.svelte').default;
+
 	let appearanceSettings = $state<AppearanceSettings>(createDefaultAppearanceSettings());
 	let registry = $state<WorkspaceRegistry>(createEmptyWorkspaceRegistry());
+	let PersonasPanel = $state<PersonasPanelComponent | null>(null);
 	let activeWorkspace = $derived(getActiveWorkspace(registry));
 	let messages = $derived(getWorkduckMessages(appearanceSettings.languageId));
 
 	onMount(() => {
+		void import('$lib/personas/PersonasPanel.svelte').then((module) => {
+			PersonasPanel = module.default;
+		});
 		appearanceSettings = readAppearanceSettingsFromBrowser().settings;
 		registry = readWorkspaceRegistryFromBrowser().registry;
 		const unsubscribeAppearanceSettings = subscribeAppearanceSettings((nextSettings) => {
@@ -54,7 +59,7 @@
 	</header>
 
 	<WorkspaceGate>
-		{#if activeWorkspace !== null}
+		{#if activeWorkspace !== null && PersonasPanel !== null}
 			<PersonasPanel workspace={activeWorkspace} />
 		{/if}
 	</WorkspaceGate>

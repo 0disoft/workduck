@@ -2,7 +2,6 @@
 	import { onMount } from 'svelte';
 
 	import { getWorkduckMessages } from '$lib/i18n/workduck-language';
-	import ProjectsBoard from '$lib/projects/ProjectsBoard.svelte';
 	import {
 		createDefaultAppearanceSettings,
 		type AppearanceSettings
@@ -22,12 +21,18 @@
 		subscribeWorkspaceRegistry
 	} from '$lib/workspaces/workspace-storage';
 
+	type ProjectsBoardComponent = typeof import('$lib/projects/ProjectsBoard.svelte').default;
+
 	let appearanceSettings = $state<AppearanceSettings>(createDefaultAppearanceSettings());
 	let registry = $state<WorkspaceRegistry>(createEmptyWorkspaceRegistry());
+	let ProjectsBoard = $state<ProjectsBoardComponent | null>(null);
 	let activeWorkspace = $derived(getActiveWorkspace(registry));
 	let messages = $derived(getWorkduckMessages(appearanceSettings.languageId));
 
 	onMount(() => {
+		void import('$lib/projects/ProjectsBoard.svelte').then((module) => {
+			ProjectsBoard = module.default;
+		});
 		appearanceSettings = readAppearanceSettingsFromBrowser().settings;
 		registry = readWorkspaceRegistryFromBrowser().registry;
 		const unsubscribeAppearanceSettings = subscribeAppearanceSettings((nextSettings) => {
@@ -50,8 +55,12 @@
 
 <main class="workduck-page workduck-page--projects">
 	<WorkspaceGate title={messages.navigation.projects}>
-		{#if activeWorkspace !== null}
-			<ProjectsBoard workspace={activeWorkspace} title={messages.navigation.projects} />
+		{#if activeWorkspace !== null && ProjectsBoard !== null}
+			<ProjectsBoard
+				workspace={activeWorkspace}
+				title={messages.navigation.projects}
+				projectMessages={messages.projects}
+			/>
 		{/if}
 	</WorkspaceGate>
 </main>

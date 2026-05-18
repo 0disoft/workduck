@@ -10,7 +10,6 @@
 		readAppearanceSettingsFromBrowser,
 		subscribeAppearanceSettings
 	} from '$lib/settings/appearance-storage';
-	import TerminalPanel from '$lib/terminals/TerminalPanel.svelte';
 	import WorkspaceGate from '$lib/workspaces/WorkspaceGate.svelte';
 	import {
 		createEmptyWorkspaceRegistry,
@@ -22,12 +21,18 @@
 		subscribeWorkspaceRegistry
 	} from '$lib/workspaces/workspace-storage';
 
+	type TerminalPanelComponent = typeof import('$lib/terminals/TerminalPanel.svelte').default;
+
 	let appearanceSettings = $state<AppearanceSettings>(createDefaultAppearanceSettings());
 	let registry = $state<WorkspaceRegistry>(createEmptyWorkspaceRegistry());
+	let TerminalPanel = $state<TerminalPanelComponent | null>(null);
 	let activeWorkspace = $derived(getActiveWorkspace(registry));
 	let messages = $derived(getWorkduckMessages(appearanceSettings.languageId));
 
 	onMount(() => {
+		void import('$lib/terminals/TerminalPanel.svelte').then((module) => {
+			TerminalPanel = module.default;
+		});
 		appearanceSettings = readAppearanceSettingsFromBrowser().settings;
 		registry = readWorkspaceRegistryFromBrowser().registry;
 		const unsubscribeAppearanceSettings = subscribeAppearanceSettings((nextSettings) => {
@@ -54,7 +59,7 @@
 	</header>
 
 	<WorkspaceGate>
-		{#if activeWorkspace !== null}
+		{#if activeWorkspace !== null && TerminalPanel !== null}
 			<TerminalPanel workspace={activeWorkspace} />
 		{/if}
 	</WorkspaceGate>

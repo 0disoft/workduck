@@ -1,14 +1,35 @@
-@import "@fontsource-variable/jetbrains-mono";
-@import "@fontsource-variable/cascadia-code";
-@import "@fontsource-variable/fira-code";
-@import "@fontsource-variable/source-code-pro";
-@import "@fontsource-variable/geist-mono";
-@import "pretendard/dist/web/variable/pretendardvariable.css";
 @import "tailwindcss";
 @import "./lib/styles/workduck-theme.css";
 
 * {
 	box-sizing: border-box;
+	scrollbar-color: oklch(var(--workduck-oklch-muted) / 0.72) transparent;
+	scrollbar-width: thin;
+}
+
+*::-webkit-scrollbar {
+	width: 8px;
+	height: 8px;
+}
+
+*::-webkit-scrollbar-track {
+	background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+	border: 2px solid transparent;
+	border-radius: 999px;
+	background: oklch(var(--workduck-oklch-muted) / 0.72);
+	background-clip: content-box;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+	background: oklch(var(--workduck-oklch-muted-strong) / 0.82);
+	background-clip: content-box;
+}
+
+*::-webkit-scrollbar-corner {
+	background: transparent;
 }
 
 html {
@@ -22,10 +43,8 @@ body {
 	color: var(--workduck-color-text);
 	font-size: var(--workduck-font-size-md);
 	font-family:
-		"Pretendard Variable", Pretendard, "JetBrains Mono Variable", "JetBrains Mono",
-		"Cascadia Code Variable", "Cascadia Code", "Fira Code Variable", "Fira Code",
-		"Source Code Pro Variable", "Source Code Pro", "Geist Mono Variable", "Geist Mono",
-		"SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+		system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Apple SD Gothic Neo",
+		"Malgun Gothic", "Noto Sans KR", sans-serif;
 	letter-spacing: 0;
 	-webkit-font-smoothing: antialiased;
 	text-rendering: geometricprecision;
@@ -77,7 +96,7 @@ a {
 	user-select: none;
 }
 
-:where(input, textarea, .workduck-input, .workduck-textarea, .workduck-readonly-value, .cm-editor, .cm-content) {
+:where(input, textarea, .workduck-input, .workduck-textarea, .workduck-readonly-value) {
 	-webkit-user-select: text;
 	user-select: text;
 }
@@ -93,6 +112,11 @@ a {
 	align-content: start;
 	gap: 18px;
 	padding: 28px;
+}
+
+.workduck-boot-screen {
+	min-height: 100vh;
+	background: var(--workduck-color-background);
 }
 
 .workduck-page--projects {
@@ -415,6 +439,7 @@ a {
 }
 
 .workduck-queue-review-task-header strong {
+	flex: 1 1 auto;
 	min-width: 0;
 	overflow: hidden;
 	color: var(--workduck-color-text);
@@ -433,6 +458,28 @@ a {
 	padding: 2px 8px;
 	font-size: var(--workduck-font-size-xs);
 	font-weight: 800;
+}
+
+.workduck-queue-priority-pill[data-priority='low'] {
+	border-color: oklch(var(--workduck-oklch-border) / 0.76);
+	background: oklch(var(--workduck-oklch-surface) / 0.64);
+	color: var(--workduck-color-muted);
+}
+
+.workduck-queue-priority-pill[data-priority='high'] {
+	border-color: oklch(0.76 0.15 70 / 0.8);
+	background: oklch(0.76 0.15 70 / 0.14);
+	color: oklch(0.82 0.17 72);
+}
+
+.workduck-queue-priority-pill[data-priority='urgent'] {
+	border-color: oklch(0.68 0.19 24 / 0.84);
+	background: oklch(0.68 0.19 24 / 0.14);
+	color: oklch(0.73 0.22 24);
+}
+
+.workduck-queue-task-edit-button {
+	flex: 0 0 auto;
 }
 
 .workduck-queue-review-task p {
@@ -576,6 +623,29 @@ a {
 	grid-template-columns: minmax(140px, 0.55fr) minmax(240px, 1.2fr) minmax(170px, 0.7fr) auto;
 	gap: 10px;
 	align-items: end;
+}
+
+.workduck-workspace-repository-options {
+	display: grid;
+	grid-column: 1 / -1;
+	min-width: 0;
+	gap: 10px;
+	margin: 0;
+	padding: 0;
+	border: 0;
+}
+
+.workduck-workspace-repository-options > legend {
+	padding: 0;
+	color: var(--workduck-color-muted);
+	font-size: var(--workduck-font-size-xs);
+	font-weight: 800;
+}
+
+.workduck-workspace-repository-option-grid {
+	display: grid;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 10px;
 }
 
 .workduck-preferences-form {
@@ -975,10 +1045,7 @@ a {
 	background: oklch(var(--workduck-oklch-background) / 0.9);
 	padding: 14px;
 	color: var(--workduck-color-muted);
-	font-family:
-		"JetBrains Mono Variable", "JetBrains Mono", "Cascadia Code Variable", "Cascadia Code",
-		"Fira Code Variable", "Fira Code", "Source Code Pro Variable", "Source Code Pro",
-		"Geist Mono Variable", "Geist Mono", Consolas, monospace;
+	font-family: var(--workduck-editor-font-family);
 	font-size: var(--workduck-editor-font-size);
 	line-height: 1.55;
 	white-space: pre-wrap;
@@ -1308,6 +1375,135 @@ a {
 .workduck-persona-spectrum-selected[data-level='5'] {
 	--workduck-persona-spectrum-color: oklch(0.68 0.21 24);
 	color: var(--workduck-persona-spectrum-color);
+}
+
+.workduck-persona-agent-assignment {
+	display: grid;
+	grid-column: 1 / -1;
+	min-width: 0;
+	gap: 8px;
+	align-self: end;
+	margin-top: 2px;
+}
+
+.workduck-persona-agent-assignment-label {
+	min-width: 0;
+	overflow: hidden;
+	color: var(--workduck-color-muted);
+	font-size: var(--workduck-font-size-xs);
+	font-weight: 800;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.workduck-persona-agent-select {
+	position: relative;
+	min-width: 0;
+}
+
+.workduck-persona-agent-select-summary {
+	display: flex;
+	min-width: 0;
+	height: var(--workduck-control-height);
+	align-items: center;
+	justify-content: space-between;
+	border: 1px solid oklch(var(--workduck-oklch-border) / 0.76);
+	border-radius: 8px;
+	background: var(--workduck-color-surface);
+	color: var(--workduck-color-text);
+	cursor: pointer;
+	font-size: var(--workduck-font-size-sm);
+	font-weight: 800;
+	list-style: none;
+	padding: 0 12px;
+}
+
+.workduck-persona-agent-select-summary::-webkit-details-marker {
+	display: none;
+}
+
+.workduck-persona-agent-select-summary::after {
+	width: 8px;
+	height: 8px;
+	border-right: 2px solid var(--workduck-color-muted);
+	border-bottom: 2px solid var(--workduck-color-muted);
+	content: '';
+	transform: rotate(45deg) translateY(-2px);
+}
+
+.workduck-persona-agent-select[open] .workduck-persona-agent-select-summary::after {
+	transform: rotate(225deg) translate(-2px, -2px);
+}
+
+.workduck-persona-agent-select-summary span {
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.workduck-persona-agent-select-summary:hover,
+.workduck-persona-agent-select-summary:focus-visible {
+	border-color: var(--workduck-color-accent);
+	outline: 0;
+}
+
+.workduck-persona-agent-select-summary-disabled {
+	color: var(--workduck-color-muted);
+	cursor: default;
+	opacity: 0.72;
+}
+
+.workduck-persona-agent-select-summary-disabled::after {
+	display: none;
+}
+
+.workduck-persona-agent-select-options {
+	position: absolute;
+	z-index: 12;
+	right: 0;
+	bottom: calc(100% + 6px);
+	left: 0;
+	display: grid;
+	max-height: 160px;
+	min-width: 0;
+	overflow: auto;
+	gap: 4px;
+	border: 1px solid oklch(var(--workduck-oklch-border) / 0.76);
+	border-radius: 8px;
+	background: var(--workduck-color-surface);
+	box-shadow: 0 18px 44px oklch(0 0 0 / 0.36);
+	padding: 6px;
+}
+
+.workduck-persona-agent-option {
+	display: flex;
+	min-width: 0;
+	align-items: center;
+	gap: 8px;
+	border-radius: 6px;
+	color: var(--workduck-color-text);
+	font-size: var(--workduck-font-size-sm);
+	font-weight: 800;
+	padding: 6px;
+}
+
+.workduck-persona-agent-option:hover {
+	background: oklch(var(--workduck-oklch-accent) / 0.12);
+}
+
+.workduck-persona-agent-option input {
+	flex: 0 0 auto;
+	width: 16px;
+	height: 16px;
+	accent-color: var(--workduck-color-accent);
+}
+
+.workduck-persona-agent-option span {
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 
 .workduck-agent-details-list {
@@ -2623,16 +2819,6 @@ a {
 	gap: 8px;
 }
 
-.workduck-page--editor {
-	grid-template-rows: auto minmax(420px, 1fr);
-	height: 100%;
-}
-
-.workduck-editor-panel {
-	min-height: 0;
-	overflow: hidden;
-}
-
 @media (max-width: 1060px) {
 	.workduck-persona-dialog-body {
 		grid-template-columns: minmax(0, 1fr);
@@ -2655,6 +2841,7 @@ a {
 	.workduck-environment-form,
 	.workduck-environment-unlock-form,
 	.workduck-persona-dialog-body,
+	.workduck-workspace-repository-option-grid,
 	.workduck-sync-profile-form,
 	.workduck-sync-repository-status,
 	.workduck-sync-form,
@@ -2788,8 +2975,4 @@ a {
 		display: none;
 	}
 
-	.workduck-page--editor {
-		height: calc(100vh - var(--workduck-titlebar-height) - 54px);
-		grid-template-rows: auto minmax(320px, 1fr);
-	}
 }

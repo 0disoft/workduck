@@ -1,19 +1,33 @@
 <script lang="ts">
 	import { page } from '$app/state';
-
-	import WorkbenchShell from '$lib/shell/WorkbenchShell.svelte';
+	import { onMount } from 'svelte';
 
 	import '../app.css';
 
+	type WorkbenchShellComponent = typeof import('$lib/shell/WorkbenchShell.svelte').default;
+
 	let { children } = $props();
 
+	let WorkbenchShell = $state<WorkbenchShellComponent | null>(null);
 	let isTrayMenuWindow = $derived(
 		page.url.pathname === '/tray-menu' || page.url.pathname === '/tray-menu/'
 	);
+
+	onMount(() => {
+		if (isTrayMenuWindow) {
+			return;
+		}
+
+		void import('$lib/shell/WorkbenchShell.svelte').then((module) => {
+			WorkbenchShell = module.default;
+		});
+	});
 </script>
 
 {#if isTrayMenuWindow}
 	{@render children()}
+{:else if WorkbenchShell === null}
+	<div class="workduck-boot-screen" aria-hidden="true"></div>
 {:else}
 	<WorkbenchShell>
 		{@render children()}

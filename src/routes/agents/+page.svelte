@@ -1,7 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 
-	import AgentsPanel from '$lib/agents/AgentsPanel.svelte';
 	import { getWorkduckMessages } from '$lib/i18n/workduck-language';
 	import {
 		createDefaultAppearanceSettings,
@@ -22,12 +21,18 @@
 		subscribeWorkspaceRegistry
 	} from '$lib/workspaces/workspace-storage';
 
+	type AgentsPanelComponent = typeof import('$lib/agents/AgentsPanel.svelte').default;
+
 	let appearanceSettings = $state<AppearanceSettings>(createDefaultAppearanceSettings());
 	let registry = $state<WorkspaceRegistry>(createEmptyWorkspaceRegistry());
+	let AgentsPanel = $state<AgentsPanelComponent | null>(null);
 	let activeWorkspace = $derived(getActiveWorkspace(registry));
 	let messages = $derived(getWorkduckMessages(appearanceSettings.languageId));
 
 	onMount(() => {
+		void import('$lib/agents/AgentsPanel.svelte').then((module) => {
+			AgentsPanel = module.default;
+		});
 		appearanceSettings = readAppearanceSettingsFromBrowser().settings;
 		registry = readWorkspaceRegistryFromBrowser().registry;
 		const unsubscribeAppearanceSettings = subscribeAppearanceSettings((nextSettings) => {
@@ -54,7 +59,7 @@
 	</header>
 
 	<WorkspaceGate>
-		{#if activeWorkspace !== null}
+		{#if activeWorkspace !== null && AgentsPanel !== null}
 			<AgentsPanel workspace={activeWorkspace} />
 		{/if}
 	</WorkspaceGate>

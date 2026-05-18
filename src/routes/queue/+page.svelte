@@ -2,7 +2,6 @@
 	import { onMount } from 'svelte';
 
 	import { getWorkduckMessages } from '$lib/i18n/workduck-language';
-	import QueuePanel from '$lib/queue/QueuePanel.svelte';
 	import {
 		createDefaultAppearanceSettings,
 		type AppearanceSettings
@@ -22,12 +21,18 @@
 		subscribeWorkspaceRegistry
 	} from '$lib/workspaces/workspace-storage';
 
+	type QueuePanelComponent = typeof import('$lib/queue/QueuePanel.svelte').default;
+
 	let appearanceSettings = $state<AppearanceSettings>(createDefaultAppearanceSettings());
 	let registry = $state<WorkspaceRegistry>(createEmptyWorkspaceRegistry());
+	let QueuePanel = $state<QueuePanelComponent | null>(null);
 	let activeWorkspace = $derived(getActiveWorkspace(registry));
 	let messages = $derived(getWorkduckMessages(appearanceSettings.languageId));
 
 	onMount(() => {
+		void import('$lib/queue/QueuePanel.svelte').then((module) => {
+			QueuePanel = module.default;
+		});
 		appearanceSettings = readAppearanceSettingsFromBrowser().settings;
 		registry = readWorkspaceRegistryFromBrowser().registry;
 		const unsubscribeAppearanceSettings = subscribeAppearanceSettings((nextSettings) => {
@@ -50,7 +55,7 @@
 
 <main class="workduck-page workduck-page--queue">
 	<WorkspaceGate title={messages.navigation.queue}>
-		{#if activeWorkspace !== null}
+		{#if activeWorkspace !== null && QueuePanel !== null}
 			<QueuePanel workspace={activeWorkspace} title={messages.navigation.queue} />
 		{/if}
 	</WorkspaceGate>
