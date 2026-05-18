@@ -13,8 +13,7 @@ work.
   operations.
 - Custom title bar, resizable sidebar, tray integration, startup setting,
   minimize-to-tray setting, and workspace inactivity lock setting.
-- Bundled editor fonts and appearance settings for interface and editor font
-  sizes.
+- Language and interface font size appearance settings.
 
 ### Workspace And Sync
 
@@ -22,6 +21,11 @@ work.
   unlock, unlock retry delay, manual lock, and inactivity auto-lock.
 - Workspace path repair for synced workspace metadata that points to a missing
   local folder on the current device.
+- Optional workspace repository bootstrap creates the workspace folder layout,
+  initializes Git, installs mustflow files, and appends a Workduck `.gitignore`
+  block that ignores `projects/` while keeping `queue/` and `.workduck/`
+  trackable. Existing unlocked workspaces can run the same preparation from the
+  workspace list.
 - Settings tabs for appearance, workspaces, encrypted sync, and system options.
 - Encrypted workspace, project, group, and repository metadata sync file
   export/import.
@@ -34,6 +38,9 @@ work.
   `queue/proposals` folder creation, queued JSON listing, structured
   result-report review, internal work-order and proposal rendering, and
   follow-up work-order JSON creation.
+- Workspace-owned `.workduck/` metadata folder for agent, persona, and skill
+  registries. Secret values remain outside `.workduck` in the encrypted
+  Environment vault.
 
 ### Projects And Repositories
 
@@ -66,37 +73,36 @@ work.
   agent export, and workbench orchestration.
 - Agent Brief Markdown export targets for Claude Code, Codex, Cursor, and
   OpenCode.
-- Artifact draft editor powered by CodeMirror for Markdown, JSON, and YAML.
 - Queue result-report, work-order, and proposal JSON contracts in the shared
   core and schema packages.
-- Skills menu with workspace-local Workduck skills and a built-in proposal
-  writer skill.
+- Skills menu with workspace-local Workduck skills stored in
+  `<workspace>/.workduck/skills.json` and a built-in proposal writer skill.
 - Agents menu with workspace-local agent cards that reference `llm` API keys
-  from the Environment vault and selected Workduck skills without copying
-  secret values.
+  from the Environment vault without copying secret values.
+- Persona menu with workspace-local personas stored in
+  `<workspace>/.workduck/personas.json`; agents are stored in
+  `<workspace>/.workduck/agents.json` and may reference persona IDs.
 
 ## Next Work
 
-1. Connect artifact drafts to SQLite artifact tables and the FTS5 search index.
-2. Build the first Agent Brief -> Run -> Gate loop using local data only.
-3. Add an AGENTS.md generator after the brief/run/gate loop exists.
-4. Add a local shell runner with explicit approval after run records can capture
+1. Build the first Agent Brief -> Run -> Gate loop using local data only.
+2. Add an AGENTS.md generator after the brief/run/gate loop exists.
+3. Add a local shell runner with explicit approval after run records can capture
    command, output, diff, and approval state.
-5. Add OpenCode and other agent adapters only after the local runner boundary is
+4. Add OpenCode and other agent adapters only after the local runner boundary is
    stable.
 
 ## Deferred Dependencies
 
-- Svelte Flow: wait until artifact dependency graphs, task graphs, or run
-  handoff graphs are being built.
+- Svelte Flow: wait until task graphs or run handoff graphs are being built.
 - Tiptap: wait until rich-text narrative documents need a dedicated editor.
 - shadcn-svelte: wait until concrete copied component ownership is useful.
 - Runtime agent SDKs: wait until Agent Briefs, Runs, and Gates have real data.
-- MCP server/client: wait until local artifacts and briefs can be read and
+- MCP server/client: wait until local queue items and briefs can be read and
   written through stable commands.
 - Observability and evaluation services: wait until local run traces exist.
 - Cloud runners and sandboxes: wait until local approval-gated execution works.
-- Vector search: wait until there is meaningful artifact and run data.
+- Vector search: wait until there is meaningful report, brief, and run data.
 
 ## Distribution Order
 
