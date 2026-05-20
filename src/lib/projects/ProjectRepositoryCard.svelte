@@ -21,7 +21,9 @@
 		readonly canCloneRepository: boolean;
 		readonly canInitializeRepository: boolean;
 		readonly canPublishRepositoryToGithub: boolean;
-		readonly canRunRemoteRepositoryGitAction: boolean;
+		readonly canFetchRepository: boolean;
+		readonly canPullRepository: boolean;
+		readonly canPushRepository: boolean;
 		readonly isRepositoryOperationRunning: (name: ProjectRepositoryOperation['name']) => boolean;
 		readonly onContextMenu: (event: MouseEvent) => void;
 		readonly onClone: () => Promise<void>;
@@ -41,7 +43,9 @@
 		canCloneRepository,
 		canInitializeRepository,
 		canPublishRepositoryToGithub,
-		canRunRemoteRepositoryGitAction,
+		canFetchRepository,
+		canPullRepository,
+		canPushRepository,
 		isRepositoryOperationRunning,
 		onContextMenu,
 		onClone,
@@ -126,14 +130,16 @@
 				{getRepositoryActionButtonLabel(repositoryOperation, 'publish', 'Publish')}
 			</button>
 		{/if}
-		{#if canRunRemoteRepositoryGitAction ||
+		{#if canFetchRepository ||
+			canPullRepository ||
+			canPushRepository ||
 			isRepositoryOperationRunning('fetch') ||
 			isRepositoryOperationRunning('pull') ||
 			isRepositoryOperationRunning('push')}
 			<button
 				class="workduck-repository-action-button"
 				type="button"
-				disabled={repositoryBusy}
+				disabled={repositoryBusy || !canFetchRepository}
 				onclick={() => void onGitAction('fetch')}
 			>
 				{getRepositoryActionButtonLabel(repositoryOperation, 'fetch', 'Fetch')}
@@ -141,7 +147,7 @@
 			<button
 				class="workduck-repository-action-button"
 				type="button"
-				disabled={repositoryBusy}
+				disabled={repositoryBusy || !canPullRepository}
 				onclick={() => void onGitAction('pull')}
 			>
 				{getRepositoryActionButtonLabel(repositoryOperation, 'pull', 'Pull')}
@@ -149,7 +155,7 @@
 			<button
 				class="workduck-repository-action-button"
 				type="button"
-				disabled={repositoryBusy}
+				disabled={repositoryBusy || !canPushRepository}
 				onclick={() => void onGitAction('push')}
 			>
 				{getRepositoryActionButtonLabel(repositoryOperation, 'push', 'Push')}

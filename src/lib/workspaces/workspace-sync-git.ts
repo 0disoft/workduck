@@ -1,4 +1,5 @@
 import { normalizeWorkspacePathForStorage } from './workspace-path-format';
+import type { ProjectRepositoryGitCredentialInput } from '$lib/projects/project-repository';
 
 export type WorkspaceSyncGitError =
 	| 'workspace-sync-git-folder-required'
@@ -39,6 +40,9 @@ export type WorkspaceSyncGitInspectionResult =
 			readonly isRepository: boolean;
 			readonly originUrl: string | null;
 			readonly branchName: string | null;
+			readonly aheadCount: number;
+			readonly behindCount: number;
+			readonly hasSyncFileChanges: boolean;
 	  }
 	| {
 			readonly ok: false;
@@ -72,6 +76,9 @@ interface WorkspaceSyncGitInspectionResponse {
 	readonly isRepository?: boolean | null;
 	readonly originUrl?: string | null;
 	readonly branchName?: string | null;
+	readonly aheadCount?: number | null;
+	readonly behindCount?: number | null;
+	readonly hasSyncFileChanges?: boolean | null;
 	readonly error?: WorkspaceSyncGitError | null;
 }
 
@@ -83,7 +90,8 @@ interface WorkspaceSyncGitRunResponse {
 }
 
 export async function inspectWorkspaceSyncGit(
-	folderPath: string
+	folderPath: string,
+	fileName = ''
 ): Promise<WorkspaceSyncGitInspectionResult> {
 	const invoke = getTauriInvoke();
 
@@ -93,7 +101,8 @@ export async function inspectWorkspaceSyncGit(
 
 	try {
 		const response = await invoke<WorkspaceSyncGitInspectionResponse>('inspect_workspace_sync_git', {
-			folderPath: normalizeWorkspacePathForStorage(folderPath)
+			folderPath: normalizeWorkspacePathForStorage(folderPath),
+			fileName
 		});
 
 		if (
@@ -106,7 +115,10 @@ export async function inspectWorkspaceSyncGit(
 				normalizedPath: normalizeWorkspacePathForStorage(response.normalizedPath),
 				isRepository: response.isRepository,
 				originUrl: typeof response.originUrl === 'string' ? response.originUrl : null,
-				branchName: typeof response.branchName === 'string' ? response.branchName : null
+				branchName: typeof response.branchName === 'string' ? response.branchName : null,
+				aheadCount: normalizeGitCount(response.aheadCount),
+				behindCount: normalizeGitCount(response.behindCount),
+				hasSyncFileChanges: response.hasSyncFileChanges === true
 			};
 		}
 
@@ -121,10 +133,15 @@ export async function inspectWorkspaceSyncGit(
 	}
 }
 
+function normalizeGitCount(value: unknown) {
+	return typeof value === 'number' && Number.isInteger(value) && value > 0 ? value : 0;
+}
+
 export async function runWorkspaceSyncGit(
 	folderPath: string,
 	fileName: string,
-	action: WorkspaceSyncGitRunAction
+	action: WorkspaceSyncGitRunAction,
+	credential: ProjectRepositoryGitCredentialInput | null = null
 ): Promise<WorkspaceSyncGitRunResult> {
 	const invoke = getTauriInvoke();
 
@@ -136,7 +153,8 @@ export async function runWorkspaceSyncGit(
 		const response = await invoke<WorkspaceSyncGitRunResponse>('run_workspace_sync_git', {
 			folderPath: normalizeWorkspacePathForStorage(folderPath),
 			fileName,
-			action
+			action,
+			...createCredentialCommandArgs(credential)
 		});
 
 		if (response.ok && isWorkspaceSyncGitRunOutcome(response.outcome)) {
@@ -156,6 +174,18 @@ export async function runWorkspaceSyncGit(
 	} catch {
 		return { ok: false, error: 'workspace-sync-git-command-failed', phase: null };
 	}
+}
+
+function createCredentialCommandArgs(credential: ProjectRepositoryGitCredentialInput | null) {
+	return credential === null
+		? {
+				credentialKind: null,
+				credentialValue: null
+			}
+		: {
+				credentialKind: credential.kind,
+				credentialValue: credential.value
+			};
 }
 
 export function formatWorkspaceSyncRemoteForDisplay(originUrl: string | null) {

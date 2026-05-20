@@ -60,7 +60,10 @@
 		readonly canCloneRepository: (repository: ProjectRepositoryLinkRecord) => boolean;
 		readonly canInitializeRepository: (repository: ProjectRepositoryLinkRecord) => boolean;
 		readonly canPublishRepositoryToGithub: (repository: ProjectRepositoryLinkRecord) => boolean;
-		readonly canRunRemoteRepositoryGitAction: (repository: ProjectRepositoryLinkRecord) => boolean;
+		readonly canRunRemoteRepositoryGitAction: (
+			repository: ProjectRepositoryLinkRecord,
+			action: ProjectRepositoryGitAction
+		) => boolean;
 		readonly isRepositoryOperationRunning: (
 			repositoryId: string,
 			name: ProjectRepositoryOperation['name']
@@ -176,7 +179,8 @@
 									projectMessages.counts.repo,
 									projectMessages.counts.repos
 								),
-								...(node.githubCredentialSecretId === null
+								...(selectedProject.githubCredentialSecretId !== null ||
+								node.githubCredentialSecretId === null
 									? []
 									: [`GitHub: ${getNodeGithubCredentialName(node)}`])
 							]}
@@ -207,7 +211,9 @@
 												canCloneRepository={canCloneRepository(repository)}
 												canInitializeRepository={canInitializeRepository(repository)}
 												canPublishRepositoryToGithub={canPublishRepositoryToGithub(repository)}
-												canRunRemoteRepositoryGitAction={canRunRemoteRepositoryGitAction(repository)}
+												canFetchRepository={canRunRemoteRepositoryGitAction(repository, 'fetch')}
+												canPullRepository={canRunRemoteRepositoryGitAction(repository, 'pull')}
+												canPushRepository={canRunRemoteRepositoryGitAction(repository, 'push')}
 												isRepositoryOperationRunning={(name) => isRepositoryOperationRunning(repository.id, name)}
 												onContextMenu={(event) => onRepositoryContextMenu(event, node, repository)}
 												onClone={() => onCloneRepository(node, repository)}

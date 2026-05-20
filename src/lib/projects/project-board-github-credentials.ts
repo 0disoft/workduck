@@ -62,7 +62,7 @@ export function getRepositoryGithubCredentialName(
 	node: ProjectNodeRecord,
 	repository: ProjectRepositoryLinkRecord
 ) {
-	const credentialSecretId = resolveRepositoryGithubCredentialSecretId(nodes, node, repository);
+	const credentialSecretId = repository.githubCredentialSecretId;
 
 	return getGithubCredentialName(vault, options, credentialSecretId);
 }
@@ -105,6 +105,15 @@ function resolveRepositoryGithubCredentialSecretId(
 	node: ProjectNodeRecord,
 	repository: ProjectRepositoryLinkRecord
 ) {
+	const project =
+		node.parentId === null
+			? null
+			: nodes.find((candidateNode) => candidateNode.id === node.parentId) ?? null;
+
+	if (project?.githubCredentialSecretId !== null && project?.githubCredentialSecretId !== undefined) {
+		return project.githubCredentialSecretId;
+	}
+
 	if (repository.githubCredentialSecretId !== null) {
 		return repository.githubCredentialSecretId;
 	}
@@ -112,11 +121,6 @@ function resolveRepositoryGithubCredentialSecretId(
 	if (node.githubCredentialSecretId !== null) {
 		return node.githubCredentialSecretId;
 	}
-
-	const project =
-		node.parentId === null
-			? null
-			: nodes.find((candidateNode) => candidateNode.id === node.parentId) ?? null;
 
 	return project?.githubCredentialSecretId ?? null;
 }

@@ -109,7 +109,10 @@ export interface WorkspaceSettingsActions {
 	readonly workspaceRepositoryCanPrepare: (workspaceId: string) => boolean;
 	readonly workspaceRepositoryCanPublish: (workspaceId: string) => boolean;
 	readonly workspaceRepositoryHasRemote: (workspaceId: string) => boolean;
-	readonly workspaceRepositoryCanRunRemoteAction: (workspaceId: string) => boolean;
+	readonly workspaceRepositoryCanRunRemoteAction: (
+		workspaceId: string,
+		action: WorkspaceRepositoryGitAction
+	) => boolean;
 	readonly getWorkspaceRepositoryGitActionLabel: (
 		workspaceId: string,
 		action: WorkspaceRepositoryGitAction,

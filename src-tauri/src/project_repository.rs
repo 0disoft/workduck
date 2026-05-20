@@ -7,9 +7,11 @@ use std::{
     time::{Duration, Instant},
 };
 
-use base64::{Engine as _, engine::general_purpose::STANDARD};
-use zeroize::Zeroize;
-
+use crate::git_credential::{
+    GitCredential, apply_git_credential, apply_github_cli_credential,
+    clear_git_credential_environment, parse_git_credential,
+};
+use crate::git_path::git_process_path;
 use crate::project_repository_failure::{
     classify_git_clone_failure, classify_git_fetch_failure, classify_git_pull_failure,
     classify_git_push_failure, classify_github_initial_commit_failure,
@@ -188,10 +190,6 @@ struct GitCommandFailure {
     error: ProjectRepositoryGitError,
 }
 
-enum GitCredential {
-    GithubToken(String),
-}
-
 #[tauri::command]
 pub fn clone_project_repository(
     workspace_path: String,
@@ -285,25 +283,73 @@ fn run_git_clone_with_public_fallback(
         return Ok(());
     };
 
-    if credential.is_none() || !should_retry_clone_without_credential(&first_failure.error) {
+    if !should_retry_clone_with_system_credential(&first_failure.error) {
         return Err(first_failure);
     }
 
     cleanup_failed_clone_target(clone_target);
 
-    match run_git_clone(group_path, remote_url, clone_target, None) {
-        Ok(()) => Ok(()),
-        Err(_) => Err(first_failure),
+    if let Some(github_cli_credential) = read_github_cli_git_credential() {
+        match run_git_clone(
+            group_path,
+            remote_url,
+            clone_target,
+            Some(&github_cli_credential),
+        ) {
+            Ok(()) => return Ok(()),
+            Err(_) => cleanup_failed_clone_target(clone_target),
+        }
     }
+
+    if credential.is_some() {
+        match run_git_clone(group_path, remote_url, clone_target, None) {
+            Ok(()) => return Ok(()),
+            Err(_) => cleanup_failed_clone_target(clone_target),
+        }
+    }
+
+    Err(first_failure)
 }
 
-fn should_retry_clone_without_credential(error: &ProjectRepositoryCloneError) -> bool {
+fn should_retry_clone_with_system_credential(error: &ProjectRepositoryCloneError) -> bool {
     matches!(
         error,
         ProjectRepositoryCloneError::CloneTokenInvalid
             | ProjectRepositoryCloneError::CloneAuthRequired
+            | ProjectRepositoryCloneError::ClonePermissionDenied
+            | ProjectRepositoryCloneError::CloneRepositoryNotFound
+            | ProjectRepositoryCloneError::CloneOrganizationRestricted
             | ProjectRepositoryCloneError::CloneFailed
     )
+}
+
+fn read_github_cli_git_credential() -> Option<GitCredential> {
+    let mut command = Command::new("gh");
+    command
+        .arg("auth")
+        .arg("token")
+        .env("GCM_INTERACTIVE", "Never")
+        .stdin(Stdio::null())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::null());
+
+    #[cfg(target_os = "windows")]
+    command.creation_flags(CREATE_NO_WINDOW);
+
+    let child = command.spawn().ok()?;
+    let output = wait_for_child_output(child, PROJECT_REPOSITORY_GIT_ACTION_TIMEOUT).ok()?;
+
+    if !output.status.success() {
+        return None;
+    }
+
+    let token = String::from_utf8_lossy(&output.stdout).trim().to_owned();
+
+    if token.is_empty() || token.chars().any(char::is_control) {
+        return None;
+    }
+
+    Some(GitCredential::GithubToken(token))
 }
 
 #[tauri::command]
@@ -600,13 +646,15 @@ fn run_git_clone(
     clone_target: &Path,
     credential: Option<&GitCredential>,
 ) -> Result<(), CloneFailure> {
+    let git_group_path = git_process_path(group_path);
+    let git_clone_target = git_process_path(clone_target);
     let mut command = Command::new("git");
     command
         .arg("clone")
         .arg("--")
         .arg(remote_url)
-        .arg(clone_target)
-        .current_dir(group_path)
+        .arg(git_clone_target)
+        .current_dir(git_group_path)
         .env("GIT_TERMINAL_PROMPT", "0")
         .env("GCM_INTERACTIVE", "Never")
         .stdin(Stdio::null())
@@ -837,68 +885,17 @@ fn create_initial_repository_commit(
     }
 }
 
-fn parse_git_credential(
-    credential_kind: Option<String>,
-    credential_value: Option<String>,
-) -> Option<GitCredential> {
-    let kind = credential_kind?.trim().to_ascii_lowercase();
-    let value = credential_value?;
-    let trimmed_value = value.trim();
-
-    if kind != "github-token"
-        || trimmed_value.is_empty()
-        || trimmed_value.chars().any(char::is_control)
-    {
-        return None;
-    }
-
-    Some(GitCredential::GithubToken(trimmed_value.to_owned()))
-}
-
-fn apply_git_credential(command: &mut Command, credential: Option<&GitCredential>) {
-    let Some(GitCredential::GithubToken(token)) = credential else {
-        return;
-    };
-
-    let mut basic_source = format!("x-access-token:{token}");
-    let mut authorization_value =
-        format!("AUTHORIZATION: basic {}", STANDARD.encode(&basic_source));
-    basic_source.zeroize();
-
-    command
-        .env("GIT_CONFIG_COUNT", "1")
-        .env("GIT_CONFIG_KEY_0", "http.https://github.com/.extraheader")
-        .env("GIT_CONFIG_VALUE_0", &authorization_value);
-    authorization_value.zeroize();
-}
-
-fn clear_git_credential_environment(command: &mut Command) {
-    command
-        .env_remove("GIT_CONFIG_COUNT")
-        .env_remove("GIT_CONFIG_KEY_0")
-        .env_remove("GIT_CONFIG_VALUE_0")
-        .env_remove("GIT_ASKPASS")
-        .env_remove("SSH_ASKPASS");
-}
-
-fn apply_github_cli_credential(command: &mut Command, credential: Option<&GitCredential>) {
-    let Some(GitCredential::GithubToken(token)) = credential else {
-        return;
-    };
-
-    command.env("GH_TOKEN", token);
-}
-
 fn run_git_command(
     repository_path: &Path,
     args: &[&str],
     timeout: Duration,
     credential: Option<&GitCredential>,
 ) -> Result<Output, GitCommandFailure> {
+    let git_repository_path = git_process_path(repository_path);
     let mut command = Command::new("git");
     command
         .args(args)
-        .current_dir(repository_path)
+        .current_dir(git_repository_path)
         .env("GIT_TERMINAL_PROMPT", "0")
         .env("GCM_INTERACTIVE", "Never")
         .stdin(Stdio::null())
@@ -932,6 +929,7 @@ fn run_gh_repo_create(
     visibility_flag: &str,
     credential: Option<&GitCredential>,
 ) -> Result<Output, GitCommandFailure> {
+    let git_repository_path = git_process_path(repository_path);
     let mut command = Command::new("gh");
     command
         .arg("repo")
@@ -939,11 +937,11 @@ fn run_gh_repo_create(
         .arg(repository_name)
         .arg(visibility_flag)
         .arg("--source")
-        .arg(repository_path)
+        .arg(&git_repository_path)
         .arg("--remote")
         .arg("origin")
         .arg("--push")
-        .current_dir(repository_path)
+        .current_dir(git_repository_path)
         .env("GIT_TERMINAL_PROMPT", "0")
         .env("GCM_INTERACTIVE", "Never")
         .env("GH_PROMPT_DISABLED", "1")

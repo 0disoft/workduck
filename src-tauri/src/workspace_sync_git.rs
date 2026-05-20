@@ -1,3 +1,7 @@
+use crate::git_credential::{
+    GitCredential, apply_git_credential, clear_git_credential_environment, parse_git_credential,
+};
+use crate::git_path::git_process_path;
 use crate::workspace_sync_file::{
     WorkspaceSyncFileError, resolve_sync_file_path, validate_sync_file_target,
 };
@@ -101,6 +105,12 @@ pub struct WorkspaceSyncGitInspection {
     #[serde(skip_serializing_if = "Option::is_none")]
     branch_name: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    ahead_count: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    behind_count: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    has_sync_file_changes: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     error: Option<WorkspaceSyncGitError>,
 }
 
@@ -139,7 +149,10 @@ struct WorkspaceSyncGitFailure {
 }
 
 #[tauri::command]
-pub fn inspect_workspace_sync_git(folder_path: String) -> WorkspaceSyncGitInspection {
+pub fn inspect_workspace_sync_git(
+    folder_path: String,
+    file_name: Option<String>,
+) -> WorkspaceSyncGitInspection {
     let folder_path = match validate_sync_folder_path(&folder_path) {
         Ok(folder_path) => folder_path,
         Err(error) => return invalid_inspection(error),
@@ -152,16 +165,32 @@ pub fn inspect_workspace_sync_git(folder_path: String) -> WorkspaceSyncGitInspec
             is_repository: Some(false),
             origin_url: None,
             branch_name: None,
+            ahead_count: Some(0),
+            behind_count: Some(0),
+            has_sync_file_changes: Some(false),
             error: None,
         };
+    };
+
+    let origin_url = read_origin_url(&git_dir);
+    let (ahead_count, behind_count) = if origin_url.is_some() {
+        read_git_ahead_behind_counts(&folder_path)
+    } else {
+        (0, 0)
     };
 
     WorkspaceSyncGitInspection {
         ok: true,
         normalized_path: Some(folder_path.to_string_lossy().into_owned()),
         is_repository: Some(true),
-        origin_url: read_origin_url(&git_dir),
+        origin_url,
         branch_name: read_branch_name(&git_dir),
+        ahead_count: Some(ahead_count),
+        behind_count: Some(behind_count),
+        has_sync_file_changes: Some(read_sync_file_has_changes(
+            &folder_path,
+            file_name.as_deref(),
+        )),
         error: None,
     }
 }
@@ -171,6 +200,8 @@ pub fn run_workspace_sync_git(
     folder_path: String,
     file_name: String,
     action: String,
+    credential_kind: Option<String>,
+    credential_value: Option<String>,
 ) -> WorkspaceSyncGitRun {
     let operation = match WorkspaceSyncGitOperation::from_action(&action) {
         Some(operation) => operation,
@@ -190,12 +221,15 @@ pub fn run_workspace_sync_git(
         return invalid_run(WorkspaceSyncGitRunError::RemoteMissing, None);
     }
 
+    let credential = parse_git_credential(credential_kind, credential_value);
+
     match operation {
         WorkspaceSyncGitOperation::Fetch => {
             match run_git_success(
                 &folder_path,
                 &["fetch", "origin"],
                 WorkspaceSyncGitPhase::Fetch,
+                credential.as_ref(),
             ) {
                 Ok(()) => valid_run(WorkspaceSyncGitRunOutcome::Fetched),
                 Err(failure) => invalid_run(failure.error, failure.phase),
@@ -210,6 +244,7 @@ pub fn run_workspace_sync_git(
                 &folder_path,
                 &["pull", "--ff-only", "origin", branch_name.as_str()],
                 WorkspaceSyncGitPhase::Pull,
+                credential.as_ref(),
             ) {
                 Ok(()) => valid_run(WorkspaceSyncGitRunOutcome::Pulled),
                 Err(failure) => invalid_run(failure.error, failure.phase),
@@ -220,7 +255,7 @@ pub fn run_workspace_sync_git(
                 return invalid_run(WorkspaceSyncGitRunError::BranchMissing, None);
             };
 
-            run_workspace_sync_push(&folder_path, &file_name, &branch_name)
+            run_workspace_sync_push(&folder_path, &file_name, &branch_name, credential.as_ref())
         }
     }
 }
@@ -254,6 +289,7 @@ fn run_workspace_sync_push(
     folder_path: &Path,
     file_name: &str,
     branch_name: &str,
+    credential: Option<&GitCredential>,
 ) -> WorkspaceSyncGitRun {
     let sync_file_path =
         match resolve_sync_file_path(folder_path.to_string_lossy().as_ref(), file_name) {
@@ -288,6 +324,7 @@ fn run_workspace_sync_push(
         folder_path,
         &["add", "--", sync_file_name],
         WorkspaceSyncGitPhase::Add,
+        None,
     ) {
         return invalid_run(failure.error, failure.phase);
     }
@@ -296,6 +333,7 @@ fn run_workspace_sync_push(
         folder_path,
         &["diff", "--cached", "--quiet", "--", sync_file_name],
         WorkspaceSyncGitPhase::Diff,
+        None,
     ) {
         Ok(output) => output,
         Err(failure) => return invalid_run(failure.error, failure.phase),
@@ -321,6 +359,7 @@ fn run_workspace_sync_push(
                 sync_file_name,
             ],
             WorkspaceSyncGitPhase::Commit,
+            None,
         ) {
             return invalid_run(failure.error, failure.phase);
         }
@@ -330,6 +369,7 @@ fn run_workspace_sync_push(
         folder_path,
         &["push", "-u", "origin", branch_name],
         WorkspaceSyncGitPhase::Push,
+        credential,
     ) {
         Ok(()) => valid_run(if has_staged_sync_file_change {
             WorkspaceSyncGitRunOutcome::CommittedAndPushed
@@ -417,6 +457,89 @@ fn read_branch_name(git_dir: &Path) -> Option<String> {
     }
 }
 
+fn read_git_ahead_behind_counts(folder_path: &Path) -> (u32, u32) {
+    let upstream_output = match run_git_command(
+        folder_path,
+        &[
+            "rev-parse",
+            "--abbrev-ref",
+            "--symbolic-full-name",
+            "@{upstream}",
+        ],
+        WorkspaceSyncGitPhase::Diff,
+        None,
+    ) {
+        Ok(output) => output,
+        Err(_) => return (0, 0),
+    };
+
+    if !upstream_output.status.success() {
+        return (0, 0);
+    }
+
+    let output = match run_git_command(
+        folder_path,
+        &["rev-list", "--left-right", "--count", "HEAD...@{upstream}"],
+        WorkspaceSyncGitPhase::Diff,
+        None,
+    ) {
+        Ok(output) => output,
+        Err(_) => return (0, 0),
+    };
+
+    if !output.status.success() {
+        return (0, 0);
+    }
+
+    parse_git_ahead_behind_counts(&String::from_utf8_lossy(&output.stdout))
+}
+
+fn parse_git_ahead_behind_counts(output: &str) -> (u32, u32) {
+    let mut parts = output.split_whitespace();
+    let ahead_count = parts
+        .next()
+        .and_then(|part| part.parse::<u32>().ok())
+        .unwrap_or(0);
+    let behind_count = parts
+        .next()
+        .and_then(|part| part.parse::<u32>().ok())
+        .unwrap_or(0);
+
+    (ahead_count, behind_count)
+}
+
+fn read_sync_file_has_changes(folder_path: &Path, file_name: Option<&str>) -> bool {
+    let Some(file_name) = file_name else {
+        return false;
+    };
+
+    let sync_file_path =
+        match resolve_sync_file_path(folder_path.to_string_lossy().as_ref(), file_name) {
+            Ok(sync_file_path) => sync_file_path,
+            Err(_) => return false,
+        };
+
+    if validate_sync_file_target(&sync_file_path).is_err() {
+        return false;
+    }
+
+    let Some(sync_file_name) = sync_file_path.file_name().and_then(|name| name.to_str()) else {
+        return false;
+    };
+
+    let output = match run_git_command(
+        folder_path,
+        &["status", "--porcelain", "--", sync_file_name],
+        WorkspaceSyncGitPhase::Diff,
+        None,
+    ) {
+        Ok(output) => output,
+        Err(_) => return false,
+    };
+
+    output.status.success() && !output.stdout.is_empty()
+}
+
 impl WorkspaceSyncGitOperation {
     fn from_action(action: &str) -> Option<Self> {
         match action.trim() {
@@ -445,8 +568,9 @@ fn run_git_success(
     folder_path: &Path,
     args: &[&str],
     phase: WorkspaceSyncGitPhase,
+    credential: Option<&GitCredential>,
 ) -> Result<(), WorkspaceSyncGitFailure> {
-    let output = run_git_command(folder_path, args, phase)?;
+    let output = run_git_command(folder_path, args, phase, credential)?;
 
     if output.status.success() {
         Ok(())
@@ -459,24 +583,29 @@ fn run_git_command(
     folder_path: &Path,
     args: &[&str],
     phase: WorkspaceSyncGitPhase,
+    credential: Option<&GitCredential>,
 ) -> Result<Output, WorkspaceSyncGitFailure> {
-    let mut child = Command::new("git")
+    let git_folder_path = git_process_path(folder_path);
+    let mut command = Command::new("git");
+    command
         .args(args)
-        .current_dir(folder_path)
+        .current_dir(git_folder_path)
         .env("GIT_TERMINAL_PROMPT", "0")
         .env("GCM_INTERACTIVE", "Never")
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .spawn()
-        .map_err(|error| WorkspaceSyncGitFailure {
-            error: if error.kind() == io::ErrorKind::NotFound {
-                WorkspaceSyncGitRunError::CommandUnavailable
-            } else {
-                WorkspaceSyncGitRunError::CommandFailed
-            },
-            phase: Some(phase),
-        })?;
+        .stderr(Stdio::piped());
+    clear_git_credential_environment(&mut command);
+    apply_git_credential(&mut command, credential);
+
+    let mut child = command.spawn().map_err(|error| WorkspaceSyncGitFailure {
+        error: if error.kind() == io::ErrorKind::NotFound {
+            WorkspaceSyncGitRunError::CommandUnavailable
+        } else {
+            WorkspaceSyncGitRunError::CommandFailed
+        },
+        phase: Some(phase),
+    })?;
 
     let started_at = Instant::now();
 
@@ -588,6 +717,9 @@ fn invalid_inspection(error: WorkspaceSyncGitError) -> WorkspaceSyncGitInspectio
         is_repository: None,
         origin_url: None,
         branch_name: None,
+        ahead_count: None,
+        behind_count: None,
+        has_sync_file_changes: None,
         error: Some(error),
     }
 }

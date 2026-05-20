@@ -68,6 +68,7 @@
 		readonly canCloneContextRepository: boolean;
 		readonly canInitializeContextRepository: boolean;
 		readonly canPublishContextRepository: boolean;
+		readonly canEditContextGithubCredential: boolean;
 		readonly getDeleteDialogTitle: () => string;
 		readonly getDeleteDialogText: () => string;
 		readonly getDeleteLocalFolderLabel: () => string;
@@ -128,8 +129,8 @@
 		environmentVaultError, githubCredentialOptions, isEnvironmentVaultBusy, isSubmitting,
 		canSaveGithubCredential, githubRepositoryVisibility, isPublishingRepository,
 		canSubmitPublishRepository, canSubmitDialog, canOpenContextFolder, canCloneContextRepository,
-		canInitializeContextRepository, canPublishContextRepository, getDeleteDialogTitle,
-		getDeleteDialogText, getDeleteLocalFolderLabel, getDeleteLocalFolderUnavailableText,
+		canInitializeContextRepository, canPublishContextRepository, canEditContextGithubCredential,
+		getDeleteDialogTitle, getDeleteDialogText, getDeleteLocalFolderLabel, getDeleteLocalFolderUnavailableText,
 		getVisibleFormErrorMessage, getTagsInputMaxLength, getDialogTitle, getDialogSubmitLabel,
 		isRepositoryRemoteUrlError, onOpenFolder, onEditDescription, onEditGithubCredential,
 		onEditTags, onDelete, onCloneRepository, onInitializeRepository, onPublishRepository,
@@ -146,6 +147,7 @@
 {#if contextMenu !== null}
 	<ProjectContextMenu {contextMenu} bind:contextMenuElement {canOpenContextFolder}
 		{canCloneContextRepository} {canInitializeContextRepository} {canPublishContextRepository}
+		{canEditContextGithubCredential}
 		onOpenFolder={onOpenFolder} onEditDescription={onEditDescription}
 		onEditGithubCredential={onEditGithubCredential} onEditTags={onEditTags} onDelete={onDelete}
 		onCloneRepository={onCloneRepository} onInitializeRepository={onInitializeRepository}

@@ -36,6 +36,9 @@
 	import { formatWorkspacePathForDisplay } from '$lib/workspaces/workspace-path-format';
 	import { selectWorkspacePath } from '$lib/workspaces/workspace-path';
 	import { startAppOperation } from '$lib/shell/app-operation';
+	import { resolveDefaultGithubTokenCredential } from '$lib/environment/github-credential';
+	import { openEnvironmentVaultSessionFromWorkspaceUnlock } from '$lib/environment/environment-vault-session-loader';
+	import type { ProjectRepositoryGitCredentialInput } from '$lib/projects/project-repository';
 
 	import {
 		createDefaultSyncSettings,
@@ -94,8 +97,19 @@
 			!isBusy
 	);
 	let canFetchSync = $derived(isSyncGitRemoteReady(false) && !isBusy);
-	let canPullSync = $derived(isSyncGitRemoteReady(true) && !isBusy);
-	let canPushSync = $derived(isSyncGitRemoteReady(true) && syncFileNameIsUsable && !isBusy);
+	let canPullSync = $derived(
+		isSyncGitRemoteReady(true) &&
+			syncGitInspection?.ok === true &&
+			syncGitInspection.behindCount > 0 &&
+			!isBusy
+	);
+	let canPushSync = $derived(
+		isSyncGitRemoteReady(true) &&
+			syncGitInspection?.ok === true &&
+			syncFileNameIsUsable &&
+			(syncGitInspection.aheadCount > 0 || syncGitInspection.hasSyncFileChanges) &&
+			!isBusy
+	);
 
 	function getSyncErrorMessage(error: SyncPanelError) {
 		switch (error) {
@@ -316,7 +330,7 @@
 		syncSettings = result.settings;
 		syncFolderPathDisplay = formatWorkspacePathForDisplay(result.settings.folderPath);
 		syncError = result.ok ? null : result.error;
-		void inspectSyncGitRepository(result.settings.folderPath);
+		void inspectSyncGitRepository(result.settings.folderPath, result.settings.fileName);
 	}
 
 	function persistSyncSettings(nextSettings: SyncSettings, displayPath: string | null = null) {
@@ -327,7 +341,7 @@
 		syncError = result.ok ? null : result.error;
 	}
 
-	async function inspectSyncGitRepository(folderPath: string) {
+	async function inspectSyncGitRepository(folderPath: string, fileName = syncSettings.fileName) {
 		const requestId = ++syncGitInspectionRequestId;
 
 		if (folderPath.trim().length === 0) {
@@ -338,7 +352,7 @@
 
 		isInspectingSyncGit = true;
 
-		const result = await inspectWorkspaceSyncGit(folderPath);
+		const result = await inspectWorkspaceSyncGit(folderPath, fileName);
 
 		if (requestId !== syncGitInspectionRequestId) {
 			return;
@@ -377,6 +391,7 @@
 		}
 
 		persistSyncSettings({ ...syncSettings, fileName: target.value });
+		void inspectSyncGitRepository(syncSettings.folderPath, target.value);
 	}
 
 	async function handleSyncFolderSelect() {
@@ -528,6 +543,7 @@
 
 		syncPayload = payload;
 		syncStatus = syncMessages.statuses.saved.replace('{fileName}', syncSettings.fileName);
+		void inspectSyncGitRepository(syncSettings.folderPath);
 	}
 
 	async function handleLoadFile() {
@@ -552,6 +568,7 @@
 		if (await importEncryptedRegistryPayload(readResult.content)) {
 			syncPayload = readResult.content;
 			syncStatus = syncMessages.statuses.loaded.replace('{fileName}', syncSettings.fileName);
+			void inspectSyncGitRepository(syncSettings.folderPath);
 		}
 	}
 
@@ -573,7 +590,13 @@
 		});
 
 		try {
-			const result = await runWorkspaceSyncGit(syncSettings.folderPath, syncSettings.fileName, action);
+			const credential = await resolveActiveWorkspaceGithubCredential();
+			const result = await runWorkspaceSyncGit(
+				syncSettings.folderPath,
+				syncSettings.fileName,
+				action,
+				credential
+			);
 
 			if (!result.ok) {
 				syncError = result.error;
@@ -586,6 +609,34 @@
 			appOperation.finish();
 			isBusy = false;
 		}
+	}
+
+	async function resolveActiveWorkspaceGithubCredential(): Promise<ProjectRepositoryGitCredentialInput | null> {
+		const registryResult = readWorkspaceRegistryFromBrowser();
+
+		if (!registryResult.ok || registryResult.registry.activeWorkspaceId === null) {
+			return null;
+		}
+
+		const workspace =
+			registryResult.registry.workspaces.find(
+				(candidate) => candidate.id === registryResult.registry.activeWorkspaceId
+			) ?? null;
+
+		if (workspace === null) {
+			return null;
+		}
+
+		const vaultResult = await openEnvironmentVaultSessionFromWorkspaceUnlock(
+			workspace.id,
+			workspace.path
+		);
+
+		if (!vaultResult.ok) {
+			return null;
+		}
+
+		return resolveDefaultGithubTokenCredential(vaultResult.vault);
 	}
 
 	function getSyncGitOutcomeMessage(outcome: WorkspaceSyncGitRunOutcome) {
@@ -631,12 +682,16 @@
 		});
 		const unsubscribeSyncSettings = subscribeSyncSettings((nextSettings) => {
 			const previousFolderPath = syncSettings.folderPath;
+			const previousFileName = syncSettings.fileName;
 
 			syncSettings = nextSettings;
 			syncFolderPathDisplay = formatWorkspacePathForDisplay(nextSettings.folderPath);
 
-			if (nextSettings.folderPath !== previousFolderPath) {
-				void inspectSyncGitRepository(nextSettings.folderPath);
+			if (
+				nextSettings.folderPath !== previousFolderPath ||
+				nextSettings.fileName !== previousFileName
+			) {
+				void inspectSyncGitRepository(nextSettings.folderPath, nextSettings.fileName);
 			}
 		});
 

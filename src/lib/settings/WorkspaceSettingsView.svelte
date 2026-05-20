@@ -400,7 +400,7 @@
 									<button
 										class="workduck-button workduck-button-secondary"
 										type="button"
-										disabled={!workspaceRepositoryCanRunRemoteAction(workspace.id)}
+										disabled={!workspaceRepositoryCanRunRemoteAction(workspace.id, 'fetch')}
 										onclick={() => runWorkspaceRepositoryGitAction(workspace.id, 'fetch')}
 									>
 										{getWorkspaceRepositoryGitActionLabel(
@@ -417,7 +417,7 @@
 									<button
 										class="workduck-button workduck-button-secondary"
 										type="button"
-										disabled={!workspaceRepositoryCanRunRemoteAction(workspace.id)}
+										disabled={!workspaceRepositoryCanRunRemoteAction(workspace.id, 'pull')}
 										onclick={() => runWorkspaceRepositoryGitAction(workspace.id, 'pull')}
 									>
 										{getWorkspaceRepositoryGitActionLabel(
@@ -434,7 +434,7 @@
 									<button
 										class="workduck-button workduck-button-secondary"
 										type="button"
-										disabled={!workspaceRepositoryCanRunRemoteAction(workspace.id)}
+										disabled={!workspaceRepositoryCanRunRemoteAction(workspace.id, 'push')}
 										onclick={() => runWorkspaceRepositoryGitAction(workspace.id, 'push')}
 									>
 										{getWorkspaceRepositoryGitActionLabel(

@@ -1,5 +1,8 @@
 import type { ProjectRepositoryOperation } from './project-board-operations';
-import { getRepositoryOperationLabel } from './project-board-operations';
+import {
+	getRepositoryOperationLabel,
+	type ProjectRepositoryGitAction
+} from './project-board-operations';
 import type { ProjectRepositoryGitStatus } from './project-board-selectors';
 import type { ProjectRepositoryLinkRecord } from './project-registry';
 
@@ -77,13 +80,27 @@ export function canRunRemoteProjectRepositoryGitAction(
 	repository: ProjectRepositoryLinkRecord,
 	gitStatus: ProjectRepositoryGitStatus | undefined,
 	isRepositoryPathInsideWorkspace: boolean,
-	isRepositoryBusy: boolean
+	isRepositoryBusy: boolean,
+	action: ProjectRepositoryGitAction
 ) {
-	return (
+	const canRunRemoteAction =
 		repository.path !== null &&
 		isRepositoryPathInsideWorkspace &&
 		gitStatus?.isGitRepository === true &&
 		gitStatus.hasRemote &&
-		!isRepositoryBusy
-	);
+		!isRepositoryBusy;
+
+	if (!canRunRemoteAction) {
+		return false;
+	}
+
+	if (action === 'fetch') {
+		return true;
+	}
+
+	if (action === 'pull') {
+		return gitStatus.behindCount > 0;
+	}
+
+	return gitStatus.aheadCount > 0;
 }

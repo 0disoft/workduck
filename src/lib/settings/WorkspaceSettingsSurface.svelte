@@ -12,6 +12,8 @@
 	import {
 		createWorkspacePasswordHash,
 	} from '$lib/workspaces/workspace-password';
+	import { resolveDefaultGithubTokenCredential } from '$lib/environment/github-credential';
+	import { openEnvironmentVaultSessionFromWorkspaceUnlock } from '$lib/environment/environment-vault-session-loader';
 	import {
 		selectWorkspacePath,
 		validateWorkspacePath
@@ -28,6 +30,7 @@
 		pullWorkspaceRepositoryGit,
 		pushWorkspaceRepositoryGit,
 		type WorkspaceRepositoryGithubVisibility,
+		type WorkspaceRepositoryGitCredentialInput,
 	} from '$lib/workspaces/workspace-repository-git';
 	import {
 		readWorkspaceRegistryFromBrowser,
@@ -299,8 +302,25 @@
 		return gitStatus === null || !gitStatus.ok || !gitStatus.isGitRepository;
 	}
 
-	function workspaceRepositoryCanRunRemoteAction(workspaceId: string) {
-		return workspaceRepositoryHasRemote(workspaceId) && !workspaceRepositoryGitBusy(workspaceId);
+	function workspaceRepositoryCanRunRemoteAction(
+		workspaceId: string,
+		action: WorkspaceRepositoryGitAction
+	) {
+		const gitStatus = getWorkspaceRepositoryGitStatus(workspaceId);
+
+		if (gitStatus?.ok !== true || !gitStatus.hasRemote || workspaceRepositoryGitBusy(workspaceId)) {
+			return false;
+		}
+
+		if (action === 'fetch') {
+			return true;
+		}
+
+		if (action === 'pull') {
+			return gitStatus.behindCount > 0;
+		}
+
+		return gitStatus.aheadCount > 0;
 	}
 
 	function getWorkspaceRepositoryGitActionLabel(
@@ -640,7 +660,11 @@
 	) {
 		const workspace = registry.workspaces.find((candidate) => candidate.id === workspaceId);
 
-		if (workspace === undefined || workspaceRepositoryGitBusy(workspaceId)) {
+		if (
+			workspace === undefined ||
+			workspaceRepositoryGitBusy(workspaceId) ||
+			!workspaceRepositoryCanRunRemoteAction(workspaceId, action)
+		) {
 			return;
 		}
 
@@ -650,12 +674,13 @@
 		workspaceRepositoryGitAction = action;
 
 		try {
+			const credential = await resolveWorkspaceRepositoryCredential(workspace);
 			const result =
 				action === 'fetch'
-					? await fetchWorkspaceRepositoryGit(workspace.path)
+					? await fetchWorkspaceRepositoryGit(workspace.path, credential)
 					: action === 'pull'
-						? await pullWorkspaceRepositoryGit(workspace.path)
-						: await pushWorkspaceRepositoryGit(workspace.path);
+						? await pullWorkspaceRepositoryGit(workspace.path, credential)
+						: await pushWorkspaceRepositoryGit(workspace.path, credential);
 
 			if (!result.ok) {
 				formError = result.error;
@@ -673,6 +698,21 @@
 			workspaceRepositoryGitActionId = null;
 			workspaceRepositoryGitAction = null;
 		}
+	}
+
+	async function resolveWorkspaceRepositoryCredential(
+		workspace: WorkspaceRegistry['workspaces'][number]
+	): Promise<WorkspaceRepositoryGitCredentialInput | null> {
+		const vaultResult = await openEnvironmentVaultSessionFromWorkspaceUnlock(
+			workspace.id,
+			workspace.path
+		);
+
+		if (!vaultResult.ok) {
+			return null;
+		}
+
+		return resolveDefaultGithubTokenCredential(vaultResult.vault);
 	}
 
 	function requestWorkspaceRemoveConfirmation(workspaceId: string) {
@@ -796,11 +836,15 @@
 		isPublishingWorkspaceRepository = true;
 
 		try {
+			const credential = await resolveWorkspaceRepositoryCredential(
+				workspaceRepositoryPublishCandidate
+			);
 			const result = await publishWorkspaceRepositoryToGithub({
 				path: workspaceRepositoryPublishCandidate.path,
 				repositoryName: workspaceRepositoryName,
 				commitMessage: workspaceRepositoryCommitMessage,
-				visibility: workspaceRepositoryVisibility
+				visibility: workspaceRepositoryVisibility,
+				credential
 			});
 
 			if (!result.ok) {

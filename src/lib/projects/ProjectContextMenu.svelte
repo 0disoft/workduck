@@ -8,6 +8,7 @@
 		readonly canCloneContextRepository: boolean;
 		readonly canInitializeContextRepository: boolean;
 		readonly canPublishContextRepository: boolean;
+		readonly canEditContextGithubCredential: boolean;
 		readonly onOpenFolder: () => Promise<void>;
 		readonly onEditDescription: () => void;
 		readonly onEditGithubCredential: () => void;
@@ -25,6 +26,7 @@
 		canCloneContextRepository,
 		canInitializeContextRepository,
 		canPublishContextRepository,
+		canEditContextGithubCredential,
 		onOpenFolder,
 		onEditDescription,
 		onEditGithubCredential,
@@ -62,14 +64,16 @@
 		>
 			Edit description
 		</button>
-		<button
-			class="workduck-context-menu-item"
-			type="button"
-			role="menuitem"
-			onclick={onEditGithubCredential}
-		>
-			GitHub credential
-		</button>
+		{#if canEditContextGithubCredential}
+			<button
+				class="workduck-context-menu-item"
+				type="button"
+				role="menuitem"
+				onclick={onEditGithubCredential}
+			>
+				GitHub credential
+			</button>
+		{/if}
 		<button class="workduck-context-menu-item" type="button" role="menuitem" onclick={onEditTags}>
 			Edit tags
 		</button>
@@ -125,14 +129,16 @@
 		<button class="workduck-context-menu-item" type="button" role="menuitem" onclick={onEditTags}>
 			Edit tags
 		</button>
-		<button
-			class="workduck-context-menu-item"
-			type="button"
-			role="menuitem"
-			onclick={onEditGithubCredential}
-		>
-			GitHub credential
-		</button>
+		{#if canEditContextGithubCredential}
+			<button
+				class="workduck-context-menu-item"
+				type="button"
+				role="menuitem"
+				onclick={onEditGithubCredential}
+			>
+				GitHub credential
+			</button>
+		{/if}
 		<button
 			class="workduck-context-menu-item workduck-context-menu-item-danger"
 			type="button"

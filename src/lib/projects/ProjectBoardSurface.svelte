@@ -575,7 +575,7 @@
 	}
 
 	function selectGroup(node: ProjectNodeRecord) {
-		selectedGroupId = node.id;
+		selectedGroupId = selectedGroupId === node.id ? null : node.id;
 		closeContextMenu();
 	}
 
@@ -635,6 +635,10 @@
 		node: ProjectNodeRecord,
 		repository: ProjectRepositoryLinkRecord
 	) {
+		if (selectedProject?.githubCredentialSecretId !== null && selectedProject !== null) {
+			return 'System Git';
+		}
+
 		return getRepositoryGithubCredentialDisplayName(
 			registry.nodes,
 			environmentVault,
@@ -642,6 +646,26 @@
 			node,
 			repository
 		);
+	}
+
+	function childGithubCredentialMenuIsAvailable() {
+		return selectedProject?.githubCredentialSecretId === null;
+	}
+
+	function canEditContextGithubCredential() {
+		const target = contextMenu?.target ?? null;
+
+		if (target === null) {
+			return false;
+		}
+
+		if (target.type === 'node') {
+			const node = getProjectContextMenuNode(registry.nodes, target);
+
+			return node?.kind === 'project' || childGithubCredentialMenuIsAvailable();
+		}
+
+		return childGithubCredentialMenuIsAvailable();
 	}
 
 	function resolveRepositoryGithubCredentialOrSetError(
@@ -700,12 +724,16 @@
 		);
 	}
 
-	function canRunRemoteRepositoryGitAction(repository: ProjectRepositoryLinkRecord) {
+	function canRunRemoteRepositoryGitAction(
+		repository: ProjectRepositoryLinkRecord,
+		action: ProjectRepositoryGitAction
+	) {
 		return canRunRemoteProjectRepositoryGitAction(
 			repository,
 			repositoryGitStatusById[repository.id],
 			repository.path !== null && isRepositoryPathInsideWorkspace(repository.path),
-			isRepositoryBusy(repository.id)
+			isRepositoryBusy(repository.id),
+			action
 		);
 	}
 
@@ -893,6 +921,7 @@
 	{canCloneContextRepository}
 	{canInitializeContextRepository}
 	{canPublishContextRepository}
+	canEditContextGithubCredential={canEditContextGithubCredential()}
 	{getDeleteDialogTitle}
 	{getDeleteDialogText}
 	{getDeleteLocalFolderLabel}
