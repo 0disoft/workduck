@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { onMount, tick } from 'svelte';
 
 	import { getWorkduckMessages } from '$lib/i18n/workduck-language';
 	import {
@@ -10,6 +10,7 @@
 		readAppearanceSettingsFromBrowser,
 		subscribeAppearanceSettings
 	} from '$lib/settings/appearance-storage';
+	import PageTitleRow from '$lib/ui/PageTitleRow.svelte';
 	import type { WorkspaceRecord } from '$lib/workspaces/workspace-registry';
 	import {
 		createEmptyAgentRegistry,
@@ -17,6 +18,15 @@
 		type AgentRegistry
 	} from '$lib/agents/agent-registry';
 	import { readAgentRegistry, subscribeAgentRegistry } from '$lib/agents/agent-registry-storage';
+	import {
+		createEmptyPersonaRegistry,
+		type PersonaRecord,
+		type PersonaRegistry
+	} from '$lib/personas/persona-registry';
+	import {
+		readPersonaRegistry,
+		subscribePersonaRegistry
+	} from '$lib/personas/persona-registry-storage';
 	import {
 		createEmptyReferenceRegistry,
 		type ReferenceRecord,
@@ -35,10 +45,11 @@
 	import { readSkillRegistry, subscribeSkillRegistry } from '$lib/skills/skill-registry-storage';
 
 	import {
+		archiveQueueWorkOrder,
 		createDefaultReportReviews,
 		createManualQueueWorkOrder,
+		createQueueResultReportFileNameFromLabel,
 		createQueueWorkOrderFileName,
-		createQueueWorkOrderFileNameFromLabel,
 		createQueueWorkOrderFromReportReview,
 		defaultQueueWorkPriority,
 		normalizeQueueWorkPriority,
@@ -46,6 +57,7 @@
 		parseQueueResultReport,
 		parseQueueWorkOrder,
 		readQueueArtifactExecutionState,
+		readQueueArtifactId,
 		readQueueArtifactAgentName,
 		readQueueArtifactTitle,
 		readQueueWorkPriorityLabel,
@@ -61,11 +73,16 @@
 		updateQueueWorkOrderTask,
 		type WorkduckQueueReviewDecision
 	} from './queue-artifacts';
+	import { readEnvironmentVaultSession } from '$lib/environment/environment-vault-session';
+	import type { AgentExecutionError } from '$lib/agents/agent-execution';
+	import { executeQueueWorkOrder, type QueueExecutionError } from './queue-execution';
 	import {
+		deleteQueueFile,
 		ensureQueueFolder,
 		listQueueFiles,
 		readQueueFile,
 		updateQueueWorkOrderFile,
+		writeQueueResultReportFile,
 		writeQueueWorkOrderFile,
 		type QueueFileEntry,
 		type QueueFolderError
@@ -83,6 +100,7 @@
 	}
 
 	const QUEUE_AUTO_REFRESH_INTERVAL_MS = 30_000;
+	const QUEUE_CONTEXT_MENU_MARGIN_PX = 12;
 	const reviewDecisionOptions = [
 		{ value: 'approved' },
 		{ value: 'needs-work' },
@@ -100,12 +118,24 @@
 	type QueueExecutionFilter = (typeof queueExecutionFilterOptions)[number]['id'];
 	type QueueCardEntry = QueueFileEntry & {
 		readonly isRead: boolean;
+		readonly artifactId: string;
 		readonly agentName: string;
 		readonly title: string;
 		readonly priority: WorkduckQueueWorkPriority | null;
 		readonly executionState: WorkduckQueueExecutionState | null;
 	};
 	type WorkOrderDialogMode = 'create' | 'edit';
+	type QueueExecutionContext = {
+		readonly agents: readonly AgentRecord[];
+		readonly skills: readonly WorkduckSkillRecord[];
+		readonly references: readonly ReferenceRecord[];
+		readonly personas: readonly PersonaRecord[];
+	};
+	type QueueContextMenuState = {
+		readonly x: number;
+		readonly y: number;
+		readonly file: QueueCardEntry;
+	};
 
 	let { workspace, title, refreshSignal = 0 }: Props = $props();
 
@@ -134,13 +164,19 @@
 	let selectedManualReferenceIds = $state<string[]>([]);
 	let skillRegistry = $state<SkillRegistry>(createEmptySkillRegistry(''));
 	let agentRegistry = $state<AgentRegistry>(createEmptyAgentRegistry(''));
+	let personaRegistry = $state<PersonaRegistry>(createEmptyPersonaRegistry(''));
 	let referenceRegistry = $state<ReferenceRegistry>(createEmptyReferenceRegistry(''));
 	let isRefreshing = $state(false);
 	let isReading = $state(false);
 	let isWriting = $state(false);
+	let queueContextMenu = $state<QueueContextMenuState | null>(null);
+	let queueContextMenuElement = $state<HTMLElement | undefined>(undefined);
 	let ensureSignature = $state('');
 	let refreshSignature = $state(0);
 	let messages = $derived(getWorkduckMessages(appearanceSettings.languageId));
+	let queueItemCountLabel = $derived(
+		messages.queue.registeredCount.replace('{count}', files.length.toString())
+	);
 	let allSkills = $derived(getAllSkills(skillRegistry));
 	let allAgents = $derived(agentRegistry.agents);
 	let allReferences = $derived(referenceRegistry.references);
@@ -179,6 +215,9 @@
 	);
 	let canCreateManualWorkOrder = $derived(
 		manualWorkOrderTitle.trim().length > 0 && manualWorkOrderBody.trim().length > 0 && !isWriting
+	);
+	let canExecuteSelectedWorkOrder = $derived(
+		selectedWorkOrder !== null && selectedWorkOrder.status !== 'archived' && !isWriting
 	);
 	let workOrderDialogTitle = $derived(
 		workOrderDialogMode === 'create' ? messages.queue.newWork : messages.queue.editWork
@@ -231,17 +270,21 @@
 		selectedWorkOrderPath = null;
 		selectedProposal = null;
 		selectedProposalPath = null;
+		queueContextMenu = null;
+		queueContextMenuElement = undefined;
 		reviews = [];
 		readFilePaths = readQueueReadFilePaths(workspace.id);
 		queueExecutionFilter = 'all';
 		skillRegistry = createEmptySkillRegistry(workspace.id);
 		agentRegistry = createEmptyAgentRegistry(workspace.id);
+		personaRegistry = createEmptyPersonaRegistry(workspace.id);
 		referenceRegistry = createEmptyReferenceRegistry(workspace.id);
 		selectedManualSkillIds = [];
 		selectedManualAgentIds = [];
 		selectedManualReferenceIds = [];
 		void readSkillsForWorkspace(workspace.id, workspace.path);
 		void readAgentsForWorkspace(workspace.id, workspace.path);
+		void readPersonasForWorkspace(workspace.id, workspace.path);
 		void readReferencesForWorkspace(workspace.id, workspace.path);
 		void ensureQueueFolderForWorkspace();
 
@@ -251,6 +294,9 @@
 		const unsubscribeAgentRegistry = subscribeAgentRegistry(workspace.id, (nextRegistry) => {
 			agentRegistry = nextRegistry;
 		});
+		const unsubscribePersonaRegistry = subscribePersonaRegistry(workspace.id, (nextRegistry) => {
+			personaRegistry = nextRegistry;
+		});
 		const unsubscribeReferenceRegistry = subscribeReferenceRegistry(workspace.id, (nextRegistry) => {
 			referenceRegistry = nextRegistry;
 		});
@@ -258,6 +304,7 @@
 		return () => {
 			unsubscribeSkillRegistry();
 			unsubscribeAgentRegistry();
+			unsubscribePersonaRegistry();
 			unsubscribeReferenceRegistry();
 		};
 	});
@@ -269,6 +316,46 @@
 
 		refreshSignature = refreshSignal;
 		void refreshQueueFiles();
+	});
+
+	$effect(() => {
+		if (queueContextMenu === null || queueContextMenuElement === undefined) {
+			return;
+		}
+
+		void alignQueueContextMenuToViewport(queueContextMenu, queueContextMenuElement);
+	});
+
+	$effect(() => {
+		if (queueContextMenu === null || typeof window === 'undefined') {
+			return;
+		}
+
+		function handleGlobalPointerDown(event: PointerEvent) {
+			if (
+				queueContextMenuElement !== undefined &&
+				event.target instanceof Node &&
+				queueContextMenuElement.contains(event.target)
+			) {
+				return;
+			}
+
+			closeQueueContextMenu();
+		}
+
+		function handleGlobalContextKey(event: KeyboardEvent) {
+			if (event.key === 'Escape') {
+				closeQueueContextMenu();
+			}
+		}
+
+		window.addEventListener('pointerdown', handleGlobalPointerDown);
+		window.addEventListener('keydown', handleGlobalContextKey);
+
+		return () => {
+			window.removeEventListener('pointerdown', handleGlobalPointerDown);
+			window.removeEventListener('keydown', handleGlobalContextKey);
+		};
 	});
 
 	async function ensureQueueFolderForWorkspace() {
@@ -296,10 +383,37 @@
 		agentRegistry = result.registry;
 	}
 
+	async function readPersonasForWorkspace(workspaceId: string, workspacePath: string) {
+		const result = await readPersonaRegistry(workspaceId, workspacePath);
+
+		personaRegistry = result.registry;
+	}
+
 	async function readReferencesForWorkspace(workspaceId: string, workspacePath: string) {
 		const result = await readReferenceRegistry(workspaceId, workspacePath);
 
 		referenceRegistry = result.registry;
+	}
+
+	async function readExecutionContextForWorkspace(): Promise<QueueExecutionContext> {
+		const [skillResult, agentResult, referenceResult, personaResult] = await Promise.all([
+			readSkillRegistry(workspace.id, workspace.path),
+			readAgentRegistry(workspace.id, workspace.path),
+			readReferenceRegistry(workspace.id, workspace.path),
+			readPersonaRegistry(workspace.id, workspace.path)
+		]);
+
+		skillRegistry = skillResult.registry;
+		agentRegistry = agentResult.registry;
+		referenceRegistry = referenceResult.registry;
+		personaRegistry = personaResult.registry;
+
+		return {
+			agents: agentResult.registry.agents,
+			skills: getAllSkills(skillResult.registry),
+			references: referenceResult.registry.references,
+			personas: personaResult.registry.personas
+		};
 	}
 
 	async function refreshQueueFiles(options: { readonly silent?: boolean } = {}) {
@@ -467,6 +581,114 @@
 		status = null;
 	}
 
+	function clearQueueSelectionForPath(relativePath: string) {
+		if (selectedReportPath === relativePath) {
+			selectedReport = null;
+			selectedReportPath = null;
+			reviews = [];
+		}
+
+		if (selectedWorkOrderPath === relativePath) {
+			selectedWorkOrder = null;
+			selectedWorkOrderPath = null;
+		}
+
+		if (selectedProposalPath === relativePath) {
+			selectedProposal = null;
+			selectedProposalPath = null;
+		}
+
+		parseError = null;
+	}
+
+	function openQueueContextMenu(event: MouseEvent, file: QueueCardEntry) {
+		if (file.kind === 'unsupported' || isWriting) {
+			return;
+		}
+
+		event.preventDefault();
+		event.stopPropagation();
+		queueContextMenu = {
+			x: event.clientX,
+			y: event.clientY,
+			file
+		};
+	}
+
+	function closeQueueContextMenu() {
+		queueContextMenu = null;
+		queueContextMenuElement = undefined;
+	}
+
+	async function alignQueueContextMenuToViewport(
+		menuSnapshot: QueueContextMenuState,
+		menuElement: HTMLElement
+	) {
+		await tick();
+
+		if (
+			typeof window === 'undefined' ||
+			queueContextMenu !== menuSnapshot ||
+			queueContextMenuElement !== menuElement
+		) {
+			return;
+		}
+
+		const menuRect = menuElement.getBoundingClientRect();
+		const maxX = Math.max(
+			QUEUE_CONTEXT_MENU_MARGIN_PX,
+			window.innerWidth - menuRect.width - QUEUE_CONTEXT_MENU_MARGIN_PX
+		);
+		const maxY = Math.max(
+			QUEUE_CONTEXT_MENU_MARGIN_PX,
+			window.innerHeight - menuRect.height - QUEUE_CONTEXT_MENU_MARGIN_PX
+		);
+		const nextX = Math.min(Math.max(QUEUE_CONTEXT_MENU_MARGIN_PX, menuSnapshot.x), maxX);
+		const nextY = Math.min(Math.max(QUEUE_CONTEXT_MENU_MARGIN_PX, menuSnapshot.y), maxY);
+
+		if (nextX === menuSnapshot.x && nextY === menuSnapshot.y) {
+			return;
+		}
+
+		queueContextMenu = {
+			...menuSnapshot,
+			x: nextX,
+			y: nextY
+		};
+	}
+
+	async function handleDeleteContextQueueFile() {
+		const targetFile = queueContextMenu?.file ?? null;
+
+		if (targetFile === null || targetFile.kind === 'unsupported' || isWriting) {
+			return;
+		}
+
+		closeQueueContextMenu();
+		isWriting = true;
+		error = null;
+		parseError = null;
+		status = null;
+
+		try {
+			const result = await deleteQueueFile(workspace.path, targetFile.relativePath);
+
+			if (!result.ok) {
+				error = result.error;
+				return;
+			}
+
+			files = files.filter((file) => file.relativePath !== result.relativePath);
+			readFilePaths = readFilePaths.filter((relativePath) => relativePath !== result.relativePath);
+			writeQueueReadFilePaths(workspace.id, readFilePaths);
+			clearQueueSelectionForPath(result.relativePath);
+			status = messages.queue.deletedFile.replace('{relativePath}', result.relativePath);
+			dispatchQueueFilesChanged(workspace.id);
+		} finally {
+			isWriting = false;
+		}
+	}
+
 	function openNewWorkOrderDialog() {
 		isNewWorkOrderDialogOpen = true;
 		workOrderDialogMode = 'create';
@@ -547,6 +769,7 @@
 					return {
 						...file,
 						isRead: readFilePaths.includes(file.relativePath),
+						artifactId: '',
 						agentName: '',
 						title: file.fileName,
 						priority: null,
@@ -560,6 +783,7 @@
 				return {
 					...file,
 					isRead: readFilePaths.includes(file.relativePath),
+					artifactId: readResult.ok ? readQueueArtifactId(readResult.content) : '',
 					agentName: readResult.ok ? readQueueArtifactAgentName(readResult.content) : '',
 					title: artifactTitle.length > 0 ? artifactTitle : file.fileName,
 					priority:
@@ -659,7 +883,7 @@
 		try {
 			const result = await writeQueueWorkOrderFile(
 				workspace.path,
-				createQueueWorkOrderFileName(selectedReport),
+				createQueueWorkOrderFileName(workOrder),
 				serializeQueueArtifact(workOrder)
 			);
 
@@ -702,7 +926,7 @@
 			);
 			const result = await writeQueueWorkOrderFile(
 				workspace.path,
-				createQueueWorkOrderFileNameFromLabel(workOrder.ref.label),
+				createQueueWorkOrderFileName(workOrder),
 				serializeQueueArtifact(workOrder)
 			);
 
@@ -766,6 +990,66 @@
 		}
 
 		error = result.error;
+	}
+
+	async function handleExecuteWorkOrder() {
+		if (selectedWorkOrder === null || selectedWorkOrderPath === null || !canExecuteSelectedWorkOrder) {
+			return;
+		}
+
+		isWriting = true;
+		error = null;
+		parseError = null;
+		status = messages.queue.executing;
+
+		try {
+			const executionContext = await readExecutionContextForWorkspace();
+			const executionResult = await executeQueueWorkOrder({
+				workOrder: selectedWorkOrder,
+				agents: executionContext.agents,
+				vault: readEnvironmentVaultSession(workspace.id),
+				skills: executionContext.skills,
+				references: executionContext.references,
+				personas: executionContext.personas
+			});
+
+			if (!executionResult.ok) {
+				parseError = getQueueExecutionErrorMessage(executionResult.error);
+				status = null;
+				return;
+			}
+
+			const reportWriteResult = await writeQueueResultReportFile(
+				workspace.path,
+				createQueueResultReportFileNameFromLabel(executionResult.report.ref.label),
+				serializeQueueArtifact(executionResult.report)
+			);
+
+			if (!reportWriteResult.ok) {
+				error = reportWriteResult.error;
+				status = null;
+				return;
+			}
+
+			const archivedWorkOrder = archiveQueueWorkOrder(selectedWorkOrder);
+			const archiveResult = await updateQueueWorkOrderFile(
+				workspace.path,
+				selectedWorkOrderPath,
+				serializeQueueArtifact(archivedWorkOrder)
+			);
+
+			if (!archiveResult.ok) {
+				error = archiveResult.error;
+				status = null;
+				return;
+			}
+
+			selectedWorkOrder = archivedWorkOrder;
+			status = messages.queue.executedFile.replace('{relativePath}', reportWriteResult.relativePath);
+			await refreshQueueFiles({ silent: true });
+		} finally {
+			isWriting = false;
+		}
 	}
 
 	function getFileKindLabel(kind: QueueFileEntry['kind']) {
@@ -955,17 +1239,63 @@
 				return messages.queue.errors.fileReadFailed;
 			case 'queue-folder-file-write-failed':
 				return messages.queue.errors.fileWriteFailed;
+			case 'queue-folder-file-delete-failed':
+				return messages.queue.errors.fileDeleteFailed;
 			case 'queue-folder-file-already-exists':
 				return messages.queue.errors.fileAlreadyExists;
 			case 'queue-folder-unavailable':
 				return messages.queue.errors.unavailable;
 		}
 	}
+
+	function getQueueExecutionErrorMessage(executionError: QueueExecutionError) {
+		switch (executionError) {
+			case 'queue-execution-no-task':
+				return messages.queue.errors.executionNoTask;
+			case 'queue-execution-no-agent':
+				return messages.queue.errors.executionNoAgent;
+			case 'queue-execution-vault-locked':
+				return messages.queue.errors.executionVaultLocked;
+			default:
+				return getAgentExecutionErrorMessage(executionError);
+		}
+	}
+
+	function getAgentExecutionErrorMessage(agentError: AgentExecutionError) {
+		switch (agentError) {
+			case 'agent-execution-agent-not-found':
+				return messages.queue.errors.executionAgentNotFound;
+			case 'agent-execution-secret-not-found':
+				return messages.queue.errors.executionSecretNotFound;
+			case 'agent-execution-provider-unsupported':
+				return messages.queue.errors.executionProviderUnsupported;
+			case 'agent-execution-api-key-required':
+				return messages.queue.errors.executionApiKeyRequired;
+			case 'agent-execution-prompt-required':
+				return messages.queue.errors.executionPromptRequired;
+			case 'agent-execution-model-required':
+				return messages.queue.errors.executionModelRequired;
+			case 'agent-execution-request-invalid':
+				return messages.queue.errors.executionRequestInvalid;
+			case 'agent-execution-authentication-failed':
+				return messages.queue.errors.executionAuthenticationFailed;
+			case 'agent-execution-rate-limited':
+				return messages.queue.errors.executionRateLimited;
+			case 'agent-execution-provider-rejected':
+				return messages.queue.errors.executionProviderRejected;
+			case 'agent-execution-provider-unavailable':
+				return messages.queue.errors.executionProviderUnavailable;
+			case 'agent-execution-response-invalid':
+				return messages.queue.errors.executionResponseInvalid;
+			case 'agent-execution-unavailable':
+				return messages.queue.errors.executionUnavailable;
+		}
+	}
 </script>
 
 <section class="workduck-queue-panel" aria-label={messages.navigation.queue}>
 	<header class="workduck-page-header">
-		<h1 class="workduck-page-title">{title}</h1>
+		<PageTitleRow {title} meta={queueItemCountLabel} />
 		<div class="workduck-page-actions workduck-queue-header-actions">
 			<div class="workduck-queue-filters" aria-label={messages.queue.executionFilters}>
 				{#each queueExecutionFilterOptions as option}
@@ -1024,10 +1354,14 @@
 						disabled={isReading || file.kind === 'unsupported'}
 						aria-pressed={isSelectedQueueFile(file)}
 						onclick={() => handleQueueCardClick(file)}
+						oncontextmenu={(event) => openQueueContextMenu(event, file)}
 					>
 						<div class="workduck-queue-file-details">
 							<strong>{file.title}</strong>
 							<span>{getFileKindLabel(file.kind)}</span>
+							{#if file.kind === 'work-order' && file.artifactId.length > 0}
+								<span>{messages.queue.workOrderId}: {file.artifactId}</span>
+							{/if}
 							{#if file.agentName.length > 0}
 								<span>{file.agentName}</span>
 							{/if}
@@ -1145,10 +1479,16 @@
 				<div class="workduck-queue-review-header">
 					<div class="workduck-queue-file-details">
 						<strong>{selectedWorkOrder.ref.label}</strong>
-						{#if selectedWorkOrderPath !== null}
-							<span>{selectedWorkOrderPath}</span>
-						{/if}
+						<span>{messages.queue.workOrderId}: {selectedWorkOrder.ref.id}</span>
 					</div>
+					<button
+						class="workduck-button workduck-button-primary"
+						type="button"
+						disabled={!canExecuteSelectedWorkOrder}
+						onclick={handleExecuteWorkOrder}
+					>
+						{isWriting ? messages.queue.executing : messages.queue.executeWorkOrder}
+					</button>
 				</div>
 
 				<div class="workduck-queue-review-tasks">
@@ -1156,24 +1496,26 @@
 						<article class="workduck-queue-review-task">
 							<header class="workduck-queue-review-task-header">
 								<strong>{task.title}</strong>
-								<span
-									class="workduck-queue-task-pill workduck-queue-priority-pill"
-									data-priority={normalizeQueueWorkPriority(task.priority)}
-								>
-									{getQueuePriorityLabel(normalizeQueueWorkPriority(task.priority))}
-								</span>
-								{#if task.decision !== undefined}
-									<span class="workduck-queue-task-pill">{task.decision}</span>
-								{/if}
-								{#each getQueueTaskSkillLabels(task) as skillLabel (skillLabel)}
-									<span class="workduck-queue-task-pill">{skillLabel}</span>
-								{/each}
-								{#each getQueueTaskAgentLabels(task) as agentLabel (agentLabel)}
-									<span class="workduck-queue-task-pill">{agentLabel}</span>
-								{/each}
-								{#each getQueueTaskReferenceLabels(task) as referenceLabel (referenceLabel)}
-									<span class="workduck-queue-task-pill">{referenceLabel}</span>
-								{/each}
+								<div class="workduck-queue-review-task-pills">
+									<span
+										class="workduck-queue-task-pill workduck-queue-priority-pill"
+										data-priority={normalizeQueueWorkPriority(task.priority)}
+									>
+										{getQueuePriorityLabel(normalizeQueueWorkPriority(task.priority))}
+									</span>
+									{#if task.decision !== undefined}
+										<span class="workduck-queue-task-pill">{task.decision}</span>
+									{/if}
+									{#each getQueueTaskSkillLabels(task) as skillLabel (skillLabel)}
+										<span class="workduck-queue-task-pill">{skillLabel}</span>
+									{/each}
+									{#each getQueueTaskAgentLabels(task) as agentLabel (agentLabel)}
+										<span class="workduck-queue-task-pill">{agentLabel}</span>
+									{/each}
+									{#each getQueueTaskReferenceLabels(task) as referenceLabel (referenceLabel)}
+										<span class="workduck-queue-task-pill">{referenceLabel}</span>
+									{/each}
+								</div>
 								<button
 									class="workduck-button workduck-button-secondary workduck-queue-task-edit-button"
 									type="button"
@@ -1285,6 +1627,26 @@
 		</section>
 	</div>
 </section>
+
+{#if queueContextMenu !== null}
+	<div
+		class="workduck-context-menu"
+		role="menu"
+		aria-label={messages.queue.contextMenu}
+		style={`left: ${queueContextMenu.x}px; top: ${queueContextMenu.y}px;`}
+		bind:this={queueContextMenuElement}
+	>
+		<button
+			class="workduck-context-menu-item workduck-context-menu-item-danger"
+			type="button"
+			role="menuitem"
+			disabled={isWriting}
+			onclick={() => void handleDeleteContextQueueFile()}
+		>
+			{messages.common.remove}
+		</button>
+	</div>
+{/if}
 
 {#if isNewWorkOrderDialogOpen}
 	<div class="workduck-dialog-backdrop" role="presentation" onclick={(event) => {

@@ -1,6 +1,7 @@
 mod developer_processes;
 mod git_credential;
 mod git_path;
+mod llm_chat;
 mod project_folder;
 mod project_registry_store;
 mod project_repository_failure;
@@ -106,12 +107,15 @@ pub fn run() {
             project_folder::ensure_project_folder_path,
             project_folder::open_project_folder_path,
             project_folder::open_project_node_folder,
+            queue_folder::delete_queue_file,
             queue_folder::ensure_queue_folder,
             queue_folder::list_queue_files,
             queue_folder::open_queue_folder,
             queue_folder::read_queue_file,
             queue_folder::update_queue_work_order_file,
-            queue_folder::write_queue_work_order_file
+            queue_folder::write_queue_work_order_file,
+            queue_folder::write_queue_result_report_file,
+            llm_chat::run_llm_chat_completion
         ])
         .run(tauri::generate_context!())
         .expect("error while running Workduck");

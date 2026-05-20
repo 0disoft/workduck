@@ -346,11 +346,7 @@ export function normalizeQueueWorkPriority(value: unknown): WorkduckQueueWorkPri
 	return isQueueWorkPriority(value) ? value : defaultQueueWorkPriority;
 }
 
-export function createQueueWorkOrderFileName(report: WorkduckQueueResultReport) {
-	return createQueueWorkOrderFileNameFromLabel(`${report.ref.label}-review`);
-}
-
-export function createQueueWorkOrderFileNameFromLabel(label: string) {
+export function createQueueResultReportFileNameFromLabel(label: string) {
 	const timestamp = new Date().toISOString().replaceAll(/[:.]/g, '-');
 	const slug = normalizeQueueText(label)
 		.toLowerCase()
@@ -358,7 +354,18 @@ export function createQueueWorkOrderFileNameFromLabel(label: string) {
 		.replaceAll(/^-|-$/g, '')
 		.slice(0, 48);
 
-	return `${timestamp}-${slug || 'work-order'}.workduck-work-order.json`;
+	return `${timestamp}-${slug || 'report'}.workduck-report.json`;
+}
+
+export function createQueueWorkOrderFileName(workOrder: WorkduckQueueWorkOrder) {
+	return `${createQueueArtifactFileId(workOrder.ref.id, 'work-order')}.workduck-work-order.json`;
+}
+
+export function archiveQueueWorkOrder(workOrder: WorkduckQueueWorkOrder): WorkduckQueueWorkOrder {
+	return {
+		...workOrder,
+		status: 'archived'
+	};
 }
 
 export function serializeQueueArtifact(artifact: unknown) {
@@ -403,12 +410,45 @@ export function readQueueArtifactTitle(content: string) {
 	}
 }
 
+export function readQueueArtifactId(content: string) {
+	try {
+		const parsed: unknown = JSON.parse(content);
+
+		if (!isRecord(parsed) || !isRecord(parsed.ref)) {
+			return '';
+		}
+
+		return readOptionalText(parsed.ref.id);
+	} catch {
+		return '';
+	}
+}
+
 function createQueueId(prefix: string) {
-	if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
-		return `${prefix}_${crypto.randomUUID()}`;
+	const normalizedPrefix = prefix === 'work-order' ? 'wo' : prefix;
+
+	return `${normalizedPrefix}_${Date.now().toString(36)}_${createQueueRandomToken()}`;
+}
+
+function createQueueRandomToken() {
+	if (typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function') {
+		const values = new Uint8Array(10);
+		crypto.getRandomValues(values);
+
+		return Array.from(values, (value) => value.toString(36).padStart(2, '0')).join('').slice(0, 16);
 	}
 
-	return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+	return Math.random().toString(36).slice(2, 18);
+}
+
+function createQueueArtifactFileId(id: string, fallback: string) {
+	const normalizedId = normalizeQueueText(id)
+		.toLowerCase()
+		.replaceAll(/[^a-z0-9_-]+/g, '-')
+		.replaceAll(/^-|-$/g, '')
+		.slice(0, 80);
+
+	return normalizedId.length > 0 ? normalizedId : createQueueId(fallback);
 }
 
 function normalizeQueueText(value: string) {

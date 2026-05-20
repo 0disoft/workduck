@@ -4,8 +4,12 @@ import {
 	type AgentEvaluationSummary
 } from './agent-evaluation';
 
-export const AGENT_REGISTRY_VERSION = 3;
+export const AGENT_REGISTRY_VERSION = 4;
 export const AGENT_NAME_MAX_LENGTH = 120;
+export const AGENT_MODEL_ID_MAX_LENGTH = 160;
+
+export type AgentExecutionProvider = 'deepseek' | 'openai' | 'openrouter';
+export type AgentExecutionProviderInput = AgentExecutionProvider | 'auto';
 
 export type AgentRegistryError =
 	| 'agent-name-required'
@@ -19,6 +23,8 @@ export interface AgentRecord {
 	readonly name: string;
 	readonly environmentSecretId: string | null;
 	readonly personaId: string | null;
+	readonly executionProvider: AgentExecutionProvider | null;
+	readonly modelId: string | null;
 	readonly evaluationSummary: AgentEvaluationSummary;
 	readonly createdAt: string;
 	readonly updatedAt: string;
@@ -36,6 +42,8 @@ export interface AgentInput {
 	readonly name: string;
 	readonly environmentSecretId?: string | null;
 	readonly personaId?: string | null;
+	readonly executionProvider?: AgentExecutionProviderInput | null;
+	readonly modelId?: string | null;
 }
 
 export type AgentRegistryMutationResult =
@@ -79,6 +87,8 @@ export function upsertAgent(
 	const name = normalizeAgentName(input.name);
 	const environmentSecretId = normalizeRecordId(input.environmentSecretId);
 	const personaId = normalizeRecordId(input.personaId);
+	const executionProvider = normalizeAgentExecutionProvider(input.executionProvider);
+	const modelId = normalizeAgentModelId(input.modelId);
 	const agentId = normalizeRecordId(input.id ?? null);
 
 	if (name.length === 0) {
@@ -109,6 +119,8 @@ export function upsertAgent(
 		name,
 		environmentSecretId,
 		personaId,
+		executionProvider,
+		modelId,
 		evaluationSummary: matchingAgent?.evaluationSummary ?? createEmptyAgentEvaluationSummary(),
 		createdAt: matchingAgent?.createdAt ?? timestamp,
 		updatedAt: timestamp
@@ -194,7 +206,10 @@ export function assignPersonaToAgents(
 function normalizeAgentRegistry(value: unknown, workspaceId: string): AgentRegistry | null {
 	if (
 		!isObjectRecord(value) ||
-		(value.version !== AGENT_REGISTRY_VERSION && value.version !== 2 && value.version !== 1)
+		(value.version !== AGENT_REGISTRY_VERSION &&
+			value.version !== 3 &&
+			value.version !== 2 &&
+			value.version !== 1)
 	) {
 		return null;
 	}
@@ -243,6 +258,8 @@ function parseAgentRecord(value: unknown): AgentRecord | null {
 	const name = normalizeAgentName(readTrimmedString(value.name));
 	const environmentSecretId = normalizeRecordId(value.environmentSecretId);
 	const personaId = normalizeRecordId(value.personaId);
+	const executionProvider = normalizeAgentExecutionProvider(value.executionProvider);
+	const modelId = normalizeAgentModelId(value.modelId);
 	const evaluationSummary = normalizeAgentEvaluationSummary(value.evaluationSummary);
 	const createdAt = readTrimmedString(value.createdAt);
 	const updatedAt = readTrimmedString(value.updatedAt);
@@ -256,6 +273,8 @@ function parseAgentRecord(value: unknown): AgentRecord | null {
 		name,
 		environmentSecretId,
 		personaId,
+		executionProvider,
+		modelId,
 		evaluationSummary,
 		createdAt: createdAt.length === 0 ? updatedAt : createdAt,
 		updatedAt: updatedAt.length === 0 ? createdAt : updatedAt
@@ -276,6 +295,25 @@ function normalizeRecordId(value: unknown) {
 	const id = readTrimmedString(value);
 
 	return id.length === 0 ? null : id;
+}
+
+function normalizeAgentExecutionProvider(value: unknown): AgentExecutionProvider | null {
+	const provider = readTrimmedString(value).toLocaleLowerCase('en-US');
+
+	switch (provider) {
+		case 'deepseek':
+		case 'openai':
+		case 'openrouter':
+			return provider;
+		default:
+			return null;
+	}
+}
+
+function normalizeAgentModelId(value: unknown) {
+	const modelId = readTrimmedString(value).replace(/\s+/g, ' ').slice(0, AGENT_MODEL_ID_MAX_LENGTH);
+
+	return modelId.length === 0 ? null : modelId;
 }
 
 function createAgentId() {

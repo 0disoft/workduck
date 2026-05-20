@@ -15,6 +15,7 @@ export type QueueFolderError =
 	| 'queue-folder-file-not-found'
 	| 'queue-folder-file-read-failed'
 	| 'queue-folder-file-write-failed'
+	| 'queue-folder-file-delete-failed'
 	| 'queue-folder-file-already-exists'
 	| 'queue-folder-unavailable';
 
@@ -70,6 +71,16 @@ type QueueFileReadResult =
 			readonly ok: true;
 			readonly relativePath: string;
 			readonly content: string;
+	  }
+	| {
+			readonly ok: false;
+			readonly error: QueueFolderError;
+	  };
+
+type QueueFileDeleteResult =
+	| {
+			readonly ok: true;
+			readonly relativePath: string;
 	  }
 	| {
 			readonly ok: false;
@@ -203,6 +214,45 @@ export async function writeQueueWorkOrderFile(
 	}
 }
 
+export async function writeQueueResultReportFile(
+	workspacePath: string,
+	fileName: string,
+	content: string
+): Promise<QueueFileReadResult> {
+	const invoke = getTauriInvoke();
+
+	if (invoke === undefined) {
+		return { ok: false, error: 'queue-folder-unavailable' };
+	}
+
+	try {
+		const response = await invoke<QueueFileReadResponse>('write_queue_result_report_file', {
+			workspacePath: normalizeWorkspacePathForStorage(workspacePath),
+			fileName,
+			content
+		});
+
+		if (
+			response.ok &&
+			typeof response.relativePath === 'string' &&
+			typeof response.content === 'string'
+		) {
+			return {
+				ok: true,
+				relativePath: response.relativePath,
+				content: response.content
+			};
+		}
+
+		return {
+			ok: false,
+			error: isQueueFolderError(response.error) ? response.error : 'queue-folder-file-write-failed'
+		};
+	} catch {
+		return { ok: false, error: 'queue-folder-file-write-failed' };
+	}
+}
+
 export async function updateQueueWorkOrderFile(
 	workspacePath: string,
 	relativePath: string,
@@ -242,6 +292,38 @@ export async function updateQueueWorkOrderFile(
 	}
 }
 
+export async function deleteQueueFile(
+	workspacePath: string,
+	relativePath: string
+): Promise<QueueFileDeleteResult> {
+	const invoke = getTauriInvoke();
+
+	if (invoke === undefined) {
+		return { ok: false, error: 'queue-folder-unavailable' };
+	}
+
+	try {
+		const response = await invoke<QueueFileReadResponse>('delete_queue_file', {
+			workspacePath: normalizeWorkspacePathForStorage(workspacePath),
+			relativePath
+		});
+
+		if (response.ok && typeof response.relativePath === 'string') {
+			return {
+				ok: true,
+				relativePath: response.relativePath
+			};
+		}
+
+		return {
+			ok: false,
+			error: isQueueFolderError(response.error) ? response.error : 'queue-folder-file-delete-failed'
+		};
+	} catch {
+		return { ok: false, error: 'queue-folder-file-delete-failed' };
+	}
+}
+
 export function getQueueFolderErrorMessage(error: QueueFolderError) {
 	switch (error) {
 		case 'queue-folder-workspace-required':
@@ -272,6 +354,8 @@ export function getQueueFolderErrorMessage(error: QueueFolderError) {
 			return 'Queue file could not be read.';
 		case 'queue-folder-file-write-failed':
 			return 'Queue file could not be written.';
+		case 'queue-folder-file-delete-failed':
+			return 'Queue file could not be deleted.';
 		case 'queue-folder-file-already-exists':
 			return 'Queue file already exists.';
 		case 'queue-folder-unavailable':
@@ -341,6 +425,7 @@ function isQueueFolderError(value: unknown): value is QueueFolderError {
 		value === 'queue-folder-file-not-found' ||
 		value === 'queue-folder-file-read-failed' ||
 		value === 'queue-folder-file-write-failed' ||
+		value === 'queue-folder-file-delete-failed' ||
 		value === 'queue-folder-file-already-exists' ||
 		value === 'queue-folder-unavailable'
 	);

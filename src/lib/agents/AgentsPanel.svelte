@@ -40,10 +40,18 @@
 		createEmptyAgentRegistry,
 		removeAgent,
 		upsertAgent,
+		type AgentExecutionProviderInput,
 		type AgentRecord,
 		type AgentRegistry,
 		type AgentRegistryError
 	} from './agent-registry';
+	import {
+		CUSTOM_AGENT_MODEL_SELECTION,
+		agentProviderOptions,
+		findAgentModelPreset,
+		getAgentModelLabel,
+		getAgentModelPresetsForProvider
+	} from './agent-model-options';
 	import {
 		readAgentRegistry,
 		subscribeAgentRegistry,
@@ -53,6 +61,7 @@
 
 	interface Props {
 		readonly workspace: WorkspaceRecord;
+		readonly onAgentCountChange?: (count: number) => void;
 	}
 
 	interface LlmApiKeyOption {
@@ -60,7 +69,7 @@
 		readonly name: string;
 	}
 
-	let { workspace }: Props = $props();
+	let { workspace, onAgentCountChange }: Props = $props();
 
 	let appearanceSettings = $state<AppearanceSettings>(createDefaultAppearanceSettings());
 	let registry = $state<AgentRegistry>(createEmptyAgentRegistry(''));
@@ -69,6 +78,9 @@
 	let agentName = $state('');
 	let selectedEnvironmentSecretId = $state('');
 	let selectedPersonaId = $state('');
+	let selectedExecutionProvider = $state<AgentExecutionProviderInput>('auto');
+	let selectedModelSelection = $state('');
+	let selectedModelId = $state('');
 	let selectedAgentId = $state<string | null>(null);
 	let editingAgentId = $state<string | null>(null);
 	let isAgentFormOpen = $state(false);
@@ -91,6 +103,17 @@
 	let selectedAgentPersonaName = $derived(
 		selectedAgent === null ? null : getPersonaNameById(selectedAgent.personaId)
 	);
+	let selectedAgentProviderName = $derived(
+		selectedAgent === null
+			? null
+			: getProviderLabel(selectedAgent.executionProvider ?? 'auto')
+	);
+	let selectedAgentModelName = $derived(
+		selectedAgent === null
+			? null
+			: getAgentModelLabel(selectedAgent.modelId, messages.agents.defaultModel)
+	);
+	let agentModelPresetOptions = $derived(getAgentModelPresetsForProvider(selectedExecutionProvider));
 	let selectedEnvironmentSecretIsMissing = $derived(
 		selectedEnvironmentSecretId.length > 0 &&
 			!llmApiKeyOptions.some((option) => option.id === selectedEnvironmentSecretId)
@@ -129,6 +152,9 @@
 			agentName = '';
 			selectedEnvironmentSecretId = '';
 			selectedPersonaId = '';
+			selectedExecutionProvider = 'auto';
+			selectedModelSelection = '';
+			selectedModelId = '';
 			environmentVault = readEnvironmentVaultSession(workspaceId);
 			agentError = null;
 			status = null;
@@ -163,6 +189,10 @@
 				unsubscribeEnvironmentVault();
 			};
 		});
+	});
+
+	$effect(() => {
+		onAgentCountChange?.(registry.agents.length);
 	});
 
 	async function readRegistryFromStorage(workspaceId: string, workspacePath: string) {
@@ -204,6 +234,9 @@
 		agentName = selectedAgent.name;
 		selectedEnvironmentSecretId = selectedAgent.environmentSecretId ?? '';
 		selectedPersonaId = selectedAgent.personaId ?? '';
+		selectedExecutionProvider = selectedAgent.executionProvider ?? 'auto';
+		selectedModelId = selectedAgent.modelId ?? '';
+		selectedModelSelection = resolveModelSelection(selectedModelId);
 		status = null;
 		agentError = null;
 	}
@@ -214,6 +247,9 @@
 		agentName = '';
 		selectedEnvironmentSecretId = '';
 		selectedPersonaId = '';
+		selectedExecutionProvider = 'auto';
+		selectedModelSelection = '';
+		selectedModelId = '';
 		agentError = null;
 	}
 
@@ -238,7 +274,9 @@
 				id: editingAgentId,
 				name: agentName,
 				environmentSecretId: selectedEnvironmentSecretId,
-				personaId: selectedPersonaId
+				personaId: selectedPersonaId,
+				executionProvider: selectedExecutionProvider,
+				modelId: selectedModelId
 			});
 
 			if (!mutation.ok) {
@@ -334,6 +372,51 @@
 		return personaRegistry.personas.find((persona) => persona.id === personaId)?.name ?? messages.common.missingPersona;
 	}
 
+	function getProviderLabel(provider: AgentExecutionProviderInput) {
+		return messages.agents.providers[provider];
+	}
+
+	function handleProviderChange(event: Event) {
+		const provider = (event.currentTarget as HTMLSelectElement).value;
+
+		selectedExecutionProvider = normalizeSelectedExecutionProvider(provider);
+		selectedModelSelection = '';
+		selectedModelId = '';
+	}
+
+	function handleModelSelectionChange(event: Event) {
+		const modelSelection = (event.currentTarget as HTMLSelectElement).value;
+
+		selectedModelSelection = modelSelection;
+
+		if (modelSelection !== CUSTOM_AGENT_MODEL_SELECTION) {
+			selectedModelId = modelSelection;
+		} else if (selectedModelId.length > 0 && findAgentModelPreset(selectedModelId) !== null) {
+			selectedModelId = '';
+		}
+	}
+
+	function normalizeSelectedExecutionProvider(provider: string): AgentExecutionProviderInput {
+		switch (provider) {
+			case 'deepseek':
+			case 'openai':
+			case 'openrouter':
+				return provider;
+			default:
+				return 'auto';
+		}
+	}
+
+	function resolveModelSelection(modelId: string) {
+		if (modelId.length === 0) {
+			return '';
+		}
+
+		return agentModelPresetOptions.some((option) => option.modelId === modelId)
+			? modelId
+			: CUSTOM_AGENT_MODEL_SELECTION;
+	}
+
 	function getEvaluationCriterionMessages(criterionId: AgentEvaluationCriterionId) {
 		return messages.agents.evaluation.criteria[criterionId];
 	}
@@ -409,6 +492,14 @@
 					<div>
 						<dt>{messages.common.persona}</dt>
 						<dd>{selectedAgentPersonaName}</dd>
+					</div>
+					<div>
+						<dt>{messages.agents.provider}</dt>
+						<dd>{selectedAgentProviderName}</dd>
+					</div>
+					<div>
+						<dt>{messages.agents.model}</dt>
+						<dd>{selectedAgentModelName}</dd>
 					</div>
 				</dl>
 
@@ -539,6 +630,52 @@
 						{/each}
 					</select>
 				</label>
+
+				<label class="workduck-form-field" for="agent-provider">
+					<span>{messages.agents.provider}</span>
+					<select
+						id="agent-provider"
+						class="workduck-select"
+						value={selectedExecutionProvider}
+						disabled={isSavingAgent}
+						onchange={handleProviderChange}
+					>
+						{#each agentProviderOptions as option (option.id)}
+							<option value={option.id}>{getProviderLabel(option.id)}</option>
+						{/each}
+					</select>
+				</label>
+
+				<label class="workduck-form-field" for="agent-model-preset">
+					<span>{messages.agents.model}</span>
+					<select
+						id="agent-model-preset"
+						class="workduck-select"
+						value={selectedModelSelection}
+						disabled={isSavingAgent}
+						onchange={handleModelSelectionChange}
+					>
+						<option value="">{messages.agents.defaultModel}</option>
+						{#each agentModelPresetOptions as option (`${option.provider}:${option.modelId}`)}
+							<option value={option.modelId}>{option.label} ({option.modelId})</option>
+						{/each}
+						<option value={CUSTOM_AGENT_MODEL_SELECTION}>{messages.agents.customModel}</option>
+					</select>
+				</label>
+
+				{#if selectedModelSelection === CUSTOM_AGENT_MODEL_SELECTION}
+					<label class="workduck-form-field" for="agent-model-id">
+						<span>{messages.agents.modelId}</span>
+						<input
+							id="agent-model-id"
+							class="workduck-input"
+							type="text"
+							bind:value={selectedModelId}
+							autocomplete="off"
+							disabled={isSavingAgent}
+						/>
+					</label>
+				{/if}
 
 				<div class="workduck-dialog-actions">
 					<button class="workduck-button workduck-button-secondary" type="button" onclick={clearAgentForm}>

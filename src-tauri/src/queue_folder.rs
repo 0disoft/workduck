@@ -43,6 +43,8 @@ pub enum QueueFolderError {
     FileReadFailed,
     #[serde(rename = "queue-folder-file-write-failed")]
     FileWriteFailed,
+    #[serde(rename = "queue-folder-file-delete-failed")]
+    FileDeleteFailed,
     #[serde(rename = "queue-folder-file-already-exists")]
     FileAlreadyExists,
 }
@@ -230,6 +232,46 @@ pub fn write_queue_work_order_file(
 }
 
 #[tauri::command]
+pub fn write_queue_result_report_file(
+    workspace_path: String,
+    file_name: String,
+    content: String,
+) -> QueueFileReadResult {
+    let workspace_root = match validate_workspace_root(&workspace_path) {
+        Ok(workspace_root) => workspace_root,
+        Err(error) => return invalid_file_read(error),
+    };
+    let queue_root = match ensure_queue_root(&workspace_root) {
+        Ok(queue_root) => queue_root,
+        Err(error) => return invalid_file_read(error),
+    };
+    let safe_file_name = match validate_report_file_name(&file_name) {
+        Ok(file_name) => file_name,
+        Err(error) => return invalid_file_read(error),
+    };
+    let relative_path = format!("{REPORTS_DIRECTORY_NAME}/{safe_file_name}");
+    let file_path = queue_root.join(REPORTS_DIRECTORY_NAME).join(&safe_file_name);
+
+    match OpenOptions::new()
+        .write(true)
+        .create_new(true)
+        .open(&file_path)
+        .and_then(|mut file| file.write_all(content.as_bytes()))
+    {
+        Ok(_) => QueueFileReadResult {
+            ok: true,
+            relative_path: Some(relative_path),
+            content: Some(content),
+            error: None,
+        },
+        Err(error) if error.kind() == io::ErrorKind::AlreadyExists => {
+            invalid_file_read(QueueFolderError::FileAlreadyExists)
+        }
+        Err(_) => invalid_file_read(QueueFolderError::FileWriteFailed),
+    }
+}
+
+#[tauri::command]
 pub fn update_queue_work_order_file(
     workspace_path: String,
     relative_path: String,
@@ -270,6 +312,36 @@ pub fn update_queue_work_order_file(
             invalid_file_read(QueueFolderError::FileNotFound)
         }
         Err(_) => invalid_file_read(QueueFolderError::FileWriteFailed),
+    }
+}
+
+#[tauri::command]
+pub fn delete_queue_file(workspace_path: String, relative_path: String) -> QueueFileReadResult {
+    let workspace_root = match validate_workspace_root(&workspace_path) {
+        Ok(workspace_root) => workspace_root,
+        Err(error) => return invalid_file_read(error),
+    };
+    let queue_root = match ensure_queue_root(&workspace_root) {
+        Ok(queue_root) => queue_root,
+        Err(error) => return invalid_file_read(error),
+    };
+    let normalized_relative_path = normalize_relative_path(&relative_path);
+    let file_path = match resolve_queue_file_path(&queue_root, &normalized_relative_path) {
+        Ok(file_path) => file_path,
+        Err(error) => return invalid_file_read(error),
+    };
+
+    match fs::remove_file(&file_path) {
+        Ok(_) => QueueFileReadResult {
+            ok: true,
+            relative_path: Some(normalized_relative_path),
+            content: None,
+            error: None,
+        },
+        Err(error) if error.kind() == io::ErrorKind::NotFound => {
+            invalid_file_read(QueueFolderError::FileNotFound)
+        }
+        Err(_) => invalid_file_read(QueueFolderError::FileDeleteFailed),
     }
 }
 
@@ -452,6 +524,21 @@ fn validate_work_order_file_name(file_name: &str) -> Result<String, QueueFolderE
 
     if trimmed_file_name.is_empty()
         || !trimmed_file_name.ends_with(WORK_ORDER_FILE_SUFFIX)
+        || trimmed_file_name.contains('/')
+        || trimmed_file_name.contains('\\')
+        || trimmed_file_name.contains("..")
+    {
+        return Err(QueueFolderError::FileInvalid);
+    }
+
+    Ok(trimmed_file_name.to_string())
+}
+
+fn validate_report_file_name(file_name: &str) -> Result<String, QueueFolderError> {
+    let trimmed_file_name = file_name.trim();
+
+    if trimmed_file_name.is_empty()
+        || !trimmed_file_name.ends_with(REPORT_FILE_SUFFIX)
         || trimmed_file_name.contains('/')
         || trimmed_file_name.contains('\\')
         || trimmed_file_name.contains("..")

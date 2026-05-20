@@ -170,6 +170,21 @@ a {
 	line-height: 1.2;
 }
 
+.workduck-page-title-row {
+	display: flex;
+	min-width: 0;
+	align-items: baseline;
+	gap: 10px;
+}
+
+.workduck-page-title-meta {
+	min-width: 0;
+	color: var(--workduck-color-muted);
+	font-size: var(--workduck-font-size-sm);
+	font-weight: 700;
+	line-height: 1.2;
+}
+
 .workduck-page-actions {
 	display: flex;
 	min-width: 0;
@@ -429,15 +444,18 @@ a {
 }
 
 .workduck-queue-review-task-header {
-	display: flex;
+	display: grid;
 	min-width: 0;
-	align-items: center;
-	justify-content: space-between;
-	gap: 10px;
+	grid-template-columns: minmax(0, 1fr) auto;
+	grid-template-areas:
+		"title action"
+		"pills action";
+	align-items: start;
+	gap: 8px 10px;
 }
 
 .workduck-queue-review-task-header strong {
-	flex: 1 1 auto;
+	grid-area: title;
 	min-width: 0;
 	overflow: hidden;
 	color: var(--workduck-color-text);
@@ -447,15 +465,29 @@ a {
 	white-space: nowrap;
 }
 
+.workduck-queue-review-task-pills {
+	display: block;
+	grid-area: pills;
+	min-width: 0;
+	max-width: 100%;
+}
+
 .workduck-queue-task-pill {
-	flex: 0 0 auto;
+	display: inline-flex;
+	max-width: 100%;
+	width: fit-content;
+	align-items: center;
 	border: 1px solid oklch(var(--workduck-oklch-accent) / 0.66);
 	border-radius: 999px;
 	background: oklch(var(--workduck-oklch-accent) / 0.14);
 	color: var(--workduck-color-accent);
+	overflow: hidden;
+	margin: 0 6px 6px 0;
 	padding: 2px 8px;
 	font-size: var(--workduck-font-size-xs);
 	font-weight: 800;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 
 .workduck-queue-priority-pill[data-priority='low'] {
@@ -477,6 +509,7 @@ a {
 }
 
 .workduck-queue-task-edit-button {
+	grid-area: action;
 	flex: 0 0 auto;
 }
 
