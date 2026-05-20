@@ -155,7 +155,7 @@
 					environmentVault = nextVault;
 				}
 			);
-			void openEnvironmentVaultFromWorkspaceSession(workspaceId);
+			void openEnvironmentVaultFromWorkspaceSession(workspaceId, workspace.path);
 
 			return () => {
 				unsubscribeRegistry();
@@ -177,9 +177,9 @@
 		personaRegistry = (await readPersonaRegistry(workspaceId, workspacePath)).registry;
 	}
 
-	async function openEnvironmentVaultFromWorkspaceSession(workspaceId: string) {
+	async function openEnvironmentVaultFromWorkspaceSession(workspaceId: string, workspacePath: string) {
 		const sequence = ++environmentVaultOpenSequence;
-		const result = await openEnvironmentVaultSessionFromWorkspaceUnlock(workspaceId);
+		const result = await openEnvironmentVaultSessionFromWorkspaceUnlock(workspaceId, workspacePath);
 
 		if (sequence !== environmentVaultOpenSequence || !result.ok) {
 			return;

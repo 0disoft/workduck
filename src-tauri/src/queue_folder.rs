@@ -373,6 +373,11 @@ fn collect_known_queue_files(
         }
 
         let file_name = entry.file_name().to_string_lossy().into_owned();
+
+        if is_queue_placeholder_file(&file_name) {
+            continue;
+        }
+
         let kind = classify_queue_file(child_dir, &file_name).unwrap_or(QueueFileKind::Unsupported);
 
         files.push(QueueFileEntry {
@@ -383,6 +388,10 @@ fn collect_known_queue_files(
     }
 
     Ok(())
+}
+
+fn is_queue_placeholder_file(file_name: &str) -> bool {
+    file_name.starts_with('.')
 }
 
 fn classify_queue_file(child_dir: &str, file_name: &str) -> Option<QueueFileKind> {

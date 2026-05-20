@@ -3,7 +3,7 @@ import {
 	type EnvironmentVault
 } from './environment-vault';
 import {
-	readEnvironmentVaultEnvelope,
+	readEnvironmentVaultEnvelopeForWorkspace,
 	type EnvironmentVaultStorageError
 } from './environment-vault-storage';
 import {
@@ -37,7 +37,8 @@ export type EnvironmentVaultSessionOpenResult =
 	  };
 
 export async function openEnvironmentVaultSessionFromWorkspaceUnlock(
-	workspaceId: string
+	workspaceId: string,
+	workspacePath?: string
 ): Promise<EnvironmentVaultSessionOpenResult> {
 	const currentVault = readEnvironmentVaultSession(workspaceId);
 
@@ -49,7 +50,7 @@ export async function openEnvironmentVaultSessionFromWorkspaceUnlock(
 		};
 	}
 
-	const envelopeResult = readEnvironmentVaultEnvelope(workspaceId);
+	const envelopeResult = await readEnvironmentVaultEnvelopeForWorkspace(workspaceId, workspacePath);
 
 	if (!envelopeResult.ok) {
 		return {

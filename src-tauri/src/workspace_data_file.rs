@@ -3,11 +3,16 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use crate::workspace_repository_gitignore::ensure_secrets_sync_gitignore_policy;
+
 const WORKDUCK_DIRECTORY_NAME: &str = ".workduck";
+const SECRETS_SYNC_FILE_NAME: &str = "secrets.sync.json";
 const WORKSPACE_DATA_FILE_MAX_BYTES: u64 = 1_048_576;
 const ALLOWED_WORKSPACE_DATA_FILES: &[&str] = &[
     "agents.json",
     "personas.json",
+    "references.json",
+    "secrets.sync.json",
     "skills.json",
     "workspace.json",
 ];
@@ -61,7 +66,12 @@ pub fn read_workspace_data_file(
     workspace_path: String,
     file_name: String,
 ) -> WorkspaceDataFileReadResponse {
-    let file_path = match resolve_workspace_data_file_path(&workspace_path, &file_name, false) {
+    let workspace_root = match validate_workspace_root(&workspace_path) {
+        Ok(workspace_root) => workspace_root,
+        Err(error) => return invalid_read(error),
+    };
+
+    let file_path = match resolve_workspace_data_file_path(&workspace_root, &file_name, false) {
         Ok(file_path) => file_path,
         Err(error) => return invalid_read(error),
     };
@@ -98,7 +108,18 @@ pub fn write_workspace_data_file(
         return invalid_write(WorkspaceDataFileError::FileTooLarge);
     }
 
-    let file_path = match resolve_workspace_data_file_path(&workspace_path, &file_name, true) {
+    let normalized_file_name = match validate_workspace_data_file_name(&file_name) {
+        Ok(file_name) => file_name.to_string(),
+        Err(error) => return invalid_write(error),
+    };
+
+    let workspace_root = match validate_workspace_root(&workspace_path) {
+        Ok(workspace_root) => workspace_root,
+        Err(error) => return invalid_write(error),
+    };
+
+    let file_path = match resolve_workspace_data_file_path(&workspace_root, &normalized_file_name, true)
+    {
         Ok(file_path) => file_path,
         Err(error) => return invalid_write(error),
     };
@@ -110,10 +131,18 @@ pub fn write_workspace_data_file(
     }
 
     match fs::rename(&temporary_path, &file_path) {
-        Ok(_) => WorkspaceDataFileWriteResponse {
-            ok: true,
-            error: None,
-        },
+        Ok(_) => {
+            if normalized_file_name == SECRETS_SYNC_FILE_NAME
+                && ensure_secrets_sync_gitignore_policy(&workspace_root).is_err()
+            {
+                return invalid_write(WorkspaceDataFileError::FileWriteFailed);
+            }
+
+            WorkspaceDataFileWriteResponse {
+                ok: true,
+                error: None,
+            }
+        }
         Err(_) => {
             let _ = fs::remove_file(&temporary_path);
             invalid_write(WorkspaceDataFileError::FileWriteFailed)
@@ -122,11 +151,10 @@ pub fn write_workspace_data_file(
 }
 
 fn resolve_workspace_data_file_path(
-    workspace_path: &str,
+    workspace_root: &Path,
     file_name: &str,
     create_root: bool,
 ) -> Result<PathBuf, WorkspaceDataFileError> {
-    let workspace_root = validate_workspace_root(workspace_path)?;
     let normalized_file_name = validate_workspace_data_file_name(file_name)?;
     let workduck_root = workspace_root.join(WORKDUCK_DIRECTORY_NAME);
 

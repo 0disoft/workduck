@@ -1,6 +1,8 @@
 export type WorkspaceDataFileName =
 	| 'agents.json'
 	| 'personas.json'
+	| 'references.json'
+	| 'secrets.sync.json'
 	| 'skills.json'
 	| 'workspace.json';
 

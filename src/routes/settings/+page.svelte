@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { page } from '$app/state';
-	import { onMount } from 'svelte';
+	import { onMount, type Component } from 'svelte';
 
 	import { getWorkduckMessages } from '$lib/i18n/workduck-language';
 	import {
@@ -18,8 +18,7 @@
 		type SettingsTabId
 	} from '$lib/settings/settings-tabs';
 
-	type SettingsPanelComponent =
-		typeof import('$lib/settings/AppearanceSettingsPanel.svelte').default;
+	type SettingsPanelComponent = Component<Record<string, never>>;
 	type LoadedSettingsPanels = Partial<Record<SettingsTabId, SettingsPanelComponent>>;
 
 	let activeSettingsTab = $derived(normalizeSettingsTabId(page.url.searchParams.get('tab')));

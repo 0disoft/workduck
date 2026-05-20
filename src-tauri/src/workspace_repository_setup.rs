@@ -9,9 +9,12 @@ use std::{
 #[cfg(target_os = "windows")]
 use std::os::windows::process::CommandExt;
 
+use crate::workspace_repository_gitignore::ensure_workduck_gitignore as ensure_workduck_gitignore_policy;
+
 const PROJECTS_DIRECTORY_NAME: &str = "projects";
 const QUEUE_DIRECTORY_NAME: &str = "queue";
 const WORKDUCK_DIRECTORY_NAME: &str = ".workduck";
+const PACKAGE_JSON_FILE_NAME: &str = "package.json";
 const QUEUE_REPORTS_DIRECTORY_NAME: &str = "reports";
 const QUEUE_WORK_ORDERS_DIRECTORY_NAME: &str = "work-orders";
 const QUEUE_PROPOSALS_DIRECTORY_NAME: &str = "proposals";
@@ -20,26 +23,19 @@ const WORKSPACE_COMMAND_POLL_INTERVAL: Duration = Duration::from_millis(100);
 #[cfg(target_os = "windows")]
 const CREATE_NO_WINDOW: u32 = 0x08000000;
 
-const WORKDUCK_GITIGNORE_BLOCK_MARKER: &str = "# BEGIN WORKDUCK WORKSPACE";
-const WORKDUCK_GITIGNORE_BLOCK: &str = "\
-# BEGIN WORKDUCK WORKSPACE
-/projects/*
-!/projects/
-!/projects/.gitkeep
-
-/.mustflow/cache/
-/.mustflow/state/
-/.mustflow/backups/
-
-/.workduck/*.local.json
-/.workduck/secrets*.json
-
-.DS_Store
-Thumbs.db
-.vscode/
-.zed/
-# END WORKDUCK WORKSPACE
-";
+const WORKSPACE_PACKAGE_JSON: &str = r#"{
+  "private": true,
+  "scripts": {
+    "mf": "mf",
+    "mustflow:check": "mf version --check",
+    "mustflow:update:dry-run": "bun update mustflow && mf update --dry-run",
+    "mustflow:update:apply": "bun update mustflow && mf update --apply"
+  },
+  "devDependencies": {
+    "mustflow": "latest"
+  }
+}
+"#;
 
 #[derive(serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -79,6 +75,8 @@ pub enum WorkspaceRepositorySetupError {
     MustflowTimedOut,
     #[serde(rename = "workspace-repository-mustflow-failed")]
     MustflowFailed,
+    #[serde(rename = "workspace-repository-mustflow-package-failed")]
+    MustflowPackageFailed,
     #[serde(rename = "workspace-repository-gitignore-failed")]
     GitignoreFailed,
 }
@@ -281,79 +279,76 @@ fn ensure_git_repository(workspace_root: &Path) -> Result<bool, WorkspaceReposit
 }
 
 fn ensure_mustflow(workspace_root: &Path) -> Result<bool, WorkspaceRepositorySetupError> {
+    let mut changed = false;
+
     match fs::symlink_metadata(workspace_root.join(".mustflow")) {
         Ok(metadata) => {
             if metadata.file_type().is_symlink() || !metadata.is_dir() {
                 return Err(WorkspaceRepositorySetupError::LayoutInvalid);
             }
-
-            return Ok(false);
         }
         Err(error) if error.kind() == io::ErrorKind::NotFound => {}
         Err(error) => return Err(map_workspace_error(error)),
     }
 
-    let output = run_command(
-        workspace_root,
-        "mf",
-        &[
-            "init",
-            "--yes",
-            "--merge",
-            "--profile",
-            "product",
-            "--locale",
-            "en",
-        ],
-        WORKSPACE_COMMAND_TIMEOUT,
-        WorkspaceRepositorySetupError::MustflowUnavailable,
-        WorkspaceRepositorySetupError::MustflowTimedOut,
-        WorkspaceRepositorySetupError::MustflowFailed,
-    )?;
+    if !workspace_root.join(".mustflow").exists() {
+        let output = run_command(
+            workspace_root,
+            "mf",
+            &[
+                "init",
+                "--yes",
+                "--merge",
+                "--profile",
+                "product",
+                "--locale",
+                "en",
+            ],
+            WORKSPACE_COMMAND_TIMEOUT,
+            WorkspaceRepositorySetupError::MustflowUnavailable,
+            WorkspaceRepositorySetupError::MustflowTimedOut,
+            WorkspaceRepositorySetupError::MustflowFailed,
+        )?;
 
-    if output.status.success() {
-        Ok(true)
-    } else {
-        Err(WorkspaceRepositorySetupError::MustflowFailed)
+        if !output.status.success() {
+            return Err(WorkspaceRepositorySetupError::MustflowFailed);
+        }
+
+        changed = true;
     }
+
+    if ensure_mustflow_package_metadata(workspace_root)? {
+        changed = true;
+    }
+
+    Ok(changed)
 }
 
-fn ensure_workduck_gitignore(workspace_root: &Path) -> Result<bool, WorkspaceRepositorySetupError> {
-    let gitignore_path = workspace_root.join(".gitignore");
+fn ensure_mustflow_package_metadata(
+    workspace_root: &Path,
+) -> Result<bool, WorkspaceRepositorySetupError> {
+    let package_json_path = workspace_root.join(PACKAGE_JSON_FILE_NAME);
 
-    match fs::symlink_metadata(&gitignore_path) {
+    match fs::symlink_metadata(&package_json_path) {
         Ok(metadata) => {
             if metadata.file_type().is_symlink() || metadata.is_dir() {
                 return Err(WorkspaceRepositorySetupError::LayoutInvalid);
             }
+
+            Ok(false)
         }
         Err(error) if error.kind() == io::ErrorKind::NotFound => {
-            fs::write(&gitignore_path, WORKDUCK_GITIGNORE_BLOCK)
-                .map_err(|_| WorkspaceRepositorySetupError::GitignoreFailed)?;
-            return Ok(true);
+            fs::write(&package_json_path, WORKSPACE_PACKAGE_JSON)
+                .map_err(|_| WorkspaceRepositorySetupError::MustflowPackageFailed)?;
+            Ok(true)
         }
-        Err(error) => return Err(map_workspace_error(error)),
+        Err(error) => Err(map_workspace_error(error)),
     }
+}
 
-    let content = fs::read_to_string(&gitignore_path)
-        .map_err(|_| WorkspaceRepositorySetupError::GitignoreFailed)?;
-
-    if content.contains(WORKDUCK_GITIGNORE_BLOCK_MARKER) {
-        return Ok(false);
-    }
-
-    let mut next_content = content;
-
-    if !next_content.ends_with('\n') {
-        next_content.push('\n');
-    }
-
-    next_content.push('\n');
-    next_content.push_str(WORKDUCK_GITIGNORE_BLOCK);
-    fs::write(&gitignore_path, next_content)
-        .map_err(|_| WorkspaceRepositorySetupError::GitignoreFailed)?;
-
-    Ok(true)
+fn ensure_workduck_gitignore(workspace_root: &Path) -> Result<bool, WorkspaceRepositorySetupError> {
+    ensure_workduck_gitignore_policy(workspace_root)
+        .map_err(|_| WorkspaceRepositorySetupError::GitignoreFailed)
 }
 
 fn run_command(

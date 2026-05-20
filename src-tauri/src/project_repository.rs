@@ -1,7 +1,8 @@
 use std::{
-    fs, io,
+    fs,
+    io::{self, Read},
     path::{Path, PathBuf},
-    process::{Command, Output, Stdio},
+    process::{Child, Command, Output, Stdio},
     thread,
     time::{Duration, Instant},
 };
@@ -9,14 +10,20 @@ use std::{
 use base64::{Engine as _, engine::general_purpose::STANDARD};
 use zeroize::Zeroize;
 
+use crate::project_repository_failure::{
+    classify_git_clone_failure, classify_git_fetch_failure, classify_git_pull_failure,
+    classify_git_push_failure, classify_github_initial_commit_failure,
+    classify_github_publish_failure, CloneFailure,
+};
+use crate::project_repository_validation::{
+    resolve_group_path, validate_commit_message, validate_github_repository_name,
+    validate_github_visibility, validate_group_relative_path, validate_remote_url,
+    validate_repository_folder_name, validate_repository_path, validate_workspace_root,
+};
+
 #[cfg(target_os = "windows")]
 use std::os::windows::process::CommandExt;
 
-const PROJECTS_DIRECTORY_NAME: &str = "projects";
-const PROJECT_REPOSITORY_NAME_MAX_CHARS: usize = 120;
-const PROJECT_REPOSITORY_REMOTE_URL_MAX_CHARS: usize = 2048;
-const PROJECT_REPOSITORY_GITHUB_NAME_MAX_CHARS: usize = 100;
-const PROJECT_REPOSITORY_COMMIT_MESSAGE_MAX_CHARS: usize = 200;
 const PROJECT_REPOSITORY_CLONE_TIMEOUT: Duration = Duration::from_secs(900);
 const PROJECT_REPOSITORY_GIT_ACTION_TIMEOUT: Duration = Duration::from_secs(600);
 const PROJECT_REPOSITORY_CLONE_POLL_INTERVAL: Duration = Duration::from_millis(100);
@@ -59,8 +66,14 @@ pub enum ProjectRepositoryCloneError {
     CloneCommandUnavailable,
     #[serde(rename = "project-repository-clone-command-timed-out")]
     CloneCommandTimedOut,
-    #[serde(rename = "project-repository-clone-access-denied")]
-    CloneAccessDenied,
+    #[serde(rename = "project-repository-clone-token-invalid")]
+    CloneTokenInvalid,
+    #[serde(rename = "project-repository-clone-permission-denied")]
+    ClonePermissionDenied,
+    #[serde(rename = "project-repository-clone-repository-not-found")]
+    CloneRepositoryNotFound,
+    #[serde(rename = "project-repository-clone-organization-restricted")]
+    CloneOrganizationRestricted,
     #[serde(rename = "project-repository-clone-auth-required")]
     CloneAuthRequired,
     #[serde(rename = "project-repository-clone-failed")]
@@ -171,10 +184,6 @@ pub struct ProjectRepositoryGitMutation {
     error: Option<ProjectRepositoryGitError>,
 }
 
-struct CloneFailure {
-    error: ProjectRepositoryCloneError,
-}
-
 struct GitCommandFailure {
     error: ProjectRepositoryGitError,
 }
@@ -215,27 +224,86 @@ pub fn clone_project_repository(
     let clone_target = group_path.join(repository_folder_name);
 
     if fs::symlink_metadata(&clone_target).is_ok() {
+        if let Some(existing_clone_path) = resolve_existing_clone_target(&clone_target, &remote_url)
+        {
+            return valid_clone(existing_clone_path);
+        }
+
         return invalid(ProjectRepositoryCloneError::CloneTargetExists);
     }
 
     let credential = parse_git_credential(credential_kind, credential_value);
 
-    match run_git_clone(&group_path, &remote_url, &clone_target, credential.as_ref()) {
+    match run_git_clone_with_public_fallback(
+        &group_path,
+        &remote_url,
+        &clone_target,
+        credential.as_ref(),
+    ) {
         Ok(()) => {
             let normalized_clone_target =
                 fs::canonicalize(&clone_target).unwrap_or_else(|_| clone_target.clone());
 
-            ProjectRepositoryClone {
-                ok: true,
-                path: Some(normalized_clone_target.to_string_lossy().into_owned()),
-                error: None,
-            }
+            valid_clone(normalized_clone_target)
         }
         Err(failure) => {
             cleanup_failed_clone_target(&clone_target);
             invalid(failure.error)
         }
     }
+}
+
+fn resolve_existing_clone_target(clone_target: &Path, remote_url: &str) -> Option<PathBuf> {
+    let metadata = fs::symlink_metadata(clone_target).ok()?;
+
+    if metadata.file_type().is_symlink() || !metadata.is_dir() {
+        return None;
+    }
+
+    if !is_git_repository(clone_target).ok()? {
+        return None;
+    }
+
+    let origin_url = read_git_origin_remote_url(clone_target).ok()??;
+
+    if normalize_remote_url_for_comparison(&origin_url)
+        != normalize_remote_url_for_comparison(remote_url)
+    {
+        return None;
+    }
+
+    Some(fs::canonicalize(clone_target).unwrap_or_else(|_| clone_target.to_path_buf()))
+}
+
+fn run_git_clone_with_public_fallback(
+    group_path: &Path,
+    remote_url: &str,
+    clone_target: &Path,
+    credential: Option<&GitCredential>,
+) -> Result<(), CloneFailure> {
+    let Err(first_failure) = run_git_clone(group_path, remote_url, clone_target, credential) else {
+        return Ok(());
+    };
+
+    if credential.is_none() || !should_retry_clone_without_credential(&first_failure.error) {
+        return Err(first_failure);
+    }
+
+    cleanup_failed_clone_target(clone_target);
+
+    match run_git_clone(group_path, remote_url, clone_target, None) {
+        Ok(()) => Ok(()),
+        Err(_) => Err(first_failure),
+    }
+}
+
+fn should_retry_clone_without_credential(error: &ProjectRepositoryCloneError) -> bool {
+    matches!(
+        error,
+        ProjectRepositoryCloneError::CloneTokenInvalid
+            | ProjectRepositoryCloneError::CloneAuthRequired
+            | ProjectRepositoryCloneError::CloneFailed
+    )
 }
 
 #[tauri::command]
@@ -526,257 +594,6 @@ fn run_remote_project_repository_git_command(
     }
 }
 
-fn validate_workspace_root(path: &str) -> Result<PathBuf, ProjectRepositoryCloneError> {
-    let trimmed_path = path.trim();
-
-    if trimmed_path.is_empty() {
-        return Err(ProjectRepositoryCloneError::WorkspaceRequired);
-    }
-
-    let workspace_path = PathBuf::from(trimmed_path);
-
-    if !workspace_path.is_absolute() {
-        return Err(ProjectRepositoryCloneError::WorkspaceNotAbsolute);
-    }
-
-    let metadata = fs::metadata(&workspace_path).map_err(map_workspace_error)?;
-
-    if !metadata.is_dir() {
-        return Err(ProjectRepositoryCloneError::WorkspaceNotDirectory);
-    }
-
-    let normalized_path = fs::canonicalize(&workspace_path).map_err(map_workspace_error)?;
-    fs::read_dir(&normalized_path).map_err(map_workspace_error)?;
-
-    Ok(normalized_path)
-}
-
-fn validate_repository_path(path: &str) -> Result<PathBuf, ProjectRepositoryGitError> {
-    let trimmed_path = path.trim();
-
-    if trimmed_path.is_empty() {
-        return Err(ProjectRepositoryGitError::PathRequired);
-    }
-
-    let repository_path = PathBuf::from(trimmed_path);
-
-    if !repository_path.is_absolute() {
-        return Err(ProjectRepositoryGitError::PathNotAbsolute);
-    }
-
-    let metadata = fs::metadata(&repository_path).map_err(map_repository_path_error)?;
-
-    if !metadata.is_dir() {
-        return Err(ProjectRepositoryGitError::PathNotDirectory);
-    }
-
-    let normalized_path = fs::canonicalize(&repository_path).map_err(map_repository_path_error)?;
-    fs::read_dir(&normalized_path).map_err(map_repository_path_error)?;
-
-    Ok(normalized_path)
-}
-
-fn validate_group_relative_path(
-    relative_path: &str,
-) -> Result<Vec<String>, ProjectRepositoryCloneError> {
-    let trimmed_path = relative_path.trim().replace('\\', "/");
-
-    if trimmed_path.is_empty() {
-        return Err(ProjectRepositoryCloneError::GroupPathRequired);
-    }
-
-    let segments: Vec<String> = trimmed_path
-        .split('/')
-        .filter(|segment| !segment.is_empty())
-        .map(str::to_owned)
-        .collect();
-
-    if segments.len() < 3 || segments.first().map(String::as_str) != Some(PROJECTS_DIRECTORY_NAME) {
-        return Err(ProjectRepositoryCloneError::GroupPathInvalid);
-    }
-
-    if segments
-        .iter()
-        .any(|segment| validate_repository_folder_name(segment).is_err())
-    {
-        return Err(ProjectRepositoryCloneError::GroupPathInvalid);
-    }
-
-    Ok(segments)
-}
-
-fn resolve_group_path(
-    workspace_root: &Path,
-    group_segments: &[String],
-) -> Result<PathBuf, ProjectRepositoryCloneError> {
-    let mut group_path = workspace_root.to_path_buf();
-
-    for segment in group_segments {
-        group_path.push(segment);
-    }
-
-    let metadata = fs::symlink_metadata(&group_path).map_err(map_group_path_error)?;
-
-    if metadata.file_type().is_symlink() || !metadata.is_dir() {
-        return Err(ProjectRepositoryCloneError::GroupPathNotDirectory);
-    }
-
-    let normalized_group_path = fs::canonicalize(&group_path).map_err(map_group_path_error)?;
-
-    if !normalized_group_path.starts_with(workspace_root) {
-        return Err(ProjectRepositoryCloneError::GroupPathInvalid);
-    }
-
-    Ok(normalized_group_path)
-}
-
-fn validate_repository_folder_name(name: &str) -> Result<String, ProjectRepositoryCloneError> {
-    let trimmed_name = name.trim();
-
-    if trimmed_name.is_empty() {
-        return Err(ProjectRepositoryCloneError::NameRequired);
-    }
-
-    if trimmed_name.chars().count() > PROJECT_REPOSITORY_NAME_MAX_CHARS
-        || trimmed_name == "."
-        || trimmed_name == ".."
-        || trimmed_name.ends_with([' ', '.'])
-        || is_windows_reserved_name(trimmed_name)
-        || trimmed_name.chars().any(|character| {
-            matches!(
-                character,
-                '/' | '\\' | '<' | '>' | ':' | '"' | '|' | '?' | '*'
-            ) || character.is_control()
-        })
-    {
-        return Err(ProjectRepositoryCloneError::NameInvalid);
-    }
-
-    Ok(trimmed_name.to_owned())
-}
-
-fn validate_remote_url(remote_url: &str) -> Result<String, ProjectRepositoryCloneError> {
-    let trimmed_url = remote_url.trim();
-
-    if trimmed_url.is_empty() {
-        return Err(ProjectRepositoryCloneError::RemoteUrlRequired);
-    }
-
-    if trimmed_url.chars().count() > PROJECT_REPOSITORY_REMOTE_URL_MAX_CHARS
-        || trimmed_url
-            .chars()
-            .any(|character| character.is_whitespace() || character.is_control())
-    {
-        return Err(ProjectRepositoryCloneError::RemoteUrlInvalid);
-    }
-
-    if trimmed_url.contains("://") {
-        validate_scheme_remote_url(trimmed_url)?;
-    } else {
-        validate_scp_like_remote_url(trimmed_url)?;
-    }
-
-    Ok(trimmed_url.to_owned())
-}
-
-fn validate_github_repository_name(
-    repository_name: &str,
-) -> Result<String, ProjectRepositoryGitError> {
-    let trimmed_name = repository_name.trim().trim_end_matches(".git");
-
-    if trimmed_name.is_empty() {
-        return Err(ProjectRepositoryGitError::GithubRepoNameRequired);
-    }
-
-    let name_parts: Vec<&str> = trimmed_name.split('/').collect();
-
-    if name_parts.len() > 2
-        || trimmed_name.chars().count() > PROJECT_REPOSITORY_GITHUB_NAME_MAX_CHARS
-        || name_parts
-            .iter()
-            .any(|part| !is_valid_github_repository_name_part(part))
-    {
-        return Err(ProjectRepositoryGitError::GithubRepoNameInvalid);
-    }
-
-    Ok(trimmed_name.to_owned())
-}
-
-fn validate_commit_message(message: &str) -> Result<String, ProjectRepositoryGitError> {
-    let trimmed_message = message.trim();
-
-    if trimmed_message.is_empty() {
-        return Err(ProjectRepositoryGitError::GithubCommitMessageRequired);
-    }
-
-    if trimmed_message.chars().count() > PROJECT_REPOSITORY_COMMIT_MESSAGE_MAX_CHARS
-        || trimmed_message.chars().any(char::is_control)
-    {
-        return Err(ProjectRepositoryGitError::GithubCommitMessageInvalid);
-    }
-
-    Ok(trimmed_message.to_owned())
-}
-
-fn is_valid_github_repository_name_part(part: &str) -> bool {
-    !part.is_empty()
-        && part != "."
-        && part != ".."
-        && !part.starts_with('.')
-        && !part.ends_with('.')
-        && part.chars().all(|character| {
-            character.is_ascii_alphanumeric() || matches!(character, '-' | '_' | '.')
-        })
-}
-
-fn validate_github_visibility(visibility: &str) -> Result<&'static str, ProjectRepositoryGitError> {
-    match visibility.trim().to_ascii_lowercase().as_str() {
-        "private" => Ok("--private"),
-        "public" => Ok("--public"),
-        _ => Err(ProjectRepositoryGitError::GithubVisibilityInvalid),
-    }
-}
-
-fn validate_scheme_remote_url(remote_url: &str) -> Result<(), ProjectRepositoryCloneError> {
-    let Some((scheme, rest)) = remote_url.split_once("://") else {
-        return Err(ProjectRepositoryCloneError::RemoteUrlInvalid);
-    };
-    let scheme = scheme.to_ascii_lowercase();
-
-    if !matches!(scheme.as_str(), "https" | "http" | "ssh" | "git") {
-        return Err(ProjectRepositoryCloneError::RemoteUrlInvalid);
-    }
-
-    let Some((authority, path)) = rest.split_once('/') else {
-        return Err(ProjectRepositoryCloneError::RemoteUrlInvalid);
-    };
-
-    if authority.is_empty() || path.is_empty() {
-        return Err(ProjectRepositoryCloneError::RemoteUrlInvalid);
-    }
-
-    if matches!(scheme.as_str(), "https" | "http") && authority.contains('@') {
-        return Err(ProjectRepositoryCloneError::RemoteUrlInvalid);
-    }
-
-    Ok(())
-}
-
-fn validate_scp_like_remote_url(remote_url: &str) -> Result<(), ProjectRepositoryCloneError> {
-    let Some((authority, path)) = remote_url.split_once(':') else {
-        return Err(ProjectRepositoryCloneError::RemoteUrlInvalid);
-    };
-    let Some((user, host)) = authority.split_once('@') else {
-        return Err(ProjectRepositoryCloneError::RemoteUrlInvalid);
-    };
-
-    if user.is_empty() || host.is_empty() || host.contains('/') || path.is_empty() {
-        return Err(ProjectRepositoryCloneError::RemoteUrlInvalid);
-    }
-
-    Ok(())
-}
-
 fn run_git_clone(
     group_path: &Path,
     remote_url: &str,
@@ -795,80 +612,35 @@ fn run_git_clone(
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped());
+    clear_git_credential_environment(&mut command);
     apply_git_credential(&mut command, credential);
 
     #[cfg(target_os = "windows")]
     command.creation_flags(CREATE_NO_WINDOW);
 
-    let mut child = command.spawn().map_err(|error| CloneFailure {
+    let child = command.spawn().map_err(|error| CloneFailure {
         error: if error.kind() == io::ErrorKind::NotFound {
             ProjectRepositoryCloneError::CloneCommandUnavailable
         } else {
             ProjectRepositoryCloneError::CloneFailed
         },
     })?;
-    let started_at = Instant::now();
 
-    loop {
-        match child.try_wait() {
-            Ok(Some(_)) => {
-                let output = child.wait_with_output().map_err(|_| CloneFailure {
-                    error: ProjectRepositoryCloneError::CloneFailed,
-                })?;
-
-                return if output.status.success() {
-                    Ok(())
-                } else {
-                    Err(classify_git_clone_failure(&output))
-                };
+    let output =
+        wait_for_child_output(child, PROJECT_REPOSITORY_CLONE_TIMEOUT).map_err(|error| {
+            CloneFailure {
+                error: match error {
+                    GitChildWaitError::TimedOut => ProjectRepositoryCloneError::CloneCommandTimedOut,
+                    GitChildWaitError::Failed => ProjectRepositoryCloneError::CloneFailed,
+                },
             }
-            Ok(None) if started_at.elapsed() >= PROJECT_REPOSITORY_CLONE_TIMEOUT => {
-                let _ = child.kill();
-                let _ = child.wait();
+        })?;
 
-                return Err(CloneFailure {
-                    error: ProjectRepositoryCloneError::CloneCommandTimedOut,
-                });
-            }
-            Ok(None) => thread::sleep(PROJECT_REPOSITORY_CLONE_POLL_INTERVAL),
-            Err(_) => {
-                let _ = child.kill();
-                let _ = child.wait();
-
-                return Err(CloneFailure {
-                    error: ProjectRepositoryCloneError::CloneFailed,
-                });
-            }
-        }
-    }
-}
-
-fn classify_git_clone_failure(output: &Output) -> CloneFailure {
-    let mut output_text = String::new();
-    output_text.push_str(&String::from_utf8_lossy(&output.stdout));
-    output_text.push_str(&String::from_utf8_lossy(&output.stderr));
-    let normalized_output = output_text.to_ascii_lowercase();
-
-    let error = if normalized_output.contains("terminal prompts disabled")
-        || normalized_output.contains("authentication failed")
-        || normalized_output.contains("could not read username")
-        || normalized_output.contains("permission denied (publickey)")
-    {
-        ProjectRepositoryCloneError::CloneAuthRequired
-    } else if normalized_output.contains("repository not found")
-        || normalized_output.contains("the requested url returned error: 403")
-        || normalized_output.contains("the requested url returned error: 404")
-        || normalized_output.contains("access denied")
-        || normalized_output.contains("not authorized")
-    {
-        ProjectRepositoryCloneError::CloneAccessDenied
-    } else if normalized_output.contains("already exists and is not an empty directory") {
-        ProjectRepositoryCloneError::CloneTargetExists
+    if output.status.success() {
+        Ok(())
     } else {
-        ProjectRepositoryCloneError::CloneFailed
-    };
-
-    CloneFailure { error }
+        Err(classify_git_clone_failure(&output, credential.is_some()))
+    }
 }
 
 fn cleanup_failed_clone_target(clone_target: &Path) {
@@ -931,6 +703,10 @@ fn is_git_repository(repository_path: &Path) -> Result<bool, GitCommandFailure> 
 }
 
 fn has_git_remote(repository_path: &Path) -> Result<bool, GitCommandFailure> {
+    Ok(read_git_origin_remote_url(repository_path)?.is_some())
+}
+
+fn read_git_origin_remote_url(repository_path: &Path) -> Result<Option<String>, GitCommandFailure> {
     let output = run_git_command(
         repository_path,
         &["remote", "get-url", "origin"],
@@ -938,7 +714,21 @@ fn has_git_remote(repository_path: &Path) -> Result<bool, GitCommandFailure> {
         None,
     )?;
 
-    Ok(output.status.success() && !String::from_utf8_lossy(&output.stdout).trim().is_empty())
+    if !output.status.success() {
+        return Ok(None);
+    }
+
+    let remote_url = String::from_utf8_lossy(&output.stdout).trim().to_owned();
+
+    Ok((!remote_url.is_empty()).then_some(remote_url))
+}
+
+fn normalize_remote_url_for_comparison(remote_url: &str) -> String {
+    remote_url
+        .trim()
+        .trim_end_matches('/')
+        .trim_end_matches(".git")
+        .to_ascii_lowercase()
 }
 
 fn read_git_branch(repository_path: &Path) -> Result<Option<String>, GitCommandFailure> {
@@ -1082,34 +872,21 @@ fn apply_git_credential(command: &mut Command, credential: Option<&GitCredential
     authorization_value.zeroize();
 }
 
+fn clear_git_credential_environment(command: &mut Command) {
+    command
+        .env_remove("GIT_CONFIG_COUNT")
+        .env_remove("GIT_CONFIG_KEY_0")
+        .env_remove("GIT_CONFIG_VALUE_0")
+        .env_remove("GIT_ASKPASS")
+        .env_remove("SSH_ASKPASS");
+}
+
 fn apply_github_cli_credential(command: &mut Command, credential: Option<&GitCredential>) {
     let Some(GitCredential::GithubToken(token)) = credential else {
         return;
     };
 
     command.env("GH_TOKEN", token);
-}
-
-fn classify_github_initial_commit_failure(output: &Output) -> ProjectRepositoryGitError {
-    let normalized_output = normalize_git_output(output);
-
-    if normalized_output.contains("author identity unknown")
-        || normalized_output.contains("please tell me who you are")
-        || normalized_output.contains("unable to auto-detect email address")
-    {
-        ProjectRepositoryGitError::GithubCommitIdentityMissing
-    } else if normalized_output.contains("index.lock")
-        || normalized_output.contains("another git process")
-    {
-        ProjectRepositoryGitError::GithubCommitIndexLocked
-    } else if normalized_output.contains("hook declined")
-        || normalized_output.contains("pre-commit hook")
-        || normalized_output.contains("commit-msg hook")
-    {
-        ProjectRepositoryGitError::GithubCommitHookFailed
-    } else {
-        ProjectRepositoryGitError::GithubCommitFailed
-    }
 }
 
 fn run_git_command(
@@ -1127,46 +904,26 @@ fn run_git_command(
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped());
+    clear_git_credential_environment(&mut command);
     apply_git_credential(&mut command, credential);
 
     #[cfg(target_os = "windows")]
     command.creation_flags(CREATE_NO_WINDOW);
 
-    let mut child = command.spawn().map_err(|error| GitCommandFailure {
+    let child = command.spawn().map_err(|error| GitCommandFailure {
         error: if error.kind() == io::ErrorKind::NotFound {
             ProjectRepositoryGitError::CommandUnavailable
         } else {
             ProjectRepositoryGitError::CommandFailed
         },
     })?;
-    let started_at = Instant::now();
 
-    loop {
-        match child.try_wait() {
-            Ok(Some(_)) => {
-                return child.wait_with_output().map_err(|_| GitCommandFailure {
-                    error: ProjectRepositoryGitError::CommandFailed,
-                });
-            }
-            Ok(None) if started_at.elapsed() >= timeout => {
-                let _ = child.kill();
-                let _ = child.wait();
-
-                return Err(GitCommandFailure {
-                    error: ProjectRepositoryGitError::CommandTimedOut,
-                });
-            }
-            Ok(None) => thread::sleep(PROJECT_REPOSITORY_CLONE_POLL_INTERVAL),
-            Err(_) => {
-                let _ = child.kill();
-                let _ = child.wait();
-
-                return Err(GitCommandFailure {
-                    error: ProjectRepositoryGitError::CommandFailed,
-                });
-            }
-        }
-    }
+    wait_for_child_output(child, timeout).map_err(|error| GitCommandFailure {
+        error: match error {
+            GitChildWaitError::TimedOut => ProjectRepositoryGitError::CommandTimedOut,
+            GitChildWaitError::Failed => ProjectRepositoryGitError::CommandFailed,
+        },
+    })
 }
 
 fn run_gh_repo_create(
@@ -1193,131 +950,89 @@ fn run_gh_repo_create(
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped());
+    clear_git_credential_environment(&mut command);
+    command.env_remove("GH_TOKEN");
     apply_github_cli_credential(&mut command, credential);
 
     #[cfg(target_os = "windows")]
     command.creation_flags(CREATE_NO_WINDOW);
 
-    let mut child = command.spawn().map_err(|error| GitCommandFailure {
+    let child = command.spawn().map_err(|error| GitCommandFailure {
         error: if error.kind() == io::ErrorKind::NotFound {
             ProjectRepositoryGitError::GithubCliUnavailable
         } else {
             ProjectRepositoryGitError::GithubCreateFailed
         },
     })?;
+
+    wait_for_child_output(child, PROJECT_REPOSITORY_CLONE_TIMEOUT).map_err(|error| {
+        GitCommandFailure {
+            error: match error {
+                GitChildWaitError::TimedOut => ProjectRepositoryGitError::CommandTimedOut,
+                GitChildWaitError::Failed => ProjectRepositoryGitError::GithubCreateFailed,
+            },
+        }
+    })
+}
+
+enum GitChildWaitError {
+    TimedOut,
+    Failed,
+}
+
+fn wait_for_child_output(mut child: Child, timeout: Duration) -> Result<Output, GitChildWaitError> {
+    let stdout_reader = child.stdout.take().map(spawn_output_reader);
+    let stderr_reader = child.stderr.take().map(spawn_output_reader);
     let started_at = Instant::now();
 
     loop {
         match child.try_wait() {
-            Ok(Some(_)) => {
-                return child.wait_with_output().map_err(|_| GitCommandFailure {
-                    error: ProjectRepositoryGitError::GithubCreateFailed,
+            Ok(Some(status)) => {
+                let stdout = join_output_reader(stdout_reader);
+                let stderr = join_output_reader(stderr_reader);
+
+                return Ok(Output {
+                    status,
+                    stdout,
+                    stderr,
                 });
             }
-            Ok(None) if started_at.elapsed() >= PROJECT_REPOSITORY_CLONE_TIMEOUT => {
+            Ok(None) if started_at.elapsed() >= timeout => {
                 let _ = child.kill();
                 let _ = child.wait();
+                let _ = join_output_reader(stdout_reader);
+                let _ = join_output_reader(stderr_reader);
 
-                return Err(GitCommandFailure {
-                    error: ProjectRepositoryGitError::CommandTimedOut,
-                });
+                return Err(GitChildWaitError::TimedOut);
             }
             Ok(None) => thread::sleep(PROJECT_REPOSITORY_CLONE_POLL_INTERVAL),
             Err(_) => {
                 let _ = child.kill();
                 let _ = child.wait();
+                let _ = join_output_reader(stdout_reader);
+                let _ = join_output_reader(stderr_reader);
 
-                return Err(GitCommandFailure {
-                    error: ProjectRepositoryGitError::GithubCreateFailed,
-                });
+                return Err(GitChildWaitError::Failed);
             }
         }
     }
 }
 
-fn classify_git_push_failure(output: &Output) -> ProjectRepositoryGitError {
-    let mut output_text = String::new();
-    output_text.push_str(&String::from_utf8_lossy(&output.stdout));
-    output_text.push_str(&String::from_utf8_lossy(&output.stderr));
-    let normalized_output = output_text.to_ascii_lowercase();
-
-    if normalized_output.contains("terminal prompts disabled")
-        || normalized_output.contains("authentication failed")
-        || normalized_output.contains("could not read username")
-        || normalized_output.contains("permission denied")
-    {
-        ProjectRepositoryGitError::PushAuthRequired
-    } else if normalized_output.contains("src refspec")
-        || normalized_output.contains("does not match any")
-        || normalized_output.contains("no commits")
-    {
-        ProjectRepositoryGitError::PushEmpty
-    } else {
-        ProjectRepositoryGitError::PushFailed
-    }
+fn spawn_output_reader<T>(mut reader: T) -> thread::JoinHandle<Vec<u8>>
+where
+    T: Read + Send + 'static,
+{
+    thread::spawn(move || {
+        let mut output = Vec::new();
+        let _ = reader.read_to_end(&mut output);
+        output
+    })
 }
 
-fn classify_git_fetch_failure(output: &Output) -> ProjectRepositoryGitError {
-    let normalized_output = normalize_git_output(output);
-
-    if git_output_needs_authentication(&normalized_output) {
-        ProjectRepositoryGitError::FetchAuthRequired
-    } else {
-        ProjectRepositoryGitError::FetchFailed
-    }
-}
-
-fn classify_git_pull_failure(output: &Output) -> ProjectRepositoryGitError {
-    let normalized_output = normalize_git_output(output);
-
-    if git_output_needs_authentication(&normalized_output) {
-        ProjectRepositoryGitError::PullAuthRequired
-    } else if normalized_output.contains("not possible to fast-forward")
-        || normalized_output.contains("would be overwritten by merge")
-        || normalized_output.contains("local changes")
-        || normalized_output.contains("conflict")
-    {
-        ProjectRepositoryGitError::PullConflict
-    } else {
-        ProjectRepositoryGitError::PullFailed
-    }
-}
-
-fn classify_github_publish_failure(output: &Output) -> ProjectRepositoryGitError {
-    let normalized_output = normalize_git_output(output);
-
-    if normalized_output.contains("not logged into")
-        || normalized_output.contains("gh auth login")
-        || normalized_output.contains("authentication")
-        || normalized_output.contains("http 401")
-        || normalized_output.contains("http 403")
-    {
-        ProjectRepositoryGitError::GithubAuthRequired
-    } else if normalized_output.contains("remote origin already exists") {
-        ProjectRepositoryGitError::GithubRemoteExists
-    } else if normalized_output.contains("src refspec")
-        || normalized_output.contains("does not match any")
-        || normalized_output.contains("no commits")
-    {
-        ProjectRepositoryGitError::GithubEmpty
-    } else {
-        ProjectRepositoryGitError::GithubCreateFailed
-    }
-}
-
-fn normalize_git_output(output: &Output) -> String {
-    let mut output_text = String::new();
-    output_text.push_str(&String::from_utf8_lossy(&output.stdout));
-    output_text.push_str(&String::from_utf8_lossy(&output.stderr));
-
-    output_text.to_ascii_lowercase()
-}
-
-fn git_output_needs_authentication(normalized_output: &str) -> bool {
-    normalized_output.contains("terminal prompts disabled")
-        || normalized_output.contains("authentication failed")
-        || normalized_output.contains("could not read username")
-        || normalized_output.contains("permission denied")
+fn join_output_reader(reader: Option<thread::JoinHandle<Vec<u8>>>) -> Vec<u8> {
+    reader
+        .and_then(|reader| reader.join().ok())
+        .unwrap_or_default()
 }
 
 fn invalid(error: ProjectRepositoryCloneError) -> ProjectRepositoryClone {
@@ -1325,6 +1040,14 @@ fn invalid(error: ProjectRepositoryCloneError) -> ProjectRepositoryClone {
         ok: false,
         path: None,
         error: Some(error),
+    }
+}
+
+fn valid_clone(path: PathBuf) -> ProjectRepositoryClone {
+    ProjectRepositoryClone {
+        ok: true,
+        path: Some(path.to_string_lossy().into_owned()),
+        error: None,
     }
 }
 
@@ -1352,49 +1075,4 @@ fn invalid_git_mutation(error: ProjectRepositoryGitError) -> ProjectRepositoryGi
         ok: false,
         error: Some(error),
     }
-}
-
-fn map_workspace_error(error: io::Error) -> ProjectRepositoryCloneError {
-    match error.kind() {
-        io::ErrorKind::NotFound => ProjectRepositoryCloneError::WorkspaceNotFound,
-        io::ErrorKind::PermissionDenied => ProjectRepositoryCloneError::WorkspacePermissionDenied,
-        _ => ProjectRepositoryCloneError::WorkspaceUnreadable,
-    }
-}
-
-fn map_group_path_error(error: io::Error) -> ProjectRepositoryCloneError {
-    match error.kind() {
-        io::ErrorKind::NotFound => ProjectRepositoryCloneError::GroupPathNotFound,
-        io::ErrorKind::PermissionDenied => ProjectRepositoryCloneError::WorkspacePermissionDenied,
-        _ => ProjectRepositoryCloneError::WorkspaceUnreadable,
-    }
-}
-
-fn map_repository_path_error(error: io::Error) -> ProjectRepositoryGitError {
-    match error.kind() {
-        io::ErrorKind::NotFound => ProjectRepositoryGitError::PathNotFound,
-        io::ErrorKind::PermissionDenied => ProjectRepositoryGitError::PathPermissionDenied,
-        _ => ProjectRepositoryGitError::PathUnreadable,
-    }
-}
-
-fn is_windows_reserved_name(name: &str) -> bool {
-    let stem = name
-        .split('.')
-        .next()
-        .unwrap_or_default()
-        .trim_end_matches([' ', '.'])
-        .to_ascii_uppercase();
-
-    matches!(stem.as_str(), "CON" | "PRN" | "AUX" | "NUL")
-        || is_reserved_numbered_device(&stem, "COM")
-        || is_reserved_numbered_device(&stem, "LPT")
-}
-
-fn is_reserved_numbered_device(stem: &str, prefix: &str) -> bool {
-    let Some(suffix) = stem.strip_prefix(prefix) else {
-        return false;
-    };
-
-    suffix.len() == 1 && matches!(suffix.as_bytes()[0], b'1'..=b'9')
 }

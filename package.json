@@ -1,6 +1,6 @@
 {
   "name": "workduck",
-  "version": "1.2.5",
+  "version": "1.2.23",
   "private": true,
   "license": "0BSD",
   "type": "module",
@@ -8,14 +8,16 @@
     "packages/*"
   ],
   "scripts": {
-    "dev": "vite dev",
+    "dev": "node ./node_modules/vite/bin/vite.js dev --host 127.0.0.1",
     "build": "vite build",
     "desktop:dev": "tauri dev",
+    "desktop:preview": "bun run build && tauri dev --no-watch --config src-tauri/tauri.preview.conf.json",
     "desktop:build": "tauri build",
     "preview": "vite preview",
     "prepare": "svelte-kit sync || echo ''",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json && bun run check:packages",
-    "check:packages": "tsc -p packages/core/tsconfig.json --noEmit && tsc -p packages/schemas/tsconfig.json --noEmit && tsc -p packages/prompts/tsconfig.json --noEmit && tsc -p packages/agents/tsconfig.json --noEmit && tsc -p packages/workbench-engine/tsconfig.json --noEmit",
+    "check:packages": "tsgo -p packages/core/tsconfig.json --noEmit && tsgo -p packages/schemas/tsconfig.json --noEmit && tsgo -p packages/prompts/tsconfig.json --noEmit && tsgo -p packages/agents/tsconfig.json --noEmit && tsgo -p packages/workbench-engine/tsconfig.json --noEmit",
+    "check:packages:tsc": "tsc -p packages/core/tsconfig.json --noEmit && tsc -p packages/schemas/tsconfig.json --noEmit && tsc -p packages/prompts/tsconfig.json --noEmit && tsc -p packages/agents/tsconfig.json --noEmit && tsc -p packages/workbench-engine/tsconfig.json --noEmit",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch"
   },
   "devDependencies": {
@@ -26,8 +28,10 @@
     "@tauri-apps/cli": "latest",
     "@tauri-apps/plugin-dialog": "^2.7.1",
     "@types/node": "^25.8.0",
+    "@typescript/native-preview": "^7.0.0-dev.20260518.1",
     "bits-ui": "^2.18.1",
-    "mustflow": "latest",
+    "mustflow": "^2.18.20",
+    "pretendard": "^1.3.9",
     "svelte": "^5.55.7",
     "svelte-check": "^4.4.8",
     "tailwindcss": "^4.3.0",

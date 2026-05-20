@@ -29,9 +29,9 @@
 		type EnvironmentVaultError
 	} from './environment-vault';
 	import {
-		readEnvironmentVaultEnvelope,
-		subscribeEnvironmentVaultEnvelope,
-		writeEnvironmentVaultEnvelope
+		readEnvironmentVaultEnvelopeForWorkspace,
+		subscribeEnvironmentVaultEnvelopeForWorkspace,
+		writeEnvironmentVaultEnvelopeForWorkspace
 	} from './environment-vault-storage';
 	import {
 		clearEnvironmentVaultSession,
@@ -332,7 +332,11 @@
 				return;
 			}
 
-			const writeResult = writeEnvironmentVaultEnvelope(workspace.id, encryptResult.envelope);
+			const writeResult = await writeEnvironmentVaultEnvelopeForWorkspace(
+				workspace.id,
+				encryptResult.envelope,
+				workspace.path
+			);
 
 			if (!writeResult.ok) {
 				error = environmentMessages.errors.vaultSaveFailed;
@@ -409,28 +413,52 @@
 
 	$effect(() => {
 		const workspaceId = workspace.id;
+		const workspacePath = workspace.path;
 
 		return untrack(() => {
-			const initialEnvelope = readEnvironmentVaultEnvelope(workspaceId).envelope;
+			let isCurrentWorkspace = true;
 
-			resetVaultSession(initialEnvelope);
-			void tryOpenVaultWithWorkspaceSession(initialEnvelope);
-			const unsubscribeVault = subscribeEnvironmentVaultEnvelope(workspaceId, (nextEnvelope) => {
-				if (isBusy) {
+			resetVaultSession(null);
+			void readEnvironmentVaultEnvelopeForWorkspace(workspaceId, workspacePath).then(
+				(initialEnvelopeResult) => {
+					if (!isCurrentWorkspace) {
+						return;
+					}
+
+					if (!initialEnvelopeResult.ok) {
+						resetVaultSession(null);
+						error = environmentMessages.errors.vaultOperationFailed;
+						return;
+					}
+
+					resetVaultSession(initialEnvelopeResult.envelope);
+					void tryOpenVaultWithWorkspaceSession(initialEnvelopeResult.envelope);
+				}
+			);
+
+			const unsubscribeVault = subscribeEnvironmentVaultEnvelopeForWorkspace(
+				workspaceId,
+				workspacePath,
+				(nextEnvelope) => {
+					if (isBusy) {
+						vaultEnvelope = nextEnvelope;
+						return;
+					}
+
+					if (vault === null) {
+						resetVaultSession(nextEnvelope);
+						void tryOpenVaultWithWorkspaceSession(nextEnvelope);
+						return;
+					}
+
 					vaultEnvelope = nextEnvelope;
-					return;
 				}
+			);
 
-				if (vault === null) {
-					resetVaultSession(nextEnvelope);
-					void tryOpenVaultWithWorkspaceSession(nextEnvelope);
-					return;
-				}
-
-				vaultEnvelope = nextEnvelope;
-			});
-
-			return unsubscribeVault;
+			return () => {
+				isCurrentWorkspace = false;
+				unsubscribeVault();
+			};
 		});
 	});
 

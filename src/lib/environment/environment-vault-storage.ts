@@ -1,7 +1,13 @@
 import { isSecretVaultEnvelope, type SecretVaultEnvelope } from './secret-vault-crypto';
+import {
+	readWorkspaceDataFile,
+	workspaceDataFilesAreAvailable,
+	writeWorkspaceDataFile
+} from '$lib/workspaces/workspace-data-file';
 
 export const WORKDUCK_ENVIRONMENT_VAULT_STORAGE_KEY = 'workduck.environmentVaults.v1';
 export const WORKDUCK_ENVIRONMENT_VAULT_CHANGED_EVENT = 'workduck:environment-vault-changed';
+export const WORKDUCK_ENVIRONMENT_VAULT_FILE_NAME = 'secrets.sync.json';
 
 export type EnvironmentVaultStorageError =
 	| 'environment-vault-storage-read-failed'
@@ -87,6 +93,54 @@ export function writeEnvironmentVaultEnvelope(
 	}
 }
 
+export async function readEnvironmentVaultEnvelopeForWorkspace(
+	workspaceId: string,
+	workspacePath: string | null | undefined
+): Promise<EnvironmentVaultEnvelopeStorageResult> {
+	if (canUseWorkspaceVaultFile(workspacePath)) {
+		const fileResult = await readWorkspaceDataFile(
+			workspacePath.trim(),
+			WORKDUCK_ENVIRONMENT_VAULT_FILE_NAME
+		);
+
+		if (!fileResult.ok) {
+			return fileResult.error === 'workspace-data-unavailable'
+				? readEnvironmentVaultEnvelope(workspaceId)
+				: {
+						ok: false,
+						envelope: null,
+						error: 'environment-vault-storage-read-failed'
+					};
+		}
+
+		if (fileResult.content !== null) {
+			return parseWorkspaceVaultEnvelope(fileResult.content);
+		}
+	}
+
+	return readEnvironmentVaultEnvelope(workspaceId);
+}
+
+export async function writeEnvironmentVaultEnvelopeForWorkspace(
+	workspaceId: string,
+	envelope: SecretVaultEnvelope,
+	workspacePath: string | null | undefined
+): Promise<EnvironmentVaultEnvelopeWriteResult> {
+	if (canUseWorkspaceVaultFile(workspacePath)) {
+		const fileResult = await writeWorkspaceDataFile(
+			workspacePath.trim(),
+			WORKDUCK_ENVIRONMENT_VAULT_FILE_NAME,
+			`${JSON.stringify(envelope, null, 2)}\n`
+		);
+
+		if (!fileResult.ok && fileResult.error !== 'workspace-data-unavailable') {
+			return { ok: false, error: 'environment-vault-storage-write-failed' };
+		}
+	}
+
+	return writeEnvironmentVaultEnvelope(workspaceId, envelope);
+}
+
 export function subscribeEnvironmentVaultEnvelope(
 	workspaceId: string,
 	callback: (envelope: SecretVaultEnvelope | null) => void
@@ -114,6 +168,49 @@ export function subscribeEnvironmentVaultEnvelope(
 		}
 
 		callback(readEnvironmentVaultEnvelope(workspaceId).envelope);
+	}
+
+	window.addEventListener(WORKDUCK_ENVIRONMENT_VAULT_CHANGED_EVENT, handleVaultChanged);
+	window.addEventListener('storage', handleStorageChanged);
+
+	return () => {
+		window.removeEventListener(WORKDUCK_ENVIRONMENT_VAULT_CHANGED_EVENT, handleVaultChanged);
+		window.removeEventListener('storage', handleStorageChanged);
+	};
+}
+
+export function subscribeEnvironmentVaultEnvelopeForWorkspace(
+	workspaceId: string,
+	workspacePath: string | null | undefined,
+	callback: (envelope: SecretVaultEnvelope | null) => void
+): () => void {
+	if (typeof window === 'undefined') {
+		return () => {};
+	}
+
+	function handleVaultChanged(event: Event) {
+		const detail = (event as CustomEvent<EnvironmentVaultChangedDetail>).detail;
+
+		if (detail?.workspaceId !== workspaceId) {
+			return;
+		}
+
+		callback(detail.envelope);
+	}
+
+	function handleStorageChanged(event: StorageEvent) {
+		if (
+			event.storageArea !== window.localStorage ||
+			event.key !== WORKDUCK_ENVIRONMENT_VAULT_STORAGE_KEY
+		) {
+			return;
+		}
+
+		void readEnvironmentVaultEnvelopeForWorkspace(workspaceId, workspacePath).then((result) => {
+			if (result.ok) {
+				callback(result.envelope);
+			}
+		});
 	}
 
 	window.addEventListener(WORKDUCK_ENVIRONMENT_VAULT_CHANGED_EVENT, handleVaultChanged);
@@ -176,6 +273,38 @@ function dispatchEnvironmentVaultChanged(
 		new CustomEvent<EnvironmentVaultChangedDetail>(WORKDUCK_ENVIRONMENT_VAULT_CHANGED_EVENT, {
 			detail: { workspaceId, envelope }
 		})
+	);
+}
+
+function parseWorkspaceVaultEnvelope(content: string): EnvironmentVaultEnvelopeStorageResult {
+	try {
+		const value: unknown = JSON.parse(content);
+
+		if (!isSecretVaultEnvelope(value)) {
+			return {
+				ok: false,
+				envelope: null,
+				error: 'environment-vault-storage-read-failed'
+			};
+		}
+
+		return { ok: true, envelope: value };
+	} catch {
+		return {
+			ok: false,
+			envelope: null,
+			error: 'environment-vault-storage-read-failed'
+		};
+	}
+}
+
+function canUseWorkspaceVaultFile(
+	workspacePath: string | null | undefined
+): workspacePath is string {
+	return (
+		typeof workspacePath === 'string' &&
+		workspacePath.trim().length > 0 &&
+		workspaceDataFilesAreAvailable()
 	);
 }
 

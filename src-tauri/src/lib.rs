@@ -1,7 +1,9 @@
 mod developer_processes;
 mod project_folder;
 mod project_registry_store;
+mod project_repository_failure;
 mod project_repository;
+mod project_repository_validation;
 mod project_repository_operation_store;
 mod queue_folder;
 mod secret_vault_crypto;
@@ -12,6 +14,7 @@ mod tray_menu;
 mod workspace_password;
 mod workspace_path;
 mod workspace_data_file;
+mod workspace_repository_gitignore;
 mod workspace_repository_setup;
 mod workspace_sync_crypto;
 mod workspace_sync_file;

@@ -22,10 +22,14 @@ work.
 - Workspace path repair for synced workspace metadata that points to a missing
   local folder on the current device.
 - Optional workspace repository bootstrap creates the workspace folder layout,
-  initializes Git, installs mustflow files, and appends a Workduck `.gitignore`
+  initializes Git, installs mustflow files, writes minimal mustflow package
+  metadata when no `package.json` exists, and appends a Workduck `.gitignore`
   block that ignores `projects/` while keeping `queue/` and `.workduck/`
   trackable. Existing unlocked workspaces can run the same preparation from the
   workspace list.
+- Workspace repository controls follow the local Git state: prepare when the
+  workspace is not initialized, publish when it has Git but no remote, and
+  fetch, pull, and push when a remote exists.
 - Settings tabs for appearance, workspaces, encrypted sync, and system options.
 - Encrypted workspace, project, group, and repository metadata sync file
   export/import.
@@ -38,9 +42,9 @@ work.
   `queue/proposals` folder creation, queued JSON listing, structured
   result-report review, internal work-order and proposal rendering, and
   follow-up work-order JSON creation.
-- Workspace-owned `.workduck/` metadata folder for agent, persona, and skill
-  registries. Secret values remain outside `.workduck` in the encrypted
-  Environment vault.
+- Workspace-owned `.workduck/` metadata folder for reference, agent, persona,
+  skill, and encrypted Environment vault files. Plaintext secret values are not
+  written to `.workduck`.
 
 ### Projects And Repositories
 
@@ -77,6 +81,8 @@ work.
   core and schema packages.
 - Skills menu with workspace-local Workduck skills stored in
   `<workspace>/.workduck/skills.json` and a built-in proposal writer skill.
+- References menu with workspace-local research references stored in
+  `<workspace>/.workduck/references.json`.
 - Agents menu with workspace-local agent cards that reference `llm` API keys
   from the Environment vault without copying secret values.
 - Persona menu with workspace-local personas stored in

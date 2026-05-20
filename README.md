@@ -17,8 +17,12 @@ includes:
 - Workspace path repair when synced workspace metadata points to a folder that
   does not exist on the current device.
 - Optional workspace repository bootstrap that creates the workspace folder
-  layout, initializes Git, installs mustflow files, and appends a Workduck
-  `.gitignore` block for new or already registered workspaces.
+  layout, initializes Git, installs mustflow files, writes a minimal
+  `package.json` with `mustflow: "latest"` when none exists, and appends a
+  Workduck `.gitignore` block for new or already registered workspaces.
+- Workspace repository actions switch by actual Git state: prepare before
+  `.git` exists, publish when Git exists without a remote, and fetch, pull, and
+  push after a remote is configured.
 - Workspace and project metadata import/export through encrypted sync files.
 - Optional Git pull and push for the encrypted sync file.
 - Appearance settings for language and interface font sizing.
@@ -32,8 +36,8 @@ includes:
   `queue/proposals` folders, renders structured result reports, work orders,
   and proposals inside Workduck, and writes follow-up work-order JSON files.
 - Workspace-owned Workduck metadata folder at `<workspace>/.workduck/` for
-  agent, persona, and skill registries that should travel with the workspace
-  repository.
+  reference, agent, persona, and skill registries that should travel with the
+  workspace repository.
 - Project and group descriptions, nested counts, and deletion confirmation with
   optional local folder removal under the workspace projects folder.
 - Repository folder creation, URL registration, clone, Git init, fetch, pull,
@@ -64,17 +68,50 @@ independently. The `<workspace>/queue/` folder remains trackable so reports,
 work orders, and proposals can move between devices through the workspace
 repository.
 
+For mustflow-managed workspace repositories, Workduck creates package metadata
+only when the workspace root does not already have `package.json`. That file
+declares `mustflow` as a `latest` development dependency and includes
+`mustflow:check`, `mustflow:update:dry-run`, and `mustflow:update:apply`
+scripts, so the workspace can update its local mustflow package and review the
+template update plan before applying it.
+
+### Sync Repository And Workspace Repository
+
+Workduck uses two different Git-backed storage paths:
+
+- The sync repository is the optional folder configured in Settings > Sync. It
+  is for moving encrypted profile bootstrap data between devices, such as the
+  workspace list and import/export payloads. It is not the source of truth for
+  one workspace's day-to-day project board.
+- The workspace repository is the selected workspace folder when it is prepared
+  as a Git repository. It owns the files a developer expects to keep with that
+  workspace: `.workduck/` metadata, `queue/` reports and work orders, mustflow
+  files, and workspace package metadata.
+- A private sync repository and a private workspace repository may point to the
+  same remote only if the user intentionally wants one combined repository.
+  The recommended default is to keep them separate: one small sync repository
+  for cross-device bootstrap, and one repository per workspace for actual
+  workspace state.
+- Secret values are never written as plaintext to either repository. The sync
+  repository stores encrypted sync files, and the workspace repository stores
+  the encrypted Environment vault at `.workduck/secrets.sync.json`.
+- Nested repositories under `<workspace>/projects/` stay outside the workspace
+  repository history. They are cloned, fetched, pulled, and pushed through their
+  own Git remotes.
+
 Workspace-level Workduck metadata is split by ownership:
 
 - `<workspace>/.workduck/agents.json`, `personas.json`, and `skills.json` are
   workspace-owned metadata and can be versioned with the workspace repository.
+- `<workspace>/.workduck/references.json` stores research references that work
+  orders can cite without copying notes into each task.
 - `<workspace>/queue/` contains work orders, result reports, and proposals and
   can also be versioned with the workspace repository.
 - `<workspace>/projects/` is ignored by the workspace repository because each
   nested project repository owns its own Git history.
-- Environment secret values stay in the encrypted vault. Workspace metadata may
-  store a secret ID reference, but it does not copy API keys, tokens, passwords,
-  or SSH keys into `.workduck`.
+- `<workspace>/.workduck/secrets.sync.json` stores the encrypted Environment
+  vault. Workspace metadata may store a secret ID reference, but plaintext API
+  keys, tokens, passwords, and SSH keys are not written to `.workduck`.
 - The encrypted sync folder is for cross-device profile bootstrap and encrypted
   import/export. The workspace repository is the source of truth for
   workspace-owned working metadata.
@@ -83,6 +120,8 @@ Workspace-level Workduck metadata is split by ownership:
 
 - `src/`: SvelteKit static app code.
 - `src/lib/projects/`: project, group, repository, folder, and Git UI logic.
+- `src/lib/references/`: workspace-local reference registry UI and `.workduck`
+  storage.
 - `src/lib/agents/`: workspace-local agent registry UI and `.workduck` storage.
 - `src/lib/skills/`: workspace-local Workduck skill registry UI and `.workduck`
   storage.

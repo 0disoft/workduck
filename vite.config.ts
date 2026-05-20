@@ -1,9 +1,17 @@
 import { sveltekit } from '@sveltejs/kit/vite';
-import tailwindcss from '@tailwindcss/vite';
 import { defineConfig } from 'vite';
 
+const devWatchIgnoredPaths = [
+	'**/.git/**',
+	'**/.mustflow/backups/**',
+	'**/.svelte-kit/**',
+	'**/build/**',
+	'**/node_modules/**',
+	'**/src-tauri/target/**'
+];
+
 export default defineConfig({
-	plugins: [tailwindcss(), sveltekit()],
+	plugins: [sveltekit()],
 	build: {
 		rollupOptions: {
 			output: {
@@ -18,7 +26,11 @@ export default defineConfig({
 		}
 	},
 	server: {
+		host: '127.0.0.1',
 		port: 5173,
-		strictPort: true
+		strictPort: true,
+		watch: {
+			ignored: devWatchIgnoredPaths
+		}
 	}
 });
