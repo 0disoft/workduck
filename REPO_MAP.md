@@ -5,8 +5,8 @@ generated_by: mustflow
 relative_root: "."
 source_policy: anchors_only
 privacy_mode: minimal
-anchor_count: 74
-source_fingerprint: "sha256:a26f841b176c0907552eef72973e32f04f0d1e5651f3e9338361f1565846463a"
+anchor_count: 79
+source_fingerprint: "sha256:966828ab20740dc9bdf08aecd0f3673b47bca2fdc6856192af6f38b13fca3cc2"
 ---
 
 # REPO_MAP.md
@@ -60,6 +60,10 @@ Regenerate it with `mf map --write` instead of editing it by hand.
 
 - `.mustflow/skills/behavior-preserving-refactor/SKILL.md`: Procedural skill document for a repeatable agent task.
 
+### .mustflow/skills/cli-output-contract-review/
+
+- `.mustflow/skills/cli-output-contract-review/SKILL.md`: Procedural skill document for a repeatable agent task.
+
 ### .mustflow/skills/code-review/
 
 - `.mustflow/skills/code-review/SKILL.md`: Procedural skill document for a repeatable agent task.
@@ -67,6 +71,10 @@ Regenerate it with `mf map --write` instead of editing it by hand.
 ### .mustflow/skills/codebase-orientation/
 
 - `.mustflow/skills/codebase-orientation/SKILL.md`: Procedural skill document for a repeatable agent task.
+
+### .mustflow/skills/command-contract-authoring/
+
+- `.mustflow/skills/command-contract-authoring/SKILL.md`: Procedural skill document for a repeatable agent task.
 
 ### .mustflow/skills/command-pattern/
 
@@ -79,6 +87,10 @@ Regenerate it with `mf map --write` instead of editing it by hand.
 ### .mustflow/skills/contract-sync-check/
 
 - `.mustflow/skills/contract-sync-check/SKILL.md`: Procedural skill document for a repeatable agent task.
+
+### .mustflow/skills/cross-platform-filesystem-safety/
+
+- `.mustflow/skills/cross-platform-filesystem-safety/SKILL.md`: Procedural skill document for a repeatable agent task.
 
 ### .mustflow/skills/database-change-safety/
 
@@ -144,6 +156,10 @@ Regenerate it with `mf map --write` instead of editing it by hand.
 
 - `.mustflow/skills/pattern-scout/SKILL.md`: Procedural skill document for a repeatable agent task.
 
+### .mustflow/skills/process-execution-safety/
+
+- `.mustflow/skills/process-execution-safety/SKILL.md`: Procedural skill document for a repeatable agent task.
+
 ### .mustflow/skills/project-context-authoring/
 
 - `.mustflow/skills/project-context-authoring/SKILL.md`: Procedural skill document for a repeatable agent task.
@@ -187,6 +203,10 @@ Regenerate it with `mf map --write` instead of editing it by hand.
 ### .mustflow/skills/skill-authoring/
 
 - `.mustflow/skills/skill-authoring/SKILL.md`: Procedural skill document for a repeatable agent task.
+
+### .mustflow/skills/source-anchor-authoring/
+
+- `.mustflow/skills/source-anchor-authoring/SKILL.md`: Procedural skill document for a repeatable agent task.
 
 ### .mustflow/skills/source-freshness-check/
 

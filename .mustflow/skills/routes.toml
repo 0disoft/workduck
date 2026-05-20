@@ -42,6 +42,18 @@ route_type = "primary"
 priority = 80
 applies_to_reasons = ["code_change", "behavior_change"]
 
+[routes."command-contract-authoring"]
+category = "workflow_contracts"
+route_type = "authoring"
+priority = 80
+applies_to_reasons = ["mustflow_config_change", "mustflow_docs_change"]
+
+[routes."cli-output-contract-review"]
+category = "workflow_contracts"
+route_type = "adjunct"
+priority = 65
+applies_to_reasons = ["public_api_change", "behavior_change", "docs_change"]
+
 [routes."facade-pattern"]
 category = "architecture_patterns"
 route_type = "primary"
@@ -84,6 +96,12 @@ route_type = "primary"
 priority = 20
 applies_to_reasons = ["unknown_change", "code_change"]
 
+[routes."source-anchor-authoring"]
+category = "general_code"
+route_type = "primary"
+priority = 60
+applies_to_reasons = ["code_change", "mustflow_docs_change"]
+
 [routes."repo-improvement-loop"]
 category = "workflow_contracts"
 route_type = "primary"
@@ -118,13 +136,25 @@ applies_to_reasons = ["code_change", "behavior_change"]
 category = "data_external"
 route_type = "adjunct"
 priority = 45
-applies_to_reasons = ["code_change", "docs_change"]
+applies_to_reasons = ["code_change", "docs_change", "security_change"]
+
+[routes."cross-platform-filesystem-safety"]
+category = "data_external"
+route_type = "adjunct"
+priority = 65
+applies_to_reasons = ["code_change", "security_change", "migration_change"]
 
 [routes."adapter-boundary"]
 category = "data_external"
 route_type = "primary"
 priority = 55
 applies_to_reasons = ["code_change", "behavior_change"]
+
+[routes."process-execution-safety"]
+category = "data_external"
+route_type = "primary"
+priority = 70
+applies_to_reasons = ["code_change", "behavior_change", "security_change"]
 
 [routes."dependency-injection"]
 category = "data_external"
@@ -178,7 +208,7 @@ applies_to_reasons = ["command_failure"]
 category = "security_privacy"
 route_type = "adjunct"
 priority = 40
-applies_to_reasons = ["docs_change", "security_change"]
+applies_to_reasons = ["docs_change", "security_change", "mustflow_config_change"]
 
 [routes."external-skill-intake"]
 category = "workflow_contracts"
