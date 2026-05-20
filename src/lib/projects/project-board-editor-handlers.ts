@@ -1,0 +1,220 @@
+import type { EnvironmentVault } from '$lib/environment/environment-vault';
+import type { SecretVaultEnvelope } from '$lib/environment/secret-vault-crypto';
+import type { ProjectFormError } from './project-board-errors';
+import {
+	saveProjectGithubCredential,
+	unlockProjectEnvironmentVault
+} from './project-board-github-credential-actions';
+import { saveProjectDescription, saveProjectTags } from './project-board-editor-actions';
+import { formatTagsInput } from './project-board-selectors';
+import type {
+	ProjectGithubCredentialEditorTarget,
+	ProjectTagEditorTarget
+} from './project-board-types';
+import type { ProjectNodeRecord, ProjectRegistry } from './project-registry';
+
+export function createProjectBoardEditorHandlers(context: {
+	readonly getRegistry: () => ProjectRegistry;
+	readonly getWorkspaceId: () => string;
+	readonly getDescriptionEditor: () => ProjectNodeRecord | null;
+	readonly getDescriptionInput: () => string;
+	readonly getIsSavingDescription: () => boolean;
+	readonly getTagEditor: () => ProjectTagEditorTarget | null;
+	readonly getTagInput: () => string;
+	readonly getIsSavingTags: () => boolean;
+	readonly getGithubCredentialEditor: () => ProjectGithubCredentialEditorTarget | null;
+	readonly getSelectedGithubCredentialSecretId: () => string;
+	readonly getIsSubmitting: () => boolean;
+	readonly getEnvironmentVault: () => EnvironmentVault | null;
+	readonly getEnvironmentVaultEnvelope: () => SecretVaultEnvelope | null;
+	readonly getEnvironmentVaultPassword: () => string;
+	readonly getIsEnvironmentVaultBusy: () => boolean;
+	readonly persistRegistry: (nextRegistry: ProjectRegistry) => Promise<boolean>;
+	readonly setDescriptionEditor: (editor: ProjectNodeRecord | null) => void;
+	readonly setDescriptionInput: (input: string) => void;
+	readonly setIsSavingDescription: (isSaving: boolean) => void;
+	readonly setTagEditor: (editor: ProjectTagEditorTarget | null) => void;
+	readonly setTagInput: (input: string) => void;
+	readonly setIsSavingTags: (isSaving: boolean) => void;
+	readonly setGithubCredentialEditor: (
+		editor: ProjectGithubCredentialEditorTarget | null
+	) => void;
+	readonly setSelectedGithubCredentialSecretId: (secretId: string) => void;
+	readonly setIsSubmitting: (isSubmitting: boolean) => void;
+	readonly setEnvironmentVault: (vault: EnvironmentVault) => void;
+	readonly setEnvironmentVaultPassword: (password: string) => void;
+	readonly setEnvironmentVaultError: (error: string | null) => void;
+	readonly setIsEnvironmentVaultBusy: (isBusy: boolean) => void;
+	readonly setFormError: (error: ProjectFormError | null) => void;
+	readonly setStatus: (status: string | null) => void;
+	readonly clearDeleteCandidate: () => void;
+	readonly clearPublishTarget: () => void;
+	readonly clearTagEditor: () => void;
+	readonly clearDescriptionEditor: () => void;
+	readonly clearDialog: () => void;
+}) {
+	function clearFeedback() {
+		context.setFormError(null);
+		context.setStatus(null);
+	}
+
+	function closeDescriptionEditor() {
+		context.setDescriptionEditor(null);
+		context.setDescriptionInput('');
+		context.setIsSavingDescription(false);
+	}
+
+	function closeTagEditor() {
+		context.setTagEditor(null);
+		context.setTagInput('');
+		context.setIsSavingTags(false);
+	}
+
+	function closeGithubCredentialEditor() {
+		context.setGithubCredentialEditor(null);
+		context.setSelectedGithubCredentialSecretId('');
+		context.setIsSubmitting(false);
+	}
+
+	return {
+		openDescriptionEditor(node: ProjectNodeRecord) {
+			context.setDescriptionEditor(node);
+			context.setDescriptionInput(node.description);
+			clearFeedback();
+			context.clearDeleteCandidate();
+			context.clearPublishTarget();
+			context.clearTagEditor();
+			context.clearDialog();
+		},
+		closeDescriptionEditor,
+		handleDescriptionEditorInput: clearFeedback,
+		handleDescriptionEditorBackdropClick(event: MouseEvent) {
+			if (event.target === event.currentTarget && !context.getIsSavingDescription()) {
+				closeDescriptionEditor();
+			}
+		},
+		async handleDescriptionEditorSubmit(event: SubmitEvent) {
+			event.preventDefault();
+
+			await saveProjectDescription(
+				{
+					editor: context.getDescriptionEditor(),
+					description: context.getDescriptionInput(),
+					registry: context.getRegistry(),
+					isSaving: context.getIsSavingDescription()
+				},
+				{
+					persistRegistry: context.persistRegistry,
+					setFormError: context.setFormError,
+					setStatus: context.setStatus,
+					setIsSaving: context.setIsSavingDescription,
+					closeEditor: closeDescriptionEditor
+				}
+			);
+		},
+		openTagEditor(target: ProjectTagEditorTarget) {
+			context.setTagEditor(target);
+			context.setTagInput(
+				formatTagsInput(target.type === 'repository' ? target.repository.tags : target.node.tags)
+			);
+			clearFeedback();
+			context.clearDeleteCandidate();
+			context.clearDescriptionEditor();
+			context.clearPublishTarget();
+			context.clearDialog();
+		},
+		closeTagEditor,
+		openGithubCredentialEditor(target: ProjectGithubCredentialEditorTarget) {
+			context.setGithubCredentialEditor(target);
+			context.setSelectedGithubCredentialSecretId(
+				target.type === 'repository'
+					? target.repository.githubCredentialSecretId ?? ''
+					: target.node.githubCredentialSecretId ?? ''
+			);
+			clearFeedback();
+			context.clearDeleteCandidate();
+			context.clearDescriptionEditor();
+			context.clearTagEditor();
+			context.clearPublishTarget();
+			context.clearDialog();
+		},
+		closeGithubCredentialEditor,
+		handleGithubCredentialEditorBackdropClick(event: MouseEvent) {
+			if (
+				event.target === event.currentTarget &&
+				!context.getIsSubmitting() &&
+				!context.getIsEnvironmentVaultBusy()
+			) {
+				closeGithubCredentialEditor();
+			}
+		},
+		async handleUnlockProjectEnvironmentVault(event: SubmitEvent) {
+			event.preventDefault();
+
+			await unlockProjectEnvironmentVault(
+				{
+					envelope: context.getEnvironmentVaultEnvelope(),
+					password: context.getEnvironmentVaultPassword(),
+					workspaceId: context.getWorkspaceId(),
+					isBusy: context.getIsEnvironmentVaultBusy()
+				},
+				{
+					setIsBusy: context.setIsEnvironmentVaultBusy,
+					setVault: context.setEnvironmentVault,
+					setPassword: context.setEnvironmentVaultPassword,
+					setVaultError: context.setEnvironmentVaultError,
+					setFormError: context.setFormError
+				}
+			);
+		},
+		async handleGithubCredentialSubmit(event: SubmitEvent) {
+			event.preventDefault();
+
+			await saveProjectGithubCredential(
+				{
+					editor: context.getGithubCredentialEditor(),
+					registry: context.getRegistry(),
+					selectedSecretId: context.getSelectedGithubCredentialSecretId(),
+					isSubmitting: context.getIsSubmitting(),
+					environmentVault: context.getEnvironmentVault()
+				},
+				{
+					persistRegistry: context.persistRegistry,
+					setIsSubmitting: context.setIsSubmitting,
+					setFormError: context.setFormError,
+					setStatus: context.setStatus,
+					closeEditor: closeGithubCredentialEditor
+				}
+			);
+		},
+		handleTagInput: clearFeedback,
+		handleTagEditorInput: clearFeedback,
+		handleTagFilterInput() {
+			context.setStatus(null);
+		},
+		handleTagEditorBackdropClick(event: MouseEvent) {
+			if (event.target === event.currentTarget && !context.getIsSavingTags()) {
+				closeTagEditor();
+			}
+		},
+		async handleTagEditorSubmit(event: SubmitEvent) {
+			event.preventDefault();
+
+			await saveProjectTags(
+				{
+					editor: context.getTagEditor(),
+					tagInput: context.getTagInput(),
+					registry: context.getRegistry(),
+					isSaving: context.getIsSavingTags()
+				},
+				{
+					persistRegistry: context.persistRegistry,
+					setFormError: context.setFormError,
+					setStatus: context.setStatus,
+					setIsSaving: context.setIsSavingTags,
+					closeEditor: closeTagEditor
+				}
+			);
+		}
+	};
+}

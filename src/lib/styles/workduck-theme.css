@@ -1,15 +1,3 @@
-@theme inline {
-	--color-workduck-accent: var(--workduck-color-accent);
-	--color-workduck-background: var(--workduck-color-background);
-	--color-workduck-border: var(--workduck-color-border);
-	--color-workduck-danger: var(--workduck-color-danger);
-	--color-workduck-muted: var(--workduck-color-muted);
-	--color-workduck-panel: var(--workduck-color-panel);
-	--color-workduck-surface: var(--workduck-color-surface);
-	--color-workduck-success: var(--workduck-color-success);
-	--color-workduck-text: var(--workduck-color-text);
-}
-
 :root {
 	color-scheme: dark;
 

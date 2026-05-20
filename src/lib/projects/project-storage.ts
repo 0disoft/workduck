@@ -8,6 +8,8 @@ import {
 
 const LEGACY_PROJECT_REGISTRIES_STORAGE_KEY = 'workduck.projectRegistries.v1';
 const PROJECT_REGISTRY_SQLITE_MIGRATION_STORAGE_KEY = 'workduck.projectRegistries.sqliteMigrated.v1';
+const PROJECT_REGISTRY_SQLITE_RETRY_ATTEMPTS = 3;
+const PROJECT_REGISTRY_SQLITE_RETRY_DELAY_MS = 150;
 export const WORKDUCK_PROJECT_REGISTRY_CHANGED_EVENT = 'workduck:project-registry-changed';
 
 export type ProjectRegistryStorageError =
@@ -336,6 +338,20 @@ export function subscribeProjectRegistry(
 }
 
 async function readProjectRegistryFromSqlite(workspaceId: string) {
+	for (let attempt = 1; attempt <= PROJECT_REGISTRY_SQLITE_RETRY_ATTEMPTS; attempt += 1) {
+		const result = await readProjectRegistryFromSqliteOnce(workspaceId);
+
+		if (result.ok || attempt === PROJECT_REGISTRY_SQLITE_RETRY_ATTEMPTS) {
+			return result;
+		}
+
+		await waitForProjectRegistrySqliteRetry();
+	}
+
+	return { ok: false, error: 'project-registry-read-failed' } as const;
+}
+
+async function readProjectRegistryFromSqliteOnce(workspaceId: string) {
 	const invoke = getTauriInvoke();
 
 	if (invoke === undefined) {
@@ -366,6 +382,20 @@ async function readProjectRegistryFromSqlite(workspaceId: string) {
 }
 
 async function readProjectRegistriesFromSqlite(workspaceIds: readonly string[]) {
+	for (let attempt = 1; attempt <= PROJECT_REGISTRY_SQLITE_RETRY_ATTEMPTS; attempt += 1) {
+		const result = await readProjectRegistriesFromSqliteOnce(workspaceIds);
+
+		if (result.ok || attempt === PROJECT_REGISTRY_SQLITE_RETRY_ATTEMPTS) {
+			return result;
+		}
+
+		await waitForProjectRegistrySqliteRetry();
+	}
+
+	return { ok: false, error: 'project-registry-read-failed' } as const;
+}
+
+async function readProjectRegistriesFromSqliteOnce(workspaceIds: readonly string[]) {
 	const invoke = getTauriInvoke();
 
 	if (invoke === undefined) {
@@ -399,6 +429,12 @@ async function readProjectRegistriesFromSqlite(workspaceIds: readonly string[]) 
 	} catch {
 		return { ok: false, error: 'project-registry-read-failed' } as const;
 	}
+}
+
+function waitForProjectRegistrySqliteRetry() {
+	return new Promise((resolve) => {
+		window.setTimeout(resolve, PROJECT_REGISTRY_SQLITE_RETRY_DELAY_MS);
+	});
 }
 
 async function writeProjectRegistryToSqlite(registry: ProjectRegistry) {

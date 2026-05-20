@@ -19,6 +19,10 @@ export type ProjectRepositoryCloneError =
 	| 'project-repository-clone-target-exists'
 	| 'project-repository-clone-command-unavailable'
 	| 'project-repository-clone-command-timed-out'
+	| 'project-repository-clone-token-invalid'
+	| 'project-repository-clone-permission-denied'
+	| 'project-repository-clone-repository-not-found'
+	| 'project-repository-clone-organization-restricted'
 	| 'project-repository-clone-access-denied'
 	| 'project-repository-clone-auth-required'
 	| 'project-repository-clone-failed';
@@ -681,6 +685,10 @@ function isProjectRepositoryCloneError(value: unknown): value is ProjectReposito
 		value === 'project-repository-clone-target-exists' ||
 		value === 'project-repository-clone-command-unavailable' ||
 		value === 'project-repository-clone-command-timed-out' ||
+		value === 'project-repository-clone-token-invalid' ||
+		value === 'project-repository-clone-permission-denied' ||
+		value === 'project-repository-clone-repository-not-found' ||
+		value === 'project-repository-clone-organization-restricted' ||
 		value === 'project-repository-clone-access-denied' ||
 		value === 'project-repository-clone-auth-required' ||
 		value === 'project-repository-clone-failed'
