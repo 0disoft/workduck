@@ -10,6 +10,7 @@
 		readAppearanceSettingsFromBrowser,
 		subscribeAppearanceSettings
 	} from '$lib/settings/appearance-storage';
+	import PageTitleRow from '$lib/ui/PageTitleRow.svelte';
 	import WorkspaceGate from '$lib/workspaces/WorkspaceGate.svelte';
 	import {
 		createEmptyWorkspaceRegistry,
@@ -26,8 +27,12 @@
 	let appearanceSettings = $state<AppearanceSettings>(createDefaultAppearanceSettings());
 	let registry = $state<WorkspaceRegistry>(createEmptyWorkspaceRegistry());
 	let AgentsPanel = $state<AgentsPanelComponent | null>(null);
+	let agentCount = $state(0);
 	let activeWorkspace = $derived(getActiveWorkspace(registry));
 	let messages = $derived(getWorkduckMessages(appearanceSettings.languageId));
+	let agentCountLabel = $derived(
+		messages.agents.registeredCount.replace('{count}', agentCount.toString())
+	);
 
 	onMount(() => {
 		void import('$lib/agents/AgentsPanel.svelte').then((module) => {
@@ -55,12 +60,12 @@
 
 <main class="workduck-page workduck-page--entity">
 	<header class="workduck-page-header">
-		<h1 class="workduck-page-title">{messages.navigation.agents}</h1>
+		<PageTitleRow title={messages.navigation.agents} meta={agentCountLabel} />
 	</header>
 
 	<WorkspaceGate>
 		{#if activeWorkspace !== null && AgentsPanel !== null}
-			<AgentsPanel workspace={activeWorkspace} />
+			<AgentsPanel workspace={activeWorkspace} onAgentCountChange={(count) => (agentCount = count)} />
 		{/if}
 	</WorkspaceGate>
 </main>

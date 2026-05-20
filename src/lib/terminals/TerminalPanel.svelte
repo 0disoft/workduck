@@ -43,9 +43,10 @@
 
 	interface Props {
 		readonly workspace: WorkspaceRecord;
+		readonly onTerminalCountChange?: (count: number) => void;
 	}
 
-	let { workspace }: Props = $props();
+	let { workspace, onTerminalCountChange }: Props = $props();
 
 	let appearanceSettings = $state<AppearanceSettings>(createDefaultAppearanceSettings());
 	let registry = $state<TerminalRegistry>(createEmptyTerminalRegistry(''));
@@ -131,6 +132,10 @@
 
 			return unsubscribeRegistry;
 		});
+	});
+
+	$effect(() => {
+		onTerminalCountChange?.(registry.sessions.length);
 	});
 
 	async function refreshTerminalCatalog() {

@@ -36,9 +36,10 @@
 
 	interface Props {
 		readonly workspace: WorkspaceRecord;
+		readonly onReferenceCountChange?: (count: number) => void;
 	}
 
-	let { workspace }: Props = $props();
+	let { workspace, onReferenceCountChange }: Props = $props();
 
 	let appearanceSettings = $state<AppearanceSettings>(createDefaultAppearanceSettings());
 	let registry = $state<ReferenceRegistry>(createEmptyReferenceRegistry(''));
@@ -112,6 +113,10 @@
 				unsubscribeProjectRegistry();
 			};
 		});
+	});
+
+	$effect(() => {
+		onReferenceCountChange?.(registry.references.length);
 	});
 
 	async function readRegistryFromStorage(workspaceId: string, workspacePath: string) {

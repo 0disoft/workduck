@@ -22,6 +22,12 @@
 	const PROCESS_REFRESH_INTERVAL_MS = 10_000;
 	const PROCESS_KILL_REFRESH_DELAY_MS = 350;
 
+	interface Props {
+		readonly onProcessCountChange?: (count: number) => void;
+	}
+
+	let { onProcessCountChange }: Props = $props();
+
 	let appearanceSettings = $state<AppearanceSettings>(createDefaultAppearanceSettings());
 	let processes = $state<readonly DeveloperProcessEntry[]>([]);
 	let selectedProcessId = $state<number | null>(null);
@@ -54,6 +60,10 @@
 				window.clearInterval(refreshIntervalId);
 			}
 		};
+	});
+
+	$effect(() => {
+		onProcessCountChange?.(processes.length);
 	});
 
 	async function refreshProcesses(

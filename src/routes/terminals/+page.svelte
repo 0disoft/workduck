@@ -10,6 +10,7 @@
 		readAppearanceSettingsFromBrowser,
 		subscribeAppearanceSettings
 	} from '$lib/settings/appearance-storage';
+	import PageTitleRow from '$lib/ui/PageTitleRow.svelte';
 	import WorkspaceGate from '$lib/workspaces/WorkspaceGate.svelte';
 	import {
 		createEmptyWorkspaceRegistry,
@@ -26,8 +27,12 @@
 	let appearanceSettings = $state<AppearanceSettings>(createDefaultAppearanceSettings());
 	let registry = $state<WorkspaceRegistry>(createEmptyWorkspaceRegistry());
 	let TerminalPanel = $state<TerminalPanelComponent | null>(null);
+	let terminalCount = $state(0);
 	let activeWorkspace = $derived(getActiveWorkspace(registry));
 	let messages = $derived(getWorkduckMessages(appearanceSettings.languageId));
+	let terminalCountLabel = $derived(
+		messages.terminals.registeredCount.replace('{count}', terminalCount.toString())
+	);
 
 	onMount(() => {
 		void import('$lib/terminals/TerminalPanel.svelte').then((module) => {
@@ -55,12 +60,15 @@
 
 <main class="workduck-page workduck-page--entity">
 	<header class="workduck-page-header">
-		<h1 class="workduck-page-title">{messages.navigation.terminals}</h1>
+		<PageTitleRow title={messages.navigation.terminals} meta={terminalCountLabel} />
 	</header>
 
 	<WorkspaceGate>
 		{#if activeWorkspace !== null && TerminalPanel !== null}
-			<TerminalPanel workspace={activeWorkspace} />
+			<TerminalPanel
+				workspace={activeWorkspace}
+				onTerminalCountChange={(count) => (terminalCount = count)}
+			/>
 		{/if}
 	</WorkspaceGate>
 </main>

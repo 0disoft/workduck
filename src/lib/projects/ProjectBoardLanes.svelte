@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { WorkduckMessages } from '$lib/i18n/workduck-message-contract';
+	import PageTitleRow from '$lib/ui/PageTitleRow.svelte';
 	import {
 		formatCountLabel,
 		getProjectGroupCount,
@@ -98,13 +99,20 @@
 		canPublishRepositoryToGithub, canRunRemoteRepositoryGitAction, isRepositoryOperationRunning,
 		onCloneRepository, onInitializeRepository, onPublishRepository, onGitAction
 	}: Props = $props();
+
+	let projectCountLabel = $derived(
+		projectMessages.registeredCount.replace(
+			'{count}',
+			registryNodes.filter((node) => node.kind === 'project').length.toString()
+		)
+	);
 </script>
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
 <section class="workduck-project-board" aria-label="Projects" oncontextmenu={onBoardContextMenu}>
 	<header class="workduck-page-header">
-		<h1 class="workduck-page-title">{title}</h1>
+		<PageTitleRow {title} meta={projectCountLabel} />
 		<div class="workduck-page-actions workduck-project-header-actions">
 			<div class="workduck-project-sync-filters" aria-label="Repository sync filters">
 				<button class="workduck-project-sync-filter-button"

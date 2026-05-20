@@ -10,6 +10,7 @@
 		readAppearanceSettingsFromBrowser,
 		subscribeAppearanceSettings
 	} from '$lib/settings/appearance-storage';
+	import PageTitleRow from '$lib/ui/PageTitleRow.svelte';
 	import type { WorkspaceRecord } from '$lib/workspaces/workspace-registry';
 	import { readWorkspaceUnlockPasswordSession } from '$lib/workspaces/workspace-unlock';
 
@@ -77,6 +78,11 @@
 	let messages = $derived(getWorkduckMessages(appearanceSettings.languageId));
 	let environmentMessages = $derived(messages.environment);
 	let vaultIsOpen = $derived(vault !== null);
+	let secretCountLabel = $derived(
+		vault === null
+			? null
+			: environmentMessages.registeredCount.replace('{count}', vault.secrets.length.toString())
+	);
 	let submitLabel = $derived(editingSecretId === null ? messages.common.add : messages.common.save);
 	let unlockLabel = $derived(
 		vaultEnvelope === null ? environmentMessages.createVault : environmentMessages.unlockVault
@@ -473,7 +479,7 @@
 
 <section class="workduck-environment-vault" aria-label={environmentMessages.ariaLabel}>
 	<header class="workduck-page-header">
-		<h1 class="workduck-page-title">{title}</h1>
+		<PageTitleRow {title} meta={secretCountLabel} />
 		{#if vaultIsOpen}
 			<div class="workduck-page-actions workduck-environment-header-actions">
 				{#if vault !== null && vault.secrets.length !== 0}

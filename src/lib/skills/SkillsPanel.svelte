@@ -33,9 +33,10 @@
 
 	interface Props {
 		readonly workspace: WorkspaceRecord;
+		readonly onSkillCountChange?: (count: number) => void;
 	}
 
-	let { workspace }: Props = $props();
+	let { workspace, onSkillCountChange }: Props = $props();
 
 	let appearanceSettings = $state<AppearanceSettings>(createDefaultAppearanceSettings());
 	let registry = $state<SkillRegistry>(createEmptySkillRegistry(''));
@@ -94,6 +95,10 @@
 
 			return unsubscribeRegistry;
 		});
+	});
+
+	$effect(() => {
+		onSkillCountChange?.(allSkills.length);
 	});
 
 	async function readRegistryFromStorage(workspaceId: string, workspacePath: string) {

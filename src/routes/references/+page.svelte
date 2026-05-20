@@ -10,6 +10,7 @@
 		readAppearanceSettingsFromBrowser,
 		subscribeAppearanceSettings
 	} from '$lib/settings/appearance-storage';
+	import PageTitleRow from '$lib/ui/PageTitleRow.svelte';
 	import WorkspaceGate from '$lib/workspaces/WorkspaceGate.svelte';
 	import {
 		createEmptyWorkspaceRegistry,
@@ -26,8 +27,12 @@
 	let appearanceSettings = $state<AppearanceSettings>(createDefaultAppearanceSettings());
 	let registry = $state<WorkspaceRegistry>(createEmptyWorkspaceRegistry());
 	let ReferencesPanel = $state<ReferencesPanelComponent | null>(null);
+	let referenceCount = $state(0);
 	let activeWorkspace = $derived(getActiveWorkspace(registry));
 	let messages = $derived(getWorkduckMessages(appearanceSettings.languageId));
+	let referenceCountLabel = $derived(
+		messages.references.registeredCount.replace('{count}', referenceCount.toString())
+	);
 
 	onMount(() => {
 		void import('$lib/references/ReferencesPanel.svelte').then((module) => {
@@ -55,12 +60,15 @@
 
 <main class="workduck-page workduck-page--entity">
 	<header class="workduck-page-header">
-		<h1 class="workduck-page-title">{messages.navigation.references}</h1>
+		<PageTitleRow title={messages.navigation.references} meta={referenceCountLabel} />
 	</header>
 
 	<WorkspaceGate>
 		{#if activeWorkspace !== null && ReferencesPanel !== null}
-			<ReferencesPanel workspace={activeWorkspace} />
+			<ReferencesPanel
+				workspace={activeWorkspace}
+				onReferenceCountChange={(count) => (referenceCount = count)}
+			/>
 		{/if}
 	</WorkspaceGate>
 </main>

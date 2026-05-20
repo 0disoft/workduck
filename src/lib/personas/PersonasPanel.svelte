@@ -54,9 +54,10 @@
 
 	interface Props {
 		readonly workspace: WorkspaceRecord;
+		readonly onPersonaCountChange?: (count: number) => void;
 	}
 
-	let { workspace }: Props = $props();
+	let { workspace, onPersonaCountChange }: Props = $props();
 
 	let appearanceSettings = $state<AppearanceSettings>(createDefaultAppearanceSettings());
 	let registry = $state<PersonaRegistry>(createEmptyPersonaRegistry(''));
@@ -126,6 +127,10 @@
 				unsubscribeAgents();
 			};
 		});
+	});
+
+	$effect(() => {
+		onPersonaCountChange?.(registry.personas.length);
 	});
 
 	async function readRegistryFromStorage(workspaceId: string, workspacePath: string) {

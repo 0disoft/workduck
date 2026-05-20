@@ -10,6 +10,7 @@
 		readAppearanceSettingsFromBrowser,
 		subscribeAppearanceSettings
 	} from '$lib/settings/appearance-storage';
+	import PageTitleRow from '$lib/ui/PageTitleRow.svelte';
 	import WorkspaceGate from '$lib/workspaces/WorkspaceGate.svelte';
 	import {
 		createEmptyWorkspaceRegistry,
@@ -26,8 +27,12 @@
 	let appearanceSettings = $state<AppearanceSettings>(createDefaultAppearanceSettings());
 	let registry = $state<WorkspaceRegistry>(createEmptyWorkspaceRegistry());
 	let PersonasPanel = $state<PersonasPanelComponent | null>(null);
+	let personaCount = $state(0);
 	let activeWorkspace = $derived(getActiveWorkspace(registry));
 	let messages = $derived(getWorkduckMessages(appearanceSettings.languageId));
+	let personaCountLabel = $derived(
+		messages.personas.registeredCount.replace('{count}', personaCount.toString())
+	);
 
 	onMount(() => {
 		void import('$lib/personas/PersonasPanel.svelte').then((module) => {
@@ -55,12 +60,15 @@
 
 <main class="workduck-page workduck-page--entity">
 	<header class="workduck-page-header">
-		<h1 class="workduck-page-title">{messages.navigation.personas}</h1>
+		<PageTitleRow title={messages.navigation.personas} meta={personaCountLabel} />
 	</header>
 
 	<WorkspaceGate>
 		{#if activeWorkspace !== null && PersonasPanel !== null}
-			<PersonasPanel workspace={activeWorkspace} />
+			<PersonasPanel
+				workspace={activeWorkspace}
+				onPersonaCountChange={(count) => (personaCount = count)}
+			/>
 		{/if}
 	</WorkspaceGate>
 </main>
