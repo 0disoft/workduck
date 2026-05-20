@@ -59,6 +59,10 @@ export const workduckQueueReviewDecisions = [
 
 export type WorkduckQueueReviewDecision = (typeof workduckQueueReviewDecisions)[number];
 
+export const workduckQueueWorkPriorities = ["low", "normal", "high", "urgent"] as const;
+
+export type WorkduckQueueWorkPriority = (typeof workduckQueueWorkPriorities)[number];
+
 export type WorkduckId = string;
 
 export interface WorkduckEntityRef {
@@ -181,6 +185,10 @@ export interface WorkduckQueueWorkOrderTask {
   readonly id: WorkduckId;
   readonly title: string;
   readonly body: string;
+  readonly priority?: WorkduckQueueWorkPriority;
+  readonly skillIds?: readonly WorkduckId[];
+  readonly agentIds?: readonly WorkduckId[];
+  readonly referenceIds?: readonly WorkduckId[];
   readonly sourceReportTaskId?: WorkduckId;
   readonly decision?: Exclude<WorkduckQueueReviewDecision, "pending" | "approved">;
 }

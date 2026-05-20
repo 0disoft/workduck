@@ -24,13 +24,9 @@
 		subscribeSystemSettings
 	} from '$lib/settings/system-storage';
 	import { clearEnvironmentVaultSession } from '$lib/environment/environment-vault-session';
-	import { listQueueFiles } from '$lib/queue/queue-folder';
-	import {
-		countUnreadQueueFiles,
-		readQueueReadFilePaths,
-		subscribeQueueFilesChanged,
-		subscribeQueueReadStateChanged
-	} from '$lib/queue/queue-read-state';
+	import { readQueueArtifactExecutionState } from '$lib/queue/queue-artifacts';
+	import { listQueueFiles, readQueueFile } from '$lib/queue/queue-folder';
+	import { subscribeQueueFilesChanged } from '$lib/queue/queue-read-state';
 	import { syncWorkduckTrayIconEnabled } from '$lib/system/tray';
 	import {
 		createEmptyWorkspaceRegistry,
@@ -97,8 +93,8 @@
 	] as const;
 	type PrimaryNavigationItem = (typeof primaryNavigationItems)[number];
 	const settingsNavigationItem = { href: '/settings', labelKey: 'settings' } as const;
-	const QUEUE_UNREAD_REFRESH_INTERVAL_MS = 5_000;
-	const QUEUE_UNREAD_REFRESH_DEFER_MS = 250;
+	const QUEUE_PENDING_REFRESH_INTERVAL_MS = 5_000;
+	const QUEUE_PENDING_REFRESH_DEFER_MS = 250;
 	const workspaceMenuId = 'workduck-workspace-menu';
 	const primaryNavigationUnavailableDescriptionId =
 		'workduck-primary-navigation-unavailable-description';
@@ -114,9 +110,9 @@
 	let workspaceUnlockId = $state<string | null>(null);
 	let workspaceUnlockRevision = $state(0);
 	let workspaceSwitchError = $state<string | null>(null);
-	let queueUnreadCount = $state(0);
-	let queueUnreadRefreshSequence = 0;
-	let queuedUnreadRefreshTimeoutId: number | undefined;
+	let queuePendingCount = $state(0);
+	let queuePendingRefreshSequence = 0;
+	let queuedPendingRefreshTimeoutId: number | undefined;
 	let resizePointerId: number | undefined;
 	let resizeStartX = 0;
 	let resizeStartWidthPx = SIDEBAR_DEFAULT_WIDTH_PX;
@@ -297,63 +293,79 @@
 		closeSidebarOnMobile();
 	}
 
-	async function refreshQueueUnreadCount() {
+	async function refreshQueuePendingCount() {
 		const workspace = activeWorkspace;
-		const sequence = ++queueUnreadRefreshSequence;
+		const sequence = ++queuePendingRefreshSequence;
 
 		if (workspace === null || !activeWorkspaceIsUsable) {
-			queueUnreadCount = 0;
+			queuePendingCount = 0;
 			return;
 		}
 
 		const result = await listQueueFiles(workspace.path);
 
-		if (sequence !== queueUnreadRefreshSequence) {
+		if (sequence !== queuePendingRefreshSequence) {
 			return;
 		}
 
 		if (!result.ok) {
-			queueUnreadCount = 0;
+			queuePendingCount = 0;
 			return;
 		}
 
-		queueUnreadCount = countUnreadQueueFiles(
-			result.files,
-			readQueueReadFilePaths(workspace.id)
+		const pendingResults = await Promise.all(
+			result.files.map(async (file) => {
+				if (file.kind === 'unsupported') {
+					return false;
+				}
+
+				const readResult = await readQueueFile(workspace.path, file.relativePath);
+
+				return (
+					readResult.ok &&
+					readQueueArtifactExecutionState(readResult.content) === 'pending'
+				);
+			})
 		);
+
+		if (sequence !== queuePendingRefreshSequence) {
+			return;
+		}
+
+		queuePendingCount = pendingResults.filter(Boolean).length;
 	}
 
-	function scheduleQueueUnreadCountRefresh() {
+	function scheduleQueuePendingCountRefresh() {
 		if (typeof window === 'undefined') {
-			void refreshQueueUnreadCount();
+			void refreshQueuePendingCount();
 			return;
 		}
 
-		if (queuedUnreadRefreshTimeoutId !== undefined) {
-			window.clearTimeout(queuedUnreadRefreshTimeoutId);
+		if (queuedPendingRefreshTimeoutId !== undefined) {
+			window.clearTimeout(queuedPendingRefreshTimeoutId);
 		}
 
-		queuedUnreadRefreshTimeoutId = window.setTimeout(() => {
-			queuedUnreadRefreshTimeoutId = undefined;
-			void refreshQueueUnreadCount();
-		}, QUEUE_UNREAD_REFRESH_DEFER_MS);
+		queuedPendingRefreshTimeoutId = window.setTimeout(() => {
+			queuedPendingRefreshTimeoutId = undefined;
+			void refreshQueuePendingCount();
+		}, QUEUE_PENDING_REFRESH_DEFER_MS);
 	}
 
 	function getPrimaryNavigationAriaLabel(item: PrimaryNavigationItem) {
 		const label = messages.navigation[item.labelKey];
 
-		if (item.labelKey !== 'queue' || queueUnreadCount === 0) {
+		if (item.labelKey !== 'queue' || queuePendingCount === 0) {
 			return label;
 		}
 
-		return `${label}, ${messages.queue.unreadCountLabel.replace(
+		return `${label}, ${messages.queue.pendingCountLabel.replace(
 			'{count}',
-			queueUnreadCount.toString()
+			queuePendingCount.toString()
 		)}`;
 	}
 
-	function getQueueUnreadBadgeLabel() {
-		return queueUnreadCount > 99 ? '99+' : queueUnreadCount.toString();
+	function getQueuePendingBadgeLabel() {
+		return queuePendingCount > 99 ? '99+' : queuePendingCount.toString();
 	}
 
 	function toggleWorkspaceMenu() {
@@ -552,11 +564,11 @@
 		const canUseWorkspace = activeWorkspaceIsUsable;
 
 		if (workspace === null || !canUseWorkspace) {
-			queueUnreadCount = 0;
+			queuePendingCount = 0;
 			return;
 		}
 
-		scheduleQueueUnreadCountRefresh();
+		scheduleQueuePendingCountRefresh();
 	});
 
 	onMount(() => {
@@ -613,19 +625,12 @@
 				}
 			}
 		});
-		const unsubscribeQueueReadState = subscribeQueueReadStateChanged((workspaceId) => {
-			if (activeWorkspace?.id !== workspaceId) {
-				return;
-			}
-
-			void refreshQueueUnreadCount();
-		});
 		const unsubscribeQueueFiles = subscribeQueueFilesChanged((workspaceId) => {
 			if (activeWorkspace?.id !== workspaceId) {
 				return;
 			}
 
-			void refreshQueueUnreadCount();
+			void refreshQueuePendingCount();
 		});
 		const recordUserActivity = () => {
 			touchWorkspaceUnlockSessions();
@@ -642,9 +647,9 @@
 			}
 		};
 		const idleLockIntervalId = window.setInterval(lockIdleSessions, 15_000);
-		const queueUnreadRefreshIntervalId = window.setInterval(
-			() => void refreshQueueUnreadCount(),
-			QUEUE_UNREAD_REFRESH_INTERVAL_MS
+		const queuePendingRefreshIntervalId = window.setInterval(
+			() => void refreshQueuePendingCount(),
+			QUEUE_PENDING_REFRESH_INTERVAL_MS
 		);
 
 		window.addEventListener('pointerdown', recordUserActivity, true);
@@ -660,13 +665,12 @@
 			unsubscribeAppOperation();
 			unsubscribeWorkspaceRegistry();
 			unsubscribeWorkspaceUnlocks();
-			unsubscribeQueueReadState();
 			unsubscribeQueueFiles();
 			window.clearInterval(idleLockIntervalId);
-			window.clearInterval(queueUnreadRefreshIntervalId);
-			if (queuedUnreadRefreshTimeoutId !== undefined) {
-				window.clearTimeout(queuedUnreadRefreshTimeoutId);
-				queuedUnreadRefreshTimeoutId = undefined;
+			window.clearInterval(queuePendingRefreshIntervalId);
+			if (queuedPendingRefreshTimeoutId !== undefined) {
+				window.clearTimeout(queuedPendingRefreshTimeoutId);
+				queuedPendingRefreshTimeoutId = undefined;
 			}
 			window.removeEventListener('pointerdown', recordUserActivity, true);
 			window.removeEventListener('keydown', recordUserActivity, true);
@@ -841,9 +845,9 @@
 					>
 						<span class="workduck-nav-dot"></span>
 						<span class="workduck-nav-label">{messages.navigation[item.labelKey]}</span>
-						{#if item.labelKey === 'queue' && queueUnreadCount > 0}
+						{#if item.labelKey === 'queue' && queuePendingCount > 0}
 							<span class="workduck-nav-badge" aria-hidden="true">
-								{getQueueUnreadBadgeLabel()}
+								{getQueuePendingBadgeLabel()}
 							</span>
 						{/if}
 					</a>
@@ -937,4 +941,3 @@
 		{/if}
 	</div>
 </div>
-

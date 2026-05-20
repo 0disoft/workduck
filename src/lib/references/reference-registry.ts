@@ -18,6 +18,7 @@ export interface ReferenceRecord {
 	readonly title: string;
 	readonly sourceUrl: string;
 	readonly tags: readonly string[];
+	readonly projectIds: readonly string[];
 	readonly content: string;
 	readonly createdAt: string;
 	readonly updatedAt: string;
@@ -35,6 +36,7 @@ export interface ReferenceInput {
 	readonly title: string;
 	readonly sourceUrl: string;
 	readonly tags: readonly string[];
+	readonly projectIds?: readonly string[];
 	readonly content: string;
 }
 
@@ -83,6 +85,7 @@ export function upsertReference(
 	const title = normalizeReferenceTitle(input.title);
 	const sourceUrl = normalizeReferenceSourceUrl(input.sourceUrl);
 	const tags = normalizeReferenceTags(input.tags);
+	const projectIds = normalizeReferenceProjectIds(input.projectIds ?? []);
 	const content = normalizeReferenceContent(input.content);
 
 	if (title.length === 0) {
@@ -119,6 +122,7 @@ export function upsertReference(
 		title,
 		sourceUrl,
 		tags,
+		projectIds,
 		content,
 		createdAt: matchingReference?.createdAt ?? timestamp,
 		updatedAt: timestamp
@@ -210,6 +214,7 @@ function parseReferenceRecord(value: unknown): ReferenceRecord | null {
 	const title = normalizeReferenceTitle(readTrimmedString(value.title));
 	const sourceUrl = normalizeReferenceSourceUrl(readTrimmedString(value.sourceUrl));
 	const tags = normalizeReferenceTags(value.tags);
+	const projectIds = normalizeReferenceProjectIds(value.projectIds);
 	const content = normalizeReferenceContent(readRawString(value.content));
 	const createdAt = readTrimmedString(value.createdAt);
 	const updatedAt = readTrimmedString(value.updatedAt);
@@ -223,6 +228,7 @@ function parseReferenceRecord(value: unknown): ReferenceRecord | null {
 		title,
 		sourceUrl,
 		tags,
+		projectIds,
 		content,
 		createdAt: createdAt.length === 0 ? updatedAt : createdAt,
 		updatedAt: updatedAt.length === 0 ? createdAt : updatedAt
@@ -294,6 +300,26 @@ function normalizeReferenceTags(value: unknown): string[] {
 
 function normalizeReferenceTag(value: string) {
 	return value.trim().replace(/\s+/g, ' ').slice(0, REFERENCE_TAG_MAX_LENGTH);
+}
+
+function normalizeReferenceProjectIds(value: unknown): string[] {
+	if (!Array.isArray(value)) {
+		return [];
+	}
+
+	const projectIds: string[] = [];
+
+	for (const item of value) {
+		const projectId = normalizeRecordId(item);
+
+		if (projectId === null || projectIds.includes(projectId)) {
+			continue;
+		}
+
+		projectIds.push(projectId);
+	}
+
+	return projectIds;
 }
 
 function normalizeReferenceContent(value: string) {

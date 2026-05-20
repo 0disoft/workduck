@@ -115,12 +115,24 @@
 			return;
 		}
 
+		openSkillFormFromRecord(selectedSkill, false);
+	}
+
+	function copySelectedSkillForEditing() {
+		if (selectedSkill === null || !selectedSkill.builtIn) {
+			return;
+		}
+
+		openSkillFormFromRecord(selectedSkill, true);
+	}
+
+	function openSkillFormFromRecord(skill: WorkduckSkillRecord, asCopy: boolean) {
 		isSkillFormOpen = true;
-		editingSkillId = selectedSkill.id;
-		skillName = selectedSkill.name;
-		skillDescription = selectedSkill.description;
-		skillOutputTypes = [...selectedSkill.outputTypes];
-		skillInstructions = selectedSkill.instructions;
+		editingSkillId = asCopy ? null : skill.id;
+		skillName = asCopy ? createCopiedSkillName(getSkillDisplayName(skill)) : skill.name;
+		skillDescription = getSkillDisplayDescription(skill);
+		skillOutputTypes = [...skill.outputTypes];
+		skillInstructions = getSkillDisplayInstructions(skill);
 		status = null;
 		skillError = null;
 	}
@@ -238,6 +250,35 @@
 			: skill.instructions;
 	}
 
+	function createCopiedSkillName(baseName: string) {
+		const existingNames = new Set<string>();
+
+		for (const skill of allSkills) {
+			existingNames.add(normalizeSkillName(skill.name));
+			existingNames.add(normalizeSkillName(getSkillDisplayName(skill)));
+		}
+
+		const copiedName = `${baseName} ${messages.skills.copyNameSuffix}`;
+
+		if (!existingNames.has(normalizeSkillName(copiedName))) {
+			return copiedName;
+		}
+
+		for (let copyIndex = 2; copyIndex < 100; copyIndex += 1) {
+			const indexedName = `${copiedName} ${copyIndex}`;
+
+			if (!existingNames.has(normalizeSkillName(indexedName))) {
+				return indexedName;
+			}
+		}
+
+		return `${copiedName} ${Date.now()}`;
+	}
+
+	function normalizeSkillName(name: string) {
+		return name.trim().toLocaleLowerCase();
+	}
+
 	function resolveSelectedSkillId(
 		currentSkillId: string | null,
 		skills: readonly WorkduckSkillRecord[]
@@ -325,19 +366,20 @@
 					<button
 						class="workduck-button workduck-button-secondary"
 						type="button"
-						disabled={selectedSkill.builtIn}
-						onclick={editSelectedSkill}
+						onclick={selectedSkill.builtIn ? copySelectedSkillForEditing : editSelectedSkill}
 					>
-						{messages.common.edit}
+						{selectedSkill.builtIn ? messages.skills.copySkill : messages.common.edit}
 					</button>
-					<button
-						class="workduck-button workduck-button-danger"
-						type="button"
-						disabled={selectedSkill.builtIn || isRemovingSkill}
-						onclick={() => void handleRemoveSelectedSkill()}
-					>
-						{messages.common.remove}
-					</button>
+					{#if !selectedSkill.builtIn}
+						<button
+							class="workduck-button workduck-button-danger"
+							type="button"
+							disabled={isRemovingSkill}
+							onclick={() => void handleRemoveSelectedSkill()}
+						>
+							{messages.common.remove}
+						</button>
+					{/if}
 				{/snippet}
 			</DetailCard>
 		{/if}

@@ -113,8 +113,8 @@ export const koMessages = {
 		list: '작업 대기열 파일',
 		detail: '작업 대기열 세부 정보',
 		filters: '작업 대기열 필터',
-		readFilters: '읽음 상태 필터',
-		unreadCountLabel: '읽지 않은 작업 대기열 항목 {count}개',
+		executionFilters: '수행 상태 필터',
+		pendingCountLabel: '수행 전 작업 {count}개',
 		resultReportReview: '결과 보고서 검토',
 		workOrderView: '작업 지시서 보기',
 		proposalView: '제안서 보기',
@@ -125,6 +125,13 @@ export const koMessages = {
 		editWork: '작업 수정',
 		workTitle: '작업 제목',
 		workPriority: '우선순위',
+		noSkill: '스킬 없음',
+		noAgent: '에이전트 없음',
+		noReference: '참고자료 없음',
+		linkedSkill: '연결된 스킬',
+		workAgents: '작업 에이전트',
+		workReferences: '작업 참고자료',
+		selectionCount: '{count}개 선택',
 		workBody: '작업 내용',
 		createWorkOrder: '작업 지시서 만들기',
 		creating: '만드는 중',
@@ -137,6 +144,10 @@ export const koMessages = {
 			normal: '보통',
 			high: '높음',
 			urgent: '긴급'
+		},
+		executionStates: {
+			pending: '수행 전',
+			completed: '수행 완료'
 		},
 		fileKinds: {
 			resultReport: '결과 보고서 JSON',
@@ -267,6 +278,9 @@ export const koMessages = {
 		editReference: '참고자료 수정',
 		sourceUrl: '출처 주소',
 		tags: '태그',
+		relatedProjects: '연관 프로젝트',
+		noProject: '프로젝트 없음',
+		projectSelectionCount: '{count}개 프로젝트 선택',
 		content: '내용',
 		saved: '저장했습니다.',
 		removed: '삭제했습니다.',
@@ -371,12 +385,15 @@ export const koMessages = {
 				repositoryGitCommandTimedOut: 'Git 명령 시간이 초과되었습니다.',
 				repositoryGitNotRepository: 'Git 저장소로 초기화되지 않았습니다.',
 				repositoryGitRemoteMissing: '원격 저장소가 설정되지 않았습니다.',
-				repositoryGitPushAuthRequired: 'Git push에는 인증이 필요합니다.',
+				repositoryGitPushAuthRequired:
+					'Git push에는 인증이 필요합니다. 시스템 Git 인증을 설정하거나 환경변수 보관함에 GitHub 토큰을 추가하세요.',
 				repositoryGitPushEmpty: 'Push할 커밋이 없습니다.',
 				repositoryGitPushFailed: 'Git push에 실패했습니다.',
-				repositoryGitFetchAuthRequired: 'Git fetch에는 인증이 필요합니다.',
+				repositoryGitFetchAuthRequired:
+					'Git fetch에는 인증이 필요합니다. 시스템 Git 인증을 설정하거나 환경변수 보관함에 GitHub 토큰을 추가하세요.',
 				repositoryGitFetchFailed: 'Git fetch에 실패했습니다.',
-				repositoryGitPullAuthRequired: 'Git pull에는 인증이 필요합니다.',
+				repositoryGitPullAuthRequired:
+					'Git pull에는 인증이 필요합니다. 시스템 Git 인증을 설정하거나 환경변수 보관함에 GitHub 토큰을 추가하세요.',
 				repositoryGitPullConflict: '충돌을 먼저 해결해야 합니다.',
 				repositoryGitPullFailed: 'Git pull에 실패했습니다.',
 				repositoryGithubNameRequired: 'GitHub 저장소 이름을 입력하세요.',
@@ -420,10 +437,14 @@ export const koMessages = {
 				fetch: '동기화 저장소에서 Git fetch를 실행합니다.',
 				pull: '동기화 저장소에서 Git pull을 실행합니다.',
 				push: '동기화 파일을 커밋하고 Git push를 실행합니다.',
-				export: '암호화된 데이터를 직접 복사하기 전에 사용합니다.',
-				import: '다른 기기에서 복사한 암호화 데이터를 붙여넣은 뒤 사용합니다.',
-				save: '동기화 폴더를 push하기 전에 사용합니다.',
-				load: '동기화 폴더를 pull한 뒤 적용할 때 사용합니다.'
+				export:
+					'현재 워크스페이스와 프로젝트 정보를 암호로 암호화해 아래 데이터 영역에 표시합니다. 파일 없이 직접 복사해 옮길 때 사용합니다.',
+				import:
+					'아래 데이터 영역에 붙여넣은 암호화 데이터를 현재 앱에 적용합니다. 같은 암호로 내보낸 데이터만 가져올 수 있습니다.',
+				save:
+					'현재 워크스페이스와 프로젝트 정보를 암호화한 뒤 선택한 동기화 폴더의 파일로 저장합니다. Git push 전에 사용합니다.',
+				load:
+					'선택한 동기화 폴더의 암호화 파일을 읽어 현재 앱에 적용합니다. Git pull 후 최신 데이터를 반영할 때 사용합니다.'
 			},
 			statuses: {
 				exported: '내보냈습니다.',
@@ -465,9 +486,10 @@ export const koMessages = {
 				gitBranchMissing: 'Git 브랜치를 찾을 수 없습니다.',
 				gitUnavailable: 'Git을 사용할 수 없습니다.',
 				gitTimedOut: 'Git 명령 시간이 초과되었습니다.',
-				gitAuthRequired: 'Git 인증이 필요합니다.',
+				gitAuthRequired:
+					'Git 인증이 필요합니다. 시스템 Git 인증을 설정하거나 환경변수 보관함에 GitHub 토큰을 추가하세요.',
 				gitIdentityRequired: 'Git 사용자 이름이나 이메일이 설정되어 있지 않습니다.',
-				gitRemoteHasChanges: '원격 저장소에 변경 사항이 있습니다. 먼저 pull 하세요.',
+				gitRemoteHasChanges: '원격 저장소에 변경 사항이 있습니다. 먼저 Pull 하세요.',
 				gitFastForwardRequired: '수동 병합이 필요합니다.',
 				gitTrustRequired: 'Git 저장소 신뢰 설정이 필요합니다.',
 				gitCommandFailed: 'Git 명령이 실패했습니다.',
@@ -684,6 +706,8 @@ export const koMessages = {
 		details: '스킬 세부 정보',
 		newSkill: '새 스킬',
 		editSkill: '스킬 수정',
+		copySkill: '복사해서 수정',
+		copyNameSuffix: '복사본',
 		saved: '저장했습니다.',
 		removed: '삭제했습니다.',
 		outputTypes: {

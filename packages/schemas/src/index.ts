@@ -4,11 +4,13 @@ import {
   type WorkduckRecordStatus,
   type WorkduckRepoKind,
   type WorkduckQueueReviewDecision,
+  type WorkduckQueueWorkPriority,
   type WorkduckRiskLevel,
   type WorkduckServiceLevel,
   workduckCatalogArtifactKinds,
   workduckEntityKinds,
   workduckQueueReviewDecisions,
+  workduckQueueWorkPriorities,
   workduckRecordStatuses,
   workduckRepoKinds,
   workduckRiskLevels,
@@ -76,6 +78,8 @@ const workduckRiskLevelEnum: readonly WorkduckRiskLevel[] = workduckRiskLevels;
 const workduckServiceLevelEnum: readonly WorkduckServiceLevel[] = workduckServiceLevels;
 const workduckQueueReviewDecisionEnum: readonly WorkduckQueueReviewDecision[] =
   workduckQueueReviewDecisions;
+const workduckQueueWorkPriorityEnum: readonly WorkduckQueueWorkPriority[] =
+  workduckQueueWorkPriorities;
 
 const entityRefReference = {
   $ref: workduckSchemaIds.entityRef
@@ -405,6 +409,13 @@ export const workduckQueueWorkOrderSchema = {
           id: nonEmptyString,
           title: nonEmptyString,
           body: nonEmptyString,
+          priority: {
+            type: "string",
+            enum: workduckQueueWorkPriorityEnum
+          },
+          skillIds: stringArray,
+          agentIds: stringArray,
+          referenceIds: stringArray,
           sourceReportTaskId: nonEmptyString,
           decision: {
             type: "string",
@@ -478,6 +489,13 @@ export const workduckQueueProposalSchema = {
           id: nonEmptyString,
           title: nonEmptyString,
           body: nonEmptyString,
+          priority: {
+            type: "string",
+            enum: workduckQueueWorkPriorityEnum
+          },
+          skillIds: stringArray,
+          agentIds: stringArray,
+          referenceIds: stringArray,
           sourceReportTaskId: nonEmptyString,
           decision: {
             type: "string",

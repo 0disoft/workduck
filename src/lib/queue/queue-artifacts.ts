@@ -1,5 +1,6 @@
 export type WorkduckQueueReviewDecision = 'pending' | 'approved' | 'needs-work' | 'rollback';
 export type WorkduckQueueWorkPriority = 'low' | 'normal' | 'high' | 'urgent';
+export type WorkduckQueueExecutionState = 'pending' | 'completed';
 
 export const defaultQueueWorkPriority = 'normal' satisfies WorkduckQueueWorkPriority;
 export const queueWorkPriorities = ['low', 'normal', 'high', 'urgent'] as const satisfies readonly WorkduckQueueWorkPriority[];
@@ -33,6 +34,9 @@ export interface WorkduckQueueWorkOrderTask {
 	readonly title: string;
 	readonly body: string;
 	readonly priority?: WorkduckQueueWorkPriority;
+	readonly skillIds?: readonly string[];
+	readonly agentIds?: readonly string[];
+	readonly referenceIds?: readonly string[];
 	readonly sourceReportTaskId?: string;
 	readonly decision?: Exclude<WorkduckQueueReviewDecision, 'pending' | 'approved'>;
 }
@@ -207,11 +211,17 @@ export function createQueueWorkOrderFromReportReview(
 export function createManualQueueWorkOrder(
 	title: string,
 	body: string,
-	priority: WorkduckQueueWorkPriority = defaultQueueWorkPriority
+	priority: WorkduckQueueWorkPriority = defaultQueueWorkPriority,
+	skillIds: readonly string[] = [],
+	agentIds: readonly string[] = [],
+	referenceIds: readonly string[] = []
 ): WorkduckQueueWorkOrder {
 	const normalizedTitle = normalizeQueueText(title);
 	const normalizedBody = normalizeQueueText(body);
 	const normalizedPriority = normalizeQueueWorkPriority(priority);
+	const normalizedSkillIds = normalizeQueueRecordIds(skillIds);
+	const normalizedAgentIds = normalizeQueueRecordIds(agentIds);
+	const normalizedReferenceIds = normalizeQueueRecordIds(referenceIds);
 
 	return {
 		schemaVersion: 'workduck.queue-work-order/v1',
@@ -227,7 +237,10 @@ export function createManualQueueWorkOrder(
 				id: createQueueId('task'),
 				title: normalizedTitle,
 				body: normalizedBody,
-				priority: normalizedPriority
+				priority: normalizedPriority,
+				...(normalizedSkillIds.length > 0 ? { skillIds: normalizedSkillIds } : {}),
+				...(normalizedAgentIds.length > 0 ? { agentIds: normalizedAgentIds } : {}),
+				...(normalizedReferenceIds.length > 0 ? { referenceIds: normalizedReferenceIds } : {})
 			}
 		]
 	};
@@ -240,21 +253,39 @@ export function updateQueueWorkOrderTask(
 		readonly title: string;
 		readonly body: string;
 		readonly priority: WorkduckQueueWorkPriority;
+		readonly skillIds?: readonly string[];
+		readonly agentIds?: readonly string[];
+		readonly referenceIds?: readonly string[];
 	}
 ): WorkduckQueueWorkOrder {
 	const normalizedTitle = normalizeQueueText(input.title);
 	const normalizedBody = normalizeQueueText(input.body);
 	const normalizedPriority = normalizeQueueWorkPriority(input.priority);
-	const tasks = workOrder.tasks.map((task) =>
-		task.id === taskId
-			? {
-					...task,
-					title: normalizedTitle,
-					body: normalizedBody,
-					priority: normalizedPriority
-				}
-			: task
-	);
+	const normalizedSkillIds = normalizeQueueRecordIds(input.skillIds ?? []);
+	const normalizedAgentIds = normalizeQueueRecordIds(input.agentIds ?? []);
+	const normalizedReferenceIds = normalizeQueueRecordIds(input.referenceIds ?? []);
+	const tasks = workOrder.tasks.map((task) => {
+		if (task.id !== taskId) {
+			return task;
+		}
+
+		const {
+			skillIds: _skillIds,
+			agentIds: _agentIds,
+			referenceIds: _referenceIds,
+			...taskWithoutAssignmentIds
+		} = task;
+
+		return {
+			...taskWithoutAssignmentIds,
+			title: normalizedTitle,
+			body: normalizedBody,
+			priority: normalizedPriority,
+			...(normalizedSkillIds.length > 0 ? { skillIds: normalizedSkillIds } : {}),
+			...(normalizedAgentIds.length > 0 ? { agentIds: normalizedAgentIds } : {}),
+			...(normalizedReferenceIds.length > 0 ? { referenceIds: normalizedReferenceIds } : {})
+		};
+	});
 
 	return {
 		...workOrder,
@@ -280,6 +311,32 @@ export function readQueueWorkPriorityLabel(content: string) {
 		const priority = readHighestQueueWorkPriorityFromTasks(parsed.tasks);
 
 		return priority ?? null;
+	} catch {
+		return null;
+	}
+}
+
+export function readQueueArtifactExecutionState(content: string): WorkduckQueueExecutionState | null {
+	try {
+		const parsed: unknown = JSON.parse(content);
+
+		if (!isRecord(parsed)) {
+			return null;
+		}
+
+		if (parsed.status === 'archived') {
+			return 'completed';
+		}
+
+		switch (parsed.schemaVersion) {
+			case 'workduck.queue-result-report/v1':
+				return 'completed';
+			case 'workduck.queue-work-order/v1':
+			case 'workduck.queue-proposal/v1':
+				return 'pending';
+			default:
+				return null;
+		}
 	} catch {
 		return null;
 	}
@@ -356,6 +413,30 @@ function createQueueId(prefix: string) {
 
 function normalizeQueueText(value: string) {
 	return value.trim().replace(/\s+/g, ' ');
+}
+
+function normalizeQueueRecordIds(value: unknown): string[] {
+	if (!Array.isArray(value)) {
+		return [];
+	}
+
+	const ids: string[] = [];
+
+	for (const item of value) {
+		if (typeof item !== 'string') {
+			continue;
+		}
+
+		const id = normalizeQueueText(item);
+
+		if (id.length === 0 || ids.includes(id)) {
+			continue;
+		}
+
+		ids.push(id);
+	}
+
+	return ids;
 }
 
 function isQueueResultReport(value: unknown): value is WorkduckQueueResultReport {
@@ -455,6 +536,9 @@ function isQueueWorkOrderTask(value: unknown) {
 		typeof value.title === 'string' &&
 		typeof value.body === 'string' &&
 		(value.priority === undefined || isQueueWorkPriority(value.priority)) &&
+		(value.skillIds === undefined || isStringArray(value.skillIds)) &&
+		(value.agentIds === undefined || isStringArray(value.agentIds)) &&
+		(value.referenceIds === undefined || isStringArray(value.referenceIds)) &&
 		(value.sourceReportTaskId === undefined || typeof value.sourceReportTaskId === 'string') &&
 		(value.decision === undefined ||
 			value.decision === 'needs-work' ||

@@ -12,6 +12,12 @@
 	} from '$lib/settings/appearance-storage';
 	import type { WorkspaceRecord } from '$lib/workspaces/workspace-registry';
 	import { DetailCard, EntityCard, EntityWorkbench } from '$lib/ui';
+	import {
+		createEmptyProjectRegistry,
+		type ProjectNodeRecord,
+		type ProjectRegistry
+	} from '$lib/projects/project-registry';
+	import { readProjectRegistry, subscribeProjectRegistry } from '$lib/projects/project-storage';
 
 	import {
 		createEmptyReferenceRegistry,
@@ -41,7 +47,9 @@
 	let referenceTitle = $state('');
 	let referenceSourceUrl = $state('');
 	let referenceTags = $state('');
+	let referenceProjectIds = $state<string[]>([]);
 	let referenceContent = $state('');
+	let projectRegistry = $state<ProjectRegistry>(createEmptyProjectRegistry(''));
 	let isReferenceFormOpen = $state(false);
 	let isSavingReference = $state(false);
 	let isRemovingReference = $state(false);
@@ -58,6 +66,12 @@
 		editingReferenceId === null ? messages.common.add : messages.common.save
 	);
 	let parsedTags = $derived(parseReferenceTagInput(referenceTags));
+	let availableProjects = $derived(
+		projectRegistry.nodes.filter((node) => node.kind === 'project')
+	);
+	let referenceProjectSummary = $derived(
+		createReferenceProjectSummary(referenceProjectIds)
+	);
 	let canSaveReference = $derived(
 		referenceTitle.trim().length > 0 &&
 			(referenceSourceUrl.trim().length > 0 || referenceContent.trim().length > 0) &&
@@ -78,17 +92,25 @@
 
 		return untrack(() => {
 			registry = createEmptyReferenceRegistry(workspaceId);
+			projectRegistry = createEmptyProjectRegistry(workspaceId);
 			selectedReferenceId = null;
 			editingReferenceId = null;
 			clearReferenceForm();
 			void readRegistryFromStorage(workspaceId, workspace.path);
+			void readProjectRegistryFromStorage(workspaceId);
 
 			const unsubscribeRegistry = subscribeReferenceRegistry(workspaceId, (nextRegistry) => {
 				registry = nextRegistry;
 				selectedReferenceId = resolveSelectedReferenceId(selectedReferenceId, nextRegistry.references);
 			});
+			const unsubscribeProjectRegistry = subscribeProjectRegistry(workspaceId, (nextRegistry) => {
+				projectRegistry = nextRegistry;
+			});
 
-			return unsubscribeRegistry;
+			return () => {
+				unsubscribeRegistry();
+				unsubscribeProjectRegistry();
+			};
 		});
 	});
 
@@ -98,6 +120,12 @@
 		registry = result.registry;
 		referenceError = result.ok ? null : result.error;
 		selectedReferenceId = resolveSelectedReferenceId(selectedReferenceId, result.registry.references);
+	}
+
+	async function readProjectRegistryFromStorage(workspaceId: string) {
+		const result = await readProjectRegistry(workspaceId);
+
+		projectRegistry = result.registry;
 	}
 
 	function selectReference(reference: ReferenceRecord) {
@@ -121,6 +149,7 @@
 		referenceTitle = selectedReference.title;
 		referenceSourceUrl = selectedReference.sourceUrl;
 		referenceTags = selectedReference.tags.join(', ');
+		referenceProjectIds = [...selectedReference.projectIds];
 		referenceContent = selectedReference.content;
 		status = null;
 		referenceError = null;
@@ -132,6 +161,7 @@
 		referenceTitle = '';
 		referenceSourceUrl = '';
 		referenceTags = '';
+		referenceProjectIds = [];
 		referenceContent = '';
 		referenceError = null;
 	}
@@ -153,6 +183,7 @@
 				title: referenceTitle,
 				sourceUrl: referenceSourceUrl,
 				tags: parsedTags,
+				projectIds: referenceProjectIds,
 				content: referenceContent
 			});
 
@@ -217,7 +248,65 @@
 			return reference.tags.join(', ');
 		}
 
+		const projectLabels = getReferenceProjectLabels(reference);
+
+		if (projectLabels.length > 0) {
+			return projectLabels.join(', ');
+		}
+
 		return getReferenceSourceHost(reference.sourceUrl);
+	}
+
+	function getReferenceProjectLabels(reference: ReferenceRecord) {
+		return reference.projectIds.map(getProjectLabelById).filter((label) => label.length > 0);
+	}
+
+	function getProjectLabelById(projectId: string) {
+		const project = availableProjects.find((candidate) => candidate.id === projectId);
+
+		return project === undefined ? projectId : project.name;
+	}
+
+	function createReferenceProjectSummary(projectIds: readonly string[]) {
+		if (projectIds.length === 0) {
+			return messages.references.noProject;
+		}
+
+		if (projectIds.length === 1) {
+			const projectId = projectIds[0];
+
+			return projectId === undefined ? messages.references.noProject : getProjectLabelById(projectId);
+		}
+
+		return messages.references.projectSelectionCount.replace('{count}', projectIds.length.toString());
+	}
+
+	function toggleReferenceProject(projectId: string, isSelected: boolean) {
+		referenceProjectIds = updateSelectedProjectIds(referenceProjectIds, projectId, isSelected);
+	}
+
+	function updateSelectedProjectIds(
+		selectedProjectIds: readonly string[],
+		projectId: string,
+		isSelected: boolean
+	) {
+		const normalizedProjectId = projectId.trim();
+
+		if (normalizedProjectId.length === 0) {
+			return [...selectedProjectIds];
+		}
+
+		if (!isSelected) {
+			return selectedProjectIds.filter((selectedProjectId) => selectedProjectId !== normalizedProjectId);
+		}
+
+		return selectedProjectIds.includes(normalizedProjectId)
+			? [...selectedProjectIds]
+			: [...selectedProjectIds, normalizedProjectId];
+	}
+
+	function getProjectOptionLabel(project: ProjectNodeRecord) {
+		return project.name;
 	}
 
 	function getReferenceSourceHost(sourceUrl: string) {
@@ -338,6 +427,18 @@
 							</dd>
 						</div>
 					{/if}
+					{#if selectedReference.projectIds.length > 0}
+						<div>
+							<dt>{messages.references.relatedProjects}</dt>
+							<dd>
+								<span class="workduck-environment-tags">
+									{#each getReferenceProjectLabels(selectedReference) as projectLabel (projectLabel)}
+										<span class="workduck-project-tag">{projectLabel}</span>
+									{/each}
+								</span>
+							</dd>
+						</div>
+					{/if}
 					{#if selectedReference.content.length > 0}
 						<div>
 							<dt>{messages.references.content}</dt>
@@ -430,6 +531,33 @@
 						disabled={isSavingReference}
 					/>
 				</label>
+
+				<div class="workduck-form-field">
+					<span>{messages.references.relatedProjects}</span>
+					<details class="workduck-multi-select">
+						<summary class="workduck-multi-select-summary">
+							<span>{referenceProjectSummary}</span>
+						</summary>
+						<div class="workduck-multi-select-options">
+							{#if availableProjects.length === 0}
+								<span class="workduck-multi-select-empty">{messages.references.noProject}</span>
+							{:else}
+								{#each availableProjects as project (project.id)}
+									<label class="workduck-multi-select-option">
+										<input
+											type="checkbox"
+											checked={referenceProjectIds.includes(project.id)}
+											disabled={isSavingReference}
+											onchange={(event) =>
+												toggleReferenceProject(project.id, event.currentTarget.checked)}
+										/>
+										<span>{getProjectOptionLabel(project)}</span>
+									</label>
+								{/each}
+							{/if}
+						</div>
+					</details>
+				</div>
 
 				<label class="workduck-form-field" for="reference-content">
 					<span>{messages.references.content}</span>

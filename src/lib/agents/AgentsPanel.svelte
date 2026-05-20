@@ -512,7 +512,7 @@
 						bind:value={selectedEnvironmentSecretId}
 						disabled={isSavingAgent}
 					>
-						<option value="" disabled>{messages.common.noApiKey}</option>
+						<option value="">{messages.common.noApiKey}</option>
 						{#if selectedEnvironmentSecretIsMissing}
 							<option value={selectedEnvironmentSecretId}>{messages.common.linkedApiKey}</option>
 						{/if}

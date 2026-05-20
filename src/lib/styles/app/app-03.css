@@ -168,7 +168,7 @@
 
 .workduck-project-add-card {
 	display: inline-flex;
-	min-height: var(--workduck-list-card-min-height);
+	min-height: 46px;
 	align-items: center;
 	align-self: start;
 	justify-content: center;
@@ -303,7 +303,7 @@
 
 .workduck-repository-card.workduck-project-add-card {
 	grid-template-columns: minmax(0, 1fr);
-	min-height: var(--workduck-list-card-min-height);
+	min-height: 46px;
 }
 
 .workduck-repository-card .workduck-project-card-header,

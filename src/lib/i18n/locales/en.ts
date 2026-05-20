@@ -111,8 +111,8 @@ export const enMessages = {
 		list: 'Work queue files',
 		detail: 'Work queue details',
 		filters: 'Work queue filters',
-		readFilters: 'Work queue read filters',
-		unreadCountLabel: '{count} unread work queue items',
+		executionFilters: 'Work status filters',
+		pendingCountLabel: '{count} pending work items',
 		resultReportReview: 'Result report review',
 		workOrderView: 'Work order view',
 		proposalView: 'Proposal view',
@@ -123,6 +123,13 @@ export const enMessages = {
 		editWork: 'Edit work',
 		workTitle: 'Work title',
 		workPriority: 'Priority',
+		noSkill: 'No skill',
+		noAgent: 'No agent',
+		noReference: 'No reference',
+		linkedSkill: 'Linked skill',
+		workAgents: 'Work agents',
+		workReferences: 'Work references',
+		selectionCount: '{count} selected',
 		workBody: 'Work body',
 		createWorkOrder: 'Create work order',
 		creating: 'Creating',
@@ -135,6 +142,10 @@ export const enMessages = {
 			normal: 'Normal',
 			high: 'High',
 			urgent: 'Urgent'
+		},
+		executionStates: {
+			pending: 'Pending',
+			completed: 'Completed'
 		},
 		fileKinds: {
 			resultReport: 'Report JSON',
@@ -265,6 +276,9 @@ export const enMessages = {
 		editReference: 'Edit reference',
 		sourceUrl: 'Source URL',
 		tags: 'Tags',
+		relatedProjects: 'Related projects',
+		noProject: 'No project',
+		projectSelectionCount: '{count} projects selected',
 		content: 'Content',
 		saved: 'Saved.',
 		removed: 'Removed.',
@@ -369,12 +383,15 @@ export const enMessages = {
 				repositoryGitCommandTimedOut: 'Git command timed out.',
 				repositoryGitNotRepository: 'Folder is not initialized for Git.',
 				repositoryGitRemoteMissing: 'Git remote is not configured.',
-				repositoryGitPushAuthRequired: 'Git push needs authentication.',
+				repositoryGitPushAuthRequired:
+					'Git push needs authentication. Configure System Git credentials or add a GitHub token to the Environment vault.',
 				repositoryGitPushEmpty: 'Repository has no commits to push.',
 				repositoryGitPushFailed: 'Git push failed.',
-				repositoryGitFetchAuthRequired: 'Git fetch needs authentication.',
+				repositoryGitFetchAuthRequired:
+					'Git fetch needs authentication. Configure System Git credentials or add a GitHub token to the Environment vault.',
 				repositoryGitFetchFailed: 'Git fetch failed.',
-				repositoryGitPullAuthRequired: 'Git pull needs authentication.',
+				repositoryGitPullAuthRequired:
+					'Git pull needs authentication. Configure System Git credentials or add a GitHub token to the Environment vault.',
 				repositoryGitPullConflict: 'Resolve Git conflicts first.',
 				repositoryGitPullFailed: 'Git pull failed.',
 				repositoryGithubNameRequired: 'GitHub repository name is required.',
@@ -419,10 +436,14 @@ export const enMessages = {
 				fetch: 'Check the sync repository remote.',
 				pull: 'Bring remote sync file changes into this folder.',
 				push: 'Commit and upload this sync file.',
-				export: 'Use before copying encrypted data manually.',
-				import: 'Use after pasting encrypted data from another device.',
-				save: 'Use before pushing the sync folder.',
-				load: 'Use after pulling the sync folder.'
+				export:
+					'Encrypt the current workspace and project data into the text area below. Use this when copying sync data manually without a file.',
+				import:
+					'Apply the encrypted data pasted in the text area below. The data must have been exported with the same password.',
+				save:
+					'Encrypt the current workspace and project data, then write it to the selected sync folder file. Use this before Git push.',
+				load:
+					'Read the encrypted file from the selected sync folder and apply it to this app. Use this after Git pull.'
 			},
 			statuses: {
 				exported: 'Exported.',
@@ -464,7 +485,8 @@ export const enMessages = {
 				gitBranchMissing: 'Git branch was not found.',
 				gitUnavailable: 'Git is not available.',
 				gitTimedOut: 'Git command timed out.',
-				gitAuthRequired: 'Git authentication is required.',
+				gitAuthRequired:
+					'Git authentication is required. Configure System Git credentials or add a GitHub token to the Environment vault.',
 				gitIdentityRequired: 'Git user name or email is not set.',
 				gitRemoteHasChanges: 'Remote has changes. Pull first.',
 				gitFastForwardRequired: 'Pull needs a manual merge.',
@@ -683,6 +705,8 @@ export const enMessages = {
 		details: 'Skill details',
 		newSkill: 'New skill',
 		editSkill: 'Edit skill',
+		copySkill: 'Copy to edit',
+		copyNameSuffix: 'copy',
 		saved: 'Saved.',
 		removed: 'Removed.',
 		outputTypes: {

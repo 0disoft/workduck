@@ -359,7 +359,7 @@ a {
 	opacity: 0.68;
 }
 
-.workduck-queue-read-state {
+.workduck-queue-execution-state {
 	display: inline-flex;
 	flex: 0 0 auto;
 	min-width: 0;
@@ -374,7 +374,7 @@ a {
 	font-weight: 800;
 }
 
-.workduck-queue-file-unread .workduck-queue-read-state {
+.workduck-queue-file-pending .workduck-queue-execution-state {
 	border-color: oklch(var(--workduck-oklch-accent) / 0.72);
 	background: oklch(var(--workduck-oklch-accent) / 0.1);
 	color: var(--workduck-color-accent);
@@ -847,4 +847,3 @@ a {
 	font-size: var(--workduck-font-size-md);
 	font-weight: 800;
 }
-
