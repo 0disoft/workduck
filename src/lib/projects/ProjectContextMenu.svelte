@@ -152,6 +152,14 @@
 				class="workduck-context-menu-item"
 				type="button"
 				role="menuitem"
+				onclick={() => void onRepositoryTask('update-dependencies')}
+			>
+				{projectMessages.contextMenu.updateDependencies}
+			</button>
+			<button
+				class="workduck-context-menu-item"
+				type="button"
+				role="menuitem"
 				onclick={() => void onRepositoryTask('start-dev-server')}
 			>
 				{projectMessages.contextMenu.startDevServer}

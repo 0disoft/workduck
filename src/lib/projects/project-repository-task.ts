@@ -3,6 +3,7 @@ import { normalizeWorkspacePathForStorage } from '$lib/workspaces/workspace-path
 export type ProjectRepositoryTask =
 	| 'open-terminal'
 	| 'install-dependencies'
+	| 'update-dependencies'
 	| 'start-dev-server'
 	| 'build';
 
@@ -27,6 +28,7 @@ export type ProjectRepositoryTaskError =
 export type ProjectRepositoryTaskResult =
 	| {
 			readonly ok: true;
+			readonly command: string | null;
 	  }
 	| {
 			readonly ok: false;
@@ -42,6 +44,7 @@ interface ProjectRepositoryTaskInput {
 interface ProjectRepositoryTaskResponse {
 	readonly ok: boolean;
 	readonly error?: ProjectRepositoryTaskError | null;
+	readonly command?: string | null;
 }
 
 interface TauriCoreApi {
@@ -73,7 +76,7 @@ export async function runProjectRepositoryTask(
 		});
 
 		return response.ok
-			? { ok: true }
+			? { ok: true, command: normalizeTaskCommand(response.command) }
 			: {
 					ok: false,
 					error: isProjectRepositoryTaskError(response.error)
@@ -83,6 +86,16 @@ export async function runProjectRepositoryTask(
 	} catch {
 		return { ok: false, error: 'project-repository-task-launch-failed' };
 	}
+}
+
+function normalizeTaskCommand(value: unknown) {
+	if (typeof value !== 'string') {
+		return null;
+	}
+
+	const command = value.trim();
+
+	return command.length > 0 ? command : null;
 }
 
 function getTauriInvoke() {

@@ -36,18 +36,25 @@ export async function runProjectRepositoryTaskForTarget(
 		return;
 	}
 
-	context.setStatus(getRepositoryTaskStatus(task, context.messages));
+	context.setStatus(getRepositoryTaskStatus(task, result.command, context.messages));
 }
 
 function getRepositoryTaskStatus(
 	task: ProjectRepositoryTask,
+	command: string | null,
 	messages: WorkduckMessages['projects']['repositoryTasks']
 ) {
+	if (command !== null) {
+		return messages.commandStarted.replace('{command}', command);
+	}
+
 	switch (task) {
 		case 'open-terminal':
 			return messages.openTerminalStarted;
 		case 'install-dependencies':
 			return messages.installDependenciesStarted;
+		case 'update-dependencies':
+			return messages.updateDependenciesStarted;
 		case 'start-dev-server':
 			return messages.startDevServerStarted;
 		case 'build':
