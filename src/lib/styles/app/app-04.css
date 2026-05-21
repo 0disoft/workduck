@@ -101,6 +101,24 @@
 	font-weight: 800;
 }
 
+.workduck-status-toast {
+	position: fixed;
+	right: 24px;
+	bottom: 24px;
+	z-index: 90;
+	max-width: min(520px, calc(100vw - 48px));
+	margin: 0;
+	border: 1px solid oklch(var(--workduck-oklch-accent) / 0.72);
+	border-radius: 8px;
+	background: oklch(var(--workduck-oklch-bg) / 0.94);
+	box-shadow: 0 18px 42px oklch(0 0 0 / 0.36);
+	color: var(--workduck-color-accent);
+	padding: 10px 12px;
+	font-size: var(--workduck-font-size-sm);
+	font-weight: 800;
+	overflow-wrap: anywhere;
+}
+
 .workduck-lock-panel {
 	display: grid;
 	max-width: 440px;
@@ -333,6 +351,7 @@
 	.workduck-environment-form,
 	.workduck-environment-unlock-form,
 	.workduck-persona-dialog-body,
+	.workduck-work-order-dialog-grid,
 	.workduck-workspace-repository-choice,
 	.workduck-workspace-repository-option-grid,
 	.workduck-sync-profile-form,
@@ -452,6 +471,14 @@
 	.workduck-dialog-actions {
 		display: grid;
 		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+
+	.workduck-vote-option-row {
+		grid-template-columns: 28px minmax(0, 1fr);
+	}
+
+	.workduck-vote-option-row input:last-child {
+		grid-column: 2;
 	}
 
 	.workduck-sync-actions {

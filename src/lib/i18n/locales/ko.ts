@@ -116,6 +116,7 @@ export const koMessages = {
 		contextMenu: '작업 대기열 파일 메뉴',
 		registeredCount: '{count}개의 항목 등록됨',
 		executionFilters: '수행 상태 필터',
+		readFilters: '읽음 상태 필터',
 		pendingCountLabel: '수행 전 작업 {count}개',
 		resultReportReview: '결과 보고서 검토',
 		workOrderView: '작업 지시서 보기',
@@ -127,6 +128,11 @@ export const koMessages = {
 		newWork: '새 작업',
 		editWork: '작업 수정',
 		workTitle: '작업 제목',
+		workType: '작업 유형',
+		workTypes: {
+			instruction: '일반 지시',
+			vote: '투표/선정'
+		},
 		workPriority: '우선순위',
 		noSkill: '스킬 없음',
 		noAgent: '에이전트 없음',
@@ -136,6 +142,21 @@ export const koMessages = {
 		workReferences: '작업 참고자료',
 		selectionCount: '{count}개 선택',
 		workBody: '작업 내용',
+		vote: {
+			question: '질문',
+			options: '선택지',
+			optionCountInput: '선택지 개수',
+			optionName: '선택지 이름',
+			optionDescription: '설명',
+			criteria: '평가 기준',
+			result: '투표 결과',
+			choice: '선택',
+			count: '{count}표',
+			confidence: '확신 {score}/9',
+			invalid: '해석하지 못한 응답 {count}개',
+			optionCount: '{count}개 선택지',
+			unparsed: '해석 실패'
+		},
 		createWorkOrder: '작업 지시서 만들기',
 		creating: '만드는 중',
 		executeWorkOrder: '실행',
@@ -156,6 +177,10 @@ export const koMessages = {
 			pending: '수행 전',
 			completed: '수행 완료'
 		},
+		readStates: {
+			read: '읽음',
+			unread: '안 읽음'
+		},
 		fileKinds: {
 			resultReport: '결과 보고서 JSON',
 			workOrder: '작업 지시서',
@@ -166,6 +191,19 @@ export const koMessages = {
 			approved: '승인',
 			needsWork: '보완 필요',
 			rollback: '되돌리기'
+		},
+		evaluation: {
+			title: '응답 평가',
+			action: '평가',
+			mode: '평가 방식',
+			manual: '직접 평가',
+			aiDelegated: 'AI에게 위임',
+			copyPrompt: '지시문 복사',
+			promptCopied: '평가 지시문을 복사했습니다.',
+			clipboardUnavailable: '클립보드를 사용할 수 없습니다.',
+			delegationPrompt: '위임 지시문',
+			saving: '저장 중',
+			saved: '평가를 저장했습니다.'
 		},
 		errors: {
 			workspaceRequired: '워크스페이스 경로를 입력하세요.',
@@ -316,12 +354,15 @@ export const koMessages = {
 			publish: '게시',
 			openTerminal: '터미널 열기',
 			installDependencies: '의존성 설치',
+			updateDependencies: '의존성 업데이트',
 			startDevServer: '개발 서버 시작',
 			build: '빌드하기'
 		},
 		repositoryTasks: {
 			openTerminalStarted: '터미널을 열었습니다.',
+			commandStarted: '터미널에서 실행을 시작했습니다: {command}',
 			installDependenciesStarted: '의존성 설치를 시작했습니다.',
+			updateDependenciesStarted: '의존성 업데이트를 시작했습니다.',
 			startDevServerStarted: '개발 서버를 시작했습니다.',
 			buildStarted: '빌드를 시작했습니다.'
 		}
@@ -603,6 +644,10 @@ export const koMessages = {
 			empty: '평가 없음',
 			noScore: '-',
 			count: '{count}건',
+			reset: '평가 초기화',
+			resetConfirm: '이 에이전트의 누적 평가를 초기화할까요?',
+			resetSaved: '평가를 초기화했습니다.',
+			resetAt: '초기화 시점: {date}',
 			criteria: {
 				problemUnderstanding: {
 					label: '문제 이해력',
@@ -784,7 +829,8 @@ export const koMessages = {
 		outputTypes: {
 			'work-order': '작업 지시서',
 			proposal: '제안서',
-			'result-report': '결과 보고서'
+			'result-report': '결과 보고서',
+			'agent-evaluation': '에이전트 평가'
 		},
 		builtIn: {
 			proposalWriter: {
@@ -792,6 +838,12 @@ export const koMessages = {
 				description: '선택지를 비교하고 추천안과 후속 작업을 포함한 제안서를 만듭니다.',
 				instructions:
 					'workduck.queue-proposal/v1 산출물을 반환합니다. 가능한 선택지를 비교하고, 절충점을 밝히고, 하나의 추천안을 고른 뒤 필요한 경우에만 구체적인 후속 작업 지시서를 포함합니다.'
+			},
+			agentResponseEvaluator: {
+				name: '에이전트 응답 평가기',
+				description: '에이전트 응답을 5개 기준의 1~9점 평가표로 채점합니다.',
+				instructions:
+					'작업 지시와 에이전트 응답만 근거로 문제 이해력, 논리적 타당성, 현실성·실행 가능성, 창의성·통찰, 리스크 감지를 각각 1~9점으로 평가합니다. 길이 자체에는 점수를 주지 말고, 실제 제약과 실행 가능성, 위험 감지, 판단 근거를 봅니다. 점수를 정한 뒤 workduck agent evaluate 명령으로 같은 워크스페이스의 에이전트 평가 누적값에 저장합니다.'
 			}
 		},
 		errors: {

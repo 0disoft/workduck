@@ -1,3 +1,5 @@
+import { AGENT_EVALUATION_DELEGATION_INSTRUCTIONS } from '$lib/agents/agent-evaluation';
+
 export const SKILL_REGISTRY_VERSION = 1;
 export const SKILL_NAME_MAX_LENGTH = 120;
 export const SKILL_DESCRIPTION_MAX_LENGTH = 420;
@@ -7,7 +9,8 @@ export const SKILL_OUTPUT_TYPES_MAX_COUNT = 5;
 export const workduckSkillOutputTypeOptions = [
 	{ id: 'work-order', label: 'Work order' },
 	{ id: 'proposal', label: 'Proposal' },
-	{ id: 'result-report', label: 'Result report' }
+	{ id: 'result-report', label: 'Result report' },
+	{ id: 'agent-evaluation', label: 'Agent evaluation' }
 ] as const;
 
 export type WorkduckSkillOutputType = (typeof workduckSkillOutputTypeOptions)[number]['id'];
@@ -66,6 +69,13 @@ const BUILT_IN_SKILLS = [
 		outputTypes: ['proposal'],
 		instructions:
 			'Return a workduck.queue-proposal/v1 artifact. Compare viable options, state tradeoffs, choose one recommendation, and include only concrete follow-up work orders when action is needed.'
+	},
+	{
+		id: 'workduck.skill.agent-response-evaluator',
+		name: 'Agent response evaluator',
+		description: 'Rate an agent response with the five-criterion 1-9 rubric.',
+		outputTypes: ['agent-evaluation'],
+		instructions: AGENT_EVALUATION_DELEGATION_INSTRUCTIONS
 	}
 ] as const satisfies readonly Omit<WorkduckSkillRecord, 'builtIn' | 'createdAt' | 'updatedAt'>[];
 

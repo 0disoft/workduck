@@ -475,10 +475,57 @@
 	width: min(460px, 100%);
 }
 
+.workduck-dialog.workduck-work-order-dialog {
+	width: min(860px, calc(100vw - 44px));
+}
+
 .workduck-project-dialog-form {
 	display: grid;
 	min-width: 0;
 	gap: 14px;
+}
+
+.workduck-work-order-dialog-grid {
+	display: grid;
+	min-width: 0;
+	grid-template-columns: repeat(2, minmax(280px, 1fr));
+	gap: 14px;
+	align-items: start;
+}
+
+.workduck-work-order-dialog-column {
+	display: grid;
+	min-width: 0;
+	gap: 14px;
+	align-items: start;
+}
+
+.workduck-vote-option-list {
+	display: grid;
+	min-width: 0;
+	gap: 8px;
+}
+
+.workduck-vote-option-row {
+	display: grid;
+	min-width: 0;
+	grid-template-columns: 28px minmax(0, 0.86fr) minmax(0, 1fr);
+	gap: 8px;
+	align-items: center;
+}
+
+.workduck-vote-option-index {
+	display: inline-flex;
+	width: 28px;
+	height: 28px;
+	align-items: center;
+	justify-content: center;
+	border: 1px solid oklch(var(--workduck-oklch-border) / 0.72);
+	border-radius: 999px;
+	background: oklch(var(--workduck-oklch-surface) / 0.44);
+	color: var(--workduck-color-muted);
+	font-size: var(--workduck-font-size-xs);
+	font-weight: 900;
 }
 
 .workduck-repository-source-mode {

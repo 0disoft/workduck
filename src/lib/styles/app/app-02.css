@@ -775,9 +775,12 @@
 .workduck-multi-select-option span,
 .workduck-multi-select-empty {
 	min-width: 0;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
+	overflow-wrap: anywhere;
+	white-space: normal;
+}
+
+.workduck-multi-select-option span {
+	line-height: 1.3;
 }
 
 .workduck-multi-select-empty {
@@ -855,6 +858,20 @@
 .workduck-agent-evaluation-header strong {
 	color: var(--workduck-color-text);
 	font-size: var(--workduck-font-size-sm);
+}
+
+.workduck-agent-evaluation-header-actions {
+	display: flex;
+	min-width: 0;
+	flex-wrap: wrap;
+	justify-content: end;
+	align-items: center;
+	gap: 8px;
+}
+
+.workduck-agent-evaluation-reset-button {
+	min-height: 30px;
+	padding-block: 4px;
 }
 
 .workduck-agent-evaluation-header span,

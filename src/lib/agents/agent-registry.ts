@@ -1,6 +1,8 @@
 import {
+	addAgentEvaluationScores,
 	createEmptyAgentEvaluationSummary,
 	normalizeAgentEvaluationSummary,
+	type AgentEvaluationScores,
 	type AgentEvaluationSummary
 } from './agent-evaluation';
 
@@ -26,6 +28,7 @@ export interface AgentRecord {
 	readonly executionProvider: AgentExecutionProvider | null;
 	readonly modelId: string | null;
 	readonly evaluationSummary: AgentEvaluationSummary;
+	readonly evaluationResetAt: string | null;
 	readonly createdAt: string;
 	readonly updatedAt: string;
 }
@@ -122,6 +125,7 @@ export function upsertAgent(
 		executionProvider,
 		modelId,
 		evaluationSummary: matchingAgent?.evaluationSummary ?? createEmptyAgentEvaluationSummary(),
+		evaluationResetAt: matchingAgent?.evaluationResetAt ?? null,
 		createdAt: matchingAgent?.createdAt ?? timestamp,
 		updatedAt: timestamp
 	} satisfies AgentRecord;
@@ -203,6 +207,76 @@ export function assignPersonaToAgents(
 	};
 }
 
+export function recordAgentEvaluation(
+	registry: AgentRegistry,
+	agentId: string,
+	scores: AgentEvaluationScores,
+	now = new Date()
+): AgentRegistryMutationResult {
+	const normalizedRegistry = normalizeAgentRegistry(registry, registry.workspaceId) ?? registry;
+	const normalizedAgentId = normalizeRecordId(agentId);
+	const matchingAgent = normalizedRegistry.agents.find((agent) => agent.id === normalizedAgentId);
+
+	if (normalizedAgentId === null || matchingAgent === undefined) {
+		return { ok: false, registry: normalizedRegistry, error: 'agent-not-found' };
+	}
+
+	const timestamp = now.toISOString();
+	const agents = normalizedRegistry.agents.map((agent) =>
+		agent.id === normalizedAgentId
+			? {
+					...agent,
+					evaluationSummary: addAgentEvaluationScores(agent.evaluationSummary, scores),
+					updatedAt: timestamp
+				}
+			: agent
+	);
+
+	return {
+		ok: true,
+		registry: {
+			...normalizedRegistry,
+			agents: sortAgents(agents),
+			updatedAt: timestamp
+		}
+	};
+}
+
+export function resetAgentEvaluation(
+	registry: AgentRegistry,
+	agentId: string,
+	now = new Date()
+): AgentRegistryMutationResult {
+	const normalizedRegistry = normalizeAgentRegistry(registry, registry.workspaceId) ?? registry;
+	const normalizedAgentId = normalizeRecordId(agentId);
+	const matchingAgent = normalizedRegistry.agents.find((agent) => agent.id === normalizedAgentId);
+
+	if (normalizedAgentId === null || matchingAgent === undefined) {
+		return { ok: false, registry: normalizedRegistry, error: 'agent-not-found' };
+	}
+
+	const timestamp = now.toISOString();
+	const agents = normalizedRegistry.agents.map((agent) =>
+		agent.id === normalizedAgentId
+			? {
+					...agent,
+					evaluationSummary: createEmptyAgentEvaluationSummary(),
+					evaluationResetAt: timestamp,
+					updatedAt: timestamp
+				}
+			: agent
+	);
+
+	return {
+		ok: true,
+		registry: {
+			...normalizedRegistry,
+			agents: sortAgents(agents),
+			updatedAt: timestamp
+		}
+	};
+}
+
 function normalizeAgentRegistry(value: unknown, workspaceId: string): AgentRegistry | null {
 	if (
 		!isObjectRecord(value) ||
@@ -261,6 +335,7 @@ function parseAgentRecord(value: unknown): AgentRecord | null {
 	const executionProvider = normalizeAgentExecutionProvider(value.executionProvider);
 	const modelId = normalizeAgentModelId(value.modelId);
 	const evaluationSummary = normalizeAgentEvaluationSummary(value.evaluationSummary);
+	const evaluationResetAt = normalizeOptionalTimestamp(value.evaluationResetAt);
 	const createdAt = readTrimmedString(value.createdAt);
 	const updatedAt = readTrimmedString(value.updatedAt);
 
@@ -276,6 +351,7 @@ function parseAgentRecord(value: unknown): AgentRecord | null {
 		executionProvider,
 		modelId,
 		evaluationSummary,
+		evaluationResetAt,
 		createdAt: createdAt.length === 0 ? updatedAt : createdAt,
 		updatedAt: updatedAt.length === 0 ? createdAt : updatedAt
 	};
@@ -314,6 +390,12 @@ function normalizeAgentModelId(value: unknown) {
 	const modelId = readTrimmedString(value).replace(/\s+/g, ' ').slice(0, AGENT_MODEL_ID_MAX_LENGTH);
 
 	return modelId.length === 0 ? null : modelId;
+}
+
+function normalizeOptionalTimestamp(value: unknown) {
+	const timestamp = readTrimmedString(value);
+
+	return timestamp.length === 0 ? null : timestamp;
 }
 
 function createAgentId() {

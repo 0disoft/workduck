@@ -1,3 +1,9 @@
+import type {
+	WorkduckQueueTaskKind,
+	WorkduckQueueVoteResult,
+	WorkduckQueueVoteSpec
+} from './queue-voting';
+
 export type WorkduckQueueReviewDecision = 'pending' | 'approved' | 'needs-work' | 'rollback';
 export type WorkduckQueueWorkPriority = 'low' | 'normal' | 'high' | 'urgent';
 export type WorkduckQueueExecutionState = 'pending' | 'completed';
@@ -18,6 +24,7 @@ export interface WorkduckQueueResultReportTask {
 	readonly filesChanged: readonly string[];
 	readonly verification: readonly string[];
 	readonly risks: readonly string[];
+	readonly vote?: WorkduckQueueVoteResult;
 }
 
 export interface WorkduckQueueResultReport {
@@ -31,12 +38,14 @@ export interface WorkduckQueueResultReport {
 
 export interface WorkduckQueueWorkOrderTask {
 	readonly id: string;
+	readonly kind?: WorkduckQueueTaskKind;
 	readonly title: string;
 	readonly body: string;
 	readonly priority?: WorkduckQueueWorkPriority;
 	readonly skillIds?: readonly string[];
 	readonly agentIds?: readonly string[];
 	readonly referenceIds?: readonly string[];
+	readonly vote?: WorkduckQueueVoteSpec;
 	readonly sourceReportTaskId?: string;
 	readonly decision?: Exclude<WorkduckQueueReviewDecision, 'pending' | 'approved'>;
 }
@@ -214,7 +223,11 @@ export function createManualQueueWorkOrder(
 	priority: WorkduckQueueWorkPriority = defaultQueueWorkPriority,
 	skillIds: readonly string[] = [],
 	agentIds: readonly string[] = [],
-	referenceIds: readonly string[] = []
+	referenceIds: readonly string[] = [],
+	options: {
+		readonly kind?: WorkduckQueueTaskKind;
+		readonly vote?: WorkduckQueueVoteSpec | null;
+	} = {}
 ): WorkduckQueueWorkOrder {
 	const normalizedTitle = normalizeQueueText(title);
 	const normalizedBody = normalizeQueueText(body);
@@ -222,6 +235,8 @@ export function createManualQueueWorkOrder(
 	const normalizedSkillIds = normalizeQueueRecordIds(skillIds);
 	const normalizedAgentIds = normalizeQueueRecordIds(agentIds);
 	const normalizedReferenceIds = normalizeQueueRecordIds(referenceIds);
+	const normalizedKind = options.kind === 'vote' ? 'vote' : 'instruction';
+	const vote = normalizedKind === 'vote' ? options.vote : null;
 
 	return {
 		schemaVersion: 'workduck.queue-work-order/v1',
@@ -235,12 +250,14 @@ export function createManualQueueWorkOrder(
 		tasks: [
 			{
 				id: createQueueId('task'),
+				...(normalizedKind === 'vote' ? { kind: normalizedKind } : {}),
 				title: normalizedTitle,
 				body: normalizedBody,
 				priority: normalizedPriority,
 				...(normalizedSkillIds.length > 0 ? { skillIds: normalizedSkillIds } : {}),
 				...(normalizedAgentIds.length > 0 ? { agentIds: normalizedAgentIds } : {}),
-				...(normalizedReferenceIds.length > 0 ? { referenceIds: normalizedReferenceIds } : {})
+				...(normalizedReferenceIds.length > 0 ? { referenceIds: normalizedReferenceIds } : {}),
+				...(vote !== null ? { vote } : {})
 			}
 		]
 	};
@@ -256,6 +273,8 @@ export function updateQueueWorkOrderTask(
 		readonly skillIds?: readonly string[];
 		readonly agentIds?: readonly string[];
 		readonly referenceIds?: readonly string[];
+		readonly kind?: WorkduckQueueTaskKind;
+		readonly vote?: WorkduckQueueVoteSpec | null;
 	}
 ): WorkduckQueueWorkOrder {
 	const normalizedTitle = normalizeQueueText(input.title);
@@ -264,6 +283,8 @@ export function updateQueueWorkOrderTask(
 	const normalizedSkillIds = normalizeQueueRecordIds(input.skillIds ?? []);
 	const normalizedAgentIds = normalizeQueueRecordIds(input.agentIds ?? []);
 	const normalizedReferenceIds = normalizeQueueRecordIds(input.referenceIds ?? []);
+	const normalizedKind = input.kind === 'vote' ? 'vote' : 'instruction';
+	const vote = normalizedKind === 'vote' ? (input.vote ?? null) : null;
 	const tasks = workOrder.tasks.map((task) => {
 		if (task.id !== taskId) {
 			return task;
@@ -273,18 +294,24 @@ export function updateQueueWorkOrderTask(
 			skillIds: _skillIds,
 			agentIds: _agentIds,
 			referenceIds: _referenceIds,
+			kind: _kind,
+			vote: _vote,
 			...taskWithoutAssignmentIds
 		} = task;
 
-		return {
+		const nextTask: WorkduckQueueWorkOrderTask = {
 			...taskWithoutAssignmentIds,
+			...(normalizedKind === 'vote' ? { kind: normalizedKind } : {}),
 			title: normalizedTitle,
 			body: normalizedBody,
 			priority: normalizedPriority,
 			...(normalizedSkillIds.length > 0 ? { skillIds: normalizedSkillIds } : {}),
 			...(normalizedAgentIds.length > 0 ? { agentIds: normalizedAgentIds } : {}),
-			...(normalizedReferenceIds.length > 0 ? { referenceIds: normalizedReferenceIds } : {})
+			...(normalizedReferenceIds.length > 0 ? { referenceIds: normalizedReferenceIds } : {}),
+			...(vote !== null ? { vote } : {})
 		};
+
+		return nextTask;
 	});
 
 	return {
@@ -544,7 +571,8 @@ function isQueueResultReportTask(value: unknown) {
 		typeof value.summary === 'string' &&
 		isStringArray(value.filesChanged) &&
 		isStringArray(value.verification) &&
-		isStringArray(value.risks)
+		isStringArray(value.risks) &&
+		(value.vote === undefined || isQueueVoteResult(value.vote))
 	);
 }
 
@@ -573,16 +601,68 @@ function isQueueWorkOrderTask(value: unknown) {
 
 	return (
 		typeof value.id === 'string' &&
+		(value.kind === undefined || value.kind === 'instruction' || value.kind === 'vote') &&
 		typeof value.title === 'string' &&
 		typeof value.body === 'string' &&
 		(value.priority === undefined || isQueueWorkPriority(value.priority)) &&
 		(value.skillIds === undefined || isStringArray(value.skillIds)) &&
 		(value.agentIds === undefined || isStringArray(value.agentIds)) &&
 		(value.referenceIds === undefined || isStringArray(value.referenceIds)) &&
+		(value.vote === undefined || isQueueVoteSpec(value.vote)) &&
+		(value.kind !== 'vote' || value.vote !== undefined) &&
 		(value.sourceReportTaskId === undefined || typeof value.sourceReportTaskId === 'string') &&
 		(value.decision === undefined ||
 			value.decision === 'needs-work' ||
 			value.decision === 'rollback')
+	);
+}
+
+function isQueueVoteSpec(value: unknown): value is WorkduckQueueVoteSpec {
+	if (!isRecord(value)) {
+		return false;
+	}
+
+	return (
+		typeof value.question === 'string' &&
+		Array.isArray(value.options) &&
+		value.options.every(isQueueVoteOption) &&
+		isStringArray(value.criteria) &&
+		value.responseKind === 'single-choice'
+	);
+}
+
+function isQueueVoteResult(value: unknown): value is WorkduckQueueVoteResult {
+	if (!isRecord(value)) {
+		return false;
+	}
+
+	return (
+		typeof value.question === 'string' &&
+		Array.isArray(value.options) &&
+		value.options.every(isQueueVoteOption) &&
+		isQueueVoteBallot(value.ballot)
+	);
+}
+
+function isQueueVoteOption(value: unknown) {
+	return (
+		isRecord(value) &&
+		typeof value.id === 'string' &&
+		typeof value.label === 'string' &&
+		(value.description === undefined || typeof value.description === 'string')
+	);
+}
+
+function isQueueVoteBallot(value: unknown) {
+	return (
+		isRecord(value) &&
+		typeof value.choiceId === 'string' &&
+		(value.confidence === null || typeof value.confidence === 'number') &&
+		typeof value.reason === 'string' &&
+		isStringArray(value.risks) &&
+		(value.parseStatus === 'parsed' ||
+			value.parseStatus === 'invalid-choice' ||
+			value.parseStatus === 'unparsed')
 	);
 }
 

@@ -114,6 +114,7 @@ export const enMessages = {
 		contextMenu: 'Work queue file actions',
 		registeredCount: '{count} queue items',
 		executionFilters: 'Work status filters',
+		readFilters: 'Read status filters',
 		pendingCountLabel: '{count} pending work items',
 		resultReportReview: 'Result report review',
 		workOrderView: 'Work order view',
@@ -125,6 +126,11 @@ export const enMessages = {
 		newWork: 'New work',
 		editWork: 'Edit work',
 		workTitle: 'Work title',
+		workType: 'Work type',
+		workTypes: {
+			instruction: 'Instruction',
+			vote: 'Vote/selection'
+		},
 		workPriority: 'Priority',
 		noSkill: 'No skill',
 		noAgent: 'No agent',
@@ -134,6 +140,21 @@ export const enMessages = {
 		workReferences: 'Work references',
 		selectionCount: '{count} selected',
 		workBody: 'Work body',
+		vote: {
+			question: 'Question',
+			options: 'Options',
+			optionCountInput: 'Option count',
+			optionName: 'Option name',
+			optionDescription: 'Description',
+			criteria: 'Criteria',
+			result: 'Vote result',
+			choice: 'Choice',
+			count: '{count} votes',
+			confidence: 'Confidence {score}/9',
+			invalid: '{count} unparsed responses',
+			optionCount: '{count} options',
+			unparsed: 'Unparsed'
+		},
 		createWorkOrder: 'Create work order',
 		creating: 'Creating',
 		executeWorkOrder: 'Run',
@@ -154,6 +175,10 @@ export const enMessages = {
 			pending: 'Pending',
 			completed: 'Completed'
 		},
+		readStates: {
+			read: 'Read',
+			unread: 'Unread'
+		},
 		fileKinds: {
 			resultReport: 'Report JSON',
 			workOrder: 'Work order',
@@ -164,6 +189,19 @@ export const enMessages = {
 			approved: 'Approve',
 			needsWork: 'Needs work',
 			rollback: 'Rollback'
+		},
+		evaluation: {
+			title: 'Rate response',
+			action: 'Rate',
+			mode: 'Rating mode',
+			manual: 'Manual rating',
+			aiDelegated: 'Delegate to AI',
+			copyPrompt: 'Copy prompt',
+			promptCopied: 'Rating prompt copied.',
+			clipboardUnavailable: 'Clipboard is not available.',
+			delegationPrompt: 'Delegation prompt',
+			saving: 'Saving',
+			saved: 'Rating saved.'
 		},
 		errors: {
 			workspaceRequired: 'Workspace path is required.',
@@ -315,12 +353,15 @@ export const enMessages = {
 			publish: 'Publish',
 			openTerminal: 'Open terminal',
 			installDependencies: 'Install dependencies',
+			updateDependencies: 'Update dependencies',
 			startDevServer: 'Start dev server',
 			build: 'Build'
 		},
 		repositoryTasks: {
 			openTerminalStarted: 'Terminal opened.',
+			commandStarted: 'Started in terminal: {command}',
 			installDependenciesStarted: 'Dependency install started.',
+			updateDependenciesStarted: 'Dependency update started.',
 			startDevServerStarted: 'Dev server started.',
 			buildStarted: 'Build started.'
 		}
@@ -603,6 +644,10 @@ export const enMessages = {
 			empty: 'No evaluations',
 			noScore: '-',
 			count: '{count} ratings',
+			reset: 'Reset ratings',
+			resetConfirm: "Reset this agent's accumulated ratings?",
+			resetSaved: 'Ratings were reset.',
+			resetAt: 'Reset at: {date}',
 			criteria: {
 				problemUnderstanding: {
 					label: 'Problem understanding',
@@ -784,7 +829,8 @@ export const enMessages = {
 		outputTypes: {
 			'work-order': 'Work order',
 			proposal: 'Proposal',
-			'result-report': 'Result report'
+			'result-report': 'Result report',
+			'agent-evaluation': 'Agent evaluation'
 		},
 		builtIn: {
 			proposalWriter: {
@@ -793,6 +839,12 @@ export const enMessages = {
 					'Compare options and produce a proposal with recommendation and follow-up work.',
 				instructions:
 					'Return a workduck.queue-proposal/v1 artifact. Compare viable options, state tradeoffs, choose one recommendation, and include only concrete follow-up work orders when action is needed.'
+			},
+			agentResponseEvaluator: {
+				name: 'Agent response evaluator',
+				description: 'Rate an agent response with the five-criterion 1-9 rubric.',
+				instructions:
+					'Rate the response from only the task and the agent answer. Score problem understanding, logical validity, practical feasibility, creative insight, and risk detection from 1 to 9. Do not reward length by itself. Judge constraints, actionability, evidence, and risk handling. After choosing scores, save them to the same workspace with the workduck agent evaluate command.'
 			}
 		},
 		errors: {

@@ -238,21 +238,26 @@
 	}
 
 	function getSkillDisplayName(skill: WorkduckSkillRecord) {
-		return skill.id === 'workduck.skill.proposal-writer'
-			? messages.skills.builtIn.proposalWriter.name
-			: skill.name;
+		return getBuiltInSkillMessages(skill)?.name ?? skill.name;
 	}
 
 	function getSkillDisplayDescription(skill: WorkduckSkillRecord) {
-		return skill.id === 'workduck.skill.proposal-writer'
-			? messages.skills.builtIn.proposalWriter.description
-			: skill.description;
+		return getBuiltInSkillMessages(skill)?.description ?? skill.description;
 	}
 
 	function getSkillDisplayInstructions(skill: WorkduckSkillRecord) {
-		return skill.id === 'workduck.skill.proposal-writer'
-			? messages.skills.builtIn.proposalWriter.instructions
-			: skill.instructions;
+		return getBuiltInSkillMessages(skill)?.instructions ?? skill.instructions;
+	}
+
+	function getBuiltInSkillMessages(skill: WorkduckSkillRecord) {
+		switch (skill.id) {
+			case 'workduck.skill.proposal-writer':
+				return messages.skills.builtIn.proposalWriter;
+			case 'workduck.skill.agent-response-evaluator':
+				return messages.skills.builtIn.agentResponseEvaluator;
+			default:
+				return null;
+		}
 	}
 
 	function createCopiedSkillName(baseName: string) {

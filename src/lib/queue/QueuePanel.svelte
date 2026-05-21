@@ -14,10 +14,23 @@
 	import type { WorkspaceRecord } from '$lib/workspaces/workspace-registry';
 	import {
 		createEmptyAgentRegistry,
+		recordAgentEvaluation,
 		type AgentRecord,
 		type AgentRegistry
 	} from '$lib/agents/agent-registry';
-	import { readAgentRegistry, subscribeAgentRegistry } from '$lib/agents/agent-registry-storage';
+	import {
+		readAgentRegistry,
+		subscribeAgentRegistry,
+		writeAgentRegistry
+	} from '$lib/agents/agent-registry-storage';
+	import {
+		agentEvaluationCriteriaDefinitions,
+		createAgentEvaluationDelegationPrompt,
+		createDefaultAgentEvaluationScores,
+		normalizeAgentEvaluationScore,
+		type AgentEvaluationCriterionId,
+		type AgentEvaluationScores
+	} from '$lib/agents/agent-evaluation';
 	import {
 		createEmptyPersonaRegistry,
 		type PersonaRecord,
@@ -67,6 +80,7 @@
 		type WorkduckQueueProposal,
 		type WorkduckQueueExecutionState,
 		type WorkduckQueueResultReport,
+		type WorkduckQueueResultReportTask,
 		type WorkduckQueueWorkPriority,
 		type WorkduckQueueWorkOrder,
 		type WorkduckQueueWorkOrderTask,
@@ -87,6 +101,14 @@
 		type QueueFileEntry,
 		type QueueFolderError
 	} from './queue-folder';
+	import {
+		createVoteAggregate,
+		createVoteSpec,
+		formatVoteCriteriaInput,
+		type WorkduckQueueVoteOption,
+		type WorkduckQueueVoteSpec,
+		type WorkduckQueueTaskKind
+	} from './queue-voting';
 	import {
 		dispatchQueueFilesChanged,
 		readQueueReadFilePaths,
@@ -114,8 +136,21 @@
 		{ id: 'pending' },
 		{ id: 'completed' }
 	] as const;
+	const queueReadFilterOptions = [
+		{ id: 'all' },
+		{ id: 'unread' },
+		{ id: 'read' }
+	] as const;
+	const manualVoteOptionCountDefaults = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] as const;
 
 	type QueueExecutionFilter = (typeof queueExecutionFilterOptions)[number]['id'];
+	type QueueReadFilter = (typeof queueReadFilterOptions)[number]['id'];
+	type ManualVoteOptionInput = {
+		readonly rowId: string;
+		readonly id: string;
+		readonly label: string;
+		readonly description: string;
+	};
 	type QueueCardEntry = QueueFileEntry & {
 		readonly isRead: boolean;
 		readonly artifactId: string;
@@ -136,6 +171,11 @@
 		readonly y: number;
 		readonly file: QueueCardEntry;
 	};
+	type AgentEvaluationDialogState = {
+		readonly task: WorkduckQueueResultReportTask;
+		readonly agent: AgentRecord;
+	};
+	type AgentEvaluationMode = 'manual' | 'ai-delegated';
 
 	let { workspace, title, refreshSignal = 0 }: Props = $props();
 
@@ -143,6 +183,7 @@
 	let files = $state<readonly QueueCardEntry[]>([]);
 	let readFilePaths = $state<readonly string[]>([]);
 	let queueExecutionFilter = $state<QueueExecutionFilter>('all');
+	let queueReadFilter = $state<QueueReadFilter>('all');
 	let error = $state<QueueFolderError | null>(null);
 	let parseError = $state<string | null>(null);
 	let status = $state<string | null>(null);
@@ -159,6 +200,10 @@
 	let manualWorkOrderTitle = $state('');
 	let manualWorkOrderBody = $state('');
 	let manualWorkOrderPriority = $state<WorkduckQueueWorkPriority>(defaultQueueWorkPriority);
+	let manualWorkOrderKind = $state<WorkduckQueueTaskKind>('instruction');
+	let manualVoteOptionCount = $state(2);
+	let manualVoteOptions = $state<readonly ManualVoteOptionInput[]>(createManualVoteOptions(2));
+	let manualVoteCriteriaInput = $state('');
 	let selectedManualSkillIds = $state<string[]>([]);
 	let selectedManualAgentIds = $state<string[]>([]);
 	let selectedManualReferenceIds = $state<string[]>([]);
@@ -169,11 +214,27 @@
 	let isRefreshing = $state(false);
 	let isReading = $state(false);
 	let isWriting = $state(false);
+	let isSavingEvaluation = $state(false);
+	let evaluationDialog = $state<AgentEvaluationDialogState | null>(null);
+	let evaluationScores = $state<AgentEvaluationScores>(createDefaultAgentEvaluationScores());
+	let evaluationMode = $state<AgentEvaluationMode>('manual');
 	let queueContextMenu = $state<QueueContextMenuState | null>(null);
 	let queueContextMenuElement = $state<HTMLElement | undefined>(undefined);
 	let ensureSignature = $state('');
 	let refreshSignature = $state(0);
 	let messages = $derived(getWorkduckMessages(appearanceSettings.languageId));
+	let evaluationDelegationPrompt = $derived(
+		evaluationDialog === null
+			? ''
+			: createAgentEvaluationDelegationPrompt({
+					workspacePath: workspace.path,
+					agentId: evaluationDialog.agent.id,
+					agentName: evaluationDialog.agent.name,
+					taskTitle: evaluationDialog.task.title,
+					taskBody: evaluationDialog.task.title,
+					response: evaluationDialog.task.summary
+				})
+	);
 	let queueItemCountLabel = $derived(
 		messages.queue.registeredCount.replace('{count}', files.length.toString())
 	);
@@ -193,18 +254,30 @@
 			getReferenceLabelById
 		)
 	);
+	let selectedReportVoteAggregate = $derived(
+		selectedReport === null ? null : createVoteAggregate(selectedReport.tasks)
+	);
+	let manualVoteOptionCountChoices = $derived(createManualVoteOptionCountChoices(manualVoteOptionCount));
+	let manualValidVoteOptionCount = $derived(
+		manualVoteOptions.filter((option) => option.label.trim().length > 0).length
+	);
 	let followUpTaskCount = $derived(
 		reviews.filter((review) => review.decision === 'needs-work' || review.decision === 'rollback')
 			.length
 	);
 	let filteredFiles = $derived(
 		files.filter((file) => {
-			if (queueExecutionFilter === 'pending') {
-				return file.executionState === 'pending';
-			}
+			const matchesExecutionFilter =
+				queueExecutionFilter === 'all' ||
+				(queueExecutionFilter === 'pending' && file.executionState === 'pending') ||
+				(queueExecutionFilter === 'completed' && file.executionState === 'completed');
+			const matchesReadFilter =
+				queueReadFilter === 'all' ||
+				(queueReadFilter === 'unread' && !file.isRead) ||
+				(queueReadFilter === 'read' && file.isRead);
 
-			if (queueExecutionFilter === 'completed') {
-				return file.executionState === 'completed';
+			if (!matchesExecutionFilter || !matchesReadFilter) {
+				return false;
 			}
 
 			return true;
@@ -214,7 +287,10 @@
 		selectedReport !== null || selectedWorkOrder !== null || selectedProposal !== null
 	);
 	let canCreateManualWorkOrder = $derived(
-		manualWorkOrderTitle.trim().length > 0 && manualWorkOrderBody.trim().length > 0 && !isWriting
+			manualWorkOrderTitle.trim().length > 0 &&
+			manualWorkOrderBody.trim().length > 0 &&
+			(manualWorkOrderKind !== 'vote' || manualValidVoteOptionCount >= 2) &&
+			!isWriting
 	);
 	let canExecuteSelectedWorkOrder = $derived(
 		selectedWorkOrder !== null && selectedWorkOrder.status !== 'archived' && !isWriting
@@ -275,6 +351,7 @@
 		reviews = [];
 		readFilePaths = readQueueReadFilePaths(workspace.id);
 		queueExecutionFilter = 'all';
+		queueReadFilter = 'all';
 		skillRegistry = createEmptySkillRegistry(workspace.id);
 		agentRegistry = createEmptyAgentRegistry(workspace.id);
 		personaRegistry = createEmptyPersonaRegistry(workspace.id);
@@ -696,6 +773,8 @@
 		manualWorkOrderTitle = '';
 		manualWorkOrderBody = '';
 		manualWorkOrderPriority = defaultQueueWorkPriority;
+		manualWorkOrderKind = 'instruction';
+		resetManualVoteFields();
 		selectedManualSkillIds = [];
 		selectedManualAgentIds = [];
 		selectedManualReferenceIds = [];
@@ -715,6 +794,8 @@
 		manualWorkOrderTitle = task.title;
 		manualWorkOrderBody = task.body;
 		manualWorkOrderPriority = normalizeQueueWorkPriority(task.priority);
+		manualWorkOrderKind = task.kind === 'vote' ? 'vote' : 'instruction';
+		loadManualVoteFields(task.vote);
 		selectedManualSkillIds = [...(task.skillIds ?? [])];
 		selectedManualAgentIds = [...(task.agentIds ?? [])];
 		selectedManualReferenceIds = [...(task.referenceIds ?? [])];
@@ -734,6 +815,8 @@
 		manualWorkOrderTitle = '';
 		manualWorkOrderBody = '';
 		manualWorkOrderPriority = defaultQueueWorkPriority;
+		manualWorkOrderKind = 'instruction';
+		resetManualVoteFields();
 		selectedManualSkillIds = [];
 		selectedManualAgentIds = [];
 		selectedManualReferenceIds = [];
@@ -922,7 +1005,8 @@
 				manualWorkOrderPriority,
 				createManualWorkOrderSkillIds(),
 				createManualWorkOrderAgentIds(),
-				createManualWorkOrderReferenceIds()
+				createManualWorkOrderReferenceIds(),
+				createManualWorkOrderKindInput()
 			);
 			const result = await writeQueueWorkOrderFile(
 				workspace.path,
@@ -936,6 +1020,8 @@
 				manualWorkOrderTitle = '';
 				manualWorkOrderBody = '';
 				manualWorkOrderPriority = defaultQueueWorkPriority;
+				manualWorkOrderKind = 'instruction';
+				resetManualVoteFields();
 				selectedManualSkillIds = [];
 				selectedManualAgentIds = [];
 				selectedManualReferenceIds = [];
@@ -964,7 +1050,8 @@
 			priority: manualWorkOrderPriority,
 			skillIds: createManualWorkOrderSkillIds(),
 			agentIds: createManualWorkOrderAgentIds(),
-			referenceIds: createManualWorkOrderReferenceIds()
+			referenceIds: createManualWorkOrderReferenceIds(),
+			...createManualWorkOrderKindInput()
 		});
 		const result = await updateQueueWorkOrderFile(
 			workspace.path,
@@ -980,6 +1067,8 @@
 			manualWorkOrderTitle = '';
 			manualWorkOrderBody = '';
 			manualWorkOrderPriority = defaultQueueWorkPriority;
+			manualWorkOrderKind = 'instruction';
+			resetManualVoteFields();
 			selectedManualSkillIds = [];
 			selectedManualAgentIds = [];
 			selectedManualReferenceIds = [];
@@ -1076,6 +1165,17 @@
 		}
 	}
 
+	function getReadFilterLabel(filter: QueueReadFilter) {
+		switch (filter) {
+			case 'all':
+				return messages.common.all;
+			case 'unread':
+				return messages.queue.readStates.unread;
+			case 'read':
+				return messages.queue.readStates.read;
+		}
+	}
+
 	function getQueueExecutionStateLabel(executionState: WorkduckQueueExecutionState | null) {
 		if (executionState === null) {
 			return '';
@@ -1166,6 +1266,125 @@
 		);
 	}
 
+	function resetManualVoteFields() {
+		manualVoteOptionCount = 2;
+		manualVoteOptions = createManualVoteOptions(2);
+		manualVoteCriteriaInput = '';
+	}
+
+	function loadManualVoteFields(vote: WorkduckQueueVoteSpec | undefined) {
+		manualVoteCriteriaInput = formatVoteCriteriaInput(vote);
+
+		if (vote === undefined || vote.options.length === 0) {
+			manualVoteOptionCount = 2;
+			manualVoteOptions = createManualVoteOptions(2);
+			return;
+		}
+
+		const nextCount = Math.max(2, vote.options.length);
+
+		manualVoteOptionCount = nextCount;
+		manualVoteOptions = createManualVoteOptions(nextCount, vote.options);
+	}
+
+	function setManualVoteOptionCount(value: string) {
+		const nextCount = normalizeManualVoteOptionCount(value);
+
+		manualVoteOptionCount = nextCount;
+		manualVoteOptions = createManualVoteOptions(nextCount, manualVoteOptions);
+	}
+
+	function updateManualVoteOption(
+		index: number,
+		field: 'label' | 'description',
+		value: string
+	) {
+		manualVoteOptions = manualVoteOptions.map((option, optionIndex) =>
+			optionIndex === index ? { ...option, [field]: value } : option
+		);
+	}
+
+	function createManualVoteOptionsText() {
+		return manualVoteOptions
+			.map((option) => {
+				const label = option.label.trim();
+
+				if (label.length === 0) {
+					return '';
+				}
+
+				const id = option.id.trim();
+				const description = option.description.trim();
+				const labelWithId = id.length > 0 ? `${id}: ${label}` : label;
+
+				return description.length > 0 ? `${labelWithId} - ${description}` : labelWithId;
+			})
+			.filter((option) => option.length > 0)
+			.join('\n');
+	}
+
+	function createManualWorkOrderKindInput() {
+		if (manualWorkOrderKind !== 'vote') {
+			return { kind: 'instruction' as const, vote: null };
+		}
+
+		return {
+			kind: 'vote' as const,
+			vote: createVoteSpec({
+				question: manualWorkOrderBody,
+				optionsText: createManualVoteOptionsText(),
+				criteriaText: manualVoteCriteriaInput
+			})
+		};
+	}
+
+	function createManualVoteOptions(
+		count: number,
+		sourceOptions: readonly (ManualVoteOptionInput | WorkduckQueueVoteOption)[] = []
+	): readonly ManualVoteOptionInput[] {
+		return Array.from({ length: count }, (_, index) =>
+			createManualVoteOption(index, sourceOptions[index])
+		);
+	}
+
+	function createManualVoteOption(
+		index: number,
+		sourceOption: ManualVoteOptionInput | WorkduckQueueVoteOption | undefined
+	): ManualVoteOptionInput {
+		if (sourceOption === undefined) {
+			return {
+				rowId: `manual-vote-option-${index + 1}`,
+				id: '',
+				label: '',
+				description: ''
+			};
+		}
+
+		return {
+			rowId: 'rowId' in sourceOption ? sourceOption.rowId : `manual-vote-option-${index + 1}`,
+			id: sourceOption.id,
+			label: sourceOption.label,
+			description: sourceOption.description ?? ''
+		};
+	}
+
+	function createManualVoteOptionCountChoices(currentCount: number) {
+		const choices = new Set<number>(manualVoteOptionCountDefaults);
+		choices.add(currentCount);
+
+		return Array.from(choices).sort((left, right) => left - right);
+	}
+
+	function normalizeManualVoteOptionCount(value: string) {
+		const numericValue = Number(value);
+
+		if (!Number.isFinite(numericValue)) {
+			return 2;
+		}
+
+		return Math.max(2, Math.min(50, Math.round(numericValue)));
+	}
+
 	function updateSelectedRecordIds(
 		selectedIds: readonly string[],
 		recordId: string,
@@ -1198,6 +1417,22 @@
 		return (task.referenceIds ?? []).map(getReferenceLabelById);
 	}
 
+	function getQueueTaskKindLabel(kind: WorkduckQueueTaskKind | undefined) {
+		return kind === 'vote' ? messages.queue.workTypes.vote : messages.queue.workTypes.instruction;
+	}
+
+	function getVoteChoiceLabel(task: WorkduckQueueResultReportTask) {
+		const vote = task.vote;
+
+		if (vote === undefined || vote.ballot.parseStatus !== 'parsed') {
+			return messages.queue.vote.unparsed;
+		}
+
+		const option = vote.options.find((candidate) => candidate.id === vote.ballot.choiceId);
+
+		return option === undefined ? vote.ballot.choiceId : option.label;
+	}
+
 	function getReviewDecisionLabel(decision: Exclude<WorkduckQueueReviewDecision, 'pending'>) {
 		switch (decision) {
 			case 'approved':
@@ -1206,6 +1441,117 @@
 				return messages.queue.reviewDecisions.needsWork;
 			case 'rollback':
 				return messages.queue.reviewDecisions.rollback;
+		}
+	}
+
+	function getReportTaskAgent(task: WorkduckQueueResultReportTask) {
+		const idMatch = /^task_(.+)_[a-z0-9]+$/i.exec(task.id);
+		const candidateAgentId = idMatch?.[1] ?? '';
+		const idMatchAgent = allAgents.find((agent) => agent.id === candidateAgentId);
+
+		if (idMatchAgent !== undefined) {
+			return idMatchAgent;
+		}
+
+		const titleAgentName = task.title.split(':')[0]?.trim() ?? '';
+
+		if (titleAgentName.length === 0) {
+			return null;
+		}
+
+		return allAgents.find((agent) => agent.name === titleAgentName) ?? null;
+	}
+
+	function openEvaluationDialog(task: WorkduckQueueResultReportTask) {
+		const agent = getReportTaskAgent(task);
+
+		if (agent === null || isWriting || isSavingEvaluation) {
+			return;
+		}
+
+		evaluationDialog = { task, agent };
+		evaluationScores = createDefaultAgentEvaluationScores();
+		evaluationMode = 'manual';
+		error = null;
+		parseError = null;
+		status = null;
+	}
+
+	function closeEvaluationDialog() {
+		if (isSavingEvaluation) {
+			return;
+		}
+
+		evaluationDialog = null;
+		evaluationScores = createDefaultAgentEvaluationScores();
+		evaluationMode = 'manual';
+	}
+
+	function updateEvaluationScore(criterionId: AgentEvaluationCriterionId, value: string) {
+		evaluationScores = {
+			...evaluationScores,
+			[criterionId]: normalizeAgentEvaluationScore(value)
+		};
+	}
+
+	async function copyEvaluationDelegationPrompt() {
+		if (evaluationDelegationPrompt.length === 0) {
+			return;
+		}
+
+		if (typeof navigator === 'undefined' || navigator.clipboard === undefined) {
+			parseError = messages.queue.evaluation.clipboardUnavailable;
+			return;
+		}
+
+		try {
+			await navigator.clipboard.writeText(evaluationDelegationPrompt);
+			status = messages.queue.evaluation.promptCopied;
+		} catch {
+			parseError = messages.queue.evaluation.clipboardUnavailable;
+		}
+	}
+
+	async function handleSaveEvaluation(event: SubmitEvent) {
+		event.preventDefault();
+
+		if (evaluationDialog === null || isSavingEvaluation || evaluationMode !== 'manual') {
+			return;
+		}
+
+		isSavingEvaluation = true;
+		error = null;
+		parseError = null;
+		status = null;
+
+		try {
+			const latestAgentRegistryResult = await readAgentRegistry(workspace.id, workspace.path);
+			const mutation = recordAgentEvaluation(
+				latestAgentRegistryResult.registry,
+				evaluationDialog.agent.id,
+				evaluationScores
+			);
+
+			if (!mutation.ok) {
+				parseError = messages.agents.errors.notFound;
+				return;
+			}
+
+			const writeResult = await writeAgentRegistry(mutation.registry, workspace.path);
+
+			agentRegistry = writeResult.registry;
+
+			if (!writeResult.ok) {
+				parseError = messages.agents.errors.saveFailed;
+				return;
+			}
+
+			status = messages.queue.evaluation.saved;
+			evaluationDialog = null;
+			evaluationScores = createDefaultAgentEvaluationScores();
+			evaluationMode = 'manual';
+		} finally {
+			isSavingEvaluation = false;
 		}
 	}
 
@@ -1310,6 +1656,19 @@
 					</button>
 				{/each}
 			</div>
+			<div class="workduck-queue-filters" aria-label={messages.queue.readFilters}>
+				{#each queueReadFilterOptions as option}
+					<button
+						class="workduck-project-sync-filter-button"
+						class:workduck-project-sync-filter-button-active={queueReadFilter === option.id}
+						type="button"
+						aria-pressed={queueReadFilter === option.id}
+						onclick={() => (queueReadFilter = option.id)}
+					>
+						{getReadFilterLabel(option.id)}
+					</button>
+				{/each}
+			</div>
 			<button
 				class="workduck-button workduck-button-secondary"
 				type="button"
@@ -1326,8 +1685,6 @@
 		<p class="workduck-inline-error" aria-live="polite">{getQueueFolderLocalizedError(error)}</p>
 	{:else if parseError !== null}
 		<p class="workduck-inline-error" aria-live="polite">{parseError}</p>
-	{:else if status !== null}
-		<p class="workduck-inline-status" aria-live="polite">{status}</p>
 	{/if}
 
 	<div class="workduck-queue-layout">
@@ -1369,11 +1726,19 @@
 								<span>{getQueuePriorityLabel(file.priority)}</span>
 							{/if}
 						</div>
-						{#if file.executionState !== null}
-							<span class="workduck-queue-execution-state">
-								{getQueueExecutionStateLabel(file.executionState)}
+						<div class="workduck-queue-card-badges">
+							<span
+								class="workduck-queue-read-state"
+								class:workduck-queue-read-state-unread={!file.isRead}
+							>
+								{file.isRead ? messages.queue.readStates.read : messages.queue.readStates.unread}
 							</span>
-						{/if}
+							{#if file.executionState !== null}
+								<span class="workduck-queue-execution-state">
+									{getQueueExecutionStateLabel(file.executionState)}
+								</span>
+							{/if}
+						</div>
 					</button>
 				{/each}
 			{/if}
@@ -1403,12 +1768,71 @@
 					</button>
 				</div>
 
+				{#if selectedReportVoteAggregate !== null}
+					<section class="workduck-queue-vote-summary" aria-label={messages.queue.vote.result}>
+						<strong>{messages.queue.vote.result}</strong>
+						<div class="workduck-queue-vote-options">
+							{#each selectedReportVoteAggregate.optionCounts as optionCount (optionCount.option.id)}
+								<div
+									class="workduck-queue-vote-option"
+									class:workduck-queue-vote-option-winner={selectedReportVoteAggregate.winnerIds.includes(
+										optionCount.option.id
+									)}
+								>
+									<span>{optionCount.option.label}</span>
+									<small>
+										{messages.queue.vote.count.replace('{count}', optionCount.count.toString())}
+										{#if optionCount.averageConfidence !== null}
+											 · {messages.queue.vote.confidence.replace(
+												'{score}',
+												optionCount.averageConfidence.toString()
+											)}
+										{/if}
+									</small>
+								</div>
+							{/each}
+						</div>
+						{#if selectedReportVoteAggregate.invalidCount > 0}
+							<small class="workduck-queue-vote-invalid">
+								{messages.queue.vote.invalid.replace(
+									'{count}',
+									selectedReportVoteAggregate.invalidCount.toString()
+								)}
+							</small>
+						{/if}
+					</section>
+				{/if}
+
 				<div class="workduck-queue-review-tasks">
 					{#each selectedReport.tasks as task (task.id)}
 						{@const review = reviews.find((item) => item.taskId === task.id)}
+						{@const reportTaskAgent = getReportTaskAgent(task)}
 						<article class="workduck-queue-review-task">
 							<header class="workduck-queue-review-task-header">
 								<strong>{task.title}</strong>
+								{#if task.vote !== undefined}
+									<div class="workduck-queue-review-task-pills">
+										<span class="workduck-queue-task-pill">
+											{messages.queue.vote.choice}: {getVoteChoiceLabel(task)}
+										</span>
+										{#if task.vote.ballot.confidence !== null}
+											<span class="workduck-queue-task-pill">
+												{messages.queue.vote.confidence.replace(
+													'{score}',
+													task.vote.ballot.confidence.toString()
+												)}
+											</span>
+										{/if}
+									</div>
+								{/if}
+								<button
+									class="workduck-button workduck-button-secondary workduck-queue-task-edit-button"
+									type="button"
+									disabled={reportTaskAgent === null || isSavingEvaluation}
+									onclick={() => openEvaluationDialog(task)}
+								>
+									{messages.queue.evaluation.action}
+								</button>
 							</header>
 							<p>{task.summary}</p>
 
@@ -1503,6 +1927,15 @@
 									>
 										{getQueuePriorityLabel(normalizeQueueWorkPriority(task.priority))}
 									</span>
+									<span class="workduck-queue-task-pill">{getQueueTaskKindLabel(task.kind)}</span>
+									{#if task.kind === 'vote' && task.vote !== undefined}
+										<span class="workduck-queue-task-pill">
+											{messages.queue.vote.optionCount.replace(
+												'{count}',
+												task.vote.options.length.toString()
+											)}
+										</span>
+									{/if}
 									{#if task.decision !== undefined}
 										<span class="workduck-queue-task-pill">{task.decision}</span>
 									{/if}
@@ -1628,6 +2061,10 @@
 	</div>
 </section>
 
+{#if status !== null}
+	<p class="workduck-status-toast" aria-live="polite">{status}</p>
+{/if}
+
 {#if queueContextMenu !== null}
 	<div
 		class="workduck-context-menu"
@@ -1648,6 +2085,122 @@
 	</div>
 {/if}
 
+{#if evaluationDialog !== null}
+	<div class="workduck-dialog-backdrop" role="presentation" onclick={(event) => {
+		if (event.target === event.currentTarget) {
+			closeEvaluationDialog();
+		}
+	}}>
+		<div
+			class="workduck-dialog workduck-project-dialog"
+			role="dialog"
+			aria-modal="true"
+			aria-labelledby="queue-evaluation-dialog-title"
+		>
+			<form class="workduck-project-dialog-form" onsubmit={handleSaveEvaluation}>
+				<h2 id="queue-evaluation-dialog-title" class="workduck-dialog-title">
+					{messages.queue.evaluation.title}
+				</h2>
+
+				<div class="workduck-queue-evaluation-target">
+					<strong>{evaluationDialog.agent.name}</strong>
+					<span>{evaluationDialog.task.title}</span>
+				</div>
+
+				<div class="workduck-queue-evaluation-mode">
+					<strong>{messages.queue.evaluation.mode}</strong>
+					<div class="workduck-queue-review-decisions">
+						<label>
+							<input
+								type="radio"
+								name="queue-evaluation-mode"
+								checked={evaluationMode === 'manual'}
+								disabled={isSavingEvaluation}
+								onchange={() => {
+									evaluationMode = 'manual';
+								}}
+							/>
+							<span>{messages.queue.evaluation.manual}</span>
+						</label>
+						<label>
+							<input
+								type="radio"
+								name="queue-evaluation-mode"
+								checked={evaluationMode === 'ai-delegated'}
+								disabled={isSavingEvaluation}
+								onchange={() => {
+									evaluationMode = 'ai-delegated';
+								}}
+							/>
+							<span>{messages.queue.evaluation.aiDelegated}</span>
+						</label>
+					</div>
+				</div>
+
+				{#if evaluationMode === 'manual'}
+					<div class="workduck-queue-evaluation-grid">
+						{#each agentEvaluationCriteriaDefinitions as criterion (criterion.id)}
+							{@const criterionMessages = messages.agents.evaluation.criteria[criterion.id]}
+							<label class="workduck-queue-evaluation-row" for={`queue-evaluation-${criterion.id}`}>
+								<span>
+									<strong>{criterionMessages.label}</strong>
+									<small>{criterionMessages.description}</small>
+								</span>
+								<select
+									id={`queue-evaluation-${criterion.id}`}
+									class="workduck-select workduck-queue-evaluation-score"
+									value={evaluationScores[criterion.id]}
+									disabled={isSavingEvaluation}
+									onchange={(event) =>
+										updateEvaluationScore(criterion.id, event.currentTarget.value)}
+								>
+									{#each [1, 2, 3, 4, 5, 6, 7, 8, 9] as score}
+										<option value={score}>{score}</option>
+									{/each}
+								</select>
+							</label>
+						{/each}
+					</div>
+				{:else}
+					<label class="workduck-form-field" for="queue-evaluation-delegation-prompt">
+						<span>{messages.queue.evaluation.delegationPrompt}</span>
+						<textarea
+							id="queue-evaluation-delegation-prompt"
+							class="workduck-input workduck-project-description-input"
+							readonly
+							value={evaluationDelegationPrompt}
+						></textarea>
+					</label>
+				{/if}
+
+				<div class="workduck-dialog-actions">
+					<button
+						class="workduck-button workduck-button-secondary"
+						type="button"
+						disabled={isSavingEvaluation}
+						onclick={closeEvaluationDialog}
+					>
+						{messages.common.cancel}
+					</button>
+					{#if evaluationMode === 'ai-delegated'}
+						<button
+							class="workduck-button workduck-button-secondary"
+							type="button"
+							onclick={() => void copyEvaluationDelegationPrompt()}
+						>
+							{messages.queue.evaluation.copyPrompt}
+						</button>
+					{:else}
+						<button class="workduck-button workduck-button-primary" type="submit" disabled={isSavingEvaluation}>
+							{isSavingEvaluation ? messages.queue.evaluation.saving : messages.common.save}
+						</button>
+					{/if}
+				</div>
+			</form>
+		</div>
+	</div>
+{/if}
+
 {#if isNewWorkOrderDialogOpen}
 	<div class="workduck-dialog-backdrop" role="presentation" onclick={(event) => {
 		if (event.target === event.currentTarget) {
@@ -1655,7 +2208,7 @@
 		}
 	}}>
 		<div
-			class="workduck-dialog workduck-project-dialog"
+			class="workduck-dialog workduck-project-dialog workduck-work-order-dialog"
 			role="dialog"
 			aria-modal="true"
 			aria-labelledby="new-work-order-dialog-title"
@@ -1665,122 +2218,203 @@
 					{workOrderDialogTitle}
 				</h2>
 
-				<label class="workduck-form-field" for="new-work-order-title">
-					<span>{messages.queue.workTitle}</span>
-					<input
-						id="new-work-order-title"
-						class="workduck-input"
-						type="text"
-						bind:value={manualWorkOrderTitle}
-						autocomplete="off"
-						disabled={isWriting}
-					/>
-				</label>
+				<div class="workduck-work-order-dialog-grid">
+					<div class="workduck-work-order-dialog-column">
+						<label class="workduck-form-field" for="new-work-order-title">
+							<span>{messages.queue.workTitle}</span>
+							<input
+								id="new-work-order-title"
+								class="workduck-input"
+								type="text"
+								bind:value={manualWorkOrderTitle}
+								autocomplete="off"
+								disabled={isWriting}
+							/>
+						</label>
 
-				<label class="workduck-form-field" for="new-work-order-priority">
-					<span>{messages.queue.workPriority}</span>
-					<select
-						id="new-work-order-priority"
-						class="workduck-select"
-						bind:value={manualWorkOrderPriority}
-						disabled={isWriting}
-					>
-						{#each queueWorkPriorities as priority}
-							<option value={priority}>{getQueuePriorityLabel(priority)}</option>
-						{/each}
-					</select>
-				</label>
+						<label class="workduck-form-field" for="new-work-order-kind">
+							<span>{messages.queue.workType}</span>
+							<select
+								id="new-work-order-kind"
+								class="workduck-select"
+								bind:value={manualWorkOrderKind}
+								disabled={isWriting}
+							>
+								<option value="instruction">{messages.queue.workTypes.instruction}</option>
+								<option value="vote">{messages.queue.workTypes.vote}</option>
+							</select>
+						</label>
 
-				<div class="workduck-form-field">
-					<span>{messages.common.skill}</span>
-					<details class="workduck-multi-select">
-						<summary class="workduck-multi-select-summary">
-							<span>{manualWorkOrderSkillSummary}</span>
-						</summary>
-						<div class="workduck-multi-select-options">
-							{#if allSkills.length === 0}
-								<span class="workduck-multi-select-empty">{messages.queue.noSkill}</span>
-							{:else}
-								{#each allSkills as skill (skill.id)}
-									<label class="workduck-multi-select-option">
-										<input
-											type="checkbox"
-											checked={selectedManualSkillIds.includes(skill.id)}
-											disabled={isWriting}
-											onchange={(event) =>
-												toggleManualWorkOrderSkill(skill.id, event.currentTarget.checked)}
-										/>
-										<span>{getSkillDisplayName(skill)}</span>
-									</label>
+						<label class="workduck-form-field" for="new-work-order-priority">
+							<span>{messages.queue.workPriority}</span>
+							<select
+								id="new-work-order-priority"
+								class="workduck-select"
+								bind:value={manualWorkOrderPriority}
+								disabled={isWriting}
+							>
+								{#each queueWorkPriorities as priority}
+									<option value={priority}>{getQueuePriorityLabel(priority)}</option>
 								{/each}
-							{/if}
-						</div>
-					</details>
-				</div>
+							</select>
+						</label>
 
-				<div class="workduck-form-field">
-					<span>{messages.queue.workAgents}</span>
-					<details class="workduck-multi-select">
-						<summary class="workduck-multi-select-summary">
-							<span>{manualWorkOrderAgentSummary}</span>
-						</summary>
-						<div class="workduck-multi-select-options">
-							{#if allAgents.length === 0}
-								<span class="workduck-multi-select-empty">{messages.queue.noAgent}</span>
-							{:else}
-								{#each allAgents as agent (agent.id)}
-									<label class="workduck-multi-select-option">
-										<input
-											type="checkbox"
-											checked={selectedManualAgentIds.includes(agent.id)}
-											disabled={isWriting}
-											onchange={(event) =>
-												toggleManualWorkOrderAgent(agent.id, event.currentTarget.checked)}
-										/>
-										<span>{getAgentDisplayName(agent)}</span>
-									</label>
-								{/each}
-							{/if}
-						</div>
-					</details>
-				</div>
+						<label class="workduck-form-field" for="new-work-order-body">
+							<span>{manualWorkOrderKind === 'vote' ? messages.queue.vote.question : messages.queue.workBody}</span>
+							<textarea
+								id="new-work-order-body"
+								class="workduck-input workduck-project-description-input"
+								bind:value={manualWorkOrderBody}
+								disabled={isWriting}
+							></textarea>
+						</label>
 
-				<div class="workduck-form-field">
-					<span>{messages.queue.workReferences}</span>
-					<details class="workduck-multi-select">
-						<summary class="workduck-multi-select-summary">
-							<span>{manualWorkOrderReferenceSummary}</span>
-						</summary>
-						<div class="workduck-multi-select-options">
-							{#if allReferences.length === 0}
-								<span class="workduck-multi-select-empty">{messages.queue.noReference}</span>
-							{:else}
-								{#each allReferences as reference (reference.id)}
-									<label class="workduck-multi-select-option">
-										<input
-											type="checkbox"
-											checked={selectedManualReferenceIds.includes(reference.id)}
-											disabled={isWriting}
-											onchange={(event) =>
-												toggleManualWorkOrderReference(reference.id, event.currentTarget.checked)}
-										/>
-										<span>{getReferenceDisplayName(reference)}</span>
-									</label>
-								{/each}
-							{/if}
-						</div>
-					</details>
-				</div>
+						{#if manualWorkOrderKind === 'vote'}
+							<label class="workduck-form-field" for="new-work-order-vote-criteria">
+								<span>{messages.queue.vote.criteria}</span>
+								<textarea
+									id="new-work-order-vote-criteria"
+									class="workduck-input workduck-project-description-input"
+									bind:value={manualVoteCriteriaInput}
+									disabled={isWriting}
+								></textarea>
+							</label>
+						{/if}
+					</div>
 
-				<label class="workduck-form-field" for="new-work-order-body">
-					<span>{messages.queue.workBody}</span>
-					<textarea
-						id="new-work-order-body"
-						class="workduck-input workduck-project-description-input"
-						bind:value={manualWorkOrderBody}
-						disabled={isWriting}
-					></textarea>
-				</label>
+					<div class="workduck-work-order-dialog-column">
+						<div class="workduck-form-field">
+							<span>{messages.common.skill}</span>
+							<details class="workduck-multi-select">
+								<summary class="workduck-multi-select-summary">
+									<span>{manualWorkOrderSkillSummary}</span>
+								</summary>
+								<div class="workduck-multi-select-options">
+									{#if allSkills.length === 0}
+										<span class="workduck-multi-select-empty">{messages.queue.noSkill}</span>
+									{:else}
+										{#each allSkills as skill (skill.id)}
+											<label class="workduck-multi-select-option">
+												<input
+													type="checkbox"
+													checked={selectedManualSkillIds.includes(skill.id)}
+													disabled={isWriting}
+													onchange={(event) =>
+														toggleManualWorkOrderSkill(skill.id, event.currentTarget.checked)}
+												/>
+												<span>{getSkillDisplayName(skill)}</span>
+											</label>
+										{/each}
+									{/if}
+								</div>
+							</details>
+						</div>
+
+						<div class="workduck-form-field">
+							<span>{messages.queue.workAgents}</span>
+							<details class="workduck-multi-select">
+								<summary class="workduck-multi-select-summary">
+									<span>{manualWorkOrderAgentSummary}</span>
+								</summary>
+								<div class="workduck-multi-select-options">
+									{#if allAgents.length === 0}
+										<span class="workduck-multi-select-empty">{messages.queue.noAgent}</span>
+									{:else}
+										{#each allAgents as agent (agent.id)}
+											<label class="workduck-multi-select-option">
+												<input
+													type="checkbox"
+													checked={selectedManualAgentIds.includes(agent.id)}
+													disabled={isWriting}
+													onchange={(event) =>
+														toggleManualWorkOrderAgent(agent.id, event.currentTarget.checked)}
+												/>
+												<span>{getAgentDisplayName(agent)}</span>
+											</label>
+										{/each}
+									{/if}
+								</div>
+							</details>
+						</div>
+
+						<div class="workduck-form-field">
+							<span>{messages.queue.workReferences}</span>
+							<details class="workduck-multi-select">
+								<summary class="workduck-multi-select-summary">
+									<span>{manualWorkOrderReferenceSummary}</span>
+								</summary>
+								<div class="workduck-multi-select-options">
+									{#if allReferences.length === 0}
+										<span class="workduck-multi-select-empty">{messages.queue.noReference}</span>
+									{:else}
+										{#each allReferences as reference (reference.id)}
+											<label class="workduck-multi-select-option">
+												<input
+													type="checkbox"
+													checked={selectedManualReferenceIds.includes(reference.id)}
+													disabled={isWriting}
+													onchange={(event) =>
+														toggleManualWorkOrderReference(reference.id, event.currentTarget.checked)}
+												/>
+												<span>{getReferenceDisplayName(reference)}</span>
+											</label>
+										{/each}
+									{/if}
+								</div>
+							</details>
+						</div>
+
+						{#if manualWorkOrderKind === 'vote'}
+							<label class="workduck-form-field" for="new-work-order-vote-option-count">
+								<span>{messages.queue.vote.optionCountInput}</span>
+								<select
+									id="new-work-order-vote-option-count"
+									class="workduck-select"
+									value={manualVoteOptionCount}
+									disabled={isWriting}
+									onchange={(event) => setManualVoteOptionCount(event.currentTarget.value)}
+								>
+									{#each manualVoteOptionCountChoices as count}
+										<option value={count}>{count}</option>
+									{/each}
+								</select>
+							</label>
+
+							<div class="workduck-form-field">
+								<span>{messages.queue.vote.options}</span>
+								<div class="workduck-vote-option-list">
+									{#each manualVoteOptions as option, index (option.rowId)}
+										<div class="workduck-vote-option-row">
+											<span class="workduck-vote-option-index">{index + 1}</span>
+											<input
+												class="workduck-input"
+												type="text"
+												value={option.label}
+												aria-label={`${messages.queue.vote.optionName} ${index + 1}`}
+												placeholder={messages.queue.vote.optionName}
+												autocomplete="off"
+												disabled={isWriting}
+												oninput={(event) =>
+													updateManualVoteOption(index, 'label', event.currentTarget.value)}
+											/>
+											<input
+												class="workduck-input"
+												type="text"
+												value={option.description}
+												aria-label={`${messages.queue.vote.optionDescription} ${index + 1}`}
+												placeholder={messages.queue.vote.optionDescription}
+												autocomplete="off"
+												disabled={isWriting}
+												oninput={(event) =>
+													updateManualVoteOption(index, 'description', event.currentTarget.value)}
+											/>
+										</div>
+									{/each}
+								</div>
+							</div>
+						{/if}
+					</div>
+				</div>
 
 				<div class="workduck-dialog-actions">
 					<button class="workduck-button workduck-button-secondary" type="button" onclick={closeNewWorkOrderDialog}>

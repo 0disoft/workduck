@@ -39,6 +39,7 @@
 	import {
 		createEmptyAgentRegistry,
 		removeAgent,
+		resetAgentEvaluation,
 		upsertAgent,
 		type AgentExecutionProviderInput,
 		type AgentRecord,
@@ -86,6 +87,7 @@
 	let isAgentFormOpen = $state(false);
 	let isSavingAgent = $state(false);
 	let isRemovingAgent = $state(false);
+	let isResettingAgentEvaluation = $state(false);
 	let agentError = $state<AgentRegistryError | AgentRegistryStorageError | null>(null);
 	let status = $state<string | null>(null);
 	let environmentVaultOpenSequence = 0;
@@ -335,6 +337,51 @@
 		}
 	}
 
+	async function handleResetSelectedAgentEvaluation() {
+		if (
+			selectedAgent === null ||
+			!hasAgentEvaluations(selectedAgent.evaluationSummary) ||
+			isResettingAgentEvaluation
+		) {
+			return;
+		}
+
+		const targetAgent = selectedAgent;
+
+		if (
+			typeof window !== 'undefined' &&
+			!window.confirm(messages.agents.evaluation.resetConfirm)
+		) {
+			return;
+		}
+
+		isResettingAgentEvaluation = true;
+		agentError = null;
+		status = null;
+
+		try {
+			const mutation = resetAgentEvaluation(registry, targetAgent.id);
+
+			if (!mutation.ok) {
+				agentError = mutation.error;
+				return;
+			}
+
+			const writeResult = await writeAgentRegistry(mutation.registry, workspace.path);
+
+			registry = writeResult.registry;
+			agentError = writeResult.ok ? null : writeResult.error;
+
+			if (!writeResult.ok) {
+				return;
+			}
+
+			status = messages.agents.evaluation.resetSaved;
+		} finally {
+			isResettingAgentEvaluation = false;
+		}
+	}
+
 	function getLlmApiKeyOptions(vault: EnvironmentVault | null): readonly LlmApiKeyOption[] {
 		if (vault === null) {
 			return [];
@@ -427,6 +474,19 @@
 		return average === null ? messages.agents.evaluation.noScore : average.toFixed(2);
 	}
 
+	function getEvaluationResetAtLabel(agent: AgentRecord) {
+		if (agent.evaluationResetAt === null) {
+			return null;
+		}
+
+		const resetAt = new Date(agent.evaluationResetAt);
+		const formattedResetAt = Number.isNaN(resetAt.getTime())
+			? agent.evaluationResetAt
+			: resetAt.toLocaleString(appearanceSettings.languageId === 'ko' ? 'ko-KR' : 'en-US');
+
+		return messages.agents.evaluation.resetAt.replace('{date}', formattedResetAt);
+	}
+
 	function resolveSelectedAgentId(
 		currentAgentId: string | null,
 		agents: readonly AgentRecord[]
@@ -506,14 +566,24 @@
 				<section class="workduck-agent-evaluation" aria-label={messages.agents.evaluation.title}>
 					<header class="workduck-agent-evaluation-header">
 						<strong>{messages.agents.evaluation.title}</strong>
-						{#if hasAgentEvaluations(selectedAgent.evaluationSummary)}
-							<span>
-								{messages.agents.evaluation.count.replace(
-									'{count}',
-									selectedAgent.evaluationSummary.totalCount.toString()
-								)}
-							</span>
-						{/if}
+						<div class="workduck-agent-evaluation-header-actions">
+							{#if hasAgentEvaluations(selectedAgent.evaluationSummary)}
+								<span>
+									{messages.agents.evaluation.count.replace(
+										'{count}',
+										selectedAgent.evaluationSummary.totalCount.toString()
+									)}
+								</span>
+								<button
+									class="workduck-button workduck-button-secondary workduck-agent-evaluation-reset-button"
+									type="button"
+									disabled={isResettingAgentEvaluation}
+									onclick={() => void handleResetSelectedAgentEvaluation()}
+								>
+									{messages.agents.evaluation.reset}
+								</button>
+							{/if}
+						</div>
 					</header>
 
 					{#if hasAgentEvaluations(selectedAgent.evaluationSummary)}
@@ -531,6 +601,10 @@
 						</div>
 					{:else}
 						<p class="workduck-agent-evaluation-empty">{messages.agents.evaluation.empty}</p>
+					{/if}
+
+					{#if selectedAgent.evaluationResetAt !== null}
+						<p class="workduck-agent-evaluation-empty">{getEvaluationResetAtLabel(selectedAgent)}</p>
 					{/if}
 				</section>
 

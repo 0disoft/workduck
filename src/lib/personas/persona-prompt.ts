@@ -19,122 +19,122 @@ type PersonaSpectrumPromptDescriptor = {
 
 const personaStylePromptDescriptors: Record<PersonaStyleId, PersonaStylePromptDescriptor> = {
 	responseLength: {
-		label: '응답 길이',
+		label: 'Response length',
 		options: {
-			short: '짧음',
-			standard: '표준',
-			detailed: '상세'
+			short: 'Prefer concise answers.',
+			standard: 'Prefer balanced-length answers.',
+			detailed: 'Prefer detailed answers when useful.'
 		}
 	},
 	emotionalTone: {
-		label: '감정 톤',
+		label: 'Tone',
 		options: {
-			calm: '차분',
-			neutral: '중립',
-			bright: '밝음'
+			calm: 'Keep the tone calm.',
+			neutral: 'Keep the tone neutral.',
+			bright: 'Keep the tone upbeat.'
 		}
 	},
 	judgmentAttitude: {
-		label: '판단 태도',
+		label: 'Judgment style',
 		options: {
-			critical: '비판적',
-			balanced: '균형',
-			supportive: '지지적'
+			critical: 'Be critical and point out weaknesses.',
+			balanced: 'Balance strengths, weaknesses, and tradeoffs.',
+			supportive: 'Be supportive while staying accurate.'
 		}
 	},
 	confidenceLevel: {
-		label: '확신 수준',
+		label: 'Confidence style',
 		options: {
-			cautious: '신중',
-			realistic: '현실적',
-			decisive: '단정적'
+			cautious: 'State uncertainty carefully.',
+			realistic: 'Use realistic confidence.',
+			decisive: 'Be decisive when evidence is enough.'
 		}
 	},
 	socialDistance: {
-		label: '사회적 거리감',
+		label: 'Social distance',
 		options: {
-			formal: '공식적',
-			comfortable: '편안함',
-			friendly: '친근함'
+			formal: 'Use a formal style.',
+			comfortable: 'Use a comfortable style.',
+			friendly: 'Use a friendly style.'
 		}
 	}
 };
 
 const personaSpectrumPromptDescriptors: Record<PersonaSpectrumId, PersonaSpectrumPromptDescriptor> = {
 	developmentApproach: {
-		label: '개발 추진 방식',
+		label: 'Development approach',
 		levels: {
-			1: '사전 설계형 - 구현 전에 구조, 경계, 데이터 흐름을 먼저 고정합니다.',
-			2: '설계 중심형 - 큰 방향과 규칙을 먼저 잡고 구현으로 들어갑니다.',
-			3: '균형 탐색형 - 작은 프로토타입과 설계를 반복하며 조정합니다.',
-			4: '실험 주도형 - 빠르게 만들어 보고 결과로 방향을 정합니다.',
-			5: '해커형 - 동작 우선. 코드가 살아 움직이는 것을 가장 중요하게 봅니다.'
+			1: 'Prefer fixing structure, boundaries, and data flow before implementation.',
+			2: 'Prefer setting direction and rules before implementation.',
+			3: 'Prefer iterating between small prototypes and design.',
+			4: 'Prefer quick experiments and decisions from observed results.',
+			5: 'Prefer working behavior first and refine structure later.'
 		}
 	},
 	qualityStandard: {
-		label: '안정성·품질 기준',
+		label: 'Stability and quality',
 		levels: {
-			1: '연구실 수준 - 검증, 타입, 테스트, 보안을 매우 엄격하게 봅니다.',
-			2: '운영 안정형 - 실서비스 기준의 안정성을 유지하려 합니다.',
-			3: '현실 타협형 - 위험과 속도를 상황에 따라 조절합니다.',
-			4: '출시 우선형 - 문제는 운영 중 고치는 편을 선호합니다.',
-			5: '실험체형 - 실패 비용보다 속도와 시도를 우선합니다.'
+			1: 'Treat validation, types, tests, and security very strictly.',
+			2: 'Prioritize production-grade stability.',
+			3: 'Balance risk and speed according to the situation.',
+			4: 'Prefer shipping first and fixing issues during operation when acceptable.',
+			5: 'Prioritize speed and experimentation when failure cost is acceptable.'
 		}
 	},
 	structureBias: {
-		label: '구조화 성향',
+		label: 'Structure preference',
 		levels: {
-			1: '시스템 설계형 - 경계, 계층, 모듈 관계를 매우 중요하게 봅니다.',
-			2: '모듈 선호형 - 재사용성과 유지보수를 꾸준히 고려합니다.',
-			3: '실용 구조형 - 필요한 만큼만 구조화합니다.',
-			4: '단순 구현형 - 추상화보다 직접 구현을 선호합니다.',
-			5: '즉흥 조립형 - 구조보다 빠른 연결과 결과를 우선합니다.'
+			1: 'Treat boundaries, layers, and module relationships as critical.',
+			2: 'Consistently consider reuse and maintainability.',
+			3: 'Add structure only where it clearly helps.',
+			4: 'Prefer direct implementation over abstraction.',
+			5: 'Prioritize fast connection and visible results over structure.'
 		}
 	},
 	productivityStrategy: {
-		label: '생산성 전략',
+		label: 'Productivity strategy',
 		levels: {
-			1: '수공예 장인형 - 의존성과 자동화를 최소화하고 직접 통제합니다.',
-			2: '절제 자동화형 - 필요한 도구만 신중히 도입합니다.',
-			3: '실용 도구형 - 생산성을 위해 적절히 자동화를 활용합니다.',
-			4: '자동화 중심형 - 반복 작업은 가능한 모두 자동화하려 합니다.',
-			5: '오케스트레이터형 - 여러 도구, 에이전트, 파이프라인을 조합해 운영합니다.'
+			1: 'Minimize dependencies and automation; keep direct control.',
+			2: 'Introduce only necessary tools carefully.',
+			3: 'Use automation pragmatically for productivity.',
+			4: 'Automate repetitive work wherever practical.',
+			5: 'Combine multiple tools, agents, and pipelines as an operator.'
 		}
 	},
 	operationPhilosophy: {
-		label: '운영·배포 철학',
+		label: 'Operations and deployment',
 		levels: {
-			1: '변경 억제형 - 장애 가능성이 있으면 배포를 미룹니다.',
-			2: '안정 배포형 - 검증과 관측을 충분히 확보한 뒤 배포합니다.',
-			3: '점진 운영형 - 작은 변경을 자주 배포하며 안정성을 봅니다.',
-			4: '빠른 대응형 - 운영 중 수정과 긴급 수정을 적극 활용합니다.',
-			5: '실시간 진화형 - 서비스는 계속 바뀌는 대상으로 봅니다.'
+			1: 'Delay changes when failure risk is unclear.',
+			2: 'Deploy after sufficient validation and observability.',
+			3: 'Prefer small frequent changes and monitor stability.',
+			4: 'Use operational fixes and urgent patches actively when needed.',
+			5: 'Treat services as systems that evolve continuously.'
 		}
 	},
 	collaborationPhilosophy: {
-		label: '협업·컨텍스트 철학',
+		label: 'Collaboration and context',
 		levels: {
-			1: '문서 계약형 - 문서, 규칙, 계약을 기준으로 협업합니다.',
-			2: '명시 협업형 - 의도와 기준을 최대한 드러내려 합니다.',
-			3: '상황 공유형 - 핵심 맥락만 공유하고 나머지는 자율에 맡깁니다.',
-			4: '암묵 협업형 - 경험과 감각 기반의 빠른 협업을 선호합니다.',
-			5: '자율 에이전트형 - 목표만 주고 사람과 AI가 스스로 판단하길 원합니다.'
+			1: 'Use documents, rules, and contracts as collaboration anchors.',
+			2: 'Make intent and standards explicit.',
+			3: 'Share core context and leave room for autonomy.',
+			4: 'Prefer fast collaboration based on experience and judgment.',
+			5: 'Give goals and let people or AI agents decide execution details.'
 		}
 	}
 };
 
 export function formatPersonaPromptBlock(persona: PersonaRecord) {
-	const blocks = [`페르소나 이름: ${persona.name}`];
+	const blocks = ['Response preferences:'];
 
 	if (persona.description.length > 0) {
-		blocks.push(`페르소나 설명: ${persona.description}`);
+		blocks.push(`- Additional description: ${persona.description}`);
 	}
 
-	blocks.push('', '응답 방식:', ...formatPersonaStyles(persona));
-	blocks.push('', '작업 성향:', ...formatPersonaSpectrums(persona));
+	blocks.push(...formatPersonaStyles(persona));
+	blocks.push('', 'Work preferences:', ...formatPersonaSpectrums(persona));
 
 	if (persona.instructions.length > 0) {
-		blocks.push('', '페르소나 지시문:', persona.instructions);
+		blocks.push('', 'Additional persona instructions:', persona.instructions);
 	}
 
 	return blocks.join('\n');
