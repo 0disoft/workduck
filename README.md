@@ -75,6 +75,22 @@ declares `mustflow` as a `latest` development dependency and includes
 scripts, so the workspace can update its local mustflow package and review the
 template update plan before applying it.
 
+### Queue CLI
+
+The local CLI can execute one queued work order by its stable work-order ID,
+write a result report under the workspace `queue/reports` folder, and archive
+the work order after the report is written.
+
+Use `WORKDUCK_VAULT_PASSWORD` or `--vault-password` to unlock the workspace
+Environment vault. If the vault is not unlocked, the CLI can use provider
+environment variables for agents with an explicit provider: `OPENROUTER_API_KEY`
+or `OPEN_ROUTER_API_KEY`, `OPENAI_API_KEY`, and `DEEPSEEK_API_KEY`. The CLI does
+not print API keys, vault passwords, or the decrypted vault payload.
+
+```powershell
+bun run workduck queue run work-order_14a32cf3-029b-425f-b2ba-6c7583313d90 --workspace C:\Users\cherr\Documents\workspace\zerodi-wd1
+```
+
 ### Sync Repository And Workspace Repository
 
 Workduck uses two different Git-backed storage paths:

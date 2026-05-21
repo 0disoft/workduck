@@ -1,10 +1,11 @@
 [package]
 name = "workduck"
-version = "1.2.26"
+version = "1.2.28"
 description = "Local-first developer workbench"
 authors = ["Workduck contributors"]
 license = "0BSD"
 edition = "2024"
+default-run = "workduck"
 
 [lib]
 name = "workduck_lib"
@@ -24,4 +25,8 @@ serde_json = "1"
 tauri = { version = "2", features = ["tray-icon"] }
 tauri-plugin-autostart = "2"
 tauri-plugin-dialog = "2"
+time = { version = "0.3.47", features = ["formatting"] }
 zeroize = "1.8.2"
+
+[target.'cfg(windows)'.dependencies]
+winreg = "0.56.0"

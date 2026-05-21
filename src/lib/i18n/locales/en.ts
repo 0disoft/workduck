@@ -223,6 +223,9 @@ export const enMessages = {
 		copy: 'Copy',
 		show: 'Show',
 		hide: 'Hide',
+		applyCliEnvironment: 'Apply CLI env',
+		applyCliEnvironmentTooltip:
+			'Save OpenRouter, OpenAI, and DeepSeek API keys as user environment variables.',
 		secretKinds: {
 			'api-key': 'API key',
 			token: 'Token',
@@ -251,7 +254,8 @@ export const enMessages = {
 			created: 'Vault created.',
 			saved: 'Saved.',
 			removed: 'Removed.',
-			copied: 'Copied.'
+			copied: 'Copied.',
+			cliEnvironmentApplied: '{count} CLI environment variables applied.'
 		},
 		errors: {
 			vaultPasswordRequired: 'Vault password is required.',
@@ -270,7 +274,13 @@ export const enMessages = {
 			tagRequired: 'Tag is required.',
 			nameDuplicate: 'Name already exists.',
 			valueRequired: 'Value is required.',
-			notFound: 'Entry was not found.'
+			notFound: 'Entry was not found.',
+			cliEnvironmentNoVariables:
+				'No OpenRouter, OpenAI, or DeepSeek API key environment variables were found.',
+			cliEnvironmentApplyFailed: 'CLI environment variables could not be applied.',
+			cliEnvironmentUnsupported:
+				'User environment variables are not supported on this operating system.',
+			cliEnvironmentUnavailable: 'CLI environment apply is available in the desktop app.'
 		}
 	},
 	projects: {
@@ -292,6 +302,27 @@ export const enMessages = {
 			groups: 'groups',
 			repo: 'repo',
 			repos: 'repos'
+		},
+		lastRepositoryOperation: 'Last action: {timestamp}',
+		contextMenu: {
+			openFolder: 'Open folder',
+			editDescription: 'Edit description',
+			githubCredential: 'GitHub credential',
+			editTags: 'Edit tags',
+			delete: 'Delete',
+			clone: 'Clone',
+			initializeGit: 'Initialize Git',
+			publish: 'Publish',
+			openTerminal: 'Open terminal',
+			installDependencies: 'Install dependencies',
+			startDevServer: 'Start dev server',
+			build: 'Build'
+		},
+		repositoryTasks: {
+			openTerminalStarted: 'Terminal opened.',
+			installDependenciesStarted: 'Dependency install started.',
+			startDevServerStarted: 'Dev server started.',
+			buildStarted: 'Build started.'
 		}
 	},
 	references: {

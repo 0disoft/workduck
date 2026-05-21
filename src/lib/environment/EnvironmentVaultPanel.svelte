@@ -15,6 +15,11 @@
 	import { readWorkspaceUnlockPasswordSession } from '$lib/workspaces/workspace-unlock';
 
 	import {
+		applyCliEnvironmentVariables,
+		type CliEnvironmentApplyError,
+		type CliEnvironmentVariableInput
+	} from './cli-environment';
+	import {
 		createEmptyEnvironmentVault,
 		createMaskedSecretValue,
 		environmentSecretKindOptions,
@@ -82,6 +87,9 @@
 		vault === null
 			? null
 			: environmentMessages.registeredCount.replace('{count}', vault.secrets.length.toString())
+	);
+	let cliEnvironmentVariables = $derived(
+		vault === null ? [] : createCliEnvironmentVariables(vault.secrets)
 	);
 	let submitLabel = $derived(editingSecretId === null ? messages.common.add : messages.common.save);
 	let unlockLabel = $derived(
@@ -306,12 +314,89 @@
 		resetVaultSession(vaultEnvelope);
 	}
 
+	async function handleApplyCliEnvironmentVariables() {
+		if (vault === null || isBusy) {
+			return;
+		}
+
+		const variables = createCliEnvironmentVariables(vault.secrets);
+
+		if (variables.length === 0) {
+			error = environmentMessages.errors.cliEnvironmentNoVariables;
+			status = null;
+			return;
+		}
+
+		isBusy = true;
+		error = null;
+		status = null;
+
+		try {
+			const result = await applyCliEnvironmentVariables(variables);
+
+			if (!result.ok) {
+				error = createCliEnvironmentApplyErrorMessage(result.error);
+				return;
+			}
+
+			status = environmentMessages.statuses.cliEnvironmentApplied.replace(
+				'{count}',
+				result.appliedNames.length.toString()
+			);
+		} finally {
+			isBusy = false;
+		}
+	}
+
 	function getSecretKindLabel(kind: EnvironmentSecretKind) {
 		return environmentMessages.secretKinds[kind] ?? environmentMessages.secretKinds.other;
 	}
 
 	function getSecretTagLabel(tag: EnvironmentSecretTag) {
 		return environmentMessages.secretTags[tag] ?? tag;
+	}
+
+	function createCliEnvironmentVariables(
+		secrets: readonly EnvironmentSecretRecord[]
+	): CliEnvironmentVariableInput[] {
+		const variables = new Map<string, string>();
+
+		for (const secret of secrets) {
+			const variableName = resolveCliEnvironmentVariableName(secret);
+
+			if (variableName === null || variables.has(variableName)) {
+				continue;
+			}
+
+			variables.set(variableName, secret.value);
+		}
+
+		return Array.from(variables, ([name, value]) => ({ name, value }));
+	}
+
+	function resolveCliEnvironmentVariableName(secret: EnvironmentSecretRecord) {
+		if (secret.kind !== 'api-key') {
+			return null;
+		}
+
+		const profileText = [secret.name, ...secret.tags]
+			.join(' ')
+			.toLocaleLowerCase('en-US')
+			.replaceAll(/[^a-z0-9]+/g, '');
+
+		if (profileText.includes('openrouter')) {
+			return 'OPENROUTER_API_KEY';
+		}
+
+		if (profileText.includes('openai')) {
+			return 'OPENAI_API_KEY';
+		}
+
+		if (profileText.includes('deepseek')) {
+			return 'DEEPSEEK_API_KEY';
+		}
+
+		return null;
 	}
 
 	function clearSecretForm() {
@@ -406,6 +491,19 @@
 		}
 
 		return environmentMessages.errors.vaultOperationFailed;
+	}
+
+	function createCliEnvironmentApplyErrorMessage(nextError: CliEnvironmentApplyError) {
+		switch (nextError) {
+			case 'cli-environment-empty':
+				return environmentMessages.errors.cliEnvironmentNoVariables;
+			case 'cli-environment-unsupported':
+				return environmentMessages.errors.cliEnvironmentUnsupported;
+			case 'cli-environment-unavailable':
+				return environmentMessages.errors.cliEnvironmentUnavailable;
+			default:
+				return environmentMessages.errors.cliEnvironmentApplyFailed;
+		}
 	}
 
 	onMount(() => {
@@ -512,6 +610,15 @@
 						</label>
 					</div>
 				{/if}
+				<button
+					class="workduck-button workduck-button-secondary"
+					type="button"
+					disabled={isBusy || cliEnvironmentVariables.length === 0}
+					title={environmentMessages.applyCliEnvironmentTooltip}
+					onclick={handleApplyCliEnvironmentVariables}
+				>
+					{environmentMessages.applyCliEnvironment}
+				</button>
 				<button class="workduck-button workduck-button-secondary" type="button" onclick={handleLockVault}>
 					{environmentMessages.lockVault}
 				</button>

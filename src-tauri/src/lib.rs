@@ -6,11 +6,13 @@ mod project_folder;
 mod project_registry_store;
 mod project_repository_failure;
 mod project_repository;
+mod project_repository_task;
 mod project_repository_validation;
 mod project_repository_operation_store;
 mod queue_folder;
 mod secret_vault_crypto;
 mod storage;
+pub mod system_environment;
 mod terminal_catalog;
 mod terminal_process;
 mod tray_menu;
@@ -73,6 +75,7 @@ pub fn run() {
             tray_menu::show_workduck_tray_menu,
             secret_vault_crypto::decrypt_secret_vault_payload,
             secret_vault_crypto::encrypt_secret_vault_payload,
+            system_environment::apply_cli_environment_variables,
             workspace_sync_crypto::decrypt_workspace_sync_payload,
             workspace_sync_crypto::encrypt_workspace_sync_payload,
             workspace_sync_file::read_workspace_sync_file,
@@ -94,6 +97,7 @@ pub fn run() {
             project_repository::publish_project_repository_to_github,
             project_repository::push_project_repository_to_github,
             project_repository::push_project_repository_git,
+            project_repository_task::run_project_repository_task,
             project_repository_operation_store::read_project_repository_operation_records,
             project_repository_operation_store::write_project_repository_operation_record,
             project_registry_store::read_project_registries,

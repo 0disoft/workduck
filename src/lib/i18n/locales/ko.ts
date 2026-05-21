@@ -225,6 +225,9 @@ export const koMessages = {
 		copy: '복사',
 		show: '보기',
 		hide: '숨기기',
+		applyCliEnvironment: 'CLI 환경 적용',
+		applyCliEnvironmentTooltip:
+			'OpenRouter, OpenAI, DeepSeek API 키를 사용자 환경변수로 저장합니다.',
 		secretKinds: {
 			'api-key': 'API 키',
 			token: '토큰',
@@ -253,7 +256,8 @@ export const koMessages = {
 			created: '보관함을 만들었습니다.',
 			saved: '저장했습니다.',
 			removed: '삭제했습니다.',
-			copied: '복사했습니다.'
+			copied: '복사했습니다.',
+			cliEnvironmentApplied: 'CLI 환경변수 {count}개를 적용했습니다.'
 		},
 		errors: {
 			vaultPasswordRequired: '보관함 암호를 입력하세요.',
@@ -272,7 +276,12 @@ export const koMessages = {
 			tagRequired: '태그를 선택하세요.',
 			nameDuplicate: '이미 있는 이름입니다.',
 			valueRequired: '값을 입력하세요.',
-			notFound: '항목을 찾을 수 없습니다.'
+			notFound: '항목을 찾을 수 없습니다.',
+			cliEnvironmentNoVariables:
+				'OpenRouter, OpenAI, DeepSeek API 키 환경변수가 없습니다.',
+			cliEnvironmentApplyFailed: 'CLI 환경변수를 적용하지 못했습니다.',
+			cliEnvironmentUnsupported: '이 운영체제에서는 사용자 환경변수 적용을 지원하지 않습니다.',
+			cliEnvironmentUnavailable: 'CLI 환경 적용은 데스크톱 앱에서 사용할 수 있습니다.'
 		}
 	},
 	projects: {
@@ -294,6 +303,27 @@ export const koMessages = {
 			groups: '그룹',
 			repo: '저장소',
 			repos: '저장소'
+		},
+		lastRepositoryOperation: '마지막 작업: {timestamp}',
+		contextMenu: {
+			openFolder: '폴더 열기',
+			editDescription: '설명 수정',
+			githubCredential: 'GitHub 인증',
+			editTags: '태그 수정',
+			delete: '삭제',
+			clone: 'Clone',
+			initializeGit: 'Git 초기화',
+			publish: '게시',
+			openTerminal: '터미널 열기',
+			installDependencies: '의존성 설치',
+			startDevServer: '개발 서버 시작',
+			build: '빌드하기'
+		},
+		repositoryTasks: {
+			openTerminalStarted: '터미널을 열었습니다.',
+			installDependenciesStarted: '의존성 설치를 시작했습니다.',
+			startDevServerStarted: '개발 서버를 시작했습니다.',
+			buildStarted: '빌드를 시작했습니다.'
 		}
 	},
 	references: {
