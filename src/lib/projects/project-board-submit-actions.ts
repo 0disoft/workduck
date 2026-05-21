@@ -4,6 +4,7 @@ import {
 } from './project-folder';
 import type { ProjectFormError } from './project-board-errors';
 import {
+	createProjectFolderNameFromDisplayName,
 	createRepositoryNameFromRemoteUrl,
 	createWorkspaceChildPath
 } from './project-board-paths';
@@ -49,7 +50,10 @@ export async function submitProjectDialog(
 
 	const folderResult =
 		input.dialog.mode === 'project'
-			? await createProjectFolder(input.workspacePath, input.formName)
+			? await createProjectFolder(
+					input.workspacePath,
+					createProjectFolderNameFromDisplayName(input.formName)
+				)
 			: await createGroupFolder(input.dialog.targetNodeId, input.formName, input, context);
 
 	if (!folderResult.ok) {
@@ -108,7 +112,11 @@ async function createGroupFolder(
 		return { ok: false, error: 'project-parent-invalid' } as const;
 	}
 
-	return createProjectGroupFolder(input.workspacePath, targetNode.path, name);
+	return createProjectGroupFolder(
+		input.workspacePath,
+		targetNode.path,
+		createProjectFolderNameFromDisplayName(name)
+	);
 }
 
 async function submitRepositoryLink(
@@ -141,7 +149,7 @@ async function submitRepositoryLink(
 	const folderResult = await createProjectGroupFolder(
 		input.workspacePath,
 		targetNode.path,
-		input.formName
+		createProjectFolderNameFromDisplayName(input.formName)
 	);
 
 	if (!folderResult.ok) {
@@ -151,7 +159,7 @@ async function submitRepositoryLink(
 
 	const result = addProjectRepositoryLink(input.registry, {
 		nodeId: targetNodeId,
-		name: folderResult.folderName,
+		name: input.formName,
 		path: createWorkspaceChildPath(input.workspacePath, folderResult.relativePath),
 		remoteUrl: null,
 		tags: parseTagsInput(input.formTags)

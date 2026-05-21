@@ -1,8 +1,11 @@
 <script lang="ts">
+	import type { WorkduckMessages } from '$lib/i18n/workduck-message-contract';
 	import type { ProjectContextMenuState } from './project-board-types';
+	import type { ProjectRepositoryTask } from './project-repository-task';
 
 	interface Props {
 		readonly contextMenu: ProjectContextMenuState;
+		readonly projectMessages: WorkduckMessages['projects'];
 		contextMenuElement: HTMLElement | undefined;
 		readonly canOpenContextFolder: boolean;
 		readonly canCloneContextRepository: boolean;
@@ -17,10 +20,12 @@
 		readonly onCloneRepository: () => Promise<void>;
 		readonly onInitializeRepository: () => Promise<void>;
 		readonly onPublishRepository: () => void;
+		readonly onRepositoryTask: (task: ProjectRepositoryTask) => Promise<void>;
 	}
 
 	let {
 		contextMenu,
+		projectMessages,
 		contextMenuElement = $bindable(),
 		canOpenContextFolder,
 		canCloneContextRepository,
@@ -34,7 +39,8 @@
 		onDelete,
 		onCloneRepository,
 		onInitializeRepository,
-		onPublishRepository
+		onPublishRepository,
+		onRepositoryTask
 	}: Props = $props();
 </script>
 
@@ -53,7 +59,7 @@
 				role="menuitem"
 				onclick={() => void onOpenFolder()}
 			>
-				Open folder
+				{projectMessages.contextMenu.openFolder}
 			</button>
 		{/if}
 		<button
@@ -62,7 +68,7 @@
 			role="menuitem"
 			onclick={onEditDescription}
 		>
-			Edit description
+			{projectMessages.contextMenu.editDescription}
 		</button>
 		{#if canEditContextGithubCredential}
 			<button
@@ -71,11 +77,11 @@
 				role="menuitem"
 				onclick={onEditGithubCredential}
 			>
-				GitHub credential
+				{projectMessages.contextMenu.githubCredential}
 			</button>
 		{/if}
 		<button class="workduck-context-menu-item" type="button" role="menuitem" onclick={onEditTags}>
-			Edit tags
+			{projectMessages.contextMenu.editTags}
 		</button>
 		<button
 			class="workduck-context-menu-item workduck-context-menu-item-danger"
@@ -83,7 +89,7 @@
 			role="menuitem"
 			onclick={onDelete}
 		>
-			Delete
+			{projectMessages.contextMenu.delete}
 		</button>
 	{:else}
 		{#if canCloneContextRepository}
@@ -93,7 +99,7 @@
 				role="menuitem"
 				onclick={() => void onCloneRepository()}
 			>
-				Clone
+				{projectMessages.contextMenu.clone}
 			</button>
 		{/if}
 		{#if canInitializeContextRepository}
@@ -103,7 +109,7 @@
 				role="menuitem"
 				onclick={() => void onInitializeRepository()}
 			>
-				Initialize Git
+				{projectMessages.contextMenu.initializeGit}
 			</button>
 		{/if}
 		{#if canPublishContextRepository}
@@ -113,7 +119,7 @@
 				role="menuitem"
 				onclick={onPublishRepository}
 			>
-				Publish
+				{projectMessages.contextMenu.publish}
 			</button>
 		{/if}
 		{#if canOpenContextFolder}
@@ -123,11 +129,45 @@
 				role="menuitem"
 				onclick={() => void onOpenFolder()}
 			>
-				Open folder
+				{projectMessages.contextMenu.openFolder}
+			</button>
+			<div class="workduck-context-menu-separator" role="separator"></div>
+			<button
+				class="workduck-context-menu-item"
+				type="button"
+				role="menuitem"
+				onclick={() => void onRepositoryTask('open-terminal')}
+			>
+				{projectMessages.contextMenu.openTerminal}
+			</button>
+			<button
+				class="workduck-context-menu-item"
+				type="button"
+				role="menuitem"
+				onclick={() => void onRepositoryTask('install-dependencies')}
+			>
+				{projectMessages.contextMenu.installDependencies}
+			</button>
+			<button
+				class="workduck-context-menu-item"
+				type="button"
+				role="menuitem"
+				onclick={() => void onRepositoryTask('start-dev-server')}
+			>
+				{projectMessages.contextMenu.startDevServer}
+			</button>
+			<button
+				class="workduck-context-menu-item"
+				type="button"
+				role="menuitem"
+				onclick={() => void onRepositoryTask('build')}
+			>
+				{projectMessages.contextMenu.build}
 			</button>
 		{/if}
+		<div class="workduck-context-menu-separator" role="separator"></div>
 		<button class="workduck-context-menu-item" type="button" role="menuitem" onclick={onEditTags}>
-			Edit tags
+			{projectMessages.contextMenu.editTags}
 		</button>
 		{#if canEditContextGithubCredential}
 			<button
@@ -136,7 +176,7 @@
 				role="menuitem"
 				onclick={onEditGithubCredential}
 			>
-				GitHub credential
+				{projectMessages.contextMenu.githubCredential}
 			</button>
 		{/if}
 		<button
@@ -145,7 +185,7 @@
 			role="menuitem"
 			onclick={onDelete}
 		>
-			Delete
+			{projectMessages.contextMenu.delete}
 		</button>
 	{/if}
 </div>

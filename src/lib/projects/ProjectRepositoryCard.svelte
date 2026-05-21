@@ -1,7 +1,10 @@
 <script lang="ts">
+	import type { WorkduckMessages } from '$lib/i18n/workduck-message-contract';
+	import type { WorkduckLanguageId } from '$lib/i18n/workduck-language';
 	import { getProjectFormErrorMessage } from './project-board-errors';
 	import {
 		getRepositoryActionButtonLabel,
+		getRepositoryOperationFinishedAtLabel,
 		getRepositoryOperationMessage,
 		type ProjectRepositoryGitAction,
 		type ProjectRepositoryOperation
@@ -12,6 +15,8 @@
 	interface Props {
 		readonly node: ProjectNodeRecord;
 		readonly repository: ProjectRepositoryLinkRecord;
+		readonly projectMessages: WorkduckMessages['projects'];
+		readonly languageId: WorkduckLanguageId;
 		readonly repositoryOperation: ProjectRepositoryOperation | null;
 		readonly repositoryGitStatus: ProjectRepositoryGitStatus | undefined;
 		readonly repositoryBusy: boolean;
@@ -34,6 +39,8 @@
 
 	let {
 		repository,
+		projectMessages,
+		languageId,
 		repositoryOperation,
 		repositoryGitStatus,
 		repositoryBusy,
@@ -53,6 +60,16 @@
 		onPublish,
 		onGitAction
 	}: Props = $props();
+
+	let repositoryOperationFinishedAtLabel = $derived(
+		repositoryOperation === null
+			? null
+			: getRepositoryOperationFinishedAtLabel(
+					repositoryOperation,
+					projectMessages.lastRepositoryOperation,
+					languageId
+				)
+	);
 </script>
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -88,7 +105,14 @@
 			role={repositoryOperation.state === 'failed' ? 'alert' : 'status'}
 			aria-live="polite"
 		>
-			{getRepositoryOperationMessage(repositoryOperation)}
+			<span class="workduck-repository-operation-status-text">
+				{getRepositoryOperationMessage(repositoryOperation)}
+			</span>
+			{#if repositoryOperationFinishedAtLabel !== null}
+				<span class="workduck-repository-operation-status-time">
+					{repositoryOperationFinishedAtLabel}
+				</span>
+			{/if}
 		</p>
 	{:else if repositoryGitStatus?.error !== null && repositoryGitStatus?.error !== undefined}
 		<p

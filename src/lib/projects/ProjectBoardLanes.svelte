@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { WorkduckMessages } from '$lib/i18n/workduck-message-contract';
+	import type { WorkduckLanguageId } from '$lib/i18n/workduck-language';
 	import PageTitleRow from '$lib/ui/PageTitleRow.svelte';
 	import {
 		formatCountLabel,
@@ -24,6 +25,7 @@
 	interface Props {
 		readonly title: string;
 		readonly projectMessages: WorkduckMessages['projects'];
+		readonly languageId: WorkduckLanguageId;
 		tagFilter: string;
 		readonly repositorySyncFilter: ProjectRepositorySyncFilter;
 		readonly repositoryFilterStats: RepositoryFilterStats;
@@ -89,7 +91,7 @@
 	}
 
 	let {
-		title, projectMessages, tagFilter = $bindable(), repositorySyncFilter, repositoryFilterStats,
+		title, projectMessages, languageId, tagFilter = $bindable(), repositorySyncFilter, repositoryFilterStats,
 		registryNodes, projectNodes, selectedProject, selectedProjectGroups, selectedGroup,
 		selectedRepositories, repositoryGitStatusById, onBoardContextMenu, onRepositorySyncFilterSelect,
 		onTagFilterInput, onOpenDialog, onSelectProject, onSelectGroup, onProjectContextMenu,
@@ -213,6 +215,7 @@
 												repository.path !== null && !isRepositoryPathInsideWorkspace(repository.path)}
 											{@const repositoryGithubCredentialName = getRepositoryGithubCredentialName(node, repository)}
 											<ProjectRepositoryCard node={node} {repository} {repositoryOperation}
+												{projectMessages} {languageId}
 												{repositoryGitStatus} {repositoryBusy} {repositoryPathOutsideWorkspace}
 												{repositoryGithubCredentialName}
 												repositoryCardKind={getRepositoryCardKind(node.id, repository)}

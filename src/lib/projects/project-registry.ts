@@ -1,4 +1,5 @@
 import { normalizeWorkspacePathForStorage } from '$lib/workspaces/workspace-path-format';
+import { createProjectFolderNameFromDisplayName } from './project-folder-name';
 
 export const WORKDUCK_PROJECT_REGISTRY_VERSION = 1;
 export const PROJECT_NAME_MAX_LENGTH = 80;
@@ -1035,7 +1036,7 @@ function createDefaultProjectPath(parentPath: string | null, name: string) {
 }
 
 function normalizeProjectPathSegment(value: string) {
-	return value.trim().replaceAll(/[\\/]/gu, '-').slice(0, PROJECT_NAME_MAX_LENGTH) || 'untitled';
+	return createProjectFolderNameFromDisplayName(value, PROJECT_NAME_MAX_LENGTH);
 }
 
 function createRepositoryPathKey(path: string) {

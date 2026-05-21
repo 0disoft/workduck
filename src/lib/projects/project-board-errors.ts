@@ -2,6 +2,7 @@ import type { SecretVaultCryptoError } from '$lib/environment/secret-vault-crypt
 import type { ProjectFolderError } from './project-folder';
 import type { ProjectRepositoryCloneError, ProjectRepositoryGitError } from './project-repository';
 import type { ProjectRepositoryOperationStorageError } from './project-operation-storage';
+import type { ProjectRepositoryTaskError } from './project-repository-task';
 import type { ProjectRegistryError } from './project-registry';
 import type { ProjectRegistryStorageError } from './project-storage';
 
@@ -15,6 +16,7 @@ export type ProjectFormError =
 	| ProjectFolderError
 	| ProjectRepositoryCloneError
 	| ProjectRepositoryGitError
+	| ProjectRepositoryTaskError
 	| ProjectRegistryStorageError
 	| ProjectRepositoryOperationStorageError
 	| ProjectCredentialError;
@@ -223,6 +225,30 @@ export function getProjectFormErrorMessage(error: ProjectFormError) {
 			return 'Initial commit could not be created.';
 		case 'project-repository-github-create-failed':
 			return 'GitHub repository could not be created. Check GitHub CLI authentication and repository name.';
+		case 'project-repository-task-unavailable':
+			return 'Repository tasks are available in the desktop app.';
+		case 'project-repository-task-workspace-required':
+		case 'project-repository-task-workspace-not-absolute':
+		case 'project-repository-task-workspace-not-found':
+		case 'project-repository-task-workspace-not-directory':
+		case 'project-repository-task-workspace-unreadable':
+			return 'Workspace path is not usable.';
+		case 'project-repository-task-path-required':
+		case 'project-repository-task-path-not-absolute':
+		case 'project-repository-task-path-not-found':
+		case 'project-repository-task-path-not-directory':
+		case 'project-repository-task-path-unreadable':
+			return 'Repository path is not usable.';
+		case 'project-repository-task-path-outside-workspace':
+			return 'Repository path must stay inside the current workspace.';
+		case 'project-repository-task-invalid':
+			return 'Repository task is not usable.';
+		case 'project-repository-task-command-unavailable':
+			return 'No matching command was found for this repository.';
+		case 'project-repository-task-terminal-unavailable':
+			return 'No supported terminal was found.';
+		case 'project-repository-task-launch-failed':
+			return 'Repository task could not be started.';
 		case 'project-registry-read-failed':
 			return 'Projects could not be loaded.';
 		case 'project-registry-write-failed':

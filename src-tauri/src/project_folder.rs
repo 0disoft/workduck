@@ -2,10 +2,14 @@ use std::{
     fs, io,
     path::{Path, PathBuf},
     process::{Command, Stdio},
+    thread,
+    time::Duration,
 };
 
 const PROJECTS_DIRECTORY_NAME: &str = "projects";
 const PROJECT_FOLDER_NAME_MAX_CHARS: usize = 80;
+const DELETE_FOLDER_MAX_ATTEMPTS: usize = 4;
+const DELETE_FOLDER_RETRY_DELAY: Duration = Duration::from_millis(75);
 
 #[derive(serde::Serialize)]
 pub enum ProjectFolderError {
@@ -662,13 +666,44 @@ fn open_folder(path: &Path) -> ProjectFolderOpen {
 }
 
 fn delete_folder_tree(path: &Path) -> ProjectFolderDelete {
-    match fs::remove_dir_all(path) {
-        Ok(()) => ProjectFolderDelete {
-            ok: true,
-            error: None,
-        },
-        Err(error) => invalid_delete(map_delete_error(error)),
+    let mut last_error = None;
+
+    for attempt_index in 0..DELETE_FOLDER_MAX_ATTEMPTS {
+        match fs::remove_dir_all(path) {
+            Ok(()) => {
+                if is_folder_absent(path) {
+                    return ProjectFolderDelete {
+                        ok: true,
+                        error: None,
+                    };
+                }
+
+                last_error = Some(ProjectFolderError::DeleteFailed);
+            }
+            Err(error) if error.kind() == io::ErrorKind::NotFound => {
+                return ProjectFolderDelete {
+                    ok: true,
+                    error: None,
+                };
+            }
+            Err(error) => {
+                last_error = Some(map_delete_error(error));
+            }
+        }
+
+        if attempt_index + 1 < DELETE_FOLDER_MAX_ATTEMPTS {
+            thread::sleep(DELETE_FOLDER_RETRY_DELAY);
+        }
     }
+
+    invalid_delete(last_error.unwrap_or(ProjectFolderError::DeleteFailed))
+}
+
+fn is_folder_absent(path: &Path) -> bool {
+    matches!(
+        fs::symlink_metadata(path),
+        Err(error) if error.kind() == io::ErrorKind::NotFound
+    )
 }
 
 #[cfg(target_os = "windows")]

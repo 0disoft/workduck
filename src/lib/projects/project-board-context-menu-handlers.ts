@@ -1,3 +1,4 @@
+import type { WorkduckMessages } from '$lib/i18n/workduck-message-contract';
 import type { ProjectFormError } from './project-board-errors';
 import { CONTEXT_MENU_MARGIN_PX } from './project-board-context-menu-position';
 import {
@@ -12,7 +13,9 @@ import {
 	initializeProjectRepositoryForTarget,
 	type ProjectRepositoryActionContext
 } from './project-board-repository-actions';
+import { runProjectRepositoryTaskForTarget } from './project-board-repository-task-actions';
 import type { ProjectNodeRecord, ProjectRepositoryLinkRecord } from './project-registry';
+import type { ProjectRepositoryTask } from './project-repository-task';
 import type {
 	ProjectContextMenuState,
 	ProjectContextMenuTarget,
@@ -27,6 +30,7 @@ export function createProjectBoardContextMenuHandlers(context: {
 	readonly getContextMenuRepository: () => ProjectRepositoryTarget | null;
 	readonly getRegistryNodes: () => readonly ProjectNodeRecord[];
 	readonly getWorkspacePath: () => string;
+	readonly getProjectMessages: () => WorkduckMessages['projects'];
 	readonly getIsOpeningFolder: () => boolean;
 	readonly createRepositoryActionContext: () => ProjectRepositoryActionContext;
 	readonly setContextMenu: (contextMenu: ProjectContextMenuState | null) => void;
@@ -175,6 +179,18 @@ export function createProjectBoardContextMenuHandlers(context: {
 			closeContextMenu();
 
 			await cloneProjectRepositoryForTarget(target, context.createRepositoryActionContext());
+		},
+		async openContextRepositoryTask(task: ProjectRepositoryTask) {
+			const target = context.getContextMenuRepository();
+
+			closeContextMenu();
+
+			await runProjectRepositoryTaskForTarget(target, task, {
+				workspacePath: context.getWorkspacePath(),
+				messages: context.getProjectMessages().repositoryTasks,
+				setFormError: context.setFormError,
+				setStatus: context.setStatus
+			});
 		},
 		async openContextCloneRepositoryForTarget(
 			node: ProjectNodeRecord,

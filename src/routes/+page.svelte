@@ -60,6 +60,7 @@
 				workspace={activeWorkspace}
 				title={messages.navigation.projects}
 				projectMessages={messages.projects}
+				languageId={appearanceSettings.languageId}
 			/>
 		{/if}
 	</WorkspaceGate>

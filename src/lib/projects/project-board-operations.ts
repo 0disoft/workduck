@@ -1,3 +1,4 @@
+import type { WorkduckLanguageId } from '$lib/i18n/workduck-language';
 import type {
 	ProjectRepositoryOperationName,
 	ProjectRepositoryOperationState
@@ -114,6 +115,46 @@ export function getRepositoryOperationMessage(operation: ProjectRepositoryOperat
 		? `${getRepositoryOperationLabel(operation.name)} failed.`
 		: (getProjectFormErrorMessage(operation.error as ProjectFormError) ??
 				'Repository operation failed.');
+}
+
+export function getRepositoryOperationFinishedAtLabel(
+	operation: ProjectRepositoryOperation,
+	labelTemplate: string,
+	languageId: WorkduckLanguageId
+) {
+	if (operation.finishedAt === null) {
+		return null;
+	}
+
+	const finishedAtLabel = formatRepositoryOperationFinishedAt(operation.finishedAt, languageId);
+
+	return finishedAtLabel === null
+		? null
+		: labelTemplate.replace('{timestamp}', finishedAtLabel);
+}
+
+function formatRepositoryOperationFinishedAt(
+	finishedAt: string,
+	languageId: WorkduckLanguageId
+) {
+	const date = new Date(finishedAt);
+
+	if (!Number.isFinite(date.getTime())) {
+		return null;
+	}
+
+	return new Intl.DateTimeFormat(getRepositoryOperationDateLocale(languageId), {
+		year: 'numeric',
+		month: '2-digit',
+		day: '2-digit',
+		hour: '2-digit',
+		minute: '2-digit',
+		hour12: false
+	}).format(date);
+}
+
+function getRepositoryOperationDateLocale(languageId: WorkduckLanguageId) {
+	return languageId === 'ko' ? 'ko-KR' : 'en-US';
 }
 
 export function getRepositoryOperationProgressLabel(name: ProjectRepositoryOperationName) {

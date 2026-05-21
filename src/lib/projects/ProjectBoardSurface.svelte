@@ -1,5 +1,6 @@
 	<script lang="ts">
 	import type { WorkduckMessages } from '$lib/i18n/workduck-message-contract';
+	import type { WorkduckLanguageId } from '$lib/i18n/workduck-language';
 	import type { EnvironmentVault } from '$lib/environment/environment-vault';
 	import {
 		type SecretVaultEnvelope
@@ -120,9 +121,10 @@
 		readonly workspace: WorkspaceRecord;
 		readonly title: string;
 		readonly projectMessages: WorkduckMessages['projects'];
+		readonly languageId: WorkduckLanguageId;
 	}
 
-	let { workspace, title, projectMessages }: Props = $props();
+	let { workspace, title, projectMessages, languageId }: Props = $props();
 
 	let registry = $state<ProjectRegistry>(createEmptyProjectRegistry(''));
 	let contextMenu = $state<ProjectContextMenuState | null>(null);
@@ -307,6 +309,7 @@
 		getContextMenuRepository: () => contextMenuRepository,
 		getRegistryNodes: () => registry.nodes,
 		getWorkspacePath: () => workspace.path,
+		getProjectMessages: () => projectMessages,
 		getIsOpeningFolder: () => isOpeningFolder,
 		createRepositoryActionContext,
 		setContextMenu: (nextContextMenu) => { contextMenu = nextContextMenu; },
@@ -836,6 +839,7 @@
 <ProjectBoardLanes
 	{title}
 	{projectMessages}
+	{languageId}
 	bind:tagFilter
 	{repositorySyncFilter}
 	{repositoryFilterStats}
@@ -877,6 +881,7 @@
 
 <ProjectBoardOverlays
 	{contextMenu}
+	{projectMessages}
 	bind:contextMenuElement
 	bind:shouldDeleteLocalFolder
 	bind:descriptionInput
@@ -939,6 +944,7 @@
 	onCloneRepository={contextMenuActions.openContextCloneRepository}
 	onInitializeRepository={contextMenuActions.openContextInitializeRepository}
 	onPublishRepository={contextMenuActions.openContextPublishRepository}
+	onRepositoryTask={contextMenuActions.openContextRepositoryTask}
 	onDeleteBackdropClick={dialogActions.handleDeleteConfirmationBackdropClick}
 	onDeleteClose={dialogActions.closeDeleteDialog}
 	onDeleteConfirm={dialogActions.handleDeleteConfirm}

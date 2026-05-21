@@ -1,4 +1,5 @@
 <script lang="ts">
+	import type { WorkduckMessages } from '$lib/i18n/workduck-message-contract';
 	import type { EnvironmentVault } from '$lib/environment/environment-vault';
 	import type { SecretVaultEnvelope } from '$lib/environment/secret-vault-crypto';
 	import type { ProjectFormError } from './project-board-errors';
@@ -13,6 +14,7 @@
 		ProjectTagEditorTarget
 	} from './project-board-types';
 	import type { ProjectRepositoryGithubVisibility } from './project-repository';
+	import type { ProjectRepositoryTask } from './project-repository-task';
 	import type { ProjectRegistryStorageError } from './project-storage';
 	import ProjectContextMenu from './ProjectContextMenu.svelte';
 	import ProjectDeleteDialog from './ProjectDeleteDialog.svelte';
@@ -24,6 +26,7 @@
 
 	interface Props {
 		readonly contextMenu: ProjectContextMenuState | null;
+		readonly projectMessages: WorkduckMessages['projects'];
 		contextMenuElement: HTMLElement | undefined;
 		shouldDeleteLocalFolder: boolean;
 		descriptionInput: string;
@@ -86,6 +89,7 @@
 		readonly onCloneRepository: () => Promise<void>;
 		readonly onInitializeRepository: () => Promise<void>;
 		readonly onPublishRepository: () => void;
+		readonly onRepositoryTask: (task: ProjectRepositoryTask) => Promise<void>;
 		readonly onDeleteBackdropClick: (event: MouseEvent) => void;
 		readonly onDeleteClose: () => void;
 		readonly onDeleteConfirm: () => Promise<void>;
@@ -118,7 +122,7 @@
 	}
 
 	let {
-		contextMenu, contextMenuElement = $bindable(), shouldDeleteLocalFolder = $bindable(),
+		contextMenu, projectMessages, contextMenuElement = $bindable(), shouldDeleteLocalFolder = $bindable(),
 		descriptionInput = $bindable(), tagInput = $bindable(), environmentVaultPassword = $bindable(),
 		selectedGithubCredentialSecretId = $bindable(), githubRepositoryName = $bindable(),
 		githubRepositoryCommitMessage = $bindable(), formName = $bindable(), formDescription = $bindable(),
@@ -134,6 +138,7 @@
 		getVisibleFormErrorMessage, getTagsInputMaxLength, getDialogTitle, getDialogSubmitLabel,
 		isRepositoryRemoteUrlError, onOpenFolder, onEditDescription, onEditGithubCredential,
 		onEditTags, onDelete, onCloneRepository, onInitializeRepository, onPublishRepository,
+		onRepositoryTask,
 		onDeleteBackdropClick, onDeleteClose, onDeleteConfirm, onDescriptionInput, onDescriptionSubmit,
 		onDescriptionBackdropClick, onDescriptionClose, onTagInput, onTagSubmit, onTagBackdropClick,
 		onTagClose, onUnlock, onGithubCredentialSubmit, onGithubCredentialBackdropClick,
@@ -145,13 +150,13 @@
 </script>
 
 {#if contextMenu !== null}
-	<ProjectContextMenu {contextMenu} bind:contextMenuElement {canOpenContextFolder}
+	<ProjectContextMenu {contextMenu} {projectMessages} bind:contextMenuElement {canOpenContextFolder}
 		{canCloneContextRepository} {canInitializeContextRepository} {canPublishContextRepository}
 		{canEditContextGithubCredential}
 		onOpenFolder={onOpenFolder} onEditDescription={onEditDescription}
 		onEditGithubCredential={onEditGithubCredential} onEditTags={onEditTags} onDelete={onDelete}
 		onCloneRepository={onCloneRepository} onInitializeRepository={onInitializeRepository}
-		onPublishRepository={onPublishRepository} />
+		onPublishRepository={onPublishRepository} onRepositoryTask={onRepositoryTask} />
 {/if}
 
 {#if deleteCandidate !== null}
