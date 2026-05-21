@@ -134,6 +134,12 @@ export const koMessages = {
 			vote: '투표/선정'
 		},
 		workPriority: '우선순위',
+		responseLanguage: '응답 언어',
+		responseLanguages: {
+			auto: '작업 언어에 맞춤',
+			ko: '한국어',
+			en: 'English'
+		},
 		noSkill: '스킬 없음',
 		noAgent: '에이전트 없음',
 		noReference: '참고자료 없음',

@@ -7,9 +7,12 @@ import type {
 export type WorkduckQueueReviewDecision = 'pending' | 'approved' | 'needs-work' | 'rollback';
 export type WorkduckQueueWorkPriority = 'low' | 'normal' | 'high' | 'urgent';
 export type WorkduckQueueExecutionState = 'pending' | 'completed';
+export type WorkduckQueueResponseLanguage = 'auto' | 'ko' | 'en';
 
 export const defaultQueueWorkPriority = 'normal' satisfies WorkduckQueueWorkPriority;
 export const queueWorkPriorities = ['low', 'normal', 'high', 'urgent'] as const satisfies readonly WorkduckQueueWorkPriority[];
+export const defaultQueueResponseLanguage = 'auto' satisfies WorkduckQueueResponseLanguage;
+export const queueResponseLanguages = ['auto', 'ko', 'en'] as const satisfies readonly WorkduckQueueResponseLanguage[];
 
 interface QueueEntityRef {
 	readonly id: string;
@@ -42,6 +45,7 @@ export interface WorkduckQueueWorkOrderTask {
 	readonly title: string;
 	readonly body: string;
 	readonly priority?: WorkduckQueueWorkPriority;
+	readonly responseLanguage?: WorkduckQueueResponseLanguage;
 	readonly skillIds?: readonly string[];
 	readonly agentIds?: readonly string[];
 	readonly referenceIds?: readonly string[];
@@ -198,6 +202,7 @@ export function createQueueWorkOrderFromReportReview(
 				title: `${decisionLabel}: ${title}`,
 				body: comment.length > 0 ? comment : `${decisionLabel} requested for ${title}.`,
 				priority: defaultQueueWorkPriority,
+				responseLanguage: defaultQueueResponseLanguage,
 				sourceReportTaskId: review.taskId,
 				decision
 			};
@@ -227,6 +232,7 @@ export function createManualQueueWorkOrder(
 	options: {
 		readonly kind?: WorkduckQueueTaskKind;
 		readonly vote?: WorkduckQueueVoteSpec | null;
+		readonly responseLanguage?: WorkduckQueueResponseLanguage;
 	} = {}
 ): WorkduckQueueWorkOrder {
 	const normalizedTitle = normalizeQueueText(title);
@@ -236,6 +242,7 @@ export function createManualQueueWorkOrder(
 	const normalizedAgentIds = normalizeQueueRecordIds(agentIds);
 	const normalizedReferenceIds = normalizeQueueRecordIds(referenceIds);
 	const normalizedKind = options.kind === 'vote' ? 'vote' : 'instruction';
+	const normalizedResponseLanguage = normalizeQueueResponseLanguage(options.responseLanguage);
 	const vote = normalizedKind === 'vote' ? options.vote : null;
 
 	return {
@@ -254,6 +261,7 @@ export function createManualQueueWorkOrder(
 				title: normalizedTitle,
 				body: normalizedBody,
 				priority: normalizedPriority,
+				responseLanguage: normalizedResponseLanguage,
 				...(normalizedSkillIds.length > 0 ? { skillIds: normalizedSkillIds } : {}),
 				...(normalizedAgentIds.length > 0 ? { agentIds: normalizedAgentIds } : {}),
 				...(normalizedReferenceIds.length > 0 ? { referenceIds: normalizedReferenceIds } : {}),
@@ -275,6 +283,7 @@ export function updateQueueWorkOrderTask(
 		readonly referenceIds?: readonly string[];
 		readonly kind?: WorkduckQueueTaskKind;
 		readonly vote?: WorkduckQueueVoteSpec | null;
+		readonly responseLanguage?: WorkduckQueueResponseLanguage;
 	}
 ): WorkduckQueueWorkOrder {
 	const normalizedTitle = normalizeQueueText(input.title);
@@ -284,6 +293,7 @@ export function updateQueueWorkOrderTask(
 	const normalizedAgentIds = normalizeQueueRecordIds(input.agentIds ?? []);
 	const normalizedReferenceIds = normalizeQueueRecordIds(input.referenceIds ?? []);
 	const normalizedKind = input.kind === 'vote' ? 'vote' : 'instruction';
+	const normalizedResponseLanguage = normalizeQueueResponseLanguage(input.responseLanguage);
 	const vote = normalizedKind === 'vote' ? (input.vote ?? null) : null;
 	const tasks = workOrder.tasks.map((task) => {
 		if (task.id !== taskId) {
@@ -296,6 +306,7 @@ export function updateQueueWorkOrderTask(
 			referenceIds: _referenceIds,
 			kind: _kind,
 			vote: _vote,
+			responseLanguage: _responseLanguage,
 			...taskWithoutAssignmentIds
 		} = task;
 
@@ -305,6 +316,7 @@ export function updateQueueWorkOrderTask(
 			title: normalizedTitle,
 			body: normalizedBody,
 			priority: normalizedPriority,
+			responseLanguage: normalizedResponseLanguage,
 			...(normalizedSkillIds.length > 0 ? { skillIds: normalizedSkillIds } : {}),
 			...(normalizedAgentIds.length > 0 ? { agentIds: normalizedAgentIds } : {}),
 			...(normalizedReferenceIds.length > 0 ? { referenceIds: normalizedReferenceIds } : {}),
@@ -371,6 +383,10 @@ export function readQueueArtifactExecutionState(content: string): WorkduckQueueE
 
 export function normalizeQueueWorkPriority(value: unknown): WorkduckQueueWorkPriority {
 	return isQueueWorkPriority(value) ? value : defaultQueueWorkPriority;
+}
+
+export function normalizeQueueResponseLanguage(value: unknown): WorkduckQueueResponseLanguage {
+	return isQueueResponseLanguage(value) ? value : defaultQueueResponseLanguage;
 }
 
 export function createQueueResultReportFileNameFromLabel(label: string) {
@@ -605,6 +621,7 @@ function isQueueWorkOrderTask(value: unknown) {
 		typeof value.title === 'string' &&
 		typeof value.body === 'string' &&
 		(value.priority === undefined || isQueueWorkPriority(value.priority)) &&
+		(value.responseLanguage === undefined || isQueueResponseLanguage(value.responseLanguage)) &&
 		(value.skillIds === undefined || isStringArray(value.skillIds)) &&
 		(value.agentIds === undefined || isStringArray(value.agentIds)) &&
 		(value.referenceIds === undefined || isStringArray(value.referenceIds)) &&
@@ -649,7 +666,7 @@ function isQueueVoteOption(value: unknown) {
 		isRecord(value) &&
 		typeof value.id === 'string' &&
 		typeof value.label === 'string' &&
-		(value.description === undefined || typeof value.description === 'string')
+		(value.description === undefined || value.description === null || typeof value.description === 'string')
 	);
 }
 
@@ -701,6 +718,10 @@ function isQueueWorkPriority(value: unknown): value is WorkduckQueueWorkPriority
 		value === 'high' ||
 		value === 'urgent'
 	);
+}
+
+function isQueueResponseLanguage(value: unknown): value is WorkduckQueueResponseLanguage {
+	return value === 'auto' || value === 'ko' || value === 'en';
 }
 
 function isEntityRef(value: unknown, kind: string) {

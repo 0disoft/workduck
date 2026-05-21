@@ -132,6 +132,12 @@ export const enMessages = {
 			vote: 'Vote/selection'
 		},
 		workPriority: 'Priority',
+		responseLanguage: 'Response language',
+		responseLanguages: {
+			auto: 'Match task language',
+			ko: 'Korean',
+			en: 'English'
+		},
 		noSkill: 'No skill',
 		noAgent: 'No agent',
 		noReference: 'No reference',

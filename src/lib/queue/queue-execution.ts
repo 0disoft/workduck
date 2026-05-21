@@ -14,6 +14,7 @@ import type { WorkduckSkillRecord } from '$lib/skills/skill-registry';
 import type {
 	WorkduckQueueResultReport,
 	WorkduckQueueResultReportTask,
+	WorkduckQueueResponseLanguage,
 	WorkduckQueueWorkOrder,
 	WorkduckQueueWorkOrderTask
 } from './queue-artifacts';
@@ -129,7 +130,8 @@ function createQueueAgentPromptPlan(input: {
 		return {
 			systemPrompt: createQueueAgentSystemPrompt({
 				agent: input.agent,
-				persona: input.persona
+				persona: input.persona,
+				responseLanguage: input.task.responseLanguage
 			}),
 			userPrompt: createVoteQueueAgentUserPrompt({
 				workOrder: input.workOrder,
@@ -147,7 +149,8 @@ function createQueueAgentPromptPlan(input: {
 		return {
 			systemPrompt: createDirectMessageSystemPrompt({
 				agent: input.agent,
-				persona: input.persona
+				persona: input.persona,
+				responseLanguage: input.task.responseLanguage
 			}),
 			userPrompt: directMessage
 		};
@@ -156,7 +159,8 @@ function createQueueAgentPromptPlan(input: {
 	return {
 		systemPrompt: createQueueAgentSystemPrompt({
 			agent: input.agent,
-			persona: input.persona
+			persona: input.persona,
+			responseLanguage: input.task.responseLanguage
 		}),
 		userPrompt: createQueueAgentUserPrompt({
 			workOrder: input.workOrder,
@@ -215,10 +219,11 @@ function createQueueExecutionRuns(
 function createQueueAgentSystemPrompt(input: {
 	readonly agent: AgentRecord;
 	readonly persona: PersonaRecord | null;
+	readonly responseLanguage: WorkduckQueueResponseLanguage | undefined;
 }) {
 	const blocks = [
 		`You are the assistant named ${input.agent.name}.`,
-		'Handle the assigned task independently and answer in the same language as the task unless the task asks for another language.',
+		createResponseLanguageSystemInstruction(input.responseLanguage),
 		'Do not claim that files, apps, repositories, or external systems were changed unless the task context gives you direct evidence.',
 		'Keep the answer useful for a task result. Use headings only when they make the result clearer.'
 	];
@@ -241,10 +246,12 @@ function createQueueAgentSystemPrompt(input: {
 function createDirectMessageSystemPrompt(input: {
 	readonly agent: AgentRecord;
 	readonly persona: PersonaRecord | null;
+	readonly responseLanguage: WorkduckQueueResponseLanguage | undefined;
 }) {
 	const blocks = [
 		`You are the assistant named ${input.agent.name}.`,
 		'Reply directly to the user message.',
+		createResponseLanguageSystemInstruction(input.responseLanguage),
 		'Do not mention orchestration, task execution, platform details, or other assistants unless the message asks about them.',
 		'Do not use a report format. Keep the reply short and natural.'
 	];
@@ -284,6 +291,7 @@ function createQueueAgentUserPrompt(input: {
 		`Work order: ${input.workOrder.ref.label}`,
 		`Task title: ${input.task.title}`,
 		`Priority: ${input.task.priority ?? 'normal'}`,
+		`Response language: ${formatResponseLanguageForPrompt(input.task.responseLanguage)}`,
 		'',
 		'Task body:',
 		input.task.body
@@ -314,6 +322,7 @@ function createVoteQueueAgentUserPrompt(input: {
 		`Work order: ${input.workOrder.ref.label}`,
 		`Task title: ${input.task.title}`,
 		`Priority: ${input.task.priority ?? 'normal'}`,
+		`Response language: ${formatResponseLanguageForPrompt(input.task.responseLanguage)}`,
 		'',
 		'Task context:',
 		input.task.body,
@@ -441,6 +450,28 @@ function formatReferencePromptBlock(reference: ReferenceRecord) {
 	const body = reference.content.length > 0 ? reference.content : reference.sourceUrl;
 
 	return [`- ${reference.title}`, body].join('\n');
+}
+
+function createResponseLanguageSystemInstruction(language: WorkduckQueueResponseLanguage | undefined) {
+	switch (language) {
+		case 'ko':
+			return 'Answer in Korean.';
+		case 'en':
+			return 'Answer in English.';
+		default:
+			return 'Answer in the same language as the task unless the task asks for another language.';
+	}
+}
+
+function formatResponseLanguageForPrompt(language: WorkduckQueueResponseLanguage | undefined) {
+	switch (language) {
+		case 'ko':
+			return 'Korean';
+		case 'en':
+			return 'English';
+		default:
+			return 'Match the task language';
+	}
 }
 
 function createQueueExecutionReportId() {

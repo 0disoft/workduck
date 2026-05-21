@@ -1,5 +1,6 @@
 use std::{
-    env, fs, io,
+    env, fs,
+    io::{self, Read},
     path::{Path, PathBuf},
     time::Duration,
 };
@@ -59,7 +60,30 @@ struct AgentEvaluateOptions {
     json: bool,
 }
 
-#[derive(Clone, Copy, Serialize)]
+#[derive(Default)]
+struct AgentEvaluateBatchOptions {
+    workspace_path: Option<PathBuf>,
+    input_path: Option<PathBuf>,
+    json: bool,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct AgentEvaluationBatchInput {
+    evaluations: Vec<AgentEvaluationBatchItem>,
+}
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct AgentEvaluationBatchItem {
+    #[serde(default)]
+    agent_id: Option<String>,
+    #[serde(default)]
+    agent_name: Option<String>,
+    scores: AgentEvaluationScores,
+}
+
+#[derive(Clone, Copy, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
 struct AgentEvaluationScores {
     problem_understanding: u8,
@@ -92,16 +116,61 @@ struct QueueWorkOrder {
 #[serde(rename_all = "camelCase")]
 struct QueueWorkOrderTask {
     id: String,
+    #[serde(default)]
+    kind: Option<String>,
     title: String,
     body: String,
     #[serde(default)]
     priority: Option<String>,
+    #[serde(default)]
+    response_language: Option<String>,
     #[serde(default)]
     agent_ids: Vec<String>,
     #[serde(default)]
     skill_ids: Vec<String>,
     #[serde(default)]
     reference_ids: Vec<String>,
+    #[serde(default)]
+    vote: Option<QueueVoteSpec>,
+}
+
+#[derive(Clone, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct QueueVoteSpec {
+    question: String,
+    #[serde(default)]
+    options: Vec<QueueVoteOption>,
+    #[serde(default)]
+    criteria: Vec<String>,
+    #[serde(default)]
+    response_kind: Option<String>,
+}
+
+#[derive(Clone, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
+struct QueueVoteOption {
+    id: String,
+    label: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    description: Option<String>,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct QueueVoteResult {
+    question: String,
+    options: Vec<QueueVoteOption>,
+    ballot: QueueVoteBallot,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct QueueVoteBallot {
+    choice_id: String,
+    confidence: Option<u8>,
+    reason: String,
+    risks: Vec<String>,
+    parse_status: String,
 }
 
 #[derive(Deserialize)]
@@ -255,6 +324,22 @@ struct AgentPromptPlan {
     mode: AgentPromptMode,
 }
 
+struct AgentRunOutput {
+    task: QueueWorkOrderTask,
+    agent_name: String,
+    content: String,
+}
+
+enum AgentRunOutcome {
+    Success(AgentRunOutput),
+    Failure {
+        task: QueueWorkOrderTask,
+        agent_name: String,
+        code: &'static str,
+        message: String,
+    },
+}
+
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 struct QueueResultReport {
@@ -275,6 +360,8 @@ struct QueueResultReportTask {
     files_changed: Vec<String>,
     verification: Vec<String>,
     risks: Vec<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    vote: Option<QueueVoteResult>,
 }
 
 #[derive(Deserialize)]
@@ -315,6 +402,23 @@ struct AgentEvaluationJsonSuccess<'a> {
 
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
+struct AgentEvaluationBatchJsonSuccess<'a> {
+    ok: bool,
+    workspace_path: &'a Path,
+    evaluations: Vec<AgentEvaluationBatchJsonItem>,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+struct AgentEvaluationBatchJsonItem {
+    agent_id: String,
+    agent_name: String,
+    total_count: u64,
+    scores: AgentEvaluationScores,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
 struct JsonFailure<'a> {
     ok: bool,
     code: &'a str,
@@ -338,7 +442,10 @@ fn main() {
                     code: error.code,
                     message: &error.message,
                 };
-                println!("{}", serde_json::to_string_pretty(&payload).unwrap_or_default());
+                println!(
+                    "{}",
+                    serde_json::to_string_pretty(&payload).unwrap_or_default()
+                );
             } else {
                 eprintln!("{}: {}", error.code, error.message);
             }
@@ -358,21 +465,29 @@ async fn run() -> Result<(), CliError> {
 
     let located = locate_work_order(&options.work_order_id, options.workspace_path.as_deref())?;
     let workspace_id = read_workspace_id(&located.workspace_path)?;
-    let work_order: QueueWorkOrder = read_json_file(&located.work_order_path, "work-order-invalid")?;
+    let work_order: QueueWorkOrder =
+        read_json_file(&located.work_order_path, "work-order-invalid")?;
 
     validate_work_order(&work_order, &options.work_order_id)?;
 
-    let agents: AgentRegistry = read_optional_workspace_json(&located.workspace_path, AGENTS_FILE_NAME)?
-        .unwrap_or(AgentRegistry { agents: Vec::new() });
-    let personas: PersonaRegistry = read_optional_workspace_json(&located.workspace_path, PERSONAS_FILE_NAME)?
-        .unwrap_or(PersonaRegistry { personas: Vec::new() });
-    let skills: SkillRegistry = read_optional_workspace_json(&located.workspace_path, SKILLS_FILE_NAME)?
-        .unwrap_or(SkillRegistry { skills: Vec::new() });
+    let agents: AgentRegistry =
+        read_optional_workspace_json(&located.workspace_path, AGENTS_FILE_NAME)?
+            .unwrap_or(AgentRegistry { agents: Vec::new() });
+    let personas: PersonaRegistry =
+        read_optional_workspace_json(&located.workspace_path, PERSONAS_FILE_NAME)?.unwrap_or(
+            PersonaRegistry {
+                personas: Vec::new(),
+            },
+        );
+    let skills: SkillRegistry =
+        read_optional_workspace_json(&located.workspace_path, SKILLS_FILE_NAME)?
+            .unwrap_or(SkillRegistry { skills: Vec::new() });
     let references: ReferenceRegistry =
-        read_optional_workspace_json(&located.workspace_path, REFERENCES_FILE_NAME)?
-            .unwrap_or(ReferenceRegistry {
+        read_optional_workspace_json(&located.workspace_path, REFERENCES_FILE_NAME)?.unwrap_or(
+            ReferenceRegistry {
                 references: Vec::new(),
-            });
+            },
+        );
     let vault = read_environment_vault(
         &located.workspace_path,
         &workspace_id,
@@ -389,8 +504,19 @@ async fn run() -> Result<(), CliError> {
     let mut handles = Vec::new();
 
     for run in runs {
+        let task = run.task.clone();
+        let agent_name = run.agent.name.clone();
+
         handles.push(tauri::async_runtime::spawn(async move {
-            run_agent_prompt(run).await
+            match run_agent_prompt(run).await {
+                Ok(output) => AgentRunOutcome::Success(output),
+                Err(error) => AgentRunOutcome::Failure {
+                    task,
+                    agent_name,
+                    code: error.code,
+                    message: error.message,
+                },
+            }
         }));
     }
 
@@ -400,7 +526,7 @@ async fn run() -> Result<(), CliError> {
         let output = handle.await.map_err(|_| CliError {
             code: "agent-execution-failed",
             message: "에이전트 응답 처리 중 작업이 중단되었습니다.".to_string(),
-        })??;
+        })?;
         outputs.push(output);
     }
 
@@ -425,7 +551,10 @@ async fn run() -> Result<(), CliError> {
                 .map(|task| task.title.split(':').next().unwrap_or("").to_string())
                 .collect(),
         };
-        println!("{}", serde_json::to_string_pretty(&payload).map_err(to_json_error)?);
+        println!(
+            "{}",
+            serde_json::to_string_pretty(&payload).map_err(to_json_error)?
+        );
     } else {
         println!("작업 실행 완료: {}", report_path.display());
         println!("응답 수신: {}", report.agent_name);
@@ -435,6 +564,17 @@ async fn run() -> Result<(), CliError> {
 }
 
 fn run_agent_command(args: Vec<String>) -> Result<(), CliError> {
+    match args.get(1).map(String::as_str) {
+        Some("evaluate") => run_agent_evaluate_command(args),
+        Some("evaluate-batch") => run_agent_evaluate_batch_command(args),
+        _ => Err(CliError {
+            code: "usage",
+            message: usage_text(),
+        }),
+    }
+}
+
+fn run_agent_evaluate_command(args: Vec<String>) -> Result<(), CliError> {
     let options = parse_agent_evaluate_args(args)?;
     let workspace_path = options
         .workspace_path
@@ -451,8 +591,12 @@ fn run_agent_command(args: Vec<String>) -> Result<(), CliError> {
         code: "agent-evaluation-score-required",
         message: "다섯 평가 점수를 모두 지정해야 합니다.".to_string(),
     })?;
-    let result =
-        record_agent_evaluation_in_registry(&mut registry, &workspace_id, &options.agent_key, scores)?;
+    let result = record_agent_evaluation_in_registry(
+        &mut registry,
+        &workspace_id,
+        &options.agent_key,
+        scores,
+    )?;
 
     write_json_file(&agents_path, &registry)?;
 
@@ -465,12 +609,92 @@ fn run_agent_command(args: Vec<String>) -> Result<(), CliError> {
             total_count: result.total_count,
             scores,
         };
-        println!("{}", serde_json::to_string_pretty(&payload).map_err(to_json_error)?);
+        println!(
+            "{}",
+            serde_json::to_string_pretty(&payload).map_err(to_json_error)?
+        );
     } else {
         println!(
             "에이전트 평가 저장: {} ({}건)",
             result.agent_name, result.total_count
         );
+    }
+
+    Ok(())
+}
+
+fn run_agent_evaluate_batch_command(args: Vec<String>) -> Result<(), CliError> {
+    let options = parse_agent_evaluate_batch_args(args)?;
+    let workspace_path = options
+        .workspace_path
+        .as_deref()
+        .ok_or_else(|| CliError {
+            code: "workspace-required",
+            message: "--workspace 옵션으로 워크스페이스를 지정해야 합니다.".to_string(),
+        })
+        .and_then(canonicalize_directory)?;
+    let input_path = options.input_path.as_deref().ok_or_else(|| CliError {
+        code: "agent-evaluation-input-required",
+        message: "--input 옵션으로 평가 JSON 경로를 지정해야 합니다.".to_string(),
+    })?;
+    let input = read_agent_evaluation_batch_input(input_path)?;
+
+    if input.evaluations.is_empty() {
+        return Err(CliError {
+            code: "agent-evaluation-batch-empty",
+            message: "저장할 평가 항목이 없습니다.".to_string(),
+        });
+    }
+
+    let workspace_id = read_workspace_id(&workspace_path)?;
+    let agents_path = workspace_data_path(&workspace_path, AGENTS_FILE_NAME);
+    let mut registry: Value = read_json_file(&agents_path, "agent-registry-invalid")?;
+    let mut results = Vec::new();
+
+    for (index, item) in input.evaluations.into_iter().enumerate() {
+        validate_agent_evaluation_scores(item.scores)?;
+        let agent_key = item
+            .agent_id
+            .as_deref()
+            .or(item.agent_name.as_deref())
+            .map(str::trim)
+            .filter(|key| !key.is_empty())
+            .ok_or_else(|| CliError {
+                code: "agent-required",
+                message: format!(
+                    "{}번째 평가 항목에 에이전트 ID 또는 이름이 필요합니다.",
+                    index + 1
+                ),
+            })?;
+        let result = record_agent_evaluation_in_registry(
+            &mut registry,
+            &workspace_id,
+            agent_key,
+            item.scores,
+        )?;
+
+        results.push(AgentEvaluationBatchJsonItem {
+            agent_id: result.agent_id,
+            agent_name: result.agent_name,
+            total_count: result.total_count,
+            scores: item.scores,
+        });
+    }
+
+    write_json_file(&agents_path, &registry)?;
+
+    if options.json {
+        let payload = AgentEvaluationBatchJsonSuccess {
+            ok: true,
+            workspace_path: &workspace_path,
+            evaluations: results,
+        };
+        println!(
+            "{}",
+            serde_json::to_string_pretty(&payload).map_err(to_json_error)?
+        );
+    } else {
+        println!("에이전트 평가 일괄 저장: {}건", results.len());
     }
 
     Ok(())
@@ -591,20 +815,27 @@ fn parse_agent_evaluate_args(args: Vec<String>) -> Result<AgentEvaluateOptions, 
             }
             "--problem-understanding" => {
                 index += 1;
-                problem_understanding = Some(parse_score_argument(args.get(index), "--problem-understanding")?);
+                problem_understanding = Some(parse_score_argument(
+                    args.get(index),
+                    "--problem-understanding",
+                )?);
             }
             "--logical-validity" => {
                 index += 1;
-                logical_validity = Some(parse_score_argument(args.get(index), "--logical-validity")?);
+                logical_validity =
+                    Some(parse_score_argument(args.get(index), "--logical-validity")?);
             }
             "--practical-feasibility" => {
                 index += 1;
-                practical_feasibility =
-                    Some(parse_score_argument(args.get(index), "--practical-feasibility")?);
+                practical_feasibility = Some(parse_score_argument(
+                    args.get(index),
+                    "--practical-feasibility",
+                )?);
             }
             "--creative-insight" => {
                 index += 1;
-                creative_insight = Some(parse_score_argument(args.get(index), "--creative-insight")?);
+                creative_insight =
+                    Some(parse_score_argument(args.get(index), "--creative-insight")?);
             }
             "--risk-detection" => {
                 index += 1;
@@ -641,6 +872,94 @@ fn parse_agent_evaluate_args(args: Vec<String>) -> Result<AgentEvaluateOptions, 
     Ok(options)
 }
 
+fn parse_agent_evaluate_batch_args(
+    args: Vec<String>,
+) -> Result<AgentEvaluateBatchOptions, CliError> {
+    let mut options = AgentEvaluateBatchOptions::default();
+    let mut index = 0;
+
+    if args.get(index).map(String::as_str) != Some("agent") {
+        return Err(CliError {
+            code: "usage",
+            message: usage_text(),
+        });
+    }
+    index += 1;
+
+    if args.get(index).map(String::as_str) != Some("evaluate-batch") {
+        return Err(CliError {
+            code: "usage",
+            message: usage_text(),
+        });
+    }
+    index += 1;
+
+    while index < args.len() {
+        match args[index].as_str() {
+            "--workspace" => {
+                index += 1;
+                options.workspace_path = args.get(index).map(PathBuf::from);
+            }
+            "--input" => {
+                index += 1;
+                options.input_path = args.get(index).map(PathBuf::from);
+            }
+            "--json" => {
+                options.json = true;
+            }
+            option => {
+                return Err(CliError {
+                    code: "unknown-option",
+                    message: format!("지원하지 않는 옵션입니다: {option}"),
+                });
+            }
+        }
+        index += 1;
+    }
+
+    Ok(options)
+}
+
+fn read_agent_evaluation_batch_input(
+    input_path: &Path,
+) -> Result<AgentEvaluationBatchInput, CliError> {
+    if input_path == Path::new("-") {
+        let mut content = String::new();
+        io::stdin()
+            .read_to_string(&mut content)
+            .map_err(|error| CliError {
+                code: "agent-evaluation-input-read-failed",
+                message: format!("표준 입력에서 평가 JSON을 읽지 못했습니다: {error}"),
+            })?;
+
+        return serde_json::from_str(&content).map_err(|_| CliError {
+            code: "agent-evaluation-input-invalid",
+            message: "평가 JSON을 해석하지 못했습니다.".to_string(),
+        });
+    }
+
+    read_json_file(input_path, "agent-evaluation-input-invalid")
+}
+
+fn validate_agent_evaluation_scores(scores: AgentEvaluationScores) -> Result<(), CliError> {
+    for (flag, score) in [
+        ("problemUnderstanding", scores.problem_understanding),
+        ("logicalValidity", scores.logical_validity),
+        ("practicalFeasibility", scores.practical_feasibility),
+        ("creativeInsight", scores.creative_insight),
+        ("riskDetection", scores.risk_detection),
+    ] {
+        if !(1..=9).contains(&score) {
+            return Err(CliError {
+                code: "agent-evaluation-score-invalid",
+                message: format!("{flag} 값은 1부터 9까지의 정수여야 합니다."),
+            });
+        }
+    }
+
+    Ok(())
+}
+
 fn parse_score_argument(value: Option<&String>, flag: &'static str) -> Result<u8, CliError> {
     let raw_value = value.ok_or_else(|| CliError {
         code: "agent-evaluation-score-required",
@@ -670,7 +989,7 @@ fn missing_score_error() -> CliError {
 
 fn usage_text() -> String {
     format!(
-        "{APP_NAME} queue run <work-order-id> [--workspace <path>] [--vault-password <password>] [--json] [--keep-work-order]\n{APP_NAME} agent evaluate <agent-id-or-name> --workspace <path> --problem-understanding <1-9> --logical-validity <1-9> --practical-feasibility <1-9> --creative-insight <1-9> --risk-detection <1-9> [--json]"
+        "{APP_NAME} queue run <work-order-id> [--workspace <path>] [--vault-password <password>] [--json] [--keep-work-order]\n{APP_NAME} agent evaluate <agent-id-or-name> --workspace <path> --problem-understanding <1-9> --logical-validity <1-9> --practical-feasibility <1-9> --creative-insight <1-9> --risk-detection <1-9> [--json]\n{APP_NAME} agent evaluate-batch --workspace <path> --input <path-or-> [--json]"
     )
 }
 
@@ -730,7 +1049,11 @@ fn default_search_roots() -> Vec<PathBuf> {
     }
 
     if let Some(user_profile) = env::var_os("USERPROFILE") {
-        roots.push(PathBuf::from(user_profile).join("Documents").join("workspace"));
+        roots.push(
+            PathBuf::from(user_profile)
+                .join("Documents")
+                .join("workspace"),
+        );
     }
 
     if let Ok(workspace) = env::var("WORKDUCK_WORKSPACE") {
@@ -754,7 +1077,9 @@ fn collect_work_order_matches(
         return Ok(());
     }
 
-    let queue_work_orders = root.join(QUEUE_DIRECTORY_NAME).join(WORK_ORDERS_DIRECTORY_NAME);
+    let queue_work_orders = root
+        .join(QUEUE_DIRECTORY_NAME)
+        .join(WORK_ORDERS_DIRECTORY_NAME);
 
     if queue_work_orders.is_dir() {
         if let Ok(path) = find_work_order_in_directory(&queue_work_orders, work_order_id) {
@@ -812,7 +1137,10 @@ fn find_work_order_in_directory(
             continue;
         }
 
-        let file_name = path.file_name().and_then(|name| name.to_str()).unwrap_or("");
+        let file_name = path
+            .file_name()
+            .and_then(|name| name.to_str())
+            .unwrap_or("");
 
         if file_name.contains(work_order_id) {
             matches.push(path);
@@ -882,7 +1210,8 @@ fn workspace_from_work_order_path(work_order_path: &Path) -> Result<PathBuf, Cli
 }
 
 fn read_workspace_id(workspace_path: &Path) -> Result<String, CliError> {
-    let workspace_json: Option<Value> = read_optional_workspace_json(workspace_path, "workspace.json")?;
+    let workspace_json: Option<Value> =
+        read_optional_workspace_json(workspace_path, "workspace.json")?;
 
     workspace_json
         .and_then(|value| {
@@ -931,7 +1260,8 @@ fn record_agent_evaluation_in_registry(
     if registry_workspace_id != workspace_id {
         return Err(CliError {
             code: "agent-registry-workspace-mismatch",
-            message: "에이전트 레지스트리의 워크스페이스 ID가 현재 워크스페이스와 다릅니다.".to_string(),
+            message: "에이전트 레지스트리의 워크스페이스 ID가 현재 워크스페이스와 다릅니다."
+                .to_string(),
         });
     }
 
@@ -1047,7 +1377,11 @@ fn ensure_json_object(value: &mut Value) -> &mut serde_json::Map<String, Value> 
 fn read_json_u64(value: Option<&Value>) -> u64 {
     value
         .and_then(Value::as_u64)
-        .or_else(|| value.and_then(Value::as_str).and_then(|value| value.parse::<u64>().ok()))
+        .or_else(|| {
+            value
+                .and_then(Value::as_str)
+                .and_then(|value| value.parse::<u64>().ok())
+        })
         .unwrap_or(0)
 }
 
@@ -1059,14 +1393,15 @@ fn read_environment_vault(
     let Some(password) = password else {
         return Ok(None);
     };
-    let envelope: SecretVaultEnvelope =
-        read_json_file(&workspace_data_path(workspace_path, VAULT_FILE_NAME), "vault-invalid")?;
+    let envelope: SecretVaultEnvelope = read_json_file(
+        &workspace_data_path(workspace_path, VAULT_FILE_NAME),
+        "vault-invalid",
+    )?;
     let plaintext = decrypt_secret_vault_payload(password, &envelope)?;
-    let vault: EnvironmentVault =
-        serde_json::from_str(&plaintext).map_err(|_| CliError {
-            code: "vault-invalid",
-            message: "보관함 데이터를 해석하지 못했습니다.".to_string(),
-        })?;
+    let vault: EnvironmentVault = serde_json::from_str(&plaintext).map_err(|_| CliError {
+        code: "vault-invalid",
+        message: "보관함 데이터를 해석하지 못했습니다.".to_string(),
+    })?;
 
     if vault.workspace_id != workspace_id {
         return Err(CliError {
@@ -1096,14 +1431,18 @@ fn decrypt_secret_vault_payload(
         });
     }
 
-    let salt = BASE64.decode(envelope.kdf.salt.as_bytes()).map_err(|_| CliError {
-        code: "vault-salt-invalid",
-        message: "보관함 salt가 올바르지 않습니다.".to_string(),
-    })?;
-    let nonce = BASE64.decode(envelope.cipher.nonce.as_bytes()).map_err(|_| CliError {
-        code: "vault-nonce-invalid",
-        message: "보관함 nonce가 올바르지 않습니다.".to_string(),
-    })?;
+    let salt = BASE64
+        .decode(envelope.kdf.salt.as_bytes())
+        .map_err(|_| CliError {
+            code: "vault-salt-invalid",
+            message: "보관함 salt가 올바르지 않습니다.".to_string(),
+        })?;
+    let nonce = BASE64
+        .decode(envelope.cipher.nonce.as_bytes())
+        .map_err(|_| CliError {
+            code: "vault-nonce-invalid",
+            message: "보관함 nonce가 올바르지 않습니다.".to_string(),
+        })?;
     let ciphertext = BASE64
         .decode(envelope.ciphertext.as_bytes())
         .map_err(|_| CliError {
@@ -1201,7 +1540,8 @@ fn create_execution_runs(
                 .as_deref()
                 .and_then(|secret_id| {
                     vault.and_then(|vault| {
-                        vault.secrets
+                        vault
+                            .secrets
                             .iter()
                             .find(|candidate| candidate.id == secret_id)
                             .cloned()
@@ -1234,7 +1574,9 @@ fn create_execution_runs(
                 provider,
                 model,
                 skills: select_records(&task.skill_ids, skills, |skill| &skill.id),
-                references: select_records(&task.reference_ids, references, |reference| &reference.id),
+                references: select_records(&task.reference_ids, references, |reference| {
+                    &reference.id
+                }),
             });
         }
     }
@@ -1297,7 +1639,7 @@ fn select_records<T: Clone>(ids: &[String], records: &[T], id_of: impl Fn(&T) ->
         .collect()
 }
 
-async fn run_agent_prompt(run: AgentExecutionRun) -> Result<(String, String), CliError> {
+async fn run_agent_prompt(run: AgentExecutionRun) -> Result<AgentRunOutput, CliError> {
     if run.secret.value.trim().is_empty() {
         return Err(CliError {
             code: "agent-api-key-required",
@@ -1319,7 +1661,10 @@ async fn run_agent_prompt(run: AgentExecutionRun) -> Result<(String, String), Cl
     if system_prompt.len() > MAX_PROMPT_LENGTH || user_prompt.len() > MAX_PROMPT_LENGTH {
         return Err(CliError {
             code: "agent-prompt-too-large",
-            message: format!("에이전트 '{}'로 보낼 프롬프트가 너무 깁니다.", run.agent.name),
+            message: format!(
+                "에이전트 '{}'로 보낼 프롬프트가 너무 깁니다.",
+                run.agent.name
+            ),
         });
     }
 
@@ -1385,7 +1730,11 @@ async fn run_agent_prompt(run: AgentExecutionRun) -> Result<(String, String), Cl
             message: format!("에이전트 '{}' 응답이 비어 있습니다.", run.agent.name),
         })?;
 
-    Ok((run.agent.name, content.to_string()))
+    Ok(AgentRunOutput {
+        task: run.task,
+        agent_name: run.agent.name,
+        content: content.to_string(),
+    })
 }
 
 fn create_agent_prompt_plan(task: &QueueWorkOrderTask) -> AgentPromptPlan {
@@ -1443,12 +1792,13 @@ fn create_system_prompt(run: &AgentExecutionRun, prompt_plan: &AgentPromptPlan) 
     let mut blocks = match &prompt_plan.mode {
         AgentPromptMode::WorkOrder => vec![
             format!("You are the assistant named {}.", run.agent.name),
-            "Handle the assigned task independently and answer in the same language as the task unless the task asks for another language.".to_string(),
+            create_response_language_system_instruction(run.task.response_language.as_deref()),
             "Do not claim that files, apps, repositories, or external systems were changed unless the task context gives you direct evidence.".to_string(),
             "Keep the answer useful for a task result. Use headings only when they make the result clearer.".to_string(),
         ],
         AgentPromptMode::DirectMessage { .. } => vec![
             "Reply directly to the user message.".to_string(),
+            create_response_language_system_instruction(run.task.response_language.as_deref()),
             "Do not mention orchestration, task execution, platform details, or other assistants unless the message asks about them.".to_string(),
             "Do not use a report format. Keep the reply short and natural.".to_string(),
         ],
@@ -1471,16 +1821,8 @@ fn create_system_prompt(run: &AgentExecutionRun, prompt_plan: &AgentPromptPlan) 
 
 fn create_user_prompt(run: &AgentExecutionRun, prompt_plan: &AgentPromptPlan) -> String {
     let mut blocks = match &prompt_plan.mode {
-        AgentPromptMode::WorkOrder => vec![
-            format!("작업 제목: {}", run.task.title),
-            format!("우선순위: {}", run.task.priority.as_deref().unwrap_or("normal")),
-            String::new(),
-            "작업 내용:".to_string(),
-            run.task.body.clone(),
-        ],
-        AgentPromptMode::DirectMessage { message } => vec![
-            message.clone(),
-        ],
+        AgentPromptMode::WorkOrder => create_work_order_user_prompt_blocks(&run.task),
+        AgentPromptMode::DirectMessage { message } => vec![message.clone()],
     };
 
     if !run.skills.is_empty() {
@@ -1498,11 +1840,107 @@ fn create_user_prompt(run: &AgentExecutionRun, prompt_plan: &AgentPromptPlan) ->
     blocks.join("\n")
 }
 
+fn create_response_language_system_instruction(language: Option<&str>) -> String {
+    match normalize_response_language(language) {
+        "ko" => "Answer in Korean.".to_string(),
+        "en" => "Answer in English.".to_string(),
+        _ => "Answer in the same language as the task unless the task asks for another language."
+            .to_string(),
+    }
+}
+
+fn format_response_language_for_prompt(language: Option<&str>) -> &'static str {
+    match normalize_response_language(language) {
+        "ko" => "Korean",
+        "en" => "English",
+        _ => "Match the task language",
+    }
+}
+
+fn normalize_response_language(language: Option<&str>) -> &'static str {
+    match language.map(str::trim) {
+        Some("ko") => "ko",
+        Some("en") => "en",
+        _ => "auto",
+    }
+}
+
+fn create_work_order_user_prompt_blocks(task: &QueueWorkOrderTask) -> Vec<String> {
+    let mut blocks = vec![
+        format!("작업 제목: {}", task.title),
+        format!("우선순위: {}", task.priority.as_deref().unwrap_or("normal")),
+        format!(
+            "응답 언어: {}",
+            format_response_language_for_prompt(task.response_language.as_deref())
+        ),
+        String::new(),
+        "작업 내용:".to_string(),
+        task.body.clone(),
+    ];
+
+    if task.kind.as_deref() == Some("vote") {
+        if let Some(vote) = &task.vote {
+            blocks.push(String::new());
+            blocks.push(create_vote_task_prompt(vote));
+        }
+    }
+
+    blocks
+}
+
+fn create_vote_task_prompt(vote: &QueueVoteSpec) -> String {
+    let options = vote
+        .options
+        .iter()
+        .map(|option| {
+            let description = option
+                .description
+                .as_deref()
+                .map(str::trim)
+                .filter(|value| !value.is_empty())
+                .map(|value| format!(" - {value}"))
+                .unwrap_or_default();
+
+            format!("- {}: {}{}", option.id, option.label, description)
+        })
+        .collect::<Vec<_>>()
+        .join("\n");
+    let criteria = if vote.criteria.is_empty() {
+        "- Overall fit for the question".to_string()
+    } else {
+        vote.criteria
+            .iter()
+            .map(|criterion| format!("- {criterion}"))
+            .collect::<Vec<_>>()
+            .join("\n")
+    };
+
+    [
+        "This is a selection vote. Choose exactly one option.",
+        "Return only one JSON object. Do not wrap it in Markdown.",
+        "Use exactly one of the provided choiceId values.",
+        "JSON shape:",
+        "{\"choiceId\":\"option-id\",\"reason\":\"short reason\",\"risks\":[\"risk if any\"]}",
+        "",
+        &format!("Question: {}", vote.question),
+        "",
+        "Options:",
+        &options,
+        "",
+        "Criteria:",
+        &criteria,
+    ]
+    .join("\n")
+}
+
 fn format_persona_prompt_block(persona: &PersonaRecord) -> String {
     let mut blocks = Vec::new();
 
     if !persona.description.trim().is_empty() {
-        blocks.push(format!("Additional guidance: {}", persona.description.trim()));
+        blocks.push(format!(
+            "Additional guidance: {}",
+            persona.description.trim()
+        ));
     }
 
     if persona.styles.is_object() {
@@ -1527,43 +1965,60 @@ fn format_persona_style_preferences(styles: &Value) -> Vec<String> {
     let mut preferences = Vec::new();
 
     if let Some(value) = styles.get("responseLength").and_then(Value::as_str) {
-        preferences.push(match value {
-            "short" => "Response length: keep replies concise.",
-            "detailed" => "Response length: include enough detail for careful review.",
-            _ => "Response length: use a moderate amount of detail.",
-        }.to_string());
+        preferences.push(
+            match value {
+                "short" => "Response length: keep replies concise.",
+                "detailed" => "Response length: include enough detail for careful review.",
+                _ => "Response length: use a moderate amount of detail.",
+            }
+            .to_string(),
+        );
     }
 
     if let Some(value) = styles.get("emotionalTone").and_then(Value::as_str) {
-        preferences.push(match value {
-            "calm" => "Tone: stay calm and steady.",
-            "bright" => "Tone: sound warm and upbeat.",
-            _ => "Tone: stay neutral and clear.",
-        }.to_string());
+        preferences.push(
+            match value {
+                "calm" => "Tone: stay calm and steady.",
+                "bright" => "Tone: sound warm and upbeat.",
+                _ => "Tone: stay neutral and clear.",
+            }
+            .to_string(),
+        );
     }
 
     if let Some(value) = styles.get("judgmentAttitude").and_then(Value::as_str) {
-        preferences.push(match value {
-            "critical" => "Judgment: examine assumptions critically and call out risks.",
-            "supportive" => "Judgment: be supportive while still being truthful.",
-            _ => "Judgment: balance critique with practical next steps.",
-        }.to_string());
+        preferences.push(
+            match value {
+                "critical" => "Judgment: examine assumptions critically and call out risks.",
+                "supportive" => "Judgment: be supportive while still being truthful.",
+                _ => "Judgment: balance critique with practical next steps.",
+            }
+            .to_string(),
+        );
     }
 
     if let Some(value) = styles.get("confidenceLevel").and_then(Value::as_str) {
-        preferences.push(match value {
-            "cautious" => "Confidence: be careful with uncertainty and avoid overstatement.",
-            "decisive" => "Confidence: be decisive when the evidence is sufficient.",
-            _ => "Confidence: state conclusions realistically and name uncertainty when needed.",
-        }.to_string());
+        preferences.push(
+            match value {
+                "cautious" => "Confidence: be careful with uncertainty and avoid overstatement.",
+                "decisive" => "Confidence: be decisive when the evidence is sufficient.",
+                _ => {
+                    "Confidence: state conclusions realistically and name uncertainty when needed."
+                }
+            }
+            .to_string(),
+        );
     }
 
     if let Some(value) = styles.get("socialDistance").and_then(Value::as_str) {
-        preferences.push(match value {
-            "formal" => "Social style: keep a professional distance.",
-            "friendly" => "Social style: be friendly and approachable.",
-            _ => "Social style: be comfortable and direct.",
-        }.to_string());
+        preferences.push(
+            match value {
+                "formal" => "Social style: keep a professional distance.",
+                "friendly" => "Social style: be friendly and approachable.",
+                _ => "Social style: be comfortable and direct.",
+            }
+            .to_string(),
+        );
     }
 
     preferences
@@ -1593,43 +2048,55 @@ fn format_persona_spectrum_preferences(spectrums: &Value) -> Vec<String> {
     }
 
     if let Some(level) = spectrum_level(spectrums, "structureBias") {
-        preferences.push(match level {
-            1 => "Structure: treat boundaries, layers, and module relationships as critical.",
-            2 => "Structure: consistently consider reuse and maintainability.",
-            4 => "Structure: prefer direct implementation over abstraction.",
-            5 => "Structure: prioritize quick connection and results over structure.",
-            _ => "Structure: add only as much structure as the work needs.",
-        }.to_string());
+        preferences.push(
+            match level {
+                1 => "Structure: treat boundaries, layers, and module relationships as critical.",
+                2 => "Structure: consistently consider reuse and maintainability.",
+                4 => "Structure: prefer direct implementation over abstraction.",
+                5 => "Structure: prioritize quick connection and results over structure.",
+                _ => "Structure: add only as much structure as the work needs.",
+            }
+            .to_string(),
+        );
     }
 
     if let Some(level) = spectrum_level(spectrums, "productivityStrategy") {
-        preferences.push(match level {
-            1 => "Productivity: minimize dependencies and automation to keep direct control.",
-            2 => "Productivity: add only necessary tools carefully.",
-            4 => "Productivity: automate repeat work whenever practical.",
-            5 => "Productivity: combine tools, agents, and pipelines to operate the work.",
-            _ => "Productivity: use automation when it improves practical throughput.",
-        }.to_string());
+        preferences.push(
+            match level {
+                1 => "Productivity: minimize dependencies and automation to keep direct control.",
+                2 => "Productivity: add only necessary tools carefully.",
+                4 => "Productivity: automate repeat work whenever practical.",
+                5 => "Productivity: combine tools, agents, and pipelines to operate the work.",
+                _ => "Productivity: use automation when it improves practical throughput.",
+            }
+            .to_string(),
+        );
     }
 
     if let Some(level) = spectrum_level(spectrums, "operationPhilosophy") {
-        preferences.push(match level {
-            1 => "Operations: delay release when failure risk is visible.",
-            2 => "Operations: release after enough verification and observability.",
-            4 => "Operations: use operational fixes and hotfixes actively.",
-            5 => "Operations: treat services as systems that evolve continuously.",
-            _ => "Operations: prefer small changes and watch stability.",
-        }.to_string());
+        preferences.push(
+            match level {
+                1 => "Operations: delay release when failure risk is visible.",
+                2 => "Operations: release after enough verification and observability.",
+                4 => "Operations: use operational fixes and hotfixes actively.",
+                5 => "Operations: treat services as systems that evolve continuously.",
+                _ => "Operations: prefer small changes and watch stability.",
+            }
+            .to_string(),
+        );
     }
 
     if let Some(level) = spectrum_level(spectrums, "collaborationPhilosophy") {
-        preferences.push(match level {
-            1 => "Collaboration: rely on documents, rules, and contracts.",
-            2 => "Collaboration: make intent and standards explicit.",
-            4 => "Collaboration: prefer fast collaboration based on experience and judgment.",
-            5 => "Collaboration: work autonomously from the goal when possible.",
-            _ => "Collaboration: share core context and handle the rest pragmatically.",
-        }.to_string());
+        preferences.push(
+            match level {
+                1 => "Collaboration: rely on documents, rules, and contracts.",
+                2 => "Collaboration: make intent and standards explicit.",
+                4 => "Collaboration: prefer fast collaboration based on experience and judgment.",
+                5 => "Collaboration: work autonomously from the goal when possible.",
+                _ => "Collaboration: share core context and handle the rest pragmatically.",
+            }
+            .to_string(),
+        );
     }
 
     preferences
@@ -1661,19 +2128,12 @@ fn format_reference_prompt_block(reference: &ReferenceRecord) -> String {
 
 fn create_result_report(
     work_order: &QueueWorkOrder,
-    outputs: Vec<(String, String)>,
+    outputs: Vec<AgentRunOutcome>,
 ) -> Result<QueueResultReport, CliError> {
     let created_at = current_timestamp()?;
     let tasks = outputs
         .iter()
-        .map(|(agent_name, content)| QueueResultReportTask {
-            id: format!("task_{}_{}", slugify(agent_name), unique_token()),
-            title: format!("{agent_name}: {}", work_order.r#ref.label),
-            summary: content.clone(),
-            files_changed: Vec::new(),
-            verification: vec![format!("{agent_name} 응답 수신")],
-            risks: Vec::new(),
-        })
+        .map(|output| create_result_report_task(work_order, output))
         .collect();
 
     Ok(QueueResultReport {
@@ -1687,18 +2147,185 @@ fn create_result_report(
         created_at,
         agent_name: outputs
             .iter()
-            .map(|(agent_name, _)| agent_name.as_str())
+            .map(agent_name_from_outcome)
             .collect::<Vec<_>>()
             .join(", "),
         tasks,
     })
 }
 
+fn create_result_report_task(
+    work_order: &QueueWorkOrder,
+    outcome: &AgentRunOutcome,
+) -> QueueResultReportTask {
+    match outcome {
+        AgentRunOutcome::Success(output) => create_success_report_task(work_order, output),
+        AgentRunOutcome::Failure {
+            task,
+            agent_name,
+            code,
+            message,
+        } => QueueResultReportTask {
+            id: format!("task_{}_{}", slugify(agent_name), unique_token()),
+            title: format!("{agent_name}: {}", task.title),
+            summary: format!("응답을 받지 못했습니다: {message}"),
+            files_changed: Vec::new(),
+            verification: vec![format!("{agent_name} 응답 실패: {code}")],
+            risks: vec!["이 에이전트의 응답은 결과 집계에서 제외해야 합니다.".to_string()],
+            vote: None,
+        },
+    }
+}
+
+fn create_success_report_task(
+    _work_order: &QueueWorkOrder,
+    output: &AgentRunOutput,
+) -> QueueResultReportTask {
+    let vote = if output.task.kind.as_deref() == Some("vote") {
+        output
+            .task
+            .vote
+            .as_ref()
+            .map(|spec| parse_vote_result(&output.content, spec))
+    } else {
+        None
+    };
+    let vote_summary = vote
+        .as_ref()
+        .filter(|result| result.ballot.parse_status == "parsed")
+        .map(|result| result.ballot.reason.trim())
+        .filter(|reason| !reason.is_empty())
+        .map(ToString::to_string);
+    let mut verification = vec![format!("{} 응답 수신", output.agent_name)];
+    let mut risks = Vec::new();
+
+    if let Some(vote) = &vote {
+        if vote.ballot.parse_status == "parsed" {
+            verification.push(format!("Vote parsed: {}", vote.ballot.choice_id));
+        } else {
+            verification.push("Vote response could not be matched to an option".to_string());
+            risks.push("The vote response did not contain a valid choiceId.".to_string());
+        }
+
+        risks.extend(vote.ballot.risks.clone());
+    }
+
+    QueueResultReportTask {
+        id: format!("task_{}_{}", slugify(&output.agent_name), unique_token()),
+        title: format!("{}: {}", output.agent_name, output.task.title),
+        summary: vote_summary.unwrap_or_else(|| output.content.clone()),
+        files_changed: Vec::new(),
+        verification,
+        risks,
+        vote,
+    }
+}
+
+fn agent_name_from_outcome(outcome: &AgentRunOutcome) -> &str {
+    match outcome {
+        AgentRunOutcome::Success(output) => &output.agent_name,
+        AgentRunOutcome::Failure { agent_name, .. } => agent_name,
+    }
+}
+
+fn parse_vote_result(content: &str, spec: &QueueVoteSpec) -> QueueVoteResult {
+    QueueVoteResult {
+        question: spec.question.clone(),
+        options: spec.options.clone(),
+        ballot: parse_vote_ballot(content, spec),
+    }
+}
+
+fn parse_vote_ballot(content: &str, spec: &QueueVoteSpec) -> QueueVoteBallot {
+    let Some(record) = parse_first_json_record(content) else {
+        return QueueVoteBallot {
+            choice_id: String::new(),
+            confidence: None,
+            reason: String::new(),
+            risks: Vec::new(),
+            parse_status: "unparsed".to_string(),
+        };
+    };
+
+    let choice_id = read_optional_text(record.get("choiceId"));
+    let confidence = record
+        .get("confidence")
+        .and_then(normalize_confidence_score);
+    let reason = read_optional_text(record.get("reason"));
+    let risks = read_text_array(record.get("risks"));
+    let parse_status = if spec.options.iter().any(|option| option.id == choice_id) {
+        "parsed"
+    } else {
+        "invalid-choice"
+    };
+
+    QueueVoteBallot {
+        choice_id,
+        confidence,
+        reason,
+        risks,
+        parse_status: parse_status.to_string(),
+    }
+}
+
+fn parse_first_json_record(content: &str) -> Option<Value> {
+    let raw_json = extract_json_object_text(content)?;
+    let parsed = serde_json::from_str::<Value>(&raw_json).ok()?;
+
+    parsed.is_object().then_some(parsed)
+}
+
+fn extract_json_object_text(content: &str) -> Option<String> {
+    let start = content.find('{')?;
+    let end = content.rfind('}')?;
+
+    if end <= start {
+        return None;
+    }
+
+    Some(content[start..=end].trim().to_string())
+}
+
+fn read_optional_text(value: Option<&Value>) -> String {
+    value
+        .and_then(Value::as_str)
+        .map(normalize_inline_text)
+        .unwrap_or_default()
+}
+
+fn read_text_array(value: Option<&Value>) -> Vec<String> {
+    let Some(items) = value.and_then(Value::as_array) else {
+        return Vec::new();
+    };
+
+    items
+        .iter()
+        .filter_map(Value::as_str)
+        .map(normalize_inline_text)
+        .filter(|item| !item.is_empty())
+        .collect()
+}
+
+fn normalize_confidence_score(value: &Value) -> Option<u8> {
+    let raw_score = value
+        .as_u64()
+        .or_else(|| value.as_str()?.parse::<u64>().ok())?;
+    let clamped = raw_score.clamp(1, 9);
+
+    u8::try_from(clamped).ok()
+}
+
+fn normalize_inline_text(value: &str) -> String {
+    value.split_whitespace().collect::<Vec<_>>().join(" ")
+}
+
 fn write_result_report(
     workspace_path: &Path,
     report: &QueueResultReport,
 ) -> Result<PathBuf, CliError> {
-    let reports_dir = workspace_path.join(QUEUE_DIRECTORY_NAME).join(REPORTS_DIRECTORY_NAME);
+    let reports_dir = workspace_path
+        .join(QUEUE_DIRECTORY_NAME)
+        .join(REPORTS_DIRECTORY_NAME);
     fs::create_dir_all(&reports_dir)
         .map_err(|error| io_error("report-directory-create-failed", &reports_dir, error))?;
     let label_slug = slugify(&report.r#ref.label);
@@ -1846,9 +2473,7 @@ fn resolve_agent_model(
     match provider {
         "deepseek" => Ok("deepseek-v4-pro".to_string()),
         "openai" => Ok("gpt-5.4-mini".to_string()),
-        "openrouter" if profile.contains("deepseek") => {
-            Ok("deepseek/deepseek-v4-pro".to_string())
-        }
+        "openrouter" if profile.contains("deepseek") => Ok("deepseek/deepseek-v4-pro".to_string()),
         "openrouter" => Ok("openrouter/auto".to_string()),
         _ => Err(CliError {
             code: "agent-provider-unsupported",

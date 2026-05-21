@@ -645,6 +645,11 @@ a {
 	gap: 8px;
 }
 
+.workduck-dialog.workduck-queue-evaluation-dialog {
+	width: min(620px, calc(100vw - 44px));
+	overflow-x: hidden;
+}
+
 .workduck-queue-evaluation-target {
 	border: 1px solid oklch(var(--workduck-oklch-border) / 0.64);
 	border-radius: 8px;
@@ -661,12 +666,11 @@ a {
 .workduck-queue-evaluation-target span,
 .workduck-queue-evaluation-row small {
 	min-width: 0;
-	overflow: hidden;
 	color: var(--workduck-color-muted);
 	font-size: var(--workduck-font-size-xs);
 	font-weight: 800;
-	text-overflow: ellipsis;
-	white-space: nowrap;
+	line-height: 1.35;
+	overflow-wrap: anywhere;
 }
 
 .workduck-queue-evaluation-disabled-option {
@@ -676,9 +680,9 @@ a {
 .workduck-queue-evaluation-row {
 	display: grid;
 	min-width: 0;
-	grid-template-columns: minmax(0, 1fr) 88px;
+	grid-template-columns: minmax(0, 1fr) 74px;
 	gap: 10px;
-	align-items: center;
+	align-items: start;
 }
 
 .workduck-queue-evaluation-row > span {
@@ -697,7 +701,7 @@ a {
 }
 
 .workduck-queue-evaluation-score {
-	width: 88px;
+	width: 74px;
 }
 
 .workduck-sr-only {
