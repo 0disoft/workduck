@@ -535,6 +535,8 @@ export const enMessages = {
 				'Repository terminal tasks are currently supported only on Windows.',
 			'project-repository-task-launch-failed': 'Command terminal could not be opened.',
 			'project-registry-read-failed': 'Projects could not be loaded.',
+			'project-registry-version-unsupported':
+				'Project data uses a newer format. Update Workduck before opening projects again.',
 			'project-registry-write-failed': 'Projects could not be saved.',
 			'project-repository-operation-read-failed':
 				'Repository operation records could not be loaded.',

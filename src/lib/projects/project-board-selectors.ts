@@ -30,13 +30,14 @@ export function getNodeKindLabel(kind: ProjectNodeKind) {
 }
 
 export function getProjectGroupCount(nodes: readonly ProjectNodeRecord[], projectId: string) {
-	return nodes.filter((node) => node.kind === 'group' && node.parentId === projectId).length;
+	return listDescendantGroups(nodes, projectId).length;
 }
 
 export function getProjectRepositoryCount(nodes: readonly ProjectNodeRecord[], projectId: string) {
-	return nodes
-		.filter((node) => node.kind === 'group' && node.parentId === projectId)
-		.reduce((total, node) => total + node.repositories.length, 0);
+	return listDescendantGroups(nodes, projectId).reduce(
+		(total, node) => total + node.repositories.length,
+		0
+	);
 }
 
 export function formatCountLabel(count: number, singularLabel: string, pluralLabel: string) {
@@ -77,8 +78,8 @@ export function selectProjectGroups(
 
 	return groups.filter(
 		(node) =>
-			groupMatchesTagFilter(node, tagQuery) &&
-			groupMatchesRepositorySyncFilter(gitStatusById, node, syncFilter)
+			groupMatchesTagFilter(nodes, node, tagQuery) &&
+			groupMatchesRepositorySyncFilter(nodes, gitStatusById, node, syncFilter)
 	);
 }
 
@@ -167,19 +168,28 @@ function projectMatchesTagFilter(
 
 	return (
 		matchesTagFilter(node.tags, tagQuery) ||
-		nodes.some(
-			(candidateNode) =>
-				candidateNode.kind === 'group' &&
-				candidateNode.parentId === node.id &&
-				(matchesTagFilter(candidateNode.tags, tagQuery) ||
-					candidateNode.repositories.some((repository) => matchesTagFilter(repository.tags, tagQuery)))
+		listDescendantGroups(nodes, node.id).some((candidateNode) =>
+			groupNodeMatchesTagFilter(candidateNode, tagQuery)
 		)
 	);
 }
 
-function groupMatchesTagFilter(node: ProjectNodeRecord, tagQuery: string) {
+function groupMatchesTagFilter(
+	nodes: readonly ProjectNodeRecord[],
+	node: ProjectNodeRecord,
+	tagQuery: string
+) {
 	return (
 		tagQuery.length === 0 ||
+		groupNodeMatchesTagFilter(node, tagQuery) ||
+		listDescendantGroups(nodes, node.id).some((candidateNode) =>
+			groupNodeMatchesTagFilter(candidateNode, tagQuery)
+		)
+	);
+}
+
+function groupNodeMatchesTagFilter(node: ProjectNodeRecord, tagQuery: string) {
+	return (
 		matchesTagFilter(node.tags, tagQuery) ||
 		node.repositories.some((repository) => repositoryMatchesTagFilter(repository, tagQuery))
 	);
@@ -197,25 +207,34 @@ function projectMatchesRepositorySyncFilter(
 ) {
 	return (
 		syncFilter === 'all' ||
-		nodes.some(
-			(candidateNode) =>
-				candidateNode.kind === 'group' &&
-				candidateNode.parentId === node.id &&
-				groupMatchesRepositorySyncFilter(gitStatusById, candidateNode, syncFilter)
+		listDescendantGroups(nodes, node.id).some((candidateNode) =>
+			groupNodeMatchesRepositorySyncFilter(gitStatusById, candidateNode, syncFilter)
 		)
 	);
 }
 
 function groupMatchesRepositorySyncFilter(
+	nodes: readonly ProjectNodeRecord[],
 	gitStatusById: ProjectRepositoryGitStatusById,
 	node: ProjectNodeRecord,
 	syncFilter: ProjectRepositorySyncFilter
 ) {
 	return (
 		syncFilter === 'all' ||
-		node.repositories.some((repository) =>
-			repositoryMatchesSyncFilter(gitStatusById, repository, syncFilter)
+		groupNodeMatchesRepositorySyncFilter(gitStatusById, node, syncFilter) ||
+		listDescendantGroups(nodes, node.id).some((candidateNode) =>
+			groupNodeMatchesRepositorySyncFilter(gitStatusById, candidateNode, syncFilter)
 		)
+	);
+}
+
+function groupNodeMatchesRepositorySyncFilter(
+	gitStatusById: ProjectRepositoryGitStatusById,
+	node: ProjectNodeRecord,
+	syncFilter: ProjectRepositorySyncFilter
+) {
+	return node.repositories.some((repository) =>
+		repositoryMatchesSyncFilter(gitStatusById, repository, syncFilter)
 	);
 }
 
@@ -237,4 +256,36 @@ function repositoryMatchesSyncFilter(
 
 function matchesTagFilter(tags: readonly string[], tagQuery: string) {
 	return tags.some((tag) => tag.toLocaleLowerCase('en-US').includes(tagQuery));
+}
+
+function listDescendantGroups(nodes: readonly ProjectNodeRecord[], rootNodeId: string) {
+	const childGroupsByParentId = new Map<string, ProjectNodeRecord[]>();
+
+	for (const node of nodes) {
+		if (node.kind !== 'group' || node.parentId === null) {
+			continue;
+		}
+
+		const childGroups = childGroupsByParentId.get(node.parentId) ?? [];
+		childGroups.push(node);
+		childGroupsByParentId.set(node.parentId, childGroups);
+	}
+
+	const descendants: ProjectNodeRecord[] = [];
+	const visitedNodeIds = new Set<string>();
+	const pendingNodes = [...(childGroupsByParentId.get(rootNodeId) ?? [])];
+
+	while (pendingNodes.length > 0) {
+		const node = pendingNodes.shift();
+
+		if (node === undefined || visitedNodeIds.has(node.id)) {
+			continue;
+		}
+
+		visitedNodeIds.add(node.id);
+		descendants.push(node);
+		pendingNodes.push(...(childGroupsByParentId.get(node.id) ?? []));
+	}
+
+	return descendants;
 }

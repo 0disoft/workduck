@@ -27,8 +27,16 @@ export interface WorkduckQueueResultReportTask {
 	readonly filesChanged: readonly string[];
 	readonly verification: readonly string[];
 	readonly risks: readonly string[];
+	readonly executionAttempts?: readonly WorkduckQueueExecutionAttempt[];
 	readonly responseLanguage?: WorkduckQueueResponseLanguage;
 	readonly vote?: WorkduckQueueVoteResult;
+}
+
+export interface WorkduckQueueExecutionAttempt {
+	readonly attempt: number;
+	readonly code: string;
+	readonly message: string;
+	readonly retryable: boolean;
 }
 
 export interface WorkduckQueueResultReport {
@@ -911,8 +919,21 @@ function isQueueResultReportTask(value: unknown) {
 		isStringArray(value.filesChanged) &&
 		isStringArray(value.verification) &&
 		isStringArray(value.risks) &&
+		(value.executionAttempts === undefined ||
+			(Array.isArray(value.executionAttempts) &&
+				value.executionAttempts.every(isQueueExecutionAttempt))) &&
 		(value.responseLanguage === undefined || isQueueResponseLanguage(value.responseLanguage)) &&
 		(value.vote === undefined || isQueueVoteResult(value.vote))
+	);
+}
+
+function isQueueExecutionAttempt(value: unknown): value is WorkduckQueueExecutionAttempt {
+	return (
+		isRecord(value) &&
+		typeof value.attempt === 'number' &&
+		typeof value.code === 'string' &&
+		typeof value.message === 'string' &&
+		typeof value.retryable === 'boolean'
 	);
 }
 

@@ -3,9 +3,11 @@ import { getTauriInvoke } from '$lib/tauri/tauri-invoke';
 import {
 	createEmptyProjectRegistry,
 	normalizeProjectRegistry,
+	parseStoredProjectRegistry,
 	serializeProjectRegistry,
 	WORKDUCK_PROJECT_REGISTRY_VERSION,
-	type ProjectRegistry
+	type ProjectRegistry,
+	type ProjectRegistryParseError
 } from './project-registry';
 
 const LEGACY_PROJECT_REGISTRIES_STORAGE_KEY = 'workduck.projectRegistries.v1';
@@ -16,6 +18,7 @@ export const WORKDUCK_PROJECT_REGISTRY_CHANGED_EVENT = 'workduck:project-registr
 
 export type ProjectRegistryStorageError =
 	| 'project-registry-read-failed'
+	| 'project-registry-version-unsupported'
 	| 'project-registry-write-failed';
 
 export type ProjectRegistryStorageResult =
@@ -89,10 +92,20 @@ export async function readProjectRegistry(workspaceId: string): Promise<ProjectR
 		};
 	}
 
-	const sqliteRegistry =
+	const sqliteRegistryResult =
 		sqliteResult.registryJson === null
-			? emptyRegistry
+			? ({ ok: true, registry: emptyRegistry } as const)
 			: parseProjectRegistryJson(sqliteResult.registryJson, workspaceId);
+
+	if (!sqliteRegistryResult.ok) {
+		return {
+			ok: false,
+			registry: legacyRegistry,
+			error: mapProjectRegistryParseError(sqliteRegistryResult.error)
+		};
+	}
+
+	const sqliteRegistry = sqliteRegistryResult.registry;
 
 	if (shouldPromoteLegacyRegistry(workspaceId, sqliteRegistry, legacyRegistry)) {
 		const writeResult = await writeProjectRegistryToSqlite(legacyRegistry);
@@ -183,12 +196,21 @@ export async function readProjectRegistries(
 
 	for (const workspaceId of workspaceIds) {
 		const sqliteRegistryJson = sqliteResult.registries[workspaceId];
-		const registry =
+		const registryResult =
 			sqliteRegistryJson === undefined
-				? createEmptyProjectRegistry(workspaceId)
+				? ({ ok: true, registry: createEmptyProjectRegistry(workspaceId) } as const)
 				: parseProjectRegistryJson(sqliteRegistryJson, workspaceId);
 		const fallbackRegistry = fallbackRegistries[workspaceId] ?? createEmptyProjectRegistry(workspaceId);
 
+		if (!registryResult.ok) {
+			return {
+				ok: false,
+				registries: fallbackRegistries,
+				error: mapProjectRegistryParseError(registryResult.error)
+			};
+		}
+
+		const registry = registryResult.registry;
 		registries[workspaceId] = registry;
 
 		if (shouldPromoteLegacyRegistry(workspaceId, registry, fallbackRegistry)) {
@@ -518,11 +540,13 @@ function shouldPromoteLegacyRegistry(
 }
 
 function parseProjectRegistryJson(registryJson: string, workspaceId: string) {
-	try {
-		return normalizeProjectRegistry(JSON.parse(registryJson), workspaceId);
-	} catch {
-		return createEmptyProjectRegistry(workspaceId);
-	}
+	return parseStoredProjectRegistry(registryJson, workspaceId);
+}
+
+function mapProjectRegistryParseError(error: ProjectRegistryParseError): ProjectRegistryStorageError {
+	return error === 'project-registry-version-unsupported'
+		? 'project-registry-version-unsupported'
+		: 'project-registry-read-failed';
 }
 
 function readLegacyProjectRegistry(workspaceId: string) {
@@ -646,7 +670,11 @@ function readMigratedWorkspaceIds() {
 }
 
 function isProjectRegistryStorageError(value: unknown): value is ProjectRegistryStorageError {
-	return value === 'project-registry-read-failed' || value === 'project-registry-write-failed';
+	return (
+		value === 'project-registry-read-failed' ||
+		value === 'project-registry-version-unsupported' ||
+		value === 'project-registry-write-failed'
+	);
 }
 
 function isStringRecord(value: unknown): value is Record<string, string> {

@@ -1,4 +1,8 @@
-use std::{env, fs, io, path::{Path, PathBuf}, time::Duration};
+use std::{
+    env, fs, io,
+    path::{Path, PathBuf},
+    time::Duration,
+};
 
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -10,6 +14,10 @@ const QUEUE_DIRECTORY_NAME: &str = "queue";
 const REPORTS_DIRECTORY_NAME: &str = "reports";
 const REPORT_FILE_SUFFIX: &str = ".workduck-report.json";
 const CHAT_COMPLETION_TIMEOUT_SECONDS: u64 = 120;
+const CHAT_COMPLETION_MAX_ATTEMPTS: u8 = 3;
+const CHAT_COMPLETION_RETRY_BASE_DELAY_MILLIS: u64 = 500;
+const CHAT_COMPLETION_RETRY_MAX_DELAY_MILLIS: u64 = 2_000;
+const CHAT_COMPLETION_RETRY_JITTER_MILLIS: u64 = 250;
 const MAX_PROMPT_LENGTH: usize = 48_000;
 const MAX_MODEL_LENGTH: usize = 160;
 
@@ -279,6 +287,24 @@ pub struct AgentRunOutput {
     pub task: QueueWorkOrderTask,
     pub agent_name: String,
     pub content: String,
+    pub execution_attempts: Vec<AgentExecutionAttempt>,
+}
+
+#[derive(Debug, Clone)]
+pub struct AgentRunFailure {
+    pub code: &'static str,
+    pub message: String,
+    pub execution_attempts: Vec<AgentExecutionAttempt>,
+}
+
+impl AgentRunFailure {
+    fn new(code: &'static str, message: impl Into<String>) -> Self {
+        Self {
+            code,
+            message: message.into(),
+            execution_attempts: Vec::new(),
+        }
+    }
 }
 
 pub enum AgentRunOutcome {
@@ -288,6 +314,7 @@ pub enum AgentRunOutcome {
         agent_name: String,
         code: &'static str,
         message: String,
+        execution_attempts: Vec<AgentExecutionAttempt>,
     },
 }
 
@@ -331,10 +358,21 @@ pub struct QueueResultReportTask {
     pub files_changed: Vec<String>,
     pub verification: Vec<String>,
     pub risks: Vec<String>,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub execution_attempts: Vec<AgentExecutionAttempt>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub response_language: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub vote: Option<QueueVoteResult>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AgentExecutionAttempt {
+    pub attempt: u8,
+    pub code: &'static str,
+    pub message: String,
+    pub retryable: bool,
 }
 
 
@@ -394,6 +432,7 @@ pub async fn execute_queue_work_order(
                     agent_name,
                     code: error.code,
                     message: error.message,
+                    execution_attempts: error.execution_attempts,
                 },
             }
         }));
@@ -886,6 +925,7 @@ fn create_result_report_task(
             agent_name,
             code,
             message,
+            execution_attempts,
         } => {
             let language = report_language_for_task(task, work_order);
 
@@ -896,6 +936,7 @@ fn create_result_report_task(
                 files_changed: Vec::new(),
                 verification: vec![response_failed(agent_name, code, language)],
                 risks: vec![response_excluded_risk(language).to_string()],
+                execution_attempts: execution_attempts.clone(),
                 response_language: task.response_language.clone(),
                 vote: None,
             }
@@ -926,6 +967,13 @@ fn create_success_report_task(
     let mut verification = vec![response_received(&output.agent_name, language)];
     let mut risks = Vec::new();
 
+    if !output.execution_attempts.is_empty() {
+        verification.push(response_retry_succeeded(
+            output.execution_attempts.len(),
+            language,
+        ));
+    }
+
     if let Some(vote) = &vote {
         if vote.ballot.parse_status == "parsed" {
             verification.push(vote_parsed(&vote.ballot.choice_id, language));
@@ -944,6 +992,7 @@ fn create_success_report_task(
         files_changed: Vec::new(),
         verification,
         risks,
+        execution_attempts: output.execution_attempts.clone(),
         response_language: output.task.response_language.clone(),
         vote,
     }
@@ -1051,6 +1100,15 @@ fn response_failed(agent_name: &str, error: &str, language: QueueReportLanguage)
     match language {
         QueueReportLanguage::Ko => format!("{agent_name} 응답 실패: {error}"),
         QueueReportLanguage::En => format!("{agent_name} response failed: {error}"),
+    }
+}
+
+fn response_retry_succeeded(attempt_count: usize, language: QueueReportLanguage) -> String {
+    match language {
+        QueueReportLanguage::Ko => format!("일시 실패 {attempt_count}회 후 응답 수신"),
+        QueueReportLanguage::En => {
+            format!("Response received after {attempt_count} transient failure(s)")
+        }
     }
 }
 
@@ -1467,19 +1525,19 @@ fn select_records<T: Clone>(ids: &[String], records: &[T], id_of: impl Fn(&T) ->
         .collect()
 }
 
-pub async fn run_agent_prompt(run: AgentExecutionRun) -> Result<AgentRunOutput, QueueExecutionErrorDetail> {
+pub async fn run_agent_prompt(run: AgentExecutionRun) -> Result<AgentRunOutput, AgentRunFailure> {
     if run.secret.value.trim().is_empty() {
-        return Err(QueueExecutionErrorDetail {
-            code: "agent-api-key-required",
-            message: format!("에이전트 '{}'의 API 키가 비어 있습니다.", run.agent.name),
-        });
+        return Err(AgentRunFailure::new(
+            "agent-api-key-required",
+            format!("에이전트 '{}'의 API 키가 비어 있습니다.", run.agent.name),
+        ));
     }
 
     if run.model.trim().is_empty() || run.model.len() > MAX_MODEL_LENGTH {
-        return Err(QueueExecutionErrorDetail {
-            code: "agent-model-required",
-            message: format!("에이전트 '{}'의 모델이 올바르지 않습니다.", run.agent.name),
-        });
+        return Err(AgentRunFailure::new(
+            "agent-model-required",
+            format!("에이전트 '{}'의 모델이 올바르지 않습니다.", run.agent.name),
+        ));
     }
 
     let prompt_plan = create_agent_prompt_plan(&run.task);
@@ -1487,25 +1545,29 @@ pub async fn run_agent_prompt(run: AgentExecutionRun) -> Result<AgentRunOutput, 
     let user_prompt = create_user_prompt(&run, &prompt_plan);
 
     if system_prompt.len() > MAX_PROMPT_LENGTH || user_prompt.len() > MAX_PROMPT_LENGTH {
-        return Err(QueueExecutionErrorDetail {
-            code: "agent-prompt-too-large",
-            message: format!(
+        return Err(AgentRunFailure::new(
+            "agent-prompt-too-large",
+            format!(
                 "에이전트 '{}'로 보낼 프롬프트가 너무 깁니다.",
                 run.agent.name
             ),
-        });
+        ));
     }
 
-    let endpoint = provider_endpoint(&run.provider).ok_or_else(|| QueueExecutionErrorDetail {
-        code: "agent-provider-unsupported",
-        message: format!("지원하지 않는 제공자입니다: {}", run.provider),
+    let endpoint = provider_endpoint(&run.provider).ok_or_else(|| {
+        AgentRunFailure::new(
+            "agent-provider-unsupported",
+            format!("지원하지 않는 제공자입니다: {}", run.provider),
+        )
     })?;
     let client = reqwest::Client::builder()
         .timeout(Duration::from_secs(CHAT_COMPLETION_TIMEOUT_SECONDS))
         .build()
-        .map_err(|_| QueueExecutionErrorDetail {
-            code: "agent-request-invalid",
-            message: "HTTP 클라이언트를 만들지 못했습니다.".to_string(),
+        .map_err(|_| {
+            AgentRunFailure::new(
+                "agent-request-invalid",
+                "HTTP 클라이언트를 만들지 못했습니다.",
+            )
         })?;
     let body = serde_json::json!({
         "model": run.model,
@@ -1515,12 +1577,71 @@ pub async fn run_agent_prompt(run: AgentExecutionRun) -> Result<AgentRunOutput, 
         ],
         "stream": false
     });
+
+    let mut execution_attempts = Vec::new();
+
+    for attempt in 1..=CHAT_COMPLETION_MAX_ATTEMPTS {
+        match send_chat_completion_request(
+            &client,
+            endpoint,
+            run.secret.value.trim(),
+            &body,
+            &run.agent.name,
+        )
+        .await
+        {
+            Ok(content) => {
+                return Ok(AgentRunOutput {
+                    task: run.task,
+                    agent_name: run.agent.name,
+                    content,
+                    execution_attempts,
+                });
+            }
+            Err(error) => {
+                let retryable = is_retryable_agent_error(error.code);
+
+                execution_attempts.push(AgentExecutionAttempt {
+                    attempt,
+                    code: error.code,
+                    message: error.message.clone(),
+                    retryable,
+                });
+
+                if retryable && attempt < CHAT_COMPLETION_MAX_ATTEMPTS {
+                    wait_before_retry(attempt).await;
+                    continue;
+                }
+
+                return Err(AgentRunFailure {
+                    code: error.code,
+                    message: error.message,
+                    execution_attempts,
+                });
+            }
+        }
+    }
+
+    Err(AgentRunFailure {
+        code: "agent-provider-unavailable",
+        message: format!("에이전트 '{}' 요청에 실패했습니다.", run.agent.name),
+        execution_attempts,
+    })
+}
+
+async fn send_chat_completion_request(
+    client: &reqwest::Client,
+    endpoint: &str,
+    api_key: &str,
+    body: &Value,
+    agent_name: &str,
+) -> Result<String, QueueExecutionErrorDetail> {
     let response = client
         .post(endpoint)
-        .bearer_auth(run.secret.value.trim())
+        .bearer_auth(api_key)
         .header(reqwest::header::CONTENT_TYPE, "application/json")
         .header("X-Title", "Workduck")
-        .json(&body)
+        .json(body)
         .send()
         .await
         .map_err(|error| QueueExecutionErrorDetail {
@@ -1529,14 +1650,14 @@ pub async fn run_agent_prompt(run: AgentExecutionRun) -> Result<AgentRunOutput, 
             } else {
                 "agent-provider-unavailable"
             },
-            message: format!("에이전트 '{}' 요청에 실패했습니다.", run.agent.name),
+            message: format!("에이전트 '{agent_name}' 요청에 실패했습니다."),
         })?;
     let status = response.status();
 
     if !status.is_success() {
         return Err(QueueExecutionErrorDetail {
             code: map_http_status(status.as_u16()),
-            message: format!("에이전트 '{}' 요청이 거부되었습니다.", run.agent.name),
+            message: format!("에이전트 '{agent_name}' 요청이 거부되었습니다."),
         });
     }
 
@@ -1545,7 +1666,7 @@ pub async fn run_agent_prompt(run: AgentExecutionRun) -> Result<AgentRunOutput, 
         .await
         .map_err(|_| QueueExecutionErrorDetail {
             code: "agent-response-invalid",
-            message: format!("에이전트 '{}' 응답을 해석하지 못했습니다.", run.agent.name),
+            message: format!("에이전트 '{agent_name}' 응답을 해석하지 못했습니다."),
         })?;
     let content = body
         .choices
@@ -1555,14 +1676,35 @@ pub async fn run_agent_prompt(run: AgentExecutionRun) -> Result<AgentRunOutput, 
         .filter(|content| !content.is_empty())
         .ok_or_else(|| QueueExecutionErrorDetail {
             code: "agent-response-empty",
-            message: format!("에이전트 '{}' 응답이 비어 있습니다.", run.agent.name),
+            message: format!("에이전트 '{agent_name}' 응답이 비어 있습니다."),
         })?;
 
-    Ok(AgentRunOutput {
-        task: run.task,
-        agent_name: run.agent.name,
-        content: content.to_string(),
-    })
+    Ok(content.to_string())
+}
+
+async fn wait_before_retry(failed_attempt: u8) {
+    let delay = retry_delay(failed_attempt);
+    let _ = tauri::async_runtime::spawn_blocking(move || std::thread::sleep(delay)).await;
+}
+
+fn retry_delay(failed_attempt: u8) -> Duration {
+    let multiplier = 1_u64 << u32::from(failed_attempt.saturating_sub(1));
+    let base_delay = CHAT_COMPLETION_RETRY_BASE_DELAY_MILLIS
+        .saturating_mul(multiplier)
+        .min(CHAT_COMPLETION_RETRY_MAX_DELAY_MILLIS);
+    Duration::from_millis(base_delay + retry_jitter_millis(failed_attempt))
+}
+
+fn retry_jitter_millis(failed_attempt: u8) -> u64 {
+    let timestamp = OffsetDateTime::now_utc().unix_timestamp_nanos() as u64;
+    (timestamp ^ u64::from(failed_attempt)) % (CHAT_COMPLETION_RETRY_JITTER_MILLIS + 1)
+}
+
+fn is_retryable_agent_error(code: &str) -> bool {
+    matches!(
+        code,
+        "agent-provider-timeout" | "agent-provider-unavailable" | "agent-rate-limited"
+    )
 }
 
 pub fn validate_work_order(

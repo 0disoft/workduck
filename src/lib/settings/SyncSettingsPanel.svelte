@@ -226,6 +226,7 @@
 			case 'workspace-sync-registry-invalid':
 				return syncMessages.errors.workspaceDataInvalid;
 			case 'project-registry-read-failed':
+			case 'project-registry-version-unsupported':
 				return syncMessages.errors.projectReadFailed;
 			case 'project-registry-write-failed':
 				return syncMessages.errors.projectWriteFailed;

@@ -1,4 +1,7 @@
-use argon2::{Algorithm, Argon2, Params, Version};
+use crate::argon2_kdf::{
+    ARGON2ID_VERSION, DEFAULT_ITERATIONS, DEFAULT_MEMORY_KIB, DEFAULT_PARALLELISM,
+    derive_argon2id_key, parameters_are_supported,
+};
 use base64::{Engine as _, engine::general_purpose::STANDARD as BASE64};
 use chacha20poly1305::{
     Key, XChaCha20Poly1305, XNonce,
@@ -13,10 +16,10 @@ const SYNC_FORMAT: &str = "workduck.workspace-sync";
 const SYNC_VERSION: u8 = 1;
 const SYNC_AAD: &[u8] = b"workduck.workspace-sync.v1";
 const SYNC_KDF_ALGORITHM: &str = "argon2id";
-const SYNC_KDF_VERSION: u32 = 19;
-const SYNC_KDF_MEMORY_KIB: u32 = 19 * 1024;
-const SYNC_KDF_ITERATIONS: u32 = 2;
-const SYNC_KDF_PARALLELISM: u32 = 1;
+const SYNC_KDF_VERSION: u32 = ARGON2ID_VERSION;
+const SYNC_KDF_MEMORY_KIB: u32 = DEFAULT_MEMORY_KIB;
+const SYNC_KDF_ITERATIONS: u32 = DEFAULT_ITERATIONS;
+const SYNC_KDF_PARALLELISM: u32 = DEFAULT_PARALLELISM;
 const SYNC_KEY_LENGTH: usize = 32;
 const SYNC_SALT_LENGTH: usize = 16;
 const SYNC_CIPHER_ALGORITHM: &str = "xchacha20poly1305";
@@ -113,7 +116,13 @@ pub fn encrypt_workspace_sync_payload(
     OsRng.fill_bytes(&mut salt);
     OsRng.fill_bytes(&mut nonce);
 
-    let mut key = match derive_sync_key(password.as_bytes(), &salt) {
+    let mut key = match derive_sync_key(
+        password.as_bytes(),
+        &salt,
+        SYNC_KDF_MEMORY_KIB,
+        SYNC_KDF_ITERATIONS,
+        SYNC_KDF_PARALLELISM,
+    ) {
         Ok(key) => key,
         Err(error) => return invalid_encryption(error),
     };
@@ -182,7 +191,13 @@ pub fn decrypt_workspace_sync_payload(
         _ => return invalid_decryption(WorkspaceSyncCryptoError::CiphertextInvalid),
     };
 
-    let mut key = match derive_sync_key(password.as_bytes(), &salt) {
+    let mut key = match derive_sync_key(
+        password.as_bytes(),
+        &salt,
+        envelope.kdf.memory_kib,
+        envelope.kdf.iterations,
+        envelope.kdf.parallelism,
+    ) {
         Ok(key) => key,
         Err(error) => return invalid_decryption(error),
     };
@@ -215,22 +230,12 @@ pub fn decrypt_workspace_sync_payload(
 fn derive_sync_key(
     password: &[u8],
     salt: &[u8],
+    memory_kib: u32,
+    iterations: u32,
+    parallelism: u32,
 ) -> Result<[u8; SYNC_KEY_LENGTH], WorkspaceSyncCryptoError> {
-    let params = Params::new(
-        SYNC_KDF_MEMORY_KIB,
-        SYNC_KDF_ITERATIONS,
-        SYNC_KDF_PARALLELISM,
-        Some(SYNC_KEY_LENGTH),
-    )
-    .map_err(|_| WorkspaceSyncCryptoError::KeyDerivationFailed)?;
-    let argon2 = Argon2::new(Algorithm::Argon2id, Version::V0x13, params);
-    let mut key = [0_u8; SYNC_KEY_LENGTH];
-
-    argon2
-        .hash_password_into(password, salt, &mut key)
-        .map_err(|_| WorkspaceSyncCryptoError::KeyDerivationFailed)?;
-
-    Ok(key)
+    derive_argon2id_key(password, salt, memory_kib, iterations, parallelism)
+        .map_err(|_| WorkspaceSyncCryptoError::KeyDerivationFailed)
 }
 
 fn is_supported_envelope(envelope: &WorkspaceSyncEnvelope) -> bool {
@@ -238,9 +243,12 @@ fn is_supported_envelope(envelope: &WorkspaceSyncEnvelope) -> bool {
         && envelope.version == SYNC_VERSION
         && envelope.kdf.algorithm == SYNC_KDF_ALGORITHM
         && envelope.kdf.version == SYNC_KDF_VERSION
-        && envelope.kdf.memory_kib == SYNC_KDF_MEMORY_KIB
-        && envelope.kdf.iterations == SYNC_KDF_ITERATIONS
-        && envelope.kdf.parallelism == SYNC_KDF_PARALLELISM
+        && parameters_are_supported(
+            envelope.kdf.version,
+            envelope.kdf.memory_kib,
+            envelope.kdf.iterations,
+            envelope.kdf.parallelism,
+        )
         && envelope.cipher.algorithm == SYNC_CIPHER_ALGORITHM
 }
 

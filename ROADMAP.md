@@ -42,6 +42,10 @@ work.
   `queue/proposals` folder creation, queued JSON listing, structured
   result-report review, internal work-order and proposal rendering, and
   follow-up work-order JSON creation.
+- Queue work-order execution is owned by the Rust queue runner used by both the
+  desktop app and the CLI, so prompt assembly, voting, report generation,
+  response language handling, retry metadata, and partial-failure reports follow
+  the same contract in both entry points.
 - Workspace-owned `.workduck/` metadata folder for reference, agent, persona,
   skill, and encrypted Environment vault files. Plaintext secret values are not
   written to `.workduck`.
@@ -104,60 +108,9 @@ These items are not new product surfaces. They are implementation debts that
 should be addressed before the queue runner, repository operations, and
 workspace sync become harder to change safely.
 
-### Queue Execution Reliability
-
-1. Add bounded retry and backoff for transient LLM provider failures.
-   - Current risk: one temporary 429, 502, 503, 504, network timeout, or gateway
-     hiccup can fail an entire work order.
-   - Target behavior: retry only transient failures with a small maximum attempt
-     count and jittered backoff; never retry authentication errors, malformed
-     requests, unsupported models, or user-cancelled execution.
-   - Acceptance criteria: app execution and CLI execution share the same retry
-     policy, each failed attempt is recorded in the report metadata, and the
-     final report still includes partial agent results when some agents fail.
-
-2. Keep app and CLI queue behavior identical.
-   - Current risk: TypeScript and Rust have historically duplicated prompt
-     assembly, voting, parsing, report generation, and partial failure policy.
-   - Target behavior: shared queue contracts define task type, response
-     language, vote options, parsed result shape, report title, validation text,
-     and partial failure handling for both app and CLI.
-   - Acceptance criteria: the same work order ID produces equivalent report
-     structure whether run from the app or the CLI, apart from runtime metadata
-     such as timestamps and process identifiers.
-
-### Sync And Secret Compatibility
-
-1. Make encrypted vault KDF parameters backward-compatible.
-   - Current risk: vault and sync decryption require exact Argon2 parameter
-     matches against current source constants, so strengthening future defaults
-     could make older encrypted files unreadable.
-   - Target behavior: decryption uses the KDF parameters stored in the envelope
-     after validating safe bounds; current constants are defaults for newly
-     encrypted files only.
-   - Acceptance criteria: fixtures encrypted with the current parameters and a
-     future stronger parameter set both decrypt when within allowed bounds;
-     unsupported algorithms and unsafe parameter values fail clearly.
-
 ### Project Registry And Repository Operations
 
-1. Add a registry migration path before the next project schema change.
-   - Current risk: an unknown project registry version can fall back to an empty
-     registry, which is too destructive once real workspaces depend on it.
-   - Target behavior: unsupported versions fail with a recoverable error and a
-     backup/export path; known older versions migrate through explicit steps.
-   - Acceptance criteria: no readable project data is silently dropped because
-     of a version mismatch.
-
-2. Replace the two-level project tree assumption with recursive traversal.
-   - Current risk: project tree rows are built around a Project -> Group ->
-     Repository shape and will fight future nested grouping.
-   - Target behavior: tree rendering and counts operate on recursive nodes
-     while preserving the current two-level UI as a presentation choice.
-   - Acceptance criteria: adding a third nesting level in registry data does
-     not require rewriting tree normalization.
-
-3. Track repository task execution instead of only opening terminals.
+1. Track repository task execution instead of only opening terminals.
    - Current risk: install, update, build, and dev-server commands can exit with
      code 1 in an external terminal while the app only knows that the command was
      launched.

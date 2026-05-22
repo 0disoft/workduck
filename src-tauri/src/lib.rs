@@ -1,3 +1,4 @@
+pub mod argon2_kdf;
 mod developer_processes;
 mod git_credential;
 mod git_path;

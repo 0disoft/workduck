@@ -537,6 +537,8 @@ export const koMessages = {
 				'저장소 터미널 작업은 현재 Windows에서만 지원됩니다.',
 			'project-repository-task-launch-failed': '명령 터미널을 열지 못했습니다.',
 			'project-registry-read-failed': '프로젝트를 불러오지 못했습니다.',
+			'project-registry-version-unsupported':
+				'프로젝트 데이터가 현재 앱보다 새 포맷입니다. Workduck을 업데이트한 뒤 다시 열어주세요.',
 			'project-registry-write-failed': '프로젝트를 저장하지 못했습니다.',
 			'project-repository-operation-read-failed':
 				'저장소 작업 기록을 불러오지 못했습니다.',

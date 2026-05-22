@@ -64,6 +64,20 @@ export interface ProjectRegistry {
 	readonly updatedAt: string;
 }
 
+export type ProjectRegistryParseError =
+	| 'project-registry-json-invalid'
+	| 'project-registry-version-unsupported';
+
+export type ProjectRegistryParseResult =
+	| {
+			readonly ok: true;
+			readonly registry: ProjectRegistry;
+	  }
+	| {
+			readonly ok: false;
+			readonly error: ProjectRegistryParseError;
+	  };
+
 export interface ProjectNodeInput {
 	readonly kind: ProjectNodeKind;
 	readonly parentId?: string | null;
@@ -161,6 +175,35 @@ export function parseProjectRegistry(
 	}
 }
 
+export function parseStoredProjectRegistry(
+	serializedRegistry: string,
+	workspaceId: string
+): ProjectRegistryParseResult {
+	try {
+		return normalizeStoredProjectRegistry(JSON.parse(serializedRegistry), workspaceId);
+	} catch {
+		return { ok: false, error: 'project-registry-json-invalid' };
+	}
+}
+
+export function normalizeStoredProjectRegistry(
+	value: unknown,
+	workspaceId: string
+): ProjectRegistryParseResult {
+	if (!isObjectRecord(value)) {
+		return { ok: false, error: 'project-registry-json-invalid' };
+	}
+
+	const version = readProjectRegistryVersion(value.version);
+
+	switch (version) {
+		case WORKDUCK_PROJECT_REGISTRY_VERSION:
+			return { ok: true, registry: normalizeProjectRegistry(value, workspaceId) };
+		default:
+			return { ok: false, error: 'project-registry-version-unsupported' };
+	}
+}
+
 export function normalizeProjectRegistry(value: unknown, workspaceId: string): ProjectRegistry {
 	if (!isObjectRecord(value) || value.version !== WORKDUCK_PROJECT_REGISTRY_VERSION) {
 		return createEmptyProjectRegistry(workspaceId);
@@ -221,7 +264,7 @@ export function addProjectNode(
 			return { ok: false, registry: normalizedRegistry, error: 'project-parent-not-found' };
 		}
 
-		if (parent.kind !== 'project') {
+		if (parent.kind !== 'project' && parent.kind !== 'group') {
 			return { ok: false, registry: normalizedRegistry, error: 'project-parent-invalid' };
 		}
 	}
@@ -690,17 +733,50 @@ export function removeProjectRepositoryLink(
 
 export function createProjectTreeRows(nodes: readonly ProjectNodeRecord[]): readonly ProjectTreeRow[] {
 	const rootNodes = nodes.filter((node) => node.kind === 'project' && node.parentId === null);
+	const childNodesByParentId = groupProjectNodesByParentId(nodes);
 	const rows: ProjectTreeRow[] = [];
+	const visitedNodeIds = new Set<string>();
 
-	for (const rootNode of rootNodes) {
-		rows.push({ node: rootNode, depth: 0 });
-
-		for (const childNode of nodes.filter((node) => node.parentId === rootNode.id)) {
-			rows.push({ node: childNode, depth: 1 });
-		}
+	for (const node of rootNodes) {
+		appendProjectTreeRows(rows, childNodesByParentId, visitedNodeIds, node, 0);
 	}
 
 	return rows;
+}
+
+function appendProjectTreeRows(
+	rows: ProjectTreeRow[],
+	childNodesByParentId: ReadonlyMap<string, readonly ProjectNodeRecord[]>,
+	visitedNodeIds: Set<string>,
+	node: ProjectNodeRecord,
+	depth: number
+) {
+	if (visitedNodeIds.has(node.id)) {
+		return;
+	}
+
+	visitedNodeIds.add(node.id);
+	rows.push({ node, depth });
+
+	for (const childNode of childNodesByParentId.get(node.id) ?? []) {
+		appendProjectTreeRows(rows, childNodesByParentId, visitedNodeIds, childNode, depth + 1);
+	}
+}
+
+function groupProjectNodesByParentId(nodes: readonly ProjectNodeRecord[]) {
+	const childNodesByParentId = new Map<string, ProjectNodeRecord[]>();
+
+	for (const node of nodes) {
+		if (node.parentId === null) {
+			continue;
+		}
+
+		const childNodes = childNodesByParentId.get(node.parentId) ?? [];
+		childNodes.push(node);
+		childNodesByParentId.set(node.parentId, childNodes);
+	}
+
+	return childNodesByParentId;
 }
 
 function collectProjectNodeSubtreeIds(nodes: readonly ProjectNodeRecord[], rootNodeId: string) {
@@ -723,7 +799,7 @@ function collectProjectNodeSubtreeIds(nodes: readonly ProjectNodeRecord[], rootN
 
 function normalizeProjectNodes(nodes: readonly ProjectNodeRecord[]): readonly ProjectNodeRecord[] {
 	const rootNodes: ProjectNodeRecord[] = [];
-	const childNodes: ProjectNodeRecord[] = [];
+	const normalizedNodes: ProjectNodeRecord[] = [];
 	const seenNodeIds = new Set<string>();
 	const seenRepositoryPaths = new Set<string>();
 	const seenRepositoryRemoteUrls = new Set<string>();
@@ -746,7 +822,7 @@ function normalizeProjectNodes(nodes: readonly ProjectNodeRecord[]): readonly Pr
 		seenNodeIds.add(node.id);
 		seenRootNames.add(nameKey);
 		seenNodePaths.add(pathKey);
-		rootNodes.push({
+		const normalizedNode = {
 			...node,
 			description: normalizeProjectDescription(node.description),
 			path,
@@ -757,57 +833,61 @@ function normalizeProjectNodes(nodes: readonly ProjectNodeRecord[]): readonly Pr
 				seenRepositoryPaths,
 				seenRepositoryRemoteUrls
 			)
-		});
+		};
+
+		rootNodes.push(normalizedNode);
+		normalizedNodes.push(normalizedNode);
 	}
 
-	const keptRootIds = new Set(rootNodes.map((node) => node.id));
 	const pathByNodeId = new Map(rootNodes.map((node) => [node.id, node.path]));
 	const seenChildNames = new Map<string, Set<string>>();
+	let changed = true;
 
-	for (const node of nodes) {
-		if (seenNodeIds.has(node.id) || node.kind !== 'group' || node.parentId === null) {
-			continue;
+	while (changed) {
+		changed = false;
+
+		for (const node of nodes) {
+			if (seenNodeIds.has(node.id) || node.kind !== 'group' || node.parentId === null) {
+				continue;
+			}
+
+			const parentPath = pathByNodeId.get(node.parentId);
+
+			if (parentPath === undefined) {
+				continue;
+			}
+
+			const nameKey = createNameKey(node.name);
+			const path = normalizeProjectPath(node.path) || createDefaultProjectPath(parentPath, node.name);
+			const pathKey = createProjectPathKey(path);
+			const siblingNames = seenChildNames.get(node.parentId) ?? new Set<string>();
+
+			if (siblingNames.has(nameKey) || seenNodePaths.has(pathKey)) {
+				continue;
+			}
+
+			seenNodeIds.add(node.id);
+			seenNodePaths.add(pathKey);
+			siblingNames.add(nameKey);
+			seenChildNames.set(node.parentId, siblingNames);
+			normalizedNodes.push({
+				...node,
+				description: normalizeProjectDescription(node.description),
+				path,
+				githubCredentialSecretId: normalizeRecordId(node.githubCredentialSecretId),
+				tags: normalizeProjectTags(node.tags),
+				repositories: filterUniqueRepositories(
+					node.repositories,
+					seenRepositoryPaths,
+					seenRepositoryRemoteUrls
+				)
+			});
+			pathByNodeId.set(node.id, path);
+			changed = true;
 		}
-
-		if (!keptRootIds.has(node.parentId)) {
-			continue;
-		}
-
-		const nameKey = createNameKey(node.name);
-		const parentPath = pathByNodeId.get(node.parentId);
-
-		if (parentPath === undefined) {
-			continue;
-		}
-
-		const path = normalizeProjectPath(node.path) || createDefaultProjectPath(parentPath, node.name);
-		const pathKey = createProjectPathKey(path);
-		const siblingNames = seenChildNames.get(node.parentId) ?? new Set<string>();
-
-		if (siblingNames.has(nameKey) || seenNodePaths.has(pathKey)) {
-			continue;
-		}
-
-		seenNodeIds.add(node.id);
-		seenNodePaths.add(pathKey);
-		siblingNames.add(nameKey);
-		seenChildNames.set(node.parentId, siblingNames);
-		childNodes.push({
-			...node,
-			description: normalizeProjectDescription(node.description),
-			path,
-			githubCredentialSecretId: normalizeRecordId(node.githubCredentialSecretId),
-			tags: normalizeProjectTags(node.tags),
-			repositories: filterUniqueRepositories(
-				node.repositories,
-				seenRepositoryPaths,
-				seenRepositoryRemoteUrls
-			)
-		});
-		pathByNodeId.set(node.id, path);
 	}
 
-	return [...rootNodes, ...childNodes];
+	return normalizedNodes;
 }
 
 function filterUniqueRepositories(
@@ -1012,6 +1092,10 @@ function normalizeRecordId(value: unknown) {
 	const id = readTrimmedString(value);
 
 	return id.length === 0 ? null : id;
+}
+
+function readProjectRegistryVersion(value: unknown) {
+	return typeof value === 'number' && Number.isInteger(value) ? value : null;
 }
 
 function createProjectRecordId(prefix: string) {

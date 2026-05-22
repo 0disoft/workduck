@@ -1,4 +1,7 @@
-use argon2::{Algorithm, Argon2, Params, Version};
+use crate::argon2_kdf::{
+    ARGON2ID_VERSION, DEFAULT_ITERATIONS, DEFAULT_MEMORY_KIB, DEFAULT_PARALLELISM,
+    derive_argon2id_key, parameters_are_supported,
+};
 use base64::{Engine as _, engine::general_purpose::STANDARD as BASE64};
 use chacha20poly1305::{
     Key, XChaCha20Poly1305, XNonce,
@@ -13,10 +16,10 @@ const VAULT_FORMAT: &str = "workduck.secret-vault";
 const VAULT_VERSION: u8 = 1;
 const VAULT_AAD: &[u8] = b"workduck.secret-vault.v1";
 const VAULT_KDF_ALGORITHM: &str = "argon2id";
-const VAULT_KDF_VERSION: u32 = 19;
-const VAULT_KDF_MEMORY_KIB: u32 = 19 * 1024;
-const VAULT_KDF_ITERATIONS: u32 = 2;
-const VAULT_KDF_PARALLELISM: u32 = 1;
+const VAULT_KDF_VERSION: u32 = ARGON2ID_VERSION;
+const VAULT_KDF_MEMORY_KIB: u32 = DEFAULT_MEMORY_KIB;
+const VAULT_KDF_ITERATIONS: u32 = DEFAULT_ITERATIONS;
+const VAULT_KDF_PARALLELISM: u32 = DEFAULT_PARALLELISM;
 const VAULT_KEY_LENGTH: usize = 32;
 const VAULT_SALT_LENGTH: usize = 16;
 const VAULT_CIPHER_ALGORITHM: &str = "xchacha20poly1305";
@@ -110,7 +113,13 @@ pub fn encrypt_secret_vault_payload(password: String, plaintext: String) -> Secr
     OsRng.fill_bytes(&mut salt);
     OsRng.fill_bytes(&mut nonce);
 
-    let mut key = match derive_vault_key(password.as_bytes(), &salt) {
+    let mut key = match derive_vault_key(
+        password.as_bytes(),
+        &salt,
+        VAULT_KDF_MEMORY_KIB,
+        VAULT_KDF_ITERATIONS,
+        VAULT_KDF_PARALLELISM,
+    ) {
         Ok(key) => key,
         Err(error) => return invalid_encryption(error),
     };
@@ -179,7 +188,13 @@ pub fn decrypt_secret_vault_payload(
         _ => return invalid_decryption(SecretVaultCryptoError::CiphertextInvalid),
     };
 
-    let mut key = match derive_vault_key(password.as_bytes(), &salt) {
+    let mut key = match derive_vault_key(
+        password.as_bytes(),
+        &salt,
+        envelope.kdf.memory_kib,
+        envelope.kdf.iterations,
+        envelope.kdf.parallelism,
+    ) {
         Ok(key) => key,
         Err(error) => return invalid_decryption(error),
     };
@@ -212,22 +227,12 @@ pub fn decrypt_secret_vault_payload(
 fn derive_vault_key(
     password: &[u8],
     salt: &[u8],
+    memory_kib: u32,
+    iterations: u32,
+    parallelism: u32,
 ) -> Result<[u8; VAULT_KEY_LENGTH], SecretVaultCryptoError> {
-    let params = Params::new(
-        VAULT_KDF_MEMORY_KIB,
-        VAULT_KDF_ITERATIONS,
-        VAULT_KDF_PARALLELISM,
-        Some(VAULT_KEY_LENGTH),
-    )
-    .map_err(|_| SecretVaultCryptoError::KeyDerivationFailed)?;
-    let argon2 = Argon2::new(Algorithm::Argon2id, Version::V0x13, params);
-    let mut key = [0_u8; VAULT_KEY_LENGTH];
-
-    argon2
-        .hash_password_into(password, salt, &mut key)
-        .map_err(|_| SecretVaultCryptoError::KeyDerivationFailed)?;
-
-    Ok(key)
+    derive_argon2id_key(password, salt, memory_kib, iterations, parallelism)
+        .map_err(|_| SecretVaultCryptoError::KeyDerivationFailed)
 }
 
 fn is_supported_envelope(envelope: &SecretVaultEnvelope) -> bool {
@@ -235,9 +240,12 @@ fn is_supported_envelope(envelope: &SecretVaultEnvelope) -> bool {
         && envelope.version == VAULT_VERSION
         && envelope.kdf.algorithm == VAULT_KDF_ALGORITHM
         && envelope.kdf.version == VAULT_KDF_VERSION
-        && envelope.kdf.memory_kib == VAULT_KDF_MEMORY_KIB
-        && envelope.kdf.iterations == VAULT_KDF_ITERATIONS
-        && envelope.kdf.parallelism == VAULT_KDF_PARALLELISM
+        && parameters_are_supported(
+            envelope.kdf.version,
+            envelope.kdf.memory_kib,
+            envelope.kdf.iterations,
+            envelope.kdf.parallelism,
+        )
         && envelope.cipher.algorithm == VAULT_CIPHER_ALGORITHM
 }
 

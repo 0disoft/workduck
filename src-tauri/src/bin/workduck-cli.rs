@@ -4,7 +4,6 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use argon2::{Algorithm, Argon2, Params, Version};
 use base64::{Engine as _, engine::general_purpose::STANDARD as BASE64};
 use chacha20poly1305::{
     Key, XChaCha20Poly1305, XNonce,
@@ -13,6 +12,9 @@ use chacha20poly1305::{
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use time::{OffsetDateTime, format_description::well_known::Rfc3339};
+use workduck_lib::argon2_kdf::{
+    ARGON2ID_VERSION, derive_argon2id_key, parameters_are_supported,
+};
 use workduck_lib::queue_execution::*;
 use zeroize::Zeroize;
 
@@ -262,6 +264,7 @@ async fn run() -> Result<(), CliError> {
                     agent_name,
                     code: error.code,
                     message: error.message,
+                    execution_attempts: error.execution_attempts,
                 },
             }
         }));
@@ -1205,7 +1208,13 @@ fn decrypt_secret_vault_payload(
         });
     }
 
-    let mut key = derive_vault_key(password.as_bytes(), &salt)?;
+    let mut key = derive_vault_key(
+        password.as_bytes(),
+        &salt,
+        envelope.kdf.memory_kib,
+        envelope.kdf.iterations,
+        envelope.kdf.parallelism,
+    )?;
     let cipher = XChaCha20Poly1305::new(Key::from_slice(&key));
     let plaintext = cipher
         .decrypt(
@@ -1227,32 +1236,32 @@ fn decrypt_secret_vault_payload(
     })
 }
 
-fn derive_vault_key(password: &[u8], salt: &[u8]) -> Result<[u8; VAULT_KEY_LENGTH], CliError> {
-    let params = Params::new(19 * 1024, 2, 1, Some(VAULT_KEY_LENGTH)).map_err(|_| CliError {
-        code: "vault-key-derivation-failed",
-        message: "보관함 키 파생 설정이 올바르지 않습니다.".to_string(),
-    })?;
-    let argon2 = Argon2::new(Algorithm::Argon2id, Version::V0x13, params);
-    let mut key = [0_u8; VAULT_KEY_LENGTH];
-
-    argon2
-        .hash_password_into(password, salt, &mut key)
-        .map_err(|_| CliError {
+fn derive_vault_key(
+    password: &[u8],
+    salt: &[u8],
+    memory_kib: u32,
+    iterations: u32,
+    parallelism: u32,
+) -> Result<[u8; VAULT_KEY_LENGTH], CliError> {
+    derive_argon2id_key(password, salt, memory_kib, iterations, parallelism).map_err(|_| {
+        CliError {
             code: "vault-key-derivation-failed",
             message: "보관함 키 파생에 실패했습니다.".to_string(),
-        })?;
-
-    Ok(key)
+        }
+    })
 }
 
 fn is_supported_envelope(envelope: &SecretVaultEnvelope) -> bool {
     envelope.format == "workduck.secret-vault"
         && envelope.version == 1
         && envelope.kdf.algorithm == "argon2id"
-        && envelope.kdf.version == 19
-        && envelope.kdf.memory_kib == 19 * 1024
-        && envelope.kdf.iterations == 2
-        && envelope.kdf.parallelism == 1
+        && envelope.kdf.version == ARGON2ID_VERSION
+        && parameters_are_supported(
+            envelope.kdf.version,
+            envelope.kdf.memory_kib,
+            envelope.kdf.iterations,
+            envelope.kdf.parallelism,
+        )
         && envelope.cipher.algorithm == "xchacha20poly1305"
 }
 
