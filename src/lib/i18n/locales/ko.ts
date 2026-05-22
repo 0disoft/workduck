@@ -218,6 +218,11 @@ export const koMessages = {
 			promptCopied: '평가 지시문을 복사했습니다.',
 			clipboardUnavailable: '클립보드를 사용할 수 없습니다.',
 			delegationPrompt: '위임 지시문',
+			sourceReport: '대상 보고서',
+			workspace: '워크스페이스',
+			criteria: '평가 기준',
+			targets: '평가 대상',
+			command: '실행 명령',
 			saving: '저장 중',
 			saved: '평가를 저장했습니다.'
 		},
@@ -715,37 +720,59 @@ export const koMessages = {
 					'선택한 동기화 폴더의 암호화 파일을 읽어 현재 앱에 적용합니다. Git pull 후 최신 데이터를 반영할 때 사용합니다.'
 			},
 			confirmations: {
+				exportData: {
+					title: '암호화 데이터 내보내기 확인',
+					body:
+						'아래 암호화된 데이터 영역의 기존 내용이 현재 앱 데이터로 새로 만든 내보내기 결과로 바뀝니다.',
+					inputLabel: '계속하려면 아래에 표시된 문구를 정확히 입력하세요.',
+					confirmTextLabel: '정확히 입력할 문구',
+					confirmText: '암호화 데이터 내보내기',
+					actionLabel: '내보내기'
+				},
 				importData: {
 					title: '암호화 데이터 가져오기 확인',
-					body: '현재 앱의 워크스페이스와 프로젝트 데이터가 입력한 암호화 데이터로 바뀝니다.',
-					inputLabel: '계속하려면 아래 문구를 입력하세요.',
-					confirmTextLabel: '입력할 문구',
-					confirmText: '가져오기',
+					body:
+						'아래 암호화된 데이터 영역의 내용이 현재 앱의 워크스페이스와 프로젝트 데이터를 바꿉니다.',
+					inputLabel: '계속하려면 아래에 표시된 문구를 정확히 입력하세요.',
+					confirmTextLabel: '정확히 입력할 문구',
+					confirmText: '암호화 데이터 가져오기',
 					actionLabel: '가져오기'
 				},
 				saveFile: {
 					title: '동기화 파일 저장 확인',
-					body: '현재 앱 데이터를 암호화해 선택한 동기화 파일을 덮어씁니다.',
-					inputLabel: '계속하려면 아래 문구를 입력하세요.',
-					confirmTextLabel: '입력할 문구',
-					confirmText: '저장',
+					body:
+						'{folderPath} 폴더의 {fileName} 파일을 현재 앱 데이터로 암호화해 덮어씁니다.',
+					inputLabel: '계속하려면 아래에 표시된 문구를 정확히 입력하세요.',
+					confirmTextLabel: '정확히 입력할 문구',
+					confirmText: '동기화 파일 저장',
 					actionLabel: '저장'
 				},
 				loadFile: {
 					title: '동기화 파일 불러오기 확인',
-					body: '선택한 동기화 파일의 데이터가 현재 앱의 워크스페이스와 프로젝트 데이터에 적용됩니다.',
-					inputLabel: '계속하려면 아래 문구를 입력하세요.',
-					confirmTextLabel: '입력할 문구',
-					confirmText: '불러오기',
+					body:
+						'{folderPath} 폴더의 {fileName} 파일을 읽어 현재 앱의 워크스페이스와 프로젝트 데이터에 적용합니다.',
+					inputLabel: '계속하려면 아래에 표시된 문구를 정확히 입력하세요.',
+					confirmTextLabel: '정확히 입력할 문구',
+					confirmText: '동기화 파일 불러오기',
 					actionLabel: '불러오기'
 				},
 				pullGit: {
 					title: 'Git pull 확인',
-					body: '원격 변경 사항이 동기화 폴더에 적용됩니다. 이후 불러오기를 실행하면 현재 앱 데이터가 바뀔 수 있습니다.',
-					inputLabel: '계속하려면 아래 문구를 입력하세요.',
-					confirmTextLabel: '입력할 문구',
-					confirmText: 'Pull',
+					body:
+						'Git pull로 원격 변경 사항을 {folderPath} 폴더에 적용합니다. 이후 불러오기를 실행하면 현재 앱 데이터가 바뀔 수 있습니다.',
+					inputLabel: '계속하려면 아래에 표시된 문구를 정확히 입력하세요.',
+					confirmTextLabel: '정확히 입력할 문구',
+					confirmText: 'Git pull',
 					actionLabel: 'Pull'
+				},
+				pushGit: {
+					title: 'Git push 확인',
+					body:
+						'{folderPath} 폴더의 {fileName} 파일을 필요하면 커밋한 뒤 원격 저장소로 Git push합니다.',
+					inputLabel: '계속하려면 아래에 표시된 문구를 정확히 입력하세요.',
+					confirmTextLabel: '정확히 입력할 문구',
+					confirmText: 'Git push',
+					actionLabel: 'Push'
 				}
 			},
 			statuses: {

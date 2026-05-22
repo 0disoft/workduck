@@ -216,6 +216,11 @@ export const enMessages = {
 			promptCopied: 'Rating prompt copied.',
 			clipboardUnavailable: 'Clipboard is not available.',
 			delegationPrompt: 'Delegation prompt',
+			sourceReport: 'Source report',
+			workspace: 'Workspace',
+			criteria: 'Criteria',
+			targets: 'Targets',
+			command: 'Command',
 			saving: 'Saving',
 			saved: 'Rating saved.'
 		},
@@ -714,37 +719,59 @@ export const enMessages = {
 					'Read the encrypted file from the selected sync folder and apply it to this app. Use this after Git pull.'
 			},
 			confirmations: {
+				exportData: {
+					title: 'Confirm encrypted data export',
+					body:
+						'The encrypted data text area will be replaced with a new export from this app.',
+					inputLabel: 'Type the exact phrase shown below to continue.',
+					confirmTextLabel: 'Exact phrase',
+					confirmText: 'Export encrypted data',
+					actionLabel: 'Export'
+				},
 				importData: {
 					title: 'Confirm encrypted data import',
-					body: 'The current app workspace and project data will be replaced by the encrypted data in the text area.',
-					inputLabel: 'Type the text below to continue.',
-					confirmTextLabel: 'Text to type',
-					confirmText: 'Import',
+					body:
+						'The encrypted data in the text area will replace this app workspace and project data.',
+					inputLabel: 'Type the exact phrase shown below to continue.',
+					confirmTextLabel: 'Exact phrase',
+					confirmText: 'Import encrypted data',
 					actionLabel: 'Import'
 				},
 				saveFile: {
 					title: 'Confirm sync file save',
-					body: 'The selected sync file will be overwritten with encrypted data from this app.',
-					inputLabel: 'Type the text below to continue.',
-					confirmTextLabel: 'Text to type',
-					confirmText: 'Save',
+					body:
+						'The file {fileName} in {folderPath} will be overwritten with encrypted data from this app.',
+					inputLabel: 'Type the exact phrase shown below to continue.',
+					confirmTextLabel: 'Exact phrase',
+					confirmText: 'Save sync file',
 					actionLabel: 'Save'
 				},
 				loadFile: {
 					title: 'Confirm sync file load',
-					body: 'Data from the selected sync file will be applied to this app workspace and its project data.',
-					inputLabel: 'Type the text below to continue.',
-					confirmTextLabel: 'Text to type',
-					confirmText: 'Load',
+					body:
+						'The file {fileName} in {folderPath} will be loaded into this app workspace and project data.',
+					inputLabel: 'Type the exact phrase shown below to continue.',
+					confirmTextLabel: 'Exact phrase',
+					confirmText: 'Load sync file',
 					actionLabel: 'Load'
 				},
 				pullGit: {
 					title: 'Confirm Git pull',
-					body: 'Remote changes will be applied to the sync folder. Loading afterward can change this app data.',
-					inputLabel: 'Type the text below to continue.',
-					confirmTextLabel: 'Text to type',
-					confirmText: 'Pull',
+					body:
+						'Git pull will apply remote changes to {folderPath}. Loading afterward can change this app data.',
+					inputLabel: 'Type the exact phrase shown below to continue.',
+					confirmTextLabel: 'Exact phrase',
+					confirmText: 'Git pull',
 					actionLabel: 'Pull'
+				},
+				pushGit: {
+					title: 'Confirm Git push',
+					body:
+						'The sync file {fileName} in {folderPath} will be committed if needed and pushed to the remote repository.',
+					inputLabel: 'Type the exact phrase shown below to continue.',
+					confirmTextLabel: 'Exact phrase',
+					confirmText: 'Git push',
+					actionLabel: 'Push'
 				}
 			},
 			statuses: {

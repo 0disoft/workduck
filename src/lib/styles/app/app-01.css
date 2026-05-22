@@ -593,6 +593,86 @@ a {
 	line-height: 1.4;
 }
 
+.workduck-queue-evaluation-delegation {
+	display: grid;
+	min-width: 0;
+	gap: 12px;
+}
+
+.workduck-queue-evaluation-delegation-meta {
+	display: grid;
+	min-width: 0;
+	grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+	gap: 8px;
+}
+
+.workduck-queue-evaluation-delegation-meta div,
+.workduck-queue-evaluation-target-card {
+	display: grid;
+	min-width: 0;
+	gap: 4px;
+	border: 1px solid oklch(var(--workduck-oklch-border) / 0.72);
+	border-radius: 8px;
+	background: oklch(var(--workduck-oklch-surface) / 0.5);
+	padding: 9px 10px;
+}
+
+.workduck-queue-evaluation-delegation-meta span,
+.workduck-queue-evaluation-delegation-meta strong,
+.workduck-queue-evaluation-target-card strong,
+.workduck-queue-evaluation-command {
+	min-width: 0;
+	overflow-wrap: anywhere;
+}
+
+.workduck-queue-evaluation-delegation-meta span {
+	color: var(--workduck-color-accent);
+	font-size: var(--workduck-font-size-xs);
+	font-weight: 800;
+}
+
+.workduck-queue-evaluation-delegation-meta strong,
+.workduck-queue-evaluation-target-card strong {
+	color: var(--workduck-color-text);
+	font-size: var(--workduck-font-size-xs);
+	font-weight: 800;
+}
+
+.workduck-queue-evaluation-target-list {
+	display: grid;
+	min-width: 0;
+	grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+	gap: 8px;
+}
+
+.workduck-queue-evaluation-target-card ul {
+	display: grid;
+	min-width: 0;
+	gap: 3px;
+	margin: 0;
+	padding-inline-start: 18px;
+}
+
+.workduck-queue-evaluation-target-card li {
+	color: var(--workduck-color-muted);
+	font-size: var(--workduck-font-size-xs);
+	font-weight: 800;
+	overflow-wrap: anywhere;
+}
+
+.workduck-queue-evaluation-command {
+	display: block;
+	border: 1px solid oklch(var(--workduck-oklch-border) / 0.72);
+	border-radius: 8px;
+	background: oklch(var(--workduck-oklch-surface) / 0.5);
+	color: var(--workduck-color-text);
+	padding: 9px 10px;
+	font-family: var(--workduck-font-mono);
+	font-size: var(--workduck-font-size-xs);
+	font-weight: 800;
+	white-space: pre-wrap;
+}
+
 .workduck-queue-review-list {
 	display: grid;
 	min-width: 0;

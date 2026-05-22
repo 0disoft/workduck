@@ -9,6 +9,7 @@
 		type WorkduckQueueWorkPriority
 	} from './queue-artifacts';
 	import type { WorkduckQueueTaskKind } from './queue-voting';
+	import { createEvaluationDelegationDisplay } from './queue-work-order-display';
 
 	interface Props {
 		readonly workOrder: WorkduckQueueWorkOrder;
@@ -61,6 +62,7 @@
 
 	<div class="workduck-queue-review-tasks">
 		{#each workOrder.tasks as task (task.id)}
+			{@const evaluationDelegation = createEvaluationDelegationDisplay(workOrder, task)}
 			<article class="workduck-queue-review-task">
 				<header class="workduck-queue-review-task-header">
 					<strong>{task.title}</strong>
@@ -108,7 +110,64 @@
 						{messages.common.edit}
 					</button>
 				</header>
-				<p>{task.body}</p>
+				{#if evaluationDelegation !== null}
+					<div class="workduck-queue-evaluation-delegation">
+						<div class="workduck-queue-evaluation-delegation-meta">
+							{#if evaluationDelegation.reportLocation !== null}
+								<div>
+									<span>{messages.queue.evaluation.sourceReport}</span>
+									<strong>{evaluationDelegation.reportLocation}</strong>
+								</div>
+							{/if}
+							{#if evaluationDelegation.workspacePath !== null}
+								<div>
+									<span>{messages.queue.evaluation.workspace}</span>
+									<strong>{evaluationDelegation.workspacePath}</strong>
+								</div>
+							{/if}
+						</div>
+
+						{#if evaluationDelegation.criteria.length > 0}
+							<div class="workduck-queue-review-list">
+								<span>{messages.queue.evaluation.criteria}</span>
+								<ul>
+									{#each evaluationDelegation.criteria as criterion}
+										<li>{criterion}</li>
+									{/each}
+								</ul>
+							</div>
+						{/if}
+
+						{#if evaluationDelegation.targets.length > 0}
+							<div class="workduck-queue-review-list">
+								<span>{messages.queue.evaluation.targets}</span>
+								<div class="workduck-queue-evaluation-target-list">
+									{#each evaluationDelegation.targets as target}
+										<section class="workduck-queue-evaluation-target-card">
+											<strong>{target.name}</strong>
+											{#if target.details.length > 0}
+												<ul>
+													{#each target.details as detail}
+														<li>{detail}</li>
+													{/each}
+												</ul>
+											{/if}
+										</section>
+									{/each}
+								</div>
+							</div>
+						{/if}
+
+						{#if evaluationDelegation.command !== null}
+							<div class="workduck-queue-review-list">
+								<span>{messages.queue.evaluation.command}</span>
+								<code class="workduck-queue-evaluation-command">{evaluationDelegation.command}</code>
+							</div>
+						{/if}
+					</div>
+				{:else}
+					<p>{task.body}</p>
+				{/if}
 
 				{#if task.sourceReportTaskId !== undefined}
 					<div class="workduck-queue-review-list">

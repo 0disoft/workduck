@@ -67,7 +67,21 @@
 		| ProjectRegistryStorageError
 		| SyncSettingsStorageError
 		| WorkspaceSyncGitRunError;
-	type SyncDangerAction = 'importData' | 'saveFile' | 'loadFile' | 'pullGit';
+	type SyncDangerAction =
+		| 'exportData'
+		| 'importData'
+		| 'saveFile'
+		| 'loadFile'
+		| 'pullGit'
+		| 'pushGit';
+	type SyncDangerConfirmation = {
+		readonly title: string;
+		readonly body: string;
+		readonly inputLabel: string;
+		readonly confirmTextLabel: string;
+		readonly confirmText: string;
+		readonly actionLabel: string;
+	};
 
 	let appearanceSettings = $state<AppearanceSettings>(createDefaultAppearanceSettings());
 	let syncSettings = $state<SyncSettings>(createDefaultSyncSettings());
@@ -119,6 +133,12 @@
 			pendingDangerConfirmText.trim() === getPendingDangerConfirmation()?.confirmText &&
 			!isBusy
 	);
+
+	function formatSyncConfirmationText(template: string) {
+		return template
+			.replaceAll('{fileName}', syncSettings.fileName)
+			.replaceAll('{folderPath}', formatWorkspacePathForDisplay(syncSettings.folderPath));
+	}
 
 	function getSyncErrorMessage(error: SyncPanelError) {
 		switch (error) {
@@ -515,7 +535,22 @@
 		return true;
 	}
 
-	async function handleExport() {
+	function handleExport() {
+		if (!canExport) {
+			syncError = 'workspace-sync-password-required';
+			syncStatus = null;
+			return;
+		}
+
+		if (syncPayload.trim().length > 0) {
+			openDangerConfirmation('exportData');
+			return;
+		}
+
+		void runExport();
+	}
+
+	async function runExport() {
 		const payload = await createEncryptedRegistryPayload();
 
 		if (payload === null) {
@@ -621,6 +656,11 @@
 			return;
 		}
 
+		if (action === 'push') {
+			openDangerConfirmation('pushGit');
+			return;
+		}
+
 		await runGitSyncAction(action);
 	}
 
@@ -679,12 +719,21 @@
 		pendingDangerConfirmText = '';
 	}
 
-	function getPendingDangerConfirmation() {
+	function getPendingDangerConfirmation(): SyncDangerConfirmation | null {
 		if (pendingDangerAction === null) {
 			return null;
 		}
 
-		return syncMessages.confirmations[pendingDangerAction];
+		const confirmation = syncMessages.confirmations[pendingDangerAction];
+
+		return {
+			title: confirmation.title,
+			body: formatSyncConfirmationText(confirmation.body),
+			inputLabel: confirmation.inputLabel,
+			confirmTextLabel: confirmation.confirmTextLabel,
+			confirmText: confirmation.confirmText,
+			actionLabel: confirmation.actionLabel
+		};
 	}
 
 	async function confirmDangerAction() {
@@ -697,6 +746,9 @@
 		pendingDangerConfirmText = '';
 
 		switch (action) {
+			case 'exportData':
+				await runExport();
+				return;
 			case 'importData':
 				await runImport();
 				return;
@@ -708,6 +760,9 @@
 				return;
 			case 'pullGit':
 				await runGitSyncAction('pull');
+				return;
+			case 'pushGit':
+				await runGitSyncAction('push');
 				return;
 		}
 	}
