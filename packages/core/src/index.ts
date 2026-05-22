@@ -8,6 +8,7 @@ export const workduckEntityKinds = [
   "service",
   "agent-brief",
   "run",
+  "shell-run",
   "gate",
   "queue-work-order",
   "queue-result-report",
@@ -90,6 +91,7 @@ export type CatalogArtifactRef = WorkduckEntityRef & { readonly kind: "catalog-a
 export type ServiceRef = WorkduckEntityRef & { readonly kind: "service" };
 export type AgentBriefRef = WorkduckEntityRef & { readonly kind: "agent-brief" };
 export type RunRef = WorkduckEntityRef & { readonly kind: "run" };
+export type ShellRunRef = WorkduckEntityRef & { readonly kind: "shell-run" };
 export type GateRef = WorkduckEntityRef & { readonly kind: "gate" };
 export type QueueWorkOrderRef = WorkduckEntityRef & { readonly kind: "queue-work-order" };
 export type QueueResultReportRef = WorkduckEntityRef & { readonly kind: "queue-result-report" };
@@ -180,6 +182,46 @@ export interface WorkduckRun {
   readonly artifactRefs: readonly ArtifactRef[];
   readonly gateRefs: readonly GateRef[];
   readonly brief?: AgentBriefRef;
+}
+
+export const workduckShellRunApprovalStates = ["pending", "approved", "rejected"] as const;
+
+export type WorkduckShellRunApprovalState = (typeof workduckShellRunApprovalStates)[number];
+
+export const workduckShellRunStates = ["blocked", "ready", "running", "succeeded", "failed"] as const;
+
+export type WorkduckShellRunState = (typeof workduckShellRunStates)[number];
+
+export const workduckShellRunBlockerCodes = [
+  "missing-command",
+  "missing-cwd",
+  "approval-pending",
+  "approval-rejected"
+] as const;
+
+export type WorkduckShellRunBlockerCode = (typeof workduckShellRunBlockerCodes)[number];
+
+export interface WorkduckShellRunApproval {
+  readonly state: WorkduckShellRunApprovalState;
+  readonly approvedBy?: string;
+  readonly approvedAt?: string;
+  readonly reason?: string;
+}
+
+export interface WorkduckShellRun {
+  readonly ref: ShellRunRef;
+  readonly status: WorkduckRecordStatus;
+  readonly run: RunRef;
+  readonly command: string;
+  readonly cwd: string;
+  readonly approval: WorkduckShellRunApproval;
+  readonly state: WorkduckShellRunState;
+  readonly blockers: readonly WorkduckShellRunBlockerCode[];
+  readonly outputTail?: string;
+  readonly diffSummary?: string;
+  readonly exitCode?: number;
+  readonly startedAt?: string;
+  readonly finishedAt?: string;
 }
 
 export interface WorkduckGate {
@@ -293,4 +335,20 @@ export function isWorkduckQueueReviewDecision(
   value: string
 ): value is WorkduckQueueReviewDecision {
   return (workduckQueueReviewDecisions as readonly string[]).includes(value);
+}
+
+export function isWorkduckShellRunApprovalState(
+  value: string
+): value is WorkduckShellRunApprovalState {
+  return (workduckShellRunApprovalStates as readonly string[]).includes(value);
+}
+
+export function isWorkduckShellRunState(value: string): value is WorkduckShellRunState {
+  return (workduckShellRunStates as readonly string[]).includes(value);
+}
+
+export function isWorkduckShellRunBlockerCode(
+  value: string
+): value is WorkduckShellRunBlockerCode {
+  return (workduckShellRunBlockerCodes as readonly string[]).includes(value);
 }

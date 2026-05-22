@@ -68,6 +68,10 @@ work.
   affected card, and block duplicate clicks during long-running operations.
 - Repository operation records for clone, init, fetch, pull, push, and publish
   are stored in SQLite.
+- Repository terminal tasks for dependency install, dependency update, dev
+  server start, and build create workspace-local run records under `.workduck/`
+  with command, repository path, start time, exit code when available, and a
+  short output tail.
 - Repository filters for tags, pull-needed repositories, and push-needed
   repositories.
 - Project board metadata is stored in SQLite by workspace, with legacy
@@ -81,8 +85,20 @@ work.
   agent export, and workbench orchestration.
 - Agent Brief Markdown export targets for Claude Code, Codex, Cursor, and
   OpenCode.
+- Export-only adapter profiles for Claude Code, Codex, Cursor, OpenCode, and
+  generic Markdown consumers. These profiles describe supported local artifacts
+  without calling model SDKs or running external agents.
+- AGENTS.md generation from local brief, run, and gate data.
+- Local Agent Brief -> Run -> Gate loop helpers compile a brief, summarize the
+  run plan, build local run records, and derive gate state from already-loaded
+  check data without calling external agents or shell commands.
 - Queue result-report, work-order, and proposal JSON contracts in the shared
   core and schema packages.
+- Local shell-run JSON contract in the shared core and schema packages, plus
+  pure workbench helpers that require explicit approval before a shell command
+  record becomes ready. The record captures command text, working directory,
+  approval state, blockers, output tail, diff summary, exit code, and timing
+  fields without executing the shell command.
 - Skills menu with workspace-local Workduck skills stored in
   `<workspace>/.workduck/skills.json` and a built-in proposal writer skill.
 - References menu with workspace-local research references stored in
@@ -92,47 +108,6 @@ work.
 - Persona menu with workspace-local personas stored in
   `<workspace>/.workduck/personas.json`; agents are stored in
   `<workspace>/.workduck/agents.json` and may reference persona IDs.
-
-## Next Work
-
-1. Build the first Agent Brief -> Run -> Gate loop using local data only.
-2. Add an AGENTS.md generator after the brief/run/gate loop exists.
-3. Add a local shell runner with explicit approval after run records can capture
-   command, output, diff, and approval state.
-4. Add OpenCode and other agent adapters only after the local runner boundary is
-   stable.
-
-## Stabilization Backlog
-
-These items are not new product surfaces. They are implementation debts that
-should be addressed before the queue runner, repository operations, and
-workspace sync become harder to change safely.
-
-### Project Registry And Repository Operations
-
-1. Track repository task execution instead of only opening terminals.
-   - Current risk: install, update, build, and dev-server commands can exit with
-     code 1 in an external terminal while the app only knows that the command was
-     launched.
-   - Target behavior: repository tasks have a durable execution record with
-     command, working directory, started time, exit code when available, and a
-     short output tail.
-   - Acceptance criteria: a failed dependency install or dev-server command is
-     visible on the repository card or task history without requiring the user to
-     inspect the terminal manually.
-
-### Frontend And Adapter Cleanup
-
-1. Keep large surfaces below the point where they become routing files.
-   - Current risk: queue, project, and settings surfaces can regrow after each
-     feature because modals, filters, file I/O, execution, evaluation, and
-     rendering sit close together.
-   - Target behavior: surface files compose focused modules for state loading,
-     filters, modals, artifact actions, context menus, and repository task
-     actions.
-   - Acceptance criteria: new queue task types or repository actions can be
-     added by extending a focused module rather than expanding the primary
-     Svelte surface.
 
 ## Deferred Dependencies
 

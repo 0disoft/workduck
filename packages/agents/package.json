@@ -1,6 +1,6 @@
 {
   "name": "@workduck/agents",
-  "version": "1.2.0",
+  "version": "1.2.2",
   "private": true,
   "license": "0BSD",
   "type": "module",
@@ -13,6 +13,7 @@
   },
   "types": "./src/index.ts",
   "dependencies": {
-    "@workduck/prompts": "workspace:*"
+    "@workduck/prompts": "workspace:*",
+    "@workduck/workbench-engine": "workspace:*"
   }
 }

@@ -1,7 +1,20 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "rootDir": "src",
+    "paths": {
+      "@workduck/core": [
+        "../core/src/index.ts"
+      ],
+      "@workduck/prompts": [
+        "../prompts/src/index.ts"
+      ],
+      "@workduck/schemas": [
+        "../schemas/src/index.ts"
+      ],
+      "@workduck/workbench-engine": [
+        "../workbench-engine/src/index.ts"
+      ]
+    },
     "noEmit": true
   },
   "include": [

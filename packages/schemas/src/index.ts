@@ -9,6 +9,9 @@ import {
   type WorkduckQueueWorkPriority,
   type WorkduckRiskLevel,
   type WorkduckServiceLevel,
+  type WorkduckShellRunApprovalState,
+  type WorkduckShellRunBlockerCode,
+  type WorkduckShellRunState,
   workduckCatalogArtifactKinds,
   workduckEntityKinds,
   workduckQueueReviewDecisions,
@@ -18,7 +21,10 @@ import {
   workduckRecordStatuses,
   workduckRepoKinds,
   workduckRiskLevels,
-  workduckServiceLevels
+  workduckServiceLevels,
+  workduckShellRunApprovalStates,
+  workduckShellRunBlockerCodes,
+  workduckShellRunStates
 } from "@workduck/core";
 
 export const workduckJsonSchemaDraft = "https://json-schema.org/draft/2020-12/schema" as const;
@@ -37,7 +43,8 @@ export const workduckSchemaIds = {
   queueWorkOrder: "urn:workduck:schema:queue-work-order:v1",
   repo: "urn:workduck:schema:repo:v1",
   run: "urn:workduck:schema:run:v1",
-  service: "urn:workduck:schema:service:v1"
+  service: "urn:workduck:schema:service:v1",
+  shellRun: "urn:workduck:schema:shell-run:v1"
 } as const;
 
 export type WorkduckSchemaId = (typeof workduckSchemaIds)[keyof typeof workduckSchemaIds];
@@ -87,6 +94,11 @@ const workduckQueueWorkPriorityEnum: readonly WorkduckQueueWorkPriority[] =
 const workduckQueueTaskKindEnum: readonly WorkduckQueueTaskKind[] = workduckQueueTaskKinds;
 const workduckQueueResponseLanguageEnum: readonly WorkduckQueueResponseLanguage[] =
   workduckQueueResponseLanguages;
+const workduckShellRunApprovalStateEnum: readonly WorkduckShellRunApprovalState[] =
+  workduckShellRunApprovalStates;
+const workduckShellRunStateEnum: readonly WorkduckShellRunState[] = workduckShellRunStates;
+const workduckShellRunBlockerCodeEnum: readonly WorkduckShellRunBlockerCode[] =
+  workduckShellRunBlockerCodes;
 
 const entityRefReference = {
   $ref: workduckSchemaIds.entityRef
@@ -354,6 +366,62 @@ export const workduckGateSchema = {
   }
 } satisfies WorkduckObjectJsonSchema;
 
+export const workduckShellRunSchema = {
+  $schema: workduckJsonSchemaDraft,
+  $id: workduckSchemaIds.shellRun,
+  title: "Workduck shell run",
+  type: "object",
+  additionalProperties: false,
+  required: ["ref", "status", "run", "command", "cwd", "approval", "state", "blockers"],
+  properties: {
+    ref: entityRefReference,
+    status: recordStatus,
+    run: entityRefReference,
+    command: {
+      type: "string"
+    },
+    cwd: {
+      type: "string"
+    },
+    approval: {
+      type: "object",
+      additionalProperties: false,
+      required: ["state"],
+      properties: {
+        state: {
+          type: "string",
+          enum: workduckShellRunApprovalStateEnum
+        },
+        approvedBy: nonEmptyString,
+        approvedAt: nonEmptyString,
+        reason: nonEmptyString
+      }
+    },
+    state: {
+      type: "string",
+      enum: workduckShellRunStateEnum
+    },
+    blockers: {
+      type: "array",
+      items: {
+        type: "string",
+        enum: workduckShellRunBlockerCodeEnum
+      }
+    },
+    outputTail: {
+      type: "string"
+    },
+    diffSummary: {
+      type: "string"
+    },
+    exitCode: {
+      type: "integer"
+    },
+    startedAt: nonEmptyString,
+    finishedAt: nonEmptyString
+  }
+} satisfies WorkduckObjectJsonSchema;
+
 export const workduckQueueResultReportSchema = {
   $schema: workduckJsonSchemaDraft,
   $id: workduckSchemaIds.queueResultReport,
@@ -550,7 +618,8 @@ export const workduckSchemas = {
   [workduckSchemaIds.queueWorkOrder]: workduckQueueWorkOrderSchema,
   [workduckSchemaIds.repo]: workduckRepoSchema,
   [workduckSchemaIds.run]: workduckRunSchema,
-  [workduckSchemaIds.service]: workduckServiceSchema
+  [workduckSchemaIds.service]: workduckServiceSchema,
+  [workduckSchemaIds.shellRun]: workduckShellRunSchema
 } as const;
 
 export type WorkduckSchema = (typeof workduckSchemas)[WorkduckSchemaId];
