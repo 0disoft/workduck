@@ -1,5 +1,6 @@
 import {
 	createEmptyWorkspaceRegistry,
+	normalizeWorkspaceRegistry,
 	parseWorkspaceRegistry,
 	serializeWorkspaceRegistry,
 	WORKDUCK_WORKSPACE_REGISTRY_STORAGE_KEY,
@@ -55,7 +56,7 @@ export function writeWorkspaceRegistryToBrowser(
 		return { ok: false, registry, error: 'workspace-registry-write-failed' };
 	}
 
-	const normalizedRegistry = parseWorkspaceRegistry(serializeWorkspaceRegistry(registry));
+	const normalizedRegistry = normalizeWorkspaceRegistry(registry);
 
 	try {
 		window.localStorage.setItem(
@@ -94,7 +95,7 @@ export function subscribeWorkspaceRegistry(
 			return;
 		}
 
-		callback(parseWorkspaceRegistry(serializeWorkspaceRegistry(detail.registry)));
+		callback(normalizeWorkspaceRegistry(detail.registry));
 	}
 
 	function handleStorageChanged(event: StorageEvent) {

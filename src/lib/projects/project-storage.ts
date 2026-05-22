@@ -592,7 +592,7 @@ function writeLegacyProjectRegistries(registries: Record<string, ProjectRegistry
 			registries: Object.fromEntries(
 				Object.entries(registries).map(([workspaceId, registry]) => [
 					workspaceId,
-					JSON.parse(serializeProjectRegistry(registry))
+					normalizeProjectRegistry(registry, workspaceId)
 				])
 			)
 		})

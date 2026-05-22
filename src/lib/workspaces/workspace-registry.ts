@@ -245,7 +245,7 @@ export function getActiveWorkspace(registry: WorkspaceRegistry): WorkspaceRecord
 	);
 }
 
-function normalizeWorkspaceRegistry(value: unknown): WorkspaceRegistry {
+export function normalizeWorkspaceRegistry(value: unknown): WorkspaceRegistry {
 	if (!isObjectRecord(value)) {
 		return createEmptyWorkspaceRegistry();
 	}

@@ -4,6 +4,7 @@ import {
 	type ProjectRegistry
 } from '$lib/projects/project-registry';
 import {
+	normalizeWorkspaceRegistry,
 	parseWorkspaceRegistry,
 	serializeWorkspaceRegistry,
 	type WorkspaceRegistry
@@ -177,7 +178,7 @@ function serializeWorkspaceSyncData(
 	workspaceRegistry: WorkspaceRegistry,
 	projectRegistries: Record<string, ProjectRegistry>
 ) {
-	const normalizedWorkspaceRegistry = parseWorkspaceRegistry(serializeWorkspaceRegistry(workspaceRegistry));
+	const normalizedWorkspaceRegistry = normalizeWorkspaceRegistry(workspaceRegistry);
 	const workspacePathById = new Map(
 		normalizedWorkspaceRegistry.workspaces.map((workspace) => [workspace.id, workspace.path])
 	);
@@ -203,7 +204,7 @@ function parseWorkspaceSyncData(plaintext: string): WorkspaceSyncData | null {
 		const value: unknown = JSON.parse(plaintext);
 
 		if (looksLikeWorkspaceRegistryValue(value)) {
-			const workspaceRegistry = parseWorkspaceRegistry(JSON.stringify(value));
+			const workspaceRegistry = normalizeWorkspaceRegistry(value);
 
 			return {
 				format: WORKSPACE_SYNC_PAYLOAD_FORMAT,
@@ -223,7 +224,7 @@ function parseWorkspaceSyncData(plaintext: string): WorkspaceSyncData | null {
 		}
 
 		const projectRegistrySnapshots = value.projectRegistries;
-		const workspaceRegistry = parseWorkspaceRegistry(JSON.stringify(value.workspaceRegistry));
+		const workspaceRegistry = normalizeWorkspaceRegistry(value.workspaceRegistry);
 		const workspacePathById = new Map(
 			workspaceRegistry.workspaces.map((workspace) => [workspace.id, workspace.path])
 		);
