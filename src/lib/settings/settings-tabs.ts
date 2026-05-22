@@ -4,6 +4,7 @@ export const settingsTabs = [
 	{ id: 'appearance', label: 'Appearance' },
 	{ id: 'workspaces', label: 'Workspaces' },
 	{ id: 'sync', label: 'Sync' },
+	{ id: 'advanced', label: 'Advanced' },
 	{ id: 'system', label: 'System' }
 ] as const;
 

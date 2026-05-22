@@ -680,8 +680,8 @@ a {
 .workduck-queue-evaluation-row {
 	display: grid;
 	min-width: 0;
-	grid-template-columns: minmax(0, 1fr) 74px;
-	gap: 10px;
+	grid-template-columns: minmax(0, 1fr) minmax(252px, 292px);
+	gap: 12px;
 	align-items: start;
 }
 
@@ -700,8 +700,46 @@ a {
 	white-space: nowrap;
 }
 
-.workduck-queue-evaluation-score {
-	width: 74px;
+.workduck-queue-evaluation-score-grid {
+	display: grid;
+	min-width: 0;
+	grid-template-columns: repeat(9, minmax(0, 1fr));
+	gap: 4px;
+}
+
+.workduck-queue-evaluation-score-button {
+	display: inline-flex;
+	min-width: 0;
+	height: 32px;
+	align-items: center;
+	justify-content: center;
+	border: 1px solid oklch(var(--workduck-oklch-border) / 0.94);
+	border-radius: 8px;
+	background: var(--workduck-color-surface);
+	color: var(--workduck-color-text);
+	font-weight: 800;
+}
+
+.workduck-queue-evaluation-score-button:hover:not(:disabled),
+.workduck-queue-evaluation-score-button:focus-visible {
+	border-color: oklch(var(--workduck-oklch-accent) / 0.82);
+	color: var(--workduck-color-accent);
+}
+
+.workduck-queue-evaluation-score-button:focus-visible {
+	outline: 2px solid var(--workduck-color-accent);
+	outline-offset: 2px;
+}
+
+.workduck-queue-evaluation-score-button-selected {
+	border-color: oklch(var(--workduck-oklch-accent) / 0.9);
+	background: oklch(var(--workduck-oklch-accent) / 0.16);
+	color: var(--workduck-color-accent);
+}
+
+.workduck-queue-evaluation-score-button:disabled {
+	cursor: not-allowed;
+	opacity: 0.56;
 }
 
 .workduck-sr-only {

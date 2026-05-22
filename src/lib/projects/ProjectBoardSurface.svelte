@@ -2,6 +2,7 @@
 	import type { WorkduckMessages } from '$lib/i18n/workduck-message-contract';
 	import type { WorkduckLanguageId } from '$lib/i18n/workduck-language';
 	import type { EnvironmentVault } from '$lib/environment/environment-vault';
+	import StatusToast from '$lib/ui/StatusToast.svelte';
 	import {
 		type SecretVaultEnvelope
 	} from '$lib/environment/secret-vault-crypto';
@@ -11,7 +12,6 @@
 
 	import {
 		createEmptyProjectRegistry,
-		createProjectTreeRows,
 		type ProjectNodeRecord,
 		type ProjectRegistry,
 		type ProjectRepositoryLinkRecord
@@ -22,14 +22,7 @@
 		type ProjectRepositoryOperationStorageError
 	} from './project-operation-storage';
 	import {
-		getRepositoryFilterStats,
 		getTagsInputMaxLength,
-		normalizeTagFilter,
-		resolveSelectedGroup,
-		resolveSelectedProject,
-		selectGroupRepositories,
-		selectProjectGroups,
-		selectProjectNodes,
 		type ProjectRepositoryGitStatus,
 		type ProjectRepositorySyncFilter
 	} from './project-board-selectors';
@@ -56,16 +49,28 @@
 		type ProjectRepositoryOperation
 	} from './project-board-operations';
 	import {
-		finishProjectRepositoryOperationForBoard,
-		getProjectRepositoryOperation,
-		isProjectRepositoryBusy,
-		isProjectRepositoryOperationRunning,
-		startProjectRepositoryOperation
-	} from './project-board-operation-state';
+		canEditProjectBoardContextGithubCredential,
+		canOpenProjectBoardContextFolder,
+		getProjectBoardContextRepositoryGitStatus,
+		getProjectBoardNodeGithubCredentialName,
+		getProjectBoardRepositoryGithubCredentialName,
+		isProjectBoardDeleteLocalFolderAvailable,
+		isProjectBoardRepositoryTarget,
+		resolveProjectBoardRepositoryGithubCredential
+	} from './project-board-surface-helpers';
+	import { createProjectBoardSurfaceSelection } from './project-board-surface-selection';
 	import {
 		runProjectRepositoryRemoteGitAction,
 		type ProjectRepositoryActionContext
 	} from './project-board-repository-actions';
+	import {
+		createProjectBoardRepositoryActionContext,
+		finishProjectBoardRepositoryOperation,
+		getProjectBoardRepositoryOperation,
+		isProjectBoardRepositoryBusy,
+		isProjectBoardRepositoryOperationRunning,
+		startProjectBoardRepositoryOperation
+	} from './project-board-repository-action-context';
 	import {
 		closeProjectRepositoryPublishDialog,
 		closeProjectRepositoryPublishDialogFromBackdrop,
@@ -107,9 +112,6 @@
 	} from './project-board-types';
 	import {
 		getGithubCredentialOptions,
-		getNodeGithubCredentialName as getNodeGithubCredentialDisplayName,
-		getRepositoryGithubCredentialName as getRepositoryGithubCredentialDisplayName,
-		resolveRepositoryGithubCredential
 	} from './project-board-github-credentials';
 	import ProjectBoardOverlays from './ProjectBoardOverlays.svelte';
 	import ProjectBoardLanes from './ProjectBoardLanes.svelte';
@@ -174,42 +176,22 @@
 	let isOpeningFolder = $state(false);
 	let contextMenuElement = $state<HTMLElement | undefined>(undefined);
 
-	let projectRows = $derived(createProjectTreeRows(registry.nodes));
-	let normalizedTagFilter = $derived(normalizeTagFilter(tagFilter));
-	let repositoryFilterStats = $derived(
-		getRepositoryFilterStats(registry.nodes, repositoryGitStatusById)
-	);
-	let projectNodes = $derived(
-		selectProjectNodes(
-			registry.nodes,
-			repositoryGitStatusById,
-			normalizedTagFilter,
-			repositorySyncFilter
-		)
-	);
-	let selectedProject = $derived(resolveSelectedProject(projectNodes, selectedProjectId));
-	let selectedProjectGroups = $derived(
-		selectedProject === null
-			? []
-			: selectProjectGroups(
-					registry.nodes,
-					repositoryGitStatusById,
-					selectedProject.id,
-					normalizedTagFilter,
-					repositorySyncFilter
-				)
-	);
-	let selectedGroup = $derived(resolveSelectedGroup(selectedProjectGroups, selectedGroupId));
-	let selectedRepositories = $derived(
-		selectedGroup === null
-			? []
-			: selectGroupRepositories(
-					selectedGroup,
-					repositoryGitStatusById,
-					normalizedTagFilter,
-					repositorySyncFilter
-				)
-	);
+	let boardSelection = $derived(createProjectBoardSurfaceSelection({
+		nodes: registry.nodes,
+		repositoryGitStatusById,
+		tagFilter,
+		repositorySyncFilter,
+		selectedProjectId,
+		selectedGroupId
+	}));
+	let projectRows = $derived(boardSelection.projectRows);
+	let normalizedTagFilter = $derived(boardSelection.normalizedTagFilter);
+	let repositoryFilterStats = $derived(boardSelection.repositoryFilterStats);
+	let projectNodes = $derived(boardSelection.projectNodes);
+	let selectedProject = $derived(boardSelection.selectedProject);
+	let selectedProjectGroups = $derived(boardSelection.selectedProjectGroups);
+	let selectedGroup = $derived(boardSelection.selectedGroup);
+	let selectedRepositories = $derived(boardSelection.selectedRepositories);
 	let dialogTargetNode = $derived(getDialogTargetNode());
 	let contextMenuRepository = $derived(getContextMenuRepository());
 	let contextMenuNode = $derived(getContextMenuNode());
@@ -441,7 +423,7 @@
 	}
 
 	function createRepositoryActionContext(): ProjectRepositoryActionContext {
-		return {
+		return createProjectBoardRepositoryActionContext({
 			workspacePath: workspace.path,
 			registry,
 			isRepositoryBusy,
@@ -462,11 +444,11 @@
 			setGitActionTarget: (target) => { gitActionTarget = target; },
 			setIsPublishingRepository: (isPublishing) => { isPublishingRepository = isPublishing; },
 			closePublishRepositoryDialog
-		};
+		});
 	}
 
 	function startRepositoryOperation(repositoryId: string, name: ProjectRepositoryOperationName) {
-		repositoryOperationById = startProjectRepositoryOperation(
+		repositoryOperationById = startProjectBoardRepositoryOperation(
 			repositoryOperationById,
 			repositoryId,
 			name
@@ -497,7 +479,7 @@
 		state: 'succeeded' | 'failed',
 		error: string | null
 	) {
-		await finishProjectRepositoryOperationForBoard(
+		await finishProjectBoardRepositoryOperation(
 			{
 				workspaceId: workspace.id,
 				node,
@@ -505,9 +487,7 @@
 				name,
 				state,
 				error,
-				operations: repositoryOperationById
-			},
-			{
+				operations: repositoryOperationById,
 				setOperations: (operations) => { repositoryOperationById = operations; },
 				setOperationStorageError: (error) => { operationStorageError = error; }
 			}
@@ -515,18 +495,18 @@
 	}
 
 	function getRepositoryOperation(repositoryId: string) {
-		return getProjectRepositoryOperation(repositoryOperationById, repositoryId);
+		return getProjectBoardRepositoryOperation(repositoryOperationById, repositoryId);
 	}
 
 	function isRepositoryBusy(repositoryId: string) {
-		return isProjectRepositoryBusy(repositoryOperationById, repositoryId);
+		return isProjectBoardRepositoryBusy(repositoryOperationById, repositoryId);
 	}
 
 	function isRepositoryOperationRunning(
 		repositoryId: string,
 		name: ProjectRepositoryOperationName
 	) {
-		return isProjectRepositoryOperationRunning(
+		return isProjectBoardRepositoryOperationRunning(
 			repositoryOperationById,
 			repositoryId,
 			name
@@ -552,23 +532,19 @@
 	}
 
 	function getContextMenuRepositoryGitStatus() {
-		const target = contextMenuRepository;
-
-		return target === null ? null : repositoryGitStatusById[target.repository.id] ?? null;
+		return getProjectBoardContextRepositoryGitStatus(
+			contextMenuRepository,
+			repositoryGitStatusById
+		);
 	}
 
 	function canOpenContextMenuFolder() {
-		const target = contextMenu?.target ?? null;
-
-		if (target === null || isOpeningFolder) {
-			return false;
-		}
-
-		if (target.type === 'node') {
-			return contextMenuNode !== null;
-		}
-
-		return contextMenuRepository?.repository.path !== null;
+		return canOpenProjectBoardContextFolder({
+			contextMenu,
+			contextMenuNode,
+			contextMenuRepository,
+			isOpeningFolder
+		});
 	}
 
 	function selectProject(node: ProjectNodeRecord) {
@@ -596,24 +572,16 @@
 	function getDeleteLocalFolderUnavailableText() { return getProjectDeleteLocalFolderUnavailableText(deleteCandidate); }
 
 	function isDeleteLocalFolderAvailable() {
-		if (deleteCandidate === null) {
-			return false;
-		}
-
-		if (deleteCandidate.type === 'node') {
-			return deleteCandidate.node.path.trim().length > 0;
-		}
-
-		return (
-			deleteCandidate.repository.path !== null &&
-			isRepositoryPathInsideProjectsFolder(deleteCandidate.repository.path)
+		return isProjectBoardDeleteLocalFolderAvailable(
+			deleteCandidate,
+			isRepositoryPathInsideProjectsFolder
 		);
 	}
 
 	function getVisibleFormErrorMessage() {
 		const error = formError ?? storageError;
 
-		return error === null ? '' : getProjectFormErrorMessage(error);
+		return error === null ? '' : getProjectFormErrorMessage(error, projectMessages.errors);
 	}
 
 	function isRepositoryRemoteUrlError(error: ProjectFormError | null) {
@@ -631,77 +599,56 @@
 	}
 
 	function getNodeGithubCredentialName(node: ProjectNodeRecord) {
-		return getNodeGithubCredentialDisplayName(environmentVault, githubCredentialOptions, node);
+		return getProjectBoardNodeGithubCredentialName({
+			environmentVault,
+			githubCredentialOptions,
+			node
+		});
 	}
 
 	function getRepositoryGithubCredentialName(
 		node: ProjectNodeRecord,
 		repository: ProjectRepositoryLinkRecord
 	) {
-		if (selectedProject?.githubCredentialSecretId !== null && selectedProject !== null) {
-			return 'System Git';
-		}
-
-		return getRepositoryGithubCredentialDisplayName(
-			registry.nodes,
+		return getProjectBoardRepositoryGithubCredentialName({
+			nodes: registry.nodes,
 			environmentVault,
 			githubCredentialOptions,
+			selectedProject,
 			node,
 			repository
-		);
-	}
-
-	function childGithubCredentialMenuIsAvailable() {
-		return selectedProject?.githubCredentialSecretId === null;
+		});
 	}
 
 	function canEditContextGithubCredential() {
-		const target = contextMenu?.target ?? null;
-
-		if (target === null) {
-			return false;
-		}
-
-		if (target.type === 'node') {
-			const node = getProjectContextMenuNode(registry.nodes, target);
-
-			return node?.kind === 'project' || childGithubCredentialMenuIsAvailable();
-		}
-
-		return childGithubCredentialMenuIsAvailable();
+		return canEditProjectBoardContextGithubCredential({
+			target: contextMenu?.target ?? null,
+			nodes: registry.nodes,
+			selectedProject
+		});
 	}
 
 	function resolveRepositoryGithubCredentialOrSetError(
 		node: ProjectNodeRecord,
 		repository: ProjectRepositoryLinkRecord
 	) {
-		const credential = resolveRepositoryGithubCredential(
-			registry.nodes,
+		return resolveProjectBoardRepositoryGithubCredential({
+			nodes: registry.nodes,
 			environmentVault,
 			githubCredentialOptions,
 			node,
-			repository
-		);
-
-		if (typeof credential === 'string') {
-			formError = credential;
-			status = null;
-			return undefined;
-		}
-
-		return credential;
+			repository,
+			setFormError: (error) => { formError = error; },
+			setStatus: (nextStatus) => { status = nextStatus; }
+		});
 	}
 
 	function isRepositoryCloneTarget(nodeId: string, repositoryId: string) {
-		return cloneTarget?.type === 'repository' &&
-			cloneTarget.nodeId === nodeId &&
-			cloneTarget.repositoryId === repositoryId;
+		return isProjectBoardRepositoryTarget(cloneTarget, nodeId, repositoryId);
 	}
 
 	function isRepositoryGitActionTarget(nodeId: string, repositoryId: string) {
-		return gitActionTarget?.type === 'repository' &&
-			gitActionTarget.nodeId === nodeId &&
-			gitActionTarget.repositoryId === repositoryId;
+		return isProjectBoardRepositoryTarget(gitActionTarget, nodeId, repositoryId);
 	}
 
 	function canCloneRepository(repository: ProjectRepositoryLinkRecord) {
@@ -876,7 +823,7 @@
 />
 
 {#if standaloneError !== null && dialog === null && deleteCandidate === null && tagEditor === null && descriptionEditor === null && githubCredentialEditor === null && publishTarget === null}
-	<p class="workduck-inline-error" aria-live="polite">{getProjectFormErrorMessage(standaloneError)}</p>
+	<p class="workduck-inline-error" aria-live="polite">{getProjectFormErrorMessage(standaloneError, projectMessages.errors)}</p>
 {/if}
 
 <ProjectBoardOverlays
@@ -976,6 +923,4 @@
 	onDialogClose={dialogActions.closeDialog}
 />
 
-{#if status !== null}
-	<p class="workduck-inline-status" aria-live="polite">{status}</p>
-{/if}
+<StatusToast message={status} />

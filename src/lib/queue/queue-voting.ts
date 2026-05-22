@@ -1,4 +1,4 @@
-export type WorkduckQueueTaskKind = 'instruction' | 'vote';
+export type WorkduckQueueTaskKind = 'instruction' | 'direct-message' | 'vote';
 export type WorkduckQueueVoteResponseKind = 'single-choice';
 export type WorkduckQueueVoteBallotParseStatus = 'parsed' | 'invalid-choice' | 'unparsed';
 
@@ -17,7 +17,6 @@ export interface WorkduckQueueVoteSpec {
 
 export interface WorkduckQueueVoteBallot {
 	readonly choiceId: string;
-	readonly confidence: number | null;
 	readonly reason: string;
 	readonly risks: readonly string[];
 	readonly parseStatus: WorkduckQueueVoteBallotParseStatus;
@@ -32,7 +31,6 @@ export interface WorkduckQueueVoteResult {
 export interface WorkduckQueueVoteAggregateOption {
 	readonly option: WorkduckQueueVoteOption;
 	readonly count: number;
-	readonly averageConfidence: number | null;
 }
 
 export interface WorkduckQueueVoteAggregate {
@@ -104,70 +102,6 @@ export function normalizeVoteCriteriaFromText(value: string): string[] {
 	return criteria;
 }
 
-export function createVoteTaskPrompt(spec: WorkduckQueueVoteSpec) {
-	const criteria =
-		spec.criteria.length > 0
-			? spec.criteria.map((criterion) => `- ${criterion}`).join('\n')
-			: '- Overall fit for the question';
-	const options = spec.options
-		.map((option) => {
-			const description =
-				option.description === undefined || option.description.length === 0
-					? ''
-					: ` - ${option.description}`;
-
-			return `- ${option.id}: ${option.label}${description}`;
-		})
-		.join('\n');
-
-	return [
-		'This is a selection vote. Choose exactly one option.',
-		'Return only one JSON object. Do not wrap it in Markdown.',
-		'Use exactly one of the provided choiceId values.',
-		'JSON shape:',
-		'{"choiceId":"option-id","reason":"short reason","risks":["risk if any"]}',
-		'',
-		`Question: ${spec.question}`,
-		'',
-		'Options:',
-		options,
-		'',
-		'Criteria:',
-		criteria
-	].join('\n');
-}
-
-export function parseVoteBallot(
-	content: string,
-	spec: WorkduckQueueVoteSpec
-): WorkduckQueueVoteBallot {
-	const parsed = parseFirstJsonRecord(content);
-
-	if (parsed === null) {
-		return {
-			choiceId: '',
-			confidence: null,
-			reason: '',
-			risks: [],
-			parseStatus: 'unparsed'
-		};
-	}
-
-	const choiceId = readOptionalText(parsed.choiceId);
-	const confidence = normalizeConfidenceScore(parsed.confidence);
-	const reason = readOptionalText(parsed.reason);
-	const risks = readTextArray(parsed.risks);
-	const hasValidChoice = spec.options.some((option) => option.id === choiceId);
-
-	return {
-		choiceId,
-		confidence,
-		reason,
-		risks,
-		parseStatus: hasValidChoice ? 'parsed' : 'invalid-choice'
-	};
-}
-
 export function createVoteAggregate(
 	results: readonly { readonly vote?: WorkduckQueueVoteResult }[]
 ): WorkduckQueueVoteAggregate | null {
@@ -177,8 +111,6 @@ export function createVoteAggregate(
 		return null;
 	}
 
-	const confidenceSums = new Map<string, number>();
-	const confidenceCounts = new Map<string, number>();
 	const counts = new Map<string, number>();
 	let invalidCount = 0;
 
@@ -193,31 +125,14 @@ export function createVoteAggregate(
 		}
 
 		counts.set(vote.ballot.choiceId, (counts.get(vote.ballot.choiceId) ?? 0) + 1);
-
-		if (vote.ballot.confidence !== null) {
-			confidenceSums.set(
-				vote.ballot.choiceId,
-				(confidenceSums.get(vote.ballot.choiceId) ?? 0) + vote.ballot.confidence
-			);
-			confidenceCounts.set(
-				vote.ballot.choiceId,
-				(confidenceCounts.get(vote.ballot.choiceId) ?? 0) + 1
-			);
-		}
 	}
 
 	const optionCounts = firstVote.options.map((option) => {
 		const count = counts.get(option.id) ?? 0;
-		const confidenceCount = confidenceCounts.get(option.id) ?? 0;
-		const averageConfidence =
-			confidenceCount === 0
-				? null
-				: Math.round(((confidenceSums.get(option.id) ?? 0) / confidenceCount) * 10) / 10;
 
 		return {
 			option,
-			count,
-			averageConfidence
+			count
 		};
 	});
 	const highestCount = Math.max(0, ...optionCounts.map((option) => option.count));
@@ -318,60 +233,6 @@ function createVoteOptionId(value: string) {
 	return normalized.length > 0 ? normalized : 'option';
 }
 
-function parseFirstJsonRecord(content: string): Record<string, unknown> | null {
-	const fencedMatch = /```(?:json)?\s*([\s\S]*?)```/iu.exec(content);
-	const rawJson = fencedMatch?.[1]?.trim() ?? extractJsonObjectText(content);
-
-	if (rawJson.length === 0) {
-		return null;
-	}
-
-	try {
-		const parsed: unknown = JSON.parse(rawJson);
-
-		return isRecord(parsed) ? parsed : null;
-	} catch {
-		return null;
-	}
-}
-
-function extractJsonObjectText(content: string) {
-	const start = content.indexOf('{');
-	const end = content.lastIndexOf('}');
-
-	if (start === -1 || end === -1 || end <= start) {
-		return '';
-	}
-
-	return content.slice(start, end + 1).trim();
-}
-
-function normalizeConfidenceScore(value: unknown) {
-	const numericValue = typeof value === 'number' ? value : Number(value);
-
-	if (!Number.isFinite(numericValue)) {
-		return null;
-	}
-
-	return Math.min(9, Math.max(1, Math.round(numericValue)));
-}
-
-function readTextArray(value: unknown) {
-	if (!Array.isArray(value)) {
-		return [];
-	}
-
-	return value.map(readOptionalText).filter((item) => item.length > 0);
-}
-
-function readOptionalText(value: unknown) {
-	return typeof value === 'string' ? normalizeInlineText(value) : '';
-}
-
 function normalizeInlineText(value: string) {
 	return value.trim().replace(/\s+/g, ' ');
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-	return typeof value === 'object' && value !== null && !Array.isArray(value);
 }

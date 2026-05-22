@@ -5,6 +5,7 @@
 	} from '$lib/workspaces/workspace-registry';
 	import { formatWorkspacePathForDisplay } from '$lib/workspaces/workspace-path-format';
 	import { workspaceRequiresUnlock } from '$lib/workspaces/workspace-unlock';
+	import StatusToast from '$lib/ui/StatusToast.svelte';
 	import WorkspacePathRepairForm from '$lib/workspaces/WorkspacePathRepairForm.svelte';
 	import WorkspaceUnlockForm from '$lib/workspaces/WorkspaceUnlockForm.svelte';
 	import {
@@ -265,11 +266,7 @@
 		</p>
 	{/if}
 
-	{#if repositorySetupStatus !== null || workspaceRepositoryGitStatus !== null}
-		<p class="workduck-inline-status" aria-live="polite">
-			{repositorySetupStatus ?? workspaceRepositoryGitStatus}
-		</p>
-	{/if}
+	<StatusToast message={repositorySetupStatus ?? workspaceRepositoryGitStatus} />
 
 	{#if hasLoaded && registry.workspaces.length === 0}
 		<p class="workduck-empty-state">{messages.settings.workspaces.noWorkspaces}</p>

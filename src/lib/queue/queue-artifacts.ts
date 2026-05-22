@@ -27,6 +27,7 @@ export interface WorkduckQueueResultReportTask {
 	readonly filesChanged: readonly string[];
 	readonly verification: readonly string[];
 	readonly risks: readonly string[];
+	readonly responseLanguage?: WorkduckQueueResponseLanguage;
 	readonly vote?: WorkduckQueueVoteResult;
 }
 
@@ -46,6 +47,7 @@ export interface WorkduckQueueWorkOrderTask {
 	readonly body: string;
 	readonly priority?: WorkduckQueueWorkPriority;
 	readonly responseLanguage?: WorkduckQueueResponseLanguage;
+	readonly projectIds?: readonly string[];
 	readonly skillIds?: readonly string[];
 	readonly agentIds?: readonly string[];
 	readonly referenceIds?: readonly string[];
@@ -194,31 +196,76 @@ export function createQueueWorkOrderFromReportReview(
 			const reportTask = report.tasks.find((task) => task.id === review.taskId);
 			const title = reportTask?.title ?? review.taskId;
 			const decision = review.decision === 'rollback' ? 'rollback' : 'needs-work';
-			const decisionLabel = decision === 'rollback' ? 'Rollback' : 'Needs work';
+			const language = getFollowUpTaskLanguage(reportTask, review);
+			const decisionLabel = getFollowUpDecisionLabel(decision, language);
 			const comment = review.comment.trim();
 
 			return {
 				id: createQueueId('task'),
 				title: `${decisionLabel}: ${title}`,
-				body: comment.length > 0 ? comment : `${decisionLabel} requested for ${title}.`,
+				body:
+					comment.length > 0
+						? comment
+						: createDefaultFollowUpTaskBody(decisionLabel, title, language),
 				priority: defaultQueueWorkPriority,
-				responseLanguage: defaultQueueResponseLanguage,
+				responseLanguage: getFollowUpResponseLanguage(reportTask, language),
 				sourceReportTaskId: review.taskId,
 				decision
 			};
 		});
+	const labelLanguage = getFollowUpWorkOrderLanguage(report, reviews);
 
 	return {
 		schemaVersion: 'workduck.queue-work-order/v1',
 		ref: {
 			id: createQueueId('work-order'),
 			kind: 'queue-work-order',
-			label: `Review follow-up for ${report.ref.label}`
+			label:
+				labelLanguage === 'ko'
+					? `${report.ref.label} 후속 작업`
+					: `Review follow-up for ${report.ref.label}`
 		},
 		status: 'active',
 		createdAt: new Date().toISOString(),
 		sourceReport: report.ref,
 		tasks
+	};
+}
+
+export function createQueueWorkOrderForReportEvaluation(
+	report: WorkduckQueueResultReport,
+	input: {
+		readonly workspacePath: string;
+		readonly reportPath: string | null;
+		readonly evaluatorSkillId: string;
+	}
+): WorkduckQueueWorkOrder {
+	const language = getEvaluationDelegationLanguage(report);
+	const title =
+		language === 'ko'
+			? `${report.ref.label} 평가 위임`
+			: `Evaluation delegation for ${report.ref.label}`;
+
+	return {
+		schemaVersion: 'workduck.queue-work-order/v1',
+		ref: {
+			id: createQueueId('work-order'),
+			kind: 'queue-work-order',
+			label: title
+		},
+		status: 'active',
+		createdAt: new Date().toISOString(),
+		sourceReport: report.ref,
+		tasks: [
+			{
+				id: createQueueId('task'),
+				title,
+				body: createReportEvaluationDelegationBody(report, input, language),
+				priority: defaultQueueWorkPriority,
+				responseLanguage: language,
+				skillIds: [input.evaluatorSkillId]
+			}
+		]
 	};
 }
 
@@ -233,6 +280,7 @@ export function createManualQueueWorkOrder(
 		readonly kind?: WorkduckQueueTaskKind;
 		readonly vote?: WorkduckQueueVoteSpec | null;
 		readonly responseLanguage?: WorkduckQueueResponseLanguage;
+		readonly projectIds?: readonly string[];
 	} = {}
 ): WorkduckQueueWorkOrder {
 	const normalizedTitle = normalizeQueueText(title);
@@ -241,7 +289,8 @@ export function createManualQueueWorkOrder(
 	const normalizedSkillIds = normalizeQueueRecordIds(skillIds);
 	const normalizedAgentIds = normalizeQueueRecordIds(agentIds);
 	const normalizedReferenceIds = normalizeQueueRecordIds(referenceIds);
-	const normalizedKind = options.kind === 'vote' ? 'vote' : 'instruction';
+	const normalizedProjectIds = normalizeQueueRecordIds(options.projectIds ?? []);
+	const normalizedKind = normalizeQueueTaskKind(options.kind);
 	const normalizedResponseLanguage = normalizeQueueResponseLanguage(options.responseLanguage);
 	const vote = normalizedKind === 'vote' ? options.vote : null;
 
@@ -257,11 +306,12 @@ export function createManualQueueWorkOrder(
 		tasks: [
 			{
 				id: createQueueId('task'),
-				...(normalizedKind === 'vote' ? { kind: normalizedKind } : {}),
+				...(normalizedKind !== 'instruction' ? { kind: normalizedKind } : {}),
 				title: normalizedTitle,
 				body: normalizedBody,
 				priority: normalizedPriority,
 				responseLanguage: normalizedResponseLanguage,
+				...(normalizedProjectIds.length > 0 ? { projectIds: normalizedProjectIds } : {}),
 				...(normalizedSkillIds.length > 0 ? { skillIds: normalizedSkillIds } : {}),
 				...(normalizedAgentIds.length > 0 ? { agentIds: normalizedAgentIds } : {}),
 				...(normalizedReferenceIds.length > 0 ? { referenceIds: normalizedReferenceIds } : {}),
@@ -278,6 +328,7 @@ export function updateQueueWorkOrderTask(
 		readonly title: string;
 		readonly body: string;
 		readonly priority: WorkduckQueueWorkPriority;
+		readonly projectIds?: readonly string[];
 		readonly skillIds?: readonly string[];
 		readonly agentIds?: readonly string[];
 		readonly referenceIds?: readonly string[];
@@ -289,10 +340,11 @@ export function updateQueueWorkOrderTask(
 	const normalizedTitle = normalizeQueueText(input.title);
 	const normalizedBody = normalizeQueueText(input.body);
 	const normalizedPriority = normalizeQueueWorkPriority(input.priority);
+	const normalizedProjectIds = normalizeQueueRecordIds(input.projectIds ?? []);
 	const normalizedSkillIds = normalizeQueueRecordIds(input.skillIds ?? []);
 	const normalizedAgentIds = normalizeQueueRecordIds(input.agentIds ?? []);
 	const normalizedReferenceIds = normalizeQueueRecordIds(input.referenceIds ?? []);
-	const normalizedKind = input.kind === 'vote' ? 'vote' : 'instruction';
+	const normalizedKind = normalizeQueueTaskKind(input.kind);
 	const normalizedResponseLanguage = normalizeQueueResponseLanguage(input.responseLanguage);
 	const vote = normalizedKind === 'vote' ? (input.vote ?? null) : null;
 	const tasks = workOrder.tasks.map((task) => {
@@ -304,6 +356,7 @@ export function updateQueueWorkOrderTask(
 			skillIds: _skillIds,
 			agentIds: _agentIds,
 			referenceIds: _referenceIds,
+			projectIds: _projectIds,
 			kind: _kind,
 			vote: _vote,
 			responseLanguage: _responseLanguage,
@@ -312,11 +365,12 @@ export function updateQueueWorkOrderTask(
 
 		const nextTask: WorkduckQueueWorkOrderTask = {
 			...taskWithoutAssignmentIds,
-			...(normalizedKind === 'vote' ? { kind: normalizedKind } : {}),
+			...(normalizedKind !== 'instruction' ? { kind: normalizedKind } : {}),
 			title: normalizedTitle,
 			body: normalizedBody,
 			priority: normalizedPriority,
 			responseLanguage: normalizedResponseLanguage,
+			...(normalizedProjectIds.length > 0 ? { projectIds: normalizedProjectIds } : {}),
 			...(normalizedSkillIds.length > 0 ? { skillIds: normalizedSkillIds } : {}),
 			...(normalizedAgentIds.length > 0 ? { agentIds: normalizedAgentIds } : {}),
 			...(normalizedReferenceIds.length > 0 ? { referenceIds: normalizedReferenceIds } : {}),
@@ -387,6 +441,10 @@ export function normalizeQueueWorkPriority(value: unknown): WorkduckQueueWorkPri
 
 export function normalizeQueueResponseLanguage(value: unknown): WorkduckQueueResponseLanguage {
 	return isQueueResponseLanguage(value) ? value : defaultQueueResponseLanguage;
+}
+
+export function normalizeQueueTaskKind(value: unknown): WorkduckQueueTaskKind {
+	return isQueueTaskKind(value) ? value : 'instruction';
 }
 
 export function createQueueResultReportFileNameFromLabel(label: string) {
@@ -467,6 +525,40 @@ export function readQueueArtifactId(content: string) {
 	}
 }
 
+export function readQueueArtifactSourceReportId(content: string) {
+	try {
+		const parsed: unknown = JSON.parse(content);
+
+		if (!isRecord(parsed) || !isRecord(parsed.sourceReport)) {
+			return '';
+		}
+
+		return readOptionalText(parsed.sourceReport.id);
+	} catch {
+		return '';
+	}
+}
+
+export function readQueueArtifactSkillIds(content: string) {
+	try {
+		const parsed: unknown = JSON.parse(content);
+
+		if (!isRecord(parsed) || !Array.isArray(parsed.tasks)) {
+			return [];
+		}
+
+		return parsed.tasks.flatMap((task) => {
+			if (!isRecord(task) || !Array.isArray(task.skillIds)) {
+				return [];
+			}
+
+			return task.skillIds.filter((skillId): skillId is string => typeof skillId === 'string');
+		});
+	} catch {
+		return [];
+	}
+}
+
 function createQueueId(prefix: string) {
 	const normalizedPrefix = prefix === 'work-order' ? 'wo' : prefix;
 
@@ -538,6 +630,240 @@ function isQueueResultReport(value: unknown): value is WorkduckQueueResultReport
 	);
 }
 
+type FollowUpContentLanguage = Extract<WorkduckQueueResponseLanguage, 'ko' | 'en'>;
+
+function getFollowUpWorkOrderLanguage(
+	report: WorkduckQueueResultReport,
+	reviews: readonly QueueReportTaskReview[]
+): FollowUpContentLanguage {
+	const firstSelectedReview = reviews.find(
+		(review) => review.decision === 'needs-work' || review.decision === 'rollback'
+	);
+	const firstReportTask =
+		firstSelectedReview === undefined
+			? undefined
+			: report.tasks.find((task) => task.id === firstSelectedReview.taskId);
+
+	return getFollowUpTaskLanguage(firstReportTask, firstSelectedReview);
+}
+
+function getFollowUpTaskLanguage(
+	reportTask: WorkduckQueueResultReportTask | undefined,
+	review: QueueReportTaskReview | undefined
+): FollowUpContentLanguage {
+	const explicitLanguage = getExplicitFollowUpLanguage(reportTask?.responseLanguage);
+
+	if (explicitLanguage !== null) {
+		return explicitLanguage;
+	}
+
+	const languageSource = [
+		reportTask?.title ?? '',
+		reportTask?.summary ?? '',
+		reportTask?.verification.join(' ') ?? '',
+		reportTask?.risks.join(' ') ?? '',
+		review?.comment ?? ''
+	].join(' ');
+
+	return containsKoreanText(languageSource) ? 'ko' : 'en';
+}
+
+function getFollowUpResponseLanguage(
+	reportTask: WorkduckQueueResultReportTask | undefined,
+	fallbackLanguage: FollowUpContentLanguage
+): WorkduckQueueResponseLanguage {
+	const normalizedLanguage = normalizeQueueResponseLanguage(reportTask?.responseLanguage);
+
+	return normalizedLanguage === 'auto' ? fallbackLanguage : normalizedLanguage;
+}
+
+function getExplicitFollowUpLanguage(
+	language: WorkduckQueueResponseLanguage | undefined
+): FollowUpContentLanguage | null {
+	return language === 'ko' || language === 'en' ? language : null;
+}
+
+function getFollowUpDecisionLabel(
+	decision: Exclude<WorkduckQueueReviewDecision, 'pending' | 'approved'>,
+	language: FollowUpContentLanguage
+) {
+	if (language === 'ko') {
+		return decision === 'rollback' ? '롤백' : '보완 필요';
+	}
+
+	return decision === 'rollback' ? 'Rollback' : 'Needs work';
+}
+
+function getEvaluationDelegationLanguage(report: WorkduckQueueResultReport): FollowUpContentLanguage {
+	const explicitTaskLanguage = report.tasks
+		.map((task) => getExplicitFollowUpLanguage(task.responseLanguage))
+		.find((language) => language !== null);
+
+	if (explicitTaskLanguage !== undefined && explicitTaskLanguage !== null) {
+		return explicitTaskLanguage;
+	}
+
+	const languageSource = [
+		report.ref.label,
+		...report.tasks.flatMap((task) => [
+			task.title,
+			task.summary,
+			task.verification.join(' '),
+			task.risks.join(' ')
+		])
+	].join(' ');
+
+	return containsKoreanText(languageSource) ? 'ko' : 'en';
+}
+
+function createReportEvaluationDelegationBody(
+	report: WorkduckQueueResultReport,
+	input: {
+		readonly workspacePath: string;
+		readonly reportPath: string | null;
+		readonly evaluatorSkillId: string;
+	},
+	language: FollowUpContentLanguage
+) {
+	const reportLocation = input.reportPath ?? report.ref.id;
+	const taskSummaries = report.tasks.map((task, index) =>
+		createReportEvaluationTargetSummary(task, index, language)
+	);
+	const batchCommand = [
+		'workduck',
+		'agent',
+		'evaluate-batch',
+		'--workspace',
+		quoteQueueCliArgument(input.workspacePath),
+		'--input',
+		'<evaluation-json-path>'
+	].join(' ');
+
+	if (language === 'ko') {
+		return [
+			'이 작업은 Codex가 수행합니다.',
+			'아래 결과 보고서에 포함된 각 에이전트 응답을 1~9점 기준으로 평가하고, 에이전트 평가 누적값에 저장하세요.',
+			'',
+			`결과 보고서: ${reportLocation}`,
+			`워크스페이스: ${input.workspacePath}`,
+			'',
+			'평가 기준:',
+			'- 문제 이해력',
+			'- 논리적 타당성',
+			'- 현실성·실행 가능성',
+			'- 창의성·통찰',
+			'- 리스크 감지',
+			'',
+			'평가 대상:',
+			...taskSummaries,
+			'',
+			'점수를 정한 뒤 아래 형태의 JSON 파일을 만들고 명령을 실행하세요.',
+			'',
+			'{',
+			'  "evaluations": [',
+			'    {',
+			'      "agentName": "에이전트 이름",',
+			'      "scores": {',
+			'        "problemUnderstanding": 5,',
+			'        "logicalValidity": 5,',
+			'        "practicalFeasibility": 5,',
+			'        "creativeInsight": 5,',
+			'        "riskDetection": 5',
+			'      }',
+			'    }',
+			'  ]',
+			'}',
+			'',
+			batchCommand
+		].join('\n');
+	}
+
+	return [
+		'This task is for Codex.',
+		'Evaluate every agent response in the result report with 1-9 scores, then save the scores to the agent evaluation summary.',
+		'',
+		`Result report: ${reportLocation}`,
+		`Workspace: ${input.workspacePath}`,
+		'',
+		'Criteria:',
+		'- Problem understanding',
+		'- Logical validity',
+		'- Practical feasibility',
+		'- Creative insight',
+		'- Risk detection',
+		'',
+		'Targets:',
+		...taskSummaries,
+		'',
+		'After choosing scores, create a JSON file with this shape and run the command below.',
+		'',
+		'{',
+		'  "evaluations": [',
+		'    {',
+		'      "agentName": "Agent name",',
+		'      "scores": {',
+		'        "problemUnderstanding": 5,',
+		'        "logicalValidity": 5,',
+		'        "practicalFeasibility": 5,',
+		'        "creativeInsight": 5,',
+		'        "riskDetection": 5',
+		'      }',
+		'    }',
+		'  ]',
+		'}',
+		'',
+		batchCommand
+	].join('\n');
+}
+
+function createReportEvaluationTargetSummary(
+	task: WorkduckQueueResultReportTask,
+	index: number,
+	language: FollowUpContentLanguage
+) {
+	const agentName = task.title.split(':')[0]?.trim() || task.title;
+	const lines =
+		language === 'ko'
+			? [
+					`${index + 1}. ${agentName}`,
+					`   작업: ${task.title}`,
+					`   응답 요약: ${task.summary}`
+				]
+			: [
+					`${index + 1}. ${agentName}`,
+					`   Task: ${task.title}`,
+					`   Response summary: ${task.summary}`
+				];
+
+	if (task.vote !== undefined && task.vote.ballot.parseStatus === 'parsed') {
+		lines.push(
+			language === 'ko'
+				? `   투표 선택: ${task.vote.ballot.choiceId}`
+				: `   Vote choice: ${task.vote.ballot.choiceId}`
+		);
+	}
+
+	return lines.join('\n');
+}
+
+function quoteQueueCliArgument(value: string) {
+	return `"${value.replaceAll('"', '\\"')}"`;
+}
+
+function createDefaultFollowUpTaskBody(
+	decisionLabel: string,
+	title: string,
+	language: FollowUpContentLanguage
+) {
+	return language === 'ko'
+		? `${title} 항목에 ${decisionLabel} 후속 작업이 요청되었습니다.`
+		: `${decisionLabel} requested for ${title}.`;
+}
+
+function containsKoreanText(value: string) {
+	return /[가-힣]/u.test(value);
+}
+
 function isQueueWorkOrder(value: unknown): value is WorkduckQueueWorkOrder {
 	if (!isRecord(value)) {
 		return false;
@@ -588,6 +914,7 @@ function isQueueResultReportTask(value: unknown) {
 		isStringArray(value.filesChanged) &&
 		isStringArray(value.verification) &&
 		isStringArray(value.risks) &&
+		(value.responseLanguage === undefined || isQueueResponseLanguage(value.responseLanguage)) &&
 		(value.vote === undefined || isQueueVoteResult(value.vote))
 	);
 }
@@ -617,11 +944,12 @@ function isQueueWorkOrderTask(value: unknown) {
 
 	return (
 		typeof value.id === 'string' &&
-		(value.kind === undefined || value.kind === 'instruction' || value.kind === 'vote') &&
+		(value.kind === undefined || isQueueTaskKind(value.kind)) &&
 		typeof value.title === 'string' &&
 		typeof value.body === 'string' &&
 		(value.priority === undefined || isQueueWorkPriority(value.priority)) &&
 		(value.responseLanguage === undefined || isQueueResponseLanguage(value.responseLanguage)) &&
+		(value.projectIds === undefined || isStringArray(value.projectIds)) &&
 		(value.skillIds === undefined || isStringArray(value.skillIds)) &&
 		(value.agentIds === undefined || isStringArray(value.agentIds)) &&
 		(value.referenceIds === undefined || isStringArray(value.referenceIds)) &&
@@ -674,7 +1002,6 @@ function isQueueVoteBallot(value: unknown) {
 	return (
 		isRecord(value) &&
 		typeof value.choiceId === 'string' &&
-		(value.confidence === null || typeof value.confidence === 'number') &&
 		typeof value.reason === 'string' &&
 		isStringArray(value.risks) &&
 		(value.parseStatus === 'parsed' ||
@@ -722,6 +1049,10 @@ function isQueueWorkPriority(value: unknown): value is WorkduckQueueWorkPriority
 
 function isQueueResponseLanguage(value: unknown): value is WorkduckQueueResponseLanguage {
 	return value === 'auto' || value === 'ko' || value === 'en';
+}
+
+function isQueueTaskKind(value: unknown): value is WorkduckQueueTaskKind {
+	return value === 'instruction' || value === 'direct-message' || value === 'vote';
 }
 
 function isEntityRef(value: unknown, kind: string) {

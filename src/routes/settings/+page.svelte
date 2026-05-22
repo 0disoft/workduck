@@ -57,6 +57,12 @@
 			return;
 		}
 
+		if (tabId === 'advanced') {
+			const module = await import('$lib/settings/AdvancedSettingsPanel.svelte');
+			loadedSettingsPanels = { ...loadedSettingsPanels, advanced: module.default };
+			return;
+		}
+
 		const module = await import('$lib/settings/SystemSettingsPanel.svelte');
 		loadedSettingsPanels = { ...loadedSettingsPanels, system: module.default };
 	}
@@ -126,6 +132,11 @@
 		{@const SyncSettingsPanel = loadedSettingsPanels.sync}
 		{#if SyncSettingsPanel !== undefined}
 			<SyncSettingsPanel />
+		{/if}
+	{:else if activeSettingsTab === 'advanced'}
+		{@const AdvancedSettingsPanel = loadedSettingsPanels.advanced}
+		{#if AdvancedSettingsPanel !== undefined}
+			<AdvancedSettingsPanel />
 		{/if}
 	{:else if activeSettingsTab === 'system'}
 		{@const SystemSettingsPanel = loadedSettingsPanels.system}

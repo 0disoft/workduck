@@ -1,0 +1,55 @@
+import type { AgentRecord } from '$lib/agents/agent-registry';
+import type { PersonaRecord } from '$lib/personas/persona-registry';
+import type { ReferenceRecord } from '$lib/references/reference-registry';
+import type { WorkduckSkillRecord } from '$lib/skills/skill-registry';
+import type { QueueFileEntry } from './queue-folder';
+import type {
+	WorkduckQueueExecutionState,
+	WorkduckQueueResultReportTask,
+	WorkduckQueueWorkPriority
+} from './queue-artifacts';
+
+export const queueExecutionFilterOptions = [{ id: 'all' }, { id: 'pending' }, { id: 'completed' }] as const;
+export const queueReadFilterOptions = [{ id: 'all' }, { id: 'unread' }, { id: 'read' }] as const;
+export const manualVoteOptionCountDefaults = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] as const;
+
+export type QueueExecutionFilter = (typeof queueExecutionFilterOptions)[number]['id'];
+export type QueueReadFilter = (typeof queueReadFilterOptions)[number]['id'];
+
+export type ManualVoteOptionInput = {
+	readonly rowId: string;
+	readonly id: string;
+	readonly label: string;
+	readonly description: string;
+};
+
+export type QueueCardEntry = QueueFileEntry & {
+	readonly isRead: boolean;
+	readonly artifactId: string;
+	readonly agentName: string;
+	readonly title: string;
+	readonly priority: WorkduckQueueWorkPriority | null;
+	readonly executionState: WorkduckQueueExecutionState | null;
+	readonly sourceReportId: string;
+	readonly skillIds: readonly string[];
+};
+
+export type WorkOrderDialogMode = 'create' | 'edit';
+
+export type QueueExecutionContext = {
+	readonly agents: readonly AgentRecord[];
+	readonly skills: readonly WorkduckSkillRecord[];
+	readonly references: readonly ReferenceRecord[];
+	readonly personas: readonly PersonaRecord[];
+};
+
+export type QueueContextMenuState = {
+	readonly x: number;
+	readonly y: number;
+	readonly file: QueueCardEntry;
+};
+
+export type AgentEvaluationDialogState = {
+	readonly task: WorkduckQueueResultReportTask;
+	readonly agent: AgentRecord;
+};

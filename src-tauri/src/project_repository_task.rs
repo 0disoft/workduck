@@ -99,12 +99,25 @@ pub fn run_project_repository_task(
             Ok(path) => path,
             Err(error) => return failed(error),
         };
-    let command = match resolve_repository_task_command(task, &repository_path) {
-        Ok(command) => command,
+    let commands = match resolve_repository_task_commands(task, &repository_path) {
+        Ok(commands) => commands,
         Err(error) => return failed(error),
     };
+    let command = if commands.is_empty() {
+        None
+    } else {
+        Some(commands.join("\n"))
+    };
 
-    match launch_repository_terminal(&repository_path, command.as_deref()) {
+    let launch_result = if commands.is_empty() {
+        launch_repository_terminal(&repository_path, None)
+    } else if matches!(task, ProjectRepositoryTask::StartDevServer) && commands.len() > 1 {
+        launch_repository_task_terminals(&repository_path, &commands)
+    } else {
+        launch_repository_terminal(&repository_path, command.as_deref())
+    };
+
+    match launch_result {
         Ok(()) => ProjectRepositoryTaskResult {
             ok: true,
             error: None,
@@ -187,31 +200,108 @@ fn validate_repository_path(
     Ok(canonical_path)
 }
 
-fn resolve_repository_task_command(
+fn resolve_repository_task_commands(
     task: ProjectRepositoryTask,
     repository_path: &Path,
-) -> Result<Option<String>, ProjectRepositoryTaskError> {
+) -> Result<Vec<String>, ProjectRepositoryTaskError> {
     if matches!(task, ProjectRepositoryTask::OpenTerminal) {
-        return Ok(None);
+        return Ok(Vec::new());
     }
 
-    if matches!(task, ProjectRepositoryTask::UpdateDependencies) {
-        return resolve_update_dependencies_command(repository_path);
+    let mut commands = Vec::new();
+
+    match task {
+        ProjectRepositoryTask::InstallDependencies => {
+            add_package_task_commands(repository_path, task, &mut commands)?;
+            add_cargo_task_commands(repository_path, task, &mut commands);
+            add_pub_task_commands(repository_path, task, &mut commands);
+            add_go_task_commands(repository_path, task, &mut commands);
+            add_python_task_commands(repository_path, task, &mut commands);
+            add_manifest_directory_task_commands(
+                repository_path,
+                &mut commands,
+                &["composer.json"],
+                "composer install",
+            );
+            add_manifest_directory_task_commands(
+                repository_path,
+                &mut commands,
+                &["Gemfile"],
+                "bundle install",
+            );
+            add_manifest_directory_task_commands(
+                repository_path,
+                &mut commands,
+                &["mix.exs"],
+                "mix deps.get",
+            );
+            add_manifest_directory_task_commands(
+                repository_path,
+                &mut commands,
+                &["Package.swift"],
+                "swift package resolve",
+            );
+        }
+        ProjectRepositoryTask::UpdateDependencies => {
+            add_package_task_commands(repository_path, task, &mut commands)?;
+            add_deno_dependency_update_commands(repository_path, &mut commands);
+            add_cargo_task_commands(repository_path, task, &mut commands);
+            add_pub_task_commands(repository_path, task, &mut commands);
+            add_go_task_commands(repository_path, task, &mut commands);
+            add_python_task_commands(repository_path, task, &mut commands);
+            add_manifest_directory_task_commands(
+                repository_path,
+                &mut commands,
+                &["composer.json"],
+                "composer update",
+            );
+            add_manifest_directory_task_commands(
+                repository_path,
+                &mut commands,
+                &["Gemfile"],
+                "bundle update",
+            );
+            add_manifest_directory_task_commands(
+                repository_path,
+                &mut commands,
+                &["mix.exs"],
+                "mix deps.update --all",
+            );
+            add_manifest_directory_task_commands(
+                repository_path,
+                &mut commands,
+                &["Package.swift"],
+                "swift package update",
+            );
+        }
+        ProjectRepositoryTask::StartDevServer => {
+            add_package_task_commands(repository_path, task, &mut commands)?;
+            add_cargo_task_commands(repository_path, task, &mut commands);
+            add_pub_task_commands(repository_path, task, &mut commands);
+            add_deno_task_commands(repository_path, task, &mut commands);
+            add_go_task_commands(repository_path, task, &mut commands);
+        }
+        ProjectRepositoryTask::Build => {
+            add_package_task_commands(repository_path, task, &mut commands)?;
+            add_cargo_task_commands(repository_path, task, &mut commands);
+            add_pub_task_commands(repository_path, task, &mut commands);
+            add_deno_task_commands(repository_path, task, &mut commands);
+            add_go_task_commands(repository_path, task, &mut commands);
+            add_manifest_directory_task_commands(
+                repository_path,
+                &mut commands,
+                &["Package.swift"],
+                "swift build",
+            );
+        }
+        ProjectRepositoryTask::OpenTerminal => {}
     }
 
-    if let Some(package_project) = read_package_project(repository_path) {
-        return resolve_package_task_command(task, &package_project);
+    if commands.is_empty() {
+        return Err(ProjectRepositoryTaskError::CommandUnavailable);
     }
 
-    if repository_path.join("Cargo.toml").is_file() {
-        return resolve_cargo_task_command(task);
-    }
-
-    if repository_path.join("pubspec.yaml").is_file() {
-        return resolve_flutter_task_command(task);
-    }
-
-    Err(ProjectRepositoryTaskError::CommandUnavailable)
+    Ok(commands)
 }
 
 struct PackageProject {
@@ -226,10 +316,6 @@ enum PackageManager {
     Npm,
     Pnpm,
     Yarn,
-}
-
-fn read_package_project(repository_path: &Path) -> Option<PackageProject> {
-    read_package_project_at(repository_path)
 }
 
 fn read_package_project_at(project_path: &Path) -> Option<PackageProject> {
@@ -285,6 +371,36 @@ fn detect_package_manager_from_locks(repository_path: &Path) -> PackageManager {
     }
 }
 
+fn add_package_task_commands(
+    repository_path: &Path,
+    task: ProjectRepositoryTask,
+    commands: &mut Vec<String>,
+) -> Result<(), ProjectRepositoryTaskError> {
+    for project_path in discover_package_project_paths(repository_path) {
+        let Some(package_project) = read_package_project_at(&project_path) else {
+            continue;
+        };
+        let Some(command) = resolve_package_task_command(task, &package_project)? else {
+            continue;
+        };
+
+        push_unique_command(
+            commands,
+            command_in_directory(repository_path, &project_path, &command),
+        );
+    }
+
+    Ok(())
+}
+
+fn discover_package_project_paths(repository_path: &Path) -> Vec<PathBuf> {
+    if read_package_project_at(repository_path).is_some() {
+        return vec![repository_path.to_path_buf()];
+    }
+
+    unique_manifest_directories(discover_manifest_paths(repository_path, &["package.json"]))
+}
+
 fn resolve_package_task_command(
     task: ProjectRepositoryTask,
     project: &PackageProject,
@@ -298,7 +414,7 @@ fn resolve_package_task_command(
             project.package_manager.update_command().to_owned(),
         )),
         ProjectRepositoryTask::StartDevServer => resolve_package_dev_server_command(project),
-        ProjectRepositoryTask::Build => resolve_package_script_command(project, "build"),
+        ProjectRepositoryTask::Build => resolve_optional_package_script_command(project, "build"),
         ProjectRepositoryTask::OpenTerminal => Ok(None),
     }
 }
@@ -306,7 +422,7 @@ fn resolve_package_task_command(
 fn resolve_package_dev_server_command(
     project: &PackageProject,
 ) -> Result<Option<String>, ProjectRepositoryTaskError> {
-    let command = resolve_package_script_command(project, "dev")?;
+    let command = resolve_optional_package_script_command(project, "dev")?;
 
     if !project
         .dev_script
@@ -325,12 +441,12 @@ fn resolve_package_dev_server_command(
     Ok(Some(format!("{command} -- --port {port}")))
 }
 
-fn resolve_package_script_command(
+fn resolve_optional_package_script_command(
     project: &PackageProject,
     script: &str,
 ) -> Result<Option<String>, ProjectRepositoryTaskError> {
     if !project.scripts.iter().any(|candidate| candidate == script) {
-        return Err(ProjectRepositoryTaskError::CommandUnavailable);
+        return Ok(None);
     }
 
     Ok(Some(format!(
@@ -372,98 +488,6 @@ impl PackageManager {
     }
 }
 
-fn resolve_cargo_task_command(
-    task: ProjectRepositoryTask,
-) -> Result<Option<String>, ProjectRepositoryTaskError> {
-    match task {
-        ProjectRepositoryTask::InstallDependencies => Ok(Some("cargo fetch".to_owned())),
-        ProjectRepositoryTask::UpdateDependencies => Ok(Some("cargo update".to_owned())),
-        ProjectRepositoryTask::StartDevServer => Ok(Some("cargo run".to_owned())),
-        ProjectRepositoryTask::Build => Ok(Some("cargo build".to_owned())),
-        ProjectRepositoryTask::OpenTerminal => Ok(None),
-    }
-}
-
-fn resolve_flutter_task_command(
-    task: ProjectRepositoryTask,
-) -> Result<Option<String>, ProjectRepositoryTaskError> {
-    match task {
-        ProjectRepositoryTask::InstallDependencies => Ok(Some("flutter pub get".to_owned())),
-        ProjectRepositoryTask::UpdateDependencies => Ok(Some("flutter pub upgrade".to_owned())),
-        ProjectRepositoryTask::StartDevServer => Ok(Some("flutter run".to_owned())),
-        ProjectRepositoryTask::Build => Ok(Some("flutter build".to_owned())),
-        ProjectRepositoryTask::OpenTerminal => Ok(None),
-    }
-}
-
-fn resolve_update_dependencies_command(
-    repository_path: &Path,
-) -> Result<Option<String>, ProjectRepositoryTaskError> {
-    let mut commands = Vec::new();
-
-    add_package_dependency_update_commands(repository_path, &mut commands);
-    add_deno_dependency_update_commands(repository_path, &mut commands);
-    add_cargo_dependency_update_commands(repository_path, &mut commands);
-    add_pub_dependency_update_commands(repository_path, &mut commands);
-    add_go_dependency_update_commands(repository_path, &mut commands);
-    add_python_dependency_update_commands(repository_path, &mut commands);
-    add_manifest_directory_update_commands(
-        repository_path,
-        &mut commands,
-        &["composer.json"],
-        "composer update",
-    );
-    add_manifest_directory_update_commands(
-        repository_path,
-        &mut commands,
-        &["Gemfile"],
-        "bundle update",
-    );
-    add_manifest_directory_update_commands(
-        repository_path,
-        &mut commands,
-        &["mix.exs"],
-        "mix deps.update --all",
-    );
-    add_manifest_directory_update_commands(
-        repository_path,
-        &mut commands,
-        &["Package.swift"],
-        "swift package update",
-    );
-
-    if commands.is_empty() {
-        return Err(ProjectRepositoryTaskError::CommandUnavailable);
-    }
-
-    Ok(Some(commands.join("\n")))
-}
-
-fn add_package_dependency_update_commands(repository_path: &Path, commands: &mut Vec<String>) {
-    if let Some(package_project) = read_package_project_at(repository_path) {
-        push_unique_command(
-            commands,
-            package_project.package_manager.update_command().to_owned(),
-        );
-        return;
-    }
-
-    for package_json_path in discover_manifest_paths(repository_path, &["package.json"]) {
-        if let Some(project_path) = package_json_path.parent()
-            && let Some(package_project) = read_package_project_at(project_path)
-        {
-            push_unique_command(
-                commands,
-                command_in_directory(
-                    repository_path,
-                    project_path,
-                    package_project.package_manager.update_command(),
-                ),
-            );
-        }
-    }
-}
-
 fn add_deno_dependency_update_commands(repository_path: &Path, commands: &mut Vec<String>) {
     for project_path in unique_manifest_directories(discover_manifest_paths(
         repository_path,
@@ -476,71 +500,92 @@ fn add_deno_dependency_update_commands(repository_path: &Path, commands: &mut Ve
     }
 }
 
-fn add_cargo_dependency_update_commands(repository_path: &Path, commands: &mut Vec<String>) {
-    for cargo_manifest_path in discover_manifest_paths(repository_path, &["Cargo.toml"]) {
-        let command = if cargo_manifest_path
-            .parent()
-            .is_some_and(|project_path| project_path == repository_path)
-        {
-            "cargo update".to_owned()
-        } else {
-            format!(
-                "cargo update --manifest-path '{}'",
-                escape_powershell_single_quoted(&relative_shell_path(
-                    repository_path,
-                    &cargo_manifest_path
-                ))
-            )
-        };
+fn add_deno_task_commands(
+    repository_path: &Path,
+    task: ProjectRepositoryTask,
+    commands: &mut Vec<String>,
+) {
+    let task_name = match task {
+        ProjectRepositoryTask::StartDevServer => "dev",
+        ProjectRepositoryTask::Build => "build",
+        _ => return,
+    };
 
-        push_unique_command(commands, command);
-    }
-}
-
-fn add_pub_dependency_update_commands(repository_path: &Path, commands: &mut Vec<String>) {
-    for pubspec_path in discover_manifest_paths(repository_path, &["pubspec.yaml"]) {
-        if let Some(project_path) = pubspec_path.parent() {
-            let command = if is_flutter_project(project_path) {
-                "flutter pub upgrade"
-            } else {
-                "dart pub upgrade"
-            };
-
+    for project_path in unique_manifest_directories(discover_manifest_paths(
+        repository_path,
+        &["deno.json", "deno.jsonc"],
+    )) {
+        if deno_task_exists(&project_path, task_name) {
             push_unique_command(
                 commands,
-                command_in_directory(repository_path, project_path, command),
+                command_in_directory(repository_path, &project_path, &format!("deno task {task_name}")),
             );
         }
     }
 }
 
-fn add_go_dependency_update_commands(repository_path: &Path, commands: &mut Vec<String>) {
-    for project_path in
-        unique_manifest_directories(discover_manifest_paths(repository_path, &["go.mod"]))
-    {
-        push_unique_command(
-            commands,
-            command_in_directory(repository_path, &project_path, "go get -u ./..."),
-        );
-        push_unique_command(
-            commands,
-            command_in_directory(repository_path, &project_path, "go mod tidy"),
-        );
+fn deno_task_exists(project_path: &Path, task_name: &str) -> bool {
+    let Ok(deno_json) = fs::read_to_string(project_path.join("deno.json")) else {
+        return false;
+    };
+    let Ok(deno_json) = serde_json::from_str::<serde_json::Value>(&deno_json) else {
+        return false;
+    };
+
+    deno_json
+        .get("tasks")
+        .and_then(serde_json::Value::as_object)
+        .is_some_and(|tasks| tasks.contains_key(task_name))
+}
+
+fn add_cargo_task_commands(
+    repository_path: &Path,
+    task: ProjectRepositoryTask,
+    commands: &mut Vec<String>,
+) {
+    for cargo_manifest_path in discover_root_or_nested_manifest_paths(repository_path, &["Cargo.toml"]) {
+        if let Some(command) = resolve_cargo_task_command(task, repository_path, &cargo_manifest_path) {
+            push_unique_command(commands, command);
+        }
     }
 }
 
-fn add_python_dependency_update_commands(repository_path: &Path, commands: &mut Vec<String>) {
-    for project_path in unique_manifest_directories(discover_manifest_paths(
-        repository_path,
-        &["uv.lock", "poetry.lock", "pdm.lock"],
-    )) {
-        let command = if project_path.join("uv.lock").is_file() {
-            "uv lock --upgrade"
-        } else if project_path.join("poetry.lock").is_file() {
-            "poetry update"
-        } else if project_path.join("pdm.lock").is_file() {
-            "pdm update"
-        } else {
+fn resolve_cargo_task_command(
+    task: ProjectRepositoryTask,
+    repository_path: &Path,
+    cargo_manifest_path: &Path,
+) -> Option<String> {
+    let command = match task {
+        ProjectRepositoryTask::InstallDependencies => "cargo fetch",
+        ProjectRepositoryTask::UpdateDependencies => "cargo update",
+        ProjectRepositoryTask::StartDevServer => "cargo run",
+        ProjectRepositoryTask::Build => "cargo build",
+        ProjectRepositoryTask::OpenTerminal => return None,
+    };
+
+    if cargo_manifest_path
+        .parent()
+        .is_some_and(|project_path| project_path == repository_path)
+    {
+        return Some(command.to_owned());
+    }
+
+    Some(format!(
+        "{command} --manifest-path '{}'",
+        escape_powershell_single_quoted(&relative_shell_path(repository_path, cargo_manifest_path))
+    ))
+}
+
+fn add_pub_task_commands(
+    repository_path: &Path,
+    task: ProjectRepositoryTask,
+    commands: &mut Vec<String>,
+) {
+    for pubspec_path in discover_root_or_nested_manifest_paths(repository_path, &["pubspec.yaml"]) {
+        let Some(project_path) = pubspec_path.parent() else {
+            continue;
+        };
+        let Some(command) = resolve_pub_task_command(task, project_path) else {
             continue;
         };
 
@@ -551,21 +596,143 @@ fn add_python_dependency_update_commands(repository_path: &Path, commands: &mut 
     }
 }
 
-fn add_manifest_directory_update_commands(
+fn resolve_pub_task_command(task: ProjectRepositoryTask, project_path: &Path) -> Option<&'static str> {
+    let is_flutter = is_flutter_project(project_path);
+
+    match task {
+        ProjectRepositoryTask::InstallDependencies if is_flutter => Some("flutter pub get"),
+        ProjectRepositoryTask::InstallDependencies => Some("dart pub get"),
+        ProjectRepositoryTask::UpdateDependencies if is_flutter => Some("flutter pub upgrade"),
+        ProjectRepositoryTask::UpdateDependencies => Some("dart pub upgrade"),
+        ProjectRepositoryTask::StartDevServer if is_flutter => Some("flutter run"),
+        ProjectRepositoryTask::Build if is_flutter => Some("flutter build"),
+        _ => None,
+    }
+}
+
+fn add_go_task_commands(
     repository_path: &Path,
+    task: ProjectRepositoryTask,
     commands: &mut Vec<String>,
-    manifest_file_names: &[&str],
-    command: &str,
 ) {
-    for project_path in unique_manifest_directories(discover_manifest_paths(
+    for go_mod_path in discover_root_or_nested_manifest_paths(repository_path, &["go.mod"]) {
+        let Some(project_path) = go_mod_path.parent() else {
+            continue;
+        };
+
+        match task {
+            ProjectRepositoryTask::InstallDependencies => push_unique_command(
+                commands,
+                command_in_directory(repository_path, project_path, "go mod download"),
+            ),
+            ProjectRepositoryTask::UpdateDependencies => {
+                push_unique_command(
+                    commands,
+                    command_in_directory(repository_path, project_path, "go get -u ./..."),
+                );
+                push_unique_command(
+                    commands,
+                    command_in_directory(repository_path, project_path, "go mod tidy"),
+                );
+            }
+            ProjectRepositoryTask::StartDevServer => push_unique_command(
+                commands,
+                command_in_directory(repository_path, project_path, "go run ./..."),
+            ),
+            ProjectRepositoryTask::Build => push_unique_command(
+                commands,
+                command_in_directory(repository_path, project_path, "go build ./..."),
+            ),
+            ProjectRepositoryTask::OpenTerminal => {}
+        }
+    }
+}
+
+fn add_python_task_commands(
+    repository_path: &Path,
+    task: ProjectRepositoryTask,
+    commands: &mut Vec<String>,
+) {
+    if !matches!(
+        task,
+        ProjectRepositoryTask::InstallDependencies | ProjectRepositoryTask::UpdateDependencies
+    ) {
+        return;
+    }
+
+    for project_path in discover_root_or_nested_manifest_directories(
         repository_path,
-        manifest_file_names,
-    )) {
+        &["uv.lock", "poetry.lock", "pdm.lock"],
+    ) {
+        let command = match task {
+            ProjectRepositoryTask::InstallDependencies if project_path.join("uv.lock").is_file() => {
+                "uv sync"
+            }
+            ProjectRepositoryTask::InstallDependencies if project_path.join("poetry.lock").is_file() => {
+                "poetry install"
+            }
+            ProjectRepositoryTask::InstallDependencies if project_path.join("pdm.lock").is_file() => {
+                "pdm install"
+            }
+            ProjectRepositoryTask::UpdateDependencies if project_path.join("uv.lock").is_file() => {
+                "uv lock --upgrade"
+            }
+            ProjectRepositoryTask::UpdateDependencies if project_path.join("poetry.lock").is_file() => {
+                "poetry update"
+            }
+            ProjectRepositoryTask::UpdateDependencies if project_path.join("pdm.lock").is_file() => {
+                "pdm update"
+            }
+            _ => continue,
+        };
+
         push_unique_command(
             commands,
             command_in_directory(repository_path, &project_path, command),
         );
     }
+}
+
+fn add_manifest_directory_task_commands(
+    repository_path: &Path,
+    commands: &mut Vec<String>,
+    manifest_file_names: &[&str],
+    command: &str,
+) {
+    for project_path in discover_root_or_nested_manifest_directories(repository_path, manifest_file_names) {
+        push_unique_command(
+            commands,
+            command_in_directory(repository_path, &project_path, command),
+        );
+    }
+}
+
+fn discover_root_or_nested_manifest_paths(
+    repository_path: &Path,
+    file_names: &[&str],
+) -> Vec<PathBuf> {
+    if file_names
+        .iter()
+        .any(|file_name| repository_path.join(file_name).is_file())
+    {
+        return file_names
+            .iter()
+            .map(|file_name| repository_path.join(file_name))
+            .filter(|path| path.is_file())
+            .collect();
+    }
+
+    discover_manifest_paths(repository_path, file_names)
+}
+
+fn discover_root_or_nested_manifest_directories(
+    repository_path: &Path,
+    file_names: &[&str],
+) -> Vec<PathBuf> {
+    unique_manifest_directories(discover_root_or_nested_manifest_paths(
+        repository_path,
+        file_names,
+    ))
 }
 
 fn discover_manifest_paths(repository_path: &Path, file_names: &[&str]) -> Vec<PathBuf> {
@@ -665,6 +832,17 @@ fn push_unique_command(commands: &mut Vec<String>, command: String) {
     if !commands.iter().any(|candidate| candidate == &command) {
         commands.push(command);
     }
+}
+
+fn launch_repository_task_terminals(
+    repository_path: &Path,
+    commands: &[String],
+) -> Result<(), ProjectRepositoryTaskError> {
+    for command in commands {
+        launch_repository_terminal(repository_path, Some(command))?;
+    }
+
+    Ok(())
 }
 
 #[cfg(target_os = "windows")]

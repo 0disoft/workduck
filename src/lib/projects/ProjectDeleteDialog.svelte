@@ -1,7 +1,9 @@
 <script lang="ts">
+	import type { WorkduckMessages } from '$lib/i18n/workduck-message-contract';
 	import { getProjectFormErrorMessage, type ProjectFormError } from './project-board-errors';
 
 	interface Props {
+		readonly projectMessages: WorkduckMessages['projects'];
 		shouldDeleteLocalFolder: boolean;
 		readonly formError: ProjectFormError | null;
 		readonly isDeleting: boolean;
@@ -17,6 +19,7 @@
 	}
 
 	let {
+		projectMessages,
 		shouldDeleteLocalFolder = $bindable(),
 		formError,
 		isDeleting,
@@ -63,7 +66,7 @@
 			<p class="workduck-dialog-note">{getDeleteLocalFolderUnavailableText()}</p>
 		{/if}
 		{#if formError !== null}
-			<p class="workduck-inline-error" aria-live="polite">{getProjectFormErrorMessage(formError)}</p>
+			<p class="workduck-inline-error" aria-live="polite">{getProjectFormErrorMessage(formError, projectMessages.errors)}</p>
 		{/if}
 		<div class="workduck-dialog-actions">
 			<button

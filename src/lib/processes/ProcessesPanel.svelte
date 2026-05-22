@@ -10,7 +10,7 @@
 		readAppearanceSettingsFromBrowser,
 		subscribeAppearanceSettings
 	} from '$lib/settings/appearance-storage';
-	import { DetailCard, EntityCard, EntityWorkbench } from '$lib/ui';
+	import { DetailCard, EntityCard, EntityWorkbench, StatusToast } from '$lib/ui';
 
 	import {
 		killDeveloperProcess,
@@ -32,7 +32,7 @@
 	let processes = $state<readonly DeveloperProcessEntry[]>([]);
 	let selectedProcessId = $state<number | null>(null);
 	let processError = $state<DeveloperProcessError | null>(null);
-	let status = $state<string | null>(null);
+	let statusMessage = $state<string | null>(null);
 	let isRefreshing = $state(false);
 	let killingProcessId = $state<number | null>(null);
 	let refreshIntervalId: number | null = null;
@@ -84,7 +84,7 @@
 
 			processes = result.processes;
 			processError = result.ok ? null : result.error;
-			status = result.ok && !options.silent ? messages.processes.refreshed : null;
+			statusMessage = result.ok && !options.silent ? messages.processes.refreshed : null;
 
 			if (
 				selectedProcessId !== null &&
@@ -157,7 +157,7 @@
 		const targetPid = selectedProcess.pid;
 		killingProcessId = targetPid;
 		processError = null;
-		status = null;
+		statusMessage = null;
 
 		try {
 			const error = await killDeveloperProcess(targetPid);
@@ -171,7 +171,7 @@
 			selectedProcessId = null;
 			await delay(PROCESS_KILL_REFRESH_DELAY_MS);
 			await refreshProcesses({ silent: true, queueIfBusy: true });
-			status = messages.processes.killSucceeded;
+			statusMessage = messages.processes.killSucceeded;
 		} finally {
 			killingProcessId = null;
 		}
@@ -273,8 +273,6 @@
 			</p>
 		{/if}
 
-		{#if status !== null}
-			<p class="workduck-inline-status" aria-live="polite">{status}</p>
-		{/if}
+		<StatusToast message={statusMessage} />
 	{/snippet}
 </EntityWorkbench>

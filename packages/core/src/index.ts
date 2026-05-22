@@ -63,6 +63,14 @@ export const workduckQueueWorkPriorities = ["low", "normal", "high", "urgent"] a
 
 export type WorkduckQueueWorkPriority = (typeof workduckQueueWorkPriorities)[number];
 
+export const workduckQueueTaskKinds = ["instruction", "direct-message", "vote"] as const;
+
+export type WorkduckQueueTaskKind = (typeof workduckQueueTaskKinds)[number];
+
+export const workduckQueueResponseLanguages = ["auto", "ko", "en"] as const;
+
+export type WorkduckQueueResponseLanguage = (typeof workduckQueueResponseLanguages)[number];
+
 export type WorkduckId = string;
 
 export interface WorkduckEntityRef {
@@ -183,9 +191,12 @@ export interface WorkduckGate {
 
 export interface WorkduckQueueWorkOrderTask {
   readonly id: WorkduckId;
+  readonly kind?: WorkduckQueueTaskKind;
   readonly title: string;
   readonly body: string;
   readonly priority?: WorkduckQueueWorkPriority;
+  readonly responseLanguage?: WorkduckQueueResponseLanguage;
+  readonly projectIds?: readonly WorkduckId[];
   readonly skillIds?: readonly WorkduckId[];
   readonly agentIds?: readonly WorkduckId[];
   readonly referenceIds?: readonly WorkduckId[];
@@ -210,6 +221,7 @@ export interface WorkduckQueueResultReportTask {
   readonly filesChanged: readonly string[];
   readonly verification: readonly string[];
   readonly risks: readonly string[];
+  readonly responseLanguage?: WorkduckQueueResponseLanguage;
 }
 
 export interface WorkduckQueueResultReport {

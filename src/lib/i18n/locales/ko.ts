@@ -114,10 +114,10 @@ export const koMessages = {
 		detail: '작업 대기열 세부 정보',
 		filters: '작업 대기열 필터',
 		contextMenu: '작업 대기열 파일 메뉴',
-		registeredCount: '{count}개의 항목 등록됨',
-		executionFilters: '수행 상태 필터',
+		registeredCount: '대기열 파일 {count}개',
+		executionFilters: '실행 상태 필터',
 		readFilters: '읽음 상태 필터',
-		pendingCountLabel: '수행 전 작업 {count}개',
+		pendingCountLabel: '실행 대기 작업 {count}개',
 		resultReportReview: '결과 보고서 검토',
 		workOrderView: '작업 지시서 보기',
 		workOrderId: '작업 ID',
@@ -131,6 +131,7 @@ export const koMessages = {
 		workType: '작업 유형',
 		workTypes: {
 			instruction: '일반 지시',
+			directMessage: '직접 메시지',
 			vote: '투표/선정'
 		},
 		workPriority: '우선순위',
@@ -140,14 +141,20 @@ export const koMessages = {
 			ko: '한국어',
 			en: 'English'
 		},
+		noProject: '프로젝트 없음',
 		noSkill: '스킬 없음',
 		noAgent: '에이전트 없음',
 		noReference: '참고자료 없음',
 		linkedSkill: '연결된 스킬',
+		assignment: '실행 설정',
+		advancedExecution: '고급 실행 설정',
+		internalSkills: '내부 스킬',
+		workProjects: '관련 프로젝트',
 		workAgents: '작업 에이전트',
 		workReferences: '작업 참고자료',
 		selectionCount: '{count}개 선택',
 		workBody: '작업 내용',
+		directMessageBody: '보낼 메시지',
 		vote: {
 			question: '질문',
 			options: '선택지',
@@ -158,16 +165,19 @@ export const koMessages = {
 			result: '투표 결과',
 			choice: '선택',
 			count: '{count}표',
-			confidence: '확신 {score}/9',
 			invalid: '해석하지 못한 응답 {count}개',
 			optionCount: '{count}개 선택지',
 			unparsed: '해석 실패'
 		},
 		createWorkOrder: '작업 지시서 만들기',
+		delegateEvaluation: '평가 위임',
 		creating: '만드는 중',
 		executeWorkOrder: '실행',
 		executing: '실행 중',
 		noFollowUpSelected: '후속 작업이 선택되지 않았습니다.',
+		noEvaluationTargets: '평가할 응답이 없습니다.',
+		evaluationAlreadyDelegated: '이미 평가 위임 작업이 있습니다: {relativePath}',
+		evaluationDelegated: '{relativePath} 평가 위임 작업을 만들었습니다.',
 		createdFile: '{relativePath} 파일을 만들었습니다.',
 		updatedFile: '{relativePath} 파일을 수정했습니다.',
 		deletedFile: '{relativePath} 파일을 삭제했습니다.',
@@ -180,15 +190,15 @@ export const koMessages = {
 			urgent: '긴급'
 		},
 		executionStates: {
-			pending: '수행 전',
-			completed: '수행 완료'
+			pending: '실행 대기',
+			completed: '실행 완료'
 		},
 		readStates: {
 			read: '읽음',
 			unread: '안 읽음'
 		},
 		fileKinds: {
-			resultReport: '결과 보고서 JSON',
+			resultReport: '결과 보고서',
 			workOrder: '작업 지시서',
 			proposal: '제안서',
 			unsupported: '지원하지 않음'
@@ -196,7 +206,7 @@ export const koMessages = {
 		reviewDecisions: {
 			approved: '승인',
 			needsWork: '보완 필요',
-			rollback: '되돌리기'
+			rollback: '롤백'
 		},
 		evaluation: {
 			title: '응답 평가',
@@ -231,27 +241,27 @@ export const koMessages = {
 			unavailable: '작업 대기열 폴더 기능은 데스크톱 앱에서 사용할 수 있습니다.',
 			executionNoTask: '실행할 작업이 없습니다.',
 			executionNoAgent: '작업 에이전트를 선택하세요.',
-			executionVaultLocked: '환경변수 보관함을 먼저 잠금 해제하세요.',
+			executionVaultLocked: '보안 보관함을 먼저 잠금 해제하세요.',
 			executionAgentNotFound: '선택한 에이전트를 찾을 수 없습니다.',
 			executionSecretNotFound: '에이전트에 연결된 API 키를 찾을 수 없습니다.',
-			executionProviderUnsupported: '지원하는 LLM 제공자를 확인하지 못했습니다. 에이전트의 제공자를 선택하거나 API 키 이름/태그에 DeepSeek, OpenAI, OpenRouter 중 하나를 포함하세요.',
+			executionProviderUnsupported: '지원하는 LLM 제공업체를 확인하지 못했습니다. 에이전트의 제공업체를 선택하거나 API 키 이름/태그에 DeepSeek, OpenAI, OpenRouter 중 하나를 포함하세요.',
 			executionApiKeyRequired: 'API 키가 비어 있습니다.',
 			executionPromptRequired: '작업 지시문을 만들지 못했습니다.',
 			executionModelRequired: '사용할 모델을 정하지 못했습니다.',
 			executionRequestInvalid: 'LLM 요청 형식이 올바르지 않습니다.',
 			executionAuthenticationFailed: 'LLM 인증에 실패했습니다. API 키를 확인하세요.',
 			executionRateLimited: 'LLM 요청 한도를 초과했습니다. 잠시 후 다시 실행하세요.',
-			executionProviderRejected: 'LLM 제공자가 요청을 거부했습니다.',
-			executionProviderUnavailable: 'LLM 제공자에 연결하지 못했습니다.',
+			executionProviderRejected: 'LLM 제공업체가 요청을 거부했습니다.',
+			executionProviderUnavailable: 'LLM 제공업체에 연결하지 못했습니다.',
 			executionResponseInvalid: 'LLM 응답을 보고서로 읽지 못했습니다.',
 			executionUnavailable: '작업 실행은 데스크톱 앱에서 사용할 수 있습니다.'
 		}
 	},
 	environment: {
 		ariaLabel: '환경변수',
-		registeredCount: '{count}개의 환경변수 등록됨',
-		vaultPassword: '보관함 암호',
-		createVault: '보관함 만들기',
+		registeredCount: '환경변수 {count}개',
+		vaultPassword: '보안 보관함 암호',
+		createVault: '보안 보관함 만들기',
 		unlockVault: '잠금 해제',
 		lockVault: '잠금',
 		kind: '종류',
@@ -297,22 +307,22 @@ export const koMessages = {
 			storage: '저장소'
 		},
 		statuses: {
-			created: '보관함을 만들었습니다.',
+			created: '보안 보관함을 만들었습니다.',
 			saved: '저장했습니다.',
 			removed: '삭제했습니다.',
 			copied: '복사했습니다.',
 			cliEnvironmentApplied: 'CLI 환경변수 {count}개를 적용했습니다.'
 		},
 		errors: {
-			vaultPasswordRequired: '보관함 암호를 입력하세요.',
+			vaultPasswordRequired: '보안 보관함 암호를 입력하세요.',
 			vaultPasswordTryAgain: '{seconds}초 뒤에 다시 시도하세요.',
-			vaultPasswordMismatch: '보관함 암호가 일치하지 않습니다.',
+			vaultPasswordMismatch: '보안 보관함 암호가 일치하지 않습니다.',
 			vaultPasswordMismatchWithAttempts:
-				'보관함 암호가 일치하지 않습니다. {attemptsRemaining}번 더 시도할 수 있습니다.',
-			vaultUnavailable: '보관함은 데스크톱 앱에서 사용할 수 있습니다.',
-			vaultInvalid: '보관함 데이터를 읽지 못했습니다.',
-			vaultSaveFailed: '보관함을 저장하지 못했습니다.',
-			vaultOperationFailed: '보관함 작업이 실패했습니다.',
+				'보안 보관함 암호가 일치하지 않습니다. {attemptsRemaining}번 더 시도할 수 있습니다.',
+			vaultUnavailable: '보안 보관함은 데스크톱 앱에서 사용할 수 있습니다.',
+			vaultInvalid: '보안 보관함 데이터를 읽지 못했습니다.',
+			vaultSaveFailed: '보안 보관함을 저장하지 못했습니다.',
+			vaultOperationFailed: '보안 보관함 작업이 실패했습니다.',
 			clipboardUnavailable: '클립보드를 사용할 수 없습니다.',
 			copyFailed: '복사하지 못했습니다.',
 			nameRequired: '이름을 입력하세요.',
@@ -332,7 +342,7 @@ export const koMessages = {
 		newProject: '새 프로젝트',
 		newGroup: '새 그룹',
 		newRepository: '새 저장소',
-		registeredCount: '{count}개의 프로젝트 등록됨',
+		registeredCount: '루트 프로젝트 {count}개',
 		filters: {
 			pullNeeded: 'Pull 필요',
 			pushNeeded: 'Push 필요',
@@ -359,28 +369,180 @@ export const koMessages = {
 			initializeGit: 'Git 초기화',
 			publish: '게시',
 			openTerminal: '터미널 열기',
-			installDependencies: '의존성 설치',
-			updateDependencies: '의존성 업데이트',
-			startDevServer: '개발 서버 시작',
-			build: '빌드하기'
+			installDependencies: '의존성 설치 터미널 열기',
+			updateDependencies: '의존성 업데이트 터미널 열기',
+			startDevServer: '개발 서버 터미널 열기',
+			build: '빌드 터미널 열기'
 		},
 		repositoryTasks: {
-			openTerminalStarted: '터미널을 열었습니다.',
-			commandStarted: '터미널에서 실행을 시작했습니다: {command}',
-			installDependenciesStarted: '의존성 설치를 시작했습니다.',
-			updateDependenciesStarted: '의존성 업데이트를 시작했습니다.',
-			startDevServerStarted: '개발 서버를 시작했습니다.',
-			buildStarted: '빌드를 시작했습니다.'
+			terminalOpened: '터미널을 열었습니다.',
+			commandTerminalOpened: '명령이 입력된 터미널을 열었습니다: {command}. 완료 여부는 터미널에서 확인하세요.',
+			installDependenciesTerminalOpened: '의존성 설치 명령이 입력된 터미널을 열었습니다. 완료 여부는 터미널에서 확인하세요.',
+			updateDependenciesTerminalOpened: '의존성 업데이트 명령이 입력된 터미널을 열었습니다. 완료 여부는 터미널에서 확인하세요.',
+			startDevServerTerminalOpened: '개발 서버 명령이 입력된 터미널을 열었습니다. 실행 여부는 터미널에서 확인하세요.',
+			buildTerminalOpened: '빌드 명령이 입력된 터미널을 열었습니다. 완료 여부는 터미널에서 확인하세요.'
+		},
+		errors: {
+			'project-github-credential-vault-locked':
+				'선택한 GitHub 인증을 사용하려면 환경변수 잠금을 해제하세요.',
+			'project-github-credential-missing': '선택한 GitHub 인증을 찾을 수 없습니다.',
+			'project-github-credential-invalid': '선택한 GitHub 인증은 GitHub 토큰이어야 합니다.',
+			'project-name-required': '이름을 입력하세요.',
+			'project-name-duplicate': '이 위치에 같은 이름이 이미 있습니다.',
+			'project-parent-not-found': '상위 프로젝트를 찾을 수 없습니다.',
+			'project-parent-invalid': '그룹은 프로젝트 아래에만 추가할 수 있습니다.',
+			'project-node-not-found': '프로젝트를 찾을 수 없습니다.',
+			'project-path-required': '프로젝트 경로가 필요합니다.',
+			'project-path-duplicate': '이미 등록된 프로젝트 경로입니다.',
+			'project-repository-target-invalid': '저장소는 그룹에만 연결할 수 있습니다.',
+			'project-repository-not-found': '저장소 연결을 찾을 수 없습니다.',
+			'project-folder-workspace-required': '워크스페이스 경로가 필요합니다.',
+			'project-folder-workspace-not-absolute': '워크스페이스 경로는 절대 경로여야 합니다.',
+			'project-folder-workspace-not-found': '워크스페이스 경로를 찾을 수 없습니다.',
+			'project-folder-workspace-not-directory': '워크스페이스 경로는 폴더여야 합니다.',
+			'project-folder-workspace-permission-denied': '워크스페이스 경로에 쓸 수 없습니다.',
+			'project-folder-workspace-unreadable': '워크스페이스 경로를 확인하지 못했습니다.',
+			'project-folder-root-invalid': '프로젝트 폴더를 사용할 수 없습니다.',
+			'project-folder-parent-required': '상위 폴더를 사용할 수 없습니다.',
+			'project-folder-parent-invalid': '상위 폴더를 사용할 수 없습니다.',
+			'project-folder-parent-not-found': '상위 폴더를 사용할 수 없습니다.',
+			'project-folder-path-required': '프로젝트 폴더 경로가 필요합니다.',
+			'project-folder-path-invalid': '프로젝트 폴더 경로를 사용할 수 없습니다.',
+			'project-folder-name-required': '이름을 입력하세요.',
+			'project-folder-name-invalid': '폴더 이름으로 사용할 수 없는 이름입니다.',
+			'project-folder-conflict': '폴더 경로를 사용할 수 없습니다.',
+			'project-folder-create-failed': '폴더를 만들지 못했습니다.',
+			'project-folder-open-path-required': '폴더 경로가 필요합니다.',
+			'project-folder-open-path-not-absolute': '폴더 경로는 절대 경로여야 합니다.',
+			'project-folder-open-path-not-found': '폴더 경로를 찾을 수 없습니다.',
+			'project-folder-open-path-not-directory': '폴더 경로는 폴더여야 합니다.',
+			'project-folder-open-path-permission-denied': '폴더를 열 수 없습니다.',
+			'project-folder-open-failed': '폴더를 열지 못했습니다.',
+			'project-folder-delete-path-required': '폴더 경로가 필요합니다.',
+			'project-folder-delete-path-not-absolute': '폴더 경로는 절대 경로여야 합니다.',
+			'project-folder-delete-path-not-found': '폴더 경로를 찾을 수 없습니다.',
+			'project-folder-delete-path-not-directory': '폴더 경로는 폴더여야 합니다.',
+			'project-folder-delete-path-outside-workspace':
+				'현재 워크스페이스의 projects 폴더 안에 있는 폴더만 여기서 삭제할 수 있습니다.',
+			'project-folder-delete-path-permission-denied': '폴더를 삭제할 수 없습니다.',
+			'project-folder-delete-failed': '폴더를 삭제하지 못했습니다.',
+			'project-folder-unavailable': '프로젝트 폴더 기능은 데스크톱 앱에서 사용할 수 있습니다.',
+			'project-repository-name-required': '저장소 이름을 입력하세요.',
+			'project-repository-source-required': '저장소 폴더나 URL이 필요합니다.',
+			'project-repository-path-required': '저장소 경로가 필요합니다.',
+			'project-repository-path-outside-workspace':
+				'저장소 경로는 현재 워크스페이스 안에 있어야 합니다.',
+			'project-repository-path-duplicate': '이미 연결된 저장소 경로입니다.',
+			'project-repository-remote-url-invalid': '저장소 URL을 사용할 수 없습니다.',
+			'project-repository-remote-url-duplicate': '이미 등록된 저장소 URL입니다.',
+			'project-repository-clone-unavailable':
+				'저장소 Clone 기능은 데스크톱 앱에서 사용할 수 있습니다.',
+			'project-repository-workspace-required': '워크스페이스 경로를 사용할 수 없습니다.',
+			'project-repository-workspace-not-absolute': '워크스페이스 경로를 사용할 수 없습니다.',
+			'project-repository-workspace-not-found': '워크스페이스 경로를 사용할 수 없습니다.',
+			'project-repository-workspace-not-directory': '워크스페이스 경로를 사용할 수 없습니다.',
+			'project-repository-workspace-permission-denied': '워크스페이스 경로를 사용할 수 없습니다.',
+			'project-repository-workspace-unreadable': '워크스페이스 경로를 사용할 수 없습니다.',
+			'project-repository-group-path-required': '저장소 그룹 폴더를 사용할 수 없습니다.',
+			'project-repository-group-path-invalid': '저장소 그룹 폴더를 사용할 수 없습니다.',
+			'project-repository-group-path-not-found': '저장소 그룹 폴더를 사용할 수 없습니다.',
+			'project-repository-group-path-not-directory': '저장소 그룹 폴더를 사용할 수 없습니다.',
+			'project-repository-name-invalid': '폴더 이름으로 사용할 수 없는 저장소 이름입니다.',
+			'project-repository-remote-url-required': '저장소 URL이 필요합니다.',
+			'project-repository-clone-target-exists': 'Clone 대상 폴더가 이미 있습니다.',
+			'project-repository-clone-command-unavailable': 'Git 명령을 찾을 수 없습니다.',
+			'project-repository-clone-command-timed-out': '저장소 Clone 시간이 초과되었습니다.',
+			'project-repository-clone-token-invalid':
+				'GitHub 토큰이 올바르지 않거나 만료되었습니다. 환경변수의 GitHub PAT를 갱신하세요.',
+			'project-repository-clone-permission-denied':
+				'GitHub 토큰에 저장소 접근 권한이 없습니다. 저장소 선택과 Contents 읽기 권한을 확인하세요.',
+			'project-repository-clone-repository-not-found':
+				'저장소를 찾을 수 없습니다. 비공개 저장소는 토큰 접근 권한이 없을 때도 이렇게 보일 수 있습니다.',
+			'project-repository-clone-organization-restricted':
+				'GitHub 조직 접근이 제한되어 있습니다. 해당 조직이나 SSO에서 토큰을 승인하세요.',
+			'project-repository-clone-access-denied':
+				'GitHub가 저장소 접근을 거부했습니다. URL, 토큰 권한, 조직 정책을 확인하세요.',
+			'project-repository-clone-auth-required':
+				'저장소 Clone에는 Git 인증이 필요합니다. 이 프로젝트에 GitHub 인증을 선택하세요.',
+			'project-repository-clone-failed':
+				'저장소 Clone에 실패했습니다. URL, 네트워크, Git 인증을 확인하세요.',
+			'project-repository-git-path-required': '저장소 경로가 필요합니다.',
+			'project-repository-git-path-not-absolute': '저장소 경로는 절대 경로여야 합니다.',
+			'project-repository-git-path-not-found': '저장소 경로를 찾을 수 없습니다.',
+			'project-repository-git-path-not-directory': '저장소 경로는 폴더여야 합니다.',
+			'project-repository-git-path-permission-denied': '저장소 경로를 읽을 수 없습니다.',
+			'project-repository-git-path-unreadable': '저장소 경로를 확인하지 못했습니다.',
+			'project-repository-git-command-unavailable': 'Git 명령을 찾을 수 없습니다.',
+			'project-repository-git-command-failed':
+				'Git 명령이 실패했습니다. 저장소 경로와 Git 설치 상태를 확인하세요.',
+			'project-repository-git-command-timed-out': 'Git 명령 시간이 초과되었습니다.',
+			'project-repository-git-not-repository': '저장소 폴더가 Git 저장소로 초기화되지 않았습니다.',
+			'project-repository-git-init-failed': 'Git 저장소를 초기화하지 못했습니다.',
+			'project-repository-git-remote-missing': 'Git 원격 저장소가 설정되지 않았습니다.',
+			'project-repository-git-push-auth-required': 'Git push에는 인증이 필요합니다.',
+			'project-repository-git-push-empty': 'Push할 커밋이 없습니다.',
+			'project-repository-git-push-failed':
+				'Git push에 실패했습니다. 원격 URL, 브랜치, 네트워크, 인증을 확인하세요.',
+			'project-repository-git-fetch-auth-required': 'Git fetch에는 인증이 필요합니다.',
+			'project-repository-git-fetch-failed':
+				'Git fetch에 실패했습니다. 원격 URL, 네트워크, 인증을 확인하세요.',
+			'project-repository-git-pull-auth-required': 'Git pull에는 인증이 필요합니다.',
+			'project-repository-git-pull-conflict':
+				'이 체크아웃에 로컬 수정 또는 충돌이 있어서 Git pull을 중단했습니다. 필요한 변경을 커밋하거나 스태시하거나 버린 뒤 다시 Pull 하세요.',
+			'project-repository-git-pull-failed':
+				'Git pull에 실패했습니다. 원격 URL, 브랜치, 네트워크, 인증을 확인하세요.',
+			'project-repository-github-repo-name-required': 'GitHub 저장소 이름을 입력하세요.',
+			'project-repository-github-repo-name-invalid': 'GitHub 저장소 이름을 사용할 수 없습니다.',
+			'project-repository-github-commit-message-required': '커밋 메시지를 입력하세요.',
+			'project-repository-github-commit-message-invalid': '커밋 메시지를 사용할 수 없습니다.',
+			'project-repository-github-visibility-invalid': 'GitHub 공개 범위를 사용할 수 없습니다.',
+			'project-repository-github-cli-unavailable': 'GitHub CLI를 찾을 수 없습니다.',
+			'project-repository-github-auth-required': 'GitHub CLI 인증이 필요합니다.',
+			'project-repository-github-remote-exists': 'Git 원격 origin이 이미 설정되어 있습니다.',
+			'project-repository-github-empty': '게시할 커밋이 없습니다.',
+			'project-repository-github-commit-identity-missing':
+				'Git 작성자 이름이나 이메일이 설정되지 않았습니다.',
+			'project-repository-github-commit-index-locked':
+				'다른 프로세스가 Git 인덱스를 사용 중입니다.',
+			'project-repository-github-commit-hook-failed': 'Git 훅이 첫 커밋을 막았습니다.',
+			'project-repository-github-commit-failed': '첫 커밋을 만들지 못했습니다.',
+			'project-repository-github-create-failed':
+				'GitHub 저장소를 만들지 못했습니다. GitHub CLI 인증과 저장소 이름을 확인하세요.',
+			'project-repository-task-unavailable':
+				'저장소 작업은 데스크톱 앱에서 사용할 수 있습니다.',
+			'project-repository-task-workspace-required': '워크스페이스 경로를 사용할 수 없습니다.',
+			'project-repository-task-workspace-not-absolute': '워크스페이스 경로를 사용할 수 없습니다.',
+			'project-repository-task-workspace-not-found': '워크스페이스 경로를 사용할 수 없습니다.',
+			'project-repository-task-workspace-not-directory': '워크스페이스 경로를 사용할 수 없습니다.',
+			'project-repository-task-workspace-unreadable': '워크스페이스 경로를 사용할 수 없습니다.',
+			'project-repository-task-path-required': '저장소 경로를 사용할 수 없습니다.',
+			'project-repository-task-path-not-absolute': '저장소 경로를 사용할 수 없습니다.',
+			'project-repository-task-path-not-found': '저장소 경로를 사용할 수 없습니다.',
+			'project-repository-task-path-not-directory': '저장소 경로를 사용할 수 없습니다.',
+			'project-repository-task-path-outside-workspace':
+				'저장소 경로는 현재 워크스페이스 안에 있어야 합니다.',
+			'project-repository-task-path-unreadable': '저장소 경로를 사용할 수 없습니다.',
+			'project-repository-task-invalid': '저장소 작업을 사용할 수 없습니다.',
+			'project-repository-task-command-unavailable':
+				'이 저장소에 맞는 명령을 찾을 수 없습니다.',
+			'project-repository-task-terminal-unavailable': '지원하는 터미널을 찾을 수 없습니다.',
+			'project-repository-task-launch-failed': '명령 터미널을 열지 못했습니다.',
+			'project-registry-read-failed': '프로젝트를 불러오지 못했습니다.',
+			'project-registry-write-failed': '프로젝트를 저장하지 못했습니다.',
+			'project-repository-operation-read-failed':
+				'저장소 작업 기록을 불러오지 못했습니다.',
+			'project-repository-operation-write-failed':
+				'저장소 작업 기록을 저장하지 못했습니다.'
 		}
 	},
 	references: {
 		title: '참고자료',
 		list: '참고자료 목록',
 		details: '참고자료 세부 정보',
-		registeredCount: '{count}개의 참고자료 등록됨',
+		registeredCount: '참고자료 {count}개',
 		newReference: '새 참고자료',
 		editReference: '참고자료 수정',
-		sourceUrl: '출처 주소',
+		sourceUrl: '참고 URL',
 		tags: '태그',
 		relatedProjects: '연관 프로젝트',
 		noProject: '프로젝트 없음',
@@ -390,8 +552,8 @@ export const koMessages = {
 		removed: '삭제했습니다.',
 		errors: {
 			titleRequired: '제목을 입력하세요.',
-			bodyOrSourceRequired: '출처 주소나 내용을 입력하세요.',
-			sourceUrlInvalid: '출처 주소는 http:// 또는 https://로 시작해야 합니다.',
+			bodyOrSourceRequired: '참고 URL이나 내용을 입력하세요.',
+			sourceUrlInvalid: '참고 URL은 http:// 또는 https://로 시작해야 합니다.',
 			titleDuplicate: '이미 있는 제목입니다.',
 			notFound: '참고자료를 찾을 수 없습니다.',
 			readFailed: '참고자료를 불러오지 못했습니다.',
@@ -406,6 +568,7 @@ export const koMessages = {
 			appearance: '화면',
 			workspaces: '워크스페이스',
 			sync: '동기화',
+			advanced: '고급',
 			system: '시스템'
 		},
 		appearance: {
@@ -490,15 +653,16 @@ export const koMessages = {
 				repositoryGitNotRepository: 'Git 저장소로 초기화되지 않았습니다.',
 				repositoryGitRemoteMissing: '원격 저장소가 설정되지 않았습니다.',
 				repositoryGitPushAuthRequired:
-					'Git push에는 인증이 필요합니다. 시스템 Git 인증을 설정하거나 환경변수 보관함에 GitHub 토큰을 추가하세요.',
+					'Git push에는 인증이 필요합니다. 시스템 Git 인증을 설정하거나 보안 보관함에 GitHub 토큰을 추가하세요.',
 				repositoryGitPushEmpty: 'Push할 커밋이 없습니다.',
 				repositoryGitPushFailed: 'Git push에 실패했습니다.',
 				repositoryGitFetchAuthRequired:
-					'Git fetch에는 인증이 필요합니다. 시스템 Git 인증을 설정하거나 환경변수 보관함에 GitHub 토큰을 추가하세요.',
+					'Git fetch에는 인증이 필요합니다. 시스템 Git 인증을 설정하거나 보안 보관함에 GitHub 토큰을 추가하세요.',
 				repositoryGitFetchFailed: 'Git fetch에 실패했습니다.',
 				repositoryGitPullAuthRequired:
-					'Git pull에는 인증이 필요합니다. 시스템 Git 인증을 설정하거나 환경변수 보관함에 GitHub 토큰을 추가하세요.',
-				repositoryGitPullConflict: '충돌을 먼저 해결해야 합니다.',
+					'Git pull에는 인증이 필요합니다. 시스템 Git 인증을 설정하거나 보안 보관함에 GitHub 토큰을 추가하세요.',
+				repositoryGitPullConflict:
+					'이 체크아웃에 로컬 수정 또는 충돌이 있어서 Git pull을 중단했습니다. 필요한 변경을 커밋하거나 스태시하거나 버린 뒤 다시 Pull 하세요.',
 				repositoryGitPullFailed: 'Git pull에 실패했습니다.',
 				repositoryGithubNameRequired: 'GitHub 저장소 이름을 입력하세요.',
 				repositoryGithubNameInvalid: 'GitHub 저장소 이름을 사용할 수 없습니다.',
@@ -550,6 +714,40 @@ export const koMessages = {
 				load:
 					'선택한 동기화 폴더의 암호화 파일을 읽어 현재 앱에 적용합니다. Git pull 후 최신 데이터를 반영할 때 사용합니다.'
 			},
+			confirmations: {
+				importData: {
+					title: '암호화 데이터 가져오기 확인',
+					body: '현재 앱의 워크스페이스와 프로젝트 데이터가 입력한 암호화 데이터로 바뀝니다.',
+					inputLabel: '계속하려면 아래 문구를 입력하세요.',
+					confirmTextLabel: '입력할 문구',
+					confirmText: '가져오기',
+					actionLabel: '가져오기'
+				},
+				saveFile: {
+					title: '동기화 파일 저장 확인',
+					body: '현재 앱 데이터를 암호화해 선택한 동기화 파일을 덮어씁니다.',
+					inputLabel: '계속하려면 아래 문구를 입력하세요.',
+					confirmTextLabel: '입력할 문구',
+					confirmText: '저장',
+					actionLabel: '저장'
+				},
+				loadFile: {
+					title: '동기화 파일 불러오기 확인',
+					body: '선택한 동기화 파일의 데이터가 현재 앱의 워크스페이스와 프로젝트 데이터에 적용됩니다.',
+					inputLabel: '계속하려면 아래 문구를 입력하세요.',
+					confirmTextLabel: '입력할 문구',
+					confirmText: '불러오기',
+					actionLabel: '불러오기'
+				},
+				pullGit: {
+					title: 'Git pull 확인',
+					body: '원격 변경 사항이 동기화 폴더에 적용됩니다. 이후 불러오기를 실행하면 현재 앱 데이터가 바뀔 수 있습니다.',
+					inputLabel: '계속하려면 아래 문구를 입력하세요.',
+					confirmTextLabel: '입력할 문구',
+					confirmText: 'Pull',
+					actionLabel: 'Pull'
+				}
+			},
 			statuses: {
 				exported: '내보냈습니다.',
 				imported: '가져왔습니다.',
@@ -591,7 +789,7 @@ export const koMessages = {
 				gitUnavailable: 'Git을 사용할 수 없습니다.',
 				gitTimedOut: 'Git 명령 시간이 초과되었습니다.',
 				gitAuthRequired:
-					'Git 인증이 필요합니다. 시스템 Git 인증을 설정하거나 환경변수 보관함에 GitHub 토큰을 추가하세요.',
+					'Git 인증이 필요합니다. 시스템 Git 인증을 설정하거나 보안 보관함에 GitHub 토큰을 추가하세요.',
 				gitIdentityRequired: 'Git 사용자 이름이나 이메일이 설정되어 있지 않습니다.',
 				gitRemoteHasChanges: '원격 저장소에 변경 사항이 있습니다. 먼저 Pull 하세요.',
 				gitFastForwardRequired: '수동 병합이 필요합니다.',
@@ -629,10 +827,10 @@ export const koMessages = {
 		title: '에이전트',
 		list: '에이전트 목록',
 		details: '에이전트 세부 정보',
-		registeredCount: '{count}개의 에이전트 등록됨',
+		registeredCount: '에이전트 {count}개',
 		newAgent: '새 에이전트',
 		editAgent: '에이전트 수정',
-		provider: '제공자',
+		provider: '제공업체',
 		model: '모델',
 		modelId: '모델 ID',
 		defaultModel: '기본 모델',
@@ -690,7 +888,7 @@ export const koMessages = {
 		title: '페르소나',
 		list: '페르소나 목록',
 		details: '페르소나 세부 정보',
-		registeredCount: '{count}개의 페르소나 등록됨',
+		registeredCount: '페르소나 {count}개',
 		newPersona: '새 페르소나',
 		editPersona: '페르소나 수정',
 		randomSpectrums: '랜덤 특성',
@@ -712,7 +910,7 @@ export const koMessages = {
 					}
 				},
 				emotionalTone: {
-					label: '감정 톤',
+					label: '대화 어조',
 					options: {
 						calm: '차분',
 						neutral: '중립',
@@ -736,7 +934,7 @@ export const koMessages = {
 					}
 				},
 				socialDistance: {
-					label: '사회적 거리감',
+					label: '대화 격식',
 					options: {
 						formal: '공식적',
 						comfortable: '편안함',
@@ -765,7 +963,7 @@ export const koMessages = {
 						2: { name: '운영 안정형', description: '실서비스 기준의 안정성을 유지하려 합니다.' },
 						3: { name: '현실 타협형', description: '위험과 속도를 상황에 따라 조절합니다.' },
 						4: { name: '출시 우선형', description: '문제는 운영 중 고치는 편을 선호합니다.' },
-						5: { name: '실험체형', description: '실패 비용보다 속도와 시도를 우선합니다.' }
+						5: { name: '속도 우선형', description: '실패 비용보다 속도와 시도를 우선합니다.' }
 					}
 				},
 				structureBias: {
@@ -825,7 +1023,7 @@ export const koMessages = {
 		title: '스킬',
 		list: '스킬 목록',
 		details: '스킬 세부 정보',
-		registeredCount: '{count}개의 스킬 등록됨',
+		registeredCount: '스킬 {count}개',
 		newSkill: '새 스킬',
 		editSkill: '스킬 수정',
 		copySkill: '복사해서 수정',
@@ -855,7 +1053,7 @@ export const koMessages = {
 		errors: {
 			nameRequired: '이름을 입력하세요.',
 			nameDuplicate: '이미 있는 이름입니다.',
-			outputTypeRequired: '출력 형식을 선택하세요.',
+			outputTypeRequired: '산출물 유형을 선택하세요.',
 			instructionsRequired: '지시문을 입력하세요.',
 			notFound: '스킬을 찾을 수 없습니다.',
 			builtInReadonly: '기본 제공 스킬은 변경할 수 없습니다.',
@@ -867,7 +1065,7 @@ export const koMessages = {
 		title: '터미널',
 		list: '터미널 목록',
 		details: '터미널 세부 정보',
-		registeredCount: '{count}개의 터미널 등록됨',
+		registeredCount: '터미널 {count}개',
 		newTerminal: '새 터미널',
 		editTerminal: '터미널 수정',
 		defaultSessionName: '터미널',
@@ -905,7 +1103,7 @@ export const koMessages = {
 		title: '프로세스',
 		list: '프로세스 목록',
 		details: '프로세스 세부 정보',
-		registeredCount: '{count}개 실행 중',
+		registeredCount: '실행 중인 프로세스 {count}개',
 		pid: 'PID',
 		kind: '종류',
 		command: '명령',

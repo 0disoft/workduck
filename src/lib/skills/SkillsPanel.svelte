@@ -11,7 +11,7 @@
 		subscribeAppearanceSettings
 	} from '$lib/settings/appearance-storage';
 	import type { WorkspaceRecord } from '$lib/workspaces/workspace-registry';
-	import { DetailCard, EntityCard, EntityWorkbench } from '$lib/ui';
+	import { DetailCard, EntityCard, EntityWorkbench, StatusToast } from '$lib/ui';
 
 	import {
 		createEmptySkillRegistry,
@@ -50,7 +50,7 @@
 	let isSavingSkill = $state(false);
 	let isRemovingSkill = $state(false);
 	let skillError = $state<SkillRegistryError | SkillRegistryStorageError | null>(null);
-	let status = $state<string | null>(null);
+	let statusMessage = $state<string | null>(null);
 	let messages = $derived(getWorkduckMessages(appearanceSettings.languageId));
 
 	let allSkills = $derived(getAllSkills(registry));
@@ -111,7 +111,7 @@
 
 	function selectSkill(skill: WorkduckSkillRecord) {
 		selectedSkillId = selectedSkillId === skill.id ? null : skill.id;
-		status = null;
+		statusMessage = null;
 		skillError = null;
 	}
 
@@ -138,7 +138,7 @@
 		skillDescription = getSkillDisplayDescription(skill);
 		skillOutputTypes = [...skill.outputTypes];
 		skillInstructions = getSkillDisplayInstructions(skill);
-		status = null;
+		statusMessage = null;
 		skillError = null;
 	}
 
@@ -166,7 +166,7 @@
 
 		isSavingSkill = true;
 		skillError = null;
-		status = null;
+		statusMessage = null;
 
 		try {
 			const mutation = upsertSkill(registry, {
@@ -193,7 +193,7 @@
 
 			selectedSkillId = null;
 			clearSkillForm();
-			status = messages.skills.saved;
+			statusMessage = messages.skills.saved;
 		} finally {
 			isSavingSkill = false;
 		}
@@ -206,7 +206,7 @@
 
 		isRemovingSkill = true;
 		skillError = null;
-		status = null;
+		statusMessage = null;
 
 		try {
 			const mutation = removeSkill(registry, selectedSkill.id);
@@ -227,7 +227,7 @@
 
 			selectedSkillId = null;
 			clearSkillForm();
-			status = messages.skills.removed;
+			statusMessage = messages.skills.removed;
 		} finally {
 			isRemovingSkill = false;
 		}
@@ -400,9 +400,7 @@
 			<p class="workduck-inline-error" aria-live="polite">{createSkillErrorMessage(skillError)}</p>
 		{/if}
 
-		{#if status !== null}
-			<p class="workduck-inline-status" aria-live="polite">{status}</p>
-		{/if}
+		<StatusToast message={statusMessage} />
 	{/snippet}
 </EntityWorkbench>
 

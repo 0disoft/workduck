@@ -160,7 +160,7 @@
 {/if}
 
 {#if deleteCandidate !== null}
-	<ProjectDeleteDialog bind:shouldDeleteLocalFolder {formError} {isDeleting} {canConfirmDelete}
+	<ProjectDeleteDialog {projectMessages} bind:shouldDeleteLocalFolder {formError} {isDeleting} {canConfirmDelete}
 		{canDeleteLocalFolder} {getDeleteDialogTitle} {getDeleteDialogText}
 		{getDeleteLocalFolderLabel} {getDeleteLocalFolderUnavailableText}
 		onBackdropClick={onDeleteBackdropClick} onClose={onDeleteClose} onConfirm={onDeleteConfirm} />

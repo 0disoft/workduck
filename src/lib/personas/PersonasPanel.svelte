@@ -10,7 +10,7 @@
 		readAppearanceSettingsFromBrowser,
 		subscribeAppearanceSettings
 	} from '$lib/settings/appearance-storage';
-	import { DetailCard, EntityCard, EntityWorkbench } from '$lib/ui';
+	import { DetailCard, EntityCard, EntityWorkbench, StatusToast } from '$lib/ui';
 	import type { WorkspaceRecord } from '$lib/workspaces/workspace-registry';
 	import {
 		assignPersonaToAgents,
@@ -75,7 +75,7 @@
 	let personaError = $state<
 		PersonaRegistryError | PersonaRegistryStorageError | AgentRegistryStorageError | null
 	>(null);
-	let status = $state<string | null>(null);
+	let statusMessage = $state<string | null>(null);
 	let messages = $derived(getWorkduckMessages(appearanceSettings.languageId));
 
 	let selectedPersona = $derived(
@@ -153,7 +153,7 @@
 
 	function selectPersona(persona: PersonaRecord) {
 		selectedPersonaId = selectedPersonaId === persona.id ? null : persona.id;
-		status = null;
+		statusMessage = null;
 		personaError = null;
 	}
 
@@ -169,7 +169,7 @@
 		personaStyles = selectedPersona.styles;
 		personaSpectrums = selectedPersona.spectrums;
 		selectedUnassignedAgentIds = [];
-		status = null;
+		statusMessage = null;
 		personaError = null;
 	}
 
@@ -200,7 +200,7 @@
 
 		isSavingPersona = true;
 		personaError = null;
-		status = null;
+		statusMessage = null;
 
 		try {
 			const mutation = upsertPersona(registry, {
@@ -248,7 +248,7 @@
 
 			selectedPersonaId = savedPersonaId;
 			clearPersonaForm();
-			status = messages.personas.saved;
+			statusMessage = messages.personas.saved;
 		} finally {
 			isSavingPersona = false;
 		}
@@ -261,7 +261,7 @@
 
 		isRemovingPersona = true;
 		personaError = null;
-		status = null;
+		statusMessage = null;
 
 		try {
 			const mutation = removePersona(registry, selectedPersona.id);
@@ -282,7 +282,7 @@
 
 			selectedPersonaId = null;
 			clearPersonaForm();
-			status = messages.personas.removed;
+			statusMessage = messages.personas.removed;
 		} finally {
 			isRemovingPersona = false;
 		}
@@ -505,9 +505,7 @@
 			<p class="workduck-inline-error" aria-live="polite">{createPersonaErrorMessage(personaError)}</p>
 		{/if}
 
-		{#if status !== null}
-			<p class="workduck-inline-status" aria-live="polite">{status}</p>
-		{/if}
+		<StatusToast message={statusMessage} />
 	{/snippet}
 </EntityWorkbench>
 

@@ -1,0 +1,180 @@
+import type { AgentRecord } from '$lib/agents/agent-registry';
+import type { WorkduckMessages } from '$lib/i18n/workduck-language';
+import type { ProjectNodeRecord } from '$lib/projects/project-registry';
+import type { ReferenceRecord } from '$lib/references/reference-registry';
+import type { WorkduckSkillRecord } from '$lib/skills/skill-registry';
+import type {
+	WorkduckQueueExecutionState,
+	WorkduckQueueResponseLanguage,
+	WorkduckQueueResultReportTask,
+	WorkduckQueueReviewDecision,
+	WorkduckQueueWorkOrderTask,
+	WorkduckQueueWorkPriority
+} from './queue-artifacts';
+import type { QueueFileEntry } from './queue-folder';
+import type { QueueExecutionFilter, QueueReadFilter } from './queue-panel-types';
+import type { WorkduckQueueTaskKind } from './queue-voting';
+
+export function getFileKindLabel(messages: WorkduckMessages, kind: QueueFileEntry['kind']) {
+	switch (kind) {
+		case 'result-report':
+			return messages.queue.fileKinds.resultReport;
+		case 'work-order':
+			return messages.queue.fileKinds.workOrder;
+		case 'proposal':
+			return messages.queue.fileKinds.proposal;
+		case 'unsupported':
+			return messages.queue.fileKinds.unsupported;
+	}
+}
+
+export function getExecutionFilterLabel(
+	messages: WorkduckMessages,
+	filter: QueueExecutionFilter
+) {
+	switch (filter) {
+		case 'all':
+			return messages.common.all;
+		case 'pending':
+			return messages.queue.executionStates.pending;
+		case 'completed':
+			return messages.queue.executionStates.completed;
+	}
+}
+
+export function getReadFilterLabel(messages: WorkduckMessages, filter: QueueReadFilter) {
+	switch (filter) {
+		case 'all':
+			return messages.common.all;
+		case 'unread':
+			return messages.queue.readStates.unread;
+		case 'read':
+			return messages.queue.readStates.read;
+	}
+}
+
+export function getQueueExecutionStateLabel(
+	messages: WorkduckMessages,
+	executionState: WorkduckQueueExecutionState | null
+) {
+	return executionState === null ? '' : messages.queue.executionStates[executionState];
+}
+
+export function getQueuePriorityLabel(
+	messages: WorkduckMessages,
+	priority: WorkduckQueueWorkPriority
+) {
+	return messages.queue.priorities[priority];
+}
+
+export function getQueueResponseLanguageLabel(
+	messages: WorkduckMessages,
+	language: WorkduckQueueResponseLanguage
+) {
+	return messages.queue.responseLanguages[language];
+}
+
+export function getSkillDisplayName(messages: WorkduckMessages, skill: WorkduckSkillRecord) {
+	return skill.id === 'workduck.skill.proposal-writer'
+		? messages.skills.builtIn.proposalWriter.name
+		: skill.name;
+}
+
+export function getQueueTaskKindLabel(
+	messages: WorkduckMessages,
+	kind: WorkduckQueueTaskKind | undefined
+) {
+	switch (kind) {
+		case 'direct-message':
+			return messages.queue.workTypes.directMessage;
+		case 'vote':
+			return messages.queue.workTypes.vote;
+		default:
+			return messages.queue.workTypes.instruction;
+	}
+}
+
+export function getVoteChoiceLabel(
+	messages: WorkduckMessages,
+	task: WorkduckQueueResultReportTask
+) {
+	const vote = task.vote;
+
+	if (vote === undefined || vote.ballot.parseStatus !== 'parsed') {
+		return messages.queue.vote.unparsed;
+	}
+
+	const option = vote.options.find((candidate) => candidate.id === vote.ballot.choiceId);
+
+	return option === undefined ? vote.ballot.choiceId : option.label;
+}
+
+export function getReviewDecisionLabel(
+	messages: WorkduckMessages,
+	decision: Exclude<WorkduckQueueReviewDecision, 'pending'>
+) {
+	switch (decision) {
+		case 'approved':
+			return messages.queue.reviewDecisions.approved;
+		case 'needs-work':
+			return messages.queue.reviewDecisions.needsWork;
+		case 'rollback':
+			return messages.queue.reviewDecisions.rollback;
+	}
+}
+
+export function getRecordLabelById<T extends { readonly id: string }>(
+	records: readonly T[],
+	recordId: string,
+	getLabel: (record: T) => string
+) {
+	const record = records.find((candidate) => candidate.id === recordId);
+
+	return record === undefined ? recordId : getLabel(record);
+}
+
+export function createTaskRecordLabels(
+	task: WorkduckQueueWorkOrderTask,
+	getSkillLabel: (skillId: string) => string,
+	getAgentLabel: (agentId: string) => string,
+	getReferenceLabel: (referenceId: string) => string
+) {
+	return {
+		skills: (task.skillIds ?? []).map(getSkillLabel),
+		agents: (task.agentIds ?? []).map(getAgentLabel),
+		references: (task.referenceIds ?? []).map(getReferenceLabel)
+	};
+}
+
+export function getReportTaskAgent(
+	task: WorkduckQueueResultReportTask,
+	agents: readonly AgentRecord[]
+) {
+	const idMatch = /^task_(.+)_[a-z0-9]+$/i.exec(task.id);
+	const candidateAgentId = idMatch?.[1] ?? '';
+	const idMatchAgent = agents.find((agent) => agent.id === candidateAgentId);
+
+	if (idMatchAgent !== undefined) {
+		return idMatchAgent;
+	}
+
+	const titleAgentName = task.title.split(':')[0]?.trim() ?? '';
+
+	if (titleAgentName.length === 0) {
+		return null;
+	}
+
+	return agents.find((agent) => agent.name === titleAgentName) ?? null;
+}
+
+export function getAgentDisplayName(agent: AgentRecord) {
+	return agent.name;
+}
+
+export function getProjectDisplayName(project: ProjectNodeRecord) {
+	return project.name;
+}
+
+export function getReferenceDisplayName(reference: ReferenceRecord) {
+	return reference.title;
+}

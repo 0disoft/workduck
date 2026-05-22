@@ -11,7 +11,7 @@
 		subscribeAppearanceSettings
 	} from '$lib/settings/appearance-storage';
 	import type { WorkspaceRecord } from '$lib/workspaces/workspace-registry';
-	import { DetailCard, EntityCard, EntityWorkbench } from '$lib/ui';
+	import { DetailCard, EntityCard, EntityWorkbench, StatusToast } from '$lib/ui';
 	import {
 		createEmptyProjectRegistry,
 		type ProjectNodeRecord,
@@ -55,7 +55,7 @@
 	let isSavingReference = $state(false);
 	let isRemovingReference = $state(false);
 	let referenceError = $state<ReferenceRegistryError | ReferenceRegistryStorageError | null>(null);
-	let status = $state<string | null>(null);
+	let statusMessage = $state<string | null>(null);
 	let messages = $derived(getWorkduckMessages(appearanceSettings.languageId));
 
 	let selectedReference = $derived(
@@ -135,7 +135,7 @@
 
 	function selectReference(reference: ReferenceRecord) {
 		selectedReferenceId = selectedReferenceId === reference.id ? null : reference.id;
-		status = null;
+		statusMessage = null;
 		referenceError = null;
 	}
 
@@ -156,7 +156,7 @@
 		referenceTags = selectedReference.tags.join(', ');
 		referenceProjectIds = [...selectedReference.projectIds];
 		referenceContent = selectedReference.content;
-		status = null;
+		statusMessage = null;
 		referenceError = null;
 	}
 
@@ -180,7 +180,7 @@
 
 		isSavingReference = true;
 		referenceError = null;
-		status = null;
+		statusMessage = null;
 
 		try {
 			const mutation = upsertReference(registry, {
@@ -208,7 +208,7 @@
 
 			selectedReferenceId = null;
 			clearReferenceForm();
-			status = messages.references.saved;
+			statusMessage = messages.references.saved;
 		} finally {
 			isSavingReference = false;
 		}
@@ -221,7 +221,7 @@
 
 		isRemovingReference = true;
 		referenceError = null;
-		status = null;
+		statusMessage = null;
 
 		try {
 			const mutation = removeReference(registry, selectedReference.id);
@@ -242,7 +242,7 @@
 
 			selectedReferenceId = null;
 			clearReferenceForm();
-			status = messages.references.removed;
+			statusMessage = messages.references.removed;
 		} finally {
 			isRemovingReference = false;
 		}
@@ -478,9 +478,7 @@
 			<p class="workduck-inline-error" aria-live="polite">{createReferenceErrorMessage(referenceError)}</p>
 		{/if}
 
-		{#if status !== null}
-			<p class="workduck-inline-status" aria-live="polite">{status}</p>
-		{/if}
+		<StatusToast message={statusMessage} />
 	{/snippet}
 </EntityWorkbench>
 

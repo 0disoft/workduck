@@ -45,19 +45,19 @@ function getRepositoryTaskStatus(
 	messages: WorkduckMessages['projects']['repositoryTasks']
 ) {
 	if (command !== null) {
-		return messages.commandStarted.replace('{command}', command);
+		return messages.commandTerminalOpened.replace('{command}', command);
 	}
 
 	switch (task) {
 		case 'open-terminal':
-			return messages.openTerminalStarted;
+			return messages.terminalOpened;
 		case 'install-dependencies':
-			return messages.installDependenciesStarted;
+			return messages.installDependenciesTerminalOpened;
 		case 'update-dependencies':
-			return messages.updateDependenciesStarted;
+			return messages.updateDependenciesTerminalOpened;
 		case 'start-dev-server':
-			return messages.startDevServerStarted;
+			return messages.startDevServerTerminalOpened;
 		case 'build':
-			return messages.buildStarted;
+			return messages.buildTerminalOpened;
 	}
 }

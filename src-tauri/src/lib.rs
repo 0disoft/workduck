@@ -10,6 +10,7 @@ mod project_repository_task;
 mod project_repository_validation;
 mod project_repository_operation_store;
 mod queue_folder;
+pub mod queue_execution;
 mod secret_vault_crypto;
 mod storage;
 pub mod system_environment;
@@ -119,6 +120,7 @@ pub fn run() {
             queue_folder::update_queue_work_order_file,
             queue_folder::write_queue_work_order_file,
             queue_folder::write_queue_result_report_file,
+            queue_execution::execute_queue_work_order,
             llm_chat::run_llm_chat_completion
         ])
         .run(tauri::generate_context!())

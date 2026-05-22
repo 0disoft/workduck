@@ -86,7 +86,6 @@
 		{ href: '/references', labelKey: 'references', requiresWorkspace: true },
 		{ href: '/agents', labelKey: 'agents', requiresWorkspace: true },
 		{ href: '/personas', labelKey: 'personas', requiresWorkspace: true },
-		{ href: '/skills', labelKey: 'skills', requiresWorkspace: true },
 		{ href: '/terminals', labelKey: 'terminals', requiresWorkspace: true },
 		{ href: '/processes', labelKey: 'processes', requiresWorkspace: false },
 		{ href: '/environment', labelKey: 'environment', requiresWorkspace: true }

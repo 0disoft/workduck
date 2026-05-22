@@ -10,7 +10,7 @@
 		readAppearanceSettingsFromBrowser,
 		subscribeAppearanceSettings
 	} from '$lib/settings/appearance-storage';
-	import { DetailCard, EntityCard, EntityWorkbench } from '$lib/ui';
+	import { DetailCard, EntityCard, EntityWorkbench, StatusToast } from '$lib/ui';
 	import type { WorkspaceRecord } from '$lib/workspaces/workspace-registry';
 
 	import {
@@ -61,7 +61,7 @@
 	let catalogError = $state<TerminalCatalogError | null>(null);
 	let terminalError = $state<TerminalRegistryError | TerminalRegistryStorageError | null>(null);
 	let sessionError = $state<TerminalSessionError | null>(null);
-	let status = $state<string | null>(null);
+	let statusMessage = $state<string | null>(null);
 	let terminalOutput = $state('');
 	let terminalInput = $state('');
 	let isSessionConnected = $state(false);
@@ -120,7 +120,7 @@
 			selectedTerminalId = '';
 			terminalError = null;
 			sessionError = null;
-			status = null;
+			statusMessage = null;
 			resetTerminalRuntimeView();
 
 			readRegistryFromStorage(workspaceId);
@@ -164,7 +164,7 @@
 		const nextSessionId = selectedSession?.id === session.id ? null : session.id;
 
 		selectedSessionId = nextSessionId;
-		status = null;
+		statusMessage = null;
 		terminalError = null;
 		sessionError = null;
 		resetTerminalRuntimeView();
@@ -184,7 +184,7 @@
 		editingSessionId = selectedSession.id;
 		terminalName = selectedSession.name;
 		selectedTerminalId = selectedSession.terminalId;
-		status = null;
+		statusMessage = null;
 		terminalError = null;
 	}
 
@@ -220,7 +220,7 @@
 
 		isSavingTerminal = true;
 		terminalError = null;
-		status = null;
+		statusMessage = null;
 
 		try {
 			const mutation = upsertTerminalSession(registry, {
@@ -247,7 +247,7 @@
 				mutation.registry.sessions.find((session) => session.name === terminalName.trim())?.id ?? null;
 			resetTerminalRuntimeView();
 			clearTerminalForm();
-			status = messages.terminals.saved;
+			statusMessage = messages.terminals.saved;
 		} finally {
 			isSavingTerminal = false;
 		}
@@ -261,7 +261,7 @@
 		isRemovingTerminal = true;
 		terminalError = null;
 		sessionError = null;
-		status = null;
+		statusMessage = null;
 
 		try {
 			await stopTerminalSession(selectedSession.id);
@@ -284,7 +284,7 @@
 			selectedSessionId = null;
 			resetTerminalRuntimeView();
 			clearTerminalForm();
-			status = messages.terminals.removed;
+			statusMessage = messages.terminals.removed;
 		} finally {
 			isRemovingTerminal = false;
 		}
@@ -297,7 +297,7 @@
 
 		isSessionStarting = true;
 		sessionError = null;
-		status = null;
+		statusMessage = null;
 
 		try {
 			const result = await startTerminalSession({
@@ -326,7 +326,7 @@
 
 		isSessionStopping = true;
 		sessionError = null;
-		status = null;
+		statusMessage = null;
 
 		try {
 			const result = await stopTerminalSession(selectedSession.id);
@@ -354,7 +354,7 @@
 		terminalInput = '';
 		isSessionSending = true;
 		sessionError = null;
-		status = null;
+		statusMessage = null;
 
 		try {
 			const result = await writeTerminalSessionInput({
@@ -657,9 +657,7 @@
 			<p class="workduck-inline-error" aria-live="polite">{createSessionErrorMessage(sessionError)}</p>
 		{/if}
 
-		{#if status !== null}
-			<p class="workduck-inline-status" aria-live="polite">{status}</p>
-		{/if}
+		<StatusToast message={statusMessage} />
 	{/snippet}
 </EntityWorkbench>
 

@@ -27,7 +27,7 @@
 		readPersonaRegistry,
 		subscribePersonaRegistry
 	} from '$lib/personas/persona-registry-storage';
-	import { DetailCard, EntityCard, EntityWorkbench } from '$lib/ui';
+	import { DetailCard, EntityCard, EntityWorkbench, StatusToast } from '$lib/ui';
 	import type { WorkspaceRecord } from '$lib/workspaces/workspace-registry';
 
 	import {
@@ -89,7 +89,7 @@
 	let isRemovingAgent = $state(false);
 	let isResettingAgentEvaluation = $state(false);
 	let agentError = $state<AgentRegistryError | AgentRegistryStorageError | null>(null);
-	let status = $state<string | null>(null);
+	let statusMessage = $state<string | null>(null);
 	let environmentVaultOpenSequence = 0;
 	let messages = $derived(getWorkduckMessages(appearanceSettings.languageId));
 
@@ -159,7 +159,7 @@
 			selectedModelId = '';
 			environmentVault = readEnvironmentVaultSession(workspaceId);
 			agentError = null;
-			status = null;
+			statusMessage = null;
 
 			void readRegistryFromStorage(workspaceId, workspace.path);
 			void readPersonaRegistryFromStorage(workspaceId, workspace.path);
@@ -222,7 +222,7 @@
 
 	function selectAgent(agent: AgentRecord) {
 		selectedAgentId = agent.id;
-		status = null;
+		statusMessage = null;
 		agentError = null;
 	}
 
@@ -239,7 +239,7 @@
 		selectedExecutionProvider = selectedAgent.executionProvider ?? 'auto';
 		selectedModelId = selectedAgent.modelId ?? '';
 		selectedModelSelection = resolveModelSelection(selectedModelId);
-		status = null;
+		statusMessage = null;
 		agentError = null;
 	}
 
@@ -269,7 +269,7 @@
 
 		isSavingAgent = true;
 		agentError = null;
-		status = null;
+		statusMessage = null;
 
 		try {
 			const mutation = upsertAgent(registry, {
@@ -297,7 +297,7 @@
 
 			selectedAgentId = mutation.registry.agents.find((agent) => agent.name === agentName.trim())?.id ?? null;
 			clearAgentForm();
-			status = messages.agents.saved;
+			statusMessage = messages.agents.saved;
 		} finally {
 			isSavingAgent = false;
 		}
@@ -310,7 +310,7 @@
 
 		isRemovingAgent = true;
 		agentError = null;
-		status = null;
+		statusMessage = null;
 
 		try {
 			const mutation = removeAgent(registry, selectedAgent.id);
@@ -331,7 +331,7 @@
 
 			selectedAgentId = resolveSelectedAgentId(null, mutation.registry.agents);
 			clearAgentForm();
-			status = messages.agents.removed;
+			statusMessage = messages.agents.removed;
 		} finally {
 			isRemovingAgent = false;
 		}
@@ -357,7 +357,7 @@
 
 		isResettingAgentEvaluation = true;
 		agentError = null;
-		status = null;
+		statusMessage = null;
 
 		try {
 			const mutation = resetAgentEvaluation(registry, targetAgent.id);
@@ -376,7 +376,7 @@
 				return;
 			}
 
-			status = messages.agents.evaluation.resetSaved;
+			statusMessage = messages.agents.evaluation.resetSaved;
 		} finally {
 			isResettingAgentEvaluation = false;
 		}
@@ -634,9 +634,7 @@
 			<p class="workduck-inline-error" aria-live="polite">{createAgentErrorMessage(agentError)}</p>
 		{/if}
 
-		{#if status !== null}
-			<p class="workduck-inline-status" aria-live="polite">{status}</p>
-		{/if}
+		<StatusToast message={statusMessage} />
 	{/snippet}
 </EntityWorkbench>
 

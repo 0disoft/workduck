@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 
 	import { getWorkduckMessages } from '$lib/i18n/workduck-language';
+	import StatusToast from '$lib/ui/StatusToast.svelte';
 	import {
 		readWorkspaceRegistryFromBrowser,
 		writeWorkspaceRegistryToBrowser
@@ -66,6 +67,7 @@
 		| ProjectRegistryStorageError
 		| SyncSettingsStorageError
 		| WorkspaceSyncGitRunError;
+	type SyncDangerAction = 'importData' | 'saveFile' | 'loadFile' | 'pullGit';
 
 	let appearanceSettings = $state<AppearanceSettings>(createDefaultAppearanceSettings());
 	let syncSettings = $state<SyncSettings>(createDefaultSyncSettings());
@@ -77,6 +79,8 @@
 	let syncStatus = $state<string | null>(null);
 	let isBusy = $state(false);
 	let isInspectingSyncGit = $state(false);
+	let pendingDangerAction = $state<SyncDangerAction | null>(null);
+	let pendingDangerConfirmText = $state('');
 	let syncGitInspectionRequestId = 0;
 	let messages = $derived(getWorkduckMessages(appearanceSettings.languageId));
 	let syncMessages = $derived(messages.settings.sync);
@@ -108,6 +112,11 @@
 			syncGitInspection?.ok === true &&
 			syncFileNameIsUsable &&
 			(syncGitInspection.aheadCount > 0 || syncGitInspection.hasSyncFileChanges) &&
+			!isBusy
+	);
+	let canConfirmDangerAction = $derived(
+		pendingDangerAction !== null &&
+			pendingDangerConfirmText.trim() === getPendingDangerConfirmation()?.confirmText &&
 			!isBusy
 	);
 
@@ -221,6 +230,14 @@
 		}
 
 		return 'workspace-sync-password-required';
+	}
+
+	function getSyncImportReadinessError(): SyncPanelError {
+		if (syncPassword.length === 0) {
+			return 'workspace-sync-password-required';
+		}
+
+		return 'workspace-sync-content-required';
 	}
 
 	function getSyncGitActionReadinessError(action: WorkspaceSyncGitRunAction): SyncPanelError | null {
@@ -509,19 +526,33 @@
 		syncStatus = syncMessages.statuses.exported;
 	}
 
-	async function handleImport() {
+	function handleImport() {
+		if (!canImport) {
+			syncError = getSyncImportReadinessError();
+			syncStatus = null;
+			return;
+		}
+
+		openDangerConfirmation('importData');
+	}
+
+	async function runImport() {
 		if (await importEncryptedRegistryPayload(syncPayload)) {
 			syncStatus = syncMessages.statuses.imported;
 		}
 	}
 
-	async function handleSaveFile() {
+	function handleSaveFile() {
 		if (!canSave) {
 			syncError = getSyncReadinessError();
 			syncStatus = null;
 			return;
 		}
 
+		openDangerConfirmation('saveFile');
+	}
+
+	async function runSaveFile() {
 		const payload = await createEncryptedRegistryPayload();
 
 		if (payload === null) {
@@ -546,13 +577,17 @@
 		void inspectSyncGitRepository(syncSettings.folderPath);
 	}
 
-	async function handleLoadFile() {
+	function handleLoadFile() {
 		if (!canLoad) {
 			syncError = getSyncReadinessError();
 			syncStatus = null;
 			return;
 		}
 
+		openDangerConfirmation('loadFile');
+	}
+
+	async function runLoadFile() {
 		isBusy = true;
 		syncError = null;
 		syncStatus = null;
@@ -573,6 +608,23 @@
 	}
 
 	async function handleGitSyncAction(action: WorkspaceSyncGitRunAction) {
+		const readinessError = getSyncGitActionReadinessError(action);
+
+		if (readinessError !== null) {
+			syncError = readinessError;
+			syncStatus = null;
+			return;
+		}
+
+		if (action === 'pull') {
+			openDangerConfirmation('pullGit');
+			return;
+		}
+
+		await runGitSyncAction(action);
+	}
+
+	async function runGitSyncAction(action: WorkspaceSyncGitRunAction) {
 		const readinessError = getSyncGitActionReadinessError(action);
 
 		if (readinessError !== null) {
@@ -608,6 +660,55 @@
 		} finally {
 			appOperation.finish();
 			isBusy = false;
+		}
+	}
+
+	function openDangerConfirmation(action: SyncDangerAction) {
+		pendingDangerAction = action;
+		pendingDangerConfirmText = '';
+		syncError = null;
+		syncStatus = null;
+	}
+
+	function closeDangerConfirmation() {
+		if (isBusy) {
+			return;
+		}
+
+		pendingDangerAction = null;
+		pendingDangerConfirmText = '';
+	}
+
+	function getPendingDangerConfirmation() {
+		if (pendingDangerAction === null) {
+			return null;
+		}
+
+		return syncMessages.confirmations[pendingDangerAction];
+	}
+
+	async function confirmDangerAction() {
+		if (!canConfirmDangerAction || pendingDangerAction === null) {
+			return;
+		}
+
+		const action = pendingDangerAction;
+		pendingDangerAction = null;
+		pendingDangerConfirmText = '';
+
+		switch (action) {
+			case 'importData':
+				await runImport();
+				return;
+			case 'saveFile':
+				await runSaveFile();
+				return;
+			case 'loadFile':
+				await runLoadFile();
+				return;
+			case 'pullGit':
+				await runGitSyncAction('pull');
+				return;
 		}
 	}
 
@@ -890,7 +991,66 @@
 
 	{#if syncError !== null}
 		<p class="workduck-inline-error" aria-live="polite">{getSyncErrorMessage(syncError)}</p>
-	{:else if syncStatus !== null}
-		<p class="workduck-inline-status" aria-live="polite">{syncStatus}</p>
+	{/if}
+
+	<StatusToast message={syncError === null ? syncStatus : null} />
+
+	{#if pendingDangerAction !== null}
+		{@const confirmation = getPendingDangerConfirmation()}
+		{#if confirmation !== null}
+			<div class="workduck-dialog-backdrop" role="presentation" onclick={(event) => {
+				if (event.target === event.currentTarget) {
+					closeDangerConfirmation();
+				}
+			}}>
+				<div
+					class="workduck-dialog workduck-project-dialog"
+					role="dialog"
+					aria-modal="true"
+					aria-labelledby="sync-danger-confirm-title"
+					aria-describedby="sync-danger-confirm-description"
+				>
+					<h2 id="sync-danger-confirm-title" class="workduck-dialog-title">
+						{confirmation.title}
+					</h2>
+					<p id="sync-danger-confirm-description" class="workduck-dialog-text">
+						{confirmation.body}
+					</p>
+					<label class="workduck-form-field" for="sync-danger-confirm-input">
+						<span>{confirmation.inputLabel}</span>
+						<span class="workduck-dialog-kicker">
+							{confirmation.confirmTextLabel}: {confirmation.confirmText}
+						</span>
+						<input
+							id="sync-danger-confirm-input"
+							class="workduck-input"
+							type="text"
+							bind:value={pendingDangerConfirmText}
+							autocomplete="off"
+							spellcheck="false"
+							disabled={isBusy}
+						/>
+					</label>
+					<div class="workduck-dialog-actions">
+						<button
+							class="workduck-button"
+							type="button"
+							disabled={isBusy}
+							onclick={closeDangerConfirmation}
+						>
+							{messages.common.cancel}
+						</button>
+						<button
+							class="workduck-button workduck-button-danger"
+							type="button"
+							disabled={!canConfirmDangerAction}
+							onclick={() => void confirmDangerAction()}
+						>
+							{confirmation.actionLabel}
+						</button>
+					</div>
+				</div>
+			</div>
+		{/if}
 	{/if}
 </section>

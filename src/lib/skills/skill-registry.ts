@@ -5,6 +5,8 @@ export const SKILL_NAME_MAX_LENGTH = 120;
 export const SKILL_DESCRIPTION_MAX_LENGTH = 420;
 export const SKILL_INSTRUCTIONS_MAX_LENGTH = 8_000;
 export const SKILL_OUTPUT_TYPES_MAX_COUNT = 5;
+export const WORKDUCK_AGENT_RESPONSE_EVALUATOR_SKILL_ID =
+	'workduck.skill.agent-response-evaluator';
 
 export const workduckSkillOutputTypeOptions = [
 	{ id: 'work-order', label: 'Work order' },
@@ -71,7 +73,7 @@ const BUILT_IN_SKILLS = [
 			'Return a workduck.queue-proposal/v1 artifact. Compare viable options, state tradeoffs, choose one recommendation, and include only concrete follow-up work orders when action is needed.'
 	},
 	{
-		id: 'workduck.skill.agent-response-evaluator',
+		id: WORKDUCK_AGENT_RESPONSE_EVALUATOR_SKILL_ID,
 		name: 'Agent response evaluator',
 		description: 'Rate an agent response with the five-criterion 1-9 rubric.',
 		outputTypes: ['agent-evaluation'],

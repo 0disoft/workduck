@@ -4,12 +4,16 @@ import {
   type WorkduckRecordStatus,
   type WorkduckRepoKind,
   type WorkduckQueueReviewDecision,
+  type WorkduckQueueResponseLanguage,
+  type WorkduckQueueTaskKind,
   type WorkduckQueueWorkPriority,
   type WorkduckRiskLevel,
   type WorkduckServiceLevel,
   workduckCatalogArtifactKinds,
   workduckEntityKinds,
   workduckQueueReviewDecisions,
+  workduckQueueResponseLanguages,
+  workduckQueueTaskKinds,
   workduckQueueWorkPriorities,
   workduckRecordStatuses,
   workduckRepoKinds,
@@ -80,6 +84,9 @@ const workduckQueueReviewDecisionEnum: readonly WorkduckQueueReviewDecision[] =
   workduckQueueReviewDecisions;
 const workduckQueueWorkPriorityEnum: readonly WorkduckQueueWorkPriority[] =
   workduckQueueWorkPriorities;
+const workduckQueueTaskKindEnum: readonly WorkduckQueueTaskKind[] = workduckQueueTaskKinds;
+const workduckQueueResponseLanguageEnum: readonly WorkduckQueueResponseLanguage[] =
+  workduckQueueResponseLanguages;
 
 const entityRefReference = {
   $ref: workduckSchemaIds.entityRef
@@ -375,7 +382,11 @@ export const workduckQueueResultReportSchema = {
           summary: nonEmptyString,
           filesChanged: stringArray,
           verification: stringArray,
-          risks: stringArray
+          risks: stringArray,
+          responseLanguage: {
+            type: "string",
+            enum: workduckQueueResponseLanguageEnum
+          }
         }
       }
     }
@@ -407,12 +418,21 @@ export const workduckQueueWorkOrderSchema = {
         required: ["id", "title", "body"],
         properties: {
           id: nonEmptyString,
+          kind: {
+            type: "string",
+            enum: workduckQueueTaskKindEnum
+          },
           title: nonEmptyString,
           body: nonEmptyString,
           priority: {
             type: "string",
             enum: workduckQueueWorkPriorityEnum
           },
+          responseLanguage: {
+            type: "string",
+            enum: workduckQueueResponseLanguageEnum
+          },
+          projectIds: stringArray,
           skillIds: stringArray,
           agentIds: stringArray,
           referenceIds: stringArray,
@@ -487,12 +507,21 @@ export const workduckQueueProposalSchema = {
         required: ["id", "title", "body"],
         properties: {
           id: nonEmptyString,
+          kind: {
+            type: "string",
+            enum: workduckQueueTaskKindEnum
+          },
           title: nonEmptyString,
           body: nonEmptyString,
           priority: {
             type: "string",
             enum: workduckQueueWorkPriorityEnum
           },
+          responseLanguage: {
+            type: "string",
+            enum: workduckQueueResponseLanguageEnum
+          },
+          projectIds: stringArray,
           skillIds: stringArray,
           agentIds: stringArray,
           referenceIds: stringArray,

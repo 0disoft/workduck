@@ -11,6 +11,7 @@
 		subscribeAppearanceSettings
 	} from '$lib/settings/appearance-storage';
 	import PageTitleRow from '$lib/ui/PageTitleRow.svelte';
+	import StatusToast from '$lib/ui/StatusToast.svelte';
 	import type { WorkspaceRecord } from '$lib/workspaces/workspace-registry';
 	import { readWorkspaceUnlockPasswordSession } from '$lib/workspaces/workspace-unlock';
 
@@ -801,7 +802,5 @@
 		<p class="workduck-inline-error" aria-live="polite">{error}</p>
 	{/if}
 
-	{#if status !== null}
-		<p class="workduck-inline-status" aria-live="polite">{status}</p>
-	{/if}
+	<StatusToast message={status} />
 </section>

@@ -1,4 +1,5 @@
 import type { WorkduckLanguageId } from '$lib/i18n/workduck-language';
+import type { WorkduckMessages } from '$lib/i18n/workduck-message-contract';
 import type {
 	ProjectRepositoryOperationName,
 	ProjectRepositoryOperationState
@@ -102,7 +103,10 @@ export function getRepositoryGitActionDoneLabel(action: ProjectRepositoryGitActi
 	return 'pushed';
 }
 
-export function getRepositoryOperationMessage(operation: ProjectRepositoryOperation) {
+export function getRepositoryOperationMessage(
+	operation: ProjectRepositoryOperation,
+	projectMessages: WorkduckMessages['projects']
+) {
 	if (operation.state === 'running') {
 		return `${getRepositoryOperationProgressLabel(operation.name)}.`;
 	}
@@ -113,8 +117,7 @@ export function getRepositoryOperationMessage(operation: ProjectRepositoryOperat
 
 	return operation.error === null
 		? `${getRepositoryOperationLabel(operation.name)} failed.`
-		: (getProjectFormErrorMessage(operation.error as ProjectFormError) ??
-				'Repository operation failed.');
+		: getProjectFormErrorMessage(operation.error as ProjectFormError, projectMessages.errors);
 }
 
 export function getRepositoryOperationFinishedAtLabel(

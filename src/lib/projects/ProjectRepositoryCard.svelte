@@ -94,7 +94,7 @@
 	{/if}
 	{#if repositoryPathOutsideWorkspace}
 		<p class="workduck-repository-operation-status workduck-repository-operation-status-failed">
-			Repository path must stay inside this workspace.
+			{getProjectFormErrorMessage('project-repository-path-outside-workspace', projectMessages.errors)}
 		</p>
 	{:else if repositoryOperation !== null}
 		<p
@@ -106,7 +106,7 @@
 			aria-live="polite"
 		>
 			<span class="workduck-repository-operation-status-text">
-				{getRepositoryOperationMessage(repositoryOperation)}
+				{getRepositoryOperationMessage(repositoryOperation, projectMessages)}
 			</span>
 			{#if repositoryOperationFinishedAtLabel !== null}
 				<span class="workduck-repository-operation-status-time">
@@ -120,7 +120,7 @@
 			role="alert"
 			aria-live="polite"
 		>
-			{getProjectFormErrorMessage(repositoryGitStatus.error)}
+			{getProjectFormErrorMessage(repositoryGitStatus.error, projectMessages.errors)}
 		</p>
 	{/if}
 	<div class="workduck-repository-card-actions" aria-label={`${repository.name} actions`}>
