@@ -106,19 +106,7 @@ workspace sync become harder to change safely.
 
 ### Queue Execution Reliability
 
-1. Harden LLM JSON extraction for voting work orders.
-   - Current risk: `src-tauri/src/queue_execution.rs` extracts vote JSON by
-     taking the first `{` and the last `}` in the response. That can break when
-     an agent returns Markdown fences, prose containing braces, or multiple JSON
-     snippets.
-   - Target behavior: prefer fenced `json` blocks, then scan for balanced JSON
-     object candidates, parse each candidate, and accept the first object that
-     satisfies the expected vote schema.
-   - Acceptance criteria: a vote response with explanatory prose, a fenced JSON
-     block, and unrelated braces still records the intended choice; invalid
-     choices remain visible as parse failures instead of being silently coerced.
-
-2. Add bounded retry and backoff for transient LLM provider failures.
+1. Add bounded retry and backoff for transient LLM provider failures.
    - Current risk: one temporary 429, 502, 503, 504, network timeout, or gateway
      hiccup can fail an entire work order.
    - Target behavior: retry only transient failures with a small maximum attempt
@@ -128,18 +116,7 @@ workspace sync become harder to change safely.
      policy, each failed attempt is recorded in the report metadata, and the
      final report still includes partial agent results when some agents fail.
 
-3. Move fallback model choices out of queue execution code.
-   - Current risk: default model IDs such as OpenAI, DeepSeek, and OpenRouter
-     fallbacks are embedded in `src-tauri/src/queue_execution.rs`, so model
-     churn requires code changes.
-   - Target behavior: agent-specific model selection remains the first source
-     of truth; provider defaults come from a small local model preset catalog
-     that can be updated without touching queue execution logic.
-   - Acceptance criteria: adding or replacing a default model changes one
-     catalog file, not the runner; old agents without explicit model IDs still
-     resolve to a documented fallback.
-
-4. Keep app and CLI queue behavior identical.
+2. Keep app and CLI queue behavior identical.
    - Current risk: TypeScript and Rust have historically duplicated prompt
      assembly, voting, parsing, report generation, and partial failure policy.
    - Target behavior: shared queue contracts define task type, response
@@ -194,17 +171,7 @@ workspace sync become harder to change safely.
      future stronger parameter set both decrypt when within allowed bounds;
      unsupported algorithms and unsafe parameter values fail clearly.
 
-2. Strengthen destructive sync save/import confirmation text.
-   - Current risk: confirmation dialogs can ask for a generic word such as
-     "save", which does not clearly explain what is being overwritten.
-   - Target behavior: the dialog names the target file, the direction of the
-     operation, and the exact confirmation phrase in the user's interface
-     language.
-   - Acceptance criteria: saving, loading, exporting, importing, pulling, and
-     pushing encrypted sync data each have a distinct confirmation message when
-     data may be overwritten.
-
-3. Audit path normalization at the Tauri IPC boundary.
+2. Audit path normalization at the Tauri IPC boundary.
    - Current risk: Windows canonical paths can expose `\\?\` prefixes in UI or
      terminal prompts when a backend command returns raw filesystem paths.
    - Target behavior: backend responses use display-safe paths for UI fields
@@ -271,16 +238,7 @@ workspace sync become harder to change safely.
    - Acceptance criteria: storage modules do not duplicate generic record
      guards, and domain parsers still produce domain-specific error messages.
 
-3. Remove unnecessary serialize-then-parse normalization where a direct helper
-   is safer.
-   - Current risk: some registry updates normalize data by serializing and
-     reparsing, which hides intent and makes error ownership unclear.
-   - Target behavior: expose explicit clone-and-normalize helpers for registry
-     structures that need deep normalization.
-   - Acceptance criteria: normalization remains behaviorally identical but no
-     caller depends on a JSON round trip for ordinary in-memory cleanup.
-
-4. Keep large surfaces below the point where they become routing files.
+3. Keep large surfaces below the point where they become routing files.
    - Current risk: queue, project, and settings surfaces can regrow after each
      feature because modals, filters, file I/O, execution, evaluation, and
      rendering sit close together.
