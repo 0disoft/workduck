@@ -6,7 +6,9 @@ relative_root: "."
 source_policy: anchors_only
 privacy_mode: minimal
 anchor_count: 79
-source_fingerprint: "sha256:966828ab20740dc9bdf08aecd0f3673b47bca2fdc6856192af6f38b13fca3cc2"
+degraded: false
+git_ls_files_status: ok
+source_fingerprint: "sha256:f00d07ec65cc91e6f9a8190954b3b4143836182c8df1a7f9b386f77ab08968be"
 ---
 
 # REPO_MAP.md
