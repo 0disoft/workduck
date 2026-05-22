@@ -9,7 +9,12 @@
 		type ProjectRepositoryGitAction,
 		type ProjectRepositoryOperation
 	} from './project-board-operations';
+	import {
+		getRepositoryTaskRunFinishedAtLabel,
+		getRepositoryTaskRunMessage
+	} from './project-repository-task-runs';
 	import type { ProjectRepositoryGitStatus } from './project-board-selectors';
+	import type { ProjectRepositoryTaskRunRecord } from './project-repository-task';
 	import type { ProjectNodeRecord, ProjectRepositoryLinkRecord } from './project-registry';
 
 	interface Props {
@@ -18,6 +23,7 @@
 		readonly projectMessages: WorkduckMessages['projects'];
 		readonly languageId: WorkduckLanguageId;
 		readonly repositoryOperation: ProjectRepositoryOperation | null;
+		readonly repositoryTaskRun: ProjectRepositoryTaskRunRecord | null;
 		readonly repositoryGitStatus: ProjectRepositoryGitStatus | undefined;
 		readonly repositoryBusy: boolean;
 		readonly repositoryPathOutsideWorkspace: boolean;
@@ -42,6 +48,7 @@
 		projectMessages,
 		languageId,
 		repositoryOperation,
+		repositoryTaskRun,
 		repositoryGitStatus,
 		repositoryBusy,
 		repositoryPathOutsideWorkspace,
@@ -66,6 +73,15 @@
 			? null
 			: getRepositoryOperationFinishedAtLabel(
 					repositoryOperation,
+					projectMessages.lastRepositoryOperation,
+					languageId
+				)
+	);
+	let repositoryTaskRunFinishedAtLabel = $derived(
+		repositoryTaskRun === null
+			? null
+			: getRepositoryTaskRunFinishedAtLabel(
+					repositoryTaskRun,
 					projectMessages.lastRepositoryOperation,
 					languageId
 				)
@@ -95,6 +111,26 @@
 	{#if repositoryPathOutsideWorkspace}
 		<p class="workduck-repository-operation-status workduck-repository-operation-status-failed">
 			{getProjectFormErrorMessage('project-repository-path-outside-workspace', projectMessages.errors)}
+		</p>
+	{:else if repositoryTaskRun !== null &&
+		(repositoryOperation === null ||
+			new Date(repositoryTaskRun.startedAt).getTime() >= new Date(repositoryOperation.startedAt).getTime())}
+		<p
+			class="workduck-repository-operation-status"
+			class:workduck-repository-operation-status-running={repositoryTaskRun.state === 'running'}
+			class:workduck-repository-operation-status-failed={repositoryTaskRun.state === 'failed'}
+			class:workduck-repository-operation-status-succeeded={repositoryTaskRun.state === 'succeeded'}
+			role={repositoryTaskRun.state === 'failed' ? 'alert' : 'status'}
+			aria-live="polite"
+		>
+			<span class="workduck-repository-operation-status-text">
+				{getRepositoryTaskRunMessage(repositoryTaskRun, projectMessages.repositoryTasks)}
+			</span>
+			{#if repositoryTaskRunFinishedAtLabel !== null}
+				<span class="workduck-repository-operation-status-time">
+					{repositoryTaskRunFinishedAtLabel}
+				</span>
+			{/if}
 		</p>
 	{:else if repositoryOperation !== null}
 		<p

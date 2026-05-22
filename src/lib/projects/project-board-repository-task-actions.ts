@@ -3,7 +3,8 @@ import type { ProjectFormError } from './project-board-errors';
 import type { ProjectRepositoryTarget } from './project-board-types';
 import {
 	runProjectRepositoryTask,
-	type ProjectRepositoryTask
+	type ProjectRepositoryTask,
+	type ProjectRepositoryTaskRunRecord
 } from './project-repository-task';
 
 export async function runProjectRepositoryTaskForTarget(
@@ -12,13 +13,22 @@ export async function runProjectRepositoryTaskForTarget(
 	context: {
 		readonly workspacePath: string;
 		readonly messages: WorkduckMessages['projects']['repositoryTasks'];
+		readonly isRepositoryBusy: (repositoryId: string) => boolean;
 		readonly setFormError: (error: ProjectFormError | null) => void;
 		readonly setStatus: (status: string | null) => void;
+		readonly setTaskRun: (
+			repositoryId: string,
+			record: ProjectRepositoryTaskRunRecord
+		) => void;
 	}
 ) {
 	if (target === null || target.repository.path === null) {
 		context.setFormError('project-repository-not-found');
 		context.setStatus(null);
+		return;
+	}
+
+	if (context.isRepositoryBusy(target.repository.id)) {
 		return;
 	}
 
@@ -36,6 +46,9 @@ export async function runProjectRepositoryTaskForTarget(
 		return;
 	}
 
+	if (result.runRecord !== null) {
+		context.setTaskRun(target.repository.id, result.runRecord);
+	}
 	context.setStatus(getRepositoryTaskStatus(task, result.command, context.messages));
 }
 

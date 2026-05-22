@@ -6,6 +6,7 @@ use std::{
 };
 
 use base64::{Engine as _, engine::general_purpose};
+use time::{OffsetDateTime, format_description::well_known::Rfc3339};
 
 #[derive(serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -23,6 +24,8 @@ pub struct ProjectRepositoryTaskResult {
     error: Option<ProjectRepositoryTaskError>,
     #[serde(skip_serializing_if = "Option::is_none")]
     command: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    run_record: Option<ProjectRepositoryTaskRunRecord>,
 }
 
 #[derive(serde::Serialize)]
@@ -60,6 +63,35 @@ pub enum ProjectRepositoryTaskError {
     TerminalUnsupportedPlatform,
     #[serde(rename = "project-repository-task-launch-failed")]
     LaunchFailed,
+    #[serde(rename = "project-repository-task-record-write-failed")]
+    RecordWriteFailed,
+    #[serde(rename = "project-repository-task-record-read-failed")]
+    RecordReadFailed,
+}
+
+#[derive(Clone, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ProjectRepositoryTaskRunRecord {
+    id: String,
+    task: String,
+    repository_path: String,
+    command: String,
+    state: String,
+    exit_code: Option<i32>,
+    started_at: String,
+    finished_at: Option<String>,
+    output_tail: Option<String>,
+    record_path: String,
+}
+
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ProjectRepositoryTaskRunRecordsResult {
+    ok: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    records: Option<Vec<ProjectRepositoryTaskRunRecord>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    error: Option<ProjectRepositoryTaskError>,
 }
 
 #[derive(Clone, Copy)]
@@ -111,13 +143,27 @@ pub fn run_project_repository_task(
     } else {
         Some(commands.join("\n"))
     };
-
-    let launch_result = if commands.is_empty() {
-        launch_repository_terminal(&repository_path, None)
+    let (launch_result, run_record) = if commands.is_empty() {
+        (launch_repository_terminal(&repository_path, None, None), None)
     } else if matches!(task, ProjectRepositoryTask::StartDevServer) && commands.len() > 1 {
-        launch_repository_task_terminals(&repository_path, &commands)
+        match launch_repository_task_terminals(&workspace_path, &repository_path, task, &commands) {
+            Ok(records) => (Ok(()), records.into_iter().next()),
+            Err(error) => (Err(error), None),
+        }
     } else {
-        launch_repository_terminal(&repository_path, command.as_deref())
+        let run_record = match create_task_run_record(
+            &workspace_path,
+            &repository_path,
+            task,
+            command.as_deref().unwrap_or(""),
+        ) {
+            Ok(record) => record,
+            Err(error) => return failed(error),
+        };
+        (
+            launch_repository_terminal(&repository_path, command.as_deref(), Some(&run_record)),
+            Some(run_record),
+        )
     };
 
     match launch_result {
@@ -125,8 +171,82 @@ pub fn run_project_repository_task(
             ok: true,
             error: None,
             command,
+            run_record,
         },
-        Err(error) => failed(error),
+        Err(error) => {
+            if let Some(record) = run_record.as_ref() {
+                let _ = write_task_run_record(
+                    &PathBuf::from(&record.record_path),
+                    &failed_launch_task_run_record(record),
+                );
+            }
+
+            failed(error)
+        }
+    }
+}
+
+#[tauri::command]
+pub fn read_project_repository_task_run_records(
+    workspace_path: String,
+) -> ProjectRepositoryTaskRunRecordsResult {
+    let workspace_path = match validate_workspace_path(&workspace_path) {
+        Ok(path) => path,
+        Err(error) => {
+            return ProjectRepositoryTaskRunRecordsResult {
+                ok: false,
+                records: None,
+                error: Some(error),
+            };
+        }
+    };
+    let record_dir = task_run_record_dir(&workspace_path);
+    let entries = match fs::read_dir(&record_dir) {
+        Ok(entries) => entries,
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+            return ProjectRepositoryTaskRunRecordsResult {
+                ok: true,
+                records: Some(Vec::new()),
+                error: None,
+            };
+        }
+        Err(_) => {
+            return ProjectRepositoryTaskRunRecordsResult {
+                ok: false,
+                records: None,
+                error: Some(ProjectRepositoryTaskError::RecordReadFailed),
+            };
+        }
+    };
+    let mut records = Vec::new();
+    let visible_workspace_path = crate::git_path::git_process_path(&workspace_path);
+
+    for entry in entries.flatten() {
+        let path = entry.path();
+
+        if path.extension().and_then(|extension| extension.to_str()) != Some("json") {
+            continue;
+        }
+
+        let Ok(record_json) = fs::read_to_string(&path) else {
+            continue;
+        };
+        let Ok(record) = serde_json::from_str::<ProjectRepositoryTaskRunRecord>(&record_json) else {
+            continue;
+        };
+        let repository_path = PathBuf::from(&record.repository_path);
+
+        if repository_path.starts_with(&visible_workspace_path) {
+            records.push(record);
+        }
+    }
+
+    records.sort_by(|left, right| right.started_at.cmp(&left.started_at).then(right.id.cmp(&left.id)));
+
+    ProjectRepositoryTaskRunRecordsResult {
+        ok: true,
+        records: Some(records),
+        error: None,
     }
 }
 
@@ -868,20 +988,113 @@ fn push_unique_command(commands: &mut Vec<String>, command: String) {
 }
 
 fn launch_repository_task_terminals(
+    workspace_path: &Path,
     repository_path: &Path,
+    task: ProjectRepositoryTask,
     commands: &[String],
-) -> Result<(), ProjectRepositoryTaskError> {
+) -> Result<Vec<ProjectRepositoryTaskRunRecord>, ProjectRepositoryTaskError> {
+    let mut run_records = Vec::new();
+
     for command in commands {
-        launch_repository_terminal(repository_path, Some(command))?;
+        let run_record = create_task_run_record(workspace_path, repository_path, task, command)?;
+        launch_repository_terminal(repository_path, Some(command), Some(&run_record))?;
+        run_records.push(run_record);
     }
 
-    Ok(())
+    Ok(run_records)
+}
+
+fn create_task_run_record(
+    workspace_path: &Path,
+    repository_path: &Path,
+    task: ProjectRepositoryTask,
+    command: &str,
+) -> Result<ProjectRepositoryTaskRunRecord, ProjectRepositoryTaskError> {
+    let started_at = current_task_run_timestamp();
+    let id = format!(
+        "repo_task_{}_{}",
+        started_at
+            .chars()
+            .filter(|character| character.is_ascii_alphanumeric())
+            .collect::<String>(),
+        task.as_str()
+    );
+    let record_path = task_run_record_dir(workspace_path).join(format!("{id}.json"));
+    let record = ProjectRepositoryTaskRunRecord {
+        id,
+        task: task.as_str().to_owned(),
+        repository_path: crate::git_path::git_process_path(repository_path)
+            .to_string_lossy()
+            .to_string(),
+        command: command.to_owned(),
+        state: "running".to_owned(),
+        exit_code: None,
+        started_at,
+        finished_at: None,
+        output_tail: None,
+        record_path: crate::git_path::git_process_path(&record_path)
+            .to_string_lossy()
+            .to_string(),
+    };
+
+    write_task_run_record(&record_path, &record)?;
+
+    Ok(record)
+}
+
+fn write_task_run_record(
+    record_path: &Path,
+    record: &ProjectRepositoryTaskRunRecord,
+) -> Result<(), ProjectRepositoryTaskError> {
+    let Some(parent) = record_path.parent() else {
+        return Err(ProjectRepositoryTaskError::RecordWriteFailed);
+    };
+    fs::create_dir_all(parent).map_err(|_| ProjectRepositoryTaskError::RecordWriteFailed)?;
+    let record_json = serde_json::to_string_pretty(record)
+        .map_err(|_| ProjectRepositoryTaskError::RecordWriteFailed)?;
+
+    fs::write(record_path, record_json).map_err(|_| ProjectRepositoryTaskError::RecordWriteFailed)
+}
+
+fn failed_launch_task_run_record(
+    record: &ProjectRepositoryTaskRunRecord,
+) -> ProjectRepositoryTaskRunRecord {
+    ProjectRepositoryTaskRunRecord {
+        state: "failed".to_owned(),
+        exit_code: None,
+        finished_at: Some(current_task_run_timestamp()),
+        output_tail: Some("Terminal launch failed before the command could run.".to_owned()),
+        ..record.clone()
+    }
+}
+
+fn task_run_record_dir(workspace_path: &Path) -> PathBuf {
+    workspace_path.join(".workduck").join("repository-task-runs")
+}
+
+fn current_task_run_timestamp() -> String {
+    OffsetDateTime::now_utc()
+        .format(&Rfc3339)
+        .unwrap_or_else(|_| "1970-01-01T00:00:00Z".to_owned())
+}
+
+impl ProjectRepositoryTask {
+    fn as_str(self) -> &'static str {
+        match self {
+            ProjectRepositoryTask::OpenTerminal => "open-terminal",
+            ProjectRepositoryTask::InstallDependencies => "install-dependencies",
+            ProjectRepositoryTask::UpdateDependencies => "update-dependencies",
+            ProjectRepositoryTask::StartDevServer => "start-dev-server",
+            ProjectRepositoryTask::Build => "build",
+        }
+    }
 }
 
 #[cfg(target_os = "windows")]
 fn launch_repository_terminal(
     repository_path: &Path,
     command: Option<&str>,
+    run_record: Option<&ProjectRepositoryTaskRunRecord>,
 ) -> Result<(), ProjectRepositoryTaskError> {
     use std::os::windows::process::CommandExt;
 
@@ -895,7 +1108,7 @@ fn launch_repository_terminal(
         .as_deref()
         .unwrap_or(terminal.command);
     let shell_repository_path = crate::git_path::git_process_path(repository_path);
-    let script = create_powershell_script(&shell_repository_path, command);
+    let script = create_powershell_script(&shell_repository_path, command, run_record);
     let encoded_script = encode_powershell_command(&script);
 
     Command::new(executable)
@@ -917,12 +1130,17 @@ fn launch_repository_terminal(
 fn launch_repository_terminal(
     _repository_path: &Path,
     _command: Option<&str>,
+    _run_record: Option<&ProjectRepositoryTaskRunRecord>,
 ) -> Result<(), ProjectRepositoryTaskError> {
     Err(ProjectRepositoryTaskError::TerminalUnsupportedPlatform)
 }
 
 #[cfg(target_os = "windows")]
-fn create_powershell_script(repository_path: &Path, command: Option<&str>) -> String {
+fn create_powershell_script(
+    repository_path: &Path,
+    command: Option<&str>,
+    run_record: Option<&ProjectRepositoryTaskRunRecord>,
+) -> String {
     let path = escape_powershell_single_quoted(&repository_path.to_string_lossy());
     let mut script = format!(
         "[Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false); Set-Location -LiteralPath '{}'",
@@ -937,13 +1155,75 @@ fn create_powershell_script(repository_path: &Path, command: Option<&str>) -> St
     {
         let escaped_command = escape_powershell_single_quoted(command);
 
-        script.push_str(&format!(
-            "; Write-Host 'Workduck: {}'; {}; if ($LASTEXITCODE -ne $null -and $LASTEXITCODE -ne 0) {{ Write-Host ('Workduck exit code: ' + $LASTEXITCODE); return }}",
-            escaped_command, command
-        ));
+        if let Some(run_record) = run_record {
+            script.push_str(&create_tracked_powershell_command(&escaped_command, run_record));
+        } else {
+            script.push_str(&format!(
+                "; Write-Host 'Workduck: {}'; {}; if ($LASTEXITCODE -ne $null -and $LASTEXITCODE -ne 0) {{ Write-Host ('Workduck exit code: ' + $LASTEXITCODE); return }}",
+                escaped_command, command
+            ));
+        }
     }
 
     script
+}
+
+#[cfg(target_os = "windows")]
+fn create_tracked_powershell_command(
+    escaped_command: &str,
+    run_record: &ProjectRepositoryTaskRunRecord,
+) -> String {
+    let record_path = escape_powershell_single_quoted(&run_record.record_path);
+    let log_path = escape_powershell_single_quoted(&format!("{}.log", run_record.record_path));
+    let id = escape_powershell_single_quoted(&run_record.id);
+    let task = escape_powershell_single_quoted(&run_record.task);
+    let repository_path = escape_powershell_single_quoted(&run_record.repository_path);
+    let command_json = escape_powershell_single_quoted(&run_record.command);
+    let started_at = escape_powershell_single_quoted(&run_record.started_at);
+
+    format!(
+        r#";
+$workduckRecordPath = '{record_path}';
+$workduckLogPath = '{log_path}';
+$workduckCommand = '{command_json}';
+function Write-WorkduckTaskRunRecord {{
+    param([string]$State, [Nullable[int]]$ExitCode, [string]$OutputTail)
+    $record = [ordered]@{{
+        id = '{id}';
+        task = '{task}';
+        repositoryPath = '{repository_path}';
+        command = $workduckCommand;
+        state = $State;
+        exitCode = $ExitCode;
+        startedAt = '{started_at}';
+        finishedAt = if ($State -eq 'running') {{ $null }} else {{ (Get-Date).ToUniversalTime().ToString('o') }};
+        outputTail = if ([string]::IsNullOrWhiteSpace($OutputTail)) {{ $null }} else {{ $OutputTail }};
+        recordPath = $workduckRecordPath
+    }};
+    $record | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath $workduckRecordPath -Encoding UTF8
+}}
+Write-Host 'Workduck: {escaped_command}';
+$workduckExitCode = 0;
+try {{
+    Invoke-Expression $workduckCommand 2>&1 | Tee-Object -FilePath $workduckLogPath -Append;
+    if ($LASTEXITCODE -ne $null) {{
+        $workduckExitCode = [int]$LASTEXITCODE;
+    }} elseif (-not $?) {{
+        $workduckExitCode = 1;
+    }}
+}} catch {{
+    $workduckExitCode = 1;
+    $_ | Out-String | Tee-Object -FilePath $workduckLogPath -Append;
+}}
+$workduckTail = if (Test-Path -LiteralPath $workduckLogPath) {{ (Get-Content -LiteralPath $workduckLogPath -Tail 40) -join [Environment]::NewLine }} else {{ '' }};
+if ($workduckExitCode -eq 0) {{
+    Write-WorkduckTaskRunRecord -State 'succeeded' -ExitCode $workduckExitCode -OutputTail $workduckTail;
+}} else {{
+    Write-WorkduckTaskRunRecord -State 'failed' -ExitCode $workduckExitCode -OutputTail $workduckTail;
+    Write-Host ('Workduck exit code: ' + $workduckExitCode);
+    return
+}}"#
+    )
 }
 
 #[cfg(target_os = "windows")]
@@ -965,5 +1245,6 @@ fn failed(error: ProjectRepositoryTaskError) -> ProjectRepositoryTaskResult {
         ok: false,
         error: Some(error),
         command: None,
+        run_record: None,
     }
 }

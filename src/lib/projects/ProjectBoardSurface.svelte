@@ -79,6 +79,14 @@
 		type ProjectRepositoryPublishTarget
 	} from './project-board-publish-actions';
 	import {
+		mapLatestTaskRunsByRepositoryId,
+		type ProjectRepositoryTaskRunRecordByRepositoryId
+	} from './project-repository-task-runs';
+	import {
+		readProjectRepositoryTaskRunRecords,
+		type ProjectRepositoryTaskRunRecord
+	} from './project-repository-task';
+	import {
 		isRepositoryPathInsideProjectsFolder as isRepositoryPathInsideProjectsFolderPath,
 		isRepositoryPathInsideWorkspace as isRepositoryPathInsideWorkspacePath
 	} from './project-board-paths';
@@ -160,6 +168,7 @@
 	let repositoryGitInspectionSignature = $state('');
 	let repositoryGitStatusById = $state<Record<string, ProjectRepositoryGitStatus>>({});
 	let repositoryOperationById = $state<Record<string, ProjectRepositoryOperation>>({});
+	let repositoryTaskRunById = $state<ProjectRepositoryTaskRunRecordByRepositoryId>({});
 	let selectedProjectId = $state<string | null>(null);
 	let selectedGroupId = $state<string | null>(null);
 	let isSubmitting = $state(false);
@@ -297,6 +306,7 @@
 		setContextMenu: (nextContextMenu) => { contextMenu = nextContextMenu; },
 		setFormError: (error) => { formError = error; },
 		setStatus: (nextStatus) => { status = nextStatus; },
+		setRepositoryTaskRun: setRepositoryTaskRun,
 		setDeleteCandidate: (candidate) => { deleteCandidate = candidate; },
 		setShouldDeleteLocalFolder: (shouldDelete) => { shouldDeleteLocalFolder = shouldDelete; },
 		setDescriptionEditor: (editor) => { descriptionEditor = editor; },
@@ -498,8 +508,42 @@
 		return getProjectBoardRepositoryOperation(repositoryOperationById, repositoryId);
 	}
 
+	function getRepositoryTaskRun(repositoryId: string) {
+		return repositoryTaskRunById[repositoryId] ?? null;
+	}
+
+	function setRepositoryTaskRun(
+		repositoryId: string,
+		record: ProjectRepositoryTaskRunRecord
+	) {
+		repositoryTaskRunById = {
+			...repositoryTaskRunById,
+			[repositoryId]: record
+		};
+	}
+
+	function getAllRepositories() {
+		return registry.nodes.flatMap((node) => node.repositories);
+	}
+
+	async function refreshRepositoryTaskRuns() {
+		const result = await readProjectRepositoryTaskRunRecords(workspace.path);
+
+		if (!result.ok) {
+			return;
+		}
+
+		repositoryTaskRunById = mapLatestTaskRunsByRepositoryId(
+			getAllRepositories(),
+			result.records
+		);
+	}
+
 	function isRepositoryBusy(repositoryId: string) {
-		return isProjectBoardRepositoryBusy(repositoryOperationById, repositoryId);
+		return (
+			isProjectBoardRepositoryBusy(repositoryOperationById, repositoryId) ||
+			repositoryTaskRunById[repositoryId]?.state === 'running'
+		);
 	}
 
 	function isRepositoryOperationRunning(
@@ -714,6 +758,39 @@
 		);
 	}
 
+	$effect(() => {
+		const workspacePath = workspace.path;
+		const repositorySignature = registry.nodes
+			.flatMap((node) =>
+				node.repositories.map((repository) => `${repository.id}:${repository.path ?? ''}`)
+			)
+			.join('|');
+		let isCurrent = true;
+
+		void repositorySignature;
+
+		const refresh = async () => {
+			const result = await readProjectRepositoryTaskRunRecords(workspacePath);
+
+			if (!isCurrent || !result.ok) {
+				return;
+			}
+
+			repositoryTaskRunById = mapLatestTaskRunsByRepositoryId(
+				getAllRepositories(),
+				result.records
+			);
+		};
+
+		void refresh();
+		const interval = window.setInterval(() => void refresh(), 2000);
+
+		return () => {
+			isCurrent = false;
+			window.clearInterval(interval);
+		};
+	});
+
 	function handleWindowKeydown(event: KeyboardEvent) {
 		if (event.key !== 'Escape') {
 			return;
@@ -808,6 +885,7 @@
 	{getNodeGithubCredentialName}
 	{getRepositoryGithubCredentialName}
 	{getRepositoryOperation}
+	{getRepositoryTaskRun}
 	{isRepositoryBusy}
 	{isRepositoryPathInsideWorkspace}
 	{getRepositoryCardKind}

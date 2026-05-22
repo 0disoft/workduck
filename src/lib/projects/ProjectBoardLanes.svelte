@@ -10,6 +10,7 @@
 		type ProjectRepositorySyncFilter
 	} from './project-board-selectors';
 	import type { ProjectRepositoryGitAction, ProjectRepositoryOperation } from './project-board-operations';
+	import type { ProjectRepositoryTaskRunRecord } from './project-repository-task';
 	import type {
 		ProjectNodeRecord,
 		ProjectRepositoryLinkRecord
@@ -54,6 +55,7 @@
 			repository: ProjectRepositoryLinkRecord
 		) => string;
 		readonly getRepositoryOperation: (repositoryId: string) => ProjectRepositoryOperation | null;
+		readonly getRepositoryTaskRun: (repositoryId: string) => ProjectRepositoryTaskRunRecord | null;
 		readonly isRepositoryBusy: (repositoryId: string) => boolean;
 		readonly isRepositoryPathInsideWorkspace: (repositoryPath: string) => boolean;
 		readonly getRepositoryCardKind: (
@@ -96,7 +98,7 @@
 		selectedRepositories, repositoryGitStatusById, onBoardContextMenu, onRepositorySyncFilterSelect,
 		onTagFilterInput, onOpenDialog, onSelectProject, onSelectGroup, onProjectContextMenu,
 		onRepositoryContextMenu, getNodeGithubCredentialName, getRepositoryGithubCredentialName,
-		getRepositoryOperation, isRepositoryBusy, isRepositoryPathInsideWorkspace,
+		getRepositoryOperation, getRepositoryTaskRun, isRepositoryBusy, isRepositoryPathInsideWorkspace,
 		getRepositoryCardKind, canCloneRepository, canInitializeRepository,
 		canPublishRepositoryToGithub, canRunRemoteRepositoryGitAction, isRepositoryOperationRunning,
 		onCloneRepository, onInitializeRepository, onPublishRepository, onGitAction
@@ -209,12 +211,15 @@
 
 										{#each selectedRepositories as repository (repository.id)}
 											{@const repositoryOperation = getRepositoryOperation(repository.id)}
+											{@const repositoryTaskRun = getRepositoryTaskRun(repository.id)}
 											{@const repositoryGitStatus = repositoryGitStatusById[repository.id]}
-											{@const repositoryBusy = isRepositoryBusy(repository.id)}
+											{@const repositoryBusy =
+												isRepositoryBusy(repository.id) || repositoryTaskRun?.state === 'running'}
 											{@const repositoryPathOutsideWorkspace =
 												repository.path !== null && !isRepositoryPathInsideWorkspace(repository.path)}
 											{@const repositoryGithubCredentialName = getRepositoryGithubCredentialName(node, repository)}
 											<ProjectRepositoryCard node={node} {repository} {repositoryOperation}
+												{repositoryTaskRun}
 												{projectMessages} {languageId}
 												{repositoryGitStatus} {repositoryBusy} {repositoryPathOutsideWorkspace}
 												{repositoryGithubCredentialName}

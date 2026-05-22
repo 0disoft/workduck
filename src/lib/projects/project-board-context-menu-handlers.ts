@@ -15,7 +15,7 @@ import {
 } from './project-board-repository-actions';
 import { runProjectRepositoryTaskForTarget } from './project-board-repository-task-actions';
 import type { ProjectNodeRecord, ProjectRepositoryLinkRecord } from './project-registry';
-import type { ProjectRepositoryTask } from './project-repository-task';
+import type { ProjectRepositoryTask, ProjectRepositoryTaskRunRecord } from './project-repository-task';
 import type {
 	ProjectContextMenuState,
 	ProjectContextMenuTarget,
@@ -36,6 +36,10 @@ export function createProjectBoardContextMenuHandlers(context: {
 	readonly setContextMenu: (contextMenu: ProjectContextMenuState | null) => void;
 	readonly setFormError: (error: ProjectFormError | null) => void;
 	readonly setStatus: (status: string | null) => void;
+	readonly setRepositoryTaskRun: (
+		repositoryId: string,
+		record: ProjectRepositoryTaskRunRecord
+	) => void;
 	readonly setDeleteCandidate: (candidate: ProjectDeleteCandidate | null) => void;
 	readonly setShouldDeleteLocalFolder: (shouldDelete: boolean) => void;
 	readonly setDescriptionEditor: (editor: ProjectNodeRecord | null) => void;
@@ -188,8 +192,10 @@ export function createProjectBoardContextMenuHandlers(context: {
 			await runProjectRepositoryTaskForTarget(target, task, {
 				workspacePath: context.getWorkspacePath(),
 				messages: context.getProjectMessages().repositoryTasks,
+				isRepositoryBusy: context.createRepositoryActionContext().isRepositoryBusy,
 				setFormError: context.setFormError,
-				setStatus: context.setStatus
+				setStatus: context.setStatus,
+				setTaskRun: context.setRepositoryTaskRun
 			});
 		},
 		async openContextCloneRepositoryForTarget(

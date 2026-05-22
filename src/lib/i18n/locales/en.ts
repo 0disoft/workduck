@@ -382,11 +382,22 @@ export const enMessages = {
 		},
 		repositoryTasks: {
 			terminalOpened: 'Terminal opened.',
-			commandTerminalOpened: 'Opened a terminal with this command: {command}. Check the terminal for the result.',
-			installDependenciesTerminalOpened: 'Opened a terminal with the dependency install command. Check the terminal for the result.',
-			updateDependenciesTerminalOpened: 'Opened a terminal with the dependency update command. Check the terminal for the result.',
-			startDevServerTerminalOpened: 'Opened a terminal with the dev server command. Check the terminal for the result.',
-			buildTerminalOpened: 'Opened a terminal with the build command. Check the terminal for the result.'
+			commandTerminalOpened: 'Opened a terminal with this command: {command}. The repository card will update with the result.',
+			installDependenciesTerminalOpened: 'Opened a terminal with the dependency install command. The repository card will update with the result.',
+			updateDependenciesTerminalOpened: 'Opened a terminal with the dependency update command. The repository card will update with the result.',
+			startDevServerTerminalOpened: 'Opened a terminal with the dev server command. The repository card will update with the result.',
+			buildTerminalOpened: 'Opened a terminal with the build command. The repository card will update with the result.',
+			taskRunning: '{task} running.',
+			taskSucceeded: '{task} succeeded.',
+			taskFailed: '{task} failed.',
+			taskFailedWithExitCode: '{task} failed. Exit code: {exitCode}.',
+			tasks: {
+				openTerminal: 'Terminal',
+				installDependencies: 'Dependency install',
+				updateDependencies: 'Dependency update',
+				startDevServer: 'Dev server',
+				build: 'Build'
+			}
 		},
 		errors: {
 			'project-github-credential-vault-locked':
@@ -534,6 +545,10 @@ export const enMessages = {
 			'project-repository-task-terminal-unsupported-platform':
 				'Repository terminal tasks are currently supported only on Windows.',
 			'project-repository-task-launch-failed': 'Command terminal could not be opened.',
+			'project-repository-task-record-write-failed':
+				'Repository task record could not be saved.',
+			'project-repository-task-record-read-failed':
+				'Repository task records could not be loaded.',
 			'project-registry-read-failed': 'Projects could not be loaded.',
 			'project-registry-version-unsupported':
 				'Project data uses a newer format. Update Workduck before opening projects again.',

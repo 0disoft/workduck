@@ -383,11 +383,22 @@ export const koMessages = {
 		},
 		repositoryTasks: {
 			terminalOpened: '터미널을 열었습니다.',
-			commandTerminalOpened: '명령이 입력된 터미널을 열었습니다: {command}. 완료 여부는 터미널에서 확인하세요.',
-			installDependenciesTerminalOpened: '의존성 설치 명령이 입력된 터미널을 열었습니다. 완료 여부는 터미널에서 확인하세요.',
-			updateDependenciesTerminalOpened: '의존성 업데이트 명령이 입력된 터미널을 열었습니다. 완료 여부는 터미널에서 확인하세요.',
-			startDevServerTerminalOpened: '개발 서버 명령이 입력된 터미널을 열었습니다. 실행 여부는 터미널에서 확인하세요.',
-			buildTerminalOpened: '빌드 명령이 입력된 터미널을 열었습니다. 완료 여부는 터미널에서 확인하세요.'
+			commandTerminalOpened: '명령이 입력된 터미널을 열었습니다: {command}. 결과는 저장소 카드에 갱신됩니다.',
+			installDependenciesTerminalOpened: '의존성 설치 명령이 입력된 터미널을 열었습니다. 결과는 저장소 카드에 갱신됩니다.',
+			updateDependenciesTerminalOpened: '의존성 업데이트 명령이 입력된 터미널을 열었습니다. 결과는 저장소 카드에 갱신됩니다.',
+			startDevServerTerminalOpened: '개발 서버 명령이 입력된 터미널을 열었습니다. 결과는 저장소 카드에 갱신됩니다.',
+			buildTerminalOpened: '빌드 명령이 입력된 터미널을 열었습니다. 결과는 저장소 카드에 갱신됩니다.',
+			taskRunning: '{task} 실행 중.',
+			taskSucceeded: '{task} 성공.',
+			taskFailed: '{task} 실패.',
+			taskFailedWithExitCode: '{task} 실패. 종료 코드: {exitCode}.',
+			tasks: {
+				openTerminal: '터미널',
+				installDependencies: '의존성 설치',
+				updateDependencies: '의존성 업데이트',
+				startDevServer: '개발 서버',
+				build: '빌드'
+			}
 		},
 		errors: {
 			'project-github-credential-vault-locked':
@@ -536,6 +547,8 @@ export const koMessages = {
 			'project-repository-task-terminal-unsupported-platform':
 				'저장소 터미널 작업은 현재 Windows에서만 지원됩니다.',
 			'project-repository-task-launch-failed': '명령 터미널을 열지 못했습니다.',
+			'project-repository-task-record-write-failed': '저장소 작업 기록을 저장하지 못했습니다.',
+			'project-repository-task-record-read-failed': '저장소 작업 기록을 읽지 못했습니다.',
 			'project-registry-read-failed': '프로젝트를 불러오지 못했습니다.',
 			'project-registry-version-unsupported':
 				'프로젝트 데이터가 현재 앱보다 새 포맷입니다. Workduck을 업데이트한 뒤 다시 열어주세요.',

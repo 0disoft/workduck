@@ -101,6 +101,7 @@ pub fn run() {
             project_repository::publish_project_repository_to_github,
             project_repository::push_project_repository_to_github,
             project_repository::push_project_repository_git,
+            project_repository_task::read_project_repository_task_run_records,
             project_repository_task::run_project_repository_task,
             project_repository_operation_store::read_project_repository_operation_records,
             project_repository_operation_store::write_project_repository_operation_record,
