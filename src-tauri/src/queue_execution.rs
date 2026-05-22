@@ -1091,7 +1091,7 @@ fn parse_vote_result(content: &str, spec: &QueueVoteSpec) -> QueueVoteResult {
 }
 
 fn parse_vote_ballot(content: &str, spec: &QueueVoteSpec) -> QueueVoteBallot {
-    let Some(record) = parse_first_json_record(content) else {
+    let Some(record) = parse_vote_json_record(content, spec) else {
         return QueueVoteBallot {
             choice_id: String::new(),
             reason: String::new(),
@@ -1117,22 +1117,199 @@ fn parse_vote_ballot(content: &str, spec: &QueueVoteSpec) -> QueueVoteBallot {
     }
 }
 
-fn parse_first_json_record(content: &str) -> Option<Value> {
-    let raw_json = extract_json_object_text(content)?;
-    let parsed = serde_json::from_str::<Value>(&raw_json).ok()?;
+fn parse_vote_json_record(content: &str, spec: &QueueVoteSpec) -> Option<Value> {
+    let mut first_record = None;
 
-    parsed.is_object().then_some(parsed)
-}
+    for candidate in json_object_candidates(content) {
+        let Ok(parsed) = serde_json::from_str::<Value>(&candidate) else {
+            continue;
+        };
 
-fn extract_json_object_text(content: &str) -> Option<String> {
-    let start = content.find('{')?;
-    let end = content.rfind('}')?;
+        if !parsed.is_object() {
+            continue;
+        }
 
-    if end <= start {
-        return None;
+        if first_record.is_none() {
+            first_record = Some(parsed.clone());
+        }
+
+        let choice_id = read_optional_text(parsed.get("choiceId"));
+
+        if spec.options.iter().any(|option| option.id == choice_id) {
+            return Some(parsed);
+        }
     }
 
-    Some(content[start..=end].trim().to_string())
+    first_record
+}
+
+fn json_object_candidates(content: &str) -> Vec<String> {
+    let fenced_candidates = fenced_json_object_candidates(content);
+    let balanced_candidates = balanced_json_object_candidates(content);
+
+    if fenced_candidates.is_empty() {
+        return balanced_candidates;
+    }
+
+    let mut candidates = fenced_candidates;
+
+    for candidate in balanced_candidates {
+        if !candidates.iter().any(|existing| existing == &candidate) {
+            candidates.push(candidate);
+        }
+    }
+
+    candidates
+}
+
+fn fenced_json_object_candidates(content: &str) -> Vec<String> {
+    let mut candidates = Vec::new();
+    let mut remainder = content;
+
+    while let Some(fence_start) = remainder.find("```") {
+        remainder = &remainder[fence_start + 3..];
+        let Some(line_end) = remainder.find('\n') else {
+            break;
+        };
+
+        let info = remainder[..line_end].trim().to_ascii_lowercase();
+        remainder = &remainder[line_end + 1..];
+        let Some(fence_end) = remainder.find("```") else {
+            break;
+        };
+
+        if info.is_empty() || info == "json" {
+            let fenced_body = remainder[..fence_end].trim();
+            candidates.extend(balanced_json_object_candidates(fenced_body));
+        }
+
+        remainder = &remainder[fence_end + 3..];
+    }
+
+    candidates
+}
+
+fn balanced_json_object_candidates(content: &str) -> Vec<String> {
+    let mut candidates = Vec::new();
+
+    for (start_index, character) in content.char_indices() {
+        if character != '{' {
+            continue;
+        }
+
+        if let Some(end_index) = find_balanced_json_object_end(content, start_index) {
+            let candidate = content[start_index..=end_index].trim().to_string();
+
+            if !candidates.iter().any(|existing| existing == &candidate) {
+                candidates.push(candidate);
+            }
+        }
+    }
+
+    candidates
+}
+
+fn find_balanced_json_object_end(content: &str, start_index: usize) -> Option<usize> {
+    let mut depth = 0usize;
+    let mut in_string = false;
+    let mut is_escaped = false;
+
+    for (offset, character) in content[start_index..].char_indices() {
+        let index = start_index + offset;
+
+        if in_string {
+            if is_escaped {
+                is_escaped = false;
+            } else if character == '\\' {
+                is_escaped = true;
+            } else if character == '"' {
+                in_string = false;
+            }
+
+            continue;
+        }
+
+        match character {
+            '"' => in_string = true,
+            '{' => depth += 1,
+            '}' => {
+                depth = depth.saturating_sub(1);
+
+                if depth == 0 {
+                    return Some(index);
+                }
+            }
+            _ => {}
+        }
+    }
+
+    None
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn vote_spec() -> QueueVoteSpec {
+        QueueVoteSpec {
+            question: "Pick a framework".to_string(),
+            options: vec![
+                QueueVoteOption {
+                    id: "astro".to_string(),
+                    label: "Astro".to_string(),
+                    description: None,
+                },
+                QueueVoteOption {
+                    id: "svelte".to_string(),
+                    label: "Svelte".to_string(),
+                    description: None,
+                },
+            ],
+            criteria: Vec::new(),
+            response_kind: None,
+        }
+    }
+
+    #[test]
+    fn vote_parser_prefers_fenced_json_over_prose_braces() {
+        let content = r#"I considered option {A}, then chose:
+```json
+{"choiceId":"svelte","reason":"better fit","risks":["team familiarity"]}
+```
+"#;
+
+        let ballot = parse_vote_ballot(content, &vote_spec());
+
+        assert_eq!(ballot.parse_status, "parsed");
+        assert_eq!(ballot.choice_id, "svelte");
+        assert_eq!(ballot.reason, "better fit");
+        assert_eq!(ballot.risks, vec!["team familiarity"]);
+    }
+
+    #[test]
+    fn vote_parser_scans_until_a_valid_choice_object() {
+        let content = r#"
+{"choiceId":"ember","reason":"not available"}
+Final answer:
+{"choiceId":"astro","reason":"static content fit","risks":[]}
+"#;
+
+        let ballot = parse_vote_ballot(content, &vote_spec());
+
+        assert_eq!(ballot.parse_status, "parsed");
+        assert_eq!(ballot.choice_id, "astro");
+        assert_eq!(ballot.reason, "static content fit");
+    }
+
+    #[test]
+    fn vote_parser_keeps_invalid_choice_visible_when_no_valid_choice_exists() {
+        let content = r#"{"choiceId":"ember","reason":"unsupported option","risks":[]}"#;
+
+        let ballot = parse_vote_ballot(content, &vote_spec());
+
+        assert_eq!(ballot.parse_status, "invalid-choice");
+        assert_eq!(ballot.choice_id, "ember");
+    }
 }
 
 fn read_optional_text(value: Option<&Value>) -> String {
@@ -1514,12 +1691,9 @@ fn resolve_agent_model(
             .chain(secret.tags.iter().map(String::as_str)),
     );
 
-    match provider {
-        "deepseek" => Ok("deepseek-v4-pro".to_string()),
-        "openai" => Ok("gpt-5.4-mini".to_string()),
-        "openrouter" if profile.contains("deepseek") => Ok("deepseek/deepseek-v4-pro".to_string()),
-        "openrouter" => Ok("openrouter/auto".to_string()),
-        _ => Err(QueueExecutionErrorDetail {
+    match crate::queue_model_catalog::resolve_queue_model_fallback(provider, &profile) {
+        Some(model) => Ok(model.to_string()),
+        None => Err(QueueExecutionErrorDetail {
             code: "agent-provider-unsupported",
             message: format!("지원하지 않는 제공자입니다: {provider}"),
         }),

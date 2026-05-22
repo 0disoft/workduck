@@ -10,6 +10,7 @@ mod project_repository_task;
 mod project_repository_validation;
 mod project_repository_operation_store;
 mod queue_folder;
+mod queue_model_catalog;
 pub mod queue_execution;
 mod secret_vault_crypto;
 mod storage;
