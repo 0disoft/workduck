@@ -1,3 +1,5 @@
+import { isObjectRecord } from '$lib/shared/object-record';
+import { getTauriInvoke } from '$lib/tauri/tauri-invoke';
 import {
 	normalizeProjectRegistry,
 	WORKDUCK_PROJECT_REGISTRY_VERSION,
@@ -87,16 +89,6 @@ export type WorkspaceSyncDataDecryptionResult =
 			readonly ok: false;
 			readonly error: WorkspaceSyncRegistryError;
 	  };
-
-interface TauriCoreApi {
-	readonly invoke?: <T>(command: string, args?: Record<string, unknown>) => Promise<T>;
-}
-
-interface TauriGlobalWindow {
-	readonly __TAURI__?: {
-		readonly core?: TauriCoreApi;
-	};
-}
 
 interface WorkspaceSyncEncryptionResponse {
 	readonly ok: boolean;
@@ -449,14 +441,6 @@ async function decryptWorkspaceSyncPayload(
 	}
 }
 
-function getTauriInvoke() {
-	if (typeof window === 'undefined') {
-		return undefined;
-	}
-
-	return (window as unknown as TauriGlobalWindow).__TAURI__?.core?.invoke;
-}
-
 function isWorkspaceSyncEnvelope(value: unknown): value is WorkspaceSyncEnvelope {
 	if (!isObjectRecord(value) || !isObjectRecord(value.kdf) || !isObjectRecord(value.cipher)) {
 		return false;
@@ -527,8 +511,4 @@ function normalizeSyncedLocalPath(value: string | null) {
 	return segments.length > 0 && segments.every((segment) => segment !== '.' && segment !== '..')
 		? segments.join('/')
 		: null;
-}
-
-function isObjectRecord(value: unknown): value is Record<string, unknown> {
-	return typeof value === 'object' && value !== null && !Array.isArray(value);
 }

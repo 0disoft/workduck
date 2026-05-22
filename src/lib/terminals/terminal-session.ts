@@ -1,3 +1,4 @@
+import { getTauriInvoke } from '$lib/tauri/tauri-invoke';
 export type TerminalSessionError =
 	| 'terminal-session-unavailable'
 	| 'terminal-session-start-failed'
@@ -20,16 +21,6 @@ export type TerminalSessionResult =
 			readonly snapshot: TerminalSessionSnapshot;
 			readonly error: TerminalSessionError;
 	  };
-
-interface TauriCoreApi {
-	readonly invoke?: <T>(command: string, args?: Record<string, unknown>) => Promise<T>;
-}
-
-interface TauriGlobalWindow {
-	readonly __TAURI__?: {
-		readonly core?: TauriCoreApi;
-	};
-}
 
 interface TerminalSessionSnapshotResponse {
 	readonly ok?: boolean;
@@ -111,12 +102,4 @@ function createTerminalSessionSnapshot(
 		connected: response?.connected === true,
 		output: typeof response?.output === 'string' ? response.output : ''
 	};
-}
-
-function getTauriInvoke() {
-	if (typeof window === 'undefined') {
-		return undefined;
-	}
-
-	return (window as unknown as TauriGlobalWindow).__TAURI__?.core?.invoke;
 }

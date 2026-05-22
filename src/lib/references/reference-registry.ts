@@ -1,3 +1,4 @@
+import { isObjectRecord } from '$lib/shared/object-record';
 export const REFERENCE_REGISTRY_VERSION = 1;
 export const REFERENCE_TITLE_MAX_LENGTH = 180;
 export const REFERENCE_SOURCE_URL_MAX_LENGTH = 2_048;
@@ -350,8 +351,4 @@ function readRawString(value: unknown) {
 
 function readTrimmedString(value: unknown) {
 	return typeof value === 'string' ? value.trim() : '';
-}
-
-function isObjectRecord(value: unknown): value is Record<string, unknown> {
-	return typeof value === 'object' && value !== null && !Array.isArray(value);
 }

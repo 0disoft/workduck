@@ -1,3 +1,4 @@
+import { getTauriInvoke } from '$lib/tauri/tauri-invoke';
 import type { AgentExecutionProvider, AgentRecord } from './agent-registry';
 import type { EnvironmentSecretRecord, EnvironmentVault } from '$lib/environment/environment-vault';
 
@@ -45,16 +46,6 @@ export type AgentPromptRunResult =
 			readonly agent: AgentRecord;
 			readonly error: AgentExecutionError;
 	  };
-
-interface TauriCoreApi {
-	readonly invoke?: <T>(command: string, args?: Record<string, unknown>) => Promise<T>;
-}
-
-interface TauriGlobalWindow {
-	readonly __TAURI__?: {
-		readonly core?: TauriCoreApi;
-	};
-}
 
 interface LlmChatCompletionResponse {
 	readonly ok: boolean;
@@ -258,12 +249,4 @@ function mapLlmChatCompletionError(
 		default:
 			return 'agent-execution-provider-unavailable';
 	}
-}
-
-function getTauriInvoke() {
-	if (typeof window === 'undefined') {
-		return undefined;
-	}
-
-	return (window as unknown as TauriGlobalWindow).__TAURI__?.core?.invoke;
 }

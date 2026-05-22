@@ -1,3 +1,4 @@
+import { isObjectRecord } from '$lib/shared/object-record';
 export const TERMINAL_REGISTRY_VERSION = 1;
 export const TERMINAL_SESSION_NAME_MAX_LENGTH = 120;
 
@@ -236,8 +237,4 @@ function createTerminalSessionNameKey(name: string) {
 
 function readTrimmedString(value: unknown) {
 	return typeof value === 'string' ? value.trim() : '';
-}
-
-function isObjectRecord(value: unknown): value is Record<string, unknown> {
-	return typeof value === 'object' && value !== null && !Array.isArray(value);
 }

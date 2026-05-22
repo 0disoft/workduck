@@ -1,3 +1,4 @@
+import { isObjectRecord } from '$lib/shared/object-record';
 export const AGENT_EVALUATION_SCORE_MIN = 1;
 export const AGENT_EVALUATION_SCORE_MAX = 9;
 
@@ -266,10 +267,6 @@ function normalizeScore(value: unknown) {
 
 function readTrimmedString(value: unknown) {
 	return typeof value === 'string' ? value.trim() : '';
-}
-
-function isObjectRecord(value: unknown): value is Record<string, unknown> {
-	return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
 function quoteCliArgument(value: string) {

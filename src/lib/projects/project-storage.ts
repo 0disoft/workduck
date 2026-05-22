@@ -1,3 +1,5 @@
+import { isObjectRecord } from '$lib/shared/object-record';
+import { getTauriInvoke } from '$lib/tauri/tauri-invoke';
 import {
 	createEmptyProjectRegistry,
 	normalizeProjectRegistry,
@@ -46,16 +48,6 @@ interface ProjectRegistryStorageRecord {
 interface ProjectRegistryChangedDetail {
 	readonly workspaceId: string;
 	readonly registry: ProjectRegistry;
-}
-
-interface TauriCoreApi {
-	readonly invoke?: <T>(command: string, args?: Record<string, unknown>) => Promise<T>;
-}
-
-interface TauriGlobalWindow {
-	readonly __TAURI__?: {
-		readonly core?: TauriCoreApi;
-	};
 }
 
 interface ProjectRegistryReadResponse {
@@ -618,14 +610,6 @@ function createEmptyLegacyStorageRecord(): ProjectRegistryStorageRecord {
 	};
 }
 
-function getTauriInvoke() {
-	if (typeof window === 'undefined') {
-		return undefined;
-	}
-
-	return (window as unknown as TauriGlobalWindow).__TAURI__?.core?.invoke;
-}
-
 function workspaceRegistryWasMigrated(workspaceId: string) {
 	return readMigratedWorkspaceIds().has(workspaceId);
 }
@@ -670,8 +654,4 @@ function isStringRecord(value: unknown): value is Record<string, string> {
 		isObjectRecord(value) &&
 		Object.values(value).every((item): item is string => typeof item === 'string')
 	);
-}
-
-function isObjectRecord(value: unknown): value is Record<string, unknown> {
-	return typeof value === 'object' && value !== null && !Array.isArray(value);
 }

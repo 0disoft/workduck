@@ -1,3 +1,4 @@
+import { getTauriInvoke } from '$lib/tauri/tauri-invoke';
 import type { AgentExecutionError } from '$lib/agents/agent-execution';
 import type { AgentRecord } from '$lib/agents/agent-registry';
 import type { EnvironmentVault } from '$lib/environment/environment-vault';
@@ -21,16 +22,6 @@ export type QueueExecutionResult =
 			readonly ok: false;
 			readonly error: QueueExecutionError;
 	  };
-
-interface TauriCoreApi {
-	readonly invoke?: <T>(command: string, args?: Record<string, unknown>) => Promise<T>;
-}
-
-interface TauriGlobalWindow {
-	readonly __TAURI__?: {
-		readonly core?: TauriCoreApi;
-	};
-}
 
 interface QueueExecutionCommandResponse {
 	readonly ok: boolean;
@@ -120,12 +111,4 @@ function normalizeQueueExecutionError(error: string | null | undefined): QueueEx
 		default:
 			return 'agent-execution-provider-unavailable';
 	}
-}
-
-function getTauriInvoke() {
-	if (typeof window === 'undefined') {
-		return undefined;
-	}
-
-	return (window as unknown as TauriGlobalWindow).__TAURI__?.core?.invoke;
 }

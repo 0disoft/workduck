@@ -1,3 +1,4 @@
+import { getTauriInvoke } from '$lib/tauri/tauri-invoke';
 import { normalizeWorkspacePathForStorage } from './workspace-path-format';
 
 export type WorkspaceRepositorySetupError =
@@ -37,16 +38,6 @@ export type WorkspaceRepositorySetupResult =
 			readonly ok: false;
 			readonly error: WorkspaceRepositorySetupError;
 	  };
-
-interface TauriCoreApi {
-	readonly invoke?: <T>(command: string, args?: Record<string, unknown>) => Promise<T>;
-}
-
-interface TauriGlobalWindow {
-	readonly __TAURI__?: {
-		readonly core?: TauriCoreApi;
-	};
-}
 
 interface WorkspaceRepositorySetupResponse {
 	readonly ok: boolean;
@@ -92,14 +83,6 @@ export async function setupWorkspaceRepository(
 	} catch {
 		return { ok: false, error: 'workspace-repository-create-failed' };
 	}
-}
-
-function getTauriInvoke() {
-	if (typeof window === 'undefined') {
-		return undefined;
-	}
-
-	return (window as unknown as TauriGlobalWindow).__TAURI__?.core?.invoke;
 }
 
 function isWorkspaceRepositorySetupError(

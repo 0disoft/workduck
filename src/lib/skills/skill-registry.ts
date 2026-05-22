@@ -1,3 +1,4 @@
+import { isObjectRecord } from '$lib/shared/object-record';
 import { AGENT_EVALUATION_DELEGATION_INSTRUCTIONS } from '$lib/agents/agent-evaluation';
 
 export const SKILL_REGISTRY_VERSION = 1;
@@ -378,8 +379,4 @@ function readRawString(value: unknown) {
 
 function readTrimmedString(value: unknown) {
 	return typeof value === 'string' ? value.trim() : '';
-}
-
-function isObjectRecord(value: unknown): value is Record<string, unknown> {
-	return typeof value === 'object' && value !== null && !Array.isArray(value);
 }

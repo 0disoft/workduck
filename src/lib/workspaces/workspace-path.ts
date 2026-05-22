@@ -1,3 +1,4 @@
+import { getTauriInvoke } from '$lib/tauri/tauri-invoke';
 import { open } from '@tauri-apps/plugin-dialog';
 
 import { normalizeWorkspacePathForStorage } from './workspace-path-format';
@@ -36,16 +37,6 @@ export type WorkspacePathSelectionResult =
 			readonly ok: false;
 			readonly error: WorkspacePathSelectionError;
 	  };
-
-interface TauriCoreApi {
-	readonly invoke?: <T>(command: string, args?: Record<string, unknown>) => Promise<T>;
-}
-
-interface TauriGlobalWindow {
-	readonly __TAURI__?: {
-		readonly core?: TauriCoreApi;
-	};
-}
 
 interface WorkspacePathValidationResponse {
 	readonly ok: boolean;
@@ -115,14 +106,6 @@ export async function validateWorkspacePath(
 	} catch {
 		return { ok: false, error: 'workspace-path-unreadable' };
 	}
-}
-
-function getTauriInvoke() {
-	if (typeof window === 'undefined') {
-		return undefined;
-	}
-
-	return (window as unknown as TauriGlobalWindow).__TAURI__?.core?.invoke;
 }
 
 function isWorkspacePathValidationError(

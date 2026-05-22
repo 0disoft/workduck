@@ -1,3 +1,4 @@
+import { getTauriInvoke } from '$lib/tauri/tauri-invoke';
 export type WorkspaceDataFileName =
 	| 'agents.json'
 	| 'personas.json'
@@ -39,16 +40,6 @@ export type WorkspaceDataFileWriteResult =
 			readonly ok: false;
 			readonly error: WorkspaceDataFileError;
 	  };
-
-interface TauriCoreApi {
-	readonly invoke?: <T>(command: string, args?: Record<string, unknown>) => Promise<T>;
-}
-
-interface TauriGlobalWindow {
-	readonly __TAURI__?: {
-		readonly core?: TauriCoreApi;
-	};
-}
 
 interface WorkspaceDataFileReadResponse {
 	readonly ok: boolean;
@@ -131,14 +122,6 @@ export async function writeWorkspaceDataFile(
 	} catch {
 		return { ok: false, error: 'workspace-data-file-write-failed' };
 	}
-}
-
-function getTauriInvoke() {
-	if (typeof window === 'undefined') {
-		return undefined;
-	}
-
-	return (window as unknown as TauriGlobalWindow).__TAURI__?.core?.invoke;
 }
 
 function isWorkspaceDataFileError(value: unknown): value is WorkspaceDataFileError {

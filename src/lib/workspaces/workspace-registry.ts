@@ -1,3 +1,4 @@
+import { isObjectRecord } from '$lib/shared/object-record';
 import { normalizeWorkspacePathForStorage } from './workspace-path-format';
 
 export const WORKDUCK_WORKSPACE_REGISTRY_STORAGE_KEY = 'workduck.workspaceRegistry.v1';
@@ -366,8 +367,4 @@ function normalizePasswordHash(value: string | null) {
 
 function readTrimmedString(value: unknown) {
 	return typeof value === 'string' ? value.trim() : '';
-}
-
-function isObjectRecord(value: unknown): value is Record<string, unknown> {
-	return typeof value === 'object' && value !== null && !Array.isArray(value);
 }

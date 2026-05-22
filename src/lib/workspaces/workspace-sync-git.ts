@@ -1,3 +1,4 @@
+import { getTauriInvoke } from '$lib/tauri/tauri-invoke';
 import { normalizeWorkspacePathForStorage } from './workspace-path-format';
 import type { ProjectRepositoryGitCredentialInput } from '$lib/projects/project-repository';
 
@@ -59,16 +60,6 @@ export type WorkspaceSyncGitRunResult =
 			readonly error: WorkspaceSyncGitRunError;
 			readonly phase: string | null;
 	  };
-
-interface TauriCoreApi {
-	readonly invoke?: <T>(command: string, args?: Record<string, unknown>) => Promise<T>;
-}
-
-interface TauriGlobalWindow {
-	readonly __TAURI__?: {
-		readonly core?: TauriCoreApi;
-	};
-}
 
 interface WorkspaceSyncGitInspectionResponse {
 	readonly ok: boolean;
@@ -237,14 +228,6 @@ function isWorkspaceSyncGitRunOutcome(value: unknown): value is WorkspaceSyncGit
 		value === 'pushed' ||
 		value === 'committed-and-pushed'
 	);
-}
-
-function getTauriInvoke() {
-	if (typeof window === 'undefined') {
-		return undefined;
-	}
-
-	return (window as unknown as TauriGlobalWindow).__TAURI__?.core?.invoke;
 }
 
 function isWorkspaceSyncGitError(value: unknown): value is WorkspaceSyncGitError {

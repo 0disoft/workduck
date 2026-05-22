@@ -1,3 +1,4 @@
+import { isObjectRecord } from '$lib/shared/object-record';
 export const PERSONA_REGISTRY_VERSION = 1;
 export const PERSONA_NAME_MAX_LENGTH = 120;
 export const PERSONA_DESCRIPTION_MAX_LENGTH = 420;
@@ -389,8 +390,4 @@ function readRawString(value: unknown) {
 
 function readTrimmedString(value: unknown) {
 	return typeof value === 'string' ? value.trim() : '';
-}
-
-function isObjectRecord(value: unknown): value is Record<string, unknown> {
-	return typeof value === 'object' && value !== null && !Array.isArray(value);
 }

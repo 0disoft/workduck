@@ -1,3 +1,5 @@
+import { isObjectRecord } from '$lib/shared/object-record';
+import { getTauriInvoke } from '$lib/tauri/tauri-invoke';
 import { normalizeWorkspacePathForStorage } from '$lib/workspaces/workspace-path-format';
 
 export type ProjectRepositoryCloneError =
@@ -118,16 +120,6 @@ interface ProjectRepositoryGithubPublishInput {
 	readonly commitMessage: string;
 	readonly visibility: ProjectRepositoryGithubVisibility;
 	readonly credential?: ProjectRepositoryGitCredentialInput | null;
-}
-
-interface TauriCoreApi {
-	readonly invoke?: <T>(command: string, args?: Record<string, unknown>) => Promise<T>;
-}
-
-interface TauriGlobalWindow {
-	readonly __TAURI__?: {
-		readonly core?: TauriCoreApi;
-	};
 }
 
 interface ProjectRepositoryCloneResponse {
@@ -614,14 +606,6 @@ function formatRemoteParts(host: string, path: string) {
 	return repoName === undefined ? host : `${host}/.../${repoName}`;
 }
 
-function getTauriInvoke() {
-	if (typeof window === 'undefined') {
-		return undefined;
-	}
-
-	return (window as unknown as TauriGlobalWindow).__TAURI__?.core?.invoke;
-}
-
 function normalizeGitCount(value: unknown) {
 	return typeof value === 'number' && Number.isFinite(value) && value > 0 ? Math.floor(value) : 0;
 }
@@ -693,8 +677,4 @@ function isProjectRepositoryCloneError(value: unknown): value is ProjectReposito
 		value === 'project-repository-clone-auth-required' ||
 		value === 'project-repository-clone-failed'
 	);
-}
-
-function isObjectRecord(value: unknown): value is Record<string, unknown> {
-	return typeof value === 'object' && value !== null && !Array.isArray(value);
 }

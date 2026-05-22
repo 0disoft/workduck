@@ -1,3 +1,4 @@
+import { isObjectRecord } from '$lib/shared/object-record';
 import {
 	addAgentEvaluationScores,
 	createEmptyAgentEvaluationSummary,
@@ -412,8 +413,4 @@ function createAgentNameKey(name: string) {
 
 function readTrimmedString(value: unknown) {
 	return typeof value === 'string' ? value.trim() : '';
-}
-
-function isObjectRecord(value: unknown): value is Record<string, unknown> {
-	return typeof value === 'object' && value !== null && !Array.isArray(value);
 }

@@ -1,3 +1,4 @@
+import { getTauriInvoke } from '$lib/tauri/tauri-invoke';
 export type CliEnvironmentApplyError =
 	| 'cli-environment-empty'
 	| 'cli-environment-too-large'
@@ -22,16 +23,6 @@ export type CliEnvironmentApplyResult =
 			readonly ok: false;
 			readonly error: CliEnvironmentApplyError;
 	  };
-
-interface TauriCoreApi {
-	readonly invoke?: <T>(command: string, args?: Record<string, unknown>) => Promise<T>;
-}
-
-interface TauriGlobalWindow {
-	readonly __TAURI__?: {
-		readonly core?: TauriCoreApi;
-	};
-}
 
 interface CliEnvironmentApplyResponse {
 	readonly ok: boolean;
@@ -72,14 +63,6 @@ export async function applyCliEnvironmentVariables(
 	} catch {
 		return { ok: false, error: 'cli-environment-write-failed' };
 	}
-}
-
-function getTauriInvoke() {
-	if (typeof window === 'undefined') {
-		return undefined;
-	}
-
-	return (window as unknown as TauriGlobalWindow).__TAURI__?.core?.invoke;
 }
 
 function isCliEnvironmentApplyError(value: unknown): value is CliEnvironmentApplyError {

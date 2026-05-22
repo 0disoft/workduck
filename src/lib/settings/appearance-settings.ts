@@ -1,3 +1,4 @@
+import { isObjectRecord } from '$lib/shared/object-record';
 import {
 	DEFAULT_WORKDUCK_LANGUAGE_ID,
 	normalizeWorkduckLanguageId,
@@ -104,8 +105,4 @@ function normalizeAllowedInteger(
 
 		return closestValue;
 	}, fallback);
-}
-
-function isObjectRecord(value: unknown): value is Record<string, unknown> {
-	return typeof value === 'object' && value !== null && !Array.isArray(value);
 }

@@ -1,3 +1,4 @@
+import { isObjectRecord } from '$lib/shared/object-record';
 import { normalizeWorkspacePathForStorage } from '$lib/workspaces/workspace-path-format';
 import { createProjectFolderNameFromDisplayName } from './project-folder-name';
 
@@ -1121,8 +1122,4 @@ function readTrimmedString(value: unknown) {
 
 function readStringArray(value: unknown) {
 	return Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : [];
-}
-
-function isObjectRecord(value: unknown): value is Record<string, unknown> {
-	return typeof value === 'object' && value !== null && !Array.isArray(value);
 }

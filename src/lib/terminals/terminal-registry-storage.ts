@@ -1,3 +1,4 @@
+import { isObjectRecord } from '$lib/shared/object-record';
 import {
 	createEmptyTerminalRegistry,
 	parseTerminalRegistry,
@@ -198,8 +199,4 @@ function createEmptyStorageRecord(): TerminalRegistryStorageRecord {
 		version: 1,
 		registries: {}
 	};
-}
-
-function isObjectRecord(value: unknown): value is Record<string, unknown> {
-	return typeof value === 'object' && value !== null && !Array.isArray(value);
 }

@@ -1,3 +1,4 @@
+import { isObjectRecord } from '$lib/shared/object-record';
 import {
 	createEmptyAgentRegistry,
 	parseAgentRegistry,
@@ -253,8 +254,4 @@ function createEmptyStorageRecord(): AgentRegistryStorageRecord {
 		version: 1,
 		registries: {}
 	};
-}
-
-function isObjectRecord(value: unknown): value is Record<string, unknown> {
-	return typeof value === 'object' && value !== null && !Array.isArray(value);
 }

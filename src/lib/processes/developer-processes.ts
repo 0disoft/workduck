@@ -1,3 +1,4 @@
+import { getTauriInvoke } from '$lib/tauri/tauri-invoke';
 export type DeveloperProcessError =
 	| 'developer-processes-unavailable'
 	| 'developer-processes-read-failed'
@@ -23,16 +24,6 @@ export type DeveloperProcessListResult =
 			readonly processes: readonly DeveloperProcessEntry[];
 			readonly error: DeveloperProcessError;
 	  };
-
-interface TauriCoreApi {
-	readonly invoke?: <T>(command: string, args?: Record<string, unknown>) => Promise<T>;
-}
-
-interface TauriGlobalWindow {
-	readonly __TAURI__?: {
-		readonly core?: TauriCoreApi;
-	};
-}
 
 interface DeveloperProcessListResponse {
 	readonly ok?: boolean;
@@ -122,12 +113,4 @@ export async function killDeveloperProcess(pid: number): Promise<DeveloperProces
 	} catch {
 		return 'developer-process-kill-failed';
 	}
-}
-
-function getTauriInvoke() {
-	if (typeof window === 'undefined') {
-		return undefined;
-	}
-
-	return (window as unknown as TauriGlobalWindow).__TAURI__?.core?.invoke;
 }

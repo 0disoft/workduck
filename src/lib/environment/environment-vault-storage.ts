@@ -1,3 +1,4 @@
+import { isObjectRecord } from '$lib/shared/object-record';
 import { isSecretVaultEnvelope, type SecretVaultEnvelope } from './secret-vault-crypto';
 import {
 	readWorkspaceDataFile,
@@ -313,8 +314,4 @@ function createEmptyStorageRecord(): EnvironmentVaultStorageRecord {
 		version: 1,
 		vaults: {}
 	};
-}
-
-function isObjectRecord(value: unknown): value is Record<string, unknown> {
-	return typeof value === 'object' && value !== null && !Array.isArray(value);
 }

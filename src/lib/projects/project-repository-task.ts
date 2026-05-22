@@ -1,3 +1,4 @@
+import { getTauriInvoke } from '$lib/tauri/tauri-invoke';
 import { normalizeWorkspacePathForStorage } from '$lib/workspaces/workspace-path-format';
 
 export type ProjectRepositoryTask =
@@ -47,16 +48,6 @@ interface ProjectRepositoryTaskResponse {
 	readonly command?: string | null;
 }
 
-interface TauriCoreApi {
-	readonly invoke?: <T>(command: string, args?: Record<string, unknown>) => Promise<T>;
-}
-
-interface TauriGlobalWindow {
-	readonly __TAURI__?: {
-		readonly core?: TauriCoreApi;
-	};
-}
-
 export async function runProjectRepositoryTask(
 	input: ProjectRepositoryTaskInput
 ): Promise<ProjectRepositoryTaskResult> {
@@ -96,14 +87,6 @@ function normalizeTaskCommand(value: unknown) {
 	const command = value.trim();
 
 	return command.length > 0 ? command : null;
-}
-
-function getTauriInvoke() {
-	if (typeof window === 'undefined') {
-		return undefined;
-	}
-
-	return (window as unknown as TauriGlobalWindow).__TAURI__?.core?.invoke;
 }
 
 function isProjectRepositoryTaskError(value: unknown): value is ProjectRepositoryTaskError {

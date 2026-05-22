@@ -1,3 +1,5 @@
+import { isObjectRecord } from '$lib/shared/object-record';
+import { getTauriInvoke } from '$lib/tauri/tauri-invoke';
 export const SECRET_VAULT_FORMAT = 'workduck.secret-vault';
 export const SECRET_VAULT_VERSION = 1;
 
@@ -51,16 +53,6 @@ export type SecretVaultDecryptionResult =
 			readonly ok: false;
 			readonly error: SecretVaultCryptoError;
 	  };
-
-interface TauriCoreApi {
-	readonly invoke?: <T>(command: string, args?: Record<string, unknown>) => Promise<T>;
-}
-
-interface TauriGlobalWindow {
-	readonly __TAURI__?: {
-		readonly core?: TauriCoreApi;
-	};
-}
 
 interface SecretVaultEncryptionResponse {
 	readonly ok: boolean;
@@ -164,14 +156,6 @@ export function isSecretVaultEnvelope(value: unknown): value is SecretVaultEnvel
 	);
 }
 
-function getTauriInvoke() {
-	if (typeof window === 'undefined') {
-		return undefined;
-	}
-
-	return (window as unknown as TauriGlobalWindow).__TAURI__?.core?.invoke;
-}
-
 function isSecretVaultCryptoError(value: unknown): value is SecretVaultCryptoError {
 	return (
 		value === 'secret-vault-password-required' ||
@@ -186,8 +170,4 @@ function isSecretVaultCryptoError(value: unknown): value is SecretVaultCryptoErr
 		value === 'secret-vault-plaintext-invalid' ||
 		value === 'secret-vault-unavailable'
 	);
-}
-
-function isObjectRecord(value: unknown): value is Record<string, unknown> {
-	return typeof value === 'object' && value !== null && !Array.isArray(value);
 }

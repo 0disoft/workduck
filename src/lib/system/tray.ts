@@ -1,3 +1,8 @@
+import {
+	getTauriGlobal as getWorkduckTauriGlobal,
+	getTauriInvoke
+} from '$lib/tauri/tauri-invoke';
+
 const WORKDUCK_TRAY_ID = 'workduck-main-tray';
 
 type TauriTrayIconEvent = {
@@ -26,10 +31,6 @@ interface TauriAppApi {
 	readonly defaultWindowIcon?: () => Promise<unknown | null>;
 }
 
-interface TauriCoreApi {
-	readonly invoke?: <T>(command: string, args?: Record<string, unknown>) => Promise<T>;
-}
-
 interface TauriTrayIconController {
 	readonly setVisible?: (visible: boolean) => Promise<void>;
 }
@@ -49,13 +50,10 @@ interface TauriTrayApi {
 	};
 }
 
-interface TauriGlobalWindow {
-	readonly __TAURI__?: {
-		readonly app?: TauriAppApi;
-		readonly core?: TauriCoreApi;
-		readonly tray?: TauriTrayApi;
-		readonly window?: TauriWindowApi;
-	};
+interface WorkduckTrayTauriGlobal {
+	readonly app?: TauriAppApi;
+	readonly tray?: TauriTrayApi;
+	readonly window?: TauriWindowApi;
 }
 
 export async function ensureWorkduckTrayIcon(): Promise<boolean> {
@@ -211,10 +209,6 @@ function getCurrentTauriWindow() {
 	return getTauriGlobal()?.window?.getCurrentWindow?.();
 }
 
-function getTauriInvoke() {
-	return getTauriGlobal()?.core?.invoke;
-}
-
 function normalizeTrayPosition(position: TauriTrayIconEvent['position']) {
 	if (
 		position === undefined ||
@@ -233,9 +227,5 @@ function normalizeTrayPosition(position: TauriTrayIconEvent['position']) {
 }
 
 function getTauriGlobal() {
-	if (typeof window === 'undefined') {
-		return undefined;
-	}
-
-	return (window as unknown as TauriGlobalWindow).__TAURI__;
+	return getWorkduckTauriGlobal() as WorkduckTrayTauriGlobal | undefined;
 }

@@ -1,3 +1,4 @@
+import { isObjectRecord } from '$lib/shared/object-record';
 export const ENVIRONMENT_VAULT_VERSION = 1;
 export const ENVIRONMENT_SECRET_NAME_MAX_LENGTH = 120;
 export const ENVIRONMENT_SECRET_VALUE_MAX_LENGTH = 16_384;
@@ -338,8 +339,4 @@ function readRawString(value: unknown) {
 
 function readTrimmedString(value: unknown) {
 	return typeof value === 'string' ? value.trim() : '';
-}
-
-function isObjectRecord(value: unknown): value is Record<string, unknown> {
-	return typeof value === 'object' && value !== null && !Array.isArray(value);
 }

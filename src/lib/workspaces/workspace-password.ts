@@ -1,3 +1,4 @@
+import { getTauriInvoke } from '$lib/tauri/tauri-invoke';
 export const WORKSPACE_PASSWORD_MIN_LENGTH = 8;
 
 export type WorkspacePasswordError =
@@ -26,16 +27,6 @@ export type WorkspacePasswordVerificationResult =
 			readonly ok: false;
 			readonly error: WorkspacePasswordError;
 	  };
-
-interface TauriCoreApi {
-	readonly invoke?: <T>(command: string, args?: Record<string, unknown>) => Promise<T>;
-}
-
-interface TauriGlobalWindow {
-	readonly __TAURI__?: {
-		readonly core?: TauriCoreApi;
-	};
-}
 
 interface WorkspacePasswordHashResponse {
 	readonly ok: boolean;
@@ -122,14 +113,6 @@ export async function verifyWorkspacePassword(
 	} catch {
 		return { ok: false, error: 'workspace-password-invalid-hash' };
 	}
-}
-
-function getTauriInvoke() {
-	if (typeof window === 'undefined') {
-		return undefined;
-	}
-
-	return (window as unknown as TauriGlobalWindow).__TAURI__?.core?.invoke;
 }
 
 function isWorkspacePasswordError(value: unknown): value is WorkspacePasswordError {

@@ -1,3 +1,4 @@
+import { getTauriInvoke } from '$lib/tauri/tauri-invoke';
 export type TerminalCatalogError =
 	| 'terminal-catalog-unavailable'
 	| 'terminal-catalog-read-failed';
@@ -20,16 +21,6 @@ export type TerminalCatalogResult =
 			readonly terminals: readonly TerminalCatalogEntry[];
 			readonly error: TerminalCatalogError;
 	  };
-
-interface TauriCoreApi {
-	readonly invoke?: <T>(command: string, args?: Record<string, unknown>) => Promise<T>;
-}
-
-interface TauriGlobalWindow {
-	readonly __TAURI__?: {
-		readonly core?: TauriCoreApi;
-	};
-}
 
 interface TerminalCatalogResponse {
 	readonly ok: boolean;
@@ -79,12 +70,4 @@ function normalizeTerminalCatalogEntry(entry: TerminalCatalogEntry): TerminalCat
 		executablePath: entry.executablePath ?? null,
 		available: entry.available
 	};
-}
-
-function getTauriInvoke() {
-	if (typeof window === 'undefined') {
-		return undefined;
-	}
-
-	return (window as unknown as TauriGlobalWindow).__TAURI__?.core?.invoke;
 }

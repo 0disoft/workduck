@@ -1,3 +1,4 @@
+import { getTauriInvoke } from '$lib/tauri/tauri-invoke';
 import { normalizeWorkspacePathForStorage } from '$lib/workspaces/workspace-path-format';
 
 export type ProjectFolderError =
@@ -60,16 +61,6 @@ export type ProjectFolderDeleteResult =
 			readonly ok: false;
 			readonly error: ProjectFolderError;
 	  };
-
-interface TauriCoreApi {
-	readonly invoke?: <T>(command: string, args?: Record<string, unknown>) => Promise<T>;
-}
-
-interface TauriGlobalWindow {
-	readonly __TAURI__?: {
-		readonly core?: TauriCoreApi;
-	};
-}
 
 interface ProjectFolderCreateResponse {
 	readonly ok: boolean;
@@ -250,14 +241,6 @@ async function deleteProjectFolderFromCommand(
 	} catch {
 		return { ok: false, error: 'project-folder-delete-failed' };
 	}
-}
-
-function getTauriInvoke() {
-	if (typeof window === 'undefined') {
-		return undefined;
-	}
-
-	return (window as unknown as TauriGlobalWindow).__TAURI__?.core?.invoke;
 }
 
 function isProjectFolderError(value: unknown): value is ProjectFolderError {
