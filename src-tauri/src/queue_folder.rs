@@ -5,6 +5,8 @@ use std::{
     process::{Command, Stdio},
 };
 
+use crate::path_display::display_path;
+
 const QUEUE_DIRECTORY_NAME: &str = "queue";
 const REPORTS_DIRECTORY_NAME: &str = "reports";
 const WORK_ORDERS_DIRECTORY_NAME: &str = "work-orders";
@@ -135,7 +137,7 @@ pub fn list_queue_files(workspace_path: String) -> QueueFileListResult {
 
     QueueFileListResult {
         ok: true,
-        path: Some(queue_root.to_string_lossy().into_owned()),
+        path: Some(display_path(&queue_root)),
         files,
         error: None,
     }
@@ -677,7 +679,7 @@ fn create_open_folder_command(path: &Path) -> Command {
 fn valid(path: PathBuf) -> QueueFolderResult {
     QueueFolderResult {
         ok: true,
-        path: Some(path.to_string_lossy().into_owned()),
+        path: Some(display_path(&path)),
         relative_path: Some(QUEUE_DIRECTORY_NAME),
         error: None,
     }

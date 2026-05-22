@@ -9,6 +9,7 @@ use std::{
 #[cfg(target_os = "windows")]
 use std::os::windows::process::CommandExt;
 
+use crate::path_display::display_path;
 use crate::workspace_repository_gitignore::ensure_workduck_gitignore as ensure_workduck_gitignore_policy;
 
 const PROJECTS_DIRECTORY_NAME: &str = "projects";
@@ -248,7 +249,7 @@ fn ensure_gitkeep(
         Err(error) if error.kind() == io::ErrorKind::NotFound => {
             fs::write(&gitkeep_path, "")
                 .map_err(|_| WorkspaceRepositorySetupError::CreateFailed)?;
-            created_paths.push(gitkeep_path.to_string_lossy().into_owned());
+            created_paths.push(display_path(&gitkeep_path));
         }
         Err(error) => return Err(map_workspace_error(error)),
     }

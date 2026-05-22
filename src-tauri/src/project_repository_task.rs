@@ -55,6 +55,9 @@ pub enum ProjectRepositoryTaskError {
     CommandUnavailable,
     #[serde(rename = "project-repository-task-terminal-unavailable")]
     TerminalUnavailable,
+    #[cfg_attr(target_os = "windows", allow(dead_code))]
+    #[serde(rename = "project-repository-task-terminal-unsupported-platform")]
+    TerminalUnsupportedPlatform,
     #[serde(rename = "project-repository-task-launch-failed")]
     LaunchFailed,
 }
@@ -394,11 +397,22 @@ fn add_package_task_commands(
 }
 
 fn discover_package_project_paths(repository_path: &Path) -> Vec<PathBuf> {
+    let mut project_paths = Vec::new();
+
     if read_package_project_at(repository_path).is_some() {
-        return vec![repository_path.to_path_buf()];
+        project_paths.push(repository_path.to_path_buf());
     }
 
-    unique_manifest_directories(discover_manifest_paths(repository_path, &["package.json"]))
+    for project_path in unique_manifest_directories(discover_manifest_paths(
+        repository_path,
+        &["package.json"],
+    )) {
+        if !project_paths.contains(&project_path) {
+            project_paths.push(project_path);
+        }
+    }
+
+    project_paths
 }
 
 fn resolve_package_task_command(
@@ -458,8 +472,27 @@ fn resolve_optional_package_script_command(
 
 fn is_vite_strict_port_script(script: &str) -> bool {
     let script = script.to_ascii_lowercase();
+    let flags = script.split_whitespace().map(normalize_cli_flag);
 
-    script.contains("vite") && script.contains("--strictport") && script.contains("--port")
+    script.contains("vite")
+        && flags.clone().any(|flag| flag == "strictport")
+        && flags.clone().any(|flag| flag == "port")
+}
+
+fn normalize_cli_flag(token: &str) -> String {
+    let trimmed = token.trim_matches(|character: char| {
+        matches!(
+            character,
+            '"' | '\'' | '`' | ',' | ';' | '(' | ')' | '[' | ']'
+        )
+    });
+
+    trimmed
+        .split_once('=')
+        .map(|(flag, _)| flag)
+        .unwrap_or(trimmed)
+        .to_ascii_lowercase()
+        .replace('-', "")
 }
 
 fn find_available_local_port(start: u16, attempts: u16) -> Option<u16> {
@@ -885,7 +918,7 @@ fn launch_repository_terminal(
     _repository_path: &Path,
     _command: Option<&str>,
 ) -> Result<(), ProjectRepositoryTaskError> {
-    Err(ProjectRepositoryTaskError::TerminalUnavailable)
+    Err(ProjectRepositoryTaskError::TerminalUnsupportedPlatform)
 }
 
 #[cfg(target_os = "windows")]

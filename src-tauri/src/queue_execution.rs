@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use time::{OffsetDateTime, format_description::well_known::Rfc3339};
 
-use crate::system_environment::read_cli_user_environment_variable;
+use crate::{path_display::display_path, system_environment::read_cli_user_environment_variable};
 
 const QUEUE_DIRECTORY_NAME: &str = "queue";
 const REPORTS_DIRECTORY_NAME: &str = "reports";
@@ -1063,8 +1063,8 @@ fn response_excluded_risk(language: QueueReportLanguage) -> &'static str {
 
 pub fn command_completed(report_path: &Path, language: QueueReportLanguage) -> String {
     match language {
-        QueueReportLanguage::Ko => format!("작업 실행 완료: {}", report_path.display()),
-        QueueReportLanguage::En => format!("Work execution completed: {}", report_path.display()),
+        QueueReportLanguage::Ko => format!("작업 실행 완료: {}", display_path(report_path)),
+        QueueReportLanguage::En => format!("Work execution completed: {}", display_path(report_path)),
     }
 }
 
@@ -1773,7 +1773,7 @@ fn write_json_file<T: Serialize>(path: &Path, value: &T) -> Result<(), QueueExec
 }
 
 fn io_error(code: &'static str, path: &Path, error: io::Error) -> QueueExecutionErrorDetail {
-    QueueExecutionErrorDetail::new(code, format!("{}: {}", path.display(), error))
+    QueueExecutionErrorDetail::new(code, format!("{}: {}", display_path(path), error))
 }
 
 pub fn write_result_report(

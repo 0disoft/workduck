@@ -3,6 +3,8 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use crate::path_display::display_path;
+
 const WORKSPACE_SYNC_FILE_NAME_MAX_CHARS: usize = 120;
 const WORKSPACE_SYNC_FILE_MAX_BYTES: u64 = 5 * 1024 * 1024;
 
@@ -80,7 +82,7 @@ pub fn write_workspace_sync_file(
     match fs::write(&sync_file_path, content) {
         Ok(()) => WorkspaceSyncFileWrite {
             ok: true,
-            normalized_path: Some(sync_file_path.to_string_lossy().into_owned()),
+            normalized_path: Some(display_path(&sync_file_path)),
             error: None,
         },
         Err(error) => invalid_write(map_write_error(error)),
@@ -110,7 +112,7 @@ pub fn read_workspace_sync_file(folder_path: String, file_name: String) -> Works
     match fs::read_to_string(&sync_file_path) {
         Ok(content) => WorkspaceSyncFileRead {
             ok: true,
-            normalized_path: Some(sync_file_path.to_string_lossy().into_owned()),
+            normalized_path: Some(display_path(&sync_file_path)),
             content: Some(content),
             error: None,
         },

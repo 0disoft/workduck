@@ -533,6 +533,8 @@ export const koMessages = {
 			'project-repository-task-command-unavailable':
 				'이 저장소에 맞는 명령을 찾을 수 없습니다.',
 			'project-repository-task-terminal-unavailable': '지원하는 터미널을 찾을 수 없습니다.',
+			'project-repository-task-terminal-unsupported-platform':
+				'저장소 터미널 작업은 현재 Windows에서만 지원됩니다.',
 			'project-repository-task-launch-failed': '명령 터미널을 열지 못했습니다.',
 			'project-registry-read-failed': '프로젝트를 불러오지 못했습니다.',
 			'project-registry-write-failed': '프로젝트를 저장하지 못했습니다.',

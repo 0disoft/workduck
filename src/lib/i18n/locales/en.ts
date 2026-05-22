@@ -531,6 +531,8 @@ export const enMessages = {
 			'project-repository-task-command-unavailable':
 				'No matching command was found for this repository.',
 			'project-repository-task-terminal-unavailable': 'No supported terminal was found.',
+			'project-repository-task-terminal-unsupported-platform':
+				'Repository terminal tasks are currently supported only on Windows.',
 			'project-repository-task-launch-failed': 'Command terminal could not be opened.',
 			'project-registry-read-failed': 'Projects could not be loaded.',
 			'project-registry-write-failed': 'Projects could not be saved.',

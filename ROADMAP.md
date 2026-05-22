@@ -139,15 +139,6 @@ workspace sync become harder to change safely.
      future stronger parameter set both decrypt when within allowed bounds;
      unsupported algorithms and unsafe parameter values fail clearly.
 
-2. Audit path normalization at the Tauri IPC boundary.
-   - Current risk: Windows canonical paths can expose `\\?\` prefixes in UI or
-     terminal prompts when a backend command returns raw filesystem paths.
-   - Target behavior: backend responses use display-safe paths for UI fields
-     while preserving raw paths only for internal filesystem and Git calls.
-   - Acceptance criteria: workspace, sync, repository, terminal, and process
-     views do not show `\\?\` prefixes unless the user explicitly opens raw
-     diagnostic output.
-
 ### Project Registry And Repository Operations
 
 1. Add a registry migration path before the next project schema change.
@@ -177,16 +168,6 @@ workspace sync become harder to change safely.
      visible on the repository card or task history without requiring the user to
      inspect the terminal manually.
 
-4. Make repository task detection handle mixed-runtime projects.
-   - Current risk: `package.json` currently dominates detection, so projects
-     with both frontend and Rust, Flutter, Deno, or other runtimes may only run
-     one part of the expected task.
-   - Target behavior: detection returns all applicable task plans, groups them
-     by runtime, and makes multi-runtime commands explicit before execution.
-   - Acceptance criteria: a Tauri/Svelte/Rust repository can install, update,
-     build, and start development commands for both JavaScript and Rust parts
-     where configured.
-
 ### Frontend And Adapter Cleanup
 
 1. Keep large surfaces below the point where they become routing files.
@@ -199,33 +180,6 @@ workspace sync become harder to change safely.
    - Acceptance criteria: new queue task types or repository actions can be
      added by extending a focused module rather than expanding the primary
      Svelte surface.
-
-### Platform And Process Follow-Up
-
-1. Decide the repository terminal portability boundary.
-   - Current risk: repository terminal actions are Windows-first, while Tauri
-     itself is cross-platform.
-   - Target behavior: either implement macOS and Linux terminal launchers or
-     make the Windows-only boundary explicit in UI and command errors.
-   - Acceptance criteria: non-Windows builds fail with a clear unsupported
-     message instead of pretending the action is available.
-
-2. Move heavy process inventory work off the UI-critical path if lag appears.
-   - Current risk: Windows process and port discovery can be expensive on busy
-     machines.
-   - Target behavior: process collection runs through a bounded background task
-     or cached snapshot when direct collection proves slow.
-   - Acceptance criteria: opening the process menu does not visibly freeze the
-     app on a machine with many running processes.
-
-3. Improve Vite strict-port detection only when needed by a real project.
-   - Current risk: string matching catches common scripts but not every
-     `vite.config.*` setting.
-   - Target behavior: keep current behavior until a repository needs config-file
-     detection, then add a small parser or documented manual override instead
-     of broad command inference.
-   - Acceptance criteria: Workduck does not guess long-running dev-server
-     commands beyond the repository's declared scripts or configured task plan.
 
 ## Deferred Dependencies
 

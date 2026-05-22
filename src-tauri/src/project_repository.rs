@@ -11,7 +11,7 @@ use crate::git_credential::{
     GitCredential, apply_git_credential, apply_github_cli_credential,
     clear_git_credential_environment, parse_git_credential,
 };
-use crate::git_path::git_process_path;
+use crate::{git_path::git_process_path, path_display::display_path};
 use crate::project_repository_failure::{
     classify_git_clone_failure, classify_git_fetch_failure, classify_git_pull_failure,
     classify_git_push_failure, classify_github_initial_commit_failure,
@@ -1044,7 +1044,7 @@ fn invalid(error: ProjectRepositoryCloneError) -> ProjectRepositoryClone {
 fn valid_clone(path: PathBuf) -> ProjectRepositoryClone {
     ProjectRepositoryClone {
         ok: true,
-        path: Some(path.to_string_lossy().into_owned()),
+        path: Some(display_path(&path)),
         error: None,
     }
 }

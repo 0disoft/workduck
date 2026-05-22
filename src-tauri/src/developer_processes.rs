@@ -5,6 +5,8 @@ use std::{
     process::{Command, Stdio},
 };
 
+use crate::path_display::display_path_text;
+
 #[cfg(target_os = "windows")]
 use std::os::windows::process::CommandExt;
 
@@ -100,8 +102,8 @@ struct RawPortRecord {
 }
 
 #[tauri::command]
-pub fn list_developer_processes() -> DeveloperProcessList {
-    match collect_developer_processes() {
+pub async fn list_developer_processes() -> DeveloperProcessList {
+    match collect_developer_processes_off_thread().await {
         Ok(processes) => DeveloperProcessList {
             ok: true,
             processes,
@@ -113,6 +115,15 @@ pub fn list_developer_processes() -> DeveloperProcessList {
             error: Some(error),
         },
     }
+}
+
+async fn collect_developer_processes_off_thread() -> Result<
+    Vec<DeveloperProcessEntry>,
+    DeveloperProcessError,
+> {
+    tauri::async_runtime::spawn_blocking(collect_developer_processes)
+        .await
+        .map_err(|_| DeveloperProcessError::ReadFailed)?
 }
 
 #[tauri::command]
@@ -461,9 +472,11 @@ fn sanitize_command_token(token: &str, home: Option<&str>) -> String {
         return "[redacted]".to_string();
     }
 
+    let display_token = display_path_text(token);
+
     if let Some(home) = home {
-        return token.replace(home, "~");
+        return display_token.replace(home, "~");
     }
 
-    token.to_string()
+    display_token
 }

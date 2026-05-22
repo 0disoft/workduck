@@ -3,6 +3,8 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use crate::path_display::display_path;
+
 #[derive(serde::Serialize)]
 pub enum WorkspacePathValidationError {
     #[serde(rename = "workspace-path-required")]
@@ -46,7 +48,7 @@ pub fn validate_workspace_path(path: String) -> WorkspacePathValidation {
     match validate_directory_path(&workspace_path) {
         Ok(normalized_path) => WorkspacePathValidation {
             ok: true,
-            normalized_path: Some(normalized_path.to_string_lossy().into_owned()),
+            normalized_path: Some(display_path(&normalized_path)),
             error: None,
         },
         Err(error) => invalid(error),

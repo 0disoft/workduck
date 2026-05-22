@@ -24,6 +24,7 @@ export type ProjectRepositoryTaskError =
 	| 'project-repository-task-invalid'
 	| 'project-repository-task-command-unavailable'
 	| 'project-repository-task-terminal-unavailable'
+	| 'project-repository-task-terminal-unsupported-platform'
 	| 'project-repository-task-launch-failed';
 
 export type ProjectRepositoryTaskResult =
@@ -106,6 +107,7 @@ function isProjectRepositoryTaskError(value: unknown): value is ProjectRepositor
 		value === 'project-repository-task-invalid' ||
 		value === 'project-repository-task-command-unavailable' ||
 		value === 'project-repository-task-terminal-unavailable' ||
+		value === 'project-repository-task-terminal-unsupported-platform' ||
 		value === 'project-repository-task-launch-failed'
 	);
 }

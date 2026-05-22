@@ -1,5 +1,7 @@
 use std::{fmt, fs, path::PathBuf, time::Duration};
 
+use crate::path_display::display_path;
+
 use rusqlite::{Connection, OptionalExtension, params};
 use tauri::{AppHandle, Manager};
 
@@ -102,7 +104,7 @@ impl fmt::Display for StorageError {
             Self::CreateAppLocalDataDir { path, source } => write!(
                 formatter,
                 "failed to create app local data directory '{}': {source}",
-                path.display()
+                display_path(path)
             ),
             Self::Sqlite { operation, source } => {
                 write!(formatter, "SQLite {operation} failed: {source}")
@@ -334,7 +336,7 @@ fn inspect_connection(
     Ok(StorageStatus {
         driver: DATABASE_DRIVER,
         database_file_name: DATABASE_FILE_NAME,
-        database_path: database_path.to_string_lossy().into_owned(),
+        database_path: display_path(&database_path),
         journal_mode,
         foreign_keys,
         json_available,

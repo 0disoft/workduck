@@ -2,6 +2,7 @@ use crate::git_credential::{
     GitCredential, apply_git_credential, clear_git_credential_environment, parse_git_credential,
 };
 use crate::git_path::git_process_path;
+use crate::path_display::display_path;
 use crate::workspace_sync_file::{
     WorkspaceSyncFileError, resolve_sync_file_path, validate_sync_file_target,
 };
@@ -161,7 +162,7 @@ pub fn inspect_workspace_sync_git(
     let Some(git_dir) = resolve_git_dir(&folder_path) else {
         return WorkspaceSyncGitInspection {
             ok: true,
-            normalized_path: Some(folder_path.to_string_lossy().into_owned()),
+            normalized_path: Some(display_path(&folder_path)),
             is_repository: Some(false),
             origin_url: None,
             branch_name: None,
@@ -181,7 +182,7 @@ pub fn inspect_workspace_sync_git(
 
     WorkspaceSyncGitInspection {
         ok: true,
-        normalized_path: Some(folder_path.to_string_lossy().into_owned()),
+        normalized_path: Some(display_path(&folder_path)),
         is_repository: Some(true),
         origin_url,
         branch_name: read_branch_name(&git_dir),
