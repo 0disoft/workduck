@@ -12,8 +12,9 @@ const PROPOSALS_DIRECTORY_NAME: &str = "proposals";
 const REPORT_FILE_SUFFIX: &str = ".workduck-report.json";
 const WORK_ORDER_FILE_SUFFIX: &str = ".workduck-work-order.json";
 const PROPOSAL_FILE_SUFFIX: &str = ".workduck-proposal.json";
+const AGENT_RESPONSE_EVALUATOR_SKILL_ID: &str = "workduck.skill.agent-response-evaluator";
 
-#[derive(serde::Serialize)]
+#[derive(Debug, PartialEq, Eq, serde::Serialize)]
 pub enum QueueFolderError {
     #[serde(rename = "queue-folder-workspace-required")]
     WorkspaceRequired,
@@ -47,6 +48,8 @@ pub enum QueueFolderError {
     FileDeleteFailed,
     #[serde(rename = "queue-folder-file-already-exists")]
     FileAlreadyExists,
+    #[serde(rename = "queue-folder-evaluation-delegation-already-exists")]
+    EvaluationDelegationAlreadyExists,
 }
 
 #[derive(serde::Serialize)]
@@ -212,6 +215,10 @@ pub fn write_queue_work_order_file(
         .join(WORK_ORDERS_DIRECTORY_NAME)
         .join(&safe_file_name);
 
+    if let Err(error) = ensure_unique_evaluation_delegation(&queue_root, None, &content) {
+        return invalid_file_read(error);
+    }
+
     match OpenOptions::new()
         .write(true)
         .create_new(true)
@@ -295,6 +302,12 @@ pub fn update_queue_work_order_file(
         Ok(file_path) => file_path,
         Err(error) => return invalid_file_read(error),
     };
+
+    if let Err(error) =
+        ensure_unique_evaluation_delegation(&queue_root, Some(&normalized_relative_path), &content)
+    {
+        return invalid_file_read(error);
+    }
 
     match OpenOptions::new()
         .write(true)
@@ -482,6 +495,93 @@ fn classify_queue_file(child_dir: &str, file_name: &str) -> Option<QueueFileKind
     None
 }
 
+fn ensure_unique_evaluation_delegation(
+    queue_root: &Path,
+    current_relative_path: Option<&str>,
+    content: &str,
+) -> Result<(), QueueFolderError> {
+    let Some(source_report_id) = read_evaluation_delegation_source_report_id(content) else {
+        return Ok(());
+    };
+
+    let work_orders_dir = queue_root.join(WORK_ORDERS_DIRECTORY_NAME);
+    let entries = fs::read_dir(&work_orders_dir).map_err(|_| QueueFolderError::FileReadFailed)?;
+
+    for entry in entries {
+        let entry = entry.map_err(|_| QueueFolderError::FileReadFailed)?;
+        let metadata = entry
+            .metadata()
+            .map_err(|_| QueueFolderError::FileReadFailed)?;
+
+        if !metadata.is_file() {
+            continue;
+        }
+
+        let file_name = entry.file_name().to_string_lossy().into_owned();
+
+        if !file_name.ends_with(WORK_ORDER_FILE_SUFFIX) {
+            continue;
+        }
+
+        let relative_path = format!("{WORK_ORDERS_DIRECTORY_NAME}/{file_name}");
+
+        if current_relative_path == Some(relative_path.as_str()) {
+            continue;
+        }
+
+        let existing_content =
+            fs::read_to_string(entry.path()).map_err(|_| QueueFolderError::FileReadFailed)?;
+
+        if read_evaluation_delegation_source_report_id(&existing_content).as_deref()
+            == Some(source_report_id.as_str())
+        {
+            return Err(QueueFolderError::EvaluationDelegationAlreadyExists);
+        }
+    }
+
+    Ok(())
+}
+
+fn read_evaluation_delegation_source_report_id(content: &str) -> Option<String> {
+    let value: serde_json::Value = serde_json::from_str(content).ok()?;
+    let source_report = value.get("sourceReport")?.as_object()?;
+
+    if source_report.get("kind")?.as_str()? != "queue-result-report" {
+        return None;
+    }
+
+    if !work_order_has_evaluator_skill(&value) {
+        return None;
+    }
+
+    let id = source_report.get("id")?.as_str()?.trim();
+
+    if id.is_empty() {
+        return None;
+    }
+
+    Some(id.to_string())
+}
+
+fn work_order_has_evaluator_skill(value: &serde_json::Value) -> bool {
+    value
+        .get("tasks")
+        .and_then(serde_json::Value::as_array)
+        .map(|tasks| {
+            tasks.iter().any(|task| {
+                task.get("skillIds")
+                    .and_then(serde_json::Value::as_array)
+                    .map(|skill_ids| {
+                        skill_ids
+                            .iter()
+                            .any(|skill_id| skill_id.as_str() == Some(AGENT_RESPONSE_EVALUATOR_SKILL_ID))
+                    })
+                    .unwrap_or(false)
+            })
+        })
+        .unwrap_or(false)
+}
+
 fn resolve_queue_file_path(
     queue_root: &Path,
     relative_path: &str,
@@ -622,5 +722,116 @@ fn map_create_error(error: io::Error) -> QueueFolderError {
     match error.kind() {
         io::ErrorKind::PermissionDenied => QueueFolderError::WorkspacePermissionDenied,
         _ => QueueFolderError::CreateFailed,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::time::{SystemTime, UNIX_EPOCH};
+
+    #[test]
+    fn detects_evaluation_delegation_source_report() {
+        let content = evaluation_delegation_content("queue-result-report_source");
+
+        assert_eq!(
+            read_evaluation_delegation_source_report_id(&content).as_deref(),
+            Some("queue-result-report_source")
+        );
+    }
+
+    #[test]
+    fn ignores_non_evaluator_work_order_with_source_report() {
+        let content = r#"{
+            "schemaVersion": "workduck.queue-work-order/v1",
+            "sourceReport": {
+                "id": "queue-result-report_source",
+                "kind": "queue-result-report",
+                "label": "Source"
+            },
+            "tasks": [
+                {
+                    "id": "task_1",
+                    "title": "Follow-up",
+                    "body": "Do the work.",
+                    "skillIds": ["workduck.skill.proposal-writer"]
+                }
+            ]
+        }"#;
+
+        assert_eq!(read_evaluation_delegation_source_report_id(content), None);
+    }
+
+    #[test]
+    fn blocks_duplicate_evaluation_delegation_for_same_source_report() {
+        let queue_root = create_test_queue_root();
+        let existing_file = queue_root
+            .join(WORK_ORDERS_DIRECTORY_NAME)
+            .join("existing.workduck-work-order.json");
+        let content = evaluation_delegation_content("queue-result-report_source");
+
+        fs::write(&existing_file, &content).expect("existing evaluation delegation fixture");
+
+        let result = ensure_unique_evaluation_delegation(&queue_root, None, &content);
+
+        fs::remove_dir_all(&queue_root).ok();
+
+        assert_eq!(
+            result,
+            Err(QueueFolderError::EvaluationDelegationAlreadyExists)
+        );
+    }
+
+    #[test]
+    fn allows_updating_the_existing_evaluation_delegation_file() {
+        let queue_root = create_test_queue_root();
+        let existing_file = queue_root
+            .join(WORK_ORDERS_DIRECTORY_NAME)
+            .join("existing.workduck-work-order.json");
+        let content = evaluation_delegation_content("queue-result-report_source");
+
+        fs::write(&existing_file, &content).expect("existing evaluation delegation fixture");
+
+        let result = ensure_unique_evaluation_delegation(
+            &queue_root,
+            Some("work-orders/existing.workduck-work-order.json"),
+            &content,
+        );
+
+        fs::remove_dir_all(&queue_root).ok();
+
+        assert_eq!(result, Ok(()));
+    }
+
+    fn create_test_queue_root() -> PathBuf {
+        let unique = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .expect("system time")
+            .as_nanos();
+        let queue_root = std::env::temp_dir().join(format!("workduck-queue-folder-test-{unique}"));
+
+        fs::create_dir_all(queue_root.join(WORK_ORDERS_DIRECTORY_NAME)).expect("work-orders dir");
+        queue_root
+    }
+
+    fn evaluation_delegation_content(source_report_id: &str) -> String {
+        format!(
+            r#"{{
+                "schemaVersion": "workduck.queue-work-order/v1",
+                "sourceReport": {{
+                    "id": "{source_report_id}",
+                    "kind": "queue-result-report",
+                    "label": "Source"
+                }},
+                "tasks": [
+                    {{
+                        "id": "task_1",
+                        "title": "Evaluation delegation",
+                        "body": "workduck agent evaluate-batch --workspace . --input result.json",
+                        "skillIds": ["{AGENT_RESPONSE_EVALUATOR_SKILL_ID}"]
+                    }}
+                ]
+            }}"#
+        )
     }
 }

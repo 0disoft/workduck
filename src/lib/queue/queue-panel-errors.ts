@@ -37,6 +37,8 @@ export function getQueueFolderLocalizedError(messages: WorkduckMessages, error: 
 			return messages.queue.errors.fileDeleteFailed;
 		case 'queue-folder-file-already-exists':
 			return messages.queue.errors.fileAlreadyExists;
+		case 'queue-folder-evaluation-delegation-already-exists':
+			return messages.queue.errors.evaluationDelegationAlreadyExists;
 		case 'queue-folder-unavailable':
 			return messages.queue.errors.unavailable;
 	}

@@ -243,6 +243,8 @@ export const koMessages = {
 			fileWriteFailed: '작업 대기열 파일을 쓰지 못했습니다.',
 			fileDeleteFailed: '작업 대기열 파일을 삭제하지 못했습니다.',
 			fileAlreadyExists: '작업 대기열 파일이 이미 있습니다.',
+			evaluationDelegationAlreadyExists:
+				'이 보고서의 평가 위임 작업이 이미 있습니다. 기존 작업을 삭제한 뒤 다시 만드세요.',
 			unavailable: '작업 대기열 폴더 기능은 데스크톱 앱에서 사용할 수 있습니다.',
 			executionNoTask: '실행할 작업이 없습니다.',
 			executionNoAgent: '작업 에이전트를 선택하세요.',

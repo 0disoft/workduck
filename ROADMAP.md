@@ -126,38 +126,6 @@ workspace sync become harder to change safely.
      structure whether run from the app or the CLI, apart from runtime metadata
      such as timestamps and process identifiers.
 
-### Evaluation And Report Flow
-
-1. Keep evaluation delegation one-to-one with the source report.
-   - Current state: the queue UI now blocks repeated evaluation-delegation work
-     orders for the same source report.
-   - Follow-up: preserve the same rule in CLI and file-import flows so duplicate
-     work orders cannot be created outside the visible button.
-   - Acceptance criteria: a report can have at most one pending or completed
-     evaluation-delegation work order unless the original delegation file is
-     deleted intentionally.
-
-2. Separate report review actions by report type.
-   - Current risk: voting reports previously showed decision actions such as
-     approve, needs work, or rollback, even though those actions belong to
-     proposal or implementation review.
-   - Target behavior: voting reports show vote totals, source responses, and
-     evaluation controls only; proposal or code-review reports show approval
-     decisions.
-   - Acceptance criteria: no voting report renders proposal-review controls,
-     and no proposal report renders vote-specific controls.
-
-3. Make delegated AI evaluation a batch workflow.
-   - Current risk: one-response-at-a-time evaluation is tedious and encourages
-     inconsistent scoring.
-   - Target behavior: an evaluation-delegation work order contains the source
-     report path, all response IDs, the five scoring criteria, and instructions
-     for Codex or another reviewer to store scores through the same evaluation
-     persistence path.
-   - Acceptance criteria: one delegated evaluation task can score every agent
-     response in a report, and agent summary scores update after the task is
-     applied.
-
 ### Sync And Secret Compatibility
 
 1. Make encrypted vault KDF parameters backward-compatible.
@@ -221,24 +189,7 @@ workspace sync become harder to change safely.
 
 ### Frontend And Adapter Cleanup
 
-1. Consolidate repeated Tauri invoke wrappers.
-   - Current risk: multiple TypeScript modules define local `getTauriInvoke`
-     helpers, which spreads runtime detection and error behavior across the app.
-   - Target behavior: one small adapter owns Tauri invoke discovery, browser
-     fallback behavior, and typed error normalization.
-   - Acceptance criteria: workspace, sync, password, project, terminal, and
-     process modules import the shared adapter instead of repeating the same
-     helper.
-
-2. Consolidate repeated object-record guards and JSON normalization helpers.
-   - Current risk: `isObjectRecord`-style guards and parse-normalize patterns
-     are copied across storage modules.
-   - Target behavior: shared parse helpers live in one internal utility module,
-     with call sites keeping their domain-specific validation rules.
-   - Acceptance criteria: storage modules do not duplicate generic record
-     guards, and domain parsers still produce domain-specific error messages.
-
-3. Keep large surfaces below the point where they become routing files.
+1. Keep large surfaces below the point where they become routing files.
    - Current risk: queue, project, and settings surfaces can regrow after each
      feature because modals, filters, file I/O, execution, evaluation, and
      rendering sit close together.

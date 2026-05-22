@@ -241,6 +241,8 @@ export const enMessages = {
 			fileWriteFailed: 'Work queue file could not be written.',
 			fileDeleteFailed: 'Work queue file could not be deleted.',
 			fileAlreadyExists: 'Work queue file already exists.',
+			evaluationDelegationAlreadyExists:
+				'A rating delegation work order already exists for this report. Delete the existing work order before creating another one.',
 			unavailable: 'Work queue folders are available in the desktop app.',
 			executionNoTask: 'There is no task to run.',
 			executionNoAgent: 'Select at least one work agent.',

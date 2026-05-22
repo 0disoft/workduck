@@ -729,6 +729,7 @@ function createReportEvaluationDelegationBody(
 	const taskSummaries = report.tasks.map((task, index) =>
 		createReportEvaluationTargetSummary(task, index, language)
 	);
+	const evaluationJsonTemplate = createReportEvaluationBatchJsonTemplate(report);
 	const batchCommand = [
 		'workduck',
 		'agent',
@@ -757,22 +758,9 @@ function createReportEvaluationDelegationBody(
 			'평가 대상:',
 			...taskSummaries,
 			'',
-			'점수를 정한 뒤 아래 형태의 JSON 파일을 만들고 명령을 실행하세요.',
+			'아래 JSON에서 각 점수를 확정한 뒤 파일로 저장하고 명령을 실행하세요.',
 			'',
-			'{',
-			'  "evaluations": [',
-			'    {',
-			'      "agentName": "에이전트 이름",',
-			'      "scores": {',
-			'        "problemUnderstanding": 5,',
-			'        "logicalValidity": 5,',
-			'        "practicalFeasibility": 5,',
-			'        "creativeInsight": 5,',
-			'        "riskDetection": 5',
-			'      }',
-			'    }',
-			'  ]',
-			'}',
+			evaluationJsonTemplate,
 			'',
 			batchCommand
 		].join('\n');
@@ -795,22 +783,9 @@ function createReportEvaluationDelegationBody(
 		'Targets:',
 		...taskSummaries,
 		'',
-		'After choosing scores, create a JSON file with this shape and run the command below.',
+		'After choosing scores, save this JSON to a file and run the command below.',
 		'',
-		'{',
-		'  "evaluations": [',
-		'    {',
-		'      "agentName": "Agent name",',
-		'      "scores": {',
-		'        "problemUnderstanding": 5,',
-		'        "logicalValidity": 5,',
-		'        "practicalFeasibility": 5,',
-		'        "creativeInsight": 5,',
-		'        "riskDetection": 5',
-		'      }',
-		'    }',
-		'  ]',
-		'}',
+		evaluationJsonTemplate,
 		'',
 		batchCommand
 	].join('\n');
@@ -826,11 +801,13 @@ function createReportEvaluationTargetSummary(
 		language === 'ko'
 			? [
 					`${index + 1}. ${agentName}`,
+					`   응답 ID: ${task.id}`,
 					`   작업: ${task.title}`,
 					`   응답 요약: ${task.summary}`
 				]
 			: [
 					`${index + 1}. ${agentName}`,
+					`   Response ID: ${task.id}`,
 					`   Task: ${task.title}`,
 					`   Response summary: ${task.summary}`
 				];
@@ -844,6 +821,26 @@ function createReportEvaluationTargetSummary(
 	}
 
 	return lines.join('\n');
+}
+
+function createReportEvaluationBatchJsonTemplate(report: WorkduckQueueResultReport) {
+	return JSON.stringify(
+		{
+			evaluations: report.tasks.map((task) => ({
+				reportTaskId: task.id,
+				agentName: task.title.split(':')[0]?.trim() || task.title,
+				scores: {
+					problemUnderstanding: 5,
+					logicalValidity: 5,
+					practicalFeasibility: 5,
+					creativeInsight: 5,
+					riskDetection: 5
+				}
+			}))
+		},
+		null,
+		2
+	);
 }
 
 function quoteQueueCliArgument(value: string) {

@@ -1,3 +1,4 @@
+import { getTauriInvoke } from '$lib/tauri/tauri-invoke';
 import { normalizeWorkspacePathForStorage } from '$lib/workspaces/workspace-path-format';
 
 export type QueueFolderError =
@@ -17,6 +18,7 @@ export type QueueFolderError =
 	| 'queue-folder-file-write-failed'
 	| 'queue-folder-file-delete-failed'
 	| 'queue-folder-file-already-exists'
+	| 'queue-folder-evaluation-delegation-already-exists'
 	| 'queue-folder-unavailable';
 
 export type QueueFileKind = 'result-report' | 'work-order' | 'proposal' | 'unsupported';
@@ -31,16 +33,6 @@ export type QueueFolderResult =
 			readonly ok: false;
 			readonly error: QueueFolderError;
 	  };
-
-interface TauriCoreApi {
-	readonly invoke?: <T>(command: string, args?: Record<string, unknown>) => Promise<T>;
-}
-
-interface TauriGlobalWindow {
-	readonly __TAURI__?: {
-		readonly core?: TauriCoreApi;
-	};
-}
 
 interface QueueFolderResponse {
 	readonly ok: boolean;
@@ -358,6 +350,8 @@ export function getQueueFolderErrorMessage(error: QueueFolderError) {
 			return 'Queue file could not be deleted.';
 		case 'queue-folder-file-already-exists':
 			return 'Queue file already exists.';
+		case 'queue-folder-evaluation-delegation-already-exists':
+			return 'A rating delegation work order already exists for this report.';
 		case 'queue-folder-unavailable':
 			return 'Queue folders are available in the desktop app.';
 	}
@@ -401,14 +395,6 @@ async function runQueueFolderCommand(
 	}
 }
 
-function getTauriInvoke() {
-	if (typeof window === 'undefined') {
-		return undefined;
-	}
-
-	return (window as unknown as TauriGlobalWindow).__TAURI__?.core?.invoke;
-}
-
 function isQueueFolderError(value: unknown): value is QueueFolderError {
 	return (
 		value === 'queue-folder-workspace-required' ||
@@ -427,6 +413,7 @@ function isQueueFolderError(value: unknown): value is QueueFolderError {
 		value === 'queue-folder-file-write-failed' ||
 		value === 'queue-folder-file-delete-failed' ||
 		value === 'queue-folder-file-already-exists' ||
+		value === 'queue-folder-evaluation-delegation-already-exists' ||
 		value === 'queue-folder-unavailable'
 	);
 }

@@ -157,7 +157,7 @@
 					</div>
 				{/if}
 
-				{#if task.vote === undefined}
+				{#if voteAggregate === null}
 					<div class="workduck-queue-review-decisions">
 						{#each reviewDecisionOptions as option}
 							<label>
