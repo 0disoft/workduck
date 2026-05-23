@@ -1,8 +1,11 @@
 use std::{
+    collections::{HashMap, HashSet},
     fs,
     net::TcpListener,
     path::{Path, PathBuf},
     process::Command,
+    sync::{Mutex, OnceLock},
+    time::SystemTime,
 };
 
 use base64::{Engine as _, engine::general_purpose};
@@ -103,6 +106,26 @@ enum ProjectRepositoryTask {
     Build,
 }
 
+#[derive(Clone)]
+struct CachedTaskRunRecordFile {
+    len: u64,
+    modified_at: Option<SystemTime>,
+    record: Option<ProjectRepositoryTaskRunRecord>,
+}
+
+#[derive(Default)]
+struct WorkspaceTaskRunRecordCache {
+    files: HashMap<String, CachedTaskRunRecordFile>,
+    dir_len: u64,
+    dir_modified_at: Option<SystemTime>,
+    latest_records: Vec<ProjectRepositoryTaskRunRecord>,
+}
+
+#[derive(Default)]
+struct TaskRunRecordCache {
+    record_dirs: HashMap<PathBuf, WorkspaceTaskRunRecordCache>,
+}
+
 const DEPENDENCY_DISCOVERY_MAX_DEPTH: usize = 3;
 const DEPENDENCY_DISCOVERY_IGNORED_DIRS: &[&str] = &[
     ".git",
@@ -201,25 +224,52 @@ pub fn read_project_repository_task_run_records(
         }
     };
     let record_dir = task_run_record_dir(&workspace_path);
-    let entries = match fs::read_dir(&record_dir) {
-        Ok(entries) => entries,
-        Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
-            return ProjectRepositoryTaskRunRecordsResult {
-                ok: true,
-                records: Some(Vec::new()),
-                error: None,
-            };
-        }
-        Err(_) => {
+    let visible_workspace_path = crate::git_path::git_process_path(&workspace_path);
+    let records = match read_latest_cached_task_run_records(&record_dir, &visible_workspace_path) {
+        Ok(records) => records,
+        Err(error) => {
             return ProjectRepositoryTaskRunRecordsResult {
                 ok: false,
                 records: None,
-                error: Some(ProjectRepositoryTaskError::RecordReadFailed),
+                error: Some(error),
             };
         }
     };
-    let mut records = Vec::new();
-    let visible_workspace_path = crate::git_path::git_process_path(&workspace_path);
+
+    ProjectRepositoryTaskRunRecordsResult {
+        ok: true,
+        records: Some(records),
+        error: None,
+    }
+}
+
+fn read_latest_cached_task_run_records(
+    record_dir: &Path,
+    visible_workspace_path: &Path,
+) -> Result<Vec<ProjectRepositoryTaskRunRecord>, ProjectRepositoryTaskError> {
+    let metadata = match fs::metadata(record_dir) {
+        Ok(metadata) if metadata.is_dir() => metadata,
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => {
+            clear_cached_task_run_records(record_dir);
+            return Ok(Vec::new());
+        }
+        Err(_) => return Err(ProjectRepositoryTaskError::RecordReadFailed),
+        Ok(_) => return Err(ProjectRepositoryTaskError::RecordReadFailed),
+    };
+    let dir_len = metadata.len();
+    let dir_modified_at = metadata.modified().ok();
+    let mut cache = task_run_record_cache()
+        .lock()
+        .map_err(|_| ProjectRepositoryTaskError::RecordReadFailed)?;
+    let workspace_cache = cache.record_dirs.entry(record_dir.to_path_buf()).or_default();
+
+    if workspace_cache.is_fresh(dir_len, dir_modified_at) {
+        return Ok(workspace_cache.latest_records.clone());
+    }
+
+    let entries = fs::read_dir(record_dir)
+        .map_err(|_| ProjectRepositoryTaskError::RecordReadFailed)?;
+    let mut seen_files = HashSet::new();
 
     for entry in entries.flatten() {
         let path = entry.path();
@@ -228,26 +278,154 @@ pub fn read_project_repository_task_run_records(
             continue;
         }
 
-        let Ok(record_json) = fs::read_to_string(&path) else {
+        let file_name = entry.file_name().to_string_lossy().to_string();
+        let Ok(metadata) = entry.metadata() else {
             continue;
         };
-        let Ok(record) = serde_json::from_str::<ProjectRepositoryTaskRunRecord>(&record_json) else {
-            continue;
-        };
-        let repository_path = PathBuf::from(&record.repository_path);
 
-        if repository_path.starts_with(&visible_workspace_path) {
-            records.push(record);
+        if !metadata.is_file() {
+            continue;
         }
+
+        seen_files.insert(file_name.clone());
+
+        let len = metadata.len();
+        let modified_at = metadata.modified().ok();
+        let cached_file = workspace_cache.files.get(&file_name);
+
+        if cached_file.is_some_and(|cached| {
+            modified_at.is_some() && cached.len == len && cached.modified_at == modified_at
+        })
+        {
+            continue;
+        }
+
+        workspace_cache.files.insert(
+            file_name,
+            CachedTaskRunRecordFile {
+                len,
+                modified_at,
+                record: read_visible_task_run_record(&path, visible_workspace_path),
+            },
+        );
     }
 
-    records.sort_by(|left, right| right.started_at.cmp(&left.started_at).then(right.id.cmp(&left.id)));
+    workspace_cache
+        .files
+        .retain(|file_name, _| seen_files.contains(file_name));
 
-    ProjectRepositoryTaskRunRecordsResult {
-        ok: true,
-        records: Some(records),
-        error: None,
+    let records = workspace_cache
+        .files
+        .values()
+        .filter_map(|cached| cached.record.clone())
+        .collect();
+    workspace_cache.dir_len = dir_len;
+    workspace_cache.dir_modified_at = dir_modified_at;
+    workspace_cache.latest_records = latest_task_run_records_by_repository(records);
+
+    Ok(workspace_cache.latest_records.clone())
+}
+
+fn task_run_record_cache() -> &'static Mutex<TaskRunRecordCache> {
+    static TASK_RUN_RECORD_CACHE: OnceLock<Mutex<TaskRunRecordCache>> = OnceLock::new();
+
+    TASK_RUN_RECORD_CACHE.get_or_init(|| Mutex::new(TaskRunRecordCache::default()))
+}
+
+fn clear_cached_task_run_records(record_dir: &Path) {
+    if let Ok(mut cache) = task_run_record_cache().lock() {
+        cache.record_dirs.remove(record_dir);
     }
+}
+
+impl WorkspaceTaskRunRecordCache {
+    fn is_fresh(&self, dir_len: u64, dir_modified_at: Option<SystemTime>) -> bool {
+        if dir_modified_at.is_none()
+            || self.dir_len != dir_len
+            || self.dir_modified_at != dir_modified_at
+        {
+            return false;
+        }
+
+        !self.latest_records.iter().any(|record| record.state == "running")
+            || self.running_record_files_are_fresh()
+    }
+
+    fn running_record_files_are_fresh(&self) -> bool {
+        self.files
+            .values()
+            .filter_map(|cached| {
+                cached
+                    .record
+                    .as_ref()
+                    .filter(|record| record.state == "running")
+                    .map(|record| (cached, record))
+            })
+            .all(|(cached, record)| {
+                fs::metadata(PathBuf::from(&record.record_path))
+                    .ok()
+                    .and_then(|metadata| {
+                        metadata.modified().ok().map(|modified_at| {
+                            metadata.len() == cached.len && Some(modified_at) == cached.modified_at
+                        })
+                    })
+                    .unwrap_or(false)
+            })
+    }
+}
+
+fn read_visible_task_run_record(
+    path: &Path,
+    visible_workspace_path: &Path,
+) -> Option<ProjectRepositoryTaskRunRecord> {
+    let record_json = fs::read_to_string(path).ok()?;
+    let record = serde_json::from_str::<ProjectRepositoryTaskRunRecord>(&record_json).ok()?;
+    let repository_path = PathBuf::from(&record.repository_path);
+
+    repository_path
+        .starts_with(visible_workspace_path)
+        .then_some(record)
+}
+
+fn latest_task_run_records_by_repository(
+    records: Vec<ProjectRepositoryTaskRunRecord>,
+) -> Vec<ProjectRepositoryTaskRunRecord> {
+    let mut latest_records = HashMap::new();
+
+    for record in records {
+        let repository_path = record.repository_path.clone();
+
+        if latest_records
+            .get(&repository_path)
+            .is_some_and(|existing| !is_newer_task_run_record(&record, existing))
+        {
+            continue;
+        }
+
+        latest_records.insert(repository_path, record);
+    }
+
+    let mut records = latest_records.into_values().collect::<Vec<_>>();
+    records.sort_by(compare_task_run_records_descending);
+    records
+}
+
+fn is_newer_task_run_record(
+    candidate: &ProjectRepositoryTaskRunRecord,
+    current: &ProjectRepositoryTaskRunRecord,
+) -> bool {
+    candidate.started_at > current.started_at
+        || (candidate.started_at == current.started_at && candidate.id > current.id)
+}
+
+fn compare_task_run_records_descending(
+    left: &ProjectRepositoryTaskRunRecord,
+    right: &ProjectRepositoryTaskRunRecord,
+) -> std::cmp::Ordering {
+    right
+        .started_at
+        .cmp(&left.started_at)
+        .then(right.id.cmp(&left.id))
 }
 
 fn parse_task(task: &str) -> Option<ProjectRepositoryTask> {
@@ -1086,6 +1264,56 @@ impl ProjectRepositoryTask {
             ProjectRepositoryTask::UpdateDependencies => "update-dependencies",
             ProjectRepositoryTask::StartDevServer => "start-dev-server",
             ProjectRepositoryTask::Build => "build",
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn latest_task_run_records_keep_newest_record_per_repository() {
+        let records = latest_task_run_records_by_repository(vec![
+            task_run_record("repo-a-old", "C:/workspace/repo-a", "2026-05-23T01:00:00Z"),
+            task_run_record("repo-b", "C:/workspace/repo-b", "2026-05-23T02:00:00Z"),
+            task_run_record("repo-a-new", "C:/workspace/repo-a", "2026-05-23T03:00:00Z"),
+        ]);
+
+        let ids = records
+            .iter()
+            .map(|record| record.id.as_str())
+            .collect::<Vec<_>>();
+
+        assert_eq!(ids, vec!["repo-a-new", "repo-b"]);
+    }
+
+    #[test]
+    fn latest_task_run_records_use_id_as_timestamp_tie_breaker() {
+        let records = latest_task_run_records_by_repository(vec![
+            task_run_record("repo-a-1", "C:/workspace/repo-a", "2026-05-23T01:00:00Z"),
+            task_run_record("repo-a-2", "C:/workspace/repo-a", "2026-05-23T01:00:00Z"),
+        ]);
+
+        assert_eq!(records[0].id, "repo-a-2");
+    }
+
+    fn task_run_record(
+        id: &str,
+        repository_path: &str,
+        started_at: &str,
+    ) -> ProjectRepositoryTaskRunRecord {
+        ProjectRepositoryTaskRunRecord {
+            id: id.to_owned(),
+            task: ProjectRepositoryTask::Build.as_str().to_owned(),
+            repository_path: repository_path.to_owned(),
+            command: "bun run build".to_owned(),
+            state: "succeeded".to_owned(),
+            exit_code: Some(0),
+            started_at: started_at.to_owned(),
+            finished_at: Some(started_at.to_owned()),
+            output_tail: None,
+            record_path: format!("{id}.json"),
         }
     }
 }

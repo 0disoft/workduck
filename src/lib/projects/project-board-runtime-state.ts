@@ -1,7 +1,12 @@
 import type { ProjectRepositoryOperation } from './project-board-operations';
 import type { ProjectRepositoryGitStatus } from './project-board-selectors';
 import { ensureProjectFolderPath, type ProjectFolderError } from './project-folder';
-import { inspectProjectRepositoryGit, type ProjectRepositoryGitError } from './project-repository';
+import {
+	inspectProjectRepositoriesGit,
+	inspectProjectRepositoryGit,
+	type ProjectRepositoryGitError,
+	type ProjectRepositoryGitInspectionResult
+} from './project-repository';
 import type {
 	ProjectRegistry,
 	ProjectRepositoryLinkRecord,
@@ -96,26 +101,74 @@ export async function refreshProjectRepositoryGitStatusForBoard(
 
 	context.updateRepositoryGitStatus(
 		input.repositoryId,
-		result.ok
-			? {
-					isGitRepository: result.isGitRepository,
-					hasRemote: result.hasRemote,
-					aheadCount: result.aheadCount,
-					behindCount: result.behindCount,
-					hasUncommittedChanges: result.hasUncommittedChanges,
-					branch: result.branch,
-					error: null
-				}
-			: {
-					isGitRepository: false,
-					hasRemote: false,
-					aheadCount: 0,
-					behindCount: 0,
-					hasUncommittedChanges: false,
-					branch: null,
-					error: result.error as ProjectRepositoryGitError
-				}
+		createRepositoryGitStatusFromInspectionResult(result)
 	);
+}
+
+export async function refreshProjectRepositoryGitStatusesForBoard(
+	input: {
+		readonly repositories: readonly ProjectRepositoryLinkRecord[];
+		readonly expectedSignature: string;
+	},
+	context: {
+		readonly getRepositoryGitInspectionSignature: () => string;
+		readonly updateRepositoryGitStatuses: (
+			gitStatuses: Record<string, ProjectRepositoryGitStatus>
+		) => void;
+	}
+) {
+	const repositories = input.repositories.filter(
+		(repository): repository is ProjectRepositoryLinkRecord & { readonly path: string } =>
+			repository.path !== null
+	);
+
+	if (repositories.length === 0) {
+		return;
+	}
+
+	const records = await inspectProjectRepositoriesGit(
+		repositories.map((repository) => ({
+			repositoryId: repository.id,
+			path: repository.path
+		}))
+	);
+
+	if (input.expectedSignature !== context.getRepositoryGitInspectionSignature()) {
+		return;
+	}
+
+	context.updateRepositoryGitStatuses(
+		Object.fromEntries(
+			records.map((record) => [
+				record.repositoryId,
+				createRepositoryGitStatusFromInspectionResult(record.result)
+			])
+		)
+	);
+}
+
+function createRepositoryGitStatusFromInspectionResult(
+	result: ProjectRepositoryGitInspectionResult
+): ProjectRepositoryGitStatus {
+	return result.ok
+		? {
+				isGitRepository: result.isGitRepository,
+				hasRemote: result.hasRemote,
+				aheadCount: result.aheadCount,
+				behindCount: result.behindCount,
+				hasUncommittedChanges: result.hasUncommittedChanges,
+				branch: result.branch,
+				error: null
+			}
+		: {
+				isGitRepository: false,
+				hasRemote: false,
+				aheadCount: 0,
+				behindCount: 0,
+				hasUncommittedChanges: false,
+				branch: null,
+				error: result.error as ProjectRepositoryGitError
+			};
 }
 
 function pruneRecordById<T>(record: Readonly<Record<string, T>>, ids: ReadonlySet<string>) {

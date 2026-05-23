@@ -63,6 +63,7 @@
 	let sessionError = $state<TerminalSessionError | null>(null);
 	let statusMessage = $state<string | null>(null);
 	let terminalOutput = $state('');
+	let terminalOutputCursor = $state(0);
 	let terminalInput = $state('');
 	let isSessionConnected = $state(false);
 	let isSessionStarting = $state(false);
@@ -373,9 +374,14 @@
 	}
 
 	async function refreshSelectedTerminalSession(sessionId: string) {
-		const result = await readTerminalSession(sessionId);
+		const expectedOutputCursor = terminalOutputCursor;
+		const result = await readTerminalSession(sessionId, expectedOutputCursor);
 
-		applyTerminalSessionResult(result.snapshot);
+		if (selectedSessionId !== sessionId) {
+			return;
+		}
+
+		applyTerminalSessionResult(result.snapshot, { expectedOutputCursor });
 
 		if (!result.ok) {
 			sessionError = result.error;
@@ -399,6 +405,7 @@
 	function resetTerminalRuntimeView() {
 		stopTerminalPolling();
 		terminalOutput = '';
+		terminalOutputCursor = 0;
 		terminalInput = '';
 		isSessionConnected = false;
 		shouldFollowTerminalOutput = true;
@@ -406,12 +413,21 @@
 
 	function applyTerminalSessionResult(
 		snapshot: TerminalSessionSnapshot,
-		options: { readonly forceScroll?: boolean } = {}
+		options: { readonly forceScroll?: boolean; readonly expectedOutputCursor?: number } = {}
 	) {
+		if (
+			snapshot.outputReset === false &&
+			options.expectedOutputCursor !== undefined &&
+			options.expectedOutputCursor !== terminalOutputCursor
+		) {
+			return;
+		}
+
 		const shouldScroll =
 			options.forceScroll === true || shouldFollowTerminalOutput || isTerminalOutputNearBottom();
 
-		terminalOutput = snapshot.output;
+		terminalOutput = snapshot.outputReset ? snapshot.output : `${terminalOutput}${snapshot.output}`;
+		terminalOutputCursor = snapshot.outputCursor;
 		isSessionConnected = snapshot.connected;
 
 		if (shouldScroll) {

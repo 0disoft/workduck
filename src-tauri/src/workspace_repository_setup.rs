@@ -2,9 +2,10 @@ use std::{
     fs, io,
     path::{Path, PathBuf},
     process::{Command, Output, Stdio},
-    thread,
-    time::{Duration, Instant},
+    time::Duration,
 };
+
+use wait_timeout::ChildExt;
 
 #[cfg(target_os = "windows")]
 use std::os::windows::process::CommandExt;
@@ -20,7 +21,6 @@ const QUEUE_REPORTS_DIRECTORY_NAME: &str = "reports";
 const QUEUE_WORK_ORDERS_DIRECTORY_NAME: &str = "work-orders";
 const QUEUE_PROPOSALS_DIRECTORY_NAME: &str = "proposals";
 const WORKSPACE_COMMAND_TIMEOUT: Duration = Duration::from_secs(120);
-const WORKSPACE_COMMAND_POLL_INTERVAL: Duration = Duration::from_millis(100);
 #[cfg(target_os = "windows")]
 const CREATE_NO_WINDOW: u32 = 0x08000000;
 
@@ -379,26 +379,19 @@ fn run_command(
             failed_error
         }
     })?;
-    let started_at = Instant::now();
-
-    loop {
-        match child.try_wait() {
-            Ok(Some(_)) => {
-                return child
-                    .wait_with_output()
-                    .map_err(|_| WorkspaceRepositorySetupError::CreateFailed);
-            }
-            Ok(None) if started_at.elapsed() >= timeout => {
-                let _ = child.kill();
-                let _ = child.wait();
-                return Err(timed_out_error);
-            }
-            Ok(None) => thread::sleep(WORKSPACE_COMMAND_POLL_INTERVAL),
-            Err(_) => {
-                let _ = child.kill();
-                let _ = child.wait();
-                return Err(failed_error);
-            }
+    match child.wait_timeout(timeout) {
+        Ok(Some(_)) => child
+            .wait_with_output()
+            .map_err(|_| WorkspaceRepositorySetupError::CreateFailed),
+        Ok(None) => {
+            let _ = child.kill();
+            let _ = child.wait();
+            Err(timed_out_error)
+        }
+        Err(_) => {
+            let _ = child.kill();
+            let _ = child.wait();
+            Err(failed_error)
         }
     }
 }

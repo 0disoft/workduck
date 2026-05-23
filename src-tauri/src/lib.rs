@@ -1,3 +1,5 @@
+use tauri::Manager;
+
 pub mod argon2_kdf;
 mod developer_processes;
 mod git_credential;
@@ -59,6 +61,9 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .setup(|app| {
             app.set_theme(Some(tauri::Theme::Dark));
+            let storage_state = storage::initialize_app_storage(&app.handle())
+                .map_err(Box::<dyn std::error::Error>::from)?;
+            app.manage(storage_state);
             Ok(())
         })
         .manage(terminal_process::TerminalProcessState::default())
@@ -95,6 +100,7 @@ pub fn run() {
             project_repository::clone_project_repository,
             project_repository::fetch_project_repository_git,
             project_repository::initialize_project_repository_git,
+            project_repository::inspect_project_repositories_git,
             project_repository::inspect_project_repository_git,
             project_repository::pull_project_repository_git,
             project_repository::prepare_project_repository_for_github_publish,

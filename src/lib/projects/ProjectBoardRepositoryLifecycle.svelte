@@ -8,7 +8,7 @@
 		ensureProjectFoldersForBoard,
 		pruneRepositoryGitStatusRecord,
 		pruneRepositoryOperationRecord,
-		refreshProjectRepositoryGitStatusForBoard
+		refreshProjectRepositoryGitStatusesForBoard
 	} from './project-board-runtime-state';
 	import {
 		listRegisteredRepositories,
@@ -56,25 +56,6 @@
 		);
 	}
 
-	async function refreshRepositoryGitStatus(
-		repositoryId: string,
-		path: string | null,
-		expectedSignature = repositoryGitInspectionSignature
-	) {
-		await refreshProjectRepositoryGitStatusForBoard(
-			{ repositoryId, path, expectedSignature },
-			{
-				getRepositoryGitInspectionSignature: () => repositoryGitInspectionSignature,
-				updateRepositoryGitStatus: (nextRepositoryId, gitStatus) => {
-					repositoryGitStatusById = {
-						...repositoryGitStatusById,
-						[nextRepositoryId]: gitStatus
-					};
-				}
-			}
-		);
-	}
-
 	$effect(() => {
 		const registeredRepositories = listRegisteredRepositories(registry.nodes);
 		const repositoriesToInspect = registeredRepositories.filter(
@@ -100,9 +81,18 @@
 			registeredRepositoryIds
 		);
 
-		for (const repository of repositoriesToInspect) {
-			void refreshRepositoryGitStatus(repository.id, repository.path, nextSignature);
-		}
+		void refreshProjectRepositoryGitStatusesForBoard(
+			{ repositories: repositoriesToInspect, expectedSignature: nextSignature },
+			{
+				getRepositoryGitInspectionSignature: () => repositoryGitInspectionSignature,
+				updateRepositoryGitStatuses: (gitStatuses) => {
+					repositoryGitStatusById = {
+						...repositoryGitStatusById,
+						...gitStatuses
+					};
+				}
+			}
+		);
 	});
 
 	$effect(() => {

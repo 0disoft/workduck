@@ -11,12 +11,12 @@ use std::{
     fs, io,
     path::{Path, PathBuf},
     process::{Command, Output, Stdio},
-    thread,
-    time::{Duration, Instant},
+    time::Duration,
 };
 
+use wait_timeout::ChildExt;
+
 const WORKSPACE_SYNC_GIT_COMMAND_TIMEOUT: Duration = Duration::from_secs(60);
-const WORKSPACE_SYNC_GIT_COMMAND_POLL_INTERVAL: Duration = Duration::from_millis(50);
 const WORKSPACE_SYNC_GIT_COMMIT_MESSAGE: &str = "chore: update workduck sync";
 
 #[derive(serde::Serialize)]
@@ -642,37 +642,30 @@ fn run_git_command(
         phase: Some(phase),
     })?;
 
-    let started_at = Instant::now();
+    match child.wait_timeout(WORKSPACE_SYNC_GIT_COMMAND_TIMEOUT) {
+        Ok(Some(_)) => child
+            .wait_with_output()
+            .map_err(|_| WorkspaceSyncGitFailure {
+                error: WorkspaceSyncGitRunError::CommandFailed,
+                phase: Some(phase),
+            }),
+        Ok(None) => {
+            let _ = child.kill();
+            let _ = child.wait();
 
-    loop {
-        match child.try_wait() {
-            Ok(Some(_)) => {
-                return child
-                    .wait_with_output()
-                    .map_err(|_| WorkspaceSyncGitFailure {
-                        error: WorkspaceSyncGitRunError::CommandFailed,
-                        phase: Some(phase),
-                    });
-            }
-            Ok(None) if started_at.elapsed() >= WORKSPACE_SYNC_GIT_COMMAND_TIMEOUT => {
-                let _ = child.kill();
-                let _ = child.wait();
+            Err(WorkspaceSyncGitFailure {
+                error: WorkspaceSyncGitRunError::CommandTimedOut,
+                phase: Some(phase),
+            })
+        }
+        Err(_) => {
+            let _ = child.kill();
+            let _ = child.wait();
 
-                return Err(WorkspaceSyncGitFailure {
-                    error: WorkspaceSyncGitRunError::CommandTimedOut,
-                    phase: Some(phase),
-                });
-            }
-            Ok(None) => thread::sleep(WORKSPACE_SYNC_GIT_COMMAND_POLL_INTERVAL),
-            Err(_) => {
-                let _ = child.kill();
-                let _ = child.wait();
-
-                return Err(WorkspaceSyncGitFailure {
-                    error: WorkspaceSyncGitRunError::CommandFailed,
-                    phase: Some(phase),
-                });
-            }
+            Err(WorkspaceSyncGitFailure {
+                error: WorkspaceSyncGitRunError::CommandFailed,
+                phase: Some(phase),
+            })
         }
     }
 }

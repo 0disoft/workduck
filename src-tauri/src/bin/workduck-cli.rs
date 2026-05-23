@@ -250,14 +250,19 @@ async fn run() -> Result<(), CliError> {
         &skills.skills,
         &references.references,
     )?;
+    let client = queue_http_client().map_err(|error| CliError {
+        code: error.code,
+        message: error.message,
+    })?;
     let mut handles = Vec::new();
 
     for run in runs {
         let task = run.task.clone();
         let agent_name = run.agent.name.clone();
+        let client = client.clone();
 
         handles.push(tauri::async_runtime::spawn(async move {
-            match run_agent_prompt(run).await {
+            match run_agent_prompt(run, client).await {
                 Ok(output) => AgentRunOutcome::Success(output),
                 Err(error) => AgentRunOutcome::Failure {
                     task,

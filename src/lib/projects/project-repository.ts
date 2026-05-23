@@ -98,6 +98,16 @@ export type ProjectRepositoryGitInspectionResult =
 			readonly error: ProjectRepositoryGitError;
 	  };
 
+export interface ProjectRepositoryGitInspectionInput {
+	readonly repositoryId: string;
+	readonly path: string;
+}
+
+export interface ProjectRepositoryGitInspectionRecord {
+	readonly repositoryId: string;
+	readonly result: ProjectRepositoryGitInspectionResult;
+}
+
 export type ProjectRepositoryGitMutationResult =
 	| {
 			readonly ok: true;
@@ -138,6 +148,11 @@ interface ProjectRepositoryGitInspectionResponse {
 	readonly hasUncommittedChanges?: boolean | null;
 	readonly branch?: string | null;
 	readonly error?: ProjectRepositoryGitError | null;
+}
+
+interface ProjectRepositoryGitInspectionRecordResponse {
+	readonly repositoryId?: string | null;
+	readonly inspection?: ProjectRepositoryGitInspectionResponse | null;
 }
 
 interface ProjectRepositoryGitMutationResponse {
@@ -197,28 +212,43 @@ export async function inspectProjectRepositoryGit(
 			{ path: normalizeWorkspacePathForStorage(path) }
 		);
 
-		if (response.ok) {
-			return {
-				ok: true,
-				isGitRepository: response.isGitRepository === true,
-				hasRemote: response.hasRemote === true,
-				aheadCount: normalizeGitCount(response.aheadCount),
-				behindCount: normalizeGitCount(response.behindCount),
-				hasUncommittedChanges: response.hasUncommittedChanges === true,
-				branch: typeof response.branch === 'string' && response.branch.length > 0
-					? response.branch
-					: null
-			};
-		}
-
-		return {
-			ok: false,
-			error: isProjectRepositoryGitError(response.error)
-				? response.error
-				: 'project-repository-git-path-unreadable'
-		};
+		return normalizeProjectRepositoryGitInspectionResponse(response);
 	} catch {
 		return { ok: false, error: 'project-repository-git-path-unreadable' };
+	}
+}
+
+export async function inspectProjectRepositoriesGit(
+	repositories: readonly ProjectRepositoryGitInspectionInput[]
+): Promise<readonly ProjectRepositoryGitInspectionRecord[]> {
+	const invoke = getTauriInvoke();
+
+	if (invoke === undefined) {
+		return repositories.map((repository) => ({
+			repositoryId: repository.repositoryId,
+			result: { ok: false, error: 'project-repository-git-command-unavailable' }
+		}));
+	}
+
+	try {
+		const response = await invoke<readonly ProjectRepositoryGitInspectionRecordResponse[]>(
+			'inspect_project_repositories_git',
+			{
+				repositories: repositories.map((repository) => ({
+					repositoryId: repository.repositoryId,
+					path: normalizeWorkspacePathForStorage(repository.path)
+				}))
+			}
+		);
+
+		return response
+			.map(normalizeProjectRepositoryGitInspectionRecord)
+			.filter((record): record is ProjectRepositoryGitInspectionRecord => record !== null);
+	} catch {
+		return repositories.map((repository) => ({
+			repositoryId: repository.repositoryId,
+			result: { ok: false, error: 'project-repository-git-path-unreadable' }
+		}));
 	}
 }
 
@@ -611,6 +641,44 @@ function formatRemoteParts(host: string, path: string) {
 
 function normalizeGitCount(value: unknown) {
 	return typeof value === 'number' && Number.isFinite(value) && value > 0 ? Math.floor(value) : 0;
+}
+
+function normalizeProjectRepositoryGitInspectionRecord(
+	value: ProjectRepositoryGitInspectionRecordResponse
+): ProjectRepositoryGitInspectionRecord | null {
+	if (typeof value.repositoryId !== 'string' || value.repositoryId.length === 0) {
+		return null;
+	}
+
+	return {
+		repositoryId: value.repositoryId,
+		result: normalizeProjectRepositoryGitInspectionResponse(value.inspection)
+	};
+}
+
+function normalizeProjectRepositoryGitInspectionResponse(
+	response: ProjectRepositoryGitInspectionResponse | null | undefined
+): ProjectRepositoryGitInspectionResult {
+	if (response?.ok) {
+		return {
+			ok: true,
+			isGitRepository: response.isGitRepository === true,
+			hasRemote: response.hasRemote === true,
+			aheadCount: normalizeGitCount(response.aheadCount),
+			behindCount: normalizeGitCount(response.behindCount),
+			hasUncommittedChanges: response.hasUncommittedChanges === true,
+			branch: typeof response.branch === 'string' && response.branch.length > 0
+				? response.branch
+				: null
+		};
+	}
+
+	return {
+		ok: false,
+		error: isProjectRepositoryGitError(response?.error)
+			? response.error
+			: 'project-repository-git-path-unreadable'
+	};
 }
 
 function isProjectRepositoryGitError(value: unknown): value is ProjectRepositoryGitError {

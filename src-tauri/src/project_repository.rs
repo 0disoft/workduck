@@ -4,8 +4,10 @@ use std::{
     path::{Path, PathBuf},
     process::{Child, Command, Output, Stdio},
     thread,
-    time::{Duration, Instant},
+    time::Duration,
 };
+
+use wait_timeout::ChildExt;
 
 use crate::git_credential::{
     GitCredential, apply_git_credential, apply_github_cli_credential,
@@ -28,7 +30,6 @@ use std::os::windows::process::CommandExt;
 
 const PROJECT_REPOSITORY_CLONE_TIMEOUT: Duration = Duration::from_secs(900);
 const PROJECT_REPOSITORY_GIT_ACTION_TIMEOUT: Duration = Duration::from_secs(600);
-const PROJECT_REPOSITORY_CLONE_POLL_INTERVAL: Duration = Duration::from_millis(100);
 #[cfg(target_os = "windows")]
 const CREATE_NO_WINDOW: u32 = 0x08000000;
 
@@ -179,6 +180,20 @@ pub struct ProjectRepositoryGitInspection {
     error: Option<ProjectRepositoryGitError>,
 }
 
+#[derive(serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ProjectRepositoryGitInspectionRequest {
+    repository_id: String,
+    path: String,
+}
+
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ProjectRepositoryGitInspectionRecord {
+    repository_id: String,
+    inspection: ProjectRepositoryGitInspection,
+}
+
 #[derive(serde::Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ProjectRepositoryGitMutation {
@@ -189,6 +204,13 @@ pub struct ProjectRepositoryGitMutation {
 
 struct GitCommandFailure {
     error: ProjectRepositoryGitError,
+}
+
+struct GitStatusSummary {
+    branch: Option<String>,
+    ahead_count: u32,
+    behind_count: u32,
+    has_uncommitted_changes: bool,
 }
 
 #[tauri::command]
@@ -364,6 +386,19 @@ pub fn inspect_project_repository_git(path: String) -> ProjectRepositoryGitInspe
         Ok(inspection) => inspection,
         Err(failure) => invalid_git_inspection(failure.error),
     }
+}
+
+#[tauri::command]
+pub fn inspect_project_repositories_git(
+    repositories: Vec<ProjectRepositoryGitInspectionRequest>,
+) -> Vec<ProjectRepositoryGitInspectionRecord> {
+    repositories
+        .into_iter()
+        .map(|repository| ProjectRepositoryGitInspectionRecord {
+            repository_id: repository.repository_id,
+            inspection: inspect_project_repository_git(repository.path),
+        })
+        .collect()
 }
 
 #[tauri::command]
@@ -710,36 +745,111 @@ fn cleanup_failed_clone_target(clone_target: &Path) {
 fn inspect_git_repository(
     repository_path: &Path,
 ) -> Result<ProjectRepositoryGitInspection, GitCommandFailure> {
-    if !is_git_repository(repository_path)? {
-        return Ok(ProjectRepositoryGitInspection {
-            ok: true,
-            is_git_repository: false,
-            has_remote: false,
-            ahead_count: 0,
-            behind_count: 0,
-            has_uncommitted_changes: false,
-            branch: None,
-            error: None,
-        });
-    }
+    let Some(status) = read_git_status_summary(repository_path)? else {
+        return Ok(not_git_repository_inspection());
+    };
 
     let has_remote = has_git_remote(repository_path)?;
-    let (ahead_count, behind_count) = if has_remote {
-        read_git_ahead_behind_counts(repository_path)?
-    } else {
-        (0, 0)
-    };
 
     Ok(ProjectRepositoryGitInspection {
         ok: true,
         is_git_repository: true,
         has_remote,
-        ahead_count,
-        behind_count,
-        has_uncommitted_changes: has_git_uncommitted_changes(repository_path)?,
-        branch: read_git_branch(repository_path)?,
+        ahead_count: if has_remote { status.ahead_count } else { 0 },
+        behind_count: if has_remote { status.behind_count } else { 0 },
+        has_uncommitted_changes: status.has_uncommitted_changes,
+        branch: status.branch,
         error: None,
     })
+}
+
+fn not_git_repository_inspection() -> ProjectRepositoryGitInspection {
+    ProjectRepositoryGitInspection {
+        ok: true,
+        is_git_repository: false,
+        has_remote: false,
+        ahead_count: 0,
+        behind_count: 0,
+        has_uncommitted_changes: false,
+        branch: None,
+        error: None,
+    }
+}
+
+fn read_git_status_summary(
+    repository_path: &Path,
+) -> Result<Option<GitStatusSummary>, GitCommandFailure> {
+    let output = run_git_command(
+        repository_path,
+        &["status", "--porcelain=v2", "--branch", "--untracked-files=normal"],
+        PROJECT_REPOSITORY_GIT_ACTION_TIMEOUT,
+        None,
+    )?;
+
+    if !output.status.success() {
+        return if is_git_repository(repository_path)? {
+            Err(GitCommandFailure {
+                error: ProjectRepositoryGitError::CommandFailed,
+            })
+        } else {
+            Ok(None)
+        };
+    }
+
+    Ok(Some(parse_git_status_summary(&String::from_utf8_lossy(
+        &output.stdout,
+    ))))
+}
+
+fn parse_git_status_summary(output: &str) -> GitStatusSummary {
+    let mut branch = None;
+    let mut ahead_count = 0;
+    let mut behind_count = 0;
+    let mut has_uncommitted_changes = false;
+
+    for line in output.lines() {
+        if let Some(head) = line.strip_prefix("# branch.head ") {
+            let head = head.trim();
+
+            if !head.is_empty() && head != "(detached)" {
+                branch = Some(head.to_owned());
+            }
+            continue;
+        }
+
+        if let Some(ahead_behind) = line.strip_prefix("# branch.ab ") {
+            let (ahead, behind) = parse_git_branch_ahead_behind(ahead_behind);
+            ahead_count = ahead;
+            behind_count = behind;
+            continue;
+        }
+
+        if !line.starts_with('#') && !line.trim().is_empty() {
+            has_uncommitted_changes = true;
+        }
+    }
+
+    GitStatusSummary {
+        branch,
+        ahead_count,
+        behind_count,
+        has_uncommitted_changes,
+    }
+}
+
+fn parse_git_branch_ahead_behind(output: &str) -> (u32, u32) {
+    let mut ahead_count = 0;
+    let mut behind_count = 0;
+
+    for part in output.split_whitespace() {
+        if let Some(value) = part.strip_prefix('+') {
+            ahead_count = value.parse::<u32>().unwrap_or(0);
+        } else if let Some(value) = part.strip_prefix('-') {
+            behind_count = value.parse::<u32>().unwrap_or(0);
+        }
+    }
+
+    (ahead_count, behind_count)
 }
 
 fn is_git_repository(repository_path: &Path) -> Result<bool, GitCommandFailure> {
@@ -782,79 +892,33 @@ fn normalize_remote_url_for_comparison(remote_url: &str) -> String {
         .to_ascii_lowercase()
 }
 
-fn read_git_branch(repository_path: &Path) -> Result<Option<String>, GitCommandFailure> {
-    let output = run_git_command(
-        repository_path,
-        &["branch", "--show-current"],
-        PROJECT_REPOSITORY_GIT_ACTION_TIMEOUT,
-        None,
-    )?;
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-    if !output.status.success() {
-        return Ok(None);
+    #[test]
+    fn git_status_summary_reads_branch_counts_and_changes() {
+        let summary = parse_git_status_summary(
+            "# branch.oid 9fceb02\n# branch.head main\n# branch.upstream origin/main\n# branch.ab +2 -3\n1 .M N... 100644 100644 100644 abc def file.txt\n",
+        );
+
+        assert_eq!(summary.branch.as_deref(), Some("main"));
+        assert_eq!(summary.ahead_count, 2);
+        assert_eq!(summary.behind_count, 3);
+        assert!(summary.has_uncommitted_changes);
     }
 
-    let branch = String::from_utf8_lossy(&output.stdout).trim().to_owned();
+    #[test]
+    fn git_status_summary_ignores_detached_branch_head() {
+        let summary = parse_git_status_summary(
+            "# branch.oid 9fceb02\n# branch.head (detached)\n# branch.ab +0 -0\n",
+        );
 
-    Ok((!branch.is_empty()).then_some(branch))
-}
-
-fn read_git_ahead_behind_counts(repository_path: &Path) -> Result<(u32, u32), GitCommandFailure> {
-    let upstream_output = run_git_command(
-        repository_path,
-        &[
-            "rev-parse",
-            "--abbrev-ref",
-            "--symbolic-full-name",
-            "@{upstream}",
-        ],
-        PROJECT_REPOSITORY_GIT_ACTION_TIMEOUT,
-        None,
-    )?;
-
-    if !upstream_output.status.success() {
-        return Ok((0, 0));
+        assert_eq!(summary.branch, None);
+        assert_eq!(summary.ahead_count, 0);
+        assert_eq!(summary.behind_count, 0);
+        assert!(!summary.has_uncommitted_changes);
     }
-
-    let output = run_git_command(
-        repository_path,
-        &["rev-list", "--left-right", "--count", "HEAD...@{upstream}"],
-        PROJECT_REPOSITORY_GIT_ACTION_TIMEOUT,
-        None,
-    )?;
-
-    if !output.status.success() {
-        return Ok((0, 0));
-    }
-
-    Ok(parse_git_ahead_behind_counts(&String::from_utf8_lossy(
-        &output.stdout,
-    )))
-}
-
-fn has_git_uncommitted_changes(repository_path: &Path) -> Result<bool, GitCommandFailure> {
-    let output = run_git_command(
-        repository_path,
-        &["status", "--porcelain", "--untracked-files=normal"],
-        PROJECT_REPOSITORY_GIT_ACTION_TIMEOUT,
-        None,
-    )?;
-
-    Ok(output.status.success() && !output.stdout.is_empty())
-}
-
-fn parse_git_ahead_behind_counts(output: &str) -> (u32, u32) {
-    let mut parts = output.split_whitespace();
-    let ahead_count = parts
-        .next()
-        .and_then(|part| part.parse::<u32>().ok())
-        .unwrap_or(0);
-    let behind_count = parts
-        .next()
-        .and_then(|part| part.parse::<u32>().ok())
-        .unwrap_or(0);
-
-    (ahead_count, behind_count)
 }
 
 fn repository_has_head_commit(repository_path: &Path) -> Result<bool, GitCommandFailure> {
@@ -995,37 +1059,33 @@ enum GitChildWaitError {
 fn wait_for_child_output(mut child: Child, timeout: Duration) -> Result<Output, GitChildWaitError> {
     let stdout_reader = child.stdout.take().map(spawn_output_reader);
     let stderr_reader = child.stderr.take().map(spawn_output_reader);
-    let started_at = Instant::now();
 
-    loop {
-        match child.try_wait() {
-            Ok(Some(status)) => {
-                let stdout = join_output_reader(stdout_reader);
-                let stderr = join_output_reader(stderr_reader);
+    match child.wait_timeout(timeout) {
+        Ok(Some(status)) => {
+            let stdout = join_output_reader(stdout_reader);
+            let stderr = join_output_reader(stderr_reader);
 
-                return Ok(Output {
-                    status,
-                    stdout,
-                    stderr,
-                });
-            }
-            Ok(None) if started_at.elapsed() >= timeout => {
-                let _ = child.kill();
-                let _ = child.wait();
-                let _ = join_output_reader(stdout_reader);
-                let _ = join_output_reader(stderr_reader);
+            Ok(Output {
+                status,
+                stdout,
+                stderr,
+            })
+        }
+        Ok(None) => {
+            let _ = child.kill();
+            let _ = child.wait();
+            let _ = join_output_reader(stdout_reader);
+            let _ = join_output_reader(stderr_reader);
 
-                return Err(GitChildWaitError::TimedOut);
-            }
-            Ok(None) => thread::sleep(PROJECT_REPOSITORY_CLONE_POLL_INTERVAL),
-            Err(_) => {
-                let _ = child.kill();
-                let _ = child.wait();
-                let _ = join_output_reader(stdout_reader);
-                let _ = join_output_reader(stderr_reader);
+            Err(GitChildWaitError::TimedOut)
+        }
+        Err(_) => {
+            let _ = child.kill();
+            let _ = child.wait();
+            let _ = join_output_reader(stdout_reader);
+            let _ = join_output_reader(stderr_reader);
 
-                return Err(GitChildWaitError::Failed);
-            }
+            Err(GitChildWaitError::Failed)
         }
     }
 }

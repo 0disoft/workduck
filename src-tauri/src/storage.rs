@@ -1,9 +1,14 @@
-use std::{fmt, fs, path::PathBuf, time::Duration};
+use std::{
+    fmt, fs,
+    path::PathBuf,
+    sync::{Mutex, MutexGuard},
+    time::Duration,
+};
 
 use crate::path_display::display_path;
 
 use rusqlite::{Connection, OptionalExtension, params};
-use tauri::{AppHandle, Manager};
+use tauri::{AppHandle, Manager, State};
 
 const DATABASE_DRIVER: &str = "sqlite";
 const DATABASE_FILE_NAME: &str = "workduck.sqlite3";
@@ -15,6 +20,11 @@ struct Migration {
     name: &'static str,
     checksum: &'static str,
     sql: &'static str,
+}
+
+pub(crate) struct AppStorageState {
+    database_path: PathBuf,
+    connection: Mutex<Connection>,
 }
 
 const MIGRATIONS: &[Migration] = &[
@@ -90,6 +100,8 @@ pub enum StorageError {
         database_version: i64,
         current_version: i64,
     },
+    AppStorageNotInitialized,
+    AppStorageLockPoisoned,
 }
 
 impl fmt::Display for StorageError {
@@ -125,22 +137,46 @@ impl fmt::Display for StorageError {
                 formatter,
                 "database schema version {database_version} is newer than supported version {current_version}"
             ),
+            Self::AppStorageNotInitialized => write!(formatter, "app storage is not initialized"),
+            Self::AppStorageLockPoisoned => write!(formatter, "app storage connection lock failed"),
         }
     }
 }
 
 impl std::error::Error for StorageError {}
 
-pub fn storage_status(app: &AppHandle) -> Result<StorageStatus, StorageError> {
+pub(crate) fn initialize_app_storage(app: &AppHandle) -> Result<AppStorageState, StorageError> {
     let database_path = resolve_database_path(app)?;
     let connection = connect_database(&database_path)?;
+
+    Ok(AppStorageState {
+        database_path,
+        connection: Mutex::new(connection),
+    })
+}
+
+pub fn storage_status(app: &AppHandle) -> Result<StorageStatus, StorageError> {
+    let database_path = app_storage_state(app)?.database_path.clone();
+    let connection = app_connection(app)?;
+
     inspect_connection(&connection, database_path)
 }
 
-pub(crate) fn app_connection(app: &AppHandle) -> Result<Connection, StorageError> {
-    let database_path = resolve_database_path(app)?;
+pub(crate) fn app_connection(
+    app: &AppHandle,
+) -> Result<MutexGuard<'_, Connection>, StorageError> {
+    let state = app_storage_state(app)?;
 
-    connect_database(&database_path)
+    state
+        .inner()
+        .connection
+        .lock()
+        .map_err(|_| StorageError::AppStorageLockPoisoned)
+}
+
+fn app_storage_state(app: &AppHandle) -> Result<State<'_, AppStorageState>, StorageError> {
+    app.try_state::<AppStorageState>()
+        .ok_or(StorageError::AppStorageNotInitialized)
 }
 
 fn resolve_database_path(app: &AppHandle) -> Result<PathBuf, StorageError> {

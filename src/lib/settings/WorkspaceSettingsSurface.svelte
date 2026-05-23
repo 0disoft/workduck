@@ -13,6 +13,7 @@
 		createEmptyWorkspaceRegistry,
 		removeWorkspace,
 		switchWorkspace,
+		type WorkspaceRecord,
 		type WorkspaceRegistry,
 	} from '$lib/workspaces/workspace-registry';
 	import {
@@ -458,8 +459,21 @@
 						ok: false,
 						isLoading: false,
 						error: result.error
-					}
+				}
 		};
+	}
+
+	async function refreshWorkspaceRepositoryGitStatuses(
+		workspaces: readonly WorkspaceRecord[],
+		signature = workspaceRepositoryGitInspectionSignature
+	) {
+		for (const workspace of workspaces) {
+			if (signature !== workspaceRepositoryGitInspectionSignature) {
+				return;
+			}
+
+			await refreshWorkspaceRepositoryGitStatus(workspace.id, workspace.path, signature);
+		}
 	}
 
 	function handleWorkspacePathInput(event: Event) {
@@ -986,9 +1000,7 @@
 			new Set(unlockedWorkspaces.map((workspace) => workspace.id))
 		);
 
-		for (const workspace of unlockedWorkspaces) {
-			void refreshWorkspaceRepositoryGitStatus(workspace.id, workspace.path, nextSignature);
-		}
+		void refreshWorkspaceRepositoryGitStatuses(unlockedWorkspaces, nextSignature);
 	});
 
 	onMount(() => {

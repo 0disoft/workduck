@@ -1,6 +1,7 @@
 use std::{
     env, fs, io,
     path::{Path, PathBuf},
+    sync::OnceLock,
     time::Duration,
 };
 
@@ -20,6 +21,34 @@ const CHAT_COMPLETION_RETRY_MAX_DELAY_MILLIS: u64 = 2_000;
 const CHAT_COMPLETION_RETRY_JITTER_MILLIS: u64 = 250;
 const MAX_PROMPT_LENGTH: usize = 48_000;
 const MAX_MODEL_LENGTH: usize = 160;
+
+static QUEUE_HTTP_CLIENT: OnceLock<reqwest::Client> = OnceLock::new();
+
+pub fn create_queue_http_client() -> Result<reqwest::Client, QueueExecutionErrorDetail> {
+    reqwest::Client::builder()
+        .timeout(Duration::from_secs(CHAT_COMPLETION_TIMEOUT_SECONDS))
+        .build()
+        .map_err(|_| {
+            QueueExecutionErrorDetail::new(
+                "agent-request-invalid",
+                "HTTP 클라이언트를 만들지 못했습니다.",
+            )
+        })
+}
+
+pub fn queue_http_client() -> Result<reqwest::Client, QueueExecutionErrorDetail> {
+    if let Some(client) = QUEUE_HTTP_CLIENT.get() {
+        return Ok(client.clone());
+    }
+
+    let client = create_queue_http_client()?;
+    let _ = QUEUE_HTTP_CLIENT.set(client.clone());
+
+    Ok(QUEUE_HTTP_CLIENT
+        .get()
+        .cloned()
+        .unwrap_or(client))
+}
 
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -429,14 +458,19 @@ pub async fn execute_queue_work_order(
         Ok(runs) => runs,
         Err(error) => return queue_execution_failed(error),
     };
+    let client = match queue_http_client() {
+        Ok(client) => client,
+        Err(error) => return queue_execution_failed(error),
+    };
     let mut handles = Vec::new();
 
     for run in runs {
         let task = run.task.clone();
         let agent_name = run.agent.name.clone();
+        let client = client.clone();
 
         handles.push(tauri::async_runtime::spawn(async move {
-            match run_agent_prompt(run).await {
+            match run_agent_prompt(run, client).await {
                 Ok(output) => AgentRunOutcome::Success(output),
                 Err(error) => AgentRunOutcome::Failure {
                     task,
@@ -1728,7 +1762,10 @@ fn select_records<T: Clone>(ids: &[String], records: &[T], id_of: impl Fn(&T) ->
         .collect()
 }
 
-pub async fn run_agent_prompt(run: AgentExecutionRun) -> Result<AgentRunOutput, AgentRunFailure> {
+pub async fn run_agent_prompt(
+    run: AgentExecutionRun,
+    client: reqwest::Client,
+) -> Result<AgentRunOutput, AgentRunFailure> {
     if run.secret.value.trim().is_empty() {
         return Err(AgentRunFailure::new(
             "agent-api-key-required",
@@ -1763,15 +1800,6 @@ pub async fn run_agent_prompt(run: AgentExecutionRun) -> Result<AgentRunOutput, 
             format!("지원하지 않는 제공자입니다: {}", run.provider),
         )
     })?;
-    let client = reqwest::Client::builder()
-        .timeout(Duration::from_secs(CHAT_COMPLETION_TIMEOUT_SECONDS))
-        .build()
-        .map_err(|_| {
-            AgentRunFailure::new(
-                "agent-request-invalid",
-                "HTTP 클라이언트를 만들지 못했습니다.",
-            )
-        })?;
     let body = serde_json::json!({
         "model": run.model,
         "messages": [
@@ -1887,7 +1915,7 @@ async fn send_chat_completion_request(
 
 async fn wait_before_retry(failed_attempt: u8) {
     let delay = retry_delay(failed_attempt);
-    let _ = tauri::async_runtime::spawn_blocking(move || std::thread::sleep(delay)).await;
+    tokio::time::sleep(delay).await;
 }
 
 fn retry_delay(failed_attempt: u8) -> Duration {

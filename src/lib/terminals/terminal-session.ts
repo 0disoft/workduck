@@ -9,6 +9,8 @@ export type TerminalSessionError =
 export interface TerminalSessionSnapshot {
 	readonly connected: boolean;
 	readonly output: string;
+	readonly outputCursor: number;
+	readonly outputReset: boolean;
 }
 
 export type TerminalSessionResult =
@@ -26,6 +28,8 @@ interface TerminalSessionSnapshotResponse {
 	readonly ok?: boolean;
 	readonly connected?: boolean;
 	readonly output?: string;
+	readonly outputCursor?: number;
+	readonly outputReset?: boolean;
 }
 
 export async function startTerminalSession(input: {
@@ -36,8 +40,15 @@ export async function startTerminalSession(input: {
 	return invokeTerminalSession('start_terminal_session', { request: input }, 'terminal-session-start-failed');
 }
 
-export async function readTerminalSession(sessionId: string): Promise<TerminalSessionResult> {
-	return invokeTerminalSession('read_terminal_session', { sessionId }, 'terminal-session-read-failed');
+export async function readTerminalSession(
+	sessionId: string,
+	outputCursor?: number
+): Promise<TerminalSessionResult> {
+	return invokeTerminalSession(
+		'read_terminal_session',
+		{ request: { sessionId, outputCursor } },
+		'terminal-session-read-failed'
+	);
 }
 
 export async function writeTerminalSessionInput(input: {
@@ -100,6 +111,8 @@ function createTerminalSessionSnapshot(
 ): TerminalSessionSnapshot {
 	return {
 		connected: response?.connected === true,
-		output: typeof response?.output === 'string' ? response.output : ''
+		output: typeof response?.output === 'string' ? response.output : '',
+		outputCursor: typeof response?.outputCursor === 'number' ? response.outputCursor : 0,
+		outputReset: response?.outputReset !== false
 	};
 }

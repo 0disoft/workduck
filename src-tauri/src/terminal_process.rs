@@ -12,6 +12,7 @@ use tauri::State;
 use crate::terminal_catalog;
 
 const POWERSHELL_BOOTSTRAP_COMMAND: &str = "[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; if (Get-Variable -Name PSStyle -ErrorAction SilentlyContinue) { $PSStyle.OutputRendering = 'PlainText'; $PSStyle.FileInfo.Directory = ''; $PSStyle.FileInfo.SymbolicLink = ''; $PSStyle.FileInfo.Executable = '' }";
+const TERMINAL_OUTPUT_MAX_BYTES: usize = 128 * 1024;
 
 #[derive(Default)]
 pub(crate) struct TerminalProcessState {
@@ -21,7 +22,7 @@ pub(crate) struct TerminalProcessState {
 struct TerminalProcess {
     child: Child,
     stdin: Arc<Mutex<ChildStdin>>,
-    output: Arc<Mutex<String>>,
+    output: Arc<Mutex<TerminalOutputBuffer>>,
 }
 
 #[derive(serde::Deserialize)]
@@ -39,12 +40,21 @@ pub struct TerminalSessionInputRequest {
     input: String,
 }
 
+#[derive(serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ReadTerminalSessionRequest {
+    session_id: String,
+    output_cursor: Option<u64>,
+}
+
 #[derive(serde::Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct TerminalSessionSnapshot {
     ok: bool,
     connected: bool,
     output: String,
+    output_cursor: u64,
+    output_reset: bool,
 }
 
 #[tauri::command]
@@ -95,7 +105,7 @@ pub fn start_terminal_session(
             .take()
             .ok_or_else(|| "terminal-stdin-unavailable".to_string())?,
     ));
-    let output = Arc::new(Mutex::new(String::new()));
+    let output = Arc::new(Mutex::new(TerminalOutputBuffer::default()));
 
     if let Some(stdout) = child.stdout.take() {
         spawn_output_reader(stdout, Arc::clone(&output));
@@ -119,9 +129,9 @@ pub fn start_terminal_session(
 #[tauri::command]
 pub fn read_terminal_session(
     state: State<'_, TerminalProcessState>,
-    session_id: String,
+    request: ReadTerminalSessionRequest,
 ) -> Result<TerminalSessionSnapshot, String> {
-    let session_id = normalize_session_id(&session_id)?;
+    let session_id = normalize_session_id(&request.session_id)?;
     let mut sessions = state
         .sessions
         .lock()
@@ -131,11 +141,13 @@ pub fn read_terminal_session(
             ok: true,
             connected: false,
             output: String::new(),
+            output_cursor: request.output_cursor.unwrap_or(0),
+            output_reset: false,
         });
     };
 
     let connected = is_child_running(&mut process.child);
-    let snapshot = create_snapshot(connected, process);
+    let snapshot = create_snapshot_from_cursor(connected, process, request.output_cursor);
 
     if !connected {
         sessions.remove(&session_id);
@@ -207,6 +219,8 @@ pub fn stop_terminal_session(
         ok: true,
         connected: false,
         output: String::new(),
+        output_cursor: 0,
+        output_reset: true,
     })
 }
 
@@ -225,14 +239,30 @@ fn create_terminal_args(terminal_id: &str) -> Vec<&'static str> {
 }
 
 fn create_snapshot(connected: bool, process: &TerminalProcess) -> TerminalSessionSnapshot {
+    create_snapshot_from_cursor(connected, process, None)
+}
+
+fn create_snapshot_from_cursor(
+    connected: bool,
+    process: &TerminalProcess,
+    output_cursor: Option<u64>,
+) -> TerminalSessionSnapshot {
+    let output = process
+        .output
+        .lock()
+        .map(|output| output.snapshot(output_cursor))
+        .unwrap_or_else(|_| TerminalOutputSnapshot {
+            output: String::new(),
+            cursor: output_cursor.unwrap_or(0),
+            reset: false,
+        });
+
     TerminalSessionSnapshot {
         ok: true,
         connected,
-        output: process
-            .output
-            .lock()
-            .map(|output| output.clone())
-            .unwrap_or_default(),
+        output: output.output,
+        output_cursor: output.cursor,
+        output_reset: output.reset,
     }
 }
 
@@ -253,7 +283,7 @@ fn is_clear_screen_command(input: &str) -> bool {
     )
 }
 
-fn spawn_output_reader<R>(mut reader: R, output: Arc<Mutex<String>>)
+fn spawn_output_reader<R>(mut reader: R, output: Arc<Mutex<TerminalOutputBuffer>>)
 where
     R: Read + Send + 'static,
 {
@@ -297,7 +327,7 @@ impl Default for AnsiStripState {
 
 fn push_terminal_output(
     bytes: &[u8],
-    output: &Arc<Mutex<String>>,
+    output: &Arc<Mutex<TerminalOutputBuffer>>,
     state: &mut TerminalOutputState,
 ) {
     let cleaned = strip_ansi_sequences(bytes, &mut state.ansi_state);
@@ -342,7 +372,79 @@ fn push_terminal_output(
     }
 
     if let Ok(mut output) = output.lock() {
-        output.push_str(&decoded);
+        output.push(&decoded);
+    }
+}
+
+#[derive(Default)]
+struct TerminalOutputBuffer {
+    content: String,
+    base_cursor: u64,
+    next_cursor: u64,
+}
+
+struct TerminalOutputSnapshot {
+    output: String,
+    cursor: u64,
+    reset: bool,
+}
+
+impl TerminalOutputBuffer {
+    fn push(&mut self, decoded: &str) {
+        self.content.push_str(decoded);
+        self.next_cursor = self.next_cursor.saturating_add(decoded.len() as u64);
+        self.trim_to_limit();
+    }
+
+    fn clear(&mut self) {
+        self.content.clear();
+        self.base_cursor = self.next_cursor;
+    }
+
+    fn snapshot(&self, output_cursor: Option<u64>) -> TerminalOutputSnapshot {
+        let Some(output_cursor) = output_cursor else {
+            return TerminalOutputSnapshot {
+                output: self.content.clone(),
+                cursor: self.next_cursor,
+                reset: true,
+            };
+        };
+
+        if output_cursor < self.base_cursor || output_cursor > self.next_cursor {
+            return TerminalOutputSnapshot {
+                output: self.content.clone(),
+                cursor: self.next_cursor,
+                reset: true,
+            };
+        }
+
+        let offset = (output_cursor - self.base_cursor) as usize;
+        let output = self
+            .content
+            .get(offset..)
+            .map(str::to_owned)
+            .unwrap_or_else(|| self.content.clone());
+
+        TerminalOutputSnapshot {
+            output,
+            cursor: self.next_cursor,
+            reset: false,
+        }
+    }
+
+    fn trim_to_limit(&mut self) {
+        if self.content.len() <= TERMINAL_OUTPUT_MAX_BYTES {
+            return;
+        }
+
+        let mut trim_bytes = self.content.len() - TERMINAL_OUTPUT_MAX_BYTES;
+
+        while !self.content.is_char_boundary(trim_bytes) {
+            trim_bytes += 1;
+        }
+
+        self.content.drain(..trim_bytes);
+        self.base_cursor = self.base_cursor.saturating_add(trim_bytes as u64);
     }
 }
 
@@ -429,7 +531,9 @@ fn normalize_workspace_path(value: &str) -> Result<String, String> {
 
 #[cfg(test)]
 mod tests {
-    use super::{AnsiStripState, strip_ansi_sequences};
+    use super::{
+        AnsiStripState, TERMINAL_OUTPUT_MAX_BYTES, TerminalOutputBuffer, strip_ansi_sequences,
+    };
 
     #[test]
     fn strip_ansi_sequences_preserves_korean_utf8_bytes() {
@@ -456,5 +560,28 @@ mod tests {
             String::from_utf8(cleaned).expect("chunked terminal output should stay valid UTF-8"),
             "오후"
         );
+    }
+
+    #[test]
+    fn terminal_output_buffer_returns_delta_from_cursor() {
+        let mut output = TerminalOutputBuffer::default();
+        output.push("hello");
+        let first = output.snapshot(None);
+
+        output.push(" world");
+        let next = output.snapshot(Some(first.cursor));
+
+        assert_eq!(next.output, " world");
+        assert!(!next.reset);
+    }
+
+    #[test]
+    fn terminal_output_buffer_resets_when_cursor_was_trimmed() {
+        let mut output = TerminalOutputBuffer::default();
+        output.push(&"a".repeat(TERMINAL_OUTPUT_MAX_BYTES + 10));
+        let snapshot = output.snapshot(Some(0));
+
+        assert!(snapshot.reset);
+        assert_eq!(snapshot.output.len(), TERMINAL_OUTPUT_MAX_BYTES);
     }
 }
