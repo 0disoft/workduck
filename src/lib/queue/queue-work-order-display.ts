@@ -80,6 +80,12 @@ function extractBulletSection(lines: readonly string[], labels: readonly string[
 }
 
 function extractEvaluationTargets(lines: readonly string[]) {
+	const jsonTargets = extractEvaluationTargetsFromJsonTemplate(lines.join('\n'));
+
+	if (jsonTargets.length > 0) {
+		return jsonTargets;
+	}
+
 	const startIndex = findSectionStart(lines, ['평가 대상:', 'Targets:']);
 
 	if (startIndex === -1) {
@@ -92,10 +98,6 @@ function extractEvaluationTargets(lines: readonly string[]) {
 	for (let index = startIndex + 1; index < lines.length; index += 1) {
 		const line = lines[index] ?? '';
 		const trimmed = line.trim();
-
-		if (trimmed.length === 0) {
-			break;
-		}
 
 		const targetMatch = /^\d+\.\s+(.+)$/.exec(trimmed);
 
@@ -125,4 +127,101 @@ function extractEvaluationTargets(lines: readonly string[]) {
 
 function findSectionStart(lines: readonly string[], labels: readonly string[]) {
 	return lines.findIndex((line) => labels.includes(line.trim()));
+}
+
+function extractEvaluationTargetsFromJsonTemplate(content: string) {
+	const markerIndex = content.indexOf('"evaluations"');
+
+	if (markerIndex === -1) {
+		return [];
+	}
+
+	const objectStartIndex = content.lastIndexOf('{', markerIndex);
+
+	if (objectStartIndex === -1) {
+		return [];
+	}
+
+	const objectText = findBalancedObjectText(content, objectStartIndex);
+
+	if (objectText === null) {
+		return [];
+	}
+
+	try {
+		const parsed: unknown = JSON.parse(objectText);
+
+		if (!isRecord(parsed) || !Array.isArray(parsed.evaluations)) {
+			return [];
+		}
+
+		return parsed.evaluations.flatMap((evaluation): QueueEvaluationDelegationTarget[] => {
+			if (!isRecord(evaluation)) {
+				return [];
+			}
+
+			const agentName = readDisplayText(evaluation.agentName);
+			const reportTaskId = readDisplayText(evaluation.reportTaskId);
+
+			if (agentName.length === 0 && reportTaskId.length === 0) {
+				return [];
+			}
+
+			return [
+				{
+					name: agentName || reportTaskId,
+					details: reportTaskId.length > 0 ? [`응답 ID: ${reportTaskId}`] : []
+				}
+			];
+		});
+	} catch {
+		return [];
+	}
+}
+
+function findBalancedObjectText(content: string, startIndex: number) {
+	let depth = 0;
+	let inString = false;
+	let escaped = false;
+
+	for (let index = startIndex; index < content.length; index += 1) {
+		const character = content[index];
+
+		if (inString) {
+			if (escaped) {
+				escaped = false;
+			} else if (character === '\\') {
+				escaped = true;
+			} else if (character === '"') {
+				inString = false;
+			}
+
+			continue;
+		}
+
+		if (character === '"') {
+			inString = true;
+			continue;
+		}
+
+		if (character === '{') {
+			depth += 1;
+		} else if (character === '}') {
+			depth -= 1;
+
+			if (depth === 0) {
+				return content.slice(startIndex, index + 1);
+			}
+		}
+	}
+
+	return null;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+	return typeof value === 'object' && value !== null;
+}
+
+function readDisplayText(value: unknown) {
+	return typeof value === 'string' ? value.trim() : '';
 }

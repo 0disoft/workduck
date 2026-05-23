@@ -169,6 +169,12 @@ export const koMessages = {
 			optionCount: '{count}개 선택지',
 			unparsed: '해석 실패'
 		},
+		structuredResponse: {
+			summary: '요약',
+			strengths: '장점/근거',
+			recommendations: '제안',
+			cautions: '주의점'
+		},
 		createWorkOrder: '작업 지시서 만들기',
 		delegateEvaluation: '평가 위임',
 		creating: '만드는 중',

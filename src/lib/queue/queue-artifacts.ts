@@ -24,12 +24,20 @@ export interface WorkduckQueueResultReportTask {
 	readonly id: string;
 	readonly title: string;
 	readonly summary: string;
+	readonly structuredResponse?: WorkduckQueueStructuredResponse;
 	readonly filesChanged: readonly string[];
 	readonly verification: readonly string[];
 	readonly risks: readonly string[];
 	readonly executionAttempts?: readonly WorkduckQueueExecutionAttempt[];
 	readonly responseLanguage?: WorkduckQueueResponseLanguage;
 	readonly vote?: WorkduckQueueVoteResult;
+}
+
+export interface WorkduckQueueStructuredResponse {
+	readonly summary: string;
+	readonly strengths: readonly string[];
+	readonly recommendations: readonly string[];
+	readonly cautions: readonly string[];
 }
 
 export interface WorkduckQueueExecutionAttempt {
@@ -805,19 +813,20 @@ function createReportEvaluationTargetSummary(
 	language: FollowUpContentLanguage
 ) {
 	const agentName = task.title.split(':')[0]?.trim() || task.title;
+	const summary = summarizeReportTaskForEvaluation(task.summary);
 	const lines =
 		language === 'ko'
 			? [
 					`${index + 1}. ${agentName}`,
 					`   응답 ID: ${task.id}`,
 					`   작업: ${task.title}`,
-					`   응답 요약: ${task.summary}`
+					`   응답 요약: ${summary}`
 				]
 			: [
 					`${index + 1}. ${agentName}`,
 					`   Response ID: ${task.id}`,
 					`   Task: ${task.title}`,
-					`   Response summary: ${task.summary}`
+					`   Response summary: ${summary}`
 				];
 
 	if (task.vote !== undefined && task.vote.ballot.parseStatus === 'parsed') {
@@ -829,6 +838,18 @@ function createReportEvaluationTargetSummary(
 	}
 
 	return lines.join('\n');
+}
+
+function summarizeReportTaskForEvaluation(summary: string) {
+	const normalized = summary
+		.replaceAll(/\s+/g, ' ')
+		.trim();
+
+	if (normalized.length <= 280) {
+		return normalized;
+	}
+
+	return `${normalized.slice(0, 277).trimEnd()}...`;
 }
 
 function createReportEvaluationBatchJsonTemplate(report: WorkduckQueueResultReport) {
@@ -916,6 +937,8 @@ function isQueueResultReportTask(value: unknown) {
 		typeof value.id === 'string' &&
 		typeof value.title === 'string' &&
 		typeof value.summary === 'string' &&
+		(value.structuredResponse === undefined ||
+			isQueueStructuredResponse(value.structuredResponse)) &&
 		isStringArray(value.filesChanged) &&
 		isStringArray(value.verification) &&
 		isStringArray(value.risks) &&
@@ -924,6 +947,16 @@ function isQueueResultReportTask(value: unknown) {
 				value.executionAttempts.every(isQueueExecutionAttempt))) &&
 		(value.responseLanguage === undefined || isQueueResponseLanguage(value.responseLanguage)) &&
 		(value.vote === undefined || isQueueVoteResult(value.vote))
+	);
+}
+
+function isQueueStructuredResponse(value: unknown): value is WorkduckQueueStructuredResponse {
+	return (
+		isRecord(value) &&
+		typeof value.summary === 'string' &&
+		isStringArray(value.strengths) &&
+		isStringArray(value.recommendations) &&
+		isStringArray(value.cautions)
 	);
 }
 

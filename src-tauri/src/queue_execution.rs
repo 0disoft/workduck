@@ -355,6 +355,8 @@ pub struct QueueResultReportTask {
     pub id: String,
     pub title: String,
     pub summary: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub structured_response: Option<QueueStructuredResponse>,
     pub files_changed: Vec<String>,
     pub verification: Vec<String>,
     pub risks: Vec<String>,
@@ -364,6 +366,15 @@ pub struct QueueResultReportTask {
     pub response_language: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub vote: Option<QueueVoteResult>,
+}
+
+#[derive(Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct QueueStructuredResponse {
+    pub summary: String,
+    pub strengths: Vec<String>,
+    pub recommendations: Vec<String>,
+    pub cautions: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -559,6 +570,7 @@ fn create_work_order_user_prompt_blocks(
     task: &QueueWorkOrderTask,
     labels: &QueuePromptLabels,
 ) -> Vec<String> {
+    let language = prompt_language_for_task(task);
     let mut blocks = vec![
         format!("{}: {}", labels.task_title, task.title),
         format!("{}: {}", labels.priority, task.priority.as_deref().unwrap_or("normal")),
@@ -575,11 +587,41 @@ fn create_work_order_user_prompt_blocks(
     if task.kind.as_deref() == Some("vote") {
         if let Some(vote) = &task.vote {
             blocks.push(String::new());
-            blocks.push(create_vote_task_prompt(vote, prompt_language_for_task(task)));
+            blocks.push(create_vote_task_prompt(vote, language));
         }
+    } else {
+        blocks.push(String::new());
+        blocks.push(create_work_order_response_format_prompt(language));
     }
 
     blocks
+}
+
+fn create_work_order_response_format_prompt(language: QueueReportLanguage) -> String {
+    match language {
+        QueueReportLanguage::Ko => [
+            "응답 형식:",
+            "마크다운이나 설명 문장을 붙이지 말고 JSON 객체 하나만 반환하세요.",
+            r#"{"summary":"핵심 결론 한 문장","strengths":["장점 또는 판단 근거"],"recommendations":["제안 또는 다음 행동"],"cautions":["주의점, 리스크, 확인할 항목"]}"#,
+            "규칙:",
+            "- summary는 비워두지 마세요.",
+            "- strengths, recommendations, cautions는 각각 1~5개의 짧은 항목으로 작성하세요.",
+            "- 해당 항목이 없으면 빈 배열을 사용하세요.",
+            "- 사용자가 요청한 응답 언어를 유지하세요.",
+        ]
+        .join("\n"),
+        QueueReportLanguage::En => [
+            "Response format:",
+            "Return exactly one JSON object. Do not wrap it in Markdown or add prose outside it.",
+            r#"{"summary":"One-sentence conclusion","strengths":["Strength or supporting reason"],"recommendations":["Recommendation or next action"],"cautions":["Risk, assumption, or check"]}"#,
+            "Rules:",
+            "- Keep summary non-empty.",
+            "- Keep strengths, recommendations, and cautions to 1-5 short items each.",
+            "- Use an empty array when a section has no items.",
+            "- Use the requested response language.",
+        ]
+        .join("\n"),
+    }
 }
 
 fn create_vote_task_prompt(vote: &QueueVoteSpec, language: QueueReportLanguage) -> String {
@@ -933,6 +975,7 @@ fn create_result_report_task(
                 id: format!("task_{}_{}", slugify(agent_name), unique_token()),
                 title: format!("{agent_name}: {}", task.title),
                 summary: response_not_received(message, language),
+                structured_response: None,
                 files_changed: Vec::new(),
                 verification: vec![response_failed(agent_name, code, language)],
                 risks: vec![response_excluded_risk(language).to_string()],
@@ -985,10 +1028,23 @@ fn create_success_report_task(
         risks.extend(vote.ballot.risks.clone());
     }
 
+    let structured_response =
+        if vote.is_none() && output.task.kind.as_deref() != Some("direct-message") {
+            parse_structured_agent_response(&output.content)
+        } else {
+            None
+        };
+    let structured_summary = structured_response
+        .as_ref()
+        .map(|response| format_structured_response_summary(response, language));
+
     QueueResultReportTask {
         id: format!("task_{}_{}", slugify(&output.agent_name), unique_token()),
         title: format!("{}: {}", output.agent_name, output.task.title),
-        summary: vote_summary.unwrap_or_else(|| output.content.clone()),
+        summary: vote_summary
+            .or(structured_summary)
+            .unwrap_or_else(|| output.content.clone()),
+        structured_response,
         files_changed: Vec::new(),
         verification,
         risks,
@@ -996,6 +1052,85 @@ fn create_success_report_task(
         response_language: output.task.response_language.clone(),
         vote,
     }
+}
+
+fn parse_structured_agent_response(content: &str) -> Option<QueueStructuredResponse> {
+    for candidate in json_object_candidates(content) {
+        let Ok(parsed) = serde_json::from_str::<Value>(&candidate) else {
+            continue;
+        };
+
+        let summary = read_optional_text(parsed.get("summary"));
+        let strengths = read_limited_text_array(parsed.get("strengths"), 5);
+        let recommendations = read_limited_text_array(parsed.get("recommendations"), 5);
+        let cautions = read_limited_text_array(parsed.get("cautions"), 5);
+
+        if summary.trim().is_empty()
+            && strengths.is_empty()
+            && recommendations.is_empty()
+            && cautions.is_empty()
+        {
+            continue;
+        }
+
+        return Some(QueueStructuredResponse {
+            summary,
+            strengths,
+            recommendations,
+            cautions,
+        });
+    }
+
+    None
+}
+
+fn read_limited_text_array(value: Option<&Value>, limit: usize) -> Vec<String> {
+    read_text_array(value)
+        .into_iter()
+        .map(|item| item.trim().to_string())
+        .filter(|item| !item.is_empty())
+        .take(limit)
+        .collect()
+}
+
+fn format_structured_response_summary(
+    response: &QueueStructuredResponse,
+    language: QueueReportLanguage,
+) -> String {
+    let labels = match language {
+        QueueReportLanguage::Ko => ("요약", "장점/근거", "제안", "주의점"),
+        QueueReportLanguage::En => (
+            "Summary",
+            "Strengths/Evidence",
+            "Recommendations",
+            "Cautions",
+        ),
+    };
+    let mut sections = Vec::new();
+
+    if !response.summary.trim().is_empty() {
+        sections.push(format!("{}: {}", labels.0, response.summary.trim()));
+    }
+
+    push_structured_summary_section(&mut sections, labels.1, &response.strengths);
+    push_structured_summary_section(&mut sections, labels.2, &response.recommendations);
+    push_structured_summary_section(&mut sections, labels.3, &response.cautions);
+
+    sections.join("\n\n")
+}
+
+fn push_structured_summary_section(sections: &mut Vec<String>, label: &str, items: &[String]) {
+    if items.is_empty() {
+        return;
+    }
+
+    let body = items
+        .iter()
+        .map(|item| format!("- {item}"))
+        .collect::<Vec<_>>()
+        .join("\n");
+
+    sections.push(format!("{label}:\n{body}"));
 }
 
 pub fn report_language_for_work_order(work_order: &QueueWorkOrder) -> QueueReportLanguage {
@@ -1367,6 +1502,74 @@ Final answer:
 
         assert_eq!(ballot.parse_status, "invalid-choice");
         assert_eq!(ballot.choice_id, "ember");
+    }
+
+    #[test]
+    fn work_order_prompt_includes_a_structured_response_format() {
+        let task = QueueWorkOrderTask {
+            id: "task_1".to_string(),
+            kind: None,
+            title: "에이전트 참모진들 의견참고".to_string(),
+            body: "플랫폼 대안을 검토해줘".to_string(),
+            priority: Some("normal".to_string()),
+            response_language: Some("ko".to_string()),
+            project_ids: Vec::new(),
+            agent_ids: Vec::new(),
+            skill_ids: Vec::new(),
+            reference_ids: Vec::new(),
+            vote: None,
+        };
+
+        let prompt =
+            create_work_order_user_prompt_blocks(&task, queue_prompt_labels(QueueReportLanguage::Ko))
+                .join("\n");
+
+        assert!(prompt.contains("응답 형식:"));
+        assert!(prompt.contains(r#""summary""#));
+        assert!(prompt.contains(r#""strengths""#));
+        assert!(prompt.contains(r#""recommendations""#));
+        assert!(prompt.contains(r#""cautions""#));
+    }
+
+    #[test]
+    fn structured_response_parser_prefers_json_over_wrapping_text() {
+        let content = r#"
+Here is my answer:
+```json
+{"summary":"Astro fits best","strengths":["Static content"],"recommendations":["Prototype Astro"],"cautions":["Team familiarity"]}
+```
+"#;
+
+        let response = parse_structured_agent_response(content).expect("structured response");
+
+        assert_eq!(response.summary, "Astro fits best");
+        assert_eq!(response.strengths, vec!["Static content"]);
+        assert_eq!(response.recommendations, vec!["Prototype Astro"]);
+        assert_eq!(response.cautions, vec!["Team familiarity"]);
+    }
+
+    #[test]
+    fn vote_prompt_keeps_json_only_response_format() {
+        let task = QueueWorkOrderTask {
+            id: "task_1".to_string(),
+            kind: Some("vote".to_string()),
+            title: "프레임워크 선정".to_string(),
+            body: "하나를 골라줘".to_string(),
+            priority: Some("normal".to_string()),
+            response_language: Some("ko".to_string()),
+            project_ids: Vec::new(),
+            agent_ids: Vec::new(),
+            skill_ids: Vec::new(),
+            reference_ids: Vec::new(),
+            vote: Some(vote_spec()),
+        };
+
+        let prompt =
+            create_work_order_user_prompt_blocks(&task, queue_prompt_labels(QueueReportLanguage::Ko))
+                .join("\n");
+
+        assert!(prompt.contains("JSON 객체 하나만 반환하세요."));
+        assert!(!prompt.contains("응답 형식:"));
     }
 }
 

@@ -103,6 +103,7 @@
 		{#each report.tasks as task (task.id)}
 			{@const review = reviews.find((item) => item.taskId === task.id)}
 			{@const reportTaskAgent = getReportTaskAgent(task)}
+			{@const structuredResponse = task.structuredResponse}
 			<article class="workduck-queue-review-task">
 				<header class="workduck-queue-review-task-header">
 					<strong>{task.title}</strong>
@@ -122,7 +123,51 @@
 						{messages.queue.evaluation.action}
 					</button>
 				</header>
-				<p>{task.summary}</p>
+				{#if structuredResponse !== undefined}
+					<div class="workduck-queue-structured-response">
+						{#if structuredResponse.summary.trim().length > 0}
+							<section>
+								<span>{messages.queue.structuredResponse.summary}</span>
+								<p>{structuredResponse.summary}</p>
+							</section>
+						{/if}
+
+						{#if structuredResponse.strengths.length > 0}
+							<section>
+								<span>{messages.queue.structuredResponse.strengths}</span>
+								<ul>
+									{#each structuredResponse.strengths as item}
+										<li>{item}</li>
+									{/each}
+								</ul>
+							</section>
+						{/if}
+
+						{#if structuredResponse.recommendations.length > 0}
+							<section>
+								<span>{messages.queue.structuredResponse.recommendations}</span>
+								<ul>
+									{#each structuredResponse.recommendations as item}
+										<li>{item}</li>
+									{/each}
+								</ul>
+							</section>
+						{/if}
+
+						{#if structuredResponse.cautions.length > 0}
+							<section>
+								<span>{messages.queue.structuredResponse.cautions}</span>
+								<ul>
+									{#each structuredResponse.cautions as item}
+										<li>{item}</li>
+									{/each}
+								</ul>
+							</section>
+						{/if}
+					</div>
+				{:else}
+					<div class="workduck-queue-review-task-summary">{task.summary}</div>
+				{/if}
 
 				{#if task.filesChanged.length > 0}
 					<div class="workduck-queue-review-list">

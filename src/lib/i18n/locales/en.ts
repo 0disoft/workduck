@@ -167,6 +167,12 @@ export const enMessages = {
 			optionCount: '{count} options',
 			unparsed: 'Unparsed'
 		},
+		structuredResponse: {
+			summary: 'Summary',
+			strengths: 'Strengths/Evidence',
+			recommendations: 'Recommendations',
+			cautions: 'Cautions'
+		},
 		createWorkOrder: 'Create work order',
 		delegateEvaluation: 'Delegate rating',
 		creating: 'Creating',

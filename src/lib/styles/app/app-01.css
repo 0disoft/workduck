@@ -585,12 +585,48 @@ a {
 	flex: 0 0 auto;
 }
 
-.workduck-queue-review-task p {
+.workduck-queue-review-task-summary {
 	margin: 0;
 	color: var(--workduck-color-muted);
 	font-size: var(--workduck-font-size-sm);
 	font-weight: 800;
 	line-height: 1.4;
+	overflow-wrap: anywhere;
+	white-space: pre-wrap;
+}
+
+.workduck-queue-structured-response {
+	display: grid;
+	min-width: 0;
+	gap: 10px;
+}
+
+.workduck-queue-structured-response section {
+	display: grid;
+	min-width: 0;
+	gap: 4px;
+}
+
+.workduck-queue-structured-response span {
+	color: var(--workduck-color-accent);
+	font-size: var(--workduck-font-size-xs);
+	font-weight: 900;
+}
+
+.workduck-queue-structured-response p,
+.workduck-queue-structured-response ul {
+	margin: 0;
+	color: var(--workduck-color-muted);
+	font-size: var(--workduck-font-size-sm);
+	font-weight: 800;
+	line-height: 1.45;
+	overflow-wrap: anywhere;
+}
+
+.workduck-queue-structured-response ul {
+	display: grid;
+	gap: 3px;
+	padding-inline-start: 18px;
 }
 
 .workduck-queue-evaluation-delegation {
