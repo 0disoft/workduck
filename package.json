@@ -35,7 +35,7 @@
     "@types/node": "^25.8.0",
     "@typescript/native-preview": "^7.0.0-dev.20260518.1",
     "bits-ui": "^2.18.1",
-    "mustflow": "^2.22.13",
+    "mustflow": "^2.22.15",
     "pretendard": "^1.3.9",
     "svelte": "^5.55.7",
     "svelte-check": "^4.4.8",

@@ -5,10 +5,10 @@ generated_by: mustflow
 relative_root: "."
 source_policy: anchors_only
 privacy_mode: minimal
-anchor_count: 79
+anchor_count: 80
 degraded: false
 git_ls_files_status: ok
-source_fingerprint: "sha256:f00d07ec65cc91e6f9a8190954b3b4143836182c8df1a7f9b386f77ab08968be"
+source_fingerprint: "sha256:b93ec5af77ad8373f815eac46fe64239753de145882e580c38b05c63907aaa72"
 ---
 
 # REPO_MAP.md
@@ -137,6 +137,10 @@ Regenerate it with `mf map --write` instead of editing it by hand.
 ### .mustflow/skills/failure-triage/
 
 - `.mustflow/skills/failure-triage/SKILL.md`: Procedural skill document for a repeatable agent task.
+
+### .mustflow/skills/idea-triage/
+
+- `.mustflow/skills/idea-triage/SKILL.md`: Procedural skill document for a repeatable agent task.
 
 ### .mustflow/skills/instruction-conflict-scope-check/
 

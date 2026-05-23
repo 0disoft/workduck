@@ -3,7 +3,7 @@ generated_by = "mustflow"
 
 [template]
 id = "default"
-version = "2.22.13"
+version = "2.22.15"
 profile = "oss"
 locale = "en"
 agent_lang = "en"
@@ -26,7 +26,7 @@ content_hash = "sha256:faad13856766b6728e80734def3281600ee8f68b19db3fe26614ab7ee
 [files.".mustflow/skills/INDEX.md"]
 source = "template_locale"
 last_action = "updated"
-content_hash = "sha256:612016ba65a988879333225e68e298402bb95175d08562b678640e718b78fc7c"
+content_hash = "sha256:1b6eb2f3bcddb7c8b3ff06ea2142861731f3608e2ef74d89938926a00dbbaa35"
 
 [files.".mustflow/skills/adapter-boundary/SKILL.md"]
 source = "template_locale"
@@ -266,7 +266,7 @@ content_hash = "sha256:21a66253853d1632ecd2767a8e45599197e14494e682016a58542b138
 [files.".mustflow/skills/routes.toml"]
 source = "template_locale"
 last_action = "updated"
-content_hash = "sha256:e935fd5e159db52d5482740e0e2f45d12388e19b66dcc6914840b58618d719d7"
+content_hash = "sha256:3990a2b56c59224e59c2237aa1b5eeaa616d11591e25ce1a4f940099fa850f5f"
 
 [files.".mustflow/skills/cli-output-contract-review/SKILL.md"]
 source = "template_locale"
@@ -292,3 +292,8 @@ content_hash = "sha256:33c6b2abdc3da3774440dc81d0bb066382ff0fa2577742b9b33435b0a
 source = "template_locale"
 last_action = "created"
 content_hash = "sha256:e5b81fc9d9c909c3c87d119dec3742fdf0182618c5930f92a6dac60d66db050f"
+
+[files.".mustflow/skills/idea-triage/SKILL.md"]
+source = "template_locale"
+last_action = "created"
+content_hash = "sha256:20d688dc858d4da5a59342a4df159a23225f6574f59870bc982edaa5283f50ba"
