@@ -103,6 +103,7 @@
 					reviewDecisionOptions={controller.reviewDecisionOptions}
 					isWriting={controller.isWriting}
 					isSavingEvaluation={controller.isSavingEvaluation}
+					canDelegateEvaluation={controller.selectedReportCanDelegateEvaluation}
 					isEvaluationDelegationCreated={controller.selectedReportEvaluationDelegationPath !== null}
 					onDelegateEvaluation={controller.handleDelegateReportEvaluation}
 					onUpdateReviewDecision={controller.updateReviewDecision}

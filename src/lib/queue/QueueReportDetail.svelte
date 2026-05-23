@@ -20,6 +20,7 @@
 		}[];
 		readonly isWriting: boolean;
 		readonly isSavingEvaluation: boolean;
+		readonly canDelegateEvaluation: boolean;
 		readonly isEvaluationDelegationCreated: boolean;
 		readonly onDelegateEvaluation: () => Promise<void>;
 		readonly onUpdateReviewDecision: (
@@ -44,6 +45,7 @@
 		reviewDecisionOptions,
 		isWriting,
 		isSavingEvaluation,
+		canDelegateEvaluation,
 		isEvaluationDelegationCreated,
 		onDelegateEvaluation,
 		onUpdateReviewDecision,
@@ -63,14 +65,16 @@
 				<span>{reportPath}</span>
 			{/if}
 		</div>
-		<button
-			class="workduck-button workduck-button-primary"
-			type="button"
-			disabled={isWriting || isEvaluationDelegationCreated || report.tasks.length === 0}
-			onclick={() => void onDelegateEvaluation()}
-		>
-			{isWriting ? messages.queue.creating : messages.queue.delegateEvaluation}
-		</button>
+		{#if canDelegateEvaluation}
+			<button
+				class="workduck-button workduck-button-primary"
+				type="button"
+				disabled={isWriting || isEvaluationDelegationCreated}
+				onclick={() => void onDelegateEvaluation()}
+			>
+				{isWriting ? messages.queue.creating : messages.queue.delegateEvaluation}
+			</button>
+		{/if}
 	</div>
 
 	{#if voteAggregate !== null}
@@ -114,14 +118,16 @@
 							</span>
 						</div>
 					{/if}
-					<button
-						class="workduck-button workduck-button-secondary workduck-queue-task-edit-button"
-						type="button"
-						disabled={reportTaskAgent === null || isSavingEvaluation}
-						onclick={() => onOpenEvaluation(task)}
-					>
-						{messages.queue.evaluation.action}
-					</button>
+					{#if reportTaskAgent !== null}
+						<button
+							class="workduck-button workduck-button-secondary workduck-queue-task-edit-button"
+							type="button"
+							disabled={isSavingEvaluation}
+							onclick={() => onOpenEvaluation(task)}
+						>
+							{messages.queue.evaluation.action}
+						</button>
+					{/if}
 				</header>
 				{#if structuredResponse !== undefined}
 					<div class="workduck-queue-structured-response">

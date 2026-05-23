@@ -278,6 +278,9 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 			? null
 			: findReportEvaluationDelegationPath(selectedReport)
 	);
+	let selectedReportCanDelegateEvaluation = $derived(
+		selectedReport !== null && selectedReport.tasks.some((task) => getReportTaskAgent(task) !== null)
+	);
 	let manualVoteOptionCountChoices = $derived(
 		createManualVoteOptionCountChoices(manualVoteOptionCountDefaults, manualVoteOptionCount)
 	);
@@ -962,16 +965,16 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 			return;
 	}
 
+		if (!selectedReportCanDelegateEvaluation) {
+			status = messages.queue.noEvaluationTargets;
+			return;
+	}
+
 		if (selectedReportEvaluationDelegationPath !== null) {
 			status = messages.queue.evaluationAlreadyDelegated.replace(
 				'{relativePath}',
 				selectedReportEvaluationDelegationPath
 			);
-			return;
-	}
-
-		if (selectedReport.tasks.length === 0) {
-			status = messages.queue.noEvaluationTargets;
 			return;
 	}
 
@@ -1484,6 +1487,7 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		get selectedReportPath() { return selectedReportPath; },
 		get selectedReportVoteAggregate() { return selectedReportVoteAggregate; },
 		get selectedReportEvaluationDelegationPath() { return selectedReportEvaluationDelegationPath; },
+		get selectedReportCanDelegateEvaluation() { return selectedReportCanDelegateEvaluation; },
 		get selectedWorkOrder() { return selectedWorkOrder; },
 		get selectedProposal() { return selectedProposal; },
 		get selectedProposalPath() { return selectedProposalPath; },

@@ -169,11 +169,13 @@ export function parseQueueWorkOrder(content: string): QueueWorkOrderParseResult 
 		return { ok: false, message: 'Work-order JSON could not be parsed.' };
 	}
 
-	if (!isQueueWorkOrder(parsed)) {
+	const normalized = normalizeQueueWorkOrderForParsing(parsed);
+
+	if (!isQueueWorkOrder(normalized)) {
 		return { ok: false, message: 'Work-order JSON does not match workduck.queue-work-order/v1.' };
 	}
 
-	return { ok: true, workOrder: parsed };
+	return { ok: true, workOrder: normalized };
 }
 
 export function parseQueueProposal(content: string): QueueProposalParseResult {
@@ -1011,6 +1013,46 @@ function isQueueWorkOrderTask(value: unknown) {
 			value.decision === 'needs-work' ||
 			value.decision === 'rollback')
 	);
+}
+
+const nullableLegacyWorkOrderTaskKeys = [
+	'kind',
+	'priority',
+	'responseLanguage',
+	'projectIds',
+	'skillIds',
+	'agentIds',
+	'referenceIds',
+	'vote',
+	'sourceReportTaskId',
+	'decision'
+] as const;
+
+function normalizeQueueWorkOrderForParsing(value: unknown): unknown {
+	if (!isRecord(value) || !Array.isArray(value.tasks)) {
+		return value;
+	}
+
+	return {
+		...value,
+		tasks: value.tasks.map(normalizeQueueWorkOrderTaskForParsing)
+	};
+}
+
+function normalizeQueueWorkOrderTaskForParsing(value: unknown): unknown {
+	if (!isRecord(value)) {
+		return value;
+	}
+
+	const normalized = { ...value };
+
+	for (const key of nullableLegacyWorkOrderTaskKeys) {
+		if (normalized[key] === null) {
+			delete normalized[key];
+		}
+	}
+
+	return normalized;
 }
 
 function isQueueVoteSpec(value: unknown): value is WorkduckQueueVoteSpec {
