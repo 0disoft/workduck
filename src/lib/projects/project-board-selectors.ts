@@ -7,13 +7,14 @@ import {
 	type ProjectRepositoryLinkRecord
 } from './project-registry';
 
-export type ProjectRepositorySyncFilter = 'all' | 'pull' | 'push';
+export type ProjectRepositorySyncFilter = 'all' | 'pull' | 'push' | 'commit';
 
 export interface ProjectRepositoryGitStatus {
 	readonly isGitRepository: boolean;
 	readonly hasRemote: boolean;
 	readonly aheadCount: number;
 	readonly behindCount: number;
+	readonly hasUncommittedChanges: boolean;
 	readonly branch: string | null;
 	readonly error: ProjectRepositoryGitError | null;
 }
@@ -21,6 +22,7 @@ export interface ProjectRepositoryGitStatus {
 export interface ProjectRepositoryFilterStats {
 	readonly pullNeeded: number;
 	readonly pushNeeded: number;
+	readonly commitNeeded: number;
 }
 
 export type ProjectRepositoryGitStatusById = Readonly<Record<string, ProjectRepositoryGitStatus>>;
@@ -127,9 +129,12 @@ export function getRepositoryFilterStats(
 				(repositoryMatchesSyncFilter(gitStatusById, repository, 'pull') ? 1 : 0),
 			pushNeeded:
 				stats.pushNeeded +
-				(repositoryMatchesSyncFilter(gitStatusById, repository, 'push') ? 1 : 0)
+				(repositoryMatchesSyncFilter(gitStatusById, repository, 'push') ? 1 : 0),
+			commitNeeded:
+				stats.commitNeeded +
+				(repositoryMatchesSyncFilter(gitStatusById, repository, 'commit') ? 1 : 0)
 		}),
-		{ pullNeeded: 0, pushNeeded: 0 }
+		{ pullNeeded: 0, pushNeeded: 0, commitNeeded: 0 }
 	);
 }
 
@@ -249,9 +254,13 @@ function repositoryMatchesSyncFilter(
 
 	const gitStatus = gitStatusById[repository.id];
 
-	return syncFilter === 'pull'
-		? gitStatus?.behindCount !== undefined && gitStatus.behindCount > 0
-		: gitStatus?.aheadCount !== undefined && gitStatus.aheadCount > 0;
+	if (syncFilter === 'pull') {
+		return gitStatus?.behindCount !== undefined && gitStatus.behindCount > 0;
+	}
+
+	return syncFilter === 'push'
+		? gitStatus?.aheadCount !== undefined && gitStatus.aheadCount > 0
+		: gitStatus?.hasUncommittedChanges === true;
 }
 
 function matchesTagFilter(tags: readonly string[], tagQuery: string) {

@@ -4,6 +4,12 @@
 	import { getWorkduckMessages } from '$lib/i18n/workduck-language';
 	import StatusToast from '$lib/ui/StatusToast.svelte';
 	import {
+		enqueueRepositoryCommitWorkOrder
+	} from '$lib/queue/repository-commit-work-order';
+	import {
+		getQueueFolderLocalizedError
+	} from '$lib/queue/queue-panel-errors';
+	import {
 		readWorkspaceRegistryFromBrowser,
 		writeWorkspaceRegistryToBrowser
 	} from '$lib/workspaces/workspace-storage';
@@ -126,6 +132,13 @@
 			syncGitInspection?.ok === true &&
 			syncFileNameIsUsable &&
 			(syncGitInspection.aheadCount > 0 || syncGitInspection.hasSyncFileChanges) &&
+			!isBusy
+	);
+	let canQueueSyncCommitWorkOrder = $derived(
+		syncSettings.folderPath.length > 0 &&
+			syncGitInspection?.ok === true &&
+			syncGitInspection.isRepository &&
+			syncGitInspection.hasUncommittedChanges &&
 			!isBusy
 	);
 	let canConfirmDangerAction = $derived(
@@ -704,6 +717,52 @@
 		}
 	}
 
+	async function handleQueueSyncCommitWorkOrder() {
+		if (!canQueueSyncCommitWorkOrder) {
+			return;
+		}
+
+		const registryResult = readWorkspaceRegistryFromBrowser();
+		const activeWorkspace =
+			registryResult.ok && registryResult.registry.activeWorkspaceId !== null
+				? registryResult.registry.workspaces.find(
+						(workspace) => workspace.id === registryResult.registry.activeWorkspaceId
+					) ?? null
+				: null;
+
+		if (activeWorkspace === null) {
+			syncError = 'workspace-sync-git-read-failed';
+			syncStatus = null;
+			return;
+		}
+
+		isBusy = true;
+		syncError = null;
+		syncStatus = null;
+
+		try {
+			const result = await enqueueRepositoryCommitWorkOrder({
+				workspacePath: activeWorkspace.path,
+				repositoryName: syncSettings.profileName,
+				repositoryPath: syncSettings.folderPath,
+				source: 'sync',
+				responseLanguage: appearanceSettings.languageId === 'en' ? 'en' : 'ko'
+			});
+
+			if (!result.ok) {
+				syncStatus = getQueueFolderLocalizedError(messages, result.error);
+				return;
+			}
+
+			syncStatus = syncMessages.statuses.commitWorkOrderQueued.replace(
+				'{relativePath}',
+				result.relativePath
+			);
+		} finally {
+			isBusy = false;
+		}
+	}
+
 	function openDangerConfirmation(action: SyncDangerAction) {
 		pendingDangerAction = action;
 		pendingDangerConfirmText = '';
@@ -928,6 +987,9 @@
 			<span>{messages.common.branch}</span>
 			<span class="workduck-readonly-value">{getSyncBranchDisplay()}</span>
 		</div>
+		{#if syncGitInspection?.ok === true && syncGitInspection.hasUncommittedChanges}
+			<span class="workduck-status-pill">{syncMessages.commitNeeded}</span>
+		{/if}
 	</div>
 
 	<div class="workduck-sync-remote-actions" aria-label={syncMessages.section}>
@@ -967,6 +1029,22 @@
 			</button>
 			<span class="workduck-sr-only" id="sync-push-tooltip">{syncMessages.tooltips.push}</span>
 		</span>
+		{#if syncGitInspection?.ok === true && syncGitInspection.hasUncommittedChanges}
+			<span class="workduck-tooltip-anchor" data-tooltip={syncMessages.tooltips.queueCommitWorkOrder}>
+				<button
+					class="workduck-button"
+					type="button"
+					disabled={!canQueueSyncCommitWorkOrder}
+					aria-describedby="sync-queue-commit-tooltip"
+					onclick={() => void handleQueueSyncCommitWorkOrder()}
+				>
+					{syncMessages.queueCommitWorkOrder}
+				</button>
+				<span class="workduck-sr-only" id="sync-queue-commit-tooltip">
+					{syncMessages.tooltips.queueCommitWorkOrder}
+				</span>
+			</span>
+		{/if}
 	</div>
 
 	<div class="workduck-sync-form">

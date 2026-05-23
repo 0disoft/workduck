@@ -3,6 +3,12 @@
 
 	import { getWorkduckMessages } from '$lib/i18n/workduck-language';
 	import {
+		enqueueRepositoryCommitWorkOrder
+	} from '$lib/queue/repository-commit-work-order';
+	import {
+		getQueueFolderLocalizedError
+	} from '$lib/queue/queue-panel-errors';
+	import {
 		addWorkspace,
 		createEmptyWorkspaceRegistry,
 		removeWorkspace,
@@ -89,6 +95,7 @@
 	let workspaceRepositoryGitStatusById = $state<Record<string, WorkspaceRepositoryGitStatus>>({});
 	let workspaceRepositoryGitActionId = $state<string | null>(null);
 	let workspaceRepositoryGitAction = $state<WorkspaceRepositoryGitAction | null>(null);
+	let workspaceRepositoryCommitQueueId = $state<string | null>(null);
 	let formError = $state<WorkspaceFormError | null>(null);
 	let repositorySetupError = $state<WorkspaceRepositorySetupError | null>(null);
 	let repositorySetupStatus = $state<string | null>(null);
@@ -276,7 +283,11 @@
 	}
 
 	function workspaceRepositoryGitBusy(workspaceId: string) {
-		return workspaceRepositoryGitActionId === workspaceId || isPublishingWorkspaceRepository;
+		return (
+			workspaceRepositoryGitActionId === workspaceId ||
+			workspaceRepositoryCommitQueueId === workspaceId ||
+			isPublishingWorkspaceRepository
+		);
 	}
 
 	function workspaceRepositoryHasRemote(workspaceId: string) {
@@ -321,6 +332,56 @@
 		}
 
 		return gitStatus.aheadCount > 0;
+	}
+
+	function workspaceRepositoryCanQueueCommitWorkOrder(workspaceId: string) {
+		const gitStatus = getWorkspaceRepositoryGitStatus(workspaceId);
+
+		return (
+			gitStatus?.ok === true &&
+			gitStatus.isGitRepository &&
+			gitStatus.hasUncommittedChanges &&
+			!workspaceRepositoryGitBusy(workspaceId)
+		);
+	}
+
+	async function queueWorkspaceRepositoryCommitWorkOrder(workspaceId: string) {
+		const workspace = registry.workspaces.find((candidate) => candidate.id === workspaceId);
+
+		if (
+			workspace === undefined ||
+			workspaceRepositoryGitBusy(workspaceId) ||
+			!workspaceRepositoryCanQueueCommitWorkOrder(workspaceId)
+		) {
+			return;
+		}
+
+		formError = null;
+		workspaceRepositoryGitStatus = null;
+		workspaceRepositoryCommitQueueId = workspace.id;
+
+		try {
+			const result = await enqueueRepositoryCommitWorkOrder({
+				workspacePath: workspace.path,
+				repositoryName: workspace.name,
+				repositoryPath: workspace.path,
+				source: 'workspace',
+				responseLanguage: appearanceSettings.languageId === 'en' ? 'en' : 'ko'
+			});
+
+			if (!result.ok) {
+				workspaceRepositoryGitStatus = getQueueFolderLocalizedError(messages, result.error);
+				return;
+			}
+
+			workspaceRepositoryGitStatus =
+				messages.settings.workspaces.repository.commitWorkOrderQueued.replace(
+					'{relativePath}',
+					result.relativePath
+				);
+		} finally {
+			workspaceRepositoryCommitQueueId = null;
+		}
 	}
 
 	function getWorkspaceRepositoryGitActionLabel(
@@ -369,6 +430,7 @@
 				hasRemote: false,
 				aheadCount: 0,
 				behindCount: 0,
+				hasUncommittedChanges: false,
 				branch: null
 			}
 		};
@@ -389,6 +451,7 @@
 						hasRemote: result.hasRemote,
 						aheadCount: result.aheadCount,
 						behindCount: result.behindCount,
+						hasUncommittedChanges: result.hasUncommittedChanges,
 						branch: result.branch
 					}
 				: {
@@ -1013,7 +1076,9 @@
 		workspaceRepositoryCanPublish,
 		workspaceRepositoryHasRemote,
 		workspaceRepositoryCanRunRemoteAction,
+		workspaceRepositoryCanQueueCommitWorkOrder,
 		getWorkspaceRepositoryGitActionLabel,
+		queueWorkspaceRepositoryCommitWorkOrder,
 		runWorkspaceRepositoryGitAction,
 		handleWorkspaceRepair,
 		handleWorkspaceSwitch,

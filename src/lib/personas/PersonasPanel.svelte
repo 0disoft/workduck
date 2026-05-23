@@ -13,6 +13,14 @@
 	import { DetailCard, EntityCard, EntityWorkbench, StatusToast } from '$lib/ui';
 	import type { WorkspaceRecord } from '$lib/workspaces/workspace-registry';
 	import {
+		AGENT_EVALUATION_SCORE_MAX,
+		agentEvaluationCriteriaDefinitions,
+		getAgentEvaluationAverage,
+		getAgentEvaluationOverallAverage,
+		hasAgentEvaluations,
+		type AgentEvaluationCriterionId
+	} from '$lib/agents/agent-evaluation';
+	import {
 		assignPersonaToAgents,
 		createEmptyAgentRegistry,
 		type AgentRecord,
@@ -29,6 +37,7 @@
 		createDefaultPersonaStyleValues,
 		createDefaultPersonaSpectrumValues,
 		createEmptyPersonaRegistry,
+		createRandomPersonaName,
 		createRandomPersonaStyleValues,
 		createRandomPersonaSpectrumValues,
 		personaStyleDefinitions,
@@ -55,6 +64,21 @@
 	interface Props {
 		readonly workspace: WorkspaceRecord;
 		readonly onPersonaCountChange?: (count: number) => void;
+	}
+
+	type PersonaEvaluationOverviewMetricId = 'overall' | AgentEvaluationCriterionId;
+
+	interface PersonaEvaluationOverviewMetric {
+		readonly id: PersonaEvaluationOverviewMetricId;
+		readonly label: string;
+	}
+
+	interface PersonaEvaluationOverviewRow {
+		readonly persona: PersonaRecord;
+		readonly count: number;
+		readonly score: number | null;
+		readonly scoreLabel: string;
+		readonly width: string;
 	}
 
 	let { workspace, onPersonaCountChange }: Props = $props();
@@ -88,6 +112,11 @@
 	);
 	let unassignedAgents = $derived(
 		agentRegistry.agents.filter((agent) => agent.personaId === null)
+	);
+	let selectedEvaluationOverviewMetric = $state<PersonaEvaluationOverviewMetricId>('overall');
+	let personaEvaluationOverviewMetrics = $derived(createPersonaEvaluationOverviewMetrics());
+	let personaEvaluationOverviewRows = $derived(
+		createPersonaEvaluationOverviewRows(registry.personas, selectedEvaluationOverviewMetric)
 	);
 	let agentAssignmentSummary = $derived(createAgentAssignmentSummary());
 	let canSavePersona = $derived(personaName.trim().length > 0 && !isSavingPersona);
@@ -186,6 +215,7 @@
 
 	function openNewPersonaForm() {
 		clearPersonaForm();
+		personaName = createRandomPersonaName(registry.personas.map((persona) => persona.name));
 		personaStyles = createRandomPersonaStyleValues();
 		personaSpectrums = createRandomPersonaSpectrumValues();
 		isPersonaFormOpen = true;
@@ -314,6 +344,7 @@
 	}
 
 	function randomizePersonaSpectrums() {
+		personaName = createRandomPersonaName(registry.personas.map((persona) => persona.name));
 		personaStyles = createRandomPersonaStyleValues();
 		personaSpectrums = createRandomPersonaSpectrumValues();
 	}
@@ -370,6 +401,90 @@
 		const options = getStyleMessages(styleId).options as Record<string, string>;
 
 		return options[option] ?? option;
+	}
+
+	function getEvaluationCriterionMessages(criterionId: AgentEvaluationCriterionId) {
+		return messages.agents.evaluation.criteria[criterionId];
+	}
+
+	function getEvaluationAverageLabel(persona: PersonaRecord, criterionId: AgentEvaluationCriterionId) {
+		const average = getAgentEvaluationAverage(persona.evaluationSummary, criterionId);
+
+		return average === null ? messages.agents.evaluation.noScore : average.toFixed(2);
+	}
+
+	function createPersonaEvaluationOverviewMetrics(): readonly PersonaEvaluationOverviewMetric[] {
+		return [
+			{
+				id: 'overall',
+				label: messages.agents.evaluation.overallScore
+			},
+			...agentEvaluationCriteriaDefinitions.map((criterion) => ({
+				id: criterion.id,
+				label: getEvaluationCriterionMessages(criterion.id).label
+			}))
+		];
+	}
+
+	function createPersonaEvaluationOverviewRows(
+		personas: readonly PersonaRecord[],
+		metricId: PersonaEvaluationOverviewMetricId
+	): readonly PersonaEvaluationOverviewRow[] {
+		return [...personas]
+			.map((persona) => createPersonaEvaluationOverviewRow(persona, metricId))
+			.sort(comparePersonaEvaluationOverviewRows);
+	}
+
+	function createPersonaEvaluationOverviewRow(
+		persona: PersonaRecord,
+		metricId: PersonaEvaluationOverviewMetricId
+	): PersonaEvaluationOverviewRow {
+		const score = getPersonaEvaluationMetricAverage(persona, metricId);
+
+		return {
+			persona,
+			count: persona.evaluationSummary.totalCount,
+			score,
+			scoreLabel: score === null ? messages.agents.evaluation.noScore : score.toFixed(2),
+			width: `${getEvaluationScoreRatio(score) * 100}%`
+		};
+	}
+
+	function getPersonaEvaluationMetricAverage(
+		persona: PersonaRecord,
+		metricId: PersonaEvaluationOverviewMetricId
+	) {
+		if (metricId === 'overall') {
+			return getAgentEvaluationOverallAverage(persona.evaluationSummary);
+		}
+
+		return getAgentEvaluationAverage(persona.evaluationSummary, metricId);
+	}
+
+	function getEvaluationScoreRatio(score: number | null) {
+		if (score === null) {
+			return 0;
+		}
+
+		return Math.min(1, Math.max(0, score / AGENT_EVALUATION_SCORE_MAX));
+	}
+
+	function comparePersonaEvaluationOverviewRows(
+		left: PersonaEvaluationOverviewRow,
+		right: PersonaEvaluationOverviewRow
+	) {
+		const rightScore = right.score ?? -1;
+		const leftScore = left.score ?? -1;
+
+		if (rightScore !== leftScore) {
+			return rightScore - leftScore;
+		}
+
+		if (right.count !== left.count) {
+			return right.count - left.count;
+		}
+
+		return left.persona.name.localeCompare(right.persona.name, appearanceSettings.languageId === 'ko' ? 'ko-KR' : 'en-US');
 	}
 
 	function createPersonaErrorMessage(
@@ -479,6 +594,37 @@
 					{/each}
 				</div>
 
+				<section class="workduck-agent-evaluation" aria-label={messages.agents.evaluation.title}>
+					<header class="workduck-agent-evaluation-header">
+						<strong>{messages.agents.evaluation.title}</strong>
+						{#if hasAgentEvaluations(selectedPersona.evaluationSummary)}
+							<span>
+								{messages.agents.evaluation.count.replace(
+									'{count}',
+									selectedPersona.evaluationSummary.totalCount.toString()
+								)}
+							</span>
+						{/if}
+					</header>
+
+					{#if hasAgentEvaluations(selectedPersona.evaluationSummary)}
+						<div class="workduck-agent-evaluation-list">
+							{#each agentEvaluationCriteriaDefinitions as criterion (criterion.id)}
+								{@const criterionMessages = getEvaluationCriterionMessages(criterion.id)}
+								<div class="workduck-agent-evaluation-row">
+									<div>
+										<strong>{criterionMessages.label}</strong>
+										<span>{criterionMessages.description}</span>
+									</div>
+									<output>{getEvaluationAverageLabel(selectedPersona, criterion.id)}</output>
+								</div>
+							{/each}
+						</div>
+					{:else}
+						<p class="workduck-agent-evaluation-empty">{messages.agents.evaluation.empty}</p>
+					{/if}
+				</section>
+
 				{#snippet actions()}
 					<button
 						class="workduck-button workduck-button-secondary"
@@ -496,6 +642,63 @@
 						{messages.common.remove}
 					</button>
 				{/snippet}
+			</DetailCard>
+		{:else}
+			<DetailCard
+				title={messages.agents.evaluation.overviewTitle}
+				kind={messages.personas.registeredCount.replace('{count}', registry.personas.length.toString())}
+			>
+				<section
+					class="workduck-agent-evaluation-overview"
+					aria-label={messages.agents.evaluation.overviewTitle}
+				>
+					{#if personaEvaluationOverviewRows.length > 0}
+						<div class="workduck-agent-evaluation-filter-list" aria-label={messages.agents.evaluation.rankBy}>
+							{#each personaEvaluationOverviewMetrics as metric (metric.id)}
+								<button
+									class="workduck-agent-evaluation-filter-button"
+									class:workduck-agent-evaluation-filter-button-active={selectedEvaluationOverviewMetric === metric.id}
+									type="button"
+									aria-pressed={selectedEvaluationOverviewMetric === metric.id}
+									onclick={() => {
+										selectedEvaluationOverviewMetric = metric.id;
+									}}
+								>
+									{metric.label}
+								</button>
+							{/each}
+						</div>
+
+						<div class="workduck-agent-evaluation-overview-list">
+							{#each personaEvaluationOverviewRows as row, index (row.persona.id)}
+								<article class="workduck-agent-evaluation-overview-row">
+									<output class="workduck-agent-evaluation-overview-rank">
+										{row.score === null ? messages.agents.evaluation.noScore : index + 1}
+									</output>
+									<div class="workduck-agent-evaluation-overview-main">
+										<div class="workduck-agent-evaluation-overview-row-header">
+											<strong>{row.persona.name}</strong>
+											<span>
+												{messages.agents.evaluation.count.replace('{count}', row.count.toString())}
+											</span>
+										</div>
+										<div class="workduck-agent-evaluation-overview-bar">
+											<div class="workduck-agent-evaluation-overview-track" aria-hidden="true">
+												<div
+													class="workduck-agent-evaluation-overview-fill"
+													style={`--workduck-agent-evaluation-width: ${row.width}`}
+												></div>
+											</div>
+											<output>{row.scoreLabel}</output>
+										</div>
+									</div>
+								</article>
+							{/each}
+						</div>
+					{:else}
+						<p class="workduck-agent-evaluation-empty">{messages.personas.evaluation.overviewEmpty}</p>
+					{/if}
+				</section>
 			</DetailCard>
 		{/if}
 	{/snippet}

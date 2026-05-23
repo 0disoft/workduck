@@ -9,7 +9,10 @@
 		type WorkduckQueueWorkPriority
 	} from './queue-artifacts';
 	import type { WorkduckQueueTaskKind } from './queue-voting';
-	import { createEvaluationDelegationDisplay } from './queue-work-order-display';
+	import {
+		createEvaluationDelegationDisplay,
+		createWorkOrderBodyDisplay
+	} from './queue-work-order-display';
 
 	interface Props {
 		readonly workOrder: WorkduckQueueWorkOrder;
@@ -63,6 +66,7 @@
 	<div class="workduck-queue-review-tasks">
 		{#each workOrder.tasks as task (task.id)}
 			{@const evaluationDelegation = createEvaluationDelegationDisplay(workOrder, task)}
+			{@const bodyDisplay = createWorkOrderBodyDisplay(task.body)}
 			<article class="workduck-queue-review-task">
 				<header class="workduck-queue-review-task-header">
 					<strong>{task.title}</strong>
@@ -166,7 +170,48 @@
 						{/if}
 					</div>
 				{:else}
-					<p>{task.body}</p>
+					<div class="workduck-queue-work-order-body">
+						{#if bodyDisplay.fallback !== null}
+							<p class="workduck-queue-review-task-summary">{bodyDisplay.fallback}</p>
+						{/if}
+
+						{#if bodyDisplay.lead.length > 0}
+							<div class="workduck-queue-work-order-lead">
+								{#each bodyDisplay.lead as line}
+									<p>{line}</p>
+								{/each}
+							</div>
+						{/if}
+
+						{#if bodyDisplay.fields.length > 0}
+							<dl class="workduck-queue-work-order-fields">
+								{#each bodyDisplay.fields as field}
+									<div>
+										<dt>{field.label}</dt>
+										<dd>{field.value}</dd>
+									</div>
+								{/each}
+							</dl>
+						{/if}
+
+						{#each bodyDisplay.sections as section}
+							<section class="workduck-queue-work-order-section">
+								{#if section.title.length > 0}
+									<span>{section.title}</span>
+								{/if}
+								{#each section.paragraphs as paragraph}
+									<p>{paragraph}</p>
+								{/each}
+								{#if section.items.length > 0}
+									<ul>
+										{#each section.items as item}
+											<li>{item}</li>
+										{/each}
+									</ul>
+								{/if}
+							</section>
+						{/each}
+					</div>
 				{/if}
 
 				{#if task.sourceReportTaskId !== undefined}

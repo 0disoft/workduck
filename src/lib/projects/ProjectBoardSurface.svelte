@@ -1,12 +1,22 @@
 	<script lang="ts">
 	import type { WorkduckMessages } from '$lib/i18n/workduck-message-contract';
-	import type { WorkduckLanguageId } from '$lib/i18n/workduck-language';
+	import {
+		getWorkduckMessages,
+		type WorkduckLanguageId
+	} from '$lib/i18n/workduck-language';
 	import type { EnvironmentVault } from '$lib/environment/environment-vault';
 	import StatusToast from '$lib/ui/StatusToast.svelte';
 	import {
 		type SecretVaultEnvelope
 	} from '$lib/environment/secret-vault-crypto';
 	import type { WorkspaceRecord } from '$lib/workspaces/workspace-registry';
+	import {
+		enqueueRepositoryCommitWorkOrder
+	} from '$lib/queue/repository-commit-work-order';
+	import {
+		getQueueFolderLocalizedError
+	} from '$lib/queue/queue-panel-errors';
+	import type { QueueFolderError } from '$lib/queue/queue-folder';
 	import { type ProjectFolderError } from './project-folder';
 	import { type ProjectRepositoryGithubVisibility } from './project-repository';
 
@@ -135,6 +145,7 @@
 	}
 
 	let { workspace, title, projectMessages, languageId }: Props = $props();
+	let messages = $derived(getWorkduckMessages(languageId));
 
 	let registry = $state<ProjectRegistry>(createEmptyProjectRegistry(''));
 	let contextMenu = $state<ProjectContextMenuState | null>(null);
@@ -163,6 +174,7 @@
 	let status = $state<string | null>(null);
 	let storageError = $state<ProjectRegistryStorageError | null>(null);
 	let operationStorageError = $state<ProjectRepositoryOperationStorageError | null>(null);
+	let queueFolderError = $state<QueueFolderError | null>(null);
 	let folderRepairError = $state<ProjectFolderError | null>(null);
 	let folderRepairSignature = $state('');
 	let repositoryGitInspectionSignature = $state('');
@@ -175,6 +187,7 @@
 	let isDeleting = $state(false);
 	let cloneTarget = $state<ProjectContextMenuTarget | null>(null);
 	let gitActionTarget = $state<ProjectContextMenuTarget | null>(null);
+	let commitWorkOrderTargetRepositoryId = $state<string | null>(null);
 	let publishTarget = $state<ProjectRepositoryPublishTarget | null>(null);
 	let githubRepositoryName = $state('');
 	let githubRepositoryCommitMessage = $state(DEFAULT_GITHUB_REPOSITORY_COMMIT_MESSAGE);
@@ -432,6 +445,44 @@
 		await runProjectRepositoryRemoteGitAction(target, action, createRepositoryActionContext());
 	}
 
+	async function queueRepositoryCommitWorkOrder(
+		node: ProjectNodeRecord,
+		repository: ProjectRepositoryLinkRecord
+	) {
+		if (!canQueueRepositoryCommitWorkOrder(repository) || repository.path === null) {
+			return;
+		}
+
+		commitWorkOrderTargetRepositoryId = repository.id;
+		formError = null;
+		queueFolderError = null;
+		status = null;
+
+		try {
+			const rootProjectId = resolveRootProjectId(node);
+			const result = await enqueueRepositoryCommitWorkOrder({
+				workspacePath: workspace.path,
+				repositoryName: repository.name,
+				repositoryPath: repository.path,
+				source: 'project',
+				responseLanguage: languageId === 'en' ? 'en' : 'ko',
+				projectIds: rootProjectId === null ? [] : [rootProjectId]
+			});
+
+			if (!result.ok) {
+				queueFolderError = result.error;
+				return;
+			}
+
+			status = projectMessages.repository.commitWorkOrderQueued.replace(
+				'{relativePath}',
+				result.relativePath
+			);
+		} finally {
+			commitWorkOrderTargetRepositoryId = null;
+		}
+	}
+
 	function createRepositoryActionContext(): ProjectRepositoryActionContext {
 		return createProjectBoardRepositoryActionContext({
 			workspacePath: workspace.path,
@@ -542,7 +593,8 @@
 	function isRepositoryBusy(repositoryId: string) {
 		return (
 			isProjectBoardRepositoryBusy(repositoryOperationById, repositoryId) ||
-			repositoryTaskRunById[repositoryId]?.state === 'running'
+			repositoryTaskRunById[repositoryId]?.state === 'running' ||
+			commitWorkOrderTargetRepositoryId === repositoryId
 		);
 	}
 
@@ -731,6 +783,28 @@
 		);
 	}
 
+	function canQueueRepositoryCommitWorkOrder(repository: ProjectRepositoryLinkRecord) {
+		const gitStatus = repositoryGitStatusById[repository.id];
+
+		return (
+			repository.path !== null &&
+			isRepositoryPathInsideWorkspace(repository.path) &&
+			gitStatus?.isGitRepository === true &&
+			gitStatus.hasUncommittedChanges &&
+			!isRepositoryBusy(repository.id)
+		);
+	}
+
+	function resolveRootProjectId(node: ProjectNodeRecord) {
+		let currentNode: ProjectNodeRecord | undefined = node;
+
+		while (currentNode !== undefined && currentNode.kind !== 'project') {
+			currentNode = registry.nodes.find((candidate) => candidate.id === currentNode?.parentId);
+		}
+
+		return currentNode?.id ?? null;
+	}
+
 	function isRepositoryPathInsideWorkspace(repositoryPath: string) {
 		return isRepositoryPathInsideWorkspacePath(workspace.path, repositoryPath);
 	}
@@ -892,16 +966,23 @@
 	{canCloneRepository}
 	{canInitializeRepository}
 	{canPublishRepositoryToGithub}
+	{canQueueRepositoryCommitWorkOrder}
 	{canRunRemoteRepositoryGitAction}
 	{isRepositoryOperationRunning}
 	onCloneRepository={contextMenuActions.openContextCloneRepositoryForTarget}
 	onInitializeRepository={contextMenuActions.openInitializeRepositoryForTarget}
 	onPublishRepository={openPublishRepositoryDialog}
+	onQueueRepositoryCommitWorkOrder={queueRepositoryCommitWorkOrder}
 	onGitAction={(node, repository, action) => runRepositoryGitAction({ node, repository }, action)}
 />
 
 {#if standaloneError !== null && dialog === null && deleteCandidate === null && tagEditor === null && descriptionEditor === null && githubCredentialEditor === null && publishTarget === null}
 	<p class="workduck-inline-error" aria-live="polite">{getProjectFormErrorMessage(standaloneError, projectMessages.errors)}</p>
+{/if}
+{#if queueFolderError !== null && dialog === null && deleteCandidate === null && tagEditor === null && descriptionEditor === null && githubCredentialEditor === null && publishTarget === null}
+	<p class="workduck-inline-error" aria-live="polite">
+		{getQueueFolderLocalizedError(messages, queueFolderError)}
+	</p>
 {/if}
 
 <ProjectBoardOverlays

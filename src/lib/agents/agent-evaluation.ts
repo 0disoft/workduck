@@ -57,7 +57,7 @@ Rules:
 - Use only the supplied task and response. Do not invent external facts or reward claims that were not supported.
 - Do not reward length by itself. Reward useful detail, correct constraints, and actionable judgment.
 - If evidence is missing, score that criterion conservatively.
-- Return the five scores as JSON, then save them with the Workduck CLI command shown in the prompt.`;
+- Return the five scores as JSON, then save them with the Workduck CLI command shown in the prompt. The command records the agent score and also updates the linked persona score when the agent has a persona.`;
 
 export function createAgentEvaluationDelegationPrompt(input: AgentEvaluationDelegationPromptInput) {
 	const cliCommand = [
@@ -161,6 +161,18 @@ export function getAgentEvaluationAverage(
 	}
 
 	return criterion.scoreSum / criterion.count;
+}
+
+export function getAgentEvaluationOverallAverage(summary: AgentEvaluationSummary) {
+	const averages = agentEvaluationCriteriaDefinitions
+		.map((criterion) => getAgentEvaluationAverage(summary, criterion.id))
+		.filter((average): average is number => average !== null);
+
+	if (averages.length === 0) {
+		return null;
+	}
+
+	return averages.reduce((sum, average) => sum + average, 0) / averages.length;
 }
 
 export function createDefaultAgentEvaluationScores(): AgentEvaluationScores {

@@ -401,6 +401,10 @@
 	color: var(--workduck-color-danger);
 }
 
+.workduck-repository-operation-status-warning {
+	color: var(--workduck-color-accent);
+}
+
 .workduck-context-menu {
 	position: fixed;
 	z-index: 90;

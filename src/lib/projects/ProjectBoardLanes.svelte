@@ -21,6 +21,7 @@
 	interface RepositoryFilterStats {
 		readonly pullNeeded: number;
 		readonly pushNeeded: number;
+		readonly commitNeeded: number;
 	}
 
 	interface Props {
@@ -65,6 +66,9 @@
 		readonly canCloneRepository: (repository: ProjectRepositoryLinkRecord) => boolean;
 		readonly canInitializeRepository: (repository: ProjectRepositoryLinkRecord) => boolean;
 		readonly canPublishRepositoryToGithub: (repository: ProjectRepositoryLinkRecord) => boolean;
+		readonly canQueueRepositoryCommitWorkOrder: (
+			repository: ProjectRepositoryLinkRecord
+		) => boolean;
 		readonly canRunRemoteRepositoryGitAction: (
 			repository: ProjectRepositoryLinkRecord,
 			action: ProjectRepositoryGitAction
@@ -85,6 +89,10 @@
 			node: ProjectNodeRecord,
 			repository: ProjectRepositoryLinkRecord
 		) => void;
+		readonly onQueueRepositoryCommitWorkOrder: (
+			node: ProjectNodeRecord,
+			repository: ProjectRepositoryLinkRecord
+		) => Promise<void>;
 		readonly onGitAction: (
 			node: ProjectNodeRecord,
 			repository: ProjectRepositoryLinkRecord,
@@ -100,8 +108,10 @@
 		onRepositoryContextMenu, getNodeGithubCredentialName, getRepositoryGithubCredentialName,
 		getRepositoryOperation, getRepositoryTaskRun, isRepositoryBusy, isRepositoryPathInsideWorkspace,
 		getRepositoryCardKind, canCloneRepository, canInitializeRepository,
-		canPublishRepositoryToGithub, canRunRemoteRepositoryGitAction, isRepositoryOperationRunning,
-		onCloneRepository, onInitializeRepository, onPublishRepository, onGitAction
+		canPublishRepositoryToGithub, canQueueRepositoryCommitWorkOrder,
+		canRunRemoteRepositoryGitAction, isRepositoryOperationRunning,
+		onCloneRepository, onInitializeRepository, onPublishRepository,
+		onQueueRepositoryCommitWorkOrder, onGitAction
 	}: Props = $props();
 
 	let projectCountLabel = $derived(
@@ -132,6 +142,13 @@
 					onclick={() => onRepositorySyncFilterSelect('push')}>
 					{projectMessages.filters.pushNeeded}
 					<span>{repositoryFilterStats.pushNeeded}</span>
+				</button>
+				<button class="workduck-project-sync-filter-button"
+					class:workduck-project-sync-filter-button-active={repositorySyncFilter === 'commit'}
+					type="button" aria-pressed={repositorySyncFilter === 'commit'}
+					onclick={() => onRepositorySyncFilterSelect('commit')}>
+					{projectMessages.filters.commitNeeded}
+					<span>{repositoryFilterStats.commitNeeded}</span>
 				</button>
 			</div>
 			<label class="workduck-project-filter-field" for="project-tag-filter">
@@ -227,6 +244,7 @@
 												canCloneRepository={canCloneRepository(repository)}
 												canInitializeRepository={canInitializeRepository(repository)}
 												canPublishRepositoryToGithub={canPublishRepositoryToGithub(repository)}
+												canQueueCommitWorkOrder={canQueueRepositoryCommitWorkOrder(repository)}
 												canFetchRepository={canRunRemoteRepositoryGitAction(repository, 'fetch')}
 												canPullRepository={canRunRemoteRepositoryGitAction(repository, 'pull')}
 												canPushRepository={canRunRemoteRepositoryGitAction(repository, 'push')}
@@ -235,6 +253,7 @@
 												onClone={() => onCloneRepository(node, repository)}
 												onInitialize={() => onInitializeRepository(node, repository)}
 												onPublish={() => onPublishRepository(node, repository)}
+												onQueueCommitWorkOrder={() => onQueueRepositoryCommitWorkOrder(node, repository)}
 												onGitAction={(action) => onGitAction(node, repository, action)} />
 										{/each}
 									</div>

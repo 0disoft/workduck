@@ -32,6 +32,7 @@
 		readonly canCloneRepository: boolean;
 		readonly canInitializeRepository: boolean;
 		readonly canPublishRepositoryToGithub: boolean;
+		readonly canQueueCommitWorkOrder: boolean;
 		readonly canFetchRepository: boolean;
 		readonly canPullRepository: boolean;
 		readonly canPushRepository: boolean;
@@ -40,6 +41,7 @@
 		readonly onClone: () => Promise<void>;
 		readonly onInitialize: () => Promise<void>;
 		readonly onPublish: () => void;
+		readonly onQueueCommitWorkOrder: () => Promise<void>;
 		readonly onGitAction: (action: ProjectRepositoryGitAction) => Promise<void>;
 	}
 
@@ -57,6 +59,7 @@
 		canCloneRepository,
 		canInitializeRepository,
 		canPublishRepositoryToGithub,
+		canQueueCommitWorkOrder,
 		canFetchRepository,
 		canPullRepository,
 		canPushRepository,
@@ -65,6 +68,7 @@
 		onClone,
 		onInitialize,
 		onPublish,
+		onQueueCommitWorkOrder,
 		onGitAction
 	}: Props = $props();
 
@@ -158,6 +162,14 @@
 		>
 			{getProjectFormErrorMessage(repositoryGitStatus.error, projectMessages.errors)}
 		</p>
+	{:else if repositoryGitStatus?.hasUncommittedChanges === true}
+		<p
+			class="workduck-repository-operation-status workduck-repository-operation-status-warning"
+			role="status"
+			aria-live="polite"
+		>
+			{projectMessages.repository.uncommittedChanges}
+		</p>
 	{/if}
 	<div class="workduck-repository-card-actions" aria-label={`${repository.name} actions`}>
 		{#if canCloneRepository || isRepositoryOperationRunning('clone')}
@@ -193,6 +205,7 @@
 		{#if canFetchRepository ||
 			canPullRepository ||
 			canPushRepository ||
+			canQueueCommitWorkOrder ||
 			isRepositoryOperationRunning('fetch') ||
 			isRepositoryOperationRunning('pull') ||
 			isRepositoryOperationRunning('push')}
@@ -220,6 +233,16 @@
 			>
 				{getRepositoryActionButtonLabel(repositoryOperation, 'push', 'Push')}
 			</button>
+			{#if canQueueCommitWorkOrder}
+				<button
+					class="workduck-repository-action-button"
+					type="button"
+					disabled={repositoryBusy}
+					onclick={() => void onQueueCommitWorkOrder()}
+				>
+					{projectMessages.repository.queueCommitWorkOrder}
+				</button>
+			{/if}
 		{/if}
 	</div>
 </article>

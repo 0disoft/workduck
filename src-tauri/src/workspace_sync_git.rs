@@ -112,6 +112,8 @@ pub struct WorkspaceSyncGitInspection {
     #[serde(skip_serializing_if = "Option::is_none")]
     has_sync_file_changes: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    has_uncommitted_changes: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     error: Option<WorkspaceSyncGitError>,
 }
 
@@ -169,6 +171,7 @@ pub fn inspect_workspace_sync_git(
             ahead_count: Some(0),
             behind_count: Some(0),
             has_sync_file_changes: Some(false),
+            has_uncommitted_changes: Some(false),
             error: None,
         };
     };
@@ -189,6 +192,10 @@ pub fn inspect_workspace_sync_git(
         ahead_count: Some(ahead_count),
         behind_count: Some(behind_count),
         has_sync_file_changes: Some(read_sync_file_has_changes(
+            &folder_path,
+            file_name.as_deref(),
+        )),
+        has_uncommitted_changes: Some(read_git_has_uncommitted_changes(
             &folder_path,
             file_name.as_deref(),
         )),
@@ -541,6 +548,33 @@ fn read_sync_file_has_changes(folder_path: &Path, file_name: Option<&str>) -> bo
     output.status.success() && !output.stdout.is_empty()
 }
 
+fn read_git_has_uncommitted_changes(folder_path: &Path, file_name: Option<&str>) -> bool {
+    let sync_file_path = file_name
+        .and_then(|file_name| {
+            resolve_sync_file_path(folder_path.to_string_lossy().as_ref(), file_name).ok()
+        })
+        .filter(|sync_file_path| validate_sync_file_target(sync_file_path).is_ok());
+    let sync_file_name = sync_file_path
+        .as_ref()
+        .and_then(|sync_file_path| sync_file_path.file_name())
+        .and_then(|name| name.to_str());
+    let excluded_sync_file_pathspec = sync_file_name.map(|sync_file_name| {
+        format!(":(exclude){}", sync_file_name.replace('\\', "/"))
+    });
+    let mut args = vec!["status", "--porcelain", "--untracked-files=normal", "--", "."];
+
+    if let Some(excluded_sync_file_pathspec) = excluded_sync_file_pathspec.as_deref() {
+        args.push(excluded_sync_file_pathspec);
+    }
+
+    let output = match run_git_command(folder_path, &args, WorkspaceSyncGitPhase::Diff, None) {
+        Ok(output) => output,
+        Err(_) => return false,
+    };
+
+    output.status.success() && !output.stdout.is_empty()
+}
+
 impl WorkspaceSyncGitOperation {
     fn from_action(action: &str) -> Option<Self> {
         match action.trim() {
@@ -721,6 +755,7 @@ fn invalid_inspection(error: WorkspaceSyncGitError) -> WorkspaceSyncGitInspectio
         ahead_count: None,
         behind_count: None,
         has_sync_file_changes: None,
+        has_uncommitted_changes: None,
         error: Some(error),
     }
 }

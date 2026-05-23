@@ -338,6 +338,12 @@ fn run_agent_evaluate_command(args: Vec<String>) -> Result<(), CliError> {
     let workspace_id = read_workspace_id(&workspace_path)?;
     let agents_path = workspace_data_path(&workspace_path, AGENTS_FILE_NAME);
     let mut registry: Value = read_json_file(&agents_path, "agent-registry-invalid")?;
+    let personas_path = workspace_data_path(&workspace_path, PERSONAS_FILE_NAME);
+    let mut persona_registry: Option<Value> = if personas_path.exists() {
+        Some(read_json_file(&personas_path, "persona-registry-invalid")?)
+    } else {
+        None
+    };
     let scores = options.scores.ok_or_else(|| CliError {
         code: "agent-evaluation-score-required",
         message: "다섯 평가 점수를 모두 지정해야 합니다.".to_string(),
@@ -348,8 +354,26 @@ fn run_agent_evaluate_command(args: Vec<String>) -> Result<(), CliError> {
         &options.agent_key,
         scores,
     )?;
+    let persona_registry_changed =
+        if let (Some(persona_id), Some(persona_registry)) =
+            (result.persona_id.as_deref(), persona_registry.as_mut())
+        {
+            record_persona_evaluation_in_registry(
+                persona_registry,
+                &workspace_id,
+                persona_id,
+                scores,
+            )?
+        } else {
+            false
+        };
 
     write_json_file(&agents_path, &registry)?;
+    if persona_registry_changed {
+        if let Some(persona_registry) = &persona_registry {
+            write_json_file(&personas_path, persona_registry)?;
+        }
+    }
 
     if options.json {
         let payload = AgentEvaluationJsonSuccess {
@@ -400,6 +424,13 @@ fn run_agent_evaluate_batch_command(args: Vec<String>) -> Result<(), CliError> {
     let workspace_id = read_workspace_id(&workspace_path)?;
     let agents_path = workspace_data_path(&workspace_path, AGENTS_FILE_NAME);
     let mut registry: Value = read_json_file(&agents_path, "agent-registry-invalid")?;
+    let personas_path = workspace_data_path(&workspace_path, PERSONAS_FILE_NAME);
+    let mut persona_registry: Option<Value> = if personas_path.exists() {
+        Some(read_json_file(&personas_path, "persona-registry-invalid")?)
+    } else {
+        None
+    };
+    let mut persona_registry_changed = false;
     let mut results = Vec::new();
 
     for (index, item) in input.evaluations.into_iter().enumerate() {
@@ -424,6 +455,17 @@ fn run_agent_evaluate_batch_command(args: Vec<String>) -> Result<(), CliError> {
             item.scores,
         )?;
 
+        if let (Some(persona_id), Some(persona_registry)) =
+            (result.persona_id.as_deref(), persona_registry.as_mut())
+        {
+            persona_registry_changed = record_persona_evaluation_in_registry(
+                persona_registry,
+                &workspace_id,
+                persona_id,
+                item.scores,
+            )? || persona_registry_changed;
+        }
+
         results.push(AgentEvaluationBatchJsonItem {
             agent_id: result.agent_id,
             agent_name: result.agent_name,
@@ -433,6 +475,11 @@ fn run_agent_evaluate_batch_command(args: Vec<String>) -> Result<(), CliError> {
     }
 
     write_json_file(&agents_path, &registry)?;
+    if persona_registry_changed {
+        if let Some(persona_registry) = &persona_registry {
+            write_json_file(&personas_path, persona_registry)?;
+        }
+    }
 
     if options.json {
         let payload = AgentEvaluationBatchJsonSuccess {
@@ -988,6 +1035,7 @@ fn read_workspace_id(workspace_path: &Path) -> Result<String, CliError> {
 struct AgentEvaluationWriteResult {
     agent_id: String,
     agent_name: String,
+    persona_id: Option<String>,
     total_count: u64,
 }
 
@@ -1038,53 +1086,112 @@ fn record_agent_evaluation_in_registry(
         .and_then(Value::as_str)
         .unwrap_or(&agent_id)
         .to_string();
-    let total_count = {
-        let agent_object = ensure_json_object(agent);
-        let summary = agent_object
-            .entry("evaluationSummary")
-            .or_insert_with(|| serde_json::json!({}));
-        let summary_object = ensure_json_object(summary);
-        let previous_total_count = read_json_u64(summary_object.get("totalCount"));
-        let next_total_count = previous_total_count + 1;
-
-        summary_object.insert("totalCount".to_string(), Value::from(next_total_count));
-        let criteria_value = summary_object
-            .entry("criteria")
-            .or_insert_with(|| serde_json::json!({}));
-        let criteria_object = ensure_json_object(criteria_value);
-
-        for (criterion_id, score) in [
-            ("problemUnderstanding", scores.problem_understanding),
-            ("logicalValidity", scores.logical_validity),
-            ("practicalFeasibility", scores.practical_feasibility),
-            ("creativeInsight", scores.creative_insight),
-            ("riskDetection", scores.risk_detection),
-        ] {
-            let criterion_value = criteria_object
-                .entry(criterion_id.to_string())
-                .or_insert_with(|| serde_json::json!({}));
-            let criterion_object = ensure_json_object(criterion_value);
-            let previous_count = read_json_u64(criterion_object.get("count"));
-            let previous_score_sum = read_json_u64(criterion_object.get("scoreSum"));
-
-            criterion_object.insert("count".to_string(), Value::from(previous_count + 1));
-            criterion_object.insert(
-                "scoreSum".to_string(),
-                Value::from(previous_score_sum + u64::from(score)),
-            );
-        }
-
-        agent_object.insert("updatedAt".to_string(), Value::String(timestamp.clone()));
-        next_total_count
-    };
+    let persona_id = agent
+        .get("personaId")
+        .and_then(Value::as_str)
+        .map(str::trim)
+        .filter(|value| !value.is_empty())
+        .map(ToOwned::to_owned);
+    let total_count = record_evaluation_summary_on_record(agent, &timestamp, scores);
 
     registry_object.insert("updatedAt".to_string(), Value::String(timestamp));
 
     Ok(AgentEvaluationWriteResult {
         agent_id,
         agent_name,
+        persona_id,
         total_count,
     })
+}
+
+fn record_persona_evaluation_in_registry(
+    registry: &mut Value,
+    workspace_id: &str,
+    persona_id: &str,
+    scores: AgentEvaluationScores,
+) -> Result<bool, CliError> {
+    let timestamp = current_timestamp()?;
+    let registry_object = registry.as_object_mut().ok_or_else(|| CliError {
+        code: "persona-registry-invalid",
+        message: "페르소나 레지스트리 형식이 올바르지 않습니다.".to_string(),
+    })?;
+
+    let registry_workspace_id = registry_object
+        .get("workspaceId")
+        .and_then(Value::as_str)
+        .unwrap_or("");
+
+    if registry_workspace_id != workspace_id {
+        return Err(CliError {
+            code: "persona-registry-workspace-mismatch",
+            message: "페르소나 레지스트리의 워크스페이스 ID가 현재 워크스페이스와 다릅니다."
+                .to_string(),
+        });
+    }
+
+    let personas = registry_object
+        .get_mut("personas")
+        .and_then(Value::as_array_mut)
+        .ok_or_else(|| CliError {
+            code: "persona-registry-invalid",
+            message: "페르소나 목록 형식이 올바르지 않습니다.".to_string(),
+        })?;
+    let Some(persona) = personas
+        .iter_mut()
+        .find(|persona| persona.get("id").and_then(Value::as_str) == Some(persona_id))
+    else {
+        return Ok(false);
+    };
+
+    record_evaluation_summary_on_record(persona, &timestamp, scores);
+    registry_object.insert("updatedAt".to_string(), Value::String(timestamp));
+
+    Ok(true)
+}
+
+fn record_evaluation_summary_on_record(
+    record: &mut Value,
+    timestamp: &str,
+    scores: AgentEvaluationScores,
+) -> u64 {
+    let record_object = ensure_json_object(record);
+    let summary = record_object
+        .entry("evaluationSummary")
+        .or_insert_with(|| serde_json::json!({}));
+    let summary_object = ensure_json_object(summary);
+    let previous_total_count = read_json_u64(summary_object.get("totalCount"));
+    let next_total_count = previous_total_count + 1;
+
+    summary_object.insert("totalCount".to_string(), Value::from(next_total_count));
+    let criteria_value = summary_object
+        .entry("criteria")
+        .or_insert_with(|| serde_json::json!({}));
+    let criteria_object = ensure_json_object(criteria_value);
+
+    for (criterion_id, score) in [
+        ("problemUnderstanding", scores.problem_understanding),
+        ("logicalValidity", scores.logical_validity),
+        ("practicalFeasibility", scores.practical_feasibility),
+        ("creativeInsight", scores.creative_insight),
+        ("riskDetection", scores.risk_detection),
+    ] {
+        let criterion_value = criteria_object
+            .entry(criterion_id.to_string())
+            .or_insert_with(|| serde_json::json!({}));
+        let criterion_object = ensure_json_object(criterion_value);
+        let previous_count = read_json_u64(criterion_object.get("count"));
+        let previous_score_sum = read_json_u64(criterion_object.get("scoreSum"));
+
+        criterion_object.insert("count".to_string(), Value::from(previous_count + 1));
+        criterion_object.insert(
+            "scoreSum".to_string(),
+            Value::from(previous_score_sum + u64::from(score)),
+        );
+    }
+
+    record_object.insert("updatedAt".to_string(), Value::String(timestamp.to_string()));
+
+    next_total_count
 }
 
 fn resolve_agent_index(agents: &[Value], agent_key: &str) -> Result<usize, CliError> {

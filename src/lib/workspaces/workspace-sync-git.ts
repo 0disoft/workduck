@@ -44,6 +44,7 @@ export type WorkspaceSyncGitInspectionResult =
 			readonly aheadCount: number;
 			readonly behindCount: number;
 			readonly hasSyncFileChanges: boolean;
+			readonly hasUncommittedChanges: boolean;
 	  }
 	| {
 			readonly ok: false;
@@ -70,6 +71,7 @@ interface WorkspaceSyncGitInspectionResponse {
 	readonly aheadCount?: number | null;
 	readonly behindCount?: number | null;
 	readonly hasSyncFileChanges?: boolean | null;
+	readonly hasUncommittedChanges?: boolean | null;
 	readonly error?: WorkspaceSyncGitError | null;
 }
 
@@ -109,7 +111,8 @@ export async function inspectWorkspaceSyncGit(
 				branchName: typeof response.branchName === 'string' ? response.branchName : null,
 				aheadCount: normalizeGitCount(response.aheadCount),
 				behindCount: normalizeGitCount(response.behindCount),
-				hasSyncFileChanges: response.hasSyncFileChanges === true
+				hasSyncFileChanges: response.hasSyncFileChanges === true,
+				hasUncommittedChanges: response.hasUncommittedChanges === true
 			};
 		}
 

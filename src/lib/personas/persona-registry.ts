@@ -1,11 +1,20 @@
 import { isObjectRecord } from '$lib/shared/object-record';
-export const PERSONA_REGISTRY_VERSION = 1;
+import {
+	addAgentEvaluationScores,
+	createEmptyAgentEvaluationSummary,
+	normalizeAgentEvaluationSummary,
+	type AgentEvaluationScores,
+	type AgentEvaluationSummary
+} from '$lib/agents/agent-evaluation';
+
+export const PERSONA_REGISTRY_VERSION = 2;
 export const PERSONA_NAME_MAX_LENGTH = 120;
 export const PERSONA_DESCRIPTION_MAX_LENGTH = 420;
 export const PERSONA_INSTRUCTIONS_MAX_LENGTH = 8_000;
 export const PERSONA_SPECTRUM_MIN_LEVEL = 1;
 export const PERSONA_SPECTRUM_MAX_LEVEL = 5;
 export const PERSONA_SPECTRUM_DEFAULT_LEVEL = 3;
+export const PERSONA_RANDOM_NAME_MAX_ATTEMPTS = 24;
 
 export const personaSpectrumDefinitions = [
 	{ id: 'developmentApproach' },
@@ -23,6 +32,58 @@ export const personaStyleDefinitions = [
 	{ id: 'judgmentAttitude', options: ['critical', 'balanced', 'supportive'] },
 	{ id: 'confidenceLevel', options: ['cautious', 'realistic', 'decisive'] },
 	{ id: 'socialDistance', options: ['formal', 'comfortable', 'friendly'] }
+] as const;
+const personaRandomNameAdjectives = [
+	'Bold',
+	'Brave',
+	'Bright',
+	'Calm',
+	'Clever',
+	'Curious',
+	'Eager',
+	'Gentle',
+	'Honest',
+	'Kind',
+	'Lovely',
+	'Lucky',
+	'Nimble',
+	'Noble',
+	'Patient',
+	'Quiet',
+	'Radiant',
+	'Sharp',
+	'Steady',
+	'Sunny',
+	'Tender',
+	'Vivid',
+	'Warm',
+	'Wise'
+] as const;
+const personaRandomNameNouns = [
+	'Badger',
+	'Beaver',
+	'Dolphin',
+	'Dragonfly',
+	'Falcon',
+	'Fox',
+	'Heron',
+	'Koala',
+	'Lark',
+	'Lynx',
+	'Marten',
+	'Otter',
+	'Owl',
+	'Panda',
+	'Penguin',
+	'Raven',
+	'Robin',
+	'Sparrow',
+	'Stork',
+	'Swan',
+	'Swift',
+	'Turtle',
+	'Weasel',
+	'Whale'
 ] as const;
 
 export type PersonaSpectrumId = (typeof personaSpectrumDefinitions)[number]['id'];
@@ -50,6 +111,7 @@ export interface PersonaRecord {
 	readonly instructions: string;
 	readonly spectrums: PersonaSpectrumValues;
 	readonly styles: PersonaStyleValues;
+	readonly evaluationSummary: AgentEvaluationSummary;
 	readonly createdAt: string;
 	readonly updatedAt: string;
 }
@@ -143,6 +205,26 @@ export function createRandomPersonaStyleValues(): PersonaStyleValues {
 	}, {} as Record<PersonaStyleId, string>) as PersonaStyleValues;
 }
 
+export function createRandomPersonaName(existingNames: readonly string[] = []) {
+	const existingNameKeys = new Set(existingNames.map(createPersonaNameKey));
+	let candidate = createRandomPersonaNameCandidate();
+
+	for (let attempt = 0; attempt < PERSONA_RANDOM_NAME_MAX_ATTEMPTS; attempt += 1) {
+		if (!existingNameKeys.has(createPersonaNameKey(candidate))) {
+			return candidate;
+		}
+
+		candidate = createRandomPersonaNameCandidate();
+	}
+
+	let suffix = 2;
+	while (existingNameKeys.has(createPersonaNameKey(`${candidate} ${suffix}`))) {
+		suffix += 1;
+	}
+
+	return `${candidate} ${suffix}`;
+}
+
 export function upsertPersona(
 	registry: PersonaRegistry,
 	input: PersonaInput,
@@ -182,6 +264,7 @@ export function upsertPersona(
 		instructions,
 		spectrums,
 		styles,
+		evaluationSummary: matchingPersona?.evaluationSummary ?? createEmptyAgentEvaluationSummary(),
 		createdAt: matchingPersona?.createdAt ?? timestamp,
 		updatedAt: timestamp
 	} satisfies PersonaRecord;
@@ -223,8 +306,48 @@ export function removePersona(
 	};
 }
 
+export function recordPersonaEvaluation(
+	registry: PersonaRegistry,
+	personaId: string,
+	scores: AgentEvaluationScores,
+	now = new Date()
+): PersonaRegistryMutationResult {
+	const normalizedRegistry = normalizePersonaRegistry(registry, registry.workspaceId) ?? registry;
+	const normalizedPersonaId = normalizeRecordId(personaId);
+	const matchingPersona = normalizedRegistry.personas.find(
+		(persona) => persona.id === normalizedPersonaId
+	);
+
+	if (normalizedPersonaId === null || matchingPersona === undefined) {
+		return { ok: false, registry: normalizedRegistry, error: 'persona-not-found' };
+	}
+
+	const timestamp = now.toISOString();
+	const personas = normalizedRegistry.personas.map((persona) =>
+		persona.id === normalizedPersonaId
+			? {
+					...persona,
+					evaluationSummary: addAgentEvaluationScores(persona.evaluationSummary, scores),
+					updatedAt: timestamp
+				}
+			: persona
+	);
+
+	return {
+		ok: true,
+		registry: {
+			...normalizedRegistry,
+			personas: sortPersonas(personas),
+			updatedAt: timestamp
+		}
+	};
+}
+
 function normalizePersonaRegistry(value: unknown, workspaceId: string): PersonaRegistry | null {
-	if (!isObjectRecord(value) || value.version !== PERSONA_REGISTRY_VERSION) {
+	if (
+		!isObjectRecord(value) ||
+		(value.version !== PERSONA_REGISTRY_VERSION && value.version !== 1)
+	) {
 		return null;
 	}
 
@@ -274,6 +397,7 @@ function parsePersonaRecord(value: unknown): PersonaRecord | null {
 	const instructions = normalizePersonaInstructions(readRawString(value.instructions));
 	const spectrums = normalizePersonaSpectrumValues(value.spectrums);
 	const styles = normalizePersonaStyleValues(value.styles);
+	const evaluationSummary = normalizeAgentEvaluationSummary(value.evaluationSummary);
 	const createdAt = readTrimmedString(value.createdAt);
 	const updatedAt = readTrimmedString(value.updatedAt);
 
@@ -288,6 +412,7 @@ function parsePersonaRecord(value: unknown): PersonaRecord | null {
 		instructions,
 		spectrums,
 		styles,
+		evaluationSummary,
 		createdAt: createdAt.length === 0 ? updatedAt : createdAt,
 		updatedAt: updatedAt.length === 0 ? createdAt : updatedAt
 	};
@@ -380,8 +505,16 @@ function createPersonaId() {
 	return `persona-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
+function createRandomPersonaNameCandidate() {
+	return `${pickRandomValue(personaRandomNameAdjectives)} ${pickRandomValue(personaRandomNameNouns)}`;
+}
+
 function createPersonaNameKey(name: string) {
 	return normalizePersonaName(name).toLocaleLowerCase('en-US');
+}
+
+function pickRandomValue<Value>(values: readonly Value[]) {
+	return values[Math.floor(Math.random() * values.length)];
 }
 
 function readRawString(value: unknown) {

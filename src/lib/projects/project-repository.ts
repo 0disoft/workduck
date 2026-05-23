@@ -90,6 +90,7 @@ export type ProjectRepositoryGitInspectionResult =
 			readonly hasRemote: boolean;
 			readonly aheadCount: number;
 			readonly behindCount: number;
+			readonly hasUncommittedChanges: boolean;
 			readonly branch: string | null;
 	  }
 	| {
@@ -134,6 +135,7 @@ interface ProjectRepositoryGitInspectionResponse {
 	readonly hasRemote?: boolean | null;
 	readonly aheadCount?: number | null;
 	readonly behindCount?: number | null;
+	readonly hasUncommittedChanges?: boolean | null;
 	readonly branch?: string | null;
 	readonly error?: ProjectRepositoryGitError | null;
 }
@@ -202,6 +204,7 @@ export async function inspectProjectRepositoryGit(
 				hasRemote: response.hasRemote === true,
 				aheadCount: normalizeGitCount(response.aheadCount),
 				behindCount: normalizeGitCount(response.behindCount),
+				hasUncommittedChanges: response.hasUncommittedChanges === true,
 				branch: typeof response.branch === 'string' && response.branch.length > 0
 					? response.branch
 					: null

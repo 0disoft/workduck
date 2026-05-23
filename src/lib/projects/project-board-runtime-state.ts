@@ -102,6 +102,7 @@ export async function refreshProjectRepositoryGitStatusForBoard(
 					hasRemote: result.hasRemote,
 					aheadCount: result.aheadCount,
 					behindCount: result.behindCount,
+					hasUncommittedChanges: result.hasUncommittedChanges,
 					branch: result.branch,
 					error: null
 				}
@@ -110,6 +111,7 @@ export async function refreshProjectRepositoryGitStatusForBoard(
 					hasRemote: false,
 					aheadCount: 0,
 					behindCount: 0,
+					hasUncommittedChanges: false,
 					branch: null,
 					error: result.error as ProjectRepositoryGitError
 				}

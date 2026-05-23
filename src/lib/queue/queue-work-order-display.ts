@@ -13,6 +13,24 @@ export interface QueueEvaluationDelegationDisplay {
 	readonly command: string | null;
 }
 
+export interface QueueWorkOrderBodyField {
+	readonly label: string;
+	readonly value: string;
+}
+
+export interface QueueWorkOrderBodySection {
+	readonly title: string;
+	readonly paragraphs: readonly string[];
+	readonly items: readonly string[];
+}
+
+export interface QueueWorkOrderBodyDisplay {
+	readonly lead: readonly string[];
+	readonly fields: readonly QueueWorkOrderBodyField[];
+	readonly sections: readonly QueueWorkOrderBodySection[];
+	readonly fallback: string | null;
+}
+
 export function createEvaluationDelegationDisplay(
 	workOrder: WorkduckQueueWorkOrder,
 	task: WorkduckQueueWorkOrderTask
@@ -38,6 +56,70 @@ export function createEvaluationDelegationDisplay(
 	};
 }
 
+export function createWorkOrderBodyDisplay(body: string): QueueWorkOrderBodyDisplay {
+	const normalizedBody = body.trim();
+	const lead: string[] = [];
+	const fields: QueueWorkOrderBodyField[] = [];
+	const sections: MutableQueueWorkOrderBodySection[] = [];
+	let currentSection: MutableQueueWorkOrderBodySection | null = null;
+
+	for (const rawLine of normalizedBody.split(/\r?\n/)) {
+		const line = rawLine.trim();
+
+		if (line.length === 0) {
+			continue;
+		}
+
+		const sectionTitle = readSectionTitle(line);
+		if (sectionTitle !== null) {
+			currentSection = {
+				title: sectionTitle,
+				paragraphs: [],
+				items: []
+			};
+			sections.push(currentSection);
+			continue;
+		}
+
+		const bulletText = readBulletText(line);
+		if (bulletText !== null) {
+			if (currentSection === null) {
+				currentSection = {
+					title: '',
+					paragraphs: [],
+					items: []
+				};
+				sections.push(currentSection);
+			}
+
+			currentSection.items.push(bulletText);
+			continue;
+		}
+
+		const field = readBodyField(line);
+		if (field !== null && currentSection === null) {
+			fields.push(field);
+			continue;
+		}
+
+		if (currentSection !== null) {
+			currentSection.paragraphs.push(line);
+			continue;
+		}
+
+		lead.push(line);
+	}
+
+	const hasStructure = lead.length > 0 || fields.length > 0 || sections.length > 0;
+
+	return {
+		lead,
+		fields,
+		sections,
+		fallback: hasStructure ? null : normalizedBody || null
+	};
+}
+
 function findPrefixedValue(lines: readonly string[], prefixes: readonly string[]) {
 	for (const line of lines) {
 		const trimmed = line.trim();
@@ -51,6 +133,37 @@ function findPrefixedValue(lines: readonly string[], prefixes: readonly string[]
 	}
 
 	return null;
+}
+
+interface MutableQueueWorkOrderBodySection {
+	readonly title: string;
+	readonly paragraphs: string[];
+	readonly items: string[];
+}
+
+function readSectionTitle(line: string) {
+	const match = /^([^:]{1,80}):$/.exec(line);
+
+	return match?.[1]?.trim() ?? null;
+}
+
+function readBulletText(line: string) {
+	const match = /^[-*]\s+(.+)$/.exec(line);
+
+	return match?.[1]?.trim() ?? null;
+}
+
+function readBodyField(line: string): QueueWorkOrderBodyField | null {
+	const match = /^([^:]{1,36}):\s+(.+)$/.exec(line);
+
+	if (match === null) {
+		return null;
+	}
+
+	const label = match[1]?.trim() ?? '';
+	const value = match[2]?.trim() ?? '';
+
+	return label.length === 0 || value.length === 0 ? null : { label, value };
 }
 
 function extractBulletSection(lines: readonly string[], labels: readonly string[]) {

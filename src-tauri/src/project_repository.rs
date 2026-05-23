@@ -172,6 +172,7 @@ pub struct ProjectRepositoryGitInspection {
     has_remote: bool,
     ahead_count: u32,
     behind_count: u32,
+    has_uncommitted_changes: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
     branch: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -716,6 +717,7 @@ fn inspect_git_repository(
             has_remote: false,
             ahead_count: 0,
             behind_count: 0,
+            has_uncommitted_changes: false,
             branch: None,
             error: None,
         });
@@ -734,6 +736,7 @@ fn inspect_git_repository(
         has_remote,
         ahead_count,
         behind_count,
+        has_uncommitted_changes: has_git_uncommitted_changes(repository_path)?,
         branch: read_git_branch(repository_path)?,
         error: None,
     })
@@ -827,6 +830,17 @@ fn read_git_ahead_behind_counts(repository_path: &Path) -> Result<(u32, u32), Gi
     Ok(parse_git_ahead_behind_counts(&String::from_utf8_lossy(
         &output.stdout,
     )))
+}
+
+fn has_git_uncommitted_changes(repository_path: &Path) -> Result<bool, GitCommandFailure> {
+    let output = run_git_command(
+        repository_path,
+        &["status", "--porcelain", "--untracked-files=normal"],
+        PROJECT_REPOSITORY_GIT_ACTION_TIMEOUT,
+        None,
+    )?;
+
+    Ok(output.status.success() && !output.stdout.is_empty())
 }
 
 fn parse_git_ahead_behind_counts(output: &str) -> (u32, u32) {
@@ -1056,6 +1070,7 @@ fn invalid_git_inspection(error: ProjectRepositoryGitError) -> ProjectRepository
         has_remote: false,
         ahead_count: 0,
         behind_count: 0,
+        has_uncommitted_changes: false,
         branch: None,
         error: Some(error),
     }

@@ -29,12 +29,14 @@ import {
 } from '$lib/agents/agent-evaluation';
 import {
 	createEmptyPersonaRegistry,
+	recordPersonaEvaluation,
 	type PersonaRecord,
 	type PersonaRegistry
 } from '$lib/personas/persona-registry';
 import {
 	readPersonaRegistry,
-	subscribePersonaRegistry
+	subscribePersonaRegistry,
+	writePersonaRegistry
 } from '$lib/personas/persona-registry-storage';
 import {
 	createEmptyReferenceRegistry,
@@ -1384,16 +1386,51 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		status = null;
 
 		try {
+			const targetAgentId = evaluationDialog.agent.id;
 			const latestAgentRegistryResult = await readAgentRegistry(workspace.id, workspace.path);
 			const mutation = recordAgentEvaluation(
 				latestAgentRegistryResult.registry,
-				evaluationDialog.agent.id,
+				targetAgentId,
 				evaluationScores
 			);
 
 			if (!mutation.ok) {
 				parseError = messages.agents.errors.notFound;
 				return;
+			}
+
+			const evaluatedAgent =
+				mutation.registry.agents.find((agent) => agent.id === targetAgentId) ?? null;
+			let nextPersonaRegistry = personaRegistry;
+			let shouldWritePersonaRegistry = false;
+
+			if (evaluatedAgent?.personaId !== null && evaluatedAgent?.personaId !== undefined) {
+				const latestPersonaRegistryResult = await readPersonaRegistry(workspace.id, workspace.path);
+
+				if (!latestPersonaRegistryResult.ok) {
+					parseError = messages.personas.errors.readFailed;
+					return;
+				}
+
+				nextPersonaRegistry = latestPersonaRegistryResult.registry;
+
+				if (
+					nextPersonaRegistry.personas.some((persona) => persona.id === evaluatedAgent.personaId)
+				) {
+					const personaMutation = recordPersonaEvaluation(
+						nextPersonaRegistry,
+						evaluatedAgent.personaId,
+						evaluationScores
+					);
+
+					if (!personaMutation.ok) {
+						parseError = messages.personas.errors.notFound;
+						return;
+					}
+
+					nextPersonaRegistry = personaMutation.registry;
+					shouldWritePersonaRegistry = true;
+				}
 			}
 
 			const writeResult = await writeAgentRegistry(mutation.registry, workspace.path);
@@ -1403,6 +1440,17 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 			if (!writeResult.ok) {
 				parseError = messages.agents.errors.saveFailed;
 				return;
+			}
+
+			if (shouldWritePersonaRegistry) {
+				const personaWriteResult = await writePersonaRegistry(nextPersonaRegistry, workspace.path);
+
+				personaRegistry = personaWriteResult.registry;
+
+				if (!personaWriteResult.ok) {
+					parseError = messages.personas.errors.saveFailed;
+					return;
+				}
 			}
 
 			status = messages.queue.evaluation.saved;

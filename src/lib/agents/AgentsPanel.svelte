@@ -31,8 +31,10 @@
 	import type { WorkspaceRecord } from '$lib/workspaces/workspace-registry';
 
 	import {
+		AGENT_EVALUATION_SCORE_MAX,
 		agentEvaluationCriteriaDefinitions,
 		getAgentEvaluationAverage,
+		getAgentEvaluationOverallAverage,
 		hasAgentEvaluations,
 		type AgentEvaluationCriterionId
 	} from './agent-evaluation';
@@ -70,6 +72,21 @@
 		readonly name: string;
 	}
 
+	type AgentEvaluationOverviewMetricId = 'overall' | AgentEvaluationCriterionId;
+
+	interface AgentEvaluationOverviewMetric {
+		readonly id: AgentEvaluationOverviewMetricId;
+		readonly label: string;
+	}
+
+	interface AgentEvaluationOverviewRow {
+		readonly agent: AgentRecord;
+		readonly count: number;
+		readonly score: number | null;
+		readonly scoreLabel: string;
+		readonly width: string;
+	}
+
 	let { workspace, onAgentCountChange }: Props = $props();
 
 	let appearanceSettings = $state<AppearanceSettings>(createDefaultAppearanceSettings());
@@ -83,6 +100,7 @@
 	let selectedModelSelection = $state('');
 	let selectedModelId = $state('');
 	let selectedAgentId = $state<string | null>(null);
+	let selectedEvaluationOverviewMetric = $state<AgentEvaluationOverviewMetricId>('overall');
 	let editingAgentId = $state<string | null>(null);
 	let isAgentFormOpen = $state(false);
 	let isSavingAgent = $state(false);
@@ -114,6 +132,10 @@
 		selectedAgent === null
 			? null
 			: getAgentModelLabel(selectedAgent.modelId, messages.agents.defaultModel)
+	);
+	let agentEvaluationOverviewMetrics = $derived(createAgentEvaluationOverviewMetrics());
+	let agentEvaluationOverviewRows = $derived(
+		createAgentEvaluationOverviewRows(registry.agents, selectedEvaluationOverviewMetric)
 	);
 	let agentModelPresetOptions = $derived(getAgentModelPresetsForProvider(selectedExecutionProvider));
 	let selectedEnvironmentSecretIsMissing = $derived(
@@ -221,7 +243,7 @@
 	}
 
 	function selectAgent(agent: AgentRecord) {
-		selectedAgentId = agent.id;
+		selectedAgentId = selectedAgentId === agent.id ? null : agent.id;
 		statusMessage = null;
 		agentError = null;
 	}
@@ -474,6 +496,80 @@
 		return average === null ? messages.agents.evaluation.noScore : average.toFixed(2);
 	}
 
+	function createAgentEvaluationOverviewMetrics(): readonly AgentEvaluationOverviewMetric[] {
+		return [
+			{
+				id: 'overall',
+				label: messages.agents.evaluation.overallScore
+			},
+			...agentEvaluationCriteriaDefinitions.map((criterion) => ({
+				id: criterion.id,
+				label: getEvaluationCriterionMessages(criterion.id).label
+			}))
+		];
+	}
+
+	function createAgentEvaluationOverviewRows(
+		agents: readonly AgentRecord[],
+		metricId: AgentEvaluationOverviewMetricId
+	): readonly AgentEvaluationOverviewRow[] {
+		return [...agents]
+			.map((agent) => createAgentEvaluationOverviewRow(agent, metricId))
+			.sort(compareAgentEvaluationOverviewRows);
+	}
+
+	function createAgentEvaluationOverviewRow(
+		agent: AgentRecord,
+		metricId: AgentEvaluationOverviewMetricId
+	): AgentEvaluationOverviewRow {
+		const score = getAgentEvaluationMetricAverage(agent, metricId);
+
+		return {
+			agent,
+			count: agent.evaluationSummary.totalCount,
+			score,
+			scoreLabel: score === null ? messages.agents.evaluation.noScore : score.toFixed(2),
+			width: `${getAgentEvaluationScoreRatio(score) * 100}%`
+		};
+	}
+
+	function getAgentEvaluationMetricAverage(
+		agent: AgentRecord,
+		metricId: AgentEvaluationOverviewMetricId
+	) {
+		if (metricId === 'overall') {
+			return getAgentEvaluationOverallAverage(agent.evaluationSummary);
+		}
+
+		return getAgentEvaluationAverage(agent.evaluationSummary, metricId);
+	}
+
+	function getAgentEvaluationScoreRatio(score: number | null) {
+		if (score === null) {
+			return 0;
+		}
+
+		return Math.min(1, Math.max(0, score / AGENT_EVALUATION_SCORE_MAX));
+	}
+
+	function compareAgentEvaluationOverviewRows(
+		left: AgentEvaluationOverviewRow,
+		right: AgentEvaluationOverviewRow
+	) {
+		const rightScore = right.score ?? -1;
+		const leftScore = left.score ?? -1;
+
+		if (rightScore !== leftScore) {
+			return rightScore - leftScore;
+		}
+
+		if (right.count !== left.count) {
+			return right.count - left.count;
+		}
+
+		return left.agent.name.localeCompare(right.agent.name, appearanceSettings.languageId === 'ko' ? 'ko-KR' : 'en-US');
+	}
+
 	function getEvaluationResetAtLabel(agent: AgentRecord) {
 		if (agent.evaluationResetAt === null) {
 			return null;
@@ -495,7 +591,7 @@
 			return currentAgentId;
 		}
 
-		return agents[0]?.id ?? null;
+		return null;
 	}
 
 	function createAgentErrorMessage(nextError: AgentRegistryError | AgentRegistryStorageError) {
@@ -625,6 +721,63 @@
 						{messages.common.remove}
 					</button>
 				{/snippet}
+			</DetailCard>
+		{:else}
+			<DetailCard
+				title={messages.agents.evaluation.overviewTitle}
+				kind={messages.agents.registeredCount.replace('{count}', registry.agents.length.toString())}
+			>
+				<section
+					class="workduck-agent-evaluation-overview"
+					aria-label={messages.agents.evaluation.overviewTitle}
+				>
+					{#if agentEvaluationOverviewRows.length > 0}
+						<div class="workduck-agent-evaluation-filter-list" aria-label={messages.agents.evaluation.rankBy}>
+							{#each agentEvaluationOverviewMetrics as metric (metric.id)}
+								<button
+									class="workduck-agent-evaluation-filter-button"
+									class:workduck-agent-evaluation-filter-button-active={selectedEvaluationOverviewMetric === metric.id}
+									type="button"
+									aria-pressed={selectedEvaluationOverviewMetric === metric.id}
+									onclick={() => {
+										selectedEvaluationOverviewMetric = metric.id;
+									}}
+								>
+									{metric.label}
+								</button>
+							{/each}
+						</div>
+
+						<div class="workduck-agent-evaluation-overview-list">
+							{#each agentEvaluationOverviewRows as row, index (row.agent.id)}
+								<article class="workduck-agent-evaluation-overview-row">
+									<output class="workduck-agent-evaluation-overview-rank">
+										{row.score === null ? messages.agents.evaluation.noScore : index + 1}
+									</output>
+									<div class="workduck-agent-evaluation-overview-main">
+										<div class="workduck-agent-evaluation-overview-row-header">
+											<strong>{row.agent.name}</strong>
+											<span>
+												{messages.agents.evaluation.count.replace('{count}', row.count.toString())}
+											</span>
+										</div>
+										<div class="workduck-agent-evaluation-overview-bar">
+											<div class="workduck-agent-evaluation-overview-track" aria-hidden="true">
+												<div
+													class="workduck-agent-evaluation-overview-fill"
+													style={`--workduck-agent-evaluation-width: ${row.width}`}
+												></div>
+											</div>
+											<output>{row.scoreLabel}</output>
+										</div>
+									</div>
+								</article>
+							{/each}
+						</div>
+					{:else}
+						<p class="workduck-agent-evaluation-empty">{messages.agents.evaluation.overviewEmpty}</p>
+					{/if}
+				</section>
 			</DetailCard>
 		{/if}
 	{/snippet}

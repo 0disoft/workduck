@@ -14,9 +14,15 @@ const WORKDUCK_GITIGNORE_BLOCK: &str = "\
 /.mustflow/state/
 /.mustflow/backups/
 
+/node_modules/
+
 /.workduck/*.local.json
 /.workduck/secrets.local.json
 /.workduck/secrets.tmp.json
+/.workduck/agent-evaluation-*.json
+
+/queue/reports/*.workduck-report.json
+/queue/work-orders/*.workduck-work-order.json
 
 .DS_Store
 Thumbs.db

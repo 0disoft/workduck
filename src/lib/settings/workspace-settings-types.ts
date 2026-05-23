@@ -34,6 +34,7 @@ export type WorkspaceRepositoryGitStatus =
 			readonly hasRemote: boolean;
 			readonly aheadCount: number;
 			readonly behindCount: number;
+			readonly hasUncommittedChanges: boolean;
 			readonly branch: string | null;
 	  }
 	| {
@@ -113,11 +114,13 @@ export interface WorkspaceSettingsActions {
 		workspaceId: string,
 		action: WorkspaceRepositoryGitAction
 	) => boolean;
+	readonly workspaceRepositoryCanQueueCommitWorkOrder: (workspaceId: string) => boolean;
 	readonly getWorkspaceRepositoryGitActionLabel: (
 		workspaceId: string,
 		action: WorkspaceRepositoryGitAction,
 		idleLabel: string
 	) => string;
+	readonly queueWorkspaceRepositoryCommitWorkOrder: (workspaceId: string) => Promise<void>;
 	readonly runWorkspaceRepositoryGitAction: (
 		workspaceId: string,
 		action: WorkspaceRepositoryGitAction

@@ -85,7 +85,9 @@
 		workspaceRepositoryCanPublish,
 		workspaceRepositoryHasRemote,
 		workspaceRepositoryCanRunRemoteAction,
+		workspaceRepositoryCanQueueCommitWorkOrder,
 		getWorkspaceRepositoryGitActionLabel,
+		queueWorkspaceRepositoryCommitWorkOrder,
 		runWorkspaceRepositoryGitAction,
 		handleWorkspaceRepair,
 		handleWorkspaceSwitch,
@@ -306,6 +308,11 @@
 											{messages.common.branch}: {workspaceGitStatus.branch}
 										</span>
 									{/if}
+									{#if workspaceGitStatus.hasUncommittedChanges}
+										<span class="workduck-status-pill">
+											{messages.settings.workspaces.repository.commitNeeded}
+										</span>
+									{/if}
 									{#if workspaceGitStatus.behindCount > 0}
 										<span class="workduck-status-pill">
 											{messages.settings.workspaces.repository.pullNeeded.replace(
@@ -439,6 +446,20 @@
 											'push',
 											messages.common.push
 										)}
+									</button>
+								</span>
+							{/if}
+							{#if workspaceRepositoryCanQueueCommitWorkOrder(workspace.id)}
+								<span
+									class="workduck-tooltip-anchor"
+									data-tooltip={messages.settings.workspaces.tooltips.queueCommitWorkOrder}
+								>
+									<button
+										class="workduck-button workduck-button-secondary"
+										type="button"
+										onclick={() => queueWorkspaceRepositoryCommitWorkOrder(workspace.id)}
+									>
+										{messages.settings.workspaces.repository.queueCommitWorkOrder}
 									</button>
 								</span>
 							{/if}

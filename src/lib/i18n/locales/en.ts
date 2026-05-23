@@ -358,6 +358,7 @@ export const enMessages = {
 		filters: {
 			pullNeeded: 'Pull needed',
 			pushNeeded: 'Push needed',
+			commitNeeded: 'Commit needed',
 			tagPlaceholder: 'tag'
 		},
 		kinds: {
@@ -371,6 +372,11 @@ export const enMessages = {
 			repos: 'repos'
 		},
 		lastRepositoryOperation: 'Last action: {timestamp}',
+		repository: {
+			uncommittedChanges: 'Uncommitted changes',
+			queueCommitWorkOrder: 'Add commit work',
+			commitWorkOrderQueued: 'Added commit work: {relativePath}'
+		},
 		contextMenu: {
 			openFolder: 'Open folder',
 			editDescription: 'Edit description',
@@ -633,12 +639,15 @@ export const enMessages = {
 				installGitignore: 'Install Workduck .gitignore',
 				gitReady: 'Git ready',
 				remoteReady: 'Remote ready',
+				commitNeeded: 'Commit needed',
+				queueCommitWorkOrder: 'Add commit work',
 				pullNeeded: 'Pull {count}',
 				pushNeeded: 'Push {count}',
 				setupComplete: 'Workspace repository is ready.',
 				setupPartial: 'Workspace was added, but repository setup failed.',
 				setupFailed: 'Repository setup failed.',
 				publishComplete: 'Workspace repository was published.',
+				commitWorkOrderQueued: 'Added commit work: {relativePath}',
 				fetchComplete: 'Fetched.',
 				pullComplete: 'Pulled.',
 				pushComplete: 'Pushed.'
@@ -717,6 +726,7 @@ export const enMessages = {
 				fetchRepository: 'Check remote changes for this workspace repository.',
 				pullRepository: 'Pull remote workspace changes into this folder.',
 				pushRepository: 'Push local workspace changes to the remote repository.',
+				queueCommitWorkOrder: 'Add uncommitted change cleanup to the work queue.',
 				reconnect: 'Choose a local folder again when this workspace was synced from another device.',
 				switch: 'Make this workspace the current working area.',
 				lock: 'Lock this workspace again until its password is entered.',
@@ -731,11 +741,14 @@ export const enMessages = {
 			noRepository: 'No repository',
 			unavailable: 'Unavailable',
 			noBranch: 'No branch',
+			commitNeeded: 'Commit needed',
+			queueCommitWorkOrder: 'Add commit work',
 			tooltips: {
 				folder: 'Choose the folder that stores the sync file.',
 				fetch: 'Check the sync repository remote.',
 				pull: 'Bring remote sync file changes into this folder.',
 				push: 'Commit and upload this sync file.',
+				queueCommitWorkOrder: 'Add sync repository uncommitted change cleanup to the work queue.',
 				export:
 					'Encrypt the current workspace and project data into the text area below. Use this when copying sync data manually without a file.',
 				import:
@@ -809,7 +822,8 @@ export const enMessages = {
 				fetched: 'Fetched.',
 				pulled: 'Pulled. Use Load to apply.',
 				pushed: 'Pushed.',
-				committedAndPushed: 'Committed and pushed.'
+				committedAndPushed: 'Committed and pushed.',
+				commitWorkOrderQueued: 'Added commit work: {relativePath}'
 			},
 			operations: {
 				fetchLabel: 'Fetching sync',
@@ -898,8 +912,12 @@ export const enMessages = {
 		removed: 'Removed.',
 		evaluation: {
 			title: 'Evaluation',
+			overviewTitle: 'Rating overview',
+			overviewEmpty: 'No agents registered.',
 			empty: 'No evaluations',
 			noScore: '-',
+			rankBy: 'Rank by',
+			overallScore: 'Overall score',
 			count: '{count} ratings',
 			reset: 'Reset ratings',
 			resetConfirm: "Reset this agent's accumulated ratings?",
@@ -950,6 +968,9 @@ export const enMessages = {
 			placeholder: 'Select agents',
 			none: 'None',
 			selectedCount: '{count} selected'
+		},
+		evaluation: {
+			overviewEmpty: 'No personas registered.'
 		},
 		styles: {
 			title: 'Response style',
@@ -1101,7 +1122,7 @@ export const enMessages = {
 				name: 'Agent response evaluator',
 				description: 'Rate an agent response with the five-criterion 1-9 rubric.',
 				instructions:
-					'Rate the response from only the task and the agent answer. Score problem understanding, logical validity, practical feasibility, creative insight, and risk detection from 1 to 9. Do not reward length by itself. Judge constraints, actionability, evidence, and risk handling. After choosing scores, save them to the same workspace with the workduck agent evaluate command.'
+					'Rate the response from only the task and the agent answer. Score problem understanding, logical validity, practical feasibility, creative insight, and risk detection from 1 to 9. Do not reward length by itself. Judge constraints, actionability, evidence, and risk handling. After choosing scores, save them to the same workspace with the workduck agent evaluate command. If the agent has a linked persona, that persona rating is updated too.'
 			}
 		},
 		errors: {

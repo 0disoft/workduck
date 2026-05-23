@@ -359,6 +359,7 @@ export const koMessages = {
 		filters: {
 			pullNeeded: 'Pull 필요',
 			pushNeeded: 'Push 필요',
+			commitNeeded: '커밋 필요',
 			tagPlaceholder: '태그'
 		},
 		kinds: {
@@ -372,6 +373,11 @@ export const koMessages = {
 			repos: '저장소'
 		},
 		lastRepositoryOperation: '마지막 작업: {timestamp}',
+		repository: {
+			uncommittedChanges: '커밋되지 않은 변경 있음',
+			queueCommitWorkOrder: '커밋 작업 추가',
+			commitWorkOrderQueued: '커밋 작업을 추가했습니다: {relativePath}'
+		},
 		contextMenu: {
 			openFolder: '폴더 열기',
 			editDescription: '설명 수정',
@@ -633,12 +639,15 @@ export const koMessages = {
 				installGitignore: 'Workduck .gitignore 설치',
 				gitReady: 'Git 준비됨',
 				remoteReady: '원격 연결됨',
+				commitNeeded: '커밋 필요',
+				queueCommitWorkOrder: '커밋 작업 추가',
 				pullNeeded: 'Pull 필요 {count}',
 				pushNeeded: 'Push 필요 {count}',
 				setupComplete: '워크스페이스 저장소를 준비했습니다.',
 				setupPartial: '워크스페이스는 추가했지만 저장소 준비에 실패했습니다.',
 				setupFailed: '저장소 준비에 실패했습니다.',
 				publishComplete: '워크스페이스 저장소를 게시했습니다.',
+				commitWorkOrderQueued: '커밋 작업을 추가했습니다: {relativePath}',
 				fetchComplete: 'Fetch 완료.',
 				pullComplete: 'Pull 완료.',
 				pushComplete: 'Push 완료.'
@@ -716,6 +725,7 @@ export const koMessages = {
 				fetchRepository: '워크스페이스 저장소에서 Git fetch를 실행합니다.',
 				pullRepository: '워크스페이스 저장소에서 Git pull을 실행합니다.',
 				pushRepository: '워크스페이스 저장소에서 Git push를 실행합니다.',
+				queueCommitWorkOrder: '커밋되지 않은 변경사항 정리를 작업 대기열에 추가합니다.',
 				reconnect: '다른 기기에서 동기화한 워크스페이스라면 로컬 폴더를 다시 선택합니다.',
 				switch: '이 워크스페이스를 현재 작업 공간으로 전환합니다.',
 				lock: '암호를 다시 입력하기 전까지 이 워크스페이스를 잠급니다.',
@@ -730,11 +740,14 @@ export const koMessages = {
 			noRepository: '저장소 없음',
 			unavailable: '사용할 수 없음',
 			noBranch: '브랜치 없음',
+			commitNeeded: '커밋 필요',
+			queueCommitWorkOrder: '커밋 작업 추가',
 			tooltips: {
 				folder: '동기화 파일을 저장할 폴더를 선택합니다.',
 				fetch: '동기화 저장소에서 Git fetch를 실행합니다.',
 				pull: '동기화 저장소에서 Git pull을 실행합니다.',
 				push: '동기화 파일을 커밋하고 Git push를 실행합니다.',
+				queueCommitWorkOrder: '동기화 저장소의 커밋되지 않은 변경사항 정리를 작업 대기열에 추가합니다.',
 				export:
 					'현재 워크스페이스와 프로젝트 정보를 암호로 암호화해 아래 데이터 영역에 표시합니다. 파일 없이 직접 복사해 옮길 때 사용합니다.',
 				import:
@@ -808,7 +821,8 @@ export const koMessages = {
 				fetched: 'Fetch 완료.',
 				pulled: 'Pull 완료. 적용하려면 불러오기를 사용하세요.',
 				pushed: 'Push 완료.',
-				committedAndPushed: '커밋하고 push했습니다.'
+				committedAndPushed: '커밋하고 push했습니다.',
+				commitWorkOrderQueued: '커밋 작업을 추가했습니다: {relativePath}'
 			},
 			operations: {
 				fetchLabel: 'Fetch 중',
@@ -897,8 +911,12 @@ export const koMessages = {
 		removed: '삭제했습니다.',
 		evaluation: {
 			title: '평가',
+			overviewTitle: '평가 현황',
+			overviewEmpty: '등록된 에이전트가 없습니다.',
 			empty: '평가 없음',
 			noScore: '-',
+			rankBy: '순위 기준',
+			overallScore: '종합점수',
 			count: '{count}건',
 			reset: '평가 초기화',
 			resetConfirm: '이 에이전트의 누적 평가를 초기화할까요?',
@@ -949,6 +967,9 @@ export const koMessages = {
 			placeholder: '에이전트 선택',
 			none: '없음',
 			selectedCount: '{count}개 선택'
+		},
+		evaluation: {
+			overviewEmpty: '등록된 페르소나가 없습니다.'
 		},
 		styles: {
 			title: '응답 방식',
@@ -1099,7 +1120,7 @@ export const koMessages = {
 				name: '에이전트 응답 평가기',
 				description: '에이전트 응답을 5개 기준의 1~9점 평가표로 채점합니다.',
 				instructions:
-					'작업 지시와 에이전트 응답만 근거로 문제 이해력, 논리적 타당성, 현실성·실행 가능성, 창의성·통찰, 리스크 감지를 각각 1~9점으로 평가합니다. 길이 자체에는 점수를 주지 말고, 실제 제약과 실행 가능성, 위험 감지, 판단 근거를 봅니다. 점수를 정한 뒤 workduck agent evaluate 명령으로 같은 워크스페이스의 에이전트 평가 누적값에 저장합니다.'
+					'작업 지시와 에이전트 응답만 근거로 문제 이해력, 논리적 타당성, 현실성·실행 가능성, 창의성·통찰, 리스크 감지를 각각 1~9점으로 평가합니다. 길이 자체에는 점수를 주지 말고, 실제 제약과 실행 가능성, 위험 감지, 판단 근거를 봅니다. 점수를 정한 뒤 workduck agent evaluate 명령으로 같은 워크스페이스의 에이전트 평가 누적값에 저장합니다. 에이전트에 페르소나가 연결되어 있으면 해당 페르소나 평가에도 함께 반영됩니다.'
 			}
 		},
 		errors: {
