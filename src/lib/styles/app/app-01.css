@@ -538,10 +538,51 @@ a {
 }
 
 .workduck-queue-review-task-pills {
-	display: block;
+	display: flex;
+	min-width: 0;
+	flex-wrap: wrap;
+	gap: 6px;
+}
+
+.workduck-queue-review-task-meta {
+	display: grid;
 	grid-area: pills;
 	min-width: 0;
 	max-width: 100%;
+	grid-template-columns: repeat(auto-fit, minmax(128px, 1fr));
+	gap: 7px 12px;
+	margin: 0;
+}
+
+.workduck-queue-review-task-meta div,
+.workduck-queue-review-task-group {
+	display: grid;
+	min-width: 0;
+	gap: 4px;
+}
+
+.workduck-queue-review-task-meta dt,
+.workduck-queue-review-task-group > span {
+	color: var(--workduck-color-muted);
+	font-size: var(--workduck-font-size-xs);
+	font-weight: 800;
+}
+
+.workduck-queue-review-task-meta dd {
+	min-width: 0;
+	margin: 0;
+	color: var(--workduck-color-text);
+	font-size: var(--workduck-font-size-xs);
+	font-weight: 800;
+	overflow-wrap: anywhere;
+}
+
+.workduck-queue-review-task-groups {
+	display: grid;
+	min-width: 0;
+	gap: 8px;
+	border-top: 1px solid oklch(var(--workduck-oklch-border) / 0.52);
+	padding-top: 10px;
 }
 
 .workduck-queue-task-pill {
@@ -554,7 +595,6 @@ a {
 	background: oklch(var(--workduck-oklch-accent) / 0.14);
 	color: var(--workduck-color-accent);
 	overflow: hidden;
-	margin: 0 6px 6px 0;
 	padding: 2px 8px;
 	font-size: var(--workduck-font-size-xs);
 	font-weight: 800;

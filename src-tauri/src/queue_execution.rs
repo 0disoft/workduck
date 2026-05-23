@@ -1605,6 +1605,13 @@ Here is my answer:
         assert!(prompt.contains("JSON 객체 하나만 반환하세요."));
         assert!(!prompt.contains("응답 형식:"));
     }
+
+    #[test]
+    fn result_report_file_slug_uses_ascii_segments_only() {
+        assert_eq!(slugify("커밋 정리: workduck 결과 보고서"), "workduck");
+        assert_eq!(slugify("GPT5.4미니"), "gpt5-4");
+        assert_eq!(slugify("결과 보고서"), "");
+    }
 }
 
 fn read_optional_text(value: Option<&Value>) -> String {
@@ -2118,7 +2125,7 @@ fn unique_token() -> String {
 }
 
 fn slugify(value: &str) -> String {
-    value
+    let slug = value
         .trim()
         .to_ascii_lowercase()
         .chars()
@@ -2128,10 +2135,19 @@ fn slugify(value: &str) -> String {
             } else if character.is_whitespace() {
                 '-'
             } else {
-                '_'
+                '-'
             }
         })
-        .collect::<String>()
+        .fold(String::new(), |mut slug, character| {
+            if character == '-' && slug.ends_with('-') {
+                return slug;
+            }
+
+            slug.push(character);
+            slug
+        });
+
+    slug
         .trim_matches('-')
         .trim_matches('_')
         .chars()

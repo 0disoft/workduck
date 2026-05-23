@@ -67,44 +67,51 @@
 		{#each workOrder.tasks as task (task.id)}
 			{@const evaluationDelegation = createEvaluationDelegationDisplay(workOrder, task)}
 			{@const bodyDisplay = createWorkOrderBodyDisplay(task.body)}
+			{@const projectLabels = getQueueTaskProjectLabels(task)}
+			{@const skillLabels = getQueueTaskSkillLabels(task)}
+			{@const agentLabels = getQueueTaskAgentLabels(task)}
+			{@const referenceLabels = getQueueTaskReferenceLabels(task)}
 			<article class="workduck-queue-review-task">
 				<header class="workduck-queue-review-task-header">
 					<strong>{task.title}</strong>
-					<div class="workduck-queue-review-task-pills">
-						<span
-							class="workduck-queue-task-pill workduck-queue-priority-pill"
-							data-priority={normalizeQueueWorkPriority(task.priority)}
-						>
-							{getQueuePriorityLabel(normalizeQueueWorkPriority(task.priority))}
-						</span>
-						<span class="workduck-queue-task-pill">
-							{getQueueResponseLanguageLabel(normalizeQueueResponseLanguage(task.responseLanguage))}
-						</span>
-						<span class="workduck-queue-task-pill">{getQueueTaskKindLabel(task.kind)}</span>
+					<dl class="workduck-queue-review-task-meta">
+						<div>
+							<dt>{messages.queue.workPriority}</dt>
+							<dd>
+								<span
+									class="workduck-queue-task-pill workduck-queue-priority-pill"
+									data-priority={normalizeQueueWorkPriority(task.priority)}
+								>
+									{getQueuePriorityLabel(normalizeQueueWorkPriority(task.priority))}
+								</span>
+							</dd>
+						</div>
+						<div>
+							<dt>{messages.queue.responseLanguage}</dt>
+							<dd>{getQueueResponseLanguageLabel(normalizeQueueResponseLanguage(task.responseLanguage))}</dd>
+						</div>
+						<div>
+							<dt>{messages.queue.workType}</dt>
+							<dd>{getQueueTaskKindLabel(task.kind)}</dd>
+						</div>
 						{#if task.kind === 'vote' && task.vote !== undefined}
-							<span class="workduck-queue-task-pill">
-								{messages.queue.vote.optionCount.replace(
-									'{count}',
-									task.vote.options.length.toString()
-								)}
-							</span>
+							<div>
+								<dt>{messages.queue.vote.options}</dt>
+								<dd>
+									{messages.queue.vote.optionCount.replace(
+										'{count}',
+										task.vote.options.length.toString()
+									)}
+								</dd>
+							</div>
 						{/if}
 						{#if task.decision !== undefined}
-							<span class="workduck-queue-task-pill">{task.decision}</span>
+							<div>
+								<dt>{messages.queue.vote.choice}</dt>
+								<dd>{task.decision}</dd>
+							</div>
 						{/if}
-						{#each getQueueTaskProjectLabels(task) as projectLabel (projectLabel)}
-							<span class="workduck-queue-task-pill">{projectLabel}</span>
-						{/each}
-						{#each getQueueTaskSkillLabels(task) as skillLabel (skillLabel)}
-							<span class="workduck-queue-task-pill">{skillLabel}</span>
-						{/each}
-						{#each getQueueTaskAgentLabels(task) as agentLabel (agentLabel)}
-							<span class="workduck-queue-task-pill">{agentLabel}</span>
-						{/each}
-						{#each getQueueTaskReferenceLabels(task) as referenceLabel (referenceLabel)}
-							<span class="workduck-queue-task-pill">{referenceLabel}</span>
-						{/each}
-					</div>
+					</dl>
 					<button
 						class="workduck-button workduck-button-secondary workduck-queue-task-edit-button"
 						type="button"
@@ -114,6 +121,53 @@
 						{messages.common.edit}
 					</button>
 				</header>
+				{#if projectLabels.length > 0 ||
+					skillLabels.length > 0 ||
+					agentLabels.length > 0 ||
+					referenceLabels.length > 0}
+					<div class="workduck-queue-review-task-groups" aria-label={messages.queue.assignment}>
+						{#if projectLabels.length > 0}
+							<section class="workduck-queue-review-task-group">
+								<span>{messages.queue.workProjects}</span>
+								<div class="workduck-queue-review-task-pills">
+									{#each projectLabels as projectLabel (projectLabel)}
+										<span class="workduck-queue-task-pill">{projectLabel}</span>
+									{/each}
+								</div>
+							</section>
+						{/if}
+						{#if skillLabels.length > 0}
+							<section class="workduck-queue-review-task-group">
+								<span>{messages.queue.linkedSkill}</span>
+								<div class="workduck-queue-review-task-pills">
+									{#each skillLabels as skillLabel (skillLabel)}
+										<span class="workduck-queue-task-pill">{skillLabel}</span>
+									{/each}
+								</div>
+							</section>
+						{/if}
+						{#if agentLabels.length > 0}
+							<section class="workduck-queue-review-task-group">
+								<span>{messages.queue.workAgents}</span>
+								<div class="workduck-queue-review-task-pills">
+									{#each agentLabels as agentLabel (agentLabel)}
+										<span class="workduck-queue-task-pill">{agentLabel}</span>
+									{/each}
+								</div>
+							</section>
+						{/if}
+						{#if referenceLabels.length > 0}
+							<section class="workduck-queue-review-task-group">
+								<span>{messages.queue.workReferences}</span>
+								<div class="workduck-queue-review-task-pills">
+									{#each referenceLabels as referenceLabel (referenceLabel)}
+										<span class="workduck-queue-task-pill">{referenceLabel}</span>
+									{/each}
+								</div>
+							</section>
+						{/if}
+					</div>
+				{/if}
 				{#if evaluationDelegation !== null}
 					<div class="workduck-queue-evaluation-delegation">
 						<div class="workduck-queue-evaluation-delegation-meta">

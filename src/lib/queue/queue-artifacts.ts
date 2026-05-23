@@ -467,11 +467,7 @@ export function normalizeQueueTaskKind(value: unknown): WorkduckQueueTaskKind {
 
 export function createQueueResultReportFileNameFromLabel(label: string) {
 	const timestamp = new Date().toISOString().replaceAll(/[:.]/g, '-');
-	const slug = normalizeQueueText(label)
-		.toLowerCase()
-		.replaceAll(/[^a-z0-9가-힣]+/g, '-')
-		.replaceAll(/^-|-$/g, '')
-		.slice(0, 48);
+	const slug = createQueueFileSlug(label, 48);
 
 	return `${timestamp}-${slug || 'report'}.workduck-report.json`;
 }
@@ -595,13 +591,21 @@ function createQueueRandomToken() {
 }
 
 function createQueueArtifactFileId(id: string, fallback: string) {
-	const normalizedId = normalizeQueueText(id)
-		.toLowerCase()
-		.replaceAll(/[^a-z0-9_-]+/g, '-')
-		.replaceAll(/^-|-$/g, '')
-		.slice(0, 80);
+	const normalizedId = createQueueFileSlug(id, 80, '_');
 
 	return normalizedId.length > 0 ? normalizedId : createQueueId(fallback);
+}
+
+function createQueueFileSlug(value: string, maxLength: number, extraAllowed = '') {
+	const allowedPattern = extraAllowed.includes('_') ? /[^a-z0-9_-]+/g : /[^a-z0-9-]+/g;
+
+	return normalizeQueueText(value)
+		.toLowerCase()
+		.replaceAll(allowedPattern, '-')
+		.replaceAll(/-+/g, '-')
+		.replaceAll(/^-|-$/g, '')
+		.slice(0, maxLength)
+		.replaceAll(/^-|-$/g, '');
 }
 
 function normalizeQueueText(value: string) {
