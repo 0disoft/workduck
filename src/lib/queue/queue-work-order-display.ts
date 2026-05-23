@@ -63,7 +63,7 @@ export function createWorkOrderBodyDisplay(body: string): QueueWorkOrderBodyDisp
 	const sections: MutableQueueWorkOrderBodySection[] = [];
 	let currentSection: MutableQueueWorkOrderBodySection | null = null;
 
-	for (const rawLine of normalizedBody.split(/\r?\n/)) {
+	for (const rawLine of createWorkOrderBodyLines(normalizedBody)) {
 		const line = rawLine.trim();
 
 		if (line.length === 0) {
@@ -118,6 +118,23 @@ export function createWorkOrderBodyDisplay(body: string): QueueWorkOrderBodyDisp
 		sections,
 		fallback: hasStructure ? null : normalizedBody || null
 	};
+}
+
+function createWorkOrderBodyLines(body: string) {
+	const existingLines = body.split(/\r?\n/);
+	const nonEmptyLineCount = existingLines.filter((line) => line.trim().length > 0).length;
+
+	if (nonEmptyLineCount !== 1) {
+		return existingLines;
+	}
+
+	return body
+		.replace(
+			/\s+(대상:|종류:|저장소 경로:|워크스페이스 경로:|요청:|Target:|Kind:|Repository path:|Workspace path:|Request:)/g,
+			'\n$1'
+		)
+		.replace(/\s+-\s+/g, '\n- ')
+		.split(/\r?\n/);
 }
 
 function findPrefixedValue(lines: readonly string[], prefixes: readonly string[]) {
