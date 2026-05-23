@@ -44,6 +44,7 @@
 		personaSpectrumDefinitions,
 		personaSpectrumLevels,
 		removePersona,
+		syncPersonaEvaluationSummariesFromAgents,
 		upsertPersona,
 		type PersonaRecord,
 		type PersonaRegistry,
@@ -251,7 +252,22 @@
 				mutation.registry.personas.find((persona) => persona.name === personaName.trim())?.id ??
 				null;
 
-			const writeResult = await writePersonaRegistry(mutation.registry, workspace.path);
+			let nextPersonaRegistry = mutation.registry;
+			let nextAgentRegistry = agentRegistry;
+
+			if (savedPersonaId !== null && selectedUnassignedAgentIds.length > 0) {
+				nextAgentRegistry = assignPersonaToAgents(
+					agentRegistry,
+					selectedUnassignedAgentIds,
+					savedPersonaId
+				);
+				nextPersonaRegistry = syncPersonaEvaluationSummariesFromAgents(
+					nextPersonaRegistry,
+					nextAgentRegistry.agents
+				);
+			}
+
+			const writeResult = await writePersonaRegistry(nextPersonaRegistry, workspace.path);
 
 			registry = writeResult.registry;
 			personaError = writeResult.ok ? null : writeResult.error;
@@ -260,12 +276,7 @@
 				return;
 			}
 
-			if (savedPersonaId !== null && selectedUnassignedAgentIds.length > 0) {
-				const nextAgentRegistry = assignPersonaToAgents(
-					agentRegistry,
-					selectedUnassignedAgentIds,
-					savedPersonaId
-				);
+			if (nextAgentRegistry !== agentRegistry) {
 				const agentWriteResult = await writeAgentRegistry(nextAgentRegistry, workspace.path);
 
 				agentRegistry = agentWriteResult.registry;

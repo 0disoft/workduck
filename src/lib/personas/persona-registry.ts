@@ -1,11 +1,13 @@
 import { isObjectRecord } from '$lib/shared/object-record';
 import {
+	agentEvaluationCriteriaDefinitions,
 	addAgentEvaluationScores,
 	createEmptyAgentEvaluationSummary,
 	normalizeAgentEvaluationSummary,
 	type AgentEvaluationScores,
 	type AgentEvaluationSummary
 } from '$lib/agents/agent-evaluation';
+import type { AgentRecord } from '$lib/agents/agent-registry';
 
 export const PERSONA_REGISTRY_VERSION = 2;
 export const PERSONA_NAME_MAX_LENGTH = 120;
@@ -343,6 +345,41 @@ export function recordPersonaEvaluation(
 	};
 }
 
+export function syncPersonaEvaluationSummariesFromAgents(
+	registry: PersonaRegistry,
+	agents: readonly AgentRecord[],
+	now = new Date()
+): PersonaRegistry {
+	const normalizedRegistry = normalizePersonaRegistry(registry, registry.workspaceId) ?? registry;
+	const summaryByPersonaId = createPersonaEvaluationSummaryMap(normalizedRegistry.personas, agents);
+	const timestamp = now.toISOString();
+	let changed = false;
+	const personas = normalizedRegistry.personas.map((persona) => {
+		const nextSummary = summaryByPersonaId.get(persona.id) ?? createEmptyAgentEvaluationSummary();
+
+		if (agentEvaluationSummariesAreEqual(persona.evaluationSummary, nextSummary)) {
+			return persona;
+		}
+
+		changed = true;
+		return {
+			...persona,
+			evaluationSummary: nextSummary,
+			updatedAt: timestamp
+		};
+	});
+
+	if (!changed) {
+		return normalizedRegistry;
+	}
+
+	return {
+		...normalizedRegistry,
+		personas: sortPersonas(personas),
+		updatedAt: timestamp
+	};
+}
+
 function normalizePersonaRegistry(value: unknown, workspaceId: string): PersonaRegistry | null {
 	if (
 		!isObjectRecord(value) ||
@@ -471,6 +508,81 @@ function normalizePersonaSpectrumLevel(value: unknown): PersonaSpectrumLevel {
 	}
 
 	return PERSONA_SPECTRUM_MAX_LEVEL;
+}
+
+function createPersonaEvaluationSummaryMap(
+	personas: readonly PersonaRecord[],
+	agents: readonly AgentRecord[]
+) {
+	const summaryByPersonaId = new Map<string, AgentEvaluationSummary>();
+	const personaIds = new Set(personas.map((persona) => persona.id));
+
+	for (const agent of agents) {
+		if (agent.personaId === null || !personaIds.has(agent.personaId)) {
+			continue;
+		}
+
+		const previousSummary =
+			summaryByPersonaId.get(agent.personaId) ?? createEmptyAgentEvaluationSummary();
+		summaryByPersonaId.set(
+			agent.personaId,
+			mergeAgentEvaluationSummaries(previousSummary, agent.evaluationSummary)
+		);
+	}
+
+	return summaryByPersonaId;
+}
+
+function mergeAgentEvaluationSummaries(
+	left: AgentEvaluationSummary,
+	right: AgentEvaluationSummary
+): AgentEvaluationSummary {
+	const normalizedLeft = normalizeAgentEvaluationSummary(left);
+	const normalizedRight = normalizeAgentEvaluationSummary(right);
+	const criteria = { ...createEmptyAgentEvaluationSummary().criteria } as Record<
+		AgentEvaluationCriterionIdFromSummary,
+		{ count: number; scoreSum: number }
+	>;
+
+	for (const definition of agentEvaluationCriteriaDefinitions) {
+		const criterionId = definition.id;
+		const leftCriterion = normalizedLeft.criteria[criterionId];
+		const rightCriterion = normalizedRight.criteria[criterionId];
+
+		criteria[criterionId] = {
+			count: leftCriterion.count + rightCriterion.count,
+			scoreSum: leftCriterion.scoreSum + rightCriterion.scoreSum
+		};
+	}
+
+	return {
+		totalCount: normalizedLeft.totalCount + normalizedRight.totalCount,
+		criteria
+	};
+}
+
+type AgentEvaluationCriterionIdFromSummary = keyof AgentEvaluationSummary['criteria'];
+
+function agentEvaluationSummariesAreEqual(
+	left: AgentEvaluationSummary,
+	right: AgentEvaluationSummary
+) {
+	const normalizedLeft = normalizeAgentEvaluationSummary(left);
+	const normalizedRight = normalizeAgentEvaluationSummary(right);
+
+	if (normalizedLeft.totalCount !== normalizedRight.totalCount) {
+		return false;
+	}
+
+	return agentEvaluationCriteriaDefinitions.every((definition) => {
+		const leftCriterion = normalizedLeft.criteria[definition.id];
+		const rightCriterion = normalizedRight.criteria[definition.id];
+
+		return (
+			leftCriterion.count === rightCriterion.count &&
+			leftCriterion.scoreSum === rightCriterion.scoreSum
+		);
+	});
 }
 
 function sortPersonas(personas: readonly PersonaRecord[]) {
