@@ -5,8 +5,10 @@
 	import type { ReferenceRecord } from '$lib/references/reference-registry';
 	import type { WorkduckSkillRecord } from '$lib/skills/skill-registry';
 	import {
+		queueResponseFormats,
 		queueResponseLanguages,
 		queueWorkPriorities,
+		type WorkduckQueueResponseFormat,
 		type WorkduckQueueResponseLanguage,
 		type WorkduckQueueWorkPriority
 	} from './queue-artifacts';
@@ -23,10 +25,9 @@
 		manualWorkOrderBody: string;
 		manualWorkOrderPriority: WorkduckQueueWorkPriority;
 		manualWorkOrderResponseLanguage: WorkduckQueueResponseLanguage;
+		manualWorkOrderResponseFormat: WorkduckQueueResponseFormat;
 		manualWorkOrderKind: WorkduckQueueTaskKind;
 		manualVoteCriteriaInput: string;
-		readonly manualVoteOptionCount: number;
-		readonly manualVoteOptionCountChoices: readonly number[];
 		readonly manualVoteOptions: readonly ManualVoteOptionInput[];
 		readonly allSkills: readonly WorkduckSkillRecord[];
 		readonly allAgents: readonly AgentRecord[];
@@ -46,7 +47,8 @@
 		readonly onAgentToggle: (agentId: string, isSelected: boolean) => void;
 		readonly onProjectToggle: (projectId: string, isSelected: boolean) => void;
 		readonly onReferenceToggle: (referenceId: string, isSelected: boolean) => void;
-		readonly onVoteOptionCountChange: (value: string) => void;
+		readonly onVoteOptionAdd: () => void;
+		readonly onVoteOptionRemove: (index: number) => void;
 		readonly onVoteOptionChange: (
 			index: number,
 			field: 'label' | 'description',
@@ -54,6 +56,7 @@
 		) => void;
 		readonly getQueuePriorityLabel: (priority: WorkduckQueueWorkPriority) => string;
 		readonly getQueueResponseLanguageLabel: (language: WorkduckQueueResponseLanguage) => string;
+		readonly getQueueResponseFormatLabel: (format: WorkduckQueueResponseFormat) => string;
 		readonly getSkillDisplayName: (skill: WorkduckSkillRecord) => string;
 		readonly getAgentDisplayName: (agent: AgentRecord) => string;
 		readonly getProjectDisplayName: (project: ProjectNodeRecord) => string;
@@ -70,10 +73,9 @@
 		manualWorkOrderBody = $bindable(),
 		manualWorkOrderPriority = $bindable(),
 		manualWorkOrderResponseLanguage = $bindable(),
+		manualWorkOrderResponseFormat = $bindable(),
 		manualWorkOrderKind = $bindable(),
 		manualVoteCriteriaInput = $bindable(),
-		manualVoteOptionCount,
-		manualVoteOptionCountChoices,
 		manualVoteOptions,
 		allSkills,
 		allAgents,
@@ -93,10 +95,12 @@
 		onAgentToggle,
 		onProjectToggle,
 		onReferenceToggle,
-		onVoteOptionCountChange,
+		onVoteOptionAdd,
+		onVoteOptionRemove,
 		onVoteOptionChange,
 		getQueuePriorityLabel,
 		getQueueResponseLanguageLabel,
+		getQueueResponseFormatLabel,
 		getSkillDisplayName,
 		getAgentDisplayName,
 		getProjectDisplayName,
@@ -125,17 +129,19 @@
 			</h2>
 
 			<div class="workduck-work-order-dialog-body">
-				<label class="workduck-form-field" for="new-work-order-title">
-					<span>{messages.queue.workTitle}</span>
-					<input
-						id="new-work-order-title"
-						class="workduck-input"
-						type="text"
-						bind:value={manualWorkOrderTitle}
-						autocomplete="off"
-						disabled={isWriting}
-					/>
-				</label>
+				{#if manualWorkOrderKind !== 'direct-message'}
+					<label class="workduck-form-field" for="new-work-order-title">
+						<span>{messages.queue.workTitle}</span>
+						<input
+							id="new-work-order-title"
+							class="workduck-input"
+							type="text"
+							bind:value={manualWorkOrderTitle}
+							autocomplete="off"
+							disabled={isWriting}
+						/>
+					</label>
+				{/if}
 
 				<div class="workduck-work-order-dialog-compact-grid">
 					<label class="workduck-form-field" for="new-work-order-kind">
@@ -152,33 +158,53 @@
 						</select>
 					</label>
 
-					<label class="workduck-form-field" for="new-work-order-priority">
-						<span>{messages.queue.workPriority}</span>
-						<select
-							id="new-work-order-priority"
-							class="workduck-select"
-							bind:value={manualWorkOrderPriority}
-							disabled={isWriting}
-						>
-							{#each queueWorkPriorities as priority}
-								<option value={priority}>{getQueuePriorityLabel(priority)}</option>
-							{/each}
-						</select>
-					</label>
+					{#if manualWorkOrderKind !== 'direct-message'}
+						<label class="workduck-form-field" for="new-work-order-priority">
+							<span>{messages.queue.workPriority}</span>
+							<select
+								id="new-work-order-priority"
+								class="workduck-select"
+								bind:value={manualWorkOrderPriority}
+								disabled={isWriting}
+							>
+								{#each queueWorkPriorities as priority}
+									<option value={priority}>{getQueuePriorityLabel(priority)}</option>
+								{/each}
+							</select>
+						</label>
+					{/if}
 
-					<label class="workduck-form-field" for="new-work-order-response-language">
-						<span>{messages.queue.responseLanguage}</span>
-						<select
-							id="new-work-order-response-language"
-							class="workduck-select"
-							bind:value={manualWorkOrderResponseLanguage}
-							disabled={isWriting}
-						>
-							{#each queueResponseLanguages as language}
-								<option value={language}>{getQueueResponseLanguageLabel(language)}</option>
-							{/each}
-						</select>
-					</label>
+					{#if manualWorkOrderKind !== 'direct-message'}
+						<label class="workduck-form-field" for="new-work-order-response-language">
+							<span>{messages.queue.responseLanguage}</span>
+							<select
+								id="new-work-order-response-language"
+								class="workduck-select"
+								bind:value={manualWorkOrderResponseLanguage}
+								disabled={isWriting}
+							>
+								{#each queueResponseLanguages as language}
+									<option value={language}>{getQueueResponseLanguageLabel(language)}</option>
+								{/each}
+							</select>
+						</label>
+					{/if}
+
+					{#if manualWorkOrderKind === 'instruction'}
+						<label class="workduck-form-field" for="new-work-order-response-format">
+							<span>{messages.queue.responseFormat}</span>
+							<select
+								id="new-work-order-response-format"
+								class="workduck-select"
+								bind:value={manualWorkOrderResponseFormat}
+								disabled={isWriting}
+							>
+								{#each queueResponseFormats as format}
+									<option value={format}>{getQueueResponseFormatLabel(format)}</option>
+								{/each}
+							</select>
+						</label>
+					{/if}
 				</div>
 
 				<label class="workduck-form-field" for="new-work-order-body">
@@ -203,23 +229,18 @@
 							<span>{messages.queue.vote.options}</span>
 						</summary>
 						<div class="workduck-work-order-section-body">
-							<label class="workduck-form-field" for="new-work-order-vote-option-count">
-								<span>{messages.queue.vote.optionCountInput}</span>
-								<select
-									id="new-work-order-vote-option-count"
-									class="workduck-select"
-									value={manualVoteOptionCount}
-									disabled={isWriting}
-									onchange={(event) => onVoteOptionCountChange(event.currentTarget.value)}
-								>
-									{#each manualVoteOptionCountChoices as count}
-										<option value={count}>{count}</option>
-									{/each}
-								</select>
-							</label>
-
 							<div class="workduck-form-field">
-								<span>{messages.queue.vote.options}</span>
+								<div class="workduck-vote-option-header">
+									<span>{messages.queue.vote.options}</span>
+									<button
+										class="workduck-button workduck-button-secondary workduck-vote-option-add-button"
+										type="button"
+										disabled={isWriting}
+										onclick={onVoteOptionAdd}
+									>
+										{messages.queue.vote.addOption}
+									</button>
+								</div>
 								<div class="workduck-vote-option-list">
 									{#each manualVoteOptions as option, index (option.rowId)}
 										<div class="workduck-vote-option-row">
@@ -246,6 +267,15 @@
 												oninput={(event) =>
 													onVoteOptionChange(index, 'description', event.currentTarget.value)}
 											/>
+											<button
+												class="workduck-icon-button workduck-vote-option-remove-button"
+												type="button"
+												aria-label={`${messages.queue.vote.removeOption} ${index + 1}`}
+												disabled={isWriting || manualVoteOptions.length <= 2}
+												onclick={() => onVoteOptionRemove(index)}
+											>
+												×
+											</button>
 										</div>
 									{/each}
 								</div>

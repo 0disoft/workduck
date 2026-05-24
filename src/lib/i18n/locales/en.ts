@@ -115,6 +115,19 @@ export const enMessages = {
 		registeredCount: '{count} queue files',
 		executionFilters: 'Work status filters',
 		readFilters: 'Read status filters',
+		filterMenu: 'Filters',
+		activeFilterCount: '{count} active filters',
+		kindFilter: 'Kind',
+		priorityFilter: 'Priority',
+		sort: 'Sort',
+		allFileKinds: 'All kinds',
+		allPriorities: 'All priorities',
+		sortOptions: {
+			'created-desc': 'Newest',
+			'created-asc': 'Oldest',
+			'priority-desc': 'Highest priority',
+			'priority-asc': 'Lowest priority'
+		},
 		pendingCountLabel: '{count} pending work items',
 		resultReportReview: 'Result report review',
 		workOrderView: 'Work order view',
@@ -139,6 +152,18 @@ export const enMessages = {
 			ko: 'Korean',
 			en: 'English'
 		},
+		responseFormat: 'Response format',
+		responseFormats: {
+			general: 'General report',
+			'pros-cons': 'Pros and cons',
+			'feature-proposal': 'Feature proposal',
+			'execution-plan': 'Execution plan',
+			'code-review': 'Code review',
+			'risk-assessment': 'Risk assessment',
+			'comparison-table': 'Comparison table',
+			'decision-memo': 'Decision memo',
+			'bug-analysis': 'Bug analysis'
+		},
 		noProject: 'No project',
 		noSkill: 'No skill',
 		noAgent: 'No agent',
@@ -156,9 +181,10 @@ export const enMessages = {
 		vote: {
 			question: 'Question',
 			options: 'Options',
-			optionCountInput: 'Option count',
 			optionName: 'Option name',
 			optionDescription: 'Description',
+			addOption: 'Add option',
+			removeOption: 'Remove option',
 			criteria: 'Criteria',
 			result: 'Vote result',
 			choice: 'Choice',
@@ -167,21 +193,71 @@ export const enMessages = {
 			optionCount: '{count} options',
 			unparsed: 'Unparsed'
 		},
-		structuredResponse: {
-			summary: 'Summary',
-			strengths: 'Strengths/Evidence',
-			recommendations: 'Recommendations',
-			cautions: 'Cautions'
+		structuredResponseFormats: {
+			general: {
+				summary: 'Summary',
+				strengths: 'Strengths/Evidence',
+				recommendations: 'Recommendations',
+				cautions: 'Cautions'
+			},
+			'pros-cons': {
+				summary: 'Verdict',
+				strengths: 'Pros',
+				recommendations: 'Judgment',
+				cautions: 'Cons'
+			},
+			'feature-proposal': {
+				summary: 'Summary',
+				strengths: 'Evidence',
+				recommendations: 'Feature ideas',
+				cautions: 'Cautions'
+			},
+			'execution-plan': {
+				summary: 'Goal',
+				strengths: 'Assumptions',
+				recommendations: 'Steps',
+				cautions: 'Risks'
+			},
+			'code-review': {
+				summary: 'Overall review',
+				strengths: 'Keep',
+				recommendations: 'Fixes',
+				cautions: 'Issues'
+			},
+			'risk-assessment': {
+				summary: 'Risk verdict',
+				strengths: 'Mitigations',
+				recommendations: 'Responses',
+				cautions: 'Key risks'
+			},
+			'comparison-table': {
+				summary: 'Comparison verdict',
+				strengths: 'Criteria',
+				recommendations: 'Comparison rows',
+				cautions: 'Decision factors'
+			},
+			'decision-memo': {
+				summary: 'Decision',
+				strengths: 'Rationale',
+				recommendations: 'Decision items',
+				cautions: 'Follow-up checks'
+			},
+			'bug-analysis': {
+				summary: 'Cause summary',
+				strengths: 'Confirmed facts',
+				recommendations: 'Fix direction',
+				cautions: 'Reproduction/regression risks'
+			}
 		},
 		createWorkOrder: 'Create work order',
-		delegateEvaluation: 'Delegate rating',
+		delegateEvaluation: 'Delegate evaluation',
 		creating: 'Creating',
 		executeWorkOrder: 'Run',
 		executing: 'Running',
 		noFollowUpSelected: 'No follow-up selected.',
-		noEvaluationTargets: 'No responses to rate.',
-		evaluationAlreadyDelegated: 'A rating delegation work order already exists: {relativePath}',
-		evaluationDelegated: 'Created rating delegation work order {relativePath}.',
+		noEvaluationTargets: 'No responses to evaluate.',
+		evaluationAlreadyDelegated: 'An evaluation delegation work order already exists: {relativePath}',
+		evaluationDelegated: 'Created evaluation delegation work order {relativePath}.',
 		createdFile: 'Created {relativePath}.',
 		updatedFile: 'Updated {relativePath}.',
 		deletedFile: 'Deleted {relativePath}.',
@@ -213,13 +289,13 @@ export const enMessages = {
 			rollback: 'Rollback'
 		},
 		evaluation: {
-			title: 'Rate response',
-			action: 'Rate',
-			mode: 'Rating mode',
-			manual: 'Manual rating',
+			title: 'Evaluate response',
+			action: 'Evaluate',
+			mode: 'Evaluation mode',
+			manual: 'Manual evaluation',
 			aiDelegated: 'Delegate to AI',
 			copyPrompt: 'Copy prompt',
-			promptCopied: 'Rating prompt copied.',
+			promptCopied: 'Evaluation prompt copied.',
 			clipboardUnavailable: 'Clipboard is not available.',
 			delegationPrompt: 'Delegation prompt',
 			sourceReport: 'Source report',
@@ -228,7 +304,7 @@ export const enMessages = {
 			targets: 'Targets',
 			command: 'Command',
 			saving: 'Saving',
-			saved: 'Rating saved.'
+			saved: 'Evaluation saved.'
 		},
 		errors: {
 			workspaceRequired: 'Workspace path is required.',
@@ -248,7 +324,7 @@ export const enMessages = {
 			fileDeleteFailed: 'Work queue file could not be deleted.',
 			fileAlreadyExists: 'Work queue file already exists.',
 			evaluationDelegationAlreadyExists:
-				'A rating delegation work order already exists for this report. Delete the existing work order before creating another one.',
+				'An evaluation delegation work order already exists for this report. Delete the existing work order before creating another one.',
 			unavailable: 'Work queue folders are available in the desktop app.',
 			executionNoTask: 'There is no task to run.',
 			executionNoAgent: 'Select at least one work agent.',
@@ -912,16 +988,16 @@ export const enMessages = {
 		removed: 'Removed.',
 		evaluation: {
 			title: 'Evaluation',
-			overviewTitle: 'Rating overview',
+			overviewTitle: 'Evaluation overview',
 			overviewEmpty: 'No agents registered.',
 			empty: 'No evaluations',
 			noScore: '-',
 			rankBy: 'Rank by',
 			overallScore: 'Overall score',
-			count: '{count} ratings',
-			reset: 'Reset ratings',
-			resetConfirm: "Reset this agent's accumulated ratings?",
-			resetSaved: 'Ratings were reset.',
+			count: '{count} evaluations',
+			reset: 'Reset evaluations',
+			resetConfirm: "Reset this agent's accumulated evaluations?",
+			resetSaved: 'Evaluations were reset.',
 			resetAt: 'Reset at: {date}',
 			criteria: {
 				problemUnderstanding: {
@@ -1120,9 +1196,9 @@ export const enMessages = {
 			},
 			agentResponseEvaluator: {
 				name: 'Agent response evaluator',
-				description: 'Rate an agent response with the five-criterion 1-9 rubric.',
+				description: 'Evaluate an agent response with the five-criterion 1-9 rubric.',
 				instructions:
-					'Rate the response from only the task and the agent answer. Score problem understanding, logical validity, practical feasibility, creative insight, and risk detection from 1 to 9. Do not reward length by itself. Judge constraints, actionability, evidence, and risk handling. After choosing scores, save them to the same workspace with the workduck agent evaluate command. If the agent has a linked persona, that persona rating is updated too.'
+					'Evaluate the response from only the task and the agent answer. Score problem understanding, logical validity, practical feasibility, creative insight, and risk detection from 1 to 9. Do not reward length by itself. Judge constraints, actionability, evidence, and risk handling. After choosing scores, save them to the same workspace with the workduck agent evaluate command. If the agent has a linked persona, that persona evaluation is updated too.'
 			}
 		},
 		errors: {

@@ -7,6 +7,7 @@
 		WorkduckQueueResultReportTask,
 		WorkduckQueueReviewDecision
 	} from './queue-artifacts';
+	import { getQueueStructuredResponseLabels } from './queue-panel-labels';
 	import type { WorkduckQueueVoteAggregate } from './queue-voting';
 
 	interface Props {
@@ -108,6 +109,10 @@
 			{@const review = reviews.find((item) => item.taskId === task.id)}
 			{@const reportTaskAgent = getReportTaskAgent(task)}
 			{@const structuredResponse = task.structuredResponse}
+			{@const structuredResponseLabels = getQueueStructuredResponseLabels(
+				messages,
+				task.responseFormat
+			)}
 			<article class="workduck-queue-review-task">
 				<header class="workduck-queue-review-task-header">
 					<strong>{task.title}</strong>
@@ -133,14 +138,14 @@
 					<div class="workduck-queue-structured-response">
 						{#if structuredResponse.summary.trim().length > 0}
 							<section>
-								<span>{messages.queue.structuredResponse.summary}</span>
+								<span>{structuredResponseLabels.summary}</span>
 								<p>{structuredResponse.summary}</p>
 							</section>
 						{/if}
 
 						{#if structuredResponse.strengths.length > 0}
 							<section>
-								<span>{messages.queue.structuredResponse.strengths}</span>
+								<span>{structuredResponseLabels.strengths}</span>
 								<ul>
 									{#each structuredResponse.strengths as item}
 										<li>{item}</li>
@@ -151,7 +156,7 @@
 
 						{#if structuredResponse.recommendations.length > 0}
 							<section>
-								<span>{messages.queue.structuredResponse.recommendations}</span>
+								<span>{structuredResponseLabels.recommendations}</span>
 								<ul>
 									{#each structuredResponse.recommendations as item}
 										<li>{item}</li>
@@ -162,7 +167,7 @@
 
 						{#if structuredResponse.cautions.length > 0}
 							<section>
-								<span>{messages.queue.structuredResponse.cautions}</span>
+								<span>{structuredResponseLabels.cautions}</span>
 								<ul>
 									{#each structuredResponse.cautions as item}
 										<li>{item}</li>

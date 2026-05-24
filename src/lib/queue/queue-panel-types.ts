@@ -11,10 +11,31 @@ import type {
 
 export const queueExecutionFilterOptions = [{ id: 'all' }, { id: 'pending' }, { id: 'completed' }] as const;
 export const queueReadFilterOptions = [{ id: 'all' }, { id: 'unread' }, { id: 'read' }] as const;
-export const manualVoteOptionCountDefaults = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] as const;
-
+export const queueKindFilterOptions = [
+	{ id: 'all' },
+	{ id: 'work-order' },
+	{ id: 'result-report' },
+	{ id: 'proposal' },
+	{ id: 'unsupported' }
+] as const;
+export const queuePriorityFilterOptions = [
+	{ id: 'all' },
+	{ id: 'urgent' },
+	{ id: 'high' },
+	{ id: 'normal' },
+	{ id: 'low' }
+] as const;
+export const queueSortOptions = [
+	{ id: 'created-desc' },
+	{ id: 'created-asc' },
+	{ id: 'priority-desc' },
+	{ id: 'priority-asc' }
+] as const;
 export type QueueExecutionFilter = (typeof queueExecutionFilterOptions)[number]['id'];
 export type QueueReadFilter = (typeof queueReadFilterOptions)[number]['id'];
+export type QueueKindFilter = (typeof queueKindFilterOptions)[number]['id'];
+export type QueuePriorityFilter = (typeof queuePriorityFilterOptions)[number]['id'];
+export type QueueSortOption = (typeof queueSortOptions)[number]['id'];
 
 export type ManualVoteOptionInput = {
 	readonly rowId: string;
@@ -27,6 +48,7 @@ export type QueueCardEntry = QueueFileEntry & {
 	readonly isRead: boolean;
 	readonly artifactId: string;
 	readonly agentName: string;
+	readonly createdAt: string;
 	readonly title: string;
 	readonly priority: WorkduckQueueWorkPriority | null;
 	readonly executionState: WorkduckQueueExecutionState | null;

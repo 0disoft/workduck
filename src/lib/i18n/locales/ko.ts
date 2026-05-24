@@ -117,6 +117,19 @@ export const koMessages = {
 		registeredCount: '대기열 파일 {count}개',
 		executionFilters: '실행 상태 필터',
 		readFilters: '읽음 상태 필터',
+		filterMenu: '필터',
+		activeFilterCount: '적용된 필터 {count}개',
+		kindFilter: '종류',
+		priorityFilter: '우선순위',
+		sort: '정렬',
+		allFileKinds: '모든 종류',
+		allPriorities: '모든 우선순위',
+		sortOptions: {
+			'created-desc': '최신순',
+			'created-asc': '오래된순',
+			'priority-desc': '높은 우선순위',
+			'priority-asc': '낮은 우선순위'
+		},
 		pendingCountLabel: '실행 대기 작업 {count}개',
 		resultReportReview: '결과 보고서 검토',
 		workOrderView: '작업 지시서 보기',
@@ -141,6 +154,18 @@ export const koMessages = {
 			ko: '한국어',
 			en: 'English'
 		},
+		responseFormat: '응답 형식',
+		responseFormats: {
+			general: '일반 보고',
+			'pros-cons': '장단점 분석',
+			'feature-proposal': '기능 제안',
+			'execution-plan': '실행 계획',
+			'code-review': '코드 리뷰',
+			'risk-assessment': '리스크 평가',
+			'comparison-table': '비교표',
+			'decision-memo': '의사결정 메모',
+			'bug-analysis': '버그 분석'
+		},
 		noProject: '프로젝트 없음',
 		noSkill: '스킬 없음',
 		noAgent: '에이전트 없음',
@@ -158,9 +183,10 @@ export const koMessages = {
 		vote: {
 			question: '질문',
 			options: '선택지',
-			optionCountInput: '선택지 개수',
 			optionName: '선택지 이름',
 			optionDescription: '설명',
+			addOption: '선택지 추가',
+			removeOption: '선택지 삭제',
 			criteria: '평가 기준',
 			result: '투표 결과',
 			choice: '선택',
@@ -169,11 +195,61 @@ export const koMessages = {
 			optionCount: '{count}개 선택지',
 			unparsed: '해석 실패'
 		},
-		structuredResponse: {
-			summary: '요약',
-			strengths: '장점/근거',
-			recommendations: '제안',
-			cautions: '주의점'
+		structuredResponseFormats: {
+			general: {
+				summary: '요약',
+				strengths: '장점/근거',
+				recommendations: '제안',
+				cautions: '주의점'
+			},
+			'pros-cons': {
+				summary: '판단',
+				strengths: '장점',
+				recommendations: '결론',
+				cautions: '단점'
+			},
+			'feature-proposal': {
+				summary: '요약',
+				strengths: '근거',
+				recommendations: '제안 기능',
+				cautions: '주의점'
+			},
+			'execution-plan': {
+				summary: '목표',
+				strengths: '전제',
+				recommendations: '실행 단계',
+				cautions: '위험'
+			},
+			'code-review': {
+				summary: '총평',
+				strengths: '유지할 부분',
+				recommendations: '수정 제안',
+				cautions: '문제'
+			},
+			'risk-assessment': {
+				summary: '위험 결론',
+				strengths: '완화 요인',
+				recommendations: '대응 조치',
+				cautions: '주요 위험'
+			},
+			'comparison-table': {
+				summary: '비교 결론',
+				strengths: '비교 기준',
+				recommendations: '비교 결과',
+				cautions: '결정 변수'
+			},
+			'decision-memo': {
+				summary: '결정',
+				strengths: '근거',
+				recommendations: '결정 사항',
+				cautions: '후속 확인'
+			},
+			'bug-analysis': {
+				summary: '원인 요약',
+				strengths: '확인된 사실',
+				recommendations: '수정 방향',
+				cautions: '재현/회귀 위험'
+			}
 		},
 		createWorkOrder: '작업 지시서 만들기',
 		delegateEvaluation: '평가 위임',

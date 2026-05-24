@@ -1,5 +1,6 @@
 import {
 	readQueueArtifactAgentName,
+	readQueueArtifactCreatedAt,
 	readQueueArtifactExecutionState,
 	readQueueArtifactId,
 	readQueueArtifactSkillIds,
@@ -23,6 +24,7 @@ export async function createQueueCardEntries(
 					isRead: readFilePaths.includes(file.relativePath),
 					artifactId: '',
 					agentName: '',
+					createdAt: '',
 					title: file.fileName,
 					priority: null,
 					executionState: null,
@@ -40,6 +42,7 @@ export async function createQueueCardEntries(
 				isRead: readFilePaths.includes(file.relativePath),
 				artifactId: readResult.ok ? readQueueArtifactId(readResult.content) : '',
 				agentName: readResult.ok ? readQueueArtifactAgentName(readResult.content) : '',
+				createdAt: readResult.ok ? readQueueArtifactCreatedAt(readResult.content) : '',
 				title: artifactTitle.length > 0 ? artifactTitle : file.fileName,
 				priority:
 					readResult.ok && file.kind === 'work-order'

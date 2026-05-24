@@ -271,7 +271,10 @@ a {
 }
 
 .workduck-queue-header-actions {
+	flex: 1 1 auto;
 	align-items: center;
+	justify-content: flex-end;
+	flex-wrap: nowrap;
 }
 
 .workduck-queue-actions {
@@ -331,6 +334,109 @@ a {
 	min-width: 0;
 	flex-wrap: wrap;
 	gap: 8px;
+}
+
+.workduck-queue-advanced-filters {
+	position: relative;
+	flex: 0 0 auto;
+}
+
+.workduck-queue-advanced-filters[open] {
+	z-index: 20;
+}
+
+.workduck-queue-filter-summary {
+	display: inline-flex;
+	height: var(--workduck-control-height);
+	min-width: 0;
+	align-items: center;
+	gap: 8px;
+	border: 1px solid oklch(var(--workduck-oklch-border) / 0.86);
+	border-radius: 8px;
+	background: oklch(var(--workduck-oklch-surface) / 0.64);
+	color: var(--workduck-color-text);
+	padding: 0 10px;
+	font: inherit;
+	font-size: var(--workduck-font-size-xs);
+	font-weight: 800;
+	white-space: nowrap;
+	cursor: pointer;
+	list-style: none;
+}
+
+.workduck-queue-filter-summary::-webkit-details-marker {
+	display: none;
+}
+
+.workduck-queue-filter-summary:focus-visible {
+	outline: 2px solid var(--workduck-color-accent);
+	outline-offset: 2px;
+}
+
+.workduck-queue-filter-summary:hover,
+.workduck-queue-filter-summary-active {
+	border-color: oklch(var(--workduck-oklch-accent) / 0.82);
+	color: var(--workduck-color-accent);
+}
+
+.workduck-queue-filter-count {
+	display: inline-flex;
+	min-width: 20px;
+	height: 20px;
+	align-items: center;
+	justify-content: center;
+	border-radius: 999px;
+	background: oklch(var(--workduck-oklch-accent) / 0.16);
+	color: var(--workduck-color-accent);
+	font-size: var(--workduck-font-size-xs);
+	font-weight: 900;
+	line-height: 1;
+}
+
+.workduck-queue-filter-panel {
+	position: absolute;
+	top: calc(100% + 8px);
+	right: 0;
+	display: grid;
+	width: min(520px, calc(100vw - 48px));
+	min-width: 280px;
+	gap: 12px;
+	border: 1px solid oklch(var(--workduck-oklch-border) / 0.92);
+	border-radius: 8px;
+	background: oklch(var(--workduck-oklch-surface) / 0.98);
+	box-shadow: 0 18px 42px oklch(0% 0 0deg / 0.42);
+	padding: 12px;
+}
+
+.workduck-queue-filter-panel-group {
+	display: grid;
+	min-width: 0;
+	gap: 8px;
+}
+
+.workduck-queue-filter-panel-label {
+	color: var(--workduck-color-muted);
+	font-size: var(--workduck-font-size-xs);
+	font-weight: 800;
+	line-height: 1.2;
+}
+
+.workduck-queue-filter-selects {
+	display: grid;
+	min-width: 0;
+	grid-template-columns: repeat(3, minmax(0, 1fr));
+	gap: 8px;
+}
+
+.workduck-queue-filter-field {
+	display: grid;
+	min-width: 0;
+	gap: 6px;
+}
+
+.workduck-queue-filter-select {
+	width: 100%;
+	min-width: 0;
 }
 
 .workduck-queue-file,

@@ -5,14 +5,22 @@ import type { ReferenceRecord } from '$lib/references/reference-registry';
 import type { WorkduckSkillRecord } from '$lib/skills/skill-registry';
 import type {
 	WorkduckQueueExecutionState,
+	WorkduckQueueResponseFormat,
 	WorkduckQueueResponseLanguage,
 	WorkduckQueueResultReportTask,
 	WorkduckQueueReviewDecision,
 	WorkduckQueueWorkOrderTask,
 	WorkduckQueueWorkPriority
 } from './queue-artifacts';
+import { normalizeQueueResponseFormat } from './queue-artifacts';
 import type { QueueFileEntry } from './queue-folder';
-import type { QueueExecutionFilter, QueueReadFilter } from './queue-panel-types';
+import type {
+	QueueExecutionFilter,
+	QueueKindFilter,
+	QueuePriorityFilter,
+	QueueReadFilter,
+	QueueSortOption
+} from './queue-panel-types';
 import type { WorkduckQueueTaskKind } from './queue-voting';
 
 export function getFileKindLabel(messages: WorkduckMessages, kind: QueueFileEntry['kind']) {
@@ -53,6 +61,21 @@ export function getReadFilterLabel(messages: WorkduckMessages, filter: QueueRead
 	}
 }
 
+export function getKindFilterLabel(messages: WorkduckMessages, filter: QueueKindFilter) {
+	return filter === 'all' ? messages.queue.allFileKinds : getFileKindLabel(messages, filter);
+}
+
+export function getQueuePriorityFilterLabel(
+	messages: WorkduckMessages,
+	filter: QueuePriorityFilter
+) {
+	return filter === 'all' ? messages.queue.allPriorities : getQueuePriorityLabel(messages, filter);
+}
+
+export function getQueueSortLabel(messages: WorkduckMessages, sortOption: QueueSortOption) {
+	return messages.queue.sortOptions[sortOption];
+}
+
 export function getQueueExecutionStateLabel(
 	messages: WorkduckMessages,
 	executionState: WorkduckQueueExecutionState | null
@@ -72,6 +95,20 @@ export function getQueueResponseLanguageLabel(
 	language: WorkduckQueueResponseLanguage
 ) {
 	return messages.queue.responseLanguages[language];
+}
+
+export function getQueueResponseFormatLabel(
+	messages: WorkduckMessages,
+	format: WorkduckQueueResponseFormat
+) {
+	return messages.queue.responseFormats[format];
+}
+
+export function getQueueStructuredResponseLabels(
+	messages: WorkduckMessages,
+	format: WorkduckQueueResponseFormat | undefined
+) {
+	return messages.queue.structuredResponseFormats[normalizeQueueResponseFormat(format)];
 }
 
 export function getSkillDisplayName(messages: WorkduckMessages, skill: WorkduckSkillRecord) {

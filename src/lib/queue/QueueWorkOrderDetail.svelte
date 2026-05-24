@@ -2,7 +2,9 @@
 	import type { WorkduckMessages } from '$lib/i18n/workduck-message-contract';
 	import {
 		normalizeQueueResponseLanguage,
+		normalizeQueueResponseFormat,
 		normalizeQueueWorkPriority,
+		type WorkduckQueueResponseFormat,
 		type WorkduckQueueResponseLanguage,
 		type WorkduckQueueWorkOrder,
 		type WorkduckQueueWorkOrderTask,
@@ -23,6 +25,7 @@
 		readonly onEditTask: (task: WorkduckQueueWorkOrderTask) => void;
 		readonly getQueuePriorityLabel: (priority: WorkduckQueueWorkPriority) => string;
 		readonly getQueueResponseLanguageLabel: (language: WorkduckQueueResponseLanguage) => string;
+		readonly getQueueResponseFormatLabel: (format: WorkduckQueueResponseFormat) => string;
 		readonly getQueueTaskKindLabel: (kind: WorkduckQueueTaskKind | undefined) => string;
 		readonly getQueueTaskProjectLabels: (task: WorkduckQueueWorkOrderTask) => readonly string[];
 		readonly getQueueTaskSkillLabels: (task: WorkduckQueueWorkOrderTask) => readonly string[];
@@ -39,6 +42,7 @@
 		onEditTask,
 		getQueuePriorityLabel,
 		getQueueResponseLanguageLabel,
+		getQueueResponseFormatLabel,
 		getQueueTaskKindLabel,
 		getQueueTaskProjectLabels,
 		getQueueTaskSkillLabels,
@@ -90,6 +94,12 @@
 							<dt>{messages.queue.responseLanguage}</dt>
 							<dd>{getQueueResponseLanguageLabel(normalizeQueueResponseLanguage(task.responseLanguage))}</dd>
 						</div>
+						{#if task.kind === undefined || task.kind === 'instruction'}
+							<div>
+								<dt>{messages.queue.responseFormat}</dt>
+								<dd>{getQueueResponseFormatLabel(normalizeQueueResponseFormat(task.responseFormat))}</dd>
+							</div>
+						{/if}
 						<div>
 							<dt>{messages.queue.workType}</dt>
 							<dd>{getQueueTaskKindLabel(task.kind)}</dd>

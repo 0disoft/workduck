@@ -7,6 +7,7 @@ import {
 	type WorkduckQueueVoteSpec
 } from './queue-voting';
 import type {
+	WorkduckQueueResponseFormat,
 	WorkduckQueueResponseLanguage
 } from './queue-artifacts';
 import type { WorkduckQueueTaskKind } from './queue-voting';
@@ -62,26 +63,6 @@ export function createManualVoteOption(
 		label: sourceOption.label,
 		description: sourceOption.description ?? ''
 	};
-}
-
-export function createManualVoteOptionCountChoices(
-	defaultCounts: readonly number[],
-	currentCount: number
-) {
-	const choices = new Set<number>(defaultCounts);
-	choices.add(currentCount);
-
-	return Array.from(choices).sort((left, right) => left - right);
-}
-
-export function normalizeManualVoteOptionCount(value: string) {
-	const numericValue = Number(value);
-
-	if (!Number.isFinite(numericValue)) {
-		return 2;
-	}
-
-	return Math.max(2, Math.min(50, Math.round(numericValue)));
 }
 
 export function updateSelectedRecordIds(
@@ -169,6 +150,7 @@ export function createManualVoteOptionsText(options: readonly ManualVoteOptionIn
 export function createManualWorkOrderKindInput(input: {
 	readonly kind: WorkduckQueueTaskKind;
 	readonly responseLanguage: WorkduckQueueResponseLanguage;
+	readonly responseFormat: WorkduckQueueResponseFormat;
 	readonly body: string;
 	readonly voteOptions: readonly ManualVoteOptionInput[];
 	readonly voteCriteriaInput: string;
@@ -177,13 +159,15 @@ export function createManualWorkOrderKindInput(input: {
 		return {
 			kind: input.kind,
 			vote: null,
-			responseLanguage: input.responseLanguage
+			responseLanguage: input.responseLanguage,
+			responseFormat: input.responseFormat
 		};
 	}
 
 	return {
 		kind: 'vote' as const,
 		responseLanguage: input.responseLanguage,
+		responseFormat: input.responseFormat,
 		vote: createVoteSpec({
 			question: input.body,
 			optionsText: createManualVoteOptionsText(input.voteOptions),

@@ -346,6 +346,12 @@
 		flex-direction: column;
 	}
 
+	.workduck-queue-header-actions {
+		width: 100%;
+		justify-content: flex-start;
+		flex-wrap: wrap;
+	}
+
 	.workduck-preferences-form,
 	.workduck-entity-workbench,
 	.workduck-environment-form,
@@ -374,6 +380,23 @@
 	.workduck-environment-filters {
 		width: 100%;
 		flex-wrap: wrap;
+	}
+
+	.workduck-queue-filter-selects {
+		width: 100%;
+		grid-template-columns: minmax(0, 1fr);
+	}
+
+	.workduck-queue-filter-panel {
+		right: auto;
+		left: 0;
+		width: min(100%, calc(100vw - 36px));
+		min-width: min(280px, calc(100vw - 36px));
+	}
+
+	.workduck-queue-filter-field,
+	.workduck-queue-filter-select {
+		width: 100%;
 	}
 
 	.workduck-environment-filter-field,
@@ -474,11 +497,21 @@
 	}
 
 	.workduck-vote-option-row {
-		grid-template-columns: 28px minmax(0, 1fr);
+		grid-template-columns: 28px minmax(0, 1fr) 36px;
 	}
 
-	.workduck-vote-option-row input:last-child {
+	.workduck-vote-option-row input:first-of-type {
 		grid-column: 2;
+	}
+
+	.workduck-vote-option-row input:nth-of-type(2) {
+		grid-column: 2 / 4;
+		grid-row: 2;
+	}
+
+	.workduck-vote-option-remove-button {
+		grid-column: 3;
+		grid-row: 1;
 	}
 
 	.workduck-sync-actions {

@@ -9,7 +9,16 @@
 	import QueueWorkOrderDetail from './QueueWorkOrderDetail.svelte';
 	import QueueWorkOrderDialog from './QueueWorkOrderDialog.svelte';
 	import type { QueuePanelController } from './queue-panel-controller.svelte';
-	import { queueExecutionFilterOptions, queueReadFilterOptions } from './queue-panel-types';
+	import {
+		queueExecutionFilterOptions,
+		queueKindFilterOptions,
+		queuePriorityFilterOptions,
+		queueReadFilterOptions,
+		queueSortOptions,
+		type QueueKindFilter,
+		type QueuePriorityFilter,
+		type QueueSortOption
+	} from './queue-panel-types';
 
 	interface Props {
 		readonly title: string;
@@ -17,6 +26,22 @@
 	}
 
 	let { title, controller }: Props = $props();
+
+	let isAdvancedFiltersOpen = $state(false);
+	let activeAdvancedFilterCount = $derived(
+		[
+			controller.queueReadFilter !== 'all',
+			controller.queueKindFilter !== 'all',
+			controller.queuePriorityFilter !== 'all',
+			controller.queueSortOption !== 'created-desc'
+		].filter(Boolean).length
+	);
+	let activeAdvancedFilterLabel = $derived(
+		controller.messages.queue.activeFilterCount.replace(
+			'{count}',
+			String(activeAdvancedFilterCount)
+		)
+	);
 </script>
 
 <section class="workduck-queue-panel" aria-label={controller.messages.navigation.queue}>
@@ -36,19 +61,97 @@
 					</button>
 				{/each}
 			</div>
-			<div class="workduck-queue-filters" aria-label={controller.messages.queue.readFilters}>
-				{#each queueReadFilterOptions as option}
-					<button
-						class="workduck-project-sync-filter-button"
-						class:workduck-project-sync-filter-button-active={controller.queueReadFilter === option.id}
-						type="button"
-						aria-pressed={controller.queueReadFilter === option.id}
-						onclick={() => (controller.queueReadFilter = option.id)}
-					>
-						{controller.getReadFilterLabel(option.id)}
-					</button>
-				{/each}
-			</div>
+			<details class="workduck-queue-advanced-filters" bind:open={isAdvancedFiltersOpen}>
+				<summary
+					class="workduck-queue-filter-summary"
+					class:workduck-queue-filter-summary-active={isAdvancedFiltersOpen ||
+						activeAdvancedFilterCount > 0}
+					aria-label={activeAdvancedFilterCount > 0
+						? `${controller.messages.queue.filterMenu}, ${activeAdvancedFilterLabel}`
+						: controller.messages.queue.filterMenu}
+				>
+					<span>{controller.messages.queue.filterMenu}</span>
+					{#if activeAdvancedFilterCount > 0}
+						<span class="workduck-queue-filter-count" aria-hidden="true">
+							{activeAdvancedFilterCount}
+						</span>
+					{/if}
+				</summary>
+				<div class="workduck-queue-filter-panel" aria-label={controller.messages.queue.filters}>
+					<div class="workduck-queue-filter-panel-group">
+						<span class="workduck-queue-filter-panel-label">
+							{controller.messages.queue.readFilters}
+						</span>
+						<div class="workduck-queue-filters" aria-label={controller.messages.queue.readFilters}>
+							{#each queueReadFilterOptions as option}
+								<button
+									class="workduck-project-sync-filter-button"
+									class:workduck-project-sync-filter-button-active={controller.queueReadFilter ===
+										option.id}
+									type="button"
+									aria-pressed={controller.queueReadFilter === option.id}
+									onclick={() => (controller.queueReadFilter = option.id)}
+								>
+									{controller.getReadFilterLabel(option.id)}
+								</button>
+							{/each}
+						</div>
+					</div>
+					<div class="workduck-queue-filter-selects">
+						<label class="workduck-queue-filter-field" for="queue-kind-filter">
+							<span class="workduck-queue-filter-panel-label">
+								{controller.messages.queue.kindFilter}
+							</span>
+							<select
+								id="queue-kind-filter"
+								class="workduck-select workduck-queue-filter-select"
+								aria-label={controller.messages.queue.kindFilter}
+								value={controller.queueKindFilter}
+								onchange={(event) =>
+									(controller.queueKindFilter = event.currentTarget.value as QueueKindFilter)}
+							>
+								{#each queueKindFilterOptions as option}
+									<option value={option.id}>{controller.getKindFilterLabel(option.id)}</option>
+								{/each}
+							</select>
+						</label>
+						<label class="workduck-queue-filter-field" for="queue-priority-filter">
+							<span class="workduck-queue-filter-panel-label">
+								{controller.messages.queue.priorityFilter}
+							</span>
+							<select
+								id="queue-priority-filter"
+								class="workduck-select workduck-queue-filter-select"
+								aria-label={controller.messages.queue.priorityFilter}
+								value={controller.queuePriorityFilter}
+								onchange={(event) =>
+									(controller.queuePriorityFilter = event.currentTarget.value as QueuePriorityFilter)}
+							>
+								{#each queuePriorityFilterOptions as option}
+									<option value={option.id}>{controller.getQueuePriorityFilterLabel(option.id)}</option>
+								{/each}
+							</select>
+						</label>
+						<label class="workduck-queue-filter-field" for="queue-sort">
+							<span class="workduck-queue-filter-panel-label">
+								{controller.messages.queue.sort}
+							</span>
+							<select
+								id="queue-sort"
+								class="workduck-select workduck-queue-filter-select"
+								aria-label={controller.messages.queue.sort}
+								value={controller.queueSortOption}
+								onchange={(event) =>
+									(controller.queueSortOption = event.currentTarget.value as QueueSortOption)}
+							>
+								{#each queueSortOptions as option}
+									<option value={option.id}>{controller.getQueueSortLabel(option.id)}</option>
+								{/each}
+							</select>
+						</label>
+					</div>
+				</div>
+			</details>
 			<button
 				class="workduck-button workduck-button-secondary"
 				type="button"
@@ -56,7 +159,7 @@
 				disabled={controller.isRefreshing}
 				onclick={() => void controller.refreshQueueFiles()}
 			>
-				{controller.messages.common.refresh} (F5)
+				{controller.messages.common.refresh}
 			</button>
 		</div>
 	</header>
@@ -121,6 +224,7 @@
 					onEditTask={controller.openEditWorkOrderTaskDialog}
 					getQueuePriorityLabel={controller.getQueuePriorityLabel}
 					getQueueResponseLanguageLabel={controller.getQueueResponseLanguageLabel}
+					getQueueResponseFormatLabel={controller.getQueueResponseFormatLabel}
 					getQueueTaskKindLabel={controller.getQueueTaskKindLabel}
 					getQueueTaskProjectLabels={controller.getQueueTaskProjectLabels}
 					getQueueTaskSkillLabels={controller.getQueueTaskSkillLabels}
@@ -173,10 +277,9 @@
 		bind:manualWorkOrderBody={controller.manualWorkOrderBody}
 		bind:manualWorkOrderPriority={controller.manualWorkOrderPriority}
 		bind:manualWorkOrderResponseLanguage={controller.manualWorkOrderResponseLanguage}
+		bind:manualWorkOrderResponseFormat={controller.manualWorkOrderResponseFormat}
 		bind:manualWorkOrderKind={controller.manualWorkOrderKind}
 		bind:manualVoteCriteriaInput={controller.manualVoteCriteriaInput}
-		manualVoteOptionCount={controller.manualVoteOptionCount}
-		manualVoteOptionCountChoices={controller.manualVoteOptionCountChoices}
 		manualVoteOptions={controller.manualVoteOptions}
 		allSkills={controller.allSkills}
 		allAgents={controller.allAgents}
@@ -196,10 +299,12 @@
 		onAgentToggle={controller.toggleManualWorkOrderAgent}
 		onProjectToggle={controller.toggleManualWorkOrderProject}
 		onReferenceToggle={controller.toggleManualWorkOrderReference}
-		onVoteOptionCountChange={controller.setManualVoteOptionCount}
+		onVoteOptionAdd={controller.addManualVoteOption}
+		onVoteOptionRemove={controller.removeManualVoteOption}
 		onVoteOptionChange={controller.updateManualVoteOption}
 		getQueuePriorityLabel={controller.getQueuePriorityLabel}
 		getQueueResponseLanguageLabel={controller.getQueueResponseLanguageLabel}
+		getQueueResponseFormatLabel={controller.getQueueResponseFormatLabel}
 		getSkillDisplayName={controller.getSkillDisplayName}
 		getAgentDisplayName={controller.getAgentDisplayName}
 		getProjectDisplayName={controller.getProjectDisplayName}

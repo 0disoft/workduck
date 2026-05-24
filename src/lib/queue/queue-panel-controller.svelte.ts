@@ -69,8 +69,10 @@ import {
 	createQueueResultReportFileNameFromLabel,
 	createQueueWorkOrderFileName,
 	createQueueWorkOrderForReportEvaluation,
+	defaultQueueResponseFormat,
 	defaultQueueResponseLanguage,
 	defaultQueueWorkPriority,
+	normalizeQueueResponseFormat,
 	normalizeQueueResponseLanguage,
 	normalizeQueueTaskKind,
 	normalizeQueueWorkPriority,
@@ -83,6 +85,7 @@ import {
 	type WorkduckQueueExecutionState,
 	type WorkduckQueueResultReport,
 	type WorkduckQueueResultReportTask,
+	type WorkduckQueueResponseFormat,
 	type WorkduckQueueResponseLanguage,
 	type WorkduckQueueWorkPriority,
 	type WorkduckQueueWorkOrder,
@@ -115,22 +118,24 @@ import {
 	writeQueueReadFilePaths
 } from './queue-read-state';
 import {
-	createManualVoteOptionCountChoices,
 	createManualVoteOptions,
 	createManualVoteFieldState,
 	createManualWorkOrderKindInput as createManualWorkOrderKindInputFromFields,
 	createQueueFilesSignature,
 	createSelectionSummary,
-	normalizeManualVoteOptionCount,
 	sortReferencesForProjectSelection,
 	updateSelectedRecordIds
 } from './queue-panel-helpers';
 import {
 	getAgentDisplayName as getAgentDisplayNameFromRecord,
 	getExecutionFilterLabel as getLocalizedExecutionFilterLabel,
+	getKindFilterLabel as getLocalizedKindFilterLabel,
 	getQueueExecutionStateLabel as getLocalizedQueueExecutionStateLabel,
+	getQueuePriorityFilterLabel as getLocalizedQueuePriorityFilterLabel,
 	getQueuePriorityLabel as getLocalizedQueuePriorityLabel,
+	getQueueResponseFormatLabel as getLocalizedQueueResponseFormatLabel,
 	getQueueResponseLanguageLabel as getLocalizedQueueResponseLanguageLabel,
+	getQueueSortLabel as getLocalizedQueueSortLabel,
 	getQueueTaskKindLabel as getLocalizedQueueTaskKindLabel,
 	getProjectDisplayName as getProjectDisplayNameFromRecord,
 	getReadFilterLabel as getLocalizedReadFilterLabel,
@@ -146,22 +151,112 @@ import {
 	getQueueFolderLocalizedError as getLocalizedQueueFolderError
 } from './queue-panel-errors';
 import {
-	manualVoteOptionCountDefaults,
-	queueExecutionFilterOptions,
-	queueReadFilterOptions,
 	type AgentEvaluationDialogState,
 	type ManualVoteOptionInput,
 	type QueueCardEntry,
 	type QueueContextMenuState,
 	type QueueExecutionContext,
 	type QueueExecutionFilter,
+	type QueueKindFilter,
+	type QueuePriorityFilter,
 	type QueueReadFilter,
+	type QueueSortOption,
 	type WorkOrderDialogMode
 } from './queue-panel-types';
 
 export interface QueuePanelControllerInput {
 	readonly workspace: () => WorkspaceRecord;
 	readonly refreshSignal: () => number;
+}
+
+const queuePrioritySortRank = {
+	urgent: 4,
+	high: 3,
+	normal: 2,
+	low: 1
+} as const satisfies Record<WorkduckQueueWorkPriority, number>;
+
+function compareQueueFiles(left: QueueCardEntry, right: QueueCardEntry, sortOption: QueueSortOption) {
+	switch (sortOption) {
+		case 'created-asc':
+			return compareQueueCreatedAt(left, right, 'asc') || compareQueueTitle(left, right);
+		case 'created-desc':
+			return compareQueueCreatedAt(left, right, 'desc') || compareQueueTitle(left, right);
+		case 'priority-asc':
+			return (
+				compareQueuePriority(left, right, 'asc') ||
+				compareQueueCreatedAt(left, right, 'desc') ||
+				compareQueueTitle(left, right)
+			);
+		case 'priority-desc':
+			return (
+				compareQueuePriority(left, right, 'desc') ||
+				compareQueueCreatedAt(left, right, 'desc') ||
+				compareQueueTitle(left, right)
+			);
+	}
+}
+
+function compareQueueCreatedAt(
+	left: QueueCardEntry,
+	right: QueueCardEntry,
+	direction: 'asc' | 'desc'
+) {
+	const leftTimestamp = getQueueCreatedAtTime(left);
+	const rightTimestamp = getQueueCreatedAtTime(right);
+
+	if (leftTimestamp === 0 && rightTimestamp === 0) {
+		return 0;
+	}
+
+	if (leftTimestamp === 0) {
+		return 1;
+	}
+
+	if (rightTimestamp === 0) {
+		return -1;
+	}
+
+	return direction === 'asc'
+		? leftTimestamp - rightTimestamp
+		: rightTimestamp - leftTimestamp;
+}
+
+function compareQueuePriority(
+	left: QueueCardEntry,
+	right: QueueCardEntry,
+	direction: 'asc' | 'desc'
+) {
+	const leftRank = getQueuePrioritySortRank(left);
+	const rightRank = getQueuePrioritySortRank(right);
+
+	if (leftRank === 0 && rightRank === 0) {
+		return 0;
+	}
+
+	if (leftRank === 0) {
+		return 1;
+	}
+
+	if (rightRank === 0) {
+		return -1;
+	}
+
+	return direction === 'asc' ? leftRank - rightRank : rightRank - leftRank;
+}
+
+function compareQueueTitle(left: QueueCardEntry, right: QueueCardEntry) {
+	return left.title.localeCompare(right.title);
+}
+
+function getQueueCreatedAtTime(file: QueueCardEntry) {
+	const timestamp = Date.parse(file.createdAt);
+
+	return Number.isFinite(timestamp) ? timestamp : 0;
+}
+
+function getQueuePrioritySortRank(file: QueueCardEntry) {
+	return file.priority === null ? 0 : queuePrioritySortRank[file.priority];
 }
 
 export function createQueuePanelController(input: QueuePanelControllerInput) {
@@ -183,6 +278,9 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 	let readFilePaths = $state<readonly string[]>([]);
 	let queueExecutionFilter = $state<QueueExecutionFilter>('all');
 	let queueReadFilter = $state<QueueReadFilter>('all');
+	let queueKindFilter = $state<QueueKindFilter>('all');
+	let queuePriorityFilter = $state<QueuePriorityFilter>('all');
+	let queueSortOption = $state<QueueSortOption>('created-desc');
 	let error = $state<QueueFolderError | null>(null);
 	let parseError = $state<string | null>(null);
 	let status = $state<string | null>(null);
@@ -201,8 +299,9 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 	let manualWorkOrderPriority = $state<WorkduckQueueWorkPriority>(defaultQueueWorkPriority);
 	let manualWorkOrderResponseLanguage =
 		$state<WorkduckQueueResponseLanguage>(defaultQueueResponseLanguage);
+	let manualWorkOrderResponseFormat =
+		$state<WorkduckQueueResponseFormat>(defaultQueueResponseFormat);
 	let manualWorkOrderKind = $state<WorkduckQueueTaskKind>('instruction');
-	let manualVoteOptionCount = $state(2);
 	let manualVoteOptions = $state<readonly ManualVoteOptionInput[]>(createManualVoteOptions(2));
 	let manualVoteCriteriaInput = $state('');
 	let selectedManualSkillIds = $state<string[]>([]);
@@ -280,9 +379,6 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 	let selectedReportCanDelegateEvaluation = $derived(
 		selectedReport !== null && selectedReport.tasks.some((task) => getReportTaskAgent(task) !== null)
 	);
-	let manualVoteOptionCountChoices = $derived(
-		createManualVoteOptionCountChoices(manualVoteOptionCountDefaults, manualVoteOptionCount)
-	);
 	let manualValidVoteOptionCount = $derived(
 		manualVoteOptions.filter((option) => option.label.trim().length > 0).length
 	);
@@ -296,19 +392,27 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 				queueReadFilter === 'all' ||
 				(queueReadFilter === 'unread' && !file.isRead) ||
 				(queueReadFilter === 'read' && file.isRead);
+			const matchesKindFilter = queueKindFilter === 'all' || file.kind === queueKindFilter;
+			const matchesPriorityFilter =
+				queuePriorityFilter === 'all' || file.priority === queuePriorityFilter;
 
-			if (!matchesExecutionFilter || !matchesReadFilter) {
+			if (
+				!matchesExecutionFilter ||
+				!matchesReadFilter ||
+				!matchesKindFilter ||
+				!matchesPriorityFilter
+			) {
 				return false;
 			}
 
 			return true;
-	})
+	}).sort((left, right) => compareQueueFiles(left, right, queueSortOption))
 	);
 	let hasSelectedQueueArtifact = $derived(
 		selectedReport !== null || selectedWorkOrder !== null || selectedProposal !== null
 	);
 	let canCreateManualWorkOrder = $derived(
-			manualWorkOrderTitle.trim().length > 0 &&
+			getManualWorkOrderTitle().length > 0 &&
 			manualWorkOrderBody.trim().length > 0 &&
 			(manualWorkOrderKind !== 'vote' || manualValidVoteOptionCount >= 2) &&
 			!isWriting
@@ -376,6 +480,9 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		readFilePaths = readQueueReadFilePaths(workspace.id);
 		queueExecutionFilter = 'all';
 		queueReadFilter = 'all';
+		queueKindFilter = 'all';
+		queuePriorityFilter = 'all';
+		queueSortOption = 'created-desc';
 		skillRegistry = createEmptySkillRegistry(workspace.id);
 		agentRegistry = createEmptyAgentRegistry(workspace.id);
 		personaRegistry = createEmptyPersonaRegistry(workspace.id);
@@ -811,6 +918,7 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		manualWorkOrderBody = '';
 		manualWorkOrderPriority = defaultQueueWorkPriority;
 		manualWorkOrderResponseLanguage = getDefaultManualResponseLanguage();
+		manualWorkOrderResponseFormat = defaultQueueResponseFormat;
 		manualWorkOrderKind = 'instruction';
 		resetManualVoteFields();
 		selectedManualSkillIds = [];
@@ -834,6 +942,7 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		manualWorkOrderBody = task.body;
 		manualWorkOrderPriority = normalizeQueueWorkPriority(task.priority);
 		manualWorkOrderResponseLanguage = normalizeQueueResponseLanguage(task.responseLanguage);
+		manualWorkOrderResponseFormat = normalizeQueueResponseFormat(task.responseFormat);
 		manualWorkOrderKind = normalizeQueueTaskKind(task.kind);
 		loadManualVoteFields(task.vote);
 		selectedManualSkillIds = [...(task.skillIds ?? [])];
@@ -857,6 +966,7 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		manualWorkOrderBody = '';
 		manualWorkOrderPriority = defaultQueueWorkPriority;
 		manualWorkOrderResponseLanguage = defaultQueueResponseLanguage;
+		manualWorkOrderResponseFormat = defaultQueueResponseFormat;
 		manualWorkOrderKind = 'instruction';
 		resetManualVoteFields();
 		selectedManualSkillIds = [];
@@ -1025,7 +1135,7 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 			}
 
 			const workOrder = createManualQueueWorkOrder(
-				manualWorkOrderTitle,
+				getManualWorkOrderTitle(),
 				manualWorkOrderBody,
 				manualWorkOrderPriority,
 				createManualWorkOrderSkillIds(),
@@ -1049,6 +1159,7 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 				manualWorkOrderBody = '';
 				manualWorkOrderPriority = defaultQueueWorkPriority;
 				manualWorkOrderResponseLanguage = defaultQueueResponseLanguage;
+				manualWorkOrderResponseFormat = defaultQueueResponseFormat;
 				manualWorkOrderKind = 'instruction';
 				resetManualVoteFields();
 				selectedManualSkillIds = [];
@@ -1075,7 +1186,7 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 	}
 
 		const nextWorkOrder = updateQueueWorkOrderTask(selectedWorkOrder, editingWorkOrderTaskId, {
-			title: manualWorkOrderTitle,
+			title: getManualWorkOrderTitle(),
 			body: manualWorkOrderBody,
 			priority: manualWorkOrderPriority,
 			projectIds: createManualWorkOrderProjectIds(),
@@ -1099,6 +1210,7 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 			manualWorkOrderBody = '';
 			manualWorkOrderPriority = defaultQueueWorkPriority;
 			manualWorkOrderResponseLanguage = defaultQueueResponseLanguage;
+			manualWorkOrderResponseFormat = defaultQueueResponseFormat;
 			manualWorkOrderKind = 'instruction';
 			resetManualVoteFields();
 			selectedManualSkillIds = [];
@@ -1182,6 +1294,10 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		return getLocalizedReadFilterLabel(messages, filter);
 }
 
+	function getKindFilterLabel(filter: QueueKindFilter) {
+		return getLocalizedKindFilterLabel(messages, filter);
+}
+
 	function getQueueExecutionStateLabel(executionState: WorkduckQueueExecutionState | null) {
 		return getLocalizedQueueExecutionStateLabel(messages, executionState);
 }
@@ -1190,8 +1306,20 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		return getLocalizedQueuePriorityLabel(messages, priority);
 }
 
+	function getQueuePriorityFilterLabel(filter: QueuePriorityFilter) {
+		return getLocalizedQueuePriorityFilterLabel(messages, filter);
+}
+
+	function getQueueSortLabel(sortOption: QueueSortOption) {
+		return getLocalizedQueueSortLabel(messages, sortOption);
+}
+
 	function getQueueResponseLanguageLabel(language: WorkduckQueueResponseLanguage) {
 		return getLocalizedQueueResponseLanguageLabel(messages, language);
+}
+
+	function getQueueResponseFormatLabel(format: WorkduckQueueResponseFormat) {
+		return getLocalizedQueueResponseFormatLabel(messages, format);
 }
 
 	function getDefaultManualResponseLanguage(): WorkduckQueueResponseLanguage {
@@ -1269,7 +1397,6 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 	function resetManualVoteFields() {
 		const nextFields = createManualVoteFieldState(undefined);
 
-		manualVoteOptionCount = nextFields.optionCount;
 		manualVoteOptions = nextFields.options;
 		manualVoteCriteriaInput = nextFields.criteriaInput;
 }
@@ -1277,16 +1404,28 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 	function loadManualVoteFields(vote: WorkduckQueueVoteSpec | undefined) {
 		const nextFields = createManualVoteFieldState(vote);
 
-		manualVoteOptionCount = nextFields.optionCount;
 		manualVoteOptions = nextFields.options;
 		manualVoteCriteriaInput = nextFields.criteriaInput;
 }
 
-	function setManualVoteOptionCount(value: string) {
-		const nextCount = normalizeManualVoteOptionCount(value);
+	function addManualVoteOption() {
+		if (manualVoteOptions.length >= 50) {
+			return;
+	}
 
-		manualVoteOptionCount = nextCount;
-		manualVoteOptions = createManualVoteOptions(nextCount, manualVoteOptions);
+		manualVoteOptions = createManualVoteOptions(manualVoteOptions.length + 1, manualVoteOptions);
+}
+
+	function removeManualVoteOption(index: number) {
+		if (manualVoteOptions.length <= 2) {
+			return;
+	}
+
+		const nextOptions = manualVoteOptions
+			.filter((_, optionIndex) => optionIndex !== index)
+			.map(({ id, label, description }) => ({ id, label, description }));
+
+		manualVoteOptions = createManualVoteOptions(nextOptions.length, nextOptions);
 }
 
 	function updateManualVoteOption(
@@ -1299,10 +1438,32 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		);
 }
 
+	function getManualWorkOrderTitle() {
+		const explicitTitle = manualWorkOrderTitle.trim();
+
+		if (manualWorkOrderKind !== 'direct-message') {
+			return explicitTitle;
+	}
+
+		const firstLine = manualWorkOrderBody
+			.split(/\r?\n/u)
+			.map((line) => line.trim().replace(/\s+/g, ' '))
+			.find((line) => line.length > 0);
+
+		if (firstLine === undefined) {
+			return '';
+	}
+
+		const summary = firstLine.length <= 48 ? firstLine : `${firstLine.slice(0, 45).trimEnd()}...`;
+
+		return `${messages.queue.workTypes.directMessage}: ${summary}`;
+}
+
 	function createManualWorkOrderKindInput() {
 		return createManualWorkOrderKindInputFromFields({
 			kind: manualWorkOrderKind,
 			responseLanguage: manualWorkOrderResponseLanguage,
+			responseFormat: manualWorkOrderResponseFormat,
 			body: manualWorkOrderBody,
 			voteOptions: manualVoteOptions,
 			voteCriteriaInput: manualVoteCriteriaInput
@@ -1475,6 +1636,12 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		set queueExecutionFilter(value: QueueExecutionFilter) { queueExecutionFilter = value; },
 		get queueReadFilter() { return queueReadFilter; },
 		set queueReadFilter(value: QueueReadFilter) { queueReadFilter = value; },
+		get queueKindFilter() { return queueKindFilter; },
+		set queueKindFilter(value: QueueKindFilter) { queueKindFilter = value; },
+		get queuePriorityFilter() { return queuePriorityFilter; },
+		set queuePriorityFilter(value: QueuePriorityFilter) { queuePriorityFilter = value; },
+		get queueSortOption() { return queueSortOption; },
+		set queueSortOption(value: QueueSortOption) { queueSortOption = value; },
 		get error() { return error; },
 		get parseError() { return parseError; },
 		get status() { return status; },
@@ -1497,10 +1664,10 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		set manualWorkOrderPriority(value: WorkduckQueueWorkPriority) { manualWorkOrderPriority = value; },
 		get manualWorkOrderResponseLanguage() { return manualWorkOrderResponseLanguage; },
 		set manualWorkOrderResponseLanguage(value: WorkduckQueueResponseLanguage) { manualWorkOrderResponseLanguage = value; },
+		get manualWorkOrderResponseFormat() { return manualWorkOrderResponseFormat; },
+		set manualWorkOrderResponseFormat(value: WorkduckQueueResponseFormat) { manualWorkOrderResponseFormat = value; },
 		get manualWorkOrderKind() { return manualWorkOrderKind; },
 		set manualWorkOrderKind(value: WorkduckQueueTaskKind) { manualWorkOrderKind = value; },
-		get manualVoteOptionCount() { return manualVoteOptionCount; },
-		get manualVoteOptionCountChoices() { return manualVoteOptionCountChoices; },
 		get manualVoteOptions() { return manualVoteOptions; },
 		get manualVoteCriteriaInput() { return manualVoteCriteriaInput; },
 		set manualVoteCriteriaInput(value: string) { manualVoteCriteriaInput = value; },
@@ -1539,6 +1706,10 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		getQueueCardClass,
 		isSelectedQueueFile,
 		getQueuePriorityLabel,
+		getKindFilterLabel,
+		getQueuePriorityFilterLabel,
+		getQueueSortLabel,
+		getQueueResponseFormatLabel,
 		getQueueExecutionStateLabel,
 		getQueueFolderLocalizedError,
 		handleDelegateReportEvaluation,
@@ -1566,7 +1737,8 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		toggleManualWorkOrderAgent,
 		toggleManualWorkOrderProject,
 		toggleManualWorkOrderReference,
-		setManualVoteOptionCount,
+		addManualVoteOption,
+		removeManualVoteOption,
 		updateManualVoteOption,
 		getSkillDisplayName,
 		getAgentDisplayName,

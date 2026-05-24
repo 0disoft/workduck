@@ -351,7 +351,7 @@ export function getQueueFolderErrorMessage(error: QueueFolderError) {
 		case 'queue-folder-file-already-exists':
 			return 'Queue file already exists.';
 		case 'queue-folder-evaluation-delegation-already-exists':
-			return 'A rating delegation work order already exists for this report.';
+			return 'An evaluation delegation work order already exists for this report.';
 		case 'queue-folder-unavailable':
 			return 'Queue folders are available in the desktop app.';
 	}

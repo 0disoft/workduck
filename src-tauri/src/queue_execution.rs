@@ -96,6 +96,8 @@ pub struct QueueWorkOrderTask {
     #[serde(default)]
     pub response_language: Option<String>,
     #[serde(default)]
+    pub response_format: Option<String>,
+    #[serde(default)]
     pub project_ids: Vec<String>,
     #[serde(default)]
     pub agent_ids: Vec<String>,
@@ -394,6 +396,8 @@ pub struct QueueResultReportTask {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub response_language: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub response_format: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub vote: Option<QueueVoteResult>,
 }
 
@@ -625,36 +629,196 @@ fn create_work_order_user_prompt_blocks(
         }
     } else {
         blocks.push(String::new());
-        blocks.push(create_work_order_response_format_prompt(language));
+        blocks.push(create_work_order_response_format_prompt(task, language));
     }
 
     blocks
 }
 
-fn create_work_order_response_format_prompt(language: QueueReportLanguage) -> String {
+fn create_work_order_response_format_prompt(
+    task: &QueueWorkOrderTask,
+    language: QueueReportLanguage,
+) -> String {
+    let response_format = normalize_response_format(task.response_format.as_deref());
+
     match language {
-        QueueReportLanguage::Ko => [
-            "응답 형식:",
-            "마크다운이나 설명 문장을 붙이지 말고 JSON 객체 하나만 반환하세요.",
-            r#"{"summary":"핵심 결론 한 문장","strengths":["장점 또는 판단 근거"],"recommendations":["제안 또는 다음 행동"],"cautions":["주의점, 리스크, 확인할 항목"]}"#,
-            "규칙:",
-            "- summary는 비워두지 마세요.",
-            "- strengths, recommendations, cautions는 각각 1~5개의 짧은 항목으로 작성하세요.",
-            "- 해당 항목이 없으면 빈 배열을 사용하세요.",
-            "- 사용자가 요청한 응답 언어를 유지하세요.",
-        ]
-        .join("\n"),
-        QueueReportLanguage::En => [
-            "Response format:",
-            "Return exactly one JSON object. Do not wrap it in Markdown or add prose outside it.",
-            r#"{"summary":"One-sentence conclusion","strengths":["Strength or supporting reason"],"recommendations":["Recommendation or next action"],"cautions":["Risk, assumption, or check"]}"#,
-            "Rules:",
-            "- Keep summary non-empty.",
-            "- Keep strengths, recommendations, and cautions to 1-5 short items each.",
-            "- Use an empty array when a section has no items.",
-            "- Use the requested response language.",
-        ]
-        .join("\n"),
+        QueueReportLanguage::Ko => {
+            let (format_label, strengths_label, recommendations_label, cautions_label) =
+                response_format_labels_ko(response_format);
+
+            [
+                "응답 형식:".to_string(),
+                format!("형식: {format_label}"),
+                "마크다운이나 설명 문장을 붙이지 말고 JSON 객체 하나만 반환하세요.".to_string(),
+                format!(
+                    r#"{{"summary":"핵심 결론 한 문장","strengths":["{strengths_label}"],"recommendations":["{recommendations_label}"],"cautions":["{cautions_label}"]}}"#
+                ),
+                "규칙:".to_string(),
+                "- summary는 비워두지 마세요.".to_string(),
+                "- strengths, recommendations, cautions는 각각 1~5개의 짧은 항목으로 작성하세요."
+                    .to_string(),
+                "- 해당 항목이 없으면 빈 배열을 사용하세요.".to_string(),
+                "- 사용자가 요청한 응답 언어를 유지하세요.".to_string(),
+            ]
+            .join("\n")
+        }
+        QueueReportLanguage::En => {
+            let (format_label, strengths_label, recommendations_label, cautions_label) =
+                response_format_labels_en(response_format);
+
+            [
+                "Response format:".to_string(),
+                format!("Format: {format_label}"),
+                "Return exactly one JSON object. Do not wrap it in Markdown or add prose outside it."
+                    .to_string(),
+                format!(
+                    r#"{{"summary":"One-sentence conclusion","strengths":["{strengths_label}"],"recommendations":["{recommendations_label}"],"cautions":["{cautions_label}"]}}"#
+                ),
+                "Rules:".to_string(),
+                "- Keep summary non-empty.".to_string(),
+                "- Keep strengths, recommendations, and cautions to 1-5 short items each."
+                    .to_string(),
+                "- Use an empty array when a section has no items.".to_string(),
+                "- Use the requested response language.".to_string(),
+            ]
+            .join("\n")
+        }
+    }
+}
+
+fn normalize_response_format(value: Option<&str>) -> &'static str {
+    match value {
+        Some("pros-cons") => "pros-cons",
+        Some("feature-proposal") => "feature-proposal",
+        Some("execution-plan") => "execution-plan",
+        Some("code-review") => "code-review",
+        Some("risk-assessment") => "risk-assessment",
+        Some("comparison-table") => "comparison-table",
+        Some("decision-memo") => "decision-memo",
+        Some("bug-analysis") => "bug-analysis",
+        _ => "general",
+    }
+}
+
+fn response_format_labels_ko(
+    format: &str,
+) -> (&'static str, &'static str, &'static str, &'static str) {
+    match format {
+        "pros-cons" => (
+            "장단점 분석",
+            "장점 또는 찬성 근거",
+            "판단 또는 권고",
+            "단점 또는 반대 근거",
+        ),
+        "feature-proposal" => (
+            "기능 제안",
+            "기능 가치 또는 근거",
+            "도입할 기능",
+            "주의점 또는 제외할 범위",
+        ),
+        "execution-plan" => (
+            "실행 계획",
+            "성공 조건 또는 전제",
+            "실행 단계",
+            "위험 또는 확인할 항목",
+        ),
+        "code-review" => (
+            "코드 리뷰",
+            "좋은 점 또는 유지할 부분",
+            "수정 제안",
+            "문제점 또는 회귀 위험",
+        ),
+        "risk-assessment" => (
+            "리스크 평가",
+            "완화 요인 또는 안전한 조건",
+            "대응 조치",
+            "주요 위험 또는 실패 조건",
+        ),
+        "comparison-table" => (
+            "비교표",
+            "비교 기준",
+            "비교 결과 또는 선택안",
+            "결정 변수 또는 주의점",
+        ),
+        "decision-memo" => (
+            "의사결정 메모",
+            "결정 근거",
+            "결정 사항 또는 다음 행동",
+            "후속 확인 또는 되돌릴 조건",
+        ),
+        "bug-analysis" => (
+            "버그 분석",
+            "확인된 사실",
+            "수정 방향",
+            "재현 조건 또는 회귀 위험",
+        ),
+        _ => (
+            "일반 보고",
+            "장점 또는 판단 근거",
+            "제안 또는 다음 행동",
+            "주의점, 리스크, 확인할 항목",
+        ),
+    }
+}
+
+fn response_format_labels_en(
+    format: &str,
+) -> (&'static str, &'static str, &'static str, &'static str) {
+    match format {
+        "pros-cons" => (
+            "Pros and cons",
+            "Pro or supporting reason",
+            "Decision or recommendation",
+            "Con or opposing reason",
+        ),
+        "feature-proposal" => (
+            "Feature proposal",
+            "Feature value or rationale",
+            "Feature to add",
+            "Caution or non-goal",
+        ),
+        "execution-plan" => (
+            "Execution plan",
+            "Success condition or assumption",
+            "Execution step",
+            "Risk or check",
+        ),
+        "code-review" => (
+            "Code review",
+            "Positive or safe area",
+            "Fix recommendation",
+            "Issue or regression risk",
+        ),
+        "risk-assessment" => (
+            "Risk assessment",
+            "Mitigation or safe condition",
+            "Response action",
+            "Key risk or failure condition",
+        ),
+        "comparison-table" => (
+            "Comparison table",
+            "Comparison criterion",
+            "Comparison result or option",
+            "Decision factor or caution",
+        ),
+        "decision-memo" => (
+            "Decision memo",
+            "Decision rationale",
+            "Decision item or next action",
+            "Follow-up check or reversal condition",
+        ),
+        "bug-analysis" => (
+            "Bug analysis",
+            "Confirmed fact",
+            "Fix direction",
+            "Reproduction condition or regression risk",
+        ),
+        _ => (
+            "General report",
+            "Strength or supporting reason",
+            "Recommendation or next action",
+            "Risk, assumption, or check",
+        ),
     }
 }
 
@@ -1015,6 +1179,7 @@ fn create_result_report_task(
                 risks: vec![response_excluded_risk(language).to_string()],
                 execution_attempts: execution_attempts.clone(),
                 response_language: task.response_language.clone(),
+                response_format: task.response_format.clone(),
                 vote: None,
             }
         }
@@ -1084,6 +1249,7 @@ fn create_success_report_task(
         risks,
         execution_attempts: output.execution_attempts.clone(),
         response_language: output.task.response_language.clone(),
+        response_format: output.task.response_format.clone(),
         vote,
     }
 }
@@ -1547,6 +1713,7 @@ Final answer:
             body: "플랫폼 대안을 검토해줘".to_string(),
             priority: Some("normal".to_string()),
             response_language: Some("ko".to_string()),
+            response_format: Some("pros-cons".to_string()),
             project_ids: Vec::new(),
             agent_ids: Vec::new(),
             skill_ids: Vec::new(),
@@ -1559,10 +1726,36 @@ Final answer:
                 .join("\n");
 
         assert!(prompt.contains("응답 형식:"));
+        assert!(prompt.contains("형식: 장단점 분석"));
         assert!(prompt.contains(r#""summary""#));
         assert!(prompt.contains(r#""strengths""#));
         assert!(prompt.contains(r#""recommendations""#));
         assert!(prompt.contains(r#""cautions""#));
+    }
+
+    #[test]
+    fn work_order_prompt_accepts_bug_analysis_response_format() {
+        let task = QueueWorkOrderTask {
+            id: "task_1".to_string(),
+            kind: None,
+            title: "버그 분석".to_string(),
+            body: "오류 원인을 분석해줘".to_string(),
+            priority: Some("normal".to_string()),
+            response_language: Some("ko".to_string()),
+            response_format: Some("bug-analysis".to_string()),
+            project_ids: Vec::new(),
+            agent_ids: Vec::new(),
+            skill_ids: Vec::new(),
+            reference_ids: Vec::new(),
+            vote: None,
+        };
+
+        let prompt =
+            create_work_order_user_prompt_blocks(&task, queue_prompt_labels(QueueReportLanguage::Ko))
+                .join("\n");
+
+        assert!(prompt.contains("형식: 버그 분석"));
+        assert!(prompt.contains("재현 조건 또는 회귀 위험"));
     }
 
     #[test]
@@ -1591,6 +1784,7 @@ Here is my answer:
             body: "하나를 골라줘".to_string(),
             priority: Some("normal".to_string()),
             response_language: Some("ko".to_string()),
+            response_format: Some("general".to_string()),
             project_ids: Vec::new(),
             agent_ids: Vec::new(),
             skill_ids: Vec::new(),
