@@ -220,7 +220,9 @@
 					messages={controller.messages}
 					isWriting={controller.isWriting}
 					canExecute={controller.canExecuteSelectedWorkOrder}
+					canComplete={controller.canCompleteSelectedWorkOrder}
 					onExecute={controller.handleExecuteWorkOrder}
+					onComplete={controller.handleCompleteWorkOrder}
 					onEditTask={controller.openEditWorkOrderTaskDialog}
 					getQueuePriorityLabel={controller.getQueuePriorityLabel}
 					getQueueResponseLanguageLabel={controller.getQueueResponseLanguageLabel}

@@ -423,6 +423,9 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 			selectedWorkOrder.tasks.some((task) => (task.agentIds ?? []).length > 0) &&
 			!isWriting
 	);
+	let canCompleteSelectedWorkOrder = $derived(
+		selectedWorkOrder !== null && selectedWorkOrder.status !== 'archived' && !isWriting
+	);
 	let workOrderDialogTitle = $derived(
 		workOrderDialogMode === 'create' ? messages.queue.newWork : messages.queue.editWork
 	);
@@ -1286,6 +1289,40 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 	}
 }
 
+	async function handleCompleteWorkOrder() {
+		if (
+			selectedWorkOrder === null ||
+			selectedWorkOrderPath === null ||
+			!canCompleteSelectedWorkOrder
+		) {
+			return;
+	}
+
+		isWriting = true;
+		error = null;
+		parseError = null;
+
+		try {
+			const archivedWorkOrder = archiveQueueWorkOrder(selectedWorkOrder);
+			const archiveResult = await updateQueueWorkOrderFile(
+				workspace.path,
+				selectedWorkOrderPath,
+				serializeQueueArtifact(archivedWorkOrder)
+			);
+
+			if (!archiveResult.ok) {
+				error = archiveResult.error;
+				return;
+		}
+
+			selectedWorkOrder = archivedWorkOrder;
+			status = messages.queue.completedFile.replace('{relativePath}', archiveResult.relativePath);
+			await refreshQueueFiles({ silent: true });
+	} finally {
+			isWriting = false;
+	}
+}
+
 	function getExecutionFilterLabel(filter: QueueExecutionFilter) {
 		return getLocalizedExecutionFilterLabel(messages, filter);
 }
@@ -1691,6 +1728,7 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		get hasSelectedQueueArtifact() { return hasSelectedQueueArtifact; },
 		get canCreateManualWorkOrder() { return canCreateManualWorkOrder; },
 		get canExecuteSelectedWorkOrder() { return canExecuteSelectedWorkOrder; },
+		get canCompleteSelectedWorkOrder() { return canCompleteSelectedWorkOrder; },
 		get workOrderDialogTitle() { return workOrderDialogTitle; },
 		get workOrderDialogSubmitLabel() { return workOrderDialogSubmitLabel; },
 		get manualWorkOrderSkillSummary() { return manualWorkOrderSkillSummary; },
@@ -1720,6 +1758,7 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		getReportTaskAgent,
 		getReviewDecisionLabel,
 		handleExecuteWorkOrder,
+		handleCompleteWorkOrder,
 		openEditWorkOrderTaskDialog,
 		getQueueResponseLanguageLabel,
 		getQueueTaskKindLabel,

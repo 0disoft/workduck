@@ -21,7 +21,9 @@
 		readonly messages: WorkduckMessages;
 		readonly isWriting: boolean;
 		readonly canExecute: boolean;
+		readonly canComplete: boolean;
 		readonly onExecute: () => Promise<void>;
+		readonly onComplete: () => Promise<void>;
 		readonly onEditTask: (task: WorkduckQueueWorkOrderTask) => void;
 		readonly getQueuePriorityLabel: (priority: WorkduckQueueWorkPriority) => string;
 		readonly getQueueResponseLanguageLabel: (language: WorkduckQueueResponseLanguage) => string;
@@ -38,7 +40,9 @@
 		messages,
 		isWriting,
 		canExecute,
+		canComplete,
 		onExecute,
+		onComplete,
 		onEditTask,
 		getQueuePriorityLabel,
 		getQueueResponseLanguageLabel,
@@ -57,14 +61,24 @@
 			<strong>{workOrder.ref.label}</strong>
 			<span>{messages.queue.workOrderId}: {workOrder.ref.id}</span>
 		</div>
-		<button
-			class="workduck-button workduck-button-primary"
-			type="button"
-			disabled={!canExecute}
-			onclick={() => void onExecute()}
-		>
-			{isWriting ? messages.queue.executing : messages.queue.executeWorkOrder}
-		</button>
+		<div class="workduck-queue-file-actions">
+			<button
+				class="workduck-button workduck-button-secondary"
+				type="button"
+				disabled={!canComplete}
+				onclick={() => void onComplete()}
+			>
+				{messages.queue.completeWorkOrder}
+			</button>
+			<button
+				class="workduck-button workduck-button-primary"
+				type="button"
+				disabled={!canExecute}
+				onclick={() => void onExecute()}
+			>
+				{isWriting ? messages.queue.executing : messages.queue.executeWorkOrder}
+			</button>
+		</div>
 	</div>
 
 	<div class="workduck-queue-review-tasks">

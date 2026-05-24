@@ -255,6 +255,7 @@ export const koMessages = {
 		delegateEvaluation: '평가 위임',
 		creating: '만드는 중',
 		executeWorkOrder: '실행',
+		completeWorkOrder: '완료 처리',
 		executing: '실행 중',
 		noFollowUpSelected: '후속 작업이 선택되지 않았습니다.',
 		noEvaluationTargets: '평가할 응답이 없습니다.',
@@ -264,6 +265,7 @@ export const koMessages = {
 		updatedFile: '{relativePath} 파일을 수정했습니다.',
 		deletedFile: '{relativePath} 파일을 삭제했습니다.',
 		executedFile: '{relativePath} 보고서를 만들고 작업을 완료했습니다.',
+		completedFile: '{relativePath} 작업을 완료 처리했습니다.',
 		nextWorkOrders: '다음 작업 지시서',
 		priorities: {
 			low: '낮음',

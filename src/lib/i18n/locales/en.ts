@@ -253,6 +253,7 @@ export const enMessages = {
 		delegateEvaluation: 'Delegate evaluation',
 		creating: 'Creating',
 		executeWorkOrder: 'Run',
+		completeWorkOrder: 'Mark complete',
 		executing: 'Running',
 		noFollowUpSelected: 'No follow-up selected.',
 		noEvaluationTargets: 'No responses to evaluate.',
@@ -262,6 +263,7 @@ export const enMessages = {
 		updatedFile: 'Updated {relativePath}.',
 		deletedFile: 'Deleted {relativePath}.',
 		executedFile: 'Created {relativePath} and completed the work order.',
+		completedFile: 'Completed {relativePath}.',
 		nextWorkOrders: 'Next work orders',
 		priorities: {
 			low: 'Low',
