@@ -1,14 +1,14 @@
 # Releasing Workduck
 
 Workduck releases are built by GitHub Actions when a semantic version tag is pushed.
-The release workflow currently builds a Windows installer and uploads it to a draft
-GitHub Release.
+The release workflow currently builds one Windows setup executable and uploads it
+to a draft GitHub Release.
 
 ## Optional Signing Secrets
 
-The workflow can publish unsigned Windows installers without paid signing setup. If
-Windows signing secrets are configured, the same workflow signs the installer before
-uploading it.
+The workflow can publish an unsigned Windows setup executable without paid signing
+setup. If Windows signing secrets are configured, the same workflow signs the
+installer before uploading it.
 
 Add these repository secrets only when a Windows code-signing certificate is available:
 
@@ -43,7 +43,8 @@ git push origin v1.3.9
 
 The workflow rejects a release if the tag does not match both version files. The
 GitHub Release is created as a draft so the installer can be checked before
-publishing. Without signing secrets, Windows may show a SmartScreen warning when the
+publishing. Use the `Workduck_<version>_x64-setup.exe` asset as the primary
+download. Without signing secrets, Windows may show a SmartScreen warning when the
 installer is downloaded from a browser.
 
 ## Current Scope
