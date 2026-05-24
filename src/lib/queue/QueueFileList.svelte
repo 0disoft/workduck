@@ -1,11 +1,7 @@
 <script lang="ts">
 	import type { WorkduckMessages } from '$lib/i18n/workduck-message-contract';
-	import type { QueueFileEntry } from './queue-folder';
 	import type { QueueCardEntry } from './queue-panel-types';
-	import type {
-		WorkduckQueueExecutionState,
-		WorkduckQueueWorkPriority
-	} from './queue-artifacts';
+	import type { WorkduckQueueExecutionState } from './queue-artifacts';
 
 	interface Props {
 		readonly files: readonly QueueCardEntry[];
@@ -17,8 +13,6 @@
 		readonly onCardContextMenu: (event: MouseEvent, file: QueueCardEntry) => void;
 		readonly getQueueCardClass: (file: QueueCardEntry) => string;
 		readonly isSelectedQueueFile: (file: QueueCardEntry) => boolean;
-		readonly getFileKindLabel: (kind: QueueFileEntry['kind']) => string;
-		readonly getQueuePriorityLabel: (priority: WorkduckQueueWorkPriority) => string;
 		readonly getQueueExecutionStateLabel: (
 			executionState: WorkduckQueueExecutionState | null
 		) => string;
@@ -34,8 +28,6 @@
 		onCardContextMenu,
 		getQueueCardClass,
 		isSelectedQueueFile,
-		getFileKindLabel,
-		getQueuePriorityLabel,
 		getQueueExecutionStateLabel
 	}: Props = $props();
 </script>
@@ -64,16 +56,6 @@
 			>
 				<div class="workduck-queue-file-details">
 					<strong>{file.title}</strong>
-					<span>{getFileKindLabel(file.kind)}</span>
-					{#if file.kind === 'work-order' && file.artifactId.length > 0}
-						<span>{messages.queue.workOrderId}: {file.artifactId}</span>
-					{/if}
-					{#if file.agentName.length > 0}
-						<span>{file.agentName}</span>
-					{/if}
-					{#if file.priority !== null}
-						<span>{getQueuePriorityLabel(file.priority)}</span>
-					{/if}
 				</div>
 				<div class="workduck-queue-card-badges">
 					<span

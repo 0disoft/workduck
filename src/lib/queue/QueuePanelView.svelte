@@ -83,8 +83,6 @@
 			onCardContextMenu={controller.openQueueContextMenu}
 			getQueueCardClass={controller.getQueueCardClass}
 			isSelectedQueueFile={controller.isSelectedQueueFile}
-			getFileKindLabel={controller.getFileKindLabel}
-			getQueuePriorityLabel={controller.getQueuePriorityLabel}
 			getQueueExecutionStateLabel={controller.getQueueExecutionStateLabel}
 		/>
 

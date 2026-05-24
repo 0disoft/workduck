@@ -128,7 +128,6 @@ import {
 import {
 	getAgentDisplayName as getAgentDisplayNameFromRecord,
 	getExecutionFilterLabel as getLocalizedExecutionFilterLabel,
-	getFileKindLabel as getLocalizedFileKindLabel,
 	getQueueExecutionStateLabel as getLocalizedQueueExecutionStateLabel,
 	getQueuePriorityLabel as getLocalizedQueuePriorityLabel,
 	getQueueResponseLanguageLabel as getLocalizedQueueResponseLanguageLabel,
@@ -1175,10 +1174,6 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 	}
 }
 
-	function getFileKindLabel(kind: QueueFileEntry['kind']) {
-		return getLocalizedFileKindLabel(messages, kind);
-}
-
 	function getExecutionFilterLabel(filter: QueueExecutionFilter) {
 		return getLocalizedExecutionFilterLabel(messages, filter);
 }
@@ -1543,7 +1538,6 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		openQueueContextMenu,
 		getQueueCardClass,
 		isSelectedQueueFile,
-		getFileKindLabel,
 		getQueuePriorityLabel,
 		getQueueExecutionStateLabel,
 		getQueueFolderLocalizedError,
