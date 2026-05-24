@@ -1,0 +1,153 @@
+name: release
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag to create or update, for example v1.3.9."
+        required: true
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  windows:
+    name: Windows installer
+    runs-on: windows-latest
+
+    env:
+      WINDOWS_CERTIFICATE_BASE64: ${{ secrets.WINDOWS_CERTIFICATE_BASE64 }}
+      WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
+      WINDOWS_TIMESTAMP_URL: ${{ secrets.WINDOWS_TIMESTAMP_URL }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Resolve release tag
+        id: release
+        shell: pwsh
+        run: |
+          $tag = if ("${{ github.event_name }}" -eq "workflow_dispatch") {
+            "${{ inputs.tag }}".Trim()
+          } else {
+            "${{ github.ref_name }}".Trim()
+          }
+
+          if ($tag -notmatch '^v\d+\.\d+\.\d+([-+][0-9A-Za-z.-]+)?$') {
+            throw "Release tag must be a semantic version tag such as v1.3.9. Received: $tag"
+          }
+
+          $package = Get-Content -Raw -LiteralPath package.json | ConvertFrom-Json
+          $expectedVersion = $tag -replace '^v', ''
+          if ($package.version -ne $expectedVersion) {
+            throw "package.json version $($package.version) does not match release tag $tag."
+          }
+
+          $cargoToml = Get-Content -Raw -LiteralPath src-tauri/Cargo.toml
+          if ($cargoToml -notmatch "(?m)^version\s*=\s*`"$([regex]::Escape($expectedVersion))`"") {
+            throw "src-tauri/Cargo.toml version does not match release tag $tag."
+          }
+
+          "tag=$tag" >> $env:GITHUB_OUTPUT
+
+      - name: Resolve signing mode
+        id: signing
+        shell: pwsh
+        run: |
+          $hasCertificate = -not [string]::IsNullOrWhiteSpace($env:WINDOWS_CERTIFICATE_BASE64)
+          $hasPassword = -not [string]::IsNullOrWhiteSpace($env:WINDOWS_CERTIFICATE_PASSWORD)
+
+          if ($hasCertificate -xor $hasPassword) {
+            throw "Set both WINDOWS_CERTIFICATE_BASE64 and WINDOWS_CERTIFICATE_PASSWORD, or leave both empty for an unsigned release."
+          }
+
+          if ($hasCertificate -and $hasPassword) {
+            "enabled=true" >> $env:GITHUB_OUTPUT
+            "Windows code signing is enabled for this release."
+          } else {
+            "enabled=false" >> $env:GITHUB_OUTPUT
+            "Windows code signing secrets are not configured. Building an unsigned installer."
+          }
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install frontend dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Check TypeScript and Svelte
+        run: bun run check
+
+      - name: Test Rust crate
+        run: cargo test --manifest-path src-tauri/Cargo.toml
+
+      - name: Import Windows signing certificate
+        if: steps.signing.outputs.enabled == 'true'
+        id: import_windows_cert
+        shell: pwsh
+        run: |
+          $certPath = Join-Path $env:RUNNER_TEMP "workduck-code-signing.pfx"
+          $certBytes = [Convert]::FromBase64String($env:WINDOWS_CERTIFICATE_BASE64)
+          [IO.File]::WriteAllBytes($certPath, $certBytes)
+
+          $password = ConvertTo-SecureString -String $env:WINDOWS_CERTIFICATE_PASSWORD -AsPlainText -Force
+          $cert = Import-PfxCertificate `
+            -FilePath $certPath `
+            -CertStoreLocation Cert:\CurrentUser\My `
+            -Password $password
+
+          if ($null -eq $cert -or [string]::IsNullOrWhiteSpace($cert.Thumbprint)) {
+            throw "Windows signing certificate import failed."
+          }
+
+          "thumbprint=$($cert.Thumbprint)" >> $env:GITHUB_OUTPUT
+
+      - name: Prepare Tauri signing config
+        if: steps.signing.outputs.enabled == 'true'
+        id: signing_config
+        shell: pwsh
+        run: |
+          $timestampUrl = if ([string]::IsNullOrWhiteSpace($env:WINDOWS_TIMESTAMP_URL)) {
+            "http://timestamp.digicert.com"
+          } else {
+            $env:WINDOWS_TIMESTAMP_URL.Trim()
+          }
+
+          $signingConfig = [ordered]@{
+            bundle = [ordered]@{
+              windows = [ordered]@{
+                certificateThumbprint = "${{ steps.import_windows_cert.outputs.thumbprint }}"
+                digestAlgorithm = "sha256"
+                timestampUrl = $timestampUrl
+              }
+            }
+          }
+
+          $configPath = "src-tauri/tauri.release.signing.conf.json"
+          $signingConfig | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $configPath -Encoding utf8
+          "args=--config $configPath" >> $env:GITHUB_OUTPUT
+
+      - name: Build and upload release
+        uses: tauri-apps/tauri-action@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tagName: ${{ steps.release.outputs.tag }}
+          releaseName: Workduck ${{ steps.release.outputs.tag }}
+          releaseBody: "Windows installer build. Installers are unsigned unless the release workflow reports that Windows code signing was enabled."
+          releaseDraft: true
+          prerelease: false
+          generateReleaseNotes: true
+          args: ${{ steps.signing_config.outputs.args }}
