@@ -29,6 +29,11 @@
 	import { subscribeQueueFilesChanged } from '$lib/queue/queue-read-state';
 	import { syncWorkduckTrayIconEnabled } from '$lib/system/tray';
 	import {
+		checkForWorkduckUpdate,
+		installPendingWorkduckUpdate,
+		type WorkduckAvailableUpdate
+	} from '$lib/system/app-updater';
+	import {
 		createEmptyWorkspaceRegistry,
 		getActiveWorkspace,
 		switchWorkspace,
@@ -51,6 +56,7 @@
 	import WorkduckMark from '$lib/brand/WorkduckMark.svelte';
 
 	import {
+		startAppOperation,
 		subscribeAppOperation,
 		type WorkduckAppOperation
 	} from './app-operation';
@@ -105,6 +111,9 @@
 	let workspaceRegistry = $state<WorkspaceRegistry>(createEmptyWorkspaceRegistry());
 	let appearanceSettings = $state<AppearanceSettings>(createDefaultAppearanceSettings());
 	let activeAppOperation = $state<WorkduckAppOperation | null>(null);
+	let availableWorkduckUpdate = $state<WorkduckAvailableUpdate | null>(null);
+	let updateInstallError = $state<string | null>(null);
+	let isUpdateInstalling = $state(false);
 	let isWorkspaceMenuOpen = $state(false);
 	let workspaceUnlockId = $state<string | null>(null);
 	let workspaceUnlockRevision = $state(0);
@@ -262,6 +271,52 @@
 
 		if (!isDesktop) {
 			isSidebarOpen = false;
+		}
+	}
+
+	function getAvailableUpdateLabel() {
+		return messages.updater.available.replace(
+			'{version}',
+			availableWorkduckUpdate?.version ?? ''
+		);
+	}
+
+	async function checkForAvailableWorkduckUpdate(isMounted: () => boolean) {
+		try {
+			const update = await checkForWorkduckUpdate();
+
+			if (!isMounted()) {
+				return;
+			}
+
+			availableWorkduckUpdate = update;
+			updateInstallError = null;
+		} catch (error) {
+			if (isMounted()) {
+				console.warn('Workduck update check failed.', error);
+			}
+		}
+	}
+
+	async function handleInstallWorkduckUpdate() {
+		if (availableWorkduckUpdate === null || isUpdateInstalling) {
+			return;
+		}
+
+		isUpdateInstalling = true;
+		updateInstallError = null;
+		const operation = startAppOperation({
+			label: messages.updater.installing,
+			detail: messages.updater.installingDetail
+		});
+
+		try {
+			await installPendingWorkduckUpdate(() => undefined);
+		} catch (error) {
+			console.warn('Workduck update install failed.', error);
+			operation.finish();
+			isUpdateInstalling = false;
+			updateInstallError = messages.updater.installFailed;
 		}
 	}
 
@@ -593,6 +648,7 @@
 		void syncWorkduckTrayIconEnabled(shouldShowWorkduckTrayIcon(currentSystemSettings));
 		let disposeWindowState: (() => void) | undefined;
 		let shellIsMounted = true;
+		void checkForAvailableWorkduckUpdate(() => shellIsMounted);
 		void initializeTauriWindowState().then((dispose) => {
 			if (shellIsMounted) {
 				disposeWindowState = dispose;
@@ -935,6 +991,38 @@
 					>
 						<span class="workduck-operation-progress-fill"></span>
 					</div>
+				</div>
+			</div>
+		{/if}
+
+		{#if availableWorkduckUpdate !== null && activeAppOperation === null}
+			<div class="workduck-update-notice" role="status" aria-live="polite">
+				<div class="workduck-update-copy">
+					<span class="workduck-update-title">{getAvailableUpdateLabel()}</span>
+					{#if updateInstallError !== null}
+						<span class="workduck-update-error">{updateInstallError}</span>
+					{/if}
+				</div>
+				<div class="workduck-update-actions">
+					<button
+						class="workduck-update-action workduck-update-action-primary"
+						type="button"
+						disabled={isUpdateInstalling}
+						onclick={() => void handleInstallWorkduckUpdate()}
+					>
+						{messages.updater.install}
+					</button>
+					<button
+						class="workduck-update-action"
+						type="button"
+						disabled={isUpdateInstalling}
+						onclick={() => {
+							availableWorkduckUpdate = null;
+							updateInstallError = null;
+						}}
+					>
+						{messages.updater.dismiss}
+					</button>
 				</div>
 			</div>
 		{/if}

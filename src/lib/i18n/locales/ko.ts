@@ -76,6 +76,14 @@ export const koMessages = {
 		settingsArea: '설정',
 		resizeSidebar: '사이드바 너비 조절'
 	},
+	updater: {
+		available: '{version} 업데이트가 있습니다.',
+		install: '설치',
+		dismiss: '닫기',
+		installing: '업데이트 설치 중',
+		installingDetail: '업데이트 준비가 끝나면 Workduck을 다시 시작합니다.',
+		installFailed: '업데이트하지 못했습니다.'
+	},
 	workspace: {
 		addWorkspaceInSettings: '설정에서 워크스페이스를 추가하세요.',
 		locked: '워크스페이스 잠김',

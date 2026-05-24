@@ -1,14 +1,20 @@
 # Releasing Workduck
 
 Workduck releases are built by GitHub Actions when a semantic version tag is pushed.
-The release workflow currently builds one Windows setup executable and uploads it
-to a draft GitHub Release.
+The release workflow builds one Windows setup executable, signed updater artifacts,
+and `latest.json`, then uploads them to a draft GitHub Release.
 
 ## Optional Signing Secrets
 
-The workflow can publish an unsigned Windows setup executable without paid signing
-setup. If Windows signing secrets are configured, the same workflow signs the
-installer before uploading it.
+Updater signing is required for in-app updates and is separate from paid Windows
+code signing. Keep the Tauri updater private key only in GitHub Secrets:
+
+- `TAURI_SIGNING_PRIVATE_KEY`: Private updater signing key content.
+- `TAURI_SIGNING_PRIVATE_KEY_PASSWORD`: Optional updater key password.
+
+The workflow can still publish an unsigned Windows setup executable without paid
+Windows signing. If Windows signing secrets are configured, the same workflow
+signs the installer before uploading it.
 
 Add these repository secrets only when a Windows code-signing certificate is available:
 
@@ -17,7 +23,8 @@ Add these repository secrets only when a Windows code-signing certificate is ava
 - `WINDOWS_TIMESTAMP_URL`: Optional timestamp server URL. If omitted, the workflow uses
   `http://timestamp.digicert.com`.
 
-The private certificate file and password must never be committed to the repository.
+Private keys, certificate files, and passwords must never be committed to the
+repository.
 
 ## Preparing The Certificate Secret
 
@@ -42,13 +49,18 @@ git push origin v1.3.9
 ```
 
 The workflow rejects a release if the tag does not match both version files. The
-GitHub Release is created as a draft so the installer can be checked before
-publishing. Use the `Workduck_<version>_x64-setup.exe` asset as the primary
-download. Without signing secrets, Windows may show a SmartScreen warning when the
-installer is downloaded from a browser.
+GitHub Release is created as a draft so the installer and updater metadata can be
+checked before publishing. Use the `Workduck_<version>_x64-setup.exe` asset as the
+primary download. The in-app updater reads `latest.json` from the latest GitHub
+Release and installs the signed updater bundle for future versions.
+
+Without Windows signing secrets, Windows may show a SmartScreen warning when the
+installer is downloaded from a browser. Updater signing does not replace Windows
+code signing.
 
 ## Current Scope
 
-This workflow can build without a paid certificate. It does not yet configure the
-in-app updater. Automatic updates require the Tauri updater plugin, updater signing
-keys, `latest.json`, and an update-checking UI path.
+This workflow can build without a paid Windows certificate. Auto-update support
+starts with the first release built from the updater-enabled app. Users already on
+older installers must manually install that release once before later releases can
+be installed in-app.

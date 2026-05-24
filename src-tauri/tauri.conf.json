@@ -25,9 +25,21 @@
   },
   "bundle": {
     "active": true,
+    "createUpdaterArtifacts": true,
     "targets": "nsis",
     "icon": [
       "icons/icon.ico"
     ]
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDM0NEFGRTZCQTkzREUzNDEKUldSQjR6MnBhLzVLTkdaZUdZVjJHS2xodkR6WDR5RXU1MU53dFNtNzNwKzVReGdqS0lyaHBwUGYK",
+      "endpoints": [
+        "https://github.com/0disoft/workduck/releases/latest/download/latest.json"
+      ],
+      "windows": {
+        "installMode": "passive"
+      }
+    }
   }
 }
