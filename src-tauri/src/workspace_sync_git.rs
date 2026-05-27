@@ -681,7 +681,10 @@ fn run_git_command(
 ) -> Result<Output, WorkspaceSyncGitFailure> {
     let git_folder_path = git_process_path(folder_path);
     let mut command = Command::new("git");
-    apply_safe_git_config(&mut command);
+    apply_safe_git_config(
+        &mut command,
+        credential.is_none() && workspace_sync_phase_may_need_credentials(phase),
+    );
     command
         .args(args)
         .current_dir(git_folder_path)
@@ -728,6 +731,13 @@ fn run_git_command(
             })
         }
     }
+}
+
+fn workspace_sync_phase_may_need_credentials(phase: WorkspaceSyncGitPhase) -> bool {
+    matches!(
+        phase,
+        WorkspaceSyncGitPhase::Fetch | WorkspaceSyncGitPhase::Pull | WorkspaceSyncGitPhase::Push
+    )
 }
 
 fn classify_git_command_failure(

@@ -719,7 +719,7 @@ fn run_git_clone(
     let git_group_path = git_process_path(group_path);
     let git_clone_target = git_process_path(clone_target);
     let mut command = Command::new("git");
-    apply_safe_git_config(&mut command);
+    apply_safe_git_config(&mut command, credential.is_none());
     command
         .arg("clone")
         .arg("--")
@@ -1107,7 +1107,10 @@ fn run_git_command(
 ) -> Result<Output, GitCommandFailure> {
     let git_repository_path = git_process_path(repository_path);
     let mut command = Command::new("git");
-    apply_safe_git_config(&mut command);
+    apply_safe_git_config(
+        &mut command,
+        credential.is_none() && git_command_may_need_credentials(args),
+    );
     command
         .args(args)
         .current_dir(git_repository_path)
@@ -1136,6 +1139,10 @@ fn run_git_command(
             GitChildWaitError::Failed => ProjectRepositoryGitError::CommandFailed,
         },
     })
+}
+
+fn git_command_may_need_credentials(args: &[&str]) -> bool {
+    matches!(args.first().copied(), Some("fetch" | "pull" | "push"))
 }
 
 fn run_gh_repo_create(

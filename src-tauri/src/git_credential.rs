@@ -7,16 +7,19 @@ pub(crate) enum GitCredential {
     GithubToken(String),
 }
 
-pub(crate) fn apply_safe_git_config(command: &mut Command) {
+pub(crate) fn apply_safe_git_config(command: &mut Command, allow_system_credentials: bool) {
     for (key, value) in [
         ("core.fsmonitor", "false"),
         ("core.untrackedCache", "false"),
         ("core.hooksPath", disabled_hooks_path()),
         ("core.sshCommand", ""),
-        ("credential.helper", ""),
         ("protocol.ext.allow", "never"),
     ] {
         command.arg("-c").arg(format!("{key}={value}"));
+    }
+
+    if !allow_system_credentials {
+        command.arg("-c").arg("credential.helper=");
     }
 }
 
@@ -92,7 +95,7 @@ mod tests {
     #[test]
     fn safe_git_config_disables_repo_executed_helpers() {
         let mut command = Command::new("git");
-        apply_safe_git_config(&mut command);
+        apply_safe_git_config(&mut command, false);
 
         let args = command
             .get_args()
@@ -111,5 +114,21 @@ mod tests {
             .windows(2)
             .any(|pair| pair[0] == "-c" && pair[1] == "protocol.ext.allow=never"));
         assert!(args.iter().any(|arg| arg.starts_with("core.hooksPath=")));
+    }
+
+    #[test]
+    fn safe_git_config_can_preserve_system_credentials() {
+        let mut command = Command::new("git");
+        apply_safe_git_config(&mut command, true);
+
+        let args = command
+            .get_args()
+            .map(|arg| arg.to_string_lossy().into_owned())
+            .collect::<Vec<_>>();
+
+        assert!(args
+            .windows(2)
+            .any(|pair| pair[0] == "-c" && pair[1] == "core.fsmonitor=false"));
+        assert!(!args.windows(2).any(|pair| pair[0] == "-c" && pair[1] == "credential.helper="));
     }
 }
