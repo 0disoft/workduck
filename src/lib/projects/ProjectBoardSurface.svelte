@@ -235,9 +235,13 @@
 	let canDeleteLocalFolder = $derived(isDeleteLocalFolderAvailable());
 	let canCloneContextRepository = $derived(
 		contextMenuRepository !== null &&
-			contextMenuRepository.repository.remoteUrl !== null &&
-			contextMenuRepository.repository.path === null &&
-			!isRepositoryBusy(contextMenuRepository.repository.id)
+			canCloneProjectRepository(
+				contextMenuRepository.repository,
+				contextMenuRepositoryGitStatus ?? undefined,
+				contextMenuRepository.repository.path !== null &&
+					isRepositoryPathInsideWorkspace(contextMenuRepository.repository.path),
+				isRepositoryBusy(contextMenuRepository.repository.id)
+			)
 	);
 	let canInitializeContextRepository = $derived(
 		contextMenuRepository !== null &&
@@ -639,6 +643,7 @@
 			contextMenu,
 			contextMenuNode,
 			contextMenuRepository,
+			contextMenuRepositoryGitStatus,
 			isOpeningFolder
 		});
 	}
@@ -670,6 +675,7 @@
 	function isDeleteLocalFolderAvailable() {
 		return isProjectBoardDeleteLocalFolderAvailable(
 			deleteCandidate,
+			repositoryGitStatusById,
 			isRepositoryPathInsideProjectsFolder
 		);
 	}
@@ -748,7 +754,12 @@
 	}
 
 	function canCloneRepository(repository: ProjectRepositoryLinkRecord) {
-		return canCloneProjectRepository(repository, isRepositoryBusy(repository.id));
+		return canCloneProjectRepository(
+			repository,
+			repositoryGitStatusById[repository.id],
+			repository.path !== null && isRepositoryPathInsideWorkspace(repository.path),
+			isRepositoryBusy(repository.id)
+		);
 	}
 
 	function canInitializeRepository(repository: ProjectRepositoryLinkRecord) {

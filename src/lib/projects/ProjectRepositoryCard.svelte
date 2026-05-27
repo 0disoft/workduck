@@ -90,6 +90,18 @@
 					languageId
 				)
 	);
+	let visibleRepositoryGitStatusError = $derived.by(() => {
+		const error = repositoryGitStatus?.error ?? null;
+
+		if (
+			error === 'project-repository-git-path-not-found' &&
+			canCloneRepository
+		) {
+			return null;
+		}
+
+		return error;
+	});
 </script>
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -158,13 +170,13 @@
 				</span>
 			{/if}
 		</p>
-	{:else if repositoryGitStatus?.error !== null && repositoryGitStatus?.error !== undefined}
+	{:else if visibleRepositoryGitStatusError !== null}
 		<p
 			class="workduck-repository-operation-status workduck-repository-operation-status-failed"
 			role="alert"
 			aria-live="polite"
 		>
-			{getProjectFormErrorMessage(repositoryGitStatus.error, projectMessages.errors)}
+			{getProjectFormErrorMessage(visibleRepositoryGitStatusError, projectMessages.errors)}
 		</p>
 	{:else if repositoryGitStatus?.hasUncommittedChanges === true}
 		<p

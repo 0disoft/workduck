@@ -31,6 +31,7 @@ export function canOpenProjectBoardContextFolder(input: {
 	readonly contextMenu: ProjectContextMenuState | null;
 	readonly contextMenuNode: ProjectNodeRecord | null;
 	readonly contextMenuRepository: ProjectRepositoryTarget | null;
+	readonly contextMenuRepositoryGitStatus: ProjectRepositoryGitStatus | null;
 	readonly isOpeningFolder: boolean;
 }) {
 	const target = input.contextMenu?.target ?? null;
@@ -43,11 +44,15 @@ export function canOpenProjectBoardContextFolder(input: {
 		return input.contextMenuNode !== null;
 	}
 
-	return input.contextMenuRepository?.repository.path !== null;
+	return (
+		input.contextMenuRepository?.repository.path !== null &&
+		input.contextMenuRepositoryGitStatus?.error !== 'project-repository-git-path-not-found'
+	);
 }
 
 export function isProjectBoardDeleteLocalFolderAvailable(
 	deleteCandidate: ProjectDeleteCandidate | null,
+	statusByRepositoryId: Record<string, ProjectRepositoryGitStatus>,
 	isRepositoryPathInsideProjectsFolder: (repositoryPath: string) => boolean
 ) {
 	if (deleteCandidate === null) {
@@ -58,8 +63,11 @@ export function isProjectBoardDeleteLocalFolderAvailable(
 		return deleteCandidate.node.path.trim().length > 0;
 	}
 
+	const repositoryStatus = statusByRepositoryId[deleteCandidate.repository.id];
+
 	return (
 		deleteCandidate.repository.path !== null &&
+		repositoryStatus?.error !== 'project-repository-git-path-not-found' &&
 		isRepositoryPathInsideProjectsFolder(deleteCandidate.repository.path)
 	);
 }

@@ -25,7 +25,10 @@ export function getProjectRepositoryCardKind(
 		return 'Working';
 	}
 
-	if (repository.path === null) {
+	if (
+		repository.path === null ||
+		(repository.remoteUrl !== null && gitStatus?.error === 'project-repository-git-path-not-found')
+	) {
 		return 'Remote';
 	}
 
@@ -38,9 +41,22 @@ export function getProjectRepositoryCardKind(
 
 export function canCloneProjectRepository(
 	repository: ProjectRepositoryLinkRecord,
+	gitStatus: ProjectRepositoryGitStatus | undefined,
+	isRepositoryPathInsideWorkspace: boolean,
 	isRepositoryBusy: boolean
 ) {
-	return repository.remoteUrl !== null && repository.path === null && !isRepositoryBusy;
+	if (repository.remoteUrl === null || isRepositoryBusy) {
+		return false;
+	}
+
+	if (repository.path === null) {
+		return true;
+	}
+
+	return (
+		isRepositoryPathInsideWorkspace &&
+		gitStatus?.error === 'project-repository-git-path-not-found'
+	);
 }
 
 export function canInitializeProjectRepository(

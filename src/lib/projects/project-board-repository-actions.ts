@@ -1,3 +1,4 @@
+import { normalizeWorkspacePathForStorage } from '$lib/workspaces/workspace-path-format';
 import {
 	cloneProjectRepository,
 	initializeProjectRepositoryGit,
@@ -65,8 +66,11 @@ export async function cloneProjectRepositoryForTarget(
 		return;
 	}
 
-	if (target.repository.path !== null) {
-		context.setStatus('Repository already has a local path.');
+	const cloneLocation = resolveProjectRepositoryCloneLocation(target, context);
+
+	if (!cloneLocation.ok) {
+		context.setFormError(cloneLocation.error);
+		await context.failOperation(target, 'clone', cloneLocation.error);
 		return;
 	}
 
@@ -88,8 +92,8 @@ export async function cloneProjectRepositoryForTarget(
 	try {
 		const cloneResult = await cloneProjectRepository({
 			workspacePath: context.workspacePath,
-			groupRelativePath: target.node.path,
-			repositoryName: target.repository.name,
+			groupRelativePath: cloneLocation.groupRelativePath,
+			repositoryName: cloneLocation.repositoryName,
 			remoteUrl: target.repository.remoteUrl,
 			credential
 		});
@@ -116,6 +120,7 @@ export async function cloneProjectRepositoryForTarget(
 
 		if (await context.persistRegistry(updateResult.registry)) {
 			context.setSelectedGroupId(target.node.id);
+			await context.refreshRepositoryGitStatus(target.repository.id, cloneResult.path);
 			await context.succeedOperation(target, 'clone');
 			context.setStatus('Repository cloned.');
 		} else {
@@ -283,4 +288,77 @@ function createRepositoryContextMenuTarget(
 		nodeId: target.node.id,
 		repositoryId: target.repository.id
 	};
+}
+
+type ProjectRepositoryCloneLocation =
+	| {
+			readonly ok: true;
+			readonly groupRelativePath: string;
+			readonly repositoryName: string;
+	  }
+	| {
+			readonly ok: false;
+			readonly error: ProjectFormError;
+	  };
+
+function resolveProjectRepositoryCloneLocation(
+	target: ProjectRepositoryTarget,
+	context: ProjectRepositoryActionContext
+): ProjectRepositoryCloneLocation {
+	if (target.repository.path === null) {
+		return {
+			ok: true,
+			groupRelativePath: target.node.path,
+			repositoryName: target.repository.name
+		};
+	}
+
+	if (!context.isRepositoryPathInsideWorkspace(target.repository.path)) {
+		return { ok: false, error: 'project-repository-path-outside-workspace' };
+	}
+
+	const relativePath = createWorkspaceRelativePath(context.workspacePath, target.repository.path);
+
+	if (relativePath === null) {
+		return { ok: false, error: 'project-repository-path-outside-workspace' };
+	}
+
+	const segments = relativePath.split('/').filter(Boolean);
+	const repositoryName = segments.at(-1);
+	const groupSegments = segments.slice(0, -1);
+
+	if (repositoryName === undefined || groupSegments.length === 0) {
+		return { ok: false, error: 'project-repository-path-required' };
+	}
+
+	return {
+		ok: true,
+		groupRelativePath: groupSegments.join('/'),
+		repositoryName
+	};
+}
+
+function createWorkspaceRelativePath(workspacePath: string, repositoryPath: string) {
+	const workspacePathKey = createPathBoundaryKey(workspacePath);
+	const repositoryPathKey = createPathBoundaryKey(repositoryPath);
+
+	if (
+		workspacePathKey.length === 0 ||
+		repositoryPathKey === workspacePathKey ||
+		!repositoryPathKey.startsWith(`${workspacePathKey}/`)
+	) {
+		return null;
+	}
+
+	return normalizeWorkspacePathForStorage(repositoryPath)
+		.replaceAll('\\', '/')
+		.replace(/\/+$/u, '')
+		.slice(workspacePathKey.length + 1);
+}
+
+function createPathBoundaryKey(path: string) {
+	return normalizeWorkspacePathForStorage(path)
+		.replaceAll('\\', '/')
+		.replace(/\/+$/u, '')
+		.toLocaleLowerCase('en-US');
 }
