@@ -52,6 +52,10 @@ export function getRepositoryTaskRunMessage(
 		return messages.taskSucceeded.replace('{task}', taskLabel);
 	}
 
+	if (record.state === 'stopped') {
+		return messages.taskStopped.replace('{task}', taskLabel);
+	}
+
 	return record.exitCode === null
 		? messages.taskFailed.replace('{task}', taskLabel)
 		: messages.taskFailedWithExitCode

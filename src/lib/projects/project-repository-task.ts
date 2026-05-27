@@ -8,7 +8,7 @@ export type ProjectRepositoryTask =
 	| 'start-dev-server'
 	| 'build';
 
-export type ProjectRepositoryTaskRunState = 'running' | 'succeeded' | 'failed';
+export type ProjectRepositoryTaskRunState = 'running' | 'succeeded' | 'failed' | 'stopped';
 
 export interface ProjectRepositoryTaskRunRecord {
 	readonly id: string;
@@ -223,7 +223,7 @@ function isProjectRepositoryTask(value: unknown): value is ProjectRepositoryTask
 function isProjectRepositoryTaskRunState(
 	value: unknown
 ): value is ProjectRepositoryTaskRunState {
-	return value === 'running' || value === 'succeeded' || value === 'failed';
+	return value === 'running' || value === 'succeeded' || value === 'failed' || value === 'stopped';
 }
 
 function isProjectRepositoryTaskError(value: unknown): value is ProjectRepositoryTaskError {

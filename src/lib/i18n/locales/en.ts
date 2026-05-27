@@ -498,6 +498,7 @@ export const enMessages = {
 			buildTerminalOpened: 'Opened a terminal with the build command. The repository card will update with the result.',
 			taskRunning: '{task} running.',
 			taskSucceeded: '{task} succeeded.',
+			taskStopped: '{task} stopped.',
 			taskFailed: '{task} failed.',
 			taskFailedWithExitCode: '{task} failed. Exit code: {exitCode}.',
 			tasks: {

@@ -499,6 +499,7 @@ export const koMessages = {
 			buildTerminalOpened: '빌드 명령이 입력된 터미널을 열었습니다. 결과는 저장소 카드에 갱신됩니다.',
 			taskRunning: '{task} 실행 중.',
 			taskSucceeded: '{task} 성공.',
+			taskStopped: '{task} 중지됨.',
 			taskFailed: '{task} 실패.',
 			taskFailedWithExitCode: '{task} 실패. 종료 코드: {exitCode}.',
 			tasks: {

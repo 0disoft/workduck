@@ -3,7 +3,7 @@ use std::{
     fs,
     net::TcpListener,
     path::{Path, PathBuf},
-    process::Command,
+    process::{Command, Stdio},
     sync::{Mutex, OnceLock},
     time::SystemTime,
 };
@@ -80,6 +80,8 @@ pub struct ProjectRepositoryTaskRunRecord {
     repository_path: String,
     command: String,
     state: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    process_id: Option<u32>,
     exit_code: Option<i32>,
     started_at: String,
     finished_at: Option<String>,
@@ -167,14 +169,17 @@ pub fn run_project_repository_task(
         Some(commands.join("\n"))
     };
     let (launch_result, run_record) = if commands.is_empty() {
-        (launch_repository_terminal(&repository_path, None, None), None)
+        (
+            launch_repository_terminal(&repository_path, None, None).map(|_| ()),
+            None,
+        )
     } else if matches!(task, ProjectRepositoryTask::StartDevServer) && commands.len() > 1 {
         match launch_repository_task_terminals(&workspace_path, &repository_path, task, &commands) {
             Ok(records) => (Ok(()), records.into_iter().next()),
             Err(error) => (Err(error), None),
         }
     } else {
-        let run_record = match create_task_run_record(
+        let mut run_record = match create_task_run_record(
             &workspace_path,
             &repository_path,
             task,
@@ -183,10 +188,11 @@ pub fn run_project_repository_task(
             Ok(record) => record,
             Err(error) => return failed(error),
         };
-        (
-            launch_repository_terminal(&repository_path, command.as_deref(), Some(&run_record)),
-            Some(run_record),
-        )
+        let launch_result =
+            launch_repository_terminal(&repository_path, command.as_deref(), Some(&run_record))
+                .and_then(|process_id| attach_task_process_id(&mut run_record, process_id));
+
+        (launch_result, Some(run_record))
     };
 
     match launch_result {
@@ -319,6 +325,8 @@ fn read_latest_cached_task_run_records(
         .values()
         .filter_map(|cached| cached.record.clone())
         .collect();
+    let live_processes = collect_live_task_processes().ok();
+    let records = reconcile_running_task_run_records(records, live_processes.as_deref());
     workspace_cache.dir_len = dir_len;
     workspace_cache.dir_modified_at = dir_modified_at;
     workspace_cache.latest_records = latest_task_run_records_by_repository(records);
@@ -347,30 +355,10 @@ impl WorkspaceTaskRunRecordCache {
             return false;
         }
 
-        !self.latest_records.iter().any(|record| record.state == "running")
-            || self.running_record_files_are_fresh()
-    }
-
-    fn running_record_files_are_fresh(&self) -> bool {
-        self.files
-            .values()
-            .filter_map(|cached| {
-                cached
-                    .record
-                    .as_ref()
-                    .filter(|record| record.state == "running")
-                    .map(|record| (cached, record))
-            })
-            .all(|(cached, record)| {
-                fs::metadata(PathBuf::from(&record.record_path))
-                    .ok()
-                    .and_then(|metadata| {
-                        metadata.modified().ok().map(|modified_at| {
-                            metadata.len() == cached.len && Some(modified_at) == cached.modified_at
-                        })
-                    })
-                    .unwrap_or(false)
-            })
+        !self
+            .latest_records
+            .iter()
+            .any(|record| record.state == "running")
     }
 }
 
@@ -1174,8 +1162,9 @@ fn launch_repository_task_terminals(
     let mut run_records = Vec::new();
 
     for command in commands {
-        let run_record = create_task_run_record(workspace_path, repository_path, task, command)?;
-        launch_repository_terminal(repository_path, Some(command), Some(&run_record))?;
+        let mut run_record = create_task_run_record(workspace_path, repository_path, task, command)?;
+        let process_id = launch_repository_terminal(repository_path, Some(command), Some(&run_record))?;
+        attach_task_process_id(&mut run_record, process_id)?;
         run_records.push(run_record);
     }
 
@@ -1206,6 +1195,7 @@ fn create_task_run_record(
             .to_string(),
         command: command.to_owned(),
         state: "running".to_owned(),
+        process_id: None,
         exit_code: None,
         started_at,
         finished_at: None,
@@ -1218,6 +1208,18 @@ fn create_task_run_record(
     write_task_run_record(&record_path, &record)?;
 
     Ok(record)
+}
+
+fn attach_task_process_id(
+    record: &mut ProjectRepositoryTaskRunRecord,
+    process_id: Option<u32>,
+) -> Result<(), ProjectRepositoryTaskError> {
+    let Some(process_id) = process_id else {
+        return Ok(());
+    };
+
+    record.process_id = Some(process_id);
+    write_task_run_record(&PathBuf::from(&record.record_path), record)
 }
 
 fn write_task_run_record(
@@ -1244,6 +1246,196 @@ fn failed_launch_task_run_record(
         output_tail: Some("Terminal launch failed before the command could run.".to_owned()),
         ..record.clone()
     }
+}
+
+#[derive(Clone)]
+struct LiveTaskProcess {
+    pid: u32,
+    command_line: String,
+}
+
+#[derive(serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct RawLiveTaskProcessPayload {
+    #[serde(default)]
+    processes: Vec<RawLiveTaskProcessRecord>,
+}
+
+#[derive(serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct RawLiveTaskProcessRecord {
+    pid: u32,
+    name: Option<String>,
+    executable_path: Option<String>,
+    command_line: Option<String>,
+}
+
+fn reconcile_running_task_run_records(
+    records: Vec<ProjectRepositoryTaskRunRecord>,
+    live_processes: Option<&[LiveTaskProcess]>,
+) -> Vec<ProjectRepositoryTaskRunRecord> {
+    let Some(live_processes) = live_processes else {
+        return records;
+    };
+
+    records
+        .into_iter()
+        .map(|record| {
+            if is_stale_running_dev_server_record(&record, live_processes) {
+                stopped_task_run_record(&record)
+            } else {
+                record
+            }
+        })
+        .collect()
+}
+
+fn is_stale_running_dev_server_record(
+    record: &ProjectRepositoryTaskRunRecord,
+    live_processes: &[LiveTaskProcess],
+) -> bool {
+    record.state == "running"
+        && record.task == ProjectRepositoryTask::StartDevServer.as_str()
+        && !is_task_process_alive(record, live_processes)
+}
+
+fn is_task_process_alive(
+    record: &ProjectRepositoryTaskRunRecord,
+    live_processes: &[LiveTaskProcess],
+) -> bool {
+    if let Some(process_id) = record.process_id {
+        if live_processes
+            .iter()
+            .any(|process| process.pid == process_id)
+        {
+            return true;
+        }
+    }
+
+    let repository_path = normalize_process_match_text(&record.repository_path);
+
+    if repository_path.is_empty() {
+        return false;
+    }
+
+    live_processes.iter().any(|process| {
+        normalize_process_match_text(&process.command_line).contains(&repository_path)
+    })
+}
+
+fn stopped_task_run_record(
+    record: &ProjectRepositoryTaskRunRecord,
+) -> ProjectRepositoryTaskRunRecord {
+    ProjectRepositoryTaskRunRecord {
+        state: "stopped".to_owned(),
+        exit_code: None,
+        finished_at: Some(current_task_run_timestamp()),
+        output_tail: Some(
+            "Workduck could not find a running development server process for this repository."
+                .to_owned(),
+        ),
+        ..record.clone()
+    }
+}
+
+fn normalize_process_match_text(value: &str) -> String {
+    value.replace('\\', "/").to_ascii_lowercase()
+}
+
+#[cfg(target_os = "windows")]
+fn collect_live_task_processes() -> Result<Vec<LiveTaskProcess>, ProjectRepositoryTaskError> {
+    let current_pid = std::process::id();
+    let script = r#"
+$ErrorActionPreference = 'SilentlyContinue'
+$currentPid = $PID
+$workduckPid = __WORKDUCK_PID__
+$processes = @(
+  Get-CimInstance Win32_Process |
+    Where-Object { $_.ProcessId -ne $currentPid -and $_.ProcessId -ne $workduckPid } |
+    ForEach-Object {
+      [PSCustomObject]@{
+        pid = [int]$_.ProcessId
+        name = [string]$_.Name
+        executablePath = [string]$_.ExecutablePath
+        commandLine = [string]$_.CommandLine
+      }
+    }
+)
+[PSCustomObject]@{
+  processes = $processes
+} | ConvertTo-Json -Depth 4 -Compress
+"#
+    .replace("__WORKDUCK_PID__", &current_pid.to_string());
+
+    let output = Command::new("powershell.exe")
+        .arg("-NoLogo")
+        .arg("-NoProfile")
+        .arg("-NonInteractive")
+        .arg("-ExecutionPolicy")
+        .arg("Bypass")
+        .arg("-Command")
+        .arg(script)
+        .stdin(Stdio::null())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::null())
+        .output()
+        .map_err(|_| ProjectRepositoryTaskError::RecordReadFailed)?;
+
+    if !output.status.success() {
+        return Err(ProjectRepositoryTaskError::RecordReadFailed);
+    }
+
+    parse_live_task_processes(&String::from_utf8_lossy(&output.stdout))
+}
+
+#[cfg(not(target_os = "windows"))]
+fn collect_live_task_processes() -> Result<Vec<LiveTaskProcess>, ProjectRepositoryTaskError> {
+    let output = Command::new("ps")
+        .arg("-eo")
+        .arg("pid=,comm=,args=")
+        .stdin(Stdio::null())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::null())
+        .output()
+        .map_err(|_| ProjectRepositoryTaskError::RecordReadFailed)?;
+
+    if !output.status.success() {
+        return Err(ProjectRepositoryTaskError::RecordReadFailed);
+    }
+
+    Ok(String::from_utf8_lossy(&output.stdout)
+        .lines()
+        .filter_map(parse_live_unix_task_process_line)
+        .collect())
+}
+
+fn parse_live_task_processes(value: &str) -> Result<Vec<LiveTaskProcess>, ProjectRepositoryTaskError> {
+    let payload = serde_json::from_str::<RawLiveTaskProcessPayload>(value.trim())
+        .map_err(|_| ProjectRepositoryTaskError::RecordReadFailed)?;
+
+    Ok(payload
+        .processes
+        .into_iter()
+        .map(|process| LiveTaskProcess {
+            pid: process.pid,
+            command_line: format!(
+                "{} {} {}",
+                process.name.unwrap_or_default(),
+                process.executable_path.unwrap_or_default(),
+                process.command_line.unwrap_or_default()
+            ),
+        })
+        .collect())
+}
+
+#[cfg(not(target_os = "windows"))]
+fn parse_live_unix_task_process_line(line: &str) -> Option<LiveTaskProcess> {
+    let trimmed = line.trim();
+    let (pid_text, command_line) = trimmed.split_once(char::is_whitespace)?;
+    Some(LiveTaskProcess {
+        pid: pid_text.parse::<u32>().ok()?,
+        command_line: command_line.trim().to_owned(),
+    })
 }
 
 fn task_run_record_dir(workspace_path: &Path) -> PathBuf {
@@ -1309,12 +1501,64 @@ mod tests {
             repository_path: repository_path.to_owned(),
             command: "bun run build".to_owned(),
             state: "succeeded".to_owned(),
+            process_id: None,
             exit_code: Some(0),
             started_at: started_at.to_owned(),
             finished_at: Some(started_at.to_owned()),
             output_tail: None,
             record_path: format!("{id}.json"),
         }
+    }
+
+    #[test]
+    fn stale_running_dev_server_records_are_reported_as_stopped() {
+        let records = reconcile_running_task_run_records(
+            vec![ProjectRepositoryTaskRunRecord {
+                task: ProjectRepositoryTask::StartDevServer.as_str().to_owned(),
+                state: "running".to_owned(),
+                ..task_run_record("repo-a-dev", "C:/workspace/repo-a", "2026-05-23T01:00:00Z")
+            }],
+            Some(&[]),
+        );
+
+        assert_eq!(records[0].state, "stopped");
+        assert!(records[0].finished_at.is_some());
+    }
+
+    #[test]
+    fn running_dev_server_records_stay_running_when_process_id_is_alive() {
+        let records = reconcile_running_task_run_records(
+            vec![ProjectRepositoryTaskRunRecord {
+                task: ProjectRepositoryTask::StartDevServer.as_str().to_owned(),
+                state: "running".to_owned(),
+                process_id: Some(42),
+                ..task_run_record("repo-a-dev", "C:/workspace/repo-a", "2026-05-23T01:00:00Z")
+            }],
+            Some(&[LiveTaskProcess {
+                pid: 42,
+                command_line: "powershell".to_owned(),
+            }]),
+        );
+
+        assert_eq!(records[0].state, "running");
+    }
+
+    #[test]
+    fn legacy_running_dev_server_records_match_repository_path_processes() {
+        let records = reconcile_running_task_run_records(
+            vec![ProjectRepositoryTaskRunRecord {
+                task: ProjectRepositoryTask::StartDevServer.as_str().to_owned(),
+                state: "running".to_owned(),
+                ..task_run_record("repo-a-dev", "C:/workspace/repo-a", "2026-05-23T01:00:00Z")
+            }],
+            Some(&[LiveTaskProcess {
+                pid: 43,
+                command_line: "node C:\\workspace\\repo-a\\node_modules\\astro\\bin\\astro.mjs preview"
+                    .to_owned(),
+            }]),
+        );
+
+        assert_eq!(records[0].state, "running");
     }
 }
 
@@ -1323,7 +1567,7 @@ fn launch_repository_terminal(
     repository_path: &Path,
     command: Option<&str>,
     run_record: Option<&ProjectRepositoryTaskRunRecord>,
-) -> Result<(), ProjectRepositoryTaskError> {
+) -> Result<Option<u32>, ProjectRepositoryTaskError> {
     use std::os::windows::process::CommandExt;
 
     const CREATE_NEW_CONSOLE: u32 = 0x00000010;
@@ -1350,7 +1594,7 @@ fn launch_repository_terminal(
         .current_dir(&shell_repository_path)
         .creation_flags(CREATE_NEW_CONSOLE)
         .spawn()
-        .map(|_| ())
+        .map(|child| Some(child.id()))
         .map_err(|_| ProjectRepositoryTaskError::LaunchFailed)
 }
 
@@ -1359,7 +1603,7 @@ fn launch_repository_terminal(
     _repository_path: &Path,
     _command: Option<&str>,
     _run_record: Option<&ProjectRepositoryTaskRunRecord>,
-) -> Result<(), ProjectRepositoryTaskError> {
+) -> Result<Option<u32>, ProjectRepositoryTaskError> {
     Err(ProjectRepositoryTaskError::TerminalUnsupportedPlatform)
 }
 
