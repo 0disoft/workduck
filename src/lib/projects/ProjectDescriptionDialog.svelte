@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { modalDialog } from '$lib/ui/modal-dialog-action';
 	import {
 		PROJECT_DESCRIPTION_MAX_LENGTH,
 		type ProjectNodeRecord
@@ -42,6 +43,7 @@
 		role="dialog"
 		aria-modal="true"
 		aria-labelledby="project-description-dialog-title"
+		use:modalDialog={{ onClose: isSavingDescription ? undefined : onClose, initialFocusSelector: '#project-description-editor-input' }}
 	>
 		<form class="workduck-project-dialog-form" onsubmit={onSubmit}>
 			<h2 id="project-description-dialog-title" class="workduck-dialog-title">

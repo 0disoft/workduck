@@ -1,8 +1,10 @@
-use std::time::Duration;
+use std::{sync::OnceLock, time::Duration};
 
 const CHAT_COMPLETION_TIMEOUT_SECONDS: u64 = 120;
 const MAX_PROMPT_LENGTH: usize = 48_000;
 const MAX_MODEL_LENGTH: usize = 120;
+
+static LLM_CHAT_HTTP_CLIENT: OnceLock<reqwest::Client> = OnceLock::new();
 
 #[derive(serde::Deserialize)]
 #[serde(rename_all = "kebab-case")]
@@ -104,10 +106,7 @@ pub async fn run_llm_chat_completion(
         Some(endpoint) => endpoint,
         None => return failed(LlmChatCompletionError::ProviderUnsupported),
     };
-    let client = match reqwest::Client::builder()
-        .timeout(Duration::from_secs(CHAT_COMPLETION_TIMEOUT_SECONDS))
-        .build()
-    {
+    let client = match llm_chat_http_client() {
         Ok(client) => client,
         Err(_) => return failed(LlmChatCompletionError::RequestInvalid),
     };
@@ -160,6 +159,24 @@ pub async fn run_llm_chat_completion(
         Some(content) => succeeded(content.to_string()),
         None => failed(LlmChatCompletionError::ResponseInvalid),
     }
+}
+
+fn create_llm_chat_http_client() -> Result<reqwest::Client, LlmChatCompletionError> {
+    reqwest::Client::builder()
+        .timeout(Duration::from_secs(CHAT_COMPLETION_TIMEOUT_SECONDS))
+        .build()
+        .map_err(|_| LlmChatCompletionError::RequestInvalid)
+}
+
+fn llm_chat_http_client() -> Result<reqwest::Client, LlmChatCompletionError> {
+    if let Some(client) = LLM_CHAT_HTTP_CLIENT.get() {
+        return Ok(client.clone());
+    }
+
+    let client = create_llm_chat_http_client()?;
+    let _ = LLM_CHAT_HTTP_CLIENT.set(client.clone());
+
+    Ok(LLM_CHAT_HTTP_CLIENT.get().cloned().unwrap_or(client))
 }
 
 fn provider_chat_completion_endpoint(provider: &LlmChatProvider) -> Option<&'static str> {

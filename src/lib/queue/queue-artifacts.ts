@@ -797,10 +797,12 @@ function createReportEvaluationDelegationBody(
 	language: FollowUpContentLanguage
 ) {
 	const reportLocation = input.reportPath ?? report.ref.id;
-	const taskSummaries = report.tasks.map((task, index) =>
-		createReportEvaluationTargetSummary(task, index, language)
+	const evaluationTargets = createReportEvaluationTargets(report);
+	const taskSummaries = evaluationTargets.map((target, index) =>
+		createReportEvaluationTargetSummary(target.task, index, language)
 	);
-	const evaluationJsonTemplate = createReportEvaluationBatchJsonTemplate(report);
+	const skippedTaskSummaries = createSkippedReportEvaluationTargetSummaries(report, language);
+	const evaluationJsonTemplate = createReportEvaluationBatchJsonTemplate(evaluationTargets);
 	const batchCommand = [
 		'workduck',
 		'agent',
@@ -826,8 +828,13 @@ function createReportEvaluationDelegationBody(
 			'- 창의성·통찰',
 			'- 리스크 감지',
 			'',
+			'채점 제외 규칙:',
+			'- 무응답, 응답 실패, 형식 위반, 도구 호출 토큰만 포함된 응답에는 1점을 주지 마세요.',
+			'- 채점 제외 대상은 아래 JSON에도 추가하지 마세요.',
+			'',
 			'평가 대상:',
 			...taskSummaries,
+			...skippedTaskSummaries,
 			'',
 			'아래 JSON에서 각 점수를 확정한 뒤 파일로 저장하고 명령을 실행하세요.',
 			'',
@@ -851,8 +858,13 @@ function createReportEvaluationDelegationBody(
 		'- Creative insight',
 		'- Risk detection',
 		'',
+		'Scoring exclusion rules:',
+		'- Do not assign 1-point scores to nonresponses, response failures, format violations, or responses that only contain tool-call tokens.',
+		'- Excluded targets must stay out of the JSON below.',
+		'',
 		'Targets:',
 		...taskSummaries,
+		...skippedTaskSummaries,
 		'',
 		'After choosing scores, save this JSON to a file and run the command below.',
 		'',
@@ -862,12 +874,54 @@ function createReportEvaluationDelegationBody(
 	].join('\n');
 }
 
+function createReportEvaluationTargets(report: WorkduckQueueResultReport) {
+	return report.tasks
+		.map((task) => ({
+			task,
+			skipReason: getReportEvaluationSkipReason(task)
+		}))
+		.filter((target) => target.skipReason === null);
+}
+
+function createSkippedReportEvaluationTargetSummaries(
+	report: WorkduckQueueResultReport,
+	language: FollowUpContentLanguage
+) {
+	const skippedTargets = report.tasks
+		.map((task) => ({
+			task,
+			skipReason: getReportEvaluationSkipReason(task)
+		}))
+		.filter(
+			(
+				target
+			): target is {
+				readonly task: WorkduckQueueResultReportTask;
+				readonly skipReason: ReportEvaluationSkipReason;
+			} => target.skipReason !== null
+		);
+
+	if (skippedTargets.length === 0) {
+		return [];
+	}
+
+	const heading = language === 'ko' ? '채점 제외 대상:' : 'Excluded from scoring:';
+	const lines = skippedTargets.map(({ task, skipReason }) => {
+		const agentName = getReportTaskAgentName(task);
+		const reason = getReportEvaluationSkipReasonLabel(skipReason, language);
+
+		return `- ${agentName}: ${reason}`;
+	});
+
+	return ['', heading, ...lines];
+}
+
 function createReportEvaluationTargetSummary(
 	task: WorkduckQueueResultReportTask,
 	index: number,
 	language: FollowUpContentLanguage
 ) {
-	const agentName = task.title.split(':')[0]?.trim() || task.title;
+	const agentName = getReportTaskAgentName(task);
 	const summary = summarizeReportTaskForEvaluation(task.summary);
 	const lines =
 		language === 'ko'
@@ -907,12 +961,106 @@ function summarizeReportTaskForEvaluation(summary: string) {
 	return `${normalized.slice(0, 277).trimEnd()}...`;
 }
 
-function createReportEvaluationBatchJsonTemplate(report: WorkduckQueueResultReport) {
+type ReportEvaluationTarget = ReturnType<typeof createReportEvaluationTargets>[number];
+type ReportEvaluationSkipReason = 'response-failed' | 'format-violation' | 'tool-call-transcript';
+
+function getReportEvaluationSkipReason(
+	task: WorkduckQueueResultReportTask
+): ReportEvaluationSkipReason | null {
+	const summary = task.summary.trim();
+	const verificationText = task.verification.join('\n');
+	const riskText = task.risks.join('\n');
+	const combinedText = [summary, verificationText, riskText].join('\n');
+
+	if (
+		summary.length === 0 ||
+		includesAnyEvaluationMarker(combinedText, reportEvaluationResponseFailureMarkers)
+	) {
+		return 'response-failed';
+	}
+
+	if (includesAnyEvaluationMarker(combinedText, reportEvaluationToolCallMarkers)) {
+		return 'tool-call-transcript';
+	}
+
+	if (includesAnyEvaluationMarker(combinedText, reportEvaluationFormatViolationMarkers)) {
+		return 'format-violation';
+	}
+
+	return null;
+}
+
+function getReportEvaluationSkipReasonLabel(
+	reason: ReportEvaluationSkipReason,
+	language: FollowUpContentLanguage
+) {
+	if (language === 'ko') {
+		switch (reason) {
+			case 'response-failed':
+				return '응답 없음 또는 응답 실패';
+			case 'format-violation':
+				return '요청한 응답 형식 위반';
+			case 'tool-call-transcript':
+				return '도구 호출 토큰만 포함된 응답';
+		}
+	}
+
+	switch (reason) {
+		case 'response-failed':
+			return 'nonresponse or response failure';
+		case 'format-violation':
+			return 'requested response format violation';
+		case 'tool-call-transcript':
+			return 'tool-call token response';
+	}
+}
+
+function includesAnyEvaluationMarker(value: string, markers: readonly string[]) {
+	const normalized = value.toLowerCase();
+
+	return markers.some((marker) => normalized.includes(marker.toLowerCase()));
+}
+
+const reportEvaluationResponseFailureMarkers = [
+	'응답을 받지 못했습니다',
+	'응답 실패',
+	'response was not received',
+	'response failed',
+	'no response',
+	'nonresponse'
+] as const;
+
+const reportEvaluationFormatViolationMarkers = [
+	'구조화 응답을 해석하지 못했습니다',
+	'응답 형식 위반',
+	'요청한 형식을 따르지 않아',
+	'structured response could not be parsed',
+	'response format violation',
+	'did not follow the requested format',
+	'malformed response'
+] as const;
+
+const reportEvaluationToolCallMarkers = [
+	'<tool_call',
+	'<tool_calls_section',
+	'functions.bash',
+	'tool-call token',
+	'tool call token',
+	'도구 호출 토큰',
+	'```bash',
+	'```sh'
+] as const;
+
+function getReportTaskAgentName(task: WorkduckQueueResultReportTask) {
+	return task.title.split(':')[0]?.trim() || task.title;
+}
+
+function createReportEvaluationBatchJsonTemplate(targets: readonly ReportEvaluationTarget[]) {
 	return JSON.stringify(
 		{
-			evaluations: report.tasks.map((task) => ({
+			evaluations: targets.map(({ task }) => ({
 				reportTaskId: task.id,
-				agentName: task.title.split(':')[0]?.trim() || task.title,
+				agentName: getReportTaskAgentName(task),
 				scores: {
 					problemUnderstanding: 5,
 					logicalValidity: 5,

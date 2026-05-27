@@ -94,7 +94,11 @@ import {
 	type WorkduckQueueReviewDecision
 } from './queue-artifacts';
 import { readEnvironmentVaultSession } from '$lib/environment/environment-vault-session';
-import { executeQueueWorkOrder } from './queue-execution';
+import {
+	executeQueueWorkOrder,
+	previewQueueWorkOrderPrompt,
+	type WorkduckQueuePromptPreview
+} from './queue-execution';
 import {
 	deleteQueueFile,
 	ensureQueueFolder,
@@ -290,6 +294,7 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 	let selectedWorkOrderPath = $state<string | null>(null);
 	let selectedProposal = $state<WorkduckQueueProposal | null>(null);
 	let selectedProposalPath = $state<string | null>(null);
+	let promptPreviews = $state<readonly WorkduckQueuePromptPreview[] | null>(null);
 	let reviews = $state<readonly QueueReportTaskReview[]>([]);
 	let isNewWorkOrderDialogOpen = $state(false);
 	let workOrderDialogMode = $state<WorkOrderDialogMode>('create');
@@ -316,6 +321,7 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 	let isRefreshing = $state(false);
 	let isReading = $state(false);
 	let isWriting = $state(false);
+	let isPreviewingPrompt = $state(false);
 	let isSavingEvaluation = $state(false);
 	let evaluationDialog = $state<AgentEvaluationDialogState | null>(null);
 	let evaluationScores = $state<AgentEvaluationScores>(createDefaultAgentEvaluationScores());
@@ -423,6 +429,13 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 			selectedWorkOrder.tasks.some((task) => (task.agentIds ?? []).length > 0) &&
 			!isWriting
 	);
+	let canPreviewSelectedWorkOrderPrompt = $derived(
+		selectedWorkOrder !== null &&
+			selectedWorkOrder.status !== 'archived' &&
+			selectedWorkOrder.tasks.some((task) => (task.agentIds ?? []).length > 0) &&
+			!isWriting &&
+			!isPreviewingPrompt
+	);
 	let canCompleteSelectedWorkOrder = $derived(
 		selectedWorkOrder !== null && selectedWorkOrder.status !== 'archived' && !isWriting
 	);
@@ -477,6 +490,7 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		selectedWorkOrderPath = null;
 		selectedProposal = null;
 		selectedProposalPath = null;
+		promptPreviews = null;
 		queueContextMenu = null;
 		queueContextMenuElement = undefined;
 		reviews = [];
@@ -687,6 +701,7 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		selectedWorkOrderPath = null;
 		selectedProposal = null;
 		selectedProposalPath = null;
+		promptPreviews = null;
 		reviews = [];
 
 		try {
@@ -728,6 +743,7 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		selectedWorkOrderPath = null;
 		selectedProposal = null;
 		selectedProposalPath = null;
+		promptPreviews = null;
 		reviews = [];
 
 		try {
@@ -768,6 +784,7 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		selectedWorkOrderPath = null;
 		selectedProposal = null;
 		selectedProposalPath = null;
+		promptPreviews = null;
 		reviews = [];
 
 		try {
@@ -800,6 +817,7 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		selectedWorkOrderPath = null;
 		selectedProposal = null;
 		selectedProposalPath = null;
+		promptPreviews = null;
 		reviews = [];
 		parseError = null;
 		status = null;
@@ -815,6 +833,7 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		if (selectedWorkOrderPath === relativePath) {
 			selectedWorkOrder = null;
 			selectedWorkOrderPath = null;
+			promptPreviews = null;
 	}
 
 		if (selectedProposalPath === relativePath) {
@@ -1227,6 +1246,46 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 	}
 
 		error = result.error;
+}
+
+	async function handlePreviewWorkOrderPrompt() {
+		if (
+			selectedWorkOrder === null ||
+			!canPreviewSelectedWorkOrderPrompt ||
+			isPreviewingPrompt
+		) {
+			return;
+	}
+
+		isPreviewingPrompt = true;
+		error = null;
+		parseError = null;
+		status = null;
+
+		try {
+			const executionContext = await readExecutionContextForWorkspace();
+			const previewResult = await previewQueueWorkOrderPrompt({
+				workOrder: selectedWorkOrder,
+				agents: executionContext.agents,
+				skills: executionContext.skills,
+				references: executionContext.references,
+				personas: executionContext.personas
+			});
+
+			if (!previewResult.ok) {
+				parseError = getQueueExecutionErrorMessage(previewResult.error);
+				promptPreviews = null;
+				return;
+		}
+
+			promptPreviews = previewResult.previews;
+	} finally {
+			isPreviewingPrompt = false;
+	}
+}
+
+	function closePromptPreviewDialog() {
+		promptPreviews = null;
 }
 
 	async function handleExecuteWorkOrder() {
@@ -1690,6 +1749,7 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		get selectedWorkOrder() { return selectedWorkOrder; },
 		get selectedProposal() { return selectedProposal; },
 		get selectedProposalPath() { return selectedProposalPath; },
+		get promptPreviews() { return promptPreviews; },
 		get reviews() { return reviews; },
 		get reviewDecisionOptions() { return reviewDecisionOptions; },
 		get isNewWorkOrderDialogOpen() { return isNewWorkOrderDialogOpen; },
@@ -1719,6 +1779,7 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		get isRefreshing() { return isRefreshing; },
 		get isReading() { return isReading; },
 		get isWriting() { return isWriting; },
+		get isPreviewingPrompt() { return isPreviewingPrompt; },
 		get isSavingEvaluation() { return isSavingEvaluation; },
 		get evaluationDialog() { return evaluationDialog; },
 		get evaluationScores() { return evaluationScores; },
@@ -1728,6 +1789,7 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		get hasSelectedQueueArtifact() { return hasSelectedQueueArtifact; },
 		get canCreateManualWorkOrder() { return canCreateManualWorkOrder; },
 		get canExecuteSelectedWorkOrder() { return canExecuteSelectedWorkOrder; },
+		get canPreviewSelectedWorkOrderPrompt() { return canPreviewSelectedWorkOrderPrompt; },
 		get canCompleteSelectedWorkOrder() { return canCompleteSelectedWorkOrder; },
 		get workOrderDialogTitle() { return workOrderDialogTitle; },
 		get workOrderDialogSubmitLabel() { return workOrderDialogSubmitLabel; },
@@ -1757,6 +1819,8 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		getVoteChoiceLabel,
 		getReportTaskAgent,
 		getReviewDecisionLabel,
+		handlePreviewWorkOrderPrompt,
+		closePromptPreviewDialog,
 		handleExecuteWorkOrder,
 		handleCompleteWorkOrder,
 		openEditWorkOrderTaskDialog,

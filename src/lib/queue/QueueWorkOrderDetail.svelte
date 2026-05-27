@@ -20,8 +20,11 @@
 		readonly workOrder: WorkduckQueueWorkOrder;
 		readonly messages: WorkduckMessages;
 		readonly isWriting: boolean;
+		readonly isPreviewingPrompt: boolean;
 		readonly canExecute: boolean;
+		readonly canPreviewPrompt: boolean;
 		readonly canComplete: boolean;
+		readonly onPreviewPrompt: () => Promise<void>;
 		readonly onExecute: () => Promise<void>;
 		readonly onComplete: () => Promise<void>;
 		readonly onEditTask: (task: WorkduckQueueWorkOrderTask) => void;
@@ -39,8 +42,11 @@
 		workOrder,
 		messages,
 		isWriting,
+		isPreviewingPrompt,
 		canExecute,
+		canPreviewPrompt,
 		canComplete,
+		onPreviewPrompt,
 		onExecute,
 		onComplete,
 		onEditTask,
@@ -62,6 +68,14 @@
 			<span>{messages.queue.workOrderId}: {workOrder.ref.id}</span>
 		</div>
 		<div class="workduck-queue-file-actions">
+			<button
+				class="workduck-button workduck-button-secondary"
+				type="button"
+				disabled={!canPreviewPrompt}
+				onclick={() => void onPreviewPrompt()}
+			>
+				{isPreviewingPrompt ? messages.common.checking : messages.queue.previewPrompt}
+			</button>
 			<button
 				class="workduck-button workduck-button-secondary"
 				type="button"

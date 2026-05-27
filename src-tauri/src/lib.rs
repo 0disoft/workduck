@@ -133,6 +133,7 @@ pub fn run() {
             queue_folder::write_queue_work_order_file,
             queue_folder::write_queue_result_report_file,
             queue_execution::execute_queue_work_order,
+            queue_execution::preview_queue_work_order_prompt,
             llm_chat::run_llm_chat_completion
         ])
         .run(tauri::generate_context!())

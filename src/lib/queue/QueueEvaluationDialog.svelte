@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { WorkduckMessages } from '$lib/i18n/workduck-message-contract';
+	import { modalDialog } from '$lib/ui/modal-dialog-action';
 	import {
 		agentEvaluationCriteriaDefinitions,
 		type AgentEvaluationCriterionId,
@@ -42,6 +43,7 @@
 		role="dialog"
 		aria-modal="true"
 		aria-labelledby="queue-evaluation-dialog-title"
+		use:modalDialog={{ onClose: isSavingEvaluation ? undefined : onClose, initialFocusSelector: '.workduck-queue-evaluation-score-button, .workduck-button-secondary' }}
 	>
 		<form class="workduck-project-dialog-form" onsubmit={onSubmit}>
 			<h2 id="queue-evaluation-dialog-title" class="workduck-dialog-title">

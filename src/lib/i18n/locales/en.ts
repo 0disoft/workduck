@@ -3,6 +3,7 @@ export const enMessages = {
 		add: 'Add',
 		save: 'Save',
 		cancel: 'Cancel',
+		close: 'Close',
 		edit: 'Edit',
 		remove: 'Remove',
 		refresh: 'Refresh',
@@ -40,6 +41,8 @@ export const enMessages = {
 		all: 'All',
 		read: 'Read',
 		unread: 'Unread',
+		show: 'Show',
+		hide: 'Hide',
 		checking: 'Checking',
 		create: 'Create',
 		files: 'Files',
@@ -260,6 +263,7 @@ export const enMessages = {
 		createWorkOrder: 'Create work order',
 		delegateEvaluation: 'Delegate evaluation',
 		creating: 'Creating',
+		previewPrompt: 'Preview prompt',
 		executeWorkOrder: 'Run',
 		completeWorkOrder: 'Mark complete',
 		executing: 'Running',
@@ -273,6 +277,13 @@ export const enMessages = {
 		executedFile: 'Created {relativePath} and completed the work order.',
 		completedFile: 'Completed {relativePath}.',
 		nextWorkOrders: 'Next work orders',
+		promptPreview: {
+			title: 'Prompt preview',
+			description: 'Review the exact system and user prompts before running this work order.',
+			systemPrompt: 'System prompt',
+			userPrompt: 'User prompt',
+			characterCount: '{count} characters'
+		},
 		priorities: {
 			low: 'Low',
 			normal: 'Normal',

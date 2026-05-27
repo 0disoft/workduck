@@ -735,7 +735,7 @@ a {
 	margin: 0;
 	color: var(--workduck-color-muted);
 	font-size: var(--workduck-font-size-sm);
-	font-weight: 800;
+	font-weight: 600;
 	line-height: 1.4;
 	overflow-wrap: anywhere;
 	white-space: pre-wrap;
@@ -979,6 +979,80 @@ a {
 .workduck-dialog.workduck-queue-evaluation-dialog {
 	width: min(620px, calc(100vw - 44px));
 	overflow-x: hidden;
+}
+
+.workduck-dialog.workduck-queue-prompt-preview-dialog {
+	width: min(940px, calc(100vw - 44px));
+	overflow-x: hidden;
+}
+
+.workduck-queue-prompt-preview-header {
+	display: flex;
+	min-width: 0;
+	align-items: start;
+	justify-content: space-between;
+	gap: 14px;
+}
+
+.workduck-queue-prompt-preview-header > div,
+.workduck-queue-prompt-preview-list,
+.workduck-queue-prompt-preview-item,
+.workduck-queue-prompt-preview-item-header > div {
+	display: grid;
+	min-width: 0;
+	gap: 8px;
+}
+
+.workduck-queue-prompt-preview-item {
+	border: 1px solid oklch(var(--workduck-oklch-border) / 0.72);
+	border-radius: 8px;
+	background: oklch(var(--workduck-oklch-surface) / 0.44);
+	padding: 12px;
+}
+
+.workduck-queue-prompt-preview-item-header {
+	display: flex;
+	min-width: 0;
+	align-items: start;
+	justify-content: space-between;
+	gap: 10px;
+}
+
+.workduck-queue-prompt-preview-item-header strong {
+	color: var(--workduck-color-text);
+	font-size: var(--workduck-font-size-sm);
+	font-weight: 800;
+	overflow-wrap: anywhere;
+}
+
+.workduck-queue-prompt-preview-item-header span,
+.workduck-queue-prompt-preview-count {
+	color: var(--workduck-color-muted);
+	font-size: var(--workduck-font-size-xs);
+	font-weight: 800;
+}
+
+.workduck-queue-prompt-preview-count {
+	margin-inline-start: 6px;
+}
+
+.workduck-queue-prompt-preview-block {
+	max-height: 320px;
+	margin: 0;
+	overflow: auto;
+	border: 1px solid oklch(var(--workduck-oklch-border) / 0.64);
+	border-radius: 8px;
+	background: oklch(var(--workduck-oklch-bg) / 0.76);
+	color: var(--workduck-color-text);
+	padding: 10px;
+	font: inherit;
+	font-family: var(--workduck-font-mono);
+	font-size: var(--workduck-font-size-xs);
+	font-weight: 600;
+	line-height: 1.45;
+	white-space: pre-wrap;
+	overflow-wrap: anywhere;
+	user-select: text;
 }
 
 .workduck-queue-evaluation-target {

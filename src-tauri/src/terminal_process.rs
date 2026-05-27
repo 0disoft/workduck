@@ -419,14 +419,16 @@ impl TerminalOutputBuffer {
         }
 
         let offset = (output_cursor - self.base_cursor) as usize;
-        let output = self
-            .content
-            .get(offset..)
-            .map(str::to_owned)
-            .unwrap_or_else(|| self.content.clone());
+        let Some(output) = self.content.get(offset..) else {
+            return TerminalOutputSnapshot {
+                output: self.content.clone(),
+                cursor: self.next_cursor,
+                reset: true,
+            };
+        };
 
         TerminalOutputSnapshot {
-            output,
+            output: output.to_owned(),
             cursor: self.next_cursor,
             reset: false,
         }
@@ -583,5 +585,16 @@ mod tests {
 
         assert!(snapshot.reset);
         assert_eq!(snapshot.output.len(), TERMINAL_OUTPUT_MAX_BYTES);
+    }
+
+    #[test]
+    fn terminal_output_buffer_resets_on_invalid_utf8_cursor_boundary() {
+        let mut output = TerminalOutputBuffer::default();
+        output.push("가나다");
+
+        let snapshot = output.snapshot(Some(1));
+
+        assert!(snapshot.reset);
+        assert_eq!(snapshot.output, "가나다");
     }
 }

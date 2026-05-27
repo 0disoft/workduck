@@ -96,11 +96,15 @@
 <article
 	class="workduck-project-card workduck-repository-card"
 	class:workduck-repository-card-busy={repositoryBusy}
+	aria-busy={repositoryBusy}
 	oncontextmenu={onContextMenu}
 >
 	<div class="workduck-project-card-header">
 		<strong class="workduck-project-card-name">{repository.name}</strong>
 		<span class="workduck-project-card-kind">{repositoryCardKind}</span>
+		{#if repositoryBusy}
+			<span class="workduck-repository-busy-indicator" aria-hidden="true"></span>
+		{/if}
 	</div>
 	{#if repository.tags.length > 0}
 		<div class="workduck-project-tag-list" aria-label={`${repository.name} tags`}>
@@ -189,7 +193,7 @@
 				disabled={repositoryBusy}
 				onclick={() => void onInitialize()}
 			>
-				{getRepositoryActionButtonLabel(repositoryOperation, 'init', 'Init')}
+				{getRepositoryActionButtonLabel(repositoryOperation, 'init', 'Git Init')}
 			</button>
 		{/if}
 		{#if canPublishRepositoryToGithub || isRepositoryOperationRunning('publish')}

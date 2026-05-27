@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { WorkduckMessages } from '$lib/i18n/workduck-message-contract';
+	import { modalDialog } from '$lib/ui/modal-dialog-action';
 	import { getProjectFormErrorMessage, type ProjectFormError } from './project-board-errors';
 
 	interface Props {
@@ -43,6 +44,7 @@
 		aria-modal="true"
 		aria-labelledby="project-remove-confirm-title"
 		aria-describedby="project-remove-confirm-description"
+		use:modalDialog={{ onClose: isDeleting ? undefined : onClose, initialFocusSelector: '.workduck-button-secondary' }}
 	>
 		<h2 id="project-remove-confirm-title" class="workduck-dialog-title">
 			{getDeleteDialogTitle()}

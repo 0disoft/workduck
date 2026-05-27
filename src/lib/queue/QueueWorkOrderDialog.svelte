@@ -4,6 +4,7 @@
 	import type { ProjectNodeRecord } from '$lib/projects/project-registry';
 	import type { ReferenceRecord } from '$lib/references/reference-registry';
 	import type { WorkduckSkillRecord } from '$lib/skills/skill-registry';
+	import { modalDialog } from '$lib/ui/modal-dialog-action';
 	import {
 		queueResponseFormats,
 		queueResponseLanguages,
@@ -122,6 +123,7 @@
 		role="dialog"
 		aria-modal="true"
 		aria-labelledby="new-work-order-dialog-title"
+		use:modalDialog={{ onClose: isWriting ? undefined : onClose, initialFocusSelector: '#new-work-order-title, #new-work-order-kind' }}
 	>
 		<form class="workduck-project-dialog-form" onsubmit={onSubmit}>
 			<h2 id="new-work-order-dialog-title" class="workduck-dialog-title">
@@ -294,7 +296,7 @@
 					</details>
 				{/if}
 
-				<details class="workduck-work-order-section">
+				<details class="workduck-work-order-section" open>
 					<summary class="workduck-work-order-section-summary">
 						<span>{messages.queue.assignment}</span>
 					</summary>

@@ -275,6 +275,39 @@
 	padding: 18px;
 }
 
+@media (prefers-reduced-motion: no-preference) {
+	.workduck-dialog-backdrop {
+		animation: workduck-dialog-backdrop-in 120ms ease-out;
+	}
+
+	.workduck-dialog {
+		animation: workduck-dialog-in 140ms ease-out;
+	}
+
+	.workduck-repository-busy-indicator {
+		animation: workduck-spin 780ms linear infinite;
+	}
+}
+
+@keyframes workduck-dialog-backdrop-in {
+	from {
+		opacity: 0;
+	}
+}
+
+@keyframes workduck-dialog-in {
+	from {
+		opacity: 0;
+		transform: translateY(6px) scale(0.98);
+	}
+}
+
+@keyframes workduck-spin {
+	to {
+		transform: rotate(360deg);
+	}
+}
+
 .workduck-dialog-title {
 	margin: 0;
 	color: var(--workduck-color-text);
@@ -447,6 +480,10 @@
 	.workduck-queue-review-header {
 		align-items: stretch;
 		flex-direction: column;
+	}
+
+	.workduck-queue-prompt-preview-header {
+		display: grid;
 	}
 
 	.workduck-queue-file-actions {

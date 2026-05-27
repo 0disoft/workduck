@@ -1,7 +1,10 @@
 use std::{
     env, fs, io,
     path::{Path, PathBuf},
-    sync::OnceLock,
+    sync::{
+        atomic::{AtomicU64, Ordering},
+        OnceLock,
+    },
     time::Duration,
 };
 
@@ -23,6 +26,7 @@ const MAX_PROMPT_LENGTH: usize = 48_000;
 const MAX_MODEL_LENGTH: usize = 160;
 
 static QUEUE_HTTP_CLIENT: OnceLock<reqwest::Client> = OnceLock::new();
+static UNIQUE_TOKEN_COUNTER: AtomicU64 = AtomicU64::new(0);
 
 pub fn create_queue_http_client() -> Result<reqwest::Client, QueueExecutionErrorDetail> {
     reqwest::Client::builder()
@@ -44,10 +48,7 @@ pub fn queue_http_client() -> Result<reqwest::Client, QueueExecutionErrorDetail>
     let client = create_queue_http_client()?;
     let _ = QUEUE_HTTP_CLIENT.set(client.clone());
 
-    Ok(QUEUE_HTTP_CLIENT
-        .get()
-        .cloned()
-        .unwrap_or(client))
+    Ok(QUEUE_HTTP_CLIENT.get().cloned().unwrap_or(client))
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -59,10 +60,12 @@ pub struct QueueExecutionErrorDetail {
 
 impl QueueExecutionErrorDetail {
     fn new(code: &'static str, message: impl Into<String>) -> Self {
-        Self { code, message: message.into() }
+        Self {
+            code,
+            message: message.into(),
+        }
     }
 }
-
 
 #[derive(Clone, Deserialize, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -272,6 +275,44 @@ pub struct QueueExecutionCommandResult {
 }
 
 #[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct QueuePromptPreviewRequest {
+    pub work_order: QueueWorkOrder,
+    #[serde(default)]
+    pub agents: Vec<AgentRecord>,
+    #[serde(default)]
+    pub skills: Vec<SkillRecord>,
+    #[serde(default)]
+    pub references: Vec<ReferenceRecord>,
+    #[serde(default)]
+    pub personas: Vec<PersonaRecord>,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct QueuePromptPreviewCommandResult {
+    pub ok: bool,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub previews: Vec<QueuePromptPreview>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub error: Option<&'static str>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub message: Option<String>,
+}
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct QueuePromptPreview {
+    pub id: String,
+    pub task_id: String,
+    pub task_title: String,
+    pub agent_id: String,
+    pub agent_name: String,
+    pub system_prompt: String,
+    pub user_prompt: String,
+}
+
+#[derive(Deserialize)]
 struct ChatCompletionResponseBody {
     choices: Vec<ChatChoice>,
 }
@@ -302,8 +343,6 @@ pub struct QueueVoteBallot {
     pub risks: Vec<String>,
     pub parse_status: String,
 }
-
-
 
 pub enum AgentPromptMode {
     WorkOrder,
@@ -348,8 +387,6 @@ pub enum AgentRunOutcome {
         execution_attempts: Vec<AgentExecutionAttempt>,
     },
 }
-
-
 
 #[derive(Clone, Copy)]
 pub enum QueueReportLanguage {
@@ -418,8 +455,6 @@ pub struct AgentExecutionAttempt {
     pub message: String,
     pub retryable: bool,
 }
-
-
 
 pub fn create_agent_prompt_plan(task: &QueueWorkOrderTask) -> AgentPromptPlan {
     AgentPromptPlan {
@@ -513,6 +548,32 @@ pub async fn execute_queue_work_order(
     }
 }
 
+#[tauri::command]
+pub fn preview_queue_work_order_prompt(
+    request: QueuePromptPreviewRequest,
+) -> QueuePromptPreviewCommandResult {
+    match create_prompt_previews(
+        &request.work_order,
+        &request.agents,
+        &request.personas,
+        &request.skills,
+        &request.references,
+    ) {
+        Ok(previews) => QueuePromptPreviewCommandResult {
+            ok: true,
+            previews,
+            error: None,
+            message: None,
+        },
+        Err(error) => QueuePromptPreviewCommandResult {
+            ok: false,
+            previews: Vec::new(),
+            error: Some(error.code),
+            message: Some(error.message),
+        },
+    }
+}
+
 fn queue_execution_failed(error: QueueExecutionErrorDetail) -> QueueExecutionCommandResult {
     QueueExecutionCommandResult {
         ok: false,
@@ -528,6 +589,8 @@ pub fn create_system_prompt(run: &AgentExecutionRun, prompt_plan: &AgentPromptPl
             format!("You are the assistant named {}.", run.agent.name),
             create_response_language_system_instruction(run.task.response_language.as_deref()),
             "Do not claim that files, apps, repositories, or external systems were changed unless the task context gives you direct evidence.".to_string(),
+            "You cannot run commands, inspect files, browse the network, or call tools in this queue execution. Use only the task text and selected context.".to_string(),
+            "Do not pretend to call tools, emit tool-call syntax, print shell commands as actions, or describe future tool use as if it happened.".to_string(),
             "Keep the answer useful for a task result. Use headings only when they make the result clearer.".to_string(),
         ],
         AgentPromptMode::DirectMessage { .. } => vec![
@@ -611,7 +674,11 @@ fn create_work_order_user_prompt_blocks(
     let language = prompt_language_for_task(task);
     let mut blocks = vec![
         format!("{}: {}", labels.task_title, task.title),
-        format!("{}: {}", labels.priority, task.priority.as_deref().unwrap_or("normal")),
+        format!(
+            "{}: {}",
+            labels.priority,
+            task.priority.as_deref().unwrap_or("normal")
+        ),
         format!(
             "{}: {}",
             labels.response_language,
@@ -659,6 +726,10 @@ fn create_work_order_response_format_prompt(
                     .to_string(),
                 "- 해당 항목이 없으면 빈 배열을 사용하세요.".to_string(),
                 "- 사용자가 요청한 응답 언어를 유지하세요.".to_string(),
+                "- 증거가 제공되지 않은 확인은 수행한 것처럼 말하지 말고, 해당 한계를 summary나 cautions 안에 적으세요.".to_string(),
+                "- 첫 글자는 {, 마지막 글자는 } 이어야 합니다. JSON 앞뒤에 다른 텍스트를 붙이지 마세요.".to_string(),
+                "- 응답 형식 위반: 마크다운 제목, 글머리표 목록, 코드블록, ```json, 설명문, 셸 명령, `cat ...`, `rg ...`, <tool_call>, <tool_calls_section>, functions.Bash 같은 토큰.".to_string(),
+                "- 위반 예시는 절대 출력하지 말고, JSON 문자열 값 안에도 도구 호출 토큰을 넣지 마세요.".to_string(),
             ]
             .join("\n")
         }
@@ -680,6 +751,10 @@ fn create_work_order_response_format_prompt(
                     .to_string(),
                 "- Use an empty array when a section has no items.".to_string(),
                 "- Use the requested response language.".to_string(),
+                "- If evidence was not provided, do not claim you checked it; put that limitation inside summary or cautions.".to_string(),
+                "- The first character must be { and the last character must be }. Do not add text before or after the JSON.".to_string(),
+                "- Format violations: Markdown headings, bullet lists, code fences, ```json, explanatory prose, shell commands, `cat ...`, `rg ...`, <tool_call>, <tool_calls_section>, or functions.Bash tokens.".to_string(),
+                "- Never output those violation examples, and do not put tool-call tokens inside JSON string values.".to_string(),
             ]
             .join("\n")
         }
@@ -848,27 +923,34 @@ fn create_vote_task_prompt(vote: &QueueVoteSpec, language: QueueReportLanguage) 
             .collect::<Vec<_>>()
             .join("\n")
     };
-    let (intro, json_only, choice_id_instruction, json_shape, question, options_label, criteria_label) =
-        match language {
-            QueueReportLanguage::Ko => (
-                "이 작업은 선택 투표입니다. 선택지 하나만 고르세요.",
-                "Markdown으로 감싸지 말고 JSON 객체 하나만 반환하세요.",
-                "제공된 choiceId 값 중 하나만 사용하세요.",
-                "JSON 형식:",
-                "질문",
-                "선택지",
-                "평가 기준",
-            ),
-            QueueReportLanguage::En => (
-                "This is a selection vote. Choose exactly one option.",
-                "Return only one JSON object. Do not wrap it in Markdown.",
-                "Use exactly one of the provided choiceId values.",
-                "JSON shape:",
-                "Question",
-                "Options",
-                "Criteria",
-            ),
-        };
+    let (
+        intro,
+        json_only,
+        choice_id_instruction,
+        json_shape,
+        question,
+        options_label,
+        criteria_label,
+    ) = match language {
+        QueueReportLanguage::Ko => (
+            "이 작업은 선택 투표입니다. 선택지 하나만 고르세요.",
+            "Markdown으로 감싸지 말고 JSON 객체 하나만 반환하세요.",
+            "제공된 choiceId 값 중 하나만 사용하세요.",
+            "JSON 형식:",
+            "질문",
+            "선택지",
+            "평가 기준",
+        ),
+        QueueReportLanguage::En => (
+            "This is a selection vote. Choose exactly one option.",
+            "Return only one JSON object. Do not wrap it in Markdown.",
+            "Use exactly one of the provided choiceId values.",
+            "JSON shape:",
+            "Question",
+            "Options",
+            "Criteria",
+        ),
+    };
 
     [
         intro,
@@ -1227,22 +1309,36 @@ fn create_success_report_task(
         risks.extend(vote.ballot.risks.clone());
     }
 
-    let structured_response =
-        if vote.is_none() && output.task.kind.as_deref() != Some("direct-message") {
-            parse_structured_agent_response(&output.content)
-        } else {
-            None
-        };
+    let expects_structured_response =
+        vote.is_none() && output.task.kind.as_deref() != Some("direct-message");
+    let structured_response = if expects_structured_response {
+        parse_structured_agent_response(&output.content, language)
+    } else {
+        None
+    };
     let structured_summary = structured_response
         .as_ref()
         .map(|response| format_structured_response_summary(response, language));
+    let fallback_summary = if expects_structured_response && structured_response.is_none() {
+        verification.push(structured_response_unparsed(language).to_string());
+        risks.push(structured_response_unparsed_risk(language).to_string());
+
+        if looks_like_tool_call_transcript(&output.content) {
+            risks.push(tool_call_transcript_risk(language).to_string());
+            tool_call_transcript_summary(language).to_string()
+        } else {
+            output.content.clone()
+        }
+    } else {
+        output.content.clone()
+    };
 
     QueueResultReportTask {
         id: format!("task_{}_{}", slugify(&output.agent_name), unique_token()),
         title: format!("{}: {}", output.agent_name, output.task.title),
         summary: vote_summary
             .or(structured_summary)
-            .unwrap_or_else(|| output.content.clone()),
+            .unwrap_or(fallback_summary),
         structured_response,
         files_changed: Vec::new(),
         verification,
@@ -1254,7 +1350,10 @@ fn create_success_report_task(
     }
 }
 
-fn parse_structured_agent_response(content: &str) -> Option<QueueStructuredResponse> {
+fn parse_structured_agent_response(
+    content: &str,
+    language: QueueReportLanguage,
+) -> Option<QueueStructuredResponse> {
     for candidate in json_object_candidates(content) {
         let Ok(parsed) = serde_json::from_str::<Value>(&candidate) else {
             continue;
@@ -1281,7 +1380,226 @@ fn parse_structured_agent_response(content: &str) -> Option<QueueStructuredRespo
         });
     }
 
+    parse_labeled_structured_agent_response(content, language)
+}
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum StructuredResponseSection {
+    Summary,
+    Strengths,
+    Recommendations,
+    Cautions,
+}
+
+fn parse_labeled_structured_agent_response(
+    content: &str,
+    language: QueueReportLanguage,
+) -> Option<QueueStructuredResponse> {
+    let mut summary_lines = Vec::new();
+    let mut strengths = Vec::new();
+    let mut recommendations = Vec::new();
+    let mut cautions = Vec::new();
+    let mut current_section: Option<StructuredResponseSection> = None;
+
+    for line in content.lines() {
+        let line = normalize_structured_line(line);
+
+        if line.is_empty() {
+            continue;
+        }
+
+        if let Some((section, inline_text)) = parse_structured_section_heading(&line, language) {
+            current_section = Some(section);
+
+            if !inline_text.is_empty() {
+                push_structured_section_value(
+                    section,
+                    &inline_text,
+                    &mut summary_lines,
+                    &mut strengths,
+                    &mut recommendations,
+                    &mut cautions,
+                );
+            }
+
+            continue;
+        }
+
+        let Some(section) = current_section else {
+            continue;
+        };
+        let value = normalize_structured_list_item(&line);
+
+        push_structured_section_value(
+            section,
+            &value,
+            &mut summary_lines,
+            &mut strengths,
+            &mut recommendations,
+            &mut cautions,
+        );
+    }
+
+    let summary = normalize_inline_text(&summary_lines.join(" "));
+    strengths.truncate(5);
+    recommendations.truncate(5);
+    cautions.truncate(5);
+
+    if summary.is_empty()
+        && strengths.is_empty()
+        && recommendations.is_empty()
+        && cautions.is_empty()
+    {
+        return None;
+    }
+
+    Some(QueueStructuredResponse {
+        summary,
+        strengths,
+        recommendations,
+        cautions,
+    })
+}
+
+fn parse_structured_section_heading(
+    line: &str,
+    language: QueueReportLanguage,
+) -> Option<(StructuredResponseSection, String)> {
+    let normalized = normalize_structured_heading(line);
+
+    if normalized.is_empty() {
+        return None;
+    }
+
+    let candidates = structured_heading_candidates(language);
+
+    for (label, section) in candidates {
+        let label = label.to_ascii_lowercase();
+
+        if normalized == label {
+            return Some((*section, String::new()));
+        }
+
+        for separator in [":", "-", "–"] {
+            let prefix = format!("{label}{separator}");
+
+            if normalized.starts_with(&prefix) {
+                let inline_text = line
+                    .split_once(separator)
+                    .map(|(_, value)| normalize_inline_text(value))
+                    .unwrap_or_default();
+
+                return Some((*section, inline_text));
+            }
+        }
+    }
+
     None
+}
+
+fn structured_heading_candidates(
+    language: QueueReportLanguage,
+) -> &'static [(&'static str, StructuredResponseSection)] {
+    const KO_CANDIDATES: &[(&str, StructuredResponseSection)] = &[
+        ("요약", StructuredResponseSection::Summary),
+        ("판단", StructuredResponseSection::Summary),
+        ("핵심 결론", StructuredResponseSection::Summary),
+        ("장점", StructuredResponseSection::Strengths),
+        ("장점/근거", StructuredResponseSection::Strengths),
+        ("근거", StructuredResponseSection::Strengths),
+        ("강점", StructuredResponseSection::Strengths),
+        ("확인된 사실", StructuredResponseSection::Strengths),
+        ("제안", StructuredResponseSection::Recommendations),
+        ("결론", StructuredResponseSection::Recommendations),
+        ("권고", StructuredResponseSection::Recommendations),
+        ("추천", StructuredResponseSection::Recommendations),
+        ("결정 사항", StructuredResponseSection::Recommendations),
+        ("다음 행동", StructuredResponseSection::Recommendations),
+        ("주의점", StructuredResponseSection::Cautions),
+        ("위험", StructuredResponseSection::Cautions),
+        ("리스크", StructuredResponseSection::Cautions),
+        ("한계", StructuredResponseSection::Cautions),
+        ("후속 확인", StructuredResponseSection::Cautions),
+    ];
+    const EN_CANDIDATES: &[(&str, StructuredResponseSection)] = &[
+        ("summary", StructuredResponseSection::Summary),
+        ("decision", StructuredResponseSection::Summary),
+        ("conclusion", StructuredResponseSection::Summary),
+        ("strengths", StructuredResponseSection::Strengths),
+        ("pros", StructuredResponseSection::Strengths),
+        ("evidence", StructuredResponseSection::Strengths),
+        ("confirmed facts", StructuredResponseSection::Strengths),
+        (
+            "recommendations",
+            StructuredResponseSection::Recommendations,
+        ),
+        ("recommendation", StructuredResponseSection::Recommendations),
+        ("next actions", StructuredResponseSection::Recommendations),
+        ("next steps", StructuredResponseSection::Recommendations),
+        ("cautions", StructuredResponseSection::Cautions),
+        ("risks", StructuredResponseSection::Cautions),
+        ("limitations", StructuredResponseSection::Cautions),
+        ("follow-up checks", StructuredResponseSection::Cautions),
+    ];
+
+    match language {
+        QueueReportLanguage::Ko => KO_CANDIDATES,
+        QueueReportLanguage::En => EN_CANDIDATES,
+    }
+}
+
+fn push_structured_section_value(
+    section: StructuredResponseSection,
+    value: &str,
+    summary_lines: &mut Vec<String>,
+    strengths: &mut Vec<String>,
+    recommendations: &mut Vec<String>,
+    cautions: &mut Vec<String>,
+) {
+    let value = normalize_inline_text(value);
+
+    if value.is_empty() {
+        return;
+    }
+
+    match section {
+        StructuredResponseSection::Summary => summary_lines.push(value),
+        StructuredResponseSection::Strengths => strengths.push(value),
+        StructuredResponseSection::Recommendations => recommendations.push(value),
+        StructuredResponseSection::Cautions => cautions.push(value),
+    }
+}
+
+fn normalize_structured_line(line: &str) -> String {
+    line.trim()
+        .trim_matches('`')
+        .trim_matches('*')
+        .trim_matches('#')
+        .trim()
+        .to_string()
+}
+
+fn normalize_structured_heading(line: &str) -> String {
+    normalize_structured_list_item(line)
+        .trim_matches('*')
+        .trim()
+        .to_ascii_lowercase()
+}
+
+fn normalize_structured_list_item(line: &str) -> String {
+    line.trim()
+        .trim_start_matches(|character| matches!(character, '-' | '*' | '•' | '·'))
+        .trim()
+        .to_string()
+}
+
+fn looks_like_tool_call_transcript(content: &str) -> bool {
+    let normalized = content.to_ascii_lowercase();
+
+    normalized.contains("<tool_call")
+        || normalized.contains("<tool_calls_section")
+        || normalized.contains("functions.bash")
+        || normalized.contains("tool_call_argument")
 }
 
 fn read_limited_text_array(value: Option<&Value>, limit: usize) -> Vec<String> {
@@ -1447,17 +1765,61 @@ fn response_retry_succeeded(attempt_count: usize, language: QueueReportLanguage)
     }
 }
 
+fn structured_response_unparsed(language: QueueReportLanguage) -> &'static str {
+    match language {
+        QueueReportLanguage::Ko => "구조화 응답을 해석하지 못했습니다.",
+        QueueReportLanguage::En => "Structured response could not be parsed.",
+    }
+}
+
+fn structured_response_unparsed_risk(language: QueueReportLanguage) -> &'static str {
+    match language {
+        QueueReportLanguage::Ko => {
+            "이 응답은 요청한 형식을 따르지 않아 평가나 비교에서 왜곡될 수 있습니다."
+        }
+        QueueReportLanguage::En => {
+            "This response did not follow the requested format and may distort evaluation or comparison."
+        }
+    }
+}
+
+fn tool_call_transcript_summary(language: QueueReportLanguage) -> &'static str {
+    match language {
+        QueueReportLanguage::Ko => {
+            "응답 형식 위반: 에이전트가 답변 대신 도구 호출 형식의 토큰을 반환했습니다."
+        }
+        QueueReportLanguage::En => {
+            "Response format violation: the agent returned tool-call tokens instead of an answer."
+        }
+    }
+}
+
+fn tool_call_transcript_risk(language: QueueReportLanguage) -> &'static str {
+    match language {
+        QueueReportLanguage::Ko => {
+            "도구 호출 토큰이 포함된 응답은 실제 작업 결과로 신뢰하지 않아야 합니다."
+        }
+        QueueReportLanguage::En => {
+            "A response containing tool-call tokens should not be trusted as a task result."
+        }
+    }
+}
+
 fn response_excluded_risk(language: QueueReportLanguage) -> &'static str {
     match language {
         QueueReportLanguage::Ko => "이 에이전트의 응답은 결과 집계에서 제외해야 합니다.",
-        QueueReportLanguage::En => "This agent response should be excluded from result aggregation.",
+        QueueReportLanguage::En => {
+            "This agent response should be excluded from result aggregation."
+        }
     }
 }
 
 pub fn command_completed(report_path: &Path, language: QueueReportLanguage) -> String {
     match language {
         QueueReportLanguage::Ko => format!("작업 실행 완료: {}", display_path(report_path)),
-        QueueReportLanguage::En => format!("Work execution completed: {}", display_path(report_path)),
+        QueueReportLanguage::En => {
+            format!("Work execution completed: {}", display_path(report_path))
+        }
     }
 }
 
@@ -1664,6 +2026,15 @@ mod tests {
     }
 
     #[test]
+    fn unique_token_adds_sequence_entropy() {
+        let mut tokens = std::collections::HashSet::new();
+
+        for _ in 0..1024 {
+            assert!(tokens.insert(unique_token()));
+        }
+    }
+
+    #[test]
     fn vote_parser_prefers_fenced_json_over_prose_braces() {
         let content = r#"I considered option {A}, then chose:
 ```json
@@ -1721,9 +2092,11 @@ Final answer:
             vote: None,
         };
 
-        let prompt =
-            create_work_order_user_prompt_blocks(&task, queue_prompt_labels(QueueReportLanguage::Ko))
-                .join("\n");
+        let prompt = create_work_order_user_prompt_blocks(
+            &task,
+            queue_prompt_labels(QueueReportLanguage::Ko),
+        )
+        .join("\n");
 
         assert!(prompt.contains("응답 형식:"));
         assert!(prompt.contains("형식: 장단점 분석"));
@@ -1731,6 +2104,154 @@ Final answer:
         assert!(prompt.contains(r#""strengths""#));
         assert!(prompt.contains(r#""recommendations""#));
         assert!(prompt.contains(r#""cautions""#));
+        assert!(prompt.contains("첫 글자는 {, 마지막 글자는 }"));
+        assert!(prompt.contains("응답 형식 위반"));
+        assert!(prompt.contains("<tool_call>"));
+        assert!(prompt.contains("```json"));
+    }
+
+    #[test]
+    fn work_order_system_prompt_disallows_fake_tool_use() {
+        let run = AgentExecutionRun {
+            task: QueueWorkOrderTask {
+                id: "task_1".to_string(),
+                kind: None,
+                title: "릴리스 판단".to_string(),
+                body: "파일명을 판단해줘".to_string(),
+                priority: Some("normal".to_string()),
+                response_language: Some("ko".to_string()),
+                response_format: Some("decision-memo".to_string()),
+                project_ids: Vec::new(),
+                agent_ids: Vec::new(),
+                skill_ids: Vec::new(),
+                reference_ids: Vec::new(),
+                vote: None,
+            },
+            agent: AgentRecord {
+                id: "agent_1".to_string(),
+                name: "테스트 에이전트".to_string(),
+                environment_secret_id: None,
+                persona_id: None,
+                execution_provider: Some("openrouter".to_string()),
+                model_id: Some("test/model".to_string()),
+            },
+            secret: ResolvedSecret {
+                name: "OPENROUTER_API_KEY".to_string(),
+                tags: Vec::new(),
+                value: "secret".to_string(),
+            },
+            persona: None,
+            provider: "openrouter".to_string(),
+            model: "test/model".to_string(),
+            skills: Vec::new(),
+            references: Vec::new(),
+        };
+        let prompt_plan = create_agent_prompt_plan(&run.task);
+        let prompt = create_system_prompt(&run, &prompt_plan);
+
+        assert!(prompt.contains("cannot run commands"));
+        assert!(prompt.contains("Use only the task text and selected context"));
+        assert!(prompt.contains("Do not pretend to call tools"));
+    }
+
+    #[test]
+    fn prompt_preview_uses_selected_context_without_resolving_secrets() {
+        let work_order = QueueWorkOrder {
+            schema_version: "workduck.queue-work-order/v1".to_string(),
+            r#ref: QueueEntityRef {
+                id: "work_order_1".to_string(),
+                kind: "queue-work-order".to_string(),
+                label: "릴리스 판단".to_string(),
+            },
+            status: "active".to_string(),
+            created_at: "2026-05-27T00:00:00Z".to_string(),
+            tasks: vec![QueueWorkOrderTask {
+                id: "task_1".to_string(),
+                kind: None,
+                title: "릴리스 판단".to_string(),
+                body: "릴리스해도 되는지 검토해줘".to_string(),
+                priority: Some("normal".to_string()),
+                response_language: Some("ko".to_string()),
+                response_format: Some("decision-memo".to_string()),
+                project_ids: Vec::new(),
+                agent_ids: vec!["agent_1".to_string()],
+                skill_ids: vec!["skill_1".to_string()],
+                reference_ids: vec!["reference_1".to_string()],
+                vote: None,
+            }],
+        };
+        let agents = vec![AgentRecord {
+            id: "agent_1".to_string(),
+            name: "검토 에이전트".to_string(),
+            environment_secret_id: Some("missing-secret".to_string()),
+            persona_id: Some("persona_1".to_string()),
+            execution_provider: Some("openrouter".to_string()),
+            model_id: Some("test/model".to_string()),
+        }];
+        let personas = vec![PersonaRecord {
+            id: "persona_1".to_string(),
+            description: "꼼꼼한 리뷰어".to_string(),
+            instructions: "근거를 먼저 확인한다.".to_string(),
+            styles: Value::Null,
+            spectrums: Value::Null,
+        }];
+        let skills = vec![SkillRecord {
+            id: "skill_1".to_string(),
+            name: "Release review".to_string(),
+            instructions: "릴리스 위험을 확인한다.".to_string(),
+        }];
+        let references = vec![ReferenceRecord {
+            id: "reference_1".to_string(),
+            title: "Release notes".to_string(),
+            content: "변경 사항 요약".to_string(),
+            source_url: "https://example.com/release".to_string(),
+        }];
+
+        let previews = create_prompt_previews(&work_order, &agents, &personas, &skills, &references)
+            .expect("prompt previews");
+
+        assert_eq!(previews.len(), 1);
+        assert_eq!(previews[0].agent_name, "검토 에이전트");
+        assert!(previews[0].system_prompt.contains("검토 에이전트"));
+        assert!(previews[0].system_prompt.contains("근거를 먼저 확인한다."));
+        assert!(previews[0].user_prompt.contains("릴리스해도 되는지 검토해줘"));
+        assert!(previews[0].user_prompt.contains("Release review"));
+        assert!(previews[0].user_prompt.contains("변경 사항 요약"));
+        assert!(!previews[0].system_prompt.contains("missing-secret"));
+        assert!(!previews[0].user_prompt.contains("missing-secret"));
+    }
+
+    #[test]
+    fn prompt_preview_reports_missing_agent() {
+        let work_order = QueueWorkOrder {
+            schema_version: "workduck.queue-work-order/v1".to_string(),
+            r#ref: QueueEntityRef {
+                id: "work_order_1".to_string(),
+                kind: "queue-work-order".to_string(),
+                label: "릴리스 판단".to_string(),
+            },
+            status: "active".to_string(),
+            created_at: "2026-05-27T00:00:00Z".to_string(),
+            tasks: vec![QueueWorkOrderTask {
+                id: "task_1".to_string(),
+                kind: None,
+                title: "릴리스 판단".to_string(),
+                body: "릴리스해도 되는지 검토해줘".to_string(),
+                priority: Some("normal".to_string()),
+                response_language: Some("ko".to_string()),
+                response_format: Some("decision-memo".to_string()),
+                project_ids: Vec::new(),
+                agent_ids: vec!["agent_missing".to_string()],
+                skill_ids: Vec::new(),
+                reference_ids: Vec::new(),
+                vote: None,
+            }],
+        };
+
+        let error = create_prompt_previews(&work_order, &[], &[], &[], &[])
+            .expect_err("missing agent");
+
+        assert_eq!(error.code, "agent-not-found");
     }
 
     #[test]
@@ -1750,9 +2271,11 @@ Final answer:
             vote: None,
         };
 
-        let prompt =
-            create_work_order_user_prompt_blocks(&task, queue_prompt_labels(QueueReportLanguage::Ko))
-                .join("\n");
+        let prompt = create_work_order_user_prompt_blocks(
+            &task,
+            queue_prompt_labels(QueueReportLanguage::Ko),
+        )
+        .join("\n");
 
         assert!(prompt.contains("형식: 버그 분석"));
         assert!(prompt.contains("재현 조건 또는 회귀 위험"));
@@ -1767,12 +2290,100 @@ Here is my answer:
 ```
 "#;
 
-        let response = parse_structured_agent_response(content).expect("structured response");
+        let response = parse_structured_agent_response(content, QueueReportLanguage::En)
+            .expect("structured response");
 
         assert_eq!(response.summary, "Astro fits best");
         assert_eq!(response.strengths, vec!["Static content"]);
         assert_eq!(response.recommendations, vec!["Prototype Astro"]);
         assert_eq!(response.cautions, vec!["Team familiarity"]);
+    }
+
+    #[test]
+    fn structured_response_parser_accepts_korean_section_response() {
+        let content = r#"
+판단
+en-US 표기는 한국어 지원 앱을 영어 전용처럼 보이게 합니다.
+
+장점
+- 일반 사용자의 오해 가능성을 줄일 수 있습니다.
+- 주 다운로드 대상을 명확히 할 수 있습니다.
+
+결론
+- setup.exe를 기본 다운로드로 안내하세요.
+
+위험
+- 기존 링크를 확인해야 합니다.
+"#;
+
+        let response = parse_structured_agent_response(content, QueueReportLanguage::Ko)
+            .expect("structured response");
+
+        assert_eq!(
+            response.summary,
+            "en-US 표기는 한국어 지원 앱을 영어 전용처럼 보이게 합니다."
+        );
+        assert_eq!(
+            response.strengths,
+            vec![
+                "일반 사용자의 오해 가능성을 줄일 수 있습니다.",
+                "주 다운로드 대상을 명확히 할 수 있습니다."
+            ]
+        );
+        assert_eq!(
+            response.recommendations,
+            vec!["setup.exe를 기본 다운로드로 안내하세요."]
+        );
+        assert_eq!(response.cautions, vec!["기존 링크를 확인해야 합니다."]);
+    }
+
+    #[test]
+    fn malformed_tool_call_response_is_marked_as_unparsed() {
+        let work_order = QueueWorkOrder {
+            schema_version: "workduck.queue-work-order/v1".to_string(),
+            r#ref: QueueEntityRef {
+                id: "wo_1".to_string(),
+                kind: "queue-work-order".to_string(),
+                label: "릴리스 판단".to_string(),
+            },
+            status: "active".to_string(),
+            created_at: "2026-05-24T00:00:00Z".to_string(),
+            tasks: Vec::new(),
+        };
+        let output = AgentRunOutput {
+            task: QueueWorkOrderTask {
+                id: "task_1".to_string(),
+                kind: None,
+                title: "릴리스 판단".to_string(),
+                body: "파일명을 판단해줘".to_string(),
+                priority: Some("normal".to_string()),
+                response_language: Some("ko".to_string()),
+                response_format: Some("decision-memo".to_string()),
+                project_ids: Vec::new(),
+                agent_ids: Vec::new(),
+                skill_ids: Vec::new(),
+                reference_ids: Vec::new(),
+                vote: None,
+            },
+            agent_name: "키미K2.6".to_string(),
+            content: "<tool_call_begin> functions.Bash:0 <tool_call_end>".to_string(),
+            execution_attempts: Vec::new(),
+        };
+
+        let task = create_success_report_task(&work_order, &output);
+
+        assert!(task.structured_response.is_none());
+        assert!(task.summary.contains("도구 호출"));
+        assert!(
+            task.verification
+                .iter()
+                .any(|item| item.contains("구조화 응답"))
+        );
+        assert!(
+            task.risks
+                .iter()
+                .any(|item| item.contains("신뢰하지 않아야"))
+        );
     }
 
     #[test]
@@ -1792,9 +2403,11 @@ Here is my answer:
             vote: Some(vote_spec()),
         };
 
-        let prompt =
-            create_work_order_user_prompt_blocks(&task, queue_prompt_labels(QueueReportLanguage::Ko))
-                .join("\n");
+        let prompt = create_work_order_user_prompt_blocks(
+            &task,
+            queue_prompt_labels(QueueReportLanguage::Ko),
+        )
+        .join("\n");
 
         assert!(prompt.contains("JSON 객체 하나만 반환하세요."));
         assert!(!prompt.contains("응답 형식:"));
@@ -1913,6 +2526,77 @@ pub fn create_execution_runs(
     }
 
     Ok(runs)
+}
+
+pub fn create_prompt_previews(
+    work_order: &QueueWorkOrder,
+    agents: &[AgentRecord],
+    personas: &[PersonaRecord],
+    skills: &[SkillRecord],
+    references: &[ReferenceRecord],
+) -> Result<Vec<QueuePromptPreview>, QueueExecutionErrorDetail> {
+    let mut previews = Vec::new();
+
+    for task in &work_order.tasks {
+        if task.agent_ids.is_empty() {
+            return Err(QueueExecutionErrorDetail {
+                code: "work-order-agent-required",
+                message: format!("작업 '{}'에 에이전트가 지정되어 있지 않습니다.", task.title),
+            });
+        }
+
+        for agent_id in &task.agent_ids {
+            let agent = agents
+                .iter()
+                .find(|candidate| candidate.id == *agent_id)
+                .cloned()
+                .ok_or_else(|| QueueExecutionErrorDetail {
+                    code: "agent-not-found",
+                    message: format!("에이전트를 찾지 못했습니다: {agent_id}"),
+                })?;
+            let persona = agent
+                .persona_id
+                .as_ref()
+                .and_then(|persona_id| personas.iter().find(|persona| persona.id == *persona_id))
+                .cloned();
+            let run = AgentExecutionRun {
+                task: task.clone(),
+                agent: agent.clone(),
+                secret: ResolvedSecret {
+                    name: String::new(),
+                    tags: Vec::new(),
+                    value: String::new(),
+                },
+                persona,
+                provider: agent.execution_provider.clone().unwrap_or_default(),
+                model: agent.model_id.clone().unwrap_or_default(),
+                skills: select_records(&task.skill_ids, skills, |skill| &skill.id),
+                references: select_records(&task.reference_ids, references, |reference| {
+                    &reference.id
+                }),
+            };
+            let prompt_plan = create_agent_prompt_plan(&run.task);
+
+            previews.push(QueuePromptPreview {
+                id: format!("{}:{}", task.id, agent.id),
+                task_id: task.id.clone(),
+                task_title: task.title.clone(),
+                agent_id: agent.id,
+                agent_name: agent.name,
+                system_prompt: create_system_prompt(&run, &prompt_plan),
+                user_prompt: create_user_prompt(&run, &prompt_plan),
+            });
+        }
+    }
+
+    if previews.is_empty() {
+        return Err(QueueExecutionErrorDetail {
+            code: "work-order-empty",
+            message: "실행할 작업이 없습니다.".to_string(),
+        });
+    }
+
+    Ok(previews)
 }
 
 fn resolve_provider_environment_secret(
@@ -2208,7 +2892,9 @@ fn resolve_agent_provider(
     })
 }
 
-fn resolve_agent_provider_without_secret(agent: &AgentRecord) -> Result<String, QueueExecutionErrorDetail> {
+fn resolve_agent_provider_without_secret(
+    agent: &AgentRecord,
+) -> Result<String, QueueExecutionErrorDetail> {
     if let Some(provider) = agent
         .execution_provider
         .as_deref()
@@ -2303,11 +2989,10 @@ fn normalize_profile_text<'a>(parts: impl Iterator<Item = &'a str>) -> String {
         .collect()
 }
 
-
 fn current_timestamp() -> Result<String, QueueExecutionErrorDetail> {
-    OffsetDateTime::now_utc()
-        .format(&Rfc3339)
-        .map_err(|_| QueueExecutionErrorDetail::new("timestamp-format-failed", "현재 시간을 만들지 못했습니다."))
+    OffsetDateTime::now_utc().format(&Rfc3339).map_err(|_| {
+        QueueExecutionErrorDetail::new("timestamp-format-failed", "현재 시간을 만들지 못했습니다.")
+    })
 }
 
 fn timestamp_for_file_name() -> Result<String, QueueExecutionErrorDetail> {
@@ -2315,7 +3000,10 @@ fn timestamp_for_file_name() -> Result<String, QueueExecutionErrorDetail> {
 }
 
 fn unique_token() -> String {
-    format!("{:x}", OffsetDateTime::now_utc().unix_timestamp_nanos())
+    let timestamp = OffsetDateTime::now_utc().unix_timestamp_nanos();
+    let sequence = UNIQUE_TOKEN_COUNTER.fetch_add(1, Ordering::Relaxed);
+
+    format!("{timestamp:x}{sequence:016x}")
 }
 
 fn slugify(value: &str) -> String {
@@ -2341,8 +3029,7 @@ fn slugify(value: &str) -> String {
             slug
         });
 
-    slug
-        .trim_matches('-')
+    slug.trim_matches('-')
         .trim_matches('_')
         .chars()
         .take(80)
@@ -2350,8 +3037,9 @@ fn slugify(value: &str) -> String {
 }
 
 fn write_json_file<T: Serialize>(path: &Path, value: &T) -> Result<(), QueueExecutionErrorDetail> {
-    let content = serde_json::to_string_pretty(value)
-        .map_err(|_| QueueExecutionErrorDetail::new("json-serialize-failed", "JSON으로 변환하지 못했습니다."))?;
+    let content = serde_json::to_string_pretty(value).map_err(|_| {
+        QueueExecutionErrorDetail::new("json-serialize-failed", "JSON으로 변환하지 못했습니다.")
+    })?;
     fs::write(path, content).map_err(|error| io_error("file-write-failed", path, error))
 }
 

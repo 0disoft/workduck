@@ -23,9 +23,35 @@ export type QueueExecutionResult =
 			readonly error: QueueExecutionError;
 	  };
 
+export interface WorkduckQueuePromptPreview {
+	readonly id: string;
+	readonly taskId: string;
+	readonly taskTitle: string;
+	readonly agentId: string;
+	readonly agentName: string;
+	readonly systemPrompt: string;
+	readonly userPrompt: string;
+}
+
+export type QueuePromptPreviewResult =
+	| {
+			readonly ok: true;
+			readonly previews: readonly WorkduckQueuePromptPreview[];
+	  }
+	| {
+			readonly ok: false;
+			readonly error: QueueExecutionError;
+	  };
+
 interface QueueExecutionCommandResponse {
 	readonly ok: boolean;
 	readonly report?: WorkduckQueueResultReport | null;
+	readonly error?: string | null;
+}
+
+interface QueuePromptPreviewCommandResponse {
+	readonly ok: boolean;
+	readonly previews?: readonly WorkduckQueuePromptPreview[] | null;
 	readonly error?: string | null;
 }
 
@@ -59,6 +85,49 @@ export async function executeQueueWorkOrder(input: {
 			return {
 				ok: true,
 				report: response.report
+			};
+		}
+
+		return {
+			ok: false,
+			error: normalizeQueueExecutionError(response.error)
+		};
+	} catch {
+		return { ok: false, error: 'agent-execution-provider-unavailable' };
+	}
+}
+
+export async function previewQueueWorkOrderPrompt(input: {
+	readonly workOrder: WorkduckQueueWorkOrder;
+	readonly agents: readonly AgentRecord[];
+	readonly skills: readonly WorkduckSkillRecord[];
+	readonly references: readonly ReferenceRecord[];
+	readonly personas: readonly PersonaRecord[];
+}): Promise<QueuePromptPreviewResult> {
+	const invoke = getTauriInvoke();
+
+	if (invoke === undefined) {
+		return { ok: false, error: 'agent-execution-unavailable' };
+	}
+
+	try {
+		const response = await invoke<QueuePromptPreviewCommandResponse>(
+			'preview_queue_work_order_prompt',
+			{
+				request: {
+					workOrder: input.workOrder,
+					agents: input.agents,
+					skills: input.skills,
+					references: input.references,
+					personas: input.personas
+				}
+			}
+		);
+
+		if (response.ok && response.previews !== null && response.previews !== undefined) {
+			return {
+				ok: true,
+				previews: response.previews
 			};
 		}
 

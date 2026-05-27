@@ -4,6 +4,7 @@
 	import QueueContextMenu from './QueueContextMenu.svelte';
 	import QueueEvaluationDialog from './QueueEvaluationDialog.svelte';
 	import QueueFileList from './QueueFileList.svelte';
+	import QueuePromptPreviewDialog from './QueuePromptPreviewDialog.svelte';
 	import QueueProposalDetail from './QueueProposalDetail.svelte';
 	import QueueReportDetail from './QueueReportDetail.svelte';
 	import QueueWorkOrderDetail from './QueueWorkOrderDetail.svelte';
@@ -219,8 +220,11 @@
 					workOrder={controller.selectedWorkOrder}
 					messages={controller.messages}
 					isWriting={controller.isWriting}
+					isPreviewingPrompt={controller.isPreviewingPrompt}
 					canExecute={controller.canExecuteSelectedWorkOrder}
+					canPreviewPrompt={controller.canPreviewSelectedWorkOrderPrompt}
 					canComplete={controller.canCompleteSelectedWorkOrder}
+					onPreviewPrompt={controller.handlePreviewWorkOrderPrompt}
 					onExecute={controller.handleExecuteWorkOrder}
 					onComplete={controller.handleCompleteWorkOrder}
 					onEditTask={controller.openEditWorkOrderTaskDialog}
@@ -265,6 +269,14 @@
 		onClose={controller.closeEvaluationDialog}
 		onScoreChange={controller.updateEvaluationScore}
 		onSubmit={controller.handleSaveEvaluation}
+	/>
+{/if}
+
+{#if controller.promptPreviews !== null}
+	<QueuePromptPreviewDialog
+		messages={controller.messages}
+		previews={controller.promptPreviews}
+		onClose={controller.closePromptPreviewDialog}
 	/>
 {/if}
 

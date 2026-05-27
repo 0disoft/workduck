@@ -5,6 +5,7 @@ export const koMessages = {
 		add: '추가',
 		save: '저장',
 		cancel: '취소',
+		close: '닫기',
 		edit: '수정',
 		remove: '삭제',
 		refresh: '새로 고침',
@@ -42,6 +43,8 @@ export const koMessages = {
 		all: '전체',
 		read: '읽음',
 		unread: '안 읽음',
+		show: '보기',
+		hide: '숨기기',
 		checking: '확인 중',
 		create: '만들기',
 		files: '파일',
@@ -262,6 +265,7 @@ export const koMessages = {
 		createWorkOrder: '작업 지시서 만들기',
 		delegateEvaluation: '평가 위임',
 		creating: '만드는 중',
+		previewPrompt: '지시문 미리보기',
 		executeWorkOrder: '실행',
 		completeWorkOrder: '완료 처리',
 		executing: '실행 중',
@@ -275,6 +279,13 @@ export const koMessages = {
 		executedFile: '{relativePath} 보고서를 만들고 작업을 완료했습니다.',
 		completedFile: '{relativePath} 작업을 완료 처리했습니다.',
 		nextWorkOrders: '다음 작업 지시서',
+		promptPreview: {
+			title: '지시문 미리보기',
+			description: '이 작업 지시서를 실행하기 전에 실제로 전송될 시스템 지시문과 사용자 지시문을 확인합니다.',
+			systemPrompt: '시스템 지시문',
+			userPrompt: '사용자 지시문',
+			characterCount: '{count}자'
+		},
 		priorities: {
 			low: '낮음',
 			normal: '보통',

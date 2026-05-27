@@ -13,20 +13,20 @@
 	const { label, sidebarLabel, detailLabel, sidebar, detail, status }: Props = $props();
 </script>
 
-<section class="workduck-entity-workbench" aria-label={label}>
-	<section class="workduck-entity-sidebar" aria-label={sidebarLabel}>
+<div class="workduck-entity-workbench" role="group" aria-label={label}>
+	<div class="workduck-entity-sidebar" role="group" aria-label={sidebarLabel}>
 		{@render sidebar()}
-	</section>
+	</div>
 
-	<section class="workduck-entity-detail" aria-label={detailLabel}>
+	<div class="workduck-entity-detail" role="group" aria-label={detailLabel}>
 		{#if detail !== undefined}
 			{@render detail()}
 		{/if}
-	</section>
+	</div>
 
 	{#if status !== undefined}
 		<div class="workduck-entity-status">
 			{@render status()}
 		</div>
 	{/if}
-</section>
+</div>

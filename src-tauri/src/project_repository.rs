@@ -13,17 +13,17 @@ use crate::git_credential::{
     GitCredential, apply_git_credential, apply_github_cli_credential,
     clear_git_credential_environment, parse_git_credential,
 };
-use crate::{git_path::git_process_path, path_display::display_path};
 use crate::project_repository_failure::{
-    classify_git_clone_failure, classify_git_fetch_failure, classify_git_pull_failure,
-    classify_git_push_failure, classify_github_initial_commit_failure,
-    classify_github_publish_failure, CloneFailure,
+    CloneFailure, classify_git_clone_failure, classify_git_fetch_failure,
+    classify_git_pull_failure, classify_git_push_failure, classify_github_initial_commit_failure,
+    classify_github_publish_failure,
 };
 use crate::project_repository_validation::{
     resolve_group_path, validate_commit_message, validate_github_repository_name,
     validate_github_visibility, validate_group_relative_path, validate_remote_url,
     validate_repository_folder_name, validate_repository_path, validate_workspace_root,
 };
+use crate::{git_path::git_process_path, path_display::display_path};
 
 #[cfg(target_os = "windows")]
 use std::os::windows::process::CommandExt;
@@ -392,13 +392,33 @@ pub fn inspect_project_repository_git(path: String) -> ProjectRepositoryGitInspe
 pub fn inspect_project_repositories_git(
     repositories: Vec<ProjectRepositoryGitInspectionRequest>,
 ) -> Vec<ProjectRepositoryGitInspectionRecord> {
-    repositories
-        .into_iter()
-        .map(|repository| ProjectRepositoryGitInspectionRecord {
-            repository_id: repository.repository_id,
-            inspection: inspect_project_repository_git(repository.path),
-        })
-        .collect()
+    thread::scope(|scope| {
+        let handles = repositories
+            .into_iter()
+            .map(|repository| scope.spawn(move || inspect_project_repository_git_record(repository)))
+            .collect::<Vec<_>>();
+
+        handles
+            .into_iter()
+            .map(|handle| handle.join().expect("repository git inspection worker panicked"))
+            .collect()
+    })
+}
+
+fn inspect_project_repository_git_record(
+    repository: ProjectRepositoryGitInspectionRequest,
+) -> ProjectRepositoryGitInspectionRecord {
+    let ProjectRepositoryGitInspectionRequest {
+        repository_id,
+        path,
+    } = repository;
+    let inspection = std::panic::catch_unwind(move || inspect_project_repository_git(path))
+        .unwrap_or_else(|_| invalid_git_inspection(ProjectRepositoryGitError::CommandFailed));
+
+    ProjectRepositoryGitInspectionRecord {
+        repository_id,
+        inspection,
+    }
 }
 
 #[tauri::command]
@@ -714,7 +734,9 @@ fn run_git_clone(
         wait_for_child_output(child, PROJECT_REPOSITORY_CLONE_TIMEOUT).map_err(|error| {
             CloneFailure {
                 error: match error {
-                    GitChildWaitError::TimedOut => ProjectRepositoryCloneError::CloneCommandTimedOut,
+                    GitChildWaitError::TimedOut => {
+                        ProjectRepositoryCloneError::CloneCommandTimedOut
+                    }
                     GitChildWaitError::Failed => ProjectRepositoryCloneError::CloneFailed,
                 },
             }
@@ -779,9 +801,18 @@ fn not_git_repository_inspection() -> ProjectRepositoryGitInspection {
 fn read_git_status_summary(
     repository_path: &Path,
 ) -> Result<Option<GitStatusSummary>, GitCommandFailure> {
+    if !is_git_repository(repository_path)? {
+        return Ok(None);
+    }
+
     let output = run_git_command(
         repository_path,
-        &["status", "--porcelain=v2", "--branch", "--untracked-files=normal"],
+        &[
+            "status",
+            "--porcelain=v2",
+            "--branch",
+            "--untracked-files=normal",
+        ],
         PROJECT_REPOSITORY_GIT_ACTION_TIMEOUT,
         None,
     )?;
@@ -855,12 +886,50 @@ fn parse_git_branch_ahead_behind(output: &str) -> (u32, u32) {
 fn is_git_repository(repository_path: &Path) -> Result<bool, GitCommandFailure> {
     let output = run_git_command(
         repository_path,
-        &["rev-parse", "--is-inside-work-tree"],
+        &["rev-parse", "--show-toplevel"],
         PROJECT_REPOSITORY_GIT_ACTION_TIMEOUT,
         None,
     )?;
 
-    Ok(output.status.success() && String::from_utf8_lossy(&output.stdout).trim() == "true")
+    if !output.status.success() {
+        return Ok(false);
+    }
+
+    let work_tree_root = String::from_utf8_lossy(&output.stdout).trim().to_owned();
+
+    if work_tree_root.is_empty() {
+        return Ok(false);
+    }
+
+    paths_refer_to_same_directory(repository_path, Path::new(&work_tree_root))
+}
+
+fn paths_refer_to_same_directory(left: &Path, right: &Path) -> Result<bool, GitCommandFailure> {
+    let left = canonicalize_git_path(left)?;
+    let right = canonicalize_git_path(right)?;
+
+    Ok(paths_match(&left, &right))
+}
+
+fn canonicalize_git_path(path: &Path) -> Result<PathBuf, GitCommandFailure> {
+    fs::canonicalize(path).map_err(|error| GitCommandFailure {
+        error: match error.kind() {
+            io::ErrorKind::NotFound => ProjectRepositoryGitError::PathNotFound,
+            io::ErrorKind::PermissionDenied => ProjectRepositoryGitError::PathPermissionDenied,
+            _ => ProjectRepositoryGitError::PathUnreadable,
+        },
+    })
+}
+
+#[cfg(target_os = "windows")]
+fn paths_match(left: &Path, right: &Path) -> bool {
+    left.to_string_lossy()
+        .eq_ignore_ascii_case(&right.to_string_lossy())
+}
+
+#[cfg(not(target_os = "windows"))]
+fn paths_match(left: &Path, right: &Path) -> bool {
+    left == right
 }
 
 fn has_git_remote(repository_path: &Path) -> Result<bool, GitCommandFailure> {
@@ -918,6 +987,56 @@ mod tests {
         assert_eq!(summary.ahead_count, 0);
         assert_eq!(summary.behind_count, 0);
         assert!(!summary.has_uncommitted_changes);
+    }
+
+    #[test]
+    fn repository_inspection_ignores_parent_work_tree() {
+        if !git_is_available() {
+            return;
+        }
+
+        let sandbox = unique_test_directory("workduck-parent-work-tree");
+        let parent = sandbox.join("parent");
+        let child = parent.join("child");
+
+        fs::create_dir_all(&child).expect("create nested git test folder");
+
+        let init_status = Command::new("git")
+            .arg("init")
+            .current_dir(&parent)
+            .status()
+            .expect("run git init");
+
+        assert!(init_status.success());
+
+        let inspection = match inspect_git_repository(&child) {
+            Ok(inspection) => inspection,
+            Err(_) => panic!("inspect nested folder"),
+        };
+
+        assert!(!inspection.is_git_repository);
+        assert!(!inspection.has_remote);
+        assert!(!inspection.has_uncommitted_changes);
+
+        let _ = fs::remove_dir_all(&sandbox);
+    }
+
+    fn git_is_available() -> bool {
+        Command::new("git")
+            .arg("--version")
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
+            .status()
+            .is_ok_and(|status| status.success())
+    }
+
+    fn unique_test_directory(name: &str) -> PathBuf {
+        let timestamp = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .expect("system time after Unix epoch")
+            .as_nanos();
+
+        std::env::temp_dir().join(format!("{name}-{}-{timestamp}", std::process::id()))
     }
 }
 

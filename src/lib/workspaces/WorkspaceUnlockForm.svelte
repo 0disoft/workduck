@@ -40,6 +40,7 @@
 	let attemptsRemaining = $state<number | null>(null);
 	let lockedUntil = $state<number | null>(null);
 	let isUnlocking = $state(false);
+	let isPasswordVisible = $state(false);
 	let nowMs = $state(Date.now());
 
 	let lockout = $derived(getWorkspaceUnlockLockout(workspace.id, nowMs));
@@ -53,6 +54,9 @@
 	let messages = $derived(getWorkduckMessages(appearanceSettings.languageId));
 	let effectiveSubmitLabel = $derived(submitLabel ?? messages.workspace.unlock.submit);
 	let effectiveCancelLabel = $derived(cancelLabel ?? messages.common.cancel);
+	let passwordInputId = $derived(`workspace-unlock-password-${workspace.id}`);
+	let unlockErrorId = $derived(`workspace-unlock-error-${workspace.id}`);
+	let unlockMessage = $derived(getUnlockMessage());
 
 	onMount(() => {
 		appearanceSettings = readAppearanceSettingsFromBrowser().settings;
@@ -118,6 +122,7 @@
 			}
 
 			password = '';
+			isPasswordVisible = false;
 			onUnlocked?.();
 		} finally {
 			isUnlocking = false;
@@ -129,6 +134,7 @@
 		error = null;
 		attemptsRemaining = null;
 		lockedUntil = null;
+		isPasswordVisible = false;
 		onCancel?.();
 	}
 
@@ -142,17 +148,32 @@
 </script>
 
 <form class="workduck-unlock-form" onsubmit={handleSubmit}>
-	<label class="workduck-form-field" for={`workspace-unlock-password-${workspace.id}`}>
+	<label class="workduck-form-field" for={passwordInputId}>
 		<span>{messages.common.password}</span>
-		<input
-			id={`workspace-unlock-password-${workspace.id}`}
-			class="workduck-input"
-			type="password"
-			bind:value={password}
-			autocomplete="current-password"
-			disabled={isUnlocking || isLocked}
-			aria-invalid={error !== null || isLocked}
-		/>
+		<div class="workduck-password-control">
+			<input
+				id={passwordInputId}
+				class="workduck-input"
+				type={isPasswordVisible ? 'text' : 'password'}
+				bind:value={password}
+				autocomplete="current-password"
+				disabled={isUnlocking || isLocked}
+				aria-invalid={unlockMessage !== null}
+				aria-describedby={unlockMessage === null ? undefined : unlockErrorId}
+			/>
+			<button
+				class="workduck-password-toggle-button"
+				type="button"
+				disabled={isUnlocking || isLocked}
+				aria-label={isPasswordVisible ? messages.common.hide : messages.common.show}
+				aria-pressed={isPasswordVisible}
+				onclick={() => {
+					isPasswordVisible = !isPasswordVisible;
+				}}
+			>
+				{isPasswordVisible ? messages.common.hide : messages.common.show}
+			</button>
+		</div>
 	</label>
 
 	<div class="workduck-unlock-actions">
@@ -171,7 +192,7 @@
 		{/if}
 	</div>
 
-	{#if getUnlockMessage() !== null}
-		<p class="workduck-inline-error" aria-live="polite">{getUnlockMessage()}</p>
+	{#if unlockMessage !== null}
+		<p id={unlockErrorId} class="workduck-inline-error" aria-live="polite">{unlockMessage}</p>
 	{/if}
 </form>

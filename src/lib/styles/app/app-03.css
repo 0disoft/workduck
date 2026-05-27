@@ -316,6 +316,15 @@
 	border-color: oklch(var(--workduck-oklch-accent) / 0.68);
 }
 
+.workduck-repository-busy-indicator {
+	flex: 0 0 auto;
+	width: 12px;
+	height: 12px;
+	border: 2px solid oklch(var(--workduck-oklch-accent) / 0.28);
+	border-top-color: var(--workduck-color-accent);
+	border-radius: 999px;
+}
+
 .workduck-repository-card-actions {
 	display: flex;
 	min-width: 0;
@@ -882,6 +891,41 @@
 
 .workduck-input[aria-invalid="true"] {
 	border-color: oklch(var(--workduck-oklch-danger) / 0.92);
+}
+
+.workduck-password-control {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto;
+	min-width: 0;
+	gap: 8px;
+}
+
+.workduck-password-toggle-button {
+	display: inline-flex;
+	min-width: 66px;
+	height: var(--workduck-control-height);
+	align-items: center;
+	justify-content: center;
+	border: 1px solid oklch(var(--workduck-oklch-border) / 0.94);
+	border-radius: 8px;
+	background: var(--workduck-color-surface);
+	color: var(--workduck-color-muted);
+	padding: 0 10px;
+	font: inherit;
+	font-size: var(--workduck-font-size-xs);
+	font-weight: 800;
+}
+
+.workduck-password-toggle-button:hover:not(:disabled),
+.workduck-password-toggle-button:focus-visible {
+	border-color: oklch(var(--workduck-oklch-accent) / 0.78);
+	color: var(--workduck-color-accent);
+	outline: 2px solid oklch(var(--workduck-oklch-accent) / 0.36);
+	outline-offset: 0;
+}
+
+.workduck-password-toggle-button:disabled {
+	opacity: 0.54;
 }
 
 .workduck-textarea {
