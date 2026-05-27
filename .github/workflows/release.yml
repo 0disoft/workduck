@@ -23,11 +23,6 @@ jobs:
     name: Windows installer
     runs-on: windows-latest
 
-    env:
-      WINDOWS_CERTIFICATE_BASE64: ${{ secrets.WINDOWS_CERTIFICATE_BASE64 }}
-      WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
-      WINDOWS_TIMESTAMP_URL: ${{ secrets.WINDOWS_TIMESTAMP_URL }}
-
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -35,11 +30,15 @@ jobs:
       - name: Resolve release tag
         id: release
         shell: pwsh
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          RELEASE_INPUT_TAG: ${{ inputs.tag }}
+          RELEASE_REF_NAME: ${{ github.ref_name }}
         run: |
-          $tag = if ("${{ github.event_name }}" -eq "workflow_dispatch") {
-            "${{ inputs.tag }}".Trim()
+          $tag = if ($env:EVENT_NAME -eq "workflow_dispatch") {
+            $env:RELEASE_INPUT_TAG.Trim()
           } else {
-            "${{ github.ref_name }}".Trim()
+            $env:RELEASE_REF_NAME.Trim()
           }
 
           if ($tag -notmatch '^v\d+\.\d+\.\d+([-+][0-9A-Za-z.-]+)?$') {
@@ -62,6 +61,9 @@ jobs:
       - name: Resolve signing mode
         id: signing
         shell: pwsh
+        env:
+          WINDOWS_CERTIFICATE_BASE64: ${{ secrets.WINDOWS_CERTIFICATE_BASE64 }}
+          WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
         run: |
           $hasCertificate = -not [string]::IsNullOrWhiteSpace($env:WINDOWS_CERTIFICATE_BASE64)
           $hasPassword = -not [string]::IsNullOrWhiteSpace($env:WINDOWS_CERTIFICATE_PASSWORD)
@@ -112,6 +114,9 @@ jobs:
         if: steps.signing.outputs.enabled == 'true'
         id: import_windows_cert
         shell: pwsh
+        env:
+          WINDOWS_CERTIFICATE_BASE64: ${{ secrets.WINDOWS_CERTIFICATE_BASE64 }}
+          WINDOWS_CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
         run: |
           $certPath = Join-Path $env:RUNNER_TEMP "workduck-code-signing.pfx"
           $certBytes = [Convert]::FromBase64String($env:WINDOWS_CERTIFICATE_BASE64)
@@ -133,6 +138,8 @@ jobs:
         if: steps.signing.outputs.enabled == 'true'
         id: signing_config
         shell: pwsh
+        env:
+          WINDOWS_TIMESTAMP_URL: ${{ secrets.WINDOWS_TIMESTAMP_URL }}
         run: |
           $timestampUrl = if ([string]::IsNullOrWhiteSpace($env:WINDOWS_TIMESTAMP_URL)) {
             "http://timestamp.digicert.com"
@@ -164,7 +171,7 @@ jobs:
           tagName: ${{ steps.release.outputs.tag }}
           releaseName: Workduck ${{ steps.release.outputs.tag }}
           releaseBody: "Windows installer build. Auto-update metadata is generated from the signed updater bundle. Installers are unsigned unless the release workflow reports that Windows code signing was enabled."
-          releaseDraft: true
+          releaseDraft: false
           prerelease: false
           generateReleaseNotes: true
           includeUpdaterJson: true

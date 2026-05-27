@@ -282,5 +282,9 @@ function readTrimmedString(value: unknown) {
 }
 
 function quoteCliArgument(value: string) {
-	return `"${value.replaceAll('"', '\\"')}"`;
+	if (value.length === 0) {
+		return "''";
+	}
+
+	return `'${value.replaceAll("'", `'"'"'`)}'`;
 }

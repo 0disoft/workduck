@@ -352,7 +352,7 @@ export const enMessages = {
 			executionVaultLocked: 'Unlock the environment vault first.',
 			executionAgentNotFound: 'The selected agent was not found.',
 			executionSecretNotFound: 'The API key linked to the agent was not found.',
-			executionProviderUnsupported: 'The LLM provider could not be detected. Select an agent provider or include DeepSeek, OpenAI, or OpenRouter in the API key name or tag.',
+			executionProviderUnsupported: 'The LLM provider could not be detected. Include DeepSeek, OpenAI, or OpenRouter in the API key name or tag.',
 			executionApiKeyRequired: 'The API key is empty.',
 			executionPromptRequired: 'The work prompt could not be created.',
 			executionModelRequired: 'The model could not be selected.',

@@ -10,7 +10,7 @@ use std::{
 use wait_timeout::ChildExt;
 
 use crate::git_credential::{
-    GitCredential, apply_git_credential, apply_github_cli_credential,
+    GitCredential, apply_git_credential, apply_github_cli_credential, apply_safe_git_config,
     clear_git_credential_environment, parse_git_credential,
 };
 use crate::project_repository_failure::{
@@ -553,10 +553,24 @@ pub fn publish_project_repository_to_github(
         Err(failure) => return invalid_git_mutation(failure.error),
     };
 
-    if output.status.success() {
+    if !output.status.success() {
+        return invalid_git_mutation(classify_github_publish_failure(&output));
+    }
+
+    let push_output = match run_git_command(
+        &repository_path,
+        &["push", "-u", "origin", "HEAD"],
+        PROJECT_REPOSITORY_GIT_ACTION_TIMEOUT,
+        credential.as_ref(),
+    ) {
+        Ok(output) => output,
+        Err(failure) => return invalid_git_mutation(failure.error),
+    };
+
+    if push_output.status.success() {
         valid_git_mutation()
     } else {
-        invalid_git_mutation(classify_github_publish_failure(&output))
+        invalid_git_mutation(classify_git_push_failure(&push_output))
     }
 }
 
@@ -705,6 +719,7 @@ fn run_git_clone(
     let git_group_path = git_process_path(group_path);
     let git_clone_target = git_process_path(clone_target);
     let mut command = Command::new("git");
+    apply_safe_git_config(&mut command);
     command
         .arg("clone")
         .arg("--")
@@ -933,7 +948,9 @@ fn paths_match(left: &Path, right: &Path) -> bool {
 }
 
 fn has_git_remote(repository_path: &Path) -> Result<bool, GitCommandFailure> {
-    Ok(read_git_origin_remote_url(repository_path)?.is_some())
+    Ok(read_git_origin_remote_url(repository_path)?
+        .as_deref()
+        .is_some_and(|remote_url| validate_remote_url(remote_url).is_ok()))
 }
 
 fn read_git_origin_remote_url(repository_path: &Path) -> Result<Option<String>, GitCommandFailure> {
@@ -1069,7 +1086,7 @@ fn create_initial_repository_commit(
 
     let commit_output = run_git_command(
         repository_path,
-        &["commit", "--allow-empty", "-m", commit_message],
+        &["commit", "--allow-empty", "--no-verify", "-m", commit_message],
         PROJECT_REPOSITORY_GIT_ACTION_TIMEOUT,
         None,
     )
@@ -1090,6 +1107,7 @@ fn run_git_command(
 ) -> Result<Output, GitCommandFailure> {
     let git_repository_path = git_process_path(repository_path);
     let mut command = Command::new("git");
+    apply_safe_git_config(&mut command);
     command
         .args(args)
         .current_dir(git_repository_path)
@@ -1137,7 +1155,6 @@ fn run_gh_repo_create(
         .arg(&git_repository_path)
         .arg("--remote")
         .arg("origin")
-        .arg("--push")
         .current_dir(git_repository_path)
         .env("GIT_TERMINAL_PROMPT", "0")
         .env("GCM_INTERACTIVE", "Never")

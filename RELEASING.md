@@ -2,7 +2,7 @@
 
 Workduck releases are built by GitHub Actions when a semantic version tag is pushed.
 The release workflow builds one Windows setup executable, signed updater artifacts,
-and `latest.json`, then uploads them to a draft GitHub Release.
+and `latest.json`, then publishes them to a public GitHub Release.
 
 ## Optional Signing Secrets
 
@@ -49,10 +49,11 @@ git push origin v1.3.9
 ```
 
 The workflow rejects a release if the tag does not match both version files. The
-GitHub Release is created as a draft so the installer and updater metadata can be
-checked before publishing. Use the `Workduck_<version>_x64-setup.exe` asset as the
-primary download. The in-app updater reads `latest.json` from the latest GitHub
-Release and installs the signed updater bundle for future versions.
+GitHub Release is published immediately when the workflow succeeds, so review the
+commit and version before pushing the release tag. Use the
+`Workduck_<version>_x64-setup.exe` asset as the primary download. The in-app updater
+reads `latest.json` from the latest GitHub Release and installs the signed updater
+bundle for future versions.
 
 Without Windows signing secrets, Windows may show a SmartScreen warning when the
 installer is downloaded from a browser. Updater signing does not replace Windows

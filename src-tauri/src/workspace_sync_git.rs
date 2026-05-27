@@ -1,5 +1,6 @@
 use crate::git_credential::{
-    GitCredential, apply_git_credential, clear_git_credential_environment, parse_git_credential,
+    GitCredential, apply_git_credential, apply_safe_git_config, clear_git_credential_environment,
+    parse_git_credential,
 };
 use crate::git_path::git_process_path;
 use crate::path_display::display_path;
@@ -176,7 +177,7 @@ pub fn inspect_workspace_sync_git(
         };
     };
 
-    let origin_url = read_origin_url(&git_dir);
+    let origin_url = read_safe_origin_url(&git_dir);
     let (ahead_count, behind_count) = if origin_url.is_some() {
         read_git_ahead_behind_counts(&folder_path)
     } else {
@@ -225,7 +226,7 @@ pub fn run_workspace_sync_git(
         return invalid_run(WorkspaceSyncGitRunError::NotRepository, None);
     };
 
-    if read_origin_url(&git_dir).is_none() {
+    if read_safe_origin_url(&git_dir).is_none() {
         return invalid_run(WorkspaceSyncGitRunError::RemoteMissing, None);
     }
 
@@ -361,6 +362,7 @@ fn run_workspace_sync_push(
             folder_path,
             &[
                 "commit",
+                "--no-verify",
                 "-m",
                 WORKSPACE_SYNC_GIT_COMMIT_MESSAGE,
                 "--",
@@ -452,6 +454,63 @@ fn read_origin_url(git_dir: &Path) -> Option<String> {
     }
 
     None
+}
+
+fn read_safe_origin_url(git_dir: &Path) -> Option<String> {
+    let origin_url = read_origin_url(git_dir)?;
+
+    if is_safe_git_remote_url(&origin_url) {
+        Some(origin_url)
+    } else {
+        None
+    }
+}
+
+fn is_safe_git_remote_url(remote_url: &str) -> bool {
+    let remote_url = remote_url.trim();
+
+    if remote_url.is_empty()
+        || remote_url
+            .chars()
+            .any(|character| character.is_whitespace() || character.is_control())
+    {
+        return false;
+    }
+
+    if remote_url.contains("://") {
+        let Some((scheme, rest)) = remote_url.split_once("://") else {
+            return false;
+        };
+
+        if !matches!(
+            scheme.to_ascii_lowercase().as_str(),
+            "https" | "http" | "ssh" | "git"
+        ) {
+            return false;
+        }
+
+        let Some((authority, path)) = rest.split_once('/') else {
+            return false;
+        };
+
+        return !authority.is_empty()
+            && !path.is_empty()
+            && !(matches!(scheme.to_ascii_lowercase().as_str(), "https" | "http")
+                && authority.contains('@'));
+    }
+
+    let Some((authority, path)) = remote_url.split_once(':') else {
+        return false;
+    };
+    let Some((user, host)) = authority.split_once('@') else {
+        return false;
+    };
+
+    user == "git"
+        && !host.is_empty()
+        && !path.is_empty()
+        && !host.contains('/')
+        && !path.starts_with('/')
 }
 
 fn read_branch_name(git_dir: &Path) -> Option<String> {
@@ -622,6 +681,7 @@ fn run_git_command(
 ) -> Result<Output, WorkspaceSyncGitFailure> {
     let git_folder_path = git_process_path(folder_path);
     let mut command = Command::new("git");
+    apply_safe_git_config(&mut command);
     command
         .args(args)
         .current_dir(git_folder_path)

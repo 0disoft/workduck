@@ -82,7 +82,7 @@ export function resolveAgentExecutionTarget(
 		return { ok: false, agentId, error: 'agent-execution-secret-not-found' };
 	}
 
-	const provider = resolveAgentExecutionProvider(agent, secret);
+	const provider = resolveAgentExecutionProvider(secret);
 
 	if (provider === null) {
 		return { ok: false, agentId, error: 'agent-execution-provider-unsupported' };
@@ -148,13 +148,8 @@ export async function runAgentPrompt(input: {
 }
 
 function resolveAgentExecutionProvider(
-	agent: AgentRecord,
 	secret: EnvironmentSecretRecord
 ): AgentExecutionProvider | null {
-	if (agent.executionProvider !== null) {
-		return agent.executionProvider;
-	}
-
 	const secretProfileText = normalizeProviderProfileText([secret.name, secret.kind, ...secret.tags]);
 
 	if (profileIncludesProvider(secretProfileText, 'openrouter')) {
@@ -166,20 +161,6 @@ function resolveAgentExecutionProvider(
 	}
 
 	if (profileIncludesProvider(secretProfileText, 'openai')) {
-		return 'openai';
-	}
-
-	const agentProfileText = normalizeProviderProfileText([agent.name]);
-
-	if (profileIncludesProvider(agentProfileText, 'deepseek')) {
-		return 'deepseek';
-	}
-
-	if (profileIncludesProvider(agentProfileText, 'openrouter')) {
-		return 'openrouter';
-	}
-
-	if (profileIncludesProvider(agentProfileText, 'openai')) {
 		return 'openai';
 	}
 

@@ -354,7 +354,7 @@ export const koMessages = {
 			executionVaultLocked: '보안 보관함을 먼저 잠금 해제하세요.',
 			executionAgentNotFound: '선택한 에이전트를 찾을 수 없습니다.',
 			executionSecretNotFound: '에이전트에 연결된 API 키를 찾을 수 없습니다.',
-			executionProviderUnsupported: '지원하는 LLM 제공업체를 확인하지 못했습니다. 에이전트의 제공업체를 선택하거나 API 키 이름/태그에 DeepSeek, OpenAI, OpenRouter 중 하나를 포함하세요.',
+			executionProviderUnsupported: '지원하는 LLM 제공업체를 확인하지 못했습니다. API 키 이름/태그에 DeepSeek, OpenAI, OpenRouter 중 하나를 포함하세요.',
 			executionApiKeyRequired: 'API 키가 비어 있습니다.',
 			executionPromptRequired: '작업 지시문을 만들지 못했습니다.',
 			executionModelRequired: '사용할 모델을 정하지 못했습니다.',
