@@ -36,9 +36,9 @@ export async function enqueueRepositoryCommitWorkOrder(
 		language === 'ko'
 			? `커밋 정리: ${input.repositoryName}`
 			: `Commit changes: ${input.repositoryName}`;
-	const workOrder = createManualQueueWorkOrder(
+	const emptyWorkOrder = createManualQueueWorkOrder(
 		title,
-		createRepositoryCommitWorkOrderBody(input, language),
+		'',
 		'normal',
 		[],
 		[],
@@ -48,9 +48,17 @@ export async function enqueueRepositoryCommitWorkOrder(
 			projectIds: input.projectIds ?? []
 		}
 	);
+	const workOrderFileName = createQueueWorkOrderFileName(emptyWorkOrder);
+	const workOrder = {
+		...emptyWorkOrder,
+		tasks: emptyWorkOrder.tasks.map((task) => ({
+			...task,
+			body: createRepositoryCommitWorkOrderBody(input, language, workOrderFileName)
+		}))
+	};
 	const result = await writeQueueWorkOrderFile(
 		input.workspacePath,
-		createQueueWorkOrderFileName(workOrder),
+		workOrderFileName,
 		serializeQueueArtifact(workOrder)
 	);
 
@@ -61,7 +69,8 @@ export async function enqueueRepositoryCommitWorkOrder(
 
 function createRepositoryCommitWorkOrderBody(
 	input: RepositoryCommitWorkOrderInput,
-	language: Exclude<WorkduckQueueResponseLanguage, 'auto'>
+	language: Exclude<WorkduckQueueResponseLanguage, 'auto'>,
+	workOrderFileName: string
 ) {
 	const repositoryPath = formatWorkspacePathForDisplay(input.repositoryPath);
 	const workspacePath = formatWorkspacePathForDisplay(input.workspacePath);
@@ -82,7 +91,9 @@ function createRepositoryCommitWorkOrderBody(
 			'- 커밋 메시지는 실제 변경 내용을 기준으로 작성하세요.',
 			'- 커밋 전 저장소에 맞는 검증 명령을 확인하고 가능한 범위에서 실행하세요.',
 			'- 관련 없는 사용자 변경은 되돌리지 마세요.',
-			'- Push는 별도 요청이 있을 때만 수행하세요.'
+			'- 커밋할 가치가 없는 빈 파일, 임시 파일, 실수로 생성된 package-manager lockfile만 남아 있다면 안전한 범위에서 삭제하거나 무시 처리해 git status가 깨끗해지게 하세요.',
+			'- Push는 별도 요청이 있을 때만 수행하세요.',
+			`- 작업이 끝났거나 커밋할 변경이 없다고 판단되면 queue/work-orders/${workOrderFileName} 파일의 status를 archived로 바꿔 실행 대기열에 남기지 마세요.`
 		].join('\n');
 	}
 
@@ -100,7 +111,9 @@ function createRepositoryCommitWorkOrderBody(
 		'- Write commit messages from the actual changes.',
 		'- Before committing, identify and run the narrowest suitable verification commands available.',
 		'- Do not revert unrelated user changes.',
-		'- Push only when separately requested.'
+		'- If only empty files, temporary files, or accidentally generated package-manager lockfiles remain and they are not commit-worthy, remove or ignore them safely so git status becomes clean.',
+		'- Push only when separately requested.',
+		`- After the work is done, or after deciding there are no commit-worthy changes, set queue/work-orders/${workOrderFileName} status to archived so it leaves the pending queue.`
 	].join('\n');
 }
 

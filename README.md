@@ -35,6 +35,8 @@ includes:
 - Queue menu that creates workspace `queue/reports`, `queue/work-orders`, and
   `queue/proposals` folders, renders structured result reports, work orders,
   and proposals inside Workduck, and writes follow-up work-order JSON files.
+  Repository commit work orders include cleanup and archive instructions so
+  completed Codex handoffs do not remain in the pending queue.
 - Workspace-owned Workduck metadata folder at `<workspace>/.workduck/` for
   reference, agent, persona, and skill registries that should travel with the
   workspace repository.
