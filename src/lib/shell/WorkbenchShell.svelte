@@ -103,6 +103,7 @@
 	const workspaceMenuId = 'workduck-workspace-menu';
 	const primaryNavigationUnavailableDescriptionId =
 		'workduck-primary-navigation-unavailable-description';
+	const workduckVersionLabel = `v${__WORKDUCK_VERSION__}`;
 
 	let sidebarWidthPx = $state(SIDEBAR_DEFAULT_WIDTH_PX);
 	let isDesktop = $state(true);
@@ -806,7 +807,12 @@
 					<span class="workduck-brand-mark" aria-hidden="true">
 						<WorkduckMark />
 					</span>
-					<span class="workduck-brand-name">Workduck</span>
+					<span class="workduck-brand-copy">
+						<span class="workduck-brand-name">Workduck</span>
+						<span class="workduck-brand-version" aria-label={`Workduck ${workduckVersionLabel}`}>
+							{workduckVersionLabel}
+						</span>
+					</span>
 				</a>
 				<button
 					class="workduck-sidebar-close"

@@ -211,7 +211,16 @@
 		font-weight: 800;
 	}
 
+	.workduck-brand-copy {
+		display: grid;
+		min-width: 0;
+		grid-template-columns: minmax(0, auto) auto;
+		align-items: end;
+		column-gap: 8px;
+	}
+
 	.workduck-brand-name,
+	.workduck-brand-version,
 	.workduck-nav-label {
 		min-width: 0;
 		overflow: hidden;
@@ -244,6 +253,14 @@
 		color: var(--workduck-color-accent);
 		font-size: var(--workduck-font-size-brand);
 		font-weight: 800;
+	}
+
+	.workduck-brand-version {
+		padding-bottom: 2px;
+		color: var(--workduck-color-muted);
+		font-size: var(--workduck-font-size-2xs);
+		font-weight: 800;
+		line-height: 1;
 	}
 
 	.workduck-sidebar-close {

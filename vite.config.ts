@@ -1,5 +1,16 @@
+import { readFileSync } from 'node:fs';
 import { sveltekit } from '@sveltejs/kit/vite';
 import { defineConfig } from 'vite';
+
+interface WorkduckPackageManifest {
+	version?: string;
+}
+
+const workduckPackageManifest = JSON.parse(
+	readFileSync(new URL('./package.json', import.meta.url), 'utf8')
+) as WorkduckPackageManifest;
+
+const workduckVersion = workduckPackageManifest.version ?? '0.0.0';
 
 const devWatchIgnoredPaths = [
 	'**/.git/**',
@@ -12,6 +23,9 @@ const devWatchIgnoredPaths = [
 
 export default defineConfig({
 	plugins: [sveltekit()],
+	define: {
+		__WORKDUCK_VERSION__: JSON.stringify(workduckVersion)
+	},
 	build: {
 		rollupOptions: {
 			output: {
