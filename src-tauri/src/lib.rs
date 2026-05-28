@@ -1,6 +1,7 @@
 use tauri::Manager;
 
 pub mod argon2_kdf;
+mod agent_api_snapshot;
 mod developer_processes;
 mod git_credential;
 mod git_path;
@@ -72,6 +73,7 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             runtime_status,
             storage_status,
+            agent_api_snapshot::read_agent_api_snapshot,
             developer_processes::kill_developer_process,
             developer_processes::list_developer_processes,
             terminal_catalog::list_terminal_catalog,

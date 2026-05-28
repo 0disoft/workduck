@@ -72,6 +72,10 @@ work.
   server start, and build create workspace-local run records under `.workduck/`
   with command, repository path, start time, exit code when available, and a
   short output tail.
+- Read-only local agent API snapshot command exposes workspace, queue, project
+  registry, repository task-run, and `.workduck` metadata status for automation
+  clients while keeping plaintext secrets, secret IDs, command text, output
+  tails, writes, and terminal input out of the contract.
 - Repository filters for tags, pull-needed repositories, and push-needed
   repositories.
 - Project board metadata is stored in SQLite by workspace, with legacy

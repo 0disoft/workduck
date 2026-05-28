@@ -47,6 +47,9 @@ includes:
   depending only on a globally authenticated `gh` or Git credential setup.
 - Repository operation records for clone, init, fetch, pull, push, and publish
   stored in SQLite.
+- Read-only agent API snapshot command for local automation clients that need
+  workspace, project registry, queue, repository task-run, and `.workduck`
+  metadata status without decrypting or returning secret values.
 - Project board metadata stored in the local SQLite database, with legacy
   browser-stored project metadata promoted on first read.
 - Skills menu for workspace-local Workduck skills, including a built-in
@@ -90,6 +93,18 @@ not print API keys, vault passwords, or the decrypted vault payload.
 ```powershell
 bun run workduck queue run work-order_14a32cf3-029b-425f-b2ba-6c7583313d90 --workspace C:\Users\cherr\Documents\workspace\zerodi-wd1
 ```
+
+### Agent API Snapshot
+
+The desktop shell exposes `read_agent_api_snapshot` as the first local
+automation API boundary. It is read-only and returns the current workspace path,
+project registry summary, queue file summary, repository task-run summary, and
+workspace metadata file status.
+
+The snapshot intentionally does not expose plaintext secrets, encrypted vault
+payloads, secret IDs, repository task command text, terminal output tails, or
+terminal input endpoints. Future HTTP, MCP, or work-order write APIs should wrap
+the same safe core instead of duplicating filesystem reads.
 
 ### Sync Repository And Workspace Repository
 
