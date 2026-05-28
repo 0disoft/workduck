@@ -595,8 +595,7 @@ fn resolve_repository_task_commands(
 
 struct PackageProject {
     package_manager: PackageManager,
-    scripts: Vec<String>,
-    dev_script: Option<String>,
+    scripts: HashMap<String, String>,
 }
 
 #[derive(Clone, Copy)]
@@ -616,11 +615,10 @@ fn read_package_project_at(project_path: &Path) -> Option<PackageProject> {
         .and_then(serde_json::Value::as_object)
         .cloned()
         .unwrap_or_default();
-    let script_names = scripts.keys().map(String::from).collect();
-    let dev_script = scripts
-        .get("dev")
-        .and_then(serde_json::Value::as_str)
-        .map(str::to_owned);
+    let scripts = scripts
+        .into_iter()
+        .filter_map(|(name, command)| command.as_str().map(|command| (name, command.to_owned())))
+        .collect();
     let package_manager = package_json
         .get("packageManager")
         .and_then(serde_json::Value::as_str)
@@ -629,8 +627,7 @@ fn read_package_project_at(project_path: &Path) -> Option<PackageProject> {
 
     Some(PackageProject {
         package_manager,
-        scripts: script_names,
-        dev_script,
+        scripts,
     })
 }
 
@@ -722,13 +719,13 @@ fn resolve_package_task_command(
 fn resolve_package_dev_server_command(
     project: &PackageProject,
 ) -> Result<Option<String>, ProjectRepositoryTaskError> {
-    let command = resolve_optional_package_script_command(project, "dev")?;
+    let Some((script, script_command)) = resolve_package_dev_server_script(project) else {
+        return Ok(None);
+    };
 
-    if !project
-        .dev_script
-        .as_deref()
-        .is_some_and(is_vite_strict_port_script)
-    {
+    let command = resolve_optional_package_script_command(project, script)?;
+
+    if script != "dev" || !is_vite_strict_port_script(script_command) {
         return Ok(command);
     }
 
@@ -741,11 +738,21 @@ fn resolve_package_dev_server_command(
     Ok(Some(format!("{command} -- --port {port}")))
 }
 
+fn resolve_package_dev_server_script(project: &PackageProject) -> Option<(&'static str, &str)> {
+    for script in ["dev", "start"] {
+        if let Some(command) = project.scripts.get(script) {
+            return Some((script, command));
+        }
+    }
+
+    None
+}
+
 fn resolve_optional_package_script_command(
     project: &PackageProject,
     script: &str,
 ) -> Result<Option<String>, ProjectRepositoryTaskError> {
-    if !project.scripts.iter().any(|candidate| candidate == script) {
+    if !project.scripts.contains_key(script) {
         return Ok(None);
     }
 
@@ -1508,6 +1515,39 @@ mod tests {
             output_tail: None,
             record_path: format!("{id}.json"),
         }
+    }
+
+    #[test]
+    fn package_dev_server_command_uses_start_script_when_dev_is_missing() {
+        let project = PackageProject {
+            package_manager: PackageManager::Bun,
+            scripts: HashMap::from([("start".to_owned(), "bun server.ts".to_owned())]),
+        };
+
+        let command = match resolve_package_dev_server_command(&project) {
+            Ok(command) => command,
+            Err(_) => panic!("resolve command"),
+        };
+
+        assert_eq!(command, Some("bun run start".to_owned()));
+    }
+
+    #[test]
+    fn package_dev_server_command_prefers_dev_over_start() {
+        let project = PackageProject {
+            package_manager: PackageManager::Bun,
+            scripts: HashMap::from([
+                ("dev".to_owned(), "vite dev".to_owned()),
+                ("start".to_owned(), "bun server.ts".to_owned()),
+            ]),
+        };
+
+        let command = match resolve_package_dev_server_command(&project) {
+            Ok(command) => command,
+            Err(_) => panic!("resolve command"),
+        };
+
+        assert_eq!(command, Some("bun run dev".to_owned()));
     }
 
     #[test]
