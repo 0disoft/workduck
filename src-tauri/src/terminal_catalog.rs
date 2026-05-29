@@ -1,28 +1,10 @@
 use std::{env, path::Path, process::Command};
 
-#[derive(serde::Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct TerminalCatalogResult {
-    ok: bool,
-    terminals: Vec<TerminalCatalogEntry>,
-}
-
-#[derive(serde::Serialize)]
-#[serde(rename_all = "camelCase")]
 pub struct TerminalCatalogEntry {
     pub(crate) id: &'static str,
-    pub(crate) name: &'static str,
     pub(crate) command: &'static str,
     pub(crate) executable_path: Option<String>,
     pub(crate) available: bool,
-}
-
-#[tauri::command]
-pub fn list_terminal_catalog() -> TerminalCatalogResult {
-    TerminalCatalogResult {
-        ok: true,
-        terminals: terminal_candidates(),
-    }
 }
 
 pub(crate) fn find_available_terminal_entry(terminal_id: &str) -> Option<TerminalCatalogEntry> {
@@ -34,40 +16,35 @@ pub(crate) fn find_available_terminal_entry(terminal_id: &str) -> Option<Termina
 #[cfg(target_os = "windows")]
 fn terminal_candidates() -> Vec<TerminalCatalogEntry> {
     vec![
-        create_terminal_entry("powershell-core", "PowerShell", "pwsh.exe"),
-        create_terminal_entry("windows-powershell", "Windows PowerShell", "powershell.exe"),
-        create_terminal_entry("command-prompt", "Command Prompt", "cmd.exe"),
+        create_terminal_entry("powershell-core", "pwsh.exe"),
+        create_terminal_entry("windows-powershell", "powershell.exe"),
+        create_terminal_entry("command-prompt", "cmd.exe"),
         create_git_bash_entry(),
-        create_terminal_entry("wsl", "WSL", "wsl.exe"),
+        create_terminal_entry("wsl", "wsl.exe"),
     ]
 }
 
 #[cfg(target_os = "macos")]
 fn terminal_candidates() -> Vec<TerminalCatalogEntry> {
     vec![
-        create_terminal_entry("zsh", "Zsh", "zsh"),
-        create_terminal_entry("bash", "Bash", "bash"),
+        create_terminal_entry("zsh", "zsh"),
+        create_terminal_entry("bash", "bash"),
     ]
 }
 
 #[cfg(all(unix, not(target_os = "macos")))]
 fn terminal_candidates() -> Vec<TerminalCatalogEntry> {
     vec![
-        create_terminal_entry("zsh", "Zsh", "zsh"),
-        create_terminal_entry("bash", "Bash", "bash"),
+        create_terminal_entry("zsh", "zsh"),
+        create_terminal_entry("bash", "bash"),
     ]
 }
 
-fn create_terminal_entry(
-    id: &'static str,
-    name: &'static str,
-    command: &'static str,
-) -> TerminalCatalogEntry {
+fn create_terminal_entry(id: &'static str, command: &'static str) -> TerminalCatalogEntry {
     let executable_path = find_executable(command);
 
     TerminalCatalogEntry {
         id,
-        name,
         command,
         available: executable_path.is_some(),
         executable_path,
@@ -91,7 +68,6 @@ fn create_git_bash_entry() -> TerminalCatalogEntry {
 
     TerminalCatalogEntry {
         id: "git-bash",
-        name: "Git Bash",
         command: "bash.exe",
         available: executable_path.is_some(),
         executable_path,

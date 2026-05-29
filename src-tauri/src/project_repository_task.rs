@@ -1351,6 +1351,10 @@ fn normalize_process_match_text(value: &str) -> String {
 
 #[cfg(target_os = "windows")]
 fn collect_live_task_processes() -> Result<Vec<LiveTaskProcess>, ProjectRepositoryTaskError> {
+    use std::os::windows::process::CommandExt;
+
+    const CREATE_NO_WINDOW: u32 = 0x08000000;
+
     let current_pid = std::process::id();
     let script = r#"
 $ErrorActionPreference = 'SilentlyContinue'
@@ -1385,6 +1389,7 @@ $processes = @(
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
         .stderr(Stdio::null())
+        .creation_flags(CREATE_NO_WINDOW)
         .output()
         .map_err(|_| ProjectRepositoryTaskError::RecordReadFailed)?;
 

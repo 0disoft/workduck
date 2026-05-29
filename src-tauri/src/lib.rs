@@ -2,7 +2,6 @@ use tauri::Manager;
 
 pub mod argon2_kdf;
 mod agent_api_snapshot;
-mod developer_processes;
 mod git_credential;
 mod git_path;
 mod llm_chat;
@@ -21,7 +20,6 @@ mod secret_vault_crypto;
 mod storage;
 pub mod system_environment;
 mod terminal_catalog;
-mod terminal_process;
 mod tray_menu;
 mod workspace_password;
 mod workspace_path;
@@ -69,18 +67,10 @@ pub fn run() {
             app.manage(storage_state);
             Ok(())
         })
-        .manage(terminal_process::TerminalProcessState::default())
         .invoke_handler(tauri::generate_handler![
             runtime_status,
             storage_status,
             agent_api_snapshot::read_agent_api_snapshot,
-            developer_processes::kill_developer_process,
-            developer_processes::list_developer_processes,
-            terminal_catalog::list_terminal_catalog,
-            terminal_process::read_terminal_session,
-            terminal_process::start_terminal_session,
-            terminal_process::stop_terminal_session,
-            terminal_process::write_terminal_session_input,
             tray_menu::exit_workduck,
             tray_menu::hide_workduck_main_window,
             tray_menu::hide_workduck_tray_menu,
