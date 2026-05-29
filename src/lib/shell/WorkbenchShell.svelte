@@ -98,6 +98,7 @@
 	const settingsNavigationItem = { href: '/settings', labelKey: 'settings' } as const;
 	const QUEUE_PENDING_REFRESH_INTERVAL_MS = 5_000;
 	const QUEUE_PENDING_REFRESH_DEFER_MS = 250;
+	const WORKDUCK_UPDATE_REFRESH_INTERVAL_MS = 6 * 60 * 60 * 1000;
 	const workspaceMenuId = 'workduck-workspace-menu';
 	const primaryNavigationUnavailableDescriptionId =
 		'workduck-primary-navigation-unavailable-description';
@@ -112,7 +113,10 @@
 	let activeAppOperation = $state<WorkduckAppOperation | null>(null);
 	let availableWorkduckUpdate = $state<WorkduckAvailableUpdate | null>(null);
 	let updateInstallError = $state<string | null>(null);
+	let dismissedWorkduckUpdateVersion = $state<string | null>(null);
+	let isUpdateChecking = $state(false);
 	let isUpdateInstalling = $state(false);
+	let lastWorkduckUpdateCheckAt = 0;
 	let isWorkspaceMenuOpen = $state(false);
 	let workspaceUnlockId = $state<string | null>(null);
 	let workspaceUnlockRevision = $state(0);
@@ -281,10 +285,34 @@
 	}
 
 	async function checkForAvailableWorkduckUpdate(isMounted: () => boolean) {
+		if (isUpdateChecking || isUpdateInstalling || availableWorkduckUpdate !== null) {
+			return;
+		}
+
+		const now = Date.now();
+		if (
+			lastWorkduckUpdateCheckAt > 0 &&
+			now - lastWorkduckUpdateCheckAt < WORKDUCK_UPDATE_REFRESH_INTERVAL_MS
+		) {
+			return;
+		}
+
+		lastWorkduckUpdateCheckAt = now;
+		isUpdateChecking = true;
 		try {
 			const update = await checkForWorkduckUpdate();
 
 			if (!isMounted()) {
+				return;
+			}
+
+			if (update === null) {
+				availableWorkduckUpdate = null;
+				dismissedWorkduckUpdateVersion = null;
+				return;
+			}
+
+			if (update.version === dismissedWorkduckUpdateVersion) {
 				return;
 			}
 
@@ -293,6 +321,10 @@
 		} catch (error) {
 			if (isMounted()) {
 				console.warn('Workduck update check failed.', error);
+			}
+		} finally {
+			if (isMounted()) {
+				isUpdateChecking = false;
 			}
 		}
 	}
@@ -705,11 +737,20 @@
 			() => void refreshQueuePendingCount(),
 			QUEUE_PENDING_REFRESH_INTERVAL_MS
 		);
+		const refreshWorkduckUpdate = () => void checkForAvailableWorkduckUpdate(() => shellIsMounted);
+		const updateRefreshIntervalId = window.setInterval(
+			refreshWorkduckUpdate,
+			WORKDUCK_UPDATE_REFRESH_INTERVAL_MS
+		);
+		const handleWindowFocus = () => {
+			recordUserActivity();
+			refreshWorkduckUpdate();
+		};
 
 		window.addEventListener('pointerdown', recordUserActivity, true);
 		window.addEventListener('keydown', recordUserActivity, true);
 		window.addEventListener('wheel', recordUserActivity, { passive: true, capture: true });
-		window.addEventListener('focus', recordUserActivity);
+		window.addEventListener('focus', handleWindowFocus);
 
 		return () => {
 			shellIsMounted = false;
@@ -722,6 +763,7 @@
 			unsubscribeQueueFiles();
 			window.clearInterval(idleLockIntervalId);
 			window.clearInterval(queuePendingRefreshIntervalId);
+			window.clearInterval(updateRefreshIntervalId);
 			if (queuedPendingRefreshTimeoutId !== undefined) {
 				window.clearTimeout(queuedPendingRefreshTimeoutId);
 				queuedPendingRefreshTimeoutId = undefined;
@@ -729,7 +771,7 @@
 			window.removeEventListener('pointerdown', recordUserActivity, true);
 			window.removeEventListener('keydown', recordUserActivity, true);
 			window.removeEventListener('wheel', recordUserActivity, true);
-			window.removeEventListener('focus', recordUserActivity);
+			window.removeEventListener('focus', handleWindowFocus);
 			cancelTitlebarDragTracking();
 			cancelResize();
 			mediaQuery.removeEventListener('change', handleMediaChange);
@@ -1021,6 +1063,7 @@
 						type="button"
 						disabled={isUpdateInstalling}
 						onclick={() => {
+							dismissedWorkduckUpdateVersion = availableWorkduckUpdate?.version ?? null;
 							availableWorkduckUpdate = null;
 							updateInstallError = null;
 						}}
