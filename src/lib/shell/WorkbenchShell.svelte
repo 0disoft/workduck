@@ -78,6 +78,7 @@
 		startTauriWindowDrag,
 		toggleTauriWindowMaximize
 	} from './tauri-window';
+	import { suppressBrowserContextMenu } from './browser-context-menu';
 	import { hasExceededTitlebarDragThreshold } from './titlebar-interaction';
 
 	interface Props {
@@ -679,6 +680,7 @@
 		void syncWorkduckTrayIconEnabled(shouldShowWorkduckTrayIcon(currentSystemSettings));
 		let disposeWindowState: (() => void) | undefined;
 		let shellIsMounted = true;
+		const restoreBrowserContextMenu = suppressBrowserContextMenu();
 		void checkForAvailableWorkduckUpdate(() => shellIsMounted);
 		void initializeTauriWindowState().then((dispose) => {
 			if (shellIsMounted) {
@@ -754,6 +756,7 @@
 
 		return () => {
 			shellIsMounted = false;
+			restoreBrowserContextMenu();
 			disposeWindowState?.();
 			unsubscribeAppearanceSettings();
 			unsubscribeSystemSettings();
