@@ -2,7 +2,13 @@ import type { AgentRecord } from '$lib/agents/agent-registry';
 import type { WorkduckMessages } from '$lib/i18n/workduck-language';
 import type { ProjectNodeRecord } from '$lib/projects/project-registry';
 import type { ReferenceRecord } from '$lib/references/reference-registry';
-import type { WorkduckSkillRecord } from '$lib/skills/skill-registry';
+import {
+	WORKDUCK_AGENT_RESPONSE_EVALUATOR_SKILL_ID,
+	WORKDUCK_PROPOSAL_WRITER_SKILL_ID,
+	WORKDUCK_REVISION_ASSISTANT_SKILL_ID,
+	WORKDUCK_WRITING_ASSISTANT_SKILL_ID,
+	type WorkduckSkillRecord
+} from '$lib/skills/skill-registry';
 import type {
 	WorkduckQueueExecutionState,
 	WorkduckQueueResponseFormat,
@@ -112,9 +118,18 @@ export function getQueueStructuredResponseLabels(
 }
 
 export function getSkillDisplayName(messages: WorkduckMessages, skill: WorkduckSkillRecord) {
-	return skill.id === 'workduck.skill.proposal-writer'
-		? messages.skills.builtIn.proposalWriter.name
-		: skill.name;
+	switch (skill.id) {
+		case WORKDUCK_PROPOSAL_WRITER_SKILL_ID:
+			return messages.skills.builtIn.proposalWriter.name;
+		case WORKDUCK_WRITING_ASSISTANT_SKILL_ID:
+			return messages.skills.builtIn.writingAssistant.name;
+		case WORKDUCK_REVISION_ASSISTANT_SKILL_ID:
+			return messages.skills.builtIn.revisionAssistant.name;
+		case WORKDUCK_AGENT_RESPONSE_EVALUATOR_SKILL_ID:
+			return messages.skills.builtIn.agentResponseEvaluator.name;
+		default:
+			return skill.name;
+	}
 }
 
 export function getQueueTaskKindLabel(

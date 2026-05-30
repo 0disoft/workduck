@@ -57,6 +57,8 @@ import {
 	createEmptySkillRegistry,
 	getAllSkills,
 	WORKDUCK_AGENT_RESPONSE_EVALUATOR_SKILL_ID,
+	WORKDUCK_REVISION_ASSISTANT_SKILL_ID,
+	WORKDUCK_WRITING_ASSISTANT_SKILL_ID,
 	type SkillRegistry,
 	type WorkduckSkillRecord
 } from '$lib/skills/skill-registry';
@@ -156,6 +158,8 @@ import {
 } from './queue-panel-errors';
 import {
 	type AgentEvaluationDialogState,
+	manualRevisionOptions,
+	type ManualRevisionOptionId,
 	type ManualVoteOptionInput,
 	type QueueCardEntry,
 	type QueueContextMenuState,
@@ -310,6 +314,7 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 	let manualVoteOptions = $state<readonly ManualVoteOptionInput[]>(createManualVoteOptions(2));
 	let manualVoteCriteriaInput = $state('');
 	let selectedManualSkillIds = $state<string[]>([]);
+	let selectedManualRevisionOptionIds = $state<ManualRevisionOptionId[]>([]);
 	let selectedManualAgentIds = $state<string[]>([]);
 	let selectedManualProjectIds = $state<string[]>([]);
 	let selectedManualReferenceIds = $state<string[]>([]);
@@ -373,6 +378,10 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 			messages.queue.selectionCount,
 			getReferenceLabelById
 		)
+	);
+	let manualRevisionOptionsAreVisible = $derived(
+		manualWorkOrderKind === 'instruction' &&
+			selectedManualSkillIds.includes(WORKDUCK_REVISION_ASSISTANT_SKILL_ID)
 	);
 	let selectedReportVoteAggregate = $derived(
 		selectedReport === null ? null : createVoteAggregate(selectedReport.tasks)
@@ -506,6 +515,7 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		projectRegistry = createEmptyProjectRegistry(workspace.id);
 		referenceRegistry = createEmptyReferenceRegistry(workspace.id);
 		selectedManualSkillIds = [];
+		selectedManualRevisionOptionIds = [];
 		selectedManualAgentIds = [];
 		selectedManualProjectIds = [];
 		selectedManualReferenceIds = [];
@@ -944,6 +954,7 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		manualWorkOrderKind = 'instruction';
 		resetManualVoteFields();
 		selectedManualSkillIds = [];
+		selectedManualRevisionOptionIds = [];
 		selectedManualAgentIds = [];
 		selectedManualProjectIds = [];
 		selectedManualReferenceIds = [];
@@ -968,6 +979,7 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		manualWorkOrderKind = normalizeQueueTaskKind(task.kind);
 		loadManualVoteFields(task.vote);
 		selectedManualSkillIds = [...(task.skillIds ?? [])];
+		selectedManualRevisionOptionIds = [];
 		selectedManualAgentIds = [...(task.agentIds ?? [])];
 		selectedManualProjectIds = [...(task.projectIds ?? [])];
 		selectedManualReferenceIds = [...(task.referenceIds ?? [])];
@@ -992,6 +1004,7 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		manualWorkOrderKind = 'instruction';
 		resetManualVoteFields();
 		selectedManualSkillIds = [];
+		selectedManualRevisionOptionIds = [];
 		selectedManualAgentIds = [];
 		selectedManualProjectIds = [];
 		selectedManualReferenceIds = [];
@@ -1158,7 +1171,7 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 
 			const workOrder = createManualQueueWorkOrder(
 				getManualWorkOrderTitle(),
-				manualWorkOrderBody,
+				createManualWorkOrderBody(),
 				manualWorkOrderPriority,
 				createManualWorkOrderSkillIds(),
 				createManualWorkOrderAgentIds(),
@@ -1185,6 +1198,7 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 				manualWorkOrderKind = 'instruction';
 				resetManualVoteFields();
 				selectedManualSkillIds = [];
+				selectedManualRevisionOptionIds = [];
 				selectedManualAgentIds = [];
 				selectedManualProjectIds = [];
 				selectedManualReferenceIds = [];
@@ -1209,7 +1223,7 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 
 		const nextWorkOrder = updateQueueWorkOrderTask(selectedWorkOrder, editingWorkOrderTaskId, {
 			title: getManualWorkOrderTitle(),
-			body: manualWorkOrderBody,
+			body: createManualWorkOrderBody(),
 			priority: manualWorkOrderPriority,
 			projectIds: createManualWorkOrderProjectIds(),
 			skillIds: createManualWorkOrderSkillIds(),
@@ -1236,6 +1250,7 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 			manualWorkOrderKind = 'instruction';
 			resetManualVoteFields();
 			selectedManualSkillIds = [];
+			selectedManualRevisionOptionIds = [];
 			selectedManualAgentIds = [];
 			selectedManualProjectIds = [];
 			selectedManualReferenceIds = [];
@@ -1472,10 +1487,45 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 
 	function toggleManualWorkOrderSkill(skillId: string, isSelected: boolean) {
 		selectedManualSkillIds = updateSelectedRecordIds(selectedManualSkillIds, skillId, isSelected);
+
+		if (!isSelected && skillId === WORKDUCK_REVISION_ASSISTANT_SKILL_ID) {
+			selectedManualRevisionOptionIds = [];
+			if (
+				manualWorkOrderKind === 'instruction' &&
+				selectedManualSkillIds.includes(WORKDUCK_WRITING_ASSISTANT_SKILL_ID)
+			) {
+				manualWorkOrderResponseFormat = 'writing-draft';
+			}
+			return;
+	}
+
+		if (!isSelected || manualWorkOrderKind !== 'instruction') {
+			return;
+		}
+
+		if (
+			skillId === WORKDUCK_WRITING_ASSISTANT_SKILL_ID &&
+			!selectedManualSkillIds.includes(WORKDUCK_REVISION_ASSISTANT_SKILL_ID)
+		) {
+			manualWorkOrderResponseFormat = 'writing-draft';
+			return;
+	}
+
+		if (skillId === WORKDUCK_REVISION_ASSISTANT_SKILL_ID) {
+			manualWorkOrderResponseFormat = 'revision-draft';
+		}
 }
 
 	function toggleManualWorkOrderAgent(agentId: string, isSelected: boolean) {
 		selectedManualAgentIds = updateSelectedRecordIds(selectedManualAgentIds, agentId, isSelected);
+}
+
+	function toggleManualRevisionOption(optionId: ManualRevisionOptionId, isSelected: boolean) {
+		selectedManualRevisionOptionIds = updateSelectedRecordIds(
+			selectedManualRevisionOptionIds,
+			optionId,
+			isSelected
+		) as ManualRevisionOptionId[];
 }
 
 	function toggleManualWorkOrderProject(projectId: string, isSelected: boolean) {
@@ -1553,6 +1603,33 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		const summary = firstLine.length <= 48 ? firstLine : `${firstLine.slice(0, 45).trimEnd()}...`;
 
 		return `${messages.queue.workTypes.directMessage}: ${summary}`;
+}
+
+	function createManualWorkOrderBody() {
+		if (!manualRevisionOptionsAreVisible || selectedManualRevisionOptionIds.length === 0) {
+			return manualWorkOrderBody;
+	}
+
+		const selectedOptionSet = new Set(selectedManualRevisionOptionIds);
+		const optionLines = manualRevisionOptions
+			.filter((option) => selectedOptionSet.has(option.id))
+			.map((option) => {
+				const groupLabel = messages.queue.revisionOptions.groups[option.groupId];
+				const optionLabel = messages.queue.revisionOptions.options[option.id];
+
+				return `- ${groupLabel}: ${optionLabel}`;
+		});
+
+		if (optionLines.length === 0) {
+			return manualWorkOrderBody;
+	}
+
+		return [
+			manualWorkOrderBody.trimEnd(),
+			'',
+			`${messages.queue.revisionOptions.title}:`,
+			...optionLines
+		].join('\n');
 }
 
 	function createManualWorkOrderKindInput() {
@@ -1769,6 +1846,7 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		get manualVoteCriteriaInput() { return manualVoteCriteriaInput; },
 		set manualVoteCriteriaInput(value: string) { manualVoteCriteriaInput = value; },
 		get selectedManualSkillIds() { return selectedManualSkillIds; },
+		get selectedManualRevisionOptionIds() { return selectedManualRevisionOptionIds; },
 		get selectedManualAgentIds() { return selectedManualAgentIds; },
 		get selectedManualProjectIds() { return selectedManualProjectIds; },
 		get selectedManualReferenceIds() { return selectedManualReferenceIds; },
@@ -1793,6 +1871,7 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		get canCompleteSelectedWorkOrder() { return canCompleteSelectedWorkOrder; },
 		get workOrderDialogTitle() { return workOrderDialogTitle; },
 		get workOrderDialogSubmitLabel() { return workOrderDialogSubmitLabel; },
+		get manualRevisionOptionsAreVisible() { return manualRevisionOptionsAreVisible; },
 		get manualWorkOrderSkillSummary() { return manualWorkOrderSkillSummary; },
 		get manualWorkOrderAgentSummary() { return manualWorkOrderAgentSummary; },
 		get manualWorkOrderProjectSummary() { return manualWorkOrderProjectSummary; },
@@ -1837,6 +1916,7 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		closeNewWorkOrderDialog,
 		handleCreateManualWorkOrder,
 		toggleManualWorkOrderSkill,
+		toggleManualRevisionOption,
 		toggleManualWorkOrderAgent,
 		toggleManualWorkOrderProject,
 		toggleManualWorkOrderReference,

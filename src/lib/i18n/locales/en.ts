@@ -173,7 +173,37 @@ export const enMessages = {
 			'risk-assessment': 'Risk assessment',
 			'comparison-table': 'Comparison table',
 			'decision-memo': 'Decision memo',
-			'bug-analysis': 'Bug analysis'
+			'bug-analysis': 'Bug analysis',
+			'writing-draft': 'Writing draft',
+			'revision-draft': 'Revision draft'
+		},
+		revisionOptions: {
+			title: 'Revision options',
+			description: 'Selected options are added to the work body.',
+			groups: {
+				purpose: 'Purpose',
+				tone: 'Tone',
+				structure: 'Structure',
+				format: 'Format'
+			},
+			options: {
+				clarity: 'Make meaning obvious',
+				concise: 'Cut filler',
+				persuasive: 'Increase persuasion',
+				natural: 'Natural wording',
+				formal: 'More formal',
+				casual: 'More casual',
+				sharp: 'Sharper',
+				warm: 'Warmer',
+				paragraphFlow: 'Improve paragraph flow',
+				sentenceRhythm: 'Tune sentence rhythm',
+				headlineLead: 'Strengthen title/lead',
+				preserveMeaning: 'Preserve original meaning',
+				oneParagraph: 'One paragraph',
+				bulletSummary: 'Include key bullets',
+				markdownReady: 'Markdown-ready',
+				keepLength: 'Keep similar length'
+			}
 		},
 		noProject: 'No project',
 		noSkill: 'No skill',
@@ -258,6 +288,18 @@ export const enMessages = {
 				strengths: 'Confirmed facts',
 				recommendations: 'Fix direction',
 				cautions: 'Reproduction/regression risks'
+			},
+			'writing-draft': {
+				summary: 'Finished draft',
+				strengths: 'Style/source notes',
+				recommendations: 'Revision options',
+				cautions: 'Source gaps/assumptions'
+			},
+			'revision-draft': {
+				summary: 'Revised draft',
+				strengths: 'Applied revision choices',
+				recommendations: 'Further revision options',
+				cautions: 'Meaning changes/checks'
 			}
 		},
 		createWorkOrder: 'Create work order',
@@ -702,7 +744,6 @@ export const enMessages = {
 			appearance: 'Appearance',
 			workspaces: 'Workspaces',
 			sync: 'Sync',
-			advanced: 'Advanced',
 			system: 'System'
 		},
 		appearance: {
@@ -1203,6 +1244,8 @@ export const enMessages = {
 		saved: 'Saved.',
 		removed: 'Removed.',
 		outputTypes: {
+			writing: 'Writing',
+			revision: 'Revision',
 			'work-order': 'Work order',
 			proposal: 'Proposal',
 			'result-report': 'Result report',
@@ -1215,6 +1258,18 @@ export const enMessages = {
 					'Compare options and produce a proposal with recommendation and follow-up work.',
 				instructions:
 					'Return a workduck.queue-proposal/v1 artifact. Compare viable options, state tradeoffs, choose one recommendation, and include only concrete follow-up work orders when action is needed.'
+			},
+			writingAssistant: {
+				name: 'Writing assistant',
+				description: 'Draft or revise writing from a brief, style constraints, and references.',
+				instructions:
+					'Write the requested piece from the task body and selected references. Treat any Workduck work-order ID as the assignment label, not as extra evidence by itself. Obey explicit controls for paragraph count, sentences per paragraph, tone, audience, point of view, language, format, and forbidden phrases. If the task gives no controls, produce a polished concise draft in the task language. Use selected references as source material without inventing unsupported facts. For writing-draft response format, put the finished draft in summary, put style/source notes in strengths, put optional revision directions in recommendations, and put source gaps or assumptions in cautions.'
+			},
+			revisionAssistant: {
+				name: 'Revision assistant',
+				description: 'Revise drafts by selected purpose, tone, structure, and format options.',
+				instructions:
+					'Revise the provided draft according to the task body, selected references, and checked revision options. Preserve the original meaning and factual claims unless the task explicitly asks to change them. Multiple checked options can apply at once; resolve conflicts by keeping meaning first, then structure, then tone, then format. Use references only as support for factual fixes and do not invent unsupported facts. For revision-draft response format, put the revised text in summary, put the applied revision choices in strengths, put optional remaining revision ideas in recommendations, and put meaning changes, tradeoffs, source gaps, or facts to verify in cautions.'
 			},
 			agentResponseEvaluator: {
 				name: 'Agent response evaluator',

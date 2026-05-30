@@ -44,6 +44,35 @@ export type ManualVoteOptionInput = {
 	readonly description: string;
 };
 
+export const manualRevisionOptionGroups = [
+	{ id: 'purpose' },
+	{ id: 'tone' },
+	{ id: 'structure' },
+	{ id: 'format' }
+] as const;
+
+export const manualRevisionOptions = [
+	{ id: 'clarity', groupId: 'purpose' },
+	{ id: 'concise', groupId: 'purpose' },
+	{ id: 'persuasive', groupId: 'purpose' },
+	{ id: 'natural', groupId: 'purpose' },
+	{ id: 'formal', groupId: 'tone' },
+	{ id: 'casual', groupId: 'tone' },
+	{ id: 'sharp', groupId: 'tone' },
+	{ id: 'warm', groupId: 'tone' },
+	{ id: 'paragraphFlow', groupId: 'structure' },
+	{ id: 'sentenceRhythm', groupId: 'structure' },
+	{ id: 'headlineLead', groupId: 'structure' },
+	{ id: 'preserveMeaning', groupId: 'structure' },
+	{ id: 'oneParagraph', groupId: 'format' },
+	{ id: 'bulletSummary', groupId: 'format' },
+	{ id: 'markdownReady', groupId: 'format' },
+	{ id: 'keepLength', groupId: 'format' }
+] as const;
+
+export type ManualRevisionOptionGroupId = (typeof manualRevisionOptionGroups)[number]['id'];
+export type ManualRevisionOptionId = (typeof manualRevisionOptions)[number]['id'];
+
 export type QueueCardEntry = QueueFileEntry & {
 	readonly isRead: boolean;
 	readonly artifactId: string;

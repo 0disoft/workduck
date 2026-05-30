@@ -93,6 +93,7 @@
 		{ href: '/references', labelKey: 'references', requiresWorkspace: true },
 		{ href: '/agents', labelKey: 'agents', requiresWorkspace: true },
 		{ href: '/personas', labelKey: 'personas', requiresWorkspace: true },
+		{ href: '/skills', labelKey: 'skills', requiresWorkspace: true },
 		{ href: '/environment', labelKey: 'environment', requiresWorkspace: true }
 	] as const;
 	type PrimaryNavigationItem = (typeof primaryNavigationItems)[number];

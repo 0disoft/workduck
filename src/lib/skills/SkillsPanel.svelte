@@ -19,6 +19,10 @@
 		removeSkill,
 		upsertSkill,
 		workduckSkillOutputTypeOptions,
+		WORKDUCK_AGENT_RESPONSE_EVALUATOR_SKILL_ID,
+		WORKDUCK_PROPOSAL_WRITER_SKILL_ID,
+		WORKDUCK_REVISION_ASSISTANT_SKILL_ID,
+		WORKDUCK_WRITING_ASSISTANT_SKILL_ID,
 		type SkillRegistry,
 		type SkillRegistryError,
 		type WorkduckSkillOutputType,
@@ -251,9 +255,13 @@
 
 	function getBuiltInSkillMessages(skill: WorkduckSkillRecord) {
 		switch (skill.id) {
-			case 'workduck.skill.proposal-writer':
+			case WORKDUCK_PROPOSAL_WRITER_SKILL_ID:
 				return messages.skills.builtIn.proposalWriter;
-			case 'workduck.skill.agent-response-evaluator':
+			case WORKDUCK_WRITING_ASSISTANT_SKILL_ID:
+				return messages.skills.builtIn.writingAssistant;
+			case WORKDUCK_REVISION_ASSISTANT_SKILL_ID:
+				return messages.skills.builtIn.revisionAssistant;
+			case WORKDUCK_AGENT_RESPONSE_EVALUATOR_SKILL_ID:
 				return messages.skills.builtIn.agentResponseEvaluator;
 			default:
 				return null;

@@ -14,7 +14,12 @@
 		type WorkduckQueueWorkPriority
 	} from './queue-artifacts';
 	import type { WorkduckQueueTaskKind } from './queue-voting';
-	import type { ManualVoteOptionInput } from './queue-panel-types';
+	import {
+		manualRevisionOptionGroups,
+		manualRevisionOptions,
+		type ManualRevisionOptionId,
+		type ManualVoteOptionInput
+	} from './queue-panel-types';
 
 	interface Props {
 		readonly messages: WorkduckMessages;
@@ -38,6 +43,8 @@
 		readonly selectedManualAgentIds: readonly string[];
 		readonly selectedManualProjectIds: readonly string[];
 		readonly selectedManualReferenceIds: readonly string[];
+		readonly selectedManualRevisionOptionIds: readonly string[];
+		readonly showRevisionOptions: boolean;
 		readonly manualWorkOrderSkillSummary: string;
 		readonly manualWorkOrderAgentSummary: string;
 		readonly manualWorkOrderProjectSummary: string;
@@ -48,6 +55,10 @@
 		readonly onAgentToggle: (agentId: string, isSelected: boolean) => void;
 		readonly onProjectToggle: (projectId: string, isSelected: boolean) => void;
 		readonly onReferenceToggle: (referenceId: string, isSelected: boolean) => void;
+		readonly onRevisionOptionToggle: (
+			optionId: ManualRevisionOptionId,
+			isSelected: boolean
+		) => void;
 		readonly onVoteOptionAdd: () => void;
 		readonly onVoteOptionRemove: (index: number) => void;
 		readonly onVoteOptionChange: (
@@ -86,6 +97,8 @@
 		selectedManualAgentIds,
 		selectedManualProjectIds,
 		selectedManualReferenceIds,
+		selectedManualRevisionOptionIds,
+		showRevisionOptions,
 		manualWorkOrderSkillSummary,
 		manualWorkOrderAgentSummary,
 		manualWorkOrderProjectSummary,
@@ -96,6 +109,7 @@
 		onAgentToggle,
 		onProjectToggle,
 		onReferenceToggle,
+		onRevisionOptionToggle,
 		onVoteOptionAdd,
 		onVoteOptionRemove,
 		onVoteOptionChange,
@@ -224,6 +238,42 @@
 						disabled={isWriting}
 					></textarea>
 				</label>
+
+				{#if showRevisionOptions}
+					<details class="workduck-work-order-section" open>
+						<summary class="workduck-work-order-section-summary">
+							<span>{messages.queue.revisionOptions.title}</span>
+						</summary>
+						<div class="workduck-work-order-section-body">
+							<span class="workduck-revision-options-description">
+								{messages.queue.revisionOptions.description}
+							</span>
+							<div class="workduck-revision-option-groups">
+								{#each manualRevisionOptionGroups as group (group.id)}
+									<div class="workduck-revision-option-group">
+										<span class="workduck-revision-option-group-title">
+											{messages.queue.revisionOptions.groups[group.id]}
+										</span>
+										<div class="workduck-revision-option-list">
+											{#each manualRevisionOptions.filter((option) => option.groupId === group.id) as option (option.id)}
+												<label class="workduck-multi-select-option workduck-revision-option">
+													<input
+														type="checkbox"
+														checked={selectedManualRevisionOptionIds.includes(option.id)}
+														disabled={isWriting}
+														onchange={(event) =>
+															onRevisionOptionToggle(option.id, event.currentTarget.checked)}
+													/>
+													<span>{messages.queue.revisionOptions.options[option.id]}</span>
+												</label>
+											{/each}
+										</div>
+									</div>
+								{/each}
+							</div>
+						</div>
+					</details>
+				{/if}
 
 				{#if manualWorkOrderKind === 'vote'}
 					<details class="workduck-work-order-section" open>

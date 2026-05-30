@@ -708,6 +708,14 @@ fn create_work_order_response_format_prompt(
 ) -> String {
     let response_format = normalize_response_format(task.response_format.as_deref());
 
+    if response_format == "writing-draft" {
+        return create_writing_draft_response_format_prompt(language);
+    }
+
+    if response_format == "revision-draft" {
+        return create_revision_draft_response_format_prompt(language);
+    }
+
     match language {
         QueueReportLanguage::Ko => {
             let (format_label, strengths_label, recommendations_label, cautions_label) =
@@ -771,7 +779,81 @@ fn normalize_response_format(value: Option<&str>) -> &'static str {
         Some("comparison-table") => "comparison-table",
         Some("decision-memo") => "decision-memo",
         Some("bug-analysis") => "bug-analysis",
+        Some("writing-draft") => "writing-draft",
+        Some("revision-draft") => "revision-draft",
         _ => "general",
+    }
+}
+
+fn create_writing_draft_response_format_prompt(language: QueueReportLanguage) -> String {
+    match language {
+        QueueReportLanguage::Ko => [
+            "응답 형식:".to_string(),
+            "형식: 글쓰기 초안".to_string(),
+            "마크다운이나 설명 문장을 붙이지 말고 JSON 객체 하나만 반환하세요.".to_string(),
+            r#"{"summary":"완성 원고 전체","strengths":["문체 또는 참고자료 사용 메모"],"recommendations":["선택적 수정 제안"],"cautions":["출처 공백 또는 가정"]}"#.to_string(),
+            "규칙:".to_string(),
+            "- summary에는 한 문장 요약이 아니라 사용자가 바로 복사해 쓸 수 있는 완성 원고를 넣으세요.".to_string(),
+            "- 작업에서 문단 수, 문단당 문장 수, 어투, 독자, 시점, 언어, 형식, 금지 표현을 지정하면 그대로 따르세요.".to_string(),
+            "- 참고자료가 제공되면 그 내용만 사실 근거로 사용하고, 없는 사실을 꾸며내지 마세요.".to_string(),
+            "- strengths에는 문체 선택, 참고자료 반영 방식, 중요한 근거를 1~5개로 적으세요.".to_string(),
+            "- recommendations에는 더 강하게/짧게/부드럽게 고칠 수 있는 선택지를 0~5개로 적으세요.".to_string(),
+            "- cautions에는 출처 공백, 확인이 필요한 사실, 추정한 조건을 적고 없으면 빈 배열을 사용하세요.".to_string(),
+            "- 첫 글자는 {, 마지막 글자는 } 이어야 합니다. JSON 앞뒤에 다른 텍스트를 붙이지 마세요.".to_string(),
+        ]
+        .join("\n"),
+        QueueReportLanguage::En => [
+            "Response format:".to_string(),
+            "Format: Writing draft".to_string(),
+            "Return exactly one JSON object. Do not wrap it in Markdown or add prose outside it."
+                .to_string(),
+            r#"{"summary":"Finished draft","strengths":["Style or source note"],"recommendations":["Optional revision option"],"cautions":["Source gap or assumption"]}"#.to_string(),
+            "Rules:".to_string(),
+            "- Put the finished draft in summary, not a one-sentence abstract.".to_string(),
+            "- Obey requested paragraph count, sentences per paragraph, tone, audience, point of view, language, format, and forbidden phrases.".to_string(),
+            "- If references are provided, use only them as factual support and do not invent unsupported facts.".to_string(),
+            "- Put 1-5 notes about style choices, reference usage, or key evidence in strengths.".to_string(),
+            "- Put 0-5 optional revision options in recommendations.".to_string(),
+            "- Put source gaps, facts to verify, or assumptions in cautions, or use an empty array when none apply.".to_string(),
+            "- The first character must be { and the last character must be }. Do not add text before or after the JSON.".to_string(),
+        ]
+        .join("\n"),
+    }
+}
+
+fn create_revision_draft_response_format_prompt(language: QueueReportLanguage) -> String {
+    match language {
+        QueueReportLanguage::Ko => [
+            "응답 형식:".to_string(),
+            "형식: 퇴고본".to_string(),
+            "마크다운이나 설명 문장을 붙이지 말고 JSON 객체 하나만 반환하세요.".to_string(),
+            r#"{"summary":"퇴고한 글 전체","strengths":["적용한 퇴고 방향"],"recommendations":["추가 수정 제안"],"cautions":["의미 변화 또는 확인점"]}"#.to_string(),
+            "규칙:".to_string(),
+            "- summary에는 한 문장 요약이 아니라 사용자가 바로 복사해 쓸 수 있는 퇴고본 전체를 넣으세요.".to_string(),
+            "- 작업 본문에 선택된 퇴고 옵션이 있으면 그 옵션을 함께 적용하되, 서로 충돌하면 원래 의미 보존을 우선하세요.".to_string(),
+            "- 참고자료가 제공되면 사실 확인과 보강에만 사용하고, 없는 사실을 꾸며내지 마세요.".to_string(),
+            "- strengths에는 실제로 적용한 목적, 어투, 구조, 형식 수정 방향을 1~5개로 적으세요.".to_string(),
+            "- recommendations에는 더 과감하게 바꿀 수 있는 추가 퇴고 선택지를 0~5개로 적으세요.".to_string(),
+            "- cautions에는 의미가 달라질 수 있는 부분, 확인이 필요한 사실, 선택한 어투의 부작용을 적고 없으면 빈 배열을 사용하세요.".to_string(),
+            "- 첫 글자는 {, 마지막 글자는 } 이어야 합니다. JSON 앞뒤에 다른 텍스트를 붙이지 마세요.".to_string(),
+        ]
+        .join("\n"),
+        QueueReportLanguage::En => [
+            "Response format:".to_string(),
+            "Format: Revision draft".to_string(),
+            "Return exactly one JSON object. Do not wrap it in Markdown or add prose outside it."
+                .to_string(),
+            r#"{"summary":"Revised text","strengths":["Applied revision choice"],"recommendations":["Further revision option"],"cautions":["Meaning change or check"]}"#.to_string(),
+            "Rules:".to_string(),
+            "- Put the full revised text in summary, not a one-sentence abstract.".to_string(),
+            "- Apply the checked revision options from the task body; when options conflict, preserve the original meaning first.".to_string(),
+            "- If references are provided, use them only for factual checks or support and do not invent unsupported facts.".to_string(),
+            "- Put 1-5 notes about applied purpose, tone, structure, or format changes in strengths.".to_string(),
+            "- Put 0-5 optional further revision directions in recommendations.".to_string(),
+            "- Put possible meaning changes, facts to verify, or tone tradeoffs in cautions, or use an empty array when none apply.".to_string(),
+            "- The first character must be { and the last character must be }. Do not add text before or after the JSON.".to_string(),
+        ]
+        .join("\n"),
     }
 }
 
@@ -826,6 +908,18 @@ fn response_format_labels_ko(
             "확인된 사실",
             "수정 방향",
             "재현 조건 또는 회귀 위험",
+        ),
+        "writing-draft" => (
+            "글쓰기 초안",
+            "문체 또는 참고자료 메모",
+            "수정 제안",
+            "출처 공백 또는 가정",
+        ),
+        "revision-draft" => (
+            "퇴고본",
+            "적용한 퇴고 방향",
+            "추가 수정 제안",
+            "의미 변화 또는 확인점",
         ),
         _ => (
             "일반 보고",
@@ -887,6 +981,18 @@ fn response_format_labels_en(
             "Confirmed fact",
             "Fix direction",
             "Reproduction condition or regression risk",
+        ),
+        "writing-draft" => (
+            "Writing draft",
+            "Style or source note",
+            "Revision option",
+            "Source gap or assumption",
+        ),
+        "revision-draft" => (
+            "Revision draft",
+            "Applied revision choice",
+            "Further revision option",
+            "Meaning change or check",
         ),
         _ => (
             "General report",

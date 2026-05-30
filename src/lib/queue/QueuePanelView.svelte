@@ -303,6 +303,8 @@
 		selectedManualAgentIds={controller.selectedManualAgentIds}
 		selectedManualProjectIds={controller.selectedManualProjectIds}
 		selectedManualReferenceIds={controller.selectedManualReferenceIds}
+		selectedManualRevisionOptionIds={controller.selectedManualRevisionOptionIds}
+		showRevisionOptions={controller.manualRevisionOptionsAreVisible}
 		manualWorkOrderSkillSummary={controller.manualWorkOrderSkillSummary}
 		manualWorkOrderAgentSummary={controller.manualWorkOrderAgentSummary}
 		manualWorkOrderProjectSummary={controller.manualWorkOrderProjectSummary}
@@ -313,6 +315,7 @@
 		onAgentToggle={controller.toggleManualWorkOrderAgent}
 		onProjectToggle={controller.toggleManualWorkOrderProject}
 		onReferenceToggle={controller.toggleManualWorkOrderReference}
+		onRevisionOptionToggle={controller.toggleManualRevisionOption}
 		onVoteOptionAdd={controller.addManualVoteOption}
 		onVoteOptionRemove={controller.removeManualVoteOption}
 		onVoteOptionChange={controller.updateManualVoteOption}

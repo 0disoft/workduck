@@ -17,7 +17,9 @@ export type WorkduckQueueResponseFormat =
 	| 'risk-assessment'
 	| 'comparison-table'
 	| 'decision-memo'
-	| 'bug-analysis';
+	| 'bug-analysis'
+	| 'writing-draft'
+	| 'revision-draft';
 
 export const defaultQueueWorkPriority = 'normal' satisfies WorkduckQueueWorkPriority;
 export const queueWorkPriorities = ['low', 'normal', 'high', 'urgent'] as const satisfies readonly WorkduckQueueWorkPriority[];
@@ -33,7 +35,9 @@ export const queueResponseFormats = [
 	'risk-assessment',
 	'comparison-table',
 	'decision-memo',
-	'bug-analysis'
+	'bug-analysis',
+	'writing-draft',
+	'revision-draft'
 ] as const satisfies readonly WorkduckQueueResponseFormat[];
 
 interface QueueEntityRef {
@@ -1358,7 +1362,9 @@ function isQueueResponseFormat(value: unknown): value is WorkduckQueueResponseFo
 		value === 'risk-assessment' ||
 		value === 'comparison-table' ||
 		value === 'decision-memo' ||
-		value === 'bug-analysis'
+		value === 'bug-analysis' ||
+		value === 'writing-draft' ||
+		value === 'revision-draft'
 	);
 }
 

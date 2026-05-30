@@ -175,7 +175,37 @@ export const koMessages = {
 			'risk-assessment': '리스크 평가',
 			'comparison-table': '비교표',
 			'decision-memo': '의사결정 메모',
-			'bug-analysis': '버그 분석'
+			'bug-analysis': '버그 분석',
+			'writing-draft': '글쓰기 초안',
+			'revision-draft': '퇴고본'
+		},
+		revisionOptions: {
+			title: '퇴고 옵션',
+			description: '선택한 항목을 작업 내용에 함께 반영합니다.',
+			groups: {
+				purpose: '목적',
+				tone: '어투',
+				structure: '구조',
+				format: '형식'
+			},
+			options: {
+				clarity: '뜻이 바로 보이게',
+				concise: '군더더기 줄이기',
+				persuasive: '설득력 강화',
+				natural: '자연스러운 한국어',
+				formal: '격식 있게',
+				casual: '편하게',
+				sharp: '날카롭게',
+				warm: '부드럽게',
+				paragraphFlow: '문단 흐름 정리',
+				sentenceRhythm: '문장 호흡 조정',
+				headlineLead: '제목/도입부 강화',
+				preserveMeaning: '원래 의미 보존',
+				oneParagraph: '한 문단으로',
+				bulletSummary: '핵심 bullet 포함',
+				markdownReady: '마크다운으로 바로 쓰기',
+				keepLength: '분량 크게 유지'
+			}
 		},
 		noProject: '프로젝트 없음',
 		noSkill: '스킬 없음',
@@ -260,6 +290,18 @@ export const koMessages = {
 				strengths: '확인된 사실',
 				recommendations: '수정 방향',
 				cautions: '재현/회귀 위험'
+			},
+			'writing-draft': {
+				summary: '완성 원고',
+				strengths: '문체/근거 메모',
+				recommendations: '수정 제안',
+				cautions: '출처 공백/가정'
+			},
+			'revision-draft': {
+				summary: '퇴고본',
+				strengths: '적용한 퇴고 방향',
+				recommendations: '추가 수정 제안',
+				cautions: '의미 변화/확인점'
 			}
 		},
 		createWorkOrder: '작업 지시서 만들기',
@@ -702,7 +744,6 @@ export const koMessages = {
 			appearance: '화면',
 			workspaces: '워크스페이스',
 			sync: '동기화',
-			advanced: '고급',
 			system: '시스템'
 		},
 		appearance: {
@@ -1202,6 +1243,8 @@ export const koMessages = {
 		saved: '저장했습니다.',
 		removed: '삭제했습니다.',
 		outputTypes: {
+			writing: '글쓰기',
+			revision: '퇴고',
 			'work-order': '작업 지시서',
 			proposal: '제안서',
 			'result-report': '결과 보고서',
@@ -1213,6 +1256,18 @@ export const koMessages = {
 				description: '선택지를 비교하고 추천안과 후속 작업을 포함한 제안서를 만듭니다.',
 				instructions:
 					'workduck.queue-proposal/v1 산출물을 반환합니다. 가능한 선택지를 비교하고, 절충점을 밝히고, 하나의 추천안을 고른 뒤 필요한 경우에만 구체적인 후속 작업 지시서를 포함합니다.'
+			},
+			writingAssistant: {
+				name: '글쓰기 도우미',
+				description: '작업 지시, 문체 조건, 참고자료를 바탕으로 글 초안이나 수정본을 작성합니다.',
+				instructions:
+					'작업 본문과 선택된 참고자료를 바탕으로 요청한 글을 작성합니다. Workduck 작업 ID가 주어지면 그것을 현재 작업의 식별자로만 보고, 그 자체를 추가 근거로 취급하지 않습니다. 문단 수, 문단당 문장 수, 어투, 독자, 시점, 언어, 형식, 금지 표현 같은 명시 조건을 우선합니다. 별도 조건이 없으면 작업 언어로 간결하고 완성도 있는 초안을 작성합니다. 선택된 참고자료는 사실 근거로 사용하되, 없는 사실을 지어내지 않습니다. writing-draft 응답 형식에서는 summary에 완성 원고를 넣고, strengths에는 문체와 근거 메모, recommendations에는 선택적 수정 방향, cautions에는 출처 공백이나 가정을 넣습니다.'
+			},
+			revisionAssistant: {
+				name: '퇴고 도우미',
+				description: '선택한 목적, 어투, 구조, 형식 옵션에 맞춰 초안을 퇴고합니다.',
+				instructions:
+					'작업 본문, 선택된 참고자료, 체크된 퇴고 옵션에 맞춰 제공된 초안을 퇴고합니다. 사용자가 명시적으로 바꾸라고 하지 않은 원래 의미와 사실관계는 보존합니다. 여러 옵션이 동시에 선택될 수 있으므로 충돌할 때는 의미 보존, 구조, 어투, 형식 순서로 우선합니다. 참고자료는 사실 보강과 확인에만 사용하고, 없는 사실을 지어내지 않습니다. revision-draft 응답 형식에서는 summary에 퇴고본 전체를 넣고, strengths에는 적용한 퇴고 방향, recommendations에는 남은 추가 수정 선택지, cautions에는 의미 변화 가능성, 절충점, 출처 공백, 확인할 사실을 넣습니다.'
 			},
 			agentResponseEvaluator: {
 				name: '에이전트 응답 평가기',

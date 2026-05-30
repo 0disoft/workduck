@@ -6,10 +6,15 @@ export const SKILL_NAME_MAX_LENGTH = 120;
 export const SKILL_DESCRIPTION_MAX_LENGTH = 420;
 export const SKILL_INSTRUCTIONS_MAX_LENGTH = 8_000;
 export const SKILL_OUTPUT_TYPES_MAX_COUNT = 5;
+export const WORKDUCK_PROPOSAL_WRITER_SKILL_ID = 'workduck.skill.proposal-writer';
+export const WORKDUCK_WRITING_ASSISTANT_SKILL_ID = 'workduck.skill.writing-assistant';
+export const WORKDUCK_REVISION_ASSISTANT_SKILL_ID = 'workduck.skill.revision-assistant';
 export const WORKDUCK_AGENT_RESPONSE_EVALUATOR_SKILL_ID =
 	'workduck.skill.agent-response-evaluator';
 
 export const workduckSkillOutputTypeOptions = [
+	{ id: 'writing', label: 'Writing' },
+	{ id: 'revision', label: 'Revision' },
 	{ id: 'work-order', label: 'Work order' },
 	{ id: 'proposal', label: 'Proposal' },
 	{ id: 'result-report', label: 'Result report' },
@@ -66,12 +71,28 @@ export type SkillRegistryMutationResult =
 
 const BUILT_IN_SKILLS = [
 	{
-		id: 'workduck.skill.proposal-writer',
+		id: WORKDUCK_PROPOSAL_WRITER_SKILL_ID,
 		name: 'Proposal writer',
 		description: 'Compare options and produce a proposal with recommendation and follow-up work.',
 		outputTypes: ['proposal'],
 		instructions:
 			'Return a workduck.queue-proposal/v1 artifact. Compare viable options, state tradeoffs, choose one recommendation, and include only concrete follow-up work orders when action is needed.'
+	},
+	{
+		id: WORKDUCK_WRITING_ASSISTANT_SKILL_ID,
+		name: 'Writing assistant',
+		description: 'Draft or revise writing from a brief, style constraints, and selected references.',
+		outputTypes: ['writing'],
+		instructions:
+			'Write the requested piece from the task body and selected references. Treat any Workduck work-order ID as the assignment label, not as extra evidence by itself. Obey explicit controls for paragraph count, sentences per paragraph, tone, audience, point of view, language, format, and forbidden phrases. If the task gives no controls, produce a polished concise draft in the task language. Use selected references as source material without inventing unsupported facts. For writing-draft response format, put the finished draft in summary, put style/source notes in strengths, put optional revision directions in recommendations, and put source gaps or assumptions in cautions.'
+	},
+	{
+		id: WORKDUCK_REVISION_ASSISTANT_SKILL_ID,
+		name: 'Revision assistant',
+		description: 'Revise a draft by selected style, structure, and format goals.',
+		outputTypes: ['revision'],
+		instructions:
+			'Revise the provided draft according to the task body, selected references, and checked revision options. Preserve the original meaning and factual claims unless the task explicitly asks to change them. Multiple checked options can apply at once; resolve conflicts by keeping meaning first, then structure, then tone, then format. Use references only as support for factual fixes and do not invent unsupported facts. For revision-draft response format, put the revised text in summary, put the applied revision choices in strengths, put optional remaining revision ideas in recommendations, and put meaning changes, tradeoffs, source gaps, or facts to verify in cautions.'
 	},
 	{
 		id: WORKDUCK_AGENT_RESPONSE_EVALUATOR_SKILL_ID,
