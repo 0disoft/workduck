@@ -1,0 +1,306 @@
+export const enQueueMessages = {
+		list: 'Work queue files',
+		detail: 'Work queue details',
+		filters: 'Work queue filters',
+		contextMenu: 'Work queue file actions',
+		registeredCount: '{count} queue files',
+		executionFilters: 'Work status filters',
+		readFilters: 'Read status filters',
+		filterMenu: 'Filters',
+		activeFilterCount: '{count} active filters',
+		kindFilter: 'Kind',
+		priorityFilter: 'Priority',
+		sort: 'Sort',
+		allFileKinds: 'All kinds',
+		allPriorities: 'All priorities',
+		sortOptions: {
+			'created-desc': 'Newest',
+			'created-asc': 'Oldest',
+			'priority-desc': 'Highest priority',
+			'priority-asc': 'Lowest priority'
+		},
+		pendingCountLabel: '{count} pending work items',
+		resultReportReview: 'Result report review',
+		workOrderView: 'Work order view',
+		workOrderId: 'Work ID',
+		proposalView: 'Proposal view',
+		empty: 'Add report or work-order files.',
+		noMatches: 'No matching work queue files.',
+		addWork: 'Add work',
+		newWork: 'New work',
+		editWork: 'Edit work',
+		workTitle: 'Work title',
+		workType: 'Work type',
+		workTypes: {
+			instruction: 'Instruction',
+			directMessage: 'Direct message',
+			vote: 'Vote/selection'
+		},
+		workPriority: 'Priority',
+		responseLanguage: 'Response language',
+		responseLanguages: {
+			auto: 'Match task language',
+			ko: 'Korean',
+			en: 'English',
+			es: 'Spanish',
+			fr: 'French',
+			zh: 'Simplified Chinese',
+			hi: 'Hindi'
+		},
+		responseFormat: 'Response format',
+		responseFormats: {
+			general: 'General report',
+			'pros-cons': 'Pros and cons',
+			'feature-proposal': 'Feature proposal',
+			'execution-plan': 'Execution plan',
+			'code-review': 'Code review',
+			'risk-assessment': 'Risk assessment',
+			'comparison-table': 'Comparison table',
+			'decision-memo': 'Decision memo',
+			'bug-analysis': 'Bug analysis',
+			'writing-draft': 'Writing draft',
+			'revision-draft': 'Revision draft'
+		},
+		revisionOptions: {
+			title: 'Revision options',
+			description: 'Selected options are added to the work body.',
+			groups: {
+				purpose: 'Purpose',
+				tone: 'Tone',
+				structure: 'Structure',
+				format: 'Format'
+			},
+			options: {
+				clarity: 'Make meaning obvious',
+				concise: 'Cut filler',
+				persuasive: 'Increase persuasion',
+				natural: 'Natural wording',
+				formal: 'More formal',
+				casual: 'More casual',
+				sharp: 'Sharper',
+				warm: 'Warmer',
+				paragraphFlow: 'Improve paragraph flow',
+				sentenceRhythm: 'Tune sentence rhythm',
+				headlineLead: 'Strengthen title/lead',
+				preserveMeaning: 'Preserve original meaning',
+				oneParagraph: 'One paragraph',
+				bulletSummary: 'Include key bullets',
+				markdownReady: 'Markdown-ready',
+				keepLength: 'Keep similar length'
+			}
+		},
+		skillOptions: {
+			title: 'Skill options',
+			description: 'Choose the type, tone, format, or other options configured by the selected skills.'
+		},
+		noProject: 'No project',
+		noRepository: 'No repository',
+		noSkill: 'No skill',
+		noAgent: 'No agent',
+		noReference: 'No reference',
+		linkedSkill: 'Linked skill',
+		assignment: 'Execution settings',
+		advancedExecution: 'Advanced execution settings',
+		internalSkills: 'Internal skills',
+		workProjects: 'Related projects',
+		workRepositories: 'Related repositories',
+		workAgents: 'Work agents',
+		workReferences: 'Work references',
+		repositorySearchPlaceholder: 'Search repositories',
+		selectionCount: '{count} selected',
+		workBody: 'Work body',
+		directMessageBody: 'Message',
+		countLabel: '{current}/{max}',
+		vote: {
+			question: 'Question',
+			options: 'Options',
+			optionName: 'Option name',
+			optionDescription: 'Description',
+			addOption: 'Add option',
+			removeOption: 'Remove option',
+			criteria: 'Criteria',
+			result: 'Vote result',
+			choice: 'Choice',
+			count: '{count} votes',
+			invalid: '{count} unparsed responses',
+			optionCount: '{count} options',
+			unparsed: 'Unparsed'
+		},
+		structuredResponseFormats: {
+			general: {
+				summary: 'Summary',
+				strengths: 'Strengths/Evidence',
+				recommendations: 'Recommendations',
+				cautions: 'Cautions'
+			},
+			'pros-cons': {
+				summary: 'Verdict',
+				strengths: 'Pros',
+				recommendations: 'Judgment',
+				cautions: 'Cons'
+			},
+			'feature-proposal': {
+				summary: 'Summary',
+				strengths: 'Evidence',
+				recommendations: 'Feature ideas',
+				cautions: 'Cautions'
+			},
+			'execution-plan': {
+				summary: 'Goal',
+				strengths: 'Assumptions',
+				recommendations: 'Steps',
+				cautions: 'Risks'
+			},
+			'code-review': {
+				summary: 'Overall review',
+				strengths: 'Keep',
+				recommendations: 'Fixes',
+				cautions: 'Issues'
+			},
+			'risk-assessment': {
+				summary: 'Risk verdict',
+				strengths: 'Mitigations',
+				recommendations: 'Responses',
+				cautions: 'Key risks'
+			},
+			'comparison-table': {
+				summary: 'Comparison verdict',
+				strengths: 'Criteria',
+				recommendations: 'Comparison rows',
+				cautions: 'Decision factors'
+			},
+			'decision-memo': {
+				summary: 'Decision',
+				strengths: 'Rationale',
+				recommendations: 'Decision items',
+				cautions: 'Follow-up checks'
+			},
+			'bug-analysis': {
+				summary: 'Cause summary',
+				strengths: 'Confirmed facts',
+				recommendations: 'Fix direction',
+				cautions: 'Reproduction/regression risks'
+			},
+			'writing-draft': {
+				summary: 'Finished draft',
+				strengths: 'Style/source notes',
+				recommendations: 'Revision options',
+				cautions: 'Source gaps/assumptions'
+			},
+			'revision-draft': {
+				summary: 'Revised draft',
+				strengths: 'Applied revision choices',
+				recommendations: 'Further revision options',
+				cautions: 'Meaning changes/checks'
+			}
+		},
+		createWorkOrder: 'Create work order',
+		delegateEvaluation: 'Delegate evaluation',
+		creating: 'Creating',
+		previewPrompt: 'Preview prompt',
+		executeWorkOrder: 'Run',
+		completeWorkOrder: 'Mark complete',
+		executing: 'Running',
+		noFollowUpSelected: 'No follow-up selected.',
+		noEvaluationTargets: 'No responses to evaluate.',
+		evaluationAlreadyDelegated: 'An evaluation delegation work order already exists: {relativePath}',
+		evaluationDelegated: 'Created evaluation delegation work order {relativePath}.',
+		createdFile: 'Created {relativePath}.',
+		updatedFile: 'Updated {relativePath}.',
+		deletedFile: 'Deleted {relativePath}.',
+		executedFile: 'Created {relativePath} and completed the work order.',
+		completedFile: 'Completed {relativePath}.',
+		nextWorkOrders: 'Next work orders',
+		promptPreview: {
+			title: 'Prompt preview',
+			description: 'Review the exact system and user prompts before running this work order.',
+			systemPrompt: 'System prompt',
+			userPrompt: 'User prompt',
+			characterCount: '{count} characters'
+		},
+		priorities: {
+			low: 'Low',
+			normal: 'Normal',
+			high: 'High',
+			urgent: 'Urgent'
+		},
+		executionStates: {
+			pending: 'Pending',
+			completed: 'Completed'
+		},
+		readStates: {
+			read: 'Read',
+			unread: 'Unread'
+		},
+		fileKinds: {
+			resultReport: 'Report JSON',
+			workOrder: 'Work order',
+			proposal: 'Proposal',
+			unsupported: 'Unsupported'
+		},
+		reviewDecisions: {
+			approved: 'Approve',
+			needsWork: 'Needs work',
+			rollback: 'Rollback'
+		},
+		evaluation: {
+			title: 'Evaluate response',
+			action: 'Evaluate',
+			mode: 'Evaluation mode',
+			manual: 'Manual evaluation',
+			aiDelegated: 'Delegate to AI',
+			copyPrompt: 'Copy prompt',
+			promptCopied: 'Evaluation prompt copied.',
+			clipboardUnavailable: 'Clipboard is not available.',
+			delegationPrompt: 'Delegation prompt',
+			sourceReport: 'Source report',
+			workspace: 'Workspace',
+			criteria: 'Criteria',
+			targets: 'Targets',
+			command: 'Command',
+			saving: 'Saving',
+			saved: 'Evaluation saved.'
+		},
+		errors: {
+			workspaceRequired: 'Workspace path is required.',
+			workspaceNotAbsolute: 'Workspace path must be absolute.',
+			workspaceNotFound: 'Workspace path was not found.',
+			workspaceNotDirectory: 'Workspace path must be a folder.',
+			workspacePermissionDenied: 'Workspace path is not writable.',
+			workspaceUnreadable: 'Workspace path could not be checked.',
+			rootInvalid: 'Work queue folder is not usable.',
+			createFailed: 'Work queue folder could not be created.',
+			openFailed: 'Work queue folder could not be opened.',
+			listFailed: 'Work queue files could not be listed.',
+			fileInvalid: 'Work queue file path is not allowed.',
+			fileNotFound: 'Work queue file was not found.',
+			fileReadFailed: 'Work queue file could not be read.',
+			fileWriteFailed: 'Work queue file could not be written.',
+			fileDeleteFailed: 'Work queue file could not be deleted.',
+			fileAlreadyExists: 'Work queue file already exists.',
+			evaluationDelegationAlreadyExists:
+				'An evaluation delegation work order already exists for this report. Delete the existing work order before creating another one.',
+			unavailable: 'Work queue folders are available in the desktop app.',
+			executionNoTask: 'There is no task to run.',
+			executionNoAgent: 'Select at least one work agent.',
+			executionVaultLocked: 'Unlock the environment vault first.',
+			executionAgentNotFound: 'The selected agent was not found.',
+			executionSecretNotFound: 'The API key linked to the agent was not found.',
+			executionProviderUnsupported:
+				'The LLM provider could not be detected. Choose a provider on the agent or include DeepSeek, OpenAI, or OpenRouter in the API key name or tag.',
+			executionApiKeyRequired: 'The API key is empty.',
+			executionPromptRequired: 'The work prompt could not be created.',
+			executionModelRequired: 'The model could not be selected.',
+			executionRequestInvalid: 'The LLM request was invalid.',
+			executionAuthenticationFailed: 'LLM authentication failed. Check the API key.',
+			executionRateLimited: 'The LLM rate limit was reached. Try again later.',
+			executionProviderRejected: 'The LLM provider rejected the request.',
+			executionProviderTimeout: 'The LLM provider timed out. Try again later.',
+			executionProviderUnavailable: 'The LLM provider could not be reached.',
+			executionResponseEmpty: 'The LLM response was empty.',
+			executionResponseInvalid: 'The LLM response could not be read as a report.',
+			executionUnavailable: 'Work execution is available in the desktop app.',
+			executionUnknown: 'An unknown work execution error occurred.',
+			workBodyTooLong: 'Work body can be at most {max} characters.'
+		}
+	} as const;

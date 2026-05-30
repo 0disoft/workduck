@@ -1,0 +1,82 @@
+export const zhEnvironmentMessages = {
+	ariaLabel: '环境变量',
+	registeredCount: '{count} 个环境变量',
+	vaultPassword: '保管箱密码',
+	createVault: '创建保管箱',
+	unlockVault: '解锁',
+	lockVault: '锁定',
+	kind: '类型',
+	tags: '标签',
+	value: '值',
+	select: '选择',
+	filters: '环境过滤器',
+	kindFilter: '类型过滤器',
+	tagFilter: '标签过滤器',
+	allKinds: '所有类型',
+	allTags: '所有标签',
+	empty: '暂无环境变量。',
+	noMatches: '没有匹配的环境变量。',
+	entries: '环境变量条目',
+	copy: '复制',
+	show: '显示',
+	hide: '隐藏',
+	applyCliEnvironment: '应用 CLI 环境变量',
+	applyCliEnvironmentTooltip:
+		'将 OpenRouter, OpenAI 和 DeepSeek API 密钥保存为用户环境变量。',
+	secretKinds: {
+		'api-key': 'API 密钥',
+		token: '令牌',
+		'ssh-key': 'SSH 密钥',
+		account: '账户',
+		password: '密码',
+		other: '其他'
+	},
+	secretTags: {
+		llm: 'LLM',
+		github: 'GitHub',
+		gitlab: 'GitLab',
+		openai: 'OpenAI',
+		anthropic: 'Anthropic',
+		openrouter: 'OpenRouter',
+		cloud: '云服务',
+		database: '数据库',
+		auth: '身份验证',
+		sync: '同步',
+		deployment: '部署',
+		monitoring: '监控',
+		payment: '支付',
+		storage: '存储'
+	},
+	statuses: {
+		created: '保管箱已创建。',
+		saved: '已保存。',
+		removed: '已移除。',
+		copied: '已复制。',
+		cliEnvironmentApplied: '已应用 {count} 个 CLI 环境变量。'
+	},
+	errors: {
+		vaultPasswordRequired: '保管箱密码为必填项。',
+		vaultPasswordTryAgain: '请在 {seconds} 秒后重试。',
+		vaultPasswordMismatch: '保管箱密码不匹配。',
+		vaultPasswordMismatchWithAttempts:
+			'保管箱密码不匹配。还剩 {attemptsRemaining} 次尝试机会。',
+		vaultUnavailable: '保管箱仅在桌面客户端中可用。',
+		vaultInvalid: '无法读取保管箱数据。',
+		vaultSaveFailed: '无法保存保管箱。',
+		vaultOperationFailed: '保管箱操作失败。',
+		clipboardUnavailable: '剪贴板不可用。',
+		copyFailed: '复制失败。',
+		nameRequired: '名称为必填项。',
+		kindRequired: '类型为必填项。',
+		tagRequired: '标签为必填项。',
+		nameDuplicate: '名称已存在。',
+		valueRequired: '值为必填项。',
+		notFound: '未找到该条目。',
+		cliEnvironmentNoVariables:
+			'未找到 OpenRouter, OpenAI 或 DeepSeek API 密钥的环境变量。',
+		cliEnvironmentApplyFailed: '无法应用 CLI 环境变量。',
+		cliEnvironmentUnsupported:
+			'此操作系统不支持用户环境变量。',
+		cliEnvironmentUnavailable: '应用 CLI 环境变量仅在桌面客户端中可用。'
+	}
+} as const;

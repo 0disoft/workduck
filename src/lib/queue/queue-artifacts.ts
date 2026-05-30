@@ -7,7 +7,7 @@ import type {
 export type WorkduckQueueReviewDecision = 'pending' | 'approved' | 'needs-work' | 'rollback';
 export type WorkduckQueueWorkPriority = 'low' | 'normal' | 'high' | 'urgent';
 export type WorkduckQueueExecutionState = 'pending' | 'completed';
-export type WorkduckQueueResponseLanguage = 'auto' | 'ko' | 'en';
+export type WorkduckQueueResponseLanguage = 'auto' | 'ko' | 'en' | 'es' | 'fr' | 'zh' | 'hi';
 export type WorkduckQueueResponseFormat =
 	| 'general'
 	| 'pros-cons'
@@ -22,9 +22,19 @@ export type WorkduckQueueResponseFormat =
 	| 'revision-draft';
 
 export const defaultQueueWorkPriority = 'normal' satisfies WorkduckQueueWorkPriority;
+export const QUEUE_WORK_ORDER_TITLE_MAX_LENGTH = 180;
+export const QUEUE_WORK_ORDER_BODY_MAX_LENGTH = 32_000;
 export const queueWorkPriorities = ['low', 'normal', 'high', 'urgent'] as const satisfies readonly WorkduckQueueWorkPriority[];
 export const defaultQueueResponseLanguage = 'auto' satisfies WorkduckQueueResponseLanguage;
-export const queueResponseLanguages = ['auto', 'ko', 'en'] as const satisfies readonly WorkduckQueueResponseLanguage[];
+export const queueResponseLanguages = [
+	'auto',
+	'ko',
+	'en',
+	'es',
+	'fr',
+	'zh',
+	'hi'
+] as const satisfies readonly WorkduckQueueResponseLanguage[];
 export const defaultQueueResponseFormat = 'general' satisfies WorkduckQueueResponseFormat;
 export const queueResponseFormats = [
 	'general',
@@ -80,6 +90,7 @@ export interface WorkduckQueueResultReport {
 	readonly status: 'reserved' | 'active' | 'archived';
 	readonly createdAt: string;
 	readonly agentName?: string;
+	readonly sourceWorkOrder?: QueueEntityRef & { readonly kind: 'queue-work-order' };
 	readonly tasks: readonly WorkduckQueueResultReportTask[];
 }
 
@@ -92,6 +103,7 @@ export interface WorkduckQueueWorkOrderTask {
 	readonly responseLanguage?: WorkduckQueueResponseLanguage;
 	readonly responseFormat?: WorkduckQueueResponseFormat;
 	readonly projectIds?: readonly string[];
+	readonly repositoryIds?: readonly string[];
 	readonly skillIds?: readonly string[];
 	readonly agentIds?: readonly string[];
 	readonly referenceIds?: readonly string[];
@@ -308,7 +320,7 @@ export function createQueueWorkOrderForReportEvaluation(
 				title,
 				body: createReportEvaluationDelegationBody(report, input, language),
 				priority: defaultQueueWorkPriority,
-				responseLanguage: language,
+				responseLanguage: getEvaluationDelegationResponseLanguage(report, language),
 				skillIds: [input.evaluatorSkillId]
 			}
 		]
@@ -328,6 +340,7 @@ export function createManualQueueWorkOrder(
 		readonly responseLanguage?: WorkduckQueueResponseLanguage;
 		readonly responseFormat?: WorkduckQueueResponseFormat;
 		readonly projectIds?: readonly string[];
+		readonly repositoryIds?: readonly string[];
 	} = {}
 ): WorkduckQueueWorkOrder {
 	const normalizedTitle = normalizeQueueText(title);
@@ -337,6 +350,7 @@ export function createManualQueueWorkOrder(
 	const normalizedAgentIds = normalizeQueueRecordIds(agentIds);
 	const normalizedReferenceIds = normalizeQueueRecordIds(referenceIds);
 	const normalizedProjectIds = normalizeQueueRecordIds(options.projectIds ?? []);
+	const normalizedRepositoryIds = normalizeQueueRecordIds(options.repositoryIds ?? []);
 	const normalizedKind = normalizeQueueTaskKind(options.kind);
 	const normalizedResponseLanguage = normalizeQueueResponseLanguage(options.responseLanguage);
 	const normalizedResponseFormat = normalizeQueueResponseFormat(options.responseFormat);
@@ -361,6 +375,7 @@ export function createManualQueueWorkOrder(
 				responseLanguage: normalizedResponseLanguage,
 				...(normalizedKind === 'instruction' ? { responseFormat: normalizedResponseFormat } : {}),
 				...(normalizedProjectIds.length > 0 ? { projectIds: normalizedProjectIds } : {}),
+				...(normalizedRepositoryIds.length > 0 ? { repositoryIds: normalizedRepositoryIds } : {}),
 				...(normalizedSkillIds.length > 0 ? { skillIds: normalizedSkillIds } : {}),
 				...(normalizedAgentIds.length > 0 ? { agentIds: normalizedAgentIds } : {}),
 				...(normalizedReferenceIds.length > 0 ? { referenceIds: normalizedReferenceIds } : {}),
@@ -378,6 +393,7 @@ export function updateQueueWorkOrderTask(
 		readonly body: string;
 		readonly priority: WorkduckQueueWorkPriority;
 		readonly projectIds?: readonly string[];
+		readonly repositoryIds?: readonly string[];
 		readonly skillIds?: readonly string[];
 		readonly agentIds?: readonly string[];
 		readonly referenceIds?: readonly string[];
@@ -391,6 +407,7 @@ export function updateQueueWorkOrderTask(
 	const normalizedBody = normalizeQueueText(input.body);
 	const normalizedPriority = normalizeQueueWorkPriority(input.priority);
 	const normalizedProjectIds = normalizeQueueRecordIds(input.projectIds ?? []);
+	const normalizedRepositoryIds = normalizeQueueRecordIds(input.repositoryIds ?? []);
 	const normalizedSkillIds = normalizeQueueRecordIds(input.skillIds ?? []);
 	const normalizedAgentIds = normalizeQueueRecordIds(input.agentIds ?? []);
 	const normalizedReferenceIds = normalizeQueueRecordIds(input.referenceIds ?? []);
@@ -408,6 +425,7 @@ export function updateQueueWorkOrderTask(
 			agentIds: _agentIds,
 			referenceIds: _referenceIds,
 			projectIds: _projectIds,
+			repositoryIds: _repositoryIds,
 			kind: _kind,
 			vote: _vote,
 			responseLanguage: _responseLanguage,
@@ -424,6 +442,7 @@ export function updateQueueWorkOrderTask(
 			responseLanguage: normalizedResponseLanguage,
 			...(normalizedKind === 'instruction' ? { responseFormat: normalizedResponseFormat } : {}),
 			...(normalizedProjectIds.length > 0 ? { projectIds: normalizedProjectIds } : {}),
+			...(normalizedRepositoryIds.length > 0 ? { repositoryIds: normalizedRepositoryIds } : {}),
 			...(normalizedSkillIds.length > 0 ? { skillIds: normalizedSkillIds } : {}),
 			...(normalizedAgentIds.length > 0 ? { agentIds: normalizedAgentIds } : {}),
 			...(normalizedReferenceIds.length > 0 ? { referenceIds: normalizedReferenceIds } : {}),
@@ -650,7 +669,9 @@ function createQueueArtifactFileId(id: string, fallback: string) {
 }
 
 function createQueueFileSlug(value: string, maxLength: number, extraAllowed = '') {
-	const allowedPattern = extraAllowed.includes('_') ? /[^a-z0-9_-]+/g : /[^a-z0-9-]+/g;
+	const allowedPattern = extraAllowed.includes('_')
+		? /[^\p{Letter}\p{Number}_-]+/gu
+		: /[^\p{Letter}\p{Number}-]+/gu;
 
 	return normalizeQueueText(value)
 		.toLowerCase()
@@ -700,6 +721,7 @@ function isQueueResultReport(value: unknown): value is WorkduckQueueResultReport
 		(value.status === 'reserved' || value.status === 'active' || value.status === 'archived') &&
 		typeof value.createdAt === 'string' &&
 		isOptionalText(value.agentName) &&
+		isOptionalEntityRef(value.sourceWorkOrder, 'queue-work-order') &&
 		Array.isArray(value.tasks) &&
 		value.tasks.every(isQueueResultReportTask)
 	);
@@ -789,6 +811,17 @@ function getEvaluationDelegationLanguage(report: WorkduckQueueResultReport): Fol
 	].join(' ');
 
 	return containsKoreanText(languageSource) ? 'ko' : 'en';
+}
+
+function getEvaluationDelegationResponseLanguage(
+	report: WorkduckQueueResultReport,
+	fallbackLanguage: FollowUpContentLanguage
+): WorkduckQueueResponseLanguage {
+	return (
+		report.tasks
+			.map((task) => normalizeQueueResponseLanguage(task.responseLanguage))
+			.find((language) => language !== 'auto') ?? fallbackLanguage
+	);
 }
 
 function createReportEvaluationDelegationBody(
@@ -1094,7 +1127,7 @@ function createDefaultFollowUpTaskBody(
 }
 
 function containsKoreanText(value: string) {
-	return /[가-힣]/u.test(value);
+	return /[가-힣ㄱ-ㅎㅏ-ㅣ]/u.test(value);
 }
 
 function isQueueWorkOrder(value: unknown): value is WorkduckQueueWorkOrder {
@@ -1210,6 +1243,7 @@ function isQueueWorkOrderTask(value: unknown) {
 		(value.responseLanguage === undefined || isQueueResponseLanguage(value.responseLanguage)) &&
 		(value.responseFormat === undefined || isQueueResponseFormat(value.responseFormat)) &&
 		(value.projectIds === undefined || isStringArray(value.projectIds)) &&
+		(value.repositoryIds === undefined || isStringArray(value.repositoryIds)) &&
 		(value.skillIds === undefined || isStringArray(value.skillIds)) &&
 		(value.agentIds === undefined || isStringArray(value.agentIds)) &&
 		(value.referenceIds === undefined || isStringArray(value.referenceIds)) &&
@@ -1228,6 +1262,7 @@ const nullableLegacyWorkOrderTaskKeys = [
 	'responseLanguage',
 	'responseFormat',
 	'projectIds',
+	'repositoryIds',
 	'skillIds',
 	'agentIds',
 	'referenceIds',
@@ -1349,7 +1384,15 @@ function isQueueWorkPriority(value: unknown): value is WorkduckQueueWorkPriority
 }
 
 function isQueueResponseLanguage(value: unknown): value is WorkduckQueueResponseLanguage {
-	return value === 'auto' || value === 'ko' || value === 'en';
+	return (
+		value === 'auto' ||
+		value === 'ko' ||
+		value === 'en' ||
+		value === 'es' ||
+		value === 'fr' ||
+		value === 'zh' ||
+		value === 'hi'
+	);
 }
 
 function isQueueResponseFormat(value: unknown): value is WorkduckQueueResponseFormat {
@@ -1379,6 +1422,10 @@ function isEntityRef(value: unknown, kind: string) {
 		value.kind === kind &&
 		typeof value.label === 'string'
 	);
+}
+
+function isOptionalEntityRef(value: unknown, kind: string) {
+	return value === undefined || isEntityRef(value, kind);
 }
 
 function isStringArray(value: unknown): value is string[] {

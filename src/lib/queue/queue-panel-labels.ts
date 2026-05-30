@@ -4,9 +4,15 @@ import type { ProjectNodeRecord } from '$lib/projects/project-registry';
 import type { ReferenceRecord } from '$lib/references/reference-registry';
 import {
 	WORKDUCK_AGENT_RESPONSE_EVALUATOR_SKILL_ID,
+	WORKDUCK_API_SCHEMA_ARCHITECT_SKILL_ID,
+	WORKDUCK_CODE_REVIEWER_SKILL_ID,
+	WORKDUCK_COMMIT_HANDOFF_WRITER_SKILL_ID,
 	WORKDUCK_PROPOSAL_WRITER_SKILL_ID,
+	WORKDUCK_RELEASE_NOTE_WRITER_SKILL_ID,
 	WORKDUCK_REVISION_ASSISTANT_SKILL_ID,
+	WORKDUCK_TECH_DEBT_JANITOR_SKILL_ID,
 	WORKDUCK_WRITING_ASSISTANT_SKILL_ID,
+	isDefaultSkillRecord,
 	type WorkduckSkillRecord
 } from '$lib/skills/skill-registry';
 import type {
@@ -118,15 +124,29 @@ export function getQueueStructuredResponseLabels(
 }
 
 export function getSkillDisplayName(messages: WorkduckMessages, skill: WorkduckSkillRecord) {
+	if (!isDefaultSkillRecord(skill)) {
+		return skill.name;
+	}
+
 	switch (skill.id) {
 		case WORKDUCK_PROPOSAL_WRITER_SKILL_ID:
-			return messages.skills.builtIn.proposalWriter.name;
+			return messages.skills.seedSkills.proposalWriter.name;
 		case WORKDUCK_WRITING_ASSISTANT_SKILL_ID:
-			return messages.skills.builtIn.writingAssistant.name;
+			return messages.skills.seedSkills.writingAssistant.name;
 		case WORKDUCK_REVISION_ASSISTANT_SKILL_ID:
-			return messages.skills.builtIn.revisionAssistant.name;
+			return messages.skills.seedSkills.revisionAssistant.name;
+		case WORKDUCK_CODE_REVIEWER_SKILL_ID:
+			return messages.skills.seedSkills.codeReviewer.name;
+		case WORKDUCK_COMMIT_HANDOFF_WRITER_SKILL_ID:
+			return messages.skills.seedSkills.commitHandoffWriter.name;
+		case WORKDUCK_TECH_DEBT_JANITOR_SKILL_ID:
+			return messages.skills.seedSkills.techDebtJanitor.name;
+		case WORKDUCK_RELEASE_NOTE_WRITER_SKILL_ID:
+			return messages.skills.seedSkills.releaseNoteWriter.name;
+		case WORKDUCK_API_SCHEMA_ARCHITECT_SKILL_ID:
+			return messages.skills.seedSkills.apiSchemaArchitect.name;
 		case WORKDUCK_AGENT_RESPONSE_EVALUATOR_SKILL_ID:
-			return messages.skills.builtIn.agentResponseEvaluator.name;
+			return messages.skills.seedSkills.agentResponseEvaluator.name;
 		default:
 			return skill.name;
 	}

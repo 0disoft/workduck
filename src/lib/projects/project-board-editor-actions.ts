@@ -1,8 +1,10 @@
 import type { ProjectFormError } from './project-board-errors';
-import { parseTagsInput } from './project-board-selectors';
+import { validateTagsInput } from './project-board-selectors';
 import type { ProjectTagEditorTarget } from './project-board-types';
 import {
 	setProjectNodeDescription,
+	setProjectNodeName,
+	setProjectNodePath,
 	setProjectNodeTags,
 	setProjectRepositoryTags,
 	type ProjectNodeRecord,
@@ -55,6 +57,59 @@ export async function saveProjectDescription(
 	context.setIsSaving(false);
 }
 
+export async function saveProjectNodeDetails(
+	input: {
+		readonly editor: ProjectNodeRecord | null;
+		readonly name: string;
+		readonly path: string;
+		readonly registry: ProjectRegistry;
+		readonly isSaving: boolean;
+	},
+	context: ProjectEditorActionContext & {
+		readonly savedStatus: string;
+		readonly setIsSaving: (isSaving: boolean) => void;
+		readonly closeEditor: () => void;
+	}
+) {
+	if (input.editor === null || input.isSaving) {
+		return;
+	}
+
+	context.setIsSaving(true);
+	context.setFormError(null);
+	context.setStatus(null);
+
+	const nameResult = setProjectNodeName(input.registry, {
+		nodeId: input.editor.id,
+		name: input.name
+	});
+
+	if (!nameResult.ok) {
+		context.setFormError(nameResult.error);
+		context.setIsSaving(false);
+		return;
+	}
+
+	const pathResult = setProjectNodePath(nameResult.registry, {
+		nodeId: input.editor.id,
+		path: input.path
+	});
+
+	if (!pathResult.ok) {
+		context.setFormError(pathResult.error);
+		context.setIsSaving(false);
+		return;
+	}
+
+	if (await context.persistRegistry(pathResult.registry)) {
+		context.setStatus(context.savedStatus);
+		context.closeEditor();
+		return;
+	}
+
+	context.setIsSaving(false);
+}
+
 export async function saveProjectTags(
 	input: {
 		readonly editor: ProjectTagEditorTarget | null;
@@ -75,17 +130,24 @@ export async function saveProjectTags(
 	context.setFormError(null);
 	context.setStatus(null);
 
-	const tags = parseTagsInput(input.tagInput);
+	const tagsResult = validateTagsInput(input.tagInput);
+
+	if (!tagsResult.ok) {
+		context.setFormError(tagsResult.error);
+		context.setIsSaving(false);
+		return;
+	}
+
 	const result =
 		input.editor.type === 'repository'
 			? setProjectRepositoryTags(input.registry, {
 					nodeId: input.editor.node.id,
 					repositoryId: input.editor.repository.id,
-					tags
+					tags: tagsResult.tags
 				})
 			: setProjectNodeTags(input.registry, {
 					nodeId: input.editor.node.id,
-					tags
+					tags: tagsResult.tags
 				});
 
 	if (!result.ok) {

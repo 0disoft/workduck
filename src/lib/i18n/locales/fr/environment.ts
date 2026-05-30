@@ -1,0 +1,82 @@
+export const frEnvironmentMessages = {
+	ariaLabel: 'Variables d\'environnement',
+	registeredCount: '{count} variables d\'environnement',
+	vaultPassword: 'Mot de passe du coffre-fort',
+	createVault: 'Créer le coffre-fort',
+	unlockVault: 'Déverrouiller',
+	lockVault: 'Verrouiller',
+	kind: 'Type',
+	tags: 'Tags',
+	value: 'Valeur',
+	select: 'Sélectionner',
+	filters: 'Filtres d\'environnement',
+	kindFilter: 'Filtre de type',
+	tagFilter: 'Filtre de tag',
+	allKinds: 'Tous les types',
+	allTags: 'Tous les tags',
+	empty: 'Aucune variable d\'environnement pour le moment.',
+	noMatches: 'Aucune variable d\'environnement correspondante.',
+	entries: 'Entrées de variables d\'environnement',
+	copy: 'Copier',
+	show: 'Afficher',
+	hide: 'Masquer',
+	applyCliEnvironment: 'Appliquer les variables CLI',
+	applyCliEnvironmentTooltip:
+		'Enregistre les clés API OpenRouter, OpenAI et DeepSeek en tant que variables d\'environnement utilisateur.',
+	secretKinds: {
+		'api-key': 'Clé API',
+		token: 'Jeton',
+		'ssh-key': 'Clé SSH',
+		account: 'Compte',
+		password: 'Mot de passe',
+		other: 'Autre'
+	},
+	secretTags: {
+		llm: 'LLM',
+		github: 'GitHub',
+		gitlab: 'GitLab',
+		openai: 'OpenAI',
+		anthropic: 'Anthropic',
+		openrouter: 'OpenRouter',
+		cloud: 'Cloud',
+		database: 'Base de données',
+		auth: 'Authentification',
+		sync: 'Sincronisation',
+		deployment: 'Déploiement',
+		monitoring: 'Supervision',
+		payment: 'Paiement',
+		storage: 'Stockage'
+	},
+	statuses: {
+		created: 'Coffre-fort créé.',
+		saved: 'Enregistré.',
+		removed: 'Supprimé.',
+		copied: 'Copié.',
+		cliEnvironmentApplied: '{count} variables d\'environnement CLI appliquées.'
+	},
+	errors: {
+		vaultPasswordRequired: 'Le mot de passe du coffre-fort est obligatoire.',
+		vaultPasswordTryAgain: 'Réessayez dans {seconds} s.',
+		vaultPasswordMismatch: 'Le mot de passe du coffre-fort ne correspond pas.',
+		vaultPasswordMismatchWithAttempts:
+			'Le mot de passe du coffre-fort ne correspond pas. {attemptsRemaining} tentatives restantes.',
+		vaultUnavailable: 'Le coffre-fort est disponible dans l\'application de bureau.',
+		vaultInvalid: 'Les données du coffre-fort n\'ont pas pu être lues.',
+		vaultSaveFailed: 'Le coffre-fort n\'a pas pu être enregistré.',
+		vaultOperationFailed: 'L\'opération du coffre-fort a échoué.',
+		clipboardUnavailable: 'Le presse-papiers n\'est pas disponible.',
+		copyFailed: 'Échec de la copie.',
+		nameRequired: 'Le nom est obligatoire.',
+		kindRequired: 'Le type est obligatoire.',
+		tagRequired: 'Le tag est obligatoire.',
+		nameDuplicate: 'Le nom existe déjà.',
+		valueRequired: 'La valeur est obligatoire.',
+		notFound: 'L\'entrée n\'a pas été trouvée.',
+		cliEnvironmentNoVariables:
+			'Aucune variable d\'environnement pour les clés API OpenRouter, OpenAI ou DeepSeek n\'a été trouvée.',
+		cliEnvironmentApplyFailed: 'Les variables d\'environnement CLI n\'ont pas pu être appliquées.',
+		cliEnvironmentUnsupported:
+			'Les variables d\'environnement utilisateur ne sont pas prises en charge sur ce système d\'exploitation.',
+		cliEnvironmentUnavailable: 'L\'application de l\'environnement CLI est disponible dans l\'application de bureau.'
+	}
+} as const;

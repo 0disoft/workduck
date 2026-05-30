@@ -1,0 +1,82 @@
+export const enEnvironmentMessages = {
+		ariaLabel: 'Environment variables',
+		registeredCount: '{count} environment variables',
+		vaultPassword: 'Vault password',
+		createVault: 'Create vault',
+		unlockVault: 'Unlock',
+		lockVault: 'Lock',
+		kind: 'Type',
+		tags: 'Tags',
+		value: 'Value',
+		select: 'Select',
+		filters: 'Environment filters',
+		kindFilter: 'Type filter',
+		tagFilter: 'Tag filter',
+		allKinds: 'All types',
+		allTags: 'All tags',
+		empty: 'No environment variables yet.',
+		noMatches: 'No matching environment variables.',
+		entries: 'Environment variable entries',
+		copy: 'Copy',
+		show: 'Show',
+		hide: 'Hide',
+		applyCliEnvironment: 'Apply CLI env',
+		applyCliEnvironmentTooltip:
+			'Save OpenRouter, OpenAI, and DeepSeek API keys as user environment variables.',
+		secretKinds: {
+			'api-key': 'API key',
+			token: 'Token',
+			'ssh-key': 'SSH key',
+			account: 'Account',
+			password: 'Password',
+			other: 'Other'
+		},
+		secretTags: {
+			llm: 'LLM',
+			github: 'GitHub',
+			gitlab: 'GitLab',
+			openai: 'OpenAI',
+			anthropic: 'Anthropic',
+			openrouter: 'OpenRouter',
+			cloud: 'Cloud',
+			database: 'Database',
+			auth: 'Auth',
+			sync: 'Sync',
+			deployment: 'Deployment',
+			monitoring: 'Monitoring',
+			payment: 'Payment',
+			storage: 'Storage'
+		},
+		statuses: {
+			created: 'Vault created.',
+			saved: 'Saved.',
+			removed: 'Removed.',
+			copied: 'Copied.',
+			cliEnvironmentApplied: '{count} CLI environment variables applied.'
+		},
+		errors: {
+			vaultPasswordRequired: 'Vault password is required.',
+			vaultPasswordTryAgain: 'Try again in {seconds}s.',
+			vaultPasswordMismatch: 'Vault password did not match.',
+			vaultPasswordMismatchWithAttempts:
+				'Vault password did not match. {attemptsRemaining} attempts left.',
+			vaultUnavailable: 'Vault is available in the desktop app.',
+			vaultInvalid: 'Vault data could not be read.',
+			vaultSaveFailed: 'Vault could not be saved.',
+			vaultOperationFailed: 'Vault operation failed.',
+			clipboardUnavailable: 'Clipboard is not available.',
+			copyFailed: 'Copy failed.',
+			nameRequired: 'Name is required.',
+			kindRequired: 'Type is required.',
+			tagRequired: 'Tag is required.',
+			nameDuplicate: 'Name already exists.',
+			valueRequired: 'Value is required.',
+			notFound: 'Entry was not found.',
+			cliEnvironmentNoVariables:
+				'No OpenRouter, OpenAI, or DeepSeek API key environment variables were found.',
+			cliEnvironmentApplyFailed: 'CLI environment variables could not be applied.',
+			cliEnvironmentUnsupported:
+				'User environment variables are not supported on this operating system.',
+			cliEnvironmentUnavailable: 'CLI environment apply is available in the desktop app.'
+		}
+	} as const;

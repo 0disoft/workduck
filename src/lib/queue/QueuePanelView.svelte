@@ -233,6 +233,7 @@
 					getQueueResponseFormatLabel={controller.getQueueResponseFormatLabel}
 					getQueueTaskKindLabel={controller.getQueueTaskKindLabel}
 					getQueueTaskProjectLabels={controller.getQueueTaskProjectLabels}
+					getQueueTaskRepositoryLabels={controller.getQueueTaskRepositoryLabels}
 					getQueueTaskSkillLabels={controller.getQueueTaskSkillLabels}
 					getQueueTaskAgentLabels={controller.getQueueTaskAgentLabels}
 					getQueueTaskReferenceLabels={controller.getQueueTaskReferenceLabels}
@@ -298,24 +299,28 @@
 		allSkills={controller.allSkills}
 		allAgents={controller.allAgents}
 		allProjects={controller.allProjects}
+		allRepositories={controller.allRepositories}
 		allReferences={controller.prioritizedReferences}
 		selectedManualSkillIds={controller.selectedManualSkillIds}
 		selectedManualAgentIds={controller.selectedManualAgentIds}
 		selectedManualProjectIds={controller.selectedManualProjectIds}
+		selectedManualRepositoryIds={controller.selectedManualRepositoryIds}
 		selectedManualReferenceIds={controller.selectedManualReferenceIds}
-		selectedManualRevisionOptionIds={controller.selectedManualRevisionOptionIds}
-		showRevisionOptions={controller.manualRevisionOptionsAreVisible}
+		selectedManualSkillOptionIds={controller.selectedManualSkillOptionIds}
+		showSkillOptions={controller.manualSkillOptionsAreVisible}
 		manualWorkOrderSkillSummary={controller.manualWorkOrderSkillSummary}
 		manualWorkOrderAgentSummary={controller.manualWorkOrderAgentSummary}
 		manualWorkOrderProjectSummary={controller.manualWorkOrderProjectSummary}
+		manualWorkOrderRepositorySummary={controller.manualWorkOrderRepositorySummary}
 		manualWorkOrderReferenceSummary={controller.manualWorkOrderReferenceSummary}
 		onClose={controller.closeNewWorkOrderDialog}
 		onSubmit={controller.handleCreateManualWorkOrder}
 		onSkillToggle={controller.toggleManualWorkOrderSkill}
 		onAgentToggle={controller.toggleManualWorkOrderAgent}
 		onProjectToggle={controller.toggleManualWorkOrderProject}
+		onRepositoryToggle={controller.toggleManualWorkOrderRepository}
 		onReferenceToggle={controller.toggleManualWorkOrderReference}
-		onRevisionOptionToggle={controller.toggleManualRevisionOption}
+		onSkillOptionToggle={controller.toggleManualSkillOption}
 		onVoteOptionAdd={controller.addManualVoteOption}
 		onVoteOptionRemove={controller.removeManualVoteOption}
 		onVoteOptionChange={controller.updateManualVoteOption}
@@ -325,6 +330,7 @@
 		getSkillDisplayName={controller.getSkillDisplayName}
 		getAgentDisplayName={controller.getAgentDisplayName}
 		getProjectDisplayName={controller.getProjectDisplayName}
+		getRepositoryDisplayName={controller.getRepositoryDisplayName}
 		getReferenceDisplayName={controller.getReferenceDisplayName}
 	/>
 {/if}

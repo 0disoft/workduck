@@ -2,10 +2,16 @@
 	import type { AgentRecord } from '$lib/agents/agent-registry';
 	import type { WorkduckMessages } from '$lib/i18n/workduck-message-contract';
 	import type { ProjectNodeRecord } from '$lib/projects/project-registry';
+	import {
+		filterProjectRepositorySelectionOptions,
+		type ProjectRepositorySelectionOption
+	} from '$lib/projects/project-repository-selection';
 	import type { ReferenceRecord } from '$lib/references/reference-registry';
 	import type { WorkduckSkillRecord } from '$lib/skills/skill-registry';
 	import { modalDialog } from '$lib/ui/modal-dialog-action';
 	import {
+		QUEUE_WORK_ORDER_BODY_MAX_LENGTH,
+		QUEUE_WORK_ORDER_TITLE_MAX_LENGTH,
 		queueResponseFormats,
 		queueResponseLanguages,
 		queueWorkPriorities,
@@ -14,12 +20,7 @@
 		type WorkduckQueueWorkPriority
 	} from './queue-artifacts';
 	import type { WorkduckQueueTaskKind } from './queue-voting';
-	import {
-		manualRevisionOptionGroups,
-		manualRevisionOptions,
-		type ManualRevisionOptionId,
-		type ManualVoteOptionInput
-	} from './queue-panel-types';
+	import type { ManualVoteOptionInput } from './queue-panel-types';
 
 	interface Props {
 		readonly messages: WorkduckMessages;
@@ -38,25 +39,32 @@
 		readonly allSkills: readonly WorkduckSkillRecord[];
 		readonly allAgents: readonly AgentRecord[];
 		readonly allProjects: readonly ProjectNodeRecord[];
+		readonly allRepositories: readonly ProjectRepositorySelectionOption[];
 		readonly allReferences: readonly ReferenceRecord[];
 		readonly selectedManualSkillIds: readonly string[];
 		readonly selectedManualAgentIds: readonly string[];
 		readonly selectedManualProjectIds: readonly string[];
+		readonly selectedManualRepositoryIds: readonly string[];
 		readonly selectedManualReferenceIds: readonly string[];
-		readonly selectedManualRevisionOptionIds: readonly string[];
-		readonly showRevisionOptions: boolean;
+		readonly selectedManualSkillOptionIds: readonly string[];
+		readonly showSkillOptions: boolean;
 		readonly manualWorkOrderSkillSummary: string;
 		readonly manualWorkOrderAgentSummary: string;
 		readonly manualWorkOrderProjectSummary: string;
+		readonly manualWorkOrderRepositorySummary: string;
 		readonly manualWorkOrderReferenceSummary: string;
 		readonly onClose: () => void;
 		readonly onSubmit: (event: SubmitEvent) => Promise<void>;
 		readonly onSkillToggle: (skillId: string, isSelected: boolean) => void;
 		readonly onAgentToggle: (agentId: string, isSelected: boolean) => void;
 		readonly onProjectToggle: (projectId: string, isSelected: boolean) => void;
+		readonly onRepositoryToggle: (repositoryId: string, isSelected: boolean) => void;
 		readonly onReferenceToggle: (referenceId: string, isSelected: boolean) => void;
-		readonly onRevisionOptionToggle: (
-			optionId: ManualRevisionOptionId,
+		readonly onSkillOptionToggle: (
+			skillId: string,
+			groupId: string,
+			optionId: string,
+			selectionMode: 'single' | 'multiple',
 			isSelected: boolean
 		) => void;
 		readonly onVoteOptionAdd: () => void;
@@ -72,6 +80,7 @@
 		readonly getSkillDisplayName: (skill: WorkduckSkillRecord) => string;
 		readonly getAgentDisplayName: (agent: AgentRecord) => string;
 		readonly getProjectDisplayName: (project: ProjectNodeRecord) => string;
+		readonly getRepositoryDisplayName: (repository: ProjectRepositorySelectionOption) => string;
 		readonly getReferenceDisplayName: (reference: ReferenceRecord) => string;
 	}
 
@@ -92,24 +101,28 @@
 		allSkills,
 		allAgents,
 		allProjects,
+		allRepositories,
 		allReferences,
 		selectedManualSkillIds,
 		selectedManualAgentIds,
 		selectedManualProjectIds,
+		selectedManualRepositoryIds,
 		selectedManualReferenceIds,
-		selectedManualRevisionOptionIds,
-		showRevisionOptions,
+		selectedManualSkillOptionIds,
+		showSkillOptions,
 		manualWorkOrderSkillSummary,
 		manualWorkOrderAgentSummary,
 		manualWorkOrderProjectSummary,
+		manualWorkOrderRepositorySummary,
 		manualWorkOrderReferenceSummary,
 		onClose,
 		onSubmit,
 		onSkillToggle,
 		onAgentToggle,
 		onProjectToggle,
+		onRepositoryToggle,
 		onReferenceToggle,
-		onRevisionOptionToggle,
+		onSkillOptionToggle,
 		onVoteOptionAdd,
 		onVoteOptionRemove,
 		onVoteOptionChange,
@@ -119,8 +132,34 @@
 		getSkillDisplayName,
 		getAgentDisplayName,
 		getProjectDisplayName,
+		getRepositoryDisplayName,
 		getReferenceDisplayName
 	}: Props = $props();
+
+	let repositorySearchInput = $state('');
+	let selectedSkillOptionSkills = $derived(
+		allSkills.filter(
+			(skill) => selectedManualSkillIds.includes(skill.id) && skill.optionGroups.length > 0
+		)
+	);
+	let filteredRepositories = $derived(
+		filterProjectRepositorySelectionOptions(allRepositories, repositorySearchInput)
+	);
+	let manualWorkOrderTitleCount = $derived(manualWorkOrderTitle.trim().length);
+	let manualWorkOrderBodyCount = $derived(manualWorkOrderBody.trim().length);
+	let manualWorkOrderBodyIsTooLong = $derived(
+		manualWorkOrderBodyCount > QUEUE_WORK_ORDER_BODY_MAX_LENGTH
+	);
+
+	function createSkillOptionSelectionId(skillId: string, groupId: string, optionId: string) {
+		return `${skillId}:${groupId}:${optionId}`;
+	}
+
+	function formatCountLabel(current: number, max: number) {
+		return messages.queue.countLabel
+			.replace('{current}', current.toString())
+			.replace('{max}', max.toString());
+	}
 </script>
 
 <div
@@ -154,8 +193,12 @@
 							type="text"
 							bind:value={manualWorkOrderTitle}
 							autocomplete="off"
+							maxlength={QUEUE_WORK_ORDER_TITLE_MAX_LENGTH}
 							disabled={isWriting}
 						/>
+						<span class="workduck-form-field-meta">
+							{formatCountLabel(manualWorkOrderTitleCount, QUEUE_WORK_ORDER_TITLE_MAX_LENGTH)}
+						</span>
 					</label>
 				{/if}
 
@@ -235,40 +278,73 @@
 						id="new-work-order-body"
 						class="workduck-input workduck-project-description-input"
 						bind:value={manualWorkOrderBody}
+						maxlength={QUEUE_WORK_ORDER_BODY_MAX_LENGTH}
 						disabled={isWriting}
 					></textarea>
+					<span class="workduck-form-field-meta">
+						{formatCountLabel(manualWorkOrderBodyCount, QUEUE_WORK_ORDER_BODY_MAX_LENGTH)}
+					</span>
+					{#if manualWorkOrderBodyIsTooLong}
+						<span class="workduck-inline-error">
+							{messages.queue.errors.workBodyTooLong.replace(
+								'{max}',
+								QUEUE_WORK_ORDER_BODY_MAX_LENGTH.toString()
+							)}
+						</span>
+					{/if}
 				</label>
 
-				{#if showRevisionOptions}
+				{#if showSkillOptions}
 					<details class="workduck-work-order-section" open>
 						<summary class="workduck-work-order-section-summary">
-							<span>{messages.queue.revisionOptions.title}</span>
+							<span>{messages.queue.skillOptions.title}</span>
 						</summary>
 						<div class="workduck-work-order-section-body">
 							<span class="workduck-revision-options-description">
-								{messages.queue.revisionOptions.description}
+								{messages.queue.skillOptions.description}
 							</span>
 							<div class="workduck-revision-option-groups">
-								{#each manualRevisionOptionGroups as group (group.id)}
-									<div class="workduck-revision-option-group">
-										<span class="workduck-revision-option-group-title">
-											{messages.queue.revisionOptions.groups[group.id]}
-										</span>
-										<div class="workduck-revision-option-list">
-											{#each manualRevisionOptions.filter((option) => option.groupId === group.id) as option (option.id)}
-												<label class="workduck-multi-select-option workduck-revision-option">
-													<input
-														type="checkbox"
-														checked={selectedManualRevisionOptionIds.includes(option.id)}
-														disabled={isWriting}
-														onchange={(event) =>
-															onRevisionOptionToggle(option.id, event.currentTarget.checked)}
-													/>
-													<span>{messages.queue.revisionOptions.options[option.id]}</span>
-												</label>
-											{/each}
+								{#each selectedSkillOptionSkills as skill (skill.id)}
+									{#each skill.optionGroups as group (group.id)}
+										<div class="workduck-revision-option-group">
+											<span class="workduck-revision-option-group-title">
+												{group.label}
+											</span>
+											{#if group.description.length > 0}
+												<span class="workduck-revision-options-description">
+													{group.description}
+												</span>
+											{/if}
+											<div class="workduck-revision-option-list">
+												{#each group.options as option (option.id)}
+													<label class="workduck-multi-select-option workduck-revision-option">
+														<input
+															type={group.selectionMode === 'single' ? 'radio' : 'checkbox'}
+															name={`skill-option-${skill.id}-${group.id}`}
+															checked={selectedManualSkillOptionIds.includes(
+																createSkillOptionSelectionId(skill.id, group.id, option.id)
+															)}
+															disabled={isWriting}
+															onchange={(event) =>
+																onSkillOptionToggle(
+																	skill.id,
+																	group.id,
+																	option.id,
+																	group.selectionMode,
+																	event.currentTarget.checked
+																)}
+														/>
+														<span>
+															{option.label}
+															{#if option.description.length > 0}
+																<small>{option.description}</small>
+															{/if}
+														</span>
+													</label>
+												{/each}
+											</div>
 										</div>
-									</div>
+									{/each}
 								{/each}
 							</div>
 						</div>
@@ -371,6 +447,49 @@
 														onProjectToggle(project.id, event.currentTarget.checked)}
 												/>
 												<span>{getProjectDisplayName(project)}</span>
+											</label>
+										{/each}
+									{/if}
+								</div>
+							</details>
+						</div>
+
+						<div class="workduck-form-field">
+							<span>{messages.queue.workRepositories}</span>
+							<input
+								class="workduck-input"
+								type="text"
+								bind:value={repositorySearchInput}
+								autocomplete="off"
+								spellcheck="false"
+								placeholder={messages.queue.repositorySearchPlaceholder}
+								disabled={isWriting}
+							/>
+							<details class="workduck-multi-select">
+								<summary class="workduck-multi-select-summary">
+									<span>{manualWorkOrderRepositorySummary}</span>
+								</summary>
+								<div class="workduck-multi-select-options">
+									{#if allRepositories.length === 0}
+										<span class="workduck-multi-select-empty">{messages.queue.noRepository}</span>
+									{:else if filteredRepositories.length === 0}
+										<span class="workduck-multi-select-empty">{messages.queue.noRepository}</span>
+									{:else}
+										{#each filteredRepositories as repository (repository.id)}
+											<label class="workduck-multi-select-option">
+												<input
+													type="checkbox"
+													checked={selectedManualRepositoryIds.includes(repository.id)}
+													disabled={isWriting}
+													onchange={(event) =>
+														onRepositoryToggle(repository.id, event.currentTarget.checked)}
+												/>
+												<span>
+													{getRepositoryDisplayName(repository)}
+													{#if repository.description.length > 0}
+														<small class="workduck-multi-select-option-subtext">{repository.description}</small>
+													{/if}
+												</span>
 											</label>
 										{/each}
 									{/if}

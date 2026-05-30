@@ -2,8 +2,8 @@ use std::{
     env, fs, io,
     path::{Path, PathBuf},
     sync::{
-        atomic::{AtomicU64, Ordering},
         OnceLock,
+        atomic::{AtomicU64, Ordering},
     },
     time::Duration,
 };
@@ -232,6 +232,8 @@ pub struct ReferenceRecord {
     pub content: String,
     #[serde(default)]
     pub source_url: String,
+    #[serde(default)]
+    pub tags: Vec<String>,
 }
 
 #[derive(Clone)]
@@ -403,6 +405,10 @@ struct QueuePromptLabels {
     selected_references: &'static str,
     response_language_ko: &'static str,
     response_language_en: &'static str,
+    response_language_es: &'static str,
+    response_language_fr: &'static str,
+    response_language_zh: &'static str,
+    response_language_hi: &'static str,
     response_language_auto: &'static str,
 }
 
@@ -414,6 +420,7 @@ pub struct QueueResultReport {
     pub status: &'static str,
     pub created_at: String,
     pub agent_name: String,
+    pub source_work_order: QueueEntityRef,
     pub tasks: Vec<QueueResultReportTask>,
 }
 
@@ -643,6 +650,10 @@ fn create_response_language_system_instruction(language: Option<&str>) -> String
     match normalize_response_language(language) {
         "ko" => "Answer in Korean.".to_string(),
         "en" => "Answer in English.".to_string(),
+        "es" => "Answer in Spanish.".to_string(),
+        "fr" => "Answer in French.".to_string(),
+        "zh" => "Answer in Simplified Chinese.".to_string(),
+        "hi" => "Answer in Hindi.".to_string(),
         _ => "Answer in the same language as the task unless the task asks for another language."
             .to_string(),
     }
@@ -655,6 +666,10 @@ fn format_response_language_for_prompt(
     match normalize_response_language(language) {
         "ko" => labels.response_language_ko,
         "en" => labels.response_language_en,
+        "es" => labels.response_language_es,
+        "fr" => labels.response_language_fr,
+        "zh" => labels.response_language_zh,
+        "hi" => labels.response_language_hi,
         _ => labels.response_language_auto,
     }
 }
@@ -663,6 +678,10 @@ fn normalize_response_language(language: Option<&str>) -> &'static str {
     match language.map(str::trim) {
         Some("ko") => "ko",
         Some("en") => "en",
+        Some("es") => "es",
+        Some("fr") => "fr",
+        Some("zh") => "zh",
+        Some("hi") => "hi",
         _ => "auto",
     }
 }
@@ -1098,6 +1117,10 @@ fn queue_prompt_labels(language: QueueReportLanguage) -> &'static QueuePromptLab
         selected_references: "선택된 참고자료:",
         response_language_ko: "한국어",
         response_language_en: "영어",
+        response_language_es: "스페인어",
+        response_language_fr: "프랑스어",
+        response_language_zh: "중국어(간체)",
+        response_language_hi: "힌디어",
         response_language_auto: "작업 언어에 맞춤",
     };
     static EN_LABELS: QueuePromptLabels = QueuePromptLabels {
@@ -1109,6 +1132,10 @@ fn queue_prompt_labels(language: QueueReportLanguage) -> &'static QueuePromptLab
         selected_references: "Selected references:",
         response_language_ko: "Korean",
         response_language_en: "English",
+        response_language_es: "Spanish",
+        response_language_fr: "French",
+        response_language_zh: "Simplified Chinese",
+        response_language_hi: "Hindi",
         response_language_auto: "Match the task language",
     };
 
@@ -1119,11 +1146,11 @@ fn queue_prompt_labels(language: QueueReportLanguage) -> &'static QueuePromptLab
 }
 
 fn format_persona_prompt_block(persona: &PersonaRecord) -> String {
-    let mut blocks = Vec::new();
+    let mut blocks = vec!["Response preferences:".to_string()];
 
     if !persona.description.trim().is_empty() {
         blocks.push(format!(
-            "Additional guidance: {}",
+            "- Additional description: {}",
             persona.description.trim()
         ));
     }
@@ -1133,14 +1160,15 @@ fn format_persona_prompt_block(persona: &PersonaRecord) -> String {
     }
 
     if persona.spectrums.is_object() {
+        blocks.push(String::new());
+        blocks.push("Work preferences:".to_string());
         blocks.extend(format_persona_spectrum_preferences(&persona.spectrums));
     }
 
     if !persona.instructions.trim().is_empty() {
-        blocks.push(format!(
-            "Additional user-written persona guidance: {}",
-            persona.instructions.trim()
-        ));
+        blocks.push(String::new());
+        blocks.push("Additional persona instructions:".to_string());
+        blocks.push(persona.instructions.trim().to_string());
     }
 
     blocks.join("\n")
@@ -1152,9 +1180,9 @@ fn format_persona_style_preferences(styles: &Value) -> Vec<String> {
     if let Some(value) = styles.get("responseLength").and_then(Value::as_str) {
         preferences.push(
             match value {
-                "short" => "Response length: keep replies concise.",
-                "detailed" => "Response length: include enough detail for careful review.",
-                _ => "Response length: use a moderate amount of detail.",
+                "short" => "- Response length: Prefer concise answers.",
+                "detailed" => "- Response length: Prefer detailed answers when useful.",
+                _ => "- Response length: Prefer balanced-length answers.",
             }
             .to_string(),
         );
@@ -1163,9 +1191,9 @@ fn format_persona_style_preferences(styles: &Value) -> Vec<String> {
     if let Some(value) = styles.get("emotionalTone").and_then(Value::as_str) {
         preferences.push(
             match value {
-                "calm" => "Tone: stay calm and steady.",
-                "bright" => "Tone: sound warm and upbeat.",
-                _ => "Tone: stay neutral and clear.",
+                "calm" => "- Tone: Keep the tone calm.",
+                "bright" => "- Tone: Keep the tone upbeat.",
+                _ => "- Tone: Keep the tone neutral.",
             }
             .to_string(),
         );
@@ -1174,9 +1202,9 @@ fn format_persona_style_preferences(styles: &Value) -> Vec<String> {
     if let Some(value) = styles.get("judgmentAttitude").and_then(Value::as_str) {
         preferences.push(
             match value {
-                "critical" => "Judgment: examine assumptions critically and call out risks.",
-                "supportive" => "Judgment: be supportive while still being truthful.",
-                _ => "Judgment: balance critique with practical next steps.",
+                "critical" => "- Judgment style: Be critical and point out weaknesses.",
+                "supportive" => "- Judgment style: Be supportive while staying accurate.",
+                _ => "- Judgment style: Balance strengths, weaknesses, and tradeoffs.",
             }
             .to_string(),
         );
@@ -1185,11 +1213,9 @@ fn format_persona_style_preferences(styles: &Value) -> Vec<String> {
     if let Some(value) = styles.get("confidenceLevel").and_then(Value::as_str) {
         preferences.push(
             match value {
-                "cautious" => "Confidence: be careful with uncertainty and avoid overstatement.",
-                "decisive" => "Confidence: be decisive when the evidence is sufficient.",
-                _ => {
-                    "Confidence: state conclusions realistically and name uncertainty when needed."
-                }
+                "cautious" => "- Confidence style: State uncertainty carefully.",
+                "decisive" => "- Confidence style: Be decisive when evidence is enough.",
+                _ => "- Confidence style: Use realistic confidence.",
             }
             .to_string(),
         );
@@ -1198,9 +1224,9 @@ fn format_persona_style_preferences(styles: &Value) -> Vec<String> {
     if let Some(value) = styles.get("socialDistance").and_then(Value::as_str) {
         preferences.push(
             match value {
-                "formal" => "Social style: keep a professional distance.",
-                "friendly" => "Social style: be friendly and approachable.",
-                _ => "Social style: be comfortable and direct.",
+                "formal" => "- Social distance: Use a formal style.",
+                "friendly" => "- Social distance: Use a friendly style.",
+                _ => "- Social distance: Use a comfortable style.",
             }
             .to_string(),
         );
@@ -1214,32 +1240,32 @@ fn format_persona_spectrum_preferences(spectrums: &Value) -> Vec<String> {
 
     if let Some(level) = spectrum_level(spectrums, "developmentApproach") {
         preferences.push(match level {
-            1 => "Development approach: settle structure, boundaries, and data flow before implementation.",
-            2 => "Development approach: set direction and rules before implementation.",
-            4 => "Development approach: move quickly through experiments and learn from results.",
-            5 => "Development approach: prioritize working behavior and fast iteration.",
-            _ => "Development approach: balance small prototypes with design adjustment.",
+            1 => "- Development approach: Prefer fixing structure, boundaries, and data flow before implementation.",
+            2 => "- Development approach: Prefer setting direction and rules before implementation.",
+            4 => "- Development approach: Prefer quick experiments and decisions from observed results.",
+            5 => "- Development approach: Prefer working behavior first and refine structure later.",
+            _ => "- Development approach: Prefer iterating between small prototypes and design.",
         }.to_string());
     }
 
     if let Some(level) = spectrum_level(spectrums, "qualityStandard") {
         preferences.push(match level {
-            1 => "Stability and quality: treat validation, types, tests, and security very strictly.",
-            2 => "Stability and quality: prefer production-grade reliability.",
-            4 => "Stability and quality: prioritize shipping and handle issues operationally when needed.",
-            5 => "Stability and quality: prioritize speed and experiments over failure cost.",
-            _ => "Stability and quality: balance risk and speed by context.",
+            1 => "- Stability and quality: Treat validation, types, tests, and security very strictly.",
+            2 => "- Stability and quality: Prioritize production-grade stability.",
+            4 => "- Stability and quality: Prefer shipping first and fixing issues during operation when acceptable.",
+            5 => "- Stability and quality: Prioritize speed and experimentation when failure cost is acceptable.",
+            _ => "- Stability and quality: Balance risk and speed according to the situation.",
         }.to_string());
     }
 
     if let Some(level) = spectrum_level(spectrums, "structureBias") {
         preferences.push(
             match level {
-                1 => "Structure: treat boundaries, layers, and module relationships as critical.",
-                2 => "Structure: consistently consider reuse and maintainability.",
-                4 => "Structure: prefer direct implementation over abstraction.",
-                5 => "Structure: prioritize quick connection and results over structure.",
-                _ => "Structure: add only as much structure as the work needs.",
+                1 => "- Structure preference: Treat boundaries, layers, and module relationships as critical.",
+                2 => "- Structure preference: Consistently consider reuse and maintainability.",
+                4 => "- Structure preference: Prefer direct implementation over abstraction.",
+                5 => "- Structure preference: Prioritize fast connection and visible results over structure.",
+                _ => "- Structure preference: Add structure only where it clearly helps.",
             }
             .to_string(),
         );
@@ -1248,11 +1274,11 @@ fn format_persona_spectrum_preferences(spectrums: &Value) -> Vec<String> {
     if let Some(level) = spectrum_level(spectrums, "productivityStrategy") {
         preferences.push(
             match level {
-                1 => "Productivity: minimize dependencies and automation to keep direct control.",
-                2 => "Productivity: add only necessary tools carefully.",
-                4 => "Productivity: automate repeat work whenever practical.",
-                5 => "Productivity: combine tools, agents, and pipelines to operate the work.",
-                _ => "Productivity: use automation when it improves practical throughput.",
+                1 => "- Productivity strategy: Minimize dependencies and automation; keep direct control.",
+                2 => "- Productivity strategy: Introduce only necessary tools carefully.",
+                4 => "- Productivity strategy: Automate repetitive work wherever practical.",
+                5 => "- Productivity strategy: Combine multiple tools, agents, and pipelines as an operator.",
+                _ => "- Productivity strategy: Use automation pragmatically for productivity.",
             }
             .to_string(),
         );
@@ -1261,11 +1287,11 @@ fn format_persona_spectrum_preferences(spectrums: &Value) -> Vec<String> {
     if let Some(level) = spectrum_level(spectrums, "operationPhilosophy") {
         preferences.push(
             match level {
-                1 => "Operations: delay release when failure risk is visible.",
-                2 => "Operations: release after enough verification and observability.",
-                4 => "Operations: use operational fixes and hotfixes actively.",
-                5 => "Operations: treat services as systems that evolve continuously.",
-                _ => "Operations: prefer small changes and watch stability.",
+                1 => "- Operations and deployment: Delay changes when failure risk is unclear.",
+                2 => "- Operations and deployment: Deploy after sufficient validation and observability.",
+                4 => "- Operations and deployment: Use operational fixes and urgent patches actively when needed.",
+                5 => "- Operations and deployment: Treat services as systems that evolve continuously.",
+                _ => "- Operations and deployment: Prefer small frequent changes and monitor stability.",
             }
             .to_string(),
         );
@@ -1274,11 +1300,11 @@ fn format_persona_spectrum_preferences(spectrums: &Value) -> Vec<String> {
     if let Some(level) = spectrum_level(spectrums, "collaborationPhilosophy") {
         preferences.push(
             match level {
-                1 => "Collaboration: rely on documents, rules, and contracts.",
-                2 => "Collaboration: make intent and standards explicit.",
-                4 => "Collaboration: prefer fast collaboration based on experience and judgment.",
-                5 => "Collaboration: work autonomously from the goal when possible.",
-                _ => "Collaboration: share core context and handle the rest pragmatically.",
+                1 => "- Collaboration and context: Use documents, rules, and contracts as collaboration anchors.",
+                2 => "- Collaboration and context: Make intent and standards explicit.",
+                4 => "- Collaboration and context: Prefer fast collaboration based on experience and judgment.",
+                5 => "- Collaboration and context: Give goals and let people or AI agents decide execution details.",
+                _ => "- Collaboration and context: Share core context and leave room for autonomy.",
             }
             .to_string(),
         );
@@ -1302,13 +1328,37 @@ fn format_skill_prompt_block(skill: &SkillRecord) -> String {
 }
 
 fn format_reference_prompt_block(reference: &ReferenceRecord) -> String {
-    let body = if reference.content.trim().is_empty() {
-        reference.source_url.trim()
-    } else {
-        reference.content.trim()
-    };
+    let source_url = reference.source_url.trim();
+    let content = reference.content.trim();
+    let tags = reference
+        .tags
+        .iter()
+        .map(|tag| tag.trim())
+        .filter(|tag| !tag.is_empty())
+        .collect::<Vec<_>>();
+    let mut lines = vec![format!("- Title: {}", reference.title)];
 
-    format!("- {}\n{}", reference.title, body)
+    if !source_url.is_empty() {
+        lines.push(format!("  Source URL: {source_url}"));
+    }
+
+    if !tags.is_empty() {
+        lines.push(format!("  Tags: {}", tags.join(", ")));
+    }
+
+    if content.is_empty() {
+        if !source_url.is_empty() {
+            lines.push(
+                "  Note: Only the URL is available; do not claim facts from the linked page unless the task supplies its contents."
+                    .to_string(),
+            );
+        }
+    } else {
+        lines.push("  Content:".to_string());
+        lines.extend(content.lines().map(|line| format!("    {line}")));
+    }
+
+    lines.join("\n")
 }
 
 pub fn create_result_report(
@@ -1338,6 +1388,7 @@ pub fn create_result_report(
             .map(agent_name_from_outcome)
             .collect::<Vec<_>>()
             .join(", "),
+        source_work_order: work_order.r#ref.clone(),
         tasks,
     })
 }
@@ -2311,16 +2362,22 @@ Final answer:
             title: "Release notes".to_string(),
             content: "변경 사항 요약".to_string(),
             source_url: "https://example.com/release".to_string(),
+            tags: vec!["release".to_string()],
         }];
 
-        let previews = create_prompt_previews(&work_order, &agents, &personas, &skills, &references)
-            .expect("prompt previews");
+        let previews =
+            create_prompt_previews(&work_order, &agents, &personas, &skills, &references)
+                .expect("prompt previews");
 
         assert_eq!(previews.len(), 1);
         assert_eq!(previews[0].agent_name, "검토 에이전트");
         assert!(previews[0].system_prompt.contains("검토 에이전트"));
         assert!(previews[0].system_prompt.contains("근거를 먼저 확인한다."));
-        assert!(previews[0].user_prompt.contains("릴리스해도 되는지 검토해줘"));
+        assert!(
+            previews[0]
+                .user_prompt
+                .contains("릴리스해도 되는지 검토해줘")
+        );
         assert!(previews[0].user_prompt.contains("Release review"));
         assert!(previews[0].user_prompt.contains("변경 사항 요약"));
         assert!(!previews[0].system_prompt.contains("missing-secret"));
@@ -2354,8 +2411,8 @@ Final answer:
             }],
         };
 
-        let error = create_prompt_previews(&work_order, &[], &[], &[], &[])
-            .expect_err("missing agent");
+        let error =
+            create_prompt_previews(&work_order, &[], &[], &[], &[]).expect_err("missing agent");
 
         assert_eq!(error.code, "agent-not-found");
     }
@@ -2520,10 +2577,13 @@ en-US 표기는 한국어 지원 앱을 영어 전용처럼 보이게 합니다.
     }
 
     #[test]
-    fn result_report_file_slug_uses_ascii_segments_only() {
-        assert_eq!(slugify("커밋 정리: workduck 결과 보고서"), "workduck");
-        assert_eq!(slugify("GPT5.4미니"), "gpt5-4");
-        assert_eq!(slugify("결과 보고서"), "");
+    fn result_report_file_slug_preserves_unicode_segments() {
+        assert_eq!(
+            slugify("커밋 정리: workduck 결과 보고서"),
+            "커밋-정리-workduck-결과-보고서"
+        );
+        assert_eq!(slugify("GPT5.4미니"), "gpt5-4미니");
+        assert_eq!(slugify("결과 보고서"), "결과-보고서");
     }
 }
 
@@ -2969,7 +3029,9 @@ fn resolve_agent_provider(
         .map(str::trim)
         .filter(|value| !value.is_empty())
     {
-        return normalize_provider(provider);
+        if !provider.eq_ignore_ascii_case("auto") {
+            return normalize_provider(provider);
+        }
     }
 
     let secret_profile = normalize_profile_text(
@@ -2986,7 +3048,7 @@ fn resolve_agent_provider(
 
     let agent_profile = normalize_profile_text(std::iter::once(agent.name.as_str()));
 
-    for provider in ["deepseek", "openrouter", "openai"] {
+    for provider in ["openrouter", "deepseek", "openai"] {
         if agent_profile.contains(provider) {
             return Ok(provider.to_string());
         }
@@ -3007,12 +3069,14 @@ fn resolve_agent_provider_without_secret(
         .map(str::trim)
         .filter(|value| !value.is_empty())
     {
-        return normalize_provider(provider);
+        if !provider.eq_ignore_ascii_case("auto") {
+            return normalize_provider(provider);
+        }
     }
 
     let agent_profile = normalize_profile_text(std::iter::once(agent.name.as_str()));
 
-    for provider in ["deepseek", "openrouter", "openai"] {
+    for provider in ["openrouter", "deepseek", "openai"] {
         if agent_profile.contains(provider) {
             return Ok(provider.to_string());
         }
@@ -3115,10 +3179,10 @@ fn unique_token() -> String {
 fn slugify(value: &str) -> String {
     let slug = value
         .trim()
-        .to_ascii_lowercase()
+        .to_lowercase()
         .chars()
         .map(|character| {
-            if character.is_ascii_alphanumeric() || character == '-' || character == '_' {
+            if character.is_alphanumeric() || character == '-' || character == '_' {
                 character
             } else if character.is_whitespace() {
                 '-'

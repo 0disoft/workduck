@@ -68,7 +68,15 @@ export const workduckQueueTaskKinds = ["instruction", "direct-message", "vote"] 
 
 export type WorkduckQueueTaskKind = (typeof workduckQueueTaskKinds)[number];
 
-export const workduckQueueResponseLanguages = ["auto", "ko", "en"] as const;
+export const workduckQueueResponseLanguages = [
+  "auto",
+  "ko",
+  "en",
+  "es",
+  "fr",
+  "zh",
+  "hi"
+] as const;
 
 export type WorkduckQueueResponseLanguage = (typeof workduckQueueResponseLanguages)[number];
 

@@ -10,6 +10,9 @@ export type ReferenceRegistryError =
 	| 'reference-title-required'
 	| 'reference-body-or-source-required'
 	| 'reference-source-url-invalid'
+	| 'reference-content-too-long'
+	| 'reference-tags-too-many'
+	| 'reference-tag-too-long'
 	| 'reference-title-duplicate'
 	| 'reference-not-found'
 	| 'reference-registry-invalid';
@@ -20,6 +23,7 @@ export interface ReferenceRecord {
 	readonly sourceUrl: string;
 	readonly tags: readonly string[];
 	readonly projectIds: readonly string[];
+	readonly repositoryIds: readonly string[];
 	readonly content: string;
 	readonly createdAt: string;
 	readonly updatedAt: string;
@@ -38,6 +42,7 @@ export interface ReferenceInput {
 	readonly sourceUrl: string;
 	readonly tags: readonly string[];
 	readonly projectIds?: readonly string[];
+	readonly repositoryIds?: readonly string[];
 	readonly content: string;
 }
 
@@ -85,9 +90,10 @@ export function upsertReference(
 	const referenceId = normalizeRecordId(input.id ?? null);
 	const title = normalizeReferenceTitle(input.title);
 	const sourceUrl = normalizeReferenceSourceUrl(input.sourceUrl);
-	const tags = normalizeReferenceTags(input.tags);
-	const projectIds = normalizeReferenceProjectIds(input.projectIds ?? []);
-	const content = normalizeReferenceContent(input.content);
+	const tagsResult = validateAndNormalizeReferenceTags(input.tags);
+	const projectIds = normalizeReferenceRecordIds(input.projectIds ?? []);
+	const repositoryIds = normalizeReferenceRecordIds(input.repositoryIds ?? []);
+	const contentResult = validateAndNormalizeReferenceContent(input.content);
 
 	if (title.length === 0) {
 		return { ok: false, registry: normalizedRegistry, error: 'reference-title-required' };
@@ -96,6 +102,17 @@ export function upsertReference(
 	if (sourceUrl === null) {
 		return { ok: false, registry: normalizedRegistry, error: 'reference-source-url-invalid' };
 	}
+
+	if (!tagsResult.ok) {
+		return { ok: false, registry: normalizedRegistry, error: tagsResult.error };
+	}
+
+	if (!contentResult.ok) {
+		return { ok: false, registry: normalizedRegistry, error: contentResult.error };
+	}
+
+	const tags = tagsResult.tags;
+	const content = contentResult.content;
 
 	if (sourceUrl.length === 0 && content.length === 0) {
 		return { ok: false, registry: normalizedRegistry, error: 'reference-body-or-source-required' };
@@ -124,6 +141,7 @@ export function upsertReference(
 		sourceUrl,
 		tags,
 		projectIds,
+		repositoryIds,
 		content,
 		createdAt: matchingReference?.createdAt ?? timestamp,
 		updatedAt: timestamp
@@ -215,7 +233,8 @@ function parseReferenceRecord(value: unknown): ReferenceRecord | null {
 	const title = normalizeReferenceTitle(readTrimmedString(value.title));
 	const sourceUrl = normalizeReferenceSourceUrl(readTrimmedString(value.sourceUrl));
 	const tags = normalizeReferenceTags(value.tags);
-	const projectIds = normalizeReferenceProjectIds(value.projectIds);
+	const projectIds = normalizeReferenceRecordIds(value.projectIds);
+	const repositoryIds = normalizeReferenceRecordIds(value.repositoryIds);
 	const content = normalizeReferenceContent(readRawString(value.content));
 	const createdAt = readTrimmedString(value.createdAt);
 	const updatedAt = readTrimmedString(value.updatedAt);
@@ -230,6 +249,7 @@ function parseReferenceRecord(value: unknown): ReferenceRecord | null {
 		sourceUrl,
 		tags,
 		projectIds,
+		repositoryIds,
 		content,
 		createdAt: createdAt.length === 0 ? updatedAt : createdAt,
 		updatedAt: updatedAt.length === 0 ? createdAt : updatedAt
@@ -259,17 +279,62 @@ function normalizeReferenceSourceUrl(value: string) {
 		return '';
 	}
 
-	try {
-		const parsedUrl = new URL(sourceUrl);
+	for (const candidateUrl of createReferenceSourceUrlCandidates(sourceUrl)) {
+		try {
+			const parsedUrl = new URL(candidateUrl);
 
-		if (parsedUrl.protocol !== 'http:' && parsedUrl.protocol !== 'https:') {
-			return null;
+			if (parsedUrl.protocol !== 'http:' && parsedUrl.protocol !== 'https:') {
+				continue;
+			}
+
+			return parsedUrl.toString();
+		} catch {
+			continue;
+		}
+	}
+
+	return null;
+}
+
+function createReferenceSourceUrlCandidates(sourceUrl: string) {
+	if (/^[a-z][a-z0-9+.-]*:/i.test(sourceUrl)) {
+		return [sourceUrl];
+	}
+
+	return [`https://${sourceUrl}`];
+}
+
+function validateAndNormalizeReferenceTags(value: unknown):
+	| { readonly ok: true; readonly tags: string[] }
+	| { readonly ok: false; readonly error: ReferenceRegistryError } {
+	if (!Array.isArray(value)) {
+		return { ok: true, tags: [] };
+	}
+
+	const tags: string[] = [];
+	const tagKeys = new Set<string>();
+
+	for (const item of value) {
+		const tag = normalizeReferenceTagText(readTrimmedString(item));
+		const tagKey = tag.toLocaleLowerCase('en-US');
+
+		if (tag.length === 0 || tagKeys.has(tagKey)) {
+			continue;
 		}
 
-		return parsedUrl.toString();
-	} catch {
-		return null;
+		if (tag.length > REFERENCE_TAG_MAX_LENGTH) {
+			return { ok: false, error: 'reference-tag-too-long' };
+		}
+
+		if (tags.length >= REFERENCE_TAGS_MAX_COUNT) {
+			return { ok: false, error: 'reference-tags-too-many' };
+		}
+
+		tags.push(tag);
+		tagKeys.add(tagKey);
 	}
+
+	return { ok: true, tags };
 }
 
 function normalizeReferenceTags(value: unknown): string[] {
@@ -300,10 +365,14 @@ function normalizeReferenceTags(value: unknown): string[] {
 }
 
 function normalizeReferenceTag(value: string) {
-	return value.trim().replace(/\s+/g, ' ').slice(0, REFERENCE_TAG_MAX_LENGTH);
+	return normalizeReferenceTagText(value).slice(0, REFERENCE_TAG_MAX_LENGTH);
 }
 
-function normalizeReferenceProjectIds(value: unknown): string[] {
+function normalizeReferenceTagText(value: string) {
+	return value.trim().replace(/\s+/g, ' ');
+}
+
+function normalizeReferenceRecordIds(value: unknown): string[] {
 	if (!Array.isArray(value)) {
 		return [];
 	}
@@ -325,6 +394,18 @@ function normalizeReferenceProjectIds(value: unknown): string[] {
 
 function normalizeReferenceContent(value: string) {
 	return value.trim().slice(0, REFERENCE_CONTENT_MAX_LENGTH);
+}
+
+function validateAndNormalizeReferenceContent(value: string):
+	| { readonly ok: true; readonly content: string }
+	| { readonly ok: false; readonly error: ReferenceRegistryError } {
+	const content = value.trim();
+
+	if (content.length > REFERENCE_CONTENT_MAX_LENGTH) {
+		return { ok: false, error: 'reference-content-too-long' };
+	}
+
+	return { ok: true, content };
 }
 
 function normalizeRecordId(value: unknown) {

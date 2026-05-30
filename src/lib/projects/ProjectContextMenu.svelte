@@ -13,6 +13,7 @@
 		readonly canPublishContextRepository: boolean;
 		readonly canEditContextGithubCredential: boolean;
 		readonly onOpenFolder: () => Promise<void>;
+		readonly onEditDetails: () => void;
 		readonly onEditDescription: () => void;
 		readonly onEditGithubCredential: () => void;
 		readonly onEditTags: () => void;
@@ -33,6 +34,7 @@
 		canPublishContextRepository,
 		canEditContextGithubCredential,
 		onOpenFolder,
+		onEditDetails,
 		onEditDescription,
 		onEditGithubCredential,
 		onEditTags,
@@ -62,6 +64,14 @@
 				{projectMessages.contextMenu.openFolder}
 			</button>
 		{/if}
+		<button
+			class="workduck-context-menu-item"
+			type="button"
+			role="menuitem"
+			onclick={onEditDetails}
+		>
+			{projectMessages.contextMenu.editDetails}
+		</button>
 		<button
 			class="workduck-context-menu-item"
 			type="button"

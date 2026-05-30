@@ -42,6 +42,15 @@ export function writeQueueReadFilePaths(workspaceId: string, relativePaths: read
 	}
 }
 
+export function pruneQueueReadFilePaths(
+	readFilePaths: readonly string[],
+	files: readonly QueueFileEntry[]
+) {
+	const validRelativePaths = new Set(files.map((file) => file.relativePath));
+
+	return readFilePaths.filter((relativePath) => validRelativePaths.has(relativePath));
+}
+
 export function countUnreadQueueFiles(
 	files: readonly QueueFileEntry[],
 	readFilePaths: readonly string[]

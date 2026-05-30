@@ -1,5 +1,6 @@
 import type { ProjectFormError } from './project-board-errors';
 import { deleteProjectCandidate } from './project-board-delete-actions';
+import type { WorkduckMessages } from '$lib/i18n/workduck-message-contract';
 import { createRepositoryNameFromRemoteUrl } from './project-board-paths';
 import { submitProjectDialog } from './project-board-submit-actions';
 import type {
@@ -24,6 +25,7 @@ export function createProjectBoardDialogHandlers(context: {
 	readonly getIsDeleting: () => boolean;
 	readonly getShouldDeleteLocalFolder: () => boolean;
 	readonly getCanDeleteLocalFolder: () => boolean;
+	readonly getDeleteDialogMessages: () => WorkduckMessages['projects']['deleteDialog'];
 	readonly persistRegistry: (nextRegistry: ProjectRegistry) => Promise<boolean>;
 	readonly closeContextMenu: () => void;
 	readonly setDialog: (dialog: ProjectDialogState | null) => void;
@@ -165,6 +167,7 @@ export function createProjectBoardDialogHandlers(context: {
 				},
 				{
 					persistRegistry: context.persistRegistry,
+					deleteDialogMessages: context.getDeleteDialogMessages(),
 					setFormError: context.setFormError,
 					setStatus: context.setStatus,
 					setIsDeleting: context.setIsDeleting,

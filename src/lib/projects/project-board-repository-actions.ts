@@ -11,12 +11,7 @@ import {
 	type ProjectRegistry
 } from './project-registry';
 import type { ProjectFormError } from './project-board-errors';
-import {
-	getRepositoryGitActionDoneLabel,
-	getRepositoryGitActionProgressLabel,
-	runProjectRepositoryGitMutation,
-	type ProjectRepositoryGitAction
-} from './project-board-operations';
+import { runProjectRepositoryGitMutation, type ProjectRepositoryGitAction } from './project-board-operations';
 import type {
 	ProjectContextMenuTarget,
 	ProjectRepositoryTarget
@@ -50,6 +45,10 @@ export interface ProjectRepositoryActionContext {
 	readonly setGitActionTarget: (target: ProjectContextMenuTarget | null) => void;
 	readonly setIsPublishingRepository: (isPublishing: boolean) => void;
 	readonly closePublishRepositoryDialog: () => void;
+	readonly operationMessages: {
+		readonly running: Record<ProjectRepositoryOperationName, string>;
+		readonly done: Record<ProjectRepositoryOperationName, string>;
+	};
 }
 
 export async function cloneProjectRepositoryForTarget(
@@ -260,7 +259,7 @@ export async function runProjectRepositoryRemoteGitAction(
 	context.startOperation(target.repository.id, action);
 	context.setGitActionTarget(createRepositoryContextMenuTarget(target));
 	context.setFormError(null);
-	context.setStatus(`${getRepositoryGitActionProgressLabel(action)} repository.`);
+	context.setStatus(`${context.operationMessages.running[action]}.`);
 
 	try {
 		const result = await runProjectRepositoryGitMutation(action, target.repository.path, credential);
@@ -274,7 +273,7 @@ export async function runProjectRepositoryRemoteGitAction(
 
 		await context.refreshRepositoryGitStatus(target.repository.id, target.repository.path);
 		await context.succeedOperation(target, action);
-		context.setStatus(`Repository ${getRepositoryGitActionDoneLabel(action)}.`);
+		context.setStatus(context.operationMessages.done[action]);
 	} finally {
 		context.setGitActionTarget(null);
 	}

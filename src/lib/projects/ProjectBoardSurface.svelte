@@ -137,6 +137,8 @@
 	import ProjectBoardWorkspaceLifecycle from './ProjectBoardWorkspaceLifecycle.svelte';
 	import ProjectBoardRepositoryLifecycle from './ProjectBoardRepositoryLifecycle.svelte';
 
+	const PROJECT_TAG_FILTER_DEBOUNCE_MS = 500;
+
 	interface Props {
 		readonly workspace: WorkspaceRecord;
 		readonly title: string;
@@ -155,11 +157,16 @@
 	let formName = $state('');
 	let formDescription = $state('');
 	let formTags = $state('');
+	let tagFilterInput = $state('');
 	let tagFilter = $state('');
+	let tagFilterDebounceTimeoutId: ReturnType<typeof setTimeout> | null = null;
 	let repositorySyncFilter = $state<ProjectRepositorySyncFilter>('all');
 	let tagEditor = $state<ProjectTagEditorTarget | null>(null);
 	let tagInput = $state('');
 	let githubCredentialEditor = $state<ProjectGithubCredentialEditorTarget | null>(null);
+	let detailsEditor = $state<ProjectNodeRecord | null>(null);
+	let detailsNameInput = $state('');
+	let detailsPathInput = $state('');
 	let selectedGithubCredentialSecretId = $state('');
 	let environmentVaultEnvelope = $state<SecretVaultEnvelope | null>(null);
 	let environmentVault = $state<EnvironmentVault | null>(null);
@@ -195,6 +202,7 @@
 	let isPublishingRepository = $state(false);
 	let isSavingTags = $state(false);
 	let isSavingDescription = $state(false);
+	let isSavingDetails = $state(false);
 	let isOpeningFolder = $state(false);
 	let contextMenuElement = $state<HTMLElement | undefined>(undefined);
 
@@ -222,6 +230,7 @@
 	let contextMenuRepositoryGitStatus = $derived(getContextMenuRepositoryGitStatus());
 	let canOpenContextFolder = $derived(canOpenContextMenuFolder());
 	let canSaveTags = $derived(tagEditor !== null && !isSavingTags);
+	let canSaveDetails = $derived(detailsEditor !== null && !isSavingDetails);
 	let githubCredentialOptions = $derived(getGithubCredentialOptions(environmentVault));
 	let canSaveGithubCredential = $derived(
 		githubCredentialEditor !== null && !isSubmitting && environmentVault !== null
@@ -277,6 +286,11 @@
 		getDescriptionEditor: () => descriptionEditor,
 		getDescriptionInput: () => descriptionInput,
 		getIsSavingDescription: () => isSavingDescription,
+		getDetailsEditor: () => detailsEditor,
+		getDetailsNameInput: () => detailsNameInput,
+		getDetailsPathInput: () => detailsPathInput,
+		getDetailsSavedStatus: () => projectMessages.detailsDialog.saved,
+		getIsSavingDetails: () => isSavingDetails,
 		getTagEditor: () => tagEditor,
 		getTagInput: () => tagInput,
 		getIsSavingTags: () => isSavingTags,
@@ -291,6 +305,10 @@
 		setDescriptionEditor: (editor) => { descriptionEditor = editor; },
 		setDescriptionInput: (input) => { descriptionInput = input; },
 		setIsSavingDescription: (isSaving) => { isSavingDescription = isSaving; },
+		setDetailsEditor: (editor) => { detailsEditor = editor; },
+		setDetailsNameInput: (input) => { detailsNameInput = input; },
+		setDetailsPathInput: (input) => { detailsPathInput = input; },
+		setIsSavingDetails: (isSaving) => { isSavingDetails = isSaving; },
 		setTagEditor: (editor) => { tagEditor = editor; },
 		setTagInput: (input) => { tagInput = input; },
 		setIsSavingTags: (isSaving) => { isSavingTags = isSaving; },
@@ -309,6 +327,7 @@
 		clearPublishTarget: () => { publishTarget = null; },
 		clearTagEditor: () => { tagEditor = null; },
 		clearDescriptionEditor: () => { descriptionEditor = null; },
+		clearDetailsEditor: () => { detailsEditor = null; },
 		clearDialog: () => { dialog = null; }
 	});
 
@@ -331,6 +350,7 @@
 		openTagEditor: editorActions.openTagEditor,
 		openGithubCredentialEditor: editorActions.openGithubCredentialEditor,
 		openDescriptionEditor: editorActions.openDescriptionEditor,
+		openDetailsEditor: editorActions.openDetailsEditor,
 		openPublishRepositoryDialog
 	});
 
@@ -348,6 +368,7 @@
 		getIsDeleting: () => isDeleting,
 		getShouldDeleteLocalFolder: () => shouldDeleteLocalFolder,
 		getCanDeleteLocalFolder: isDeleteLocalFolderAvailable,
+		getDeleteDialogMessages: () => projectMessages.deleteDialog,
 		persistRegistry,
 		closeContextMenu,
 		setDialog: (nextDialog) => { dialog = nextDialog; },
@@ -415,6 +436,31 @@
 		status = null;
 	}
 
+	function clearTagFilterDebounce() {
+		if (tagFilterDebounceTimeoutId === null) {
+			return;
+		}
+
+		clearTimeout(tagFilterDebounceTimeoutId);
+		tagFilterDebounceTimeoutId = null;
+	}
+
+	function handleTagFilterInput(nextTagFilterInput: string) {
+		tagFilterInput = nextTagFilterInput;
+		editorActions.handleTagFilterInput();
+		clearTagFilterDebounce();
+
+		if (nextTagFilterInput.trim().length === 0) {
+			tagFilter = '';
+			return;
+		}
+
+		tagFilterDebounceTimeoutId = setTimeout(() => {
+			tagFilter = tagFilterInput;
+			tagFilterDebounceTimeoutId = null;
+		}, PROJECT_TAG_FILTER_DEBOUNCE_MS);
+	}
+
 	function selectGithubRepositoryVisibility(visibility: ProjectRepositoryGithubVisibility) {
 		githubRepositoryVisibility = visibility;
 		formError = null;
@@ -469,7 +515,7 @@
 				repositoryName: repository.name,
 				repositoryPath: repository.path,
 				source: 'project',
-				responseLanguage: languageId === 'en' ? 'en' : 'ko',
+				responseLanguage: languageId,
 				projectIds: rootProjectId === null ? [] : [rootProjectId]
 			});
 
@@ -508,7 +554,8 @@
 			setCloneTarget: (target) => { cloneTarget = target; },
 			setGitActionTarget: (target) => { gitActionTarget = target; },
 			setIsPublishingRepository: (isPublishing) => { isPublishingRepository = isPublishing; },
-			closePublishRepositoryDialog
+			closePublishRepositoryDialog,
+			operationMessages: projectMessages.operations
 		});
 	}
 
@@ -664,13 +711,13 @@
 		closeContextMenu();
 	}
 
-	function getDeleteDialogTitle() { return getProjectDeleteDialogTitle(deleteCandidate); }
+	function getDeleteDialogTitle() { return getProjectDeleteDialogTitle(deleteCandidate, projectMessages.deleteDialog); }
 
-	function getDeleteDialogText() { return getProjectDeleteDialogText(deleteCandidate); }
+	function getDeleteDialogText() { return getProjectDeleteDialogText(deleteCandidate, projectMessages.deleteDialog); }
 
-	function getDeleteLocalFolderLabel() { return getProjectDeleteLocalFolderLabel(deleteCandidate); }
+	function getDeleteLocalFolderLabel() { return getProjectDeleteLocalFolderLabel(deleteCandidate, projectMessages.deleteDialog); }
 
-	function getDeleteLocalFolderUnavailableText() { return getProjectDeleteLocalFolderUnavailableText(deleteCandidate); }
+	function getDeleteLocalFolderUnavailableText() { return getProjectDeleteLocalFolderUnavailableText(deleteCandidate, projectMessages.deleteDialog); }
 
 	function isDeleteLocalFolderAvailable() {
 		return isProjectBoardDeleteLocalFolderAvailable(
@@ -876,6 +923,8 @@
 		};
 	});
 
+	$effect(() => clearTagFilterDebounce);
+
 	function handleWindowKeydown(event: KeyboardEvent) {
 		if (event.key !== 'Escape') {
 			return;
@@ -887,10 +936,12 @@
 				hasDeleteCandidate: deleteCandidate !== null,
 				hasTagEditor: tagEditor !== null,
 				hasDescriptionEditor: descriptionEditor !== null,
+				hasDetailsEditor: detailsEditor !== null,
 				hasPublishTarget: publishTarget !== null,
 				hasGithubCredentialEditor: githubCredentialEditor !== null,
 				isSavingTags,
 				isSavingDescription,
+				isSavingDetails,
 				isPublishingRepository,
 				isSubmitting,
 				isEnvironmentVaultBusy
@@ -900,6 +951,7 @@
 				closeDeleteDialog: dialogActions.closeDeleteDialog,
 				closeTagEditor: editorActions.closeTagEditor,
 				closeDescriptionEditor: editorActions.closeDescriptionEditor,
+				closeDetailsEditor: editorActions.closeDetailsEditor,
 				closePublishRepositoryDialog,
 				closeGithubCredentialEditor: editorActions.closeGithubCredentialEditor,
 				closeContextMenu
@@ -949,7 +1001,7 @@
 	{title}
 	{projectMessages}
 	{languageId}
-	bind:tagFilter
+	{tagFilterInput}
 	{repositorySyncFilter}
 	{repositoryFilterStats}
 	registryNodes={registry.nodes}
@@ -961,7 +1013,7 @@
 	{repositoryGitStatusById}
 	onBoardContextMenu={contextMenuActions.openBoardContextMenu}
 	onRepositorySyncFilterSelect={selectRepositorySyncFilter}
-	onTagFilterInput={editorActions.handleTagFilterInput}
+	onTagFilterInput={handleTagFilterInput}
 	onOpenDialog={dialogActions.openDialog}
 	onSelectProject={selectProject}
 	onSelectGroup={selectGroup}
@@ -987,10 +1039,10 @@
 	onGitAction={(node, repository, action) => runRepositoryGitAction({ node, repository }, action)}
 />
 
-{#if standaloneError !== null && dialog === null && deleteCandidate === null && tagEditor === null && descriptionEditor === null && githubCredentialEditor === null && publishTarget === null}
+{#if standaloneError !== null && dialog === null && deleteCandidate === null && tagEditor === null && descriptionEditor === null && detailsEditor === null && githubCredentialEditor === null && publishTarget === null}
 	<p class="workduck-inline-error" aria-live="polite">{getProjectFormErrorMessage(standaloneError, projectMessages.errors)}</p>
 {/if}
-{#if queueFolderError !== null && dialog === null && deleteCandidate === null && tagEditor === null && descriptionEditor === null && githubCredentialEditor === null && publishTarget === null}
+{#if queueFolderError !== null && dialog === null && deleteCandidate === null && tagEditor === null && descriptionEditor === null && detailsEditor === null && githubCredentialEditor === null && publishTarget === null}
 	<p class="workduck-inline-error" aria-live="polite">
 		{getQueueFolderLocalizedError(messages, queueFolderError)}
 	</p>
@@ -1002,6 +1054,8 @@
 	bind:contextMenuElement
 	bind:shouldDeleteLocalFolder
 	bind:descriptionInput
+	bind:detailsNameInput
+	bind:detailsPathInput
 	bind:tagInput
 	bind:environmentVaultPassword
 	bind:selectedGithubCredentialSecretId
@@ -1013,6 +1067,7 @@
 	bind:repositoryRemoteUrl
 	{deleteCandidate}
 	{descriptionEditor}
+	{detailsEditor}
 	{tagEditor}
 	{githubCredentialEditor}
 	{publishTarget}
@@ -1026,6 +1081,8 @@
 	{canDeleteLocalFolder}
 	{isSavingDescription}
 	{canSaveDescription}
+	{isSavingDetails}
+	{canSaveDetails}
 	{isSavingTags}
 	{canSaveTags}
 	{environmentVaultEnvelope}
@@ -1054,6 +1111,7 @@
 	{getDialogSubmitLabel}
 	{isRepositoryRemoteUrlError}
 	onOpenFolder={contextMenuActions.openContextFolder}
+	onEditDetails={contextMenuActions.openContextDetailsEditor}
 	onEditDescription={contextMenuActions.openContextDescriptionEditor}
 	onEditGithubCredential={contextMenuActions.openContextGithubCredentialEditor}
 	onEditTags={contextMenuActions.openContextTagEditor}
@@ -1069,6 +1127,10 @@
 	onDescriptionSubmit={editorActions.handleDescriptionEditorSubmit}
 	onDescriptionBackdropClick={editorActions.handleDescriptionEditorBackdropClick}
 	onDescriptionClose={editorActions.closeDescriptionEditor}
+	onDetailsInput={editorActions.handleDetailsEditorInput}
+	onDetailsSubmit={editorActions.handleDetailsEditorSubmit}
+	onDetailsBackdropClick={editorActions.handleDetailsEditorBackdropClick}
+	onDetailsClose={editorActions.closeDetailsEditor}
 	onTagInput={editorActions.handleTagEditorInput}
 	onTagSubmit={editorActions.handleTagEditorSubmit}
 	onTagBackdropClick={editorActions.handleTagEditorBackdropClick}

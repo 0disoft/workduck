@@ -28,7 +28,7 @@
 		readonly title: string;
 		readonly projectMessages: WorkduckMessages['projects'];
 		readonly languageId: WorkduckLanguageId;
-		tagFilter: string;
+		readonly tagFilterInput: string;
 		readonly repositorySyncFilter: ProjectRepositorySyncFilter;
 		readonly repositoryFilterStats: RepositoryFilterStats;
 		readonly registryNodes: readonly ProjectNodeRecord[];
@@ -40,7 +40,7 @@
 		readonly repositoryGitStatusById: Readonly<Record<string, ProjectRepositoryGitStatus>>;
 		readonly onBoardContextMenu: (event: MouseEvent) => void;
 		readonly onRepositorySyncFilterSelect: (filter: ProjectRepositorySyncFilter) => void;
-		readonly onTagFilterInput: () => void;
+		readonly onTagFilterInput: (value: string) => void;
 		readonly onOpenDialog: (mode: 'project' | 'group' | 'repository', targetNodeId?: string) => void;
 		readonly onSelectProject: (node: ProjectNodeRecord) => void;
 		readonly onSelectGroup: (node: ProjectNodeRecord) => void;
@@ -101,7 +101,7 @@
 	}
 
 	let {
-		title, projectMessages, languageId, tagFilter = $bindable(), repositorySyncFilter, repositoryFilterStats,
+		title, projectMessages, languageId, tagFilterInput, repositorySyncFilter, repositoryFilterStats,
 		registryNodes, projectNodes, selectedProject, selectedProjectGroups, selectedGroup,
 		selectedRepositories, repositoryGitStatusById, onBoardContextMenu, onRepositorySyncFilterSelect,
 		onTagFilterInput, onOpenDialog, onSelectProject, onSelectGroup, onProjectContextMenu,
@@ -120,6 +120,10 @@
 			registryNodes.filter((node) => node.kind === 'project').length.toString()
 		)
 	);
+
+	function handleTagFilterInput(event: Event) {
+		onTagFilterInput((event.currentTarget as HTMLInputElement).value);
+	}
 </script>
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -152,10 +156,10 @@
 				</button>
 			</div>
 			<label class="workduck-project-filter-field" for="project-tag-filter">
-				<input id="project-tag-filter" class="workduck-input" type="text" bind:value={tagFilter}
+				<input id="project-tag-filter" class="workduck-input" type="text" value={tagFilterInput}
 					autocomplete="off" spellcheck="false" aria-label="Tag filter"
 					placeholder={projectMessages.filters.tagPlaceholder}
-					oninput={onTagFilterInput} />
+					oninput={handleTagFilterInput} />
 			</label>
 		</div>
 	</header>

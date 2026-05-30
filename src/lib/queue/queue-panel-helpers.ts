@@ -87,27 +87,33 @@ export function updateSelectedRecordIds(
 
 export function sortReferencesForProjectSelection(
 	references: readonly ReferenceRecord[],
-	selectedProjectIds: readonly string[]
+	selectedProjectIds: readonly string[],
+	selectedRepositoryIds: readonly string[] = []
 ) {
-	if (selectedProjectIds.length === 0) {
+	if (selectedProjectIds.length === 0 && selectedRepositoryIds.length === 0) {
 		return [...references];
 	}
 
 	const selectedProjectSet = new Set(selectedProjectIds);
+	const selectedRepositorySet = new Set(selectedRepositoryIds);
 
 	return [...references].sort((left, right) => {
-		const leftRank = referenceMatchesProjectSelection(left, selectedProjectSet) ? 0 : 1;
-		const rightRank = referenceMatchesProjectSelection(right, selectedProjectSet) ? 0 : 1;
+		const leftRank = referenceMatchesSelection(left, selectedProjectSet, selectedRepositorySet) ? 0 : 1;
+		const rightRank = referenceMatchesSelection(right, selectedProjectSet, selectedRepositorySet) ? 0 : 1;
 
 		return leftRank - rightRank;
 	});
 }
 
-function referenceMatchesProjectSelection(
+function referenceMatchesSelection(
 	reference: ReferenceRecord,
-	selectedProjectIds: ReadonlySet<string>
+	selectedProjectIds: ReadonlySet<string>,
+	selectedRepositoryIds: ReadonlySet<string>
 ) {
-	return reference.projectIds.some((projectId) => selectedProjectIds.has(projectId));
+	return (
+		reference.projectIds.some((projectId) => selectedProjectIds.has(projectId)) ||
+		reference.repositoryIds.some((repositoryId) => selectedRepositoryIds.has(repositoryId))
+	);
 }
 
 export function createManualVoteFieldState(vote: WorkduckQueueVoteSpec | undefined) {

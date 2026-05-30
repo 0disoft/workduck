@@ -106,7 +106,9 @@ export function resolveSelectedProject(
 	projectNodes: readonly ProjectNodeRecord[],
 	selectedProjectId: string | null
 ) {
-	return projectNodes.find((node) => node.id === selectedProjectId) ?? projectNodes[0] ?? null;
+	return selectedProjectId === null
+		? projectNodes[0] ?? null
+		: projectNodes.find((node) => node.id === selectedProjectId) ?? null;
 }
 
 export function resolveSelectedGroup(
@@ -148,18 +150,40 @@ export function normalizeTagFilter(value: string) {
 
 export function parseTagsInput(value: string) {
 	return value
-		.split(',')
-		.map((tag) => tag.trim())
+		.split(/[;,]/u)
+		.map((tag) => normalizeTagInputValue(tag))
 		.filter((tag) => tag.length > 0)
-		.slice(0, PROJECT_TAGS_MAX_COUNT);
+		.filter((tag, index, tags) => {
+			const tagKey = tag.toLocaleLowerCase('en-US');
+
+			return tags.findIndex((candidate) => candidate.toLocaleLowerCase('en-US') === tagKey) === index;
+		});
 }
 
 export function formatTagsInput(tags: readonly string[]) {
 	return tags.join(', ');
 }
 
+export function validateTagsInput(value: string) {
+	const tags = parseTagsInput(value);
+
+	if (tags.length > PROJECT_TAGS_MAX_COUNT) {
+		return { ok: false, error: 'project-tags-too-many' } as const;
+	}
+
+	if (tags.some((tag) => tag.length > PROJECT_TAG_MAX_LENGTH)) {
+		return { ok: false, error: 'project-tag-too-long' } as const;
+	}
+
+	return { ok: true, tags } as const;
+}
+
 export function getTagsInputMaxLength() {
 	return PROJECT_TAGS_MAX_COUNT * (PROJECT_TAG_MAX_LENGTH + 2);
+}
+
+function normalizeTagInputValue(value: string) {
+	return value.trim().replace(/^#+/u, '').replace(/\s+/gu, '-');
 }
 
 function projectMatchesTagFilter(

@@ -1,4 +1,5 @@
 use std::{
+    collections::{HashMap, HashSet},
     env, fs,
     io::{self, Read, Write},
     path::{Path, PathBuf},
@@ -12,9 +13,7 @@ use chacha20poly1305::{
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use time::{OffsetDateTime, format_description::well_known::Rfc3339};
-use workduck_lib::argon2_kdf::{
-    ARGON2ID_VERSION, derive_argon2id_key, parameters_are_supported,
-};
+use workduck_lib::argon2_kdf::{ARGON2ID_VERSION, derive_argon2id_key, parameters_are_supported};
 use workduck_lib::queue_execution::*;
 use zeroize::Zeroize;
 
@@ -28,6 +27,13 @@ const AGENTS_FILE_NAME: &str = "agents.json";
 const PERSONAS_FILE_NAME: &str = "personas.json";
 const REFERENCES_FILE_NAME: &str = "references.json";
 const SKILLS_FILE_NAME: &str = "skills.json";
+const AGENT_EVALUATION_CRITERION_IDS: [&str; 5] = [
+    "problemUnderstanding",
+    "logicalValidity",
+    "practicalFeasibility",
+    "creativeInsight",
+    "riskDetection",
+];
 const VAULT_AAD: &[u8] = b"workduck.secret-vault.v1";
 const VAULT_KEY_LENGTH: usize = 32;
 const VAULT_SALT_LENGTH: usize = 16;
@@ -38,7 +44,6 @@ struct CliError {
     code: &'static str,
     message: String,
 }
-
 
 impl From<QueueExecutionErrorDetail> for CliError {
     fn from(error: QueueExecutionErrorDetail) -> Self {
@@ -359,19 +364,11 @@ fn run_agent_evaluate_command(args: Vec<String>) -> Result<(), CliError> {
         &options.agent_key,
         scores,
     )?;
-    let persona_registry_changed =
-        if let (Some(persona_id), Some(persona_registry)) =
-            (result.persona_id.as_deref(), persona_registry.as_mut())
-        {
-            record_persona_evaluation_in_registry(
-                persona_registry,
-                &workspace_id,
-                persona_id,
-                scores,
-            )?
-        } else {
-            false
-        };
+    let persona_registry_changed = if let Some(persona_registry) = persona_registry.as_mut() {
+        sync_persona_evaluation_summaries_from_agents(persona_registry, &registry, &workspace_id)?
+    } else {
+        false
+    };
 
     write_json_file(&agents_path, &registry)?;
     if persona_registry_changed {
@@ -435,7 +432,6 @@ fn run_agent_evaluate_batch_command(args: Vec<String>) -> Result<(), CliError> {
     } else {
         None
     };
-    let mut persona_registry_changed = false;
     let mut results = Vec::new();
 
     for (index, item) in input.evaluations.into_iter().enumerate() {
@@ -460,17 +456,6 @@ fn run_agent_evaluate_batch_command(args: Vec<String>) -> Result<(), CliError> {
             item.scores,
         )?;
 
-        if let (Some(persona_id), Some(persona_registry)) =
-            (result.persona_id.as_deref(), persona_registry.as_mut())
-        {
-            persona_registry_changed = record_persona_evaluation_in_registry(
-                persona_registry,
-                &workspace_id,
-                persona_id,
-                item.scores,
-            )? || persona_registry_changed;
-        }
-
         results.push(AgentEvaluationBatchJsonItem {
             agent_id: result.agent_id,
             agent_name: result.agent_name,
@@ -478,6 +463,12 @@ fn run_agent_evaluate_batch_command(args: Vec<String>) -> Result<(), CliError> {
             scores: item.scores,
         });
     }
+
+    let persona_registry_changed = if let Some(persona_registry) = persona_registry.as_mut() {
+        sync_persona_evaluation_summaries_from_agents(persona_registry, &registry, &workspace_id)?
+    } else {
+        false
+    };
 
     write_json_file(&agents_path, &registry)?;
     if persona_registry_changed {
@@ -1040,7 +1031,6 @@ fn read_workspace_id(workspace_path: &Path) -> Result<String, CliError> {
 struct AgentEvaluationWriteResult {
     agent_id: String,
     agent_name: String,
-    persona_id: Option<String>,
     total_count: u64,
 }
 
@@ -1091,12 +1081,6 @@ fn record_agent_evaluation_in_registry(
         .and_then(Value::as_str)
         .unwrap_or(&agent_id)
         .to_string();
-    let persona_id = agent
-        .get("personaId")
-        .and_then(Value::as_str)
-        .map(str::trim)
-        .filter(|value| !value.is_empty())
-        .map(ToOwned::to_owned);
     let total_count = record_evaluation_summary_on_record(agent, &timestamp, scores);
 
     registry_object.insert("updatedAt".to_string(), Value::String(timestamp));
@@ -1104,29 +1088,34 @@ fn record_agent_evaluation_in_registry(
     Ok(AgentEvaluationWriteResult {
         agent_id,
         agent_name,
-        persona_id,
         total_count,
     })
 }
 
-fn record_persona_evaluation_in_registry(
-    registry: &mut Value,
+#[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
+struct EvaluationSummarySnapshot {
+    total_count: u64,
+    counts: [u64; 5],
+    score_sums: [u64; 5],
+}
+
+fn sync_persona_evaluation_summaries_from_agents(
+    persona_registry: &mut Value,
+    agent_registry: &Value,
     workspace_id: &str,
-    persona_id: &str,
-    scores: AgentEvaluationScores,
 ) -> Result<bool, CliError> {
     let timestamp = current_timestamp()?;
-    let registry_object = registry.as_object_mut().ok_or_else(|| CliError {
+    let persona_registry_object = persona_registry.as_object_mut().ok_or_else(|| CliError {
         code: "persona-registry-invalid",
         message: "페르소나 레지스트리 형식이 올바르지 않습니다.".to_string(),
     })?;
 
-    let registry_workspace_id = registry_object
+    let persona_registry_workspace_id = persona_registry_object
         .get("workspaceId")
         .and_then(Value::as_str)
         .unwrap_or("");
 
-    if registry_workspace_id != workspace_id {
+    if persona_registry_workspace_id != workspace_id {
         return Err(CliError {
             code: "persona-registry-workspace-mismatch",
             message: "페르소나 레지스트리의 워크스페이스 ID가 현재 워크스페이스와 다릅니다."
@@ -1134,24 +1123,155 @@ fn record_persona_evaluation_in_registry(
         });
     }
 
-    let personas = registry_object
+    let agent_registry_object = agent_registry.as_object().ok_or_else(|| CliError {
+        code: "agent-registry-invalid",
+        message: "에이전트 레지스트리 형식이 올바르지 않습니다.".to_string(),
+    })?;
+
+    let agent_registry_workspace_id = agent_registry_object
+        .get("workspaceId")
+        .and_then(Value::as_str)
+        .unwrap_or("");
+
+    if agent_registry_workspace_id != workspace_id {
+        return Err(CliError {
+            code: "agent-registry-workspace-mismatch",
+            message: "에이전트 레지스트리의 워크스페이스 ID가 현재 워크스페이스와 다릅니다."
+                .to_string(),
+        });
+    }
+
+    let agents = agent_registry_object
+        .get("agents")
+        .and_then(Value::as_array)
+        .ok_or_else(|| CliError {
+            code: "agent-registry-invalid",
+            message: "에이전트 목록 형식이 올바르지 않습니다.".to_string(),
+        })?;
+    let personas = persona_registry_object
         .get_mut("personas")
         .and_then(Value::as_array_mut)
         .ok_or_else(|| CliError {
             code: "persona-registry-invalid",
             message: "페르소나 목록 형식이 올바르지 않습니다.".to_string(),
         })?;
-    let Some(persona) = personas
-        .iter_mut()
-        .find(|persona| persona.get("id").and_then(Value::as_str) == Some(persona_id))
-    else {
-        return Ok(false);
-    };
 
-    record_evaluation_summary_on_record(persona, &timestamp, scores);
-    registry_object.insert("updatedAt".to_string(), Value::String(timestamp));
+    let persona_ids = personas
+        .iter()
+        .filter_map(|persona| persona.get("id").and_then(Value::as_str))
+        .map(ToOwned::to_owned)
+        .collect::<HashSet<_>>();
+    let mut summary_by_persona_id = HashMap::<String, EvaluationSummarySnapshot>::new();
 
-    Ok(true)
+    for agent in agents {
+        let Some(persona_id) = agent
+            .get("personaId")
+            .and_then(Value::as_str)
+            .map(str::trim)
+            .filter(|value| !value.is_empty())
+        else {
+            continue;
+        };
+
+        if !persona_ids.contains(persona_id) {
+            continue;
+        }
+
+        let agent_summary = read_evaluation_summary_snapshot(agent.get("evaluationSummary"));
+        let persona_summary = summary_by_persona_id
+            .entry(persona_id.to_string())
+            .or_default();
+
+        merge_evaluation_summary_snapshots(persona_summary, agent_summary);
+    }
+
+    let mut changed = false;
+
+    for persona in personas {
+        let Some(persona_id) = persona.get("id").and_then(Value::as_str) else {
+            continue;
+        };
+        let next_summary = summary_by_persona_id
+            .get(persona_id)
+            .copied()
+            .unwrap_or_default();
+
+        if read_evaluation_summary_snapshot(persona.get("evaluationSummary")) == next_summary {
+            continue;
+        }
+
+        let persona_object = ensure_json_object(persona);
+        persona_object.insert(
+            "evaluationSummary".to_string(),
+            evaluation_summary_snapshot_to_value(next_summary),
+        );
+        persona_object.insert("updatedAt".to_string(), Value::String(timestamp.clone()));
+        changed = true;
+    }
+
+    if changed {
+        persona_registry_object.insert("updatedAt".to_string(), Value::String(timestamp));
+    }
+
+    Ok(changed)
+}
+
+fn read_evaluation_summary_snapshot(value: Option<&Value>) -> EvaluationSummarySnapshot {
+    let input = value.and_then(Value::as_object);
+    let raw_criteria = input
+        .and_then(|value| value.get("criteria"))
+        .and_then(Value::as_object);
+    let mut summary = EvaluationSummarySnapshot::default();
+
+    for (index, criterion_id) in AGENT_EVALUATION_CRITERION_IDS.iter().enumerate() {
+        let raw_criterion = raw_criteria
+            .and_then(|criteria| criteria.get(*criterion_id))
+            .and_then(Value::as_object);
+        let count = read_json_u64(raw_criterion.and_then(|criterion| criterion.get("count")));
+        let score_sum =
+            read_json_u64(raw_criterion.and_then(|criterion| criterion.get("scoreSum")))
+                .min(count * 9);
+
+        summary.counts[index] = count;
+        summary.score_sums[index] = score_sum;
+    }
+
+    let largest_criterion_count = summary.counts.iter().copied().max().unwrap_or(0);
+    summary.total_count =
+        read_json_u64(input.and_then(|value| value.get("totalCount"))).max(largest_criterion_count);
+
+    summary
+}
+
+fn merge_evaluation_summary_snapshots(
+    target: &mut EvaluationSummarySnapshot,
+    source: EvaluationSummarySnapshot,
+) {
+    target.total_count += source.total_count;
+
+    for index in 0..AGENT_EVALUATION_CRITERION_IDS.len() {
+        target.counts[index] += source.counts[index];
+        target.score_sums[index] += source.score_sums[index];
+    }
+}
+
+fn evaluation_summary_snapshot_to_value(summary: EvaluationSummarySnapshot) -> Value {
+    let mut criteria = serde_json::Map::new();
+
+    for (index, criterion_id) in AGENT_EVALUATION_CRITERION_IDS.iter().enumerate() {
+        criteria.insert(
+            (*criterion_id).to_string(),
+            serde_json::json!({
+                "count": summary.counts[index],
+                "scoreSum": summary.score_sums[index],
+            }),
+        );
+    }
+
+    serde_json::json!({
+        "totalCount": summary.total_count,
+        "criteria": criteria,
+    })
 }
 
 fn record_evaluation_summary_on_record(
@@ -1194,7 +1314,10 @@ fn record_evaluation_summary_on_record(
         );
     }
 
-    record_object.insert("updatedAt".to_string(), Value::String(timestamp.to_string()));
+    record_object.insert(
+        "updatedAt".to_string(),
+        Value::String(timestamp.to_string()),
+    );
 
     next_total_count
 }
@@ -1355,11 +1478,9 @@ fn derive_vault_key(
     iterations: u32,
     parallelism: u32,
 ) -> Result<[u8; VAULT_KEY_LENGTH], CliError> {
-    derive_argon2id_key(password, salt, memory_kib, iterations, parallelism).map_err(|_| {
-        CliError {
-            code: "vault-key-derivation-failed",
-            message: "보관함 키 파생에 실패했습니다.".to_string(),
-        }
+    derive_argon2id_key(password, salt, memory_kib, iterations, parallelism).map_err(|_| CliError {
+        code: "vault-key-derivation-failed",
+        message: "보관함 키 파생에 실패했습니다.".to_string(),
     })
 }
 
@@ -1413,12 +1534,13 @@ fn write_json_file<T: Serialize>(path: &Path, value: &T) -> Result<(), CliError>
         code: "file-write-failed",
         message: format!("파일 경로에 상위 디렉터리가 없습니다: {}", path.display()),
     })?;
-    let file_name = path.file_name().and_then(|name| name.to_str()).ok_or_else(|| {
-        CliError {
+    let file_name = path
+        .file_name()
+        .and_then(|name| name.to_str())
+        .ok_or_else(|| CliError {
             code: "file-write-failed",
             message: format!("파일 이름이 유효하지 않습니다: {}", path.display()),
-        }
-    })?;
+        })?;
     let process_id = std::process::id();
 
     for index in 0..32 {

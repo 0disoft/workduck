@@ -55,6 +55,8 @@ export function getQueueExecutionErrorMessage(
 			return messages.queue.errors.executionNoAgent;
 		case 'queue-execution-vault-locked':
 			return messages.queue.errors.executionVaultLocked;
+		case 'queue-execution-unknown':
+			return messages.queue.errors.executionUnknown;
 		default:
 			return getAgentExecutionErrorMessage(messages, executionError);
 	}
@@ -85,8 +87,12 @@ export function getAgentExecutionErrorMessage(
 			return messages.queue.errors.executionRateLimited;
 		case 'agent-execution-provider-rejected':
 			return messages.queue.errors.executionProviderRejected;
+		case 'agent-execution-provider-timeout':
+			return messages.queue.errors.executionProviderTimeout;
 		case 'agent-execution-provider-unavailable':
 			return messages.queue.errors.executionProviderUnavailable;
+		case 'agent-execution-response-empty':
+			return messages.queue.errors.executionResponseEmpty;
 		case 'agent-execution-response-invalid':
 			return messages.queue.errors.executionResponseInvalid;
 		case 'agent-execution-unavailable':

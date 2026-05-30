@@ -77,7 +77,7 @@
 				disabled={isDeleting}
 				onclick={onClose}
 			>
-				Cancel
+				{projectMessages.deleteDialog.cancel}
 			</button>
 			<button
 				class="workduck-button workduck-button-danger"
@@ -85,7 +85,7 @@
 				disabled={!canConfirmDelete}
 				onclick={onConfirm}
 			>
-				{isDeleting ? 'Removing' : 'Remove'}
+				{isDeleting ? projectMessages.deleteDialog.removing : projectMessages.deleteDialog.remove}
 			</button>
 		</div>
 	</div>

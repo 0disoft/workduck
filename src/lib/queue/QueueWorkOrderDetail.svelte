@@ -33,6 +33,7 @@
 		readonly getQueueResponseFormatLabel: (format: WorkduckQueueResponseFormat) => string;
 		readonly getQueueTaskKindLabel: (kind: WorkduckQueueTaskKind | undefined) => string;
 		readonly getQueueTaskProjectLabels: (task: WorkduckQueueWorkOrderTask) => readonly string[];
+		readonly getQueueTaskRepositoryLabels: (task: WorkduckQueueWorkOrderTask) => readonly string[];
 		readonly getQueueTaskSkillLabels: (task: WorkduckQueueWorkOrderTask) => readonly string[];
 		readonly getQueueTaskAgentLabels: (task: WorkduckQueueWorkOrderTask) => readonly string[];
 		readonly getQueueTaskReferenceLabels: (task: WorkduckQueueWorkOrderTask) => readonly string[];
@@ -55,6 +56,7 @@
 		getQueueResponseFormatLabel,
 		getQueueTaskKindLabel,
 		getQueueTaskProjectLabels,
+		getQueueTaskRepositoryLabels,
 		getQueueTaskSkillLabels,
 		getQueueTaskAgentLabels,
 		getQueueTaskReferenceLabels
@@ -100,6 +102,7 @@
 			{@const evaluationDelegation = createEvaluationDelegationDisplay(workOrder, task)}
 			{@const bodyDisplay = createWorkOrderBodyDisplay(task.body)}
 			{@const projectLabels = getQueueTaskProjectLabels(task)}
+			{@const repositoryLabels = getQueueTaskRepositoryLabels(task)}
 			{@const skillLabels = getQueueTaskSkillLabels(task)}
 			{@const agentLabels = getQueueTaskAgentLabels(task)}
 			{@const referenceLabels = getQueueTaskReferenceLabels(task)}
@@ -160,6 +163,7 @@
 					</button>
 				</header>
 				{#if projectLabels.length > 0 ||
+					repositoryLabels.length > 0 ||
 					skillLabels.length > 0 ||
 					agentLabels.length > 0 ||
 					referenceLabels.length > 0}
@@ -170,6 +174,16 @@
 								<div class="workduck-queue-review-task-pills">
 									{#each projectLabels as projectLabel (projectLabel)}
 										<span class="workduck-queue-task-pill">{projectLabel}</span>
+									{/each}
+								</div>
+							</section>
+						{/if}
+						{#if repositoryLabels.length > 0}
+							<section class="workduck-queue-review-task-group">
+								<span>{messages.queue.workRepositories}</span>
+								<div class="workduck-queue-review-task-pills">
+									{#each repositoryLabels as repositoryLabel (repositoryLabel)}
+										<span class="workduck-queue-task-pill">{repositoryLabel}</span>
 									{/each}
 								</div>
 							</section>

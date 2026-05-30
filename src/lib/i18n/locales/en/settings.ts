@@ -1,0 +1,293 @@
+export const enSettingsMessages = {
+		title: 'Settings',
+		pageTitle: 'Settings - Workduck',
+		sections: 'Settings sections',
+		tabs: {
+			appearance: 'Appearance',
+			workspaces: 'Workspaces',
+			sync: 'Sync',
+			system: 'System'
+		},
+		appearance: {
+			section: 'Appearance',
+			language: 'Language',
+			interfaceFontSize: 'Interface font size',
+			loadError: 'Appearance settings could not be loaded.',
+			saveError: 'Appearance settings could not be saved.'
+		},
+		workspaces: {
+			noWorkspaces: 'No workspaces.',
+			status: 'Workspace status',
+			active: 'Active',
+			locked: 'Locked',
+			switch: 'Switch',
+			lock: 'Lock',
+			reconnect: 'Reconnect',
+			repository: {
+				section: 'Workspace repository',
+				useAsRepository: 'Use this workspace as a repository',
+				prepare: 'Prepare repository',
+				publish: 'Publish',
+				prepareTitle: 'Prepare workspace repository',
+				publishTitle: 'Publish workspace repository',
+				githubRepository: 'GitHub repository',
+				commitMessage: 'Commit message',
+				visibility: 'GitHub visibility',
+				private: 'Private',
+				public: 'Public',
+				initializeGit: 'Initialize Git repository',
+				installMustflow: 'Install mustflow',
+				installGitignore: 'Install Workduck .gitignore',
+				gitReady: 'Git ready',
+				remoteReady: 'Remote ready',
+				commitNeeded: 'Commit needed',
+				queueCommitWorkOrder: 'Add commit work',
+				pullNeeded: 'Pull {count}',
+				pushNeeded: 'Push {count}',
+				setupComplete: 'Workspace repository is ready.',
+				setupPartial: 'Workspace was added, but repository setup failed.',
+				setupFailed: 'Repository setup failed.',
+				publishComplete: 'Workspace repository was published.',
+				commitWorkOrderQueued: 'Added commit work: {relativePath}',
+				fetchComplete: 'Fetched.',
+				pullComplete: 'Pulled.',
+				pushComplete: 'Pushed.'
+			},
+			removeTitle: 'Remove workspace',
+			removeDescription: 'Remove {name}? Local files are not deleted.',
+			errors: {
+				nameRequired: 'Workspace name is required.',
+				passwordRequired: 'Workspace password is required.',
+				passwordTooShort: 'Workspace password must be at least {minLength} characters.',
+				passwordProtectFailed: 'Workspace password could not be protected.',
+				passwordInvalidHash: 'Workspace lock data could not be read.',
+				passwordUnavailable: 'Workspace password can only be protected in the desktop app.',
+				passwordHashInvalid: 'Workspace lock data could not be saved.',
+				repositoryChoiceRequired: 'Choose whether this workspace should be a repository.',
+				repositoryWorkspaceRequired: 'Workspace folder is required.',
+				repositoryWorkspaceNotAbsolute: 'Workspace path must be absolute.',
+				repositoryWorkspaceNotFound: 'Workspace folder was not found.',
+				repositoryWorkspaceNotDirectory: 'Workspace path must be a folder.',
+				repositoryWorkspacePermissionDenied: 'Workspace folder access was denied.',
+				repositoryWorkspaceUnreadable: 'Workspace folder could not be read.',
+				repositoryLayoutInvalid: 'Existing workspace file layout is not usable.',
+				repositoryCreateFailed: 'Workspace repository files could not be created.',
+				repositoryGitUnavailable: 'Git is not available.',
+				repositoryGitTimedOut: 'Git initialization timed out.',
+				repositoryGitInitFailed: 'Git repository could not be initialized.',
+				repositoryMustflowUnavailable: 'mustflow command is not available.',
+				repositoryMustflowTimedOut: 'mustflow installation timed out.',
+				repositoryMustflowFailed: 'mustflow installation failed.',
+				repositoryMustflowPackageFailed: 'mustflow package metadata could not be prepared.',
+				repositoryGitignoreFailed: '.gitignore could not be prepared.',
+				repositoryUnavailable: 'Workspace repository setup is available in the desktop app.',
+				repositoryGitPathRequired: 'Repository path is required.',
+				repositoryGitPathNotAbsolute: 'Repository path must be absolute.',
+				repositoryGitPathNotFound: 'Repository folder was not found.',
+				repositoryGitPathNotDirectory: 'Repository path must be a folder.',
+				repositoryGitPathPermissionDenied: 'Repository folder access was denied.',
+				repositoryGitPathUnreadable: 'Repository folder could not be checked.',
+				repositoryGitCommandUnavailable: 'Git command was not found.',
+				repositoryGitCommandFailed: 'Git command failed.',
+				repositoryGitCommandTimedOut: 'Git command timed out.',
+				repositoryGitNotRepository: 'Folder is not initialized for Git.',
+				repositoryGitRemoteMissing: 'Git remote is not configured.',
+				repositoryGitPushAuthRequired:
+					'Git push needs authentication. Configure System Git credentials or add a GitHub token to the Environment vault.',
+				repositoryGitPushEmpty: 'Repository has no commits to push.',
+				repositoryGitPushFailed: 'Git push failed.',
+				repositoryGitFetchAuthRequired:
+					'Git fetch needs authentication. Configure System Git credentials or add a GitHub token to the Environment vault.',
+				repositoryGitFetchFailed: 'Git fetch failed.',
+				repositoryGitPullAuthRequired:
+					'Git pull needs authentication. Configure System Git credentials or add a GitHub token to the Environment vault.',
+				repositoryGitPullConflict:
+					'Git pull was stopped because this checkout has local changes or conflicts. Commit, stash, or discard the local changes, then pull again.',
+				repositoryGitPullFailed: 'Git pull failed.',
+				repositoryGithubNameRequired: 'GitHub repository name is required.',
+				repositoryGithubNameInvalid: 'GitHub repository name is not usable.',
+				repositoryGithubCommitMessageRequired: 'Commit message is required.',
+				repositoryGithubCommitMessageInvalid: 'Commit message is not usable.',
+				repositoryGithubVisibilityInvalid: 'GitHub visibility is not usable.',
+				repositoryGithubCliUnavailable: 'GitHub CLI was not found.',
+				repositoryGithubAuthRequired: 'GitHub authentication is required.',
+				repositoryGithubRemoteExists: 'Remote origin is already configured.',
+				repositoryGithubEmpty: 'Repository has no commits to publish.',
+				repositoryGithubCommitIdentityMissing: 'Git author name or email is not configured.',
+				repositoryGithubCommitIndexLocked: 'Git index is locked by another process.',
+				repositoryGithubCommitHookFailed: 'Initial commit was blocked by a Git hook.',
+				repositoryGithubCommitFailed: 'Initial commit could not be created.',
+				repositoryGithubCreateFailed: 'GitHub repository could not be created.'
+			},
+			tooltips: {
+				unlock: 'Enter this workspace password to make it available on this device.',
+				prepareRepository:
+					'Prepare Git, mustflow, and the Workduck .gitignore in this workspace.',
+				publishRepository: 'Publish this workspace repository to GitHub for the first time.',
+				fetchRepository: 'Check remote changes for this workspace repository.',
+				pullRepository: 'Pull remote workspace changes into this folder.',
+				pushRepository: 'Push local workspace changes to the remote repository.',
+				queueCommitWorkOrder: 'Add uncommitted change cleanup to the work queue.',
+				reconnect: 'Choose a local folder again when this workspace was synced from another device.',
+				switch: 'Make this workspace the current working area.',
+				lock: 'Lock this workspace again until its password is entered.',
+				remove: 'Remove this workspace from Workduck. Local files are not deleted.'
+			}
+		},
+		sync: {
+			section: 'Sync',
+			encryptedData: 'Encrypted data',
+			noFolder: 'No folder',
+			checking: 'Checking',
+			noRepository: 'No repository',
+			unavailable: 'Unavailable',
+			noBranch: 'No branch',
+			commitNeeded: 'Commit needed',
+			queueCommitWorkOrder: 'Add commit work',
+			tooltips: {
+				folder: 'Choose the folder that stores the sync file.',
+				fetch: 'Check the sync repository remote.',
+				pull: 'Bring remote sync file changes into this folder.',
+				push: 'Commit and upload this sync file.',
+				queueCommitWorkOrder: 'Add sync repository uncommitted change cleanup to the work queue.',
+				export:
+					'Encrypt the current workspace and project data into the text area below. Use this when copying sync data manually without a file.',
+				import:
+					'Apply the encrypted data pasted in the text area below. The data must have been exported with the same password.',
+				save:
+					'Encrypt the current workspace and project data, then write it to the selected sync folder file. Use this before Git push.',
+				load:
+					'Read the encrypted file from the selected sync folder and apply it to this app. Use this after Git pull.'
+			},
+			confirmations: {
+				exportData: {
+					title: 'Confirm encrypted data export',
+					body:
+						'The encrypted data text area will be replaced with a new export from this app.',
+					inputLabel: 'Type the exact phrase shown below to continue.',
+					confirmTextLabel: 'Exact phrase',
+					confirmText: 'Export encrypted data',
+					actionLabel: 'Export'
+				},
+				importData: {
+					title: 'Confirm encrypted data import',
+					body:
+						'The encrypted data in the text area will replace this app workspace and project data.',
+					inputLabel: 'Type the exact phrase shown below to continue.',
+					confirmTextLabel: 'Exact phrase',
+					confirmText: 'Import encrypted data',
+					actionLabel: 'Import'
+				},
+				saveFile: {
+					title: 'Confirm sync file save',
+					body:
+						'The file {fileName} in {folderPath} will be overwritten with encrypted data from this app.',
+					inputLabel: 'Type the exact phrase shown below to continue.',
+					confirmTextLabel: 'Exact phrase',
+					confirmText: 'Save sync file',
+					actionLabel: 'Save'
+				},
+				loadFile: {
+					title: 'Confirm sync file load',
+					body:
+						'The file {fileName} in {folderPath} will be loaded into this app workspace and project data.',
+					inputLabel: 'Type the exact phrase shown below to continue.',
+					confirmTextLabel: 'Exact phrase',
+					confirmText: 'Load sync file',
+					actionLabel: 'Load'
+				},
+				pullGit: {
+					title: 'Confirm Git pull',
+					body:
+						'Git pull will apply remote changes to {folderPath}. Loading afterward can change this app data.',
+					inputLabel: 'Type the exact phrase shown below to continue.',
+					confirmTextLabel: 'Exact phrase',
+					confirmText: 'Git pull',
+					actionLabel: 'Pull'
+				},
+				pushGit: {
+					title: 'Confirm Git push',
+					body:
+						'The sync file {fileName} in {folderPath} will be committed if needed and pushed to the remote repository.',
+					inputLabel: 'Type the exact phrase shown below to continue.',
+					confirmTextLabel: 'Exact phrase',
+					confirmText: 'Git push',
+					actionLabel: 'Push'
+				}
+			},
+			statuses: {
+				exported: 'Exported.',
+				imported: 'Imported.',
+				saved: 'Saved {fileName}.',
+				loaded: 'Loaded {fileName}.',
+				fetched: 'Fetched.',
+				pulled: 'Pulled. Use Load to apply.',
+				pushed: 'Pushed.',
+				committedAndPushed: 'Committed and pushed.',
+				commitWorkOrderQueued: 'Added commit work: {relativePath}'
+			},
+			operations: {
+				fetchLabel: 'Fetching sync',
+				pullLabel: 'Pulling sync',
+				pushLabel: 'Pushing sync',
+				fetchDetail: 'Checking remote changes.',
+				pullDetail: 'Updating the sync folder.',
+				pushDetail: 'Uploading the sync file.'
+			},
+			errors: {
+				gitActionInvalid: 'Git action is invalid.',
+				passwordRequired: 'Password is required.',
+				folderRequired: 'Folder is required.',
+				folderNotAbsolute: 'Folder path must be absolute.',
+				folderNotFound: 'Folder was not found.',
+				folderNotDirectory: 'Path must be a folder.',
+				folderPermissionDenied: 'Folder access was denied.',
+				fileNameRequired: 'Sync file is required.',
+				fileNameInvalid: 'Sync file name is invalid.',
+				contentRequired: 'Encrypted data is required.',
+				fileNotFound: 'Sync file was not found.',
+				fileTooLarge: 'Sync file is too large.',
+				fileTargetInvalid: 'Sync file path is not usable.',
+				fileReadFailed: 'Sync file could not be read.',
+				fileWriteFailed: 'Sync file could not be saved.',
+				fileUnavailable: 'Sync files are available in the desktop app.',
+				gitNotRepository: 'Folder is not a Git repository.',
+				gitRemoteMissing: 'Git remote is not set.',
+				gitBranchMissing: 'Git branch was not found.',
+				gitUnavailable: 'Git is not available.',
+				gitTimedOut: 'Git command timed out.',
+				gitAuthRequired:
+					'Git authentication is required. Configure System Git credentials or add a GitHub token to the Environment vault.',
+				gitIdentityRequired: 'Git user name or email is not set.',
+				gitRemoteHasChanges: 'Remote has changes. Pull first.',
+				gitFastForwardRequired: 'Pull needs a manual merge.',
+				gitTrustRequired: 'Git repository trust must be configured.',
+				gitCommandFailed: 'Git command failed.',
+				gitReadFailed: 'Git repository could not be read.',
+				gitSyncUnavailable: 'Git sync is available in the desktop app.',
+				envelopeInvalid: 'Encrypted data is invalid.',
+				encryptedDataDamaged: 'Encrypted data is damaged.',
+				exportFailed: 'Export failed.',
+				passwordMismatch: 'Password did not match.',
+				workspaceDataInvalid: 'Workspace data is invalid.',
+				projectReadFailed: 'Project metadata could not be loaded.',
+				projectWriteFailed: 'Project metadata could not be saved.',
+				encryptionUnavailable: 'Sync encryption is available in the desktop app.',
+				settingsSaveFailed: 'Sync settings could not be saved.'
+			}
+		},
+		system: {
+			section: 'System',
+			startOnSignIn: 'Start on Windows sign-in',
+			showTrayIcon: 'Show tray icon',
+			minimizeToTray: 'Minimize to tray',
+			workspaceIdleLock: 'Lock after inactivity',
+			workspaceIdleLockNever: 'Never',
+			workspaceIdleLockMinutes: '{minutes} minutes',
+			loadError: 'System settings could not be loaded.',
+			saveError: 'System settings could not be saved.',
+			autostartUnavailable: 'Autostart is available in the desktop app.',
+			autostartReadFailed: 'Autostart status could not be loaded.',
+			autostartSaveFailed: 'Autostart setting could not be saved.'
+		}
+	} as const;

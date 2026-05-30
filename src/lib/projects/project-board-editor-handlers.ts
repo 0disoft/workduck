@@ -5,7 +5,11 @@ import {
 	saveProjectGithubCredential,
 	unlockProjectEnvironmentVault
 } from './project-board-github-credential-actions';
-import { saveProjectDescription, saveProjectTags } from './project-board-editor-actions';
+import {
+	saveProjectDescription,
+	saveProjectNodeDetails,
+	saveProjectTags
+} from './project-board-editor-actions';
 import { formatTagsInput } from './project-board-selectors';
 import type {
 	ProjectGithubCredentialEditorTarget,
@@ -19,6 +23,11 @@ export function createProjectBoardEditorHandlers(context: {
 	readonly getDescriptionEditor: () => ProjectNodeRecord | null;
 	readonly getDescriptionInput: () => string;
 	readonly getIsSavingDescription: () => boolean;
+	readonly getDetailsEditor: () => ProjectNodeRecord | null;
+	readonly getDetailsNameInput: () => string;
+	readonly getDetailsPathInput: () => string;
+	readonly getDetailsSavedStatus: () => string;
+	readonly getIsSavingDetails: () => boolean;
 	readonly getTagEditor: () => ProjectTagEditorTarget | null;
 	readonly getTagInput: () => string;
 	readonly getIsSavingTags: () => boolean;
@@ -33,6 +42,10 @@ export function createProjectBoardEditorHandlers(context: {
 	readonly setDescriptionEditor: (editor: ProjectNodeRecord | null) => void;
 	readonly setDescriptionInput: (input: string) => void;
 	readonly setIsSavingDescription: (isSaving: boolean) => void;
+	readonly setDetailsEditor: (editor: ProjectNodeRecord | null) => void;
+	readonly setDetailsNameInput: (input: string) => void;
+	readonly setDetailsPathInput: (input: string) => void;
+	readonly setIsSavingDetails: (isSaving: boolean) => void;
 	readonly setTagEditor: (editor: ProjectTagEditorTarget | null) => void;
 	readonly setTagInput: (input: string) => void;
 	readonly setIsSavingTags: (isSaving: boolean) => void;
@@ -51,6 +64,7 @@ export function createProjectBoardEditorHandlers(context: {
 	readonly clearPublishTarget: () => void;
 	readonly clearTagEditor: () => void;
 	readonly clearDescriptionEditor: () => void;
+	readonly clearDetailsEditor: () => void;
 	readonly clearDialog: () => void;
 }) {
 	function clearFeedback() {
@@ -62,6 +76,13 @@ export function createProjectBoardEditorHandlers(context: {
 		context.setDescriptionEditor(null);
 		context.setDescriptionInput('');
 		context.setIsSavingDescription(false);
+	}
+
+	function closeDetailsEditor() {
+		context.setDetailsEditor(null);
+		context.setDetailsNameInput('');
+		context.setDetailsPathInput('');
+		context.setIsSavingDetails(false);
 	}
 
 	function closeTagEditor() {
@@ -84,9 +105,49 @@ export function createProjectBoardEditorHandlers(context: {
 			context.clearDeleteCandidate();
 			context.clearPublishTarget();
 			context.clearTagEditor();
+			context.clearDetailsEditor();
 			context.clearDialog();
 		},
 		closeDescriptionEditor,
+		openDetailsEditor(node: ProjectNodeRecord) {
+			context.setDetailsEditor(node);
+			context.setDetailsNameInput(node.name);
+			context.setDetailsPathInput(node.path);
+			clearFeedback();
+			context.clearDeleteCandidate();
+			context.clearDescriptionEditor();
+			context.clearPublishTarget();
+			context.clearTagEditor();
+			context.clearDialog();
+		},
+		closeDetailsEditor,
+		handleDetailsEditorInput: clearFeedback,
+		handleDetailsEditorBackdropClick(event: MouseEvent) {
+			if (event.target === event.currentTarget && !context.getIsSavingDetails()) {
+				closeDetailsEditor();
+			}
+		},
+		async handleDetailsEditorSubmit(event: SubmitEvent) {
+			event.preventDefault();
+
+			await saveProjectNodeDetails(
+				{
+					editor: context.getDetailsEditor(),
+					name: context.getDetailsNameInput(),
+					path: context.getDetailsPathInput(),
+					registry: context.getRegistry(),
+					isSaving: context.getIsSavingDetails()
+				},
+				{
+					persistRegistry: context.persistRegistry,
+					savedStatus: context.getDetailsSavedStatus(),
+					setFormError: context.setFormError,
+					setStatus: context.setStatus,
+					setIsSaving: context.setIsSavingDetails,
+					closeEditor: closeDetailsEditor
+				}
+			);
+		},
 		handleDescriptionEditorInput: clearFeedback,
 		handleDescriptionEditorBackdropClick(event: MouseEvent) {
 			if (event.target === event.currentTarget && !context.getIsSavingDescription()) {
@@ -120,6 +181,7 @@ export function createProjectBoardEditorHandlers(context: {
 			clearFeedback();
 			context.clearDeleteCandidate();
 			context.clearDescriptionEditor();
+			context.clearDetailsEditor();
 			context.clearPublishTarget();
 			context.clearDialog();
 		},
@@ -135,6 +197,7 @@ export function createProjectBoardEditorHandlers(context: {
 			context.clearDeleteCandidate();
 			context.clearDescriptionEditor();
 			context.clearTagEditor();
+			context.clearDetailsEditor();
 			context.clearPublishTarget();
 			context.clearDialog();
 		},

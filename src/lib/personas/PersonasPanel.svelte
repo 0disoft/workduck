@@ -22,6 +22,7 @@
 	} from '$lib/agents/agent-evaluation';
 	import {
 		assignPersonaToAgents,
+		clearPersonaFromAgents,
 		createEmptyAgentRegistry,
 		type AgentRecord,
 		type AgentRegistry
@@ -40,6 +41,9 @@
 		createRandomPersonaName,
 		createRandomPersonaStyleValues,
 		createRandomPersonaSpectrumValues,
+		PERSONA_DESCRIPTION_MAX_LENGTH,
+		PERSONA_INSTRUCTIONS_MAX_LENGTH,
+		PERSONA_NAME_MAX_LENGTH,
 		personaStyleDefinitions,
 		personaSpectrumDefinitions,
 		personaSpectrumLevels,
@@ -91,6 +95,7 @@
 	let editingPersonaId = $state<string | null>(null);
 	let personaName = $state('');
 	let personaDescription = $state('');
+	let personaInstructions = $state('');
 	let personaStyles = $state<PersonaStyleValues>(createDefaultPersonaStyleValues());
 	let personaSpectrums = $state<PersonaSpectrumValues>(createDefaultPersonaSpectrumValues());
 	let selectedUnassignedAgentIds = $state<string[]>([]);
@@ -196,6 +201,7 @@
 		editingPersonaId = selectedPersona.id;
 		personaName = selectedPersona.name;
 		personaDescription = selectedPersona.description;
+		personaInstructions = selectedPersona.instructions;
 		personaStyles = selectedPersona.styles;
 		personaSpectrums = selectedPersona.spectrums;
 		selectedUnassignedAgentIds = [];
@@ -208,6 +214,7 @@
 		editingPersonaId = null;
 		personaName = '';
 		personaDescription = '';
+		personaInstructions = '';
 		personaStyles = createDefaultPersonaStyleValues();
 		personaSpectrums = createDefaultPersonaSpectrumValues();
 		selectedUnassignedAgentIds = [];
@@ -238,6 +245,7 @@
 				id: editingPersonaId,
 				name: personaName,
 				description: personaDescription,
+				instructions: personaInstructions,
 				styles: personaStyles,
 				spectrums: personaSpectrums
 			});
@@ -305,11 +313,26 @@
 		statusMessage = null;
 
 		try {
+			const assignedAgentCount = agentRegistry.agents.filter(
+				(agent) => agent.personaId === selectedPersona.id
+			).length;
+			const nextAgentRegistry = clearPersonaFromAgents(agentRegistry, selectedPersona.id);
 			const mutation = removePersona(registry, selectedPersona.id);
 
 			if (!mutation.ok) {
 				personaError = mutation.error;
 				return;
+			}
+
+			if (assignedAgentCount > 0) {
+				const agentWriteResult = await writeAgentRegistry(nextAgentRegistry, workspace.path);
+
+				agentRegistry = agentWriteResult.registry;
+				personaError = agentWriteResult.ok ? null : agentWriteResult.error;
+
+				if (!agentWriteResult.ok) {
+					return;
+				}
 			}
 
 			const writeResult = await writePersonaRegistry(mutation.registry, workspace.path);
@@ -484,6 +507,14 @@
 		left: PersonaEvaluationOverviewRow,
 		right: PersonaEvaluationOverviewRow
 	) {
+		if (left.score === null && right.score !== null) {
+			return 1;
+		}
+
+		if (right.score === null && left.score !== null) {
+			return -1;
+		}
+
 		const rightScore = right.score ?? -1;
 		const leftScore = left.score ?? -1;
 
@@ -496,6 +527,12 @@
 		}
 
 		return left.persona.name.localeCompare(right.persona.name, appearanceSettings.languageId === 'ko' ? 'ko-KR' : 'en-US');
+	}
+
+	function formatCountLabel(current: number, max: number) {
+		return messages.personas.countLabel
+			.replace('{current}', current.toString())
+			.replace('{max}', max.toString());
 	}
 
 	function createPersonaErrorMessage(
@@ -558,6 +595,12 @@
 						<div>
 							<dt>{messages.common.description}</dt>
 							<dd>{selectedPersona.description}</dd>
+						</div>
+					{/if}
+					{#if selectedPersona.instructions.length > 0}
+						<div>
+							<dt>{messages.common.instructions}</dt>
+							<dd class="workduck-skill-instructions">{selectedPersona.instructions}</dd>
 						</div>
 					{/if}
 				</dl>
@@ -749,9 +792,13 @@
 								class="workduck-input"
 								type="text"
 								bind:value={personaName}
+								maxlength={PERSONA_NAME_MAX_LENGTH}
 								autocomplete="off"
 								disabled={isSavingPersona}
 							/>
+							<span class="workduck-form-field-meta">
+								{formatCountLabel(personaName.length, PERSONA_NAME_MAX_LENGTH)}
+							</span>
 						</label>
 
 						<label class="workduck-form-field" for="persona-description">
@@ -761,9 +808,27 @@
 								class="workduck-input"
 								type="text"
 								bind:value={personaDescription}
+								maxlength={PERSONA_DESCRIPTION_MAX_LENGTH}
 								autocomplete="off"
 								disabled={isSavingPersona}
 							/>
+							<span class="workduck-form-field-meta">
+								{formatCountLabel(personaDescription.length, PERSONA_DESCRIPTION_MAX_LENGTH)}
+							</span>
+						</label>
+
+						<label class="workduck-form-field" for="persona-instructions">
+							<span>{messages.common.instructions}</span>
+							<textarea
+								id="persona-instructions"
+								class="workduck-input workduck-project-description-input"
+								bind:value={personaInstructions}
+								maxlength={PERSONA_INSTRUCTIONS_MAX_LENGTH}
+								disabled={isSavingPersona}
+							></textarea>
+							<span class="workduck-form-field-meta">
+								{formatCountLabel(personaInstructions.length, PERSONA_INSTRUCTIONS_MAX_LENGTH)}
+							</span>
 						</label>
 
 						<div class="workduck-persona-style-form" aria-label={messages.personas.styles.title}>

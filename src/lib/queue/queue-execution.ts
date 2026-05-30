@@ -11,6 +11,7 @@ export type QueueExecutionError =
 	| 'queue-execution-no-task'
 	| 'queue-execution-no-agent'
 	| 'queue-execution-vault-locked'
+	| 'queue-execution-unknown'
 	| AgentExecutionError;
 
 export type QueueExecutionResult =
@@ -171,13 +172,15 @@ function normalizeQueueExecutionError(error: string | null | undefined): QueueEx
 		case 'agent-provider-rejected':
 			return 'agent-execution-provider-rejected';
 		case 'agent-provider-timeout':
+			return 'agent-execution-provider-timeout';
 		case 'agent-provider-unavailable':
 		case 'agent-execution-failed':
 			return 'agent-execution-provider-unavailable';
 		case 'agent-response-empty':
+			return 'agent-execution-response-empty';
 		case 'agent-response-invalid':
 			return 'agent-execution-response-invalid';
 		default:
-			return 'agent-execution-provider-unavailable';
+			return 'queue-execution-unknown';
 	}
 }

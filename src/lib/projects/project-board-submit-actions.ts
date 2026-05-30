@@ -8,7 +8,7 @@ import {
 	createRepositoryNameFromRemoteUrl,
 	createWorkspaceChildPath
 } from './project-board-paths';
-import { parseTagsInput } from './project-board-selectors';
+import { validateTagsInput } from './project-board-selectors';
 import type {
 	ProjectDialogState,
 	ProjectRepositorySourceMode
@@ -48,6 +48,13 @@ export async function submitProjectDialog(
 		return;
 	}
 
+	const tagsResult = validateTagsInput(input.formTags);
+
+	if (!tagsResult.ok) {
+		context.setFormError(tagsResult.error);
+		return;
+	}
+
 	const folderResult =
 		input.dialog.mode === 'project'
 			? await createProjectFolder(
@@ -67,7 +74,7 @@ export async function submitProjectDialog(
 		name: input.formName,
 		description: input.formDescription,
 		path: folderResult.relativePath,
-		tags: parseTagsInput(input.formTags)
+		tags: tagsResult.tags
 	});
 
 	if (!result.ok) {
@@ -146,6 +153,13 @@ async function submitRepositoryLink(
 		return;
 	}
 
+	const tagsResult = validateTagsInput(input.formTags);
+
+	if (!tagsResult.ok) {
+		context.setFormError(tagsResult.error);
+		return;
+	}
+
 	const folderResult = await createProjectGroupFolder(
 		input.workspacePath,
 		targetNode.path,
@@ -162,7 +176,7 @@ async function submitRepositoryLink(
 		name: input.formName,
 		path: createWorkspaceChildPath(input.workspacePath, folderResult.relativePath),
 		remoteUrl: null,
-		tags: parseTagsInput(input.formTags)
+		tags: tagsResult.tags
 	});
 
 	if (!result.ok) {
@@ -189,12 +203,19 @@ async function submitRemoteRepositoryLink(
 		return;
 	}
 
+	const tagsResult = validateTagsInput(input.formTags);
+
+	if (!tagsResult.ok) {
+		context.setFormError(tagsResult.error);
+		return;
+	}
+
 	const result = addProjectRepositoryLink(input.registry, {
 		nodeId: targetNodeId,
 		name: repositoryName,
 		path: null,
 		remoteUrl: input.repositoryRemoteUrl,
-		tags: parseTagsInput(input.formTags)
+		tags: tagsResult.tags
 	});
 
 	if (!result.ok) {

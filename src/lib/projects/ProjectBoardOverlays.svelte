@@ -20,6 +20,7 @@
 	import ProjectDeleteDialog from './ProjectDeleteDialog.svelte';
 	import ProjectDescriptionDialog from './ProjectDescriptionDialog.svelte';
 	import ProjectGithubCredentialDialog from './ProjectGithubCredentialDialog.svelte';
+	import ProjectNodeDetailsDialog from './ProjectNodeDetailsDialog.svelte';
 	import ProjectNodeDialog from './ProjectNodeDialog.svelte';
 	import ProjectPublishDialog from './ProjectPublishDialog.svelte';
 	import ProjectTagDialog from './ProjectTagDialog.svelte';
@@ -30,6 +31,8 @@
 		contextMenuElement: HTMLElement | undefined;
 		shouldDeleteLocalFolder: boolean;
 		descriptionInput: string;
+		detailsNameInput: string;
+		detailsPathInput: string;
 		tagInput: string;
 		environmentVaultPassword: string;
 		selectedGithubCredentialSecretId: string;
@@ -41,6 +44,7 @@
 		repositoryRemoteUrl: string;
 		readonly deleteCandidate: ProjectDeleteCandidate | null;
 		readonly descriptionEditor: import('./project-registry').ProjectNodeRecord | null;
+		readonly detailsEditor: import('./project-registry').ProjectNodeRecord | null;
 		readonly tagEditor: ProjectTagEditorTarget | null;
 		readonly githubCredentialEditor: ProjectGithubCredentialEditorTarget | null;
 		readonly publishTarget: ProjectRepositoryTarget | null;
@@ -54,6 +58,8 @@
 		readonly canDeleteLocalFolder: boolean;
 		readonly isSavingDescription: boolean;
 		readonly canSaveDescription: boolean;
+		readonly isSavingDetails: boolean;
+		readonly canSaveDetails: boolean;
 		readonly isSavingTags: boolean;
 		readonly canSaveTags: boolean;
 		readonly environmentVaultEnvelope: SecretVaultEnvelope | null;
@@ -82,6 +88,7 @@
 		readonly getDialogSubmitLabel: () => string;
 		readonly isRepositoryRemoteUrlError: (error: ProjectFormError | null) => boolean;
 		readonly onOpenFolder: () => Promise<void>;
+		readonly onEditDetails: () => void;
 		readonly onEditDescription: () => void;
 		readonly onEditGithubCredential: () => void;
 		readonly onEditTags: () => void;
@@ -97,6 +104,10 @@
 		readonly onDescriptionSubmit: (event: SubmitEvent) => Promise<void>;
 		readonly onDescriptionBackdropClick: (event: MouseEvent) => void;
 		readonly onDescriptionClose: () => void;
+		readonly onDetailsInput: () => void;
+		readonly onDetailsSubmit: (event: SubmitEvent) => Promise<void>;
+		readonly onDetailsBackdropClick: (event: MouseEvent) => void;
+		readonly onDetailsClose: () => void;
 		readonly onTagInput: () => void;
 		readonly onTagSubmit: (event: SubmitEvent) => Promise<void>;
 		readonly onTagBackdropClick: (event: MouseEvent) => void;
@@ -123,24 +134,26 @@
 
 	let {
 		contextMenu, projectMessages, contextMenuElement = $bindable(), shouldDeleteLocalFolder = $bindable(),
-		descriptionInput = $bindable(), tagInput = $bindable(), environmentVaultPassword = $bindable(),
+		descriptionInput = $bindable(), detailsNameInput = $bindable(), detailsPathInput = $bindable(),
+		tagInput = $bindable(), environmentVaultPassword = $bindable(),
 		selectedGithubCredentialSecretId = $bindable(), githubRepositoryName = $bindable(),
 		githubRepositoryCommitMessage = $bindable(), formName = $bindable(), formDescription = $bindable(),
 		formTags = $bindable(), repositoryRemoteUrl = $bindable(), deleteCandidate, descriptionEditor,
-		tagEditor, githubCredentialEditor, publishTarget, dialog, dialogTargetNodeName, repositorySourceMode,
+		detailsEditor, tagEditor, githubCredentialEditor, publishTarget, dialog, dialogTargetNodeName, repositorySourceMode,
 		formError, storageError, isDeleting, canConfirmDelete, canDeleteLocalFolder, isSavingDescription,
-		canSaveDescription, isSavingTags, canSaveTags, environmentVaultEnvelope, environmentVault,
+		canSaveDescription, isSavingDetails, canSaveDetails, isSavingTags, canSaveTags, environmentVaultEnvelope, environmentVault,
 		environmentVaultError, githubCredentialOptions, isEnvironmentVaultBusy, isSubmitting,
 		canSaveGithubCredential, githubRepositoryVisibility, isPublishingRepository,
 		canSubmitPublishRepository, canSubmitDialog, canOpenContextFolder, canCloneContextRepository,
 		canInitializeContextRepository, canPublishContextRepository, canEditContextGithubCredential,
 		getDeleteDialogTitle, getDeleteDialogText, getDeleteLocalFolderLabel, getDeleteLocalFolderUnavailableText,
 		getVisibleFormErrorMessage, getTagsInputMaxLength, getDialogTitle, getDialogSubmitLabel,
-		isRepositoryRemoteUrlError, onOpenFolder, onEditDescription, onEditGithubCredential,
+		isRepositoryRemoteUrlError, onOpenFolder, onEditDetails, onEditDescription, onEditGithubCredential,
 		onEditTags, onDelete, onCloneRepository, onInitializeRepository, onPublishRepository,
 		onRepositoryTask,
 		onDeleteBackdropClick, onDeleteClose, onDeleteConfirm, onDescriptionInput, onDescriptionSubmit,
-		onDescriptionBackdropClick, onDescriptionClose, onTagInput, onTagSubmit, onTagBackdropClick,
+		onDescriptionBackdropClick, onDescriptionClose, onDetailsInput, onDetailsSubmit,
+		onDetailsBackdropClick, onDetailsClose, onTagInput, onTagSubmit, onTagBackdropClick,
 		onTagClose, onUnlock, onGithubCredentialSubmit, onGithubCredentialBackdropClick,
 		onGithubCredentialClose, onRepositoryNameInput, onCommitMessageInput, onSelectVisibility,
 		onPublishSubmit, onPublishBackdropClick, onPublishClose, onNameInput, onDialogDescriptionInput,
@@ -153,7 +166,7 @@
 	<ProjectContextMenu {contextMenu} {projectMessages} bind:contextMenuElement {canOpenContextFolder}
 		{canCloneContextRepository} {canInitializeContextRepository} {canPublishContextRepository}
 		{canEditContextGithubCredential}
-		onOpenFolder={onOpenFolder} onEditDescription={onEditDescription}
+		onOpenFolder={onOpenFolder} onEditDetails={onEditDetails} onEditDescription={onEditDescription}
 		onEditGithubCredential={onEditGithubCredential} onEditTags={onEditTags} onDelete={onDelete}
 		onCloneRepository={onCloneRepository} onInitializeRepository={onInitializeRepository}
 		onPublishRepository={onPublishRepository} onRepositoryTask={onRepositoryTask} />
@@ -164,6 +177,14 @@
 		{canDeleteLocalFolder} {getDeleteDialogTitle} {getDeleteDialogText}
 		{getDeleteLocalFolderLabel} {getDeleteLocalFolderUnavailableText}
 		onBackdropClick={onDeleteBackdropClick} onClose={onDeleteClose} onConfirm={onDeleteConfirm} />
+{/if}
+
+{#if detailsEditor !== null}
+	<ProjectNodeDetailsDialog editor={detailsEditor} {projectMessages} bind:nameInput={detailsNameInput}
+		bind:pathInput={detailsPathInput} {formError} {storageError} {isSavingDetails}
+		{canSaveDetails} {getVisibleFormErrorMessage}
+		onInput={onDetailsInput} onSubmit={onDetailsSubmit}
+		onBackdropClick={onDetailsBackdropClick} onClose={onDetailsClose} />
 {/if}
 
 {#if descriptionEditor !== null}

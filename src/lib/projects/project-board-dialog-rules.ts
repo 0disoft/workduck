@@ -1,10 +1,13 @@
 import type { ProjectFormError } from './project-board-errors';
+import type { WorkduckMessages } from '$lib/i18n/workduck-message-contract';
 import type {
 	ProjectDeleteCandidate,
 	ProjectDialogMode,
 	ProjectDialogState,
 	ProjectRepositorySourceMode
 } from './project-board-types';
+
+type ProjectDeleteDialogMessages = WorkduckMessages['projects']['deleteDialog'];
 
 export function getProjectDialogTitle(
 	mode: ProjectDialogMode | null | undefined,
@@ -29,58 +32,90 @@ export function getProjectDialogSubmitLabel(mode: ProjectDialogMode | null | und
 	return mode === 'repository' ? 'Link' : 'Create';
 }
 
-export function getProjectDeleteDialogTitle(deleteCandidate: ProjectDeleteCandidate | null) {
+export function getProjectDeleteDialogTitle(
+	deleteCandidate: ProjectDeleteCandidate | null,
+	messages: ProjectDeleteDialogMessages
+) {
 	if (deleteCandidate?.type === 'repository') {
-		return 'Remove repository';
+		return messages.titles.repository;
 	}
 
-	return deleteCandidate?.node.kind === 'group' ? 'Remove group' : 'Remove project';
+	return deleteCandidate?.node.kind === 'group' ? messages.titles.group : messages.titles.project;
 }
 
-export function getProjectDeleteDialogText(deleteCandidate: ProjectDeleteCandidate | null) {
+export function getProjectDeleteDialogText(
+	deleteCandidate: ProjectDeleteCandidate | null,
+	messages: ProjectDeleteDialogMessages
+) {
 	const name =
 		deleteCandidate?.type === 'repository'
 			? deleteCandidate.repository.name
 			: deleteCandidate?.node.name ?? 'this item';
 
-	return `Remove ${name} from Workduck?`;
+	if (deleteCandidate?.type === 'node') {
+		const affectedItems = [
+			formatAffectedItemCount(
+				deleteCandidate.childGroupCount,
+				messages.affectedGroup,
+				messages.affectedGroups
+			),
+			formatAffectedItemCount(
+				deleteCandidate.childRepositoryCount,
+				messages.affectedRepository,
+				messages.affectedRepositories
+			)
+		].filter((item) => item.length > 0);
+
+		if (affectedItems.length > 0) {
+			return messages.textWithAffected
+				.replace('{name}', name)
+				.replace('{affected}', affectedItems.join(', '));
+		}
+	}
+
+	return messages.text.replace('{name}', name);
 }
 
-export function getProjectDeleteLocalFolderLabel(deleteCandidate: ProjectDeleteCandidate | null) {
+export function getProjectDeleteLocalFolderLabel(
+	deleteCandidate: ProjectDeleteCandidate | null,
+	messages: ProjectDeleteDialogMessages
+) {
 	if (deleteCandidate?.type === 'repository') {
-		return 'Also delete this repository folder';
+		return messages.localRepositoryFolder;
 	}
 
 	return deleteCandidate?.node.kind === 'project'
-		? 'Also delete this project folder'
-		: 'Also delete this group folder';
+		? messages.localProjectFolder
+		: messages.localGroupFolder;
 }
 
 export function getProjectDeleteLocalFolderUnavailableText(
-	deleteCandidate: ProjectDeleteCandidate | null
+	deleteCandidate: ProjectDeleteCandidate | null,
+	messages: ProjectDeleteDialogMessages
 ) {
 	if (deleteCandidate?.type === 'repository') {
-		return 'Local folder deletion is only available for repository folders under this workspace.';
+		return messages.localRepositoryFolderUnavailable;
 	}
 
-	return 'Local folder deletion is only available for folders under this workspace.';
+	return messages.localFolderUnavailable;
 }
 
 export function getProjectDeleteSuccessStatus(
 	deleteCandidate: ProjectDeleteCandidate,
-	shouldDeleteLocalFolder: boolean
+	shouldDeleteLocalFolder: boolean,
+	messages: ProjectDeleteDialogMessages
 ) {
 	if (deleteCandidate.type === 'repository') {
 		return shouldDeleteLocalFolder
-			? 'Repository and local folder removed.'
-			: 'Repository removed.';
+			? messages.repositoryAndFolderRemoved
+			: messages.repositoryRemoved;
 	}
 
 	if (deleteCandidate.node.kind === 'project') {
-		return shouldDeleteLocalFolder ? 'Project and local folder removed.' : 'Project removed.';
+		return shouldDeleteLocalFolder ? messages.projectAndFolderRemoved : messages.projectRemoved;
 	}
 
-	return shouldDeleteLocalFolder ? 'Group and local folder removed.' : 'Group removed.';
+	return shouldDeleteLocalFolder ? messages.groupAndFolderRemoved : messages.groupRemoved;
 }
 
 export function isProjectRepositoryRemoteUrlError(error: ProjectFormError | null) {
@@ -109,4 +144,12 @@ export function canSubmitProjectDialog(
 	return repositorySourceMode === 'folder'
 		? formName.trim().length > 0
 		: repositoryRemoteUrl.trim().length > 0;
+}
+
+function formatAffectedItemCount(count: number, singularTemplate: string, pluralTemplate: string) {
+	if (count <= 0) {
+		return '';
+	}
+
+	return (count === 1 ? singularTemplate : pluralTemplate).replace('{count}', count.toString());
 }

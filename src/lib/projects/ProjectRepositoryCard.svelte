@@ -195,7 +195,12 @@
 				disabled={repositoryBusy}
 				onclick={() => void onClone()}
 			>
-				{getRepositoryActionButtonLabel(repositoryOperation, 'clone', 'Clone')}
+				{getRepositoryActionButtonLabel(
+					repositoryOperation,
+					'clone',
+					projectMessages.operations.buttonIdle.clone,
+					projectMessages
+				)}
 			</button>
 		{/if}
 		{#if canInitializeRepository || isRepositoryOperationRunning('init')}
@@ -205,7 +210,12 @@
 				disabled={repositoryBusy}
 				onclick={() => void onInitialize()}
 			>
-				{getRepositoryActionButtonLabel(repositoryOperation, 'init', 'Git Init')}
+				{getRepositoryActionButtonLabel(
+					repositoryOperation,
+					'init',
+					projectMessages.operations.buttonIdle.init,
+					projectMessages
+				)}
 			</button>
 		{/if}
 		{#if canPublishRepositoryToGithub || isRepositoryOperationRunning('publish')}
@@ -215,7 +225,12 @@
 				disabled={repositoryBusy}
 				onclick={onPublish}
 			>
-				{getRepositoryActionButtonLabel(repositoryOperation, 'publish', 'Publish')}
+				{getRepositoryActionButtonLabel(
+					repositoryOperation,
+					'publish',
+					projectMessages.operations.buttonIdle.publish,
+					projectMessages
+				)}
 			</button>
 		{/if}
 		{#if canFetchRepository ||
@@ -231,7 +246,12 @@
 				disabled={repositoryBusy || !canFetchRepository}
 				onclick={() => void onGitAction('fetch')}
 			>
-				{getRepositoryActionButtonLabel(repositoryOperation, 'fetch', 'Fetch')}
+				{getRepositoryActionButtonLabel(
+					repositoryOperation,
+					'fetch',
+					projectMessages.operations.buttonIdle.fetch,
+					projectMessages
+				)}
 			</button>
 			<button
 				class="workduck-repository-action-button"
@@ -239,7 +259,12 @@
 				disabled={repositoryBusy || !canPullRepository}
 				onclick={() => void onGitAction('pull')}
 			>
-				{getRepositoryActionButtonLabel(repositoryOperation, 'pull', 'Pull')}
+				{getRepositoryActionButtonLabel(
+					repositoryOperation,
+					'pull',
+					projectMessages.operations.buttonIdle.pull,
+					projectMessages
+				)}
 			</button>
 			<button
 				class="workduck-repository-action-button"
@@ -247,7 +272,12 @@
 				disabled={repositoryBusy || !canPushRepository}
 				onclick={() => void onGitAction('push')}
 			>
-				{getRepositoryActionButtonLabel(repositoryOperation, 'push', 'Push')}
+				{getRepositoryActionButtonLabel(
+					repositoryOperation,
+					'push',
+					projectMessages.operations.buttonIdle.push,
+					projectMessages
+				)}
 			</button>
 			{#if canQueueCommitWorkOrder}
 				<button

@@ -1,6 +1,10 @@
 export const workduckLanguageOptions = [
 	{ id: 'en', label: 'English', htmlLang: 'en' },
-	{ id: 'ko', label: '한국어', htmlLang: 'ko' }
+	{ id: 'ko', label: '한국어', htmlLang: 'ko' },
+	{ id: 'es', label: 'Español', htmlLang: 'es' },
+	{ id: 'fr', label: 'Français', htmlLang: 'fr' },
+	{ id: 'zh', label: '简体中文', htmlLang: 'zh' },
+	{ id: 'hi', label: 'हिन्दी', htmlLang: 'hi' }
 ] as const;
 
 export type WorkduckLanguageOption = (typeof workduckLanguageOptions)[number];

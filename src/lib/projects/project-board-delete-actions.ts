@@ -2,6 +2,7 @@ import {
 	deleteProjectNodeFolder,
 	deleteProjectRepositoryFolder
 } from './project-folder';
+import type { WorkduckMessages } from '$lib/i18n/workduck-message-contract';
 import type { ProjectFormError } from './project-board-errors';
 import { getProjectDeleteSuccessStatus } from './project-board-dialog-rules';
 import type { ProjectDeleteCandidate } from './project-board-types';
@@ -21,6 +22,7 @@ export interface ProjectDeleteActionInput {
 
 export interface ProjectDeleteActionContext {
 	readonly persistRegistry: (nextRegistry: ProjectRegistry) => Promise<boolean>;
+	readonly deleteDialogMessages: WorkduckMessages['projects']['deleteDialog'];
 	readonly setFormError: (error: ProjectFormError) => void;
 	readonly setStatus: (status: string) => void;
 	readonly setIsDeleting: (isDeleting: boolean) => void;
@@ -63,7 +65,11 @@ export async function deleteProjectCandidate(
 
 	if (await context.persistRegistry(result.registry)) {
 		context.setStatus(
-			getProjectDeleteSuccessStatus(input.candidate, input.shouldDeleteLocalFolder)
+			getProjectDeleteSuccessStatus(
+				input.candidate,
+				input.shouldDeleteLocalFolder,
+				context.deleteDialogMessages
+			)
 		);
 		context.closeDeleteDialog();
 		return;

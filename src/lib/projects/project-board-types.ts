@@ -18,6 +18,8 @@ export type ProjectDeleteCandidate =
 	| {
 			readonly type: 'node';
 			readonly node: ProjectNodeRecord;
+			readonly childGroupCount: number;
+			readonly childRepositoryCount: number;
 	  }
 	| {
 			readonly type: 'repository';

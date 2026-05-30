@@ -17,10 +17,19 @@
 		type ProjectNodeRecord,
 		type ProjectRegistry
 	} from '$lib/projects/project-registry';
+	import {
+		createProjectRepositorySelectionOptions,
+		filterProjectRepositorySelectionOptions
+	} from '$lib/projects/project-repository-selection';
 	import { readProjectRegistry, subscribeProjectRegistry } from '$lib/projects/project-storage';
 
 	import {
 		createEmptyReferenceRegistry,
+		REFERENCE_CONTENT_MAX_LENGTH,
+		REFERENCE_SOURCE_URL_MAX_LENGTH,
+		REFERENCE_TAGS_MAX_COUNT,
+		REFERENCE_TAG_MAX_LENGTH,
+		REFERENCE_TITLE_MAX_LENGTH,
 		removeReference,
 		upsertReference,
 		type ReferenceRecord,
@@ -49,6 +58,9 @@
 	let referenceSourceUrl = $state('');
 	let referenceTags = $state('');
 	let referenceProjectIds = $state<string[]>([]);
+	let referenceRepositoryIds = $state<string[]>([]);
+	let referenceRepositorySearchInput = $state('');
+	let referenceRepositorySearchQuery = $state('');
 	let referenceContent = $state('');
 	let projectRegistry = $state<ProjectRegistry>(createEmptyProjectRegistry(''));
 	let isReferenceFormOpen = $state(false);
@@ -63,6 +75,12 @@
 			? null
 			: registry.references.find((reference) => reference.id === selectedReferenceId) ?? null
 	);
+	let selectedReferenceProjectLabels = $derived(
+		selectedReference === null ? [] : getReferenceProjectLabels(selectedReference)
+	);
+	let selectedReferenceRepositoryLabels = $derived(
+		selectedReference === null ? [] : getReferenceRepositoryLabels(selectedReference)
+	);
 	let referenceFormLabel = $derived(
 		editingReferenceId === null ? messages.common.add : messages.common.save
 	);
@@ -70,12 +88,23 @@
 	let availableProjects = $derived(
 		projectRegistry.nodes.filter((node) => node.kind === 'project')
 	);
+	let availableRepositories = $derived(createProjectRepositorySelectionOptions(projectRegistry.nodes));
+	let filteredAvailableRepositories = $derived(
+		filterProjectRepositorySelectionOptions(availableRepositories, referenceRepositorySearchQuery)
+	);
 	let referenceProjectSummary = $derived(
 		createReferenceProjectSummary(referenceProjectIds)
 	);
+	let referenceRepositorySummary = $derived(
+		createReferenceRepositorySummary(referenceRepositoryIds)
+	);
+	let referenceTagValidationError = $derived(createReferenceTagValidationError(referenceTags));
+	let referenceContentIsTooLong = $derived(referenceContent.trim().length > REFERENCE_CONTENT_MAX_LENGTH);
 	let canSaveReference = $derived(
 		referenceTitle.trim().length > 0 &&
 			(referenceSourceUrl.trim().length > 0 || referenceContent.trim().length > 0) &&
+			referenceTagValidationError === null &&
+			!referenceContentIsTooLong &&
 			!isSavingReference
 	);
 
@@ -119,6 +148,17 @@
 		onReferenceCountChange?.(registry.references.length);
 	});
 
+	$effect(() => {
+		const nextQuery = referenceRepositorySearchInput;
+		const timeoutId = setTimeout(() => {
+			referenceRepositorySearchQuery = nextQuery;
+		}, 500);
+
+		return () => {
+			clearTimeout(timeoutId);
+		};
+	});
+
 	async function readRegistryFromStorage(workspaceId: string, workspacePath: string) {
 		const result = await readReferenceRegistry(workspaceId, workspacePath);
 
@@ -155,6 +195,9 @@
 		referenceSourceUrl = selectedReference.sourceUrl;
 		referenceTags = selectedReference.tags.join(', ');
 		referenceProjectIds = [...selectedReference.projectIds];
+		referenceRepositoryIds = [...(selectedReference.repositoryIds ?? [])];
+		referenceRepositorySearchInput = '';
+		referenceRepositorySearchQuery = '';
 		referenceContent = selectedReference.content;
 		statusMessage = null;
 		referenceError = null;
@@ -167,6 +210,9 @@
 		referenceSourceUrl = '';
 		referenceTags = '';
 		referenceProjectIds = [];
+		referenceRepositoryIds = [];
+		referenceRepositorySearchInput = '';
+		referenceRepositorySearchQuery = '';
 		referenceContent = '';
 		referenceError = null;
 	}
@@ -189,6 +235,7 @@
 				sourceUrl: referenceSourceUrl,
 				tags: parsedTags,
 				projectIds: referenceProjectIds,
+				repositoryIds: referenceRepositoryIds,
 				content: referenceContent
 			});
 
@@ -219,12 +266,21 @@
 			return;
 		}
 
+		const targetReference = selectedReference;
+
+		if (
+			typeof window !== 'undefined' &&
+			!window.confirm(messages.references.removeConfirm.replace('{title}', targetReference.title))
+		) {
+			return;
+		}
+
 		isRemovingReference = true;
 		referenceError = null;
 		statusMessage = null;
 
 		try {
-			const mutation = removeReference(registry, selectedReference.id);
+			const mutation = removeReference(registry, targetReference.id);
 
 			if (!mutation.ok) {
 				referenceError = mutation.error;
@@ -266,28 +322,59 @@
 		return reference.projectIds.map(getProjectLabelById).filter((label) => label.length > 0);
 	}
 
+	function getReferenceRepositoryLabels(reference: ReferenceRecord) {
+		return reference.repositoryIds.map(getRepositoryLabelById).filter((label) => label.length > 0);
+	}
+
 	function getProjectLabelById(projectId: string) {
 		const project = availableProjects.find((candidate) => candidate.id === projectId);
 
-		return project === undefined ? projectId : project.name;
+		return project === undefined ? '' : project.name;
 	}
 
 	function createReferenceProjectSummary(projectIds: readonly string[]) {
-		if (projectIds.length === 0) {
+		const projectLabels = projectIds.map(getProjectLabelById).filter((label) => label.length > 0);
+
+		if (projectLabels.length === 0) {
 			return messages.references.noProject;
 		}
 
-		if (projectIds.length === 1) {
-			const projectId = projectIds[0];
-
-			return projectId === undefined ? messages.references.noProject : getProjectLabelById(projectId);
+		if (projectLabels.length === 1) {
+			return projectLabels[0] ?? messages.references.noProject;
 		}
 
-		return messages.references.projectSelectionCount.replace('{count}', projectIds.length.toString());
+		return messages.references.projectSelectionCount.replace('{count}', projectLabels.length.toString());
 	}
 
 	function toggleReferenceProject(projectId: string, isSelected: boolean) {
 		referenceProjectIds = updateSelectedProjectIds(referenceProjectIds, projectId, isSelected);
+	}
+
+	function createReferenceRepositorySummary(repositoryIds: readonly string[]) {
+		const repositoryLabels = repositoryIds.map(getRepositoryLabelById).filter((label) => label.length > 0);
+
+		if (repositoryLabels.length === 0) {
+			return messages.references.noRepository;
+		}
+
+		if (repositoryLabels.length === 1) {
+			return repositoryLabels[0] ?? '';
+		}
+
+		return messages.references.repositorySelectionCount.replace(
+			'{count}',
+			repositoryLabels.length.toString()
+		);
+	}
+
+	function getRepositoryLabelById(repositoryId: string) {
+		const repository = availableRepositories.find((candidate) => candidate.id === repositoryId);
+
+		return repository === undefined ? '' : repository.label;
+	}
+
+	function toggleReferenceRepository(repositoryId: string, isSelected: boolean) {
+		referenceRepositoryIds = updateSelectedProjectIds(referenceRepositoryIds, repositoryId, isSelected);
 	}
 
 	function updateSelectedProjectIds(
@@ -344,7 +431,7 @@
 		const tags: string[] = [];
 		const tagKeys = new Set<string>();
 
-		for (const item of value.split(',')) {
+		for (const item of value.split(/[;,]/)) {
 			const tag = item.trim().replace(/\s+/g, ' ');
 			const tagKey = tag.toLocaleLowerCase('en-US');
 
@@ -359,6 +446,45 @@
 		return tags;
 	}
 
+	function createReferenceTagValidationError(value: string) {
+		const rawTags = value
+			.split(/[;,]/)
+			.map((tag) => tag.trim().replace(/\s+/g, ' '))
+			.filter((tag) => tag.length > 0);
+		const uniqueTagKeys = new Set<string>();
+		let uniqueTagCount = 0;
+
+		for (const tag of rawTags) {
+			const tagKey = tag.toLocaleLowerCase('en-US');
+
+			if (uniqueTagKeys.has(tagKey)) {
+				continue;
+			}
+
+			if (tag.length > REFERENCE_TAG_MAX_LENGTH) {
+				return messages.references.errors.tagTooLong
+					.replace('{max}', REFERENCE_TAG_MAX_LENGTH.toString())
+					.replace('{tag}', tag);
+			}
+
+			uniqueTagKeys.add(tagKey);
+			uniqueTagCount += 1;
+		}
+
+		if (uniqueTagCount > REFERENCE_TAGS_MAX_COUNT) {
+			return messages.references.errors.tagsTooMany
+				.replace('{max}', REFERENCE_TAGS_MAX_COUNT.toString());
+		}
+
+		return null;
+	}
+
+	function formatCountLabel(current: number, max: number) {
+		return messages.references.countLabel
+			.replace('{current}', current.toString())
+			.replace('{max}', max.toString());
+	}
+
 	function createReferenceErrorMessage(
 		nextError: ReferenceRegistryError | ReferenceRegistryStorageError
 	) {
@@ -369,6 +495,20 @@
 				return messages.references.errors.bodyOrSourceRequired;
 			case 'reference-source-url-invalid':
 				return messages.references.errors.sourceUrlInvalid;
+			case 'reference-content-too-long':
+				return messages.references.errors.contentTooLong.replace(
+					'{max}',
+					REFERENCE_CONTENT_MAX_LENGTH.toString()
+				);
+			case 'reference-tags-too-many':
+				return messages.references.errors.tagsTooMany.replace(
+					'{max}',
+					REFERENCE_TAGS_MAX_COUNT.toString()
+				);
+			case 'reference-tag-too-long':
+				return messages.references.errors.tagTooLong
+					.replace('{max}', REFERENCE_TAG_MAX_LENGTH.toString())
+					.replace('{tag}', '');
 			case 'reference-title-duplicate':
 				return messages.references.errors.titleDuplicate;
 			case 'reference-not-found':
@@ -432,13 +572,25 @@
 							</dd>
 						</div>
 					{/if}
-					{#if selectedReference.projectIds.length > 0}
+					{#if selectedReferenceProjectLabels.length > 0}
 						<div>
 							<dt>{messages.references.relatedProjects}</dt>
 							<dd>
 								<span class="workduck-environment-tags">
-									{#each getReferenceProjectLabels(selectedReference) as projectLabel (projectLabel)}
+									{#each selectedReferenceProjectLabels as projectLabel (projectLabel)}
 										<span class="workduck-project-tag">{projectLabel}</span>
+									{/each}
+								</span>
+							</dd>
+						</div>
+					{/if}
+					{#if selectedReferenceRepositoryLabels.length > 0}
+						<div>
+							<dt>{messages.references.relatedRepositories}</dt>
+							<dd>
+								<span class="workduck-environment-tags">
+									{#each selectedReferenceRepositoryLabels as repoLabel (repoLabel)}
+										<span class="workduck-project-tag">{repoLabel}</span>
 									{/each}
 								</span>
 							</dd>
@@ -507,8 +659,12 @@
 						type="text"
 						bind:value={referenceTitle}
 						autocomplete="off"
+						maxlength={REFERENCE_TITLE_MAX_LENGTH}
 						disabled={isSavingReference}
 					/>
+					<span class="workduck-form-field-meta">
+						{formatCountLabel(referenceTitle.trim().length, REFERENCE_TITLE_MAX_LENGTH)}
+					</span>
 				</label>
 
 				<label class="workduck-form-field" for="reference-source-url">
@@ -516,11 +672,14 @@
 					<input
 						id="reference-source-url"
 						class="workduck-input"
-						type="url"
+						type="text"
+						inputmode="url"
 						bind:value={referenceSourceUrl}
 						autocomplete="off"
+						maxlength={REFERENCE_SOURCE_URL_MAX_LENGTH}
 						disabled={isSavingReference}
 					/>
+					<span class="workduck-form-field-meta">{messages.references.sourceUrlHint}</span>
 				</label>
 
 				<label class="workduck-form-field" for="reference-tags">
@@ -533,6 +692,15 @@
 						autocomplete="off"
 						disabled={isSavingReference}
 					/>
+					<span class="workduck-form-field-meta">
+						{messages.references.tagsHint
+							.replace('{count}', parsedTags.length.toString())
+							.replace('{max}', REFERENCE_TAGS_MAX_COUNT.toString())
+							.replace('{tagMax}', REFERENCE_TAG_MAX_LENGTH.toString())}
+					</span>
+					{#if referenceTagValidationError !== null}
+						<span class="workduck-inline-error">{referenceTagValidationError}</span>
+					{/if}
 				</label>
 
 				<div class="workduck-form-field">
@@ -562,14 +730,69 @@
 					</details>
 				</div>
 
+				<div class="workduck-form-field">
+					<span>{messages.references.relatedRepositories}</span>
+					<input
+						class="workduck-input"
+						type="text"
+						bind:value={referenceRepositorySearchInput}
+						autocomplete="off"
+						spellcheck="false"
+						placeholder={messages.references.repositorySearchPlaceholder}
+						disabled={isSavingReference}
+					/>
+					<details class="workduck-multi-select">
+						<summary class="workduck-multi-select-summary">
+							<span>{referenceRepositorySummary}</span>
+						</summary>
+						<div class="workduck-multi-select-options">
+							{#if availableRepositories.length === 0}
+								<span class="workduck-multi-select-empty">{messages.references.noRepository}</span>
+							{:else if filteredAvailableRepositories.length === 0}
+								<span class="workduck-multi-select-empty">{messages.references.noRepository}</span>
+							{:else}
+								{#each filteredAvailableRepositories as repository (repository.id)}
+									<label class="workduck-multi-select-option">
+										<input
+											type="checkbox"
+											checked={referenceRepositoryIds.includes(repository.id)}
+											disabled={isSavingReference}
+											onchange={(event) =>
+												toggleReferenceRepository(repository.id, event.currentTarget.checked)}
+										/>
+										<span>
+											{repository.label}
+											{#if repository.description.length > 0}
+												<small class="workduck-multi-select-option-subtext">{repository.description}</small>
+											{/if}
+										</span>
+									</label>
+								{/each}
+							{/if}
+						</div>
+					</details>
+				</div>
+
 				<label class="workduck-form-field" for="reference-content">
 					<span>{messages.references.content}</span>
 					<textarea
 						id="reference-content"
 						class="workduck-input workduck-project-description-input"
 						bind:value={referenceContent}
+						maxlength={REFERENCE_CONTENT_MAX_LENGTH}
 						disabled={isSavingReference}
 					></textarea>
+					<span class="workduck-form-field-meta">
+						{formatCountLabel(referenceContent.trim().length, REFERENCE_CONTENT_MAX_LENGTH)}
+					</span>
+					{#if referenceContentIsTooLong}
+						<span class="workduck-inline-error">
+							{messages.references.errors.contentTooLong.replace(
+								'{max}',
+								REFERENCE_CONTENT_MAX_LENGTH.toString()
+							)}
+						</span>
+					{/if}
 				</label>
 
 				<div class="workduck-dialog-actions">

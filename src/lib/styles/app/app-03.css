@@ -488,6 +488,10 @@
 	width: min(460px, 100%);
 }
 
+.workduck-dialog.workduck-skill-dialog {
+	width: min(calc(100vw - 44px), 1180px);
+}
+
 .workduck-dialog.workduck-work-order-dialog {
 	width: min(760px, calc(100vw - 44px));
 }
@@ -509,6 +513,58 @@
 	min-width: 0;
 	grid-template-columns: repeat(2, minmax(0, 1fr));
 	gap: 12px;
+}
+
+.workduck-skill-dialog-layout {
+	display: grid;
+	min-width: 0;
+	grid-template-columns: minmax(320px, 0.86fr) minmax(0, 1.6fr);
+	gap: 16px;
+	align-items: start;
+}
+
+.workduck-skill-dialog-main,
+.workduck-skill-dialog-side {
+	display: grid;
+	min-width: 0;
+	gap: 14px;
+}
+
+.workduck-skill-dialog-side {
+	max-height: calc(100vh - 168px);
+	overflow-y: auto;
+	border: 1px solid oklch(var(--workduck-oklch-border) / 0.72);
+	border-radius: 8px;
+	background: oklch(var(--workduck-oklch-surface) / 0.28);
+	padding: 12px;
+}
+
+.workduck-skill-side-header {
+	display: grid;
+	min-width: 0;
+	grid-template-columns: minmax(0, 1fr) auto;
+	gap: 12px;
+	align-items: start;
+}
+
+.workduck-skill-side-heading {
+	display: grid;
+	min-width: 0;
+	gap: 6px;
+}
+
+.workduck-skill-side-heading strong {
+	color: var(--workduck-color-text);
+	font-size: var(--workduck-font-size-sm);
+	font-weight: 900;
+}
+
+.workduck-skill-side-heading span {
+	color: var(--workduck-color-muted);
+	font-size: var(--workduck-font-size-sm);
+	font-weight: 800;
+	line-height: 1.4;
+	overflow-wrap: anywhere;
 }
 
 .workduck-work-order-section {
@@ -599,6 +655,118 @@
 .workduck-revision-option {
 	border: 1px solid oklch(var(--workduck-oklch-border) / 0.54);
 	background: oklch(var(--workduck-oklch-surface) / 0.32);
+}
+
+.workduck-revision-option small {
+	display: block;
+	color: var(--workduck-color-muted);
+	font-size: var(--workduck-font-size-xs);
+	font-weight: 800;
+	line-height: 1.35;
+}
+
+.workduck-skill-option-preview-list {
+	display: grid;
+	min-width: 0;
+	gap: 8px;
+}
+
+.workduck-skill-option-preview-group {
+	display: grid;
+	min-width: 0;
+	gap: 3px;
+}
+
+.workduck-skill-option-preview-group strong {
+	color: var(--workduck-color-text);
+	font-size: var(--workduck-font-size-sm);
+}
+
+.workduck-skill-option-preview-group span {
+	color: var(--workduck-color-muted);
+	font-size: var(--workduck-font-size-sm);
+	font-weight: 800;
+	overflow-wrap: anywhere;
+}
+
+.workduck-skill-option-group-list {
+	display: grid;
+	min-width: 0;
+	gap: 12px;
+}
+
+.workduck-skill-option-group-row {
+	display: grid;
+	min-width: 0;
+	gap: 10px;
+	border: 1px solid oklch(var(--workduck-oklch-border) / 0.54);
+	border-radius: 8px;
+	background: oklch(var(--workduck-oklch-surface) / 0.28);
+	padding: 10px;
+}
+
+.workduck-skill-option-group-row .workduck-form-field {
+	align-content: start;
+}
+
+.workduck-skill-option-group-row .workduck-button-danger {
+	justify-self: start;
+}
+
+.workduck-skill-option-editor,
+.workduck-skill-option-row-list,
+.workduck-skill-form-errors {
+	display: grid;
+	min-width: 0;
+	gap: 8px;
+}
+
+.workduck-skill-option-editor-actions {
+	display: inline-flex;
+	min-width: 0;
+	align-items: center;
+	justify-content: flex-end;
+	gap: 8px;
+}
+
+.workduck-skill-option-row {
+	display: grid;
+	min-width: 0;
+	grid-template-columns: minmax(120px, 0.72fr) minmax(0, 1fr) auto;
+	gap: 8px;
+	align-items: end;
+}
+
+.workduck-skill-option-remove-button {
+	min-width: 72px;
+}
+
+.workduck-form-field-meta {
+	color: var(--workduck-color-muted);
+	font-size: var(--workduck-font-size-2xs);
+	font-weight: 800;
+	line-height: 1.25;
+	opacity: 0.82;
+}
+
+@media (max-width: 1060px) {
+	.workduck-skill-dialog-layout {
+		grid-template-columns: 1fr;
+	}
+
+	.workduck-skill-side-header {
+		grid-template-columns: 1fr;
+	}
+}
+
+@media (max-width: 759px) {
+	.workduck-skill-option-row {
+		grid-template-columns: 1fr;
+	}
+
+	.workduck-skill-option-remove-button {
+		width: fit-content;
+	}
 }
 
 .workduck-vote-option-list {

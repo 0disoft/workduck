@@ -1,0 +1,82 @@
+export const hiEnvironmentMessages = {
+	ariaLabel: 'पर्यावरण चर',
+	registeredCount: '{count} पर्यावरण चर',
+	vaultPassword: 'वॉल्ट पासवर्ड',
+	createVault: 'वॉल्ट बनाएं',
+	unlockVault: 'अनलॉक करें',
+	lockVault: 'लॉक करें',
+	kind: 'प्रकार',
+	tags: 'टैग',
+	value: 'मान',
+	select: 'चुनें',
+	filters: 'पर्यावरण फ़िल्टर',
+	kindFilter: 'प्रकार फ़िल्टर',
+	tagFilter: 'टैग फ़िल्टर',
+	allKinds: 'सभी प्रकार',
+	allTags: 'सभी टैग',
+	empty: 'अभी तक कोई पर्यावरण चर नहीं है।',
+	noMatches: 'कोई मिलान पर्यावरण चर नहीं मिला।',
+	entries: 'पर्यावरण चर प्रविष्टियां',
+	copy: 'कॉपी करें',
+	show: 'दिखाएं',
+	hide: 'छिपाएं',
+	applyCliEnvironment: 'CLI वातावरण लागू करें',
+	applyCliEnvironmentTooltip:
+		'Save OpenRouter, OpenAI, and DeepSeek API keys as user environment variables.',
+	secretKinds: {
+		'api-key': 'एपीआई कुंजी',
+		token: 'टोकन',
+		'ssh-key': 'एसएसएच कुंजी',
+		account: 'खाता',
+		password: 'पासवर्ड',
+		other: 'अन्य'
+	},
+	secretTags: {
+		llm: 'LLM',
+		github: 'GitHub',
+		gitlab: 'GitLab',
+		openai: 'OpenAI',
+		anthropic: 'Anthropic',
+		openrouter: 'OpenRouter',
+		cloud: 'क्लाउड',
+		database: 'डेटाबेस',
+		auth: 'प्रमाणीकरण',
+		sync: 'सिंक',
+		deployment: 'तैनाती (Deployment)',
+		monitoring: 'निगरानी',
+		payment: 'भुगतान',
+		storage: 'भंडारण'
+	},
+	statuses: {
+		created: 'वॉल्ट बनाया गया।',
+		saved: 'सहेज लिया गया।',
+		removed: 'हटा दिया गया।',
+		copied: 'कॉपी किया गया।',
+		cliEnvironmentApplied: '{count} CLI पर्यावरण चर लागू किए गए।'
+	},
+	errors: {
+		vaultPasswordRequired: 'वॉल्ट पासवर्ड आवश्यक है।',
+		vaultPasswordTryAgain: '{seconds} सेकंड में पुनः प्रयास करें।',
+		vaultPasswordMismatch: 'वॉल्ट पासवर्ड मेल नहीं खाया।',
+		vaultPasswordMismatchWithAttempts:
+			'वॉल्ट पासवर्ड मेल नहीं खाया। {attemptsRemaining} प्रयास बचे हैं।',
+		vaultUnavailable: 'वॉल्ट सुविधा डेस्कटॉप ऐप में उपलब्ध है।',
+		vaultInvalid: 'वॉल्ट डेटा नहीं पढ़ा जा सका।',
+		vaultSaveFailed: 'वॉल्ट सहेजा नहीं जा सका।',
+		vaultOperationFailed: 'वॉल्ट ऑपरेशन विफल रहा।',
+		clipboardUnavailable: 'क्लिपबोर्ड उपलब्ध नहीं है।',
+		copyFailed: 'कॉपी करना विफल रहा।',
+		nameRequired: 'नाम आवश्यक है।',
+		kindRequired: 'प्रकार आवश्यक है।',
+		tagRequired: 'टैग आवश्यक है।',
+		nameDuplicate: 'नाम पहले से मौजूद है।',
+		valueRequired: 'मान आवश्यक है।',
+		notFound: 'प्रविष्टि नहीं मिली।',
+		cliEnvironmentNoVariables:
+			'कोई OpenRouter, OpenAI, या DeepSeek एपीआई कुंजी पर्यावरण चर नहीं मिला।',
+		cliEnvironmentApplyFailed: 'CLI पर्यावरण चर लागू नहीं किए जा सके।',
+		cliEnvironmentUnsupported:
+			'इस ऑपरेटिंग सिस्टम पर उपयोगकर्ता पर्यावरण चर समर्थित नहीं हैं।',
+		cliEnvironmentUnavailable: 'CLI वातावरण लागू करने की सुविधा डेस्कटॉप ऐप में उपलब्ध है।'
+	}
+} as const;

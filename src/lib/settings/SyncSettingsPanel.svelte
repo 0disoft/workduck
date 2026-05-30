@@ -746,7 +746,7 @@
 				repositoryName: syncSettings.profileName,
 				repositoryPath: syncSettings.folderPath,
 				source: 'sync',
-				responseLanguage: appearanceSettings.languageId === 'en' ? 'en' : 'ko'
+				responseLanguage: appearanceSettings.languageId
 			});
 
 			if (!result.ok) {

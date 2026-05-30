@@ -47,6 +47,7 @@ export function createProjectBoardContextMenuHandlers(context: {
 	readonly openTagEditor: (target: ProjectTagEditorTarget) => void;
 	readonly openGithubCredentialEditor: (target: ProjectGithubCredentialEditorTarget) => void;
 	readonly openDescriptionEditor: (node: ProjectNodeRecord) => void;
+	readonly openDetailsEditor: (node: ProjectNodeRecord) => void;
 	readonly openPublishRepositoryDialog: (
 		node: ProjectNodeRecord,
 		repository: ProjectRepositoryLinkRecord
@@ -176,6 +177,21 @@ export function createProjectBoardContextMenuHandlers(context: {
 			}
 
 			context.openDescriptionEditor(result.value);
+		},
+		openContextDetailsEditor() {
+			const result = resolveContextDescriptionEditorTarget(
+				context.getRegistryNodes(),
+				context.getContextMenuTarget()
+			);
+
+			closeContextMenu();
+
+			if (!result.ok) {
+				context.setFormError(result.error);
+				return;
+			}
+
+			context.openDetailsEditor(result.value);
 		},
 		async openContextCloneRepository() {
 			const target = context.getContextMenuRepository();

@@ -1,10 +1,8 @@
 import { isObjectRecord } from '$lib/shared/object-record';
 import {
 	agentEvaluationCriteriaDefinitions,
-	addAgentEvaluationScores,
 	createEmptyAgentEvaluationSummary,
 	normalizeAgentEvaluationSummary,
-	type AgentEvaluationScores,
 	type AgentEvaluationSummary
 } from '$lib/agents/agent-evaluation';
 import type { AgentRecord } from '$lib/agents/agent-registry';
@@ -234,9 +232,12 @@ export function upsertPersona(
 ): PersonaRegistryMutationResult {
 	const normalizedRegistry = normalizePersonaRegistry(registry, registry.workspaceId) ?? registry;
 	const personaId = normalizeRecordId(input.id ?? null);
+	const matchingPersona = normalizedRegistry.personas.find((persona) => persona.id === personaId);
 	const name = normalizePersonaName(input.name);
 	const description = normalizePersonaDescription(input.description);
-	const instructions = normalizePersonaInstructions(input.instructions ?? '');
+	const instructions = normalizePersonaInstructions(
+		input.instructions === undefined ? (matchingPersona?.instructions ?? '') : input.instructions
+	);
 	const spectrums = normalizePersonaSpectrumValues(input.spectrums);
 	const styles = normalizePersonaStyleValues(input.styles);
 
@@ -244,7 +245,6 @@ export function upsertPersona(
 		return { ok: false, registry: normalizedRegistry, error: 'persona-name-required' };
 	}
 
-	const matchingPersona = normalizedRegistry.personas.find((persona) => persona.id === personaId);
 	const nameKey = createPersonaNameKey(name);
 	const nameAlreadyExists = normalizedRegistry.personas.some(
 		(persona) => persona.id !== personaId && createPersonaNameKey(persona.name) === nameKey
@@ -304,43 +304,6 @@ export function removePersona(
 			...normalizedRegistry,
 			personas: normalizedRegistry.personas.filter((persona) => persona.id !== personaId),
 			updatedAt: now.toISOString()
-		}
-	};
-}
-
-export function recordPersonaEvaluation(
-	registry: PersonaRegistry,
-	personaId: string,
-	scores: AgentEvaluationScores,
-	now = new Date()
-): PersonaRegistryMutationResult {
-	const normalizedRegistry = normalizePersonaRegistry(registry, registry.workspaceId) ?? registry;
-	const normalizedPersonaId = normalizeRecordId(personaId);
-	const matchingPersona = normalizedRegistry.personas.find(
-		(persona) => persona.id === normalizedPersonaId
-	);
-
-	if (normalizedPersonaId === null || matchingPersona === undefined) {
-		return { ok: false, registry: normalizedRegistry, error: 'persona-not-found' };
-	}
-
-	const timestamp = now.toISOString();
-	const personas = normalizedRegistry.personas.map((persona) =>
-		persona.id === normalizedPersonaId
-			? {
-					...persona,
-					evaluationSummary: addAgentEvaluationScores(persona.evaluationSummary, scores),
-					updatedAt: timestamp
-				}
-			: persona
-	);
-
-	return {
-		ok: true,
-		registry: {
-			...normalizedRegistry,
-			personas: sortPersonas(personas),
-			updatedAt: timestamp
 		}
 	};
 }

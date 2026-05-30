@@ -52,6 +52,7 @@ export function createProjectBoardRepositoryActionContext(input: {
 	readonly setGitActionTarget: (target: ProjectContextMenuTarget | null) => void;
 	readonly setIsPublishingRepository: (isPublishing: boolean) => void;
 	readonly closePublishRepositoryDialog: () => void;
+	readonly operationMessages: ProjectRepositoryActionContext['operationMessages'];
 }): ProjectRepositoryActionContext {
 	return {
 		workspacePath: input.workspacePath,
@@ -70,7 +71,8 @@ export function createProjectBoardRepositoryActionContext(input: {
 		setCloneTarget: input.setCloneTarget,
 		setGitActionTarget: input.setGitActionTarget,
 		setIsPublishingRepository: input.setIsPublishingRepository,
-		closePublishRepositoryDialog: input.closePublishRepositoryDialog
+		closePublishRepositoryDialog: input.closePublishRepositoryDialog,
+		operationMessages: input.operationMessages
 	};
 }
 

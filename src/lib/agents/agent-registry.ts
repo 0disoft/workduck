@@ -7,7 +7,7 @@ import {
 	type AgentEvaluationSummary
 } from './agent-evaluation';
 
-export const AGENT_REGISTRY_VERSION = 4;
+export const AGENT_REGISTRY_VERSION = 5;
 export const AGENT_NAME_MAX_LENGTH = 120;
 export const AGENT_MODEL_ID_MAX_LENGTH = 160;
 
@@ -26,7 +26,7 @@ export interface AgentRecord {
 	readonly name: string;
 	readonly environmentSecretId: string | null;
 	readonly personaId: string | null;
-	readonly executionProvider: AgentExecutionProvider | null;
+	readonly executionProvider: AgentExecutionProviderInput;
 	readonly modelId: string | null;
 	readonly evaluationSummary: AgentEvaluationSummary;
 	readonly evaluationResetAt: string | null;
@@ -208,6 +208,44 @@ export function assignPersonaToAgents(
 	};
 }
 
+export function clearPersonaFromAgents(
+	registry: AgentRegistry,
+	personaId: string,
+	now = new Date()
+): AgentRegistry {
+	const normalizedRegistry = normalizeAgentRegistry(registry, registry.workspaceId) ?? registry;
+	const normalizedPersonaId = normalizeRecordId(personaId);
+
+	if (normalizedPersonaId === null) {
+		return normalizedRegistry;
+	}
+
+	const timestamp = now.toISOString();
+	let changed = false;
+	const agents = normalizedRegistry.agents.map((agent) => {
+		if (agent.personaId !== normalizedPersonaId) {
+			return agent;
+		}
+
+		changed = true;
+		return {
+			...agent,
+			personaId: null,
+			updatedAt: timestamp
+		};
+	});
+
+	if (!changed) {
+		return normalizedRegistry;
+	}
+
+	return {
+		...normalizedRegistry,
+		agents: sortAgents(agents),
+		updatedAt: timestamp
+	};
+}
+
 export function recordAgentEvaluation(
 	registry: AgentRegistry,
 	agentId: string,
@@ -282,6 +320,7 @@ function normalizeAgentRegistry(value: unknown, workspaceId: string): AgentRegis
 	if (
 		!isObjectRecord(value) ||
 		(value.version !== AGENT_REGISTRY_VERSION &&
+			value.version !== 4 &&
 			value.version !== 3 &&
 			value.version !== 2 &&
 			value.version !== 1)
@@ -374,16 +413,17 @@ function normalizeRecordId(value: unknown) {
 	return id.length === 0 ? null : id;
 }
 
-function normalizeAgentExecutionProvider(value: unknown): AgentExecutionProvider | null {
+function normalizeAgentExecutionProvider(value: unknown): AgentExecutionProviderInput {
 	const provider = readTrimmedString(value).toLocaleLowerCase('en-US');
 
 	switch (provider) {
+		case 'auto':
 		case 'deepseek':
 		case 'openai':
 		case 'openrouter':
 			return provider;
 		default:
-			return null;
+			return 'auto';
 	}
 }
 

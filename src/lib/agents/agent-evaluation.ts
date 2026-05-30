@@ -164,15 +164,22 @@ export function getAgentEvaluationAverage(
 }
 
 export function getAgentEvaluationOverallAverage(summary: AgentEvaluationSummary) {
-	const averages = agentEvaluationCriteriaDefinitions
-		.map((criterion) => getAgentEvaluationAverage(summary, criterion.id))
-		.filter((average): average is number => average !== null);
+	const normalizedSummary = normalizeAgentEvaluationSummary(summary);
+	let totalCount = 0;
+	let totalScoreSum = 0;
 
-	if (averages.length === 0) {
+	for (const definition of agentEvaluationCriteriaDefinitions) {
+		const criterion = normalizedSummary.criteria[definition.id];
+
+		totalCount += criterion.count;
+		totalScoreSum += criterion.scoreSum;
+	}
+
+	if (totalCount === 0) {
 		return null;
 	}
 
-	return averages.reduce((sum, average) => sum + average, 0) / averages.length;
+	return totalScoreSum / totalCount;
 }
 
 export function createDefaultAgentEvaluationScores(): AgentEvaluationScores {

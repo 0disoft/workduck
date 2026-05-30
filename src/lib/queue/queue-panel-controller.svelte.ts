@@ -29,7 +29,7 @@ import {
 } from '$lib/agents/agent-evaluation';
 import {
 	createEmptyPersonaRegistry,
-	recordPersonaEvaluation,
+	syncPersonaEvaluationSummariesFromAgents,
 	type PersonaRecord,
 	type PersonaRegistry
 } from '$lib/personas/persona-registry';
@@ -52,13 +52,15 @@ import {
 	type ProjectNodeRecord,
 	type ProjectRegistry
 } from '$lib/projects/project-registry';
+import {
+	createProjectRepositorySelectionOptions,
+	type ProjectRepositorySelectionOption
+} from '$lib/projects/project-repository-selection';
 import { readProjectRegistry, subscribeProjectRegistry } from '$lib/projects/project-storage';
 import {
 	createEmptySkillRegistry,
 	getAllSkills,
 	WORKDUCK_AGENT_RESPONSE_EVALUATOR_SKILL_ID,
-	WORKDUCK_REVISION_ASSISTANT_SKILL_ID,
-	WORKDUCK_WRITING_ASSISTANT_SKILL_ID,
 	type SkillRegistry,
 	type WorkduckSkillRecord
 } from '$lib/skills/skill-registry';
@@ -74,6 +76,8 @@ import {
 	defaultQueueResponseFormat,
 	defaultQueueResponseLanguage,
 	defaultQueueWorkPriority,
+	QUEUE_WORK_ORDER_BODY_MAX_LENGTH,
+	QUEUE_WORK_ORDER_TITLE_MAX_LENGTH,
 	normalizeQueueResponseFormat,
 	normalizeQueueResponseLanguage,
 	normalizeQueueTaskKind,
@@ -120,6 +124,7 @@ import {
 import { createQueueCardEntries } from './queue-card-entry';
 import {
 	dispatchQueueFilesChanged,
+	pruneQueueReadFilePaths,
 	readQueueReadFilePaths,
 	writeQueueReadFilePaths
 } from './queue-read-state';
@@ -158,8 +163,6 @@ import {
 } from './queue-panel-errors';
 import {
 	type AgentEvaluationDialogState,
-	manualRevisionOptions,
-	type ManualRevisionOptionId,
 	type ManualVoteOptionInput,
 	type QueueCardEntry,
 	type QueueContextMenuState,
@@ -314,9 +317,10 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 	let manualVoteOptions = $state<readonly ManualVoteOptionInput[]>(createManualVoteOptions(2));
 	let manualVoteCriteriaInput = $state('');
 	let selectedManualSkillIds = $state<string[]>([]);
-	let selectedManualRevisionOptionIds = $state<ManualRevisionOptionId[]>([]);
+	let selectedManualSkillOptionIds = $state<string[]>([]);
 	let selectedManualAgentIds = $state<string[]>([]);
 	let selectedManualProjectIds = $state<string[]>([]);
+	let selectedManualRepositoryIds = $state<string[]>([]);
 	let selectedManualReferenceIds = $state<string[]>([]);
 	let skillRegistry = $state<SkillRegistry>(createEmptySkillRegistry(''));
 	let agentRegistry = $state<AgentRegistry>(createEmptyAgentRegistry(''));
@@ -338,14 +342,20 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 	let queueItemCountLabel = $derived(
 		messages.queue.registeredCount.replace('{count}', files.length.toString())
 	);
-	let allSkills = $derived(getAllSkills(skillRegistry));
+	let allStoredSkills = $derived(getAllSkills(skillRegistry));
+	let allSkills = $derived(sortSkillsForDisplay(allStoredSkills));
 	let allAgents = $derived(agentRegistry.agents);
 	let allProjects = $derived(
 		projectRegistry.nodes.filter((node): node is ProjectNodeRecord => node.kind === 'project')
 	);
+	let allRepositories = $derived(createProjectRepositorySelectionOptions(projectRegistry.nodes));
 	let allReferences = $derived(referenceRegistry.references);
 	let prioritizedReferences = $derived(
-		sortReferencesForProjectSelection(allReferences, selectedManualProjectIds)
+		sortReferencesForProjectSelection(
+			allReferences,
+			selectedManualProjectIds,
+			selectedManualRepositoryIds
+		)
 	);
 	let manualWorkOrderSkillSummary = $derived(
 		createSelectionSummary(
@@ -371,6 +381,14 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 			getProjectLabelById
 		)
 	);
+	let manualWorkOrderRepositorySummary = $derived(
+		createSelectionSummary(
+			selectedManualRepositoryIds,
+			messages.queue.noRepository,
+			messages.queue.selectionCount,
+			getRepositoryLabelById
+		)
+	);
 	let manualWorkOrderReferenceSummary = $derived(
 		createSelectionSummary(
 			selectedManualReferenceIds,
@@ -379,9 +397,11 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 			getReferenceLabelById
 		)
 	);
-	let manualRevisionOptionsAreVisible = $derived(
+	let manualSkillOptionsAreVisible = $derived(
 		manualWorkOrderKind === 'instruction' &&
-			selectedManualSkillIds.includes(WORKDUCK_REVISION_ASSISTANT_SKILL_ID)
+			allSkills.some(
+				(skill) => selectedManualSkillIds.includes(skill.id) && skill.optionGroups.length > 0
+			)
 	);
 	let selectedReportVoteAggregate = $derived(
 		selectedReport === null ? null : createVoteAggregate(selectedReport.tasks)
@@ -429,19 +449,23 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 	let canCreateManualWorkOrder = $derived(
 			getManualWorkOrderTitle().length > 0 &&
 			manualWorkOrderBody.trim().length > 0 &&
+			manualWorkOrderTitle.trim().length <= QUEUE_WORK_ORDER_TITLE_MAX_LENGTH &&
+			manualWorkOrderBody.trim().length <= QUEUE_WORK_ORDER_BODY_MAX_LENGTH &&
 			(manualWorkOrderKind !== 'vote' || manualValidVoteOptionCount >= 2) &&
 			!isWriting
 	);
 	let canExecuteSelectedWorkOrder = $derived(
 		selectedWorkOrder !== null &&
 			selectedWorkOrder.status !== 'archived' &&
-			selectedWorkOrder.tasks.some((task) => (task.agentIds ?? []).length > 0) &&
+			selectedWorkOrder.tasks.length > 0 &&
+			selectedWorkOrder.tasks.every((task) => (task.agentIds ?? []).length > 0) &&
 			!isWriting
 	);
 	let canPreviewSelectedWorkOrderPrompt = $derived(
 		selectedWorkOrder !== null &&
 			selectedWorkOrder.status !== 'archived' &&
-			selectedWorkOrder.tasks.some((task) => (task.agentIds ?? []).length > 0) &&
+			selectedWorkOrder.tasks.length > 0 &&
+			selectedWorkOrder.tasks.every((task) => (task.agentIds ?? []).length > 0) &&
 			!isWriting &&
 			!isPreviewingPrompt
 	);
@@ -515,9 +539,10 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		projectRegistry = createEmptyProjectRegistry(workspace.id);
 		referenceRegistry = createEmptyReferenceRegistry(workspace.id);
 		selectedManualSkillIds = [];
-		selectedManualRevisionOptionIds = [];
+		selectedManualSkillOptionIds = [];
 		selectedManualAgentIds = [];
 		selectedManualProjectIds = [];
+		selectedManualRepositoryIds = [];
 		selectedManualReferenceIds = [];
 		void readSkillsForWorkspace(workspace.id, workspace.path);
 		void readAgentsForWorkspace(workspace.id, workspace.path);
@@ -677,7 +702,14 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 			const result = await listQueueFiles(workspace.path);
 
 			if (result.ok) {
-				const nextFiles = await createQueueCardEntries(workspace.path, readFilePaths, result.files);
+				const nextReadFilePaths = pruneQueueReadFilePaths(readFilePaths, result.files);
+
+				if (nextReadFilePaths.length !== readFilePaths.length) {
+					readFilePaths = nextReadFilePaths;
+					writeQueueReadFilePaths(workspace.id, nextReadFilePaths);
+				}
+
+				const nextFiles = await createQueueCardEntries(workspace.path, nextReadFilePaths, result.files);
 				const previousSignature = createQueueFilesSignature(files);
 				const nextSignature = createQueueFilesSignature(nextFiles);
 				files = nextFiles;
@@ -954,9 +986,10 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		manualWorkOrderKind = 'instruction';
 		resetManualVoteFields();
 		selectedManualSkillIds = [];
-		selectedManualRevisionOptionIds = [];
+		selectedManualSkillOptionIds = [];
 		selectedManualAgentIds = [];
 		selectedManualProjectIds = [];
+		selectedManualRepositoryIds = [];
 		selectedManualReferenceIds = [];
 		error = null;
 		parseError = null;
@@ -979,9 +1012,10 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		manualWorkOrderKind = normalizeQueueTaskKind(task.kind);
 		loadManualVoteFields(task.vote);
 		selectedManualSkillIds = [...(task.skillIds ?? [])];
-		selectedManualRevisionOptionIds = [];
+	selectedManualSkillOptionIds = [];
 		selectedManualAgentIds = [...(task.agentIds ?? [])];
 		selectedManualProjectIds = [...(task.projectIds ?? [])];
+		selectedManualRepositoryIds = [...(task.repositoryIds ?? [])];
 		selectedManualReferenceIds = [...(task.referenceIds ?? [])];
 		error = null;
 		parseError = null;
@@ -1004,9 +1038,10 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		manualWorkOrderKind = 'instruction';
 		resetManualVoteFields();
 		selectedManualSkillIds = [];
-		selectedManualRevisionOptionIds = [];
+		selectedManualSkillOptionIds = [];
 		selectedManualAgentIds = [];
 		selectedManualProjectIds = [];
+		selectedManualRepositoryIds = [];
 		selectedManualReferenceIds = [];
 }
 
@@ -1178,7 +1213,8 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 				createManualWorkOrderReferenceIds(),
 				{
 					...createManualWorkOrderKindInput(),
-					projectIds: createManualWorkOrderProjectIds()
+					projectIds: createManualWorkOrderProjectIds(),
+					repositoryIds: createManualWorkOrderRepositoryIds()
 				}
 			);
 			const result = await writeQueueWorkOrderFile(
@@ -1198,9 +1234,10 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 				manualWorkOrderKind = 'instruction';
 				resetManualVoteFields();
 				selectedManualSkillIds = [];
-				selectedManualRevisionOptionIds = [];
+				selectedManualSkillOptionIds = [];
 				selectedManualAgentIds = [];
 				selectedManualProjectIds = [];
+				selectedManualRepositoryIds = [];
 				selectedManualReferenceIds = [];
 				await refreshQueueFiles({ silent: true });
 				return;
@@ -1226,6 +1263,7 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 			body: createManualWorkOrderBody(),
 			priority: manualWorkOrderPriority,
 			projectIds: createManualWorkOrderProjectIds(),
+			repositoryIds: createManualWorkOrderRepositoryIds(),
 			skillIds: createManualWorkOrderSkillIds(),
 			agentIds: createManualWorkOrderAgentIds(),
 			referenceIds: createManualWorkOrderReferenceIds(),
@@ -1250,9 +1288,10 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 			manualWorkOrderKind = 'instruction';
 			resetManualVoteFields();
 			selectedManualSkillIds = [];
-			selectedManualRevisionOptionIds = [];
+			selectedManualSkillOptionIds = [];
 			selectedManualAgentIds = [];
 			selectedManualProjectIds = [];
+			selectedManualRepositoryIds = [];
 			selectedManualReferenceIds = [];
 			editingWorkOrderTaskId = null;
 			workOrderDialogMode = 'create';
@@ -1434,7 +1473,7 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 }
 
 	function getDefaultManualResponseLanguage(): WorkduckQueueResponseLanguage {
-		return appearanceSettings.languageId === 'en' ? 'en' : 'ko';
+		return appearanceSettings.languageId;
 }
 
 	function createManualWorkOrderSkillIds() {
@@ -1449,13 +1488,26 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		return selectedManualProjectIds;
 }
 
+	function createManualWorkOrderRepositoryIds() {
+		return selectedManualRepositoryIds;
+}
+
 	function createManualWorkOrderReferenceIds() {
 		return selectedManualReferenceIds;
 }
 
 	function getSkillDisplayName(skill: WorkduckSkillRecord) {
 		return getLocalizedSkillDisplayName(messages, skill);
-}
+	}
+
+	function sortSkillsForDisplay(skills: readonly WorkduckSkillRecord[]) {
+		return [...skills].sort((left, right) =>
+			getSkillDisplayName(left).localeCompare(getSkillDisplayName(right), undefined, {
+				numeric: true,
+				sensitivity: 'base'
+			})
+		);
+	}
 
 	function getAgentDisplayName(agent: AgentRecord) {
 		return getAgentDisplayNameFromRecord(agent);
@@ -1463,6 +1515,10 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 
 	function getProjectDisplayName(project: ProjectNodeRecord) {
 		return getProjectDisplayNameFromRecord(project);
+}
+
+	function getRepositoryDisplayName(repository: ProjectRepositorySelectionOption) {
+		return repository.label;
 }
 
 	function getReferenceDisplayName(reference: ReferenceRecord) {
@@ -1479,58 +1535,97 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 
 	function getProjectLabelById(projectId: string) {
 		return getRecordLabelById(allProjects, projectId, getProjectDisplayName);
-}
+	}
+
+	function getRepositoryLabelById(repositoryId: string) {
+		return getRecordLabelById(allRepositories, repositoryId, getRepositoryDisplayName);
+	}
 
 	function getReferenceLabelById(referenceId: string) {
 		return getRecordLabelById(allReferences, referenceId, getReferenceDisplayName);
-}
+	}
 
 	function toggleManualWorkOrderSkill(skillId: string, isSelected: boolean) {
 		selectedManualSkillIds = updateSelectedRecordIds(selectedManualSkillIds, skillId, isSelected);
 
-		if (!isSelected && skillId === WORKDUCK_REVISION_ASSISTANT_SKILL_ID) {
-			selectedManualRevisionOptionIds = [];
-			if (
-				manualWorkOrderKind === 'instruction' &&
-				selectedManualSkillIds.includes(WORKDUCK_WRITING_ASSISTANT_SKILL_ID)
-			) {
-				manualWorkOrderResponseFormat = 'writing-draft';
-			}
+		if (!isSelected) {
+			selectedManualSkillOptionIds = selectedManualSkillOptionIds.filter(
+				(optionId) => !optionId.startsWith(`${skillId}:`)
+			);
+			applyManualSkillResponseFormat();
 			return;
-	}
+		}
 
 		if (!isSelected || manualWorkOrderKind !== 'instruction') {
 			return;
 		}
 
-		if (
-			skillId === WORKDUCK_WRITING_ASSISTANT_SKILL_ID &&
-			!selectedManualSkillIds.includes(WORKDUCK_REVISION_ASSISTANT_SKILL_ID)
-		) {
-			manualWorkOrderResponseFormat = 'writing-draft';
-			return;
+		applyManualSkillResponseFormat();
 	}
 
-		if (skillId === WORKDUCK_REVISION_ASSISTANT_SKILL_ID) {
-			manualWorkOrderResponseFormat = 'revision-draft';
+	function applyManualSkillResponseFormat() {
+		if (manualWorkOrderKind !== 'instruction') {
+			return;
 		}
-}
+
+		const selectedSkills = allSkills.filter((skill) => selectedManualSkillIds.includes(skill.id));
+
+		if (selectedSkills.some((skill) => skill.outputTypes.includes('revision'))) {
+			manualWorkOrderResponseFormat = 'revision-draft';
+			return;
+		}
+
+		if (selectedSkills.some((skill) => skill.outputTypes.includes('writing'))) {
+			manualWorkOrderResponseFormat = 'writing-draft';
+		}
+	}
 
 	function toggleManualWorkOrderAgent(agentId: string, isSelected: boolean) {
 		selectedManualAgentIds = updateSelectedRecordIds(selectedManualAgentIds, agentId, isSelected);
-}
+	}
 
-	function toggleManualRevisionOption(optionId: ManualRevisionOptionId, isSelected: boolean) {
-		selectedManualRevisionOptionIds = updateSelectedRecordIds(
-			selectedManualRevisionOptionIds,
-			optionId,
+	function toggleManualSkillOption(
+		skillId: string,
+		groupId: string,
+		optionId: string,
+		selectionMode: 'single' | 'multiple',
+		isSelected: boolean
+	) {
+		const selectionId = createSkillOptionSelectionId(skillId, groupId, optionId);
+
+		if (selectionMode === 'single') {
+			const groupPrefix = `${skillId}:${groupId}:`;
+			selectedManualSkillOptionIds = isSelected
+				? [
+						...selectedManualSkillOptionIds.filter(
+							(selectedOptionId) => !selectedOptionId.startsWith(groupPrefix)
+						),
+						selectionId
+					]
+				: selectedManualSkillOptionIds.filter(
+						(selectedOptionId) => selectedOptionId !== selectionId
+					);
+			return;
+		}
+
+		selectedManualSkillOptionIds = updateSelectedRecordIds(
+			selectedManualSkillOptionIds,
+			selectionId,
 			isSelected
-		) as ManualRevisionOptionId[];
-}
+		);
+	}
 
 	function toggleManualWorkOrderProject(projectId: string, isSelected: boolean) {
 		selectedManualProjectIds = updateSelectedRecordIds(selectedManualProjectIds, projectId, isSelected);
-}
+	}
+
+	function toggleManualWorkOrderRepository(repositoryId: string, isSelected: boolean) {
+		selectedManualRepositoryIds = updateSelectedRecordIds(
+			selectedManualRepositoryIds,
+			repositoryId,
+			isSelected
+		);
+	}
 
 	function toggleManualWorkOrderReference(referenceId: string, isSelected: boolean) {
 		selectedManualReferenceIds = updateSelectedRecordIds(
@@ -1538,41 +1633,41 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 			referenceId,
 			isSelected
 		);
-}
+	}
 
 	function resetManualVoteFields() {
 		const nextFields = createManualVoteFieldState(undefined);
 
 		manualVoteOptions = nextFields.options;
 		manualVoteCriteriaInput = nextFields.criteriaInput;
-}
+	}
 
 	function loadManualVoteFields(vote: WorkduckQueueVoteSpec | undefined) {
 		const nextFields = createManualVoteFieldState(vote);
 
 		manualVoteOptions = nextFields.options;
 		manualVoteCriteriaInput = nextFields.criteriaInput;
-}
+	}
 
 	function addManualVoteOption() {
 		if (manualVoteOptions.length >= 50) {
 			return;
-	}
+		}
 
 		manualVoteOptions = createManualVoteOptions(manualVoteOptions.length + 1, manualVoteOptions);
-}
+	}
 
 	function removeManualVoteOption(index: number) {
 		if (manualVoteOptions.length <= 2) {
 			return;
-	}
+		}
 
 		const nextOptions = manualVoteOptions
 			.filter((_, optionIndex) => optionIndex !== index)
 			.map(({ id, label, description }) => ({ id, label, description }));
 
 		manualVoteOptions = createManualVoteOptions(nextOptions.length, nextOptions);
-}
+	}
 
 	function updateManualVoteOption(
 		index: number,
@@ -1582,14 +1677,14 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		manualVoteOptions = manualVoteOptions.map((option, optionIndex) =>
 			optionIndex === index ? { ...option, [field]: value } : option
 		);
-}
+	}
 
 	function getManualWorkOrderTitle() {
 		const explicitTitle = manualWorkOrderTitle.trim();
 
 		if (manualWorkOrderKind !== 'direct-message') {
 			return explicitTitle;
-	}
+		}
 
 		const firstLine = manualWorkOrderBody
 			.split(/\r?\n/u)
@@ -1598,39 +1693,49 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 
 		if (firstLine === undefined) {
 			return '';
-	}
+		}
 
 		const summary = firstLine.length <= 48 ? firstLine : `${firstLine.slice(0, 45).trimEnd()}...`;
 
 		return `${messages.queue.workTypes.directMessage}: ${summary}`;
-}
-
-	function createManualWorkOrderBody() {
-		if (!manualRevisionOptionsAreVisible || selectedManualRevisionOptionIds.length === 0) {
-			return manualWorkOrderBody;
 	}
 
-		const selectedOptionSet = new Set(selectedManualRevisionOptionIds);
-		const optionLines = manualRevisionOptions
-			.filter((option) => selectedOptionSet.has(option.id))
-			.map((option) => {
-				const groupLabel = messages.queue.revisionOptions.groups[option.groupId];
-				const optionLabel = messages.queue.revisionOptions.options[option.id];
+	function createManualWorkOrderBody() {
+		if (!manualSkillOptionsAreVisible || selectedManualSkillOptionIds.length === 0) {
+			return manualWorkOrderBody;
+		}
 
-				return `- ${groupLabel}: ${optionLabel}`;
-		});
+		const selectedOptionSet = new Set(selectedManualSkillOptionIds);
+		const optionLines = allSkills.flatMap((skill) =>
+			skill.optionGroups.flatMap((group) =>
+				group.options
+					.filter((option) =>
+						selectedOptionSet.has(createSkillOptionSelectionId(skill.id, group.id, option.id))
+					)
+					.map((option) => {
+						const optionDescription =
+							option.description.length > 0 ? ` - ${option.description}` : '';
+
+						return `- ${getSkillDisplayName(skill)} / ${group.label}: ${option.label}${optionDescription}`;
+					})
+			)
+		);
 
 		if (optionLines.length === 0) {
 			return manualWorkOrderBody;
-	}
+		}
 
 		return [
 			manualWorkOrderBody.trimEnd(),
 			'',
-			`${messages.queue.revisionOptions.title}:`,
+			`${messages.queue.skillOptions.title}:`,
 			...optionLines
 		].join('\n');
-}
+	}
+
+	function createSkillOptionSelectionId(skillId: string, groupId: string, optionId: string) {
+		return `${skillId}:${groupId}:${optionId}`;
+	}
 
 	function createManualWorkOrderKindInput() {
 		return createManualWorkOrderKindInputFromFields({
@@ -1641,7 +1746,7 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 			voteOptions: manualVoteOptions,
 			voteCriteriaInput: manualVoteCriteriaInput
 	});
-}
+	}
 
 	function getQueueTaskSkillLabels(task: WorkduckQueueWorkOrderTask) {
 		return (task.skillIds ?? []).map(getSkillLabelById);
@@ -1653,6 +1758,10 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 
 	function getQueueTaskProjectLabels(task: WorkduckQueueWorkOrderTask) {
 		return (task.projectIds ?? []).map(getProjectLabelById);
+}
+
+	function getQueueTaskRepositoryLabels(task: WorkduckQueueWorkOrderTask) {
+		return (task.repositoryIds ?? []).map(getRepositoryLabelById);
 }
 
 	function getQueueTaskReferenceLabels(task: WorkduckQueueWorkOrderTask) {
@@ -1731,40 +1840,6 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 				return;
 			}
 
-			const evaluatedAgent =
-				mutation.registry.agents.find((agent) => agent.id === targetAgentId) ?? null;
-			let nextPersonaRegistry = personaRegistry;
-			let shouldWritePersonaRegistry = false;
-
-			if (evaluatedAgent?.personaId !== null && evaluatedAgent?.personaId !== undefined) {
-				const latestPersonaRegistryResult = await readPersonaRegistry(workspace.id, workspace.path);
-
-				if (!latestPersonaRegistryResult.ok) {
-					parseError = messages.personas.errors.readFailed;
-					return;
-				}
-
-				nextPersonaRegistry = latestPersonaRegistryResult.registry;
-
-				if (
-					nextPersonaRegistry.personas.some((persona) => persona.id === evaluatedAgent.personaId)
-				) {
-					const personaMutation = recordPersonaEvaluation(
-						nextPersonaRegistry,
-						evaluatedAgent.personaId,
-						evaluationScores
-					);
-
-					if (!personaMutation.ok) {
-						parseError = messages.personas.errors.notFound;
-						return;
-					}
-
-					nextPersonaRegistry = personaMutation.registry;
-					shouldWritePersonaRegistry = true;
-				}
-			}
-
 			const writeResult = await writeAgentRegistry(mutation.registry, workspace.path);
 
 			agentRegistry = writeResult.registry;
@@ -1774,15 +1849,24 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 				return;
 			}
 
-			if (shouldWritePersonaRegistry) {
-				const personaWriteResult = await writePersonaRegistry(nextPersonaRegistry, workspace.path);
+			const latestPersonaRegistryResult = await readPersonaRegistry(workspace.id, workspace.path);
 
-				personaRegistry = personaWriteResult.registry;
+			if (!latestPersonaRegistryResult.ok) {
+				parseError = messages.personas.errors.readFailed;
+				return;
+			}
 
-				if (!personaWriteResult.ok) {
-					parseError = messages.personas.errors.saveFailed;
-					return;
-				}
+			const nextPersonaRegistry = syncPersonaEvaluationSummariesFromAgents(
+				latestPersonaRegistryResult.registry,
+				mutation.registry.agents
+			);
+			const personaWriteResult = await writePersonaRegistry(nextPersonaRegistry, workspace.path);
+
+			personaRegistry = personaWriteResult.registry;
+
+			if (!personaWriteResult.ok) {
+				parseError = messages.personas.errors.saveFailed;
+				return;
 			}
 
 			status = messages.queue.evaluation.saved;
@@ -1846,13 +1930,15 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		get manualVoteCriteriaInput() { return manualVoteCriteriaInput; },
 		set manualVoteCriteriaInput(value: string) { manualVoteCriteriaInput = value; },
 		get selectedManualSkillIds() { return selectedManualSkillIds; },
-		get selectedManualRevisionOptionIds() { return selectedManualRevisionOptionIds; },
+		get selectedManualSkillOptionIds() { return selectedManualSkillOptionIds; },
 		get selectedManualAgentIds() { return selectedManualAgentIds; },
 		get selectedManualProjectIds() { return selectedManualProjectIds; },
+		get selectedManualRepositoryIds() { return selectedManualRepositoryIds; },
 		get selectedManualReferenceIds() { return selectedManualReferenceIds; },
 		get allSkills() { return allSkills; },
 		get allAgents() { return allAgents; },
 		get allProjects() { return allProjects; },
+		get allRepositories() { return allRepositories; },
 		get prioritizedReferences() { return prioritizedReferences; },
 		get isRefreshing() { return isRefreshing; },
 		get isReading() { return isReading; },
@@ -1871,10 +1957,11 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		get canCompleteSelectedWorkOrder() { return canCompleteSelectedWorkOrder; },
 		get workOrderDialogTitle() { return workOrderDialogTitle; },
 		get workOrderDialogSubmitLabel() { return workOrderDialogSubmitLabel; },
-		get manualRevisionOptionsAreVisible() { return manualRevisionOptionsAreVisible; },
+		get manualSkillOptionsAreVisible() { return manualSkillOptionsAreVisible; },
 		get manualWorkOrderSkillSummary() { return manualWorkOrderSkillSummary; },
 		get manualWorkOrderAgentSummary() { return manualWorkOrderAgentSummary; },
 		get manualWorkOrderProjectSummary() { return manualWorkOrderProjectSummary; },
+		get manualWorkOrderRepositorySummary() { return manualWorkOrderRepositorySummary; },
 		get manualWorkOrderReferenceSummary() { return manualWorkOrderReferenceSummary; },
 		refreshQueueFiles,
 		getExecutionFilterLabel,
@@ -1906,6 +1993,7 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		getQueueResponseLanguageLabel,
 		getQueueTaskKindLabel,
 		getQueueTaskProjectLabels,
+		getQueueTaskRepositoryLabels,
 		getQueueTaskSkillLabels,
 		getQueueTaskAgentLabels,
 		getQueueTaskReferenceLabels,
@@ -1916,9 +2004,10 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		closeNewWorkOrderDialog,
 		handleCreateManualWorkOrder,
 		toggleManualWorkOrderSkill,
-		toggleManualRevisionOption,
+		toggleManualSkillOption,
 		toggleManualWorkOrderAgent,
 		toggleManualWorkOrderProject,
+		toggleManualWorkOrderRepository,
 		toggleManualWorkOrderReference,
 		addManualVoteOption,
 		removeManualVoteOption,
@@ -1926,6 +2015,7 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		getSkillDisplayName,
 		getAgentDisplayName,
 		getProjectDisplayName,
+		getRepositoryDisplayName,
 		getReferenceDisplayName
 };
 }

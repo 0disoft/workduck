@@ -22,6 +22,8 @@ export type ProjectRegistryError =
 	| 'project-node-not-found'
 	| 'project-path-required'
 	| 'project-path-duplicate'
+	| 'project-tags-too-many'
+	| 'project-tag-too-long'
 	| 'project-repository-target-invalid'
 	| 'project-repository-not-found'
 	| 'project-repository-name-required'
@@ -116,6 +118,16 @@ export interface ProjectNodeTagsUpdateInput {
 export interface ProjectNodeDescriptionUpdateInput {
 	readonly nodeId: string;
 	readonly description: string;
+}
+
+export interface ProjectNodeNameUpdateInput {
+	readonly nodeId: string;
+	readonly name: string;
+}
+
+export interface ProjectNodePathUpdateInput {
+	readonly nodeId: string;
+	readonly path: string;
 }
 
 export interface ProjectRepositoryTagsUpdateInput {
@@ -454,6 +466,90 @@ export function setProjectNodeDescription(
 					? {
 							...node,
 							description,
+							updatedAt: timestamp
+						}
+					: node
+			),
+			updatedAt: timestamp
+		}
+	};
+}
+
+export function setProjectNodeName(
+	registry: ProjectRegistry,
+	input: ProjectNodeNameUpdateInput,
+	now = new Date()
+): ProjectRegistryMutationResult {
+	const normalizedRegistry = normalizeProjectRegistry(registry, registry.workspaceId);
+	const targetNode = normalizedRegistry.nodes.find((node) => node.id === input.nodeId);
+
+	if (targetNode === undefined) {
+		return { ok: false, registry: normalizedRegistry, error: 'project-node-not-found' };
+	}
+
+	const name = normalizeProjectName(input.name);
+
+	if (name.length === 0) {
+		return { ok: false, registry: normalizedRegistry, error: 'project-name-required' };
+	}
+
+	if (hasSiblingWithName(normalizedRegistry.nodes, targetNode.parentId, name, targetNode.id)) {
+		return { ok: false, registry: normalizedRegistry, error: 'project-name-duplicate' };
+	}
+
+	const timestamp = now.toISOString();
+
+	return {
+		ok: true,
+		registry: {
+			...normalizedRegistry,
+			nodes: normalizedRegistry.nodes.map((node) =>
+				node.id === targetNode.id
+					? {
+							...node,
+							name,
+							updatedAt: timestamp
+						}
+					: node
+			),
+			updatedAt: timestamp
+		}
+	};
+}
+
+export function setProjectNodePath(
+	registry: ProjectRegistry,
+	input: ProjectNodePathUpdateInput,
+	now = new Date()
+): ProjectRegistryMutationResult {
+	const normalizedRegistry = normalizeProjectRegistry(registry, registry.workspaceId);
+	const targetNode = normalizedRegistry.nodes.find((node) => node.id === input.nodeId);
+
+	if (targetNode === undefined) {
+		return { ok: false, registry: normalizedRegistry, error: 'project-node-not-found' };
+	}
+
+	const path = normalizeProjectPath(input.path);
+
+	if (path.length === 0) {
+		return { ok: false, registry: normalizedRegistry, error: 'project-path-required' };
+	}
+
+	if (hasNodeWithPath(normalizedRegistry.nodes, path, targetNode.id)) {
+		return { ok: false, registry: normalizedRegistry, error: 'project-path-duplicate' };
+	}
+
+	const timestamp = now.toISOString();
+
+	return {
+		ok: true,
+		registry: {
+			...normalizedRegistry,
+			nodes: normalizedRegistry.nodes.map((node) =>
+				node.id === targetNode.id
+					? {
+							...node,
+							path,
 							updatedAt: timestamp
 						}
 					: node
@@ -1002,17 +1098,29 @@ function parseRepositoryLinkRecord(value: unknown): ProjectRepositoryLinkRecord 
 function hasSiblingWithName(
 	nodes: readonly ProjectNodeRecord[],
 	parentId: string | null,
-	name: string
+	name: string,
+	ignoreNodeId: string | null = null
 ) {
 	const nameKey = createNameKey(name);
 
-	return nodes.some((node) => node.parentId === parentId && createNameKey(node.name) === nameKey);
+	return nodes.some(
+		(node) =>
+			node.id !== ignoreNodeId &&
+			node.parentId === parentId &&
+			createNameKey(node.name) === nameKey
+	);
 }
 
-function hasNodeWithPath(nodes: readonly ProjectNodeRecord[], path: string) {
+function hasNodeWithPath(
+	nodes: readonly ProjectNodeRecord[],
+	path: string,
+	ignoreNodeId: string | null = null
+) {
 	const pathKey = createProjectPathKey(path);
 
-	return nodes.some((node) => createProjectPathKey(node.path) === pathKey);
+	return nodes.some(
+		(node) => node.id !== ignoreNodeId && createProjectPathKey(node.path) === pathKey
+	);
 }
 
 function normalizeProjectNodeKind(value: unknown): ProjectNodeKind | null {

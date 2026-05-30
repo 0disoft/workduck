@@ -73,7 +73,14 @@ export function resolveContextDeleteCandidate(
 
 		return node === null
 			? { ok: false, error: 'project-node-not-found' }
-			: { ok: true, value: { type: 'node', node } };
+			: {
+					ok: true,
+					value: {
+						type: 'node',
+						node,
+						...countNodeSubtreeItems(nodes, node.id)
+					}
+				};
 	}
 
 	const repositoryTarget = getProjectRepositoryTarget(nodes, target.nodeId, target.repositoryId);
@@ -81,6 +88,40 @@ export function resolveContextDeleteCandidate(
 	return repositoryTarget === null
 		? { ok: false, error: 'project-repository-not-found' }
 		: { ok: true, value: { type: 'repository', ...repositoryTarget } };
+}
+
+function countNodeSubtreeItems(nodes: readonly ProjectNodeRecord[], nodeId: string) {
+	const pendingNodeIds = [nodeId];
+	const visitedNodeIds = new Set<string>();
+	let childGroupCount = 0;
+	let childRepositoryCount = 0;
+
+	while (pendingNodeIds.length > 0) {
+		const currentNodeId = pendingNodeIds.pop();
+
+		if (currentNodeId === undefined || visitedNodeIds.has(currentNodeId)) {
+			continue;
+		}
+
+		visitedNodeIds.add(currentNodeId);
+
+		for (const node of nodes) {
+			if (node.parentId !== currentNodeId) {
+				continue;
+			}
+
+			childGroupCount += 1;
+			childRepositoryCount += node.repositories.length;
+			pendingNodeIds.push(node.id);
+		}
+	}
+
+	const targetNode = nodes.find((node) => node.id === nodeId);
+
+	return {
+		childGroupCount,
+		childRepositoryCount: childRepositoryCount + (targetNode?.repositories.length ?? 0)
+	};
 }
 
 export function resolveContextTagEditorTarget(

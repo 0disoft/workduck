@@ -21,11 +21,14 @@
 	} from '$lib/settings/appearance-storage';
 	import {
 		createEmptyPersonaRegistry,
+		syncPersonaEvaluationSummariesFromAgents,
 		type PersonaRegistry
 	} from '$lib/personas/persona-registry';
 	import {
 		readPersonaRegistry,
-		subscribePersonaRegistry
+		subscribePersonaRegistry,
+		writePersonaRegistry,
+		type PersonaRegistryStorageError
 	} from '$lib/personas/persona-registry-storage';
 	import { DetailCard, EntityCard, EntityWorkbench, StatusToast } from '$lib/ui';
 	import type { WorkspaceRecord } from '$lib/workspaces/workspace-registry';
@@ -106,7 +109,9 @@
 	let isSavingAgent = $state(false);
 	let isRemovingAgent = $state(false);
 	let isResettingAgentEvaluation = $state(false);
-	let agentError = $state<AgentRegistryError | AgentRegistryStorageError | null>(null);
+	let agentError = $state<
+		AgentRegistryError | AgentRegistryStorageError | PersonaRegistryStorageError | null
+	>(null);
 	let statusMessage = $state<string | null>(null);
 	let environmentVaultOpenSequence = 0;
 	let messages = $derived(getWorkduckMessages(appearanceSettings.languageId));
@@ -138,8 +143,12 @@
 		createAgentEvaluationOverviewRows(registry.agents, selectedEvaluationOverviewMetric)
 	);
 	let agentModelPresetOptions = $derived(getAgentModelPresetsForProvider(selectedExecutionProvider));
+	let selectedEnvironmentSecretIsUnavailable = $derived(
+		selectedEnvironmentSecretId.length > 0 && environmentVault === null
+	);
 	let selectedEnvironmentSecretIsMissing = $derived(
 		selectedEnvironmentSecretId.length > 0 &&
+			environmentVault !== null &&
 			!llmApiKeyOptions.some((option) => option.id === selectedEnvironmentSecretId)
 	);
 	let selectedPersonaIsMissing = $derived(
@@ -317,6 +326,10 @@
 				return;
 			}
 
+			if (!(await syncPersonaEvaluationSummariesForAgents(mutation.registry.agents))) {
+				return;
+			}
+
 			selectedAgentId = mutation.registry.agents.find((agent) => agent.name === agentName.trim())?.id ?? null;
 			clearAgentForm();
 			statusMessage = messages.agents.saved;
@@ -330,12 +343,21 @@
 			return;
 		}
 
+		const targetAgent = selectedAgent;
+
+		if (
+			typeof window !== 'undefined' &&
+			!window.confirm(messages.agents.removeConfirm.replace('{name}', targetAgent.name))
+		) {
+			return;
+		}
+
 		isRemovingAgent = true;
 		agentError = null;
 		statusMessage = null;
 
 		try {
-			const mutation = removeAgent(registry, selectedAgent.id);
+			const mutation = removeAgent(registry, targetAgent.id);
 
 			if (!mutation.ok) {
 				agentError = mutation.error;
@@ -348,6 +370,10 @@
 			agentError = writeResult.ok ? null : writeResult.error;
 
 			if (!writeResult.ok) {
+				return;
+			}
+
+			if (!(await syncPersonaEvaluationSummariesForAgents(mutation.registry.agents))) {
 				return;
 			}
 
@@ -395,6 +421,10 @@
 			agentError = writeResult.ok ? null : writeResult.error;
 
 			if (!writeResult.ok) {
+				return;
+			}
+
+			if (!(await syncPersonaEvaluationSummariesForAgents(mutation.registry.agents))) {
 				return;
 			}
 
@@ -556,8 +586,16 @@
 		left: AgentEvaluationOverviewRow,
 		right: AgentEvaluationOverviewRow
 	) {
-		const rightScore = right.score ?? -1;
-		const leftScore = left.score ?? -1;
+		if (left.score === null && right.score !== null) {
+			return 1;
+		}
+
+		if (left.score !== null && right.score === null) {
+			return -1;
+		}
+
+		const rightScore = right.score ?? 0;
+		const leftScore = left.score ?? 0;
 
 		if (rightScore !== leftScore) {
 			return rightScore - leftScore;
@@ -568,6 +606,26 @@
 		}
 
 		return left.agent.name.localeCompare(right.agent.name, appearanceSettings.languageId === 'ko' ? 'ko-KR' : 'en-US');
+	}
+
+	async function syncPersonaEvaluationSummariesForAgents(agents: readonly AgentRecord[]) {
+		const latestPersonaRegistryResult = await readPersonaRegistry(workspace.id, workspace.path);
+
+		if (!latestPersonaRegistryResult.ok) {
+			agentError = latestPersonaRegistryResult.error;
+			return false;
+		}
+
+		const nextPersonaRegistry = syncPersonaEvaluationSummariesFromAgents(
+			latestPersonaRegistryResult.registry,
+			agents
+		);
+		const personaWriteResult = await writePersonaRegistry(nextPersonaRegistry, workspace.path);
+
+		personaRegistry = personaWriteResult.registry;
+		agentError = personaWriteResult.ok ? null : personaWriteResult.error;
+
+		return personaWriteResult.ok;
 	}
 
 	function getEvaluationResetAtLabel(agent: AgentRecord) {
@@ -594,7 +652,9 @@
 		return null;
 	}
 
-	function createAgentErrorMessage(nextError: AgentRegistryError | AgentRegistryStorageError) {
+	function createAgentErrorMessage(
+		nextError: AgentRegistryError | AgentRegistryStorageError | PersonaRegistryStorageError
+	) {
 		switch (nextError) {
 			case 'agent-name-required':
 				return messages.agents.errors.nameRequired;
@@ -609,7 +669,17 @@
 				return messages.agents.errors.readFailed;
 			case 'agent-registry-storage-write-failed':
 				return messages.agents.errors.saveFailed;
+			case 'persona-registry-storage-read-failed':
+				return messages.personas.errors.readFailed;
+			case 'persona-registry-storage-write-failed':
+				return messages.personas.errors.saveFailed;
 			default:
+				if (nextError.startsWith('persona-')) {
+					return nextError.includes('write') || nextError.includes('too-large')
+						? messages.personas.errors.saveFailed
+						: messages.personas.errors.readFailed;
+				}
+
 				return nextError.includes('write') || nextError.includes('too-large')
 					? messages.agents.errors.saveFailed
 					: messages.agents.errors.readFailed;
@@ -828,14 +898,23 @@
 						bind:value={selectedEnvironmentSecretId}
 						disabled={isSavingAgent}
 					>
-						<option value="">{messages.common.noApiKey}</option>
-						{#if selectedEnvironmentSecretIsMissing}
+						<option value="" disabled>{messages.agents.apiKeyPlaceholder}</option>
+						{#if selectedEnvironmentSecretIsUnavailable}
+							<option value={selectedEnvironmentSecretId}>{messages.common.linkedApiKey}</option>
+						{:else if selectedEnvironmentSecretIsMissing}
 							<option value={selectedEnvironmentSecretId}>{messages.common.linkedApiKey}</option>
 						{/if}
 						{#each llmApiKeyOptions as option (option.id)}
 							<option value={option.id}>{option.name}</option>
 						{/each}
 					</select>
+					{#if environmentVault === null}
+						<span class="workduck-form-field-meta">{messages.agents.vaultLockedHint}</span>
+					{:else if llmApiKeyOptions.length === 0}
+						<span class="workduck-form-field-meta">{messages.agents.noLlmApiKeysHint}</span>
+					{:else if selectedEnvironmentSecretIsMissing}
+						<span class="workduck-form-field-meta">{messages.agents.missingApiKeyHint}</span>
+					{/if}
 				</label>
 
 				<label class="workduck-form-field" for="agent-persona">

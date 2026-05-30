@@ -108,15 +108,15 @@ export function getRepositoryOperationMessage(
 	projectMessages: WorkduckMessages['projects']
 ) {
 	if (operation.state === 'running') {
-		return `${getRepositoryOperationProgressLabel(operation.name)}.`;
+		return `${projectMessages.operations.running[operation.name]}.`;
 	}
 
 	if (operation.state === 'succeeded') {
-		return `Repository ${getRepositoryOperationDoneLabel(operation.name)}.`;
+		return projectMessages.operations.done[operation.name];
 	}
 
 	return operation.error === null
-		? `${getRepositoryOperationLabel(operation.name)} failed.`
+		? projectMessages.operations.failed[operation.name]
 		: getProjectFormErrorMessage(operation.error as ProjectFormError, projectMessages.errors);
 }
 
@@ -214,10 +214,11 @@ export function getRepositoryOperationLabel(name: ProjectRepositoryOperationName
 export function getRepositoryActionButtonLabel(
 	operation: ProjectRepositoryOperation | null,
 	name: ProjectRepositoryOperationName,
-	idleLabel: string
+	idleLabel: string,
+	projectMessages: WorkduckMessages['projects']
 ) {
 	return operation?.state === 'running' && operation.name === name
-		? getRepositoryOperationProgressButtonLabel(name)
+		? projectMessages.operations.buttonRunning[name]
 		: idleLabel;
 }
 
