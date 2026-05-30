@@ -128,7 +128,7 @@
 	}
 
 	function copySelectedSkillForEditing() {
-		if (selectedSkill === null || !selectedSkill.builtIn) {
+		if (selectedSkill === null) {
 			return;
 		}
 
@@ -384,9 +384,18 @@
 					<button
 						class="workduck-button workduck-button-secondary"
 						type="button"
-						onclick={selectedSkill.builtIn ? copySelectedSkillForEditing : editSelectedSkill}
+						onclick={copySelectedSkillForEditing}
 					>
-						{selectedSkill.builtIn ? messages.skills.copySkill : messages.common.edit}
+						{messages.skills.copySkill}
+					</button>
+					<button
+						class="workduck-button workduck-button-secondary"
+						type="button"
+						disabled={selectedSkill.builtIn}
+						title={selectedSkill.builtIn ? messages.skills.errors.builtInReadonly : undefined}
+						onclick={editSelectedSkill}
+					>
+						{messages.common.edit}
 					</button>
 					{#if !selectedSkill.builtIn}
 						<button

@@ -1238,7 +1238,7 @@ export const koMessages = {
 		registeredCount: '스킬 {count}개',
 		newSkill: '새 스킬',
 		editSkill: '스킬 수정',
-		copySkill: '복사해서 수정',
+		copySkill: '복사',
 		copyNameSuffix: '복사본',
 		saved: '저장했습니다.',
 		removed: '삭제했습니다.',

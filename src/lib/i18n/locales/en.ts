@@ -1239,7 +1239,7 @@ export const enMessages = {
 		registeredCount: '{count} skills',
 		newSkill: 'New skill',
 		editSkill: 'Edit skill',
-		copySkill: 'Copy to edit',
+		copySkill: 'Copy',
 		copyNameSuffix: 'copy',
 		saved: 'Saved.',
 		removed: 'Removed.',
