@@ -270,6 +270,17 @@ function getQueuePrioritySortRank(file: QueueCardEntry) {
 	return file.priority === null ? 0 : queuePrioritySortRank[file.priority];
 }
 
+function shouldBulkDeleteQueueFile(file: QueueCardEntry, includePending: boolean) {
+	if (file.kind === 'unsupported') {
+		return false;
+	}
+
+	return (
+		file.executionState === 'completed' ||
+		(includePending && file.executionState === 'pending')
+	);
+}
+
 export function createQueuePanelController(input: QueuePanelControllerInput) {
 	let workspace = $derived(input.workspace());
 	let refreshSignal = $derived(input.refreshSignal());
@@ -292,6 +303,7 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 	let queueKindFilter = $state<QueueKindFilter>('all');
 	let queuePriorityFilter = $state<QueuePriorityFilter>('all');
 	let queueSortOption = $state<QueueSortOption>('created-desc');
+	let bulkDeleteIncludesPending = $state(false);
 	let error = $state<QueueFolderError | null>(null);
 	let parseError = $state<string | null>(null);
 	let status = $state<string | null>(null);
@@ -472,6 +484,11 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 	let canCompleteSelectedWorkOrder = $derived(
 		selectedWorkOrder !== null && selectedWorkOrder.status !== 'archived' && !isWriting
 	);
+	let bulkDeleteTargetFiles = $derived(
+		files.filter((file) => shouldBulkDeleteQueueFile(file, bulkDeleteIncludesPending))
+	);
+	let bulkDeleteTargetCount = $derived(bulkDeleteTargetFiles.length);
+	let canBulkDeleteQueueFiles = $derived(bulkDeleteTargetCount > 0 && !isWriting);
 	let workOrderDialogTitle = $derived(
 		workOrderDialogMode === 'create' ? messages.queue.newWork : messages.queue.editWork
 	);
@@ -886,6 +903,21 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		parseError = null;
 }
 
+	function removeQueueFilesFromState(relativePaths: readonly string[]) {
+		if (relativePaths.length === 0) {
+			return;
+		}
+
+		const relativePathSet = new Set(relativePaths);
+		files = files.filter((file) => !relativePathSet.has(file.relativePath));
+		readFilePaths = readFilePaths.filter((relativePath) => !relativePathSet.has(relativePath));
+		writeQueueReadFilePaths(workspace.id, readFilePaths);
+
+		for (const relativePath of relativePathSet) {
+			clearQueueSelectionForPath(relativePath);
+		}
+	}
+
 	function openQueueContextMenu(event: MouseEvent, file: QueueCardEntry) {
 		if (file.kind === 'unsupported' || isWriting) {
 			return;
@@ -963,11 +995,55 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 				return;
 			}
 
-			files = files.filter((file) => file.relativePath !== result.relativePath);
-			readFilePaths = readFilePaths.filter((relativePath) => relativePath !== result.relativePath);
-			writeQueueReadFilePaths(workspace.id, readFilePaths);
-			clearQueueSelectionForPath(result.relativePath);
+			removeQueueFilesFromState([result.relativePath]);
 			status = messages.queue.deletedFile.replace('{relativePath}', result.relativePath);
+			dispatchQueueFilesChanged(workspace.id);
+	} finally {
+			isWriting = false;
+	}
+}
+
+	async function handleBulkDeleteQueueFiles() {
+		if (!canBulkDeleteQueueFiles) {
+			return;
+		}
+
+		const targetFiles = bulkDeleteTargetFiles;
+
+		if (targetFiles.length === 0) {
+			return;
+		}
+
+		isWriting = true;
+		error = null;
+		parseError = null;
+		status = null;
+
+		const deletedRelativePaths: string[] = [];
+
+		try {
+			for (const targetFile of targetFiles) {
+				const result = await deleteQueueFile(workspace.path, targetFile.relativePath);
+
+				if (!result.ok) {
+					removeQueueFilesFromState(deletedRelativePaths);
+
+					if (deletedRelativePaths.length > 0) {
+						dispatchQueueFilesChanged(workspace.id);
+					}
+
+					error = result.error;
+					return;
+				}
+
+				deletedRelativePaths.push(result.relativePath);
+			}
+
+			removeQueueFilesFromState(deletedRelativePaths);
+			status = messages.queue.bulkDeletedFiles.replace(
+				'{count}',
+				deletedRelativePaths.length.toString()
+			);
 			dispatchQueueFilesChanged(workspace.id);
 	} finally {
 			isWriting = false;
@@ -1899,6 +1975,10 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		set queuePriorityFilter(value: QueuePriorityFilter) { queuePriorityFilter = value; },
 		get queueSortOption() { return queueSortOption; },
 		set queueSortOption(value: QueueSortOption) { queueSortOption = value; },
+		get bulkDeleteIncludesPending() { return bulkDeleteIncludesPending; },
+		set bulkDeleteIncludesPending(value: boolean) { bulkDeleteIncludesPending = value; },
+		get bulkDeleteTargetCount() { return bulkDeleteTargetCount; },
+		get canBulkDeleteQueueFiles() { return canBulkDeleteQueueFiles; },
 		get error() { return error; },
 		get parseError() { return parseError; },
 		get status() { return status; },
@@ -1990,6 +2070,7 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		handleExecuteWorkOrder,
 		handleCompleteWorkOrder,
 		openEditWorkOrderTaskDialog,
+		handleBulkDeleteQueueFiles,
 		getQueueResponseLanguageLabel,
 		getQueueTaskKindLabel,
 		getQueueTaskProjectLabels,

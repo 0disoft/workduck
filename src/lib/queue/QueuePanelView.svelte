@@ -153,6 +153,26 @@
 					</div>
 				</div>
 			</details>
+			<div class="workduck-queue-bulk-delete">
+				<label class="workduck-queue-bulk-delete-option">
+					<input
+						type="checkbox"
+						checked={controller.bulkDeleteIncludesPending}
+						disabled={controller.isWriting}
+						onchange={(event) =>
+							(controller.bulkDeleteIncludesPending = event.currentTarget.checked)}
+					/>
+					<span>{controller.messages.queue.includePendingDelete}</span>
+				</label>
+				<button
+					class="workduck-button workduck-button-danger"
+					type="button"
+					disabled={!controller.canBulkDeleteQueueFiles}
+					onclick={() => void controller.handleBulkDeleteQueueFiles()}
+				>
+					{controller.messages.queue.bulkDelete}
+				</button>
+			</div>
 			<button
 				class="workduck-button workduck-button-secondary"
 				type="button"

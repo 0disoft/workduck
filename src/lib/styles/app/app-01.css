@@ -345,6 +345,48 @@ a {
 	z-index: 20;
 }
 
+.workduck-queue-bulk-delete {
+	display: inline-flex;
+	min-width: 0;
+	flex: 0 0 auto;
+	align-items: center;
+	gap: 8px;
+}
+
+.workduck-queue-bulk-delete-option {
+	display: inline-flex;
+	height: var(--workduck-control-height);
+	min-width: 0;
+	align-items: center;
+	gap: 6px;
+	border: 1px solid oklch(var(--workduck-oklch-border) / 0.86);
+	border-radius: 8px;
+	background: oklch(var(--workduck-oklch-surface) / 0.64);
+	color: var(--workduck-color-muted);
+	padding: 0 10px;
+	font-size: var(--workduck-font-size-xs);
+	font-weight: 800;
+	white-space: nowrap;
+	cursor: pointer;
+}
+
+.workduck-queue-bulk-delete-option input {
+	width: 15px;
+	height: 15px;
+	margin: 0;
+	accent-color: var(--workduck-color-accent);
+}
+
+.workduck-queue-bulk-delete-option:has(input:checked) {
+	border-color: oklch(var(--workduck-oklch-danger) / 0.72);
+	color: var(--workduck-color-danger);
+}
+
+.workduck-queue-bulk-delete-option:has(input:disabled) {
+	cursor: not-allowed;
+	opacity: 0.48;
+}
+
 .workduck-queue-filter-summary {
 	display: inline-flex;
 	height: var(--workduck-control-height);
