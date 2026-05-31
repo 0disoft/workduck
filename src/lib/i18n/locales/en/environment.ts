@@ -22,7 +22,7 @@ export const enEnvironmentMessages = {
 		hide: 'Hide',
 		applyCliEnvironment: 'Apply CLI env',
 		applyCliEnvironmentTooltip:
-			'Save OpenRouter, OpenAI, and DeepSeek API keys as user environment variables.',
+			'Save stored entries as safe user environment variables for CLI tools.',
 		secretKinds: {
 			'api-key': 'API key',
 			token: 'Token',
@@ -72,8 +72,7 @@ export const enEnvironmentMessages = {
 			nameDuplicate: 'Name already exists.',
 			valueRequired: 'Value is required.',
 			notFound: 'Entry was not found.',
-			cliEnvironmentNoVariables:
-				'No OpenRouter, OpenAI, or DeepSeek API key environment variables were found.',
+			cliEnvironmentNoVariables: 'No CLI-compatible environment variables were found.',
 			cliEnvironmentApplyFailed: 'CLI environment variables could not be applied.',
 			cliEnvironmentUnsupported:
 				'User environment variables are not supported on this operating system.',

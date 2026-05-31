@@ -22,7 +22,7 @@ export const zhEnvironmentMessages = {
 	hide: '隐藏',
 	applyCliEnvironment: '应用 CLI 环境变量',
 	applyCliEnvironmentTooltip:
-		'将 OpenRouter, OpenAI 和 DeepSeek API 密钥保存为用户环境变量。',
+		'将已保存条目作为安全的用户环境变量提供给 CLI 工具。',
 	secretKinds: {
 		'api-key': 'API 密钥',
 		token: '令牌',
@@ -73,7 +73,7 @@ export const zhEnvironmentMessages = {
 		valueRequired: '值为必填项。',
 		notFound: '未找到该条目。',
 		cliEnvironmentNoVariables:
-			'未找到 OpenRouter, OpenAI 或 DeepSeek API 密钥的环境变量。',
+			'未找到可用于 CLI 的环境变量。',
 		cliEnvironmentApplyFailed: '无法应用 CLI 环境变量。',
 		cliEnvironmentUnsupported:
 			'此操作系统不支持用户环境变量。',

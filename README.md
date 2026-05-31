@@ -29,6 +29,11 @@ includes:
 - System settings for startup, tray behavior, and workspace inactivity locking.
 - Environment variable vault UI for API keys, tokens, accounts, passwords, and
   tags.
+- Environment vault entries can be applied to the user's CLI environment by
+  deriving safe variable names from saved entries, such as `custom token` to
+  `CUSTOM_TOKEN`, while keeping common aliases such as `npm_publish` to
+  `NODE_AUTH_TOKEN` and OpenAI, OpenRouter, and DeepSeek API keys compatible
+  with existing tools.
 - Projects board with project, group, and repository cards.
 - GitHub credentials can be selected from Environment token entries tagged
   `github`; projects store only the selected secret ID, not the token value.

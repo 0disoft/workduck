@@ -22,7 +22,7 @@ export const hiEnvironmentMessages = {
 	hide: 'छिपाएं',
 	applyCliEnvironment: 'CLI वातावरण लागू करें',
 	applyCliEnvironmentTooltip:
-		'Save OpenRouter, OpenAI, and DeepSeek API keys as user environment variables.',
+		'सहेजी गई प्रविष्टियों को CLI टूल के लिए सुरक्षित उपयोगकर्ता पर्यावरण चर के रूप में सहेजें।',
 	secretKinds: {
 		'api-key': 'एपीआई कुंजी',
 		token: 'टोकन',
@@ -72,8 +72,7 @@ export const hiEnvironmentMessages = {
 		nameDuplicate: 'नाम पहले से मौजूद है।',
 		valueRequired: 'मान आवश्यक है।',
 		notFound: 'प्रविष्टि नहीं मिली।',
-		cliEnvironmentNoVariables:
-			'कोई OpenRouter, OpenAI, या DeepSeek एपीआई कुंजी पर्यावरण चर नहीं मिला।',
+		cliEnvironmentNoVariables: 'कोई CLI-संगत पर्यावरण चर नहीं मिला।',
 		cliEnvironmentApplyFailed: 'CLI पर्यावरण चर लागू नहीं किए जा सके।',
 		cliEnvironmentUnsupported:
 			'इस ऑपरेटिंग सिस्टम पर उपयोगकर्ता पर्यावरण चर समर्थित नहीं हैं।',

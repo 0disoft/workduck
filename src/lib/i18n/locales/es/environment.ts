@@ -22,7 +22,7 @@ export const esEnvironmentMessages = {
 		hide: 'Ocultar',
 		applyCliEnvironment: 'Aplicar env de CLI',
 		applyCliEnvironmentTooltip:
-			'Guarda las claves API de OpenRouter, OpenAI y DeepSeek como variables de entorno del usuario.',
+			'Guarda las entradas como variables de entorno seguras para herramientas CLI.',
 		secretKinds: {
 			'api-key': 'Clave API',
 			token: 'Token',
@@ -73,7 +73,7 @@ export const esEnvironmentMessages = {
 			valueRequired: 'Se requiere el valor.',
 			notFound: 'No se encontró la entrada.',
 			cliEnvironmentNoVariables:
-				'No se encontraron variables de entorno para las claves API de OpenRouter, OpenAI o DeepSeek.',
+				'No se encontraron variables de entorno compatibles con la CLI.',
 			cliEnvironmentApplyFailed: 'No se pudieron aplicar las variables de entorno de la CLI.',
 			cliEnvironmentUnsupported:
 				'Las variables de entorno de usuario no son compatibles con este sistema operativo.',

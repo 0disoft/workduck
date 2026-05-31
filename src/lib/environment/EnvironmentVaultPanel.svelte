@@ -17,9 +17,9 @@
 
 	import {
 		applyCliEnvironmentVariables,
-		type CliEnvironmentApplyError,
-		type CliEnvironmentVariableInput
+		type CliEnvironmentApplyError
 	} from './cli-environment';
+	import { createCliEnvironmentVariables } from './cli-environment-variables';
 	import {
 		createEmptyEnvironmentVault,
 		createMaskedSecretValue,
@@ -355,49 +355,6 @@
 
 	function getSecretTagLabel(tag: EnvironmentSecretTag) {
 		return environmentMessages.secretTags[tag] ?? tag;
-	}
-
-	function createCliEnvironmentVariables(
-		secrets: readonly EnvironmentSecretRecord[]
-	): CliEnvironmentVariableInput[] {
-		const variables = new Map<string, string>();
-
-		for (const secret of secrets) {
-			const variableName = resolveCliEnvironmentVariableName(secret);
-
-			if (variableName === null || variables.has(variableName)) {
-				continue;
-			}
-
-			variables.set(variableName, secret.value);
-		}
-
-		return Array.from(variables, ([name, value]) => ({ name, value }));
-	}
-
-	function resolveCliEnvironmentVariableName(secret: EnvironmentSecretRecord) {
-		if (secret.kind !== 'api-key') {
-			return null;
-		}
-
-		const profileText = [secret.name, ...secret.tags]
-			.join(' ')
-			.toLocaleLowerCase('en-US')
-			.replaceAll(/[^a-z0-9]+/g, '');
-
-		if (profileText.includes('openrouter')) {
-			return 'OPENROUTER_API_KEY';
-		}
-
-		if (profileText.includes('openai')) {
-			return 'OPENAI_API_KEY';
-		}
-
-		if (profileText.includes('deepseek')) {
-			return 'DEEPSEEK_API_KEY';
-		}
-
-		return null;
 	}
 
 	function clearSecretForm() {

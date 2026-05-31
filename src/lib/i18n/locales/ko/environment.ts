@@ -22,7 +22,7 @@ export const koEnvironmentMessages = {
 		hide: '숨기기',
 		applyCliEnvironment: 'CLI 환경 적용',
 		applyCliEnvironmentTooltip:
-			'OpenRouter, OpenAI, DeepSeek API 키를 사용자 환경변수로 저장합니다.',
+			'저장된 항목 이름을 안전한 CLI 환경변수 이름으로 바꿔 사용자 환경변수에 저장합니다.',
 		secretKinds: {
 			'api-key': 'API 키',
 			token: '토큰',
@@ -72,8 +72,7 @@ export const koEnvironmentMessages = {
 			nameDuplicate: '이미 있는 이름입니다.',
 			valueRequired: '값을 입력하세요.',
 			notFound: '항목을 찾을 수 없습니다.',
-			cliEnvironmentNoVariables:
-				'OpenRouter, OpenAI, DeepSeek API 키 환경변수가 없습니다.',
+			cliEnvironmentNoVariables: 'CLI로 적용할 수 있는 환경변수가 없습니다.',
 			cliEnvironmentApplyFailed: 'CLI 환경변수를 적용하지 못했습니다.',
 			cliEnvironmentUnsupported: '이 운영체제에서는 사용자 환경변수 적용을 지원하지 않습니다.',
 			cliEnvironmentUnavailable: 'CLI 환경 적용은 데스크톱 앱에서 사용할 수 있습니다.'
