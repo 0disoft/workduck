@@ -754,8 +754,8 @@ fn create_work_order_response_format_prompt(
                 "- 해당 항목이 없으면 빈 배열을 사용하세요.".to_string(),
                 "- 사용자가 요청한 응답 언어를 유지하세요.".to_string(),
                 "- 증거가 제공되지 않은 확인은 수행한 것처럼 말하지 말고, 해당 한계를 summary나 cautions 안에 적으세요.".to_string(),
-                "- 첫 글자는 {, 마지막 글자는 } 이어야 합니다. JSON 앞뒤에 다른 텍스트를 붙이지 마세요.".to_string(),
-                "- 응답 형식 위반: 마크다운 제목, 글머리표 목록, 코드블록, ```json, 설명문, 셸 명령, `cat ...`, `rg ...`, <tool_call>, <tool_calls_section>, functions.Bash 같은 토큰.".to_string(),
+                "- 응답은 JSON 객체 하나로 시작하고 끝나야 합니다. 첫 문자는 여는 중괄호(`{`), 마지막 문자는 닫는 중괄호(`}`)여야 합니다.".to_string(),
+                "- 응답 형식 위반: 마크다운 제목, 글머리표 목록, JSON 코드블록 표식(세 개의 백틱 뒤에 json), 설명문, 셸 명령, `cat ...`, `rg ...`, `<tool_call>`, `<tool_calls_section>`, `functions.Bash` 같은 토큰.".to_string(),
                 "- 위반 예시는 절대 출력하지 말고, JSON 문자열 값 안에도 도구 호출 토큰을 넣지 마세요.".to_string(),
             ]
             .join("\n")
@@ -779,8 +779,8 @@ fn create_work_order_response_format_prompt(
                 "- Use an empty array when a section has no items.".to_string(),
                 "- Use the requested response language.".to_string(),
                 "- If evidence was not provided, do not claim you checked it; put that limitation inside summary or cautions.".to_string(),
-                "- The first character must be { and the last character must be }. Do not add text before or after the JSON.".to_string(),
-                "- Format violations: Markdown headings, bullet lists, code fences, ```json, explanatory prose, shell commands, `cat ...`, `rg ...`, <tool_call>, <tool_calls_section>, or functions.Bash tokens.".to_string(),
+                "- The response must start and end as one JSON object: first character `{`, last character `}`. Do not add text before or after it.".to_string(),
+                "- Format violations: Markdown headings, bullet lists, JSON code-fence markers (three backticks followed by json), explanatory prose, shell commands, `cat ...`, `rg ...`, `<tool_call>`, `<tool_calls_section>`, or `functions.Bash` tokens.".to_string(),
                 "- Never output those violation examples, and do not put tool-call tokens inside JSON string values.".to_string(),
             ]
             .join("\n")
@@ -818,7 +818,7 @@ fn create_writing_draft_response_format_prompt(language: QueueReportLanguage) ->
             "- strengths에는 문체 선택, 참고자료 반영 방식, 중요한 근거를 1~5개로 적으세요.".to_string(),
             "- recommendations에는 더 강하게/짧게/부드럽게 고칠 수 있는 선택지를 0~5개로 적으세요.".to_string(),
             "- cautions에는 출처 공백, 확인이 필요한 사실, 추정한 조건을 적고 없으면 빈 배열을 사용하세요.".to_string(),
-            "- 첫 글자는 {, 마지막 글자는 } 이어야 합니다. JSON 앞뒤에 다른 텍스트를 붙이지 마세요.".to_string(),
+            "- 응답은 JSON 객체 하나로 시작하고 끝나야 합니다. 첫 문자는 여는 중괄호(`{`), 마지막 문자는 닫는 중괄호(`}`)여야 합니다.".to_string(),
         ]
         .join("\n"),
         QueueReportLanguage::En => [
@@ -834,7 +834,7 @@ fn create_writing_draft_response_format_prompt(language: QueueReportLanguage) ->
             "- Put 1-5 notes about style choices, reference usage, or key evidence in strengths.".to_string(),
             "- Put 0-5 optional revision options in recommendations.".to_string(),
             "- Put source gaps, facts to verify, or assumptions in cautions, or use an empty array when none apply.".to_string(),
-            "- The first character must be { and the last character must be }. Do not add text before or after the JSON.".to_string(),
+            "- The response must start and end as one JSON object: first character `{`, last character `}`. Do not add text before or after it.".to_string(),
         ]
         .join("\n"),
     }
@@ -854,7 +854,7 @@ fn create_revision_draft_response_format_prompt(language: QueueReportLanguage) -
             "- strengths에는 실제로 적용한 목적, 어투, 구조, 형식 수정 방향을 1~5개로 적으세요.".to_string(),
             "- recommendations에는 더 과감하게 바꿀 수 있는 추가 퇴고 선택지를 0~5개로 적으세요.".to_string(),
             "- cautions에는 의미가 달라질 수 있는 부분, 확인이 필요한 사실, 선택한 어투의 부작용을 적고 없으면 빈 배열을 사용하세요.".to_string(),
-            "- 첫 글자는 {, 마지막 글자는 } 이어야 합니다. JSON 앞뒤에 다른 텍스트를 붙이지 마세요.".to_string(),
+            "- 응답은 JSON 객체 하나로 시작하고 끝나야 합니다. 첫 문자는 여는 중괄호(`{`), 마지막 문자는 닫는 중괄호(`}`)여야 합니다.".to_string(),
         ]
         .join("\n"),
         QueueReportLanguage::En => [
@@ -870,7 +870,7 @@ fn create_revision_draft_response_format_prompt(language: QueueReportLanguage) -
             "- Put 1-5 notes about applied purpose, tone, structure, or format changes in strengths.".to_string(),
             "- Put 0-5 optional further revision directions in recommendations.".to_string(),
             "- Put possible meaning changes, facts to verify, or tone tradeoffs in cautions, or use an empty array when none apply.".to_string(),
-            "- The first character must be { and the last character must be }. Do not add text before or after the JSON.".to_string(),
+            "- The response must start and end as one JSON object: first character `{`, last character `}`. Do not add text before or after it.".to_string(),
         ]
         .join("\n"),
     }
@@ -2261,10 +2261,10 @@ Final answer:
         assert!(prompt.contains(r#""strengths""#));
         assert!(prompt.contains(r#""recommendations""#));
         assert!(prompt.contains(r#""cautions""#));
-        assert!(prompt.contains("첫 글자는 {, 마지막 글자는 }"));
+        assert!(prompt.contains("첫 문자는 여는 중괄호(`{`), 마지막 문자는 닫는 중괄호(`}`)"));
         assert!(prompt.contains("응답 형식 위반"));
         assert!(prompt.contains("<tool_call>"));
-        assert!(prompt.contains("```json"));
+        assert!(prompt.contains("세 개의 백틱 뒤에 json"));
     }
 
     #[test]
