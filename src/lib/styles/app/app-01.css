@@ -558,6 +558,18 @@ a {
 	color: var(--workduck-color-accent);
 }
 
+.workduck-queue-file-running .workduck-queue-execution-state {
+	border-color: oklch(0.74 0.14 80 / 0.72);
+	background: oklch(0.74 0.14 80 / 0.12);
+	color: oklch(0.86 0.15 82);
+}
+
+.workduck-queue-file-failed .workduck-queue-execution-state {
+	border-color: oklch(0.65 0.18 25 / 0.72);
+	background: oklch(0.65 0.18 25 / 0.12);
+	color: oklch(0.78 0.18 25);
+}
+
 .workduck-queue-file-details {
 	display: grid;
 	min-width: 0;

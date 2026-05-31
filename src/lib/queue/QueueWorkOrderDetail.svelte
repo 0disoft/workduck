@@ -92,7 +92,11 @@
 				disabled={!canExecute}
 				onclick={() => void onExecute()}
 			>
-				{isWriting ? messages.queue.executing : messages.queue.executeWorkOrder}
+				{isWriting || workOrder.status === 'running'
+					? messages.queue.executing
+					: workOrder.status === 'failed'
+						? messages.queue.retryWorkOrder
+						: messages.queue.executeWorkOrder}
 			</button>
 		</div>
 	</div>

@@ -201,6 +201,7 @@ export const hiQueueMessages = {
 	creating: 'बनाया जा रहा है',
 	previewPrompt: 'प्रॉम्प्ट पूर्वावलोकन',
 	executeWorkOrder: 'चलाएं',
+	retryWorkOrder: 'फिर चलाएं',
 	completeWorkOrder: 'पूर्ण चिह्नित करें',
 	executing: 'चल रहा है',
 	noFollowUpSelected: 'कोई अनुवर्ती कार्रवाई नहीं चुनी गई।',
@@ -233,6 +234,8 @@ export const hiQueueMessages = {
 	},
 	executionStates: {
 		pending: 'लंबित',
+		running: 'चल रहा है',
+		failed: 'असफल',
 		completed: 'पूर्ण'
 	},
 	readStates: {
@@ -266,7 +269,9 @@ export const hiQueueMessages = {
 		targets: 'लक्ष्य',
 		command: 'कमांड',
 		saving: 'सहेजा जा रहा है',
-		saved: 'मूल्यांकन सहेज लिया गया।'
+		saved: 'मूल्यांकन सहेज लिया गया।',
+		alreadySaved: 'इस प्रतिक्रिया का मूल्यांकन पहले ही हो चुका है।',
+		savedAction: 'मूल्यांकित'
 	},
 	errors: {
 		workspaceRequired: 'कार्यक्षेत्र पथ आवश्यक है।',
@@ -290,6 +295,8 @@ export const hiQueueMessages = {
 		executionNoTask: 'चलाने के लिए कोई कार्य नहीं है।',
 		executionNoAgent: 'कम से कम एक कार्य एजेंट चुनें।',
 		executionVaultLocked: 'पहले पर्यावरण वॉल्ट को अनलॉक करें।',
+		executionWorkOrderRunning: 'यह कार्य आदेश पहले से चल रहा है।',
+		executionWorkOrderArchived: 'यह कार्य आदेश पहले ही पूरा हो चुका है।',
 		executionAgentNotFound: 'चयनित एजेंट नहीं मिला।',
 		executionSecretNotFound: 'एजेंट से लिंक्ड एपीआई कुंजी नहीं मिली।',
 		executionProviderUnsupported: 'एलएलएम प्रदाता का पता नहीं लगाया जा सका। एजेंट पर एक प्रदाता चुनें या एपीआई कुंजी नाम या टैग में DeepSeek, OpenAI, या OpenRouter शामिल करें।',

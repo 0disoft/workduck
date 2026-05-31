@@ -57,6 +57,10 @@ export function getExecutionFilterLabel(
 			return messages.common.all;
 		case 'pending':
 			return messages.queue.executionStates.pending;
+		case 'running':
+			return messages.queue.executionStates.running;
+		case 'failed':
+			return messages.queue.executionStates.failed;
 		case 'completed':
 			return messages.queue.executionStates.completed;
 	}

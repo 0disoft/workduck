@@ -6,7 +6,8 @@ import type {
 
 export type WorkduckQueueReviewDecision = 'pending' | 'approved' | 'needs-work' | 'rollback';
 export type WorkduckQueueWorkPriority = 'low' | 'normal' | 'high' | 'urgent';
-export type WorkduckQueueExecutionState = 'pending' | 'completed';
+export type WorkduckQueueExecutionState = 'pending' | 'running' | 'failed' | 'completed';
+export type WorkduckQueueArtifactStatus = 'reserved' | 'active' | 'running' | 'failed' | 'archived';
 export type WorkduckQueueResponseLanguage = 'auto' | 'ko' | 'en' | 'es' | 'fr' | 'zh' | 'hi';
 export type WorkduckQueueResponseFormat =
 	| 'general'
@@ -65,9 +66,16 @@ export interface WorkduckQueueResultReportTask {
 	readonly verification: readonly string[];
 	readonly risks: readonly string[];
 	readonly executionAttempts?: readonly WorkduckQueueExecutionAttempt[];
+	readonly evaluations?: readonly WorkduckQueueTaskEvaluation[];
 	readonly responseLanguage?: WorkduckQueueResponseLanguage;
 	readonly responseFormat?: WorkduckQueueResponseFormat;
 	readonly vote?: WorkduckQueueVoteResult;
+}
+
+export interface WorkduckQueueTaskEvaluation {
+	readonly agentId: string;
+	readonly evaluationKey: string;
+	readonly evaluatedAt: string;
 }
 
 export interface WorkduckQueueStructuredResponse {
@@ -87,7 +95,7 @@ export interface WorkduckQueueExecutionAttempt {
 export interface WorkduckQueueResultReport {
 	readonly schemaVersion: 'workduck.queue-result-report/v1';
 	readonly ref: QueueEntityRef & { readonly kind: 'queue-result-report' };
-	readonly status: 'reserved' | 'active' | 'archived';
+	readonly status: WorkduckQueueArtifactStatus;
 	readonly createdAt: string;
 	readonly agentName?: string;
 	readonly sourceWorkOrder?: QueueEntityRef & { readonly kind: 'queue-work-order' };
@@ -115,7 +123,7 @@ export interface WorkduckQueueWorkOrderTask {
 export interface WorkduckQueueWorkOrder {
 	readonly schemaVersion: 'workduck.queue-work-order/v1';
 	readonly ref: QueueEntityRef & { readonly kind: 'queue-work-order' };
-	readonly status: 'reserved' | 'active' | 'archived';
+	readonly status: WorkduckQueueArtifactStatus;
 	readonly createdAt: string;
 	readonly agentName?: string;
 	readonly sourceReport?: QueueEntityRef & { readonly kind: 'queue-result-report' };
@@ -138,7 +146,7 @@ export interface WorkduckQueueProposalRecommendation {
 export interface WorkduckQueueProposal {
 	readonly schemaVersion: 'workduck.queue-proposal/v1';
 	readonly ref: QueueEntityRef & { readonly kind: 'queue-proposal' };
-	readonly status: 'reserved' | 'active' | 'archived';
+	readonly status: WorkduckQueueArtifactStatus;
 	readonly createdAt: string;
 	readonly agentName?: string;
 	readonly question: string;
@@ -493,6 +501,14 @@ export function readQueueArtifactExecutionState(content: string): WorkduckQueueE
 			return 'completed';
 		}
 
+		if (parsed.status === 'running') {
+			return 'running';
+		}
+
+		if (parsed.status === 'failed') {
+			return 'failed';
+		}
+
 		switch (parsed.schemaVersion) {
 			case 'workduck.queue-result-report/v1':
 				return 'completed';
@@ -538,6 +554,68 @@ export function archiveQueueWorkOrder(workOrder: WorkduckQueueWorkOrder): Workdu
 	return {
 		...workOrder,
 		status: 'archived'
+	};
+}
+
+export function startQueueWorkOrderExecution(
+	workOrder: WorkduckQueueWorkOrder
+): WorkduckQueueWorkOrder {
+	return {
+		...workOrder,
+		status: 'running'
+	};
+}
+
+export function failQueueWorkOrderExecution(
+	workOrder: WorkduckQueueWorkOrder
+): WorkduckQueueWorkOrder {
+	return {
+		...workOrder,
+		status: 'failed'
+	};
+}
+
+export function createQueueReportTaskEvaluationKey(
+	report: WorkduckQueueResultReport,
+	task: WorkduckQueueResultReportTask
+) {
+	return `queue-report:${report.ref.id}:${task.id}`;
+}
+
+export function hasQueueReportTaskEvaluation(
+	task: WorkduckQueueResultReportTask,
+	agentId: string
+) {
+	return (task.evaluations ?? []).some((evaluation) => evaluation.agentId === agentId);
+}
+
+export function recordQueueReportTaskEvaluation(
+	report: WorkduckQueueResultReport,
+	taskId: string,
+	agentId: string,
+	now = new Date()
+): WorkduckQueueResultReport {
+	return {
+		...report,
+		tasks: report.tasks.map((task) => {
+			if (task.id !== taskId || hasQueueReportTaskEvaluation(task, agentId)) {
+				return task;
+			}
+
+			const evaluationKey = createQueueReportTaskEvaluationKey(report, task);
+
+			return {
+				...task,
+				evaluations: [
+					...(task.evaluations ?? []),
+					{
+						agentId,
+						evaluationKey,
+						evaluatedAt: now.toISOString()
+					}
+				]
+			};
+		})
 	};
 }
 
@@ -718,7 +796,7 @@ function isQueueResultReport(value: unknown): value is WorkduckQueueResultReport
 	return (
 		value.schemaVersion === 'workduck.queue-result-report/v1' &&
 		isEntityRef(value.ref, 'queue-result-report') &&
-		(value.status === 'reserved' || value.status === 'active' || value.status === 'archived') &&
+		isQueueArtifactStatus(value.status) &&
 		typeof value.createdAt === 'string' &&
 		isOptionalText(value.agentName) &&
 		isOptionalEntityRef(value.sourceWorkOrder, 'queue-work-order') &&
@@ -839,7 +917,7 @@ function createReportEvaluationDelegationBody(
 		createReportEvaluationTargetSummary(target.task, index, language)
 	);
 	const skippedTaskSummaries = createSkippedReportEvaluationTargetSummaries(report, language);
-	const evaluationJsonTemplate = createReportEvaluationBatchJsonTemplate(evaluationTargets);
+	const evaluationJsonTemplate = createReportEvaluationBatchJsonTemplate(report, evaluationTargets);
 	const batchCommand = [
 		'workduck',
 		'agent',
@@ -1092,20 +1170,28 @@ function getReportTaskAgentName(task: WorkduckQueueResultReportTask) {
 	return task.title.split(':')[0]?.trim() || task.title;
 }
 
-function createReportEvaluationBatchJsonTemplate(targets: readonly ReportEvaluationTarget[]) {
+function createReportEvaluationBatchJsonTemplate(
+	report: WorkduckQueueResultReport,
+	targets: readonly ReportEvaluationTarget[]
+) {
 	return JSON.stringify(
 		{
-			evaluations: targets.map(({ task }) => ({
-				reportTaskId: task.id,
-				agentName: getReportTaskAgentName(task),
-				scores: {
-					problemUnderstanding: 5,
-					logicalValidity: 5,
-					practicalFeasibility: 5,
-					creativeInsight: 5,
-					riskDetection: 5
-				}
-			}))
+			evaluations: targets.map(({ task }) => {
+				const agentName = getReportTaskAgentName(task);
+
+				return {
+					reportTaskId: task.id,
+					agentName,
+					evaluationKey: createQueueReportTaskEvaluationKey(report, task),
+					scores: {
+						problemUnderstanding: 5,
+						logicalValidity: 5,
+						practicalFeasibility: 5,
+						creativeInsight: 5,
+						riskDetection: 5
+					}
+				};
+			})
 		},
 		null,
 		2
@@ -1138,7 +1224,7 @@ function isQueueWorkOrder(value: unknown): value is WorkduckQueueWorkOrder {
 	return (
 		value.schemaVersion === 'workduck.queue-work-order/v1' &&
 		isEntityRef(value.ref, 'queue-work-order') &&
-		(value.status === 'reserved' || value.status === 'active' || value.status === 'archived') &&
+		isQueueArtifactStatus(value.status) &&
 		typeof value.createdAt === 'string' &&
 		isOptionalText(value.agentName) &&
 		(value.sourceReport === undefined || isEntityRef(value.sourceReport, 'queue-result-report')) &&
@@ -1155,7 +1241,7 @@ function isQueueProposal(value: unknown): value is WorkduckQueueProposal {
 	return (
 		value.schemaVersion === 'workduck.queue-proposal/v1' &&
 		isEntityRef(value.ref, 'queue-proposal') &&
-		(value.status === 'reserved' || value.status === 'active' || value.status === 'archived') &&
+		isQueueArtifactStatus(value.status) &&
 		typeof value.createdAt === 'string' &&
 		isOptionalText(value.agentName) &&
 		typeof value.question === 'string' &&
@@ -1185,9 +1271,30 @@ function isQueueResultReportTask(value: unknown) {
 		(value.executionAttempts === undefined ||
 			(Array.isArray(value.executionAttempts) &&
 				value.executionAttempts.every(isQueueExecutionAttempt))) &&
+		(value.evaluations === undefined ||
+			(Array.isArray(value.evaluations) && value.evaluations.every(isQueueTaskEvaluation))) &&
 		(value.responseLanguage === undefined || isQueueResponseLanguage(value.responseLanguage)) &&
 		(value.responseFormat === undefined || isQueueResponseFormat(value.responseFormat)) &&
 		(value.vote === undefined || isQueueVoteResult(value.vote))
+	);
+}
+
+function isQueueTaskEvaluation(value: unknown): value is WorkduckQueueTaskEvaluation {
+	return (
+		isRecord(value) &&
+		typeof value.agentId === 'string' &&
+		typeof value.evaluationKey === 'string' &&
+		typeof value.evaluatedAt === 'string'
+	);
+}
+
+function isQueueArtifactStatus(value: unknown): value is WorkduckQueueArtifactStatus {
+	return (
+		value === 'reserved' ||
+		value === 'active' ||
+		value === 'running' ||
+		value === 'failed' ||
+		value === 'archived'
 	);
 }
 

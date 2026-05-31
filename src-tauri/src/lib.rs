@@ -122,6 +122,7 @@ pub fn run() {
             queue_folder::list_queue_files,
             queue_folder::open_queue_folder,
             queue_folder::read_queue_file,
+            queue_folder::update_queue_result_report_file,
             queue_folder::update_queue_work_order_file,
             queue_folder::write_queue_work_order_file,
             queue_folder::write_queue_result_report_file,

@@ -479,6 +479,10 @@ pub fn create_agent_prompt_plan(task: &QueueWorkOrderTask) -> AgentPromptPlan {
 pub async fn execute_queue_work_order(
     request: QueueExecutionRequest,
 ) -> QueueExecutionCommandResult {
+    if let Err(error) = validate_executable_work_order_status(&request.work_order) {
+        return queue_execution_failed(error);
+    }
+
     if request.work_order.tasks.is_empty() {
         return queue_execution_failed(QueueExecutionErrorDetail::new(
             "queue-execution-no-task",
@@ -2585,6 +2589,46 @@ en-US 표기는 한국어 지원 앱을 영어 전용처럼 보이게 합니다.
         assert_eq!(slugify("GPT5.4미니"), "gpt5-4미니");
         assert_eq!(slugify("결과 보고서"), "결과-보고서");
     }
+
+    #[test]
+    fn validate_work_order_allows_failed_retry_but_rejects_running_and_archived() {
+        let mut work_order = QueueWorkOrder {
+            schema_version: "workduck.queue-work-order/v1".to_string(),
+            r#ref: QueueEntityRef {
+                id: "wo_retry".to_string(),
+                kind: "queue-work-order".to_string(),
+                label: "재시도".to_string(),
+            },
+            status: "failed".to_string(),
+            created_at: "2026-05-31T00:00:00Z".to_string(),
+            tasks: vec![QueueWorkOrderTask {
+                id: "task_1".to_string(),
+                kind: None,
+                title: "재시도".to_string(),
+                body: "다시 실행".to_string(),
+                priority: Some("normal".to_string()),
+                response_language: Some("ko".to_string()),
+                response_format: Some("general".to_string()),
+                project_ids: Vec::new(),
+                agent_ids: vec!["agent_1".to_string()],
+                skill_ids: Vec::new(),
+                reference_ids: Vec::new(),
+                vote: None,
+            }],
+        };
+
+        assert!(validate_work_order(&work_order, "wo_retry").is_ok());
+
+        work_order.status = "running".to_string();
+        let running_error =
+            validate_work_order(&work_order, "wo_retry").expect_err("running is blocked");
+        assert_eq!(running_error.code, "work-order-running");
+
+        work_order.status = "archived".to_string();
+        let archived_error =
+            validate_work_order(&work_order, "wo_retry").expect_err("archived is blocked");
+        assert_eq!(archived_error.code, "work-order-archived");
+    }
 }
 
 fn read_optional_text(value: Option<&Value>) -> String {
@@ -3009,14 +3053,29 @@ pub fn validate_work_order(
         });
     }
 
-    if work_order.status == "archived" {
-        return Err(QueueExecutionErrorDetail {
-            code: "work-order-archived",
-            message: "이미 완료 처리된 작업 지시서입니다.".to_string(),
-        });
-    }
+    validate_executable_work_order_status(work_order)?;
 
     Ok(())
+}
+
+fn validate_executable_work_order_status(
+    work_order: &QueueWorkOrder,
+) -> Result<(), QueueExecutionErrorDetail> {
+    match work_order.status.as_str() {
+        "active" | "failed" => Ok(()),
+        "running" => Err(QueueExecutionErrorDetail {
+            code: "work-order-running",
+            message: "이미 실행 중인 작업 지시서입니다.".to_string(),
+        }),
+        "archived" => Err(QueueExecutionErrorDetail {
+            code: "work-order-archived",
+            message: "이미 완료 처리된 작업 지시서입니다.".to_string(),
+        }),
+        _ => Err(QueueExecutionErrorDetail {
+            code: "work-order-invalid-status",
+            message: "작업 지시서 상태가 실행 가능한 상태가 아닙니다.".to_string(),
+        }),
+    }
 }
 
 fn resolve_agent_provider(

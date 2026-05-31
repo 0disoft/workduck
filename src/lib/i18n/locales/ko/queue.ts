@@ -201,6 +201,7 @@ export const koQueueMessages = {
 		creating: '만드는 중',
 		previewPrompt: '지시문 미리보기',
 		executeWorkOrder: '실행',
+		retryWorkOrder: '다시 실행',
 		completeWorkOrder: '완료 처리',
 		executing: '실행 중',
 		noFollowUpSelected: '후속 작업이 선택되지 않았습니다.',
@@ -233,6 +234,8 @@ export const koQueueMessages = {
 		},
 		executionStates: {
 			pending: '실행 대기',
+			running: '실행 중',
+			failed: '실행 실패',
 			completed: '실행 완료'
 		},
 		readStates: {
@@ -266,7 +269,9 @@ export const koQueueMessages = {
 			targets: '평가 대상',
 			command: '실행 명령',
 			saving: '저장 중',
-			saved: '평가를 저장했습니다.'
+			saved: '평가를 저장했습니다.',
+			alreadySaved: '이미 평가한 응답입니다.',
+			savedAction: '평가됨'
 		},
 		errors: {
 			workspaceRequired: '워크스페이스 경로를 입력하세요.',
@@ -291,6 +296,8 @@ export const koQueueMessages = {
 			executionNoTask: '실행할 작업이 없습니다.',
 			executionNoAgent: '작업 에이전트를 선택하세요.',
 			executionVaultLocked: '보안 보관함을 먼저 잠금 해제하세요.',
+			executionWorkOrderRunning: '이미 실행 중인 작업입니다.',
+			executionWorkOrderArchived: '이미 완료 처리된 작업입니다.',
 			executionAgentNotFound: '선택한 에이전트를 찾을 수 없습니다.',
 			executionSecretNotFound: '에이전트에 연결된 API 키를 찾을 수 없습니다.',
 			executionProviderUnsupported: '지원하는 LLM 제공업체를 확인하지 못했습니다. API 키 이름/태그에 DeepSeek, OpenAI, OpenRouter 중 하나를 포함하세요.',

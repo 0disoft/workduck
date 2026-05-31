@@ -12,7 +12,7 @@ import {
 import type { WorkspaceRecord } from '$lib/workspaces/workspace-registry';
 import {
 	createEmptyAgentRegistry,
-	recordAgentEvaluation,
+	recordAgentEvaluationOnce,
 	type AgentRecord,
 	type AgentRegistry
 } from '$lib/agents/agent-registry';
@@ -73,10 +73,13 @@ import {
 import {
 	archiveQueueWorkOrder,
 	createDefaultReportReviews,
+	createQueueReportTaskEvaluationKey,
 	createManualQueueWorkOrder,
 	createQueueResultReportFileNameFromLabel,
 	createQueueWorkOrderFileName,
 	createQueueWorkOrderForReportEvaluation,
+	failQueueWorkOrderExecution,
+	hasQueueReportTaskEvaluation,
 	defaultQueueResponseFormat,
 	defaultQueueResponseLanguage,
 	defaultQueueWorkPriority,
@@ -89,7 +92,9 @@ import {
 	parseQueueProposal,
 	parseQueueResultReport,
 	parseQueueWorkOrder,
+	recordQueueReportTaskEvaluation,
 	serializeQueueArtifact,
+	startQueueWorkOrderExecution,
 	type QueueReportTaskReview,
 	type WorkduckQueueProposal,
 	type WorkduckQueueExecutionState,
@@ -114,6 +119,7 @@ import {
 	ensureQueueFolder,
 	listQueueFiles,
 	readQueueFile,
+	updateQueueResultReportFile,
 	updateQueueWorkOrderFile,
 	writeQueueResultReportFile,
 	writeQueueWorkOrderFile,
@@ -281,7 +287,7 @@ function shouldBulkDeleteQueueFile(file: QueueCardEntry, includePending: boolean
 
 	return (
 		file.executionState === 'completed' ||
-		(includePending && file.executionState === 'pending')
+		(includePending && file.executionState !== null)
 	);
 }
 
@@ -440,6 +446,8 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 			const matchesExecutionFilter =
 				queueExecutionFilter === 'all' ||
 				(queueExecutionFilter === 'pending' && file.executionState === 'pending') ||
+				(queueExecutionFilter === 'running' && file.executionState === 'running') ||
+				(queueExecutionFilter === 'failed' && file.executionState === 'failed') ||
 				(queueExecutionFilter === 'completed' && file.executionState === 'completed');
 			const matchesReadFilter =
 				queueReadFilter === 'all' ||
@@ -474,21 +482,24 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 	);
 	let canExecuteSelectedWorkOrder = $derived(
 		selectedWorkOrder !== null &&
-			selectedWorkOrder.status !== 'archived' &&
+			(selectedWorkOrder.status === 'active' || selectedWorkOrder.status === 'failed') &&
 			selectedWorkOrder.tasks.length > 0 &&
 			selectedWorkOrder.tasks.every((task) => (task.agentIds ?? []).length > 0) &&
 			!isWriting
 	);
 	let canPreviewSelectedWorkOrderPrompt = $derived(
 		selectedWorkOrder !== null &&
-			selectedWorkOrder.status !== 'archived' &&
+			(selectedWorkOrder.status === 'active' || selectedWorkOrder.status === 'failed') &&
 			selectedWorkOrder.tasks.length > 0 &&
 			selectedWorkOrder.tasks.every((task) => (task.agentIds ?? []).length > 0) &&
 			!isWriting &&
 			!isPreviewingPrompt
 	);
 	let canCompleteSelectedWorkOrder = $derived(
-		selectedWorkOrder !== null && selectedWorkOrder.status !== 'archived' && !isWriting
+		selectedWorkOrder !== null &&
+			selectedWorkOrder.status !== 'archived' &&
+			selectedWorkOrder.status !== 'running' &&
+			!isWriting
 	);
 	let bulkDeleteTargetFiles = $derived(
 		files.filter((file) => shouldBulkDeleteQueueFile(file, bulkDeleteIncludesPending))
@@ -1082,7 +1093,12 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 }
 
 	function openEditWorkOrderTaskDialog(task: WorkduckQueueWorkOrderTask) {
-		if (selectedWorkOrder === null || selectedWorkOrderPath === null) {
+		if (
+			selectedWorkOrder === null ||
+			selectedWorkOrderPath === null ||
+			selectedWorkOrder.status === 'running' ||
+			selectedWorkOrder.status === 'archived'
+		) {
 			return;
 	}
 
@@ -1176,6 +1192,8 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 			file.kind === 'unsupported' ? 'workduck-queue-file-disabled' : 'workduck-queue-file-button',
 			isSelectedQueueFile(file) ? 'workduck-queue-file-selected' : '',
 			file.executionState === 'pending' ? 'workduck-queue-file-pending' : '',
+			file.executionState === 'running' ? 'workduck-queue-file-running' : '',
+			file.executionState === 'failed' ? 'workduck-queue-file-failed' : '',
 			file.executionState === 'completed' ? 'workduck-queue-file-completed' : ''
 		]
 			.filter(Boolean)
@@ -1432,16 +1450,34 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 			return;
 	}
 
+		const executableWorkOrder = selectedWorkOrder;
+		const workOrderPath = selectedWorkOrderPath;
+		const runningWorkOrder = startQueueWorkOrderExecution(executableWorkOrder);
+
 		isWriting = true;
 		error = null;
 		parseError = null;
 		status = messages.queue.executing;
 
 		try {
+			const runningResult = await updateQueueWorkOrderFile(
+				workspace.path,
+				workOrderPath,
+				serializeQueueArtifact(runningWorkOrder)
+			);
+
+			if (!runningResult.ok) {
+				error = runningResult.error;
+				status = null;
+				return;
+			}
+
+			selectedWorkOrder = runningWorkOrder;
+			await refreshQueueFiles({ silent: true });
 			await prepareDesktopNotificationPermission();
 			const executionContext = await readExecutionContextForWorkspace();
 			const executionResult = await executeQueueWorkOrder({
-				workOrder: selectedWorkOrder,
+				workOrder: executableWorkOrder,
 				agents: executionContext.agents,
 				vault: readEnvironmentVaultSession(workspace.id),
 				skills: executionContext.skills,
@@ -1451,6 +1487,17 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 
 			if (!executionResult.ok) {
 				parseError = getQueueExecutionErrorMessage(executionResult.error);
+				const failedWorkOrder = failQueueWorkOrderExecution(runningWorkOrder);
+				const failedResult = await updateQueueWorkOrderFile(
+					workspace.path,
+					workOrderPath,
+					serializeQueueArtifact(failedWorkOrder)
+				);
+
+				if (failedResult.ok) {
+					selectedWorkOrder = failedWorkOrder;
+					await refreshQueueFiles({ silent: true });
+				}
 				status = null;
 				return;
 			}
@@ -1463,14 +1510,25 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 
 			if (!reportWriteResult.ok) {
 				error = reportWriteResult.error;
+				const failedWorkOrder = failQueueWorkOrderExecution(runningWorkOrder);
+				const failedResult = await updateQueueWorkOrderFile(
+					workspace.path,
+					workOrderPath,
+					serializeQueueArtifact(failedWorkOrder)
+				);
+
+				if (failedResult.ok) {
+					selectedWorkOrder = failedWorkOrder;
+					await refreshQueueFiles({ silent: true });
+				}
 				status = null;
 				return;
 			}
 
-			const archivedWorkOrder = archiveQueueWorkOrder(selectedWorkOrder);
+			const archivedWorkOrder = archiveQueueWorkOrder(runningWorkOrder);
 			const archiveResult = await updateQueueWorkOrderFile(
 				workspace.path,
-				selectedWorkOrderPath,
+				workOrderPath,
 				serializeQueueArtifact(archivedWorkOrder)
 			);
 
@@ -1875,10 +1933,30 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		return findReportTaskAgent(task, allAgents);
 }
 
+	function isReportTaskEvaluationRecorded(task: WorkduckQueueResultReportTask) {
+		const agent = getReportTaskAgent(task);
+
+		if (agent === null || selectedReport === null) {
+			return false;
+		}
+
+		const evaluationKey = createQueueReportTaskEvaluationKey(selectedReport, task);
+
+		return (
+			hasQueueReportTaskEvaluation(task, agent.id) ||
+			agent.evaluationKeys.includes(evaluationKey)
+		);
+}
+
 	function openEvaluationDialog(task: WorkduckQueueResultReportTask) {
 		const agent = getReportTaskAgent(task);
 
-		if (agent === null || isWriting || isSavingEvaluation) {
+		if (
+			agent === null ||
+			isWriting ||
+			isSavingEvaluation ||
+			isReportTaskEvaluationRecorded(task)
+		) {
 			return;
 	}
 
@@ -1912,6 +1990,11 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 			return;
 	}
 
+		if (selectedReport === null || selectedReportPath === null) {
+			parseError = messages.queue.errors.fileInvalid;
+			return;
+		}
+
 		isSavingEvaluation = true;
 		error = null;
 		parseError = null;
@@ -1919,10 +2002,15 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 
 		try {
 			const targetAgentId = evaluationDialog.agent.id;
+			const evaluationKey = createQueueReportTaskEvaluationKey(
+				selectedReport,
+				evaluationDialog.task
+			);
 			const latestAgentRegistryResult = await readAgentRegistry(workspace.id, workspace.path);
-			const mutation = recordAgentEvaluation(
+			const mutation = recordAgentEvaluationOnce(
 				latestAgentRegistryResult.registry,
 				targetAgentId,
+				evaluationKey,
 				evaluationScores
 			);
 
@@ -1938,6 +2026,28 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 			if (!writeResult.ok) {
 				parseError = messages.agents.errors.saveFailed;
 				return;
+			}
+
+			if (mutation.applied) {
+				const nextReport = recordQueueReportTaskEvaluation(
+					selectedReport,
+					evaluationDialog.task.id,
+					targetAgentId
+				);
+				const reportWriteResult = await updateQueueResultReportFile(
+					workspace.path,
+					selectedReportPath,
+					serializeQueueArtifact(nextReport)
+				);
+
+				if (!reportWriteResult.ok) {
+					parseError = messages.queue.errors.fileWriteFailed;
+					return;
+				}
+
+				selectedReport = nextReport;
+				rememberCompletedReportPath(reportWriteResult.relativePath);
+				await refreshQueueFiles({ silent: true });
 			}
 
 			const latestPersonaRegistryResult = await readPersonaRegistry(workspace.id, workspace.path);
@@ -1960,7 +2070,9 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 				return;
 			}
 
-			status = messages.queue.evaluation.saved;
+			status = mutation.applied
+				? messages.queue.evaluation.saved
+				: messages.queue.evaluation.alreadySaved;
 			evaluationDialog = null;
 			evaluationScores = createDefaultAgentEvaluationScores();
 	} finally {
@@ -2120,6 +2232,7 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		getVoteChoiceLabel,
 		getReportTaskAgent,
 		getReviewDecisionLabel,
+		isReportTaskEvaluationRecorded,
 		handlePreviewWorkOrderPrompt,
 		closePromptPreviewDialog,
 		handleExecuteWorkOrder,

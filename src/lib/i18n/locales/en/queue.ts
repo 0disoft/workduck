@@ -201,6 +201,7 @@ export const enQueueMessages = {
 		creating: 'Creating',
 		previewPrompt: 'Preview prompt',
 		executeWorkOrder: 'Run',
+		retryWorkOrder: 'Run again',
 		completeWorkOrder: 'Mark complete',
 		executing: 'Running',
 		noFollowUpSelected: 'No follow-up selected.',
@@ -233,6 +234,8 @@ export const enQueueMessages = {
 		},
 		executionStates: {
 			pending: 'Pending',
+			running: 'Running',
+			failed: 'Failed',
 			completed: 'Completed'
 		},
 		readStates: {
@@ -266,7 +269,9 @@ export const enQueueMessages = {
 			targets: 'Targets',
 			command: 'Command',
 			saving: 'Saving',
-			saved: 'Evaluation saved.'
+			saved: 'Evaluation saved.',
+			alreadySaved: 'This response has already been evaluated.',
+			savedAction: 'Evaluated'
 		},
 		errors: {
 			workspaceRequired: 'Workspace path is required.',
@@ -291,6 +296,8 @@ export const enQueueMessages = {
 			executionNoTask: 'There is no task to run.',
 			executionNoAgent: 'Select at least one work agent.',
 			executionVaultLocked: 'Unlock the environment vault first.',
+			executionWorkOrderRunning: 'This work order is already running.',
+			executionWorkOrderArchived: 'This work order is already completed.',
 			executionAgentNotFound: 'The selected agent was not found.',
 			executionSecretNotFound: 'The API key linked to the agent was not found.',
 			executionProviderUnsupported:

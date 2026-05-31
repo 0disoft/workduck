@@ -201,6 +201,7 @@ export const zhQueueMessages = {
 	creating: '正在创建',
 	previewPrompt: '预览提示词',
 	executeWorkOrder: '运行',
+	retryWorkOrder: '重新运行',
 	completeWorkOrder: '标记完成',
 	executing: '正在运行',
 	noFollowUpSelected: '未选择后续项。',
@@ -233,6 +234,8 @@ export const zhQueueMessages = {
 	},
 	executionStates: {
 		pending: '待处理',
+		running: '运行中',
+		failed: '运行失败',
 		completed: '已完成'
 	},
 	readStates: {
@@ -266,7 +269,9 @@ export const zhQueueMessages = {
 		targets: '目标',
 		command: '命令',
 		saving: '正在保存',
-		saved: '评估已保存。'
+		saved: '评估已保存。',
+		alreadySaved: '此响应已经评估过。',
+		savedAction: '已评估'
 	},
 	errors: {
 		workspaceRequired: '工作区路径为必填项。',
@@ -291,6 +296,8 @@ export const zhQueueMessages = {
 		executionNoTask: '没有可运行的任务。',
 		executionNoAgent: '请选择至少一个执行智能体。',
 		executionVaultLocked: '请先解锁环境保管箱。',
+		executionWorkOrderRunning: '此工单已经在运行。',
+		executionWorkOrderArchived: '此工单已经完成。',
 		executionAgentNotFound: '未找到所选智能体。',
 		executionSecretNotFound: '未找到绑定至该智能体的 API 密钥。',
 		executionProviderUnsupported:

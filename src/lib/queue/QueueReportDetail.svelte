@@ -30,6 +30,7 @@
 		) => void;
 		readonly onUpdateReviewComment: (taskId: string, comment: string) => void;
 		readonly onOpenEvaluation: (task: WorkduckQueueResultReportTask) => void;
+		readonly isEvaluationRecorded: (task: WorkduckQueueResultReportTask) => boolean;
 		readonly getVoteChoiceLabel: (task: WorkduckQueueResultReportTask) => string;
 		readonly getReportTaskAgent: (task: WorkduckQueueResultReportTask) => AgentRecord | null;
 		readonly getReviewDecisionLabel: (
@@ -52,6 +53,7 @@
 		onUpdateReviewDecision,
 		onUpdateReviewComment,
 		onOpenEvaluation,
+		isEvaluationRecorded,
 		getVoteChoiceLabel,
 		getReportTaskAgent,
 		getReviewDecisionLabel
@@ -108,6 +110,7 @@
 		{#each report.tasks as task (task.id)}
 			{@const review = reviews.find((item) => item.taskId === task.id)}
 			{@const reportTaskAgent = getReportTaskAgent(task)}
+			{@const evaluationRecorded = isEvaluationRecorded(task)}
 			{@const structuredResponse = task.structuredResponse}
 			{@const structuredResponseLabels = getQueueStructuredResponseLabels(
 				messages,
@@ -127,10 +130,12 @@
 						<button
 							class="workduck-button workduck-button-secondary workduck-queue-task-edit-button"
 							type="button"
-							disabled={isSavingEvaluation}
+							disabled={isSavingEvaluation || evaluationRecorded}
 							onclick={() => onOpenEvaluation(task)}
 						>
-							{messages.queue.evaluation.action}
+							{evaluationRecorded
+								? messages.queue.evaluation.savedAction
+								: messages.queue.evaluation.action}
 						</button>
 					{/if}
 				</header>

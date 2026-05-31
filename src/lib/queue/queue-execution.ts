@@ -11,6 +11,8 @@ export type QueueExecutionError =
 	| 'queue-execution-no-task'
 	| 'queue-execution-no-agent'
 	| 'queue-execution-vault-locked'
+	| 'queue-execution-work-order-running'
+	| 'queue-execution-work-order-archived'
 	| 'queue-execution-unknown'
 	| AgentExecutionError;
 
@@ -147,6 +149,10 @@ function normalizeQueueExecutionError(error: string | null | undefined): QueueEx
 			return 'queue-execution-no-task';
 		case 'queue-execution-vault-locked':
 			return 'queue-execution-vault-locked';
+		case 'work-order-running':
+			return 'queue-execution-work-order-running';
+		case 'work-order-archived':
+			return 'queue-execution-work-order-archived';
 		case 'work-order-agent-required':
 		case 'work-order-empty':
 			return 'queue-execution-no-agent';

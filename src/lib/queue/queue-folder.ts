@@ -284,6 +284,45 @@ export async function updateQueueWorkOrderFile(
 	}
 }
 
+export async function updateQueueResultReportFile(
+	workspacePath: string,
+	relativePath: string,
+	content: string
+): Promise<QueueFileReadResult> {
+	const invoke = getTauriInvoke();
+
+	if (invoke === undefined) {
+		return { ok: false, error: 'queue-folder-unavailable' };
+	}
+
+	try {
+		const response = await invoke<QueueFileReadResponse>('update_queue_result_report_file', {
+			workspacePath: normalizeWorkspacePathForStorage(workspacePath),
+			relativePath,
+			content
+		});
+
+		if (
+			response.ok &&
+			typeof response.relativePath === 'string' &&
+			typeof response.content === 'string'
+		) {
+			return {
+				ok: true,
+				relativePath: response.relativePath,
+				content: response.content
+			};
+		}
+
+		return {
+			ok: false,
+			error: isQueueFolderError(response.error) ? response.error : 'queue-folder-file-write-failed'
+		};
+	} catch {
+		return { ok: false, error: 'queue-folder-file-write-failed' };
+	}
+}
+
 export async function deleteQueueFile(
 	workspacePath: string,
 	relativePath: string

@@ -201,6 +201,7 @@ export const esQueueMessages = {
 		creating: 'Creando',
 		previewPrompt: 'Vista previa del prompt',
 		executeWorkOrder: 'Ejecutar',
+		retryWorkOrder: 'Reintentar',
 		completeWorkOrder: 'Marcar como completada',
 		executing: 'Ejecutando',
 		noFollowUpSelected: 'No se ha seleccionado ninguna tarea posterior.',
@@ -233,6 +234,8 @@ export const esQueueMessages = {
 		},
 		executionStates: {
 			pending: 'Pendiente',
+			running: 'En ejecución',
+			failed: 'Fallida',
 			completed: 'Completada'
 		},
 		readStates: {
@@ -266,7 +269,9 @@ export const esQueueMessages = {
 			targets: 'Objetivos',
 			command: 'Comando',
 			saving: 'Guardando',
-			saved: 'Evaluación guardada.'
+			saved: 'Evaluación guardada.',
+			alreadySaved: 'Esta respuesta ya fue evaluada.',
+			savedAction: 'Evaluada'
 		},
 		errors: {
 			workspaceRequired: 'Se requiere la ruta del espacio de trabajo.',
@@ -291,6 +296,8 @@ export const esQueueMessages = {
 			executionNoTask: 'No hay ninguna tarea para ejecutar.',
 			executionNoAgent: 'Seleccione al menos un agente de trabajo.',
 			executionVaultLocked: 'Desbloquee la bóveda de entorno primero.',
+			executionWorkOrderRunning: 'Esta orden de trabajo ya se está ejecutando.',
+			executionWorkOrderArchived: 'Esta orden de trabajo ya está completada.',
 			executionAgentNotFound: 'No se encontró el agente seleccionado.',
 			executionSecretNotFound: 'No se encontró la clave API vinculada al agente.',
 			executionProviderUnsupported:

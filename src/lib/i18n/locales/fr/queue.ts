@@ -201,6 +201,7 @@ export const frQueueMessages = {
 	creating: 'Création',
 	previewPrompt: 'Aperçu du prompt',
 	executeWorkOrder: 'Exécuter',
+	retryWorkOrder: 'Réexécuter',
 	completeWorkOrder: 'Marquer comme terminé',
 	executing: 'Exécution',
 	noFollowUpSelected: 'Aucun suivi sélectionné.',
@@ -233,6 +234,8 @@ export const frQueueMessages = {
 	},
 	executionStates: {
 		pending: 'En attente',
+		running: 'En cours',
+		failed: 'Échec',
 		completed: 'Terminé'
 	},
 	readStates: {
@@ -266,7 +269,9 @@ export const frQueueMessages = {
 		targets: 'Cibles',
 		command: 'Commande',
 		saving: 'Enregistrement',
-		saved: 'Évaluation enregistrée.'
+		saved: 'Évaluation enregistrée.',
+		alreadySaved: 'Cette réponse a déjà été évaluée.',
+		savedAction: 'Évalué'
 	},
 	errors: {
 		workspaceRequired: 'Le chemin de l\'espace de travail est obligatoire.',
@@ -291,6 +296,8 @@ export const frQueueMessages = {
 		executionNoTask: 'Il n\'y a aucune tâche à exécuter.',
 		executionNoAgent: 'Sélectionnez au moins un agent d\'exécution.',
 		executionVaultLocked: 'Déverrouillez d\'abord le coffre-fort de l\'environnement.',
+		executionWorkOrderRunning: 'Cet ordre de travail est déjà en cours.',
+		executionWorkOrderArchived: 'Cet ordre de travail est déjà terminé.',
 		executionAgentNotFound: 'L\'agent sélectionné n\'a pas été trouvé.',
 		executionSecretNotFound: 'La clé API liée à l\'agent n\'a pas été trouvée.',
 		executionProviderUnsupported:

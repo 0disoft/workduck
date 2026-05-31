@@ -9,7 +9,13 @@ import type {
 	WorkduckQueueWorkPriority
 } from './queue-artifacts';
 
-export const queueExecutionFilterOptions = [{ id: 'all' }, { id: 'pending' }, { id: 'completed' }] as const;
+export const queueExecutionFilterOptions = [
+	{ id: 'all' },
+	{ id: 'pending' },
+	{ id: 'running' },
+	{ id: 'failed' },
+	{ id: 'completed' }
+] as const;
 export const queueReadFilterOptions = [{ id: 'all' }, { id: 'unread' }, { id: 'read' }] as const;
 export const queueKindFilterOptions = [
 	{ id: 'all' },

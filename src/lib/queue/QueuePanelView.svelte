@@ -231,6 +231,7 @@
 					onUpdateReviewDecision={controller.updateReviewDecision}
 					onUpdateReviewComment={controller.updateReviewComment}
 					onOpenEvaluation={controller.openEvaluationDialog}
+					isEvaluationRecorded={controller.isReportTaskEvaluationRecorded}
 					getVoteChoiceLabel={controller.getVoteChoiceLabel}
 					getReportTaskAgent={controller.getReportTaskAgent}
 					getReviewDecisionLabel={controller.getReviewDecisionLabel}

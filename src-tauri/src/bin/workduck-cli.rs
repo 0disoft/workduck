@@ -67,6 +67,7 @@ struct CliOptions {
 struct AgentEvaluateOptions {
     agent_key: String,
     workspace_path: Option<PathBuf>,
+    evaluation_key: Option<String>,
     scores: Option<AgentEvaluationScores>,
     json: bool,
 }
@@ -91,6 +92,8 @@ struct AgentEvaluationBatchItem {
     agent_id: Option<String>,
     #[serde(default)]
     agent_name: Option<String>,
+    #[serde(default)]
+    evaluation_key: Option<String>,
     scores: AgentEvaluationScores,
 }
 
@@ -150,6 +153,8 @@ struct AgentEvaluationJsonSuccess<'a> {
     workspace_path: &'a Path,
     agent_id: &'a str,
     agent_name: &'a str,
+    applied: bool,
+    evaluation_key: Option<&'a str>,
     total_count: u64,
     scores: AgentEvaluationScores,
 }
@@ -167,6 +172,8 @@ struct AgentEvaluationBatchJsonSuccess<'a> {
 struct AgentEvaluationBatchJsonItem {
     agent_id: String,
     agent_name: String,
+    applied: bool,
+    evaluation_key: Option<String>,
     total_count: u64,
     scores: AgentEvaluationScores,
 }
@@ -362,6 +369,7 @@ fn run_agent_evaluate_command(args: Vec<String>) -> Result<(), CliError> {
         &mut registry,
         &workspace_id,
         &options.agent_key,
+        options.evaluation_key.as_deref(),
         scores,
     )?;
     let persona_registry_changed = if let Some(persona_registry) = persona_registry.as_mut() {
@@ -383,6 +391,8 @@ fn run_agent_evaluate_command(args: Vec<String>) -> Result<(), CliError> {
             workspace_path: &workspace_path,
             agent_id: &result.agent_id,
             agent_name: &result.agent_name,
+            applied: result.applied,
+            evaluation_key: result.evaluation_key.as_deref(),
             total_count: result.total_count,
             scores,
         };
@@ -391,10 +401,17 @@ fn run_agent_evaluate_command(args: Vec<String>) -> Result<(), CliError> {
             serde_json::to_string_pretty(&payload).map_err(to_json_error)?
         );
     } else {
-        println!(
-            "에이전트 평가 저장: {} ({}건)",
-            result.agent_name, result.total_count
-        );
+        if result.applied {
+            println!(
+                "에이전트 평가 저장: {} ({}건)",
+                result.agent_name, result.total_count
+            );
+        } else {
+            println!(
+                "이미 저장된 에이전트 평가: {} ({}건)",
+                result.agent_name, result.total_count
+            );
+        }
     }
 
     Ok(())
@@ -453,12 +470,15 @@ fn run_agent_evaluate_batch_command(args: Vec<String>) -> Result<(), CliError> {
             &mut registry,
             &workspace_id,
             agent_key,
+            item.evaluation_key.as_deref(),
             item.scores,
         )?;
 
         results.push(AgentEvaluationBatchJsonItem {
             agent_id: result.agent_id,
             agent_name: result.agent_name,
+            applied: result.applied,
+            evaluation_key: result.evaluation_key,
             total_count: result.total_count,
             scores: item.scores,
         });
@@ -606,6 +626,10 @@ fn parse_agent_evaluate_args(args: Vec<String>) -> Result<AgentEvaluateOptions, 
             "--workspace" => {
                 index += 1;
                 options.workspace_path = args.get(index).map(PathBuf::from);
+            }
+            "--evaluation-key" => {
+                index += 1;
+                options.evaluation_key = args.get(index).cloned();
             }
             "--problem-understanding" => {
                 index += 1;
@@ -783,7 +807,7 @@ fn missing_score_error() -> CliError {
 
 fn usage_text() -> String {
     format!(
-        "{APP_NAME} queue run <work-order-id> [--workspace <path>] [--vault-password <password>] [--json] [--keep-work-order]\n{APP_NAME} agent evaluate <agent-id-or-name> --workspace <path> --problem-understanding <1-9> --logical-validity <1-9> --practical-feasibility <1-9> --creative-insight <1-9> --risk-detection <1-9> [--json]\n{APP_NAME} agent evaluate-batch --workspace <path> --input <path-or-> [--json]"
+        "{APP_NAME} queue run <work-order-id> [--workspace <path>] [--vault-password <password>] [--json] [--keep-work-order]\n{APP_NAME} agent evaluate <agent-id-or-name> --workspace <path> --problem-understanding <1-9> --logical-validity <1-9> --practical-feasibility <1-9> --creative-insight <1-9> --risk-detection <1-9> [--evaluation-key <key>] [--json]\n{APP_NAME} agent evaluate-batch --workspace <path> --input <path-or-> [--json]"
     )
 }
 
@@ -1031,6 +1055,8 @@ fn read_workspace_id(workspace_path: &Path) -> Result<String, CliError> {
 struct AgentEvaluationWriteResult {
     agent_id: String,
     agent_name: String,
+    applied: bool,
+    evaluation_key: Option<String>,
     total_count: u64,
 }
 
@@ -1038,9 +1064,11 @@ fn record_agent_evaluation_in_registry(
     registry: &mut Value,
     workspace_id: &str,
     agent_key: &str,
+    evaluation_key: Option<&str>,
     scores: AgentEvaluationScores,
 ) -> Result<AgentEvaluationWriteResult, CliError> {
     let timestamp = current_timestamp()?;
+    let normalized_evaluation_key = normalize_evaluation_key(evaluation_key);
     let registry_object = registry.as_object_mut().ok_or_else(|| CliError {
         code: "agent-registry-invalid",
         message: "에이전트 레지스트리 형식이 올바르지 않습니다.".to_string(),
@@ -1081,6 +1109,43 @@ fn record_agent_evaluation_in_registry(
         .and_then(Value::as_str)
         .unwrap_or(&agent_id)
         .to_string();
+
+    if let Some(evaluation_key) = normalized_evaluation_key.as_ref() {
+        let already_recorded = {
+            let agent_object = ensure_json_object(agent);
+            let evaluation_keys_value = agent_object
+                .entry("evaluationKeys")
+                .or_insert_with(|| Value::Array(Vec::new()));
+
+            if !evaluation_keys_value.is_array() {
+                *evaluation_keys_value = Value::Array(Vec::new());
+            }
+
+            let evaluation_keys = evaluation_keys_value.as_array_mut().expect("array value");
+
+            if evaluation_keys
+                .iter()
+                .any(|value| value.as_str() == Some(evaluation_key.as_str()))
+            {
+                true
+            } else {
+                evaluation_keys.push(Value::String(evaluation_key.clone()));
+                false
+            }
+        };
+
+        if already_recorded {
+            return Ok(AgentEvaluationWriteResult {
+                agent_id,
+                agent_name,
+                applied: false,
+                evaluation_key: normalized_evaluation_key,
+                total_count: read_evaluation_summary_snapshot(agent.get("evaluationSummary"))
+                    .total_count,
+            });
+        }
+    }
+
     let total_count = record_evaluation_summary_on_record(agent, &timestamp, scores);
 
     registry_object.insert("updatedAt".to_string(), Value::String(timestamp));
@@ -1088,8 +1153,17 @@ fn record_agent_evaluation_in_registry(
     Ok(AgentEvaluationWriteResult {
         agent_id,
         agent_name,
+        applied: true,
+        evaluation_key: normalized_evaluation_key,
         total_count,
     })
+}
+
+fn normalize_evaluation_key(value: Option<&str>) -> Option<String> {
+    value
+        .map(str::trim)
+        .filter(|value| !value.is_empty())
+        .map(ToString::to_string)
 }
 
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]

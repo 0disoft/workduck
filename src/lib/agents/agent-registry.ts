@@ -7,7 +7,7 @@ import {
 	type AgentEvaluationSummary
 } from './agent-evaluation';
 
-export const AGENT_REGISTRY_VERSION = 5;
+export const AGENT_REGISTRY_VERSION = 6;
 export const AGENT_NAME_MAX_LENGTH = 120;
 export const AGENT_MODEL_ID_MAX_LENGTH = 160;
 
@@ -29,6 +29,7 @@ export interface AgentRecord {
 	readonly executionProvider: AgentExecutionProviderInput;
 	readonly modelId: string | null;
 	readonly evaluationSummary: AgentEvaluationSummary;
+	readonly evaluationKeys: readonly string[];
 	readonly evaluationResetAt: string | null;
 	readonly createdAt: string;
 	readonly updatedAt: string;
@@ -126,6 +127,7 @@ export function upsertAgent(
 		executionProvider,
 		modelId,
 		evaluationSummary: matchingAgent?.evaluationSummary ?? createEmptyAgentEvaluationSummary(),
+		evaluationKeys: matchingAgent?.evaluationKeys ?? [],
 		evaluationResetAt: matchingAgent?.evaluationResetAt ?? null,
 		createdAt: matchingAgent?.createdAt ?? timestamp,
 		updatedAt: timestamp
@@ -281,6 +283,75 @@ export function recordAgentEvaluation(
 	};
 }
 
+export type AgentEvaluationOnceMutationResult =
+	| {
+			readonly ok: true;
+			readonly applied: boolean;
+			readonly registry: AgentRegistry;
+	  }
+	| {
+			readonly ok: false;
+			readonly applied: false;
+			readonly registry: AgentRegistry;
+			readonly error: AgentRegistryError;
+	  };
+
+export function recordAgentEvaluationOnce(
+	registry: AgentRegistry,
+	agentId: string,
+	evaluationKey: string,
+	scores: AgentEvaluationScores,
+	now = new Date()
+): AgentEvaluationOnceMutationResult {
+	const normalizedRegistry = normalizeAgentRegistry(registry, registry.workspaceId) ?? registry;
+	const normalizedAgentId = normalizeRecordId(agentId);
+	const normalizedEvaluationKey = normalizeRecordId(evaluationKey);
+	const matchingAgent = normalizedRegistry.agents.find((agent) => agent.id === normalizedAgentId);
+
+	if (
+		normalizedAgentId === null ||
+		normalizedEvaluationKey === null ||
+		matchingAgent === undefined
+	) {
+		return {
+			ok: false,
+			applied: false,
+			registry: normalizedRegistry,
+			error: 'agent-not-found'
+		};
+	}
+
+	if (matchingAgent.evaluationKeys.includes(normalizedEvaluationKey)) {
+		return {
+			ok: true,
+			applied: false,
+			registry: normalizedRegistry
+		};
+	}
+
+	const timestamp = now.toISOString();
+	const agents = normalizedRegistry.agents.map((agent) =>
+		agent.id === normalizedAgentId
+			? {
+					...agent,
+					evaluationSummary: addAgentEvaluationScores(agent.evaluationSummary, scores),
+					evaluationKeys: [...agent.evaluationKeys, normalizedEvaluationKey],
+					updatedAt: timestamp
+				}
+			: agent
+	);
+
+	return {
+		ok: true,
+		applied: true,
+		registry: {
+			...normalizedRegistry,
+			agents: sortAgents(agents),
+			updatedAt: timestamp
+		}
+	};
+}
+
 export function resetAgentEvaluation(
 	registry: AgentRegistry,
 	agentId: string,
@@ -300,6 +371,7 @@ export function resetAgentEvaluation(
 			? {
 					...agent,
 					evaluationSummary: createEmptyAgentEvaluationSummary(),
+					evaluationKeys: [],
 					evaluationResetAt: timestamp,
 					updatedAt: timestamp
 				}
@@ -375,6 +447,7 @@ function parseAgentRecord(value: unknown): AgentRecord | null {
 	const executionProvider = normalizeAgentExecutionProvider(value.executionProvider);
 	const modelId = normalizeAgentModelId(value.modelId);
 	const evaluationSummary = normalizeAgentEvaluationSummary(value.evaluationSummary);
+	const evaluationKeys = normalizeEvaluationKeys(value.evaluationKeys);
 	const evaluationResetAt = normalizeOptionalTimestamp(value.evaluationResetAt);
 	const createdAt = readTrimmedString(value.createdAt);
 	const updatedAt = readTrimmedString(value.updatedAt);
@@ -391,6 +464,7 @@ function parseAgentRecord(value: unknown): AgentRecord | null {
 		executionProvider,
 		modelId,
 		evaluationSummary,
+		evaluationKeys,
 		evaluationResetAt,
 		createdAt: createdAt.length === 0 ? updatedAt : createdAt,
 		updatedAt: updatedAt.length === 0 ? createdAt : updatedAt
@@ -437,6 +511,24 @@ function normalizeOptionalTimestamp(value: unknown) {
 	const timestamp = readTrimmedString(value);
 
 	return timestamp.length === 0 ? null : timestamp;
+}
+
+function normalizeEvaluationKeys(value: unknown) {
+	if (!Array.isArray(value)) {
+		return [];
+	}
+
+	const keys: string[] = [];
+
+	for (const item of value) {
+		const key = normalizeRecordId(item);
+
+		if (key !== null && !keys.includes(key)) {
+			keys.push(key);
+		}
+	}
+
+	return keys;
 }
 
 function createAgentId() {
