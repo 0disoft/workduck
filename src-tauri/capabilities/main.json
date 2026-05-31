@@ -27,6 +27,7 @@
     "core:window:allow-unminimize",
     "dialog:allow-open",
     "process:allow-restart",
-    "updater:default"
+    "updater:default",
+    "notification:default"
   ]
 }

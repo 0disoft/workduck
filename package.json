@@ -1,6 +1,6 @@
 {
   "name": "workduck",
-  "version": "1.4.12",
+  "version": "1.4.13",
   "private": true,
   "license": "0BSD",
   "type": "module",
@@ -43,5 +43,8 @@
     "tailwindcss": "^4.3.0",
     "typescript": "^6.0.3",
     "vite": "^8.0.14"
+  },
+  "dependencies": {
+    "@tauri-apps/plugin-notification": "~2"
   }
 }

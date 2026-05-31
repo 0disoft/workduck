@@ -1,6 +1,6 @@
 [package]
 name = "workduck"
-version = "1.4.12"
+version = "1.4.13"
 description = "Local-first developer workbench"
 authors = ["Workduck contributors"]
 license = "0BSD"
@@ -29,6 +29,7 @@ time = { version = "0.3.47", features = ["formatting"] }
 tokio = { version = "1", features = ["time"] }
 wait-timeout = "0.2.1"
 zeroize = "1.8.2"
+tauri-plugin-notification = "2"
 
 [target.'cfg(windows)'.dependencies]
 winreg = "0.56.0"

@@ -1,3 +1,9 @@
+import {
+	isPermissionGranted,
+	requestPermission,
+	sendNotification
+} from '@tauri-apps/plugin-notification';
+
 export interface DesktopNotificationInput {
 	readonly title: string;
 	readonly body: string;
@@ -5,8 +11,14 @@ export interface DesktopNotificationInput {
 }
 
 type DesktopNotificationPermission = NotificationPermission | 'unsupported';
+type NativeNotificationSendResult = 'sent' | 'not-granted' | 'unsupported';
 
 export async function prepareDesktopNotificationPermission(): Promise<DesktopNotificationPermission> {
+	const nativePermission = await prepareNativeNotificationPermission();
+	if (nativePermission !== 'unsupported') {
+		return nativePermission;
+	}
+
 	if (!desktopNotificationsAreAvailable()) {
 		return 'unsupported';
 	}
@@ -23,11 +35,51 @@ export async function prepareDesktopNotificationPermission(): Promise<DesktopNot
 }
 
 export function showDesktopNotificationWhenUnfocused(input: DesktopNotificationInput) {
-	if (!desktopNotificationsAreAvailable() || Notification.permission !== 'granted') {
+	if (documentIsVisibleAndFocused()) {
 		return;
 	}
 
-	if (document.visibilityState === 'visible' && document.hasFocus()) {
+	void showNativeNotification(input).then((result) => {
+		if (result === 'unsupported') {
+			showWebNotification(input);
+		}
+	});
+}
+
+async function prepareNativeNotificationPermission(): Promise<DesktopNotificationPermission> {
+	try {
+		if (await isPermissionGranted()) {
+			return 'granted';
+		}
+
+		return await requestPermission();
+	} catch {
+		return 'unsupported';
+	}
+}
+
+async function showNativeNotification(
+	input: DesktopNotificationInput
+): Promise<NativeNotificationSendResult> {
+	try {
+		if (!(await isPermissionGranted())) {
+			return 'not-granted';
+		}
+
+		sendNotification({
+			title: input.title,
+			body: input.body,
+			group: input.tag,
+			autoCancel: true
+		});
+		return 'sent';
+	} catch {
+		return 'unsupported';
+	}
+}
+
+function showWebNotification(input: DesktopNotificationInput) {
+	if (!desktopNotificationsAreAvailable() || Notification.permission !== 'granted') {
 		return;
 	}
 
@@ -44,6 +96,14 @@ export function showDesktopNotificationWhenUnfocused(input: DesktopNotificationI
 	} catch {
 		// The in-app status toast remains the fallback when the host blocks desktop notifications.
 	}
+}
+
+function documentIsVisibleAndFocused() {
+	return (
+		typeof document !== 'undefined' &&
+		document.visibilityState === 'visible' &&
+		document.hasFocus()
+	);
 }
 
 function desktopNotificationsAreAvailable() {
