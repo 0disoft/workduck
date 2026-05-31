@@ -213,6 +213,10 @@ export const zhQueueMessages = {
 	bulkDeletedFiles: '已删除 {count} 个工作。',
 	executedFile: '已创建 {relativePath} 并完成了工单。',
 	completedFile: '已完成 {relativePath}。',
+	reportNotification: {
+		title: '报告已准备好',
+		body: '{title} 结果报告可以查看了。'
+	},
 	nextWorkOrders: '后续工单',
 	promptPreview: {
 		title: '提示词预览',

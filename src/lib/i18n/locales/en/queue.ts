@@ -213,6 +213,10 @@ export const enQueueMessages = {
 		bulkDeletedFiles: 'Deleted {count} work items.',
 		executedFile: 'Created {relativePath} and completed the work order.',
 		completedFile: 'Completed {relativePath}.',
+		reportNotification: {
+			title: 'Report is ready',
+			body: '{title} result report is ready to review.'
+		},
 		nextWorkOrders: 'Next work orders',
 		promptPreview: {
 			title: 'Prompt preview',

@@ -213,6 +213,10 @@ export const koQueueMessages = {
 		bulkDeletedFiles: '{count}개 작업을 삭제했습니다.',
 		executedFile: '{relativePath} 보고서를 만들고 작업을 완료했습니다.',
 		completedFile: '{relativePath} 작업을 완료 처리했습니다.',
+		reportNotification: {
+			title: '보고서가 준비됐습니다',
+			body: '{title} 결과 보고서를 확인할 수 있습니다.'
+		},
 		nextWorkOrders: '다음 작업 지시서',
 		promptPreview: {
 			title: '지시문 미리보기',

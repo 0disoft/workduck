@@ -213,6 +213,10 @@ export const hiQueueMessages = {
 	bulkDeletedFiles: '{count} कार्य हटाए गए।',
 	executedFile: '{relativePath} बनाया गया और कार्य आदेश पूरा हुआ।',
 	completedFile: '{relativePath} पूरा हुआ।',
+	reportNotification: {
+		title: 'रिपोर्ट तैयार है',
+		body: '{title} परिणाम रिपोर्ट समीक्षा के लिए तैयार है।'
+	},
 	nextWorkOrders: 'अगले कार्य आदेश',
 	promptPreview: {
 		title: 'प्रॉम्प्ट पूर्वावलोकन',

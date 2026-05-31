@@ -18,7 +18,7 @@
 
 	--workduck-ui-font-size: 14px;
 	--workduck-control-height: 38px;
-	--workduck-list-card-width: 420px;
+	--workduck-list-card-width: 390px;
 	--workduck-list-card-min-height: 88px;
 	--workduck-font-size-icon: max(10px, calc(var(--workduck-ui-font-size) - 4px));
 	--workduck-font-size-2xs: max(10px, calc(var(--workduck-ui-font-size) - 3px));

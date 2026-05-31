@@ -213,6 +213,10 @@ export const frQueueMessages = {
 	bulkDeletedFiles: '{count} travaux supprimés.',
 	executedFile: 'Fichier {relativePath} créé et ordre de travail terminé.',
 	completedFile: 'Fichier {relativePath} terminé.',
+	reportNotification: {
+		title: 'Le rapport est prêt',
+		body: 'Le rapport de résultat {title} est prêt à examiner.'
+	},
 	nextWorkOrders: 'Ordres de travail suivants',
 	promptPreview: {
 		title: 'Aperçu du prompt',

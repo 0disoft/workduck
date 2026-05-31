@@ -65,6 +65,10 @@ import {
 	type WorkduckSkillRecord
 } from '$lib/skills/skill-registry';
 import { readSkillRegistry, subscribeSkillRegistry } from '$lib/skills/skill-registry-storage';
+import {
+	prepareDesktopNotificationPermission,
+	showDesktopNotificationWhenUnfocused
+} from '$lib/ui/desktop-notification';
 
 import {
 	archiveQueueWorkOrder,
@@ -350,6 +354,8 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 	let queueContextMenuElement = $state<HTMLElement | undefined>(undefined);
 	let ensureSignature = $state('');
 	let refreshSignature = $state(0);
+	let knownCompletedReportPaths = new Set<string>();
+	let completedReportNotificationsArePrimed = false;
 	let messages = $derived(getWorkduckMessages(appearanceSettings.languageId));
 	let queueItemCountLabel = $derived(
 		messages.queue.registeredCount.replace('{count}', files.length.toString())
@@ -550,6 +556,8 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		queueKindFilter = 'all';
 		queuePriorityFilter = 'all';
 		queueSortOption = 'created-desc';
+		knownCompletedReportPaths = new Set();
+		completedReportNotificationsArePrimed = false;
 		skillRegistry = createEmptySkillRegistry(workspace.id);
 		agentRegistry = createEmptyAgentRegistry(workspace.id);
 		personaRegistry = createEmptyPersonaRegistry(workspace.id);
@@ -729,6 +737,7 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 				const nextFiles = await createQueueCardEntries(workspace.path, nextReadFilePaths, result.files);
 				const previousSignature = createQueueFilesSignature(files);
 				const nextSignature = createQueueFilesSignature(nextFiles);
+				notifyNewCompletedReports(nextFiles);
 				files = nextFiles;
 				if (previousSignature !== nextSignature) {
 					dispatchQueueFilesChanged(workspace.id);
@@ -1429,6 +1438,7 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		status = messages.queue.executing;
 
 		try {
+			await prepareDesktopNotificationPermission();
 			const executionContext = await readExecutionContextForWorkspace();
 			const executionResult = await executeQueueWorkOrder({
 				workOrder: selectedWorkOrder,
@@ -1472,6 +1482,11 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 
 			selectedWorkOrder = archivedWorkOrder;
 			status = messages.queue.executedFile.replace('{relativePath}', reportWriteResult.relativePath);
+			rememberCompletedReportPath(reportWriteResult.relativePath);
+			showCompletedReportNotification(
+				executionResult.report.ref.label,
+				reportWriteResult.relativePath
+			);
 			await refreshQueueFiles({ silent: true });
 	} finally {
 			isWriting = false;
@@ -1959,6 +1974,46 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 
 	function getQueueExecutionErrorMessage(executionError: Parameters<typeof getLocalizedQueueExecutionErrorMessage>[1]) {
 		return getLocalizedQueueExecutionErrorMessage(messages, executionError);
+}
+
+	function notifyNewCompletedReports(nextFiles: readonly QueueCardEntry[]) {
+		const completedReportFiles = nextFiles.filter(isCompletedResultReportFile);
+		const nextCompletedReportPaths = new Set(
+			completedReportFiles.map((file) => file.relativePath)
+		);
+
+		if (!completedReportNotificationsArePrimed) {
+			knownCompletedReportPaths = nextCompletedReportPaths;
+			completedReportNotificationsArePrimed = true;
+			return;
+		}
+
+		for (const file of completedReportFiles) {
+			if (!knownCompletedReportPaths.has(file.relativePath)) {
+				showCompletedReportNotification(file.title, file.relativePath);
+			}
+		}
+
+		knownCompletedReportPaths = nextCompletedReportPaths;
+}
+
+	function rememberCompletedReportPath(relativePath: string) {
+		knownCompletedReportPaths = new Set([...knownCompletedReportPaths, relativePath]);
+		completedReportNotificationsArePrimed = true;
+}
+
+	function isCompletedResultReportFile(file: QueueCardEntry) {
+		return file.kind === 'result-report' && file.executionState === 'completed';
+}
+
+	function showCompletedReportNotification(title: string, relativePath: string) {
+		showDesktopNotificationWhenUnfocused({
+			title: messages.queue.reportNotification.title,
+			body: messages.queue.reportNotification.body
+				.replace('{title}', title)
+				.replace('{relativePath}', relativePath),
+			tag: `workduck-queue-report:${workspace.id}:${relativePath}`
+		});
 }
 	return {
 		get messages() { return messages; },

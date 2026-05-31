@@ -213,6 +213,10 @@ export const esQueueMessages = {
 		bulkDeletedFiles: 'Se han eliminado {count} tareas.',
 		executedFile: 'Se ha creado {relativePath} y completado la orden de trabajo.',
 		completedFile: 'Se ha completado {relativePath}.',
+		reportNotification: {
+			title: 'El informe está listo',
+			body: 'El informe de resultados {title} está listo para revisar.'
+		},
 		nextWorkOrders: 'Siguientes órdenes de trabajo',
 		promptPreview: {
 			title: 'Vista previa del prompt',
