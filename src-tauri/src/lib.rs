@@ -13,6 +13,7 @@ mod project_repository;
 mod project_repository_task;
 mod project_repository_validation;
 mod project_repository_operation_store;
+mod project_repository_import_attempt_store;
 mod queue_folder;
 mod queue_model_catalog;
 pub mod queue_execution;
@@ -93,6 +94,7 @@ pub fn run() {
             workspace_data_file::write_workspace_data_file,
             workspace_repository_setup::setup_workspace_repository,
             project_repository::clone_project_repository,
+            project_repository::clone_project_repository_fork,
             project_repository::fetch_project_repository_git,
             project_repository::initialize_project_repository_git,
             project_repository::inspect_project_repositories_git,
@@ -106,6 +108,8 @@ pub fn run() {
             project_repository_task::run_project_repository_task,
             project_repository_operation_store::read_project_repository_operation_records,
             project_repository_operation_store::write_project_repository_operation_record,
+            project_repository_import_attempt_store::read_project_repository_import_attempt_records,
+            project_repository_import_attempt_store::write_project_repository_import_attempt_record,
             project_registry_store::read_project_registries,
             project_registry_store::read_project_registry,
             project_registry_store::write_project_registries,

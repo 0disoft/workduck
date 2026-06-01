@@ -42,6 +42,7 @@ export const enSettingsMessages = {
 				remoteReady: 'Remote ready',
 				commitNeeded: 'Commit needed',
 				queueCommitWorkOrder: 'Add commit work',
+				updateDependencies: 'Update deps',
 				pullNeeded: 'Pull {count}',
 				pushNeeded: 'Push {count}',
 				setupComplete: 'Workspace repository is ready.',
@@ -49,6 +50,8 @@ export const enSettingsMessages = {
 				setupFailed: 'Repository setup failed.',
 				publishComplete: 'Workspace repository was published.',
 				commitWorkOrderQueued: 'Added commit work: {relativePath}',
+				dependencyUpdateTerminalOpened:
+					'Opened a terminal with the workspace dependency update command.',
 				fetchComplete: 'Fetched.',
 				pullComplete: 'Pulled.',
 				pushComplete: 'Pushed.'
@@ -128,6 +131,7 @@ export const enSettingsMessages = {
 				pullRepository: 'Pull remote workspace changes into this folder.',
 				pushRepository: 'Push local workspace changes to the remote repository.',
 				queueCommitWorkOrder: 'Add uncommitted change cleanup to the work queue.',
+				updateDependencies: 'Open a terminal to update dependencies in the workspace folder.',
 				reconnect: 'Choose a local folder again when this workspace was synced from another device.',
 				switch: 'Make this workspace the current working area.',
 				lock: 'Lock this workspace again until its password is entered.',

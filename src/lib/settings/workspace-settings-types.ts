@@ -10,6 +10,7 @@ import type {
 	WorkspaceRepositoryGithubVisibility,
 	WorkspaceRepositoryGitError
 } from '$lib/workspaces/workspace-repository-git';
+import type { ProjectRepositoryTaskError } from '$lib/projects/project-repository-task';
 
 export const GITHUB_REPOSITORY_NAME_MAX_LENGTH = 100;
 export const GITHUB_REPOSITORY_COMMIT_MESSAGE_MAX_LENGTH = 200;
@@ -63,6 +64,8 @@ export interface WorkspaceSettingsViewModel {
 	readonly storageError: string | null;
 	readonly repositorySetupStatus: string | null;
 	readonly workspaceRepositoryGitStatus: string | null;
+	readonly workspaceRepositoryTaskError: ProjectRepositoryTaskError | null;
+	readonly workspaceRepositoryTaskStatus: string | null;
 	readonly hasLoaded: boolean;
 	readonly workspaceUnlockId: string | null;
 	readonly workspaceUnlockIntent: WorkspaceUnlockIntent | null;
@@ -85,6 +88,9 @@ export interface WorkspaceSettingsActions {
 	readonly getWorkspaceErrorMessage: (error: WorkspaceFormError) => string;
 	readonly getWorkspaceRepositorySetupErrorMessage: (
 		error: WorkspaceRepositorySetupError
+	) => string;
+	readonly getWorkspaceRepositoryTaskErrorMessage: (
+		error: ProjectRepositoryTaskError
 	) => string;
 	readonly isWorkspacePathError: (error: WorkspaceFormError | null) => boolean;
 	readonly handleWorkspaceNameInput: (event: Event) => void;
@@ -115,12 +121,18 @@ export interface WorkspaceSettingsActions {
 		action: WorkspaceRepositoryGitAction
 	) => boolean;
 	readonly workspaceRepositoryCanQueueCommitWorkOrder: (workspaceId: string) => boolean;
+	readonly workspaceRepositoryCanUpdateDependencies: (workspaceId: string) => boolean;
 	readonly getWorkspaceRepositoryGitActionLabel: (
 		workspaceId: string,
 		action: WorkspaceRepositoryGitAction,
 		idleLabel: string
 	) => string;
+	readonly getWorkspaceRepositoryDependencyUpdateLabel: (
+		workspaceId: string,
+		idleLabel: string
+	) => string;
 	readonly queueWorkspaceRepositoryCommitWorkOrder: (workspaceId: string) => Promise<void>;
+	readonly runWorkspaceRepositoryDependencyUpdate: (workspaceId: string) => Promise<void>;
 	readonly runWorkspaceRepositoryGitAction: (
 		workspaceId: string,
 		action: WorkspaceRepositoryGitAction

@@ -7,7 +7,8 @@ export const hiProjectsMessages = {
 		pullNeeded: 'पुल की आवश्यकता है',
 		pushNeeded: 'पुश की आवश्यकता है',
 		commitNeeded: 'कमिट की आवश्यकता है',
-		tagPlaceholder: 'टैग'
+		searchLabel: 'रिपॉजिटरी नाम या टैग फ़िल्टर',
+		searchPlaceholder: 'नाम या टैग'
 	},
 	kinds: {
 		project: 'परियोजना',
@@ -148,6 +149,7 @@ export const hiProjectsMessages = {
 		}
 	},
 	errors: {
+		'project-github-credential-required': 'GitHub क्रेडेंशियल चुनें।',
 		'project-github-credential-vault-locked':
 			'चयनित GitHub क्रेडेंशियल का उपयोग करने के लिए पर्यावरण (Environment) को अनलॉक करें।',
 		'project-github-credential-missing': 'चयनित GitHub क्रेडेंशियल नहीं मिला।',
@@ -218,6 +220,8 @@ export const hiProjectsMessages = {
 		'project-repository-clone-target-exists': 'क्लोन लक्ष्य फ़ोल्डर पहले से मौजूद है।',
 		'project-repository-clone-command-unavailable': 'Git कमांड नहीं मिला।',
 		'project-repository-clone-command-timed-out': 'रिपॉजिटरी क्लोन का समय समाप्त हो गया।',
+		'project-repository-clone-path-too-long':
+			'क्लोन Windows पथ लंबाई सीमा से टकराया। छोटा प्रोजेक्ट पथ इस्तेमाल करें या Windows और Git में लंबे पथ चालू करें।',
 		'project-repository-clone-token-invalid':
 			'GitHub टोकन अमान्य या समाप्त हो गया है। पर्यावरण चर में GitHub PAT अपडेट करें।',
 		'project-repository-clone-permission-denied':
@@ -274,7 +278,7 @@ export const hiProjectsMessages = {
 			'प्रारंभिक कमिट को Git हुक द्वारा रोक दिया गया था।',
 		'project-repository-github-commit-failed': 'प्रारंभिक कमिट नहीं बनाई जा सकी।',
 		'project-repository-github-create-failed':
-			'GitHub रिपॉजिटरी नहीं बनाई जा सकी। GitHub CLI प्रमाणीकरण और रिपॉजिटरी नाम जांचें।',
+			'GitHub रिपॉजिटरी नहीं बनाई जा सकी। GitHub प्रमाणीकरण और रिपॉजिटरी नाम जांचें।',
 		'project-repository-task-unavailable': 'रिपॉजिटरी कार्य डेस्कटॉप ऐप में उपलब्ध हैं।',
 		'project-repository-task-workspace-required': 'कार्यक्षेत्र पथ उपयोग करने योग्य नहीं है।',
 		'project-repository-task-workspace-not-absolute': 'कार्यक्षेत्र पथ उपयोग करने योग्य नहीं है।',

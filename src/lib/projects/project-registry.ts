@@ -39,6 +39,7 @@ export interface ProjectRepositoryLinkRecord {
 	readonly name: string;
 	readonly path: string | null;
 	readonly remoteUrl: string | null;
+	readonly upstreamRemoteUrl: string | null;
 	readonly githubCredentialSecretId: string | null;
 	readonly tags: readonly string[];
 	readonly createdAt: string;
@@ -95,6 +96,7 @@ export interface ProjectRepositoryLinkInput {
 	readonly name: string;
 	readonly path?: string | null;
 	readonly remoteUrl?: string | null;
+	readonly upstreamRemoteUrl?: string | null;
 	readonly githubCredentialSecretId?: string | null;
 	readonly tags?: readonly string[];
 }
@@ -322,6 +324,7 @@ export function addProjectRepositoryLink(
 	const name = normalizeRepositoryName(input.name);
 	const path = normalizeRepositoryPath(input.path ?? '');
 	const remoteUrl = normalizeRepositoryRemoteUrl(input.remoteUrl ?? '');
+	const upstreamRemoteUrl = normalizeRepositoryRemoteUrl(input.upstreamRemoteUrl ?? '');
 	const githubCredentialSecretId = normalizeRecordId(input.githubCredentialSecretId ?? null);
 	const tags = normalizeProjectTags(input.tags ?? []);
 	const targetNode = normalizedRegistry.nodes.find((node) => node.id === input.nodeId);
@@ -343,6 +346,10 @@ export function addProjectRepositoryLink(
 	}
 
 	if ((input.remoteUrl ?? '').trim().length > 0 && remoteUrl.length === 0) {
+		return { ok: false, registry: normalizedRegistry, error: 'project-repository-remote-url-invalid' };
+	}
+
+	if ((input.upstreamRemoteUrl ?? '').trim().length > 0 && upstreamRemoteUrl.length === 0) {
 		return { ok: false, registry: normalizedRegistry, error: 'project-repository-remote-url-invalid' };
 	}
 
@@ -385,6 +392,7 @@ export function addProjectRepositoryLink(
 		name,
 		path: path.length === 0 ? null : path,
 		remoteUrl: remoteUrl.length === 0 ? null : remoteUrl,
+		upstreamRemoteUrl: upstreamRemoteUrl.length === 0 ? null : upstreamRemoteUrl,
 		githubCredentialSecretId,
 		tags,
 		createdAt: timestamp,
@@ -1016,6 +1024,10 @@ function filterUniqueRepositories(
 
 		uniqueRepositories.push({
 			...repository,
+			upstreamRemoteUrl:
+				repository.upstreamRemoteUrl === null
+					? null
+					: normalizeRepositoryRemoteUrl(repository.upstreamRemoteUrl) || null,
 			githubCredentialSecretId: normalizeRecordId(repository.githubCredentialSecretId),
 			tags: normalizeProjectTags(repository.tags)
 		});
@@ -1074,6 +1086,7 @@ function parseRepositoryLinkRecord(value: unknown): ProjectRepositoryLinkRecord 
 	const name = normalizeRepositoryName(readTrimmedString(value.name));
 	const path = normalizeRepositoryPath(readTrimmedString(value.path));
 	const remoteUrl = normalizeRepositoryRemoteUrl(readTrimmedString(value.remoteUrl));
+	const upstreamRemoteUrl = normalizeRepositoryRemoteUrl(readTrimmedString(value.upstreamRemoteUrl));
 	const githubCredentialSecretId = normalizeRecordId(value.githubCredentialSecretId);
 	const tags = normalizeProjectTags(readStringArray(value.tags));
 	const createdAt = readTrimmedString(value.createdAt);
@@ -1088,6 +1101,7 @@ function parseRepositoryLinkRecord(value: unknown): ProjectRepositoryLinkRecord 
 		name,
 		path: path.length === 0 ? null : path,
 		remoteUrl: remoteUrl.length === 0 ? null : remoteUrl,
+		upstreamRemoteUrl: upstreamRemoteUrl.length === 0 ? null : upstreamRemoteUrl,
 		githubCredentialSecretId,
 		tags,
 		createdAt: createdAt.length === 0 ? updatedAt : createdAt,

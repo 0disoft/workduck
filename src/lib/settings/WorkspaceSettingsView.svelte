@@ -41,6 +41,8 @@
 	let storageError = $derived(model.storageError);
 	let repositorySetupStatus = $derived(model.repositorySetupStatus);
 	let workspaceRepositoryGitStatus = $derived(model.workspaceRepositoryGitStatus);
+	let workspaceRepositoryTaskError = $derived(model.workspaceRepositoryTaskError);
+	let workspaceRepositoryTaskStatus = $derived(model.workspaceRepositoryTaskStatus);
 	let hasLoaded = $derived(model.hasLoaded);
 	let workspaceUnlockId = $derived(model.workspaceUnlockId);
 	let workspaceUnlockIntent = $derived(model.workspaceUnlockIntent);
@@ -62,6 +64,7 @@
 	const {
 		getWorkspaceErrorMessage,
 		getWorkspaceRepositorySetupErrorMessage,
+		getWorkspaceRepositoryTaskErrorMessage,
 		isWorkspacePathError,
 		handleWorkspaceNameInput,
 		handleWorkspacePathInput,
@@ -86,8 +89,11 @@
 		workspaceRepositoryHasRemote,
 		workspaceRepositoryCanRunRemoteAction,
 		workspaceRepositoryCanQueueCommitWorkOrder,
+		workspaceRepositoryCanUpdateDependencies,
 		getWorkspaceRepositoryGitActionLabel,
+		getWorkspaceRepositoryDependencyUpdateLabel,
 		queueWorkspaceRepositoryCommitWorkOrder,
+		runWorkspaceRepositoryDependencyUpdate,
 		runWorkspaceRepositoryGitAction,
 		handleWorkspaceRepair,
 		handleWorkspaceSwitch,
@@ -258,17 +264,21 @@
 		</div>
 	</form>
 
-	{#if formError !== null || repositorySetupError !== null || storageError !== null}
+	{#if formError !== null || repositorySetupError !== null || workspaceRepositoryTaskError !== null || storageError !== null}
 		<p class="workduck-inline-error" aria-live="polite">
 			{formError !== null
 				? getWorkspaceErrorMessage(formError)
 				: repositorySetupError !== null
 					? `${messages.settings.workspaces.repository.setupFailed} ${getWorkspaceRepositorySetupErrorMessage(repositorySetupError)}`
-					: storageError}
+					: workspaceRepositoryTaskError !== null
+						? getWorkspaceRepositoryTaskErrorMessage(workspaceRepositoryTaskError)
+						: storageError}
 		</p>
 	{/if}
 
-	<StatusToast message={repositorySetupStatus ?? workspaceRepositoryGitStatus} />
+	<StatusToast
+		message={repositorySetupStatus ?? workspaceRepositoryGitStatus ?? workspaceRepositoryTaskStatus}
+	/>
 
 	{#if hasLoaded && registry.workspaces.length === 0}
 		<p class="workduck-empty-state">{messages.settings.workspaces.noWorkspaces}</p>
@@ -463,6 +473,22 @@
 									</button>
 								</span>
 							{/if}
+							<span
+								class="workduck-tooltip-anchor"
+								data-tooltip={messages.settings.workspaces.tooltips.updateDependencies}
+							>
+								<button
+									class="workduck-button workduck-button-secondary"
+									type="button"
+									disabled={!workspaceRepositoryCanUpdateDependencies(workspace.id)}
+									onclick={() => runWorkspaceRepositoryDependencyUpdate(workspace.id)}
+								>
+									{getWorkspaceRepositoryDependencyUpdateLabel(
+										workspace.id,
+										messages.settings.workspaces.repository.updateDependencies
+									)}
+								</button>
+							</span>
 							<span
 								class="workduck-tooltip-anchor"
 								data-tooltip={messages.settings.workspaces.tooltips.reconnect}

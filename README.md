@@ -47,9 +47,10 @@ includes:
   workspace repository.
 - Project and group descriptions, nested counts, and deletion confirmation with
   optional local folder removal under the workspace projects folder.
-- Repository folder creation, URL registration, clone, Git init, fetch, pull,
-  push, publish, card-level operation status, tags, tag filtering, and
-  pull/push-needed filtering.
+- Repository folder creation, URL registration, GitHub fork-and-clone with
+  upstream remote setup, clone, Git init, fetch, pull, push, publish,
+  card-level operation status, tags, tag filtering, and pull/push-needed
+  filtering.
 - Repository Git operations can use an Environment GitHub token instead of
   depending only on a globally authenticated `gh` or Git credential setup.
 - Repository operation records for clone, init, fetch, pull, push, and publish

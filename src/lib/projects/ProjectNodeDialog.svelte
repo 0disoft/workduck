@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { ProjectFormError } from './project-board-errors';
+	import type { GithubCredentialOption } from './project-board-github-credentials';
 	import {
 		PROJECT_DESCRIPTION_MAX_LENGTH,
 		PROJECT_NAME_MAX_LENGTH,
@@ -15,7 +16,9 @@
 		formDescription: string;
 		formTags: string;
 		repositoryRemoteUrl: string;
+		repositoryGithubCredentialSecretId: string;
 		readonly repositorySourceMode: ProjectRepositorySourceMode;
+		readonly githubCredentialOptions: readonly GithubCredentialOption[];
 		readonly formError: ProjectFormError | null;
 		readonly storageError: ProjectRegistryStorageError | null;
 		readonly isSubmitting: boolean;
@@ -29,6 +32,7 @@
 		readonly onDescriptionInput: () => void;
 		readonly onTagsInput: () => void;
 		readonly onRepositoryRemoteUrlInput: (event: Event) => void;
+		readonly onRepositoryGithubCredentialSelect: (event: Event) => void;
 		readonly onSelectRepositorySourceMode: (sourceMode: ProjectRepositorySourceMode) => void;
 		readonly onSubmit: (event: SubmitEvent) => Promise<void>;
 		readonly onBackdropClick: (event: MouseEvent) => void;
@@ -42,7 +46,9 @@
 		formDescription = $bindable(),
 		formTags = $bindable(),
 		repositoryRemoteUrl = $bindable(),
+		repositoryGithubCredentialSecretId = $bindable(),
 		repositorySourceMode,
+		githubCredentialOptions,
 		formError,
 		storageError,
 		isSubmitting,
@@ -56,11 +62,33 @@
 		onDescriptionInput,
 		onTagsInput,
 		onRepositoryRemoteUrlInput,
+		onRepositoryGithubCredentialSelect,
 		onSelectRepositorySourceMode,
 		onSubmit,
 		onBackdropClick,
 		onClose
 	}: Props = $props();
+
+	function getRepositoryUrlLabel() {
+		return repositorySourceMode === 'fork' ? 'Upstream repository' : 'Repository URL';
+	}
+
+	function getSubmitButtonLabel() {
+		if (isSubmitting) {
+			return repositorySourceMode === 'fork' ? 'Forking' : 'Saving';
+		}
+
+		return repositorySourceMode === 'fork' ? 'Fork & Clone' : getDialogSubmitLabel();
+	}
+
+	function isGithubCredentialError(error: ProjectFormError | null) {
+		return (
+			error === 'project-github-credential-required' ||
+			error === 'project-github-credential-vault-locked' ||
+			error === 'project-github-credential-missing' ||
+			error === 'project-github-credential-invalid'
+		);
+	}
 </script>
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -132,6 +160,16 @@
 					>
 						URL
 					</button>
+					<button
+						class="workduck-repository-source-mode-button"
+						class:workduck-repository-source-mode-button-active={repositorySourceMode === 'fork'}
+						type="button"
+						aria-pressed={repositorySourceMode === 'fork'}
+						disabled={isSubmitting}
+						onclick={() => onSelectRepositorySourceMode('fork')}
+					>
+						Fork
+					</button>
 				</div>
 
 				{#if repositorySourceMode === 'folder'}
@@ -155,7 +193,7 @@
 					</label>
 				{:else}
 					<label class="workduck-form-field" for="project-repository-url">
-						<span>Repository URL</span>
+						<span>{getRepositoryUrlLabel()}</span>
 						<input
 							id="project-repository-url"
 							class="workduck-input"
@@ -170,6 +208,24 @@
 							aria-invalid={isRepositoryRemoteUrlError(formError)}
 						/>
 					</label>
+					{#if repositorySourceMode === 'fork'}
+						<label class="workduck-form-field" for="project-repository-github-credential">
+							<span>GitHub credential</span>
+							<select
+								id="project-repository-github-credential"
+								class="workduck-input"
+								bind:value={repositoryGithubCredentialSecretId}
+								disabled={isSubmitting}
+								onchange={onRepositoryGithubCredentialSelect}
+								aria-invalid={isGithubCredentialError(formError)}
+							>
+								<option value="">Select credential</option>
+								{#each githubCredentialOptions as option (option.id)}
+									<option value={option.id}>{option.name}</option>
+								{/each}
+							</select>
+						</label>
+					{/if}
 				{/if}
 			{/if}
 
@@ -209,7 +265,7 @@
 					type="submit"
 					disabled={!canSubmitDialog}
 				>
-					{isSubmitting ? 'Saving' : getDialogSubmitLabel()}
+					{getSubmitButtonLabel()}
 				</button>
 			</div>
 		</form>

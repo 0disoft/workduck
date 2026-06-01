@@ -49,18 +49,18 @@ export function formatCountLabel(count: number, singularLabel: string, pluralLab
 export function selectProjectNodes(
 	nodes: readonly ProjectNodeRecord[],
 	gitStatusById: ProjectRepositoryGitStatusById,
-	tagQuery: string,
+	searchQuery: string,
 	syncFilter: ProjectRepositorySyncFilter
 ) {
 	const projects = nodes.filter((node) => node.kind === 'project' && node.parentId === null);
 
-	if (tagQuery.length === 0 && syncFilter === 'all') {
+	if (searchQuery.length === 0 && syncFilter === 'all') {
 		return projects;
 	}
 
 	return projects.filter(
 		(node) =>
-			projectMatchesTagFilter(nodes, node, tagQuery) &&
+			projectMatchesSearchFilter(nodes, node, searchQuery) &&
 			projectMatchesRepositorySyncFilter(nodes, gitStatusById, node, syncFilter)
 	);
 }
@@ -69,18 +69,18 @@ export function selectProjectGroups(
 	nodes: readonly ProjectNodeRecord[],
 	gitStatusById: ProjectRepositoryGitStatusById,
 	projectId: string,
-	tagQuery: string,
+	searchQuery: string,
 	syncFilter: ProjectRepositorySyncFilter
 ) {
 	const groups = nodes.filter((node) => node.kind === 'group' && node.parentId === projectId);
 
-	if (tagQuery.length === 0 && syncFilter === 'all') {
+	if (searchQuery.length === 0 && syncFilter === 'all') {
 		return groups;
 	}
 
 	return groups.filter(
 		(node) =>
-			groupMatchesTagFilter(nodes, node, tagQuery) &&
+			groupMatchesSearchFilter(nodes, node, searchQuery) &&
 			groupMatchesRepositorySyncFilter(nodes, gitStatusById, node, syncFilter)
 	);
 }
@@ -88,16 +88,16 @@ export function selectProjectGroups(
 export function selectGroupRepositories(
 	group: ProjectNodeRecord,
 	gitStatusById: ProjectRepositoryGitStatusById,
-	tagQuery: string,
+	searchQuery: string,
 	syncFilter: ProjectRepositorySyncFilter
 ) {
-	if (tagQuery.length === 0 && syncFilter === 'all') {
+	if (searchQuery.length === 0 && syncFilter === 'all') {
 		return group.repositories;
 	}
 
 	return group.repositories.filter(
 		(repository) =>
-			repositoryMatchesTagFilter(repository, tagQuery) &&
+			repositoryMatchesSearchFilter(repository, searchQuery) &&
 			repositoryMatchesSyncFilter(gitStatusById, repository, syncFilter)
 	);
 }
@@ -144,7 +144,7 @@ export function listRegisteredRepositories(nodes: readonly ProjectNodeRecord[]) 
 	return nodes.flatMap((node) => node.repositories);
 }
 
-export function normalizeTagFilter(value: string) {
+export function normalizeProjectSearchFilter(value: string) {
 	return value.trim().replace(/^#+/u, '').toLocaleLowerCase('en-US');
 }
 
@@ -186,46 +186,55 @@ function normalizeTagInputValue(value: string) {
 	return value.trim().replace(/^#+/u, '').replace(/\s+/gu, '-');
 }
 
-function projectMatchesTagFilter(
+function projectMatchesSearchFilter(
 	nodes: readonly ProjectNodeRecord[],
 	node: ProjectNodeRecord,
-	tagQuery: string
+	searchQuery: string
 ) {
-	if (tagQuery.length === 0) {
+	if (searchQuery.length === 0) {
 		return true;
 	}
 
 	return (
-		matchesTagFilter(node.tags, tagQuery) ||
+		matchesSearchField(node.name, searchQuery) ||
+		matchesTagSearchFilter(node.tags, searchQuery) ||
 		listDescendantGroups(nodes, node.id).some((candidateNode) =>
-			groupNodeMatchesTagFilter(candidateNode, tagQuery)
+			groupNodeMatchesSearchFilter(candidateNode, searchQuery)
 		)
 	);
 }
 
-function groupMatchesTagFilter(
+function groupMatchesSearchFilter(
 	nodes: readonly ProjectNodeRecord[],
 	node: ProjectNodeRecord,
-	tagQuery: string
+	searchQuery: string
 ) {
 	return (
-		tagQuery.length === 0 ||
-		groupNodeMatchesTagFilter(node, tagQuery) ||
+		searchQuery.length === 0 ||
+		groupNodeMatchesSearchFilter(node, searchQuery) ||
 		listDescendantGroups(nodes, node.id).some((candidateNode) =>
-			groupNodeMatchesTagFilter(candidateNode, tagQuery)
+			groupNodeMatchesSearchFilter(candidateNode, searchQuery)
 		)
 	);
 }
 
-function groupNodeMatchesTagFilter(node: ProjectNodeRecord, tagQuery: string) {
+function groupNodeMatchesSearchFilter(node: ProjectNodeRecord, searchQuery: string) {
 	return (
-		matchesTagFilter(node.tags, tagQuery) ||
-		node.repositories.some((repository) => repositoryMatchesTagFilter(repository, tagQuery))
+		matchesSearchField(node.name, searchQuery) ||
+		matchesTagSearchFilter(node.tags, searchQuery) ||
+		node.repositories.some((repository) => repositoryMatchesSearchFilter(repository, searchQuery))
 	);
 }
 
-function repositoryMatchesTagFilter(repository: ProjectRepositoryLinkRecord, tagQuery: string) {
-	return tagQuery.length === 0 || matchesTagFilter(repository.tags, tagQuery);
+function repositoryMatchesSearchFilter(
+	repository: ProjectRepositoryLinkRecord,
+	searchQuery: string
+) {
+	return (
+		searchQuery.length === 0 ||
+		matchesSearchField(repository.name, searchQuery) ||
+		matchesTagSearchFilter(repository.tags, searchQuery)
+	);
 }
 
 function projectMatchesRepositorySyncFilter(
@@ -287,8 +296,12 @@ function repositoryMatchesSyncFilter(
 		: gitStatus?.hasUncommittedChanges === true;
 }
 
-function matchesTagFilter(tags: readonly string[], tagQuery: string) {
-	return tags.some((tag) => tag.toLocaleLowerCase('en-US').includes(tagQuery));
+function matchesSearchField(value: string, searchQuery: string) {
+	return value.toLocaleLowerCase('en-US').includes(searchQuery);
+}
+
+function matchesTagSearchFilter(tags: readonly string[], searchQuery: string) {
+	return tags.some((tag) => matchesSearchField(tag, searchQuery));
 }
 
 function listDescendantGroups(nodes: readonly ProjectNodeRecord[], rootNodeId: string) {

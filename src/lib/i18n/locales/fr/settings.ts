@@ -42,6 +42,7 @@ export const frSettingsMessages = {
 			remoteReady: 'Distant prêt',
 			commitNeeded: 'Commit requis',
 			queueCommitWorkOrder: 'Ajouter tâche de commit',
+			updateDependencies: 'Mettre à jour deps',
 			pullNeeded: 'Pull requis ({count})',
 			pushNeeded: 'Push requis ({count})',
 			setupComplete: 'Le dépôt de l\'espace de travail est prêt.',
@@ -49,6 +50,8 @@ export const frSettingsMessages = {
 			setupFailed: 'Échec de la configuration du dépôt.',
 			publishComplete: 'Le dépôt de l\'espace de travail a été publié.',
 			commitWorkOrderQueued: 'Tâche de commit ajoutée : {relativePath}',
+			dependencyUpdateTerminalOpened:
+				'Terminal ouvert avec la commande de mise à jour des dépendances de l\'espace de travail.',
 			fetchComplete: 'Récupéré.',
 			pullComplete: 'Mis à jour (pull).',
 			pushComplete: 'Envoyé (push).'
@@ -128,6 +131,8 @@ export const frSettingsMessages = {
 			pullRepository: 'Tirez les modifications de l\'espace de travail distant dans ce dossier.',
 			pushRepository: 'Envoyez les modifications de l\'espace de travail local vers le dépôt distant.',
 			queueCommitWorkOrder: 'Ajoutez le nettoyage des modifications non validées à la file d\'attente de travail.',
+			updateDependencies:
+				'Ouvrir un terminal pour mettre à jour les dépendances dans le dossier de l\'espace de travail.',
 			reconnect: 'Choisissez à nouveau un dossier local si cet espace de travail a été synchronisé depuis un autre appareil.',
 			switch: 'Définissez cet espace de travail comme zone de travail active.',
 			lock: 'Verrouillez à nouveau cet espace de travail jusqu\'à la saisie de son mot de passe.',

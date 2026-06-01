@@ -1,7 +1,7 @@
 import type { ProjectNodeRecord, ProjectRepositoryLinkRecord } from './project-registry';
 
 export type ProjectDialogMode = 'project' | 'group' | 'repository';
-export type ProjectRepositorySourceMode = 'folder' | 'remote';
+export type ProjectRepositorySourceMode = 'folder' | 'remote' | 'fork';
 
 export type ProjectContextMenuTarget =
 	| {

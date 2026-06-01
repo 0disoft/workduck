@@ -7,7 +7,8 @@ export const esProjectsMessages = {
 			pullNeeded: 'Requiere pull',
 			pushNeeded: 'Requiere push',
 			commitNeeded: 'Requiere commit',
-			tagPlaceholder: 'etiqueta'
+			searchLabel: 'Filtro por nombre de repositorio o etiqueta',
+			searchPlaceholder: 'nombre o etiqueta'
 		},
 		kinds: {
 			project: 'Proyecto',
@@ -143,6 +144,7 @@ export const esProjectsMessages = {
 			}
 		},
 		errors: {
+			'project-github-credential-required': 'Seleccione una credencial de GitHub.',
 			'project-github-credential-vault-locked':
 				'Desbloquee el entorno para usar la credencial de GitHub seleccionada.',
 			'project-github-credential-missing': 'No se encontró la credencial de GitHub seleccionada.',
@@ -213,6 +215,8 @@ export const esProjectsMessages = {
 			'project-repository-clone-target-exists': 'La carpeta de destino de la clonación ya existe.',
 			'project-repository-clone-command-unavailable': 'No se encontró el comando Git.',
 			'project-repository-clone-command-timed-out': 'La clonación del repositorio agotó el tiempo de espera.',
+			'project-repository-clone-path-too-long':
+				'La clonación alcanzó el límite de longitud de rutas de Windows. Usa una ruta de proyecto más corta o activa rutas largas en Windows y Git.',
 			'project-repository-clone-token-invalid':
 				'El token de GitHub no es válido o ha expirado. Actualice el PAT de GitHub en las variables de entorno.',
 			'project-repository-clone-permission-denied':
@@ -269,7 +273,7 @@ export const esProjectsMessages = {
 				'El commit inicial fue bloqueado por un hook de Git.',
 			'project-repository-github-commit-failed': 'No se pudo crear el commit inicial.',
 			'project-repository-github-create-failed':
-				'No se pudo crear el repositorio de GitHub. Verifique la autenticación de la CLI de GitHub y el nombre del repositorio.',
+				'No se pudo crear el repositorio de GitHub. Verifique la autenticación de GitHub y el nombre del repositorio.',
 			'project-repository-task-unavailable': 'Las tareas de repositorio están disponibles en la aplicación de escritorio.',
 			'project-repository-task-workspace-required': 'La ruta del espacio de trabajo no se puede usar.',
 			'project-repository-task-workspace-not-absolute': 'La ruta del espacio de trabajo no se puede usar.',

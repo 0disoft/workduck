@@ -157,8 +157,8 @@
 			</div>
 			<label class="workduck-project-filter-field" for="project-tag-filter">
 				<input id="project-tag-filter" class="workduck-input" type="text" value={tagFilterInput}
-					autocomplete="off" spellcheck="false" aria-label="Tag filter"
-					placeholder={projectMessages.filters.tagPlaceholder}
+					autocomplete="off" spellcheck="false" aria-label={projectMessages.filters.searchLabel}
+					placeholder={projectMessages.filters.searchPlaceholder}
 					oninput={handleTagFilterInput} />
 			</label>
 		</div>

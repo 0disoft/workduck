@@ -42,6 +42,7 @@ export const zhSettingsMessages = {
 			remoteReady: '远程仓库已就绪',
 			commitNeeded: '需要提交',
 			queueCommitWorkOrder: '添加提交任务',
+			updateDependencies: '更新依赖',
 			pullNeeded: '需拉取 {count} 个提交',
 			pushNeeded: '需推送 {count} 个提交',
 			setupComplete: '工作区仓库已准备就绪。',
@@ -49,6 +50,7 @@ export const zhSettingsMessages = {
 			setupFailed: '仓库设置失败。',
 			publishComplete: '工作区仓库已发布。',
 			commitWorkOrderQueued: '已添加提交任务：{relativePath}',
+			dependencyUpdateTerminalOpened: '已打开工作区依赖更新命令终端。',
 			fetchComplete: '获取成功。',
 			pullComplete: '拉取成功。',
 			pushComplete: '推送成功。'
@@ -127,6 +129,7 @@ export const zhSettingsMessages = {
 			pullRepository: '将远程工作区修改拉取到此文件夹中。',
 			pushRepository: '将本地工作区修改推送到远程仓库。',
 			queueCommitWorkOrder: '将未提交修改的清理添加至工作队列。',
+			updateDependencies: '打开终端，在工作区文件夹中更新依赖。',
 			reconnect: '当此工作区是从其他设备同步过来时，重新选择一个本地文件夹。',
 			switch: '将当前工作区设为活动工作区。',
 			lock: '重新锁定此工作区，直到输入其密码。',

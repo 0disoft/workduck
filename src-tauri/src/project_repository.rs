@@ -33,7 +33,7 @@ const PROJECT_REPOSITORY_GIT_ACTION_TIMEOUT: Duration = Duration::from_secs(600)
 #[cfg(target_os = "windows")]
 const CREATE_NO_WINDOW: u32 = 0x08000000;
 
-#[derive(serde::Serialize)]
+#[derive(Debug, serde::Serialize, PartialEq, Eq)]
 pub enum ProjectRepositoryCloneError {
     #[serde(rename = "project-repository-workspace-required")]
     WorkspaceRequired,
@@ -69,6 +69,8 @@ pub enum ProjectRepositoryCloneError {
     CloneCommandUnavailable,
     #[serde(rename = "project-repository-clone-command-timed-out")]
     CloneCommandTimedOut,
+    #[serde(rename = "project-repository-clone-path-too-long")]
+    ClonePathTooLong,
     #[serde(rename = "project-repository-clone-token-invalid")]
     CloneTokenInvalid,
     #[serde(rename = "project-repository-clone-permission-denied")]
@@ -214,11 +216,68 @@ struct GitStatusSummary {
 }
 
 #[tauri::command]
-pub fn clone_project_repository(
+pub async fn clone_project_repository(
     workspace_path: String,
     group_relative_path: String,
     repository_name: String,
     remote_url: String,
+    credential_kind: Option<String>,
+    credential_value: Option<String>,
+) -> ProjectRepositoryClone {
+    run_clone_on_blocking_thread(move || {
+        clone_project_repository_with_optional_upstream(
+            workspace_path,
+            group_relative_path,
+            repository_name,
+            remote_url,
+            None,
+            credential_kind,
+            credential_value,
+        )
+    })
+    .await
+}
+
+#[tauri::command]
+pub async fn clone_project_repository_fork(
+    workspace_path: String,
+    group_relative_path: String,
+    repository_name: String,
+    remote_url: String,
+    upstream_remote_url: String,
+    credential_kind: Option<String>,
+    credential_value: Option<String>,
+) -> ProjectRepositoryClone {
+    run_clone_on_blocking_thread(move || {
+        clone_project_repository_with_optional_upstream(
+            workspace_path,
+            group_relative_path,
+            repository_name,
+            remote_url,
+            Some(upstream_remote_url),
+            credential_kind,
+            credential_value,
+        )
+    })
+    .await
+}
+
+async fn run_clone_on_blocking_thread<F>(operation: F) -> ProjectRepositoryClone
+where
+    F: FnOnce() -> ProjectRepositoryClone + Send + 'static,
+{
+    match tauri::async_runtime::spawn_blocking(operation).await {
+        Ok(result) => result,
+        Err(_) => invalid(ProjectRepositoryCloneError::CloneFailed),
+    }
+}
+
+fn clone_project_repository_with_optional_upstream(
+    workspace_path: String,
+    group_relative_path: String,
+    repository_name: String,
+    remote_url: String,
+    upstream_remote_url: Option<String>,
     credential_kind: Option<String>,
     credential_value: Option<String>,
 ) -> ProjectRepositoryClone {
@@ -242,11 +301,24 @@ pub fn clone_project_repository(
         Ok(remote_url) => remote_url,
         Err(error) => return invalid(error),
     };
+    let upstream_remote_url = match upstream_remote_url {
+        Some(upstream_remote_url) => match validate_remote_url(&upstream_remote_url) {
+            Ok(upstream_remote_url) => Some(upstream_remote_url),
+            Err(error) => return invalid(error),
+        },
+        None => None,
+    };
     let clone_target = group_path.join(repository_folder_name);
 
     if fs::symlink_metadata(&clone_target).is_ok() {
         if let Some(existing_clone_path) = resolve_existing_clone_target(&clone_target, &remote_url)
         {
+            if let Some(upstream_remote_url) = upstream_remote_url.as_deref() {
+                if ensure_upstream_remote(&existing_clone_path, upstream_remote_url).is_err() {
+                    return invalid(ProjectRepositoryCloneError::CloneFailed);
+                }
+            }
+
             return valid_clone(existing_clone_path);
         }
 
@@ -262,6 +334,13 @@ pub fn clone_project_repository(
         credential.as_ref(),
     ) {
         Ok(()) => {
+            if let Some(upstream_remote_url) = upstream_remote_url.as_deref() {
+                if ensure_upstream_remote(&clone_target, upstream_remote_url).is_err() {
+                    cleanup_failed_clone_target(&clone_target);
+                    return invalid(ProjectRepositoryCloneError::CloneFailed);
+                }
+            }
+
             let normalized_clone_target =
                 fs::canonicalize(&clone_target).unwrap_or_else(|_| clone_target.clone());
 
@@ -320,18 +399,22 @@ fn run_git_clone_with_public_fallback(
             Some(&github_cli_credential),
         ) {
             Ok(()) => return Ok(()),
-            Err(_) => cleanup_failed_clone_target(clone_target),
+            Err(failure) if failure.error != ProjectRepositoryCloneError::CloneAuthRequired => {
+                return Err(failure);
+            }
+            Err(_) => {
+                cleanup_failed_clone_target(clone_target);
+            }
         }
     }
 
-    if credential.is_some() {
-        match run_git_clone(group_path, remote_url, clone_target, None) {
-            Ok(()) => return Ok(()),
-            Err(_) => cleanup_failed_clone_target(clone_target),
+    match run_git_clone(group_path, remote_url, clone_target, None) {
+        Ok(()) => Ok(()),
+        Err(failure) if failure.error == ProjectRepositoryCloneError::CloneAuthRequired => {
+            Err(first_failure)
         }
+        Err(failure) => Err(failure),
     }
-
-    Err(first_failure)
 }
 
 fn should_retry_clone_with_system_credential(error: &ProjectRepositoryCloneError) -> bool {
@@ -954,9 +1037,16 @@ fn has_git_remote(repository_path: &Path) -> Result<bool, GitCommandFailure> {
 }
 
 fn read_git_origin_remote_url(repository_path: &Path) -> Result<Option<String>, GitCommandFailure> {
+    read_git_remote_url(repository_path, "origin")
+}
+
+fn read_git_remote_url(
+    repository_path: &Path,
+    remote_name: &str,
+) -> Result<Option<String>, GitCommandFailure> {
     let output = run_git_command(
         repository_path,
-        &["remote", "get-url", "origin"],
+        &["remote", "get-url", remote_name],
         PROJECT_REPOSITORY_GIT_ACTION_TIMEOUT,
         None,
     )?;
@@ -968,6 +1058,38 @@ fn read_git_origin_remote_url(repository_path: &Path) -> Result<Option<String>, 
     let remote_url = String::from_utf8_lossy(&output.stdout).trim().to_owned();
 
     Ok((!remote_url.is_empty()).then_some(remote_url))
+}
+
+fn ensure_upstream_remote(
+    repository_path: &Path,
+    upstream_remote_url: &str,
+) -> Result<(), GitCommandFailure> {
+    if let Some(existing_remote_url) = read_git_remote_url(repository_path, "upstream")? {
+        return if normalize_remote_url_for_comparison(&existing_remote_url)
+            == normalize_remote_url_for_comparison(upstream_remote_url)
+        {
+            Ok(())
+        } else {
+            Err(GitCommandFailure {
+                error: ProjectRepositoryGitError::CommandFailed,
+            })
+        };
+    }
+
+    let output = run_git_command(
+        repository_path,
+        &["remote", "add", "upstream", upstream_remote_url],
+        PROJECT_REPOSITORY_GIT_ACTION_TIMEOUT,
+        None,
+    )?;
+
+    if output.status.success() {
+        Ok(())
+    } else {
+        Err(GitCommandFailure {
+            error: ProjectRepositoryGitError::CommandFailed,
+        })
+    }
 }
 
 fn normalize_remote_url_for_comparison(remote_url: &str) -> String {
@@ -1034,6 +1156,42 @@ mod tests {
         assert!(!inspection.is_git_repository);
         assert!(!inspection.has_remote);
         assert!(!inspection.has_uncommitted_changes);
+
+        let _ = fs::remove_dir_all(&sandbox);
+    }
+
+    #[test]
+    fn ensure_upstream_remote_adds_idempotently_and_rejects_different_url() {
+        if !git_is_available() {
+            return;
+        }
+
+        let sandbox = unique_test_directory("workduck-upstream-remote");
+        let repository = sandbox.join("repo");
+
+        fs::create_dir_all(&repository).expect("create git test repository");
+
+        let init_status = Command::new("git")
+            .arg("init")
+            .current_dir(&repository)
+            .status()
+            .expect("run git init");
+
+        assert!(init_status.success());
+
+        assert!(ensure_upstream_remote(&repository, "https://github.com/openai/codex.git").is_ok());
+        assert!(ensure_upstream_remote(&repository, "https://github.com/openai/codex").is_ok());
+        assert!(
+            ensure_upstream_remote(&repository, "https://github.com/example/other.git").is_err()
+        );
+
+        let upstream_remote_url = match read_git_remote_url(&repository, "upstream") {
+            Ok(Some(remote_url)) => remote_url,
+            Ok(None) => panic!("upstream remote missing"),
+            Err(_) => panic!("read upstream remote"),
+        };
+
+        assert_eq!(upstream_remote_url, "https://github.com/openai/codex.git");
 
         let _ = fs::remove_dir_all(&sandbox);
     }

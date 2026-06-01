@@ -177,6 +177,7 @@
 	let descriptionInput = $state('');
 	let repositorySourceMode = $state<ProjectRepositorySourceMode>('folder');
 	let repositoryRemoteUrl = $state('');
+	let repositoryGithubCredentialSecretId = $state('');
 	let formError = $state<ProjectFormError | null>(null);
 	let status = $state<string | null>(null);
 	let storageError = $state<ProjectRegistryStorageError | null>(null);
@@ -237,7 +238,13 @@
 	);
 	let canSaveDescription = $derived(descriptionEditor !== null && !isSavingDescription);
 	let canSubmitDialog = $derived(
-		canSubmitProjectDialog(dialog, repositorySourceMode, formName, repositoryRemoteUrl) &&
+		canSubmitProjectDialog(
+			dialog,
+			repositorySourceMode,
+			formName,
+			repositoryRemoteUrl,
+			repositoryGithubCredentialSecretId
+		) &&
 			!isSubmitting
 	);
 	let canConfirmDelete = $derived(deleteCandidate !== null && !isDeleting);
@@ -363,13 +370,16 @@
 		getFormTags: () => formTags,
 		getRepositorySourceMode: () => repositorySourceMode,
 		getRepositoryRemoteUrl: () => repositoryRemoteUrl,
+		getRepositoryGithubCredentialSecretId: () => repositoryGithubCredentialSecretId,
 		getIsSubmitting: () => isSubmitting,
 		getDeleteCandidate: () => deleteCandidate,
 		getIsDeleting: () => isDeleting,
 		getShouldDeleteLocalFolder: () => shouldDeleteLocalFolder,
 		getCanDeleteLocalFolder: isDeleteLocalFolderAvailable,
 		getDeleteDialogMessages: () => projectMessages.deleteDialog,
+		getDefaultRepositoryGithubCredentialSecretId,
 		persistRegistry,
+		resolveForkCredential: resolveRepositoryDialogForkCredential,
 		closeContextMenu,
 		setDialog: (nextDialog) => { dialog = nextDialog; },
 		setFormName: (name) => { formName = name; },
@@ -377,6 +387,9 @@
 		setFormTags: (tags) => { formTags = tags; },
 		setRepositorySourceMode: (sourceMode) => { repositorySourceMode = sourceMode; },
 		setRepositoryRemoteUrl: (remoteUrl) => { repositoryRemoteUrl = remoteUrl; },
+		setRepositoryGithubCredentialSecretId: (secretId) => {
+			repositoryGithubCredentialSecretId = secretId;
+		},
 		setFormError: (error) => { formError = error; },
 		setStatus: (nextStatus) => { status = nextStatus; },
 		setDeleteCandidate: (candidate) => { deleteCandidate = candidate; },
@@ -792,6 +805,51 @@
 		});
 	}
 
+	function getDefaultRepositoryGithubCredentialSecretId(targetNodeId: string | null) {
+		if (targetNodeId === null) {
+			return '';
+		}
+
+		const node = registry.nodes.find((candidateNode) => candidateNode.id === targetNodeId);
+
+		if (node?.kind !== 'group') {
+			return '';
+		}
+
+		const project = node.parentId === null
+			? null
+			: registry.nodes.find((candidateNode) => candidateNode.id === node.parentId) ?? null;
+
+		return project?.githubCredentialSecretId ?? node.githubCredentialSecretId ?? '';
+	}
+
+	function resolveRepositoryDialogForkCredential(secretId: string) {
+		const credentialSecretId = secretId.trim();
+
+		if (credentialSecretId.length === 0) {
+			return 'project-github-credential-required';
+		}
+
+		if (environmentVault === null) {
+			return 'project-github-credential-vault-locked';
+		}
+
+		const credential = githubCredentialOptions.find((option) => option.id === credentialSecretId);
+
+		if (credential === undefined) {
+			return 'project-github-credential-missing';
+		}
+
+		if (credential.kind !== 'token') {
+			return 'project-github-credential-invalid';
+		}
+
+		return {
+			kind: 'github-token',
+			value: credential.value
+		} as const;
+	}
+
 	function isRepositoryCloneTarget(nodeId: string, repositoryId: string) {
 		return isProjectBoardRepositoryTarget(cloneTarget, nodeId, repositoryId);
 	}
@@ -1065,6 +1123,7 @@
 	bind:formDescription
 	bind:formTags
 	bind:repositoryRemoteUrl
+	bind:repositoryGithubCredentialSecretId
 	{deleteCandidate}
 	{descriptionEditor}
 	{detailsEditor}
@@ -1149,6 +1208,15 @@
 	onDialogDescriptionInput={editorActions.handleDescriptionEditorInput}
 	onDialogTagsInput={editorActions.handleTagInput}
 	onRepositoryRemoteUrlInput={dialogActions.handleRepositoryRemoteUrlInput}
+	onRepositoryGithubCredentialSelect={(event) => {
+		const target = event.currentTarget;
+
+		if (target instanceof HTMLSelectElement) {
+			repositoryGithubCredentialSecretId = target.value;
+			formError = null;
+			status = null;
+		}
+	}}
 	onSelectRepositorySourceMode={dialogActions.selectRepositorySourceMode}
 	onDialogSubmit={dialogActions.handleDialogSubmit}
 	onDialogBackdropClick={dialogActions.handleDialogBackdropClick}

@@ -7,7 +7,8 @@ export const koProjectsMessages = {
 			pullNeeded: 'Pull 필요',
 			pushNeeded: 'Push 필요',
 			commitNeeded: '커밋 필요',
-			tagPlaceholder: '태그'
+			searchLabel: '저장소 이름 또는 태그 필터',
+			searchPlaceholder: '이름 또는 태그'
 		},
 		kinds: {
 			project: '프로젝트',
@@ -143,6 +144,7 @@ export const koProjectsMessages = {
 			}
 		},
 		errors: {
+			'project-github-credential-required': 'GitHub 인증을 선택하세요.',
 			'project-github-credential-vault-locked':
 				'선택한 GitHub 인증을 사용하려면 환경변수 잠금을 해제하세요.',
 			'project-github-credential-missing': '선택한 GitHub 인증을 찾을 수 없습니다.',
@@ -214,6 +216,8 @@ export const koProjectsMessages = {
 			'project-repository-clone-target-exists': 'Clone 대상 폴더가 이미 있습니다.',
 			'project-repository-clone-command-unavailable': 'Git 명령을 찾을 수 없습니다.',
 			'project-repository-clone-command-timed-out': '저장소 Clone 시간이 초과되었습니다.',
+			'project-repository-clone-path-too-long':
+				'Windows 경로 길이 제한 때문에 Clone에 실패했습니다. 더 짧은 프로젝트 경로를 사용하거나 Windows와 Git의 긴 경로 지원을 켜세요.',
 			'project-repository-clone-token-invalid':
 				'GitHub 토큰이 올바르지 않거나 만료되었습니다. 환경변수의 GitHub PAT를 갱신하세요.',
 			'project-repository-clone-permission-denied':
@@ -269,7 +273,7 @@ export const koProjectsMessages = {
 			'project-repository-github-commit-hook-failed': 'Git 훅이 첫 커밋을 막았습니다.',
 			'project-repository-github-commit-failed': '첫 커밋을 만들지 못했습니다.',
 			'project-repository-github-create-failed':
-				'GitHub 저장소를 만들지 못했습니다. GitHub CLI 인증과 저장소 이름을 확인하세요.',
+				'GitHub 저장소를 만들지 못했습니다. GitHub 인증과 저장소 이름을 확인하세요.',
 			'project-repository-task-unavailable':
 				'저장소 작업은 데스크톱 앱에서 사용할 수 있습니다.',
 			'project-repository-task-workspace-required': '워크스페이스 경로를 사용할 수 없습니다.',

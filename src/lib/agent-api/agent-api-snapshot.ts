@@ -25,6 +25,7 @@ export interface AgentApiSnapshot {
 	};
 	readonly queue: AgentApiQueueSnapshot;
 	readonly projectRegistry: AgentApiProjectRegistrySnapshot;
+	readonly repositoryImportAttempts: AgentApiRepositoryImportAttemptsSnapshot;
 	readonly repositoryTaskRuns: AgentApiRepositoryTaskRunsSnapshot;
 	readonly workspaceMetadata: AgentApiWorkspaceMetadataSnapshot;
 }
@@ -70,9 +71,34 @@ export interface AgentApiProjectRegistrySnapshot {
 			readonly name: string;
 			readonly path?: string | null;
 			readonly remoteUrl?: string | null;
+			readonly upstreamRemoteUrl?: string | null;
 			readonly tags: readonly string[];
 			readonly hasGithubCredential: boolean;
 		}[];
+	}[];
+	readonly error?: string | null;
+}
+
+export interface AgentApiRepositoryImportAttemptsSnapshot {
+	readonly ok: boolean;
+	readonly records: readonly {
+		readonly id: string;
+		readonly nodeId: string;
+		readonly repositoryName: string;
+		readonly state: 'running' | 'succeeded' | 'failed';
+		readonly phase:
+			| 'preflight'
+			| 'creating-fork'
+			| 'cloning-fork'
+			| 'persisting-registry'
+			| 'completed';
+		readonly upstreamRemoteUrl: string;
+		readonly forkRemoteUrl?: string | null;
+		readonly targetPath?: string | null;
+		readonly errorCode?: string | null;
+		readonly startedAt: string;
+		readonly updatedAt: string;
+		readonly finishedAt?: string | null;
 	}[];
 	readonly error?: string | null;
 }

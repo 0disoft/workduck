@@ -42,6 +42,7 @@ export const hiSettingsMessages = {
 			remoteReady: 'रिमोट तैयार है',
 			commitNeeded: 'कमिट की आवश्यकता है',
 			queueCommitWorkOrder: 'कमिट कार्य जोड़ें',
+			updateDependencies: 'निर्भरता अपडेट',
 			pullNeeded: '{count} कमिट पुल करने की आवश्यकता है',
 			pushNeeded: '{count} कमिट पुश करने की आवश्यकता है',
 			setupComplete: 'कार्यक्षेत्र रिपॉजिटरी तैयार है।',
@@ -49,6 +50,8 @@ export const hiSettingsMessages = {
 			setupFailed: 'रिपॉजिटरी सेटअप विफल रहा।',
 			publishComplete: 'कार्यक्षेत्र रिपॉजिटरी प्रकाशित कर दी गई है।',
 			commitWorkOrderQueued: 'कमिट कार्य जोड़ा गया: {relativePath}',
+			dependencyUpdateTerminalOpened:
+				'कार्यक्षेत्र निर्भरता अपडेट कमांड के साथ टर्मिनल खोला गया।',
 			fetchComplete: 'फ़ेच सफल रहा।',
 			pullComplete: 'पुल सफल रहा।',
 			pushComplete: 'पुश सफल रहा।'
@@ -127,6 +130,8 @@ export const hiSettingsMessages = {
 			pullRepository: 'रिमोट कार्यक्षेत्र परिवर्तनों को इस फ़ोल्डर में पुल करें।',
 			pushRepository: 'स्थानीय कार्यक्षेत्र परिवर्तनों को रिमोट रिपॉजिटरी में पुश करें।',
 			queueCommitWorkOrder: 'अप्रतिबद्ध परिवर्तनों की सफाई को कार्य कतार में जोड़ें।',
+			updateDependencies:
+				'कार्यक्षेत्र फ़ोल्डर में निर्भरता अपडेट करने के लिए टर्मिनल खोलें।',
 			reconnect: 'जब यह कार्यक्षेत्र किसी अन्य उपकरण से सिंक किया गया हो, तो एक स्थानीय फ़ोल्डर पुनः चुनें।',
 			switch: 'वर्तमान कार्यक्षेत्र को सक्रिय कार्यक्षेत्र के रूप में सेट करें।',
 			lock: 'पासवर्ड दर्ज होने तक इस कार्यक्षेत्र को पुनः लॉक करें।',

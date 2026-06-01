@@ -7,7 +7,8 @@ export const zhProjectsMessages = {
 		pullNeeded: '需拉取',
 		pushNeeded: '需推送',
 		commitNeeded: '需提交',
-		tagPlaceholder: '标签'
+		searchLabel: '仓库名称或标签过滤器',
+		searchPlaceholder: '名称或标签'
 	},
 	kinds: {
 		project: '项目',
@@ -143,6 +144,7 @@ export const zhProjectsMessages = {
 		}
 	},
 	errors: {
+		'project-github-credential-required': '请选择 GitHub 凭据。',
 		'project-github-credential-vault-locked':
 			'请先解锁环境以使用所选 GitHub 凭据。',
 		'project-github-credential-missing': '未找到所选 GitHub 凭据。',
@@ -214,6 +216,8 @@ export const zhProjectsMessages = {
 		'project-repository-clone-target-exists': '克隆目标文件夹已存在。',
 		'project-repository-clone-command-unavailable': '未找到 Git 命令。',
 		'project-repository-clone-command-timed-out': '仓库克隆超时。',
+		'project-repository-clone-path-too-long':
+			'仓库克隆触发了 Windows 路径长度限制。请使用更短的项目路径，或在 Windows 和 Git 中启用长路径。',
 		'project-repository-clone-token-invalid':
 			'GitHub Token 无效或已过期。请在环境变量中更新 GitHub PAT。',
 		'project-repository-clone-permission-denied':
@@ -270,7 +274,7 @@ export const zhProjectsMessages = {
 			'初始提交被 Git Hook 拦截。',
 		'project-repository-github-commit-failed': '无法创建初始提交。',
 		'project-repository-github-create-failed':
-			'无法创建 GitHub 仓库。请检查 GitHub CLI 身份验证与仓库名称。',
+			'无法创建 GitHub 仓库。请检查 GitHub 身份验证与仓库名称。',
 		'project-repository-task-unavailable': '仓库任务仅在桌面客户端中可用。',
 		'project-repository-task-workspace-required': '工作区路径不可用。',
 		'project-repository-task-workspace-not-absolute': '工作区路径不可用。',

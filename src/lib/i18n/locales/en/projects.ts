@@ -7,7 +7,8 @@ export const enProjectsMessages = {
 			pullNeeded: 'Pull needed',
 			pushNeeded: 'Push needed',
 			commitNeeded: 'Commit needed',
-			tagPlaceholder: 'tag'
+			searchLabel: 'Repository name or tag filter',
+			searchPlaceholder: 'name or tag'
 		},
 		kinds: {
 			project: 'Project',
@@ -143,6 +144,7 @@ export const enProjectsMessages = {
 			}
 		},
 		errors: {
+			'project-github-credential-required': 'Select a GitHub credential.',
 			'project-github-credential-vault-locked':
 				'Unlock Environment to use the selected GitHub credential.',
 			'project-github-credential-missing': 'Selected GitHub credential was not found.',
@@ -213,6 +215,8 @@ export const enProjectsMessages = {
 			'project-repository-clone-target-exists': 'Clone target folder already exists.',
 			'project-repository-clone-command-unavailable': 'Git command was not found.',
 			'project-repository-clone-command-timed-out': 'Repository clone timed out.',
+			'project-repository-clone-path-too-long':
+				'Repository clone hit the Windows path length limit. Try a shorter project path or enable long paths in Windows and Git.',
 			'project-repository-clone-token-invalid':
 				'GitHub token is invalid or expired. Update the GitHub PAT in Environment variables.',
 			'project-repository-clone-permission-denied':
@@ -269,7 +273,7 @@ export const enProjectsMessages = {
 				'Initial commit was blocked by a Git hook.',
 			'project-repository-github-commit-failed': 'Initial commit could not be created.',
 			'project-repository-github-create-failed':
-				'GitHub repository could not be created. Check GitHub CLI authentication and repository name.',
+				'GitHub repository could not be created. Check GitHub authentication and repository name.',
 			'project-repository-task-unavailable': 'Repository tasks are available in the desktop app.',
 			'project-repository-task-workspace-required': 'Workspace path is not usable.',
 			'project-repository-task-workspace-not-absolute': 'Workspace path is not usable.',

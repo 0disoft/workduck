@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 
 	import { getWorkduckMessages } from '$lib/i18n/workduck-language';
+	import { getProjectFormErrorMessage } from '$lib/projects/project-board-errors';
 	import {
 		enqueueRepositoryCommitWorkOrder
 	} from '$lib/queue/repository-commit-work-order';
@@ -20,6 +21,10 @@
 		createWorkspacePasswordHash,
 	} from '$lib/workspaces/workspace-password';
 	import { resolveDefaultGithubTokenCredential } from '$lib/environment/github-credential';
+	import {
+		runProjectRepositoryTask,
+		type ProjectRepositoryTaskError
+	} from '$lib/projects/project-repository-task';
 	import { openEnvironmentVaultSessionFromWorkspaceUnlock } from '$lib/environment/environment-vault-session-loader';
 	import {
 		selectWorkspacePath,
@@ -97,10 +102,13 @@
 	let workspaceRepositoryGitActionId = $state<string | null>(null);
 	let workspaceRepositoryGitAction = $state<WorkspaceRepositoryGitAction | null>(null);
 	let workspaceRepositoryCommitQueueId = $state<string | null>(null);
+	let workspaceRepositoryTaskActionId = $state<string | null>(null);
 	let formError = $state<WorkspaceFormError | null>(null);
+	let workspaceRepositoryTaskError = $state<ProjectRepositoryTaskError | null>(null);
 	let repositorySetupError = $state<WorkspaceRepositorySetupError | null>(null);
 	let repositorySetupStatus = $state<string | null>(null);
 	let workspaceRepositoryGitStatus = $state<string | null>(null);
+	let workspaceRepositoryTaskStatus = $state<string | null>(null);
 	let storageError = $state<string | null>(null);
 	let hasLoaded = $state(false);
 	let isAddingWorkspace = $state(false);
@@ -165,6 +173,10 @@
 		return resolveWorkspaceRepositorySetupErrorMessage(messages, error);
 	}
 
+	function getWorkspaceRepositoryTaskErrorMessage(error: ProjectRepositoryTaskError) {
+		return getProjectFormErrorMessage(error, messages.projects.errors);
+	}
+
 	function isWorkspacePathError(error: WorkspaceFormError | null) {
 		return error?.startsWith('workspace-path-') ?? false;
 	}
@@ -179,9 +191,11 @@
 
 	function clearFormError() {
 		formError = null;
+		workspaceRepositoryTaskError = null;
 		repositorySetupError = null;
 		repositorySetupStatus = null;
 		workspaceRepositoryGitStatus = null;
+		workspaceRepositoryTaskStatus = null;
 	}
 
 	function handleWorkspaceNameInput(event: Event) {
@@ -287,6 +301,7 @@
 		return (
 			workspaceRepositoryGitActionId === workspaceId ||
 			workspaceRepositoryCommitQueueId === workspaceId ||
+			workspaceRepositoryTaskActionId === workspaceId ||
 			isPublishingWorkspaceRepository
 		);
 	}
@@ -346,6 +361,10 @@
 		);
 	}
 
+	function workspaceRepositoryCanUpdateDependencies(workspaceId: string) {
+		return !workspaceRepositoryGitBusy(workspaceId);
+	}
+
 	async function queueWorkspaceRepositoryCommitWorkOrder(workspaceId: string) {
 		const workspace = registry.workspaces.find((candidate) => candidate.id === workspaceId);
 
@@ -359,6 +378,8 @@
 
 		formError = null;
 		workspaceRepositoryGitStatus = null;
+		workspaceRepositoryTaskError = null;
+		workspaceRepositoryTaskStatus = null;
 		workspaceRepositoryCommitQueueId = workspace.id;
 
 		try {
@@ -391,6 +412,15 @@
 		defaultLabel: string
 	) {
 		return workspaceRepositoryGitActionId === workspaceId && workspaceRepositoryGitAction === action
+			? messages.common.checking
+			: defaultLabel;
+	}
+
+	function getWorkspaceRepositoryDependencyUpdateLabel(
+		workspaceId: string,
+		defaultLabel: string
+	) {
+		return workspaceRepositoryTaskActionId === workspaceId
 			? messages.common.checking
 			: defaultLabel;
 	}
@@ -661,6 +691,8 @@
 		repositorySetupError = null;
 		repositorySetupStatus = null;
 		workspaceRepositoryGitStatus = null;
+		workspaceRepositoryTaskError = null;
+		workspaceRepositoryTaskStatus = null;
 		const workspace = registry.workspaces.find((candidate) => candidate.id === workspaceId);
 
 		if (workspace === undefined) {
@@ -682,6 +714,8 @@
 	function requestWorkspaceRepositoryPublish(workspaceId: string) {
 		formError = null;
 		workspaceRepositoryGitStatus = null;
+		workspaceRepositoryTaskError = null;
+		workspaceRepositoryTaskStatus = null;
 		const workspace = registry.workspaces.find((candidate) => candidate.id === workspaceId);
 
 		if (workspace === undefined) {
@@ -747,6 +781,8 @@
 
 		formError = null;
 		workspaceRepositoryGitStatus = null;
+		workspaceRepositoryTaskError = null;
+		workspaceRepositoryTaskStatus = null;
 		workspaceRepositoryGitActionId = workspace.id;
 		workspaceRepositoryGitAction = action;
 
@@ -774,6 +810,42 @@
 		} finally {
 			workspaceRepositoryGitActionId = null;
 			workspaceRepositoryGitAction = null;
+		}
+	}
+
+	async function runWorkspaceRepositoryDependencyUpdate(workspaceId: string) {
+		const workspace = registry.workspaces.find((candidate) => candidate.id === workspaceId);
+
+		if (
+			workspace === undefined ||
+			workspaceRepositoryGitBusy(workspaceId) ||
+			!workspaceRepositoryCanUpdateDependencies(workspaceId)
+		) {
+			return;
+		}
+
+		formError = null;
+		workspaceRepositoryTaskError = null;
+		workspaceRepositoryGitStatus = null;
+		workspaceRepositoryTaskStatus = null;
+		workspaceRepositoryTaskActionId = workspace.id;
+
+		try {
+			const result = await runProjectRepositoryTask({
+				workspacePath: workspace.path,
+				repositoryPath: workspace.path,
+				task: 'update-dependencies'
+			});
+
+			if (!result.ok) {
+				workspaceRepositoryTaskError = result.error;
+				return;
+			}
+
+			workspaceRepositoryTaskStatus =
+				messages.settings.workspaces.repository.dependencyUpdateTerminalOpened;
+		} finally {
+			workspaceRepositoryTaskActionId = null;
 		}
 	}
 
@@ -876,6 +948,8 @@
 
 		repositorySetupError = null;
 		repositorySetupStatus = null;
+		workspaceRepositoryTaskError = null;
+		workspaceRepositoryTaskStatus = null;
 		isPreparingWorkspaceRepository = true;
 
 		try {
@@ -910,6 +984,8 @@
 
 		formError = null;
 		workspaceRepositoryGitStatus = null;
+		workspaceRepositoryTaskError = null;
+		workspaceRepositoryTaskStatus = null;
 		isPublishingWorkspaceRepository = true;
 
 		try {
@@ -1052,6 +1128,8 @@
 		storageError,
 		repositorySetupStatus,
 		workspaceRepositoryGitStatus,
+		workspaceRepositoryTaskError,
+		workspaceRepositoryTaskStatus,
 		hasLoaded,
 		workspaceUnlockId,
 		workspaceUnlockIntent,
@@ -1071,7 +1149,8 @@
 	});
 
 	const actions: WorkspaceSettingsActions = {
-		getWorkspaceErrorMessage, getWorkspaceRepositorySetupErrorMessage, isWorkspacePathError,
+		getWorkspaceErrorMessage, getWorkspaceRepositorySetupErrorMessage,
+		getWorkspaceRepositoryTaskErrorMessage, isWorkspacePathError,
 		handleWorkspaceNameInput, handleWorkspacePathInput, handleWorkspacePathSelect,
 		handleWorkspacePasswordInput, handleWorkspaceSubmit, selectWorkspaceRepositoryChoice,
 		setInitializeWorkspaceGit, setInstallWorkspaceMustflow, setInstallWorkspaceGitignore,
@@ -1089,8 +1168,11 @@
 		workspaceRepositoryHasRemote,
 		workspaceRepositoryCanRunRemoteAction,
 		workspaceRepositoryCanQueueCommitWorkOrder,
+		workspaceRepositoryCanUpdateDependencies,
 		getWorkspaceRepositoryGitActionLabel,
+		getWorkspaceRepositoryDependencyUpdateLabel,
 		queueWorkspaceRepositoryCommitWorkOrder,
+		runWorkspaceRepositoryDependencyUpdate,
 		runWorkspaceRepositoryGitAction,
 		handleWorkspaceRepair,
 		handleWorkspaceSwitch,

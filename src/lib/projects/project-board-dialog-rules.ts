@@ -131,7 +131,8 @@ export function canSubmitProjectDialog(
 	dialog: ProjectDialogState | null,
 	repositorySourceMode: ProjectRepositorySourceMode,
 	formName: string,
-	repositoryRemoteUrl: string
+	repositoryRemoteUrl: string,
+	repositoryGithubCredentialSecretId = ''
 ) {
 	if (dialog === null) {
 		return false;
@@ -141,9 +142,18 @@ export function canSubmitProjectDialog(
 		return formName.trim().length > 0;
 	}
 
-	return repositorySourceMode === 'folder'
-		? formName.trim().length > 0
-		: repositoryRemoteUrl.trim().length > 0;
+	if (repositorySourceMode === 'folder') {
+		return formName.trim().length > 0;
+	}
+
+	if (repositorySourceMode === 'fork') {
+		return (
+			repositoryRemoteUrl.trim().length > 0 &&
+			repositoryGithubCredentialSecretId.trim().length > 0
+		);
+	}
+
+	return repositoryRemoteUrl.trim().length > 0;
 }
 
 function formatAffectedItemCount(count: number, singularTemplate: string, pluralTemplate: string) {

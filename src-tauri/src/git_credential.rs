@@ -8,13 +8,18 @@ pub(crate) enum GitCredential {
 }
 
 pub(crate) fn apply_safe_git_config(command: &mut Command, allow_system_credentials: bool) {
-    for (key, value) in [
+    let mut config = vec![
         ("core.fsmonitor", "false"),
         ("core.untrackedCache", "false"),
         ("core.hooksPath", disabled_hooks_path()),
         ("core.sshCommand", ""),
         ("protocol.ext.allow", "never"),
-    ] {
+    ];
+
+    #[cfg(target_os = "windows")]
+    config.push(("core.longpaths", "true"));
+
+    for (key, value) in config {
         command.arg("-c").arg(format!("{key}={value}"));
     }
 
@@ -109,6 +114,10 @@ mod tests {
             .windows(2)
             .any(|pair| pair[0] == "-c" && pair[1] == "core.untrackedCache=false"));
         assert!(args.windows(2).any(|pair| pair[0] == "-c" && pair[1] == "core.sshCommand="));
+        #[cfg(target_os = "windows")]
+        assert!(args
+            .windows(2)
+            .any(|pair| pair[0] == "-c" && pair[1] == "core.longpaths=true"));
         assert!(args.windows(2).any(|pair| pair[0] == "-c" && pair[1] == "credential.helper="));
         assert!(args
             .windows(2)

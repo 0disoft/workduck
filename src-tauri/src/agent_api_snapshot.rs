@@ -4,7 +4,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use rusqlite::OptionalExtension;
+use rusqlite::{OptionalExtension, params};
 use tauri::AppHandle;
 use time::{OffsetDateTime, format_description::well_known::Rfc3339};
 
@@ -21,6 +21,7 @@ const PROPOSAL_FILE_SUFFIX: &str = ".workduck-proposal.json";
 const WORKDUCK_DIRECTORY_NAME: &str = ".workduck";
 const WORKSPACE_DATA_FILE_MAX_BYTES: u64 = 1_048_576;
 const REPOSITORY_TASK_RUN_LIMIT: usize = 20;
+const REPOSITORY_IMPORT_ATTEMPT_LIMIT: i64 = 20;
 
 #[derive(serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -64,6 +65,7 @@ pub struct AgentApiSnapshot {
     workspace: AgentApiWorkspaceSnapshot,
     queue: AgentApiQueueSnapshot,
     project_registry: AgentApiProjectRegistrySnapshot,
+    repository_import_attempts: AgentApiRepositoryImportAttemptsSnapshot,
     repository_task_runs: AgentApiRepositoryTaskRunsSnapshot,
     workspace_metadata: AgentApiWorkspaceMetadataSnapshot,
 }
@@ -154,8 +156,35 @@ struct AgentApiProjectRepository {
     name: String,
     path: Option<String>,
     remote_url: Option<String>,
+    upstream_remote_url: Option<String>,
     tags: Vec<String>,
     has_github_credential: bool,
+}
+
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+struct AgentApiRepositoryImportAttemptsSnapshot {
+    ok: bool,
+    records: Vec<AgentApiRepositoryImportAttemptRecord>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    error: Option<&'static str>,
+}
+
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+struct AgentApiRepositoryImportAttemptRecord {
+    id: String,
+    node_id: String,
+    repository_name: String,
+    state: String,
+    phase: String,
+    upstream_remote_url: String,
+    fork_remote_url: Option<String>,
+    target_path: Option<String>,
+    error_code: Option<String>,
+    started_at: String,
+    updated_at: String,
+    finished_at: Option<String>,
 }
 
 #[derive(serde::Serialize)]
@@ -232,6 +261,7 @@ pub fn read_agent_api_snapshot(
             },
             queue: summarize_queue(&workspace_path),
             project_registry: summarize_project_registry(&app, &workspace_id),
+            repository_import_attempts: summarize_repository_import_attempts(&app, &workspace_id),
             repository_task_runs: summarize_repository_task_runs(&workspace_path),
             workspace_metadata: summarize_workspace_metadata(&workspace_path),
         }),
@@ -516,9 +546,102 @@ fn summarize_project_repository(
         name: read_required_string(value, "name")?,
         path: read_optional_string(value, "path"),
         remote_url: read_optional_string(value, "remoteUrl"),
+        upstream_remote_url: read_optional_string(value, "upstreamRemoteUrl"),
         tags: read_string_array(value, "tags"),
         has_github_credential,
     })
+}
+
+fn summarize_repository_import_attempts(
+    app: &AppHandle,
+    workspace_id: &str,
+) -> AgentApiRepositoryImportAttemptsSnapshot {
+    let connection = match storage::app_connection(app) {
+        Ok(connection) => connection,
+        Err(_) => {
+            return AgentApiRepositoryImportAttemptsSnapshot {
+                ok: false,
+                records: Vec::new(),
+                error: Some("agent-api-repository-import-attempts-read-failed"),
+            };
+        }
+    };
+    let mut statement = match connection.prepare(
+        "SELECT
+          id,
+          node_id,
+          repository_name,
+          state,
+          phase,
+          upstream_remote_url,
+          fork_remote_url,
+          target_path,
+          error_code,
+          started_at,
+          updated_at,
+          finished_at
+        FROM project_repository_import_attempt_records
+        WHERE workspace_id = ?1
+        ORDER BY updated_at DESC, id DESC
+        LIMIT ?2",
+    ) {
+        Ok(statement) => statement,
+        Err(_) => {
+            return AgentApiRepositoryImportAttemptsSnapshot {
+                ok: false,
+                records: Vec::new(),
+                error: Some("agent-api-repository-import-attempts-read-failed"),
+            };
+        }
+    };
+    let rows = match statement.query_map(
+        params![workspace_id, REPOSITORY_IMPORT_ATTEMPT_LIMIT],
+        |row| {
+            Ok(AgentApiRepositoryImportAttemptRecord {
+                id: row.get(0)?,
+                node_id: row.get(1)?,
+                repository_name: row.get(2)?,
+                state: row.get(3)?,
+                phase: row.get(4)?,
+                upstream_remote_url: row.get(5)?,
+                fork_remote_url: row.get(6)?,
+                target_path: row.get(7)?,
+                error_code: row.get(8)?,
+                started_at: row.get(9)?,
+                updated_at: row.get(10)?,
+                finished_at: row.get(11)?,
+            })
+        },
+    ) {
+        Ok(rows) => rows,
+        Err(_) => {
+            return AgentApiRepositoryImportAttemptsSnapshot {
+                ok: false,
+                records: Vec::new(),
+                error: Some("agent-api-repository-import-attempts-read-failed"),
+            };
+        }
+    };
+    let mut records = Vec::new();
+
+    for row in rows {
+        match row {
+            Ok(record) => records.push(record),
+            Err(_) => {
+                return AgentApiRepositoryImportAttemptsSnapshot {
+                    ok: false,
+                    records: Vec::new(),
+                    error: Some("agent-api-repository-import-attempts-read-failed"),
+                };
+            }
+        }
+    }
+
+    AgentApiRepositoryImportAttemptsSnapshot {
+        ok: true,
+        records,
+        error: None,
+    }
 }
 
 fn summarize_repository_task_runs(workspace_path: &Path) -> AgentApiRepositoryTaskRunsSnapshot {
@@ -799,6 +922,7 @@ mod tests {
                     "name": "agent-console",
                     "path": "projects/agent-console",
                     "remoteUrl": "https://example.invalid/repo.git",
+                    "upstreamRemoteUrl": "https://example.invalid/upstream.git",
                     "githubCredentialSecretId": "secret_repo",
                     "tags": ["console"]
                 }]
@@ -812,6 +936,10 @@ mod tests {
         assert_eq!(snapshot.counts.credential_references, 2);
         assert!(snapshot.nodes[0].has_github_credential);
         assert!(snapshot.nodes[0].repositories[0].has_github_credential);
+        assert_eq!(
+            snapshot.nodes[0].repositories[0].upstream_remote_url.as_deref(),
+            Some("https://example.invalid/upstream.git")
+        );
         assert!(!serialized.contains("secret_project"));
         assert!(!serialized.contains("secret_repo"));
     }

@@ -4,7 +4,7 @@ import {
 } from './project-registry';
 import {
 	getRepositoryFilterStats,
-	normalizeTagFilter,
+	normalizeProjectSearchFilter,
 	resolveSelectedGroup,
 	resolveSelectedProject,
 	selectGroupRepositories,
@@ -23,7 +23,7 @@ export function createProjectBoardSurfaceSelection(input: {
 	readonly selectedGroupId: string | null;
 }) {
 	const projectRows = createProjectTreeRows(input.nodes);
-	const normalizedTagFilter = normalizeTagFilter(input.tagFilter);
+	const normalizedTagFilter = normalizeProjectSearchFilter(input.tagFilter);
 	const repositoryFilterStats = getRepositoryFilterStats(
 		input.nodes,
 		input.repositoryGitStatusById

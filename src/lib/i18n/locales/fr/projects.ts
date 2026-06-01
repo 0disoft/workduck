@@ -7,7 +7,8 @@ export const frProjectsMessages = {
 		pullNeeded: 'Pull requis',
 		pushNeeded: 'Push requis',
 		commitNeeded: 'Commit requis',
-		tagPlaceholder: 'tag'
+		searchLabel: 'Filtre par nom de dépôt ou tag',
+		searchPlaceholder: 'nom ou tag'
 	},
 	kinds: {
 		project: 'Projet',
@@ -143,6 +144,7 @@ export const frProjectsMessages = {
 		}
 	},
 	errors: {
+		'project-github-credential-required': 'Sélectionnez un identifiant GitHub.',
 		'project-github-credential-vault-locked':
 			'Déverrouillez l\'environnement pour utiliser l\'identifiant GitHub sélectionné.',
 		'project-github-credential-missing': 'L\'identifiant GitHub sélectionné n\'a pas été trouvé.',
@@ -213,6 +215,8 @@ export const frProjectsMessages = {
 		'project-repository-clone-target-exists': 'Le dossier cible pour le clonage existe déjà.',
 		'project-repository-clone-command-unavailable': 'La commande Git n\'a pas été trouvée.',
 		'project-repository-clone-command-timed-out': 'Le clonage du dépôt a expiré.',
+		'project-repository-clone-path-too-long':
+			'Le clonage a atteint la limite de longueur de chemin Windows. Utilisez un chemin de projet plus court ou activez les chemins longs dans Windows et Git.',
 		'project-repository-clone-token-invalid':
 			'Le jeton GitHub est invalide ou expiré. Mettez à jour le GitHub PAT dans les variables d\'environnement.',
 		'project-repository-clone-permission-denied':
@@ -269,7 +273,7 @@ export const frProjectsMessages = {
 			'Le commit initial a été bloqué par un hook de Git.',
 		'project-repository-github-commit-failed': 'Le commit initial n\'a pas pu être créé.',
 		'project-repository-github-create-failed':
-			'Le dépôt GitHub n\'a pas pu être créé. Vérifiez l\'authentification de la CLI de GitHub et le nom du dépôt.',
+			'Le dépôt GitHub n\'a pas pu être créé. Vérifiez l\'authentification GitHub et le nom du dépôt.',
 		'project-repository-task-unavailable': 'Les tâches de dépôt sont disponibles dans l\'application de bureau.',
 		'project-repository-task-workspace-required': 'Le chemin de l\'espace de travail n\'est pas utilisable.',
 		'project-repository-task-workspace-not-absolute': 'Le chemin de l\'espace de travail n\'est pas utilisable.',

@@ -124,6 +124,10 @@ fn classify_git_clone_output(
         return ProjectRepositoryCloneError::CloneTokenInvalid;
     }
 
+    if git_clone_output_has_long_path_failure(normalized_output) {
+        return ProjectRepositoryCloneError::ClonePathTooLong;
+    }
+
     if git_clone_output_needs_authentication(normalized_output) {
         return ProjectRepositoryCloneError::CloneAuthRequired;
     }
@@ -162,6 +166,11 @@ fn git_clone_output_has_invalid_token(
         || (credential_present && normalized_output.contains("authentication failed"))
 }
 
+fn git_clone_output_has_long_path_failure(normalized_output: &str) -> bool {
+    normalized_output.contains("filename too long")
+        || normalized_output.contains("unable to checkout working tree")
+}
+
 fn git_clone_output_needs_authentication(normalized_output: &str) -> bool {
     normalized_output.contains("terminal prompts disabled")
         || normalized_output.contains("could not read username")
@@ -198,4 +207,22 @@ fn git_output_needs_authentication(normalized_output: &str) -> bool {
         || normalized_output.contains("authentication failed")
         || normalized_output.contains("could not read username")
         || normalized_output.contains("permission denied")
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn clone_failure_classifies_checkout_path_length() {
+        let output =
+            "error: unable to create file codex-rs/core/tests/suite/snapshots/very_long.snap: Filename too long
+fatal: unable to checkout working tree
+warning: Clone succeeded, but checkout failed.";
+
+        assert_eq!(
+            classify_git_clone_output(&output.to_ascii_lowercase(), false),
+            ProjectRepositoryCloneError::ClonePathTooLong
+        );
+    }
 }

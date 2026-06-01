@@ -9,6 +9,7 @@ import type { ProjectRegistryError } from './project-registry';
 import type { ProjectRegistryStorageError } from './project-storage';
 
 export type ProjectCredentialError =
+	| 'project-github-credential-required'
 	| 'project-github-credential-vault-locked'
 	| 'project-github-credential-missing'
 	| 'project-github-credential-invalid';

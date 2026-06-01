@@ -2,7 +2,10 @@ import type { ProjectFormError } from './project-board-errors';
 import { deleteProjectCandidate } from './project-board-delete-actions';
 import type { WorkduckMessages } from '$lib/i18n/workduck-message-contract';
 import { createRepositoryNameFromRemoteUrl } from './project-board-paths';
-import { submitProjectDialog } from './project-board-submit-actions';
+import {
+	submitProjectDialog,
+	type ProjectDialogSubmitContext
+} from './project-board-submit-actions';
 import type {
 	ProjectDeleteCandidate,
 	ProjectDialogMode,
@@ -20,13 +23,16 @@ export function createProjectBoardDialogHandlers(context: {
 	readonly getFormTags: () => string;
 	readonly getRepositorySourceMode: () => ProjectRepositorySourceMode;
 	readonly getRepositoryRemoteUrl: () => string;
+	readonly getRepositoryGithubCredentialSecretId: () => string;
 	readonly getIsSubmitting: () => boolean;
 	readonly getDeleteCandidate: () => ProjectDeleteCandidate | null;
 	readonly getIsDeleting: () => boolean;
 	readonly getShouldDeleteLocalFolder: () => boolean;
 	readonly getCanDeleteLocalFolder: () => boolean;
 	readonly getDeleteDialogMessages: () => WorkduckMessages['projects']['deleteDialog'];
+	readonly getDefaultRepositoryGithubCredentialSecretId: (targetNodeId: string | null) => string;
 	readonly persistRegistry: (nextRegistry: ProjectRegistry) => Promise<boolean>;
+	readonly resolveForkCredential: ProjectDialogSubmitContext['resolveForkCredential'];
 	readonly closeContextMenu: () => void;
 	readonly setDialog: (dialog: ProjectDialogState | null) => void;
 	readonly setFormName: (name: string) => void;
@@ -34,6 +40,7 @@ export function createProjectBoardDialogHandlers(context: {
 	readonly setFormTags: (tags: string) => void;
 	readonly setRepositorySourceMode: (sourceMode: ProjectRepositorySourceMode) => void;
 	readonly setRepositoryRemoteUrl: (remoteUrl: string) => void;
+	readonly setRepositoryGithubCredentialSecretId: (secretId: string) => void;
 	readonly setFormError: (error: ProjectFormError | null) => void;
 	readonly setStatus: (status: string | null) => void;
 	readonly setDeleteCandidate: (candidate: ProjectDeleteCandidate | null) => void;
@@ -57,6 +64,7 @@ export function createProjectBoardDialogHandlers(context: {
 		context.setFormTags('');
 		context.setRepositorySourceMode('folder');
 		context.setRepositoryRemoteUrl('');
+		context.setRepositoryGithubCredentialSecretId('');
 		context.setFormError(null);
 		context.setIsSubmitting(false);
 	}
@@ -75,6 +83,11 @@ export function createProjectBoardDialogHandlers(context: {
 			context.setFormTags('');
 			context.setRepositorySourceMode('folder');
 			context.setRepositoryRemoteUrl('');
+			context.setRepositoryGithubCredentialSecretId(
+				mode === 'repository'
+					? context.getDefaultRepositoryGithubCredentialSecretId(targetNodeId)
+					: ''
+			);
 			clearFeedback();
 			context.setDeleteCandidate(null);
 			context.clearDescriptionEditor();
@@ -95,6 +108,13 @@ export function createProjectBoardDialogHandlers(context: {
 			context.setRepositorySourceMode(sourceMode);
 			context.setFormName('');
 			context.setRepositoryRemoteUrl('');
+			context.setRepositoryGithubCredentialSecretId(
+				sourceMode === 'fork'
+					? context.getDefaultRepositoryGithubCredentialSecretId(
+							context.getDialog()?.targetNodeId ?? null
+						)
+					: ''
+			);
 			clearFeedback();
 		},
 		closeDeleteDialog,
@@ -132,10 +152,13 @@ export function createProjectBoardDialogHandlers(context: {
 						formDescription: context.getFormDescription(),
 						formTags: context.getFormTags(),
 						repositorySourceMode: context.getRepositorySourceMode(),
-						repositoryRemoteUrl: context.getRepositoryRemoteUrl()
+						repositoryRemoteUrl: context.getRepositoryRemoteUrl(),
+						repositoryGithubCredentialSecretId:
+							context.getRepositoryGithubCredentialSecretId()
 					},
 					{
 						persistRegistry: context.persistRegistry,
+						resolveForkCredential: context.resolveForkCredential,
 						setFormError: context.setFormError,
 						setStatus: context.setStatus,
 						setSelectedProjectId: context.setSelectedProjectId,

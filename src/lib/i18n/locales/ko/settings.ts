@@ -42,6 +42,7 @@ export const koSettingsMessages = {
 				remoteReady: '원격 연결됨',
 				commitNeeded: '커밋 필요',
 				queueCommitWorkOrder: '커밋 작업 추가',
+				updateDependencies: '의존성 업데이트',
 				pullNeeded: 'Pull 필요 {count}',
 				pushNeeded: 'Push 필요 {count}',
 				setupComplete: '워크스페이스 저장소를 준비했습니다.',
@@ -49,6 +50,8 @@ export const koSettingsMessages = {
 				setupFailed: '저장소 준비에 실패했습니다.',
 				publishComplete: '워크스페이스 저장소를 게시했습니다.',
 				commitWorkOrderQueued: '커밋 작업을 추가했습니다: {relativePath}',
+				dependencyUpdateTerminalOpened:
+					'워크스페이스 의존성 업데이트 명령이 입력된 터미널을 열었습니다.',
 				fetchComplete: 'Fetch 완료.',
 				pullComplete: 'Pull 완료.',
 				pushComplete: 'Push 완료.'
@@ -127,6 +130,7 @@ export const koSettingsMessages = {
 				pullRepository: '워크스페이스 저장소에서 Git pull을 실행합니다.',
 				pushRepository: '워크스페이스 저장소에서 Git push를 실행합니다.',
 				queueCommitWorkOrder: '커밋되지 않은 변경사항 정리를 작업 대기열에 추가합니다.',
+				updateDependencies: '워크스페이스 폴더에서 의존성 업데이트 터미널을 엽니다.',
 				reconnect: '다른 기기에서 동기화한 워크스페이스라면 로컬 폴더를 다시 선택합니다.',
 				switch: '이 워크스페이스를 현재 작업 공간으로 전환합니다.',
 				lock: '암호를 다시 입력하기 전까지 이 워크스페이스를 잠급니다.',

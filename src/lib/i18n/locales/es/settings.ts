@@ -42,6 +42,7 @@ export const esSettingsMessages = {
 			remoteReady: 'Remoto listo',
 			commitNeeded: 'Requiere commit',
 			queueCommitWorkOrder: 'Añadir tarea de commit',
+			updateDependencies: 'Actualizar deps',
 			pullNeeded: 'Traer {count}',
 			pushNeeded: 'Enviar {count}',
 			setupComplete: 'Repositorio del espacio de trabajo listo.',
@@ -49,6 +50,8 @@ export const esSettingsMessages = {
 			setupFailed: 'Falló la configuración del repositorio.',
 			publishComplete: 'Repositorio del espacio de trabajo publicado.',
 			commitWorkOrderQueued: 'Añadida tarea de commit: {relativePath}',
+			dependencyUpdateTerminalOpened:
+				'Se abrió una terminal con el comando de actualización de dependencias del espacio de trabajo.',
 			fetchComplete: 'Cambios remotos consultados.',
 			pullComplete: 'Cambios remotos traídos.',
 			pushComplete: 'Cambios locales enviados.'
@@ -128,6 +131,8 @@ export const esSettingsMessages = {
 			pullRepository: 'Trae los cambios remotos del espacio de trabajo a esta carpeta.',
 			pushRepository: 'Envía los cambios locales del espacio de trabajo al repositorio remoto.',
 			queueCommitWorkOrder: 'Añade la limpieza de cambios no confirmados a la cola de trabajo.',
+			updateDependencies:
+				'Abre una terminal para actualizar dependencias en la carpeta del espacio de trabajo.',
 			reconnect: 'Elige una carpeta local de nuevo si este espacio de trabajo se sincronizó desde otro dispositivo.',
 			switch: 'Establece este espacio de trabajo como el área de trabajo actual.',
 			lock: 'Bloquea este espacio de trabajo de nuevo hasta que se introduzca su contraseña.',

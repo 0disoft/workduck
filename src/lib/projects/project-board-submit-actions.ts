@@ -18,6 +18,17 @@ import {
 	addProjectRepositoryLink,
 	type ProjectRegistry
 } from './project-registry';
+import {
+	cloneForkedProjectRepository,
+	createGithubRepositoryFork,
+	type ProjectRepositoryGitCredentialInput
+} from './project-repository';
+import {
+	writeProjectRepositoryImportAttemptRecord,
+	type ProjectRepositoryImportAttemptPhase,
+	type ProjectRepositoryImportAttemptRecord,
+	type ProjectRepositoryImportAttemptState
+} from './project-import-attempt-storage';
 
 export interface ProjectDialogSubmitInput {
 	readonly dialog: ProjectDialogState;
@@ -28,12 +39,16 @@ export interface ProjectDialogSubmitInput {
 	readonly formTags: string;
 	readonly repositorySourceMode: ProjectRepositorySourceMode;
 	readonly repositoryRemoteUrl: string;
+	readonly repositoryGithubCredentialSecretId: string;
 }
 
 export interface ProjectDialogSubmitContext {
 	readonly persistRegistry: (nextRegistry: ProjectRegistry) => Promise<boolean>;
+	readonly resolveForkCredential: (
+		secretId: string
+	) => ProjectRepositoryGitCredentialInput | ProjectFormError;
 	readonly setFormError: (error: ProjectFormError) => void;
-	readonly setStatus: (status: string) => void;
+	readonly setStatus: (status: string | null) => void;
 	readonly setSelectedProjectId: (projectId: string | null) => void;
 	readonly setSelectedGroupId: (groupId: string | null) => void;
 	readonly closeDialog: () => void;
@@ -153,6 +168,11 @@ async function submitRepositoryLink(
 		return;
 	}
 
+	if (input.repositorySourceMode === 'fork') {
+		await submitForkedRepositoryLink(targetNodeId, targetNode.path, input, context);
+		return;
+	}
+
 	const tagsResult = validateTagsInput(input.formTags);
 
 	if (!tagsResult.ok) {
@@ -228,4 +248,255 @@ async function submitRemoteRepositoryLink(
 		context.setStatus('Repository registered.');
 		context.closeDialog();
 	}
+}
+
+async function submitForkedRepositoryLink(
+	targetNodeId: string,
+	groupRelativePath: string,
+	input: ProjectDialogSubmitInput,
+	context: ProjectDialogSubmitContext
+) {
+	const repositoryName = createRepositoryNameFromRemoteUrl(input.repositoryRemoteUrl);
+
+	if (repositoryName.length === 0) {
+		context.setFormError('project-repository-remote-url-invalid');
+		return;
+	}
+
+	const tagsResult = validateTagsInput(input.formTags);
+
+	if (!tagsResult.ok) {
+		context.setFormError(tagsResult.error);
+		return;
+	}
+
+	const predictedRepositoryPath = createWorkspaceChildPath(
+		input.workspacePath,
+		`${groupRelativePath}/${repositoryName}`
+	);
+	const preflightResult = addProjectRepositoryLink(input.registry, {
+		nodeId: targetNodeId,
+		name: repositoryName,
+		path: predictedRepositoryPath,
+		remoteUrl: null,
+		tags: tagsResult.tags
+	});
+
+	if (!preflightResult.ok) {
+		context.setFormError(preflightResult.error);
+		return;
+	}
+
+	let importAttempt: ProjectRepositoryImportAttemptRecord = createProjectRepositoryImportAttempt({
+		workspaceId: input.registry.workspaceId,
+		nodeId: targetNodeId,
+		repositoryName,
+		upstreamRemoteUrl: input.repositoryRemoteUrl,
+		targetPath: predictedRepositoryPath
+	});
+	await recordProjectRepositoryImportAttempt(importAttempt);
+
+	const credential = context.resolveForkCredential(input.repositoryGithubCredentialSecretId);
+
+	if (typeof credential === 'string') {
+		importAttempt = await finishProjectRepositoryImportAttempt(importAttempt, {
+			state: 'failed',
+			phase: 'preflight',
+			errorCode: credential
+		});
+		context.setFormError(credential);
+		return;
+	}
+
+	context.setStatus('Creating fork.');
+	importAttempt = await updateProjectRepositoryImportAttempt(importAttempt, {
+		phase: 'creating-fork'
+	});
+	const forkResult = await createGithubRepositoryFork({
+		upstreamRemoteUrl: input.repositoryRemoteUrl,
+		credential
+	});
+
+	if (!forkResult.ok) {
+		importAttempt = await finishProjectRepositoryImportAttempt(importAttempt, {
+			state: 'failed',
+			phase: 'creating-fork',
+			errorCode: forkResult.error
+		});
+		context.setFormError(forkResult.error);
+		context.setStatus(null);
+		return;
+	}
+
+	importAttempt = await updateProjectRepositoryImportAttempt(importAttempt, {
+		phase: 'cloning-fork',
+		upstreamRemoteUrl: forkResult.upstreamRemoteUrl,
+		forkRemoteUrl: forkResult.remoteUrl
+	});
+	const forkPreflightResult = addProjectRepositoryLink(input.registry, {
+		nodeId: targetNodeId,
+		name: repositoryName,
+		path: predictedRepositoryPath,
+		remoteUrl: forkResult.remoteUrl,
+		upstreamRemoteUrl: forkResult.upstreamRemoteUrl,
+		githubCredentialSecretId: input.repositoryGithubCredentialSecretId,
+		tags: tagsResult.tags
+	});
+
+	if (!forkPreflightResult.ok) {
+		importAttempt = await finishProjectRepositoryImportAttempt(importAttempt, {
+			state: 'failed',
+			phase: 'cloning-fork',
+			errorCode: forkPreflightResult.error
+		});
+		context.setFormError(forkPreflightResult.error);
+		return;
+	}
+
+	context.setStatus('Cloning fork.');
+	const cloneResult = await cloneForkedProjectRepository({
+		workspacePath: input.workspacePath,
+		groupRelativePath,
+		repositoryName,
+		remoteUrl: forkResult.remoteUrl,
+		upstreamRemoteUrl: forkResult.upstreamRemoteUrl,
+		credential
+	});
+
+	if (!cloneResult.ok) {
+		importAttempt = await finishProjectRepositoryImportAttempt(importAttempt, {
+			state: 'failed',
+			phase: 'cloning-fork',
+			errorCode: cloneResult.error
+		});
+		context.setFormError(cloneResult.error);
+		context.setStatus(null);
+		return;
+	}
+
+	importAttempt = await updateProjectRepositoryImportAttempt(importAttempt, {
+		phase: 'persisting-registry',
+		targetPath: cloneResult.path
+	});
+	const result = addProjectRepositoryLink(input.registry, {
+		nodeId: targetNodeId,
+		name: repositoryName,
+		path: cloneResult.path,
+		remoteUrl: forkResult.remoteUrl,
+		upstreamRemoteUrl: forkResult.upstreamRemoteUrl,
+		githubCredentialSecretId: input.repositoryGithubCredentialSecretId,
+		tags: tagsResult.tags
+	});
+
+	if (!result.ok) {
+		importAttempt = await finishProjectRepositoryImportAttempt(importAttempt, {
+			state: 'failed',
+			phase: 'persisting-registry',
+			errorCode: result.error
+		});
+		context.setFormError(result.error);
+		return;
+	}
+
+	if (await context.persistRegistry(result.registry)) {
+		await finishProjectRepositoryImportAttempt(importAttempt, {
+			state: 'succeeded',
+			phase: 'completed',
+			errorCode: null
+		});
+		context.setSelectedGroupId(targetNodeId);
+		context.setStatus('Fork cloned.');
+		context.closeDialog();
+		return;
+	}
+
+	await finishProjectRepositoryImportAttempt(importAttempt, {
+		state: 'failed',
+		phase: 'persisting-registry',
+		errorCode: 'project-registry-write-failed'
+	});
+}
+
+function createProjectRepositoryImportAttempt(input: {
+	readonly workspaceId: string;
+	readonly nodeId: string;
+	readonly repositoryName: string;
+	readonly upstreamRemoteUrl: string;
+	readonly targetPath: string;
+}): ProjectRepositoryImportAttemptRecord {
+	const now = new Date().toISOString();
+
+	return {
+		id: createProjectRepositoryImportAttemptRecordId(),
+		workspaceId: input.workspaceId,
+		nodeId: input.nodeId,
+		repositoryName: input.repositoryName,
+		sourceKind: 'fork',
+		state: 'running',
+		phase: 'preflight',
+		upstreamRemoteUrl: input.upstreamRemoteUrl,
+		forkRemoteUrl: null,
+		targetPath: input.targetPath,
+		errorCode: null,
+		startedAt: now,
+		updatedAt: now,
+		finishedAt: null
+	} satisfies ProjectRepositoryImportAttemptRecord;
+}
+
+async function updateProjectRepositoryImportAttempt(
+	attempt: ProjectRepositoryImportAttemptRecord,
+	update: Partial<
+		Pick<
+			ProjectRepositoryImportAttemptRecord,
+			'phase' | 'upstreamRemoteUrl' | 'forkRemoteUrl' | 'targetPath'
+		>
+	>
+) {
+	const nextAttempt = {
+		...attempt,
+		...update,
+		updatedAt: new Date().toISOString()
+	} satisfies ProjectRepositoryImportAttemptRecord;
+
+	await recordProjectRepositoryImportAttempt(nextAttempt);
+
+	return nextAttempt;
+}
+
+async function finishProjectRepositoryImportAttempt(
+	attempt: ProjectRepositoryImportAttemptRecord,
+	update: {
+		readonly state: Exclude<ProjectRepositoryImportAttemptState, 'running'>;
+		readonly phase: ProjectRepositoryImportAttemptPhase;
+		readonly errorCode: string | null;
+	}
+) {
+	const now = new Date().toISOString();
+	const nextAttempt = {
+		...attempt,
+		state: update.state,
+		phase: update.phase,
+		errorCode: update.errorCode,
+		updatedAt: now,
+		finishedAt: now
+	} satisfies ProjectRepositoryImportAttemptRecord;
+
+	await recordProjectRepositoryImportAttempt(nextAttempt);
+
+	return nextAttempt;
+}
+
+async function recordProjectRepositoryImportAttempt(
+	attempt: ProjectRepositoryImportAttemptRecord
+) {
+	await writeProjectRepositoryImportAttemptRecord(attempt);
+}
+
+function createProjectRepositoryImportAttemptRecordId() {
+	if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+		return crypto.randomUUID();
+	}
+
+	return `repository-import-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 }

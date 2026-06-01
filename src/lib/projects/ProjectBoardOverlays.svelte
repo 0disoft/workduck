@@ -42,6 +42,7 @@
 		formDescription: string;
 		formTags: string;
 		repositoryRemoteUrl: string;
+		repositoryGithubCredentialSecretId: string;
 		readonly deleteCandidate: ProjectDeleteCandidate | null;
 		readonly descriptionEditor: import('./project-registry').ProjectNodeRecord | null;
 		readonly detailsEditor: import('./project-registry').ProjectNodeRecord | null;
@@ -126,6 +127,7 @@
 		readonly onDialogDescriptionInput: () => void;
 		readonly onDialogTagsInput: () => void;
 		readonly onRepositoryRemoteUrlInput: (event: Event) => void;
+		readonly onRepositoryGithubCredentialSelect: (event: Event) => void;
 		readonly onSelectRepositorySourceMode: (sourceMode: ProjectRepositorySourceMode) => void;
 		readonly onDialogSubmit: (event: SubmitEvent) => Promise<void>;
 		readonly onDialogBackdropClick: (event: MouseEvent) => void;
@@ -138,7 +140,8 @@
 		tagInput = $bindable(), environmentVaultPassword = $bindable(),
 		selectedGithubCredentialSecretId = $bindable(), githubRepositoryName = $bindable(),
 		githubRepositoryCommitMessage = $bindable(), formName = $bindable(), formDescription = $bindable(),
-		formTags = $bindable(), repositoryRemoteUrl = $bindable(), deleteCandidate, descriptionEditor,
+		formTags = $bindable(), repositoryRemoteUrl = $bindable(),
+		repositoryGithubCredentialSecretId = $bindable(), deleteCandidate, descriptionEditor,
 		detailsEditor, tagEditor, githubCredentialEditor, publishTarget, dialog, dialogTargetNodeName, repositorySourceMode,
 		formError, storageError, isDeleting, canConfirmDelete, canDeleteLocalFolder, isSavingDescription,
 		canSaveDescription, isSavingDetails, canSaveDetails, isSavingTags, canSaveTags, environmentVaultEnvelope, environmentVault,
@@ -157,7 +160,8 @@
 		onTagClose, onUnlock, onGithubCredentialSubmit, onGithubCredentialBackdropClick,
 		onGithubCredentialClose, onRepositoryNameInput, onCommitMessageInput, onSelectVisibility,
 		onPublishSubmit, onPublishBackdropClick, onPublishClose, onNameInput, onDialogDescriptionInput,
-		onDialogTagsInput, onRepositoryRemoteUrlInput, onSelectRepositorySourceMode, onDialogSubmit,
+		onDialogTagsInput, onRepositoryRemoteUrlInput, onRepositoryGithubCredentialSelect,
+		onSelectRepositorySourceMode, onDialogSubmit,
 		onDialogBackdropClick, onDialogClose
 	}: Props = $props();
 </script>
@@ -220,11 +224,13 @@
 
 {#if dialog !== null}
 	<ProjectNodeDialog mode={dialog.mode} targetNodeName={dialogTargetNodeName} bind:formName
-		bind:formDescription bind:formTags bind:repositoryRemoteUrl {repositorySourceMode} {formError}
-		{storageError} {isSubmitting} {canSubmitDialog} {getDialogTitle} {getDialogSubmitLabel}
+		bind:formDescription bind:formTags bind:repositoryRemoteUrl bind:repositoryGithubCredentialSecretId
+		{repositorySourceMode} {githubCredentialOptions} {formError} {storageError}
+		{isSubmitting} {canSubmitDialog} {getDialogTitle} {getDialogSubmitLabel}
 		{getTagsInputMaxLength} {getVisibleFormErrorMessage} {isRepositoryRemoteUrlError}
 		onNameInput={onNameInput} onDescriptionInput={onDialogDescriptionInput}
 		onTagsInput={onDialogTagsInput} onRepositoryRemoteUrlInput={onRepositoryRemoteUrlInput}
+		onRepositoryGithubCredentialSelect={onRepositoryGithubCredentialSelect}
 		onSelectRepositorySourceMode={onSelectRepositorySourceMode} onSubmit={onDialogSubmit}
 		onBackdropClick={onDialogBackdropClick} onClose={onDialogClose} />
 {/if}

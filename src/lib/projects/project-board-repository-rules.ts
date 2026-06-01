@@ -33,6 +33,10 @@ export function getProjectRepositoryCardKind(
 	}
 
 	if (gitStatus?.isGitRepository) {
+		if (repository.upstreamRemoteUrl !== null) {
+			return 'Fork';
+		}
+
 		return gitStatus.hasRemote ? 'Git' : 'Local Git';
 	}
 
