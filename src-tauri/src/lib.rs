@@ -52,6 +52,31 @@ fn storage_status(app: tauri::AppHandle) -> Result<storage::StorageStatus, Strin
     storage::storage_status(&app).map_err(|error| error.to_string())
 }
 
+fn initialize_storage_or_defer_for_update(
+    app: &mut tauri::App,
+) -> Result<(), Box<dyn std::error::Error>> {
+    match storage::initialize_app_storage(&app.handle()) {
+        Ok(storage_state) => {
+            app.manage(storage_state);
+            Ok(())
+        }
+        Err(error) if is_recoverable_storage_setup_error(&error) => {
+            eprintln!(
+                "Workduck storage initialization was deferred so the updater can run: {error}"
+            );
+            Ok(())
+        }
+        Err(error) => Err(Box::new(error)),
+    }
+}
+
+fn is_recoverable_storage_setup_error(error: &storage::StorageError) -> bool {
+    matches!(
+        error,
+        storage::StorageError::IncompatibleSchemaVersion { .. }
+    )
+}
+
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_notification::init())
@@ -64,10 +89,7 @@ pub fn run() {
         .plugin(tauri_plugin_updater::Builder::new().build())
         .setup(|app| {
             app.set_theme(Some(tauri::Theme::Dark));
-            let storage_state = storage::initialize_app_storage(&app.handle())
-                .map_err(Box::<dyn std::error::Error>::from)?;
-            app.manage(storage_state);
-            Ok(())
+            initialize_storage_or_defer_for_update(app)
         })
         .invoke_handler(tauri::generate_handler![
             runtime_status,
@@ -136,4 +158,26 @@ pub fn run() {
         ])
         .run(tauri::generate_context!())
         .expect("error while running Workduck");
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn newer_schema_storage_error_is_recoverable_during_setup() {
+        let error = storage::StorageError::IncompatibleSchemaVersion {
+            database_version: 7,
+            current_version: 6,
+        };
+
+        assert!(is_recoverable_storage_setup_error(&error));
+    }
+
+    #[test]
+    fn ordinary_storage_error_is_not_recoverable_during_setup() {
+        let error = storage::StorageError::ResolveAppLocalDataDir("missing app path".to_string());
+
+        assert!(!is_recoverable_storage_setup_error(&error));
+    }
 }
