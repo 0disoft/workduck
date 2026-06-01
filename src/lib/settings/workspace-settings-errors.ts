@@ -174,6 +174,8 @@ export function getWorkspaceRepositorySetupErrorMessage(
 			return messages.settings.workspaces.errors.repositoryMustflowFailed;
 		case 'workspace-repository-mustflow-package-failed':
 			return messages.settings.workspaces.errors.repositoryMustflowPackageFailed;
+		case 'workspace-repository-agent-instructions-failed':
+			return messages.settings.workspaces.errors.repositoryAgentInstructionsFailed;
 		case 'workspace-repository-gitignore-failed':
 			return messages.settings.workspaces.errors.repositoryGitignoreFailed;
 		case 'workspace-repository-unavailable':

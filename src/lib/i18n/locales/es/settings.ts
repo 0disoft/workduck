@@ -82,6 +82,7 @@ export const esSettingsMessages = {
 			repositoryMustflowTimedOut: 'La instalación de mustflow agotó el tiempo de espera.',
 			repositoryMustflowFailed: 'Fallo en la instalación de mustflow.',
 			repositoryMustflowPackageFailed: 'No se pudieron preparar los metadatos del paquete mustflow.',
+			repositoryAgentInstructionsFailed: 'No se pudieron preparar las instrucciones de trabajo para agentes.',
 			repositoryGitignoreFailed: 'No se pudo preparar el archivo .gitignore.',
 			repositoryUnavailable: 'La configuración del repositorio del espacio de trabajo está disponible en la aplicación de escritorio.',
 			repositoryGitPathRequired: 'La ruta del repositorio es obligatoria.',

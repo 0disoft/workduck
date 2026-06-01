@@ -81,6 +81,7 @@ export const zhSettingsMessages = {
 			repositoryMustflowTimedOut: 'mustflow 安装超时。',
 			repositoryMustflowFailed: 'mustflow 安装失败。',
 			repositoryMustflowPackageFailed: '无法准备 mustflow 包元数据。',
+			repositoryAgentInstructionsFailed: '无法准备代理工作指令。',
 			repositoryGitignoreFailed: '无法准备 .gitignore 文件。',
 			repositoryUnavailable: '工作区仓库设置仅在桌面客户端中可用。',
 			repositoryGitPathRequired: '仓库路径为必填项。',

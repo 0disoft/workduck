@@ -82,6 +82,7 @@ export const koSettingsMessages = {
 				repositoryMustflowTimedOut: 'mustflow 설치 시간이 초과되었습니다.',
 				repositoryMustflowFailed: 'mustflow 설치에 실패했습니다.',
 				repositoryMustflowPackageFailed: 'mustflow 패키지 설정 파일을 만들지 못했습니다.',
+				repositoryAgentInstructionsFailed: '에이전트 작업 지시 규칙을 준비하지 못했습니다.',
 				repositoryGitignoreFailed: '.gitignore 파일을 준비하지 못했습니다.',
 				repositoryUnavailable: '워크스페이스 저장소 준비는 데스크톱 앱에서 사용할 수 있습니다.',
 				repositoryGitPathRequired: '저장소 경로가 필요합니다.',

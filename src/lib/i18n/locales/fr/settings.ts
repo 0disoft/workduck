@@ -82,6 +82,7 @@ export const frSettingsMessages = {
 			repositoryMustflowTimedOut: 'L\'installation de mustflow a expiré.',
 			repositoryMustflowFailed: 'L\'installation de mustflow a échoué.',
 			repositoryMustflowPackageFailed: 'Les metadonnées du paquet mustflow n\'ont pas pu être préparées.',
+			repositoryAgentInstructionsFailed: 'Les consignes de travail des agents n\'ont pas pu être préparées.',
 			repositoryGitignoreFailed: 'Le .gitignore n\'a pas pu être préparé.',
 			repositoryUnavailable: 'La configuration du dépôt de l\'espace de travail est disponible dans l\'application de bureau.',
 			repositoryGitPathRequired: 'Le chemin du dépôt est obligatoire.',

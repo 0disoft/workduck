@@ -82,6 +82,7 @@ export const enSettingsMessages = {
 				repositoryMustflowTimedOut: 'mustflow installation timed out.',
 				repositoryMustflowFailed: 'mustflow installation failed.',
 				repositoryMustflowPackageFailed: 'mustflow package metadata could not be prepared.',
+				repositoryAgentInstructionsFailed: 'Agent work-order instructions could not be prepared.',
 				repositoryGitignoreFailed: '.gitignore could not be prepared.',
 				repositoryUnavailable: 'Workspace repository setup is available in the desktop app.',
 				repositoryGitPathRequired: 'Repository path is required.',

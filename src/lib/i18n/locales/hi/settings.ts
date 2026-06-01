@@ -82,6 +82,7 @@ export const hiSettingsMessages = {
 			repositoryMustflowTimedOut: 'mustflow स्थापना का समय समाप्त हो गया।',
 			repositoryMustflowFailed: 'mustflow स्थापना विफल रही।',
 			repositoryMustflowPackageFailed: 'mustflow पैकेज मेटाडेटा तैयार करने में असमर्थ।',
+			repositoryAgentInstructionsFailed: 'एजेंट कार्य निर्देश तैयार करने में असमर्थ।',
 			repositoryGitignoreFailed: '.gitignore फ़ाइल तैयार करने में असमर्थ।',
 			repositoryUnavailable: 'कार्यक्षेत्र रिपॉजिटरी सेटअप केवल डेस्कटॉप ऐप में उपलब्ध है।',
 			repositoryGitPathRequired: 'रिपॉजिटरी पथ आवश्यक है।',

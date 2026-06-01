@@ -20,6 +20,10 @@ includes:
   layout, initializes Git, installs mustflow files, writes a minimal
   `package.json` with `mustflow: "latest"` when none exists, and appends a
   Workduck `.gitignore` block for new or already registered workspaces.
+- Workspace repository bootstrap also installs a Workduck work-order handoff
+  block in `AGENTS.md`, so an IDE coding agent that receives only a Workduck
+  work-order ID knows to resolve `queue/work-orders/*.workduck-work-order.json`
+  before editing.
 - Workspace repository actions switch by actual Git state: prepare before
   `.git` exists, publish when Git exists without a remote, and fetch, pull, and
   push after a remote is configured.
@@ -91,6 +95,12 @@ template update plan before applying it.
 The local CLI can execute one queued work order by its stable work-order ID,
 write a result report under the workspace `queue/reports` folder, and archive
 the work order after the report is written.
+
+Workspace repositories prepared by Workduck include an `AGENTS.md` work-order
+handoff block. When a human sends an IDE agent a short request such as
+`작업 ID: wo_... 진행해줘`, the agent should resolve that ID through
+`queue/work-orders/*.workduck-work-order.json`, verify the work order is active,
+follow the task body, then archive the JSON file when the work is complete.
 
 Use `WORKDUCK_VAULT_PASSWORD` or `--vault-password` to unlock the workspace
 Environment vault. If the vault is not unlocked, the CLI can use provider

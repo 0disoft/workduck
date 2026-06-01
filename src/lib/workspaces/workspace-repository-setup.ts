@@ -17,6 +17,7 @@ export type WorkspaceRepositorySetupError =
 	| 'workspace-repository-mustflow-timed-out'
 	| 'workspace-repository-mustflow-failed'
 	| 'workspace-repository-mustflow-package-failed'
+	| 'workspace-repository-agent-instructions-failed'
 	| 'workspace-repository-gitignore-failed'
 	| 'workspace-repository-unavailable';
 
@@ -104,6 +105,7 @@ function isWorkspaceRepositorySetupError(
 		value === 'workspace-repository-mustflow-timed-out' ||
 		value === 'workspace-repository-mustflow-failed' ||
 		value === 'workspace-repository-mustflow-package-failed' ||
+		value === 'workspace-repository-agent-instructions-failed' ||
 		value === 'workspace-repository-gitignore-failed' ||
 		value === 'workspace-repository-unavailable'
 	);
