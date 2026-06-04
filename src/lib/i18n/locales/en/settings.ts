@@ -149,8 +149,18 @@ export const enSettingsMessages = {
 			noBranch: 'No branch',
 			commitNeeded: 'Commit needed',
 			queueCommitWorkOrder: 'Add commit work',
+			primaryActions: 'Sync actions',
+			send: 'Send',
+			receive: 'Receive',
+			checkStatus: 'Check status',
+			advancedGit: 'Advanced Git',
+			manualCopy: 'Manual copy',
+			primaryHelp: 'Send saves this device data to the sync file and uploads it when Git is ready. Receive updates the folder when possible, then applies the sync file.',
 			tooltips: {
 				folder: 'Choose the folder that stores the sync file.',
+				send: 'Encrypt this device data, save it to the sync file, and upload it when Git is ready.',
+				receive: 'Update the sync folder when Git is ready, then apply the sync file to this app.',
+				checkStatus: 'Check the selected sync folder and Git status.',
 				fetch: 'Check the sync repository remote.',
 				pull: 'Bring remote sync file changes into this folder.',
 				push: 'Commit and upload this sync file.',
@@ -165,6 +175,24 @@ export const enSettingsMessages = {
 					'Read the encrypted file from the selected sync folder and apply it to this app. Use this after Git pull.'
 			},
 			confirmations: {
+				sendSync: {
+					title: 'Confirm sync send',
+					body:
+						'This app data will replace {fileName} in {folderPath}, then be pushed if the folder has a Git remote.',
+					inputLabel: 'Type the exact phrase shown below to continue.',
+					confirmTextLabel: 'Exact phrase',
+					confirmText: 'Send sync data',
+					actionLabel: 'Send'
+				},
+				receiveSync: {
+					title: 'Confirm sync receive',
+					body:
+						'The sync file {fileName} in {folderPath} will replace this app workspace and project data.',
+					inputLabel: 'Type the exact phrase shown below to continue.',
+					confirmTextLabel: 'Exact phrase',
+					confirmText: 'Receive sync data',
+					actionLabel: 'Receive'
+				},
 				exportData: {
 					title: 'Confirm encrypted data export',
 					body:
@@ -225,6 +253,11 @@ export const enSettingsMessages = {
 				imported: 'Imported.',
 				saved: 'Saved {fileName}.',
 				loaded: 'Loaded {fileName}.',
+				sent: 'Sent.',
+				sentLocal: 'Saved {fileName}. Git upload is not ready.',
+				received: 'Received.',
+				checked: 'Sync status checked.',
+				checkedNoRepository: 'Sync folder checked. No Git repository was found.',
 				fetched: 'Fetched.',
 				pulled: 'Pulled. Use Load to apply.',
 				pushed: 'Pushed.',

@@ -150,8 +150,19 @@ export const esSettingsMessages = {
 		noBranch: 'Sin rama',
 		commitNeeded: 'Requiere commit',
 		queueCommitWorkOrder: 'Añadir tarea de commit',
+		primaryActions: 'Acciones de sincronización',
+		send: 'Enviar',
+		receive: 'Recibir',
+		checkStatus: 'Comprobar estado',
+		advancedGit: 'Git avanzado',
+		manualCopy: 'Copia manual',
+		primaryHelp:
+			'Enviar guarda los datos de este dispositivo en el archivo de sincronización y los sube cuando Git está listo. Recibir actualiza la carpeta cuando es posible y luego aplica el archivo de sincronización.',
 		tooltips: {
 			folder: 'Elige la carpeta que almacena el archivo de sincronización.',
+			send: 'Cifra los datos de este dispositivo, los guarda en el archivo de sincronización y los sube cuando Git está listo.',
+			receive: 'Actualiza la carpeta de sincronización cuando Git está listo y luego aplica el archivo a esta app.',
+			checkStatus: 'Comprueba la carpeta de sincronización seleccionada y el estado de Git.',
 			fetch: 'Comprueba el repositorio de sincronización remoto.',
 			pull: 'Trae los cambios del archivo de sincronización remota a esta carpeta.',
 			push: 'Confirma y sube este archivo de sincronización.',
@@ -166,6 +177,24 @@ export const esSettingsMessages = {
 				'Lee el archivo cifrado de la carpeta de sincronización seleccionada y aplícalo a esta aplicación. Úsalo después de un Git pull.'
 		},
 		confirmations: {
+			sendSync: {
+				title: 'Confirmar envío de sincronización',
+				body:
+					'Los datos de esta app reemplazarán {fileName} en {folderPath} y se subirán si la carpeta tiene un remoto Git.',
+				inputLabel: 'Escribe la frase exacta que se muestra a continuación para continuar.',
+				confirmTextLabel: 'Frase exacta',
+				confirmText: 'Enviar datos de sincronización',
+				actionLabel: 'Enviar'
+			},
+			receiveSync: {
+				title: 'Confirmar recepción de sincronización',
+				body:
+					'El archivo de sincronización {fileName} en {folderPath} reemplazará los datos de proyecto y espacio de trabajo de esta app.',
+				inputLabel: 'Escribe la frase exacta que se muestra a continuación para continuar.',
+				confirmTextLabel: 'Frase exacta',
+				confirmText: 'Recibir datos de sincronización',
+				actionLabel: 'Recibir'
+			},
 			exportData: {
 				title: 'Confirmar exportación de datos cifrados',
 				body:
@@ -226,6 +255,11 @@ export const esSettingsMessages = {
 			imported: 'Importado.',
 			saved: 'Guardado {fileName}.',
 			loaded: 'Cargado {fileName}.',
+			sent: 'Enviado.',
+			sentLocal: 'Guardado {fileName}. La subida con Git aún no está lista.',
+			received: 'Recibido.',
+			checked: 'Estado de sincronización comprobado.',
+			checkedNoRepository: 'Carpeta de sincronización comprobada. No se encontró repositorio Git.',
 			fetched: 'Cambios remotos consultados.',
 			pulled: 'Cambios remotos traídos. Usa "Cargar" para aplicarlos.',
 			pushed: 'Cambios remotos enviados.',

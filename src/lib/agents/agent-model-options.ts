@@ -25,7 +25,7 @@ export const agentModelPresets = [
 	{ provider: 'openrouter', modelId: 'deepseek/deepseek-v4-pro', label: 'DeepSeek V4 Pro' },
 	{ provider: 'openrouter', modelId: 'moonshotai/kimi-k2.6', label: 'Kimi K2.6' },
 	{ provider: 'openrouter', modelId: 'z-ai/glm-5.1', label: 'GLM 5.1' },
-	{ provider: 'openrouter', modelId: 'qwen/qwen3.6-plus', label: 'Qwen3.6 Plus' },
+	{ provider: 'openrouter', modelId: 'qwen/qwen3.7-plus', label: 'Qwen3.7 Plus' },
 	{ provider: 'openrouter', modelId: 'x-ai/grok-4.3', label: 'Grok 4.3' },
 	{ provider: 'deepseek', modelId: 'deepseek-v4-pro', label: 'DeepSeek V4 Pro' },
 	{ provider: 'deepseek', modelId: 'deepseek-v4-flash', label: 'DeepSeek V4 Flash' },

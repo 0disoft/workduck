@@ -8,6 +8,7 @@ import {
 } from './agent-evaluation';
 
 export const AGENT_REGISTRY_VERSION = 6;
+const SUPPORTED_AGENT_REGISTRY_VERSIONS = [1, 2, 3, 4, 5, AGENT_REGISTRY_VERSION] as const;
 export const AGENT_NAME_MAX_LENGTH = 120;
 export const AGENT_MODEL_ID_MAX_LENGTH = 160;
 
@@ -391,11 +392,7 @@ export function resetAgentEvaluation(
 function normalizeAgentRegistry(value: unknown, workspaceId: string): AgentRegistry | null {
 	if (
 		!isObjectRecord(value) ||
-		(value.version !== AGENT_REGISTRY_VERSION &&
-			value.version !== 4 &&
-			value.version !== 3 &&
-			value.version !== 2 &&
-			value.version !== 1)
+		!isSupportedAgentRegistryVersion(value.version)
 	) {
 		return null;
 	}
@@ -433,6 +430,14 @@ function normalizeAgentRegistry(value: unknown, workspaceId: string): AgentRegis
 		agents: sortAgents(agents),
 		updatedAt: readTrimmedString(value.updatedAt)
 	};
+}
+
+function isSupportedAgentRegistryVersion(
+	version: unknown
+): version is (typeof SUPPORTED_AGENT_REGISTRY_VERSIONS)[number] {
+	return SUPPORTED_AGENT_REGISTRY_VERSIONS.some(
+		(supportedVersion) => version === supportedVersion
+	);
 }
 
 function parseAgentRecord(value: unknown): AgentRecord | null {

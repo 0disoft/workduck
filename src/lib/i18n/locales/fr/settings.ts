@@ -150,8 +150,19 @@ export const frSettingsMessages = {
 		noBranch: 'Aucune branche',
 		commitNeeded: 'Commit requis',
 		queueCommitWorkOrder: 'Ajouter tâche de commit',
+		primaryActions: 'Actions de synchronisation',
+		send: 'Envoyer',
+		receive: 'Recevoir',
+		checkStatus: 'Vérifier l’état',
+		advancedGit: 'Git avancé',
+		manualCopy: 'Copie manuelle',
+		primaryHelp:
+			'Envoyer enregistre les données de cet appareil dans le fichier de synchronisation et les envoie quand Git est prêt. Recevoir met le dossier à jour quand c’est possible, puis applique le fichier de synchronisation.',
 		tooltips: {
 			folder: 'Choisissez le dossier qui stocke le fichier de synchronisation.',
+			send: 'Chiffrez les données de cet appareil, enregistrez-les dans le fichier de synchronisation et envoyez-les quand Git est prêt.',
+			receive: 'Mettez à jour le dossier de synchronisation quand Git est prêt, puis appliquez le fichier à cette app.',
+			checkStatus: 'Vérifiez le dossier de synchronisation sélectionné et l’état Git.',
 			fetch: 'Vérifiez le dépôt de synchronisation distant.',
 			pull: 'Importez les modifications distantes du fichier de synchronisation dans ce dossier.',
 			push: 'Validez (commit) et téléchargez ce fichier de synchronisation.',
@@ -166,6 +177,24 @@ export const frSettingsMessages = {
 				'Lisez le fichier chiffré du dossier de synchronisation sélectionné et appliquez-le à cette application. Utilisez cette option après Git pull.'
 		},
 		confirmations: {
+			sendSync: {
+				title: 'Confirmer l’envoi de la synchronisation',
+				body:
+					'Les données de cette app remplaceront {fileName} dans {folderPath}, puis seront envoyées si le dossier a un distant Git.',
+				inputLabel: 'Saisissez la phrase exacte ci-dessous pour continuer.',
+				confirmTextLabel: 'Phrase exacte',
+				confirmText: 'Envoyer les données de synchronisation',
+				actionLabel: 'Envoyer'
+			},
+			receiveSync: {
+				title: 'Confirmer la réception de la synchronisation',
+				body:
+					'Le fichier de synchronisation {fileName} dans {folderPath} remplacera les données d’espace de travail et de projet de cette app.',
+				inputLabel: 'Saisissez la phrase exacte ci-dessous pour continuer.',
+				confirmTextLabel: 'Phrase exacte',
+				confirmText: 'Recevoir les données de synchronisation',
+				actionLabel: 'Recevoir'
+			},
 			exportData: {
 				title: 'Confirmer l\'exportation des données chiffrées',
 				body:
@@ -226,6 +255,11 @@ export const frSettingsMessages = {
 			imported: 'Importé.',
 			saved: '{fileName} enregistré.',
 			loaded: '{fileName} chargé.',
+			sent: 'Envoyé.',
+			sentLocal: '{fileName} enregistré. L’envoi Git n’est pas encore prêt.',
+			received: 'Reçu.',
+			checked: 'État de synchronisation vérifié.',
+			checkedNoRepository: 'Dossier de synchronisation vérifié. Aucun dépôt Git trouvé.',
 			fetched: 'Récupéré (fetched).',
 			pulled: 'Mis à jour (pulled). Utilisez "Charger" pour appliquer.',
 			pushed: 'Envoyé (pushed).',

@@ -393,13 +393,14 @@
 	.workduck-environment-unlock-form,
 	.workduck-persona-dialog-body,
 	.workduck-work-order-dialog-compact-grid,
-	.workduck-workspace-repository-choice,
-	.workduck-workspace-repository-option-grid,
-	.workduck-sync-profile-form,
-	.workduck-sync-repository-status,
-	.workduck-sync-form,
-	.workduck-workspace-form,
-	.workduck-workspace-row {
+		.workduck-workspace-repository-choice,
+		.workduck-workspace-repository-option-grid,
+		.workduck-sync-profile-form,
+		.workduck-sync-repository-status,
+		.workduck-sync-primary-panel,
+		.workduck-sync-form,
+		.workduck-workspace-form,
+		.workduck-workspace-row {
 		grid-template-columns: minmax(0, 1fr);
 	}
 
@@ -555,6 +556,10 @@
 
 	.workduck-sync-actions {
 		grid-template-columns: repeat(2, minmax(0, 1fr));
+	}
+
+	.workduck-sync-primary-actions {
+		grid-template-columns: minmax(0, 1fr);
 	}
 
 	.workduck-sync-remote-actions {

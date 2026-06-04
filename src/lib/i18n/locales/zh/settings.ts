@@ -147,8 +147,19 @@ export const zhSettingsMessages = {
 		noBranch: '无分支',
 		commitNeeded: '需要提交',
 		queueCommitWorkOrder: '添加提交任务',
+		primaryActions: '同步操作',
+		send: '发送',
+		receive: '接收',
+		checkStatus: '检查状态',
+		advancedGit: '高级 Git',
+		manualCopy: '手动复制',
+		primaryHelp:
+			'发送会将此设备的数据保存到同步文件，并在 Git 就绪时上传。接收会尽可能更新文件夹，然后应用同步文件。',
 		tooltips: {
 			folder: '选择存储同步文件的文件夹。',
+			send: '加密此设备的数据，保存到同步文件，并在 Git 就绪时上传。',
+			receive: '在 Git 就绪时更新同步文件夹，然后将同步文件应用到此应用。',
+			checkStatus: '检查所选同步文件夹和 Git 状态。',
 			fetch: '检查同步远程仓库。',
 			pull: '将远程同步文件修改拉取到此文件夹。',
 			push: '提交并上传此同步文件。',
@@ -163,6 +174,24 @@ export const zhSettingsMessages = {
 				'读取所选同步文件夹中的加密文件，并将其应用于此应用。在 Git 拉取（pull）之后使用此选项。'
 		},
 		confirmations: {
+			sendSync: {
+				title: '确认发送同步数据',
+				body:
+					'此应用的数据将替换 {folderPath} 中的 {fileName}，如果该文件夹有 Git 远程仓库，还会上传。',
+				inputLabel: '请输入下方显示的精确短语以继续。',
+				confirmTextLabel: '精确短语',
+				confirmText: '发送同步数据',
+				actionLabel: '发送'
+			},
+			receiveSync: {
+				title: '确认接收同步数据',
+				body:
+					'{folderPath} 中的同步文件 {fileName} 将替换此应用的工作区和项目数据。',
+				inputLabel: '请输入下方显示的精确短语以继续。',
+				confirmTextLabel: '精确短语',
+				confirmText: '接收同步数据',
+				actionLabel: '接收'
+			},
 			exportData: {
 				title: '确认导出加密数据',
 				body: '加密数据文本区域将被此应用的新导出替换。',
@@ -217,6 +246,11 @@ export const zhSettingsMessages = {
 			imported: '已导入。',
 			saved: '已保存 {fileName}。',
 			loaded: '已加载 {fileName}。',
+			sent: '已发送。',
+			sentLocal: '已保存 {fileName}。Git 上传尚未就绪。',
+			received: '已接收。',
+			checked: '同步状态已检查。',
+			checkedNoRepository: '同步文件夹已检查。未找到 Git 仓库。',
 			fetched: '获取成功。',
 			pulled: '拉取成功。使用“加载”来应用修改。',
 			pushed: '推送成功。',

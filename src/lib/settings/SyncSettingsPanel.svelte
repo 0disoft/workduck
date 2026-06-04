@@ -74,6 +74,8 @@
 		| SyncSettingsStorageError
 		| WorkspaceSyncGitRunError;
 	type SyncDangerAction =
+		| 'sendSync'
+		| 'receiveSync'
 		| 'exportData'
 		| 'importData'
 		| 'saveFile'
@@ -119,6 +121,11 @@
 			syncSettings.folderPath.length > 0 &&
 			syncFileNameIsUsable &&
 			!isBusy
+	);
+	let canSendSync = $derived(canSave);
+	let canReceiveSync = $derived(canLoad);
+	let canCheckSyncStatus = $derived(
+		syncSettings.folderPath.length > 0 && !isBusy && !isInspectingSyncGit
 	);
 	let canFetchSync = $derived(isSyncGitRemoteReady(false) && !isBusy);
 	let canPullSync = $derived(
@@ -392,13 +399,16 @@
 		syncError = result.ok ? null : result.error;
 	}
 
-	async function inspectSyncGitRepository(folderPath: string, fileName = syncSettings.fileName) {
+	async function inspectSyncGitRepository(
+		folderPath: string,
+		fileName = syncSettings.fileName
+	): Promise<WorkspaceSyncGitInspectionResult | null> {
 		const requestId = ++syncGitInspectionRequestId;
 
 		if (folderPath.trim().length === 0) {
 			syncGitInspection = null;
 			isInspectingSyncGit = false;
-			return;
+			return null;
 		}
 
 		isInspectingSyncGit = true;
@@ -406,11 +416,12 @@
 		const result = await inspectWorkspaceSyncGit(folderPath, fileName);
 
 		if (requestId !== syncGitInspectionRequestId) {
-			return;
+			return null;
 		}
 
 		syncGitInspection = result;
 		isInspectingSyncGit = false;
+		return result;
 	}
 
 	function handleSyncProfileNameInput(event: Event) {
@@ -591,6 +602,98 @@
 		}
 	}
 
+	function handleSendSync() {
+		if (!canSendSync) {
+			syncError = getSyncReadinessError();
+			syncStatus = null;
+			return;
+		}
+
+		openDangerConfirmation('sendSync');
+	}
+
+	async function runSendSync() {
+		const saved = await runSaveFile({ inspectAfter: false });
+
+		if (!saved) {
+			return;
+		}
+
+		if (!isSyncGitRemoteReady(true)) {
+			syncStatus = syncMessages.statuses.sentLocal.replace('{fileName}', syncSettings.fileName);
+			void inspectSyncGitRepository(syncSettings.folderPath);
+			return;
+		}
+
+		if (await runGitSyncAction('push')) {
+			syncStatus = syncMessages.statuses.sent;
+		}
+	}
+
+	function handleReceiveSync() {
+		if (!canReceiveSync) {
+			syncError = getSyncReadinessError();
+			syncStatus = null;
+			return;
+		}
+
+		openDangerConfirmation('receiveSync');
+	}
+
+	async function runReceiveSync() {
+		if (isSyncGitRemoteReady(false)) {
+			if (!(await runGitSyncAction('fetch'))) {
+				return;
+			}
+
+			const inspection = await inspectSyncGitRepository(
+				syncSettings.folderPath,
+				syncSettings.fileName
+			);
+
+			if (
+				inspection?.ok === true &&
+				inspection.isRepository &&
+				inspection.originUrl !== null &&
+				inspection.branchName !== null &&
+				inspection.behindCount > 0
+			) {
+				if (!(await runGitSyncAction('pull'))) {
+					return;
+				}
+			}
+		}
+
+		if (await runLoadFile()) {
+			syncStatus = syncMessages.statuses.received;
+		}
+	}
+
+	async function handleCheckSyncStatus() {
+		if (!canCheckSyncStatus) {
+			syncError = 'workspace-sync-folder-required';
+			syncStatus = null;
+			return;
+		}
+
+		syncError = null;
+		syncStatus = null;
+		const inspection = await inspectSyncGitRepository(syncSettings.folderPath, syncSettings.fileName);
+
+		if (inspection === null) {
+			return;
+		}
+
+		if (!inspection.ok) {
+			syncError = inspection.error;
+			return;
+		}
+
+		syncStatus = inspection.isRepository
+			? syncMessages.statuses.checked
+			: syncMessages.statuses.checkedNoRepository;
+	}
+
 	function handleSaveFile() {
 		if (!canSave) {
 			syncError = getSyncReadinessError();
@@ -601,11 +704,11 @@
 		openDangerConfirmation('saveFile');
 	}
 
-	async function runSaveFile() {
+	async function runSaveFile(options: { readonly inspectAfter?: boolean } = {}) {
 		const payload = await createEncryptedRegistryPayload();
 
 		if (payload === null) {
-			return;
+			return false;
 		}
 
 		isBusy = true;
@@ -618,12 +721,15 @@
 
 		if (!writeResult.ok) {
 			syncError = writeResult.error;
-			return;
+			return false;
 		}
 
 		syncPayload = payload;
 		syncStatus = syncMessages.statuses.saved.replace('{fileName}', syncSettings.fileName);
-		void inspectSyncGitRepository(syncSettings.folderPath);
+		if (options.inspectAfter !== false) {
+			void inspectSyncGitRepository(syncSettings.folderPath);
+		}
+		return true;
 	}
 
 	function handleLoadFile() {
@@ -646,14 +752,17 @@
 
 		if (!readResult.ok) {
 			syncError = readResult.error;
-			return;
+			return false;
 		}
 
 		if (await importEncryptedRegistryPayload(readResult.content)) {
 			syncPayload = readResult.content;
 			syncStatus = syncMessages.statuses.loaded.replace('{fileName}', syncSettings.fileName);
 			void inspectSyncGitRepository(syncSettings.folderPath);
+			return true;
 		}
+
+		return false;
 	}
 
 	async function handleGitSyncAction(action: WorkspaceSyncGitRunAction) {
@@ -684,7 +793,7 @@
 		if (readinessError !== null) {
 			syncError = readinessError;
 			syncStatus = null;
-			return;
+			return false;
 		}
 
 		isBusy = true;
@@ -706,11 +815,12 @@
 
 			if (!result.ok) {
 				syncError = result.error;
-				return;
+				return false;
 			}
 
 			syncStatus = getSyncGitOutcomeMessage(result.outcome);
 			void inspectSyncGitRepository(syncSettings.folderPath);
+			return true;
 		} finally {
 			appOperation.finish();
 			isBusy = false;
@@ -806,6 +916,12 @@
 		pendingDangerConfirmText = '';
 
 		switch (action) {
+			case 'sendSync':
+				await runSendSync();
+				return;
+			case 'receiveSync':
+				await runReceiveSync();
+				return;
 			case 'exportData':
 				await runExport();
 				return;
@@ -992,62 +1108,7 @@
 		{/if}
 	</div>
 
-	<div class="workduck-sync-remote-actions" aria-label={syncMessages.section}>
-		<span class="workduck-tooltip-anchor" data-tooltip={syncMessages.tooltips.fetch}>
-			<button
-				class="workduck-button"
-				type="button"
-				disabled={!canFetchSync}
-				aria-describedby="sync-fetch-tooltip"
-				onclick={() => handleGitSyncAction('fetch')}
-			>
-				{messages.common.fetch}
-			</button>
-			<span class="workduck-sr-only" id="sync-fetch-tooltip">{syncMessages.tooltips.fetch}</span>
-		</span>
-		<span class="workduck-tooltip-anchor" data-tooltip={syncMessages.tooltips.pull}>
-			<button
-				class="workduck-button"
-				type="button"
-				disabled={!canPullSync}
-				aria-describedby="sync-pull-tooltip"
-				onclick={() => handleGitSyncAction('pull')}
-			>
-				{messages.common.pull}
-			</button>
-			<span class="workduck-sr-only" id="sync-pull-tooltip">{syncMessages.tooltips.pull}</span>
-		</span>
-		<span class="workduck-tooltip-anchor" data-tooltip={syncMessages.tooltips.push}>
-			<button
-				class="workduck-button workduck-button-primary"
-				type="button"
-				disabled={!canPushSync}
-				aria-describedby="sync-push-tooltip"
-				onclick={() => handleGitSyncAction('push')}
-			>
-				{messages.common.push}
-			</button>
-			<span class="workduck-sr-only" id="sync-push-tooltip">{syncMessages.tooltips.push}</span>
-		</span>
-		{#if syncGitInspection?.ok === true && syncGitInspection.hasUncommittedChanges}
-			<span class="workduck-tooltip-anchor" data-tooltip={syncMessages.tooltips.queueCommitWorkOrder}>
-				<button
-					class="workduck-button"
-					type="button"
-					disabled={!canQueueSyncCommitWorkOrder}
-					aria-describedby="sync-queue-commit-tooltip"
-					onclick={() => void handleQueueSyncCommitWorkOrder()}
-				>
-					{syncMessages.queueCommitWorkOrder}
-				</button>
-				<span class="workduck-sr-only" id="sync-queue-commit-tooltip">
-					{syncMessages.tooltips.queueCommitWorkOrder}
-				</span>
-			</span>
-		{/if}
-	</div>
-
-	<div class="workduck-sync-form">
+	<div class="workduck-sync-primary-panel">
 		<label class="workduck-form-field" for="sync-password">
 			{messages.common.password}
 			<input
@@ -1060,68 +1121,166 @@
 			/>
 		</label>
 
-		<div class="workduck-sync-actions">
-			<span class="workduck-tooltip-anchor" data-tooltip={syncMessages.tooltips.export}>
+		<div class="workduck-sync-primary-actions" aria-label={syncMessages.primaryActions}>
+			<span class="workduck-tooltip-anchor" data-tooltip={syncMessages.tooltips.receive}>
+				<button
+					class="workduck-button"
+					type="button"
+					disabled={!canReceiveSync}
+					aria-describedby="sync-receive-tooltip"
+					onclick={handleReceiveSync}
+				>
+					{syncMessages.receive}
+				</button>
+				<span class="workduck-sr-only" id="sync-receive-tooltip">
+					{syncMessages.tooltips.receive}
+				</span>
+			</span>
+			<span class="workduck-tooltip-anchor" data-tooltip={syncMessages.tooltips.send}>
 				<button
 					class="workduck-button workduck-button-primary"
 					type="button"
-					disabled={!canExport}
-					aria-describedby="sync-export-tooltip"
-					onclick={handleExport}
+					disabled={!canSendSync}
+					aria-describedby="sync-send-tooltip"
+					onclick={handleSendSync}
 				>
-					{messages.common.export}
+					{syncMessages.send}
 				</button>
-				<span class="workduck-sr-only" id="sync-export-tooltip">{syncMessages.tooltips.export}</span>
+				<span class="workduck-sr-only" id="sync-send-tooltip">{syncMessages.tooltips.send}</span>
 			</span>
-			<span class="workduck-tooltip-anchor" data-tooltip={syncMessages.tooltips.import}>
+			<span class="workduck-tooltip-anchor" data-tooltip={syncMessages.tooltips.checkStatus}>
 				<button
 					class="workduck-button"
 					type="button"
-					disabled={!canImport}
-					aria-describedby="sync-import-tooltip"
-					onclick={handleImport}
+					disabled={!canCheckSyncStatus}
+					aria-describedby="sync-check-status-tooltip"
+					onclick={() => void handleCheckSyncStatus()}
 				>
-					{messages.common.import}
+					{syncMessages.checkStatus}
 				</button>
-				<span class="workduck-sr-only" id="sync-import-tooltip">{syncMessages.tooltips.import}</span>
-			</span>
-			<span class="workduck-tooltip-anchor" data-tooltip={syncMessages.tooltips.save}>
-				<button
-					class="workduck-button"
-					type="button"
-					disabled={!canSave}
-					aria-describedby="sync-save-tooltip"
-					onclick={handleSaveFile}
-				>
-					{messages.common.save}
-				</button>
-				<span class="workduck-sr-only" id="sync-save-tooltip">{syncMessages.tooltips.save}</span>
-			</span>
-			<span class="workduck-tooltip-anchor" data-tooltip={syncMessages.tooltips.load}>
-				<button
-					class="workduck-button"
-					type="button"
-					disabled={!canLoad}
-					aria-describedby="sync-load-tooltip"
-					onclick={handleLoadFile}
-				>
-					{messages.common.load}
-				</button>
-				<span class="workduck-sr-only" id="sync-load-tooltip">{syncMessages.tooltips.load}</span>
+				<span class="workduck-sr-only" id="sync-check-status-tooltip">
+					{syncMessages.tooltips.checkStatus}
+				</span>
 			</span>
 		</div>
+		<p class="workduck-sync-helper">{syncMessages.primaryHelp}</p>
 	</div>
 
-	<label class="workduck-form-field" for="sync-payload">
-		{syncMessages.encryptedData}
-		<textarea
-			id="sync-payload"
-			class="workduck-input workduck-textarea"
-			bind:value={syncPayload}
-			spellcheck="false"
-			aria-invalid={isSyncPayloadError(syncError)}
-		></textarea>
-	</label>
+	<details class="workduck-sync-advanced-section">
+		<summary class="workduck-sync-advanced-summary">
+			<span>{syncMessages.advancedGit}</span>
+		</summary>
+		<div class="workduck-sync-advanced-body">
+			<div class="workduck-sync-remote-actions" aria-label={syncMessages.advancedGit}>
+				<span class="workduck-tooltip-anchor" data-tooltip={syncMessages.tooltips.fetch}>
+					<button
+						class="workduck-button"
+						type="button"
+						disabled={!canFetchSync}
+						aria-describedby="sync-fetch-tooltip"
+						onclick={() => handleGitSyncAction('fetch')}
+					>
+						{messages.common.fetch}
+					</button>
+					<span class="workduck-sr-only" id="sync-fetch-tooltip">
+						{syncMessages.tooltips.fetch}
+					</span>
+				</span>
+				<span class="workduck-tooltip-anchor" data-tooltip={syncMessages.tooltips.pull}>
+					<button
+						class="workduck-button"
+						type="button"
+						disabled={!canPullSync}
+						aria-describedby="sync-pull-tooltip"
+						onclick={() => handleGitSyncAction('pull')}
+					>
+						{messages.common.pull}
+					</button>
+					<span class="workduck-sr-only" id="sync-pull-tooltip">
+						{syncMessages.tooltips.pull}
+					</span>
+				</span>
+				<span class="workduck-tooltip-anchor" data-tooltip={syncMessages.tooltips.push}>
+					<button
+						class="workduck-button workduck-button-primary"
+						type="button"
+						disabled={!canPushSync}
+						aria-describedby="sync-push-tooltip"
+						onclick={() => handleGitSyncAction('push')}
+					>
+						{messages.common.push}
+					</button>
+					<span class="workduck-sr-only" id="sync-push-tooltip">
+						{syncMessages.tooltips.push}
+					</span>
+				</span>
+				{#if syncGitInspection?.ok === true && syncGitInspection.hasUncommittedChanges}
+					<span class="workduck-tooltip-anchor" data-tooltip={syncMessages.tooltips.queueCommitWorkOrder}>
+						<button
+							class="workduck-button"
+							type="button"
+							disabled={!canQueueSyncCommitWorkOrder}
+							aria-describedby="sync-queue-commit-tooltip"
+							onclick={() => void handleQueueSyncCommitWorkOrder()}
+						>
+							{syncMessages.queueCommitWorkOrder}
+						</button>
+						<span class="workduck-sr-only" id="sync-queue-commit-tooltip">
+							{syncMessages.tooltips.queueCommitWorkOrder}
+						</span>
+					</span>
+				{/if}
+			</div>
+		</div>
+	</details>
+
+	<details class="workduck-sync-advanced-section">
+		<summary class="workduck-sync-advanced-summary">
+			<span>{syncMessages.manualCopy}</span>
+		</summary>
+		<div class="workduck-sync-advanced-body">
+			<div class="workduck-sync-actions">
+				<span class="workduck-tooltip-anchor" data-tooltip={syncMessages.tooltips.export}>
+					<button
+						class="workduck-button workduck-button-primary"
+						type="button"
+						disabled={!canExport}
+						aria-describedby="sync-export-tooltip"
+						onclick={handleExport}
+					>
+						{messages.common.export}
+					</button>
+					<span class="workduck-sr-only" id="sync-export-tooltip">
+						{syncMessages.tooltips.export}
+					</span>
+				</span>
+				<span class="workduck-tooltip-anchor" data-tooltip={syncMessages.tooltips.import}>
+					<button
+						class="workduck-button"
+						type="button"
+						disabled={!canImport}
+						aria-describedby="sync-import-tooltip"
+						onclick={handleImport}
+					>
+						{messages.common.import}
+					</button>
+					<span class="workduck-sr-only" id="sync-import-tooltip">
+						{syncMessages.tooltips.import}
+					</span>
+				</span>
+			</div>
+			<label class="workduck-form-field" for="sync-payload">
+				{syncMessages.encryptedData}
+				<textarea
+					id="sync-payload"
+					class="workduck-input workduck-textarea"
+					bind:value={syncPayload}
+					spellcheck="false"
+					aria-invalid={isSyncPayloadError(syncError)}
+				></textarea>
+			</label>
+		</div>
+	</details>
 
 	{#if syncError !== null}
 		<p class="workduck-inline-error" aria-live="polite">{getSyncErrorMessage(syncError)}</p>

@@ -1313,7 +1313,8 @@ fn is_task_process_alive(
     if let Some(process_id) = record.process_id {
         if live_processes
             .iter()
-            .any(|process| process.pid == process_id)
+            .find(|process| process.pid == process_id)
+            .is_some_and(|process| live_process_matches_task_record(process, record))
         {
             return true;
         }
@@ -1328,6 +1329,26 @@ fn is_task_process_alive(
     live_processes.iter().any(|process| {
         normalize_process_match_text(&process.command_line).contains(&repository_path)
     })
+}
+
+fn live_process_matches_task_record(
+    process: &LiveTaskProcess,
+    record: &ProjectRepositoryTaskRunRecord,
+) -> bool {
+    let command_line = normalize_process_match_text(&process.command_line);
+    let repository_path = normalize_process_match_text(&record.repository_path);
+
+    if !repository_path.is_empty() && command_line.contains(&repository_path) {
+        return true;
+    }
+
+    let command = normalize_process_match_text(&record.command);
+
+    !command.is_empty()
+        && command
+            .split_whitespace()
+            .filter(|part| part.len() >= 3)
+            .all(|part| command_line.contains(part))
 }
 
 fn stopped_task_run_record(
@@ -1571,7 +1592,7 @@ mod tests {
     }
 
     #[test]
-    fn running_dev_server_records_stay_running_when_process_id_is_alive() {
+    fn running_dev_server_records_stop_when_process_id_was_reused() {
         let records = reconcile_running_task_run_records(
             vec![ProjectRepositoryTaskRunRecord {
                 task: ProjectRepositoryTask::StartDevServer.as_str().to_owned(),
@@ -1582,6 +1603,25 @@ mod tests {
             Some(&[LiveTaskProcess {
                 pid: 42,
                 command_line: "powershell".to_owned(),
+            }]),
+        );
+
+        assert_eq!(records[0].state, "stopped");
+        assert!(records[0].finished_at.is_some());
+    }
+
+    #[test]
+    fn running_dev_server_records_stay_running_when_process_id_matches_task_command() {
+        let records = reconcile_running_task_run_records(
+            vec![ProjectRepositoryTaskRunRecord {
+                task: ProjectRepositoryTask::StartDevServer.as_str().to_owned(),
+                state: "running".to_owned(),
+                process_id: Some(42),
+                ..task_run_record("repo-a-dev", "C:/workspace/repo-a", "2026-05-23T01:00:00Z")
+            }],
+            Some(&[LiveTaskProcess {
+                pid: 42,
+                command_line: "powershell -NoLogo -Command bun run build".to_owned(),
             }]),
         );
 

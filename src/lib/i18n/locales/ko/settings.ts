@@ -148,8 +148,19 @@ export const koSettingsMessages = {
 			noBranch: '브랜치 없음',
 			commitNeeded: '커밋 필요',
 			queueCommitWorkOrder: '커밋 작업 추가',
+			primaryActions: '동기화 작업',
+			send: '보내기',
+			receive: '받기',
+			checkStatus: '상태 확인',
+			advancedGit: '고급 Git 작업',
+			manualCopy: '수동 복사',
+			primaryHelp:
+				'보내기는 이 기기 데이터를 동기화 파일로 저장하고, Git이 준비되어 있으면 업로드합니다. 받기는 가능하면 폴더를 업데이트한 뒤 동기화 파일을 앱에 적용합니다.',
 			tooltips: {
 				folder: '동기화 파일을 저장할 폴더를 선택합니다.',
+				send: '이 기기 데이터를 암호화해 동기화 파일로 저장하고, Git이 준비되어 있으면 업로드합니다.',
+				receive: 'Git이 준비되어 있으면 동기화 폴더를 업데이트한 뒤 동기화 파일을 현재 앱에 적용합니다.',
+				checkStatus: '선택한 동기화 폴더와 Git 상태를 확인합니다.',
 				fetch: '동기화 저장소에서 Git fetch를 실행합니다.',
 				pull: '동기화 저장소에서 Git pull을 실행합니다.',
 				push: '동기화 파일을 커밋하고 Git push를 실행합니다.',
@@ -164,6 +175,24 @@ export const koSettingsMessages = {
 					'선택한 동기화 폴더의 암호화 파일을 읽어 현재 앱에 적용합니다. Git pull 후 최신 데이터를 반영할 때 사용합니다.'
 			},
 			confirmations: {
+				sendSync: {
+					title: '동기화 보내기 확인',
+					body:
+						'현재 앱 데이터로 {folderPath} 폴더의 {fileName} 파일을 바꾸고, Git 원격 저장소가 있으면 업로드합니다.',
+					inputLabel: '계속하려면 아래에 표시된 문구를 정확히 입력하세요.',
+					confirmTextLabel: '정확히 입력할 문구',
+					confirmText: '동기화 데이터 보내기',
+					actionLabel: '보내기'
+				},
+				receiveSync: {
+					title: '동기화 받기 확인',
+					body:
+						'{folderPath} 폴더의 {fileName} 동기화 파일이 현재 앱의 워크스페이스와 프로젝트 데이터를 바꿉니다.',
+					inputLabel: '계속하려면 아래에 표시된 문구를 정확히 입력하세요.',
+					confirmTextLabel: '정확히 입력할 문구',
+					confirmText: '동기화 데이터 받기',
+					actionLabel: '받기'
+				},
 				exportData: {
 					title: '암호화 데이터 내보내기 확인',
 					body:
@@ -224,6 +253,11 @@ export const koSettingsMessages = {
 				imported: '가져왔습니다.',
 				saved: '{fileName} 파일을 저장했습니다.',
 				loaded: '{fileName} 파일을 불러왔습니다.',
+				sent: '보냈습니다.',
+				sentLocal: '{fileName} 파일을 저장했습니다. Git 업로드는 아직 준비되지 않았습니다.',
+				received: '받았습니다.',
+				checked: '동기화 상태를 확인했습니다.',
+				checkedNoRepository: '동기화 폴더를 확인했습니다. Git 저장소는 없습니다.',
 				fetched: 'Fetch 완료.',
 				pulled: 'Pull 완료. 적용하려면 불러오기를 사용하세요.',
 				pushed: 'Push 완료.',
