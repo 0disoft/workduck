@@ -16,12 +16,13 @@ export async function createQueueCardEntries(
 	readFilePaths: readonly string[],
 	queueFiles: readonly QueueFileEntry[]
 ) {
+	const readFilePathSet = new Set(readFilePaths);
 	const entries = await Promise.all(
 		queueFiles.map(async (file): Promise<QueueCardEntry> => {
 			if (file.kind === 'unsupported') {
 				return {
 					...file,
-					isRead: readFilePaths.includes(file.relativePath),
+					isRead: readFilePathSet.has(file.relativePath),
 					artifactId: '',
 					agentName: '',
 					createdAt: '',
@@ -39,7 +40,7 @@ export async function createQueueCardEntries(
 
 			return {
 				...file,
-				isRead: readFilePaths.includes(file.relativePath),
+				isRead: readFilePathSet.has(file.relativePath),
 				artifactId: readResult.ok ? readQueueArtifactId(readResult.content) : '',
 				agentName: readResult.ok ? readQueueArtifactAgentName(readResult.content) : '',
 				createdAt: readResult.ok ? readQueueArtifactCreatedAt(readResult.content) : '',

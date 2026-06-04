@@ -1,6 +1,7 @@
 import {
 	deleteProjectNodeFolder,
-	deleteProjectRepositoryFolder
+	deleteProjectRepositoryFolder,
+	type ProjectFolderError
 } from './project-folder';
 import type { WorkduckMessages } from '$lib/i18n/workduck-message-contract';
 import type { ProjectFormError } from './project-board-errors';
@@ -42,7 +43,10 @@ export async function deleteProjectCandidate(
 
 		const deleteFolderResult = await deleteSelectedLocalFolder(input.candidate, input.workspacePath);
 
-		if (!deleteFolderResult.ok) {
+		if (
+			!deleteFolderResult.ok &&
+			!isAlreadyDeletedLocalFolderError(deleteFolderResult.error)
+		) {
 			context.setFormError(deleteFolderResult.error);
 			context.setIsDeleting(false);
 			return;
@@ -94,4 +98,8 @@ async function deleteSelectedLocalFolder(
 	}
 
 	return deleteProjectNodeFolder(workspacePath, candidate.node.path);
+}
+
+function isAlreadyDeletedLocalFolderError(error: ProjectFolderError) {
+	return error === 'project-folder-delete-path-not-found';
 }

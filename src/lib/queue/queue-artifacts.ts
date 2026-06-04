@@ -770,6 +770,7 @@ function normalizeQueueRecordIds(value: unknown): string[] {
 	}
 
 	const ids: string[] = [];
+	const seenIds = new Set<string>();
 
 	for (const item of value) {
 		if (typeof item !== 'string') {
@@ -778,10 +779,11 @@ function normalizeQueueRecordIds(value: unknown): string[] {
 
 		const id = normalizeQueueText(item);
 
-		if (id.length === 0 || ids.includes(id)) {
+		if (id.length === 0 || seenIds.has(id)) {
 			continue;
 		}
 
+		seenIds.add(id);
 		ids.push(id);
 	}
 

@@ -227,15 +227,27 @@ export function groupProjectReposByFolder(input: {
   readonly placements: readonly WorkduckProjectRepoPlacement[];
 }): readonly WorkbenchProjectFolderRepoGroup[] {
   const repoByKey = new Map(input.repos.map((repo) => [createEntityRefKey(repo.ref), repo]));
+  const placementsByFolderId = new Map<string, WorkduckProjectRepoPlacement[]>();
+
+  for (const placement of input.placements) {
+    if (placement.project.id !== input.project.id) {
+      continue;
+    }
+
+    const folderPlacements = placementsByFolderId.get(placement.folder.id);
+
+    if (folderPlacements === undefined) {
+      placementsByFolderId.set(placement.folder.id, [placement]);
+      continue;
+    }
+
+    folderPlacements.push(placement);
+  }
 
   return input.folders
     .filter((folder) => folder.project.id === input.project.id)
     .map((folder) => {
-      const repos = input.placements
-        .filter(
-          (placement) =>
-            placement.project.id === input.project.id && placement.folder.id === folder.ref.id
-        )
+      const repos = (placementsByFolderId.get(folder.ref.id) ?? [])
         .map((placement) => repoByKey.get(createEntityRefKey(placement.repo)))
         .filter((repo): repo is WorkduckRepo => repo !== undefined);
 

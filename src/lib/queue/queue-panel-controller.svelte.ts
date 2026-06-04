@@ -363,6 +363,7 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 	let knownCompletedReportPaths = new Set<string>();
 	let completedReportNotificationsArePrimed = false;
 	let messages = $derived(getWorkduckMessages(appearanceSettings.languageId));
+	let readFilePathSet = $derived(new Set(readFilePaths));
 	let queueItemCountLabel = $derived(
 		messages.queue.registeredCount.replace('{count}', files.length.toString())
 	);
@@ -1170,10 +1171,12 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 }
 
 	function markQueueFileRead(relativePath: string) {
-		if (readFilePaths.includes(relativePath)) {
-			files = files.map((file) =>
-				file.relativePath === relativePath ? { ...file, isRead: true } : file
-			);
+		if (readFilePathSet.has(relativePath)) {
+			if (files.some((file) => file.relativePath === relativePath && !file.isRead)) {
+				files = files.map((file) =>
+					file.relativePath === relativePath ? { ...file, isRead: true } : file
+				);
+			}
 			return;
 	}
 
