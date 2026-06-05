@@ -17,8 +17,13 @@ use std::{
 
 use wait_timeout::ChildExt;
 
+#[cfg(target_os = "windows")]
+use std::os::windows::process::CommandExt;
+
 const WORKSPACE_SYNC_GIT_COMMAND_TIMEOUT: Duration = Duration::from_secs(60);
 const WORKSPACE_SYNC_GIT_COMMIT_MESSAGE: &str = "chore: update workduck sync";
+#[cfg(target_os = "windows")]
+const CREATE_NO_WINDOW: u32 = 0x08000000;
 
 #[derive(serde::Serialize)]
 pub enum WorkspaceSyncGitError {
@@ -695,6 +700,9 @@ fn run_git_command(
         .stderr(Stdio::piped());
     clear_git_credential_environment(&mut command);
     apply_git_credential(&mut command, credential);
+
+    #[cfg(target_os = "windows")]
+    command.creation_flags(CREATE_NO_WINDOW);
 
     let mut child = command.spawn().map_err(|error| WorkspaceSyncGitFailure {
         error: if error.kind() == io::ErrorKind::NotFound {

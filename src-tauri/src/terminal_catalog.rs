@@ -1,5 +1,11 @@
 use std::{env, path::Path, process::Command};
 
+#[cfg(target_os = "windows")]
+use std::os::windows::process::CommandExt;
+
+#[cfg(target_os = "windows")]
+const CREATE_NO_WINDOW: u32 = 0x08000000;
+
 pub struct TerminalCatalogEntry {
     pub(crate) id: &'static str,
     pub(crate) command: &'static str,
@@ -74,17 +80,21 @@ fn create_git_bash_entry() -> TerminalCatalogEntry {
     }
 }
 
-fn find_executable(command: &str) -> Option<String> {
-    if command.trim().is_empty() {
+fn find_executable(command_name: &str) -> Option<String> {
+    if command_name.trim().is_empty() {
         return None;
     }
 
-    find_executable_with_path_lookup(command).or_else(|| find_executable_in_path(command))
+    find_executable_with_path_lookup(command_name).or_else(|| find_executable_in_path(command_name))
 }
 
 #[cfg(target_os = "windows")]
-fn find_executable_with_path_lookup(command: &str) -> Option<String> {
-    let output = Command::new("where.exe").arg(command).output().ok()?;
+fn find_executable_with_path_lookup(command_name: &str) -> Option<String> {
+    let mut command = Command::new("where.exe");
+    command.arg(command_name);
+    command.creation_flags(CREATE_NO_WINDOW);
+
+    let output = command.output().ok()?;
 
     if !output.status.success() {
         return None;
@@ -98,8 +108,8 @@ fn find_executable_with_path_lookup(command: &str) -> Option<String> {
 }
 
 #[cfg(not(target_os = "windows"))]
-fn find_executable_with_path_lookup(command: &str) -> Option<String> {
-    let output = Command::new("which").arg(command).output().ok()?;
+fn find_executable_with_path_lookup(command_name: &str) -> Option<String> {
+    let output = Command::new("which").arg(command_name).output().ok()?;
 
     if !output.status.success() {
         return None;

@@ -11,8 +11,13 @@ use tauri::State;
 
 use crate::terminal_catalog;
 
+#[cfg(target_os = "windows")]
+use std::os::windows::process::CommandExt;
+
 const POWERSHELL_BOOTSTRAP_COMMAND: &str = "[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; if (Get-Variable -Name PSStyle -ErrorAction SilentlyContinue) { $PSStyle.OutputRendering = 'PlainText'; $PSStyle.FileInfo.Directory = ''; $PSStyle.FileInfo.SymbolicLink = ''; $PSStyle.FileInfo.Executable = '' }";
 const TERMINAL_OUTPUT_MAX_BYTES: usize = 128 * 1024;
+#[cfg(target_os = "windows")]
+const CREATE_NO_WINDOW: u32 = 0x08000000;
 
 #[derive(Default)]
 pub(crate) struct TerminalProcessState {
@@ -95,6 +100,9 @@ pub fn start_terminal_session(
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped());
+
+    #[cfg(target_os = "windows")]
+    command.creation_flags(CREATE_NO_WINDOW);
 
     let mut child = command
         .spawn()
