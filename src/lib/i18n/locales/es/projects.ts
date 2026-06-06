@@ -121,7 +121,8 @@ export const esProjectsMessages = {
 			installDependencies: 'Abrir terminal de instalación de dependencias',
 			updateDependencies: 'Abrir terminal de actualización de dependencias',
 			startDevServer: 'Abrir terminal del servidor de desarrollo',
-			build: 'Abrir terminal de compilación'
+			build: 'Abrir terminal de compilación',
+			preview: 'Abrir terminal de vista previa'
 		},
 		repositoryTasks: {
 			terminalOpened: 'Terminal abierta.',
@@ -130,6 +131,7 @@ export const esProjectsMessages = {
 			updateDependenciesTerminalOpened: 'Se abrió una terminal con el comando de actualización de dependencias. La tarjeta de repositorio se actualizará con el resultado.',
 			startDevServerTerminalOpened: 'Se abrió una terminal con el comando del servidor de desarrollo. La tarjeta de repositorio se actualizará con el resultado.',
 			buildTerminalOpened: 'Se abrió una terminal con el comando de compilación. La tarjeta de repositorio se actualizará con el resultado.',
+			previewTerminalOpened: 'Se abrió una terminal con el comando de vista previa. La tarjeta de repositorio se actualizará con el resultado.',
 			taskRunning: '{task} en ejecución.',
 			taskSucceeded: '{task} completada con éxito.',
 			taskStopped: '{task} detenida.',
@@ -140,7 +142,8 @@ export const esProjectsMessages = {
 				installDependencies: 'Instalación de dependencias',
 				updateDependencies: 'Actualización de dependencias',
 				startDevServer: 'Servidor de desarrollo',
-				build: 'Compilación'
+				build: 'Compilación',
+				preview: 'Vista previa'
 			}
 		},
 		errors: {

@@ -121,7 +121,8 @@ export const frProjectsMessages = {
 		installDependencies: 'Ouvrir le terminal d\'installation des dépendances',
 		updateDependencies: 'Ouvrir le terminal de mise à jour des dépendances',
 		startDevServer: 'Ouvrir le terminal du serveur de développement',
-		build: 'Ouvrir le terminal de build'
+		build: 'Ouvrir le terminal de build',
+		preview: 'Ouvrir le terminal de prévisualisation'
 	},
 	repositoryTasks: {
 		terminalOpened: 'Terminal ouvert.',
@@ -130,6 +131,7 @@ export const frProjectsMessages = {
 		updateDependenciesTerminalOpened: 'Terminal ouvert avec la commande de mise à jour des dépendances. La carte du dépôt sera mise à jour avec le résultat.',
 		startDevServerTerminalOpened: 'Terminal ouvert avec la commande du serveur de développement. La carte du dépôt sera mise à jour avec le résultat.',
 		buildTerminalOpened: 'Terminal ouvert avec la commande de build. La carte du dépôt sera mise à jour avec le résultat.',
+		previewTerminalOpened: 'Terminal ouvert avec la commande de prévisualisation. La carte du dépôt sera mise à jour avec le résultat.',
 		taskRunning: '{task} en cours.',
 		taskSucceeded: '{task} réussi.',
 		taskStopped: '{task} arrêté.',
@@ -140,7 +142,8 @@ export const frProjectsMessages = {
 			installDependencies: 'Installation des dépendances',
 			updateDependencies: 'Mise à jour des dépendances',
 			startDevServer: 'Serveur de dev',
-			build: 'Build'
+			build: 'Build',
+			preview: 'Prévisualisation'
 		}
 	},
 	errors: {

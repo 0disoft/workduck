@@ -70,6 +70,8 @@ function getRepositoryTaskStatus(
 			return messages.updateDependenciesTerminalOpened;
 		case 'start-dev-server':
 			return messages.startDevServerTerminalOpened;
+		case 'preview':
+			return messages.previewTerminalOpened;
 		case 'build':
 			return messages.buildTerminalOpened;
 	}

@@ -182,6 +182,14 @@
 			>
 				{projectMessages.contextMenu.build}
 			</button>
+			<button
+				class="workduck-context-menu-item"
+				type="button"
+				role="menuitem"
+				onclick={() => void onRepositoryTask('preview')}
+			>
+				{projectMessages.contextMenu.preview}
+			</button>
 		{/if}
 		<div class="workduck-context-menu-separator" role="separator"></div>
 		<button class="workduck-context-menu-item" type="button" role="menuitem" onclick={onEditTags}>

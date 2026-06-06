@@ -121,7 +121,8 @@ export const koProjectsMessages = {
 			installDependencies: '의존성 설치 터미널 열기',
 			updateDependencies: '의존성 업데이트 터미널 열기',
 			startDevServer: '개발 서버 터미널 열기',
-			build: '빌드 터미널 열기'
+			build: '빌드 터미널 열기',
+			preview: '프리뷰 터미널 열기'
 		},
 		repositoryTasks: {
 			terminalOpened: '터미널을 열었습니다.',
@@ -130,6 +131,7 @@ export const koProjectsMessages = {
 			updateDependenciesTerminalOpened: '의존성 업데이트 명령이 입력된 터미널을 열었습니다. 결과는 저장소 카드에 갱신됩니다.',
 			startDevServerTerminalOpened: '개발 서버 명령이 입력된 터미널을 열었습니다. 결과는 저장소 카드에 갱신됩니다.',
 			buildTerminalOpened: '빌드 명령이 입력된 터미널을 열었습니다. 결과는 저장소 카드에 갱신됩니다.',
+			previewTerminalOpened: '프리뷰 명령이 입력된 터미널을 열었습니다. 결과는 저장소 카드에 갱신됩니다.',
 			taskRunning: '{task} 실행 중.',
 			taskSucceeded: '{task} 성공.',
 			taskStopped: '{task} 중지됨.',
@@ -140,7 +142,8 @@ export const koProjectsMessages = {
 				installDependencies: '의존성 설치',
 				updateDependencies: '의존성 업데이트',
 				startDevServer: '개발 서버',
-				build: '빌드'
+				build: '빌드',
+				preview: '프리뷰'
 			}
 		},
 		errors: {

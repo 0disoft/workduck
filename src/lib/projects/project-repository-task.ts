@@ -6,6 +6,7 @@ export type ProjectRepositoryTask =
 	| 'install-dependencies'
 	| 'update-dependencies'
 	| 'start-dev-server'
+	| 'preview'
 	| 'build';
 
 export type ProjectRepositoryTaskRunState = 'running' | 'succeeded' | 'failed' | 'stopped';
@@ -216,6 +217,7 @@ function isProjectRepositoryTask(value: unknown): value is ProjectRepositoryTask
 		value === 'install-dependencies' ||
 		value === 'update-dependencies' ||
 		value === 'start-dev-server' ||
+		value === 'preview' ||
 		value === 'build'
 	);
 }

@@ -121,7 +121,8 @@ export const enProjectsMessages = {
 			installDependencies: 'Open dependency install terminal',
 			updateDependencies: 'Open dependency update terminal',
 			startDevServer: 'Open dev server terminal',
-			build: 'Open build terminal'
+			build: 'Open build terminal',
+			preview: 'Open preview terminal'
 		},
 		repositoryTasks: {
 			terminalOpened: 'Terminal opened.',
@@ -130,6 +131,7 @@ export const enProjectsMessages = {
 			updateDependenciesTerminalOpened: 'Opened a terminal with the dependency update command. The repository card will update with the result.',
 			startDevServerTerminalOpened: 'Opened a terminal with the dev server command. The repository card will update with the result.',
 			buildTerminalOpened: 'Opened a terminal with the build command. The repository card will update with the result.',
+			previewTerminalOpened: 'Opened a terminal with the preview command. The repository card will update with the result.',
 			taskRunning: '{task} running.',
 			taskSucceeded: '{task} succeeded.',
 			taskStopped: '{task} stopped.',
@@ -140,7 +142,8 @@ export const enProjectsMessages = {
 				installDependencies: 'Dependency install',
 				updateDependencies: 'Dependency update',
 				startDevServer: 'Dev server',
-				build: 'Build'
+				build: 'Build',
+				preview: 'Preview'
 			}
 		},
 		errors: {

@@ -106,6 +106,7 @@ enum ProjectRepositoryTask {
     UpdateDependencies,
     StartDevServer,
     Build,
+    Preview,
 }
 
 #[derive(Clone)]
@@ -173,7 +174,11 @@ pub fn run_project_repository_task(
             launch_repository_terminal(&repository_path, None, None).map(|_| ()),
             None,
         )
-    } else if matches!(task, ProjectRepositoryTask::StartDevServer) && commands.len() > 1 {
+    } else if matches!(
+        task,
+        ProjectRepositoryTask::StartDevServer | ProjectRepositoryTask::Preview
+    ) && commands.len() > 1
+    {
         match launch_repository_task_terminals(&workspace_path, &repository_path, task, &commands) {
             Ok(records) => (Ok(()), records.into_iter().next()),
             Err(error) => (Err(error), None),
@@ -327,6 +332,7 @@ fn read_latest_cached_task_run_records(
         .collect();
     let live_processes = collect_live_task_processes().ok();
     let records = reconcile_running_task_run_records(records, live_processes.as_deref());
+    persist_reconciled_task_run_records(&records);
     workspace_cache.dir_len = dir_len;
     workspace_cache.dir_modified_at = dir_modified_at;
     workspace_cache.latest_records = latest_task_run_records_by_repository(records);
@@ -423,6 +429,7 @@ fn parse_task(task: &str) -> Option<ProjectRepositoryTask> {
         "update-dependencies" => Some(ProjectRepositoryTask::UpdateDependencies),
         "start-dev-server" => Some(ProjectRepositoryTask::StartDevServer),
         "build" => Some(ProjectRepositoryTask::Build),
+        "preview" => Some(ProjectRepositoryTask::Preview),
         _ => None,
     }
 }
@@ -583,6 +590,10 @@ fn resolve_repository_task_commands(
                 "swift build",
             );
         }
+        ProjectRepositoryTask::Preview => {
+            add_package_task_commands(repository_path, task, &mut commands)?;
+            add_deno_task_commands(repository_path, task, &mut commands);
+        }
         ProjectRepositoryTask::OpenTerminal => {}
     }
 
@@ -712,6 +723,7 @@ fn resolve_package_task_command(
         )),
         ProjectRepositoryTask::StartDevServer => resolve_package_dev_server_command(project),
         ProjectRepositoryTask::Build => resolve_optional_package_script_command(project, "build"),
+        ProjectRepositoryTask::Preview => resolve_optional_package_script_command(project, "preview"),
         ProjectRepositoryTask::OpenTerminal => Ok(None),
     }
 }
@@ -834,6 +846,7 @@ fn add_deno_task_commands(
     let task_name = match task {
         ProjectRepositoryTask::StartDevServer => "dev",
         ProjectRepositoryTask::Build => "build",
+        ProjectRepositoryTask::Preview => "preview",
         _ => return,
     };
 
@@ -886,6 +899,7 @@ fn resolve_cargo_task_command(
         ProjectRepositoryTask::UpdateDependencies => "cargo update",
         ProjectRepositoryTask::StartDevServer => "cargo run",
         ProjectRepositoryTask::Build => "cargo build",
+        ProjectRepositoryTask::Preview => return None,
         ProjectRepositoryTask::OpenTerminal => return None,
     };
 
@@ -969,6 +983,7 @@ fn add_go_task_commands(
                 commands,
                 command_in_directory(repository_path, project_path, "go build ./..."),
             ),
+            ProjectRepositoryTask::Preview => {}
             ProjectRepositoryTask::OpenTerminal => {}
         }
     }
@@ -1288,7 +1303,7 @@ fn reconcile_running_task_run_records(
     records
         .into_iter()
         .map(|record| {
-            if is_stale_running_dev_server_record(&record, live_processes) {
+            if is_stale_running_task_record(&record, live_processes) {
                 stopped_task_run_record(&record)
             } else {
                 record
@@ -1297,27 +1312,56 @@ fn reconcile_running_task_run_records(
         .collect()
 }
 
-fn is_stale_running_dev_server_record(
+fn is_stale_running_task_record(
     record: &ProjectRepositoryTaskRunRecord,
     live_processes: &[LiveTaskProcess],
 ) -> bool {
-    record.state == "running"
-        && record.task == ProjectRepositoryTask::StartDevServer.as_str()
-        && !is_task_process_alive(record, live_processes)
+    if record.state != "running" {
+        return false;
+    }
+
+    if is_long_running_task(record.task.as_str()) {
+        return !is_long_running_task_process_alive(record, live_processes);
+    }
+
+    if is_terminal_task(record.task.as_str()) {
+        return !is_tracked_task_process_alive(record, live_processes);
+    }
+
+    false
 }
 
-fn is_task_process_alive(
+fn is_terminal_task(task: &str) -> bool {
+    task == ProjectRepositoryTask::InstallDependencies.as_str()
+        || task == ProjectRepositoryTask::UpdateDependencies.as_str()
+        || task == ProjectRepositoryTask::Build.as_str()
+}
+
+fn is_long_running_task(task: &str) -> bool {
+    task == ProjectRepositoryTask::StartDevServer.as_str()
+        || task == ProjectRepositoryTask::Preview.as_str()
+}
+
+fn is_tracked_task_process_alive(
     record: &ProjectRepositoryTaskRunRecord,
     live_processes: &[LiveTaskProcess],
 ) -> bool {
     if let Some(process_id) = record.process_id {
-        if live_processes
+        return live_processes
             .iter()
             .find(|process| process.pid == process_id)
-            .is_some_and(|process| live_process_matches_task_record(process, record))
-        {
-            return true;
-        }
+            .is_some_and(|process| live_process_matches_task_record(process, record));
+    }
+
+    false
+}
+
+fn is_long_running_task_process_alive(
+    record: &ProjectRepositoryTaskRunRecord,
+    live_processes: &[LiveTaskProcess],
+) -> bool {
+    if is_tracked_task_process_alive(record, live_processes) {
+        return true;
     }
 
     let repository_path = normalize_process_match_text(&record.repository_path);
@@ -1359,15 +1403,64 @@ fn stopped_task_run_record(
         exit_code: None,
         finished_at: Some(current_task_run_timestamp()),
         output_tail: Some(
-            "Workduck could not find a running development server process for this repository."
+            "Workduck could not find the terminal process for this repository task."
                 .to_owned(),
         ),
         ..record.clone()
     }
 }
 
+fn persist_reconciled_task_run_records(records: &[ProjectRepositoryTaskRunRecord]) {
+    for record in records
+        .iter()
+        .filter(|record| record.state == "stopped")
+    {
+        let _ = write_task_run_record(&PathBuf::from(&record.record_path), record);
+    }
+}
+
 fn normalize_process_match_text(value: &str) -> String {
-    value.replace('\\', "/").to_ascii_lowercase()
+    let mut normalized = value.replace('\\', "/").to_ascii_lowercase();
+
+    if let Some(decoded_command) = decode_powershell_encoded_command(value) {
+        normalized.push(' ');
+        normalized.push_str(&decoded_command.replace('\\', "/").to_ascii_lowercase());
+    }
+
+    normalized
+}
+
+fn decode_powershell_encoded_command(command_line: &str) -> Option<String> {
+    let encoded_command = find_powershell_encoded_command(command_line)?;
+    let bytes = general_purpose::STANDARD.decode(encoded_command).ok()?;
+    let mut code_units = Vec::with_capacity(bytes.len() / 2);
+    let mut chunks = bytes.chunks_exact(2);
+
+    for chunk in &mut chunks {
+        code_units.push(u16::from_le_bytes([chunk[0], chunk[1]]));
+    }
+
+    if !chunks.remainder().is_empty() {
+        return None;
+    }
+
+    String::from_utf16(&code_units).ok()
+}
+
+fn find_powershell_encoded_command(command_line: &str) -> Option<&str> {
+    let mut previous_was_encoded_command = false;
+
+    for part in command_line.split_whitespace() {
+        if previous_was_encoded_command {
+            let encoded = part.trim_matches(|character| character == '"' || character == '\'');
+            return (!encoded.is_empty()).then_some(encoded);
+        }
+
+        previous_was_encoded_command =
+            part.eq_ignore_ascii_case("-encodedcommand") || part.eq_ignore_ascii_case("-enc");
+    }
+
+    None
 }
 
 #[cfg(target_os = "windows")]
@@ -1489,6 +1582,7 @@ impl ProjectRepositoryTask {
             ProjectRepositoryTask::UpdateDependencies => "update-dependencies",
             ProjectRepositoryTask::StartDevServer => "start-dev-server",
             ProjectRepositoryTask::Build => "build",
+            ProjectRepositoryTask::Preview => "preview",
         }
     }
 }
@@ -1577,6 +1671,38 @@ mod tests {
     }
 
     #[test]
+    fn package_preview_command_uses_preview_script() {
+        let project = PackageProject {
+            package_manager: PackageManager::Bun,
+            scripts: HashMap::from([("preview".to_owned(), "vite preview".to_owned())]),
+        };
+
+        let command = match resolve_package_task_command(ProjectRepositoryTask::Preview, &project)
+        {
+            Ok(command) => command,
+            Err(_) => panic!("resolve command"),
+        };
+
+        assert_eq!(command, Some("bun run preview".to_owned()));
+    }
+
+    #[test]
+    fn package_preview_command_is_missing_without_preview_script() {
+        let project = PackageProject {
+            package_manager: PackageManager::Bun,
+            scripts: HashMap::from([("build".to_owned(), "vite build".to_owned())]),
+        };
+
+        let command = match resolve_package_task_command(ProjectRepositoryTask::Preview, &project)
+        {
+            Ok(command) => command,
+            Err(_) => panic!("resolve command"),
+        };
+
+        assert_eq!(command, None);
+    }
+
+    #[test]
     fn stale_running_dev_server_records_are_reported_as_stopped() {
         let records = reconcile_running_task_run_records(
             vec![ProjectRepositoryTaskRunRecord {
@@ -1621,11 +1747,159 @@ mod tests {
             }],
             Some(&[LiveTaskProcess {
                 pid: 42,
-                command_line: "powershell -NoLogo -Command bun run build".to_owned(),
+                command_line: encoded_powershell_command_line(
+                    "Set-Location -LiteralPath 'C:/workspace/repo-a'; bun run build",
+                ),
             }]),
         );
 
         assert_eq!(records[0].state, "running");
+    }
+
+    #[test]
+    fn stale_running_preview_records_are_reported_as_stopped() {
+        let records = reconcile_running_task_run_records(
+            vec![ProjectRepositoryTaskRunRecord {
+                task: ProjectRepositoryTask::Preview.as_str().to_owned(),
+                state: "running".to_owned(),
+                command: "bun run preview".to_owned(),
+                ..task_run_record("repo-a-preview", "C:/workspace/repo-a", "2026-05-23T01:00:00Z")
+            }],
+            Some(&[]),
+        );
+
+        assert_eq!(records[0].state, "stopped");
+        assert!(records[0].finished_at.is_some());
+    }
+
+    #[test]
+    fn legacy_running_preview_records_match_repository_path_processes() {
+        let records = reconcile_running_task_run_records(
+            vec![ProjectRepositoryTaskRunRecord {
+                task: ProjectRepositoryTask::Preview.as_str().to_owned(),
+                state: "running".to_owned(),
+                command: "bun run preview".to_owned(),
+                ..task_run_record("repo-a-preview", "C:/workspace/repo-a", "2026-05-23T01:00:00Z")
+            }],
+            Some(&[LiveTaskProcess {
+                pid: 43,
+                command_line:
+                    "node C:\\workspace\\repo-a\\node_modules\\vite\\bin\\vite.js preview"
+                        .to_owned(),
+            }]),
+        );
+
+        assert_eq!(records[0].state, "running");
+    }
+
+    #[test]
+    fn stale_running_dependency_update_records_are_reported_as_stopped() {
+        let records = reconcile_running_task_run_records(
+            vec![ProjectRepositoryTaskRunRecord {
+                task: ProjectRepositoryTask::UpdateDependencies.as_str().to_owned(),
+                state: "running".to_owned(),
+                process_id: Some(42),
+                command: "bun update".to_owned(),
+                ..task_run_record(
+                    "repo-a-update",
+                    "C:/workspace/repo-a",
+                    "2026-05-23T01:00:00Z",
+                )
+            }],
+            Some(&[]),
+        );
+
+        assert_eq!(records[0].state, "stopped");
+        assert!(records[0].finished_at.is_some());
+    }
+
+    #[test]
+    fn running_dependency_update_records_stay_running_when_encoded_terminal_matches_task() {
+        let records = reconcile_running_task_run_records(
+            vec![ProjectRepositoryTaskRunRecord {
+                task: ProjectRepositoryTask::UpdateDependencies.as_str().to_owned(),
+                state: "running".to_owned(),
+                process_id: Some(42),
+                command: "bun update".to_owned(),
+                ..task_run_record(
+                    "repo-a-update",
+                    "C:/workspace/repo-a",
+                    "2026-05-23T01:00:00Z",
+                )
+            }],
+            Some(&[LiveTaskProcess {
+                pid: 42,
+                command_line: encoded_powershell_command_line(
+                    "Set-Location -LiteralPath 'C:/workspace/repo-a'; bun update",
+                ),
+            }]),
+        );
+
+        assert_eq!(records[0].state, "running");
+    }
+
+    #[test]
+    fn running_dependency_update_records_stop_when_process_id_was_reused() {
+        let records = reconcile_running_task_run_records(
+            vec![ProjectRepositoryTaskRunRecord {
+                task: ProjectRepositoryTask::UpdateDependencies.as_str().to_owned(),
+                state: "running".to_owned(),
+                process_id: Some(42),
+                command: "bun update".to_owned(),
+                ..task_run_record(
+                    "repo-a-update",
+                    "C:/workspace/repo-a",
+                    "2026-05-23T01:00:00Z",
+                )
+            }],
+            Some(&[LiveTaskProcess {
+                pid: 42,
+                command_line: "powershell".to_owned(),
+            }]),
+        );
+
+        assert_eq!(records[0].state, "stopped");
+    }
+
+    #[test]
+    fn reconciled_stopped_records_are_persisted_to_disk() {
+        let unique = current_task_run_timestamp()
+            .chars()
+            .filter(|character| character.is_ascii_alphanumeric())
+            .collect::<String>();
+        let temp_dir = std::env::temp_dir().join(format!(
+            "workduck-task-run-reconcile-{}-{unique}",
+            std::process::id()
+        ));
+        fs::create_dir_all(&temp_dir).expect("create temp dir");
+        let record_path = temp_dir.join("repo_task_update.json");
+        let running_record = ProjectRepositoryTaskRunRecord {
+            task: ProjectRepositoryTask::UpdateDependencies.as_str().to_owned(),
+            state: "running".to_owned(),
+            process_id: Some(42),
+            command: "bun update".to_owned(),
+            record_path: record_path.to_string_lossy().to_string(),
+            ..task_run_record(
+                "repo-a-update",
+                "C:/workspace/repo-a",
+                "2026-05-23T01:00:00Z",
+            )
+        };
+        assert!(write_task_run_record(&record_path, &running_record).is_ok());
+
+        let stopped_record = stopped_task_run_record(&running_record);
+        persist_reconciled_task_run_records(&[stopped_record]);
+
+        let persisted_json = fs::read_to_string(&record_path).expect("read persisted record");
+        let persisted_record =
+            serde_json::from_str::<ProjectRepositoryTaskRunRecord>(&persisted_json)
+                .expect("parse persisted record");
+
+        assert_eq!(persisted_record.state, "stopped");
+        assert_eq!(persisted_record.process_id, Some(42));
+        assert!(persisted_record.finished_at.is_some());
+
+        fs::remove_dir_all(temp_dir).expect("remove temp dir");
     }
 
     #[test]
@@ -1644,6 +1918,41 @@ mod tests {
         );
 
         assert_eq!(records[0].state, "running");
+    }
+
+    #[test]
+    fn legacy_running_dependency_update_records_without_process_id_stop() {
+        let records = reconcile_running_task_run_records(
+            vec![ProjectRepositoryTaskRunRecord {
+                task: ProjectRepositoryTask::UpdateDependencies.as_str().to_owned(),
+                state: "running".to_owned(),
+                command: "bun update".to_owned(),
+                ..task_run_record(
+                    "repo-a-update",
+                    "C:/workspace/repo-a",
+                    "2026-05-23T01:00:00Z",
+                )
+            }],
+            Some(&[LiveTaskProcess {
+                pid: 43,
+                command_line:
+                    "node C:\\workspace\\repo-a\\node_modules\\vite\\bin\\vite.js dev"
+                        .to_owned(),
+            }]),
+        );
+
+        assert_eq!(records[0].state, "stopped");
+    }
+
+    fn encoded_powershell_command_line(script: &str) -> String {
+        let encoded = general_purpose::STANDARD.encode(
+            script
+                .encode_utf16()
+                .flat_map(u16::to_le_bytes)
+                .collect::<Vec<_>>(),
+        );
+
+        format!("powershell.exe -NoLogo -NoProfile -NoExit -EncodedCommand {encoded}")
     }
 }
 

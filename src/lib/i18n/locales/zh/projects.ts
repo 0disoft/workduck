@@ -121,7 +121,8 @@ export const zhProjectsMessages = {
 		installDependencies: '打开依赖安装终端',
 		updateDependencies: '打开依赖更新终端',
 		startDevServer: '打开开发服务器终端',
-		build: '打开构建终端'
+		build: '打开构建终端',
+		preview: '打开预览终端'
 	},
 	repositoryTasks: {
 		terminalOpened: 'Terminal opened.',
@@ -130,6 +131,7 @@ export const zhProjectsMessages = {
 		updateDependenciesTerminalOpened: '已打开依赖更新命令终端。仓库卡片将根据执行结果更新。',
 		startDevServerTerminalOpened: '已打开开发服务器命令终端。仓库卡片将根据执行结果更新。',
 		buildTerminalOpened: '已打开构建命令终端。仓库卡片将根据执行结果更新。',
+		previewTerminalOpened: '已打开预览命令终端。仓库卡片将根据执行结果更新。',
 		taskRunning: '{task} 正在运行。',
 		taskSucceeded: '{task} 成功。',
 		taskStopped: '{task} 已停止。',
@@ -140,7 +142,8 @@ export const zhProjectsMessages = {
 			installDependencies: '安装依赖',
 			updateDependencies: '更新依赖',
 			startDevServer: '开发服务器',
-			build: '构建'
+			build: '构建',
+			preview: '预览'
 		}
 	},
 	errors: {

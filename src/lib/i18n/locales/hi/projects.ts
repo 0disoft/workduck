@@ -121,7 +121,8 @@ export const hiProjectsMessages = {
 		installDependencies: 'निर्भरता इंस्टॉल टर्मिनल खोलें',
 		updateDependencies: 'निर्भरता अपडेट टर्मिनल खोलें',
 		startDevServer: 'देव सर्वर टर्मिनल खोलें',
-		build: 'बिल्ड टर्मिनल खोलें'
+		build: 'बिल्ड टर्मिनल खोलें',
+		preview: 'प्रीव्यू टर्मिनल खोलें'
 	},
 	repositoryTasks: {
 		terminalOpened: 'टर्मिनल खोला गया।',
@@ -135,6 +136,8 @@ export const hiProjectsMessages = {
 			'देव सर्वर कमांड के साथ एक टर्मिनल खोला गया。 परिणाम के साथ रिपॉजिटरी कार्ड अपडेट हो जाएगा।',
 		buildTerminalOpened:
 			'बिल्ड कमांड के साथ एक टर्मिनल खोला गया। परिणाम के साथ रिपॉजिटरी कार्ड अपडेट हो जाएगा।',
+		previewTerminalOpened:
+			'प्रीव्यू कमांड के साथ एक टर्मिनल खोला गया। परिणाम के साथ रिपॉजिटरी कार्ड अपडेट हो जाएगा।',
 		taskRunning: '{task} चल रहा है।',
 		taskSucceeded: '{task} सफल रहा।',
 		taskStopped: '{task} रुक गया।',
@@ -145,7 +148,8 @@ export const hiProjectsMessages = {
 			installDependencies: 'निर्भरता इंस्टॉल',
 			updateDependencies: 'निर्भरता अपडेट',
 			startDevServer: 'देव सर्वर',
-			build: 'बिल्ड'
+			build: 'बिल्ड',
+			preview: 'प्रीव्यू'
 		}
 	},
 	errors: {

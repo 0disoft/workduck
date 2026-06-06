@@ -101,6 +101,8 @@ function getRepositoryTaskLabel(
 			return messages.tasks.updateDependencies;
 		case 'start-dev-server':
 			return messages.tasks.startDevServer;
+		case 'preview':
+			return messages.tasks.preview;
 		case 'build':
 			return messages.tasks.build;
 	}
