@@ -72,12 +72,6 @@ export function createAppearanceSettingsCssVariables(
 	};
 }
 
-export function createAppearanceSettingsStyle(settings: AppearanceSettings) {
-	return Object.entries(createAppearanceSettingsCssVariables(settings))
-		.map(([name, value]) => `${name}: ${value}`)
-		.join('; ');
-}
-
 function normalizeAllowedInteger(
 	value: unknown,
 	allowedValues: readonly number[],

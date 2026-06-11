@@ -2,6 +2,7 @@
 	import { onMount, untrack } from 'svelte';
 
 	import { getWorkduckMessages } from '$lib/i18n/workduck-language';
+	import { styleProperties } from '$lib/ui/style-properties-action';
 	import {
 		createDefaultAppearanceSettings,
 		type AppearanceSettings
@@ -740,7 +741,7 @@
 											<div class="workduck-agent-evaluation-overview-track" aria-hidden="true">
 												<div
 													class="workduck-agent-evaluation-overview-fill"
-													style={`--workduck-agent-evaluation-width: ${row.width}`}
+													use:styleProperties={{ '--workduck-agent-evaluation-width': row.width }}
 												></div>
 											</div>
 											<output>{row.scoreLabel}</output>

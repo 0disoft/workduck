@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { WorkduckMessages } from '$lib/i18n/workduck-message-contract';
+	import { styleProperties } from '$lib/ui/style-properties-action';
 	import type { QueueContextMenuState } from './queue-panel-types';
 
 	interface Props {
@@ -23,7 +24,7 @@
 	class="workduck-context-menu"
 	role="menu"
 	aria-label={messages.queue.contextMenu}
-	style={`left: ${contextMenu.x}px; top: ${contextMenu.y}px;`}
+	use:styleProperties={{ left: `${contextMenu.x}px`, top: `${contextMenu.y}px` }}
 	bind:this={contextMenuElement}
 >
 	<button

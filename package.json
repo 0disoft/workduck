@@ -1,6 +1,6 @@
 {
   "name": "workduck",
-  "version": "1.6.7",
+  "version": "1.6.8",
   "private": true,
   "license": "0BSD",
   "type": "module",
@@ -13,7 +13,7 @@
   "scripts": {
     "dev": "bun ./node_modules/vite/bin/vite.js dev --host 127.0.0.1 --port 5173 --strictPort",
     "dev:tauri": "bun ./scripts/tauri-dev-server.mjs",
-    "build": "vite build",
+    "build": "vite build && bun ./scripts/apply-csp-to-build.mjs",
     "desktop:dev": "tauri dev",
     "desktop:preview": "bun run build && tauri dev --no-watch --config src-tauri/tauri.preview.conf.json",
     "desktop:build": "tauri build",

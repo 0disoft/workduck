@@ -5,7 +5,7 @@
 
 	import { getWorkduckMessages } from '$lib/i18n/workduck-language';
 	import {
-		createAppearanceSettingsStyle,
+		createAppearanceSettingsCssVariables,
 		createDefaultAppearanceSettings,
 		type AppearanceSettings
 	} from '$lib/settings/appearance-settings';
@@ -80,6 +80,7 @@
 	} from './tauri-window';
 	import { suppressBrowserContextMenu } from './browser-context-menu';
 	import { hasExceededTitlebarDragThreshold } from './titlebar-interaction';
+	import { styleProperties } from '$lib/ui/style-properties-action';
 
 	interface Props {
 		readonly children: Snippet;
@@ -153,7 +154,9 @@
 	let navigationUnavailableMessage = $derived(
 		appIsLocked ? messages.navigation.waitForOperation : workspaceUnavailableMessage
 	);
-	let appearanceSettingsStyle = $derived(createAppearanceSettingsStyle(appearanceSettings));
+	let appearanceSettingsStyleProperties = $derived(
+		createAppearanceSettingsCssVariables(appearanceSettings)
+	);
 
 	function persistSidebarWidthPx(nextWidthPx = sidebarWidthPx) {
 		if (typeof window === 'undefined') {
@@ -784,7 +787,7 @@
 
 </script>
 
-<div class="workduck-window-frame" style={appearanceSettingsStyle}>
+<div class="workduck-window-frame" use:styleProperties={appearanceSettingsStyleProperties}>
 	<!-- svelte-ignore a11y_no_static_element_interactions -->
 	<header
 		class="workduck-titlebar"
@@ -831,7 +834,7 @@
 
 	<div
 		class={isDragging ? 'workduck-shell workduck-shell-dragging' : 'workduck-shell'}
-		style={`--workduck-sidebar-width: ${sidebarWidthPx}px;`}
+		use:styleProperties={{ '--workduck-sidebar-width': `${sidebarWidthPx}px` }}
 	>
 		{#if isSidebarOpen}
 			<button

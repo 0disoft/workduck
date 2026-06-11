@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { WorkduckMessages } from '$lib/i18n/workduck-message-contract';
+	import { styleProperties } from '$lib/ui/style-properties-action';
 	import type { ProjectContextMenuState } from './project-board-types';
 	import type { ProjectRepositoryTask } from './project-repository-task';
 
@@ -50,7 +51,7 @@
 	class="workduck-context-menu"
 	role="menu"
 	aria-label="Project actions"
-	style={`left: ${contextMenu.x}px; top: ${contextMenu.y}px;`}
+	use:styleProperties={{ left: `${contextMenu.x}px`, top: `${contextMenu.y}px` }}
 	bind:this={contextMenuElement}
 >
 	{#if contextMenu.target.type === 'node'}

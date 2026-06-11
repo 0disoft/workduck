@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { styleProperties } from '$lib/ui/style-properties-action';
+
 	interface StepRangeOption {
 		readonly value: number;
 		readonly label: string;
@@ -66,7 +68,7 @@
 			step={stepValue}
 			value={value}
 			aria-valuetext={valueLabel}
-			style={`--workduck-step-range-progress: ${rangeProgressPercent}%;`}
+			use:styleProperties={{ '--workduck-step-range-progress': `${rangeProgressPercent}%` }}
 			oninput={handleInput}
 		/>
 		<span class="workduck-step-range-ticks" aria-hidden="true">
@@ -75,7 +77,9 @@
 					class={option.value === value
 						? 'workduck-step-range-tick workduck-step-range-tick-active'
 						: 'workduck-step-range-tick'}
-					style={`--workduck-step-range-tick-position: ${resolveRangeProgressPercent(option.value, minValue, maxValue)}%;`}
+					use:styleProperties={{
+						'--workduck-step-range-tick-position': `${resolveRangeProgressPercent(option.value, minValue, maxValue)}%`
+					}}
 				>
 					{option.label}
 				</span>
