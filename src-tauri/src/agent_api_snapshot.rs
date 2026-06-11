@@ -457,7 +457,7 @@ fn read_project_registry_json(
     app: &AppHandle,
     workspace_id: &str,
 ) -> Result<Option<String>, rusqlite::Error> {
-    let connection = storage::app_connection(app).map_err(|_| rusqlite::Error::InvalidQuery)?;
+    let connection = storage::app_read_connection(app).map_err(|_| rusqlite::Error::InvalidQuery)?;
 
     connection
         .query_row(
@@ -556,7 +556,7 @@ fn summarize_repository_import_attempts(
     app: &AppHandle,
     workspace_id: &str,
 ) -> AgentApiRepositoryImportAttemptsSnapshot {
-    let connection = match storage::app_connection(app) {
+    let connection = match storage::app_read_connection(app) {
         Ok(connection) => connection,
         Err(_) => {
             return AgentApiRepositoryImportAttemptsSnapshot {

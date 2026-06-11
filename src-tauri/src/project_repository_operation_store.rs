@@ -93,7 +93,7 @@ pub fn read_project_repository_operation_records(
         Ok(workspace_id) => workspace_id,
         Err(error) => return invalid_read(error),
     };
-    let connection = match storage::app_connection(&app) {
+    let connection = match storage::app_read_connection(&app) {
         Ok(connection) => connection,
         Err(_) => return invalid_read(ProjectRepositoryOperationStoreError::ReadFailed),
     };

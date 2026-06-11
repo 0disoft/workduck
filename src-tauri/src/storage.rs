@@ -24,7 +24,7 @@ struct Migration {
 
 pub(crate) struct AppStorageState {
     database_path: PathBuf,
-    connection: Mutex<Connection>,
+    writer_connection: Mutex<Connection>,
 }
 
 const MIGRATIONS: &[Migration] = &[
@@ -158,13 +158,13 @@ pub(crate) fn initialize_app_storage(app: &AppHandle) -> Result<AppStorageState,
 
     Ok(AppStorageState {
         database_path,
-        connection: Mutex::new(connection),
+        writer_connection: Mutex::new(connection),
     })
 }
 
 pub fn storage_status(app: &AppHandle) -> Result<StorageStatus, StorageError> {
     let database_path = app_storage_state(app)?.database_path.clone();
-    let connection = app_connection(app)?;
+    let connection = app_read_connection(app)?;
 
     inspect_connection(&connection, database_path)
 }
@@ -176,9 +176,15 @@ pub(crate) fn app_connection(
 
     state
         .inner()
-        .connection
+        .writer_connection
         .lock()
         .map_err(|_| StorageError::AppStorageLockPoisoned)
+}
+
+pub(crate) fn app_read_connection(app: &AppHandle) -> Result<Connection, StorageError> {
+    let database_path = app_storage_state(app)?.database_path.clone();
+
+    connect_read_database(&database_path)
 }
 
 fn app_storage_state(app: &AppHandle) -> Result<State<'_, AppStorageState>, StorageError> {
@@ -212,13 +218,22 @@ fn open_database(database_path: &PathBuf) -> Result<Connection, StorageError> {
 fn connect_database(database_path: &PathBuf) -> Result<Connection, StorageError> {
     let mut connection = open_database(database_path)?;
 
-    configure_connection(&connection)?;
+    configure_writer_connection(&connection)?;
     run_migrations(&mut connection)?;
 
     Ok(connection)
 }
 
-fn configure_connection(connection: &Connection) -> Result<(), StorageError> {
+fn connect_read_database(database_path: &PathBuf) -> Result<Connection, StorageError> {
+    let connection = open_database(database_path)?;
+
+    configure_read_connection(&connection)?;
+    verify_supported_schema_version(&connection)?;
+
+    Ok(connection)
+}
+
+fn configure_read_connection(connection: &Connection) -> Result<(), StorageError> {
     connection
         .busy_timeout(Duration::from_millis(SQLITE_BUSY_TIMEOUT_MILLIS))
         .map_err(|source| StorageError::Sqlite {
@@ -232,6 +247,12 @@ fn configure_connection(connection: &Connection) -> Result<(), StorageError> {
             operation: "foreign-key configuration",
             source,
         })?;
+
+    Ok(())
+}
+
+fn configure_writer_connection(connection: &Connection) -> Result<(), StorageError> {
+    configure_read_connection(connection)?;
 
     connection
         .pragma_update(None, "journal_mode", "WAL")
@@ -250,16 +271,23 @@ fn configure_connection(connection: &Connection) -> Result<(), StorageError> {
     Ok(())
 }
 
-fn run_migrations(connection: &mut Connection) -> Result<(), StorageError> {
-    ensure_migration_table(connection)?;
-
+fn verify_supported_schema_version(connection: &Connection) -> Result<(), StorageError> {
     let schema_version = query_i64(connection, "PRAGMA user_version")?;
+
     if schema_version > CURRENT_SCHEMA_VERSION {
         return Err(StorageError::IncompatibleSchemaVersion {
             database_version: schema_version,
             current_version: CURRENT_SCHEMA_VERSION,
         });
     }
+
+    Ok(())
+}
+
+fn run_migrations(connection: &mut Connection) -> Result<(), StorageError> {
+    ensure_migration_table(connection)?;
+
+    verify_supported_schema_version(connection)?;
 
     for migration in MIGRATIONS {
         apply_migration(connection, migration)?;
@@ -432,4 +460,34 @@ fn query_i64(connection: &Connection, sql: &str) -> Result<i64, StorageError> {
             operation: "integer inspection query",
             source,
         })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn read_connection_opens_independently_after_writer_initialization() {
+        let temp_dir = tempfile::tempdir().expect("temporary storage directory");
+        let database_path = temp_dir.path().join(DATABASE_FILE_NAME);
+        let writer_connection = connect_database(&database_path).expect("writer connection");
+
+        writer_connection
+            .execute(
+                "INSERT INTO project_registries (workspace_id, registry_json, updated_at)
+                 VALUES (?1, ?2, ?3)",
+                params!["workspace_1", r#"{"version":1,"nodes":[]}"#, "2026-06-11T00:00:00Z"],
+            )
+            .expect("registry insert");
+
+        let read_connection = connect_read_database(&database_path).expect("read connection");
+        let registry_count =
+            query_i64(&read_connection, "SELECT COUNT(*) FROM project_registries")
+                .expect("registry count");
+        let foreign_keys = query_bool(&read_connection, "PRAGMA foreign_keys")
+            .expect("foreign key setting");
+
+        assert_eq!(registry_count, 1);
+        assert!(foreign_keys);
+    }
 }

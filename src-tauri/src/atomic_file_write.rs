@@ -53,7 +53,7 @@ fn write_file(
         .and_then(|_| temporary_file.as_file().sync_all())
         .map_err(|_| AtomicFileWriteError::WriteFailed)?;
 
-    match mode {
+    let write_result = match mode {
         AtomicFileWriteMode::ExclusiveCreate => temporary_file
             .persist_noclobber(file_path)
             .map(|_| ())
@@ -65,7 +65,13 @@ fn write_file(
             .persist(file_path)
             .map(|_| ())
             .map_err(|_| AtomicFileWriteError::WriteFailed),
+    };
+
+    if write_result.is_ok() {
+        sync_parent_directory(parent);
     }
+
+    write_result
 }
 
 fn reject_symlink_path(file_path: &Path) -> Result<(), AtomicFileWriteError> {
@@ -76,6 +82,20 @@ fn reject_symlink_path(file_path: &Path) -> Result<(), AtomicFileWriteError> {
     }
 
     Ok(())
+}
+
+fn sync_parent_directory(parent: &Path) {
+    #[cfg(unix)]
+    {
+        if let Ok(directory) = fs::File::open(parent) {
+            let _ = directory.sync_all();
+        }
+    }
+
+    #[cfg(not(unix))]
+    {
+        let _ = parent;
+    }
 }
 
 #[cfg(test)]

@@ -58,7 +58,7 @@ pub fn read_project_registry(app: AppHandle, workspace_id: String) -> ProjectReg
         Ok(workspace_id) => workspace_id,
         Err(error) => return invalid_read(error),
     };
-    let connection = match storage::app_connection(&app) {
+    let connection = match storage::app_read_connection(&app) {
         Ok(connection) => connection,
         Err(_) => return invalid_read(ProjectRegistryStoreError::ReadFailed),
     };
@@ -89,7 +89,7 @@ pub fn read_project_registries(
         Ok(workspace_ids) => workspace_ids,
         Err(error) => return invalid_read_many(error),
     };
-    let connection = match storage::app_connection(&app) {
+    let connection = match storage::app_read_connection(&app) {
         Ok(connection) => connection,
         Err(_) => return invalid_read_many(ProjectRegistryStoreError::ReadFailed),
     };
