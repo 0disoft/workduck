@@ -1,11 +1,8 @@
 {
   "identifier": "main",
   "description": "Permissions for the main Workduck window.",
-  "windows": ["main", "tray-menu"],
+  "windows": ["main"],
   "permissions": [
-    "autostart:allow-disable",
-    "autostart:allow-enable",
-    "autostart:allow-is-enabled",
     "core:default",
     "core:app:allow-default-window-icon",
     "core:menu:allow-new",

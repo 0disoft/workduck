@@ -3,6 +3,7 @@ use tauri::Manager;
 pub mod argon2_kdf;
 mod agent_api_snapshot;
 mod atomic_file_write;
+mod autostart_control;
 mod git_credential;
 mod git_path;
 mod llm_chat;
@@ -101,6 +102,8 @@ pub fn run() {
             runtime_status,
             storage_status,
             agent_api_snapshot::read_agent_api_snapshot,
+            autostart_control::read_workduck_autostart_enabled,
+            autostart_control::set_workduck_autostart_enabled,
             tray_menu::exit_workduck,
             tray_menu::hide_workduck_main_window,
             tray_menu::hide_workduck_tray_menu,

@@ -1,31 +1,15 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 
+	import { getTauriInvoke } from '$lib/tauri/tauri-invoke';
+
 	type TrayMenuCommand =
 		| 'show_workduck_main_window'
 		| 'hide_workduck_main_window'
 		| 'hide_workduck_tray_menu'
 		| 'exit_workduck';
 
-	interface TauriCoreApi {
-		readonly invoke?: <T>(command: string, args?: Record<string, unknown>) => Promise<T>;
-	}
-
-	interface TauriGlobalWindow {
-		readonly __TAURI__?: {
-			readonly core?: TauriCoreApi;
-		};
-	}
-
 	let firstMenuItem: HTMLButtonElement | undefined;
-
-	function getTauriInvoke() {
-		if (typeof window === 'undefined') {
-			return undefined;
-		}
-
-		return (window as unknown as TauriGlobalWindow).__TAURI__?.core?.invoke;
-	}
 
 	async function runTrayMenuCommand(command: TrayMenuCommand) {
 		const invoke = getTauriInvoke();

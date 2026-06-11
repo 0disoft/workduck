@@ -1,66 +1,13 @@
-import {
-	getTauriGlobal as getWorkduckTauriGlobal,
-	getTauriInvoke
-} from '$lib/tauri/tauri-invoke';
+import { defaultWindowIcon } from '@tauri-apps/api/app';
+import { TrayIcon, type TrayIconEvent, type TrayIconOptions } from '@tauri-apps/api/tray';
+import { getCurrentWindow } from '@tauri-apps/api/window';
+
+import { getTauriInvoke, isTauriRuntimeAvailable } from '$lib/tauri/tauri-invoke';
 
 const WORKDUCK_TRAY_ID = 'workduck-main-tray';
 
-type TauriTrayIconEvent = {
-	readonly type: string;
-	readonly button?: string;
-	readonly buttonState?: string;
-	readonly position?: {
-		readonly x?: number;
-		readonly y?: number;
-	};
-};
-
-interface TauriWindowController {
-	readonly close?: () => Promise<void>;
-	readonly hide?: () => Promise<void>;
-	readonly setFocus?: () => Promise<void>;
-	readonly show?: () => Promise<void>;
-	readonly unminimize?: () => Promise<void>;
-}
-
-interface TauriWindowApi {
-	readonly getCurrentWindow?: () => TauriWindowController;
-}
-
-interface TauriAppApi {
-	readonly defaultWindowIcon?: () => Promise<unknown | null>;
-}
-
-interface TauriTrayIconController {
-	readonly setVisible?: (visible: boolean) => Promise<void>;
-}
-
-interface TauriTrayApi {
-	readonly TrayIcon?: {
-		readonly getById: (id: string) => Promise<TauriTrayIconController | null>;
-		readonly new: (options?: {
-			readonly id?: string;
-			readonly icon?: unknown;
-			readonly menu?: unknown;
-			readonly tooltip?: string;
-			readonly showMenuOnLeftClick?: boolean;
-			readonly action?: (event: TauriTrayIconEvent) => void;
-		}) => Promise<TauriTrayIconController>;
-		readonly removeById: (id: string) => Promise<void>;
-	};
-}
-
-interface WorkduckTrayTauriGlobal {
-	readonly app?: TauriAppApi;
-	readonly tray?: TauriTrayApi;
-	readonly window?: TauriWindowApi;
-}
-
 export async function ensureWorkduckTrayIcon(): Promise<boolean> {
-	const tauri = getTauriGlobal();
-	const TrayIcon = tauri?.tray?.TrayIcon;
-
-	if (TrayIcon === undefined) {
+	if (!isTauriRuntimeAvailable()) {
 		return false;
 	}
 
@@ -72,9 +19,8 @@ export async function ensureWorkduckTrayIcon(): Promise<boolean> {
 			return true;
 		}
 
-		const trayIcon = await TrayIcon.new({
+		const trayIconOptions: TrayIconOptions = {
 			id: WORKDUCK_TRAY_ID,
-			icon: await readDefaultWindowIcon(),
 			tooltip: 'Workduck',
 			showMenuOnLeftClick: false,
 			action: (event) => {
@@ -95,7 +41,14 @@ export async function ensureWorkduckTrayIcon(): Promise<boolean> {
 					void showWorkduckTrayMenu(event);
 				}
 			}
-		});
+		};
+		const icon = await readDefaultWindowIcon();
+
+		if (icon !== undefined) {
+			trayIconOptions.icon = icon;
+		}
+
+		const trayIcon = await TrayIcon.new(trayIconOptions);
 
 		await trayIcon.setVisible?.(true);
 		return true;
@@ -105,9 +58,7 @@ export async function ensureWorkduckTrayIcon(): Promise<boolean> {
 }
 
 export async function removeWorkduckTrayIcon(): Promise<void> {
-	const TrayIcon = getTauriGlobal()?.tray?.TrayIcon;
-
-	if (TrayIcon === undefined) {
+	if (!isTauriRuntimeAvailable()) {
 		return;
 	}
 
@@ -130,7 +81,7 @@ export async function syncWorkduckTrayIconEnabled(enabled: boolean): Promise<voi
 export async function hideWorkduckWindowToTray(): Promise<boolean> {
 	const appWindow = getCurrentTauriWindow();
 
-	if (appWindow?.hide === undefined) {
+	if (appWindow === undefined) {
 		return false;
 	}
 
@@ -167,15 +118,15 @@ async function restoreWorkduckWindowFromTray() {
 	}
 
 	try {
-		await appWindow.show?.();
-		await appWindow.unminimize?.();
-		await appWindow.setFocus?.();
+		await appWindow.show();
+		await appWindow.unminimize();
+		await appWindow.setFocus();
 	} catch {
 		return;
 	}
 }
 
-async function showWorkduckTrayMenu(event: TauriTrayIconEvent) {
+async function showWorkduckTrayMenu(event: TrayIconEvent) {
 	const invoke = getTauriInvoke();
 
 	if (invoke === undefined) {
@@ -192,12 +143,6 @@ async function showWorkduckTrayMenu(event: TauriTrayIconEvent) {
 }
 
 async function readDefaultWindowIcon() {
-	const defaultWindowIcon = getTauriGlobal()?.app?.defaultWindowIcon;
-
-	if (defaultWindowIcon === undefined) {
-		return undefined;
-	}
-
 	try {
 		return (await defaultWindowIcon()) ?? undefined;
 	} catch {
@@ -206,10 +151,14 @@ async function readDefaultWindowIcon() {
 }
 
 function getCurrentTauriWindow() {
-	return getTauriGlobal()?.window?.getCurrentWindow?.();
+	if (!isTauriRuntimeAvailable()) {
+		return undefined;
+	}
+
+	return getCurrentWindow();
 }
 
-function normalizeTrayPosition(position: TauriTrayIconEvent['position']) {
+function normalizeTrayPosition(position: TrayIconEvent['position']) {
 	if (
 		position === undefined ||
 		typeof position.x !== 'number' ||
@@ -224,8 +173,4 @@ function normalizeTrayPosition(position: TauriTrayIconEvent['position']) {
 		x: position.x,
 		y: position.y
 	};
-}
-
-function getTauriGlobal() {
-	return getWorkduckTauriGlobal() as WorkduckTrayTauriGlobal | undefined;
 }

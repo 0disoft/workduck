@@ -1,7 +1,7 @@
 import { check, type DownloadEvent, type Update } from '@tauri-apps/plugin-updater';
 import { relaunch } from '@tauri-apps/plugin-process';
 
-import { getTauriGlobal } from '$lib/tauri/tauri-invoke';
+import { isTauriRuntimeAvailable } from '$lib/tauri/tauri-invoke';
 
 const UPDATE_CHECK_TIMEOUT_MS = 15_000;
 const UPDATE_INSTALL_TIMEOUT_MS = 120_000;
@@ -20,7 +20,7 @@ export interface WorkduckUpdateInstallProgress {
 let pendingUpdate: Update | null = null;
 
 export async function checkForWorkduckUpdate(): Promise<WorkduckAvailableUpdate | null> {
-	if (getTauriGlobal() === undefined) {
+	if (!isTauriRuntimeAvailable()) {
 		return null;
 	}
 

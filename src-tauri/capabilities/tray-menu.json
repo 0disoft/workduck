@@ -1,0 +1,8 @@
+{
+  "identifier": "tray-menu",
+  "description": "Permissions for the lightweight Workduck tray menu window.",
+  "windows": ["tray-menu"],
+  "permissions": [
+    "core:default"
+  ]
+}

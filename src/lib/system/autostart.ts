@@ -1,3 +1,5 @@
+import { getTauriInvoke } from '$lib/tauri/tauri-invoke';
+
 export type WorkduckAutostartError =
 	| 'autostart-unavailable'
 	| 'autostart-read-failed'
@@ -25,27 +27,17 @@ export type WorkduckAutostartWriteResult =
 			readonly error: WorkduckAutostartError;
 	  };
 
-interface TauriAutostartApi {
-	readonly enable?: () => Promise<void>;
-	readonly disable?: () => Promise<void>;
-	readonly isEnabled?: () => Promise<boolean>;
-}
-
-interface TauriGlobalWindow {
-	readonly __TAURI__?: {
-		readonly autostart?: TauriAutostartApi;
-	};
-}
-
 export async function readWorkduckAutostartEnabled(): Promise<WorkduckAutostartReadResult> {
-	const autostart = getTauriAutostart();
+	const invoke = getTauriInvoke();
 
-	if (autostart?.isEnabled === undefined) {
+	if (invoke === undefined) {
 		return { ok: false, enabled: false, error: 'autostart-unavailable' };
 	}
 
 	try {
-		return { ok: true, enabled: await autostart.isEnabled() };
+		return normalizeAutostartReadResponse(
+			await invoke<unknown>('read_workduck_autostart_enabled')
+		);
 	} catch {
 		return { ok: false, enabled: false, error: 'autostart-read-failed' };
 	}
@@ -54,35 +46,73 @@ export async function readWorkduckAutostartEnabled(): Promise<WorkduckAutostartR
 export async function setWorkduckAutostartEnabled(
 	enabled: boolean
 ): Promise<WorkduckAutostartWriteResult> {
-	const autostart = getTauriAutostart();
+	const invoke = getTauriInvoke();
 
-	if (autostart?.enable === undefined || autostart.disable === undefined) {
+	if (invoke === undefined) {
 		return { ok: false, enabled, error: 'autostart-unavailable' };
 	}
 
 	try {
-		if (enabled) {
-			await autostart.enable();
-		} else {
-			await autostart.disable();
-		}
+		return normalizeAutostartWriteResponse(
+			await invoke<unknown>('set_workduck_autostart_enabled', { enabled }),
+			enabled
+		);
 	} catch {
 		return { ok: false, enabled, error: 'autostart-write-failed' };
 	}
-
-	const readResult = await readWorkduckAutostartEnabled();
-
-	if (!readResult.ok) {
-		return { ok: false, enabled, error: 'autostart-read-failed' };
-	}
-
-	return { ok: true, enabled: readResult.enabled };
 }
 
-function getTauriAutostart() {
-	if (typeof window === 'undefined') {
-		return undefined;
+function normalizeAutostartReadResponse(response: unknown): WorkduckAutostartReadResult {
+	if (isAutostartSuccessResponse(response)) {
+		return { ok: true, enabled: response.enabled };
 	}
 
-	return (window as unknown as TauriGlobalWindow).__TAURI__?.autostart;
+	if (isAutostartFailureResponse(response)) {
+		return { ok: false, enabled: false, error: response.error };
+	}
+
+	return { ok: false, enabled: false, error: 'autostart-read-failed' };
+}
+
+function normalizeAutostartWriteResponse(
+	response: unknown,
+	requestedEnabled: boolean
+): WorkduckAutostartWriteResult {
+	if (isAutostartSuccessResponse(response)) {
+		return { ok: true, enabled: response.enabled };
+	}
+
+	if (isAutostartFailureResponse(response)) {
+		return { ok: false, enabled: requestedEnabled, error: response.error };
+	}
+
+	return { ok: false, enabled: requestedEnabled, error: 'autostart-write-failed' };
+}
+
+function isAutostartSuccessResponse(
+	response: unknown
+): response is { readonly ok: true; readonly enabled: boolean } {
+	return isObjectRecord(response) && response.ok === true && typeof response.enabled === 'boolean';
+}
+
+function isAutostartFailureResponse(
+	response: unknown
+): response is { readonly ok: false; readonly error: WorkduckAutostartError } {
+	return (
+		isObjectRecord(response) &&
+		response.ok === false &&
+		isWorkduckAutostartError(response.error)
+	);
+}
+
+function isWorkduckAutostartError(error: unknown): error is WorkduckAutostartError {
+	return (
+		error === 'autostart-unavailable' ||
+		error === 'autostart-read-failed' ||
+		error === 'autostart-write-failed'
+	);
+}
+
+function isObjectRecord(value: unknown): value is Record<string, unknown> {
+	return typeof value === 'object' && value !== null;
 }

@@ -1,47 +1,22 @@
+import {
+	getCurrentWindow,
+	PhysicalSize as TauriPhysicalSize,
+	type Window as TauriWindow
+} from '@tauri-apps/api/window';
+
 import { readSystemSettingsFromBrowser } from '$lib/settings/system-storage';
 import { hideWorkduckWindowToTray } from '$lib/system/tray';
+import { isTauriRuntimeAvailable } from '$lib/tauri/tauri-invoke';
 
-interface TauriWindowController {
-	close: () => Promise<void>;
-	hide: () => Promise<void>;
-	innerSize: () => Promise<TauriPhysicalSize>;
-	isMaximized: () => Promise<boolean>;
-	maximize: () => Promise<void>;
-	minimize: () => Promise<void>;
-	onResized: (handler: (event: { payload: TauriPhysicalSize }) => void) => Promise<() => void>;
-	setFocus: () => Promise<void>;
-	startDragging: () => Promise<void>;
-	setSize: (size: TauriWindowSize) => Promise<void>;
-	show: () => Promise<void>;
-	toggleMaximize: () => Promise<void>;
-	unminimize: () => Promise<void>;
-}
-
-interface TauriWindowApi {
-	getCurrentWindow: () => TauriWindowController;
-}
-
-declare global {
-	interface Window {
-		__TAURI__?: {
-			window?: TauriWindowApi;
-		};
-	}
-}
-
-interface TauriPhysicalSize {
+interface WorkduckWindowSize {
 	readonly width: number;
 	readonly height: number;
-}
-
-interface TauriWindowSize extends TauriPhysicalSize {
-	readonly type: 'Physical';
 }
 
 interface WorkduckWindowState {
 	readonly version: 1;
 	readonly maximized: boolean;
-	readonly size?: TauriPhysicalSize;
+	readonly size?: WorkduckWindowSize;
 }
 
 const WINDOW_STATE_STORAGE_KEY = 'workduck:window-state:v1';
@@ -50,14 +25,14 @@ const WINDOW_STATE_MIN_HEIGHT_PX = 600;
 const WINDOW_STATE_MAX_DIMENSION_PX = 20000;
 
 function getCurrentTauriWindow() {
-	if (typeof window === 'undefined') {
+	if (!isTauriRuntimeAvailable()) {
 		return undefined;
 	}
 
-	return window.__TAURI__?.window?.getCurrentWindow?.();
+	return getCurrentWindow();
 }
 
-function isUsableWindowSize(value: unknown): value is TauriPhysicalSize {
+function isUsableWindowSize(value: unknown): value is WorkduckWindowSize {
 	if (typeof value !== 'object' || value === null) {
 		return false;
 	}
@@ -132,7 +107,7 @@ function writeWindowState(state: WorkduckWindowState) {
 	}
 }
 
-async function captureWindowState(appWindow: TauriWindowController) {
+async function captureWindowState(appWindow: TauriWindow) {
 	const previousState = readWindowState();
 	const maximized = await appWindow.isMaximized();
 
@@ -166,7 +141,7 @@ async function captureWindowState(appWindow: TauriWindowController) {
 	});
 }
 
-async function applyInitialWindowState(appWindow: TauriWindowController) {
+async function applyInitialWindowState(appWindow: TauriWindow) {
 	const state = readWindowState();
 
 	if (state === null) {
@@ -181,15 +156,11 @@ async function applyInitialWindowState(appWindow: TauriWindowController) {
 	}
 
 	if (state.size !== undefined) {
-		await appWindow.setSize({
-			type: 'Physical',
-			width: state.size.width,
-			height: state.size.height
-		});
+		await appWindow.setSize(new TauriPhysicalSize(state.size.width, state.size.height));
 	}
 }
 
-function createWindowStateCapture(appWindow: TauriWindowController) {
+function createWindowStateCapture(appWindow: TauriWindow) {
 	let timeoutId: number | undefined;
 
 	function clearPendingCapture() {
@@ -223,7 +194,7 @@ function createWindowStateCapture(appWindow: TauriWindowController) {
 	};
 }
 
-async function runWindowAction(action: (appWindow: TauriWindowController) => Promise<void>) {
+async function runWindowAction(action: (appWindow: TauriWindow) => Promise<void>) {
 	const appWindow = getCurrentTauriWindow();
 
 	if (appWindow === undefined) {
