@@ -1,9 +1,10 @@
 use std::{
     fs,
-    io::{self, Write},
+    io,
     path::{Path, PathBuf},
 };
 
+use crate::atomic_file_write::{write_file_atomically, AtomicFileWriteError};
 use crate::workspace_repository_gitignore::ensure_secrets_sync_gitignore_policy;
 
 const WORKDUCK_DIRECTORY_NAME: &str = ".workduck";
@@ -128,8 +129,9 @@ pub fn write_workspace_data_file(
         Err(error) => return invalid_write(error),
     };
 
-    if write_workspace_data_file_safely(&file_path, content).is_err() {
-        return invalid_write(WorkspaceDataFileError::FileWriteFailed);
+    let write_result = write_file_atomically(&file_path, &content).map_err(map_atomic_write_error);
+    if let Err(error) = write_result {
+        return invalid_write(error);
     }
 
     if normalized_file_name == SECRETS_SYNC_FILE_NAME
@@ -144,67 +146,13 @@ pub fn write_workspace_data_file(
     }
 }
 
-fn write_workspace_data_file_safely(
-    file_path: &Path,
-    content: String,
-) -> Result<(), WorkspaceDataFileError> {
-    reject_symlink_path(file_path, WorkspaceDataFileError::FileInvalid)?;
-
-    let parent = file_path
-        .parent()
-        .ok_or(WorkspaceDataFileError::FileInvalid)?;
-    let file_name = file_path
-        .file_name()
-        .and_then(|name| name.to_str())
-        .ok_or(WorkspaceDataFileError::FileInvalid)?;
-    let process_id = std::process::id();
-
-    for index in 0..32 {
-        let temporary_path = parent.join(format!(".{file_name}.tmp.{process_id}.{index}"));
-        reject_symlink_path(&temporary_path, WorkspaceDataFileError::FileWriteFailed)?;
-
-        let mut temporary_file = match fs::OpenOptions::new()
-            .write(true)
-            .create_new(true)
-            .open(&temporary_path)
-        {
-            Ok(file) => file,
-            Err(error) if error.kind() == io::ErrorKind::AlreadyExists => continue,
-            Err(_) => return Err(WorkspaceDataFileError::FileWriteFailed),
-        };
-
-        let write_result = temporary_file
-            .write_all(content.as_bytes())
-            .and_then(|_| temporary_file.flush());
-        drop(temporary_file);
-
-        if write_result.is_err() {
-            let _ = fs::remove_file(&temporary_path);
-            return Err(WorkspaceDataFileError::FileWriteFailed);
-        }
-
-        if fs::rename(&temporary_path, file_path).is_err() {
-            let _ = fs::remove_file(&temporary_path);
-            return Err(WorkspaceDataFileError::FileWriteFailed);
-        }
-
-        return Ok(());
-    }
-
-    Err(WorkspaceDataFileError::FileWriteFailed)
-}
-
-fn reject_symlink_path(
-    path: &Path,
-    error: WorkspaceDataFileError,
-) -> Result<(), WorkspaceDataFileError> {
-    if let Ok(metadata) = fs::symlink_metadata(path) {
-        if metadata.file_type().is_symlink() {
-            return Err(error);
+fn map_atomic_write_error(error: AtomicFileWriteError) -> WorkspaceDataFileError {
+    match error {
+        AtomicFileWriteError::TargetInvalid => WorkspaceDataFileError::FileInvalid,
+        AtomicFileWriteError::TargetAlreadyExists | AtomicFileWriteError::WriteFailed => {
+            WorkspaceDataFileError::FileWriteFailed
         }
     }
-
-    Ok(())
 }
 
 fn resolve_workspace_data_file_path(

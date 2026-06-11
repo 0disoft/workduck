@@ -9,9 +9,11 @@ use crate::workspace_sync_file::{
 };
 
 use std::{
-    fs, io,
+    fs,
+    io::{self, Read},
     path::{Path, PathBuf},
-    process::{Command, Output, Stdio},
+    process::{Child, Command, Output, Stdio},
+    thread,
     time::Duration,
 };
 
@@ -155,6 +157,12 @@ enum WorkspaceSyncGitPhase {
 struct WorkspaceSyncGitFailure {
     error: WorkspaceSyncGitRunError,
     phase: Option<WorkspaceSyncGitPhase>,
+}
+
+#[derive(Debug)]
+enum GitChildWaitError {
+    TimedOut,
+    Failed,
 }
 
 #[tauri::command]
@@ -704,7 +712,7 @@ fn run_git_command(
     #[cfg(target_os = "windows")]
     command.creation_flags(CREATE_NO_WINDOW);
 
-    let mut child = command.spawn().map_err(|error| WorkspaceSyncGitFailure {
+    let child = command.spawn().map_err(|error| WorkspaceSyncGitFailure {
         error: if error.kind() == io::ErrorKind::NotFound {
             WorkspaceSyncGitRunError::CommandUnavailable
         } else {
@@ -713,32 +721,15 @@ fn run_git_command(
         phase: Some(phase),
     })?;
 
-    match child.wait_timeout(WORKSPACE_SYNC_GIT_COMMAND_TIMEOUT) {
-        Ok(Some(_)) => child
-            .wait_with_output()
-            .map_err(|_| WorkspaceSyncGitFailure {
-                error: WorkspaceSyncGitRunError::CommandFailed,
-                phase: Some(phase),
-            }),
-        Ok(None) => {
-            let _ = child.kill();
-            let _ = child.wait();
-
-            Err(WorkspaceSyncGitFailure {
-                error: WorkspaceSyncGitRunError::CommandTimedOut,
-                phase: Some(phase),
-            })
+    wait_for_child_output(child, WORKSPACE_SYNC_GIT_COMMAND_TIMEOUT).map_err(|error| {
+        WorkspaceSyncGitFailure {
+            error: match error {
+                GitChildWaitError::TimedOut => WorkspaceSyncGitRunError::CommandTimedOut,
+                GitChildWaitError::Failed => WorkspaceSyncGitRunError::CommandFailed,
+            },
+            phase: Some(phase),
         }
-        Err(_) => {
-            let _ = child.kill();
-            let _ = child.wait();
-
-            Err(WorkspaceSyncGitFailure {
-                error: WorkspaceSyncGitRunError::CommandFailed,
-                phase: Some(phase),
-            })
-        }
-    }
+    })
 }
 
 fn workspace_sync_phase_may_need_credentials(phase: WorkspaceSyncGitPhase) -> bool {
@@ -793,6 +784,57 @@ fn git_output_text(output: &Output) -> String {
     output_text.push_str(&String::from_utf8_lossy(&output.stdout));
     output_text.push_str(&String::from_utf8_lossy(&output.stderr));
     output_text
+}
+
+fn wait_for_child_output(mut child: Child, timeout: Duration) -> Result<Output, GitChildWaitError> {
+    let stdout_reader = child.stdout.take().map(spawn_output_reader);
+    let stderr_reader = child.stderr.take().map(spawn_output_reader);
+
+    match child.wait_timeout(timeout) {
+        Ok(Some(status)) => {
+            let stdout = join_output_reader(stdout_reader);
+            let stderr = join_output_reader(stderr_reader);
+
+            Ok(Output {
+                status,
+                stdout,
+                stderr,
+            })
+        }
+        Ok(None) => {
+            let _ = child.kill();
+            let _ = child.wait();
+            let _ = join_output_reader(stdout_reader);
+            let _ = join_output_reader(stderr_reader);
+
+            Err(GitChildWaitError::TimedOut)
+        }
+        Err(_) => {
+            let _ = child.kill();
+            let _ = child.wait();
+            let _ = join_output_reader(stdout_reader);
+            let _ = join_output_reader(stderr_reader);
+
+            Err(GitChildWaitError::Failed)
+        }
+    }
+}
+
+fn spawn_output_reader<T>(mut reader: T) -> thread::JoinHandle<Vec<u8>>
+where
+    T: Read + Send + 'static,
+{
+    thread::spawn(move || {
+        let mut output = Vec::new();
+        let _ = reader.read_to_end(&mut output);
+        output
+    })
+}
+
+fn join_output_reader(reader: Option<thread::JoinHandle<Vec<u8>>>) -> Vec<u8> {
+    reader
+        .and_then(|reader| reader.join().ok())
+        .unwrap_or_default()
 }
 
 fn redact_remote_credentials(remote_url: &str) -> String {
@@ -890,5 +932,47 @@ fn map_folder_error(error: io::Error) -> WorkspaceSyncGitError {
         io::ErrorKind::NotFound => WorkspaceSyncGitError::FolderNotFound,
         io::ErrorKind::PermissionDenied => WorkspaceSyncGitError::FolderPermissionDenied,
         _ => WorkspaceSyncGitError::ReadFailed,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn child_output_wait_drains_large_stdout_and_stderr() {
+        let mut command = large_output_command();
+        command
+            .stdin(Stdio::null())
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped());
+
+        let child = command.spawn().expect("spawn large output command");
+        let output =
+            wait_for_child_output(child, Duration::from_secs(10)).expect("large output completes");
+
+        assert!(output.status.success());
+        assert!(output.stdout.len() > 64 * 1024);
+        assert!(output.stderr.len() > 64 * 1024);
+    }
+
+    #[cfg(target_os = "windows")]
+    fn large_output_command() -> Command {
+        let mut command = Command::new("cmd");
+        command.args([
+            "/C",
+            "(for /L %i in (1,1,9000) do @echo stdout%i) & (for /L %i in (1,1,9000) do @echo stderr%i 1>&2)",
+        ]);
+        command
+    }
+
+    #[cfg(not(target_os = "windows"))]
+    fn large_output_command() -> Command {
+        let mut command = Command::new("sh");
+        command.args([
+            "-c",
+            "i=0; while [ $i -lt 9000 ]; do echo stdout$i; echo stderr$i >&2; i=$((i + 1)); done",
+        ]);
+        command
     }
 }

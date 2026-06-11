@@ -241,7 +241,7 @@ fn create_terminal_args(terminal_id: &str) -> Vec<&'static str> {
             "-Command",
             POWERSHELL_BOOTSTRAP_COMMAND,
         ],
-        "command-prompt" => vec!["/Q"],
+        "command-prompt" => vec!["/Q", "/K", "chcp 65001 >NUL"],
         _ => Vec::new(),
     }
 }
@@ -542,8 +542,17 @@ fn normalize_workspace_path(value: &str) -> Result<String, String> {
 #[cfg(test)]
 mod tests {
     use super::{
-        AnsiStripState, TERMINAL_OUTPUT_MAX_BYTES, TerminalOutputBuffer, strip_ansi_sequences,
+        AnsiStripState, TERMINAL_OUTPUT_MAX_BYTES, TerminalOutputBuffer, create_terminal_args,
+        strip_ansi_sequences,
     };
+
+    #[test]
+    fn command_prompt_bootstrap_switches_to_utf8_codepage() {
+        assert_eq!(
+            create_terminal_args("command-prompt"),
+            vec!["/Q", "/K", "chcp 65001 >NUL"]
+        );
+    }
 
     #[test]
     fn strip_ansi_sequences_preserves_korean_utf8_bytes() {

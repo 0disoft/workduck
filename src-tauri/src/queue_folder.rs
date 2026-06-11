@@ -1,10 +1,13 @@
 use std::{
-    fs::{self, OpenOptions},
-    io::{self, Write},
+    fs,
+    io,
     path::{Path, PathBuf},
     process::{Command, Stdio},
 };
 
+use crate::atomic_file_write::{
+    write_file_atomically, write_file_exclusively, AtomicFileWriteError,
+};
 use crate::path_display::display_path;
 
 const QUEUE_DIRECTORY_NAME: &str = "queue";
@@ -221,22 +224,14 @@ pub fn write_queue_work_order_file(
         return invalid_file_read(error);
     }
 
-    match OpenOptions::new()
-        .write(true)
-        .create_new(true)
-        .open(&file_path)
-        .and_then(|mut file| file.write_all(content.as_bytes()))
-    {
+    match write_file_exclusively(&file_path, &content).map_err(map_atomic_file_write_error) {
         Ok(_) => QueueFileReadResult {
             ok: true,
             relative_path: Some(relative_path),
             content: Some(content),
             error: None,
         },
-        Err(error) if error.kind() == io::ErrorKind::AlreadyExists => {
-            invalid_file_read(QueueFolderError::FileAlreadyExists)
-        }
-        Err(_) => invalid_file_read(QueueFolderError::FileWriteFailed),
+        Err(error) => invalid_file_read(error),
     }
 }
 
@@ -261,22 +256,14 @@ pub fn write_queue_result_report_file(
     let relative_path = format!("{REPORTS_DIRECTORY_NAME}/{safe_file_name}");
     let file_path = queue_root.join(REPORTS_DIRECTORY_NAME).join(&safe_file_name);
 
-    match OpenOptions::new()
-        .write(true)
-        .create_new(true)
-        .open(&file_path)
-        .and_then(|mut file| file.write_all(content.as_bytes()))
-    {
+    match write_file_exclusively(&file_path, &content).map_err(map_atomic_file_write_error) {
         Ok(_) => QueueFileReadResult {
             ok: true,
             relative_path: Some(relative_path),
             content: Some(content),
             error: None,
         },
-        Err(error) if error.kind() == io::ErrorKind::AlreadyExists => {
-            invalid_file_read(QueueFolderError::FileAlreadyExists)
-        }
-        Err(_) => invalid_file_read(QueueFolderError::FileWriteFailed),
+        Err(error) => invalid_file_read(error),
     }
 }
 
@@ -311,22 +298,14 @@ pub fn update_queue_work_order_file(
         return invalid_file_read(error);
     }
 
-    match OpenOptions::new()
-        .write(true)
-        .truncate(true)
-        .open(&file_path)
-        .and_then(|mut file| file.write_all(content.as_bytes()))
-    {
+    match write_file_atomically(&file_path, &content).map_err(map_atomic_file_write_error) {
         Ok(_) => QueueFileReadResult {
             ok: true,
             relative_path: Some(normalized_relative_path),
             content: Some(content),
             error: None,
         },
-        Err(error) if error.kind() == io::ErrorKind::NotFound => {
-            invalid_file_read(QueueFolderError::FileNotFound)
-        }
-        Err(_) => invalid_file_read(QueueFolderError::FileWriteFailed),
+        Err(error) => invalid_file_read(error),
     }
 }
 
@@ -355,22 +334,14 @@ pub fn update_queue_result_report_file(
         Err(error) => return invalid_file_read(error),
     };
 
-    match OpenOptions::new()
-        .write(true)
-        .truncate(true)
-        .open(&file_path)
-        .and_then(|mut file| file.write_all(content.as_bytes()))
-    {
+    match write_file_atomically(&file_path, &content).map_err(map_atomic_file_write_error) {
         Ok(_) => QueueFileReadResult {
             ok: true,
             relative_path: Some(normalized_relative_path),
             content: Some(content),
             error: None,
         },
-        Err(error) if error.kind() == io::ErrorKind::NotFound => {
-            invalid_file_read(QueueFolderError::FileNotFound)
-        }
-        Err(_) => invalid_file_read(QueueFolderError::FileWriteFailed),
+        Err(error) => invalid_file_read(error),
     }
 }
 
@@ -427,6 +398,14 @@ fn validate_workspace_root(path: &str) -> Result<PathBuf, QueueFolderError> {
     fs::read_dir(&normalized_path).map_err(map_workspace_error)?;
 
     Ok(normalized_path)
+}
+
+fn map_atomic_file_write_error(error: AtomicFileWriteError) -> QueueFolderError {
+    match error {
+        AtomicFileWriteError::TargetInvalid => QueueFolderError::FileInvalid,
+        AtomicFileWriteError::TargetAlreadyExists => QueueFolderError::FileAlreadyExists,
+        AtomicFileWriteError::WriteFailed => QueueFolderError::FileWriteFailed,
+    }
 }
 
 fn ensure_queue_root(workspace_root: &Path) -> Result<PathBuf, QueueFolderError> {
@@ -849,6 +828,44 @@ mod tests {
         assert_eq!(result, Ok(()));
     }
 
+    #[test]
+    fn create_new_queue_write_does_not_clobber_existing_file() {
+        let queue_root = create_test_queue_root();
+        let file_path = queue_root
+            .join(WORK_ORDERS_DIRECTORY_NAME)
+            .join("existing.workduck-work-order.json");
+        fs::write(&file_path, "old content").expect("existing queue file");
+
+        let result = write_file_exclusively(&file_path, "new content")
+            .map_err(map_atomic_file_write_error);
+
+        let content = fs::read_to_string(&file_path).expect("existing content preserved");
+        fs::remove_dir_all(&queue_root).ok();
+
+        assert_eq!(result, Err(QueueFolderError::FileAlreadyExists));
+        assert_eq!(content, "old content");
+    }
+
+    #[test]
+    fn replace_existing_queue_write_swaps_complete_content() {
+        let queue_root = create_test_queue_root();
+        let file_path = queue_root
+            .join(WORK_ORDERS_DIRECTORY_NAME)
+            .join("existing.workduck-work-order.json");
+        fs::write(&file_path, "old content").expect("existing queue file");
+
+        let result =
+            write_file_atomically(&file_path, "new content").map_err(map_atomic_file_write_error);
+
+        let content = fs::read_to_string(&file_path).expect("replaced queue file");
+        let temp_files = list_queue_write_temp_files(&queue_root.join(WORK_ORDERS_DIRECTORY_NAME));
+        fs::remove_dir_all(&queue_root).ok();
+
+        assert_eq!(result, Ok(()));
+        assert_eq!(content, "new content");
+        assert!(temp_files.is_empty(), "temporary files left behind: {temp_files:?}");
+    }
+
     fn create_test_queue_root() -> PathBuf {
         let unique = SystemTime::now()
             .duration_since(UNIX_EPOCH)
@@ -858,6 +875,15 @@ mod tests {
 
         fs::create_dir_all(queue_root.join(WORK_ORDERS_DIRECTORY_NAME)).expect("work-orders dir");
         queue_root
+    }
+
+    fn list_queue_write_temp_files(parent: &Path) -> Vec<String> {
+        fs::read_dir(parent)
+            .expect("queue child directory")
+            .filter_map(|entry| entry.ok())
+            .map(|entry| entry.file_name().to_string_lossy().into_owned())
+            .filter(|name| name.starts_with(".workduck-write."))
+            .collect()
     }
 
     fn evaluation_delegation_content(source_report_id: &str) -> String {

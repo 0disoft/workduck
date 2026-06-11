@@ -5796,7 +5796,7 @@ dependencies = [
 
 [[package]]
 name = "workduck"
-version = "1.6.4"
+version = "1.6.5"
 dependencies = [
  "argon2",
  "base64 0.22.1",
@@ -5813,6 +5813,7 @@ dependencies = [
  "tauri-plugin-notification",
  "tauri-plugin-process",
  "tauri-plugin-updater",
+ "tempfile",
  "time",
  "tokio",
  "wait-timeout",
