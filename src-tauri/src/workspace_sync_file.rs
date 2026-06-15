@@ -3,6 +3,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use crate::atomic_file_write::{AtomicFileWriteError, write_file_atomically};
 use crate::path_display::display_path;
 
 const WORKSPACE_SYNC_FILE_NAME_MAX_CHARS: usize = 120;
@@ -79,13 +80,13 @@ pub fn write_workspace_sync_file(
         return invalid_write(error);
     }
 
-    match fs::write(&sync_file_path, content) {
+    match write_file_atomically(&sync_file_path, &content) {
         Ok(()) => WorkspaceSyncFileWrite {
             ok: true,
             normalized_path: Some(display_path(&sync_file_path)),
             error: None,
         },
-        Err(error) => invalid_write(map_write_error(error)),
+        Err(error) => invalid_write(map_atomic_write_error(error)),
     }
 }
 
@@ -228,9 +229,11 @@ fn map_read_error(error: io::Error) -> WorkspaceSyncFileError {
     }
 }
 
-fn map_write_error(error: io::Error) -> WorkspaceSyncFileError {
-    match error.kind() {
-        io::ErrorKind::PermissionDenied => WorkspaceSyncFileError::FolderPermissionDenied,
-        _ => WorkspaceSyncFileError::WriteFailed,
+fn map_atomic_write_error(error: AtomicFileWriteError) -> WorkspaceSyncFileError {
+    match error {
+        AtomicFileWriteError::TargetInvalid => WorkspaceSyncFileError::FileTargetInvalid,
+        AtomicFileWriteError::TargetAlreadyExists | AtomicFileWriteError::WriteFailed => {
+            WorkspaceSyncFileError::WriteFailed
+        }
     }
 }

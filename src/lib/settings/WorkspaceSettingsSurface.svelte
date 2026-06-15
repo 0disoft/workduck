@@ -21,6 +21,7 @@
 		createWorkspacePasswordHash,
 	} from '$lib/workspaces/workspace-password';
 	import { resolveDefaultGithubTokenCredential } from '$lib/environment/github-credential';
+	import { clearEnvironmentVaultSession } from '$lib/environment/environment-vault-session';
 	import {
 		runProjectRepositoryTask,
 		type ProjectRepositoryTaskError
@@ -890,6 +891,7 @@
 		}
 
 		markWorkspaceLocked(workspaceId);
+		clearEnvironmentVaultSession(workspaceId);
 
 		if (workspaceUnlockId === workspaceId) {
 			clearWorkspaceUnlockRequest();
@@ -906,6 +908,7 @@
 
 		if (persistRegistry(result.registry)) {
 			markWorkspaceLocked(workspaceId);
+			clearEnvironmentVaultSession(workspaceId);
 
 			if (workspaceUnlockId === workspaceId) {
 				clearWorkspaceUnlockRequest();

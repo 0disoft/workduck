@@ -505,7 +505,14 @@ fn inspect_project_repository_git_record(
 }
 
 #[tauri::command]
-pub fn initialize_project_repository_git(path: String) -> ProjectRepositoryGitMutation {
+pub async fn initialize_project_repository_git(path: String) -> ProjectRepositoryGitMutation {
+    run_project_repository_git_mutation_off_thread(move || {
+        initialize_project_repository_git_blocking(path)
+    })
+    .await
+}
+
+fn initialize_project_repository_git_blocking(path: String) -> ProjectRepositoryGitMutation {
     let repository_path = match validate_repository_path(&path) {
         Ok(repository_path) => repository_path,
         Err(error) => return invalid_git_mutation(error),
@@ -535,49 +542,109 @@ pub fn initialize_project_repository_git(path: String) -> ProjectRepositoryGitMu
 }
 
 #[tauri::command]
-pub fn fetch_project_repository_git(
+pub async fn fetch_project_repository_git(
     path: String,
     credential_kind: Option<String>,
     credential_value: Option<String>,
 ) -> ProjectRepositoryGitMutation {
+    run_project_repository_git_mutation_off_thread(move || {
+        fetch_project_repository_git_blocking(path, credential_kind, credential_value)
+    })
+    .await
+}
+
+fn fetch_project_repository_git_blocking(
+    path: String,
+    credential_kind: Option<String>,
+    credential_value: Option<String>,
+) -> ProjectRepositoryGitMutation {
+    let credential = parse_git_credential(credential_kind, credential_value);
+
     run_remote_project_repository_git_command(
         path,
         &["fetch", "--all", "--prune"],
         classify_git_fetch_failure,
-        parse_git_credential(credential_kind, credential_value).as_ref(),
+        credential.as_ref(),
     )
 }
 
 #[tauri::command]
-pub fn pull_project_repository_git(
+pub async fn pull_project_repository_git(
     path: String,
     credential_kind: Option<String>,
     credential_value: Option<String>,
 ) -> ProjectRepositoryGitMutation {
+    run_project_repository_git_mutation_off_thread(move || {
+        pull_project_repository_git_blocking(path, credential_kind, credential_value)
+    })
+    .await
+}
+
+fn pull_project_repository_git_blocking(
+    path: String,
+    credential_kind: Option<String>,
+    credential_value: Option<String>,
+) -> ProjectRepositoryGitMutation {
+    let credential = parse_git_credential(credential_kind, credential_value);
+
     run_remote_project_repository_git_command(
         path,
         &["pull", "--ff-only"],
         classify_git_pull_failure,
-        parse_git_credential(credential_kind, credential_value).as_ref(),
+        credential.as_ref(),
     )
 }
 
 #[tauri::command]
-pub fn push_project_repository_git(
+pub async fn push_project_repository_git(
     path: String,
     credential_kind: Option<String>,
     credential_value: Option<String>,
 ) -> ProjectRepositoryGitMutation {
+    run_project_repository_git_mutation_off_thread(move || {
+        push_project_repository_git_blocking(path, credential_kind, credential_value)
+    })
+    .await
+}
+
+fn push_project_repository_git_blocking(
+    path: String,
+    credential_kind: Option<String>,
+    credential_value: Option<String>,
+) -> ProjectRepositoryGitMutation {
+    let credential = parse_git_credential(credential_kind, credential_value);
+
     run_remote_project_repository_git_command(
         path,
         &["push", "-u", "origin", "HEAD"],
         classify_git_push_failure,
-        parse_git_credential(credential_kind, credential_value).as_ref(),
+        credential.as_ref(),
     )
 }
 
 #[tauri::command]
-pub fn publish_project_repository_to_github(
+pub async fn publish_project_repository_to_github(
+    path: String,
+    repository_name: String,
+    commit_message: String,
+    visibility: String,
+    credential_kind: Option<String>,
+    credential_value: Option<String>,
+) -> ProjectRepositoryGitMutation {
+    run_project_repository_git_mutation_off_thread(move || {
+        publish_project_repository_to_github_blocking(
+            path,
+            repository_name,
+            commit_message,
+            visibility,
+            credential_kind,
+            credential_value,
+        )
+    })
+    .await
+}
+
+fn publish_project_repository_to_github_blocking(
     path: String,
     repository_name: String,
     commit_message: String,
@@ -658,7 +725,17 @@ pub fn publish_project_repository_to_github(
 }
 
 #[tauri::command]
-pub fn prepare_project_repository_for_github_publish(
+pub async fn prepare_project_repository_for_github_publish(
+    path: String,
+    commit_message: String,
+) -> ProjectRepositoryGitMutation {
+    run_project_repository_git_mutation_off_thread(move || {
+        prepare_project_repository_for_github_publish_blocking(path, commit_message)
+    })
+    .await
+}
+
+fn prepare_project_repository_for_github_publish_blocking(
     path: String,
     commit_message: String,
 ) -> ProjectRepositoryGitMutation {
@@ -694,7 +771,24 @@ pub fn prepare_project_repository_for_github_publish(
 }
 
 #[tauri::command]
-pub fn push_project_repository_to_github(
+pub async fn push_project_repository_to_github(
+    path: String,
+    remote_url: String,
+    credential_kind: Option<String>,
+    credential_value: Option<String>,
+) -> ProjectRepositoryGitMutation {
+    run_project_repository_git_mutation_off_thread(move || {
+        push_project_repository_to_github_blocking(
+            path,
+            remote_url,
+            credential_kind,
+            credential_value,
+        )
+    })
+    .await
+}
+
+fn push_project_repository_to_github_blocking(
     path: String,
     remote_url: String,
     credential_kind: Option<String>,
@@ -751,6 +845,14 @@ pub fn push_project_repository_to_github(
     } else {
         invalid_git_mutation(classify_git_push_failure(&push_output))
     }
+}
+
+async fn run_project_repository_git_mutation_off_thread(
+    task: impl FnOnce() -> ProjectRepositoryGitMutation + Send + 'static,
+) -> ProjectRepositoryGitMutation {
+    tauri::async_runtime::spawn_blocking(task)
+        .await
+        .unwrap_or_else(|_| invalid_git_mutation(ProjectRepositoryGitError::CommandFailed))
 }
 
 fn run_remote_project_repository_git_command(

@@ -737,7 +737,7 @@ function createQueueRandomToken() {
 		return Array.from(values, (value) => value.toString(36).padStart(2, '0')).join('').slice(0, 16);
 	}
 
-	return Math.random().toString(36).slice(2, 18);
+	throw new Error('Secure random values are unavailable.');
 }
 
 function createQueueArtifactFileId(id: string, fallback: string) {

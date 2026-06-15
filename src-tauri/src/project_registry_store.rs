@@ -1,6 +1,6 @@
 use std::collections::BTreeMap;
 
-use rusqlite::{OptionalExtension, params};
+use rusqlite::{OptionalExtension, params, params_from_iter};
 use tauri::AppHandle;
 
 use crate::storage;
@@ -93,24 +93,43 @@ pub fn read_project_registries(
         Ok(connection) => connection,
         Err(_) => return invalid_read_many(ProjectRegistryStoreError::ReadFailed),
     };
+    if workspace_ids.is_empty() {
+        return ProjectRegistriesRead {
+            ok: true,
+            registries: Some(BTreeMap::new()),
+            error: None,
+        };
+    }
+
+    let placeholders = std::iter::repeat("?")
+        .take(workspace_ids.len())
+        .collect::<Vec<_>>()
+        .join(", ");
+    let query = format!(
+        "SELECT workspace_id, registry_json
+         FROM project_registries
+         WHERE workspace_id IN ({placeholders})"
+    );
+    let mut statement = match connection.prepare(&query) {
+        Ok(statement) => statement,
+        Err(_) => return invalid_read_many(ProjectRegistryStoreError::ReadFailed),
+    };
+    let rows = match statement.query_map(
+        params_from_iter(workspace_ids.iter().map(String::as_str)),
+        |row| Ok((row.get::<_, String>(0)?, row.get::<_, String>(1)?)),
+    ) {
+        Ok(rows) => rows,
+        Err(_) => return invalid_read_many(ProjectRegistryStoreError::ReadFailed),
+    };
     let mut registries = BTreeMap::new();
 
-    for workspace_id in workspace_ids {
-        let registry_json = match connection
-            .query_row(
-                "SELECT registry_json FROM project_registries WHERE workspace_id = ?1",
-                [&workspace_id],
-                |row| row.get::<_, String>(0),
-            )
-            .optional()
-        {
-            Ok(registry_json) => registry_json,
+    for row in rows {
+        let (workspace_id, registry_json) = match row {
+            Ok(row) => row,
             Err(_) => return invalid_read_many(ProjectRegistryStoreError::ReadFailed),
         };
 
-        if let Some(registry_json) = registry_json {
-            registries.insert(workspace_id, registry_json);
-        }
+        registries.insert(workspace_id, registry_json);
     }
 
     ProjectRegistriesRead {

@@ -218,7 +218,27 @@ pub fn inspect_workspace_sync_git(
 }
 
 #[tauri::command]
-pub fn run_workspace_sync_git(
+pub async fn run_workspace_sync_git(
+    folder_path: String,
+    file_name: String,
+    action: String,
+    credential_kind: Option<String>,
+    credential_value: Option<String>,
+) -> WorkspaceSyncGitRun {
+    tauri::async_runtime::spawn_blocking(move || {
+        run_workspace_sync_git_blocking(
+            folder_path,
+            file_name,
+            action,
+            credential_kind,
+            credential_value,
+        )
+    })
+    .await
+    .unwrap_or_else(|_| invalid_run(WorkspaceSyncGitRunError::CommandFailed, None))
+}
+
+fn run_workspace_sync_git_blocking(
     folder_path: String,
     file_name: String,
     action: String,

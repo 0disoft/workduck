@@ -74,6 +74,10 @@ export async function encryptSecretVaultPayload(
 		return { ok: false, error: 'secret-vault-password-required' };
 	}
 
+	if (plaintext.length === 0) {
+		return { ok: false, error: 'secret-vault-plaintext-required' };
+	}
+
 	const invoke = getTauriInvoke();
 
 	if (invoke === undefined) {

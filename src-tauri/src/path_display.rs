@@ -20,3 +20,18 @@ pub(crate) fn non_verbatim_path(path: &Path) -> PathBuf {
 pub(crate) fn display_path(path: &Path) -> String {
     non_verbatim_path(path).to_string_lossy().into_owned()
 }
+
+pub(crate) fn display_path_text(path_text: &str) -> String {
+    #[cfg(target_os = "windows")]
+    {
+        if let Some(rest) = path_text.strip_prefix(r"\\?\UNC\") {
+            return format!(r"\\{}", rest);
+        }
+
+        if let Some(rest) = path_text.strip_prefix(r"\\?\") {
+            return rest.to_string();
+        }
+    }
+
+    path_text.to_string()
+}

@@ -1125,15 +1125,17 @@ fn should_skip_dependency_discovery_dir(path: &Path) -> bool {
 }
 
 fn unique_manifest_directories(manifest_paths: Vec<PathBuf>) -> Vec<PathBuf> {
+    let mut seen = HashSet::new();
     let mut directories = Vec::new();
 
     for manifest_path in manifest_paths {
         let Some(directory) = manifest_path.parent() else {
             continue;
         };
+        let directory = directory.to_path_buf();
 
-        if !directories.iter().any(|candidate| candidate == directory) {
-            directories.push(directory.to_path_buf());
+        if seen.insert(directory.clone()) {
+            directories.push(directory);
         }
     }
 

@@ -239,6 +239,7 @@
 
 		isDragging = false;
 		resizePointerId = undefined;
+		applySidebarWidthPx(resizeStartWidthPx);
 		document.body.classList.remove('workduck-sidebar-resizing');
 		window.removeEventListener('pointermove', handleResizePointerMove);
 		window.removeEventListener('pointerup', finishResize);
@@ -350,9 +351,10 @@
 			await installPendingWorkduckUpdate(() => undefined);
 		} catch (error) {
 			console.warn('Workduck update install failed.', error);
+			updateInstallError = messages.updater.installFailed;
+		} finally {
 			operation.finish();
 			isUpdateInstalling = false;
-			updateInstallError = messages.updater.installFailed;
 		}
 	}
 
@@ -926,10 +928,6 @@
 
 			<nav class="workduck-sidebar-nav" aria-label={messages.navigation.primary}>
 					{#if appIsLocked || !activeWorkspaceIsUsable}
-						<span id={primaryNavigationUnavailableDescriptionId} class="workduck-sr-only">
-							{navigationUnavailableMessage}
-						</span>
-					{:else if !activeWorkspaceIsUsable}
 						<span id={primaryNavigationUnavailableDescriptionId} class="workduck-sr-only">
 							{navigationUnavailableMessage}
 						</span>

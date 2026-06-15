@@ -10,7 +10,7 @@ use chacha20poly1305::{
         rand_core::{OsRng, RngCore},
     },
 };
-use zeroize::Zeroize;
+use zeroize::{Zeroize, Zeroizing};
 
 const VAULT_FORMAT: &str = "workduck.secret-vault";
 const VAULT_VERSION: u8 = 1;
@@ -100,6 +100,8 @@ pub struct SecretVaultDecryption {
 
 #[tauri::command]
 pub fn encrypt_secret_vault_payload(password: String, plaintext: String) -> SecretVaultEncryption {
+    let password = Zeroizing::new(password);
+
     if password.is_empty() {
         return invalid_encryption(SecretVaultCryptoError::PasswordRequired);
     }
@@ -167,6 +169,8 @@ pub fn decrypt_secret_vault_payload(
     password: String,
     envelope: SecretVaultEnvelope,
 ) -> SecretVaultDecryption {
+    let password = Zeroizing::new(password);
+
     if password.is_empty() {
         return invalid_decryption(SecretVaultCryptoError::PasswordRequired);
     }

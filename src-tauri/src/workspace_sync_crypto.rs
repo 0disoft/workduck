@@ -10,7 +10,7 @@ use chacha20poly1305::{
         rand_core::{OsRng, RngCore},
     },
 };
-use zeroize::Zeroize;
+use zeroize::{Zeroize, Zeroizing};
 
 const SYNC_FORMAT: &str = "workduck.workspace-sync";
 const SYNC_VERSION: u8 = 1;
@@ -103,6 +103,8 @@ pub fn encrypt_workspace_sync_payload(
     password: String,
     plaintext: String,
 ) -> WorkspaceSyncEncryption {
+    let password = Zeroizing::new(password);
+
     if password.is_empty() {
         return invalid_encryption(WorkspaceSyncCryptoError::PasswordRequired);
     }
@@ -170,6 +172,8 @@ pub fn decrypt_workspace_sync_payload(
     password: String,
     envelope: WorkspaceSyncEnvelope,
 ) -> WorkspaceSyncDecryption {
+    let password = Zeroizing::new(password);
+
     if password.is_empty() {
         return invalid_decryption(WorkspaceSyncCryptoError::PasswordRequired);
     }

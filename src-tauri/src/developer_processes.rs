@@ -127,8 +127,13 @@ async fn collect_developer_processes_off_thread() -> Result<
 }
 
 #[tauri::command]
-pub fn kill_developer_process(pid: u32) -> DeveloperProcessCommandResult {
-    match force_kill_process(pid) {
+pub async fn kill_developer_process(pid: u32) -> DeveloperProcessCommandResult {
+    let result = tauri::async_runtime::spawn_blocking(move || verified_force_kill_process(pid))
+        .await
+        .map_err(|_| DeveloperProcessCommandError::Unavailable)
+        .and_then(|result| result);
+
+    match result {
         Ok(()) => DeveloperProcessCommandResult {
             ok: true,
             error: None,
@@ -137,6 +142,28 @@ pub fn kill_developer_process(pid: u32) -> DeveloperProcessCommandResult {
             ok: false,
             error: Some(error),
         },
+    }
+}
+
+fn verified_force_kill_process(pid: u32) -> Result<(), DeveloperProcessCommandError> {
+    verify_developer_process_id(pid)?;
+    force_kill_process(pid)
+}
+
+fn verify_developer_process_id(pid: u32) -> Result<(), DeveloperProcessCommandError> {
+    if is_protected_process_id(pid) {
+        return Err(DeveloperProcessCommandError::KillDenied);
+    }
+
+    let processes = collect_developer_processes().map_err(|error| match error {
+        DeveloperProcessError::Unavailable => DeveloperProcessCommandError::Unavailable,
+        DeveloperProcessError::ReadFailed => DeveloperProcessCommandError::KillDenied,
+    })?;
+
+    if processes.iter().any(|process| process.pid == pid) {
+        Ok(())
+    } else {
+        Err(DeveloperProcessCommandError::KillDenied)
     }
 }
 

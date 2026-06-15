@@ -28,7 +28,9 @@ mod secret_vault_crypto;
 mod storage;
 pub mod system_environment;
 mod terminal_catalog;
+mod terminal_process;
 mod tray_menu;
+mod developer_processes;
 mod workspace_password;
 mod workspace_path;
 mod workspace_data_file;
@@ -96,6 +98,7 @@ pub fn run() {
         .plugin(tauri_plugin_updater::Builder::new().build())
         .setup(|app| {
             app.set_theme(Some(tauri::Theme::Dark));
+            app.manage(terminal_process::TerminalProcessState::default());
             initialize_storage_or_defer_for_update(app)
         })
         .invoke_handler(tauri::generate_handler![
@@ -109,6 +112,12 @@ pub fn run() {
             tray_menu::hide_workduck_tray_menu,
             tray_menu::show_workduck_main_window,
             tray_menu::show_workduck_tray_menu,
+            terminal_process::read_terminal_session,
+            terminal_process::start_terminal_session,
+            terminal_process::stop_terminal_session,
+            terminal_process::write_terminal_session_input,
+            developer_processes::kill_developer_process,
+            developer_processes::list_developer_processes,
             secret_vault_crypto::decrypt_secret_vault_payload,
             secret_vault_crypto::encrypt_secret_vault_payload,
             system_environment::apply_cli_environment_variables,

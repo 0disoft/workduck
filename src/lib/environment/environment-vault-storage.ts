@@ -134,7 +134,17 @@ export async function writeEnvironmentVaultEnvelopeForWorkspace(
 			`${JSON.stringify(envelope, null, 2)}\n`
 		);
 
-		if (!fileResult.ok && fileResult.error !== 'workspace-data-unavailable') {
+		if (fileResult.ok) {
+			const browserMirrorResult = writeEnvironmentVaultEnvelope(workspaceId, envelope);
+
+			if (!browserMirrorResult.ok) {
+				dispatchEnvironmentVaultChanged(workspaceId, envelope);
+			}
+
+			return { ok: true };
+		}
+
+		if (fileResult.error !== 'workspace-data-unavailable') {
 			return { ok: false, error: 'environment-vault-storage-write-failed' };
 		}
 	}

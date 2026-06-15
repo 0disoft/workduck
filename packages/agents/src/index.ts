@@ -291,6 +291,6 @@ function shiftMarkdownHeadings(markdown: string, levels: number): string {
 
   return markdown
     .split("\n")
-    .map((line) => (line.startsWith("#") ? `${prefix}${line}` : line))
+    .map((line) => (/^#{1,6}(?:\s|$)/u.test(line) ? `${prefix}${line}` : line))
     .join("\n");
 }

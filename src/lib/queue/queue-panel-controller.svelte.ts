@@ -360,6 +360,7 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 	let queueContextMenuElement = $state<HTMLElement | undefined>(undefined);
 	let ensureSignature = $state('');
 	let refreshSignature = $state(0);
+	let workspaceDataReadGeneration = 0;
 	let knownCompletedReportPaths = new Set<string>();
 	let completedReportNotificationsArePrimed = false;
 	let messages = $derived(getWorkduckMessages(appearanceSettings.languageId));
@@ -581,12 +582,13 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		selectedManualProjectIds = [];
 		selectedManualRepositoryIds = [];
 		selectedManualReferenceIds = [];
-		void readSkillsForWorkspace(workspace.id, workspace.path);
-		void readAgentsForWorkspace(workspace.id, workspace.path);
-		void readPersonasForWorkspace(workspace.id, workspace.path);
-		void readProjectsForWorkspace(workspace.id);
-		void readReferencesForWorkspace(workspace.id, workspace.path);
-		void ensureQueueFolderForWorkspace();
+		const readGeneration = ++workspaceDataReadGeneration;
+		void readSkillsForWorkspace(workspace.id, workspace.path, readGeneration);
+		void readAgentsForWorkspace(workspace.id, workspace.path, readGeneration);
+		void readPersonasForWorkspace(workspace.id, workspace.path, readGeneration);
+		void readProjectsForWorkspace(workspace.id, workspace.path, readGeneration);
+		void readReferencesForWorkspace(workspace.id, workspace.path, readGeneration);
+		void ensureQueueFolderForWorkspace(workspace.id, workspace.path, readGeneration);
 
 		const unsubscribeSkillRegistry = subscribeSkillRegistry(workspace.id, (nextRegistry) => {
 			skillRegistry = nextRegistry;
@@ -605,6 +607,7 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 	});
 
 		return () => {
+			workspaceDataReadGeneration += 1;
 			unsubscribeSkillRegistry();
 			unsubscribeAgentRegistry();
 			unsubscribePersonaRegistry();
@@ -662,48 +665,108 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 	};
 });
 
-	async function ensureQueueFolderForWorkspace() {
-		const result = await ensureQueueFolder(workspace.path);
+	async function ensureQueueFolderForWorkspace(
+		workspaceId: string,
+		workspacePath: string,
+		readGeneration: number
+	) {
+		const result = await ensureQueueFolder(workspacePath);
+
+		if (!workspaceDataReadIsCurrent(workspaceId, workspacePath, readGeneration)) {
+			return;
+		}
 
 		if (result.ok) {
 			error = null;
 			await refreshQueueFiles({ silent: true });
 			return;
-	}
+		}
 
 		error = result.error;
 		status = null;
-}
+	}
 
-	async function readSkillsForWorkspace(workspaceId: string, workspacePath: string) {
+	async function readSkillsForWorkspace(
+		workspaceId: string,
+		workspacePath: string,
+		readGeneration: number
+	) {
 		const result = await readSkillRegistry(workspaceId, workspacePath);
 
-		skillRegistry = result.registry;
-}
+		if (!workspaceDataReadIsCurrent(workspaceId, workspacePath, readGeneration)) {
+			return;
+		}
 
-	async function readAgentsForWorkspace(workspaceId: string, workspacePath: string) {
+		skillRegistry = result.registry;
+	}
+
+	async function readAgentsForWorkspace(
+		workspaceId: string,
+		workspacePath: string,
+		readGeneration: number
+	) {
 		const result = await readAgentRegistry(workspaceId, workspacePath);
 
-		agentRegistry = result.registry;
-}
+		if (!workspaceDataReadIsCurrent(workspaceId, workspacePath, readGeneration)) {
+			return;
+		}
 
-	async function readPersonasForWorkspace(workspaceId: string, workspacePath: string) {
+		agentRegistry = result.registry;
+	}
+
+	async function readPersonasForWorkspace(
+		workspaceId: string,
+		workspacePath: string,
+		readGeneration: number
+	) {
 		const result = await readPersonaRegistry(workspaceId, workspacePath);
 
-		personaRegistry = result.registry;
-}
+		if (!workspaceDataReadIsCurrent(workspaceId, workspacePath, readGeneration)) {
+			return;
+		}
 
-	async function readProjectsForWorkspace(workspaceId: string) {
+		personaRegistry = result.registry;
+	}
+
+	async function readProjectsForWorkspace(
+		workspaceId: string,
+		workspacePath: string,
+		readGeneration: number
+	) {
 		const result = await readProjectRegistry(workspaceId);
 
-		projectRegistry = result.registry;
-}
+		if (!workspaceDataReadIsCurrent(workspaceId, workspacePath, readGeneration)) {
+			return;
+		}
 
-	async function readReferencesForWorkspace(workspaceId: string, workspacePath: string) {
+		projectRegistry = result.registry;
+	}
+
+	async function readReferencesForWorkspace(
+		workspaceId: string,
+		workspacePath: string,
+		readGeneration: number
+	) {
 		const result = await readReferenceRegistry(workspaceId, workspacePath);
 
+		if (!workspaceDataReadIsCurrent(workspaceId, workspacePath, readGeneration)) {
+			return;
+		}
+
 		referenceRegistry = result.registry;
-}
+	}
+
+	function workspaceDataReadIsCurrent(
+		workspaceId: string,
+		workspacePath: string,
+		readGeneration: number
+	) {
+		return (
+			readGeneration === workspaceDataReadGeneration &&
+			workspace.id === workspaceId &&
+			workspace.path === workspacePath
+		);
+	}
 
 	async function readExecutionContextForWorkspace(): Promise<QueueExecutionContext> {
 		const [skillResult, agentResult, referenceResult, personaResult] = await Promise.all([

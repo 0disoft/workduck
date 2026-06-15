@@ -339,14 +339,18 @@ function createWorkspaceChildPath(workspacePath: string, relativePath: string) {
 		.trim()
 		.replaceAll('\\', '/')
 		.replace(/^\/+|\/+$/gu, '');
+	const pathSeparator = readWorkspacePathSeparator(normalizedWorkspacePath);
 
 	return normalizedRelativePath.length === 0
 		? normalizedWorkspacePath
-		: `${normalizedWorkspacePath}\\${normalizedRelativePath.replaceAll('/', '\\')}`;
+		: `${normalizedWorkspacePath}${pathSeparator}${normalizedRelativePath.replaceAll(
+				'/',
+				pathSeparator
+			)}`;
 }
 
 function createPathBoundaryKey(path: string) {
-	return createPathBoundaryValue(path).toLocaleLowerCase('en-US');
+	return createPathBoundaryValue(path).toLowerCase();
 }
 
 function createPathBoundaryValue(path: string) {
@@ -354,6 +358,10 @@ function createPathBoundaryValue(path: string) {
 		.replaceAll('\\', '/')
 		.replace(/^\/\/\?\//u, '')
 		.replace(/\/+$/u, '');
+}
+
+function readWorkspacePathSeparator(workspacePath: string) {
+	return /^[A-Za-z]:[\\/]/u.test(workspacePath) || workspacePath.includes('\\') ? '\\' : '/';
 }
 
 async function encryptWorkspaceSyncPayload(

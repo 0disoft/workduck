@@ -60,13 +60,14 @@ Rules:
 - Return the five scores as JSON, then save them with the Workduck CLI command shown in the prompt. The command records the agent score and also updates the linked persona score when the agent has a persona.`;
 
 export function createAgentEvaluationDelegationPrompt(input: AgentEvaluationDelegationPromptInput) {
+	const cliShell = inferCliShell(input.workspacePath);
 	const cliCommand = [
 		'workduck',
 		'agent',
 		'evaluate',
-		quoteCliArgument(input.agentId),
+		quoteCliArgument(input.agentId, cliShell),
 		'--workspace',
-		quoteCliArgument(input.workspacePath),
+		quoteCliArgument(input.workspacePath, cliShell),
 		'--problem-understanding <1-9>',
 		'--logical-validity <1-9>',
 		'--practical-feasibility <1-9>',
@@ -288,9 +289,19 @@ function readTrimmedString(value: unknown) {
 	return typeof value === 'string' ? value.trim() : '';
 }
 
-function quoteCliArgument(value: string) {
+function inferCliShell(workspacePath: string) {
+	return /^[A-Za-z]:[\\/]/u.test(workspacePath) || workspacePath.includes('\\')
+		? 'powershell'
+		: 'posix';
+}
+
+function quoteCliArgument(value: string, shell: 'posix' | 'powershell') {
 	if (value.length === 0) {
 		return "''";
+	}
+
+	if (shell === 'powershell') {
+		return `'${value.replaceAll("'", "''")}'`;
 	}
 
 	return `'${value.replaceAll("'", `'"'"'`)}'`;

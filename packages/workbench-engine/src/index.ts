@@ -30,6 +30,7 @@ import type { WorkduckSchemaId } from "@workduck/schemas";
 export type WorkbenchArtifactRole = "source" | "candidate" | "output";
 export type WorkbenchGateCheckState = "passed" | "warning" | "failed";
 export type WorkbenchGateEvaluationState = "pending" | "passed" | "blocked";
+const UNLABELED_FAILED_GATE_CHECK_LABEL = "Failed check";
 
 export interface WorkbenchArtifactInput {
   readonly ref: ArtifactRef;
@@ -182,6 +183,7 @@ export function createWorkbenchLocalShellRun(input: WorkbenchLocalShellRunInput)
   const state = determineShellRunState({
     blockers,
     ...(startedAt === undefined ? {} : { startedAt }),
+    ...(finishedAt === undefined ? {} : { finishedAt }),
     ...(input.exitCode === undefined ? {} : { exitCode: input.exitCode })
   });
 
@@ -359,7 +361,7 @@ export function summarizeWorkbenchRunPlan(
     project: input.project,
     entityRefs,
     schemaIds: collectArtifactSchemaIds(input.artifacts),
-    gateRefs: input.gates
+    gateRefs: collectUniqueTypedEntityRefs(input.gates)
   };
 
   if (input.brief === undefined) {
@@ -406,7 +408,7 @@ function buildGateEvaluations(
     ])
   );
 
-  return input.gates.map((gate) => {
+  return collectUniqueTypedEntityRefs(input.gates).map((gate) => {
     const evaluation = evaluationByGateKey.get(createEntityRefKey(gate));
     const checks = normalizeGateChecks(evaluation?.checks ?? []);
 
@@ -432,7 +434,10 @@ function normalizeGateChecks(
       const details = check.details?.trim();
 
       return {
-        label,
+        label:
+          label.length > 0 || check.state !== "failed"
+            ? label
+            : UNLABELED_FAILED_GATE_CHECK_LABEL,
         state: check.state,
         ...(details === undefined || details.length === 0 ? {} : { details })
       };
@@ -505,6 +510,7 @@ function collectShellRunBlockers(input: {
 function determineShellRunState(input: {
   readonly blockers: readonly WorkduckShellRunBlockerCode[];
   readonly startedAt?: string;
+  readonly finishedAt?: string;
   readonly exitCode?: number;
 }): WorkduckShellRunState {
   if (input.blockers.length > 0) {
@@ -513,6 +519,10 @@ function determineShellRunState(input: {
 
   if (input.exitCode !== undefined) {
     return input.exitCode === 0 ? "succeeded" : "failed";
+  }
+
+  if (input.finishedAt !== undefined) {
+    return "failed";
   }
 
   if (input.startedAt !== undefined) {

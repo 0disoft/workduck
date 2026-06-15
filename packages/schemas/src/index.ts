@@ -378,10 +378,12 @@ export const workduckShellRunSchema = {
     status: recordStatus,
     run: entityRefReference,
     command: {
-      type: "string"
+      type: "string",
+      minLength: 1
     },
     cwd: {
-      type: "string"
+      type: "string",
+      minLength: 1
     },
     approval: {
       type: "object",

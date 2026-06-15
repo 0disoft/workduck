@@ -326,11 +326,22 @@ function createSecretId() {
 		return crypto.randomUUID();
 	}
 
-	return `secret-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+	return `secret-${Date.now().toString(36)}-${createSecretRandomToken()}`;
 }
 
 function createSecretNameKey(name: string) {
-	return normalizeSecretName(name).toLocaleLowerCase('en-US');
+	return normalizeSecretName(name).toLowerCase();
+}
+
+function createSecretRandomToken() {
+	if (typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function') {
+		const values = new Uint8Array(8);
+		crypto.getRandomValues(values);
+
+		return Array.from(values, (value) => value.toString(36).padStart(2, '0')).join('');
+	}
+
+	throw new Error('Secure random values are unavailable.');
 }
 
 function readRawString(value: unknown) {
