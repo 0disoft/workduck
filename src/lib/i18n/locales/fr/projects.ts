@@ -24,7 +24,8 @@ export const frProjectsMessages = {
 	repository: {
 		uncommittedChanges: 'Modifications non validées (uncommitted)',
 		queueCommitWorkOrder: 'Ajouter tâche de commit',
-		commitWorkOrderQueued: 'Tâche de commit ajoutée : {relativePath}'
+		commitWorkOrderQueued: 'Tâche de commit ajoutée : {relativePath}',
+		githubCredentialSaved: 'Identifiant GitHub enregistré.'
 	},
 	operations: {
 		running: {

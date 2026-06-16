@@ -24,7 +24,8 @@ export const zhProjectsMessages = {
 	repository: {
 		uncommittedChanges: '未提交的修改',
 		queueCommitWorkOrder: '添加提交任务',
-		commitWorkOrderQueued: '已添加提交任务：{relativePath}'
+		commitWorkOrderQueued: '已添加提交任务：{relativePath}',
+		githubCredentialSaved: 'GitHub 凭据已保存。'
 	},
 	operations: {
 		running: {

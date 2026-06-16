@@ -1,9 +1,11 @@
 import { parseEnvironmentVault, type EnvironmentVault } from '$lib/environment/environment-vault';
+import { createSecretVaultCryptoErrorMessage } from '$lib/environment/secret-vault-error-messages';
 import {
 	decryptSecretVaultPayload,
 	type SecretVaultEnvelope
 } from '$lib/environment/secret-vault-crypto';
-import { createSecretVaultErrorMessage, type ProjectFormError } from './project-board-errors';
+import type { WorkduckMessages } from '$lib/i18n/workduck-message-contract';
+import type { ProjectFormError } from './project-board-errors';
 import type { ProjectGithubCredentialEditorTarget } from './project-board-types';
 import {
 	setProjectNodeGithubCredential,
@@ -24,6 +26,7 @@ export interface ProjectEnvironmentVaultUnlockContext {
 	readonly setPassword: (password: string) => void;
 	readonly setVaultError: (error: string | null) => void;
 	readonly setFormError: (error: ProjectFormError | null) => void;
+	readonly getEnvironmentMessages: () => WorkduckMessages['environment'];
 }
 
 export async function unlockProjectEnvironmentVault(
@@ -40,16 +43,19 @@ export async function unlockProjectEnvironmentVault(
 
 	try {
 		const decryptResult = await decryptSecretVaultPayload(input.envelope, input.password);
+		const environmentMessages = context.getEnvironmentMessages();
 
 		if (!decryptResult.ok) {
-			context.setVaultError(createSecretVaultErrorMessage(decryptResult.error));
+			context.setVaultError(
+				createSecretVaultCryptoErrorMessage(decryptResult.error, environmentMessages.errors)
+			);
 			return;
 		}
 
 		const parsedVault = parseEnvironmentVault(decryptResult.plaintext, input.workspaceId);
 
 		if (parsedVault === null) {
-			context.setVaultError('Environment vault could not be read.');
+			context.setVaultError(environmentMessages.errors.vaultInvalid);
 			return;
 		}
 
@@ -73,6 +79,7 @@ export interface ProjectGithubCredentialSaveContext {
 	readonly setIsSubmitting: (isSubmitting: boolean) => void;
 	readonly setFormError: (error: ProjectFormError | null) => void;
 	readonly setStatus: (status: string | null) => void;
+	readonly getSavedStatus: () => string;
 	readonly closeEditor: () => void;
 }
 
@@ -107,7 +114,7 @@ export async function saveProjectGithubCredential(
 	}
 
 	if (await context.persistRegistry(result.registry)) {
-		context.setStatus('GitHub credential saved.');
+		context.setStatus(context.getSavedStatus());
 		context.closeEditor();
 		return;
 	}

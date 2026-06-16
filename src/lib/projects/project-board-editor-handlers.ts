@@ -1,5 +1,6 @@
 import type { EnvironmentVault } from '$lib/environment/environment-vault';
 import type { SecretVaultEnvelope } from '$lib/environment/secret-vault-crypto';
+import type { WorkduckMessages } from '$lib/i18n/workduck-message-contract';
 import type { ProjectFormError } from './project-board-errors';
 import {
 	saveProjectGithubCredential,
@@ -27,6 +28,7 @@ export function createProjectBoardEditorHandlers(context: {
 	readonly getDetailsNameInput: () => string;
 	readonly getDetailsPathInput: () => string;
 	readonly getDetailsSavedStatus: () => string;
+	readonly getGithubCredentialSavedStatus: () => string;
 	readonly getIsSavingDetails: () => boolean;
 	readonly getTagEditor: () => ProjectTagEditorTarget | null;
 	readonly getTagInput: () => string;
@@ -38,6 +40,7 @@ export function createProjectBoardEditorHandlers(context: {
 	readonly getEnvironmentVaultEnvelope: () => SecretVaultEnvelope | null;
 	readonly getEnvironmentVaultPassword: () => string;
 	readonly getIsEnvironmentVaultBusy: () => boolean;
+	readonly getEnvironmentMessages: () => WorkduckMessages['environment'];
 	readonly persistRegistry: (nextRegistry: ProjectRegistry) => Promise<boolean>;
 	readonly setDescriptionEditor: (editor: ProjectNodeRecord | null) => void;
 	readonly setDescriptionInput: (input: string) => void;
@@ -226,7 +229,8 @@ export function createProjectBoardEditorHandlers(context: {
 					setVault: context.setEnvironmentVault,
 					setPassword: context.setEnvironmentVaultPassword,
 					setVaultError: context.setEnvironmentVaultError,
-					setFormError: context.setFormError
+					setFormError: context.setFormError,
+					getEnvironmentMessages: context.getEnvironmentMessages
 				}
 			);
 		},
@@ -246,6 +250,7 @@ export function createProjectBoardEditorHandlers(context: {
 					setIsSubmitting: context.setIsSubmitting,
 					setFormError: context.setFormError,
 					setStatus: context.setStatus,
+					getSavedStatus: context.getGithubCredentialSavedStatus,
 					closeEditor: closeGithubCredentialEditor
 				}
 			);

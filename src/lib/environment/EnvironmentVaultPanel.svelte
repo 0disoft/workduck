@@ -52,9 +52,9 @@
 	import {
 		decryptSecretVaultPayload,
 		encryptSecretVaultPayload,
-		type SecretVaultCryptoError,
 		type SecretVaultEnvelope
 	} from './secret-vault-crypto';
+	import { createSecretVaultCryptoErrorMessage } from './secret-vault-error-messages';
 
 	interface Props {
 		readonly workspace: WorkspaceRecord;
@@ -377,7 +377,7 @@
 			);
 
 			if (!encryptResult.ok) {
-				error = createSecretVaultErrorMessage(encryptResult.error);
+				error = createSecretVaultCryptoErrorMessage(encryptResult.error, environmentMessages.errors);
 				return;
 			}
 
@@ -429,26 +429,6 @@
 			case 'environment-vault-invalid':
 				return environmentMessages.errors.vaultInvalid;
 		}
-	}
-
-	function createSecretVaultErrorMessage(nextError: SecretVaultCryptoError) {
-		if (nextError === 'secret-vault-password-required') {
-			return environmentMessages.errors.vaultPasswordRequired;
-		}
-
-		if (nextError === 'secret-vault-unavailable') {
-			return environmentMessages.errors.vaultUnavailable;
-		}
-
-		if (
-			nextError === 'secret-vault-decryption-failed' ||
-			nextError === 'secret-vault-envelope-invalid' ||
-			nextError === 'secret-vault-ciphertext-invalid'
-		) {
-			return environmentMessages.errors.vaultPasswordMismatch;
-		}
-
-		return environmentMessages.errors.vaultOperationFailed;
 	}
 
 	function createCliEnvironmentApplyErrorMessage(nextError: CliEnvironmentApplyError) {

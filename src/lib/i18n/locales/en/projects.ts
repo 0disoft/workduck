@@ -24,7 +24,8 @@ export const enProjectsMessages = {
 		repository: {
 			uncommittedChanges: 'Uncommitted changes',
 			queueCommitWorkOrder: 'Add commit work',
-			commitWorkOrderQueued: 'Added commit work: {relativePath}'
+			commitWorkOrderQueued: 'Added commit work: {relativePath}',
+			githubCredentialSaved: 'GitHub credential saved.'
 		},
 		operations: {
 			running: {

@@ -1,6 +1,5 @@
 import { enMessages } from '$lib/i18n/locales/en';
 import type { WorkduckMessages } from '$lib/i18n/workduck-message-contract';
-import type { SecretVaultCryptoError } from '$lib/environment/secret-vault-crypto';
 import type { ProjectFolderError } from './project-folder';
 import type { ProjectRepositoryCloneError, ProjectRepositoryGitError } from './project-repository';
 import type { ProjectRepositoryOperationStorageError } from './project-operation-storage';
@@ -31,16 +30,4 @@ export function getProjectFormErrorMessage(
 	messages: ProjectFormErrorMessages = enMessages.projects.errors
 ) {
 	return messages[error] ?? enMessages.projects.errors[error];
-}
-
-export function createSecretVaultErrorMessage(nextError: SecretVaultCryptoError) {
-	if (nextError === 'secret-vault-password-required') {
-		return 'Environment vault password is required.';
-	}
-
-	if (nextError === 'secret-vault-unavailable') {
-		return 'Environment vault is available in the desktop app.';
-	}
-
-	return 'Environment vault password did not match.';
 }

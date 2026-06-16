@@ -24,7 +24,8 @@ export const koProjectsMessages = {
 		repository: {
 			uncommittedChanges: '커밋되지 않은 변경 있음',
 			queueCommitWorkOrder: '커밋 작업 추가',
-			commitWorkOrderQueued: '커밋 작업을 추가했습니다: {relativePath}'
+			commitWorkOrderQueued: '커밋 작업을 추가했습니다: {relativePath}',
+			githubCredentialSaved: 'GitHub 인증을 저장했습니다.'
 		},
 		operations: {
 			running: {

@@ -24,7 +24,8 @@ export const hiProjectsMessages = {
 	repository: {
 		uncommittedChanges: 'अप्रतिबद्ध (Uncommitted) बदलाव',
 		queueCommitWorkOrder: 'कमिट कार्य जोड़ें',
-		commitWorkOrderQueued: 'कमिट कार्य जोड़ा गया: {relativePath}'
+		commitWorkOrderQueued: 'कमिट कार्य जोड़ा गया: {relativePath}',
+		githubCredentialSaved: 'GitHub क्रेडेंशियल सहेजा गया।'
 	},
 	operations: {
 		running: {

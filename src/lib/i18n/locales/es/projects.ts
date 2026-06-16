@@ -24,7 +24,8 @@ export const esProjectsMessages = {
 		repository: {
 			uncommittedChanges: 'Cambios sin confirmar',
 			queueCommitWorkOrder: 'Añadir tarea de commit',
-			commitWorkOrderQueued: 'Tarea de commit añadida: {relativePath}'
+			commitWorkOrderQueued: 'Tarea de commit añadida: {relativePath}',
+			githubCredentialSaved: 'Credencial de GitHub guardada.'
 		},
 		operations: {
 			running: {
