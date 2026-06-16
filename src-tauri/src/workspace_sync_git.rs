@@ -1,8 +1,5 @@
-use crate::git_credential::{
-    GitCredential, apply_git_credential, apply_safe_git_config, clear_git_credential_environment,
-    parse_git_credential,
-};
-use crate::git_path::git_process_path;
+use crate::git_credential::{GitCredential, parse_git_credential};
+use crate::git_path::{GitProcessError, run_git_process};
 use crate::path_display::display_path;
 use crate::workspace_sync_file::{
     WorkspaceSyncFileError, resolve_sync_file_path, validate_sync_file_target,
@@ -10,22 +7,14 @@ use crate::workspace_sync_file::{
 
 use std::{
     fs,
-    io::{self, Read},
+    io,
     path::{Path, PathBuf},
-    process::{Child, Command, Output, Stdio},
-    thread,
+    process::Output,
     time::Duration,
 };
 
-use wait_timeout::ChildExt;
-
-#[cfg(target_os = "windows")]
-use std::os::windows::process::CommandExt;
-
 const WORKSPACE_SYNC_GIT_COMMAND_TIMEOUT: Duration = Duration::from_secs(60);
 const WORKSPACE_SYNC_GIT_COMMIT_MESSAGE: &str = "chore: update workduck sync";
-#[cfg(target_os = "windows")]
-const CREATE_NO_WINDOW: u32 = 0x08000000;
 
 #[derive(serde::Serialize)]
 pub enum WorkspaceSyncGitError {
@@ -157,12 +146,6 @@ enum WorkspaceSyncGitPhase {
 struct WorkspaceSyncGitFailure {
     error: WorkspaceSyncGitRunError,
     phase: Option<WorkspaceSyncGitPhase>,
-}
-
-#[derive(Debug)]
-enum GitChildWaitError {
-    TimedOut,
-    Failed,
 }
 
 #[tauri::command]
@@ -712,40 +695,25 @@ fn run_git_command(
     phase: WorkspaceSyncGitPhase,
     credential: Option<&GitCredential>,
 ) -> Result<Output, WorkspaceSyncGitFailure> {
-    let git_folder_path = git_process_path(folder_path);
-    let mut command = Command::new("git");
-    apply_safe_git_config(
-        &mut command,
+    run_git_process(
+        folder_path,
+        args.iter().copied(),
+        WORKSPACE_SYNC_GIT_COMMAND_TIMEOUT,
+        credential,
         credential.is_none() && workspace_sync_phase_may_need_credentials(phase),
-    );
-    command
-        .args(args)
-        .current_dir(git_folder_path)
-        .env("GIT_TERMINAL_PROMPT", "0")
-        .env("GCM_INTERACTIVE", "Never")
-        .stdin(Stdio::null())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped());
-    clear_git_credential_environment(&mut command);
-    apply_git_credential(&mut command, credential);
-
-    #[cfg(target_os = "windows")]
-    command.creation_flags(CREATE_NO_WINDOW);
-
-    let child = command.spawn().map_err(|error| WorkspaceSyncGitFailure {
-        error: if error.kind() == io::ErrorKind::NotFound {
-            WorkspaceSyncGitRunError::CommandUnavailable
-        } else {
-            WorkspaceSyncGitRunError::CommandFailed
-        },
-        phase: Some(phase),
-    })?;
-
-    wait_for_child_output(child, WORKSPACE_SYNC_GIT_COMMAND_TIMEOUT).map_err(|error| {
+    )
+    .map_err(|error| {
         WorkspaceSyncGitFailure {
             error: match error {
-                GitChildWaitError::TimedOut => WorkspaceSyncGitRunError::CommandTimedOut,
-                GitChildWaitError::Failed => WorkspaceSyncGitRunError::CommandFailed,
+                GitProcessError::Spawn(error)
+                    if error.kind() == std::io::ErrorKind::NotFound =>
+                {
+                    WorkspaceSyncGitRunError::CommandUnavailable
+                }
+                GitProcessError::Spawn(_) | GitProcessError::Failed => {
+                    WorkspaceSyncGitRunError::CommandFailed
+                }
+                GitProcessError::TimedOut => WorkspaceSyncGitRunError::CommandTimedOut,
             },
             phase: Some(phase),
         }
@@ -804,57 +772,6 @@ fn git_output_text(output: &Output) -> String {
     output_text.push_str(&String::from_utf8_lossy(&output.stdout));
     output_text.push_str(&String::from_utf8_lossy(&output.stderr));
     output_text
-}
-
-fn wait_for_child_output(mut child: Child, timeout: Duration) -> Result<Output, GitChildWaitError> {
-    let stdout_reader = child.stdout.take().map(spawn_output_reader);
-    let stderr_reader = child.stderr.take().map(spawn_output_reader);
-
-    match child.wait_timeout(timeout) {
-        Ok(Some(status)) => {
-            let stdout = join_output_reader(stdout_reader);
-            let stderr = join_output_reader(stderr_reader);
-
-            Ok(Output {
-                status,
-                stdout,
-                stderr,
-            })
-        }
-        Ok(None) => {
-            let _ = child.kill();
-            let _ = child.wait();
-            let _ = join_output_reader(stdout_reader);
-            let _ = join_output_reader(stderr_reader);
-
-            Err(GitChildWaitError::TimedOut)
-        }
-        Err(_) => {
-            let _ = child.kill();
-            let _ = child.wait();
-            let _ = join_output_reader(stdout_reader);
-            let _ = join_output_reader(stderr_reader);
-
-            Err(GitChildWaitError::Failed)
-        }
-    }
-}
-
-fn spawn_output_reader<T>(mut reader: T) -> thread::JoinHandle<Vec<u8>>
-where
-    T: Read + Send + 'static,
-{
-    thread::spawn(move || {
-        let mut output = Vec::new();
-        let _ = reader.read_to_end(&mut output);
-        output
-    })
-}
-
-fn join_output_reader(reader: Option<thread::JoinHandle<Vec<u8>>>) -> Vec<u8> {
-    reader
-        .and_then(|reader| reader.join().ok())
-        .unwrap_or_default()
 }
 
 fn redact_remote_credentials(remote_url: &str) -> String {
@@ -958,6 +875,8 @@ fn map_folder_error(error: io::Error) -> WorkspaceSyncGitError {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::git_path::wait_for_child_output;
+    use std::process::{Command, Stdio};
 
     #[test]
     fn safe_origin_url_redacts_embedded_credentials_before_display() {

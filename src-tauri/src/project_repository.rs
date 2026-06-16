@@ -1,17 +1,16 @@
 use std::{
+    ffi::OsString,
     fs,
-    io::{self, Read},
+    io,
     path::{Path, PathBuf},
-    process::{Child, Command, Output, Stdio},
+    process::{Command, Output, Stdio},
     thread,
     time::Duration,
 };
 
-use wait_timeout::ChildExt;
-
 use crate::git_credential::{
-    GitCredential, apply_git_credential, apply_github_cli_credential, apply_safe_git_config,
-    clear_git_credential_environment, parse_git_credential,
+    GitCredential, apply_github_cli_credential, clear_git_credential_environment,
+    parse_git_credential,
 };
 use crate::project_repository_failure::{
     CloneFailure, classify_git_clone_failure, classify_git_fetch_failure,
@@ -23,7 +22,10 @@ use crate::project_repository_validation::{
     validate_github_visibility, validate_group_relative_path, validate_remote_url,
     validate_repository_folder_name, validate_repository_path, validate_workspace_root,
 };
-use crate::{git_path::git_process_path, path_display::display_path};
+use crate::{
+    git_path::{GitProcessError, git_process_path, run_git_process, wait_for_child_output},
+    path_display::display_path,
+};
 
 #[cfg(target_os = "windows")]
 use std::os::windows::process::CommandExt;
@@ -901,46 +903,30 @@ fn run_git_clone(
     clone_target: &Path,
     credential: Option<&GitCredential>,
 ) -> Result<(), CloneFailure> {
-    let git_group_path = git_process_path(group_path);
-    let git_clone_target = git_process_path(clone_target);
-    let mut command = Command::new("git");
-    apply_safe_git_config(&mut command, credential.is_none());
-    command
-        .arg("clone")
-        .arg("--")
-        .arg(remote_url)
-        .arg(git_clone_target)
-        .current_dir(git_group_path)
-        .env("GIT_TERMINAL_PROMPT", "0")
-        .env("GCM_INTERACTIVE", "Never")
-        .stdin(Stdio::null())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped());
-    clear_git_credential_environment(&mut command);
-    apply_git_credential(&mut command, credential);
-
-    #[cfg(target_os = "windows")]
-    command.creation_flags(CREATE_NO_WINDOW);
-
-    let child = command.spawn().map_err(|error| CloneFailure {
-        error: if error.kind() == io::ErrorKind::NotFound {
-            ProjectRepositoryCloneError::CloneCommandUnavailable
-        } else {
-            ProjectRepositoryCloneError::CloneFailed
+    let args = [
+        OsString::from("clone"),
+        OsString::from("--"),
+        OsString::from(remote_url),
+        git_process_path(clone_target).into_os_string(),
+    ];
+    let output = run_git_process(
+        group_path,
+        args,
+        PROJECT_REPOSITORY_CLONE_TIMEOUT,
+        credential,
+        credential.is_none(),
+    )
+    .map_err(|error| CloneFailure {
+        error: match error {
+            GitProcessError::Spawn(error) if error.kind() == io::ErrorKind::NotFound => {
+                ProjectRepositoryCloneError::CloneCommandUnavailable
+            }
+            GitProcessError::Spawn(_) | GitProcessError::Failed => {
+                ProjectRepositoryCloneError::CloneFailed
+            }
+            GitProcessError::TimedOut => ProjectRepositoryCloneError::CloneCommandTimedOut,
         },
     })?;
-
-    let output =
-        wait_for_child_output(child, PROJECT_REPOSITORY_CLONE_TIMEOUT).map_err(|error| {
-            CloneFailure {
-                error: match error {
-                    GitChildWaitError::TimedOut => {
-                        ProjectRepositoryCloneError::CloneCommandTimedOut
-                    }
-                    GitChildWaitError::Failed => ProjectRepositoryCloneError::CloneFailed,
-                },
-            }
-        })?;
 
     if output.status.success() {
         Ok(())
@@ -1365,38 +1351,22 @@ fn run_git_command(
     timeout: Duration,
     credential: Option<&GitCredential>,
 ) -> Result<Output, GitCommandFailure> {
-    let git_repository_path = git_process_path(repository_path);
-    let mut command = Command::new("git");
-    apply_safe_git_config(
-        &mut command,
+    run_git_process(
+        repository_path,
+        args.iter().copied(),
+        timeout,
+        credential,
         credential.is_none() && git_command_may_need_credentials(args),
-    );
-    command
-        .args(args)
-        .current_dir(git_repository_path)
-        .env("GIT_TERMINAL_PROMPT", "0")
-        .env("GCM_INTERACTIVE", "Never")
-        .stdin(Stdio::null())
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped());
-    clear_git_credential_environment(&mut command);
-    apply_git_credential(&mut command, credential);
-
-    #[cfg(target_os = "windows")]
-    command.creation_flags(CREATE_NO_WINDOW);
-
-    let child = command.spawn().map_err(|error| GitCommandFailure {
-        error: if error.kind() == io::ErrorKind::NotFound {
-            ProjectRepositoryGitError::CommandUnavailable
-        } else {
-            ProjectRepositoryGitError::CommandFailed
-        },
-    })?;
-
-    wait_for_child_output(child, timeout).map_err(|error| GitCommandFailure {
+    )
+    .map_err(|error| GitCommandFailure {
         error: match error {
-            GitChildWaitError::TimedOut => ProjectRepositoryGitError::CommandTimedOut,
-            GitChildWaitError::Failed => ProjectRepositoryGitError::CommandFailed,
+            GitProcessError::Spawn(error) if error.kind() == io::ErrorKind::NotFound => {
+                ProjectRepositoryGitError::CommandUnavailable
+            }
+            GitProcessError::Spawn(_) | GitProcessError::Failed => {
+                ProjectRepositoryGitError::CommandFailed
+            }
+            GitProcessError::TimedOut => ProjectRepositoryGitError::CommandTimedOut,
         },
     })
 }
@@ -1447,67 +1417,13 @@ fn run_gh_repo_create(
     wait_for_child_output(child, PROJECT_REPOSITORY_CLONE_TIMEOUT).map_err(|error| {
         GitCommandFailure {
             error: match error {
-                GitChildWaitError::TimedOut => ProjectRepositoryGitError::CommandTimedOut,
-                GitChildWaitError::Failed => ProjectRepositoryGitError::GithubCreateFailed,
+                GitProcessError::TimedOut => ProjectRepositoryGitError::CommandTimedOut,
+                GitProcessError::Spawn(_) | GitProcessError::Failed => {
+                    ProjectRepositoryGitError::GithubCreateFailed
+                }
             },
         }
     })
-}
-
-enum GitChildWaitError {
-    TimedOut,
-    Failed,
-}
-
-fn wait_for_child_output(mut child: Child, timeout: Duration) -> Result<Output, GitChildWaitError> {
-    let stdout_reader = child.stdout.take().map(spawn_output_reader);
-    let stderr_reader = child.stderr.take().map(spawn_output_reader);
-
-    match child.wait_timeout(timeout) {
-        Ok(Some(status)) => {
-            let stdout = join_output_reader(stdout_reader);
-            let stderr = join_output_reader(stderr_reader);
-
-            Ok(Output {
-                status,
-                stdout,
-                stderr,
-            })
-        }
-        Ok(None) => {
-            let _ = child.kill();
-            let _ = child.wait();
-            let _ = join_output_reader(stdout_reader);
-            let _ = join_output_reader(stderr_reader);
-
-            Err(GitChildWaitError::TimedOut)
-        }
-        Err(_) => {
-            let _ = child.kill();
-            let _ = child.wait();
-            let _ = join_output_reader(stdout_reader);
-            let _ = join_output_reader(stderr_reader);
-
-            Err(GitChildWaitError::Failed)
-        }
-    }
-}
-
-fn spawn_output_reader<T>(mut reader: T) -> thread::JoinHandle<Vec<u8>>
-where
-    T: Read + Send + 'static,
-{
-    thread::spawn(move || {
-        let mut output = Vec::new();
-        let _ = reader.read_to_end(&mut output);
-        output
-    })
-}
-
-fn join_output_reader(reader: Option<thread::JoinHandle<Vec<u8>>>) -> Vec<u8> {
-    reader
-        .and_then(|reader| reader.join().ok())
-        .unwrap_or_default()
 }
 
 fn invalid(error: ProjectRepositoryCloneError) -> ProjectRepositoryClone {
