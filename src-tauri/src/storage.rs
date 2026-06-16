@@ -1,7 +1,7 @@
 use std::{
     fmt, fs,
     path::PathBuf,
-    sync::{Mutex, MutexGuard},
+    sync::{Arc, Mutex, MutexGuard},
     time::Duration,
 };
 
@@ -25,6 +25,34 @@ struct Migration {
 pub(crate) struct AppStorageState {
     database_path: PathBuf,
     writer_connection: Mutex<Connection>,
+    read_connections: Arc<Mutex<Vec<Connection>>>,
+}
+
+pub(crate) struct AppReadConnection {
+    connection: Option<Connection>,
+    read_connections: Arc<Mutex<Vec<Connection>>>,
+}
+
+impl std::ops::Deref for AppReadConnection {
+    type Target = Connection;
+
+    fn deref(&self) -> &Self::Target {
+        self.connection
+            .as_ref()
+            .expect("pooled read connection must exist until drop")
+    }
+}
+
+impl Drop for AppReadConnection {
+    fn drop(&mut self) {
+        let Some(connection) = self.connection.take() else {
+            return;
+        };
+
+        if let Ok(mut read_connections) = self.read_connections.lock() {
+            read_connections.push(connection);
+        }
+    }
 }
 
 const MIGRATIONS: &[Migration] = &[
@@ -159,6 +187,7 @@ pub(crate) fn initialize_app_storage(app: &AppHandle) -> Result<AppStorageState,
     Ok(AppStorageState {
         database_path,
         writer_connection: Mutex::new(connection),
+        read_connections: Arc::new(Mutex::new(Vec::new())),
     })
 }
 
@@ -181,10 +210,32 @@ pub(crate) fn app_connection(
         .map_err(|_| StorageError::AppStorageLockPoisoned)
 }
 
-pub(crate) fn app_read_connection(app: &AppHandle) -> Result<Connection, StorageError> {
-    let database_path = app_storage_state(app)?.database_path.clone();
+pub(crate) fn app_read_connection(app: &AppHandle) -> Result<AppReadConnection, StorageError> {
+    let state = app_storage_state(app)?;
+    let database_path = state.database_path.clone();
+    let read_connections = Arc::clone(&state.read_connections);
 
-    connect_read_database(&database_path)
+    checkout_read_connection(database_path, read_connections)
+}
+
+fn checkout_read_connection(
+    database_path: PathBuf,
+    read_connections: Arc<Mutex<Vec<Connection>>>,
+) -> Result<AppReadConnection, StorageError> {
+    let connection = read_connections
+        .lock()
+        .map_err(|_| StorageError::AppStorageLockPoisoned)?
+        .pop();
+
+    let connection = match connection {
+        Some(connection) => connection,
+        None => connect_read_database(&database_path)?,
+    };
+
+    Ok(AppReadConnection {
+        connection: Some(connection),
+        read_connections,
+    })
 }
 
 fn app_storage_state(app: &AppHandle) -> Result<State<'_, AppStorageState>, StorageError> {
@@ -489,5 +540,33 @@ mod tests {
 
         assert_eq!(registry_count, 1);
         assert!(foreign_keys);
+    }
+
+    #[test]
+    fn read_connection_pool_reuses_returned_connections() {
+        let temp_dir = tempfile::tempdir().expect("temporary storage directory");
+        let database_path = temp_dir.path().join(DATABASE_FILE_NAME);
+        let _writer_connection = connect_database(&database_path).expect("writer connection");
+        let read_connections = Arc::new(Mutex::new(Vec::new()));
+
+        {
+            let read_connection =
+                checkout_read_connection(database_path.clone(), Arc::clone(&read_connections))
+                    .expect("first read connection");
+            assert_eq!(query_i64(&read_connection, "PRAGMA user_version").expect("schema version"), 6);
+            assert_eq!(read_connections.lock().expect("read pool").len(), 0);
+        }
+
+        assert_eq!(read_connections.lock().expect("read pool").len(), 1);
+
+        {
+            let read_connection =
+                checkout_read_connection(database_path, Arc::clone(&read_connections))
+                    .expect("reused read connection");
+            assert!(query_bool(&read_connection, "PRAGMA foreign_keys").expect("foreign keys"));
+            assert_eq!(read_connections.lock().expect("read pool").len(), 0);
+        }
+
+        assert_eq!(read_connections.lock().expect("read pool").len(), 1);
     }
 }
