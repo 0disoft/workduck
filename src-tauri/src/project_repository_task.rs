@@ -11,7 +11,9 @@ use std::{
 use base64::{Engine as _, engine::general_purpose};
 use time::{OffsetDateTime, format_description::well_known::Rfc3339};
 
-use crate::workspace_path::{WorkspacePathValidationError, validate_workspace_directory_path};
+use crate::workspace_path::{
+    WorkspacePathValidationError, validate_absolute_directory_path, validate_workspace_directory_path,
+};
 
 #[derive(serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -458,35 +460,30 @@ fn validate_repository_path(
     workspace_path: &Path,
     path: &str,
 ) -> Result<PathBuf, ProjectRepositoryTaskError> {
-    let trimmed_path = path.trim();
-
-    if trimmed_path.is_empty() {
-        return Err(ProjectRepositoryTaskError::RepositoryPathRequired);
-    }
-
-    let path = PathBuf::from(trimmed_path);
-
-    if !path.is_absolute() {
-        return Err(ProjectRepositoryTaskError::RepositoryPathNotAbsolute);
-    }
-
-    let metadata =
-        fs::metadata(&path).map_err(|_| ProjectRepositoryTaskError::RepositoryPathNotFound)?;
-
-    if !metadata.is_dir() {
-        return Err(ProjectRepositoryTaskError::RepositoryPathNotDirectory);
-    }
-
     let canonical_path =
-        fs::canonicalize(&path).map_err(|_| ProjectRepositoryTaskError::RepositoryPathUnreadable)?;
-    fs::read_dir(&canonical_path)
-        .map_err(|_| ProjectRepositoryTaskError::RepositoryPathUnreadable)?;
+        validate_absolute_directory_path(path).map_err(map_repository_path_error)?;
 
     if !canonical_path.starts_with(workspace_path) {
         return Err(ProjectRepositoryTaskError::RepositoryPathOutsideWorkspace);
     }
 
     Ok(canonical_path)
+}
+
+fn map_repository_path_error(error: WorkspacePathValidationError) -> ProjectRepositoryTaskError {
+    match error {
+        WorkspacePathValidationError::Required => ProjectRepositoryTaskError::RepositoryPathRequired,
+        WorkspacePathValidationError::NotAbsolute => {
+            ProjectRepositoryTaskError::RepositoryPathNotAbsolute
+        }
+        WorkspacePathValidationError::NotFound => ProjectRepositoryTaskError::RepositoryPathNotFound,
+        WorkspacePathValidationError::NotDirectory => {
+            ProjectRepositoryTaskError::RepositoryPathNotDirectory
+        }
+        WorkspacePathValidationError::PermissionDenied | WorkspacePathValidationError::Unreadable => {
+            ProjectRepositoryTaskError::RepositoryPathUnreadable
+        }
+    }
 }
 
 fn resolve_repository_task_commands(

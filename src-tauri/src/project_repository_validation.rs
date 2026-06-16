@@ -4,7 +4,9 @@ use std::{
 };
 
 use crate::project_repository::{ProjectRepositoryCloneError, ProjectRepositoryGitError};
-use crate::workspace_path::{WorkspacePathValidationError, validate_workspace_directory_path};
+use crate::workspace_path::{
+    WorkspacePathValidationError, validate_absolute_directory_path, validate_workspace_directory_path,
+};
 
 const PROJECTS_DIRECTORY_NAME: &str = "projects";
 const PROJECT_REPOSITORY_NAME_MAX_CHARS: usize = 120;
@@ -17,28 +19,7 @@ pub(crate) fn validate_workspace_root(path: &str) -> Result<PathBuf, ProjectRepo
 }
 
 pub(crate) fn validate_repository_path(path: &str) -> Result<PathBuf, ProjectRepositoryGitError> {
-    let trimmed_path = path.trim();
-
-    if trimmed_path.is_empty() {
-        return Err(ProjectRepositoryGitError::PathRequired);
-    }
-
-    let repository_path = PathBuf::from(trimmed_path);
-
-    if !repository_path.is_absolute() {
-        return Err(ProjectRepositoryGitError::PathNotAbsolute);
-    }
-
-    let metadata = fs::metadata(&repository_path).map_err(map_repository_path_error)?;
-
-    if !metadata.is_dir() {
-        return Err(ProjectRepositoryGitError::PathNotDirectory);
-    }
-
-    let normalized_path = fs::canonicalize(&repository_path).map_err(map_repository_path_error)?;
-    fs::read_dir(&normalized_path).map_err(map_repository_path_error)?;
-
-    Ok(normalized_path)
+    validate_absolute_directory_path(path).map_err(map_repository_path_error)
 }
 
 pub(crate) fn validate_group_relative_path(
@@ -274,11 +255,14 @@ fn map_group_path_error(error: io::Error) -> ProjectRepositoryCloneError {
     }
 }
 
-fn map_repository_path_error(error: io::Error) -> ProjectRepositoryGitError {
-    match error.kind() {
-        io::ErrorKind::NotFound => ProjectRepositoryGitError::PathNotFound,
-        io::ErrorKind::PermissionDenied => ProjectRepositoryGitError::PathPermissionDenied,
-        _ => ProjectRepositoryGitError::PathUnreadable,
+fn map_repository_path_error(error: WorkspacePathValidationError) -> ProjectRepositoryGitError {
+    match error {
+        WorkspacePathValidationError::Required => ProjectRepositoryGitError::PathRequired,
+        WorkspacePathValidationError::NotAbsolute => ProjectRepositoryGitError::PathNotAbsolute,
+        WorkspacePathValidationError::NotFound => ProjectRepositoryGitError::PathNotFound,
+        WorkspacePathValidationError::NotDirectory => ProjectRepositoryGitError::PathNotDirectory,
+        WorkspacePathValidationError::PermissionDenied => ProjectRepositoryGitError::PathPermissionDenied,
+        WorkspacePathValidationError::Unreadable => ProjectRepositoryGitError::PathUnreadable,
     }
 }
 

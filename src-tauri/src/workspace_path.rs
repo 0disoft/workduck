@@ -46,6 +46,12 @@ pub fn validate_workspace_path(path: String) -> WorkspacePathValidation {
 pub(crate) fn validate_workspace_directory_path(
     path: &str,
 ) -> Result<PathBuf, WorkspacePathValidationError> {
+    validate_absolute_directory_path(path)
+}
+
+pub(crate) fn validate_absolute_directory_path(
+    path: &str,
+) -> Result<PathBuf, WorkspacePathValidationError> {
     let trimmed_path = path.trim();
 
     if trimmed_path.is_empty() {
@@ -125,6 +131,18 @@ mod tests {
         assert_eq!(
             validate_workspace_directory_path(&file_path.to_string_lossy()),
             Err(WorkspacePathValidationError::NotDirectory)
+        );
+    }
+
+    #[test]
+    fn absolute_directory_path_uses_same_validation_contract() {
+        assert_eq!(
+            validate_absolute_directory_path(""),
+            Err(WorkspacePathValidationError::Required)
+        );
+        assert_eq!(
+            validate_absolute_directory_path("relative/path"),
+            Err(WorkspacePathValidationError::NotAbsolute)
         );
     }
 }
