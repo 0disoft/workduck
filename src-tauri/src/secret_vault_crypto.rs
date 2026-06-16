@@ -268,3 +268,100 @@ fn invalid_decryption(error: SecretVaultCryptoError) -> SecretVaultDecryption {
         error: Some(error),
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn vault_payload_round_trips_with_supported_envelope_metadata() {
+        let encryption =
+            encrypt_secret_vault_payload("correct horse battery staple".into(), "secret-json".into());
+
+        assert!(encryption.ok);
+        assert!(encryption.error.is_none());
+
+        let envelope = encryption.envelope.expect("encrypted envelope");
+        assert_eq!(envelope.format, VAULT_FORMAT);
+        assert_eq!(envelope.version, VAULT_VERSION);
+        assert_eq!(envelope.kdf.algorithm, VAULT_KDF_ALGORITHM);
+        assert_eq!(envelope.kdf.version, VAULT_KDF_VERSION);
+        assert_eq!(envelope.kdf.memory_kib, VAULT_KDF_MEMORY_KIB);
+        assert_eq!(envelope.kdf.iterations, VAULT_KDF_ITERATIONS);
+        assert_eq!(envelope.kdf.parallelism, VAULT_KDF_PARALLELISM);
+        assert_eq!(envelope.cipher.algorithm, VAULT_CIPHER_ALGORITHM);
+        assert_eq!(
+            BASE64.decode(envelope.kdf.salt.as_bytes()).expect("salt").len(),
+            VAULT_SALT_LENGTH
+        );
+        assert_eq!(
+            BASE64.decode(envelope.cipher.nonce.as_bytes()).expect("nonce").len(),
+            VAULT_NONCE_LENGTH
+        );
+        assert!(
+            !BASE64
+                .decode(envelope.ciphertext.as_bytes())
+                .expect("ciphertext")
+                .is_empty()
+        );
+
+        let decryption =
+            decrypt_secret_vault_payload("correct horse battery staple".into(), envelope);
+
+        assert!(decryption.ok);
+        assert_eq!(decryption.plaintext.as_deref(), Some("secret-json"));
+        assert!(decryption.error.is_none());
+    }
+
+    #[test]
+    fn vault_decryption_rejects_wrong_password() {
+        let envelope = encrypt_secret_vault_payload("right-password".into(), "secret-json".into())
+            .envelope
+            .expect("encrypted envelope");
+
+        let decryption = decrypt_secret_vault_payload("wrong-password".into(), envelope);
+
+        assert!(!decryption.ok);
+        assert!(decryption.plaintext.is_none());
+        assert!(matches!(
+            decryption.error,
+            Some(SecretVaultCryptoError::DecryptionFailed)
+        ));
+    }
+
+    #[test]
+    fn vault_rejects_empty_inputs_before_crypto_work() {
+        let missing_password = encrypt_secret_vault_payload(String::new(), "secret-json".into());
+        let missing_plaintext =
+            encrypt_secret_vault_payload("correct horse battery staple".into(), String::new());
+
+        assert!(!missing_password.ok);
+        assert!(matches!(
+            missing_password.error,
+            Some(SecretVaultCryptoError::PasswordRequired)
+        ));
+        assert!(!missing_plaintext.ok);
+        assert!(matches!(
+            missing_plaintext.error,
+            Some(SecretVaultCryptoError::PlaintextRequired)
+        ));
+    }
+
+    #[test]
+    fn vault_rejects_unsupported_envelope_metadata() {
+        let mut envelope =
+            encrypt_secret_vault_payload("correct horse battery staple".into(), "secret-json".into())
+                .envelope
+                .expect("encrypted envelope");
+        envelope.format = "workduck.other-vault".to_string();
+
+        let decryption =
+            decrypt_secret_vault_payload("correct horse battery staple".into(), envelope);
+
+        assert!(!decryption.ok);
+        assert!(matches!(
+            decryption.error,
+            Some(SecretVaultCryptoError::EnvelopeInvalid)
+        ));
+    }
+}

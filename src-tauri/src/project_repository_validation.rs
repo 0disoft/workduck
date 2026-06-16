@@ -259,7 +259,12 @@ fn validate_scp_like_remote_url(remote_url: &str) -> Result<(), ProjectRepositor
         return Err(ProjectRepositoryCloneError::RemoteUrlInvalid);
     };
 
-    if user.is_empty() || host.is_empty() || host.contains('/') || path.is_empty() {
+    if user.is_empty()
+        || host.is_empty()
+        || host.contains('/')
+        || path.is_empty()
+        || path.starts_with('/')
+    {
         return Err(ProjectRepositoryCloneError::RemoteUrlInvalid);
     }
 
@@ -309,4 +314,144 @@ fn is_reserved_numbered_device(stem: &str, prefix: &str) -> bool {
     };
 
     suffix.len() == 1 && matches!(suffix.as_bytes()[0], b'1'..=b'9')
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn workspace_and_group_paths_resolve_inside_workspace() {
+        let temp_dir = tempfile::tempdir().expect("temporary workspace");
+        let workspace_root = fs::canonicalize(temp_dir.path()).expect("canonical workspace");
+        let group_path = workspace_root.join("projects").join("hobby").join("opensource");
+        fs::create_dir_all(&group_path).expect("group path");
+
+        let validated_workspace =
+            validate_workspace_root(&workspace_root.to_string_lossy()).expect("workspace root");
+        let group_segments =
+            validate_group_relative_path(" projects\\hobby/opensource ").expect("group segments");
+        let resolved_group =
+            resolve_group_path(&validated_workspace, &group_segments).expect("resolved group path");
+
+        assert_eq!(validated_workspace, workspace_root);
+        assert_eq!(
+            group_segments,
+            vec![
+                "projects".to_string(),
+                "hobby".to_string(),
+                "opensource".to_string()
+            ]
+        );
+        assert_eq!(resolved_group, group_path);
+    }
+
+    #[test]
+    fn group_relative_path_must_stay_under_projects_tree() {
+        assert!(matches!(
+            validate_group_relative_path("projects/hobby"),
+            Err(ProjectRepositoryCloneError::GroupPathInvalid)
+        ));
+        assert!(matches!(
+            validate_group_relative_path("../projects/hobby/opensource"),
+            Err(ProjectRepositoryCloneError::GroupPathInvalid)
+        ));
+        assert!(matches!(
+            validate_group_relative_path("projects/hobby/../opensource"),
+            Err(ProjectRepositoryCloneError::GroupPathInvalid)
+        ));
+    }
+
+    #[test]
+    fn repository_folder_name_rejects_windows_reserved_or_ambiguous_names() {
+        for invalid_name in ["", ".", "..", "CON", "com1.txt", "repo.", "bad/name"] {
+            assert!(
+                matches!(
+                    validate_repository_folder_name(invalid_name),
+                    Err(
+                        ProjectRepositoryCloneError::NameRequired
+                            | ProjectRepositoryCloneError::NameInvalid
+                    )
+                ),
+                "{invalid_name:?} should be rejected"
+            );
+        }
+
+        assert_eq!(
+            validate_repository_folder_name(" workduck ").expect("repository folder name"),
+            "workduck"
+        );
+    }
+
+    #[test]
+    fn remote_url_rejects_embedded_http_credentials_and_malformed_scp_forms() {
+        assert_eq!(
+            validate_remote_url(" https://github.com/workduck/workduck.git ")
+                .expect("https remote"),
+            "https://github.com/workduck/workduck.git"
+        );
+        assert_eq!(
+            validate_remote_url("git@github.com:workduck/workduck.git").expect("scp remote"),
+            "git@github.com:workduck/workduck.git"
+        );
+
+        for invalid_url in [
+            "",
+            "https://token@github.com/workduck/workduck.git",
+            "ftp://github.com/workduck/workduck.git",
+            "https://github.com",
+            "git@github.com:/workduck/workduck.git",
+            "github.com/workduck/workduck.git",
+            "https://github.com/workduck/work duck.git",
+        ] {
+            assert!(
+                matches!(
+                    validate_remote_url(invalid_url),
+                    Err(ProjectRepositoryCloneError::RemoteUrlRequired | ProjectRepositoryCloneError::RemoteUrlInvalid)
+                ),
+                "{invalid_url:?} should be rejected"
+            );
+        }
+    }
+
+    #[test]
+    fn github_publish_inputs_reject_ambiguous_names_messages_and_visibility() {
+        assert_eq!(
+            expect_git_success(validate_github_repository_name("owner/repo.git")),
+            "owner/repo"
+        );
+        assert!(matches!(
+            validate_github_repository_name(".repo"),
+            Err(ProjectRepositoryGitError::GithubRepoNameInvalid)
+        ));
+        assert!(matches!(
+            validate_github_repository_name("owner/repo/extra"),
+            Err(ProjectRepositoryGitError::GithubRepoNameInvalid)
+        ));
+
+        assert_eq!(
+            expect_git_success(validate_commit_message(" chore: initial commit ")),
+            "chore: initial commit"
+        );
+        assert!(matches!(
+            validate_commit_message("bad\nmessage"),
+            Err(ProjectRepositoryGitError::GithubCommitMessageInvalid)
+        ));
+
+        assert_eq!(
+            expect_git_success(validate_github_visibility(" private ")),
+            "--private"
+        );
+        assert!(matches!(
+            validate_github_visibility("internal"),
+            Err(ProjectRepositoryGitError::GithubVisibilityInvalid)
+        ));
+    }
+
+    fn expect_git_success<T>(result: Result<T, ProjectRepositoryGitError>) -> T {
+        match result {
+            Ok(value) => value,
+            Err(_) => panic!("expected git validation success"),
+        }
+    }
 }

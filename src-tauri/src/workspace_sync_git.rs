@@ -960,6 +960,62 @@ mod tests {
     use super::*;
 
     #[test]
+    fn safe_origin_url_redacts_embedded_credentials_before_display() {
+        let temp_dir = tempfile::tempdir().expect("temporary git dir");
+        let git_dir = temp_dir.path().join(".git");
+        fs::create_dir_all(&git_dir).expect("git dir");
+        fs::write(
+            git_dir.join("config"),
+            r#"
+[remote "origin"]
+    url = https://token@example.com/workduck/workduck.git
+"#,
+        )
+        .expect("git config");
+
+        assert_eq!(
+            read_origin_url(&git_dir).as_deref(),
+            Some("https://example.com/workduck/workduck.git")
+        );
+        assert_eq!(
+            read_safe_origin_url(&git_dir).as_deref(),
+            Some("https://example.com/workduck/workduck.git")
+        );
+    }
+
+    #[test]
+    fn remote_url_safety_rejects_credentials_absolute_scp_paths_and_whitespace() {
+        for safe_url in [
+            "https://github.com/workduck/workduck.git",
+            "ssh://git@github.com/workduck/workduck.git",
+            "git@github.com:workduck/workduck.git",
+        ] {
+            assert!(is_safe_git_remote_url(safe_url), "{safe_url:?} should be safe");
+        }
+
+        for unsafe_url in [
+            "",
+            "https://token@github.com/workduck/workduck.git",
+            "https://github.com/workduck/work duck.git",
+            "ftp://github.com/workduck/workduck.git",
+            "git@github.com:/workduck/workduck.git",
+            "github.com/workduck/workduck.git",
+        ] {
+            assert!(
+                !is_safe_git_remote_url(unsafe_url),
+                "{unsafe_url:?} should be rejected"
+            );
+        }
+    }
+
+    #[test]
+    fn detached_head_and_malformed_ahead_behind_counts_fall_back_to_zero() {
+        assert_eq!(parse_git_ahead_behind_counts("2\t3\n"), (2, 3));
+        assert_eq!(parse_git_ahead_behind_counts("bad 3"), (0, 3));
+        assert_eq!(parse_git_ahead_behind_counts(""), (0, 0));
+    }
+
+    #[test]
     fn child_output_wait_drains_large_stdout_and_stderr() {
         let mut command = large_output_command();
         command

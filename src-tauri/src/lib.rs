@@ -4,6 +4,7 @@ pub mod argon2_kdf;
 mod agent_api_snapshot;
 mod atomic_file_write;
 mod autostart_control;
+mod chat_completion;
 mod git_credential;
 mod git_path;
 mod llm_chat;

@@ -1,10 +1,12 @@
-use std::{sync::OnceLock, time::Duration};
+use serde_json::json;
 
-const CHAT_COMPLETION_TIMEOUT_SECONDS: u64 = 120;
+use crate::chat_completion::{
+    ChatCompletionError, chat_completion_endpoint, chat_completion_http_client,
+    send_chat_completion_json,
+};
+
 const MAX_PROMPT_LENGTH: usize = 48_000;
 const MAX_MODEL_LENGTH: usize = 120;
-
-static LLM_CHAT_HTTP_CLIENT: OnceLock<reqwest::Client> = OnceLock::new();
 
 #[derive(serde::Deserialize)]
 #[serde(rename_all = "kebab-case")]
@@ -49,34 +51,6 @@ pub struct LlmChatCompletionResult {
     error: Option<LlmChatCompletionError>,
 }
 
-#[derive(serde::Serialize)]
-struct ChatCompletionRequestBody<'a> {
-    model: &'a str,
-    messages: Vec<ChatMessage<'a>>,
-    stream: bool,
-}
-
-#[derive(serde::Serialize)]
-struct ChatMessage<'a> {
-    role: &'a str,
-    content: &'a str,
-}
-
-#[derive(serde::Deserialize)]
-struct ChatCompletionResponseBody {
-    choices: Vec<ChatChoice>,
-}
-
-#[derive(serde::Deserialize)]
-struct ChatChoice {
-    message: ChatChoiceMessage,
-}
-
-#[derive(serde::Deserialize)]
-struct ChatChoiceMessage {
-    content: Option<String>,
-}
-
 #[tauri::command]
 pub async fn run_llm_chat_completion(
     request: LlmChatCompletionRequest,
@@ -102,98 +76,51 @@ pub async fn run_llm_chat_completion(
         return failed(LlmChatCompletionError::PromptRequired);
     }
 
-    let endpoint = match provider_chat_completion_endpoint(&request.provider) {
+    let endpoint = match chat_completion_endpoint(request.provider.as_str()) {
         Some(endpoint) => endpoint,
         None => return failed(LlmChatCompletionError::ProviderUnsupported),
     };
-    let client = match llm_chat_http_client() {
+    let client = match chat_completion_http_client() {
         Ok(client) => client,
-        Err(_) => return failed(LlmChatCompletionError::RequestInvalid),
+        Err(error) => return failed(map_chat_completion_error(error)),
     };
-    let body = ChatCompletionRequestBody {
-        model,
-        messages: vec![
-            ChatMessage {
-                role: "system",
-                content: system_prompt,
-            },
-            ChatMessage {
-                role: "user",
-                content: user_prompt,
-            },
+    let body = json!({
+        "model": model,
+        "messages": [
+            { "role": "system", "content": system_prompt },
+            { "role": "user", "content": user_prompt }
         ],
-        stream: false,
-    };
-    let response = match client
-        .post(endpoint)
-        .bearer_auth(api_key)
-        .header(reqwest::header::CONTENT_TYPE, "application/json")
-        .json(&body)
-        .send()
-        .await
-    {
-        Ok(response) => response,
-        Err(error) if error.is_timeout() => {
-            return failed(LlmChatCompletionError::ProviderUnavailable)
+        "stream": false
+    });
+
+    match send_chat_completion_json(&client, endpoint, api_key, &body, false).await {
+        Ok(content) => succeeded(content),
+        Err(error) => failed(map_chat_completion_error(error)),
+    }
+}
+
+impl LlmChatProvider {
+    fn as_str(&self) -> &'static str {
+        match self {
+            Self::Deepseek => "deepseek",
+            Self::Openai => "openai",
+            Self::Openrouter => "openrouter",
         }
-        Err(_) => return failed(LlmChatCompletionError::ProviderUnavailable),
-    };
-    let status = response.status();
-
-    if !status.is_success() {
-        return failed(map_http_status(status.as_u16()));
-    }
-
-    let response_body = match response.json::<ChatCompletionResponseBody>().await {
-        Ok(response_body) => response_body,
-        Err(_) => return failed(LlmChatCompletionError::ResponseInvalid),
-    };
-    let content = response_body
-        .choices
-        .first()
-        .and_then(|choice| choice.message.content.as_deref())
-        .map(str::trim)
-        .filter(|content| !content.is_empty());
-
-    match content {
-        Some(content) => succeeded(content.to_string()),
-        None => failed(LlmChatCompletionError::ResponseInvalid),
     }
 }
 
-fn create_llm_chat_http_client() -> Result<reqwest::Client, LlmChatCompletionError> {
-    reqwest::Client::builder()
-        .timeout(Duration::from_secs(CHAT_COMPLETION_TIMEOUT_SECONDS))
-        .build()
-        .map_err(|_| LlmChatCompletionError::RequestInvalid)
-}
-
-fn llm_chat_http_client() -> Result<reqwest::Client, LlmChatCompletionError> {
-    if let Some(client) = LLM_CHAT_HTTP_CLIENT.get() {
-        return Ok(client.clone());
-    }
-
-    let client = create_llm_chat_http_client()?;
-    let _ = LLM_CHAT_HTTP_CLIENT.set(client.clone());
-
-    Ok(LLM_CHAT_HTTP_CLIENT.get().cloned().unwrap_or(client))
-}
-
-fn provider_chat_completion_endpoint(provider: &LlmChatProvider) -> Option<&'static str> {
-    match provider {
-        LlmChatProvider::Deepseek => Some("https://api.deepseek.com/chat/completions"),
-        LlmChatProvider::Openai => Some("https://api.openai.com/v1/chat/completions"),
-        LlmChatProvider::Openrouter => Some("https://openrouter.ai/api/v1/chat/completions"),
-    }
-}
-
-fn map_http_status(status: u16) -> LlmChatCompletionError {
-    match status {
-        400 | 404 | 422 => LlmChatCompletionError::RequestInvalid,
-        401 | 403 => LlmChatCompletionError::AuthenticationFailed,
-        429 => LlmChatCompletionError::RateLimited,
-        500..=599 => LlmChatCompletionError::ProviderUnavailable,
-        _ => LlmChatCompletionError::ProviderRejected,
+fn map_chat_completion_error(error: ChatCompletionError) -> LlmChatCompletionError {
+    match error {
+        ChatCompletionError::RequestInvalid => LlmChatCompletionError::RequestInvalid,
+        ChatCompletionError::AuthenticationFailed => LlmChatCompletionError::AuthenticationFailed,
+        ChatCompletionError::RateLimited => LlmChatCompletionError::RateLimited,
+        ChatCompletionError::ProviderRejected => LlmChatCompletionError::ProviderRejected,
+        ChatCompletionError::ProviderTimeout | ChatCompletionError::ProviderUnavailable => {
+            LlmChatCompletionError::ProviderUnavailable
+        }
+        ChatCompletionError::ResponseEmpty | ChatCompletionError::ResponseInvalid => {
+            LlmChatCompletionError::ResponseInvalid
+        }
     }
 }
 
