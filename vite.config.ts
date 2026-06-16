@@ -21,22 +21,31 @@ const devWatchIgnoredPaths = [
 	'**/src-tauri/target/**'
 ];
 
-const workduckManualChunkPrefixes = [
-	['/src/lib/projects/', 'workduck-projects'],
-	['/src/lib/queue/', 'workduck-queue'],
-	['/src/lib/settings/', 'workduck-settings'],
-	['/src/lib/references/', 'workduck-references'],
-	['/src/lib/environment/', 'workduck-environment'],
-	['/src/lib/agents/', 'workduck-agents'],
-	['/src/lib/personas/', 'workduck-personas'],
-	['/src/lib/skills/', 'workduck-skills'],
-	['/src/lib/terminals/', 'workduck-terminals'],
-	['/src/lib/processes/', 'workduck-processes'],
-	['/src/lib/shell/', 'workduck-shell']
+const workduckSharedManualChunkPrefixes = [
+	['/src/lib/i18n/', 'workduck-i18n'],
+	['/src/lib/shared/', 'workduck-shared'],
+	['/src/lib/agents/agent-evaluation', 'workduck-agent-core'],
+	['/src/lib/agents/agent-execution', 'workduck-agent-core'],
+	['/src/lib/agents/agent-model-options', 'workduck-agent-core'],
+	['/src/lib/agents/agent-registry', 'workduck-agent-core'],
+	['/src/lib/personas/persona-prompt', 'workduck-persona-core'],
+	['/src/lib/personas/persona-registry', 'workduck-persona-core'],
+	['/src/lib/skills/skill-registry', 'workduck-skill-core'],
+	['/src/lib/projects/project-folder', 'workduck-project-core'],
+	['/src/lib/projects/project-registry', 'workduck-project-core'],
+	['/src/lib/projects/project-repository', 'workduck-project-core'],
+	['/src/lib/projects/project-storage', 'workduck-project-core']
 ] as const;
 
 function getWorkduckManualChunk(normalizedId: string) {
-	for (const [prefix, chunkName] of workduckManualChunkPrefixes) {
+	return getChunkFromPrefixes(normalizedId, workduckSharedManualChunkPrefixes);
+}
+
+function getChunkFromPrefixes(
+	normalizedId: string,
+	prefixes: readonly (readonly [string, string])[]
+) {
+	for (const [prefix, chunkName] of prefixes) {
 		if (normalizedId.includes(prefix)) {
 			return chunkName;
 		}
