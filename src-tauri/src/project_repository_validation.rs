@@ -4,6 +4,7 @@ use std::{
 };
 
 use crate::project_repository::{ProjectRepositoryCloneError, ProjectRepositoryGitError};
+use crate::workspace_path::{WorkspacePathValidationError, validate_workspace_directory_path};
 
 const PROJECTS_DIRECTORY_NAME: &str = "projects";
 const PROJECT_REPOSITORY_NAME_MAX_CHARS: usize = 120;
@@ -12,28 +13,7 @@ const PROJECT_REPOSITORY_GITHUB_NAME_MAX_CHARS: usize = 100;
 const PROJECT_REPOSITORY_COMMIT_MESSAGE_MAX_CHARS: usize = 200;
 
 pub(crate) fn validate_workspace_root(path: &str) -> Result<PathBuf, ProjectRepositoryCloneError> {
-    let trimmed_path = path.trim();
-
-    if trimmed_path.is_empty() {
-        return Err(ProjectRepositoryCloneError::WorkspaceRequired);
-    }
-
-    let workspace_path = PathBuf::from(trimmed_path);
-
-    if !workspace_path.is_absolute() {
-        return Err(ProjectRepositoryCloneError::WorkspaceNotAbsolute);
-    }
-
-    let metadata = fs::metadata(&workspace_path).map_err(map_workspace_error)?;
-
-    if !metadata.is_dir() {
-        return Err(ProjectRepositoryCloneError::WorkspaceNotDirectory);
-    }
-
-    let normalized_path = fs::canonicalize(&workspace_path).map_err(map_workspace_error)?;
-    fs::read_dir(&normalized_path).map_err(map_workspace_error)?;
-
-    Ok(normalized_path)
+    validate_workspace_directory_path(path).map_err(map_workspace_path_error)
 }
 
 pub(crate) fn validate_repository_path(path: &str) -> Result<PathBuf, ProjectRepositoryGitError> {
@@ -271,11 +251,18 @@ fn validate_scp_like_remote_url(remote_url: &str) -> Result<(), ProjectRepositor
     Ok(())
 }
 
-fn map_workspace_error(error: io::Error) -> ProjectRepositoryCloneError {
-    match error.kind() {
-        io::ErrorKind::NotFound => ProjectRepositoryCloneError::WorkspaceNotFound,
-        io::ErrorKind::PermissionDenied => ProjectRepositoryCloneError::WorkspacePermissionDenied,
-        _ => ProjectRepositoryCloneError::WorkspaceUnreadable,
+fn map_workspace_path_error(error: WorkspacePathValidationError) -> ProjectRepositoryCloneError {
+    match error {
+        WorkspacePathValidationError::Required => ProjectRepositoryCloneError::WorkspaceRequired,
+        WorkspacePathValidationError::NotAbsolute => ProjectRepositoryCloneError::WorkspaceNotAbsolute,
+        WorkspacePathValidationError::NotFound => ProjectRepositoryCloneError::WorkspaceNotFound,
+        WorkspacePathValidationError::NotDirectory => {
+            ProjectRepositoryCloneError::WorkspaceNotDirectory
+        }
+        WorkspacePathValidationError::PermissionDenied => {
+            ProjectRepositoryCloneError::WorkspacePermissionDenied
+        }
+        WorkspacePathValidationError::Unreadable => ProjectRepositoryCloneError::WorkspaceUnreadable,
     }
 }
 

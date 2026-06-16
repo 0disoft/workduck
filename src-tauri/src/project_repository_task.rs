@@ -11,6 +11,8 @@ use std::{
 use base64::{Engine as _, engine::general_purpose};
 use time::{OffsetDateTime, format_description::well_known::Rfc3339};
 
+use crate::workspace_path::{WorkspacePathValidationError, validate_workspace_directory_path};
+
 #[derive(serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ProjectRepositoryTaskRequest {
@@ -435,30 +437,21 @@ fn parse_task(task: &str) -> Option<ProjectRepositoryTask> {
 }
 
 fn validate_workspace_path(path: &str) -> Result<PathBuf, ProjectRepositoryTaskError> {
-    let trimmed_path = path.trim();
+    validate_workspace_directory_path(path).map_err(map_workspace_path_error)
+}
 
-    if trimmed_path.is_empty() {
-        return Err(ProjectRepositoryTaskError::WorkspaceRequired);
+fn map_workspace_path_error(error: WorkspacePathValidationError) -> ProjectRepositoryTaskError {
+    match error {
+        WorkspacePathValidationError::Required => ProjectRepositoryTaskError::WorkspaceRequired,
+        WorkspacePathValidationError::NotAbsolute => ProjectRepositoryTaskError::WorkspaceNotAbsolute,
+        WorkspacePathValidationError::NotFound => ProjectRepositoryTaskError::WorkspaceNotFound,
+        WorkspacePathValidationError::NotDirectory => {
+            ProjectRepositoryTaskError::WorkspaceNotDirectory
+        }
+        WorkspacePathValidationError::PermissionDenied | WorkspacePathValidationError::Unreadable => {
+            ProjectRepositoryTaskError::WorkspaceUnreadable
+        }
     }
-
-    let path = PathBuf::from(trimmed_path);
-
-    if !path.is_absolute() {
-        return Err(ProjectRepositoryTaskError::WorkspaceNotAbsolute);
-    }
-
-    let metadata = fs::metadata(&path).map_err(|_| ProjectRepositoryTaskError::WorkspaceNotFound)?;
-
-    if !metadata.is_dir() {
-        return Err(ProjectRepositoryTaskError::WorkspaceNotDirectory);
-    }
-
-    let canonical_path =
-        fs::canonicalize(&path).map_err(|_| ProjectRepositoryTaskError::WorkspaceUnreadable)?;
-    fs::read_dir(&canonical_path)
-        .map_err(|_| ProjectRepositoryTaskError::WorkspaceUnreadable)?;
-
-    Ok(canonical_path)
 }
 
 fn validate_repository_path(

@@ -5,7 +5,7 @@ use std::{
 
 use crate::path_display::display_path;
 
-#[derive(serde::Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
 pub enum WorkspacePathValidationError {
     #[serde(rename = "workspace-path-required")]
     Required,
@@ -33,19 +33,7 @@ pub struct WorkspacePathValidation {
 
 #[tauri::command]
 pub fn validate_workspace_path(path: String) -> WorkspacePathValidation {
-    let trimmed_path = path.trim();
-
-    if trimmed_path.is_empty() {
-        return invalid(WorkspacePathValidationError::Required);
-    }
-
-    let workspace_path = PathBuf::from(trimmed_path);
-
-    if !workspace_path.is_absolute() {
-        return invalid(WorkspacePathValidationError::NotAbsolute);
-    }
-
-    match validate_directory_path(&workspace_path) {
+    match validate_workspace_directory_path(&path) {
         Ok(normalized_path) => WorkspacePathValidation {
             ok: true,
             normalized_path: Some(display_path(&normalized_path)),
@@ -53,6 +41,24 @@ pub fn validate_workspace_path(path: String) -> WorkspacePathValidation {
         },
         Err(error) => invalid(error),
     }
+}
+
+pub(crate) fn validate_workspace_directory_path(
+    path: &str,
+) -> Result<PathBuf, WorkspacePathValidationError> {
+    let trimmed_path = path.trim();
+
+    if trimmed_path.is_empty() {
+        return Err(WorkspacePathValidationError::Required);
+    }
+
+    let workspace_path = PathBuf::from(trimmed_path);
+
+    if !workspace_path.is_absolute() {
+        return Err(WorkspacePathValidationError::NotAbsolute);
+    }
+
+    validate_directory_path(&workspace_path)
 }
 
 fn validate_directory_path(path: &Path) -> Result<PathBuf, WorkspacePathValidationError> {
@@ -81,5 +87,44 @@ fn map_io_error(error: io::Error) -> WorkspacePathValidationError {
         io::ErrorKind::NotFound => WorkspacePathValidationError::NotFound,
         io::ErrorKind::PermissionDenied => WorkspacePathValidationError::PermissionDenied,
         _ => WorkspacePathValidationError::Unreadable,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn workspace_directory_path_requires_non_empty_absolute_directory() {
+        assert_eq!(
+            validate_workspace_directory_path(""),
+            Err(WorkspacePathValidationError::Required)
+        );
+        assert_eq!(
+            validate_workspace_directory_path("relative/path"),
+            Err(WorkspacePathValidationError::NotAbsolute)
+        );
+    }
+
+    #[test]
+    fn workspace_directory_path_canonicalizes_existing_directory() {
+        let temp_dir = tempfile::tempdir().expect("temporary workspace directory");
+        let normalized_path =
+            validate_workspace_directory_path(&temp_dir.path().to_string_lossy())
+                .expect("valid workspace directory");
+
+        assert_eq!(normalized_path, temp_dir.path().canonicalize().expect("canonical temp dir"));
+    }
+
+    #[test]
+    fn workspace_directory_path_rejects_existing_file() {
+        let temp_dir = tempfile::tempdir().expect("temporary workspace directory");
+        let file_path = temp_dir.path().join("workspace-file");
+        fs::write(&file_path, "not a directory").expect("workspace file");
+
+        assert_eq!(
+            validate_workspace_directory_path(&file_path.to_string_lossy()),
+            Err(WorkspacePathValidationError::NotDirectory)
+        );
     }
 }
