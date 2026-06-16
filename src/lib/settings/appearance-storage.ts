@@ -7,7 +7,10 @@ import {
 	WORKDUCK_APPEARANCE_SETTINGS_STORAGE_KEY,
 	type AppearanceSettings
 } from './appearance-settings';
-import { getWorkduckLanguageOption } from '$lib/i18n/workduck-language';
+import {
+	getWorkduckLanguageOption,
+	WORKDUCK_MESSAGES_LOADED_EVENT
+} from '$lib/i18n/workduck-language';
 
 export const WORKDUCK_APPEARANCE_SETTINGS_CHANGED_EVENT = 'workduck:appearance-settings-changed';
 const WORKDUCK_APPEARANCE_SETTINGS_SCOPE_SELECTOR = '.workduck-window-frame';
@@ -137,8 +140,16 @@ export function subscribeAppearanceSettings(
 		callback(storedSettings);
 	}
 
+	function handleWorkduckMessagesLoaded() {
+		const storedSettings = readAppearanceSettingsFromBrowser().settings;
+
+		applyAppearanceSettingsToBrowserDocument(storedSettings);
+		callback(storedSettings);
+	}
+
 	window.addEventListener(WORKDUCK_APPEARANCE_SETTINGS_CHANGED_EVENT, handleAppearanceSettingsChanged);
 	window.addEventListener('storage', handleStorage);
+	window.addEventListener(WORKDUCK_MESSAGES_LOADED_EVENT, handleWorkduckMessagesLoaded);
 
 	return () => {
 		window.removeEventListener(
@@ -146,5 +157,6 @@ export function subscribeAppearanceSettings(
 			handleAppearanceSettingsChanged
 		);
 		window.removeEventListener('storage', handleStorage);
+		window.removeEventListener(WORKDUCK_MESSAGES_LOADED_EVENT, handleWorkduckMessagesLoaded);
 	};
 }

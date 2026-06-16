@@ -22,7 +22,6 @@ const devWatchIgnoredPaths = [
 ];
 
 const workduckSharedManualChunkPrefixes = [
-	['/src/lib/i18n/', 'workduck-i18n'],
 	['/src/lib/shared/', 'workduck-shared'],
 	['/src/lib/agents/agent-evaluation', 'workduck-agent-core'],
 	['/src/lib/agents/agent-execution', 'workduck-agent-core'],
