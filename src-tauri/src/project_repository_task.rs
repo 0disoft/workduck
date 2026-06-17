@@ -1385,6 +1385,7 @@ fn failed_launch_task_run_record(
 #[derive(Clone)]
 struct LiveTaskProcess {
     pid: u32,
+    parent_process_id: Option<u32>,
     command_line: String,
 }
 
@@ -1399,6 +1400,7 @@ struct RawLiveTaskProcessPayload {
 #[serde(rename_all = "camelCase")]
 struct RawLiveTaskProcessRecord {
     pid: u32,
+    parent_process_id: Option<u32>,
     name: Option<String>,
     executable_path: Option<String>,
     command_line: Option<String>,
@@ -1472,8 +1474,10 @@ fn is_long_running_task_process_alive(
     record: &ProjectRepositoryTaskRunRecord,
     live_processes: &[LiveTaskProcess],
 ) -> bool {
-    if is_tracked_task_process_alive(record, live_processes) {
-        return true;
+    if let Some(process_id) = record.process_id {
+        if has_live_descendant_task_process(process_id, live_processes) {
+            return true;
+        }
     }
 
     let repository_path = normalize_process_match_text(&record.repository_path);
@@ -1483,8 +1487,67 @@ fn is_long_running_task_process_alive(
     }
 
     live_processes.iter().any(|process| {
-        normalize_process_match_text(&process.command_line).contains(&repository_path)
+        long_running_process_matches_repository(process, &repository_path)
     })
+}
+
+fn has_live_descendant_task_process(
+    ancestor_pid: u32,
+    live_processes: &[LiveTaskProcess],
+) -> bool {
+    let parent_process_id_by_pid = live_processes
+        .iter()
+        .filter_map(|process| {
+            process
+                .parent_process_id
+                .map(|parent_process_id| (process.pid, parent_process_id))
+        })
+        .collect::<HashMap<_, _>>();
+
+    live_processes.iter().any(|process| {
+        process.pid != ancestor_pid
+            && !is_terminal_host_process(process)
+            && is_descendant_process(process.pid, ancestor_pid, &parent_process_id_by_pid)
+    })
+}
+
+fn is_descendant_process(
+    process_id: u32,
+    ancestor_pid: u32,
+    parent_process_id_by_pid: &HashMap<u32, u32>,
+) -> bool {
+    let mut current_pid = process_id;
+    let mut seen = HashSet::new();
+
+    while let Some(parent_pid) = parent_process_id_by_pid.get(&current_pid).copied() {
+        if parent_pid == ancestor_pid {
+            return true;
+        }
+
+        if parent_pid == 0 || !seen.insert(parent_pid) {
+            return false;
+        }
+
+        current_pid = parent_pid;
+    }
+
+    false
+}
+
+fn long_running_process_matches_repository(
+    process: &LiveTaskProcess,
+    repository_path: &str,
+) -> bool {
+    !is_terminal_host_process(process)
+        && normalize_process_match_text(&process.command_line).contains(repository_path)
+}
+
+fn is_terminal_host_process(process: &LiveTaskProcess) -> bool {
+    let command_line = normalize_process_match_text(&process.command_line);
+
+    command_line.contains("powershell")
+        || command_line.contains("pwsh")
+        || command_line.contains("cmd.exe")
 }
 
 fn live_process_matches_task_record(
@@ -1590,8 +1653,9 @@ $processes = @(
   Get-CimInstance Win32_Process |
     Where-Object { $_.ProcessId -ne $currentPid -and $_.ProcessId -ne $workduckPid } |
     ForEach-Object {
-      [PSCustomObject]@{
+        [PSCustomObject]@{
         pid = [int]$_.ProcessId
+        parentProcessId = if ($_.ParentProcessId -ne $null) { [int]$_.ParentProcessId } else { $null }
         name = [string]$_.Name
         executablePath = [string]$_.ExecutablePath
         commandLine = [string]$_.CommandLine
@@ -1630,7 +1694,7 @@ $processes = @(
 fn collect_live_task_processes() -> Result<Vec<LiveTaskProcess>, ProjectRepositoryTaskError> {
     let output = Command::new("ps")
         .arg("-eo")
-        .arg("pid=,comm=,args=")
+        .arg("pid=,ppid=,comm=,args=")
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
         .stderr(Stdio::null())
@@ -1656,6 +1720,7 @@ fn parse_live_task_processes(value: &str) -> Result<Vec<LiveTaskProcess>, Projec
         .into_iter()
         .map(|process| LiveTaskProcess {
             pid: process.pid,
+            parent_process_id: process.parent_process_id,
             command_line: format!(
                 "{} {} {}",
                 process.name.unwrap_or_default(),
@@ -1669,9 +1734,11 @@ fn parse_live_task_processes(value: &str) -> Result<Vec<LiveTaskProcess>, Projec
 #[cfg(not(target_os = "windows"))]
 fn parse_live_unix_task_process_line(line: &str) -> Option<LiveTaskProcess> {
     let trimmed = line.trim();
-    let (pid_text, command_line) = trimmed.split_once(char::is_whitespace)?;
+    let (pid_text, remainder) = trimmed.split_once(char::is_whitespace)?;
+    let (parent_pid_text, command_line) = remainder.trim().split_once(char::is_whitespace)?;
     Some(LiveTaskProcess {
         pid: pid_text.parse::<u32>().ok()?,
+        parent_process_id: parent_pid_text.parse::<u32>().ok(),
         command_line: command_line.trim().to_owned(),
     })
 }
@@ -1762,6 +1829,18 @@ mod tests {
         fs::create_dir_all(&repository_path).expect("create temporary repository");
 
         repository_path
+    }
+
+    fn live_task_process(
+        pid: u32,
+        parent_process_id: Option<u32>,
+        command_line: &str,
+    ) -> LiveTaskProcess {
+        LiveTaskProcess {
+            pid,
+            parent_process_id,
+            command_line: command_line.to_owned(),
+        }
     }
 
     #[test]
@@ -1999,10 +2078,7 @@ mod tests {
                 process_id: Some(42),
                 ..task_run_record("repo-a-dev", "C:/workspace/repo-a", "2026-05-23T01:00:00Z")
             }],
-            Some(&[LiveTaskProcess {
-                pid: 42,
-                command_line: "powershell".to_owned(),
-            }]),
+            Some(&[live_task_process(42, None, "powershell")]),
         );
 
         assert_eq!(records[0].state, "stopped");
@@ -2018,15 +2094,41 @@ mod tests {
                 process_id: Some(42),
                 ..task_run_record("repo-a-dev", "C:/workspace/repo-a", "2026-05-23T01:00:00Z")
             }],
-            Some(&[LiveTaskProcess {
-                pid: 42,
-                command_line: encoded_powershell_command_line(
-                    "Set-Location -LiteralPath 'C:/workspace/repo-a'; bun run build",
+            Some(&[
+                live_task_process(
+                    42,
+                    None,
+                    &encoded_powershell_command_line(
+                        "Set-Location -LiteralPath 'C:/workspace/repo-a'; bun run dev",
+                    ),
                 ),
-            }]),
+                live_task_process(43, Some(42), "bun run dev"),
+            ]),
         );
 
         assert_eq!(records[0].state, "running");
+    }
+
+    #[test]
+    fn running_dev_server_records_stop_when_only_terminal_process_remains() {
+        let records = reconcile_running_task_run_records(
+            vec![ProjectRepositoryTaskRunRecord {
+                task: ProjectRepositoryTask::StartDevServer.as_str().to_owned(),
+                state: "running".to_owned(),
+                process_id: Some(42),
+                ..task_run_record("repo-a-dev", "C:/workspace/repo-a", "2026-05-23T01:00:00Z")
+            }],
+            Some(&[live_task_process(
+                42,
+                None,
+                &encoded_powershell_command_line(
+                    "Set-Location -LiteralPath 'C:/workspace/repo-a'; bun run dev",
+                ),
+            )]),
+        );
+
+        assert_eq!(records[0].state, "stopped");
+        assert!(records[0].finished_at.is_some());
     }
 
     #[test]
@@ -2054,12 +2156,11 @@ mod tests {
                 command: "bun run preview".to_owned(),
                 ..task_run_record("repo-a-preview", "C:/workspace/repo-a", "2026-05-23T01:00:00Z")
             }],
-            Some(&[LiveTaskProcess {
-                pid: 43,
-                command_line:
-                    "node C:\\workspace\\repo-a\\node_modules\\vite\\bin\\vite.js preview"
-                        .to_owned(),
-            }]),
+            Some(&[live_task_process(
+                43,
+                None,
+                "node C:\\workspace\\repo-a\\node_modules\\vite\\bin\\vite.js preview",
+            )]),
         );
 
         assert_eq!(records[0].state, "running");
@@ -2100,12 +2201,13 @@ mod tests {
                     "2026-05-23T01:00:00Z",
                 )
             }],
-            Some(&[LiveTaskProcess {
-                pid: 42,
-                command_line: encoded_powershell_command_line(
+            Some(&[live_task_process(
+                42,
+                None,
+                &encoded_powershell_command_line(
                     "Set-Location -LiteralPath 'C:/workspace/repo-a'; bun update",
                 ),
-            }]),
+            )]),
         );
 
         assert_eq!(records[0].state, "running");
@@ -2125,10 +2227,7 @@ mod tests {
                     "2026-05-23T01:00:00Z",
                 )
             }],
-            Some(&[LiveTaskProcess {
-                pid: 42,
-                command_line: "powershell".to_owned(),
-            }]),
+            Some(&[live_task_process(42, None, "powershell")]),
         );
 
         assert_eq!(records[0].state, "stopped");
@@ -2183,11 +2282,11 @@ mod tests {
                 state: "running".to_owned(),
                 ..task_run_record("repo-a-dev", "C:/workspace/repo-a", "2026-05-23T01:00:00Z")
             }],
-            Some(&[LiveTaskProcess {
-                pid: 43,
-                command_line: "node C:\\workspace\\repo-a\\node_modules\\astro\\bin\\astro.mjs preview"
-                    .to_owned(),
-            }]),
+            Some(&[live_task_process(
+                43,
+                None,
+                "node C:\\workspace\\repo-a\\node_modules\\astro\\bin\\astro.mjs preview",
+            )]),
         );
 
         assert_eq!(records[0].state, "running");
@@ -2206,12 +2305,11 @@ mod tests {
                     "2026-05-23T01:00:00Z",
                 )
             }],
-            Some(&[LiveTaskProcess {
-                pid: 43,
-                command_line:
-                    "node C:\\workspace\\repo-a\\node_modules\\vite\\bin\\vite.js dev"
-                        .to_owned(),
-            }]),
+            Some(&[live_task_process(
+                43,
+                None,
+                "node C:\\workspace\\repo-a\\node_modules\\vite\\bin\\vite.js dev",
+            )]),
         );
 
         assert_eq!(records[0].state, "stopped");
