@@ -6,11 +6,11 @@ use std::{
 };
 
 use sha2::{Digest, Sha256};
-use wait_timeout::ChildExt;
 
 #[cfg(target_os = "windows")]
 use std::os::windows::process::CommandExt;
 
+use crate::git_path::{GitProcessError, wait_for_child_output};
 use crate::path_display::display_path;
 use crate::workspace_repository_gitignore::ensure_workduck_gitignore as ensure_workduck_gitignore_policy;
 
@@ -574,27 +574,18 @@ fn run_command(
     #[cfg(target_os = "windows")]
     command.creation_flags(CREATE_NO_WINDOW);
 
-    let mut child = command.spawn().map_err(|error| {
+    let child = command.spawn().map_err(|error| {
         if error.kind() == io::ErrorKind::NotFound {
             unavailable_error
         } else {
             failed_error
         }
     })?;
-    match child.wait_timeout(timeout) {
-        Ok(Some(_)) => child
-            .wait_with_output()
-            .map_err(|_| WorkspaceRepositorySetupError::CreateFailed),
-        Ok(None) => {
-            let _ = child.kill();
-            let _ = child.wait();
-            Err(timed_out_error)
-        }
-        Err(_) => {
-            let _ = child.kill();
-            let _ = child.wait();
-            Err(failed_error)
-        }
+
+    match wait_for_child_output(child, timeout) {
+        Ok(output) => Ok(output),
+        Err(GitProcessError::TimedOut) => Err(timed_out_error),
+        Err(GitProcessError::Spawn(_)) | Err(GitProcessError::Failed) => Err(failed_error),
     }
 }
 
@@ -690,6 +681,44 @@ mod tests {
         assert!(manifest_lock.contains(&format!("content_hash = \"{agents_hash}\"")));
         assert!(manifest_lock.contains("[files.\"README.md\"]"));
         assert!(manifest_lock.contains("content_hash = \"sha256:readme\""));
+
+        fs::remove_dir_all(workspace_root).unwrap();
+    }
+
+    #[test]
+    fn setup_command_drains_large_stdout_and_stderr() {
+        let workspace_root = create_test_workspace("large-command-output");
+        #[cfg(target_os = "windows")]
+        let (program, args) = (
+            "cmd",
+            vec![
+                "/C",
+                "(for /L %i in (1,1,9000) do @echo stdout%i) & (for /L %i in (1,1,9000) do @echo stderr%i 1>&2)",
+            ],
+        );
+        #[cfg(not(target_os = "windows"))]
+        let (program, args) = (
+            "sh",
+            vec![
+                "-c",
+                "i=0; while [ $i -lt 9000 ]; do echo stdout$i; echo stderr$i >&2; i=$((i + 1)); done",
+            ],
+        );
+
+        let output = run_command(
+            &workspace_root,
+            program,
+            &args,
+            Duration::from_secs(10),
+            WorkspaceRepositorySetupError::GitUnavailable,
+            WorkspaceRepositorySetupError::GitTimedOut,
+            WorkspaceRepositorySetupError::GitInitFailed,
+        )
+        .expect("large output command completes");
+
+        assert!(output.status.success());
+        assert!(output.stdout.len() > 64 * 1024);
+        assert!(output.stderr.len() > 64 * 1024);
 
         fs::remove_dir_all(workspace_root).unwrap();
     }
