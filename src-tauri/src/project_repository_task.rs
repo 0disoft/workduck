@@ -597,6 +597,7 @@ fn resolve_repository_task_commands(
 struct PackageProject {
     package_manager: PackageManager,
     scripts: HashMap<String, String>,
+    local_dependency_paths: Vec<PathBuf>,
 }
 
 #[derive(Clone, Copy)]
@@ -629,7 +630,62 @@ fn read_package_project_at(project_path: &Path) -> Option<PackageProject> {
     Some(PackageProject {
         package_manager,
         scripts,
+        local_dependency_paths: collect_local_package_dependency_paths(project_path, &package_json),
     })
+}
+
+fn collect_local_package_dependency_paths(
+    project_path: &Path,
+    package_json: &serde_json::Value,
+) -> Vec<PathBuf> {
+    let mut local_dependency_paths = Vec::new();
+
+    for section in [
+        "dependencies",
+        "devDependencies",
+        "optionalDependencies",
+        "peerDependencies",
+    ] {
+        let Some(dependencies) = package_json
+            .get(section)
+            .and_then(serde_json::Value::as_object)
+        else {
+            continue;
+        };
+
+        for dependency in dependencies.values().filter_map(serde_json::Value::as_str) {
+            let Some(dependency_path) =
+                resolve_local_package_dependency_path(project_path, dependency)
+            else {
+                continue;
+            };
+
+            if !local_dependency_paths
+                .iter()
+                .any(|existing_path| existing_path == &dependency_path)
+            {
+                local_dependency_paths.push(dependency_path);
+            }
+        }
+    }
+
+    local_dependency_paths
+}
+
+fn resolve_local_package_dependency_path(project_path: &Path, dependency: &str) -> Option<PathBuf> {
+    let relative_path = dependency.strip_prefix("file:")?.trim();
+
+    if relative_path.is_empty() {
+        return None;
+    }
+
+    let dependency_path = project_path.join(relative_path);
+
+    if !dependency_path.join("package.json").is_file() {
+        return None;
+    }
+
+    Some(fs::canonicalize(&dependency_path).unwrap_or(dependency_path))
 }
 
 fn parse_package_manager(value: &str) -> Option<PackageManager> {
@@ -663,7 +719,7 @@ fn add_package_task_commands(
     task: ProjectRepositoryTask,
     commands: &mut Vec<String>,
 ) -> Result<(), ProjectRepositoryTaskError> {
-    for project_path in discover_package_project_paths(repository_path) {
+    for project_path in discover_package_project_paths(repository_path, task) {
         let Some(package_project) = read_package_project_at(&project_path) else {
             continue;
         };
@@ -680,11 +736,19 @@ fn add_package_task_commands(
     Ok(())
 }
 
-fn discover_package_project_paths(repository_path: &Path) -> Vec<PathBuf> {
+fn discover_package_project_paths(
+    repository_path: &Path,
+    task: ProjectRepositoryTask,
+) -> Vec<PathBuf> {
     let mut project_paths = Vec::new();
+    let root_project = read_package_project_at(repository_path);
 
-    if read_package_project_at(repository_path).is_some() {
+    if root_project.is_some() {
         project_paths.push(repository_path.to_path_buf());
+    }
+
+    if root_project_has_task_script(task, root_project.as_ref()) {
+        return project_paths;
     }
 
     for project_path in unique_manifest_directories(discover_manifest_paths(
@@ -696,7 +760,63 @@ fn discover_package_project_paths(repository_path: &Path) -> Vec<PathBuf> {
         }
     }
 
+    filter_local_dependency_package_project_paths(project_paths)
+}
+
+fn root_project_has_task_script(
+    task: ProjectRepositoryTask,
+    root_project: Option<&PackageProject>,
+) -> bool {
+    if !matches!(
+        task,
+        ProjectRepositoryTask::StartDevServer
+            | ProjectRepositoryTask::Build
+            | ProjectRepositoryTask::Preview
+    ) {
+        return false;
+    }
+
+    root_project
+        .and_then(|project| resolve_package_task_command(task, project).ok().flatten())
+        .is_some()
+}
+
+fn filter_local_dependency_package_project_paths(project_paths: Vec<PathBuf>) -> Vec<PathBuf> {
+    let local_dependency_paths = project_paths
+        .iter()
+        .filter_map(|project_path| read_package_project_at(project_path))
+        .flat_map(|project| project.local_dependency_paths)
+        .collect::<Vec<_>>();
+
+    if local_dependency_paths.is_empty() {
+        return project_paths;
+    }
+
     project_paths
+        .into_iter()
+        .enumerate()
+        .filter_map(|(index, project_path)| {
+            if index == 0
+                || !is_local_dependency_package_project_path(&project_path, &local_dependency_paths)
+            {
+                Some(project_path)
+            } else {
+                None
+            }
+        })
+        .collect()
+}
+
+fn is_local_dependency_package_project_path(
+    project_path: &Path,
+    local_dependency_paths: &[PathBuf],
+) -> bool {
+    let normalized_project_path =
+        fs::canonicalize(project_path).unwrap_or_else(|_| project_path.to_path_buf());
+
+    local_dependency_paths
+        .iter()
+        .any(|dependency_path| dependency_path == &normalized_project_path)
 }
 
 fn resolve_package_task_command(
@@ -1629,11 +1749,27 @@ mod tests {
         }
     }
 
+    fn temp_repository_path(name: &str) -> PathBuf {
+        let nanos = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map(|duration| duration.as_nanos())
+            .unwrap_or_default();
+        let repository_path = std::env::temp_dir().join(format!(
+            "workduck-project-repository-task-{name}-{}-{nanos}",
+            std::process::id()
+        ));
+
+        fs::create_dir_all(&repository_path).expect("create temporary repository");
+
+        repository_path
+    }
+
     #[test]
     fn package_dev_server_command_uses_start_script_when_dev_is_missing() {
         let project = PackageProject {
             package_manager: PackageManager::Bun,
             scripts: HashMap::from([("start".to_owned(), "bun server.ts".to_owned())]),
+            local_dependency_paths: Vec::new(),
         };
 
         let command = match resolve_package_dev_server_command(&project) {
@@ -1652,6 +1788,7 @@ mod tests {
                 ("dev".to_owned(), "vite dev".to_owned()),
                 ("start".to_owned(), "bun server.ts".to_owned()),
             ]),
+            local_dependency_paths: Vec::new(),
         };
 
         let command = match resolve_package_dev_server_command(&project) {
@@ -1667,6 +1804,7 @@ mod tests {
         let project = PackageProject {
             package_manager: PackageManager::Bun,
             scripts: HashMap::from([("preview".to_owned(), "vite preview".to_owned())]),
+            local_dependency_paths: Vec::new(),
         };
 
         let command = match resolve_package_task_command(ProjectRepositoryTask::Preview, &project)
@@ -1683,6 +1821,7 @@ mod tests {
         let project = PackageProject {
             package_manager: PackageManager::Bun,
             scripts: HashMap::from([("build".to_owned(), "vite build".to_owned())]),
+            local_dependency_paths: Vec::new(),
         };
 
         let command = match resolve_package_task_command(ProjectRepositoryTask::Preview, &project)
@@ -1692,6 +1831,148 @@ mod tests {
         };
 
         assert_eq!(command, None);
+    }
+
+    #[test]
+    fn repository_task_commands_prefer_root_script_over_nested_package_scripts() {
+        let repository_path = temp_repository_path("root-script");
+        fs::create_dir_all(repository_path.join("apps/workbench")).expect("create nested package");
+        fs::write(
+            repository_path.join("package.json"),
+            r#"{
+                "packageManager": "bun@1.0.0",
+                "scripts": {
+                    "dev": "bun run ./scripts/dev-workbench.ts",
+                    "build": "bun run ./scripts/build-workbench.ts",
+                    "preview": "bun run ./scripts/preview-workbench.ts"
+                }
+            }"#,
+        )
+        .expect("write root package");
+        fs::write(
+            repository_path.join("apps/workbench/package.json"),
+            r#"{
+                "packageManager": "bun@1.0.0",
+                "scripts": {
+                    "dev": "astro dev",
+                    "build": "astro build",
+                    "preview": "astro preview"
+                }
+            }"#,
+        )
+        .expect("write nested package");
+
+        let dev_commands = match resolve_repository_task_commands(
+            ProjectRepositoryTask::StartDevServer,
+            &repository_path,
+        ) {
+            Ok(commands) => commands,
+            Err(_) => panic!("resolve dev command"),
+        };
+        let build_commands = match resolve_repository_task_commands(
+            ProjectRepositoryTask::Build,
+            &repository_path,
+        ) {
+            Ok(commands) => commands,
+            Err(_) => panic!("resolve build command"),
+        };
+        let preview_commands = match resolve_repository_task_commands(
+            ProjectRepositoryTask::Preview,
+            &repository_path,
+        ) {
+            Ok(commands) => commands,
+            Err(_) => panic!("resolve preview command"),
+        };
+
+        assert_eq!(dev_commands, vec!["bun run dev"]);
+        assert_eq!(build_commands, vec!["bun run build"]);
+        assert_eq!(preview_commands, vec!["bun run preview"]);
+
+        let _ = fs::remove_dir_all(repository_path);
+    }
+
+    #[test]
+    fn install_dependency_commands_skip_local_file_package_targets() {
+        let repository_path = temp_repository_path("local-file-dependencies");
+        fs::create_dir_all(repository_path.join("apps/workbench")).expect("create nested package");
+        fs::create_dir_all(repository_path.join("scripts/telemetry")).expect("create local package");
+        fs::write(
+            repository_path.join("package.json"),
+            r#"{
+                "packageManager": "bun@1.0.0",
+                "dependencies": {
+                    "@taskmesh/telemetry": "file:./scripts/telemetry"
+                }
+            }"#,
+        )
+        .expect("write root package");
+        fs::write(
+            repository_path.join("apps/workbench/package.json"),
+            r#"{
+                "packageManager": "bun@1.0.0",
+                "devDependencies": {
+                    "@taskmesh/telemetry": "file:../../scripts/telemetry"
+                }
+            }"#,
+        )
+        .expect("write nested package");
+        fs::write(
+            repository_path.join("scripts/telemetry/package.json"),
+            r#"{
+                "name": "@taskmesh/telemetry",
+                "version": "0.0.0"
+            }"#,
+        )
+        .expect("write local package");
+
+        let commands = match resolve_repository_task_commands(
+            ProjectRepositoryTask::InstallDependencies,
+            &repository_path,
+        ) {
+            Ok(commands) => commands,
+            Err(_) => panic!("resolve install commands"),
+        };
+
+        assert_eq!(
+            commands,
+            vec![
+                "bun install",
+                "Push-Location -LiteralPath 'apps/workbench'; bun install; Pop-Location"
+            ]
+        );
+
+        let _ = fs::remove_dir_all(repository_path);
+    }
+
+    #[cfg(target_os = "windows")]
+    #[test]
+    fn powershell_script_executes_each_tracked_command_line_once() {
+        let run_record = ProjectRepositoryTaskRunRecord {
+            command:
+                "bun install\nPush-Location -LiteralPath 'apps/workbench'; bun install; Pop-Location"
+                    .to_owned(),
+            ..task_run_record(
+                "repo-a-install",
+                "C:/workspace/repo-a",
+                "2026-05-23T01:00:00Z",
+            )
+        };
+        let script = create_powershell_script(
+            Path::new("C:/workspace/repo-a"),
+            Some(&run_record.command),
+            Some(&run_record),
+        );
+
+        assert!(script.contains("Write-Host 'Workduck: bun install'"));
+        assert!(script.contains(
+            "Write-Host 'Workduck: Push-Location -LiteralPath ''apps/workbench''; bun install; Pop-Location'"
+        ));
+        assert!(script.contains("$workduckCommand = 'bun install';"));
+        assert!(script.contains(
+            "$workduckCommand = 'Push-Location -LiteralPath ''apps/workbench''; bun install; Pop-Location';"
+        ));
+        assert!(script.contains("command = $workduckRecordCommand;"));
+        assert!(!script.contains("Invoke-Expression $workduckRecordCommand"));
     }
 
     #[test]
@@ -2014,7 +2295,10 @@ fn create_powershell_script(
         let escaped_command = escape_powershell_single_quoted(command);
 
         if let Some(run_record) = run_record {
-            script.push_str(&create_tracked_powershell_command(&escaped_command, run_record));
+            script.push_str(&create_tracked_powershell_command(
+                &escaped_command,
+                run_record,
+            ));
         } else {
             script.push_str(&format!(
                 "; Write-Host 'Workduck: {}'; {}; if ($LASTEXITCODE -ne $null -and $LASTEXITCODE -ne 0) {{ Write-Host ('Workduck exit code: ' + $LASTEXITCODE); return }}",
@@ -2036,21 +2320,22 @@ fn create_tracked_powershell_command(
     let id = escape_powershell_single_quoted(&run_record.id);
     let task = escape_powershell_single_quoted(&run_record.task);
     let repository_path = escape_powershell_single_quoted(&run_record.repository_path);
-    let command_json = escape_powershell_single_quoted(&run_record.command);
+    let record_command = escape_powershell_single_quoted(&run_record.command);
     let started_at = escape_powershell_single_quoted(&run_record.started_at);
 
     format!(
         r#";
 $workduckRecordPath = '{record_path}';
 $workduckLogPath = '{log_path}';
-$workduckCommand = '{command_json}';
+$workduckRecordCommand = '{record_command}';
+$workduckCommand = '{escaped_command}';
 function Write-WorkduckTaskRunRecord {{
     param([string]$State, [Nullable[int]]$ExitCode, [string]$OutputTail)
     $record = [ordered]@{{
         id = '{id}';
         task = '{task}';
         repositoryPath = '{repository_path}';
-        command = $workduckCommand;
+        command = $workduckRecordCommand;
         state = $State;
         exitCode = $ExitCode;
         startedAt = '{started_at}';
