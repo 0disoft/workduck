@@ -6,6 +6,7 @@ use std::{
 };
 
 use crate::path_display::display_path_text;
+use sha2::{Digest, Sha256};
 
 #[cfg(target_os = "windows")]
 use std::os::windows::process::CommandExt;
@@ -68,6 +69,7 @@ pub enum DeveloperProcessCommandError {
 #[serde(rename_all = "camelCase")]
 pub struct DeveloperProcessEntry {
     pid: u32,
+    identity: String,
     name: String,
     kind: String,
     command: String,
@@ -91,6 +93,7 @@ struct RawProcessRecord {
     name: Option<String>,
     executable_path: Option<String>,
     command_line: Option<String>,
+    creation_date: Option<String>,
     memory_bytes: Option<u64>,
 }
 
@@ -127,11 +130,12 @@ async fn collect_developer_processes_off_thread() -> Result<
 }
 
 #[tauri::command]
-pub async fn kill_developer_process(pid: u32) -> DeveloperProcessCommandResult {
-    let result = tauri::async_runtime::spawn_blocking(move || verified_force_kill_process(pid))
-        .await
-        .map_err(|_| DeveloperProcessCommandError::Unavailable)
-        .and_then(|result| result);
+pub async fn kill_developer_process(pid: u32, identity: String) -> DeveloperProcessCommandResult {
+    let result =
+        tauri::async_runtime::spawn_blocking(move || verified_force_kill_process(pid, identity))
+            .await
+            .map_err(|_| DeveloperProcessCommandError::Unavailable)
+            .and_then(|result| result);
 
     match result {
         Ok(()) => DeveloperProcessCommandResult {
@@ -145,22 +149,39 @@ pub async fn kill_developer_process(pid: u32) -> DeveloperProcessCommandResult {
     }
 }
 
-fn verified_force_kill_process(pid: u32) -> Result<(), DeveloperProcessCommandError> {
-    verify_developer_process_id(pid)?;
+fn verified_force_kill_process(
+    pid: u32,
+    expected_identity: String,
+) -> Result<(), DeveloperProcessCommandError> {
+    verify_developer_process_id(pid, expected_identity.trim())?;
     force_kill_process(pid)
 }
 
-fn verify_developer_process_id(pid: u32) -> Result<(), DeveloperProcessCommandError> {
-    if is_protected_process_id(pid) {
-        return Err(DeveloperProcessCommandError::KillDenied);
-    }
-
+fn verify_developer_process_id(
+    pid: u32,
+    expected_identity: &str,
+) -> Result<(), DeveloperProcessCommandError> {
     let processes = collect_developer_processes().map_err(|error| match error {
         DeveloperProcessError::Unavailable => DeveloperProcessCommandError::Unavailable,
         DeveloperProcessError::ReadFailed => DeveloperProcessCommandError::KillDenied,
     })?;
 
-    if processes.iter().any(|process| process.pid == pid) {
+    verify_developer_process_identity(pid, expected_identity, &processes)
+}
+
+fn verify_developer_process_identity(
+    pid: u32,
+    expected_identity: &str,
+    processes: &[DeveloperProcessEntry],
+) -> Result<(), DeveloperProcessCommandError> {
+    if is_protected_process_id(pid) || expected_identity.is_empty() {
+        return Err(DeveloperProcessCommandError::KillDenied);
+    }
+
+    if processes
+        .iter()
+        .any(|process| process.pid == pid && process.identity == expected_identity)
+    {
         Ok(())
     } else {
         Err(DeveloperProcessCommandError::KillDenied)
@@ -190,6 +211,7 @@ $processes = @(
         name = [string]$_.Name
         executablePath = [string]$_.ExecutablePath
         commandLine = [string]$_.CommandLine
+        creationDate = [string]$_.CreationDate
         memoryBytes = if ($_.WorkingSetSize -ne $null) { [Int64]$_.WorkingSetSize } else { $null }
       }
     }
@@ -267,7 +289,7 @@ fn force_kill_process(pid: u32) -> Result<(), DeveloperProcessCommandError> {
 fn collect_developer_processes() -> Result<Vec<DeveloperProcessEntry>, DeveloperProcessError> {
     let output = Command::new("ps")
         .arg("-eo")
-        .arg("pid=,rss=,comm=,args=")
+        .arg("pid=,rss=,lstart=,comm=,args=")
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
         .stderr(Stdio::null())
@@ -334,12 +356,13 @@ fn map_raw_process(
     process: RawProcessRecord,
     ports_by_pid: &BTreeMap<u32, Vec<u16>>,
 ) -> Option<DeveloperProcessEntry> {
+    let executable_path = process.executable_path.unwrap_or_default();
     let name = process
         .name
         .as_deref()
         .filter(|value| !value.trim().is_empty())
         .map(ToOwned::to_owned)
-        .or_else(|| executable_leaf(process.executable_path.as_deref()))?;
+        .or_else(|| executable_leaf(Some(&executable_path)))?;
     let command_line = process.command_line.unwrap_or_default();
     let searchable = format!("{} {}", name, command_line).to_ascii_lowercase();
 
@@ -349,6 +372,13 @@ fn map_raw_process(
 
     Some(DeveloperProcessEntry {
         pid: process.pid,
+        identity: create_process_identity(
+            process.pid,
+            &name,
+            &executable_path,
+            &command_line,
+            process.creation_date.as_deref(),
+        ),
         kind: classify_process_kind(&searchable),
         command: sanitize_command_line(&command_line, &name),
         name,
@@ -372,10 +402,20 @@ fn parse_unix_process_line(line: &str) -> Option<DeveloperProcessEntry> {
         .ok()
         .map(|rss_kib| rss_kib.saturating_mul(1024));
     let remainder = remainder.trim();
-    let (name, command_line) = remainder
-        .split_once(char::is_whitespace)
-        .map(|(name, command)| (name.to_string(), command.trim().to_string()))
-        .unwrap_or_else(|| (remainder.to_string(), remainder.to_string()));
+    let mut parts = remainder.split_whitespace();
+    let started_at = (0..5)
+        .filter_map(|_| parts.next())
+        .collect::<Vec<_>>()
+        .join(" ");
+    let name = parts.next()?.to_owned();
+    let command_line = {
+        let command = parts.collect::<Vec<_>>().join(" ");
+        if command.trim().is_empty() {
+            name.clone()
+        } else {
+            command
+        }
+    };
     let searchable = format!("{} {}", name, command_line).to_ascii_lowercase();
 
     if !is_developer_process(&searchable) {
@@ -384,6 +424,7 @@ fn parse_unix_process_line(line: &str) -> Option<DeveloperProcessEntry> {
 
     Some(DeveloperProcessEntry {
         pid,
+        identity: create_process_identity(pid, &name, "", &command_line, Some(&started_at)),
         kind: classify_process_kind(&searchable),
         command: sanitize_command_line(&command_line, &name),
         name,
@@ -421,6 +462,34 @@ fn executable_leaf(value: Option<&str>) -> Option<String> {
         .file_name()
         .and_then(|file_name| file_name.to_str())
         .map(ToOwned::to_owned)
+}
+
+fn create_process_identity(
+    pid: u32,
+    name: &str,
+    executable_path: &str,
+    command_line: &str,
+    creation_marker: Option<&str>,
+) -> String {
+    let mut hasher = Sha256::new();
+    hasher.update(pid.to_string().as_bytes());
+    hasher.update([0]);
+    hasher.update(name.as_bytes());
+    hasher.update([0]);
+    hasher.update(executable_path.as_bytes());
+    hasher.update([0]);
+    hasher.update(command_line.as_bytes());
+    hasher.update([0]);
+    hasher.update(creation_marker.unwrap_or_default().as_bytes());
+
+    format!("sha256:{}", hex_digest(&hasher.finalize()))
+}
+
+fn hex_digest(bytes: &[u8]) -> String {
+    bytes
+        .iter()
+        .map(|byte| format!("{byte:02x}"))
+        .collect::<String>()
 }
 
 fn is_developer_process(value: &str) -> bool {
@@ -506,4 +575,87 @@ fn sanitize_command_token(token: &str, home: Option<&str>) -> String {
     }
 
     display_token
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn process_identity_changes_when_creation_marker_changes() {
+        let first_identity = create_process_identity(
+            42,
+            "node.exe",
+            "C:/Program Files/nodejs/node.exe",
+            "node server.js",
+            Some("20260617010101.000000+540"),
+        );
+        let second_identity = create_process_identity(
+            42,
+            "node.exe",
+            "C:/Program Files/nodejs/node.exe",
+            "node server.js",
+            Some("20260617020202.000000+540"),
+        );
+
+        assert_ne!(first_identity, second_identity);
+        assert!(first_identity.starts_with("sha256:"));
+    }
+
+    #[test]
+    fn developer_process_identity_verification_requires_matching_identity() {
+        let identity = create_process_identity(
+            42,
+            "node.exe",
+            "C:/Program Files/nodejs/node.exe",
+            "node server.js",
+            Some("20260617010101.000000+540"),
+        );
+        let processes = vec![DeveloperProcessEntry {
+            pid: 42,
+            identity: identity.clone(),
+            name: "node.exe".to_owned(),
+            kind: "Node.js".to_owned(),
+            command: "node server.js".to_owned(),
+            ports: Vec::new(),
+            memory_bytes: Some(1024),
+        }];
+
+        assert!(verify_developer_process_identity(42, &identity, &processes).is_ok());
+        assert!(matches!(
+            verify_developer_process_identity(42, "sha256:stale", &processes),
+            Err(DeveloperProcessCommandError::KillDenied)
+        ));
+        assert!(matches!(
+            verify_developer_process_identity(43, &identity, &processes),
+            Err(DeveloperProcessCommandError::KillDenied)
+        ));
+    }
+
+    #[test]
+    fn raw_process_mapping_uses_unsanitized_identity_but_redacted_display_command() {
+        let payload = r#"{
+            "processes": [
+                {
+                    "pid": 42,
+                    "name": "node.exe",
+                    "executablePath": "C:/Program Files/nodejs/node.exe",
+                    "commandLine": "node server.js --token super-secret",
+                    "creationDate": "20260617010101.000000+540",
+                    "memoryBytes": 2048
+                }
+            ],
+            "ports": [{"pid": 42, "port": 5173}]
+        }"#;
+        let processes = match parse_process_payload(payload) {
+            Ok(processes) => processes,
+            Err(_) => panic!("parse process payload"),
+        };
+
+        assert_eq!(processes.len(), 1);
+        assert_eq!(processes[0].ports, vec![5173]);
+        assert!(processes[0].identity.starts_with("sha256:"));
+        assert!(processes[0].command.contains("[redacted]"));
+        assert!(!processes[0].command.contains("super-secret"));
+    }
 }

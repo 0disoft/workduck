@@ -160,7 +160,7 @@
 		statusMessage = null;
 
 		try {
-			const error = await killDeveloperProcess(targetPid);
+			const error = await killDeveloperProcess(selectedProcess);
 
 			if (error !== null) {
 				processError = error;

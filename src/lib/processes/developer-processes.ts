@@ -7,6 +7,7 @@ export type DeveloperProcessError =
 
 export interface DeveloperProcessEntry {
 	readonly pid: number;
+	readonly identity: string;
 	readonly name: string;
 	readonly kind: string;
 	readonly command: string;
@@ -95,7 +96,9 @@ function normalizeProcessMemoryBytes(memoryBytes: number | null | undefined) {
 	return typeof memoryBytes === 'number' && Number.isFinite(memoryBytes) ? memoryBytes : -1;
 }
 
-export async function killDeveloperProcess(pid: number): Promise<DeveloperProcessError | null> {
+export async function killDeveloperProcess(
+	process: Pick<DeveloperProcessEntry, 'pid' | 'identity'>
+): Promise<DeveloperProcessError | null> {
 	const invoke = getTauriInvoke();
 
 	if (invoke === undefined) {
@@ -103,7 +106,10 @@ export async function killDeveloperProcess(pid: number): Promise<DeveloperProces
 	}
 
 	try {
-		const response = await invoke<DeveloperProcessCommandResponse>('kill_developer_process', { pid });
+		const response = await invoke<DeveloperProcessCommandResponse>('kill_developer_process', {
+			pid: process.pid,
+			identity: process.identity
+		});
 
 		if (response.ok === true) {
 			return null;
