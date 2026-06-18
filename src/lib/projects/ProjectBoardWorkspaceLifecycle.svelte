@@ -1,6 +1,11 @@
 <script lang="ts">
 	import type { EnvironmentVault } from '$lib/environment/environment-vault';
 	import {
+		readEnvironmentVaultSession,
+		subscribeEnvironmentVaultSession
+	} from '$lib/environment/environment-vault-session';
+	import { openEnvironmentVaultSessionFromWorkspaceUnlock } from '$lib/environment/environment-vault-session-loader';
+	import {
 		readEnvironmentVaultEnvelopeForWorkspace,
 		subscribeEnvironmentVaultEnvelopeForWorkspace
 	} from '$lib/environment/environment-vault-storage';
@@ -51,10 +56,13 @@
 		repositoryOperationById = $bindable()
 	}: Props = $props();
 
+	let environmentVaultOpenSequence = 0;
+
 	$effect(() => {
 		const workspaceId = workspace.id;
 		const workspacePath = workspace.path;
 		let isCurrentWorkspace = true;
+		const openSequence = ++environmentVaultOpenSequence;
 
 		folderRepairError = null;
 		storageError = null;
@@ -63,7 +71,7 @@
 		selectedProjectId = null;
 		selectedGroupId = null;
 		environmentVaultEnvelope = null;
-		environmentVault = null;
+		environmentVault = readEnvironmentVaultSession(workspaceId);
 		environmentVaultPassword = '';
 		environmentVaultError = null;
 
@@ -84,17 +92,29 @@
 				repositoryOperationById = next.repositoryOperationById;
 			}
 		});
+		void openEnvironmentVaultSessionFromWorkspaceUnlock(workspaceId, workspacePath).then((result) => {
+			if (!isCurrentWorkspace || openSequence !== environmentVaultOpenSequence || !result.ok) {
+				return;
+			}
+
+			environmentVault = result.vault;
+		});
 
 		const unsubscribeProjectRegistry = subscribeProjectRegistry(workspaceId, (nextRegistry) => {
 			registry = nextRegistry;
 			storageError = null;
 		});
+		const unsubscribeEnvironmentVaultSession = subscribeEnvironmentVaultSession(
+			workspaceId,
+			(nextVault) => {
+				environmentVault = nextVault;
+			}
+		);
 		const unsubscribeEnvironmentVault = subscribeEnvironmentVaultEnvelopeForWorkspace(
 			workspaceId,
 			workspacePath,
 			(nextEnvelope) => {
 				environmentVaultEnvelope = nextEnvelope;
-				environmentVault = null;
 				environmentVaultPassword = '';
 				environmentVaultError = null;
 			}
@@ -103,6 +123,7 @@
 		return () => {
 			isCurrentWorkspace = false;
 			unsubscribeProjectRegistry();
+			unsubscribeEnvironmentVaultSession();
 			unsubscribeEnvironmentVault();
 		};
 	});
