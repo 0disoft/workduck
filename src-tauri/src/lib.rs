@@ -40,6 +40,7 @@ mod workspace_repository_setup;
 mod workspace_sync_crypto;
 mod workspace_sync_file;
 mod workspace_sync_git;
+mod windows_filename;
 
 #[derive(serde::Serialize)]
 struct RuntimeStatus {

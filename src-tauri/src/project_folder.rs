@@ -7,6 +7,7 @@ use std::{
 };
 
 use crate::workspace_path::{validate_absolute_directory_path, WorkspacePathValidationError};
+use crate::windows_filename::is_windows_reserved_name;
 
 const PROJECTS_DIRECTORY_NAME: &str = "projects";
 const PROJECT_FOLDER_NAME_MAX_CHARS: usize = 80;
@@ -790,25 +791,4 @@ fn map_delete_error(error: io::Error) -> ProjectFolderError {
         io::ErrorKind::PermissionDenied => ProjectFolderError::DeletePathPermissionDenied,
         _ => ProjectFolderError::DeleteFailed,
     }
-}
-
-fn is_windows_reserved_name(name: &str) -> bool {
-    let stem = name
-        .split('.')
-        .next()
-        .unwrap_or_default()
-        .trim_end_matches([' ', '.'])
-        .to_ascii_uppercase();
-
-    matches!(stem.as_str(), "CON" | "PRN" | "AUX" | "NUL")
-        || is_reserved_numbered_device(&stem, "COM")
-        || is_reserved_numbered_device(&stem, "LPT")
-}
-
-fn is_reserved_numbered_device(stem: &str, prefix: &str) -> bool {
-    let Some(suffix) = stem.strip_prefix(prefix) else {
-        return false;
-    };
-
-    suffix.len() == 1 && matches!(suffix.as_bytes()[0], b'1'..=b'9')
 }

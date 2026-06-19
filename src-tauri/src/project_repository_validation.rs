@@ -7,6 +7,7 @@ use crate::project_repository::{ProjectRepositoryCloneError, ProjectRepositoryGi
 use crate::workspace_path::{
     WorkspacePathValidationError, validate_absolute_directory_path, validate_workspace_directory_path,
 };
+use crate::windows_filename::is_windows_reserved_name;
 
 const PROJECTS_DIRECTORY_NAME: &str = "projects";
 const PROJECT_REPOSITORY_NAME_MAX_CHARS: usize = 120;
@@ -264,27 +265,6 @@ fn map_repository_path_error(error: WorkspacePathValidationError) -> ProjectRepo
         WorkspacePathValidationError::PermissionDenied => ProjectRepositoryGitError::PathPermissionDenied,
         WorkspacePathValidationError::Unreadable => ProjectRepositoryGitError::PathUnreadable,
     }
-}
-
-fn is_windows_reserved_name(name: &str) -> bool {
-    let stem = name
-        .split('.')
-        .next()
-        .unwrap_or_default()
-        .trim_end_matches([' ', '.'])
-        .to_ascii_uppercase();
-
-    matches!(stem.as_str(), "CON" | "PRN" | "AUX" | "NUL")
-        || is_reserved_numbered_device(&stem, "COM")
-        || is_reserved_numbered_device(&stem, "LPT")
-}
-
-fn is_reserved_numbered_device(stem: &str, prefix: &str) -> bool {
-    let Some(suffix) = stem.strip_prefix(prefix) else {
-        return false;
-    };
-
-    suffix.len() == 1 && matches!(suffix.as_bytes()[0], b'1'..=b'9')
 }
 
 #[cfg(test)]
