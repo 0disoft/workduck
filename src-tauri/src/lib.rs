@@ -175,6 +175,7 @@ pub fn run() {
             queue_folder::write_queue_result_report_file,
             queue_execution::cancel_queue_work_order_execution,
             queue_execution::execute_queue_work_order,
+            queue_execution::inspect_queue_work_order_executions,
             queue_execution::preview_queue_work_order_prompt,
             llm_chat::run_llm_chat_completion
         ])

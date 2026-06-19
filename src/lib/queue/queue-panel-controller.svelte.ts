@@ -112,6 +112,7 @@ import { readEnvironmentVaultSession } from '$lib/environment/environment-vault-
 import {
 	cancelQueueWorkOrderExecution,
 	executeQueueWorkOrder,
+	inspectQueueWorkOrderExecutions,
 	previewQueueWorkOrderPrompt,
 	type WorkduckQueuePromptPreview
 } from './queue-execution';
@@ -814,7 +815,24 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 					writeQueueReadFilePaths(workspace.id, nextReadFilePaths);
 				}
 
-				const nextFiles = await createQueueCardEntries(workspace.path, nextReadFilePaths, result.files);
+				let nextFiles = await createQueueCardEntries(
+					workspace.path,
+					nextReadFilePaths,
+					result.files
+				);
+				const recoveredStaleRunningWorkOrders =
+					!isWriting && !isCancellingExecution
+						? await recoverStaleRunningWorkOrders(nextFiles)
+						: false;
+
+				if (recoveredStaleRunningWorkOrders) {
+					nextFiles = await createQueueCardEntries(
+						workspace.path,
+						nextReadFilePaths,
+						result.files
+					);
+				}
+
 				const previousSignature = createQueueFilesSignature(files);
 				const nextSignature = createQueueFilesSignature(nextFiles);
 				notifyNewCompletedReports(nextFiles);
@@ -829,10 +847,101 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 			}
 
 			error = result.error;
-	} finally {
+		} finally {
 			isRefreshing = false;
+		}
 	}
-}
+
+	async function recoverStaleRunningWorkOrders(queueFiles: readonly QueueCardEntry[]) {
+		const runningWorkOrderFiles = queueFiles.filter(
+			(file) =>
+				file.kind === 'work-order' &&
+				file.executionState === 'running' &&
+				file.artifactId.trim().length > 0
+		);
+
+		if (runningWorkOrderFiles.length === 0) {
+			return false;
+		}
+
+		const inspectResult = await inspectQueueWorkOrderExecutions({
+			workOrderIds: runningWorkOrderFiles.map((file) => file.artifactId)
+		});
+
+		if (!inspectResult.ok) {
+			return false;
+		}
+
+		const runningWorkOrderIds = new Set(
+			inspectResult.runningWorkOrderIds
+				.map((workOrderId) => workOrderId.trim())
+				.filter((workOrderId) => workOrderId.length > 0)
+		);
+		let recoveredAny = false;
+
+		for (const file of runningWorkOrderFiles) {
+			const workOrderId = file.artifactId.trim();
+
+			if (runningWorkOrderIds.has(workOrderId)) {
+				continue;
+			}
+
+			const recoveredWorkOrder = await markStaleRunningWorkOrderFailed(
+				file.relativePath,
+				workOrderId
+			);
+
+			if (recoveredWorkOrder !== null) {
+				recoveredAny = true;
+			}
+		}
+
+		return recoveredAny;
+	}
+
+	async function markStaleRunningWorkOrderFailed(relativePath: string, workOrderId: string) {
+		const normalizedWorkOrderId = workOrderId.trim();
+
+		if (normalizedWorkOrderId.length === 0) {
+			return null;
+		}
+
+		const readResult = await readQueueFile(workspace.path, relativePath);
+
+		if (!readResult.ok) {
+			return null;
+		}
+
+		const parsed = parseQueueWorkOrder(readResult.content);
+
+		if (!parsed.ok) {
+			return null;
+		}
+
+		if (
+			parsed.workOrder.status !== 'running' ||
+			parsed.workOrder.ref.id.trim() !== normalizedWorkOrderId
+		) {
+			return null;
+		}
+
+		const failedWorkOrder = failQueueWorkOrderExecution(parsed.workOrder);
+		const updateResult = await updateQueueWorkOrderFile(
+			workspace.path,
+			relativePath,
+			serializeQueueArtifact(failedWorkOrder)
+		);
+
+		if (!updateResult.ok) {
+			return null;
+		}
+
+		if (selectedWorkOrder?.ref.id === failedWorkOrder.ref.id) {
+			selectedWorkOrder = failedWorkOrder;
+		}
+
+		return failedWorkOrder;
+	}
 
 	async function handleReviewReport(file: QueueFileEntry) {
 		if (isReading) {
@@ -1637,13 +1746,30 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 			});
 
 			if (!cancelResult.ok) {
+				if (
+					cancelResult.error === 'queue-execution-work-order-not-running' &&
+					selectedWorkOrderPath !== null
+				) {
+					const recoveredWorkOrder = await markStaleRunningWorkOrderFailed(
+						selectedWorkOrderPath,
+						selectedWorkOrder.ref.id
+					);
+
+					if (recoveredWorkOrder !== null) {
+						selectedWorkOrder = recoveredWorkOrder;
+						status = null;
+						await refreshQueueFiles({ silent: true });
+						return;
+					}
+				}
+
 				parseError = getQueueExecutionErrorMessage(cancelResult.error);
 				status = null;
 			}
-	} finally {
+		} finally {
 			isCancellingExecution = false;
+		}
 	}
-}
 
 	async function handleCompleteWorkOrder() {
 		if (

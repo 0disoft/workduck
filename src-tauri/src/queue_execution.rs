@@ -251,6 +251,13 @@ pub struct QueueExecutionCancelRequest {
     pub work_order_id: String,
 }
 
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct QueueExecutionInspectRequest {
+    #[serde(default)]
+    pub work_order_ids: Vec<String>,
+}
+
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct QueueExecutionCommandResult {
@@ -267,6 +274,18 @@ pub struct QueueExecutionCommandResult {
 #[serde(rename_all = "camelCase")]
 pub struct QueueExecutionCancelCommandResult {
     pub ok: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub error: Option<&'static str>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub message: Option<String>,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct QueueExecutionInspectCommandResult {
+    pub ok: bool,
+    #[serde(default)]
+    pub running_work_order_ids: Vec<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub error: Option<&'static str>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -563,6 +582,26 @@ pub fn cancel_queue_work_order_execution(
 }
 
 #[tauri::command]
+pub fn inspect_queue_work_order_executions(
+    request: QueueExecutionInspectRequest,
+) -> QueueExecutionInspectCommandResult {
+    match running_queue_work_order_ids(&request.work_order_ids) {
+        Ok(running_work_order_ids) => QueueExecutionInspectCommandResult {
+            ok: true,
+            running_work_order_ids,
+            error: None,
+            message: None,
+        },
+        Err(error) => QueueExecutionInspectCommandResult {
+            ok: false,
+            running_work_order_ids: Vec::new(),
+            error: Some(error.code),
+            message: Some(error.message),
+        },
+    }
+}
+
+#[tauri::command]
 pub fn preview_queue_work_order_prompt(
     request: QueuePromptPreviewRequest,
 ) -> QueuePromptPreviewCommandResult {
@@ -715,8 +754,36 @@ fn cancel_running_queue_work_order_execution(
     Ok(())
 }
 
-fn running_queue_work_orders()
--> &'static Mutex<HashMap<String, RunningQueueWorkOrderExecution>> {
+fn running_queue_work_order_ids(
+    work_order_ids: &[String],
+) -> Result<Vec<String>, QueueExecutionErrorDetail> {
+    let running_work_orders = running_queue_work_orders().lock().map_err(|_| {
+        QueueExecutionErrorDetail::new(
+            "agent-execution-failed",
+            "작업 실행 상태를 확인하지 못했습니다.",
+        )
+    })?;
+    let mut running_ids = Vec::new();
+
+    for work_order_id in work_order_ids {
+        let normalized_work_order_id = work_order_id.trim();
+
+        if normalized_work_order_id.is_empty()
+            || !running_work_orders.contains_key(normalized_work_order_id)
+            || running_ids
+                .iter()
+                .any(|running_id| running_id == normalized_work_order_id)
+        {
+            continue;
+        }
+
+        running_ids.push(normalized_work_order_id.to_string());
+    }
+
+    Ok(running_ids)
+}
+
+fn running_queue_work_orders() -> &'static Mutex<HashMap<String, RunningQueueWorkOrderExecution>> {
     RUNNING_QUEUE_WORK_ORDERS.get_or_init(|| Mutex::new(HashMap::new()))
 }
 
@@ -1229,6 +1296,53 @@ en-US 표기는 한국어 지원 앱을 영어 전용처럼 보이게 합니다.
         assert_eq!(duplicate_error.code, "work-order-running");
 
         drop(first_guard);
+    }
+
+    #[test]
+    fn running_queue_work_order_ids_returns_tracked_ids_only() {
+        let running_work_order_id = format!("wo_{}", unique_token());
+        let stale_work_order_id = format!("wo_{}", unique_token());
+        let guard =
+            acquire_queue_work_order_execution(&running_work_order_id).expect("execution guard");
+
+        let running_ids = running_queue_work_order_ids(&[
+            stale_work_order_id,
+            running_work_order_id.clone(),
+        ])
+        .expect("running queue work order ids");
+
+        assert_eq!(running_ids, vec![running_work_order_id]);
+
+        drop(guard);
+    }
+
+    #[test]
+    fn running_queue_work_order_ids_normalizes_and_deduplicates_ids() {
+        let work_order_id = format!("wo_{}", unique_token());
+        let guard = acquire_queue_work_order_execution(&work_order_id).expect("execution guard");
+
+        let running_ids = running_queue_work_order_ids(&[
+            String::new(),
+            format!(" {work_order_id} "),
+            work_order_id.clone(),
+        ])
+        .expect("running queue work order ids");
+
+        assert_eq!(running_ids, vec![work_order_id]);
+
+        drop(guard);
+    }
+
+    #[test]
+    fn running_queue_work_order_ids_excludes_released_ids() {
+        let work_order_id = format!("wo_{}", unique_token());
+        let guard = acquire_queue_work_order_execution(&work_order_id).expect("execution guard");
+        drop(guard);
+
+        let running_ids =
+            running_queue_work_order_ids(&[work_order_id]).expect("running queue work order ids");
+
+        assert!(running_ids.is_empty());
     }
 
     #[test]

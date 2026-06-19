@@ -57,6 +57,16 @@ export type QueueExecutionCancelResult =
 			readonly error: QueueExecutionError;
 	  };
 
+export type QueueExecutionInspectResult =
+	| {
+			readonly ok: true;
+			readonly runningWorkOrderIds: readonly string[];
+	  }
+	| {
+			readonly ok: false;
+			readonly error: QueueExecutionError;
+	  };
+
 interface QueueExecutionCommandResponse {
 	readonly ok: boolean;
 	readonly report?: WorkduckQueueResultReport | null;
@@ -65,6 +75,12 @@ interface QueueExecutionCommandResponse {
 
 interface QueueExecutionCancelCommandResponse {
 	readonly ok: boolean;
+	readonly error?: string | null;
+}
+
+interface QueueExecutionInspectCommandResponse {
+	readonly ok: boolean;
+	readonly runningWorkOrderIds?: readonly string[] | null;
 	readonly error?: string | null;
 }
 
@@ -180,6 +196,41 @@ export async function cancelQueueWorkOrderExecution(input: {
 
 		if (response.ok) {
 			return { ok: true };
+		}
+
+		return {
+			ok: false,
+			error: normalizeQueueExecutionError(response.error)
+		};
+	} catch {
+		return { ok: false, error: 'agent-execution-provider-unavailable' };
+	}
+}
+
+export async function inspectQueueWorkOrderExecutions(input: {
+	readonly workOrderIds: readonly string[];
+}): Promise<QueueExecutionInspectResult> {
+	const invoke = getTauriInvoke();
+
+	if (invoke === undefined) {
+		return { ok: false, error: 'agent-execution-unavailable' };
+	}
+
+	try {
+		const response = await invoke<QueueExecutionInspectCommandResponse>(
+			'inspect_queue_work_order_executions',
+			{
+				request: {
+					workOrderIds: input.workOrderIds
+				}
+			}
+		);
+
+		if (response.ok) {
+			return {
+				ok: true,
+				runningWorkOrderIds: response.runningWorkOrderIds ?? []
+			};
 		}
 
 		return {
