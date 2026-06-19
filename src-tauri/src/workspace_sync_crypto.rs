@@ -1,29 +1,12 @@
-use crate::argon2_kdf::{
-    ARGON2ID_VERSION, DEFAULT_ITERATIONS, DEFAULT_MEMORY_KIB, DEFAULT_PARALLELISM,
-    derive_argon2id_key, parameters_are_supported,
+use crate::password_envelope_crypto::{
+    PasswordEnvelope, PasswordEnvelopeCipher, PasswordEnvelopeConfig, PasswordEnvelopeCryptoError,
+    PasswordEnvelopeKdf, decrypt_password_envelope, encrypt_password_envelope,
 };
-use base64::{Engine as _, engine::general_purpose::STANDARD as BASE64};
-use chacha20poly1305::{
-    Key, XChaCha20Poly1305, XNonce,
-    aead::{
-        Aead, KeyInit, Payload,
-        rand_core::{OsRng, RngCore},
-    },
-};
-use zeroize::{Zeroize, Zeroizing};
+use zeroize::Zeroizing;
 
 const SYNC_FORMAT: &str = "workduck.workspace-sync";
 const SYNC_VERSION: u8 = 1;
 const SYNC_AAD: &[u8] = b"workduck.workspace-sync.v1";
-const SYNC_KDF_ALGORITHM: &str = "argon2id";
-const SYNC_KDF_VERSION: u32 = ARGON2ID_VERSION;
-const SYNC_KDF_MEMORY_KIB: u32 = DEFAULT_MEMORY_KIB;
-const SYNC_KDF_ITERATIONS: u32 = DEFAULT_ITERATIONS;
-const SYNC_KDF_PARALLELISM: u32 = DEFAULT_PARALLELISM;
-const SYNC_KEY_LENGTH: usize = 32;
-const SYNC_SALT_LENGTH: usize = 16;
-const SYNC_CIPHER_ALGORITHM: &str = "xchacha20poly1305";
-const SYNC_NONCE_LENGTH: usize = 24;
 
 #[derive(serde::Deserialize, serde::Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -113,56 +96,18 @@ pub fn encrypt_workspace_sync_payload(
         return invalid_encryption(WorkspaceSyncCryptoError::PlaintextRequired);
     }
 
-    let mut salt = [0_u8; SYNC_SALT_LENGTH];
-    let mut nonce = [0_u8; SYNC_NONCE_LENGTH];
-    OsRng.fill_bytes(&mut salt);
-    OsRng.fill_bytes(&mut nonce);
-
-    let mut key = match derive_sync_key(
+    let envelope = match encrypt_password_envelope(
         password.as_bytes(),
-        &salt,
-        SYNC_KDF_MEMORY_KIB,
-        SYNC_KDF_ITERATIONS,
-        SYNC_KDF_PARALLELISM,
+        plaintext.as_bytes(),
+        sync_envelope_config(),
     ) {
-        Ok(key) => key,
-        Err(error) => return invalid_encryption(error),
-    };
-
-    let cipher = XChaCha20Poly1305::new(Key::from_slice(&key));
-    let ciphertext_result = cipher.encrypt(
-        XNonce::from_slice(&nonce),
-        Payload {
-            msg: plaintext.as_bytes(),
-            aad: SYNC_AAD,
-        },
-    );
-    key.zeroize();
-
-    let ciphertext = match ciphertext_result {
-        Ok(ciphertext) => ciphertext,
-        Err(_) => return invalid_encryption(WorkspaceSyncCryptoError::EncryptionFailed),
+        Ok(envelope) => envelope,
+        Err(error) => return invalid_encryption(map_password_envelope_error(error)),
     };
 
     WorkspaceSyncEncryption {
         ok: true,
-        envelope: Some(WorkspaceSyncEnvelope {
-            format: SYNC_FORMAT.to_string(),
-            version: SYNC_VERSION,
-            kdf: WorkspaceSyncKdf {
-                algorithm: SYNC_KDF_ALGORITHM.to_string(),
-                version: SYNC_KDF_VERSION,
-                memory_kib: SYNC_KDF_MEMORY_KIB,
-                iterations: SYNC_KDF_ITERATIONS,
-                parallelism: SYNC_KDF_PARALLELISM,
-                salt: BASE64.encode(salt),
-            },
-            cipher: WorkspaceSyncCipher {
-                algorithm: SYNC_CIPHER_ALGORITHM.to_string(),
-                nonce: BASE64.encode(nonce),
-            },
-            ciphertext: BASE64.encode(ciphertext),
-        }),
+        envelope: Some(from_password_envelope(envelope)),
         error: None,
     }
 }
@@ -178,82 +123,80 @@ pub fn decrypt_workspace_sync_payload(
         return invalid_decryption(WorkspaceSyncCryptoError::PasswordRequired);
     }
 
-    if !is_supported_envelope(&envelope) {
-        return invalid_decryption(WorkspaceSyncCryptoError::EnvelopeInvalid);
-    }
-
-    let salt = match BASE64.decode(envelope.kdf.salt.as_bytes()) {
-        Ok(salt) if salt.len() == SYNC_SALT_LENGTH => salt,
-        _ => return invalid_decryption(WorkspaceSyncCryptoError::SaltInvalid),
-    };
-    let nonce = match BASE64.decode(envelope.cipher.nonce.as_bytes()) {
-        Ok(nonce) if nonce.len() == SYNC_NONCE_LENGTH => nonce,
-        _ => return invalid_decryption(WorkspaceSyncCryptoError::NonceInvalid),
-    };
-    let ciphertext = match BASE64.decode(envelope.ciphertext.as_bytes()) {
-        Ok(ciphertext) if !ciphertext.is_empty() => ciphertext,
-        _ => return invalid_decryption(WorkspaceSyncCryptoError::CiphertextInvalid),
-    };
-
-    let mut key = match derive_sync_key(
-        password.as_bytes(),
-        &salt,
-        envelope.kdf.memory_kib,
-        envelope.kdf.iterations,
-        envelope.kdf.parallelism,
-    ) {
-        Ok(key) => key,
-        Err(error) => return invalid_decryption(error),
-    };
-
-    let cipher = XChaCha20Poly1305::new(Key::from_slice(&key));
-    let plaintext_result = cipher.decrypt(
-        XNonce::from_slice(&nonce),
-        Payload {
-            msg: ciphertext.as_ref(),
-            aad: SYNC_AAD,
-        },
-    );
-    key.zeroize();
-
-    let plaintext = match plaintext_result {
-        Ok(plaintext) => plaintext,
-        Err(_) => return invalid_decryption(WorkspaceSyncCryptoError::DecryptionFailed),
-    };
-
-    match String::from_utf8(plaintext) {
+    let envelope = to_password_envelope(&envelope);
+    match decrypt_password_envelope(password.as_bytes(), &envelope, sync_envelope_config()) {
         Ok(plaintext) => WorkspaceSyncDecryption {
             ok: true,
             plaintext: Some(plaintext),
             error: None,
         },
-        Err(_) => invalid_decryption(WorkspaceSyncCryptoError::PlaintextInvalid),
+        Err(error) => invalid_decryption(map_password_envelope_error(error)),
     }
 }
 
-fn derive_sync_key(
-    password: &[u8],
-    salt: &[u8],
-    memory_kib: u32,
-    iterations: u32,
-    parallelism: u32,
-) -> Result<[u8; SYNC_KEY_LENGTH], WorkspaceSyncCryptoError> {
-    derive_argon2id_key(password, salt, memory_kib, iterations, parallelism)
-        .map_err(|_| WorkspaceSyncCryptoError::KeyDerivationFailed)
+fn sync_envelope_config() -> PasswordEnvelopeConfig {
+    PasswordEnvelopeConfig {
+        format: SYNC_FORMAT,
+        version: SYNC_VERSION,
+        aad: SYNC_AAD,
+    }
 }
 
-fn is_supported_envelope(envelope: &WorkspaceSyncEnvelope) -> bool {
-    envelope.format == SYNC_FORMAT
-        && envelope.version == SYNC_VERSION
-        && envelope.kdf.algorithm == SYNC_KDF_ALGORITHM
-        && envelope.kdf.version == SYNC_KDF_VERSION
-        && parameters_are_supported(
-            envelope.kdf.version,
-            envelope.kdf.memory_kib,
-            envelope.kdf.iterations,
-            envelope.kdf.parallelism,
-        )
-        && envelope.cipher.algorithm == SYNC_CIPHER_ALGORITHM
+fn from_password_envelope(envelope: PasswordEnvelope) -> WorkspaceSyncEnvelope {
+    WorkspaceSyncEnvelope {
+        format: envelope.format,
+        version: envelope.version,
+        kdf: WorkspaceSyncKdf {
+            algorithm: envelope.kdf.algorithm,
+            version: envelope.kdf.version,
+            memory_kib: envelope.kdf.memory_kib,
+            iterations: envelope.kdf.iterations,
+            parallelism: envelope.kdf.parallelism,
+            salt: envelope.kdf.salt,
+        },
+        cipher: WorkspaceSyncCipher {
+            algorithm: envelope.cipher.algorithm,
+            nonce: envelope.cipher.nonce,
+        },
+        ciphertext: envelope.ciphertext,
+    }
+}
+
+fn to_password_envelope(envelope: &WorkspaceSyncEnvelope) -> PasswordEnvelope {
+    PasswordEnvelope {
+        format: envelope.format.clone(),
+        version: envelope.version,
+        kdf: PasswordEnvelopeKdf {
+            algorithm: envelope.kdf.algorithm.clone(),
+            version: envelope.kdf.version,
+            memory_kib: envelope.kdf.memory_kib,
+            iterations: envelope.kdf.iterations,
+            parallelism: envelope.kdf.parallelism,
+            salt: envelope.kdf.salt.clone(),
+        },
+        cipher: PasswordEnvelopeCipher {
+            algorithm: envelope.cipher.algorithm.clone(),
+            nonce: envelope.cipher.nonce.clone(),
+        },
+        ciphertext: envelope.ciphertext.clone(),
+    }
+}
+
+fn map_password_envelope_error(error: PasswordEnvelopeCryptoError) -> WorkspaceSyncCryptoError {
+    match error {
+        PasswordEnvelopeCryptoError::EnvelopeInvalid => WorkspaceSyncCryptoError::EnvelopeInvalid,
+        PasswordEnvelopeCryptoError::SaltInvalid => WorkspaceSyncCryptoError::SaltInvalid,
+        PasswordEnvelopeCryptoError::NonceInvalid => WorkspaceSyncCryptoError::NonceInvalid,
+        PasswordEnvelopeCryptoError::CiphertextInvalid => {
+            WorkspaceSyncCryptoError::CiphertextInvalid
+        }
+        PasswordEnvelopeCryptoError::KeyDerivationFailed => {
+            WorkspaceSyncCryptoError::KeyDerivationFailed
+        }
+        PasswordEnvelopeCryptoError::EncryptionFailed => WorkspaceSyncCryptoError::EncryptionFailed,
+        PasswordEnvelopeCryptoError::DecryptionFailed => WorkspaceSyncCryptoError::DecryptionFailed,
+        PasswordEnvelopeCryptoError::PlaintextInvalid => WorkspaceSyncCryptoError::PlaintextInvalid,
+    }
 }
 
 fn invalid_encryption(error: WorkspaceSyncCryptoError) -> WorkspaceSyncEncryption {
@@ -269,5 +212,108 @@ fn invalid_decryption(error: WorkspaceSyncCryptoError) -> WorkspaceSyncDecryptio
         ok: false,
         plaintext: None,
         error: Some(error),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::password_envelope_crypto::{
+        ENVELOPE_CIPHER_ALGORITHM, ENVELOPE_KDF_ALGORITHM, ENVELOPE_KDF_ITERATIONS,
+        ENVELOPE_KDF_MEMORY_KIB, ENVELOPE_KDF_PARALLELISM, ENVELOPE_KDF_VERSION,
+        ENVELOPE_NONCE_LENGTH, ENVELOPE_SALT_LENGTH,
+    };
+    use base64::{Engine as _, engine::general_purpose::STANDARD as BASE64};
+
+    #[test]
+    fn workspace_sync_payload_round_trips_with_supported_envelope_metadata() {
+        let encryption =
+            encrypt_workspace_sync_payload("correct horse battery staple".into(), "sync-json".into());
+
+        assert!(encryption.ok);
+        assert!(encryption.error.is_none());
+
+        let envelope = encryption.envelope.expect("encrypted envelope");
+        assert_eq!(envelope.format, SYNC_FORMAT);
+        assert_eq!(envelope.version, SYNC_VERSION);
+        assert_eq!(envelope.kdf.algorithm, ENVELOPE_KDF_ALGORITHM);
+        assert_eq!(envelope.kdf.version, ENVELOPE_KDF_VERSION);
+        assert_eq!(envelope.kdf.memory_kib, ENVELOPE_KDF_MEMORY_KIB);
+        assert_eq!(envelope.kdf.iterations, ENVELOPE_KDF_ITERATIONS);
+        assert_eq!(envelope.kdf.parallelism, ENVELOPE_KDF_PARALLELISM);
+        assert_eq!(envelope.cipher.algorithm, ENVELOPE_CIPHER_ALGORITHM);
+        assert_eq!(
+            BASE64.decode(envelope.kdf.salt.as_bytes()).expect("salt").len(),
+            ENVELOPE_SALT_LENGTH
+        );
+        assert_eq!(
+            BASE64.decode(envelope.cipher.nonce.as_bytes()).expect("nonce").len(),
+            ENVELOPE_NONCE_LENGTH
+        );
+        assert!(
+            !BASE64
+                .decode(envelope.ciphertext.as_bytes())
+                .expect("ciphertext")
+                .is_empty()
+        );
+
+        let decryption =
+            decrypt_workspace_sync_payload("correct horse battery staple".into(), envelope);
+
+        assert!(decryption.ok);
+        assert_eq!(decryption.plaintext.as_deref(), Some("sync-json"));
+        assert!(decryption.error.is_none());
+    }
+
+    #[test]
+    fn workspace_sync_decryption_rejects_wrong_password() {
+        let envelope = encrypt_workspace_sync_payload("right-password".into(), "sync-json".into())
+            .envelope
+            .expect("encrypted envelope");
+
+        let decryption = decrypt_workspace_sync_payload("wrong-password".into(), envelope);
+
+        assert!(!decryption.ok);
+        assert!(decryption.plaintext.is_none());
+        assert!(matches!(
+            decryption.error,
+            Some(WorkspaceSyncCryptoError::DecryptionFailed)
+        ));
+    }
+
+    #[test]
+    fn workspace_sync_rejects_empty_inputs_before_crypto_work() {
+        let missing_password = encrypt_workspace_sync_payload(String::new(), "sync-json".into());
+        let missing_plaintext =
+            encrypt_workspace_sync_payload("correct horse battery staple".into(), String::new());
+
+        assert!(!missing_password.ok);
+        assert!(matches!(
+            missing_password.error,
+            Some(WorkspaceSyncCryptoError::PasswordRequired)
+        ));
+        assert!(!missing_plaintext.ok);
+        assert!(matches!(
+            missing_plaintext.error,
+            Some(WorkspaceSyncCryptoError::PlaintextRequired)
+        ));
+    }
+
+    #[test]
+    fn workspace_sync_rejects_unsupported_envelope_metadata() {
+        let mut envelope =
+            encrypt_workspace_sync_payload("correct horse battery staple".into(), "sync-json".into())
+                .envelope
+                .expect("encrypted envelope");
+        envelope.format = "workduck.other-sync".to_string();
+
+        let decryption =
+            decrypt_workspace_sync_payload("correct horse battery staple".into(), envelope);
+
+        assert!(!decryption.ok);
+        assert!(matches!(
+            decryption.error,
+            Some(WorkspaceSyncCryptoError::EnvelopeInvalid)
+        ));
     }
 }

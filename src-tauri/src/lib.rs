@@ -9,6 +9,7 @@ mod git_credential;
 mod git_path;
 mod llm_chat;
 mod path_display;
+mod password_envelope_crypto;
 mod project_folder;
 mod project_registry_store;
 mod project_repository_failure;
