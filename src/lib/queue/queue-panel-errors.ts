@@ -57,8 +57,12 @@ export function getQueueExecutionErrorMessage(
 			return messages.queue.errors.executionVaultLocked;
 		case 'queue-execution-work-order-running':
 			return messages.queue.errors.executionWorkOrderRunning;
+		case 'queue-execution-work-order-not-running':
+			return messages.queue.errors.executionWorkOrderNotRunning;
 		case 'queue-execution-work-order-archived':
 			return messages.queue.errors.executionWorkOrderArchived;
+		case 'queue-execution-cancelled':
+			return messages.queue.errors.executionCancelled;
 		case 'queue-execution-unknown':
 			return messages.queue.errors.executionUnknown;
 		default:

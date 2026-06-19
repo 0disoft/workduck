@@ -21,11 +21,14 @@
 		readonly messages: WorkduckMessages;
 		readonly isWriting: boolean;
 		readonly isPreviewingPrompt: boolean;
+		readonly isCancellingExecution: boolean;
 		readonly canExecute: boolean;
 		readonly canPreviewPrompt: boolean;
 		readonly canComplete: boolean;
+		readonly canCancelExecution: boolean;
 		readonly onPreviewPrompt: () => Promise<void>;
 		readonly onExecute: () => Promise<void>;
+		readonly onCancelExecution: () => Promise<void>;
 		readonly onComplete: () => Promise<void>;
 		readonly onEditTask: (task: WorkduckQueueWorkOrderTask) => void;
 		readonly getQueuePriorityLabel: (priority: WorkduckQueueWorkPriority) => string;
@@ -44,11 +47,14 @@
 		messages,
 		isWriting,
 		isPreviewingPrompt,
+		isCancellingExecution,
 		canExecute,
 		canPreviewPrompt,
 		canComplete,
+		canCancelExecution,
 		onPreviewPrompt,
 		onExecute,
+		onCancelExecution,
 		onComplete,
 		onEditTask,
 		getQueuePriorityLabel,
@@ -86,6 +92,16 @@
 			>
 				{messages.queue.completeWorkOrder}
 			</button>
+			{#if workOrder.status === 'running'}
+				<button
+					class="workduck-button workduck-button-secondary"
+					type="button"
+					disabled={!canCancelExecution}
+					onclick={() => void onCancelExecution()}
+				>
+					{isCancellingExecution ? messages.queue.cancellingExecution : messages.queue.cancelExecution}
+				</button>
+			{/if}
 			<button
 				class="workduck-button workduck-button-primary"
 				type="button"

@@ -204,6 +204,8 @@ export const frQueueMessages = {
 	retryWorkOrder: 'Réexécuter',
 	completeWorkOrder: 'Marquer comme terminé',
 	executing: 'Exécution',
+	cancelExecution: 'Annuler l\'exécution',
+	cancellingExecution: 'Annulation',
 	noFollowUpSelected: 'Aucun suivi sélectionné.',
 	noEvaluationTargets: 'Aucune réponse à évaluer.',
 	evaluationAlreadyDelegated: 'Un ordre de travail de délégation d\'évaluation existe déjà : {relativePath}',
@@ -297,7 +299,9 @@ export const frQueueMessages = {
 		executionNoAgent: 'Sélectionnez au moins un agent d\'exécution.',
 		executionVaultLocked: 'Déverrouillez d\'abord le coffre-fort de l\'environnement.',
 		executionWorkOrderRunning: 'Cet ordre de travail est déjà en cours.',
+		executionWorkOrderNotRunning: 'Cet ordre de travail n\'est pas en cours.',
 		executionWorkOrderArchived: 'Cet ordre de travail est déjà terminé.',
+		executionCancelled: 'L\'exécution de l\'ordre de travail a été annulée.',
 		executionAgentNotFound: 'L\'agent sélectionné n\'a pas été trouvé.',
 		executionSecretNotFound: 'La clé API liée à l\'agent n\'a pas été trouvée.',
 		executionProviderUnsupported:

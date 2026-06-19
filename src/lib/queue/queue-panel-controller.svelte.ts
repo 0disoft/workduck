@@ -110,6 +110,7 @@ import {
 } from './queue-artifacts';
 import { readEnvironmentVaultSession } from '$lib/environment/environment-vault-session';
 import {
+	cancelQueueWorkOrderExecution,
 	executeQueueWorkOrder,
 	previewQueueWorkOrderPrompt,
 	type WorkduckQueuePromptPreview
@@ -353,6 +354,7 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 	let isReading = $state(false);
 	let isWriting = $state(false);
 	let isPreviewingPrompt = $state(false);
+	let isCancellingExecution = $state(false);
 	let isSavingEvaluation = $state(false);
 	let evaluationDialog = $state<AgentEvaluationDialogState | null>(null);
 	let evaluationScores = $state<AgentEvaluationScores>(createDefaultAgentEvaluationScores());
@@ -502,6 +504,9 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 			selectedWorkOrder.status !== 'archived' &&
 			selectedWorkOrder.status !== 'running' &&
 			!isWriting
+	);
+	let canCancelSelectedWorkOrderExecution = $derived(
+		selectedWorkOrder !== null && selectedWorkOrder.status === 'running' && !isCancellingExecution
 	);
 	let bulkDeleteTargetFiles = $derived(
 		files.filter((file) => shouldBulkDeleteQueueFile(file, bulkDeleteIncludesPending))
@@ -1617,6 +1622,29 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 	}
 }
 
+	async function handleCancelWorkOrderExecution() {
+		if (selectedWorkOrder === null || !canCancelSelectedWorkOrderExecution) {
+			return;
+	}
+
+		isCancellingExecution = true;
+		parseError = null;
+		status = messages.queue.cancellingExecution;
+
+		try {
+			const cancelResult = await cancelQueueWorkOrderExecution({
+				workOrderId: selectedWorkOrder.ref.id
+			});
+
+			if (!cancelResult.ok) {
+				parseError = getQueueExecutionErrorMessage(cancelResult.error);
+				status = null;
+			}
+	} finally {
+			isCancellingExecution = false;
+	}
+}
+
 	async function handleCompleteWorkOrder() {
 		if (
 			selectedWorkOrder === null ||
@@ -2257,6 +2285,7 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		get isReading() { return isReading; },
 		get isWriting() { return isWriting; },
 		get isPreviewingPrompt() { return isPreviewingPrompt; },
+		get isCancellingExecution() { return isCancellingExecution; },
 		get isSavingEvaluation() { return isSavingEvaluation; },
 		get evaluationDialog() { return evaluationDialog; },
 		get evaluationScores() { return evaluationScores; },
@@ -2268,6 +2297,7 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		get canExecuteSelectedWorkOrder() { return canExecuteSelectedWorkOrder; },
 		get canPreviewSelectedWorkOrderPrompt() { return canPreviewSelectedWorkOrderPrompt; },
 		get canCompleteSelectedWorkOrder() { return canCompleteSelectedWorkOrder; },
+		get canCancelSelectedWorkOrderExecution() { return canCancelSelectedWorkOrderExecution; },
 		get workOrderDialogTitle() { return workOrderDialogTitle; },
 		get workOrderDialogSubmitLabel() { return workOrderDialogSubmitLabel; },
 		get manualSkillOptionsAreVisible() { return manualSkillOptionsAreVisible; },
@@ -2302,6 +2332,7 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		handlePreviewWorkOrderPrompt,
 		closePromptPreviewDialog,
 		handleExecuteWorkOrder,
+		handleCancelWorkOrderExecution,
 		handleCompleteWorkOrder,
 		openEditWorkOrderTaskDialog,
 		handleBulkDeleteQueueFiles,

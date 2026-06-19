@@ -204,6 +204,8 @@ export const esQueueMessages = {
 		retryWorkOrder: 'Reintentar',
 		completeWorkOrder: 'Marcar como completada',
 		executing: 'Ejecutando',
+		cancelExecution: 'Cancelar ejecución',
+		cancellingExecution: 'Cancelando',
 		noFollowUpSelected: 'No se ha seleccionado ninguna tarea posterior.',
 		noEvaluationTargets: 'No hay respuestas para evaluar.',
 		evaluationAlreadyDelegated: 'Ya existe una orden de delegación de evaluación: {relativePath}',
@@ -297,7 +299,9 @@ export const esQueueMessages = {
 			executionNoAgent: 'Seleccione al menos un agente de trabajo.',
 			executionVaultLocked: 'Desbloquee la bóveda de entorno primero.',
 			executionWorkOrderRunning: 'Esta orden de trabajo ya se está ejecutando.',
+			executionWorkOrderNotRunning: 'Esta orden de trabajo no se está ejecutando.',
 			executionWorkOrderArchived: 'Esta orden de trabajo ya está completada.',
+			executionCancelled: 'La ejecución de la orden de trabajo se canceló.',
 			executionAgentNotFound: 'No se encontró el agente seleccionado.',
 			executionSecretNotFound: 'No se encontró la clave API vinculada al agente.',
 			executionProviderUnsupported:

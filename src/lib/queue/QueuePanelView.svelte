@@ -242,11 +242,14 @@
 					messages={controller.messages}
 					isWriting={controller.isWriting}
 					isPreviewingPrompt={controller.isPreviewingPrompt}
+					isCancellingExecution={controller.isCancellingExecution}
 					canExecute={controller.canExecuteSelectedWorkOrder}
 					canPreviewPrompt={controller.canPreviewSelectedWorkOrderPrompt}
 					canComplete={controller.canCompleteSelectedWorkOrder}
+					canCancelExecution={controller.canCancelSelectedWorkOrderExecution}
 					onPreviewPrompt={controller.handlePreviewWorkOrderPrompt}
 					onExecute={controller.handleExecuteWorkOrder}
+					onCancelExecution={controller.handleCancelWorkOrderExecution}
 					onComplete={controller.handleCompleteWorkOrder}
 					onEditTask={controller.openEditWorkOrderTaskDialog}
 					getQueuePriorityLabel={controller.getQueuePriorityLabel}

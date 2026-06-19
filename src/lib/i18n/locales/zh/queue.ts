@@ -204,6 +204,8 @@ export const zhQueueMessages = {
 	retryWorkOrder: '重新运行',
 	completeWorkOrder: '标记完成',
 	executing: '正在运行',
+	cancelExecution: '取消运行',
+	cancellingExecution: '正在取消',
 	noFollowUpSelected: '未选择后续项。',
 	noEvaluationTargets: '没有要评估的响应。',
 	evaluationAlreadyDelegated: '评估委托工单已存在：{relativePath}',
@@ -297,7 +299,9 @@ export const zhQueueMessages = {
 		executionNoAgent: '请选择至少一个执行智能体。',
 		executionVaultLocked: '请先解锁环境保管箱。',
 		executionWorkOrderRunning: '此工单已经在运行。',
+		executionWorkOrderNotRunning: '此工单未在运行。',
 		executionWorkOrderArchived: '此工单已经完成。',
+		executionCancelled: '工单运行已取消。',
 		executionAgentNotFound: '未找到所选智能体。',
 		executionSecretNotFound: '未找到绑定至该智能体的 API 密钥。',
 		executionProviderUnsupported:

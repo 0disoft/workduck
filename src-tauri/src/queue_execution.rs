@@ -1,8 +1,11 @@
 use std::{
+    collections::HashMap,
     env, fs, io,
     path::{Path, PathBuf},
+    sync::{Mutex, OnceLock},
 };
 
+use futures_util::future::{AbortHandle, Abortable};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
@@ -25,6 +28,9 @@ use crate::{
 const QUEUE_DIRECTORY_NAME: &str = "queue";
 const REPORTS_DIRECTORY_NAME: &str = "reports";
 const REPORT_FILE_SUFFIX: &str = ".workduck-report.json";
+
+static RUNNING_QUEUE_WORK_ORDERS: OnceLock<Mutex<HashMap<String, RunningQueueWorkOrderExecution>>> =
+    OnceLock::new();
 
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -239,12 +245,28 @@ pub struct QueueExecutionRequest {
     pub personas: Vec<PersonaRecord>,
 }
 
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct QueueExecutionCancelRequest {
+    pub work_order_id: String,
+}
+
 #[derive(Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct QueueExecutionCommandResult {
     pub ok: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub report: Option<QueueResultReport>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub error: Option<&'static str>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub message: Option<String>,
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct QueueExecutionCancelCommandResult {
+    pub ok: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub error: Option<&'static str>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -429,6 +451,11 @@ pub async fn execute_queue_work_order(
         ));
     };
 
+    let _execution_guard = match acquire_queue_work_order_execution(&request.work_order.r#ref.id) {
+        Ok(guard) => guard,
+        Err(error) => return queue_execution_failed(error),
+    };
+
     let runs = match create_execution_runs(
         &request.work_order,
         &request.agents,
@@ -450,16 +477,30 @@ pub async fn execute_queue_work_order(
         let task = run.task.clone();
         let agent_name = run.agent.name.clone();
         let client = client.clone();
+        let (abort_handle, abort_registration) = AbortHandle::new_pair();
+
+        if let Err(error) =
+            register_queue_work_order_abort_handle(&request.work_order.r#ref.id, abort_handle)
+        {
+            return queue_execution_failed(error);
+        }
 
         handles.push(tauri::async_runtime::spawn(async move {
-            match run_agent_prompt(run, client).await {
-                Ok(output) => AgentRunOutcome::Success(output),
-                Err(error) => AgentRunOutcome::Failure {
+            match Abortable::new(run_agent_prompt(run, client), abort_registration).await {
+                Ok(Ok(output)) => AgentRunOutcome::Success(output),
+                Ok(Err(error)) => AgentRunOutcome::Failure {
                     task,
                     agent_name,
                     code: error.code,
                     message: error.message,
                     execution_attempts: error.execution_attempts,
+                },
+                Err(_) => AgentRunOutcome::Failure {
+                    task,
+                    agent_name,
+                    code: "queue-execution-cancelled",
+                    message: "작업 실행이 취소되었습니다.".to_string(),
+                    execution_attempts: Vec::new(),
                 },
             }
         }));
@@ -477,6 +518,18 @@ pub async fn execute_queue_work_order(
                 ));
             }
         };
+        if matches!(
+            output,
+            AgentRunOutcome::Failure {
+                code: "queue-execution-cancelled",
+                ..
+            }
+        ) {
+            return queue_execution_failed(QueueExecutionErrorDetail::new(
+                "queue-execution-cancelled",
+                "작업 실행이 취소되었습니다.",
+            ));
+        }
         outputs.push(output);
     }
 
@@ -488,6 +541,24 @@ pub async fn execute_queue_work_order(
             message: None,
         },
         Err(error) => queue_execution_failed(error),
+    }
+}
+
+#[tauri::command]
+pub fn cancel_queue_work_order_execution(
+    request: QueueExecutionCancelRequest,
+) -> QueueExecutionCancelCommandResult {
+    match cancel_running_queue_work_order_execution(&request.work_order_id) {
+        Ok(()) => QueueExecutionCancelCommandResult {
+            ok: true,
+            error: None,
+            message: None,
+        },
+        Err(error) => QueueExecutionCancelCommandResult {
+            ok: false,
+            error: Some(error.code),
+            message: Some(error.message),
+        },
     }
 }
 
@@ -524,6 +595,129 @@ fn queue_execution_failed(error: QueueExecutionErrorDetail) -> QueueExecutionCom
         error: Some(error.code),
         message: Some(error.message),
     }
+}
+
+#[derive(Debug)]
+struct QueueWorkOrderExecutionGuard {
+    work_order_id: String,
+}
+
+#[derive(Debug, Default)]
+struct RunningQueueWorkOrderExecution {
+    abort_handles: Vec<AbortHandle>,
+    cancel_requested: bool,
+}
+
+impl Drop for QueueWorkOrderExecutionGuard {
+    fn drop(&mut self) {
+        if let Ok(mut running_work_orders) = running_queue_work_orders().lock() {
+            running_work_orders.remove(&self.work_order_id);
+        }
+    }
+}
+
+fn acquire_queue_work_order_execution(
+    work_order_id: &str,
+) -> Result<QueueWorkOrderExecutionGuard, QueueExecutionErrorDetail> {
+    let normalized_work_order_id = work_order_id.trim();
+
+    if normalized_work_order_id.is_empty() {
+        return Err(QueueExecutionErrorDetail::new(
+            "work-order-invalid",
+            "작업 지시서 ID가 비어 있습니다.",
+        ));
+    }
+
+    let mut running_work_orders = running_queue_work_orders().lock().map_err(|_| {
+        QueueExecutionErrorDetail::new(
+            "agent-execution-failed",
+            "작업 실행 상태를 확인하지 못했습니다.",
+        )
+    })?;
+
+    if running_work_orders.contains_key(normalized_work_order_id) {
+        return Err(QueueExecutionErrorDetail::new(
+            "work-order-running",
+            "이미 실행 중인 작업 지시서입니다.",
+        ));
+    }
+
+    running_work_orders.insert(
+        normalized_work_order_id.to_string(),
+        RunningQueueWorkOrderExecution::default(),
+    );
+
+    Ok(QueueWorkOrderExecutionGuard {
+        work_order_id: normalized_work_order_id.to_string(),
+    })
+}
+
+fn register_queue_work_order_abort_handle(
+    work_order_id: &str,
+    abort_handle: AbortHandle,
+) -> Result<(), QueueExecutionErrorDetail> {
+    let normalized_work_order_id = work_order_id.trim();
+    let mut running_work_orders = running_queue_work_orders().lock().map_err(|_| {
+        QueueExecutionErrorDetail::new(
+            "agent-execution-failed",
+            "작업 실행 상태를 확인하지 못했습니다.",
+        )
+    })?;
+
+    let Some(execution) = running_work_orders.get_mut(normalized_work_order_id) else {
+        return Err(QueueExecutionErrorDetail::new(
+            "work-order-not-running",
+            "실행 중인 작업 지시서를 찾지 못했습니다.",
+        ));
+    };
+
+    if execution.cancel_requested {
+        abort_handle.abort();
+    }
+
+    execution.abort_handles.push(abort_handle);
+
+    Ok(())
+}
+
+fn cancel_running_queue_work_order_execution(
+    work_order_id: &str,
+) -> Result<(), QueueExecutionErrorDetail> {
+    let normalized_work_order_id = work_order_id.trim();
+
+    if normalized_work_order_id.is_empty() {
+        return Err(QueueExecutionErrorDetail::new(
+            "work-order-invalid",
+            "작업 지시서 ID가 비어 있습니다.",
+        ));
+    }
+
+    let mut running_work_orders = running_queue_work_orders().lock().map_err(|_| {
+        QueueExecutionErrorDetail::new(
+            "agent-execution-failed",
+            "작업 실행 상태를 확인하지 못했습니다.",
+        )
+    })?;
+
+    let Some(execution) = running_work_orders.get_mut(normalized_work_order_id) else {
+        return Err(QueueExecutionErrorDetail::new(
+            "work-order-not-running",
+            "실행 중인 작업 지시서를 찾지 못했습니다.",
+        ));
+    };
+
+    execution.cancel_requested = true;
+
+    for abort_handle in &execution.abort_handles {
+        abort_handle.abort();
+    }
+
+    Ok(())
+}
+
+fn running_queue_work_orders()
+-> &'static Mutex<HashMap<String, RunningQueueWorkOrderExecution>> {
+    RUNNING_QUEUE_WORK_ORDERS.get_or_init(|| Mutex::new(HashMap::new()))
 }
 
 pub fn command_completed(report_path: &Path, language: QueueReportLanguage) -> String {
@@ -1005,6 +1199,79 @@ en-US 표기는 한국어 지원 앱을 영어 전용처럼 보이게 합니다.
         let archived_error =
             validate_work_order(&work_order, "wo_retry").expect_err("archived is blocked");
         assert_eq!(archived_error.code, "work-order-archived");
+    }
+
+    #[test]
+    fn queue_work_order_execution_guard_rejects_duplicate_running_id_until_released() {
+        let work_order_id = format!("wo_{}", unique_token());
+        let first_guard =
+            acquire_queue_work_order_execution(&work_order_id).expect("first execution guard");
+        let duplicate_error = acquire_queue_work_order_execution(&work_order_id)
+            .expect_err("duplicate execution should be rejected");
+
+        assert_eq!(duplicate_error.code, "work-order-running");
+
+        drop(first_guard);
+
+        let second_guard =
+            acquire_queue_work_order_execution(&work_order_id).expect("released execution guard");
+        drop(second_guard);
+    }
+
+    #[test]
+    fn queue_work_order_execution_guard_normalizes_ids_before_tracking() {
+        let work_order_id = format!("wo_{}", unique_token());
+        let first_guard = acquire_queue_work_order_execution(&format!(" {work_order_id} "))
+            .expect("trimmed execution guard");
+        let duplicate_error = acquire_queue_work_order_execution(&work_order_id)
+            .expect_err("trimmed duplicate should be rejected");
+
+        assert_eq!(duplicate_error.code, "work-order-running");
+
+        drop(first_guard);
+    }
+
+    #[test]
+    fn cancel_running_queue_work_order_execution_aborts_registered_handles() {
+        let work_order_id = format!("wo_{}", unique_token());
+        let guard =
+            acquire_queue_work_order_execution(&work_order_id).expect("execution guard");
+        let (abort_handle, _abort_registration) = AbortHandle::new_pair();
+        let abort_handle_for_assertion = abort_handle.clone();
+
+        register_queue_work_order_abort_handle(&work_order_id, abort_handle)
+            .expect("abort handle registration");
+        cancel_running_queue_work_order_execution(&work_order_id).expect("cancel running work order");
+
+        assert!(abort_handle_for_assertion.is_aborted());
+
+        drop(guard);
+    }
+
+    #[test]
+    fn cancel_running_queue_work_order_execution_rejects_missing_running_id() {
+        let work_order_id = format!("wo_{}", unique_token());
+        let error = cancel_running_queue_work_order_execution(&work_order_id)
+            .expect_err("missing execution should be rejected");
+
+        assert_eq!(error.code, "work-order-not-running");
+    }
+
+    #[test]
+    fn queue_work_order_abort_handle_registered_after_cancel_is_aborted_immediately() {
+        let work_order_id = format!("wo_{}", unique_token());
+        let guard =
+            acquire_queue_work_order_execution(&work_order_id).expect("execution guard");
+        let (abort_handle, _abort_registration) = AbortHandle::new_pair();
+        let abort_handle_for_assertion = abort_handle.clone();
+
+        cancel_running_queue_work_order_execution(&work_order_id).expect("cancel running work order");
+        register_queue_work_order_abort_handle(&work_order_id, abort_handle)
+            .expect("late abort handle registration");
+
+        assert!(abort_handle_for_assertion.is_aborted());
+
+        drop(guard);
     }
 }
 

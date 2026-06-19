@@ -12,7 +12,9 @@ export type QueueExecutionError =
 	| 'queue-execution-no-agent'
 	| 'queue-execution-vault-locked'
 	| 'queue-execution-work-order-running'
+	| 'queue-execution-work-order-not-running'
 	| 'queue-execution-work-order-archived'
+	| 'queue-execution-cancelled'
 	| 'queue-execution-unknown'
 	| AgentExecutionError;
 
@@ -46,9 +48,23 @@ export type QueuePromptPreviewResult =
 			readonly error: QueueExecutionError;
 	  };
 
+export type QueueExecutionCancelResult =
+	| {
+			readonly ok: true;
+	  }
+	| {
+			readonly ok: false;
+			readonly error: QueueExecutionError;
+	  };
+
 interface QueueExecutionCommandResponse {
 	readonly ok: boolean;
 	readonly report?: WorkduckQueueResultReport | null;
+	readonly error?: string | null;
+}
+
+interface QueueExecutionCancelCommandResponse {
+	readonly ok: boolean;
 	readonly error?: string | null;
 }
 
@@ -143,14 +159,50 @@ export async function previewQueueWorkOrderPrompt(input: {
 	}
 }
 
+export async function cancelQueueWorkOrderExecution(input: {
+	readonly workOrderId: string;
+}): Promise<QueueExecutionCancelResult> {
+	const invoke = getTauriInvoke();
+
+	if (invoke === undefined) {
+		return { ok: false, error: 'agent-execution-unavailable' };
+	}
+
+	try {
+		const response = await invoke<QueueExecutionCancelCommandResponse>(
+			'cancel_queue_work_order_execution',
+			{
+				request: {
+					workOrderId: input.workOrderId
+				}
+			}
+		);
+
+		if (response.ok) {
+			return { ok: true };
+		}
+
+		return {
+			ok: false,
+			error: normalizeQueueExecutionError(response.error)
+		};
+	} catch {
+		return { ok: false, error: 'agent-execution-provider-unavailable' };
+	}
+}
+
 function normalizeQueueExecutionError(error: string | null | undefined): QueueExecutionError {
 	switch (error) {
 		case 'queue-execution-no-task':
 			return 'queue-execution-no-task';
 		case 'queue-execution-vault-locked':
 			return 'queue-execution-vault-locked';
+		case 'queue-execution-cancelled':
+			return 'queue-execution-cancelled';
 		case 'work-order-running':
 			return 'queue-execution-work-order-running';
+		case 'work-order-not-running':
+			return 'queue-execution-work-order-not-running';
 		case 'work-order-archived':
 			return 'queue-execution-work-order-archived';
 		case 'work-order-agent-required':

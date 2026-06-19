@@ -204,6 +204,8 @@ export const enQueueMessages = {
 		retryWorkOrder: 'Run again',
 		completeWorkOrder: 'Mark complete',
 		executing: 'Running',
+		cancelExecution: 'Cancel run',
+		cancellingExecution: 'Cancelling',
 		noFollowUpSelected: 'No follow-up selected.',
 		noEvaluationTargets: 'No responses to evaluate.',
 		evaluationAlreadyDelegated: 'An evaluation delegation work order already exists: {relativePath}',
@@ -297,7 +299,9 @@ export const enQueueMessages = {
 			executionNoAgent: 'Select at least one work agent.',
 			executionVaultLocked: 'Unlock the environment vault first.',
 			executionWorkOrderRunning: 'This work order is already running.',
+			executionWorkOrderNotRunning: 'This work order is not running.',
 			executionWorkOrderArchived: 'This work order is already completed.',
+			executionCancelled: 'The work order run was cancelled.',
 			executionAgentNotFound: 'The selected agent was not found.',
 			executionSecretNotFound: 'The API key linked to the agent was not found.',
 			executionProviderUnsupported:
