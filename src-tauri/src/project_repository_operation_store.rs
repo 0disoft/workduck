@@ -1,4 +1,4 @@
-use rusqlite::{OptionalExtension, params};
+use rusqlite::params;
 use tauri::AppHandle;
 
 use crate::storage;
@@ -172,18 +172,6 @@ pub fn write_project_repository_operation_record(
         Ok(connection) => connection,
         Err(_) => return invalid_write(ProjectRepositoryOperationStoreError::WriteFailed),
     };
-
-    if connection
-        .query_row(
-            "SELECT id FROM project_repository_operation_records WHERE id = ?1",
-            [&record.id],
-            |row| row.get::<_, String>(0),
-        )
-        .optional()
-        .is_err()
-    {
-        return invalid_write(ProjectRepositoryOperationStoreError::WriteFailed);
-    }
 
     if connection
         .execute(
