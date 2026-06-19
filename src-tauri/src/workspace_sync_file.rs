@@ -5,6 +5,7 @@ use std::{
 
 use crate::atomic_file_write::{AtomicFileWriteError, write_file_atomically};
 use crate::path_display::display_path;
+use crate::workspace_path::{validate_absolute_directory, WorkspacePathValidationError};
 
 const WORKSPACE_SYNC_FILE_NAME_MAX_CHARS: usize = 120;
 const WORKSPACE_SYNC_FILE_MAX_BYTES: u64 = 5 * 1024 * 1024;
@@ -144,16 +145,7 @@ pub(crate) fn resolve_sync_file_path(
 }
 
 fn validate_sync_folder_path(path: &Path) -> Result<PathBuf, WorkspaceSyncFileError> {
-    let metadata = fs::metadata(path).map_err(map_folder_error)?;
-
-    if !metadata.is_dir() {
-        return Err(WorkspaceSyncFileError::FolderNotDirectory);
-    }
-
-    let normalized_path = fs::canonicalize(path).map_err(map_folder_error)?;
-    fs::read_dir(&normalized_path).map_err(map_folder_error)?;
-
-    Ok(normalized_path)
+    validate_absolute_directory(path).map_err(map_folder_path_validation_error)
 }
 
 fn validate_sync_file_name(file_name: &str) -> Result<String, WorkspaceSyncFileError> {
@@ -213,11 +205,16 @@ fn invalid_read(error: WorkspaceSyncFileError) -> WorkspaceSyncFileRead {
     }
 }
 
-fn map_folder_error(error: io::Error) -> WorkspaceSyncFileError {
-    match error.kind() {
-        io::ErrorKind::NotFound => WorkspaceSyncFileError::FolderNotFound,
-        io::ErrorKind::PermissionDenied => WorkspaceSyncFileError::FolderPermissionDenied,
-        _ => WorkspaceSyncFileError::ReadFailed,
+fn map_folder_path_validation_error(
+    error: WorkspacePathValidationError,
+) -> WorkspaceSyncFileError {
+    match error {
+        WorkspacePathValidationError::Required => WorkspaceSyncFileError::FolderRequired,
+        WorkspacePathValidationError::NotAbsolute => WorkspaceSyncFileError::FolderNotAbsolute,
+        WorkspacePathValidationError::NotFound => WorkspaceSyncFileError::FolderNotFound,
+        WorkspacePathValidationError::NotDirectory => WorkspaceSyncFileError::FolderNotDirectory,
+        WorkspacePathValidationError::PermissionDenied => WorkspaceSyncFileError::FolderPermissionDenied,
+        WorkspacePathValidationError::Unreadable => WorkspaceSyncFileError::ReadFailed,
     }
 }
 

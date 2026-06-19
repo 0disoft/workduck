@@ -4,6 +4,7 @@ use serde::Deserialize;
 use serde_json::Value;
 
 const CHAT_COMPLETION_TIMEOUT_SECONDS: u64 = 120;
+pub(crate) const CHAT_COMPLETION_MODEL_MAX_LENGTH: usize = 160;
 
 static CHAT_COMPLETION_HTTP_CLIENT: OnceLock<reqwest::Client> = OnceLock::new();
 

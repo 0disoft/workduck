@@ -6,6 +6,8 @@ use std::{
     time::Duration,
 };
 
+use crate::workspace_path::{validate_absolute_directory_path, WorkspacePathValidationError};
+
 const PROJECTS_DIRECTORY_NAME: &str = "projects";
 const PROJECT_FOLDER_NAME_MAX_CHARS: usize = 80;
 const DELETE_FOLDER_MAX_ATTEMPTS: usize = 4;
@@ -256,28 +258,7 @@ pub fn delete_project_repository_folder(
 }
 
 fn validate_workspace_root(path: &str) -> Result<PathBuf, ProjectFolderError> {
-    let trimmed_path = path.trim();
-
-    if trimmed_path.is_empty() {
-        return Err(ProjectFolderError::WorkspaceRequired);
-    }
-
-    let workspace_path = PathBuf::from(trimmed_path);
-
-    if !workspace_path.is_absolute() {
-        return Err(ProjectFolderError::WorkspaceNotAbsolute);
-    }
-
-    let metadata = fs::metadata(&workspace_path).map_err(map_workspace_error)?;
-
-    if !metadata.is_dir() {
-        return Err(ProjectFolderError::WorkspaceNotDirectory);
-    }
-
-    let normalized_path = fs::canonicalize(&workspace_path).map_err(map_workspace_error)?;
-    fs::read_dir(&normalized_path).map_err(map_workspace_error)?;
-
-    Ok(normalized_path)
+    validate_absolute_directory_path(path).map_err(map_workspace_path_validation_error)
 }
 
 fn ensure_projects_root(workspace_root: &Path) -> Result<PathBuf, ProjectFolderError> {
@@ -755,6 +736,19 @@ fn map_workspace_error(error: io::Error) -> ProjectFolderError {
         io::ErrorKind::NotFound => ProjectFolderError::WorkspaceNotFound,
         io::ErrorKind::PermissionDenied => ProjectFolderError::WorkspacePermissionDenied,
         _ => ProjectFolderError::WorkspaceUnreadable,
+    }
+}
+
+fn map_workspace_path_validation_error(
+    error: WorkspacePathValidationError,
+) -> ProjectFolderError {
+    match error {
+        WorkspacePathValidationError::Required => ProjectFolderError::WorkspaceRequired,
+        WorkspacePathValidationError::NotAbsolute => ProjectFolderError::WorkspaceNotAbsolute,
+        WorkspacePathValidationError::NotFound => ProjectFolderError::WorkspaceNotFound,
+        WorkspacePathValidationError::NotDirectory => ProjectFolderError::WorkspaceNotDirectory,
+        WorkspacePathValidationError::PermissionDenied => ProjectFolderError::WorkspacePermissionDenied,
+        WorkspacePathValidationError::Unreadable => ProjectFolderError::WorkspaceUnreadable,
     }
 }
 

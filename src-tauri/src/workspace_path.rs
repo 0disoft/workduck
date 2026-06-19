@@ -67,6 +67,16 @@ pub(crate) fn validate_absolute_directory_path(
     validate_directory_path(&workspace_path)
 }
 
+pub(crate) fn validate_absolute_directory(
+    path: &Path,
+) -> Result<PathBuf, WorkspacePathValidationError> {
+    if !path.is_absolute() {
+        return Err(WorkspacePathValidationError::NotAbsolute);
+    }
+
+    validate_directory_path(path)
+}
+
 fn validate_directory_path(path: &Path) -> Result<PathBuf, WorkspacePathValidationError> {
     let metadata = fs::metadata(path).map_err(map_io_error)?;
 

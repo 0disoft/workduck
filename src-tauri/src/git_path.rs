@@ -19,6 +19,8 @@ use std::os::windows::process::CommandExt;
 #[cfg(target_os = "windows")]
 const CREATE_NO_WINDOW: u32 = 0x08000000;
 
+const CHILD_OUTPUT_MAX_BYTES: usize = 128 * 1024;
+
 pub(crate) fn git_process_path(path: &Path) -> PathBuf {
     crate::path_display::non_verbatim_path(path)
 }
@@ -106,7 +108,16 @@ where
 {
     thread::spawn(move || {
         let mut output = Vec::new();
-        let _ = reader.read_to_end(&mut output);
+        let mut buffer = [0_u8; 4096];
+
+        loop {
+            match reader.read(&mut buffer) {
+                Ok(0) => break,
+                Ok(length) => append_bounded_output(&mut output, &buffer[..length]),
+                Err(_) => break,
+            }
+        }
+
         output
     })
 }
@@ -115,4 +126,51 @@ fn join_output_reader(reader: Option<thread::JoinHandle<Vec<u8>>>) -> Vec<u8> {
     reader
         .and_then(|reader| reader.join().ok())
         .unwrap_or_default()
+}
+
+fn append_bounded_output(output: &mut Vec<u8>, bytes: &[u8]) {
+    if bytes.len() >= CHILD_OUTPUT_MAX_BYTES {
+        output.clear();
+        output.extend_from_slice(&bytes[bytes.len() - CHILD_OUTPUT_MAX_BYTES..]);
+        return;
+    }
+
+    let overflow = output
+        .len()
+        .saturating_add(bytes.len())
+        .saturating_sub(CHILD_OUTPUT_MAX_BYTES);
+
+    if overflow > 0 {
+        output.drain(..overflow);
+    }
+
+    output.extend_from_slice(bytes);
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{append_bounded_output, CHILD_OUTPUT_MAX_BYTES};
+
+    #[test]
+    fn bounded_output_keeps_recent_bytes_after_multiple_chunks() {
+        let mut output = Vec::new();
+        append_bounded_output(&mut output, &vec![b'a'; CHILD_OUTPUT_MAX_BYTES - 3]);
+        append_bounded_output(&mut output, b"bcdef");
+
+        assert_eq!(output.len(), CHILD_OUTPUT_MAX_BYTES);
+        assert!(output.iter().take(8).all(|byte| *byte == b'a'));
+        assert_eq!(&output[output.len() - 5..], b"bcdef");
+    }
+
+    #[test]
+    fn bounded_output_keeps_tail_when_single_chunk_exceeds_limit() {
+        let mut output = b"old".to_vec();
+        let mut large = vec![b'a'; CHILD_OUTPUT_MAX_BYTES + 10];
+        large.extend_from_slice(b"tail");
+
+        append_bounded_output(&mut output, &large);
+
+        assert_eq!(output.len(), CHILD_OUTPUT_MAX_BYTES);
+        assert_eq!(&output[output.len() - 4..], b"tail");
+    }
 }

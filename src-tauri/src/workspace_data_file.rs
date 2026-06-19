@@ -5,6 +5,7 @@ use std::{
 };
 
 use crate::atomic_file_write::{write_file_atomically, AtomicFileWriteError};
+use crate::workspace_path::{validate_absolute_directory_path, WorkspacePathValidationError};
 use crate::workspace_repository_gitignore::ensure_secrets_sync_gitignore_policy;
 
 const WORKDUCK_DIRECTORY_NAME: &str = ".workduck";
@@ -195,28 +196,7 @@ fn resolve_workspace_data_file_path(
 }
 
 fn validate_workspace_root(workspace_path: &str) -> Result<PathBuf, WorkspaceDataFileError> {
-    let trimmed_path = workspace_path.trim();
-
-    if trimmed_path.is_empty() {
-        return Err(WorkspaceDataFileError::WorkspaceRequired);
-    }
-
-    let workspace_path = PathBuf::from(trimmed_path);
-
-    if !workspace_path.is_absolute() {
-        return Err(WorkspaceDataFileError::WorkspaceNotAbsolute);
-    }
-
-    let metadata = fs::metadata(&workspace_path).map_err(map_workspace_error)?;
-
-    if !metadata.is_dir() {
-        return Err(WorkspaceDataFileError::WorkspaceNotDirectory);
-    }
-
-    let normalized_path = fs::canonicalize(&workspace_path).map_err(map_workspace_error)?;
-    fs::read_dir(&normalized_path).map_err(map_workspace_error)?;
-
-    Ok(normalized_path)
+    validate_absolute_directory_path(workspace_path).map_err(map_workspace_path_validation_error)
 }
 
 fn validate_workspace_data_file_name(file_name: &str) -> Result<&str, WorkspaceDataFileError> {
@@ -263,6 +243,21 @@ fn map_workspace_error(error: io::Error) -> WorkspaceDataFileError {
         io::ErrorKind::NotFound => WorkspaceDataFileError::WorkspaceNotFound,
         io::ErrorKind::PermissionDenied => WorkspaceDataFileError::WorkspacePermissionDenied,
         _ => WorkspaceDataFileError::WorkspaceUnreadable,
+    }
+}
+
+fn map_workspace_path_validation_error(
+    error: WorkspacePathValidationError,
+) -> WorkspaceDataFileError {
+    match error {
+        WorkspacePathValidationError::Required => WorkspaceDataFileError::WorkspaceRequired,
+        WorkspacePathValidationError::NotAbsolute => WorkspaceDataFileError::WorkspaceNotAbsolute,
+        WorkspacePathValidationError::NotFound => WorkspaceDataFileError::WorkspaceNotFound,
+        WorkspacePathValidationError::NotDirectory => WorkspaceDataFileError::WorkspaceNotDirectory,
+        WorkspacePathValidationError::PermissionDenied => {
+            WorkspaceDataFileError::WorkspacePermissionDenied
+        }
+        WorkspacePathValidationError::Unreadable => WorkspaceDataFileError::WorkspaceUnreadable,
     }
 }
 

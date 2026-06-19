@@ -4,6 +4,7 @@ use crate::path_display::display_path;
 use crate::workspace_sync_file::{
     WorkspaceSyncFileError, resolve_sync_file_path, validate_sync_file_target,
 };
+use crate::workspace_path::{validate_absolute_directory_path, WorkspacePathValidationError};
 
 use std::{
     fs,
@@ -286,28 +287,7 @@ fn run_workspace_sync_git_blocking(
 }
 
 fn validate_sync_folder_path(folder_path: &str) -> Result<PathBuf, WorkspaceSyncGitError> {
-    let trimmed_folder_path = folder_path.trim();
-
-    if trimmed_folder_path.is_empty() {
-        return Err(WorkspaceSyncGitError::FolderRequired);
-    }
-
-    let folder_path = PathBuf::from(trimmed_folder_path);
-
-    if !folder_path.is_absolute() {
-        return Err(WorkspaceSyncGitError::FolderNotAbsolute);
-    }
-
-    let metadata = fs::metadata(&folder_path).map_err(map_folder_error)?;
-
-    if !metadata.is_dir() {
-        return Err(WorkspaceSyncGitError::FolderNotDirectory);
-    }
-
-    let normalized_path = fs::canonicalize(&folder_path).map_err(map_folder_error)?;
-    fs::read_dir(&normalized_path).map_err(map_folder_error)?;
-
-    Ok(normalized_path)
+    validate_absolute_directory_path(folder_path).map_err(map_folder_path_validation_error)
 }
 
 fn run_workspace_sync_push(
@@ -864,11 +844,14 @@ fn map_file_error(error: WorkspaceSyncFileError) -> WorkspaceSyncGitRunError {
     }
 }
 
-fn map_folder_error(error: io::Error) -> WorkspaceSyncGitError {
-    match error.kind() {
-        io::ErrorKind::NotFound => WorkspaceSyncGitError::FolderNotFound,
-        io::ErrorKind::PermissionDenied => WorkspaceSyncGitError::FolderPermissionDenied,
-        _ => WorkspaceSyncGitError::ReadFailed,
+fn map_folder_path_validation_error(error: WorkspacePathValidationError) -> WorkspaceSyncGitError {
+    match error {
+        WorkspacePathValidationError::Required => WorkspaceSyncGitError::FolderRequired,
+        WorkspacePathValidationError::NotAbsolute => WorkspaceSyncGitError::FolderNotAbsolute,
+        WorkspacePathValidationError::NotFound => WorkspaceSyncGitError::FolderNotFound,
+        WorkspacePathValidationError::NotDirectory => WorkspaceSyncGitError::FolderNotDirectory,
+        WorkspacePathValidationError::PermissionDenied => WorkspaceSyncGitError::FolderPermissionDenied,
+        WorkspacePathValidationError::Unreadable => WorkspaceSyncGitError::ReadFailed,
     }
 }
 

@@ -1,12 +1,12 @@
 use serde_json::json;
 
 use crate::chat_completion::{
-    ChatCompletionError, chat_completion_endpoint, chat_completion_http_client,
+    ChatCompletionError, CHAT_COMPLETION_MODEL_MAX_LENGTH, chat_completion_endpoint,
+    chat_completion_http_client,
     send_chat_completion_json,
 };
 
 const MAX_PROMPT_LENGTH: usize = 48_000;
-const MAX_MODEL_LENGTH: usize = 120;
 
 #[derive(serde::Deserialize)]
 #[serde(rename_all = "kebab-case")]
@@ -64,7 +64,7 @@ pub async fn run_llm_chat_completion(
         return failed(LlmChatCompletionError::ApiKeyRequired);
     }
 
-    if model.is_empty() || model.len() > MAX_MODEL_LENGTH {
+    if model.is_empty() || model.len() > CHAT_COMPLETION_MODEL_MAX_LENGTH {
         return failed(LlmChatCompletionError::ModelRequired);
     }
 

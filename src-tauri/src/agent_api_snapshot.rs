@@ -8,7 +8,11 @@ use rusqlite::{OptionalExtension, params};
 use tauri::AppHandle;
 use time::{OffsetDateTime, format_description::well_known::Rfc3339};
 
-use crate::{path_display::display_path, storage};
+use crate::{
+    path_display::display_path,
+    storage,
+    workspace_path::{validate_absolute_directory_path, WorkspacePathValidationError},
+};
 
 const SNAPSHOT_VERSION: u16 = 1;
 const QUEUE_DIRECTORY_NAME: &str = "queue";
@@ -280,28 +284,7 @@ fn validate_workspace_id(workspace_id: &str) -> Result<String, AgentApiSnapshotE
 }
 
 fn validate_workspace_path(workspace_path: &str) -> Result<PathBuf, AgentApiSnapshotError> {
-    let workspace_path = workspace_path.trim();
-
-    if workspace_path.is_empty() {
-        return Err(AgentApiSnapshotError::WorkspaceRequired);
-    }
-
-    let workspace_path = PathBuf::from(workspace_path);
-
-    if !workspace_path.is_absolute() {
-        return Err(AgentApiSnapshotError::WorkspaceNotAbsolute);
-    }
-
-    let metadata = fs::metadata(&workspace_path).map_err(map_workspace_error)?;
-
-    if !metadata.is_dir() {
-        return Err(AgentApiSnapshotError::WorkspaceNotDirectory);
-    }
-
-    let workspace_path = fs::canonicalize(workspace_path).map_err(map_workspace_error)?;
-    fs::read_dir(&workspace_path).map_err(map_workspace_error)?;
-
-    Ok(workspace_path)
+    validate_absolute_directory_path(workspace_path).map_err(map_workspace_path_validation_error)
 }
 
 fn summarize_queue(workspace_path: &Path) -> AgentApiQueueSnapshot {
@@ -845,11 +828,17 @@ fn invalid(error: AgentApiSnapshotError) -> AgentApiSnapshotResult {
     }
 }
 
-fn map_workspace_error(error: io::Error) -> AgentApiSnapshotError {
-    match error.kind() {
-        io::ErrorKind::NotFound => AgentApiSnapshotError::WorkspaceNotFound,
-        io::ErrorKind::PermissionDenied => AgentApiSnapshotError::WorkspaceUnreadable,
-        _ => AgentApiSnapshotError::WorkspaceUnreadable,
+fn map_workspace_path_validation_error(
+    error: WorkspacePathValidationError,
+) -> AgentApiSnapshotError {
+    match error {
+        WorkspacePathValidationError::Required => AgentApiSnapshotError::WorkspaceRequired,
+        WorkspacePathValidationError::NotAbsolute => AgentApiSnapshotError::WorkspaceNotAbsolute,
+        WorkspacePathValidationError::NotFound => AgentApiSnapshotError::WorkspaceNotFound,
+        WorkspacePathValidationError::NotDirectory => AgentApiSnapshotError::WorkspaceNotDirectory,
+        WorkspacePathValidationError::PermissionDenied | WorkspacePathValidationError::Unreadable => {
+            AgentApiSnapshotError::WorkspaceUnreadable
+        }
     }
 }
 

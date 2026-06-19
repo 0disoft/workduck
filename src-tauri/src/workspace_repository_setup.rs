@@ -12,6 +12,7 @@ use std::os::windows::process::CommandExt;
 
 use crate::git_path::{GitProcessError, wait_for_child_output};
 use crate::path_display::display_path;
+use crate::workspace_path::{validate_absolute_directory_path, WorkspacePathValidationError};
 use crate::workspace_repository_gitignore::ensure_workduck_gitignore as ensure_workduck_gitignore_policy;
 
 const PROJECTS_DIRECTORY_NAME: &str = "projects";
@@ -201,28 +202,7 @@ fn failure(error: WorkspaceRepositorySetupError) -> WorkspaceRepositorySetupResp
 }
 
 fn validate_workspace_root(workspace_path: &str) -> Result<PathBuf, WorkspaceRepositorySetupError> {
-    let trimmed_path = workspace_path.trim();
-
-    if trimmed_path.is_empty() {
-        return Err(WorkspaceRepositorySetupError::WorkspaceRequired);
-    }
-
-    let workspace_path = PathBuf::from(trimmed_path);
-
-    if !workspace_path.is_absolute() {
-        return Err(WorkspaceRepositorySetupError::WorkspaceNotAbsolute);
-    }
-
-    let metadata = fs::metadata(&workspace_path).map_err(map_workspace_error)?;
-
-    if !metadata.is_dir() {
-        return Err(WorkspaceRepositorySetupError::WorkspaceNotDirectory);
-    }
-
-    let normalized_path = fs::canonicalize(&workspace_path).map_err(map_workspace_error)?;
-    fs::read_dir(&normalized_path).map_err(map_workspace_error)?;
-
-    Ok(normalized_path)
+    validate_absolute_directory_path(workspace_path).map_err(map_workspace_path_validation_error)
 }
 
 fn ensure_workspace_layout(
@@ -594,6 +574,27 @@ fn map_workspace_error(error: io::Error) -> WorkspaceRepositorySetupError {
         io::ErrorKind::NotFound => WorkspaceRepositorySetupError::WorkspaceNotFound,
         io::ErrorKind::PermissionDenied => WorkspaceRepositorySetupError::WorkspacePermissionDenied,
         _ => WorkspaceRepositorySetupError::WorkspaceUnreadable,
+    }
+}
+
+fn map_workspace_path_validation_error(
+    error: WorkspacePathValidationError,
+) -> WorkspaceRepositorySetupError {
+    match error {
+        WorkspacePathValidationError::Required => WorkspaceRepositorySetupError::WorkspaceRequired,
+        WorkspacePathValidationError::NotAbsolute => {
+            WorkspaceRepositorySetupError::WorkspaceNotAbsolute
+        }
+        WorkspacePathValidationError::NotFound => WorkspaceRepositorySetupError::WorkspaceNotFound,
+        WorkspacePathValidationError::NotDirectory => {
+            WorkspaceRepositorySetupError::WorkspaceNotDirectory
+        }
+        WorkspacePathValidationError::PermissionDenied => {
+            WorkspaceRepositorySetupError::WorkspacePermissionDenied
+        }
+        WorkspacePathValidationError::Unreadable => {
+            WorkspaceRepositorySetupError::WorkspaceUnreadable
+        }
     }
 }
 

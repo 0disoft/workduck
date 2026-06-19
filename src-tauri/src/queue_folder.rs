@@ -9,6 +9,7 @@ use crate::atomic_file_write::{
     write_file_atomically, write_file_exclusively, AtomicFileWriteError,
 };
 use crate::path_display::display_path;
+use crate::workspace_path::{validate_absolute_directory_path, WorkspacePathValidationError};
 
 const QUEUE_DIRECTORY_NAME: &str = "queue";
 const REPORTS_DIRECTORY_NAME: &str = "reports";
@@ -376,28 +377,7 @@ pub fn delete_queue_file(workspace_path: String, relative_path: String) -> Queue
 }
 
 fn validate_workspace_root(path: &str) -> Result<PathBuf, QueueFolderError> {
-    let trimmed_path = path.trim();
-
-    if trimmed_path.is_empty() {
-        return Err(QueueFolderError::WorkspaceRequired);
-    }
-
-    let workspace_path = PathBuf::from(trimmed_path);
-
-    if !workspace_path.is_absolute() {
-        return Err(QueueFolderError::WorkspaceNotAbsolute);
-    }
-
-    let metadata = fs::metadata(&workspace_path).map_err(map_workspace_error)?;
-
-    if !metadata.is_dir() {
-        return Err(QueueFolderError::WorkspaceNotDirectory);
-    }
-
-    let normalized_path = fs::canonicalize(&workspace_path).map_err(map_workspace_error)?;
-    fs::read_dir(&normalized_path).map_err(map_workspace_error)?;
-
-    Ok(normalized_path)
+    validate_absolute_directory_path(path).map_err(map_workspace_path_validation_error)
 }
 
 fn map_atomic_file_write_error(error: AtomicFileWriteError) -> QueueFolderError {
@@ -740,6 +720,17 @@ fn map_workspace_error(error: io::Error) -> QueueFolderError {
         io::ErrorKind::NotFound => QueueFolderError::WorkspaceNotFound,
         io::ErrorKind::PermissionDenied => QueueFolderError::WorkspacePermissionDenied,
         _ => QueueFolderError::WorkspaceUnreadable,
+    }
+}
+
+fn map_workspace_path_validation_error(error: WorkspacePathValidationError) -> QueueFolderError {
+    match error {
+        WorkspacePathValidationError::Required => QueueFolderError::WorkspaceRequired,
+        WorkspacePathValidationError::NotAbsolute => QueueFolderError::WorkspaceNotAbsolute,
+        WorkspacePathValidationError::NotFound => QueueFolderError::WorkspaceNotFound,
+        WorkspacePathValidationError::NotDirectory => QueueFolderError::WorkspaceNotDirectory,
+        WorkspacePathValidationError::PermissionDenied => QueueFolderError::WorkspacePermissionDenied,
+        WorkspacePathValidationError::Unreadable => QueueFolderError::WorkspaceUnreadable,
     }
 }
 

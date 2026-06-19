@@ -5,8 +5,8 @@ use time::OffsetDateTime;
 
 use crate::{
     chat_completion::{
-        ChatCompletionError, chat_completion_endpoint, chat_completion_http_client,
-        create_chat_completion_http_client, send_chat_completion_json,
+        ChatCompletionError, CHAT_COMPLETION_MODEL_MAX_LENGTH, chat_completion_endpoint,
+        chat_completion_http_client, create_chat_completion_http_client, send_chat_completion_json,
     },
     queue_execution::{
         AgentExecutionAttempt, AgentExecutionRun, AgentRunFailure, AgentRunOutput,
@@ -20,7 +20,6 @@ const CHAT_COMPLETION_RETRY_BASE_DELAY_MILLIS: u64 = 500;
 const CHAT_COMPLETION_RETRY_MAX_DELAY_MILLIS: u64 = 2_000;
 const CHAT_COMPLETION_RETRY_JITTER_MILLIS: u64 = 250;
 const MAX_PROMPT_LENGTH: usize = 48_000;
-const MAX_MODEL_LENGTH: usize = 160;
 
 pub fn create_queue_http_client() -> Result<reqwest::Client, QueueExecutionErrorDetail> {
     create_chat_completion_http_client().map_err(|_| {
@@ -51,7 +50,7 @@ pub async fn run_agent_prompt(
         ));
     }
 
-    if run.model.trim().is_empty() || run.model.len() > MAX_MODEL_LENGTH {
+    if run.model.trim().is_empty() || run.model.len() > CHAT_COMPLETION_MODEL_MAX_LENGTH {
         return Err(AgentRunFailure::new(
             "agent-model-required",
             format!("에이전트 '{}'의 모델이 올바르지 않습니다.", run.agent.name),
