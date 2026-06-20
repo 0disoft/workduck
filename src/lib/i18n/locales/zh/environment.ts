@@ -38,6 +38,7 @@ export const zhEnvironmentMessages = {
 		openai: 'OpenAI',
 		anthropic: 'Anthropic',
 		openrouter: 'OpenRouter',
+		umans: 'Umans',
 		cloud: '云服务',
 		database: '数据库',
 		auth: '身份验证',

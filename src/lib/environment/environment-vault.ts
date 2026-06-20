@@ -20,6 +20,7 @@ export const environmentSecretTagOptions = [
 	{ id: 'openai', label: 'OpenAI' },
 	{ id: 'anthropic', label: 'Anthropic' },
 	{ id: 'openrouter', label: 'OpenRouter' },
+	{ id: 'umans', label: 'Umans' },
 	{ id: 'cloud', label: 'Cloud' },
 	{ id: 'database', label: 'Database' },
 	{ id: 'auth', label: 'Auth' },

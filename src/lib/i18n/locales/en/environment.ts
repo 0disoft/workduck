@@ -38,6 +38,7 @@ export const enEnvironmentMessages = {
 			openai: 'OpenAI',
 			anthropic: 'Anthropic',
 			openrouter: 'OpenRouter',
+			umans: 'Umans',
 			cloud: 'Cloud',
 			database: 'Database',
 			auth: 'Auth',

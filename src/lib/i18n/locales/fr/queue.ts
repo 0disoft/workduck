@@ -305,7 +305,7 @@ export const frQueueMessages = {
 		executionAgentNotFound: 'L\'agent sélectionné n\'a pas été trouvé.',
 		executionSecretNotFound: 'La clé API liée à l\'agent n\'a pas été trouvée.',
 		executionProviderUnsupported:
-			'Le fournisseur de LLM n\'a pas pu être détecté. Choisissez un fournisseur pour l\'agent ou incluez DeepSeek, OpenAI ou OpenRouter dans le nom ou les tags de la clé API.',
+			'Le fournisseur de LLM n\'a pas pu être détecté. Choisissez un fournisseur pour l\'agent ou incluez DeepSeek, OpenAI, OpenRouter ou Umans dans le nom ou les tags de la clé API.',
 		executionApiKeyRequired: 'La clé API est vide.',
 		executionPromptRequired: 'Le prompt de travail n\'a pas pu être créé.',
 		executionModelRequired: 'Le modèle n\'a pas pu être sélectionné.',

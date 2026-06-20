@@ -1,6 +1,6 @@
 {
   "name": "workduck",
-  "version": "1.6.26",
+  "version": "1.6.27",
   "private": true,
   "license": "0BSD",
   "type": "module",
@@ -23,7 +23,8 @@
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json && bun run check:packages",
     "check:packages": "tsgo -p packages/core/tsconfig.json --noEmit && tsgo -p packages/schemas/tsconfig.json --noEmit && tsgo -p packages/prompts/tsconfig.json --noEmit && tsgo -p packages/agents/tsconfig.json --noEmit && tsgo -p packages/workbench-engine/tsconfig.json --noEmit",
     "check:packages:tsc": "tsc -p packages/core/tsconfig.json --noEmit && tsc -p packages/schemas/tsconfig.json --noEmit && tsc -p packages/prompts/tsconfig.json --noEmit && tsc -p packages/agents/tsconfig.json --noEmit && tsc -p packages/workbench-engine/tsconfig.json --noEmit",
-    "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch"
+    "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
+    "test:environment": "bun test src/lib/environment/cli-environment-variables.test.ts"
   },
   "devDependencies": {
     "@sveltejs/adapter-static": "^3.0.10",

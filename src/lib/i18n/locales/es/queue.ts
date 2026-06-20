@@ -305,7 +305,7 @@ export const esQueueMessages = {
 			executionAgentNotFound: 'No se encontró el agente seleccionado.',
 			executionSecretNotFound: 'No se encontró la clave API vinculada al agente.',
 			executionProviderUnsupported:
-				'No se pudo detectar el proveedor de LLM. Elija un proveedor en el agente o incluya DeepSeek, OpenAI o OpenRouter en el nombre o etiqueta de la clave API.',
+				'No se pudo detectar el proveedor de LLM. Elija un proveedor en el agente o incluya DeepSeek, OpenAI, OpenRouter o Umans en el nombre o etiqueta de la clave API.',
 			executionApiKeyRequired: 'La clave API está vacía.',
 			executionPromptRequired: 'No se pudo crear el prompt de la tarea.',
 			executionModelRequired: 'No se pudo seleccionar el modelo.',

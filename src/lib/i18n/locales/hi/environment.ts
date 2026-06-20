@@ -38,6 +38,7 @@ export const hiEnvironmentMessages = {
 		openai: 'OpenAI',
 		anthropic: 'Anthropic',
 		openrouter: 'OpenRouter',
+		umans: 'Umans',
 		cloud: 'क्लाउड',
 		database: 'डेटाबेस',
 		auth: 'प्रमाणीकरण',

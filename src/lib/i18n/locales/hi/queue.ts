@@ -303,7 +303,7 @@ export const hiQueueMessages = {
 		executionCancelled: 'कार्य आदेश रन रद्द कर दिया गया।',
 		executionAgentNotFound: 'चयनित एजेंट नहीं मिला।',
 		executionSecretNotFound: 'एजेंट से लिंक्ड एपीआई कुंजी नहीं मिली।',
-		executionProviderUnsupported: 'एलएलएम प्रदाता का पता नहीं लगाया जा सका। एजेंट पर एक प्रदाता चुनें या एपीआई कुंजी नाम या टैग में DeepSeek, OpenAI, या OpenRouter शामिल करें।',
+		executionProviderUnsupported: 'एलएलएम प्रदाता का पता नहीं लगाया जा सका। एजेंट पर एक प्रदाता चुनें या एपीआई कुंजी नाम या टैग में DeepSeek, OpenAI, OpenRouter, या Umans शामिल करें।',
 		executionApiKeyRequired: 'एपीआई कुंजी खाली है।',
 		executionPromptRequired: 'कार्य प्रॉम्प्ट नहीं बनाया जा सका।',
 		executionModelRequired: 'मॉडल नहीं चुना जा सका।',

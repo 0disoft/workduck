@@ -51,9 +51,42 @@ jobs:
             throw "package.json version $($package.version) does not match release tag $tag."
           }
 
-          $cargoToml = Get-Content -Raw -LiteralPath src-tauri/Cargo.toml
-          if ($cargoToml -notmatch "(?m)^version\s*=\s*`"$([regex]::Escape($expectedVersion))`"") {
-            throw "src-tauri/Cargo.toml version does not match release tag $tag."
+          $cargoPackageName = $null
+          $cargoPackageVersion = $null
+          $inCargoPackageSection = $false
+          foreach ($line in Get-Content -LiteralPath src-tauri/Cargo.toml) {
+            $trimmedLine = $line.Trim()
+            if ($trimmedLine -eq "[package]") {
+              $inCargoPackageSection = $true
+              continue
+            }
+            if ($inCargoPackageSection -and $trimmedLine.StartsWith("[")) {
+              break
+            }
+            if ($inCargoPackageSection -and $trimmedLine -match '^name\s*=\s*"([^"]+)"') {
+              $cargoPackageName = $Matches[1]
+            }
+            if ($inCargoPackageSection -and $trimmedLine -match '^version\s*=\s*"([^"]+)"') {
+              $cargoPackageVersion = $Matches[1]
+            }
+          }
+          if ($cargoPackageName -ne "workduck") {
+            throw "src-tauri/Cargo.toml package name must be workduck."
+          }
+          if ($cargoPackageVersion -ne $expectedVersion) {
+            throw "src-tauri/Cargo.toml version $cargoPackageVersion does not match release tag $tag."
+          }
+
+          $cargoLock = Get-Content -Raw -LiteralPath src-tauri/Cargo.lock
+          $workduckLockPackage = [regex]::Match(
+            $cargoLock,
+            '(?ms)^\[\[package\]\]\s+name\s*=\s*"workduck"\s+version\s*=\s*"([^"]+)"'
+          )
+          if (!$workduckLockPackage.Success) {
+            throw "src-tauri/Cargo.lock does not contain the workduck package entry."
+          }
+          if ($workduckLockPackage.Groups[1].Value -ne $expectedVersion) {
+            throw "src-tauri/Cargo.lock workduck version $($workduckLockPackage.Groups[1].Value) does not match release tag $tag."
           }
 
           "tag=$tag" >> $env:GITHUB_OUTPUT
@@ -108,7 +141,7 @@ jobs:
         run: bun run check
 
       - name: Test Rust crate
-        run: cargo test --manifest-path src-tauri/Cargo.toml
+        run: cargo test --locked --manifest-path src-tauri/Cargo.toml
 
       - name: Import Windows signing certificate
         if: steps.signing.outputs.enabled == 'true'
@@ -176,4 +209,4 @@ jobs:
           generateReleaseNotes: true
           includeUpdaterJson: true
           updaterJsonPreferNsis: true
-          args: ${{ steps.signing_config.outputs.args }}
+          args: ${{ steps.signing_config.outputs.args }} -- --locked

@@ -39,7 +39,8 @@ Copy the contents of `workduck-signing.base64.txt` into the
 
 ## Publishing A Release
 
-1. Update `package.json` and `src-tauri/Cargo.toml` to the same version.
+1. Update `package.json`, `src-tauri/Cargo.toml`, and the `workduck` package
+   entry in `src-tauri/Cargo.lock` to the same version.
 2. Commit and push the version change.
 3. Create and push a matching tag:
 
@@ -48,12 +49,13 @@ git tag v1.3.9
 git push origin v1.3.9
 ```
 
-The workflow rejects a release if the tag does not match both version files. The
-GitHub Release is published immediately when the workflow succeeds, so review the
-commit and version before pushing the release tag. Use the
-`Workduck_<version>_x64-setup.exe` asset as the primary download. The in-app updater
-reads `latest.json` from the latest GitHub Release and installs the signed updater
-bundle for future versions.
+The workflow rejects a release if the tag does not match `package.json`,
+`src-tauri/Cargo.toml`, and `src-tauri/Cargo.lock`, or if Cargo cannot test and
+build with the committed lockfile. The GitHub Release is published immediately
+when the workflow succeeds, so review the commit and version before pushing the
+release tag. Use the `Workduck_<version>_x64-setup.exe` asset as the primary
+download. The in-app updater reads `latest.json` from the latest GitHub Release
+and installs the signed updater bundle for future versions.
 
 Without Windows signing secrets, Windows may show a SmartScreen warning when the
 installer is downloaded from a browser. Updater signing does not replace Windows

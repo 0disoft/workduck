@@ -15,6 +15,7 @@ export interface AgentModelPreset {
 export const agentProviderOptions = [
 	{ id: 'auto' },
 	{ id: 'openrouter' },
+	{ id: 'umans' },
 	{ id: 'deepseek' },
 	{ id: 'openai' }
 ] as const satisfies readonly AgentProviderOption[];
@@ -27,6 +28,12 @@ export const agentModelPresets = [
 	{ provider: 'openrouter', modelId: 'z-ai/glm-5.1', label: 'GLM 5.1' },
 	{ provider: 'openrouter', modelId: 'qwen/qwen3.7-plus', label: 'Qwen3.7 Plus' },
 	{ provider: 'openrouter', modelId: 'x-ai/grok-4.3', label: 'Grok 4.3' },
+	{ provider: 'umans', modelId: 'umans-coder', label: 'Umans Coder' },
+	{ provider: 'umans', modelId: 'umans-glm-5.2', label: 'Umans GLM 5.2' },
+	{ provider: 'umans', modelId: 'umans-kimi-k2.7', label: 'Umans Kimi K2.7' },
+	{ provider: 'umans', modelId: 'umans-flash', label: 'Umans Flash' },
+	{ provider: 'umans', modelId: 'umans-glm-5.1', label: 'Umans GLM 5.1' },
+	{ provider: 'umans', modelId: 'umans-kimi-k2.6', label: 'Umans Kimi K2.6' },
 	{ provider: 'deepseek', modelId: 'deepseek-v4-pro', label: 'DeepSeek V4 Pro' },
 	{ provider: 'deepseek', modelId: 'deepseek-v4-flash', label: 'DeepSeek V4 Flash' },
 	{ provider: 'openai', modelId: 'gpt-5.4-mini', label: 'GPT-5.4 mini' }

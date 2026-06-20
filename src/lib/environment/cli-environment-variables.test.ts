@@ -22,6 +22,10 @@ describe('CLI environment variable derivation', () => {
 			resolveCliEnvironmentVariableName(secret({ name: 'open_router', tags: ['openrouter'] })),
 			'OPENROUTER_API_KEY'
 		);
+		assert.equal(
+			resolveCliEnvironmentVariableName(secret({ name: 'UMANS_API_KEY', tags: ['llm'] })),
+			'UMANS_API_KEY'
+		);
 	});
 
 	test('derives generic CLI environment names from saved secret names', () => {

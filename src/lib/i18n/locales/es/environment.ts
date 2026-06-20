@@ -38,6 +38,7 @@ export const esEnvironmentMessages = {
 			openai: 'OpenAI',
 			anthropic: 'Anthropic',
 			openrouter: 'OpenRouter',
+			umans: 'Umans',
 			cloud: 'Cloud',
 			database: 'Base de datos',
 			auth: 'Autenticación',

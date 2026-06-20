@@ -38,6 +38,7 @@ export const koEnvironmentMessages = {
 			openai: 'OpenAI',
 			anthropic: 'Anthropic',
 			openrouter: 'OpenRouter',
+			umans: 'Umans',
 			cloud: '클라우드',
 			database: '데이터베이스',
 			auth: '인증',

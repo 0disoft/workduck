@@ -21,6 +21,7 @@ export const koAgentsMessages = {
 		providers: {
 			auto: '자동',
 			openrouter: 'OpenRouter',
+			umans: 'Umans',
 			deepseek: 'DeepSeek',
 			openai: 'OpenAI'
 		},

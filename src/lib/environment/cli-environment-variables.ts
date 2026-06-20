@@ -107,6 +107,10 @@ function resolveKnownProviderVariableName(secret: EnvironmentSecretRecord): stri
 		return 'OPENROUTER_API_KEY';
 	}
 
+	if (profileText.includes('umans')) {
+		return 'UMANS_API_KEY';
+	}
+
 	if (profileText.includes('openai')) {
 		return 'OPENAI_API_KEY';
 	}

@@ -25,6 +25,21 @@ pub(crate) const QUEUE_MODEL_FALLBACKS: &[QueueModelFallback] = &[
         profile_hint: None,
         model_id: "openrouter/auto",
     },
+    QueueModelFallback {
+        provider: "umans",
+        profile_hint: Some("glm"),
+        model_id: "umans-glm-5.2",
+    },
+    QueueModelFallback {
+        provider: "umans",
+        profile_hint: Some("kimi"),
+        model_id: "umans-kimi-k2.7",
+    },
+    QueueModelFallback {
+        provider: "umans",
+        profile_hint: None,
+        model_id: "umans-coder",
+    },
 ];
 
 pub(crate) fn resolve_queue_model_fallback(
@@ -60,6 +75,10 @@ mod tests {
             resolve_queue_model_fallback("openrouter", ""),
             Some("openrouter/auto")
         );
+        assert_eq!(
+            resolve_queue_model_fallback("umans", ""),
+            Some("umans-coder")
+        );
     }
 
     #[test]
@@ -73,5 +92,17 @@ mod tests {
     #[test]
     fn rejects_unsupported_provider() {
         assert_eq!(resolve_queue_model_fallback("unknown", ""), None);
+    }
+
+    #[test]
+    fn resolves_profile_specific_umans_defaults_first() {
+        assert_eq!(
+            resolve_queue_model_fallback("umans", "teamglmagent"),
+            Some("umans-glm-5.2")
+        );
+        assert_eq!(
+            resolve_queue_model_fallback("umans", "teamkimiagent"),
+            Some("umans-kimi-k2.7")
+        );
     }
 }

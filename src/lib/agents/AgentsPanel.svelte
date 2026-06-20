@@ -502,6 +502,7 @@
 			case 'deepseek':
 			case 'openai':
 			case 'openrouter':
+			case 'umans':
 				return provider;
 			default:
 				return 'auto';

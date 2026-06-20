@@ -58,6 +58,7 @@ pub(crate) fn chat_completion_endpoint(provider: &str) -> Option<&'static str> {
         "deepseek" => Some("https://api.deepseek.com/chat/completions"),
         "openai" => Some("https://api.openai.com/v1/chat/completions"),
         "openrouter" => Some("https://openrouter.ai/api/v1/chat/completions"),
+        "umans" => Some("https://api.code.umans.ai/v1/chat/completions"),
         _ => None,
     }
 }
@@ -141,6 +142,10 @@ mod tests {
         assert_eq!(
             chat_completion_endpoint("openrouter"),
             Some("https://openrouter.ai/api/v1/chat/completions")
+        );
+        assert_eq!(
+            chat_completion_endpoint("umans"),
+            Some("https://api.code.umans.ai/v1/chat/completions")
         );
         assert_eq!(chat_completion_endpoint("anthropic"), None);
     }

@@ -305,7 +305,7 @@ export const enQueueMessages = {
 			executionAgentNotFound: 'The selected agent was not found.',
 			executionSecretNotFound: 'The API key linked to the agent was not found.',
 			executionProviderUnsupported:
-				'The LLM provider could not be detected. Choose a provider on the agent or include DeepSeek, OpenAI, or OpenRouter in the API key name or tag.',
+				'The LLM provider could not be detected. Choose a provider on the agent or include DeepSeek, OpenAI, OpenRouter, or Umans in the API key name or tag.',
 			executionApiKeyRequired: 'The API key is empty.',
 			executionPromptRequired: 'The work prompt could not be created.',
 			executionModelRequired: 'The model could not be selected.',

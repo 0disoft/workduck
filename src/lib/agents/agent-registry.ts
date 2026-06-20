@@ -12,7 +12,7 @@ const SUPPORTED_AGENT_REGISTRY_VERSIONS = [1, 2, 3, 4, 5, AGENT_REGISTRY_VERSION
 export const AGENT_NAME_MAX_LENGTH = 120;
 export const AGENT_MODEL_ID_MAX_LENGTH = 160;
 
-export type AgentExecutionProvider = 'deepseek' | 'openai' | 'openrouter';
+export type AgentExecutionProvider = 'deepseek' | 'openai' | 'openrouter' | 'umans';
 export type AgentExecutionProviderInput = AgentExecutionProvider | 'auto';
 
 export type AgentRegistryError =
@@ -500,6 +500,7 @@ function normalizeAgentExecutionProvider(value: unknown): AgentExecutionProvider
 		case 'deepseek':
 		case 'openai':
 		case 'openrouter':
+		case 'umans':
 			return provider;
 		default:
 			return 'auto';

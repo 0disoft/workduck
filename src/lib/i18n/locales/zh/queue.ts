@@ -305,7 +305,7 @@ export const zhQueueMessages = {
 		executionAgentNotFound: '未找到所选智能体。',
 		executionSecretNotFound: '未找到绑定至该智能体的 API 密钥。',
 		executionProviderUnsupported:
-			'无法检测 LLM 提供商。请为智能体选择提供商，或在 API 密钥名称/标签中包含 DeepSeek, OpenAI 或 OpenRouter。',
+			'无法检测 LLM 提供商。请为智能体选择提供商，或在 API 密钥名称/标签中包含 DeepSeek, OpenAI, OpenRouter 或 Umans。',
 		executionApiKeyRequired: 'API 密钥为空。',
 		executionPromptRequired: '无法创建工作提示词。',
 		executionModelRequired: '无法选择模型。',

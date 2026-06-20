@@ -18,6 +18,7 @@ export const hiAgentsMessages = {
 	providers: {
 		auto: 'ऑटो',
 		openrouter: 'OpenRouter',
+		umans: 'Umans',
 		deepseek: 'DeepSeek',
 		openai: 'OpenAI'
 	},

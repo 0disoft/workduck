@@ -1060,6 +1060,70 @@ Final answer:
     }
 
     #[test]
+    fn linked_secret_resolution_keeps_unlinked_agents_on_environment_fallback_path() {
+        let agent = AgentRecord {
+            id: "agent_1".to_string(),
+            name: "Env fallback agent".to_string(),
+            environment_secret_id: None,
+            persona_id: None,
+            execution_provider: Some("openrouter".to_string()),
+            model_id: Some("openrouter/auto".to_string()),
+        };
+
+        let linked_secret =
+            resolve_agent_linked_secret(&agent, None).expect("unlinked agent is valid");
+
+        assert!(linked_secret.is_none());
+    }
+
+    #[test]
+    fn execution_run_rejects_missing_linked_secret_before_environment_fallback() {
+        let work_order = QueueWorkOrder {
+            schema_version: "workduck.queue-work-order/v1".to_string(),
+            r#ref: QueueEntityRef {
+                id: "work_order_1".to_string(),
+                kind: "queue-work-order".to_string(),
+                label: "Secret lookup".to_string(),
+            },
+            status: "active".to_string(),
+            created_at: "2026-06-20T00:00:00Z".to_string(),
+            tasks: vec![QueueWorkOrderTask {
+                id: "task_1".to_string(),
+                kind: None,
+                title: "Secret lookup".to_string(),
+                body: "Run with the linked key".to_string(),
+                priority: Some("normal".to_string()),
+                response_language: Some("en".to_string()),
+                response_format: Some("general".to_string()),
+                project_ids: Vec::new(),
+                agent_ids: vec!["agent_1".to_string()],
+                skill_ids: Vec::new(),
+                reference_ids: Vec::new(),
+                vote: None,
+            }],
+        };
+        let agents = vec![AgentRecord {
+            id: "agent_1".to_string(),
+            name: "Linked secret agent".to_string(),
+            environment_secret_id: Some("missing-secret".to_string()),
+            persona_id: None,
+            execution_provider: Some("openrouter".to_string()),
+            model_id: Some("openrouter/auto".to_string()),
+        }];
+        let vault = EnvironmentVault {
+            workspace_id: "workspace_1".to_string(),
+            secrets: Vec::new(),
+        };
+
+        let error = match create_execution_runs(&work_order, &agents, Some(&vault), &[], &[], &[]) {
+            Ok(_) => panic!("missing linked secret should not fall back to environment variables"),
+            Err(error) => error,
+        };
+
+        assert_eq!(error.code, "agent-secret-not-found");
+    }
+
+    #[test]
     fn work_order_prompt_accepts_bug_analysis_response_format() {
         let task = QueueWorkOrderTask {
             id: "task_1".to_string(),
@@ -1416,18 +1480,7 @@ pub fn create_execution_runs(
                     code: "agent-not-found",
                     message: format!("에이전트를 찾지 못했습니다: {agent_id}"),
                 })?;
-            let vault_secret = agent
-                .environment_secret_id
-                .as_deref()
-                .and_then(|secret_id| {
-                    vault.and_then(|vault| {
-                        vault
-                            .secrets
-                            .iter()
-                            .find(|candidate| candidate.id == secret_id)
-                            .cloned()
-                    })
-                });
+            let vault_secret = resolve_agent_linked_secret(&agent, vault)?;
             let provider = match &vault_secret {
                 Some(secret) => resolve_agent_provider(&agent, secret)?,
                 None => resolve_agent_provider_without_secret(&agent)?,
@@ -1470,6 +1523,37 @@ pub fn create_execution_runs(
     }
 
     Ok(runs)
+}
+
+fn resolve_agent_linked_secret(
+    agent: &AgentRecord,
+    vault: Option<&EnvironmentVault>,
+) -> Result<Option<EnvironmentSecretRecord>, QueueExecutionErrorDetail> {
+    let Some(secret_id) = agent
+        .environment_secret_id
+        .as_deref()
+        .map(str::trim)
+        .filter(|secret_id| !secret_id.is_empty())
+    else {
+        return Ok(None);
+    };
+
+    vault
+        .and_then(|vault| {
+            vault
+                .secrets
+                .iter()
+                .find(|candidate| candidate.id == secret_id)
+                .cloned()
+        })
+        .map(Some)
+        .ok_or_else(|| QueueExecutionErrorDetail {
+            code: "agent-secret-not-found",
+            message: format!(
+                "에이전트 '{}'에 연결된 API 키를 찾지 못했습니다. Environment에서 키를 다시 선택하거나 보관함을 잠금 해제하세요.",
+                agent.name
+            ),
+        })
 }
 
 pub fn create_prompt_previews(
@@ -1551,6 +1635,7 @@ fn resolve_provider_environment_secret(
         "openrouter" => &["OPENROUTER_API_KEY", "OPEN_ROUTER_API_KEY"],
         "openai" => &["OPENAI_API_KEY"],
         "deepseek" => &["DEEPSEEK_API_KEY"],
+        "umans" => &["UMANS_API_KEY", "UMANS_CODE_API_KEY"],
         _ => &[],
     };
 
@@ -1657,7 +1742,7 @@ fn resolve_agent_provider(
             .chain(secret.tags.iter().map(String::as_str)),
     );
 
-    for provider in ["openrouter", "deepseek", "openai"] {
+    for provider in ["openrouter", "umans", "deepseek", "openai"] {
         if secret_profile.contains(provider) {
             return Ok(provider.to_string());
         }
@@ -1665,7 +1750,7 @@ fn resolve_agent_provider(
 
     let agent_profile = normalize_profile_text(std::iter::once(agent.name.as_str()));
 
-    for provider in ["openrouter", "deepseek", "openai"] {
+    for provider in ["openrouter", "umans", "deepseek", "openai"] {
         if agent_profile.contains(provider) {
             return Ok(provider.to_string());
         }
@@ -1693,7 +1778,7 @@ fn resolve_agent_provider_without_secret(
 
     let agent_profile = normalize_profile_text(std::iter::once(agent.name.as_str()));
 
-    for provider in ["openrouter", "deepseek", "openai"] {
+    for provider in ["openrouter", "umans", "deepseek", "openai"] {
         if agent_profile.contains(provider) {
             return Ok(provider.to_string());
         }
@@ -1710,7 +1795,7 @@ fn resolve_agent_provider_without_secret(
 
 fn normalize_provider(provider: &str) -> Result<String, QueueExecutionErrorDetail> {
     match provider.to_ascii_lowercase().as_str() {
-        "deepseek" | "openai" | "openrouter" => Ok(provider.to_ascii_lowercase()),
+        "deepseek" | "openai" | "openrouter" | "umans" => Ok(provider.to_ascii_lowercase()),
         _ => Err(QueueExecutionErrorDetail {
             code: "agent-provider-unsupported",
             message: format!("지원하지 않는 제공자입니다: {provider}"),

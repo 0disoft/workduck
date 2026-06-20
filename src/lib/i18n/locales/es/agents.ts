@@ -21,6 +21,7 @@ export const esAgentsMessages = {
 	providers: {
 		auto: 'Auto',
 		openrouter: 'OpenRouter',
+		umans: 'Umans',
 		deepseek: 'DeepSeek',
 		openai: 'OpenAI'
 	},

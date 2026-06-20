@@ -14,6 +14,7 @@ pub enum LlmChatProvider {
     Deepseek,
     Openai,
     Openrouter,
+    Umans,
 }
 
 #[derive(serde::Deserialize)]
@@ -105,6 +106,7 @@ impl LlmChatProvider {
             Self::Deepseek => "deepseek",
             Self::Openai => "openai",
             Self::Openrouter => "openrouter",
+            Self::Umans => "umans",
         }
     }
 }

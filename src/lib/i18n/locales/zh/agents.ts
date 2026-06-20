@@ -18,6 +18,7 @@ export const zhAgentsMessages = {
 	providers: {
 		auto: '自动',
 		openrouter: 'OpenRouter',
+		umans: 'Umans',
 		deepseek: 'DeepSeek',
 		openai: 'OpenAI'
 	},

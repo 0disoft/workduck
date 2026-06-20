@@ -261,6 +261,7 @@ function normalizeQueueExecutionError(error: string | null | undefined): QueueEx
 			return 'queue-execution-no-agent';
 		case 'agent-not-found':
 			return 'agent-execution-agent-not-found';
+		case 'agent-secret-not-found':
 		case 'agent-api-key-env-missing':
 			return 'agent-execution-secret-not-found';
 		case 'agent-provider-unsupported':
