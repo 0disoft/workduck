@@ -561,8 +561,14 @@ fn resolve_repository_task_commands(
             );
         }
         ProjectRepositoryTask::StartDevServer => {
+            let package_command_count = commands.len();
             add_package_task_commands(repository_path, task, &mut commands)?;
-            add_cargo_task_commands(repository_path, task, &mut commands);
+            if !commands[package_command_count..]
+                .iter()
+                .any(|command| is_desktop_dev_package_command(command))
+            {
+                add_cargo_task_commands(repository_path, task, &mut commands);
+            }
             add_pub_task_commands(repository_path, task, &mut commands);
             add_deno_task_commands(repository_path, task, &mut commands);
             add_go_task_commands(repository_path, task, &mut commands);
@@ -861,13 +867,19 @@ fn resolve_package_dev_server_command(
 }
 
 fn resolve_package_dev_server_script(project: &PackageProject) -> Option<(&'static str, &str)> {
-    for script in ["dev", "start"] {
+    for script in ["desktop:dev", "dev", "start"] {
         if let Some(command) = project.scripts.get(script) {
             return Some((script, command));
         }
     }
 
     None
+}
+
+fn is_desktop_dev_package_command(command: &str) -> bool {
+    command
+        .to_ascii_lowercase()
+        .contains(" run desktop:dev")
 }
 
 fn resolve_optional_package_script_command(
@@ -1879,6 +1891,26 @@ mod tests {
     }
 
     #[test]
+    fn package_dev_server_command_prefers_desktop_dev_over_web_dev() {
+        let project = PackageProject {
+            package_manager: PackageManager::Bun,
+            scripts: HashMap::from([
+                ("desktop:dev".to_owned(), "tauri dev".to_owned()),
+                ("dev".to_owned(), "vite dev".to_owned()),
+                ("start".to_owned(), "bun server.ts".to_owned()),
+            ]),
+            local_dependency_paths: Vec::new(),
+        };
+
+        let command = match resolve_package_dev_server_command(&project) {
+            Ok(command) => command,
+            Err(_) => panic!("resolve command"),
+        };
+
+        assert_eq!(command, Some("bun run desktop:dev".to_owned()));
+    }
+
+    #[test]
     fn package_preview_command_uses_preview_script() {
         let project = PackageProject {
             package_manager: PackageManager::Bun,
@@ -1966,6 +1998,44 @@ mod tests {
         assert_eq!(dev_commands, vec!["bun run dev"]);
         assert_eq!(build_commands, vec!["bun run build"]);
         assert_eq!(preview_commands, vec!["bun run preview"]);
+
+        let _ = fs::remove_dir_all(repository_path);
+    }
+
+    #[test]
+    fn repository_task_commands_use_desktop_dev_without_extra_cargo_run() {
+        let repository_path = temp_repository_path("tauri-desktop-dev");
+        fs::create_dir_all(repository_path.join("src-tauri")).expect("create tauri package");
+        fs::write(
+            repository_path.join("package.json"),
+            r#"{
+                "packageManager": "bun@1.0.0",
+                "scripts": {
+                    "dev": "vite --host 127.0.0.1 --port 5173 --strictPort",
+                    "desktop:dev": "tauri dev"
+                }
+            }"#,
+        )
+        .expect("write package");
+        fs::write(
+            repository_path.join("src-tauri/Cargo.toml"),
+            r#"[package]
+name = "tauri-desktop-dev"
+version = "0.1.0"
+edition = "2021"
+"#,
+        )
+        .expect("write cargo manifest");
+
+        let commands = match resolve_repository_task_commands(
+            ProjectRepositoryTask::StartDevServer,
+            &repository_path,
+        ) {
+            Ok(commands) => commands,
+            Err(_) => panic!("resolve dev command"),
+        };
+
+        assert_eq!(commands, vec!["bun run desktop:dev"]);
 
         let _ = fs::remove_dir_all(repository_path);
     }
