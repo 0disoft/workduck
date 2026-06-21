@@ -24,7 +24,7 @@
 		subscribeSystemSettings
 	} from '$lib/settings/system-storage';
 	import { clearEnvironmentVaultSession } from '$lib/environment/environment-vault-session';
-	import { readQueueArtifactExecutionState } from '$lib/queue/queue-artifacts';
+	import { readQueueArtifactExecutionState } from '$lib/queue/domain/queue-artifact-readers';
 	import { listQueueFiles, readQueueFile } from '$lib/queue/queue-folder';
 	import { subscribeQueueFilesChanged } from '$lib/queue/queue-read-state';
 	import { syncWorkduckTrayIconEnabled } from '$lib/system/tray';

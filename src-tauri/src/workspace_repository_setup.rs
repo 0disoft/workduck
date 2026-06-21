@@ -694,7 +694,7 @@ mod tests {
             "cmd",
             vec![
                 "/C",
-                "(for /L %i in (1,1,9000) do @echo stdout%i) & (for /L %i in (1,1,9000) do @echo stderr%i 1>&2)",
+                "(for /L %i in (1,1,1024) do @echo stdout%i-abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz) & (for /L %i in (1,1,1024) do @echo stderr%i-abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz 1>&2)",
             ],
         );
         #[cfg(not(target_os = "windows"))]
@@ -702,7 +702,7 @@ mod tests {
             "sh",
             vec![
                 "-c",
-                "i=0; while [ $i -lt 9000 ]; do echo stdout$i; echo stderr$i >&2; i=$((i + 1)); done",
+                "i=0; while [ $i -lt 1024 ]; do echo stdout$i-abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz; echo stderr$i-abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz >&2; i=$((i + 1)); done",
             ],
         );
 

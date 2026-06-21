@@ -7,7 +7,7 @@ import {
 	readQueueArtifactSourceReportId,
 	readQueueArtifactTitle,
 	readQueueWorkPriorityLabel
-} from './queue-artifacts';
+} from './domain/queue-artifact-readers';
 import { readQueueFile, type QueueFileEntry } from './queue-folder';
 import type { QueueCardEntry } from './queue-panel-types';
 

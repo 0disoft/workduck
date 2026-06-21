@@ -72,7 +72,6 @@ import {
 
 import {
 	archiveQueueWorkOrder,
-	createDefaultReportReviews,
 	createQueueReportTaskEvaluationKey,
 	createManualQueueWorkOrder,
 	createQueueResultReportFileNameFromLabel,
@@ -89,9 +88,6 @@ import {
 	normalizeQueueResponseLanguage,
 	normalizeQueueTaskKind,
 	normalizeQueueWorkPriority,
-	parseQueueProposal,
-	parseQueueResultReport,
-	parseQueueWorkOrder,
 	recordQueueReportTaskEvaluation,
 	serializeQueueArtifact,
 	startQueueWorkOrderExecution,
@@ -112,15 +108,12 @@ import { readEnvironmentVaultSession } from '$lib/environment/environment-vault-
 import {
 	cancelQueueWorkOrderExecution,
 	executeQueueWorkOrder,
-	inspectQueueWorkOrderExecutions,
 	previewQueueWorkOrderPrompt,
 	type WorkduckQueuePromptPreview
 } from './queue-execution';
 import {
 	deleteQueueFile,
 	ensureQueueFolder,
-	listQueueFiles,
-	readQueueFile,
 	updateQueueResultReportFile,
 	updateQueueWorkOrderFile,
 	writeQueueResultReportFile,
@@ -133,10 +126,8 @@ import {
 	type WorkduckQueueVoteSpec,
 	type WorkduckQueueTaskKind
 } from './queue-voting';
-import { createQueueCardEntries } from './queue-card-entry';
 import {
 	dispatchQueueFilesChanged,
-	pruneQueueReadFilePaths,
 	readQueueReadFilePaths,
 	writeQueueReadFilePaths
 } from './queue-read-state';
@@ -144,11 +135,19 @@ import {
 	createManualVoteOptions,
 	createManualVoteFieldState,
 	createManualWorkOrderKindInput as createManualWorkOrderKindInputFromFields,
-	createQueueFilesSignature,
 	createSelectionSummary,
 	sortReferencesForProjectSelection,
 	updateSelectedRecordIds
 } from './queue-panel-helpers';
+import {
+	readQueueProposalSelection,
+	readQueueResultReportSelection,
+	readQueueWorkOrderSelection
+} from './workflows/queue-artifact-selection';
+import { loadQueueFilesForWorkspace } from './workflows/queue-refresh';
+import {
+	markStaleRunningWorkOrderFailed as markStaleRunningWorkOrderFailedForWorkspace
+} from './workflows/stale-running-recovery';
 import {
 	getAgentDisplayName as getAgentDisplayNameFromRecord,
 	getExecutionFilterLabel as getLocalizedExecutionFilterLabel,
@@ -805,39 +804,24 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		status = null;
 
 		try {
-			const result = await listQueueFiles(workspace.path);
+			const result = await loadQueueFilesForWorkspace({
+				workspacePath: workspace.path,
+				currentFiles: files,
+				currentReadFilePaths: readFilePaths,
+				recoverStaleRunning: !isWriting && !isCancellingExecution
+			});
 
 			if (result.ok) {
-				const nextReadFilePaths = pruneQueueReadFilePaths(readFilePaths, result.files);
-
-				if (nextReadFilePaths.length !== readFilePaths.length) {
-					readFilePaths = nextReadFilePaths;
-					writeQueueReadFilePaths(workspace.id, nextReadFilePaths);
+				if (result.readFilePathsChanged) {
+					readFilePaths = result.readFilePaths;
+					writeQueueReadFilePaths(workspace.id, result.readFilePaths);
 				}
 
-				let nextFiles = await createQueueCardEntries(
-					workspace.path,
-					nextReadFilePaths,
-					result.files
-				);
-				const recoveredStaleRunningWorkOrders =
-					!isWriting && !isCancellingExecution
-						? await recoverStaleRunningWorkOrders(nextFiles)
-						: false;
+				applyStaleRunningWorkOrderRecoveries(result.recoveredStaleRunningWorkOrders);
+				notifyNewCompletedReports(result.files);
+				files = result.files;
 
-				if (recoveredStaleRunningWorkOrders) {
-					nextFiles = await createQueueCardEntries(
-						workspace.path,
-						nextReadFilePaths,
-						result.files
-					);
-				}
-
-				const previousSignature = createQueueFilesSignature(files);
-				const nextSignature = createQueueFilesSignature(nextFiles);
-				notifyNewCompletedReports(nextFiles);
-				files = nextFiles;
-				if (previousSignature !== nextSignature) {
+				if (result.queueFilesChanged) {
 					dispatchQueueFilesChanged(workspace.id);
 				}
 				if (!options.silent) {
@@ -852,91 +836,24 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		}
 	}
 
-	async function recoverStaleRunningWorkOrders(queueFiles: readonly QueueCardEntry[]) {
-		const runningWorkOrderFiles = queueFiles.filter(
-			(file) =>
-				file.kind === 'work-order' &&
-				file.executionState === 'running' &&
-				file.artifactId.trim().length > 0
-		);
-
-		if (runningWorkOrderFiles.length === 0) {
-			return false;
-		}
-
-		const inspectResult = await inspectQueueWorkOrderExecutions({
-			workOrderIds: runningWorkOrderFiles.map((file) => file.artifactId)
-		});
-
-		if (!inspectResult.ok) {
-			return false;
-		}
-
-		const runningWorkOrderIds = new Set(
-			inspectResult.runningWorkOrderIds
-				.map((workOrderId) => workOrderId.trim())
-				.filter((workOrderId) => workOrderId.length > 0)
-		);
-		let recoveredAny = false;
-
-		for (const file of runningWorkOrderFiles) {
-			const workOrderId = file.artifactId.trim();
-
-			if (runningWorkOrderIds.has(workOrderId)) {
-				continue;
-			}
-
-			const recoveredWorkOrder = await markStaleRunningWorkOrderFailed(
-				file.relativePath,
-				workOrderId
-			);
-
-			if (recoveredWorkOrder !== null) {
-				recoveredAny = true;
+	function applyStaleRunningWorkOrderRecoveries(
+		recoveries: readonly { readonly workOrder: WorkduckQueueWorkOrder }[]
+	) {
+		for (const recovery of recoveries) {
+			if (selectedWorkOrder?.ref.id === recovery.workOrder.ref.id) {
+				selectedWorkOrder = recovery.workOrder;
 			}
 		}
-
-		return recoveredAny;
 	}
 
 	async function markStaleRunningWorkOrderFailed(relativePath: string, workOrderId: string) {
-		const normalizedWorkOrderId = workOrderId.trim();
-
-		if (normalizedWorkOrderId.length === 0) {
-			return null;
-		}
-
-		const readResult = await readQueueFile(workspace.path, relativePath);
-
-		if (!readResult.ok) {
-			return null;
-		}
-
-		const parsed = parseQueueWorkOrder(readResult.content);
-
-		if (!parsed.ok) {
-			return null;
-		}
-
-		if (
-			parsed.workOrder.status !== 'running' ||
-			parsed.workOrder.ref.id.trim() !== normalizedWorkOrderId
-		) {
-			return null;
-		}
-
-		const failedWorkOrder = failQueueWorkOrderExecution(parsed.workOrder);
-		const updateResult = await updateQueueWorkOrderFile(
-			workspace.path,
+		const failedWorkOrder = await markStaleRunningWorkOrderFailedForWorkspace({
+			workspacePath: workspace.path,
 			relativePath,
-			serializeQueueArtifact(failedWorkOrder)
-		);
+			workOrderId
+		});
 
-		if (!updateResult.ok) {
-			return null;
-		}
-
-		if (selectedWorkOrder?.ref.id === failedWorkOrder.ref.id) {
+		if (failedWorkOrder !== null && selectedWorkOrder?.ref.id === failedWorkOrder.ref.id) {
 			selectedWorkOrder = failedWorkOrder;
 		}
 
@@ -962,23 +879,20 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		reviews = [];
 
 		try {
-			const result = await readQueueFile(workspace.path, file.relativePath);
+			const result = await readQueueResultReportSelection(workspace.path, file);
 
 			if (!result.ok) {
-				error = result.error;
+				if ('error' in result) {
+					error = result.error;
+				} else {
+					parseError = result.parseError;
+				}
 				return;
 			}
 
-			const parsed = parseQueueResultReport(result.content);
-
-			if (!parsed.ok) {
-				parseError = parsed.message;
-				return;
-			}
-
-			selectedReport = parsed.report;
+			selectedReport = result.report;
 			selectedReportPath = result.relativePath;
-			reviews = createDefaultReportReviews(parsed.report);
+			reviews = result.reviews;
 			markQueueFileRead(result.relativePath);
 	} finally {
 			isReading = false;
@@ -1004,21 +918,18 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		reviews = [];
 
 		try {
-			const result = await readQueueFile(workspace.path, file.relativePath);
+			const result = await readQueueWorkOrderSelection(workspace.path, file);
 
 			if (!result.ok) {
-				error = result.error;
+				if ('error' in result) {
+					error = result.error;
+				} else {
+					parseError = result.parseError;
+				}
 				return;
 			}
 
-			const parsed = parseQueueWorkOrder(result.content);
-
-			if (!parsed.ok) {
-				parseError = parsed.message;
-				return;
-			}
-
-			selectedWorkOrder = parsed.workOrder;
+			selectedWorkOrder = result.workOrder;
 			selectedWorkOrderPath = result.relativePath;
 			markQueueFileRead(result.relativePath);
 	} finally {
@@ -1045,21 +956,18 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		reviews = [];
 
 		try {
-			const result = await readQueueFile(workspace.path, file.relativePath);
+			const result = await readQueueProposalSelection(workspace.path, file);
 
 			if (!result.ok) {
-				error = result.error;
+				if ('error' in result) {
+					error = result.error;
+				} else {
+					parseError = result.parseError;
+				}
 				return;
 			}
 
-			const parsed = parseQueueProposal(result.content);
-
-			if (!parsed.ok) {
-				parseError = parsed.message;
-				return;
-			}
-
-			selectedProposal = parsed.proposal;
+			selectedProposal = result.proposal;
 			selectedProposalPath = result.relativePath;
 			markQueueFileRead(result.relativePath);
 	} finally {

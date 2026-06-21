@@ -49,7 +49,7 @@
 		writeSkillRegistry,
 		type SkillRegistryStorageError
 	} from './skill-registry-storage';
-	import { readQueueArtifactSkillIds } from '$lib/queue/queue-artifacts';
+	import { readQueueArtifactSkillIds } from '$lib/queue/domain/queue-artifact-readers';
 	import { listQueueFiles, readQueueFile } from '$lib/queue/queue-folder';
 
 	interface Props {
