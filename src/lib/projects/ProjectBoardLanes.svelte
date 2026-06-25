@@ -6,6 +6,7 @@
 		formatCountLabel,
 		getProjectGroupCount,
 		getProjectRepositoryCount,
+		type ProjectBoardSelectionIndex,
 		type ProjectRepositoryGitStatus,
 		type ProjectRepositorySyncFilter
 	} from './project-board-selectors';
@@ -31,7 +32,7 @@
 		readonly tagFilterInput: string;
 		readonly repositorySyncFilter: ProjectRepositorySyncFilter;
 		readonly repositoryFilterStats: RepositoryFilterStats;
-		readonly registryNodes: readonly ProjectNodeRecord[];
+		readonly selectionIndex: ProjectBoardSelectionIndex;
 		readonly projectNodes: readonly ProjectNodeRecord[];
 		readonly selectedProject: ProjectNodeRecord | null;
 		readonly selectedProjectGroups: readonly ProjectNodeRecord[];
@@ -41,6 +42,7 @@
 		readonly onBoardContextMenu: (event: MouseEvent) => void;
 		readonly onRepositorySyncFilterSelect: (filter: ProjectRepositorySyncFilter) => void;
 		readonly onTagFilterInput: (value: string) => void;
+		readonly onOverlayIntent: () => void;
 		readonly onOpenDialog: (mode: 'project' | 'group' | 'repository', targetNodeId?: string) => void;
 		readonly onSelectProject: (node: ProjectNodeRecord) => void;
 		readonly onSelectGroup: (node: ProjectNodeRecord) => void;
@@ -102,9 +104,9 @@
 
 	let {
 		title, projectMessages, languageId, tagFilterInput, repositorySyncFilter, repositoryFilterStats,
-		registryNodes, projectNodes, selectedProject, selectedProjectGroups, selectedGroup,
+		selectionIndex, projectNodes, selectedProject, selectedProjectGroups, selectedGroup,
 		selectedRepositories, repositoryGitStatusById, onBoardContextMenu, onRepositorySyncFilterSelect,
-		onTagFilterInput, onOpenDialog, onSelectProject, onSelectGroup, onProjectContextMenu,
+		onTagFilterInput, onOverlayIntent, onOpenDialog, onSelectProject, onSelectGroup, onProjectContextMenu,
 		onRepositoryContextMenu, getNodeGithubCredentialName, getRepositoryGithubCredentialName,
 		getRepositoryOperation, getRepositoryTaskRun, isRepositoryBusy, isRepositoryPathInsideWorkspace,
 		getRepositoryCardKind, canCloneRepository, canInitializeRepository,
@@ -117,7 +119,7 @@
 	let projectCountLabel = $derived(
 		projectMessages.registeredCount.replace(
 			'{count}',
-			registryNodes.filter((node) => node.kind === 'project').length.toString()
+			selectionIndex.projectNodes.length.toString()
 		)
 	);
 
@@ -168,19 +170,20 @@
 		<section class="workduck-project-lane workduck-project-sidebar-lane" aria-label="Projects">
 			<div class="workduck-project-lane-track">
 				<button class="workduck-project-card workduck-project-card-button workduck-project-add-card"
-					type="button" onclick={() => onOpenDialog('project')}>
+					type="button" onpointerenter={onOverlayIntent} onfocus={onOverlayIntent}
+					onclick={() => onOpenDialog('project')}>
 					{projectMessages.newProject}
 				</button>
 
 				{#each projectNodes as node (node.id)}
 					{@const projectStats = [
 						formatCountLabel(
-							getProjectGroupCount(registryNodes, node.id),
+							getProjectGroupCount(selectionIndex, node.id),
 							projectMessages.counts.group,
 							projectMessages.counts.groups
 						),
 						formatCountLabel(
-							getProjectRepositoryCount(registryNodes, node.id),
+							getProjectRepositoryCount(selectionIndex, node.id),
 							projectMessages.counts.repo,
 							projectMessages.counts.repos
 						),
@@ -190,6 +193,7 @@
 					]}
 					<ProjectNodeCard {node} selected={selectedProject?.id === node.id}
 						kindLabel={projectMessages.kinds[node.kind]} stats={projectStats}
+						{onOverlayIntent}
 						onSelect={() => onSelectProject(node)}
 						onContextMenu={(event) => onProjectContextMenu(event, node)} />
 				{/each}
@@ -201,7 +205,8 @@
 				<section class="workduck-project-lane workduck-project-group-lane" aria-label="Groups">
 					<div class="workduck-project-lane-track">
 						<button class="workduck-project-card workduck-project-card-button workduck-project-add-card"
-							type="button" onclick={() => onOpenDialog('group', selectedProject.id)}>
+							type="button" onpointerenter={onOverlayIntent} onfocus={onOverlayIntent}
+							onclick={() => onOpenDialog('group', selectedProject.id)}>
 							{projectMessages.newGroup}
 						</button>
 
@@ -220,13 +225,15 @@
 							<div class="workduck-project-group-stack">
 								<ProjectNodeCard {node} selected={selectedGroup?.id === node.id}
 									kindLabel={projectMessages.kinds[node.kind]} stats={groupStats}
+									{onOverlayIntent}
 									onSelect={() => onSelectGroup(node)}
 									onContextMenu={(event) => onProjectContextMenu(event, node)} />
 
 								{#if selectedGroup?.id === node.id}
 									<div class="workduck-project-lane-track workduck-project-repository-track">
 										<button class="workduck-project-card workduck-project-card-button workduck-project-add-card workduck-repository-card"
-											type="button" onclick={() => onOpenDialog('repository', node.id)}>
+											type="button" onpointerenter={onOverlayIntent} onfocus={onOverlayIntent}
+											onclick={() => onOpenDialog('repository', node.id)}>
 											{projectMessages.newRepository}
 										</button>
 
@@ -253,6 +260,7 @@
 												canPullRepository={canRunRemoteRepositoryGitAction(repository, 'pull')}
 												canPushRepository={canRunRemoteRepositoryGitAction(repository, 'push')}
 												isRepositoryOperationRunning={(name) => isRepositoryOperationRunning(repository.id, name)}
+												{onOverlayIntent}
 												onContextMenu={(event) => onRepositoryContextMenu(event, node, repository)}
 												onClone={() => onCloneRepository(node, repository)}
 												onInitialize={() => onInitializeRepository(node, repository)}

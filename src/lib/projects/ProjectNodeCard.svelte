@@ -6,11 +6,12 @@
 		readonly selected: boolean;
 		readonly kindLabel: string;
 		readonly stats: readonly string[];
+		readonly onOverlayIntent: () => void;
 		readonly onSelect: () => void;
 		readonly onContextMenu: (event: MouseEvent) => void;
 	}
 
-	let { node, selected, kindLabel, stats, onSelect, onContextMenu }: Props = $props();
+	let { node, selected, kindLabel, stats, onOverlayIntent, onSelect, onContextMenu }: Props = $props();
 </script>
 
 <button
@@ -18,6 +19,8 @@
 	class:workduck-project-card-selected={selected}
 	type="button"
 	aria-pressed={selected}
+	onpointerenter={onOverlayIntent}
+	onfocus={onOverlayIntent}
 	onclick={onSelect}
 	oncontextmenu={onContextMenu}
 >

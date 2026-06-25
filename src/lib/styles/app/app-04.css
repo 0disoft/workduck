@@ -285,10 +285,6 @@
 	.workduck-dialog {
 		animation: workduck-dialog-in 140ms ease-out;
 	}
-
-	.workduck-repository-busy-indicator {
-		animation: workduck-spin 780ms linear infinite;
-	}
 }
 
 @keyframes workduck-dialog-backdrop-in {
@@ -301,12 +297,6 @@
 	from {
 		opacity: 0;
 		transform: translateY(6px) scale(0.98);
-	}
-}
-
-@keyframes workduck-spin {
-	to {
-		transform: rotate(360deg);
 	}
 }
 
@@ -495,36 +485,6 @@
 
 	.workduck-environment-actions {
 		flex-wrap: wrap;
-	}
-
-	.workduck-project-workspace-layout {
-		grid-template-columns: minmax(0, 1fr);
-	}
-
-	.workduck-project-sidebar-lane,
-	.workduck-project-group-lane {
-		position: static;
-	}
-
-	.workduck-project-sidebar-lane .workduck-project-lane-track {
-		max-height: none;
-		overflow-y: visible;
-		padding-inline-end: 0;
-	}
-
-	.workduck-project-card {
-		flex-basis: min(var(--workduck-list-card-width), 82vw);
-	}
-
-	.workduck-repository-card {
-		grid-template-columns: minmax(0, 1fr);
-		flex-basis: auto;
-	}
-
-	.workduck-repository-card-actions {
-		grid-column: 1;
-		grid-row: auto;
-		justify-content: flex-start;
 	}
 
 	.workduck-workspace-actions {

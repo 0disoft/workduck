@@ -3,6 +3,7 @@
 	import type { WorkduckLanguageId } from '$lib/i18n/workduck-language';
 	import type { WorkspaceRecord } from '$lib/workspaces/workspace-registry';
 	import ProjectBoardSurface from './ProjectBoardSurface.svelte';
+	import './project-board.css';
 
 	interface Props {
 		readonly workspace: WorkspaceRecord;

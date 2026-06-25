@@ -37,6 +37,7 @@
 		readonly canPullRepository: boolean;
 		readonly canPushRepository: boolean;
 		readonly isRepositoryOperationRunning: (name: ProjectRepositoryOperation['name']) => boolean;
+		readonly onOverlayIntent: () => void;
 		readonly onContextMenu: (event: MouseEvent) => void;
 		readonly onClone: () => Promise<void>;
 		readonly onInitialize: () => Promise<void>;
@@ -64,6 +65,7 @@
 		canPullRepository,
 		canPushRepository,
 		isRepositoryOperationRunning,
+		onOverlayIntent,
 		onContextMenu,
 		onClone,
 		onInitialize,
@@ -109,6 +111,8 @@
 	class="workduck-project-card workduck-repository-card"
 	class:workduck-repository-card-busy={repositoryBusy}
 	aria-busy={repositoryBusy}
+	onpointerenter={onOverlayIntent}
+	onfocusin={onOverlayIntent}
 	oncontextmenu={onContextMenu}
 >
 	<div class="workduck-project-card-header">

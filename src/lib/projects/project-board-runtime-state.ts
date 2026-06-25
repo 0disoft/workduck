@@ -1,5 +1,8 @@
 import type { ProjectRepositoryOperation } from './project-board-operations';
-import type { ProjectRepositoryGitStatus } from './project-board-selectors';
+import type {
+	InspectableProjectRepositoryLinkRecord,
+	ProjectRepositoryGitStatus
+} from './project-board-selectors';
 import { ensureProjectFolderPath, type ProjectFolderError } from './project-folder';
 import {
 	inspectProjectRepositoriesGit,
@@ -107,7 +110,7 @@ export async function refreshProjectRepositoryGitStatusForBoard(
 
 export async function refreshProjectRepositoryGitStatusesForBoard(
 	input: {
-		readonly repositories: readonly ProjectRepositoryLinkRecord[];
+		readonly repositories: readonly InspectableProjectRepositoryLinkRecord[];
 		readonly expectedSignature: string;
 	},
 	context: {
@@ -117,17 +120,12 @@ export async function refreshProjectRepositoryGitStatusesForBoard(
 		) => void;
 	}
 ) {
-	const repositories = input.repositories.filter(
-		(repository): repository is ProjectRepositoryLinkRecord & { readonly path: string } =>
-			repository.path !== null
-	);
-
-	if (repositories.length === 0) {
+	if (input.repositories.length === 0) {
 		return;
 	}
 
 	const records = await inspectProjectRepositoriesGit(
-		repositories.map((repository) => ({
+		input.repositories.map((repository) => ({
 			repositoryId: repository.id,
 			path: repository.path
 		}))
@@ -173,12 +171,15 @@ function createRepositoryGitStatusFromInspectionResult(
 
 function pruneRecordById<T>(record: Readonly<Record<string, T>>, ids: ReadonlySet<string>) {
 	const nextRecord: Record<string, T> = {};
+	let didPruneRecord = false;
 
 	for (const [id, value] of Object.entries(record)) {
 		if (ids.has(id)) {
 			nextRecord[id] = value;
+		} else {
+			didPruneRecord = true;
 		}
 	}
 
-	return nextRecord;
+	return didPruneRecord ? nextRecord : record;
 }

@@ -21,9 +21,11 @@ export {
 	readQueueArtifactId,
 	readQueueArtifactSkillIds,
 	readQueueArtifactSourceReportId,
+	readQueueArtifactSummary,
 	readQueueArtifactTitle,
 	readQueueWorkPriorityLabel
 } from './domain/queue-artifact-readers';
+export type { QueueArtifactSummary } from './domain/queue-artifact-readers';
 
 export type WorkduckQueueReviewDecision = 'pending' | 'approved' | 'needs-work' | 'rollback';
 export type WorkduckQueueWorkPriority = 'low' | 'normal' | 'high' | 'urgent';
@@ -227,10 +229,11 @@ export function createQueueWorkOrderFromReportReview(
 	report: WorkduckQueueResultReport,
 	reviews: readonly QueueReportTaskReview[]
 ): WorkduckQueueWorkOrder {
+	const reportTasksById = createQueueReportTaskIndex(report.tasks);
 	const tasks = reviews
 		.filter((review) => review.decision === 'needs-work' || review.decision === 'rollback')
 		.map((review): WorkduckQueueWorkOrderTask => {
-			const reportTask = report.tasks.find((task) => task.id === review.taskId);
+			const reportTask = reportTasksById.get(review.taskId);
 			const title = reportTask?.title ?? review.taskId;
 			const decision = review.decision === 'rollback' ? 'rollback' : 'needs-work';
 			const language = getFollowUpTaskLanguage(reportTask, review);
@@ -250,7 +253,7 @@ export function createQueueWorkOrderFromReportReview(
 				decision
 			};
 		});
-	const labelLanguage = getFollowUpWorkOrderLanguage(report, reviews);
+	const labelLanguage = getFollowUpWorkOrderLanguage(reportTasksById, reviews);
 
 	return {
 		schemaVersion: 'workduck.queue-work-order/v1',
@@ -566,7 +569,7 @@ function normalizeQueueRecordIds(value: unknown): string[] {
 type FollowUpContentLanguage = Extract<WorkduckQueueResponseLanguage, 'ko' | 'en'>;
 
 function getFollowUpWorkOrderLanguage(
-	report: WorkduckQueueResultReport,
+	reportTasksById: ReadonlyMap<string, WorkduckQueueResultReportTask>,
 	reviews: readonly QueueReportTaskReview[]
 ): FollowUpContentLanguage {
 	const firstSelectedReview = reviews.find(
@@ -575,9 +578,13 @@ function getFollowUpWorkOrderLanguage(
 	const firstReportTask =
 		firstSelectedReview === undefined
 			? undefined
-			: report.tasks.find((task) => task.id === firstSelectedReview.taskId);
+			: reportTasksById.get(firstSelectedReview.taskId);
 
 	return getFollowUpTaskLanguage(firstReportTask, firstSelectedReview);
+}
+
+function createQueueReportTaskIndex(reportTasks: readonly WorkduckQueueResultReportTask[]) {
+	return new Map(reportTasks.map((task) => [task.id, task]));
 }
 
 function getFollowUpTaskLanguage(

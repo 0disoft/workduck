@@ -1,8 +1,5 @@
 import {
-	createProjectTreeRows,
-	type ProjectNodeRecord
-} from './project-registry';
-import {
+	createProjectBoardFilterMatchIndex,
 	getRepositoryFilterStats,
 	normalizeProjectSearchFilter,
 	resolveSelectedGroup,
@@ -10,26 +7,33 @@ import {
 	selectGroupRepositories,
 	selectProjectGroups,
 	selectProjectNodes,
+	type ProjectBoardSelectionIndex,
 	type ProjectRepositoryGitStatus,
 	type ProjectRepositorySyncFilter
 } from './project-board-selectors';
 
 export function createProjectBoardSurfaceSelection(input: {
-	readonly nodes: readonly ProjectNodeRecord[];
+	readonly selectionIndex: ProjectBoardSelectionIndex;
 	readonly repositoryGitStatusById: Record<string, ProjectRepositoryGitStatus>;
 	readonly tagFilter: string;
 	readonly repositorySyncFilter: ProjectRepositorySyncFilter;
 	readonly selectedProjectId: string | null;
 	readonly selectedGroupId: string | null;
 }) {
-	const projectRows = createProjectTreeRows(input.nodes);
 	const normalizedTagFilter = normalizeProjectSearchFilter(input.tagFilter);
+	const filterMatchIndex = createProjectBoardFilterMatchIndex(
+		input.selectionIndex,
+		input.repositoryGitStatusById,
+		normalizedTagFilter,
+		input.repositorySyncFilter
+	);
 	const repositoryFilterStats = getRepositoryFilterStats(
-		input.nodes,
+		input.selectionIndex,
 		input.repositoryGitStatusById
 	);
 	const projectNodes = selectProjectNodes(
-		input.nodes,
+		input.selectionIndex,
+		filterMatchIndex,
 		input.repositoryGitStatusById,
 		normalizedTagFilter,
 		input.repositorySyncFilter
@@ -39,7 +43,8 @@ export function createProjectBoardSurfaceSelection(input: {
 		selectedProject === null
 			? []
 			: selectProjectGroups(
-					input.nodes,
+					input.selectionIndex,
+					filterMatchIndex,
 					input.repositoryGitStatusById,
 					selectedProject.id,
 					normalizedTagFilter,
@@ -50,6 +55,7 @@ export function createProjectBoardSurfaceSelection(input: {
 		selectedGroup === null
 			? []
 			: selectGroupRepositories(
+					input.selectionIndex,
 					selectedGroup,
 					input.repositoryGitStatusById,
 					normalizedTagFilter,
@@ -57,7 +63,6 @@ export function createProjectBoardSurfaceSelection(input: {
 				);
 
 	return {
-		projectRows,
 		normalizedTagFilter,
 		repositoryFilterStats,
 		projectNodes,

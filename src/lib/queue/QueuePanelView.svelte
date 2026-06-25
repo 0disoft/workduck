@@ -1,14 +1,7 @@
 <script lang="ts">
 	import PageTitleRow from '$lib/ui/PageTitleRow.svelte';
 	import StatusToast from '$lib/ui/StatusToast.svelte';
-	import QueueContextMenu from './QueueContextMenu.svelte';
-	import QueueEvaluationDialog from './QueueEvaluationDialog.svelte';
 	import QueueFileList from './QueueFileList.svelte';
-	import QueuePromptPreviewDialog from './QueuePromptPreviewDialog.svelte';
-	import QueueProposalDetail from './QueueProposalDetail.svelte';
-	import QueueReportDetail from './QueueReportDetail.svelte';
-	import QueueWorkOrderDetail from './QueueWorkOrderDetail.svelte';
-	import QueueWorkOrderDialog from './QueueWorkOrderDialog.svelte';
 	import type { QueuePanelController } from './queue-panel-controller.svelte';
 	import {
 		queueExecutionFilterOptions,
@@ -16,10 +9,19 @@
 		queuePriorityFilterOptions,
 		queueReadFilterOptions,
 		queueSortOptions,
+		type QueueCardEntry,
 		type QueueKindFilter,
 		type QueuePriorityFilter,
 		type QueueSortOption
 	} from './queue-panel-types';
+
+	type QueueContextMenuComponent = typeof import('./QueueContextMenu.svelte').default;
+	type QueueEvaluationDialogComponent = typeof import('./QueueEvaluationDialog.svelte').default;
+	type QueuePromptPreviewDialogComponent = typeof import('./QueuePromptPreviewDialog.svelte').default;
+	type QueueProposalDetailComponent = typeof import('./QueueProposalDetail.svelte').default;
+	type QueueReportDetailComponent = typeof import('./QueueReportDetail.svelte').default;
+	type QueueWorkOrderDetailComponent = typeof import('./QueueWorkOrderDetail.svelte').default;
+	type QueueWorkOrderDialogComponent = typeof import('./QueueWorkOrderDialog.svelte').default;
 
 	interface Props {
 		readonly title: string;
@@ -29,6 +31,20 @@
 	let { title, controller }: Props = $props();
 
 	let isAdvancedFiltersOpen = $state(false);
+	let QueueContextMenu = $state<QueueContextMenuComponent | null>(null);
+	let QueueEvaluationDialog = $state<QueueEvaluationDialogComponent | null>(null);
+	let QueuePromptPreviewDialog = $state<QueuePromptPreviewDialogComponent | null>(null);
+	let QueueProposalDetail = $state<QueueProposalDetailComponent | null>(null);
+	let QueueReportDetail = $state<QueueReportDetailComponent | null>(null);
+	let QueueWorkOrderDetail = $state<QueueWorkOrderDetailComponent | null>(null);
+	let QueueWorkOrderDialog = $state<QueueWorkOrderDialogComponent | null>(null);
+	let queueContextMenuLoad: Promise<void> | null = null;
+	let queueEvaluationDialogLoad: Promise<void> | null = null;
+	let queuePromptPreviewDialogLoad: Promise<void> | null = null;
+	let queueProposalDetailLoad: Promise<void> | null = null;
+	let queueReportDetailLoad: Promise<void> | null = null;
+	let queueWorkOrderDetailLoad: Promise<void> | null = null;
+	let queueWorkOrderDialogLoad: Promise<void> | null = null;
 	let activeAdvancedFilterCount = $derived(
 		[
 			controller.queueReadFilter !== 'all',
@@ -43,6 +59,140 @@
 			String(activeAdvancedFilterCount)
 		)
 	);
+
+	function loadQueueContextMenu() {
+		if (QueueContextMenu !== null) {
+			return Promise.resolve();
+		}
+
+		queueContextMenuLoad ??= import('./QueueContextMenu.svelte').then((module) => {
+			QueueContextMenu = module.default;
+		});
+
+		return queueContextMenuLoad;
+	}
+
+	function loadQueueEvaluationDialog() {
+		if (QueueEvaluationDialog !== null) {
+			return Promise.resolve();
+		}
+
+		queueEvaluationDialogLoad ??= import('./QueueEvaluationDialog.svelte').then((module) => {
+			QueueEvaluationDialog = module.default;
+		});
+
+		return queueEvaluationDialogLoad;
+	}
+
+	function loadQueuePromptPreviewDialog() {
+		if (QueuePromptPreviewDialog !== null) {
+			return Promise.resolve();
+		}
+
+		queuePromptPreviewDialogLoad ??= import('./QueuePromptPreviewDialog.svelte').then((module) => {
+			QueuePromptPreviewDialog = module.default;
+		});
+
+		return queuePromptPreviewDialogLoad;
+	}
+
+	function loadQueueProposalDetail() {
+		if (QueueProposalDetail !== null) {
+			return Promise.resolve();
+		}
+
+		queueProposalDetailLoad ??= import('./QueueProposalDetail.svelte').then((module) => {
+			QueueProposalDetail = module.default;
+		});
+
+		return queueProposalDetailLoad;
+	}
+
+	function loadQueueReportDetail() {
+		if (QueueReportDetail !== null) {
+			return Promise.resolve();
+		}
+
+		queueReportDetailLoad ??= import('./QueueReportDetail.svelte').then((module) => {
+			QueueReportDetail = module.default;
+		});
+
+		return queueReportDetailLoad;
+	}
+
+	function loadQueueWorkOrderDetail() {
+		if (QueueWorkOrderDetail !== null) {
+			return Promise.resolve();
+		}
+
+		queueWorkOrderDetailLoad ??= import('./QueueWorkOrderDetail.svelte').then((module) => {
+			QueueWorkOrderDetail = module.default;
+		});
+
+		return queueWorkOrderDetailLoad;
+	}
+
+	function loadQueueWorkOrderDialog() {
+		if (QueueWorkOrderDialog !== null) {
+			return Promise.resolve();
+		}
+
+		queueWorkOrderDialogLoad ??= import('./QueueWorkOrderDialog.svelte').then((module) => {
+			QueueWorkOrderDialog = module.default;
+		});
+
+		return queueWorkOrderDialogLoad;
+	}
+
+	function preloadQueueCardSurface(file: QueueCardEntry) {
+		if (file.kind === 'unsupported') {
+			return;
+		}
+
+		void loadQueueContextMenu();
+
+		if (file.kind === 'result-report') {
+			void loadQueueReportDetail();
+			return;
+		}
+
+		if (file.kind === 'proposal') {
+			void loadQueueProposalDetail();
+			return;
+		}
+
+		void loadQueueWorkOrderDetail();
+	}
+
+	$effect(() => {
+		if (controller.selectedReport !== null) {
+			void loadQueueReportDetail();
+		}
+
+		if (controller.selectedWorkOrder !== null) {
+			void loadQueueWorkOrderDetail();
+		}
+
+		if (controller.selectedProposal !== null) {
+			void loadQueueProposalDetail();
+		}
+
+		if (controller.queueContextMenu !== null) {
+			void loadQueueContextMenu();
+		}
+
+		if (controller.evaluationDialog !== null) {
+			void loadQueueEvaluationDialog();
+		}
+
+		if (controller.promptPreviews !== null) {
+			void loadQueuePromptPreviewDialog();
+		}
+
+		if (controller.isNewWorkOrderDialogOpen) {
+			void loadQueueWorkOrderDialog();
+		}
+	});
 </script>
 
 <section class="workduck-queue-panel" aria-label={controller.messages.navigation.queue}>
@@ -199,12 +349,18 @@
 			filteredFiles={controller.filteredFiles}
 			messages={controller.messages}
 			isReading={controller.isReading}
+			onAddWorkIntent={() => void loadQueueWorkOrderDialog()}
 			onAddWork={(event) => {
 				event.stopPropagation();
+				void loadQueueWorkOrderDialog();
 				controller.openNewWorkOrderDialog();
 			}}
+			onCardIntent={preloadQueueCardSurface}
 			onCardClick={controller.handleQueueCardClick}
-			onCardContextMenu={controller.openQueueContextMenu}
+			onCardContextMenu={(event, file) => {
+				preloadQueueCardSurface(file);
+				controller.openQueueContextMenu(event, file);
+			}}
 			getQueueCardClass={controller.getQueueCardClass}
 			isSelectedQueueFile={controller.isSelectedQueueFile}
 			getQueueExecutionStateLabel={controller.getQueueExecutionStateLabel}
@@ -215,7 +371,7 @@
 			class:workduck-queue-detail-empty={!controller.hasSelectedQueueArtifact}
 			aria-label={controller.messages.queue.detail}
 		>
-			{#if controller.selectedReport !== null}
+			{#if controller.selectedReport !== null && QueueReportDetail !== null}
 				<QueueReportDetail
 					report={controller.selectedReport}
 					reportPath={controller.selectedReportPath}
@@ -236,7 +392,7 @@
 					getReportTaskAgent={controller.getReportTaskAgent}
 					getReviewDecisionLabel={controller.getReviewDecisionLabel}
 				/>
-			{:else if controller.selectedWorkOrder !== null}
+			{:else if controller.selectedWorkOrder !== null && QueueWorkOrderDetail !== null}
 				<QueueWorkOrderDetail
 					workOrder={controller.selectedWorkOrder}
 					messages={controller.messages}
@@ -262,7 +418,7 @@
 					getQueueTaskAgentLabels={controller.getQueueTaskAgentLabels}
 					getQueueTaskReferenceLabels={controller.getQueueTaskReferenceLabels}
 				/>
-			{:else if controller.selectedProposal !== null}
+			{:else if controller.selectedProposal !== null && QueueProposalDetail !== null}
 				<QueueProposalDetail
 					proposal={controller.selectedProposal}
 					proposalPath={controller.selectedProposalPath}
@@ -275,7 +431,7 @@
 
 <StatusToast message={controller.status} />
 
-{#if controller.queueContextMenu !== null}
+{#if controller.queueContextMenu !== null && QueueContextMenu !== null}
 	<QueueContextMenu
 		contextMenu={controller.queueContextMenu}
 		messages={controller.messages}
@@ -285,7 +441,7 @@
 	/>
 {/if}
 
-{#if controller.evaluationDialog !== null}
+{#if controller.evaluationDialog !== null && QueueEvaluationDialog !== null}
 	<QueueEvaluationDialog
 		dialog={controller.evaluationDialog}
 		messages={controller.messages}
@@ -297,7 +453,7 @@
 	/>
 {/if}
 
-{#if controller.promptPreviews !== null}
+{#if controller.promptPreviews !== null && QueuePromptPreviewDialog !== null}
 	<QueuePromptPreviewDialog
 		messages={controller.messages}
 		previews={controller.promptPreviews}
@@ -305,7 +461,7 @@
 	/>
 {/if}
 
-{#if controller.isNewWorkOrderDialogOpen}
+{#if controller.isNewWorkOrderDialogOpen && QueueWorkOrderDialog !== null}
 	<QueueWorkOrderDialog
 		messages={controller.messages}
 		isWriting={controller.isWriting}

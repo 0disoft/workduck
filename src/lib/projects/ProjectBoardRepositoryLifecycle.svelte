@@ -10,15 +10,16 @@
 		pruneRepositoryOperationRecord,
 		refreshProjectRepositoryGitStatusesForBoard
 	} from './project-board-runtime-state';
-	import {
-		listRegisteredRepositories,
-		type ProjectRepositoryGitStatus
+	import type {
+		ProjectBoardSelectionIndex,
+		ProjectRepositoryGitStatus
 	} from './project-board-selectors';
 	import type { ProjectRegistry, ProjectTreeRow } from './project-registry';
 
 	interface Props {
 		readonly workspace: WorkspaceRecord;
 		readonly projectRows: readonly ProjectTreeRow[];
+		readonly selectionIndex: ProjectBoardSelectionIndex;
 		readonly registry: ProjectRegistry;
 		folderRepairError: ProjectFolderError | null;
 		folderRepairSignature: string;
@@ -31,6 +32,7 @@
 	let {
 		workspace,
 		projectRows,
+		selectionIndex,
 		registry,
 		folderRepairError = $bindable(),
 		folderRepairSignature = $bindable(),
@@ -57,13 +59,18 @@
 	}
 
 	$effect(() => {
-		const registeredRepositories = listRegisteredRepositories(registry.nodes);
-		const repositoriesToInspect = registeredRepositories.filter(
-			(repository) => repository.path !== null
-		);
 		const nextSignature = createRepositoryGitInspectionSignature(
 			workspace.id,
-			repositoriesToInspect
+			selectionIndex.repositoriesToInspect
+		);
+
+		repositoryGitStatusById = pruneRepositoryGitStatusRecord(
+			repositoryGitStatusById,
+			selectionIndex.inspectableRepositoryIds
+		);
+		repositoryOperationById = pruneRepositoryOperationRecord(
+			repositoryOperationById,
+			selectionIndex.registeredRepositoryIds
 		);
 
 		if (repositoryGitInspectionSignature === nextSignature) {
@@ -71,18 +78,9 @@
 		}
 
 		repositoryGitInspectionSignature = nextSignature;
-		const registeredRepositoryIds = new Set(registeredRepositories.map((repository) => repository.id));
-		repositoryGitStatusById = pruneRepositoryGitStatusRecord(
-			repositoryGitStatusById,
-			new Set(repositoriesToInspect.map((repository) => repository.id))
-		);
-		repositoryOperationById = pruneRepositoryOperationRecord(
-			repositoryOperationById,
-			registeredRepositoryIds
-		);
 
 		void refreshProjectRepositoryGitStatusesForBoard(
-			{ repositories: repositoriesToInspect, expectedSignature: nextSignature },
+			{ repositories: selectionIndex.repositoriesToInspect, expectedSignature: nextSignature },
 			{
 				getRepositoryGitInspectionSignature: () => repositoryGitInspectionSignature,
 				updateRepositoryGitStatuses: (gitStatuses) => {

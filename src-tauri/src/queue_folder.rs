@@ -70,7 +70,7 @@ pub struct QueueFolderResult {
     error: Option<QueueFolderError>,
 }
 
-#[derive(serde::Serialize)]
+#[derive(Clone, Copy, serde::Serialize)]
 #[serde(rename_all = "kebab-case")]
 pub enum QueueFileKind {
     ResultReport,
@@ -110,6 +110,27 @@ pub struct QueueFileReadResult {
     error: Option<QueueFolderError>,
 }
 
+#[derive(Default, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct QueueFileStatusCounts {
+    pending: usize,
+    running: usize,
+    completed: usize,
+    failed: usize,
+    unknown: usize,
+}
+
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct QueueFileSummaryResult {
+    ok: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    path: Option<String>,
+    counts: QueueFileStatusCounts,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    error: Option<QueueFolderError>,
+}
+
 #[tauri::command]
 pub fn ensure_queue_folder(workspace_path: String) -> QueueFolderResult {
     let workspace_root = match validate_workspace_root(&workspace_path) {
@@ -143,6 +164,42 @@ pub fn list_queue_files(workspace_path: String) -> QueueFileListResult {
         ok: true,
         path: Some(display_path(&queue_root)),
         files,
+        error: None,
+    }
+}
+
+#[tauri::command]
+pub fn summarize_queue_files(workspace_path: String) -> QueueFileSummaryResult {
+    let workspace_root = match validate_workspace_root(&workspace_path) {
+        Ok(workspace_root) => workspace_root,
+        Err(error) => return invalid_file_summary(error),
+    };
+    let queue_root = match ensure_queue_root(&workspace_root) {
+        Ok(queue_root) => queue_root,
+        Err(error) => return invalid_file_summary(error),
+    };
+    let files = match list_known_queue_files(&queue_root) {
+        Ok(files) => files,
+        Err(error) => return invalid_file_summary(error),
+    };
+    let mut counts = QueueFileStatusCounts::default();
+
+    for file in files {
+        let state = read_queue_file_execution_state(&queue_root, &file);
+
+        match state {
+            Some("pending") => counts.pending += 1,
+            Some("running") => counts.running += 1,
+            Some("completed") => counts.completed += 1,
+            Some("failed") => counts.failed += 1,
+            _ => counts.unknown += 1,
+        }
+    }
+
+    QueueFileSummaryResult {
+        ok: true,
+        path: Some(display_path(&queue_root)),
+        counts,
         error: None,
     }
 }
@@ -500,6 +557,47 @@ fn classify_queue_file(child_dir: &str, file_name: &str) -> Option<QueueFileKind
     None
 }
 
+fn read_queue_file_execution_state(
+    queue_root: &Path,
+    file: &QueueFileEntry,
+) -> Option<&'static str> {
+    match file.kind {
+        QueueFileKind::Unsupported => return None,
+        QueueFileKind::ResultReport | QueueFileKind::WorkOrder | QueueFileKind::Proposal => {}
+    }
+
+    let file_path = resolve_queue_file_path(queue_root, &file.relative_path).ok()?;
+    let content = fs::read_to_string(file_path).ok()?;
+    read_queue_content_execution_state(&content)
+}
+
+fn read_queue_content_execution_state(content: &str) -> Option<&'static str> {
+    let value: serde_json::Value = serde_json::from_str(content).ok()?;
+
+    if value.get("status").and_then(serde_json::Value::as_str) == Some("archived") {
+        return Some("completed");
+    }
+
+    if value.get("status").and_then(serde_json::Value::as_str) == Some("running") {
+        return Some("running");
+    }
+
+    if value.get("status").and_then(serde_json::Value::as_str) == Some("failed") {
+        return Some("failed");
+    }
+
+    match value
+        .get("schemaVersion")
+        .and_then(serde_json::Value::as_str)
+    {
+        Some("workduck.queue-result-report/v1") => Some("completed"),
+        Some("workduck.queue-work-order/v1") | Some("workduck.queue-proposal/v1") => {
+            Some("pending")
+        }
+        _ => None,
+    }
+}
+
 fn ensure_unique_evaluation_delegation(
     queue_root: &Path,
     current_relative_path: Option<&str>,
@@ -706,6 +804,15 @@ fn invalid_file_list(error: QueueFolderError) -> QueueFileListResult {
     }
 }
 
+fn invalid_file_summary(error: QueueFolderError) -> QueueFileSummaryResult {
+    QueueFileSummaryResult {
+        ok: false,
+        path: None,
+        counts: QueueFileStatusCounts::default(),
+        error: Some(error),
+    }
+}
+
 fn invalid_file_read(error: QueueFolderError) -> QueueFileReadResult {
     QueueFileReadResult {
         ok: false,
@@ -857,6 +964,66 @@ mod tests {
         assert!(temp_files.is_empty(), "temporary files left behind: {temp_files:?}");
     }
 
+    #[test]
+    fn queue_file_summary_counts_execution_states() {
+        let queue_root = create_test_queue_root();
+        fs::create_dir_all(queue_root.join(REPORTS_DIRECTORY_NAME)).expect("reports dir");
+        fs::create_dir_all(queue_root.join(PROPOSALS_DIRECTORY_NAME)).expect("proposals dir");
+        fs::write(
+            queue_root
+                .join(WORK_ORDERS_DIRECTORY_NAME)
+                .join("pending.workduck-work-order.json"),
+            r#"{"schemaVersion":"workduck.queue-work-order/v1","status":"active"}"#,
+        )
+        .expect("pending work order");
+        fs::write(
+            queue_root
+                .join(WORK_ORDERS_DIRECTORY_NAME)
+                .join("running.workduck-work-order.json"),
+            r#"{"schemaVersion":"workduck.queue-work-order/v1","status":"running"}"#,
+        )
+        .expect("running work order");
+        fs::write(
+            queue_root
+                .join(WORK_ORDERS_DIRECTORY_NAME)
+                .join("archived.workduck-work-order.json"),
+            r#"{"schemaVersion":"workduck.queue-work-order/v1","status":"archived"}"#,
+        )
+        .expect("archived work order");
+        fs::write(
+            queue_root
+                .join(REPORTS_DIRECTORY_NAME)
+                .join("done.workduck-report.json"),
+            r#"{"schemaVersion":"workduck.queue-result-report/v1"}"#,
+        )
+        .expect("result report");
+        fs::write(
+            queue_root.join(PROPOSALS_DIRECTORY_NAME).join("bad.workduck-proposal.json"),
+            "not json",
+        )
+        .expect("unknown proposal");
+        let files = list_known_queue_files(&queue_root).expect("queue files");
+        let mut counts = QueueFileStatusCounts::default();
+
+        for file in files {
+            match read_queue_file_execution_state(&queue_root, &file) {
+                Some("pending") => counts.pending += 1,
+                Some("running") => counts.running += 1,
+                Some("completed") => counts.completed += 1,
+                Some("failed") => counts.failed += 1,
+                _ => counts.unknown += 1,
+            }
+        }
+
+        fs::remove_dir_all(&queue_root).ok();
+
+        assert_eq!(counts.pending, 1);
+        assert_eq!(counts.running, 1);
+        assert_eq!(counts.completed, 2);
+        assert_eq!(counts.failed, 0);
+        assert_eq!(counts.unknown, 1);
+    }
+
     fn create_test_queue_root() -> PathBuf {
         let unique = SystemTime::now()
             .duration_since(UNIX_EPOCH)
@@ -865,7 +1032,7 @@ mod tests {
         let queue_root = std::env::temp_dir().join(format!("workduck-queue-folder-test-{unique}"));
 
         fs::create_dir_all(queue_root.join(WORK_ORDERS_DIRECTORY_NAME)).expect("work-orders dir");
-        queue_root
+        fs::canonicalize(&queue_root).expect("canonical queue root")
     }
 
     fn list_queue_write_temp_files(parent: &Path) -> Vec<String> {

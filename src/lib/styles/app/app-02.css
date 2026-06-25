@@ -1074,36 +1074,6 @@
 	font-variant-numeric: tabular-nums;
 }
 
-.workduck-project-board {
-	position: relative;
-	display: grid;
-	min-height: 320px;
-	height: 100%;
-	grid-template-rows: auto minmax(0, 1fr);
-	align-content: stretch;
-	gap: 18px;
-}
-
-.workduck-project-board:focus-visible {
-	outline: 2px solid oklch(var(--workduck-oklch-accent) / 0.42);
-	outline-offset: 2px;
-}
-
-.workduck-project-header-actions {
-	flex: 1 1 auto;
-	flex-wrap: nowrap;
-	align-items: center;
-	justify-content: flex-end;
-}
-
-.workduck-project-sync-filters {
-	display: flex;
-	min-width: 0;
-	flex: 0 0 auto;
-	flex-wrap: nowrap;
-	gap: 8px;
-}
-
 .workduck-project-sync-filter-button {
 	display: inline-flex;
 	height: var(--workduck-control-height);

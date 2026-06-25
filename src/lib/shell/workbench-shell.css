@@ -149,7 +149,7 @@
 	}
 
 	.workduck-shell-dragging,
-	:global(.workduck-sidebar-resizing) {
+	.workduck-sidebar-resizing {
 		cursor: col-resize;
 		user-select: none;
 	}
@@ -170,8 +170,8 @@
 		user-select: none;
 	}
 
-	.workduck-sidebar :global(input),
-	.workduck-sidebar :global(textarea) {
+	.workduck-sidebar input,
+	.workduck-sidebar textarea {
 		-webkit-user-select: text;
 		user-select: text;
 	}
@@ -397,19 +397,19 @@
 		white-space: nowrap;
 	}
 
-	.workduck-workspace-menu-entry :global(.workduck-unlock-form) {
+	.workduck-workspace-menu-entry .workduck-unlock-form {
 		padding: 8px 10px 10px;
 		border: 1px solid oklch(var(--workduck-oklch-border) / 0.72);
 		border-radius: 7px;
 		background: oklch(var(--workduck-oklch-surface) / 0.54);
 	}
 
-	.workduck-workspace-menu-entry :global(.workduck-unlock-actions) {
+	.workduck-workspace-menu-entry .workduck-unlock-actions {
 		display: grid;
 		grid-template-columns: repeat(2, minmax(0, 1fr));
 	}
 
-	.workduck-workspace-menu-entry :global(.workduck-button) {
+	.workduck-workspace-menu-entry .workduck-button {
 		width: 100%;
 	}
 

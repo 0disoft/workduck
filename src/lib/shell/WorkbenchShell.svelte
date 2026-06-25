@@ -24,8 +24,7 @@
 		subscribeSystemSettings
 	} from '$lib/settings/system-storage';
 	import { clearEnvironmentVaultSession } from '$lib/environment/environment-vault-session';
-	import { readQueueArtifactExecutionState } from '$lib/queue/domain/queue-artifact-readers';
-	import { listQueueFiles, readQueueFile } from '$lib/queue/queue-folder';
+	import { summarizeQueueFiles } from '$lib/queue/queue-folder';
 	import { subscribeQueueFilesChanged } from '$lib/queue/queue-read-state';
 	import { syncWorkduckTrayIconEnabled } from '$lib/system/tray';
 	import {
@@ -394,7 +393,7 @@
 			return;
 		}
 
-		const result = await listQueueFiles(workspace.path);
+		const result = await summarizeQueueFiles(workspace.path);
 
 		if (sequence !== queuePendingRefreshSequence) {
 			return;
@@ -405,26 +404,7 @@
 			return;
 		}
 
-		const pendingResults = await Promise.all(
-			result.files.map(async (file) => {
-				if (file.kind === 'unsupported') {
-					return false;
-				}
-
-				const readResult = await readQueueFile(workspace.path, file.relativePath);
-
-				return (
-					readResult.ok &&
-					readQueueArtifactExecutionState(readResult.content) === 'pending'
-				);
-			})
-		);
-
-		if (sequence !== queuePendingRefreshSequence) {
-			return;
-		}
-
-		queuePendingCount = pendingResults.filter(Boolean).length;
+		queuePendingCount = result.counts.pending;
 	}
 
 	function scheduleQueuePendingCountRefresh() {

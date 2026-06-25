@@ -58,6 +58,25 @@ type QueueFileListResult =
 			readonly error: QueueFolderError;
 	  };
 
+export interface QueueFileStatusCounts {
+	readonly pending: number;
+	readonly running: number;
+	readonly completed: number;
+	readonly failed: number;
+	readonly unknown: number;
+}
+
+type QueueFileSummaryResult =
+	| {
+			readonly ok: true;
+			readonly path: string;
+			readonly counts: QueueFileStatusCounts;
+	  }
+	| {
+			readonly ok: false;
+			readonly error: QueueFolderError;
+	  };
+
 type QueueFileReadResult =
 	| {
 			readonly ok: true;
@@ -83,6 +102,13 @@ interface QueueFileListResponse {
 	readonly ok: boolean;
 	readonly path?: string | null;
 	readonly files?: readonly QueueFileEntry[] | null;
+	readonly error?: QueueFolderError | null;
+}
+
+interface QueueFileSummaryResponse {
+	readonly ok: boolean;
+	readonly path?: string | null;
+	readonly counts?: Partial<QueueFileStatusCounts> | null;
 	readonly error?: QueueFolderError | null;
 }
 
@@ -118,6 +144,35 @@ export async function listQueueFiles(workspacePath: string): Promise<QueueFileLi
 				ok: true,
 				path: normalizeWorkspacePathForStorage(response.path),
 				files: response.files
+			};
+		}
+
+		return {
+			ok: false,
+			error: isQueueFolderError(response.error) ? response.error : 'queue-folder-list-failed'
+		};
+	} catch {
+		return { ok: false, error: 'queue-folder-list-failed' };
+	}
+}
+
+export async function summarizeQueueFiles(workspacePath: string): Promise<QueueFileSummaryResult> {
+	const invoke = getTauriInvoke();
+
+	if (invoke === undefined) {
+		return { ok: false, error: 'queue-folder-unavailable' };
+	}
+
+	try {
+		const response = await invoke<QueueFileSummaryResponse>('summarize_queue_files', {
+			workspacePath: normalizeWorkspacePathForStorage(workspacePath)
+		});
+
+		if (response.ok && typeof response.path === 'string') {
+			return {
+				ok: true,
+				path: normalizeWorkspacePathForStorage(response.path),
+				counts: normalizeQueueFileStatusCounts(response.counts)
 			};
 		}
 
@@ -432,6 +487,24 @@ async function runQueueFolderCommand(
 	} catch {
 		return { ok: false, error: command === 'open_queue_folder' ? 'queue-folder-open-failed' : 'queue-folder-create-failed' };
 	}
+}
+
+function normalizeQueueFileStatusCounts(
+	counts: Partial<QueueFileStatusCounts> | null | undefined
+): QueueFileStatusCounts {
+	return {
+		pending: normalizeQueueFileStatusCount(counts?.pending),
+		running: normalizeQueueFileStatusCount(counts?.running),
+		completed: normalizeQueueFileStatusCount(counts?.completed),
+		failed: normalizeQueueFileStatusCount(counts?.failed),
+		unknown: normalizeQueueFileStatusCount(counts?.unknown)
+	};
+}
+
+function normalizeQueueFileStatusCount(value: unknown) {
+	return typeof value === 'number' && Number.isFinite(value) && value > 0
+		? Math.floor(value)
+		: 0;
 }
 
 function isQueueFolderError(value: unknown): value is QueueFolderError {

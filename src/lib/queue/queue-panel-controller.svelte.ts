@@ -11,44 +11,19 @@ import {
 } from '$lib/settings/appearance-storage';
 import type { WorkspaceRecord } from '$lib/workspaces/workspace-registry';
 import {
-	createEmptyAgentRegistry,
-	recordAgentEvaluationOnce,
 	type AgentRecord,
 	type AgentRegistry
 } from '$lib/agents/agent-registry';
 import {
-	readAgentRegistry,
-	subscribeAgentRegistry,
-	writeAgentRegistry
-} from '$lib/agents/agent-registry-storage';
-import {
-	createDefaultAgentEvaluationScores,
-	normalizeAgentEvaluationScore,
 	type AgentEvaluationCriterionId,
 	type AgentEvaluationScores
 } from '$lib/agents/agent-evaluation';
 import {
-	createEmptyPersonaRegistry,
-	syncPersonaEvaluationSummariesFromAgents,
 	type PersonaRecord,
 	type PersonaRegistry
 } from '$lib/personas/persona-registry';
+import { type ReferenceRecord, type ReferenceRegistry } from '$lib/references/reference-registry';
 import {
-	readPersonaRegistry,
-	subscribePersonaRegistry,
-	writePersonaRegistry
-} from '$lib/personas/persona-registry-storage';
-import {
-	createEmptyReferenceRegistry,
-	type ReferenceRecord,
-	type ReferenceRegistry
-} from '$lib/references/reference-registry';
-import {
-	readReferenceRegistry,
-	subscribeReferenceRegistry
-} from '$lib/references/reference-registry-storage';
-import {
-	createEmptyProjectRegistry,
 	type ProjectNodeRecord,
 	type ProjectRegistry
 } from '$lib/projects/project-registry';
@@ -56,41 +31,22 @@ import {
 	createProjectRepositorySelectionOptions,
 	type ProjectRepositorySelectionOption
 } from '$lib/projects/project-repository-selection';
-import { readProjectRegistry, subscribeProjectRegistry } from '$lib/projects/project-storage';
 import {
-	createEmptySkillRegistry,
 	getAllSkills,
 	WORKDUCK_AGENT_RESPONSE_EVALUATOR_SKILL_ID,
 	type SkillRegistry,
 	type WorkduckSkillRecord
 } from '$lib/skills/skill-registry';
-import { readSkillRegistry, subscribeSkillRegistry } from '$lib/skills/skill-registry-storage';
 import {
 	prepareDesktopNotificationPermission,
 	showDesktopNotificationWhenUnfocused
 } from '$lib/ui/desktop-notification';
 
 import {
-	archiveQueueWorkOrder,
 	createQueueReportTaskEvaluationKey,
-	createManualQueueWorkOrder,
-	createQueueResultReportFileNameFromLabel,
-	createQueueWorkOrderFileName,
-	createQueueWorkOrderForReportEvaluation,
-	failQueueWorkOrderExecution,
 	hasQueueReportTaskEvaluation,
-	defaultQueueResponseFormat,
-	defaultQueueResponseLanguage,
-	defaultQueueWorkPriority,
 	QUEUE_WORK_ORDER_BODY_MAX_LENGTH,
 	QUEUE_WORK_ORDER_TITLE_MAX_LENGTH,
-	normalizeQueueResponseFormat,
-	normalizeQueueResponseLanguage,
-	normalizeQueueTaskKind,
-	normalizeQueueWorkPriority,
-	recordQueueReportTaskEvaluation,
-	serializeQueueArtifact,
-	startQueueWorkOrderExecution,
 	type QueueReportTaskReview,
 	type WorkduckQueueProposal,
 	type WorkduckQueueExecutionState,
@@ -101,53 +57,26 @@ import {
 	type WorkduckQueueWorkPriority,
 	type WorkduckQueueWorkOrder,
 	type WorkduckQueueWorkOrderTask,
-	updateQueueWorkOrderTask,
 	type WorkduckQueueReviewDecision
 } from './queue-artifacts';
 import { readEnvironmentVaultSession } from '$lib/environment/environment-vault-session';
+import type { WorkduckQueuePromptPreview } from './queue-execution';
 import {
-	cancelQueueWorkOrderExecution,
-	executeQueueWorkOrder,
-	previewQueueWorkOrderPrompt,
-	type WorkduckQueuePromptPreview
-} from './queue-execution';
-import {
-	deleteQueueFile,
-	ensureQueueFolder,
-	updateQueueResultReportFile,
-	updateQueueWorkOrderFile,
-	writeQueueResultReportFile,
-	writeQueueWorkOrderFile,
 	type QueueFileEntry,
 	type QueueFolderError
 } from './queue-folder';
 import {
 	createVoteAggregate,
-	type WorkduckQueueVoteSpec,
 	type WorkduckQueueTaskKind
 } from './queue-voting';
 import {
-	dispatchQueueFilesChanged,
-	readQueueReadFilePaths,
-	writeQueueReadFilePaths
+	dispatchQueueFilesChanged
 } from './queue-read-state';
 import {
-	createManualVoteOptions,
-	createManualVoteFieldState,
 	createManualWorkOrderKindInput as createManualWorkOrderKindInputFromFields,
 	createSelectionSummary,
-	sortReferencesForProjectSelection,
-	updateSelectedRecordIds
+	sortReferencesForProjectSelection
 } from './queue-panel-helpers';
-import {
-	readQueueProposalSelection,
-	readQueueResultReportSelection,
-	readQueueWorkOrderSelection
-} from './workflows/queue-artifact-selection';
-import { loadQueueFilesForWorkspace } from './workflows/queue-refresh';
-import {
-	markStaleRunningWorkOrderFailed as markStaleRunningWorkOrderFailedForWorkspace
-} from './workflows/stale-running-recovery';
 import {
 	getAgentDisplayName as getAgentDisplayNameFromRecord,
 	getExecutionFilterLabel as getLocalizedExecutionFilterLabel,
@@ -169,6 +98,81 @@ import {
 	getVoteChoiceLabel as getLocalizedVoteChoiceLabel
 } from './queue-panel-labels';
 import {
+	startQueueAutoRefreshScheduler,
+	type QueueAutoRefreshScheduler
+} from './queue-auto-refresh-scheduler';
+import { createQueueCompletedReportNotifications } from './queue-completed-report-notifications';
+import {
+	canOpenQueueContextMenu,
+	createQueueContextMenuState,
+	createViewportAlignedQueueContextMenu,
+	subscribeQueueContextMenuDismissal
+} from './queue-panel-context-menu-lifecycle';
+import {
+	createFilteredQueueFiles,
+	createQueueCardClass as createQueueCardClassFromSelection,
+	isQueueFileSelected,
+	shouldBulkDeleteQueueFile
+} from './queue-panel-file-list';
+import {
+	canCloseQueueEvaluationDialog,
+	canOpenQueueEvaluationDialog,
+	createClosedQueueEvaluationDialogState,
+	createInitialQueueEvaluationDialogState,
+	createOpenQueueEvaluationDialogState,
+	createUpdatedQueueEvaluationScores
+} from './queue-panel-evaluation-dialog-lifecycle';
+import {
+	saveQueuePanelEvaluation,
+	type QueuePanelEvaluationSaveFailureCode,
+	type QueuePanelEvaluationSaveResult
+} from './queue-panel-evaluation-save-workflow';
+import {
+	executeQueuePanelWorkOrder,
+	type QueuePanelWorkOrderExecutionResult
+} from './queue-panel-work-order-execution-workflow';
+import { cancelQueuePanelWorkOrder } from './queue-panel-work-order-cancel-workflow';
+import { completeQueuePanelWorkOrder } from './queue-panel-work-order-completion-workflow';
+import {
+	createQueuePanelManualWorkOrder,
+	updateQueuePanelManualWorkOrder,
+	type QueuePanelManualWorkOrderSaveDraft
+} from './queue-panel-manual-work-order-save-workflow';
+import { delegateQueuePanelReportEvaluation } from './queue-panel-report-evaluation-delegation-workflow';
+import { deleteQueuePanelFiles } from './queue-panel-file-delete-workflow';
+import {
+	markQueuePanelFileRead,
+	readQueuePanelReadFilePaths,
+	removeQueuePanelReadFilePaths
+} from './queue-panel-read-state-workflow';
+import { createQueuePanelExecutionContextReader } from './queue-panel-execution-context-workflow';
+import { previewQueuePanelWorkOrderPrompt } from './queue-panel-prompt-preview-workflow';
+import { refreshQueuePanelFiles } from './queue-panel-refresh-workflow';
+import {
+	readQueuePanelArtifactSelection,
+	type QueuePanelArtifactSelection,
+	type QueuePanelArtifactSelectionResult
+} from './queue-panel-selection';
+import {
+	createEmptyQueuePanelWorkspaceRegistryState,
+	startQueuePanelWorkspaceQueueFolderEnsure,
+	startQueuePanelWorkspaceRegistryReads,
+	subscribeQueuePanelWorkspaceRegistries
+} from './queue-panel-workspace-lifecycle';
+import {
+	addManualVoteOption as addManualVoteOptionToDraft,
+	createEmptyManualWorkOrderDraft,
+	createManualWorkOrderBodyWithSkillOptions,
+	createManualWorkOrderDraftFromTask,
+	createManualWorkOrderResolvedTitle,
+	removeManualVoteOption as removeManualVoteOptionFromDraft,
+	updateManualSkillOptionSelection,
+	updateManualWorkOrderRecordSelection,
+	updateManualVoteOption as updateManualVoteOptionInDraft,
+	updateManualWorkOrderSkillSelection,
+	type QueuePanelManualWorkOrderDraft
+} from './queue-panel-manual-work-order-draft';
+import {
 	getQueueExecutionErrorMessage as getLocalizedQueueExecutionErrorMessage,
 	getQueueFolderLocalizedError as getLocalizedQueueFolderError
 } from './queue-panel-errors';
@@ -186,117 +190,27 @@ import {
 	type WorkOrderDialogMode
 } from './queue-panel-types';
 
+type QueuePanelWorkOrderExecutionSuccessResult = Extract<
+	QueuePanelWorkOrderExecutionResult,
+	{ readonly ok: true }
+>;
+
+type QueuePanelWorkOrderExecutionFailureResult = Extract<
+	QueuePanelWorkOrderExecutionResult,
+	{ readonly ok: false }
+>;
+
 export interface QueuePanelControllerInput {
 	readonly workspace: () => WorkspaceRecord;
 	readonly refreshSignal: () => number;
 }
 
-const queuePrioritySortRank = {
-	urgent: 4,
-	high: 3,
-	normal: 2,
-	low: 1
-} as const satisfies Record<WorkduckQueueWorkPriority, number>;
-
-function compareQueueFiles(left: QueueCardEntry, right: QueueCardEntry, sortOption: QueueSortOption) {
-	switch (sortOption) {
-		case 'created-asc':
-			return compareQueueCreatedAt(left, right, 'asc') || compareQueueTitle(left, right);
-		case 'created-desc':
-			return compareQueueCreatedAt(left, right, 'desc') || compareQueueTitle(left, right);
-		case 'priority-asc':
-			return (
-				compareQueuePriority(left, right, 'asc') ||
-				compareQueueCreatedAt(left, right, 'desc') ||
-				compareQueueTitle(left, right)
-			);
-		case 'priority-desc':
-			return (
-				compareQueuePriority(left, right, 'desc') ||
-				compareQueueCreatedAt(left, right, 'desc') ||
-				compareQueueTitle(left, right)
-			);
-	}
-}
-
-function compareQueueCreatedAt(
-	left: QueueCardEntry,
-	right: QueueCardEntry,
-	direction: 'asc' | 'desc'
-) {
-	const leftTimestamp = getQueueCreatedAtTime(left);
-	const rightTimestamp = getQueueCreatedAtTime(right);
-
-	if (leftTimestamp === 0 && rightTimestamp === 0) {
-		return 0;
-	}
-
-	if (leftTimestamp === 0) {
-		return 1;
-	}
-
-	if (rightTimestamp === 0) {
-		return -1;
-	}
-
-	return direction === 'asc'
-		? leftTimestamp - rightTimestamp
-		: rightTimestamp - leftTimestamp;
-}
-
-function compareQueuePriority(
-	left: QueueCardEntry,
-	right: QueueCardEntry,
-	direction: 'asc' | 'desc'
-) {
-	const leftRank = getQueuePrioritySortRank(left);
-	const rightRank = getQueuePrioritySortRank(right);
-
-	if (leftRank === 0 && rightRank === 0) {
-		return 0;
-	}
-
-	if (leftRank === 0) {
-		return 1;
-	}
-
-	if (rightRank === 0) {
-		return -1;
-	}
-
-	return direction === 'asc' ? leftRank - rightRank : rightRank - leftRank;
-}
-
-function compareQueueTitle(left: QueueCardEntry, right: QueueCardEntry) {
-	return left.title.localeCompare(right.title);
-}
-
-function getQueueCreatedAtTime(file: QueueCardEntry) {
-	const timestamp = Date.parse(file.createdAt);
-
-	return Number.isFinite(timestamp) ? timestamp : 0;
-}
-
-function getQueuePrioritySortRank(file: QueueCardEntry) {
-	return file.priority === null ? 0 : queuePrioritySortRank[file.priority];
-}
-
-function shouldBulkDeleteQueueFile(file: QueueCardEntry, includePending: boolean) {
-	if (file.kind === 'unsupported') {
-		return false;
-	}
-
-	return (
-		file.executionState === 'completed' ||
-		(includePending && file.executionState !== null)
-	);
-}
-
 export function createQueuePanelController(input: QueuePanelControllerInput) {
 	let workspace = $derived(input.workspace());
 	let refreshSignal = $derived(input.refreshSignal());
-	const QUEUE_AUTO_REFRESH_INTERVAL_MS = 30_000;
-	const QUEUE_CONTEXT_MENU_MARGIN_PX = 12;
+	const QUEUE_AUTO_REFRESH_ACTIVE_MS = 30_000;
+	const QUEUE_AUTO_REFRESH_IDLE_MS = 60_000;
+	const QUEUE_AUTO_REFRESH_HIDDEN_MS = 60_000;
 	const reviewDecisionOptions = [
 		{ value: 'approved' },
 		{ value: 'needs-work' },
@@ -304,6 +218,8 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 	] as const satisfies readonly {
 		readonly value: Exclude<WorkduckQueueReviewDecision, 'pending'>;
 	}[];
+	const initialManualWorkOrderDraft = createEmptyManualWorkOrderDraft();
+	const executionContextReader = createQueuePanelExecutionContextReader();
 
 
 	let appearanceSettings = $state<AppearanceSettings>(createDefaultAppearanceSettings());
@@ -329,42 +245,51 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 	let isNewWorkOrderDialogOpen = $state(false);
 	let workOrderDialogMode = $state<WorkOrderDialogMode>('create');
 	let editingWorkOrderTaskId = $state<string | null>(null);
-	let manualWorkOrderTitle = $state('');
-	let manualWorkOrderBody = $state('');
-	let manualWorkOrderPriority = $state<WorkduckQueueWorkPriority>(defaultQueueWorkPriority);
+	let manualWorkOrderTitle = $state(initialManualWorkOrderDraft.title);
+	let manualWorkOrderBody = $state(initialManualWorkOrderDraft.body);
+	let manualWorkOrderPriority =
+		$state<WorkduckQueueWorkPriority>(initialManualWorkOrderDraft.priority);
 	let manualWorkOrderResponseLanguage =
-		$state<WorkduckQueueResponseLanguage>(defaultQueueResponseLanguage);
+		$state<WorkduckQueueResponseLanguage>(initialManualWorkOrderDraft.responseLanguage);
 	let manualWorkOrderResponseFormat =
-		$state<WorkduckQueueResponseFormat>(defaultQueueResponseFormat);
-	let manualWorkOrderKind = $state<WorkduckQueueTaskKind>('instruction');
-	let manualVoteOptions = $state<readonly ManualVoteOptionInput[]>(createManualVoteOptions(2));
-	let manualVoteCriteriaInput = $state('');
-	let selectedManualSkillIds = $state<string[]>([]);
-	let selectedManualSkillOptionIds = $state<string[]>([]);
-	let selectedManualAgentIds = $state<string[]>([]);
-	let selectedManualProjectIds = $state<string[]>([]);
-	let selectedManualRepositoryIds = $state<string[]>([]);
-	let selectedManualReferenceIds = $state<string[]>([]);
-	let skillRegistry = $state<SkillRegistry>(createEmptySkillRegistry(''));
-	let agentRegistry = $state<AgentRegistry>(createEmptyAgentRegistry(''));
-	let personaRegistry = $state<PersonaRegistry>(createEmptyPersonaRegistry(''));
-	let projectRegistry = $state<ProjectRegistry>(createEmptyProjectRegistry(''));
-	let referenceRegistry = $state<ReferenceRegistry>(createEmptyReferenceRegistry(''));
+		$state<WorkduckQueueResponseFormat>(initialManualWorkOrderDraft.responseFormat);
+	let manualWorkOrderKind = $state<WorkduckQueueTaskKind>(initialManualWorkOrderDraft.kind);
+	let manualVoteOptions =
+		$state<readonly ManualVoteOptionInput[]>(initialManualWorkOrderDraft.voteOptions);
+	let manualVoteCriteriaInput = $state(initialManualWorkOrderDraft.voteCriteriaInput);
+	let selectedManualSkillIds = $state<string[]>(initialManualWorkOrderDraft.selectedSkillIds);
+	let selectedManualSkillOptionIds =
+		$state<string[]>(initialManualWorkOrderDraft.selectedSkillOptionIds);
+	let selectedManualAgentIds = $state<string[]>(initialManualWorkOrderDraft.selectedAgentIds);
+	let selectedManualProjectIds = $state<string[]>(initialManualWorkOrderDraft.selectedProjectIds);
+	let selectedManualRepositoryIds =
+		$state<string[]>(initialManualWorkOrderDraft.selectedRepositoryIds);
+	let selectedManualReferenceIds =
+		$state<string[]>(initialManualWorkOrderDraft.selectedReferenceIds);
+	const initialWorkspaceRegistries = createEmptyQueuePanelWorkspaceRegistryState('');
+	let skillRegistry = $state<SkillRegistry>(initialWorkspaceRegistries.skillRegistry);
+	let agentRegistry = $state<AgentRegistry>(initialWorkspaceRegistries.agentRegistry);
+	let personaRegistry = $state<PersonaRegistry>(initialWorkspaceRegistries.personaRegistry);
+	let projectRegistry = $state<ProjectRegistry>(initialWorkspaceRegistries.projectRegistry);
+	let referenceRegistry = $state<ReferenceRegistry>(initialWorkspaceRegistries.referenceRegistry);
 	let isRefreshing = $state(false);
 	let isReading = $state(false);
 	let isWriting = $state(false);
 	let isPreviewingPrompt = $state(false);
 	let isCancellingExecution = $state(false);
 	let isSavingEvaluation = $state(false);
-	let evaluationDialog = $state<AgentEvaluationDialogState | null>(null);
-	let evaluationScores = $state<AgentEvaluationScores>(createDefaultAgentEvaluationScores());
+	const initialEvaluationDialogState = createInitialQueueEvaluationDialogState();
+	let evaluationDialog = $state<AgentEvaluationDialogState | null>(
+		initialEvaluationDialogState.dialog
+	);
+	let evaluationScores = $state<AgentEvaluationScores>(initialEvaluationDialogState.scores);
 	let queueContextMenu = $state<QueueContextMenuState | null>(null);
 	let queueContextMenuElement = $state<HTMLElement | undefined>(undefined);
 	let ensureSignature = $state('');
 	let refreshSignature = $state(0);
 	let workspaceDataReadGeneration = 0;
-	let knownCompletedReportPaths = new Set<string>();
-	let completedReportNotificationsArePrimed = false;
+	let queueAutoRefreshScheduler: QueueAutoRefreshScheduler | null = null;
+	const completedReportNotifications = createQueueCompletedReportNotifications();
 	let messages = $derived(getWorkduckMessages(appearanceSettings.languageId));
 	let readFilePathSet = $derived(new Set(readFilePaths));
 	let queueItemCountLabel = $derived(
@@ -446,32 +371,13 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		manualVoteOptions.filter((option) => option.label.trim().length > 0).length
 	);
 	let filteredFiles = $derived(
-		files.filter((file) => {
-			const matchesExecutionFilter =
-				queueExecutionFilter === 'all' ||
-				(queueExecutionFilter === 'pending' && file.executionState === 'pending') ||
-				(queueExecutionFilter === 'running' && file.executionState === 'running') ||
-				(queueExecutionFilter === 'failed' && file.executionState === 'failed') ||
-				(queueExecutionFilter === 'completed' && file.executionState === 'completed');
-			const matchesReadFilter =
-				queueReadFilter === 'all' ||
-				(queueReadFilter === 'unread' && !file.isRead) ||
-				(queueReadFilter === 'read' && file.isRead);
-			const matchesKindFilter = queueKindFilter === 'all' || file.kind === queueKindFilter;
-			const matchesPriorityFilter =
-				queuePriorityFilter === 'all' || file.priority === queuePriorityFilter;
-
-			if (
-				!matchesExecutionFilter ||
-				!matchesReadFilter ||
-				!matchesKindFilter ||
-				!matchesPriorityFilter
-			) {
-				return false;
-			}
-
-			return true;
-	}).sort((left, right) => compareQueueFiles(left, right, queueSortOption))
+		createFilteredQueueFiles(files, {
+			executionFilter: queueExecutionFilter,
+			readFilter: queueReadFilter,
+			kindFilter: queueKindFilter,
+			priorityFilter: queuePriorityFilter,
+			sortOption: queueSortOption
+		})
 	);
 	let hasSelectedQueueArtifact = $derived(
 		selectedReport !== null || selectedWorkOrder !== null || selectedProposal !== null
@@ -525,9 +431,14 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		const unsubscribeAppearanceSettings = subscribeAppearanceSettings((nextSettings) => {
 			appearanceSettings = nextSettings;
 	});
-		const intervalId = window.setInterval(() => {
-			void refreshQueueFiles({ silent: true });
-	}, QUEUE_AUTO_REFRESH_INTERVAL_MS);
+		queueAutoRefreshScheduler = startQueueAutoRefreshScheduler({
+			getDelayMs: getQueueAutoRefreshDelayMs,
+			refresh: () => {
+				void refreshQueueFiles({ silent: true });
+			},
+			environment: { document, window }
+		});
+
 		const handleQueueShortcut = (event: KeyboardEvent) => {
 			if (event.key !== 'F5') {
 				return;
@@ -540,8 +451,9 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		window.addEventListener('keydown', handleQueueShortcut);
 
 		return () => {
+			queueAutoRefreshScheduler?.dispose();
+			queueAutoRefreshScheduler = null;
 			window.removeEventListener('keydown', handleQueueShortcut);
-			window.clearInterval(intervalId);
 			unsubscribeAppearanceSettings();
 	};
 });
@@ -568,56 +480,74 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		queueContextMenu = null;
 		queueContextMenuElement = undefined;
 		reviews = [];
-		readFilePaths = readQueueReadFilePaths(workspace.id);
+		readFilePaths = readQueuePanelReadFilePaths(workspace.id);
 		queueExecutionFilter = 'all';
 		queueReadFilter = 'all';
 		queueKindFilter = 'all';
 		queuePriorityFilter = 'all';
 		queueSortOption = 'created-desc';
-		knownCompletedReportPaths = new Set();
-		completedReportNotificationsArePrimed = false;
-		skillRegistry = createEmptySkillRegistry(workspace.id);
-		agentRegistry = createEmptyAgentRegistry(workspace.id);
-		personaRegistry = createEmptyPersonaRegistry(workspace.id);
-		projectRegistry = createEmptyProjectRegistry(workspace.id);
-		referenceRegistry = createEmptyReferenceRegistry(workspace.id);
+		completedReportNotifications.reset();
+		const emptyWorkspaceRegistries = createEmptyQueuePanelWorkspaceRegistryState(workspace.id);
+		skillRegistry = emptyWorkspaceRegistries.skillRegistry;
+		agentRegistry = emptyWorkspaceRegistries.agentRegistry;
+		personaRegistry = emptyWorkspaceRegistries.personaRegistry;
+		projectRegistry = emptyWorkspaceRegistries.projectRegistry;
+		referenceRegistry = emptyWorkspaceRegistries.referenceRegistry;
 		selectedManualSkillIds = [];
 		selectedManualSkillOptionIds = [];
 		selectedManualAgentIds = [];
 		selectedManualProjectIds = [];
 		selectedManualRepositoryIds = [];
 		selectedManualReferenceIds = [];
+		const workspaceId = workspace.id;
+		const workspacePath = workspace.path;
 		const readGeneration = ++workspaceDataReadGeneration;
-		void readSkillsForWorkspace(workspace.id, workspace.path, readGeneration);
-		void readAgentsForWorkspace(workspace.id, workspace.path, readGeneration);
-		void readPersonasForWorkspace(workspace.id, workspace.path, readGeneration);
-		void readProjectsForWorkspace(workspace.id, workspace.path, readGeneration);
-		void readReferencesForWorkspace(workspace.id, workspace.path, readGeneration);
-		void ensureQueueFolderForWorkspace(workspace.id, workspace.path, readGeneration);
+		const workspaceDataReadIsStillCurrent = () =>
+			workspaceDataReadIsCurrent(workspaceId, workspacePath, readGeneration);
+		const workspaceRegistrySetters = {
+			setSkillRegistry: (nextRegistry: SkillRegistry) => {
+				skillRegistry = nextRegistry;
+			},
+			setAgentRegistry: (nextRegistry: AgentRegistry) => {
+				agentRegistry = nextRegistry;
+			},
+			setPersonaRegistry: (nextRegistry: PersonaRegistry) => {
+				personaRegistry = nextRegistry;
+			},
+			setProjectRegistry: (nextRegistry: ProjectRegistry) => {
+				projectRegistry = nextRegistry;
+			},
+			setReferenceRegistry: (nextRegistry: ReferenceRegistry) => {
+				referenceRegistry = nextRegistry;
+			}
+		};
+		startQueuePanelWorkspaceRegistryReads({
+			workspaceId,
+			workspacePath,
+			isCurrent: workspaceDataReadIsStillCurrent,
+			...workspaceRegistrySetters
+		});
+		startQueuePanelWorkspaceQueueFolderEnsure({
+			workspacePath,
+			isCurrent: workspaceDataReadIsStillCurrent,
+			onReady: async () => {
+				error = null;
+				await refreshQueueFiles({ silent: true });
+			},
+			onFailure: (folderError) => {
+				error = folderError;
+				status = null;
+			}
+		});
 
-		const unsubscribeSkillRegistry = subscribeSkillRegistry(workspace.id, (nextRegistry) => {
-			skillRegistry = nextRegistry;
-	});
-		const unsubscribeAgentRegistry = subscribeAgentRegistry(workspace.id, (nextRegistry) => {
-			agentRegistry = nextRegistry;
-	});
-		const unsubscribePersonaRegistry = subscribePersonaRegistry(workspace.id, (nextRegistry) => {
-			personaRegistry = nextRegistry;
-	});
-		const unsubscribeProjectRegistry = subscribeProjectRegistry(workspace.id, (nextRegistry) => {
-			projectRegistry = nextRegistry;
-	});
-		const unsubscribeReferenceRegistry = subscribeReferenceRegistry(workspace.id, (nextRegistry) => {
-			referenceRegistry = nextRegistry;
-	});
+		const unsubscribeWorkspaceRegistries = subscribeQueuePanelWorkspaceRegistries(
+			workspaceId,
+			workspaceRegistrySetters
+		);
 
 		return () => {
 			workspaceDataReadGeneration += 1;
-			unsubscribeSkillRegistry();
-			unsubscribeAgentRegistry();
-			unsubscribePersonaRegistry();
-			unsubscribeProjectRegistry();
-			unsubscribeReferenceRegistry();
+			unsubscribeWorkspaceRegistries();
 	};
 });
 
@@ -635,7 +565,10 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 			return;
 	}
 
-		void alignQueueContextMenuToViewport(queueContextMenu, queueContextMenuElement);
+		void alignQueueContextMenuToViewport({
+			menuSnapshot: queueContextMenu,
+			menuElement: queueContextMenuElement
+		});
 });
 
 	$effect(() => {
@@ -643,123 +576,12 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 			return;
 	}
 
-		function handleGlobalPointerDown(event: PointerEvent) {
-			if (
-				queueContextMenuElement !== undefined &&
-				event.target instanceof Node &&
-				queueContextMenuElement.contains(event.target)
-			) {
-				return;
-			}
-
-			closeQueueContextMenu();
-	}
-
-		function handleGlobalContextKey(event: KeyboardEvent) {
-			if (event.key === 'Escape') {
-				closeQueueContextMenu();
-			}
-	}
-
-		window.addEventListener('pointerdown', handleGlobalPointerDown);
-		window.addEventListener('keydown', handleGlobalContextKey);
-
-		return () => {
-			window.removeEventListener('pointerdown', handleGlobalPointerDown);
-			window.removeEventListener('keydown', handleGlobalContextKey);
-	};
+		return subscribeQueueContextMenuDismissal({
+			window,
+			getMenuElement: () => queueContextMenuElement,
+			close: closeQueueContextMenu
+		});
 });
-
-	async function ensureQueueFolderForWorkspace(
-		workspaceId: string,
-		workspacePath: string,
-		readGeneration: number
-	) {
-		const result = await ensureQueueFolder(workspacePath);
-
-		if (!workspaceDataReadIsCurrent(workspaceId, workspacePath, readGeneration)) {
-			return;
-		}
-
-		if (result.ok) {
-			error = null;
-			await refreshQueueFiles({ silent: true });
-			return;
-		}
-
-		error = result.error;
-		status = null;
-	}
-
-	async function readSkillsForWorkspace(
-		workspaceId: string,
-		workspacePath: string,
-		readGeneration: number
-	) {
-		const result = await readSkillRegistry(workspaceId, workspacePath);
-
-		if (!workspaceDataReadIsCurrent(workspaceId, workspacePath, readGeneration)) {
-			return;
-		}
-
-		skillRegistry = result.registry;
-	}
-
-	async function readAgentsForWorkspace(
-		workspaceId: string,
-		workspacePath: string,
-		readGeneration: number
-	) {
-		const result = await readAgentRegistry(workspaceId, workspacePath);
-
-		if (!workspaceDataReadIsCurrent(workspaceId, workspacePath, readGeneration)) {
-			return;
-		}
-
-		agentRegistry = result.registry;
-	}
-
-	async function readPersonasForWorkspace(
-		workspaceId: string,
-		workspacePath: string,
-		readGeneration: number
-	) {
-		const result = await readPersonaRegistry(workspaceId, workspacePath);
-
-		if (!workspaceDataReadIsCurrent(workspaceId, workspacePath, readGeneration)) {
-			return;
-		}
-
-		personaRegistry = result.registry;
-	}
-
-	async function readProjectsForWorkspace(
-		workspaceId: string,
-		workspacePath: string,
-		readGeneration: number
-	) {
-		const result = await readProjectRegistry(workspaceId);
-
-		if (!workspaceDataReadIsCurrent(workspaceId, workspacePath, readGeneration)) {
-			return;
-		}
-
-		projectRegistry = result.registry;
-	}
-
-	async function readReferencesForWorkspace(
-		workspaceId: string,
-		workspacePath: string,
-		readGeneration: number
-	) {
-		const result = await readReferenceRegistry(workspaceId, workspacePath);
-
-		if (!workspaceDataReadIsCurrent(workspaceId, workspacePath, readGeneration)) {
-			return;
-		}
-
-		referenceRegistry = result.registry;
-	}
 
 	function workspaceDataReadIsCurrent(
 		workspaceId: string,
@@ -774,28 +596,22 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 	}
 
 	async function readExecutionContextForWorkspace(): Promise<QueueExecutionContext> {
-		const [skillResult, agentResult, referenceResult, personaResult] = await Promise.all([
-			readSkillRegistry(workspace.id, workspace.path),
-			readAgentRegistry(workspace.id, workspace.path),
-			readReferenceRegistry(workspace.id, workspace.path),
-			readPersonaRegistry(workspace.id, workspace.path)
-		]);
+		const result = await executionContextReader.read({
+			workspaceId: workspace.id,
+			workspacePath: workspace.path
+		});
 
-		skillRegistry = skillResult.registry;
-		agentRegistry = agentResult.registry;
-		referenceRegistry = referenceResult.registry;
-		personaRegistry = personaResult.registry;
+		skillRegistry = result.skillRegistry;
+		agentRegistry = result.agentRegistry;
+		referenceRegistry = result.referenceRegistry;
+		personaRegistry = result.personaRegistry;
 
-		return {
-			agents: agentResult.registry.agents,
-			skills: getAllSkills(skillResult.registry),
-			references: referenceResult.registry.references,
-			personas: personaResult.registry.personas
-	};
-}
+		return result.executionContext;
+	}
 
 	async function refreshQueueFiles(options: { readonly silent?: boolean } = {}) {
 		if (isRefreshing) {
+			queueAutoRefreshScheduler?.reschedule();
 			return;
 	}
 
@@ -804,26 +620,21 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		status = null;
 
 		try {
-			const result = await loadQueueFilesForWorkspace({
+			const result = await refreshQueuePanelFiles({
+				workspaceId: workspace.id,
 				workspacePath: workspace.path,
 				currentFiles: files,
 				currentReadFilePaths: readFilePaths,
-				recoverStaleRunning: !isWriting && !isCancellingExecution
+				selectedWorkOrder,
+				recoverStaleRunning: !isWriting && !isCancellingExecution,
+				completedReportNotifications,
+				showCompletedReportNotification
 			});
 
 			if (result.ok) {
-				if (result.readFilePathsChanged) {
-					readFilePaths = result.readFilePaths;
-					writeQueueReadFilePaths(workspace.id, result.readFilePaths);
-				}
-
-				applyStaleRunningWorkOrderRecoveries(result.recoveredStaleRunningWorkOrders);
-				notifyNewCompletedReports(result.files);
 				files = result.files;
-
-				if (result.queueFilesChanged) {
-					dispatchQueueFilesChanged(workspace.id);
-				}
+				readFilePaths = result.readFilePaths;
+				selectedWorkOrder = result.selectedWorkOrder;
 				if (!options.silent) {
 					status = null;
 				}
@@ -833,147 +644,91 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 			error = result.error;
 		} finally {
 			isRefreshing = false;
+			queueAutoRefreshScheduler?.reschedule();
 		}
 	}
 
-	function applyStaleRunningWorkOrderRecoveries(
-		recoveries: readonly { readonly workOrder: WorkduckQueueWorkOrder }[]
+	function getQueueAutoRefreshDelayMs() {
+		if (typeof document !== 'undefined' && document.visibilityState !== 'visible') {
+			return QUEUE_AUTO_REFRESH_HIDDEN_MS;
+		}
+
+		return hasActiveQueueWork() ? QUEUE_AUTO_REFRESH_ACTIVE_MS : QUEUE_AUTO_REFRESH_IDLE_MS;
+	}
+
+	function hasActiveQueueWork() {
+		return (
+			isWriting ||
+			isCancellingExecution ||
+			files.some((file) => file.executionState === 'running')
+		);
+	}
+
+	async function handleSelectQueueArtifact(file: QueueFileEntry) {
+		if (isReading) {
+			return;
+	}
+
+		isReading = true;
+		error = null;
+		parseError = null;
+		status = null;
+		resetQueueArtifactSelectionState();
+
+		try {
+			const result = await readQueuePanelArtifactSelection(workspace.path, file);
+
+			if (!result.ok) {
+				applyQueueArtifactSelectionFailure(result);
+				return;
+			}
+
+			applyQueueArtifactSelection(result.selection);
+			markQueueFileRead(result.selection.relativePath);
+	} finally {
+			isReading = false;
+	}
+}
+
+	function resetQueueArtifactSelectionState() {
+		selectedReport = null;
+		selectedReportPath = null;
+		selectedWorkOrder = null;
+		selectedWorkOrderPath = null;
+		selectedProposal = null;
+		selectedProposalPath = null;
+		promptPreviews = null;
+		reviews = [];
+	}
+
+	function applyQueueArtifactSelectionFailure(
+		result: Exclude<QueuePanelArtifactSelectionResult, { readonly ok: true }>
 	) {
-		for (const recovery of recoveries) {
-			if (selectedWorkOrder?.ref.id === recovery.workOrder.ref.id) {
-				selectedWorkOrder = recovery.workOrder;
-			}
+		if ('error' in result) {
+			error = result.error;
+			return;
+	}
+
+		parseError = result.parseError;
+	}
+
+	function applyQueueArtifactSelection(selection: QueuePanelArtifactSelection) {
+		if (selection.kind === 'result-report') {
+			selectedReport = selection.report;
+			selectedReportPath = selection.relativePath;
+			reviews = selection.reviews;
+			return;
+	}
+
+		if (selection.kind === 'work-order') {
+			selectedWorkOrder = selection.workOrder;
+			selectedWorkOrderPath = selection.relativePath;
+			return;
 		}
+
+		selectedProposal = selection.proposal;
+		selectedProposalPath = selection.relativePath;
 	}
-
-	async function markStaleRunningWorkOrderFailed(relativePath: string, workOrderId: string) {
-		const failedWorkOrder = await markStaleRunningWorkOrderFailedForWorkspace({
-			workspacePath: workspace.path,
-			relativePath,
-			workOrderId
-		});
-
-		if (failedWorkOrder !== null && selectedWorkOrder?.ref.id === failedWorkOrder.ref.id) {
-			selectedWorkOrder = failedWorkOrder;
-		}
-
-		return failedWorkOrder;
-	}
-
-	async function handleReviewReport(file: QueueFileEntry) {
-		if (isReading) {
-			return;
-	}
-
-		isReading = true;
-		error = null;
-		parseError = null;
-		status = null;
-		selectedReport = null;
-		selectedReportPath = null;
-		selectedWorkOrder = null;
-		selectedWorkOrderPath = null;
-		selectedProposal = null;
-		selectedProposalPath = null;
-		promptPreviews = null;
-		reviews = [];
-
-		try {
-			const result = await readQueueResultReportSelection(workspace.path, file);
-
-			if (!result.ok) {
-				if ('error' in result) {
-					error = result.error;
-				} else {
-					parseError = result.parseError;
-				}
-				return;
-			}
-
-			selectedReport = result.report;
-			selectedReportPath = result.relativePath;
-			reviews = result.reviews;
-			markQueueFileRead(result.relativePath);
-	} finally {
-			isReading = false;
-	}
-}
-
-	async function handleViewWorkOrder(file: QueueFileEntry) {
-		if (isReading) {
-			return;
-	}
-
-		isReading = true;
-		error = null;
-		parseError = null;
-		status = null;
-		selectedReport = null;
-		selectedReportPath = null;
-		selectedWorkOrder = null;
-		selectedWorkOrderPath = null;
-		selectedProposal = null;
-		selectedProposalPath = null;
-		promptPreviews = null;
-		reviews = [];
-
-		try {
-			const result = await readQueueWorkOrderSelection(workspace.path, file);
-
-			if (!result.ok) {
-				if ('error' in result) {
-					error = result.error;
-				} else {
-					parseError = result.parseError;
-				}
-				return;
-			}
-
-			selectedWorkOrder = result.workOrder;
-			selectedWorkOrderPath = result.relativePath;
-			markQueueFileRead(result.relativePath);
-	} finally {
-			isReading = false;
-	}
-}
-
-	async function handleViewProposal(file: QueueFileEntry) {
-		if (isReading) {
-			return;
-	}
-
-		isReading = true;
-		error = null;
-		parseError = null;
-		status = null;
-		selectedReport = null;
-		selectedReportPath = null;
-		selectedWorkOrder = null;
-		selectedWorkOrderPath = null;
-		selectedProposal = null;
-		selectedProposalPath = null;
-		promptPreviews = null;
-		reviews = [];
-
-		try {
-			const result = await readQueueProposalSelection(workspace.path, file);
-
-			if (!result.ok) {
-				if ('error' in result) {
-					error = result.error;
-				} else {
-					parseError = result.parseError;
-				}
-				return;
-			}
-
-			selectedProposal = result.proposal;
-			selectedProposalPath = result.relativePath;
-			markQueueFileRead(result.relativePath);
-	} finally {
-			isReading = false;
-	}
-}
 
 	function clearQueueSelection() {
 		selectedReport = null;
@@ -1016,8 +771,11 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 
 		const relativePathSet = new Set(relativePaths);
 		files = files.filter((file) => !relativePathSet.has(file.relativePath));
-		readFilePaths = readFilePaths.filter((relativePath) => !relativePathSet.has(relativePath));
-		writeQueueReadFilePaths(workspace.id, readFilePaths);
+		readFilePaths = removeQueuePanelReadFilePaths({
+			workspaceId: workspace.id,
+			currentReadFilePaths: readFilePaths,
+			relativePaths
+		});
 
 		for (const relativePath of relativePathSet) {
 			clearQueueSelectionForPath(relativePath);
@@ -1025,17 +783,11 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 	}
 
 	function openQueueContextMenu(event: MouseEvent, file: QueueCardEntry) {
-		if (file.kind === 'unsupported' || isWriting) {
+		if (!canOpenQueueContextMenu(file, isWriting)) {
 			return;
 	}
 
-		event.preventDefault();
-		event.stopPropagation();
-		queueContextMenu = {
-			x: event.clientX,
-			y: event.clientY,
-			file
-	};
+		queueContextMenu = createQueueContextMenuState(event, file);
 }
 
 	function closeQueueContextMenu() {
@@ -1043,41 +795,28 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		queueContextMenuElement = undefined;
 }
 
-	async function alignQueueContextMenuToViewport(
-		menuSnapshot: QueueContextMenuState,
-		menuElement: HTMLElement
-	) {
-		await tick();
-
-		if (
-			typeof window === 'undefined' ||
-			queueContextMenu !== menuSnapshot ||
-			queueContextMenuElement !== menuElement
-		) {
+	async function alignQueueContextMenuToViewport(input: {
+		readonly menuSnapshot: QueueContextMenuState;
+		readonly menuElement: HTMLElement;
+	}) {
+		if (typeof window === 'undefined') {
 			return;
 	}
 
-		const menuRect = menuElement.getBoundingClientRect();
-		const maxX = Math.max(
-			QUEUE_CONTEXT_MENU_MARGIN_PX,
-			window.innerWidth - menuRect.width - QUEUE_CONTEXT_MENU_MARGIN_PX
-		);
-		const maxY = Math.max(
-			QUEUE_CONTEXT_MENU_MARGIN_PX,
-			window.innerHeight - menuRect.height - QUEUE_CONTEXT_MENU_MARGIN_PX
-		);
-		const nextX = Math.min(Math.max(QUEUE_CONTEXT_MENU_MARGIN_PX, menuSnapshot.x), maxX);
-		const nextY = Math.min(Math.max(QUEUE_CONTEXT_MENU_MARGIN_PX, menuSnapshot.y), maxY);
+		const alignedMenu = await createViewportAlignedQueueContextMenu({
+			...input,
+			window,
+			waitForDomUpdate: tick,
+			isCurrent: () =>
+				queueContextMenu === input.menuSnapshot &&
+				queueContextMenuElement === input.menuElement
+		});
 
-		if (nextX === menuSnapshot.x && nextY === menuSnapshot.y) {
+		if (alignedMenu === null) {
 			return;
 	}
 
-		queueContextMenu = {
-			...menuSnapshot,
-			x: nextX,
-			y: nextY
-	};
+		queueContextMenu = alignedMenu;
 }
 
 	async function handleDeleteContextQueueFile() {
@@ -1094,16 +833,22 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		status = null;
 
 		try {
-			const result = await deleteQueueFile(workspace.path, targetFile.relativePath);
+			const result = await deleteQueuePanelFiles({
+				workspacePath: workspace.path,
+				relativePaths: [targetFile.relativePath]
+			});
 
 			if (!result.ok) {
+				applyDeletedQueueFiles(result.deletedRelativePaths);
 				error = result.error;
 				return;
 			}
 
-			removeQueueFilesFromState([result.relativePath]);
-			status = messages.queue.deletedFile.replace('{relativePath}', result.relativePath);
-			dispatchQueueFilesChanged(workspace.id);
+			applyDeletedQueueFiles(result.deletedRelativePaths);
+			status = messages.queue.deletedFile.replace(
+				'{relativePath}',
+				result.deletedRelativePaths[0] ?? targetFile.relativePath
+			);
 	} finally {
 			isWriting = false;
 	}
@@ -1125,54 +870,71 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		parseError = null;
 		status = null;
 
-		const deletedRelativePaths: string[] = [];
-
 		try {
-			for (const targetFile of targetFiles) {
-				const result = await deleteQueueFile(workspace.path, targetFile.relativePath);
+			const result = await deleteQueuePanelFiles({
+				workspacePath: workspace.path,
+				relativePaths: targetFiles.map((targetFile) => targetFile.relativePath)
+			});
 
-				if (!result.ok) {
-					removeQueueFilesFromState(deletedRelativePaths);
-
-					if (deletedRelativePaths.length > 0) {
-						dispatchQueueFilesChanged(workspace.id);
-					}
-
-					error = result.error;
-					return;
-				}
-
-				deletedRelativePaths.push(result.relativePath);
+			if (!result.ok) {
+				applyDeletedQueueFiles(result.deletedRelativePaths);
+				error = result.error;
+				return;
 			}
 
-			removeQueueFilesFromState(deletedRelativePaths);
+			applyDeletedQueueFiles(result.deletedRelativePaths);
 			status = messages.queue.bulkDeletedFiles.replace(
 				'{count}',
-				deletedRelativePaths.length.toString()
+				result.deletedRelativePaths.length.toString()
 			);
-			dispatchQueueFilesChanged(workspace.id);
 	} finally {
 			isWriting = false;
 	}
 }
 
+	function applyDeletedQueueFiles(deletedRelativePaths: readonly string[]) {
+		removeQueueFilesFromState(deletedRelativePaths);
+
+		if (deletedRelativePaths.length > 0) {
+			dispatchQueueFilesChanged(workspace.id);
+		}
+	}
+
+	function applyManualWorkOrderDraft(draft: QueuePanelManualWorkOrderDraft) {
+		manualWorkOrderTitle = draft.title;
+		manualWorkOrderBody = draft.body;
+		manualWorkOrderPriority = draft.priority;
+		manualWorkOrderResponseLanguage = draft.responseLanguage;
+		manualWorkOrderResponseFormat = draft.responseFormat;
+		manualWorkOrderKind = draft.kind;
+		manualVoteOptions = draft.voteOptions;
+		manualVoteCriteriaInput = draft.voteCriteriaInput;
+		selectedManualSkillIds = draft.selectedSkillIds;
+		selectedManualSkillOptionIds = draft.selectedSkillOptionIds;
+		selectedManualAgentIds = draft.selectedAgentIds;
+		selectedManualProjectIds = draft.selectedProjectIds;
+		selectedManualRepositoryIds = draft.selectedRepositoryIds;
+		selectedManualReferenceIds = draft.selectedReferenceIds;
+	}
+
+	function resetManualWorkOrderDraft(input: {
+		readonly responseLanguage?: WorkduckQueueResponseLanguage;
+	} = {}) {
+		applyManualWorkOrderDraft(createEmptyManualWorkOrderDraft(input));
+	}
+
+	function finishManualWorkOrderDialog() {
+		isNewWorkOrderDialogOpen = false;
+		workOrderDialogMode = 'create';
+		editingWorkOrderTaskId = null;
+		resetManualWorkOrderDraft();
+	}
+
 	function openNewWorkOrderDialog() {
 		isNewWorkOrderDialogOpen = true;
 		workOrderDialogMode = 'create';
 		editingWorkOrderTaskId = null;
-		manualWorkOrderTitle = '';
-		manualWorkOrderBody = '';
-		manualWorkOrderPriority = defaultQueueWorkPriority;
-		manualWorkOrderResponseLanguage = getDefaultManualResponseLanguage();
-		manualWorkOrderResponseFormat = defaultQueueResponseFormat;
-		manualWorkOrderKind = 'instruction';
-		resetManualVoteFields();
-		selectedManualSkillIds = [];
-		selectedManualSkillOptionIds = [];
-		selectedManualAgentIds = [];
-		selectedManualProjectIds = [];
-		selectedManualRepositoryIds = [];
-		selectedManualReferenceIds = [];
+		resetManualWorkOrderDraft({ responseLanguage: getDefaultManualResponseLanguage() });
 		error = null;
 		parseError = null;
 		status = null;
@@ -1191,19 +953,7 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		isNewWorkOrderDialogOpen = true;
 		workOrderDialogMode = 'edit';
 		editingWorkOrderTaskId = task.id;
-		manualWorkOrderTitle = task.title;
-		manualWorkOrderBody = task.body;
-		manualWorkOrderPriority = normalizeQueueWorkPriority(task.priority);
-		manualWorkOrderResponseLanguage = normalizeQueueResponseLanguage(task.responseLanguage);
-		manualWorkOrderResponseFormat = normalizeQueueResponseFormat(task.responseFormat);
-		manualWorkOrderKind = normalizeQueueTaskKind(task.kind);
-		loadManualVoteFields(task.vote);
-		selectedManualSkillIds = [...(task.skillIds ?? [])];
-	selectedManualSkillOptionIds = [];
-		selectedManualAgentIds = [...(task.agentIds ?? [])];
-		selectedManualProjectIds = [...(task.projectIds ?? [])];
-		selectedManualRepositoryIds = [...(task.repositoryIds ?? [])];
-		selectedManualReferenceIds = [...(task.referenceIds ?? [])];
+		applyManualWorkOrderDraft(createManualWorkOrderDraftFromTask(task));
 		error = null;
 		parseError = null;
 		status = null;
@@ -1214,22 +964,7 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 			return;
 	}
 
-		isNewWorkOrderDialogOpen = false;
-		workOrderDialogMode = 'create';
-		editingWorkOrderTaskId = null;
-		manualWorkOrderTitle = '';
-		manualWorkOrderBody = '';
-		manualWorkOrderPriority = defaultQueueWorkPriority;
-		manualWorkOrderResponseLanguage = defaultQueueResponseLanguage;
-		manualWorkOrderResponseFormat = defaultQueueResponseFormat;
-		manualWorkOrderKind = 'instruction';
-		resetManualVoteFields();
-		selectedManualSkillIds = [];
-		selectedManualSkillOptionIds = [];
-		selectedManualAgentIds = [];
-		selectedManualProjectIds = [];
-		selectedManualRepositoryIds = [];
-		selectedManualReferenceIds = [];
+		finishManualWorkOrderDialog();
 }
 
 	function handleQueueCardClick(file: QueueCardEntry) {
@@ -1242,58 +977,36 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 			return;
 	}
 
-		if (file.kind === 'result-report') {
-			void handleReviewReport(file);
-			return;
-	}
-
-		if (file.kind === 'proposal') {
-			void handleViewProposal(file);
-			return;
-	}
-
-		void handleViewWorkOrder(file);
+		void handleSelectQueueArtifact(file);
 }
 
 	function markQueueFileRead(relativePath: string) {
-		if (readFilePathSet.has(relativePath)) {
-			if (files.some((file) => file.relativePath === relativePath && !file.isRead)) {
-				files = files.map((file) =>
-					file.relativePath === relativePath ? { ...file, isRead: true } : file
-				);
-			}
-			return;
-	}
+		const nextReadState = markQueuePanelFileRead({
+			workspaceId: workspace.id,
+			currentFiles: files,
+			currentReadFilePaths: readFilePaths,
+			isAlreadyRead: readFilePathSet.has(relativePath),
+			relativePath
+		});
 
-		const nextReadFilePaths = [...readFilePaths, relativePath];
-
-		readFilePaths = nextReadFilePaths;
-		files = files.map((file) =>
-			file.relativePath === relativePath ? { ...file, isRead: true } : file
-		);
-		writeQueueReadFilePaths(workspace.id, nextReadFilePaths);
+		files = nextReadState.files;
+		readFilePaths = nextReadState.readFilePaths;
 }
 
 	function getQueueCardClass(file: QueueCardEntry) {
-		return [
-			'workduck-queue-file',
-			file.kind === 'unsupported' ? 'workduck-queue-file-disabled' : 'workduck-queue-file-button',
-			isSelectedQueueFile(file) ? 'workduck-queue-file-selected' : '',
-			file.executionState === 'pending' ? 'workduck-queue-file-pending' : '',
-			file.executionState === 'running' ? 'workduck-queue-file-running' : '',
-			file.executionState === 'failed' ? 'workduck-queue-file-failed' : '',
-			file.executionState === 'completed' ? 'workduck-queue-file-completed' : ''
-		]
-			.filter(Boolean)
-			.join(' ');
+		return createQueueCardClassFromSelection(file, {
+			reportPath: selectedReportPath,
+			workOrderPath: selectedWorkOrderPath,
+			proposalPath: selectedProposalPath
+		});
 }
 
 	function isSelectedQueueFile(file: QueueCardEntry) {
-		return (
-			file.relativePath === selectedReportPath ||
-			file.relativePath === selectedWorkOrderPath ||
-			file.relativePath === selectedProposalPath
-		);
+		return isQueueFileSelected(file, {
+			reportPath: selectedReportPath,
+			workOrderPath: selectedWorkOrderPath,
+			proposalPath: selectedProposalPath
+		});
 }
 
 	function findReportEvaluationDelegationPath(report: WorkduckQueueResultReport) {
@@ -1333,12 +1046,12 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 	async function handleDelegateReportEvaluation() {
 		if (selectedReport === null || isWriting) {
 			return;
-	}
+		}
 
 		if (!selectedReportCanDelegateEvaluation) {
 			status = messages.queue.noEvaluationTargets;
 			return;
-	}
+		}
 
 		if (selectedReportEvaluationDelegationPath !== null) {
 			status = messages.queue.evaluationAlreadyDelegated.replace(
@@ -1346,13 +1059,7 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 				selectedReportEvaluationDelegationPath
 			);
 			return;
-	}
-
-		const workOrder = createQueueWorkOrderForReportEvaluation(selectedReport, {
-			workspacePath: workspace.path,
-			reportPath: selectedReportPath,
-			evaluatorSkillId: WORKDUCK_AGENT_RESPONSE_EVALUATOR_SKILL_ID
-	});
+		}
 
 		isWriting = true;
 		error = null;
@@ -1360,11 +1067,12 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		status = null;
 
 		try {
-			const result = await writeQueueWorkOrderFile(
-				workspace.path,
-				createQueueWorkOrderFileName(workOrder),
-				serializeQueueArtifact(workOrder)
-			);
+			const result = await delegateQueuePanelReportEvaluation({
+				workspacePath: workspace.path,
+				reportPath: selectedReportPath,
+				report: selectedReport,
+				evaluatorSkillId: WORKDUCK_AGENT_RESPONSE_EVALUATOR_SKILL_ID
+			});
 
 			if (result.ok) {
 				status = messages.queue.evaluationDelegated.replace('{relativePath}', result.relativePath);
@@ -1373,17 +1081,17 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 			}
 
 			error = result.error;
-	} finally {
+		} finally {
 			isWriting = false;
+		}
 	}
-}
 
 	async function handleCreateManualWorkOrder(event: SubmitEvent) {
 		event.preventDefault();
 
 		if (!canCreateManualWorkOrder) {
 			return;
-	}
+		}
 
 		isWriting = true;
 		error = null;
@@ -1395,50 +1103,23 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 				return;
 			}
 
-			const workOrder = createManualQueueWorkOrder(
-				getManualWorkOrderTitle(),
-				createManualWorkOrderBody(),
-				manualWorkOrderPriority,
-				createManualWorkOrderSkillIds(),
-				createManualWorkOrderAgentIds(),
-				createManualWorkOrderReferenceIds(),
-				{
-					...createManualWorkOrderKindInput(),
-					projectIds: createManualWorkOrderProjectIds(),
-					repositoryIds: createManualWorkOrderRepositoryIds()
-				}
-			);
-			const result = await writeQueueWorkOrderFile(
-				workspace.path,
-				createQueueWorkOrderFileName(workOrder),
-				serializeQueueArtifact(workOrder)
-			);
+			const result = await createQueuePanelManualWorkOrder({
+				workspacePath: workspace.path,
+				draft: createManualWorkOrderSaveDraft()
+			});
 
 			if (result.ok) {
 				status = messages.queue.createdFile.replace('{relativePath}', result.relativePath);
-				isNewWorkOrderDialogOpen = false;
-				manualWorkOrderTitle = '';
-				manualWorkOrderBody = '';
-				manualWorkOrderPriority = defaultQueueWorkPriority;
-				manualWorkOrderResponseLanguage = defaultQueueResponseLanguage;
-				manualWorkOrderResponseFormat = defaultQueueResponseFormat;
-				manualWorkOrderKind = 'instruction';
-				resetManualVoteFields();
-				selectedManualSkillIds = [];
-				selectedManualSkillOptionIds = [];
-				selectedManualAgentIds = [];
-				selectedManualProjectIds = [];
-				selectedManualRepositoryIds = [];
-				selectedManualReferenceIds = [];
+				finishManualWorkOrderDialog();
 				await refreshQueueFiles({ silent: true });
 				return;
 			}
 
 			error = result.error;
-	} finally {
+		} finally {
 			isWriting = false;
+		}
 	}
-}
 
 	async function handleUpdateManualWorkOrder() {
 		if (
@@ -1447,51 +1128,27 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 			editingWorkOrderTaskId === null
 		) {
 			return;
-	}
+		}
 
-		const nextWorkOrder = updateQueueWorkOrderTask(selectedWorkOrder, editingWorkOrderTaskId, {
-			title: getManualWorkOrderTitle(),
-			body: createManualWorkOrderBody(),
-			priority: manualWorkOrderPriority,
-			projectIds: createManualWorkOrderProjectIds(),
-			repositoryIds: createManualWorkOrderRepositoryIds(),
-			skillIds: createManualWorkOrderSkillIds(),
-			agentIds: createManualWorkOrderAgentIds(),
-			referenceIds: createManualWorkOrderReferenceIds(),
-			...createManualWorkOrderKindInput()
-	});
-		const result = await updateQueueWorkOrderFile(
-			workspace.path,
-			selectedWorkOrderPath,
-			serializeQueueArtifact(nextWorkOrder)
-		);
+		const result = await updateQueuePanelManualWorkOrder({
+			workspacePath: workspace.path,
+			workOrderPath: selectedWorkOrderPath,
+			workOrder: selectedWorkOrder,
+			taskId: editingWorkOrderTaskId,
+			draft: createManualWorkOrderSaveDraft()
+		});
 
 		if (result.ok) {
-			selectedWorkOrder = nextWorkOrder;
+			selectedWorkOrder = result.workOrder;
 			selectedWorkOrderPath = result.relativePath;
 			status = messages.queue.updatedFile.replace('{relativePath}', result.relativePath);
-			isNewWorkOrderDialogOpen = false;
-			manualWorkOrderTitle = '';
-			manualWorkOrderBody = '';
-			manualWorkOrderPriority = defaultQueueWorkPriority;
-			manualWorkOrderResponseLanguage = defaultQueueResponseLanguage;
-			manualWorkOrderResponseFormat = defaultQueueResponseFormat;
-			manualWorkOrderKind = 'instruction';
-			resetManualVoteFields();
-			selectedManualSkillIds = [];
-			selectedManualSkillOptionIds = [];
-			selectedManualAgentIds = [];
-			selectedManualProjectIds = [];
-			selectedManualRepositoryIds = [];
-			selectedManualReferenceIds = [];
-			editingWorkOrderTaskId = null;
-			workOrderDialogMode = 'create';
+			finishManualWorkOrderDialog();
 			await refreshQueueFiles({ silent: true });
 			return;
-	}
+		}
 
 		error = result.error;
-}
+	}
 
 	async function handlePreviewWorkOrderPrompt() {
 		if (
@@ -1508,13 +1165,9 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		status = null;
 
 		try {
-			const executionContext = await readExecutionContextForWorkspace();
-			const previewResult = await previewQueueWorkOrderPrompt({
+			const previewResult = await previewQueuePanelWorkOrderPrompt({
 				workOrder: selectedWorkOrder,
-				agents: executionContext.agents,
-				skills: executionContext.skills,
-				references: executionContext.references,
-				personas: executionContext.personas
+				readExecutionContext: readExecutionContextForWorkspace
 			});
 
 			if (!previewResult.ok) {
@@ -1540,7 +1193,6 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 
 		const executableWorkOrder = selectedWorkOrder;
 		const workOrderPath = selectedWorkOrderPath;
-		const runningWorkOrder = startQueueWorkOrderExecution(executableWorkOrder);
 
 		isWriting = true;
 		error = null;
@@ -1548,95 +1200,61 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		status = messages.queue.executing;
 
 		try {
-			const runningResult = await updateQueueWorkOrderFile(
-				workspace.path,
+			const executionResult = await executeQueuePanelWorkOrder({
+				workspacePath: workspace.path,
 				workOrderPath,
-				serializeQueueArtifact(runningWorkOrder)
-			);
-
-			if (!runningResult.ok) {
-				error = runningResult.error;
-				status = null;
-				return;
-			}
-
-			selectedWorkOrder = runningWorkOrder;
-			await refreshQueueFiles({ silent: true });
-			await prepareDesktopNotificationPermission();
-			const executionContext = await readExecutionContextForWorkspace();
-			const executionResult = await executeQueueWorkOrder({
 				workOrder: executableWorkOrder,
-				agents: executionContext.agents,
-				vault: readEnvironmentVaultSession(workspace.id),
-				skills: executionContext.skills,
-				references: executionContext.references,
-				personas: executionContext.personas
+				readExecutionContext: readExecutionContextForWorkspace,
+				readVault: () => readEnvironmentVaultSession(workspace.id),
+				onRunningWorkOrderSaved: async (runningWorkOrder) => {
+					selectedWorkOrder = runningWorkOrder;
+					await refreshQueueFiles({ silent: true });
+					await prepareDesktopNotificationPermission();
+				}
 			});
 
-			if (!executionResult.ok) {
-				parseError = getQueueExecutionErrorMessage(executionResult.error);
-				const failedWorkOrder = failQueueWorkOrderExecution(runningWorkOrder);
-				const failedResult = await updateQueueWorkOrderFile(
-					workspace.path,
-					workOrderPath,
-					serializeQueueArtifact(failedWorkOrder)
-				);
-
-				if (failedResult.ok) {
-					selectedWorkOrder = failedWorkOrder;
-					await refreshQueueFiles({ silent: true });
-				}
-				status = null;
-				return;
-			}
-
-			const reportWriteResult = await writeQueueResultReportFile(
-				workspace.path,
-				createQueueResultReportFileNameFromLabel(executionResult.report.ref.label),
-				serializeQueueArtifact(executionResult.report)
-			);
-
-			if (!reportWriteResult.ok) {
-				error = reportWriteResult.error;
-				const failedWorkOrder = failQueueWorkOrderExecution(runningWorkOrder);
-				const failedResult = await updateQueueWorkOrderFile(
-					workspace.path,
-					workOrderPath,
-					serializeQueueArtifact(failedWorkOrder)
-				);
-
-				if (failedResult.ok) {
-					selectedWorkOrder = failedWorkOrder;
-					await refreshQueueFiles({ silent: true });
-				}
-				status = null;
-				return;
-			}
-
-			const archivedWorkOrder = archiveQueueWorkOrder(runningWorkOrder);
-			const archiveResult = await updateQueueWorkOrderFile(
-				workspace.path,
-				workOrderPath,
-				serializeQueueArtifact(archivedWorkOrder)
-			);
-
-			if (!archiveResult.ok) {
-				error = archiveResult.error;
-				status = null;
-				return;
-			}
-
-			selectedWorkOrder = archivedWorkOrder;
-			status = messages.queue.executedFile.replace('{relativePath}', reportWriteResult.relativePath);
-			rememberCompletedReportPath(reportWriteResult.relativePath);
-			showCompletedReportNotification(
-				executionResult.report.ref.label,
-				reportWriteResult.relativePath
-			);
-			await refreshQueueFiles({ silent: true });
+			await applyQueuePanelWorkOrderExecutionResult(executionResult);
 	} finally {
 			isWriting = false;
 	}
+}
+
+	async function applyQueuePanelWorkOrderExecutionResult(
+		result: QueuePanelWorkOrderExecutionResult
+	) {
+		if (!result.ok) {
+			await applyQueuePanelWorkOrderExecutionFailure(result);
+			return;
+		}
+
+		await applyQueuePanelWorkOrderExecutionSuccess(result);
+}
+
+	async function applyQueuePanelWorkOrderExecutionSuccess(
+		result: QueuePanelWorkOrderExecutionSuccessResult
+	) {
+		selectedWorkOrder = result.workOrder;
+		status = messages.queue.executedFile.replace('{relativePath}', result.reportRelativePath);
+		completedReportNotifications.rememberPath(result.reportRelativePath);
+		showCompletedReportNotification(result.report.ref.label, result.reportRelativePath);
+		await refreshQueueFiles({ silent: true });
+}
+
+	async function applyQueuePanelWorkOrderExecutionFailure(
+		result: QueuePanelWorkOrderExecutionFailureResult
+	) {
+		if (result.code === 'execution-failed') {
+			parseError = getQueueExecutionErrorMessage(result.error);
+		} else {
+			error = result.error;
+		}
+
+		if (result.workOrder !== null) {
+			selectedWorkOrder = result.workOrder;
+			await refreshQueueFiles({ silent: true });
+		}
+
+		status = null;
 }
 
 	async function handleCancelWorkOrderExecution() {
@@ -1649,28 +1267,20 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		status = messages.queue.cancellingExecution;
 
 		try {
-			const cancelResult = await cancelQueueWorkOrderExecution({
+			const cancelResult = await cancelQueuePanelWorkOrder({
+				workspacePath: workspace.path,
+				workOrderPath: selectedWorkOrderPath,
 				workOrderId: selectedWorkOrder.ref.id
 			});
 
+			if (cancelResult.ok && cancelResult.recoveredWorkOrder !== null) {
+				selectedWorkOrder = cancelResult.recoveredWorkOrder;
+				status = null;
+				await refreshQueueFiles({ silent: true });
+				return;
+			}
+
 			if (!cancelResult.ok) {
-				if (
-					cancelResult.error === 'queue-execution-work-order-not-running' &&
-					selectedWorkOrderPath !== null
-				) {
-					const recoveredWorkOrder = await markStaleRunningWorkOrderFailed(
-						selectedWorkOrderPath,
-						selectedWorkOrder.ref.id
-					);
-
-					if (recoveredWorkOrder !== null) {
-						selectedWorkOrder = recoveredWorkOrder;
-						status = null;
-						await refreshQueueFiles({ silent: true });
-						return;
-					}
-				}
-
 				parseError = getQueueExecutionErrorMessage(cancelResult.error);
 				status = null;
 			}
@@ -1686,32 +1296,34 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 			!canCompleteSelectedWorkOrder
 		) {
 			return;
-	}
+		}
 
 		isWriting = true;
 		error = null;
 		parseError = null;
 
 		try {
-			const archivedWorkOrder = archiveQueueWorkOrder(selectedWorkOrder);
-			const archiveResult = await updateQueueWorkOrderFile(
-				workspace.path,
-				selectedWorkOrderPath,
-				serializeQueueArtifact(archivedWorkOrder)
-			);
+			const completionResult = await completeQueuePanelWorkOrder({
+				workspacePath: workspace.path,
+				workOrderPath: selectedWorkOrderPath,
+				workOrder: selectedWorkOrder
+			});
 
-			if (!archiveResult.ok) {
-				error = archiveResult.error;
+			if (!completionResult.ok) {
+				error = completionResult.error;
 				return;
-		}
+			}
 
-			selectedWorkOrder = archivedWorkOrder;
-			status = messages.queue.completedFile.replace('{relativePath}', archiveResult.relativePath);
+			selectedWorkOrder = completionResult.workOrder;
+			status = messages.queue.completedFile.replace(
+				'{relativePath}',
+				completionResult.relativePath
+			);
 			await refreshQueueFiles({ silent: true });
-	} finally {
+		} finally {
 			isWriting = false;
+		}
 	}
-}
 
 	function getExecutionFilterLabel(filter: QueueExecutionFilter) {
 		return getLocalizedExecutionFilterLabel(messages, filter);
@@ -1771,7 +1383,21 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 
 	function createManualWorkOrderReferenceIds() {
 		return selectedManualReferenceIds;
-}
+	}
+
+	function createManualWorkOrderSaveDraft(): QueuePanelManualWorkOrderSaveDraft {
+		return {
+			title: getManualWorkOrderTitle(),
+			body: createManualWorkOrderBody(),
+			priority: manualWorkOrderPriority,
+			skillIds: createManualWorkOrderSkillIds(),
+			agentIds: createManualWorkOrderAgentIds(),
+			referenceIds: createManualWorkOrderReferenceIds(),
+			projectIds: createManualWorkOrderProjectIds(),
+			repositoryIds: createManualWorkOrderRepositoryIds(),
+			kindInput: createManualWorkOrderKindInput()
+		};
+	}
 
 	function getSkillDisplayName(skill: WorkduckSkillRecord) {
 		return getLocalizedSkillDisplayName(messages, skill);
@@ -1823,42 +1449,27 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 	}
 
 	function toggleManualWorkOrderSkill(skillId: string, isSelected: boolean) {
-		selectedManualSkillIds = updateSelectedRecordIds(selectedManualSkillIds, skillId, isSelected);
+		const nextSelection = updateManualWorkOrderSkillSelection({
+			selectedSkillIds: selectedManualSkillIds,
+			selectedSkillOptionIds: selectedManualSkillOptionIds,
+			skillId,
+			isSelected,
+			kind: manualWorkOrderKind,
+			skills: allSkills,
+			responseFormat: manualWorkOrderResponseFormat
+		});
 
-		if (!isSelected) {
-			selectedManualSkillOptionIds = selectedManualSkillOptionIds.filter(
-				(optionId) => !optionId.startsWith(`${skillId}:`)
-			);
-			applyManualSkillResponseFormat();
-			return;
-		}
-
-		if (!isSelected || manualWorkOrderKind !== 'instruction') {
-			return;
-		}
-
-		applyManualSkillResponseFormat();
-	}
-
-	function applyManualSkillResponseFormat() {
-		if (manualWorkOrderKind !== 'instruction') {
-			return;
-		}
-
-		const selectedSkills = allSkills.filter((skill) => selectedManualSkillIds.includes(skill.id));
-
-		if (selectedSkills.some((skill) => skill.outputTypes.includes('revision'))) {
-			manualWorkOrderResponseFormat = 'revision-draft';
-			return;
-		}
-
-		if (selectedSkills.some((skill) => skill.outputTypes.includes('writing'))) {
-			manualWorkOrderResponseFormat = 'writing-draft';
-		}
+		selectedManualSkillIds = nextSelection.selectedSkillIds;
+		selectedManualSkillOptionIds = nextSelection.selectedSkillOptionIds;
+		manualWorkOrderResponseFormat = nextSelection.responseFormat;
 	}
 
 	function toggleManualWorkOrderAgent(agentId: string, isSelected: boolean) {
-		selectedManualAgentIds = updateSelectedRecordIds(selectedManualAgentIds, agentId, isSelected);
+		selectedManualAgentIds = updateManualWorkOrderRecordSelection(
+			selectedManualAgentIds,
+			agentId,
+			isSelected
+		);
 	}
 
 	function toggleManualSkillOption(
@@ -1868,36 +1479,26 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		selectionMode: 'single' | 'multiple',
 		isSelected: boolean
 	) {
-		const selectionId = createSkillOptionSelectionId(skillId, groupId, optionId);
+		selectedManualSkillOptionIds = updateManualSkillOptionSelection({
+			selectedSkillOptionIds: selectedManualSkillOptionIds,
+			skillId,
+			groupId,
+			optionId,
+			selectionMode,
+			isSelected
+		});
+	}
 
-		if (selectionMode === 'single') {
-			const groupPrefix = `${skillId}:${groupId}:`;
-			selectedManualSkillOptionIds = isSelected
-				? [
-						...selectedManualSkillOptionIds.filter(
-							(selectedOptionId) => !selectedOptionId.startsWith(groupPrefix)
-						),
-						selectionId
-					]
-				: selectedManualSkillOptionIds.filter(
-						(selectedOptionId) => selectedOptionId !== selectionId
-					);
-			return;
-		}
-
-		selectedManualSkillOptionIds = updateSelectedRecordIds(
-			selectedManualSkillOptionIds,
-			selectionId,
+	function toggleManualWorkOrderProject(projectId: string, isSelected: boolean) {
+		selectedManualProjectIds = updateManualWorkOrderRecordSelection(
+			selectedManualProjectIds,
+			projectId,
 			isSelected
 		);
 	}
 
-	function toggleManualWorkOrderProject(projectId: string, isSelected: boolean) {
-		selectedManualProjectIds = updateSelectedRecordIds(selectedManualProjectIds, projectId, isSelected);
-	}
-
 	function toggleManualWorkOrderRepository(repositoryId: string, isSelected: boolean) {
-		selectedManualRepositoryIds = updateSelectedRecordIds(
+		selectedManualRepositoryIds = updateManualWorkOrderRecordSelection(
 			selectedManualRepositoryIds,
 			repositoryId,
 			isSelected
@@ -1905,45 +1506,19 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 	}
 
 	function toggleManualWorkOrderReference(referenceId: string, isSelected: boolean) {
-		selectedManualReferenceIds = updateSelectedRecordIds(
+		selectedManualReferenceIds = updateManualWorkOrderRecordSelection(
 			selectedManualReferenceIds,
 			referenceId,
 			isSelected
 		);
 	}
 
-	function resetManualVoteFields() {
-		const nextFields = createManualVoteFieldState(undefined);
-
-		manualVoteOptions = nextFields.options;
-		manualVoteCriteriaInput = nextFields.criteriaInput;
-	}
-
-	function loadManualVoteFields(vote: WorkduckQueueVoteSpec | undefined) {
-		const nextFields = createManualVoteFieldState(vote);
-
-		manualVoteOptions = nextFields.options;
-		manualVoteCriteriaInput = nextFields.criteriaInput;
-	}
-
 	function addManualVoteOption() {
-		if (manualVoteOptions.length >= 50) {
-			return;
-		}
-
-		manualVoteOptions = createManualVoteOptions(manualVoteOptions.length + 1, manualVoteOptions);
+		manualVoteOptions = addManualVoteOptionToDraft(manualVoteOptions);
 	}
 
 	function removeManualVoteOption(index: number) {
-		if (manualVoteOptions.length <= 2) {
-			return;
-		}
-
-		const nextOptions = manualVoteOptions
-			.filter((_, optionIndex) => optionIndex !== index)
-			.map(({ id, label, description }) => ({ id, label, description }));
-
-		manualVoteOptions = createManualVoteOptions(nextOptions.length, nextOptions);
+		manualVoteOptions = removeManualVoteOptionFromDraft(manualVoteOptions, index);
 	}
 
 	function updateManualVoteOption(
@@ -1951,67 +1526,32 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		field: 'label' | 'description',
 		value: string
 	) {
-		manualVoteOptions = manualVoteOptions.map((option, optionIndex) =>
-			optionIndex === index ? { ...option, [field]: value } : option
-		);
+		manualVoteOptions = updateManualVoteOptionInDraft({
+			options: manualVoteOptions,
+			index,
+			field,
+			value
+		});
 	}
 
 	function getManualWorkOrderTitle() {
-		const explicitTitle = manualWorkOrderTitle.trim();
-
-		if (manualWorkOrderKind !== 'direct-message') {
-			return explicitTitle;
-		}
-
-		const firstLine = manualWorkOrderBody
-			.split(/\r?\n/u)
-			.map((line) => line.trim().replace(/\s+/g, ' '))
-			.find((line) => line.length > 0);
-
-		if (firstLine === undefined) {
-			return '';
-		}
-
-		const summary = firstLine.length <= 48 ? firstLine : `${firstLine.slice(0, 45).trimEnd()}...`;
-
-		return `${messages.queue.workTypes.directMessage}: ${summary}`;
+		return createManualWorkOrderResolvedTitle({
+			title: manualWorkOrderTitle,
+			body: manualWorkOrderBody,
+			kind: manualWorkOrderKind,
+			directMessageLabel: messages.queue.workTypes.directMessage
+		});
 	}
 
 	function createManualWorkOrderBody() {
-		if (!manualSkillOptionsAreVisible || selectedManualSkillOptionIds.length === 0) {
-			return manualWorkOrderBody;
-		}
-
-		const selectedOptionSet = new Set(selectedManualSkillOptionIds);
-		const optionLines = allSkills.flatMap((skill) =>
-			skill.optionGroups.flatMap((group) =>
-				group.options
-					.filter((option) =>
-						selectedOptionSet.has(createSkillOptionSelectionId(skill.id, group.id, option.id))
-					)
-					.map((option) => {
-						const optionDescription =
-							option.description.length > 0 ? ` - ${option.description}` : '';
-
-						return `- ${getSkillDisplayName(skill)} / ${group.label}: ${option.label}${optionDescription}`;
-					})
-			)
-		);
-
-		if (optionLines.length === 0) {
-			return manualWorkOrderBody;
-		}
-
-		return [
-			manualWorkOrderBody.trimEnd(),
-			'',
-			`${messages.queue.skillOptions.title}:`,
-			...optionLines
-		].join('\n');
-	}
-
-	function createSkillOptionSelectionId(skillId: string, groupId: string, optionId: string) {
-		return `${skillId}:${groupId}:${optionId}`;
+		return createManualWorkOrderBodyWithSkillOptions({
+			body: manualWorkOrderBody,
+			skillOptionsAreVisible: manualSkillOptionsAreVisible,
+			selectedSkillOptionIds: selectedManualSkillOptionIds,
+			skills: allSkills,
+			skillOptionsTitle: messages.queue.skillOptions.title,
+			getSkillDisplayName
+		});
 	}
 
 	function createManualWorkOrderKindInput() {
@@ -2081,34 +1621,38 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 
 		if (
 			agent === null ||
-			isWriting ||
-			isSavingEvaluation ||
-			isReportTaskEvaluationRecorded(task)
+			!canOpenQueueEvaluationDialog({
+				agent,
+				isWriting,
+				isSavingEvaluation,
+				isEvaluationRecorded: isReportTaskEvaluationRecorded(task)
+			})
 		) {
 			return;
 	}
 
-		evaluationDialog = { task, agent };
-		evaluationScores = createDefaultAgentEvaluationScores();
+		const nextState = createOpenQueueEvaluationDialogState(task, agent);
+
+		evaluationDialog = nextState.dialog;
+		evaluationScores = nextState.scores;
 		error = null;
 		parseError = null;
 		status = null;
 }
 
 	function closeEvaluationDialog() {
-		if (isSavingEvaluation) {
+		if (!canCloseQueueEvaluationDialog(isSavingEvaluation)) {
 			return;
 	}
 
-		evaluationDialog = null;
-		evaluationScores = createDefaultAgentEvaluationScores();
+		const nextState = createClosedQueueEvaluationDialogState();
+
+		evaluationDialog = nextState.dialog;
+		evaluationScores = nextState.scores;
 }
 
 	function updateEvaluationScore(criterionId: AgentEvaluationCriterionId, value: string) {
-		evaluationScores = {
-			...evaluationScores,
-			[criterionId]: normalizeAgentEvaluationScore(value)
-	};
+		evaluationScores = createUpdatedQueueEvaluationScores(evaluationScores, criterionId, value);
 }
 
 	async function handleSaveEvaluation(event: SubmitEvent) {
@@ -2129,83 +1673,68 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		status = null;
 
 		try {
-			const targetAgentId = evaluationDialog.agent.id;
-			const evaluationKey = createQueueReportTaskEvaluationKey(
-				selectedReport,
-				evaluationDialog.task
-			);
-			const latestAgentRegistryResult = await readAgentRegistry(workspace.id, workspace.path);
-			const mutation = recordAgentEvaluationOnce(
-				latestAgentRegistryResult.registry,
-				targetAgentId,
-				evaluationKey,
-				evaluationScores
-			);
+			const saveResult = await saveQueuePanelEvaluation({
+				workspaceId: workspace.id,
+				workspacePath: workspace.path,
+				report: selectedReport,
+				reportPath: selectedReportPath,
+				task: evaluationDialog.task,
+				agentId: evaluationDialog.agent.id,
+				scores: evaluationScores
+			});
 
-			if (!mutation.ok) {
-				parseError = messages.agents.errors.notFound;
+			await applyQueuePanelEvaluationSaveState(saveResult);
+
+			if (!saveResult.ok) {
+				parseError = getQueuePanelEvaluationSaveFailureMessage(saveResult.code);
 				return;
 			}
 
-			const writeResult = await writeAgentRegistry(mutation.registry, workspace.path);
-
-			agentRegistry = writeResult.registry;
-
-			if (!writeResult.ok) {
-				parseError = messages.agents.errors.saveFailed;
-				return;
-			}
-
-			if (mutation.applied) {
-				const nextReport = recordQueueReportTaskEvaluation(
-					selectedReport,
-					evaluationDialog.task.id,
-					targetAgentId
-				);
-				const reportWriteResult = await updateQueueResultReportFile(
-					workspace.path,
-					selectedReportPath,
-					serializeQueueArtifact(nextReport)
-				);
-
-				if (!reportWriteResult.ok) {
-					parseError = messages.queue.errors.fileWriteFailed;
-					return;
-				}
-
-				selectedReport = nextReport;
-				rememberCompletedReportPath(reportWriteResult.relativePath);
-				await refreshQueueFiles({ silent: true });
-			}
-
-			const latestPersonaRegistryResult = await readPersonaRegistry(workspace.id, workspace.path);
-
-			if (!latestPersonaRegistryResult.ok) {
-				parseError = messages.personas.errors.readFailed;
-				return;
-			}
-
-			const nextPersonaRegistry = syncPersonaEvaluationSummariesFromAgents(
-				latestPersonaRegistryResult.registry,
-				mutation.registry.agents
-			);
-			const personaWriteResult = await writePersonaRegistry(nextPersonaRegistry, workspace.path);
-
-			personaRegistry = personaWriteResult.registry;
-
-			if (!personaWriteResult.ok) {
-				parseError = messages.personas.errors.saveFailed;
-				return;
-			}
-
-			status = mutation.applied
+			status = saveResult.applied
 				? messages.queue.evaluation.saved
 				: messages.queue.evaluation.alreadySaved;
-			evaluationDialog = null;
-			evaluationScores = createDefaultAgentEvaluationScores();
+			const nextState = createClosedQueueEvaluationDialogState();
+
+			evaluationDialog = nextState.dialog;
+			evaluationScores = nextState.scores;
 	} finally {
 			isSavingEvaluation = false;
 	}
+}
+
+	async function applyQueuePanelEvaluationSaveState(result: QueuePanelEvaluationSaveResult) {
+		if (result.agentRegistry !== null) {
+			agentRegistry = result.agentRegistry;
+		}
+
+		if (result.report !== null && result.reportRelativePath !== null) {
+			selectedReport = result.report;
+			completedReportNotifications.rememberPath(result.reportRelativePath);
+			await refreshQueueFiles({ silent: true });
+		}
+
+		if (result.personaRegistry !== null) {
+			personaRegistry = result.personaRegistry;
+		}
+}
+
+	function getQueuePanelEvaluationSaveFailureMessage(
+		code: QueuePanelEvaluationSaveFailureCode
+	) {
+		switch (code) {
+			case 'agent-read-failed':
+				return messages.agents.errors.readFailed;
+			case 'agent-not-found':
+				return messages.agents.errors.notFound;
+			case 'agent-save-failed':
+				return messages.agents.errors.saveFailed;
+			case 'report-write-failed':
+				return messages.queue.errors.fileWriteFailed;
+			case 'persona-read-failed':
+				return messages.personas.errors.readFailed;
+			case 'persona-save-failed':
+				return messages.personas.errors.saveFailed;
+		}
 }
 
 	function getQueueFolderLocalizedError(error: QueueFolderError) {
@@ -2214,36 +1743,6 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 
 	function getQueueExecutionErrorMessage(executionError: Parameters<typeof getLocalizedQueueExecutionErrorMessage>[1]) {
 		return getLocalizedQueueExecutionErrorMessage(messages, executionError);
-}
-
-	function notifyNewCompletedReports(nextFiles: readonly QueueCardEntry[]) {
-		const completedReportFiles = nextFiles.filter(isCompletedResultReportFile);
-		const nextCompletedReportPaths = new Set(
-			completedReportFiles.map((file) => file.relativePath)
-		);
-
-		if (!completedReportNotificationsArePrimed) {
-			knownCompletedReportPaths = nextCompletedReportPaths;
-			completedReportNotificationsArePrimed = true;
-			return;
-		}
-
-		for (const file of completedReportFiles) {
-			if (!knownCompletedReportPaths.has(file.relativePath)) {
-				showCompletedReportNotification(file.title, file.relativePath);
-			}
-		}
-
-		knownCompletedReportPaths = nextCompletedReportPaths;
-}
-
-	function rememberCompletedReportPath(relativePath: string) {
-		knownCompletedReportPaths = new Set([...knownCompletedReportPaths, relativePath]);
-		completedReportNotificationsArePrimed = true;
-}
-
-	function isCompletedResultReportFile(file: QueueCardEntry) {
-		return file.kind === 'result-report' && file.executionState === 'completed';
 }
 
 	function showCompletedReportNotification(title: string, relativePath: string) {

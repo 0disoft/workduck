@@ -11,9 +11,6 @@
 	} from '$lib/environment/secret-vault-crypto';
 	import type { WorkspaceRecord } from '$lib/workspaces/workspace-registry';
 	import {
-		enqueueRepositoryCommitWorkOrder
-	} from '$lib/queue/repository-commit-work-order';
-	import {
 		getQueueFolderLocalizedError
 	} from '$lib/queue/queue-panel-errors';
 	import type { QueueFolderError } from '$lib/queue/queue-folder';
@@ -32,6 +29,7 @@
 		type ProjectRepositoryOperationStorageError
 	} from './project-operation-storage';
 	import {
+		createProjectBoardSelectionIndex,
 		getTagsInputMaxLength,
 		type ProjectRepositoryGitStatus,
 		type ProjectRepositorySyncFilter
@@ -89,11 +87,9 @@
 		type ProjectRepositoryPublishTarget
 	} from './project-board-publish-actions';
 	import {
-		mapLatestTaskRunsByRepositoryId,
 		type ProjectRepositoryTaskRunRecordByRepositoryId
 	} from './project-repository-task-runs';
 	import {
-		readProjectRepositoryTaskRunRecords,
 		type ProjectRepositoryTaskRunRecord
 	} from './project-repository-task';
 	import {
@@ -108,6 +104,10 @@
 		canRunRemoteProjectRepositoryGitAction,
 		getProjectRepositoryCardKind
 	} from './project-board-repository-rules';
+	import {
+		canQueueProjectRepositoryCommitWorkOrder,
+		queueProjectRepositoryCommitWorkOrder
+	} from './project-board-repository-commit-work-order';
 	import { refreshProjectRepositoryGitStatusForBoard } from './project-board-runtime-state';
 	import {
 		getProjectContextMenuNode,
@@ -129,15 +129,18 @@
 		ProjectTagEditorTarget
 	} from './project-board-types';
 	import {
+		getDefaultRepositoryGithubCredentialSecretId as getDefaultRepositoryGithubCredentialSecretIdFromRegistry,
 		getGithubCredentialOptions,
+		resolveRepositoryDialogForkCredential as resolveRepositoryDialogForkCredentialFromVault,
 	} from './project-board-github-credentials';
-	import ProjectBoardOverlays from './ProjectBoardOverlays.svelte';
 	import ProjectBoardLanes from './ProjectBoardLanes.svelte';
 	import ProjectContextMenuLifecycle from './ProjectContextMenuLifecycle.svelte';
 	import ProjectBoardWorkspaceLifecycle from './ProjectBoardWorkspaceLifecycle.svelte';
 	import ProjectBoardRepositoryLifecycle from './ProjectBoardRepositoryLifecycle.svelte';
+	import ProjectBoardRepositoryTaskRunLifecycle from './ProjectBoardRepositoryTaskRunLifecycle.svelte';
 
 	const PROJECT_TAG_FILTER_DEBOUNCE_MS = 500;
+	type ProjectBoardOverlaysComponent = typeof import('./ProjectBoardOverlays.svelte').default;
 
 	interface Props {
 		readonly workspace: WorkspaceRecord;
@@ -206,16 +209,19 @@
 	let isSavingDetails = $state(false);
 	let isOpeningFolder = $state(false);
 	let contextMenuElement = $state<HTMLElement | undefined>(undefined);
+	let ProjectBoardOverlays = $state<ProjectBoardOverlaysComponent | null>(null);
+	let projectBoardOverlaysLoad: Promise<void> | null = null;
 
+	let selectionIndex = $derived(createProjectBoardSelectionIndex(registry.nodes));
+	let projectRows = $derived(selectionIndex.projectRows);
 	let boardSelection = $derived(createProjectBoardSurfaceSelection({
-		nodes: registry.nodes,
+		selectionIndex,
 		repositoryGitStatusById,
 		tagFilter,
 		repositorySyncFilter,
 		selectedProjectId,
 		selectedGroupId
 	}));
-	let projectRows = $derived(boardSelection.projectRows);
 	let normalizedTagFilter = $derived(boardSelection.normalizedTagFilter);
 	let repositoryFilterStats = $derived(boardSelection.repositoryFilterStats);
 	let projectNodes = $derived(boardSelection.projectNodes);
@@ -279,12 +285,38 @@
 			!isPublishingRepository &&
 			!isRepositoryBusy(publishTarget.repository.id)
 	);
+	let hasActiveOverlay = $derived(
+		contextMenu !== null ||
+			deleteCandidate !== null ||
+			descriptionEditor !== null ||
+			detailsEditor !== null ||
+			tagEditor !== null ||
+			githubCredentialEditor !== null ||
+			publishTarget !== null ||
+			dialog !== null
+	);
 
 	async function persistRegistry(nextRegistry: ProjectRegistry) {
 		return writeProjectRegistryForBoard(nextRegistry, (next) => {
 			registry = next.registry;
 			storageError = next.storageError;
 		});
+	}
+
+	function loadProjectBoardOverlays() {
+		if (ProjectBoardOverlays !== null) {
+			return Promise.resolve();
+		}
+
+		projectBoardOverlaysLoad ??= import('./ProjectBoardOverlays.svelte').then((module) => {
+			ProjectBoardOverlays = module.default;
+		});
+
+		return projectBoardOverlaysLoad;
+	}
+
+	function preloadProjectBoardOverlays() {
+		void loadProjectBoardOverlays();
 	}
 
 	const editorActions = createProjectBoardEditorHandlers({
@@ -408,10 +440,33 @@
 		contextMenuActions.closeContextMenu();
 	}
 
+	function openProjectBoardDialog(
+		mode: 'project' | 'group' | 'repository',
+		targetNodeId?: string
+	) {
+		preloadProjectBoardOverlays();
+		dialogActions.openDialog(mode, targetNodeId ?? null);
+	}
+
+	function openProjectBoardProjectContextMenu(event: MouseEvent, node: ProjectNodeRecord) {
+		preloadProjectBoardOverlays();
+		contextMenuActions.openProjectContextMenu(event, node);
+	}
+
+	function openProjectBoardRepositoryContextMenu(
+		event: MouseEvent,
+		node: ProjectNodeRecord,
+		repository: ProjectRepositoryLinkRecord
+	) {
+		preloadProjectBoardOverlays();
+		contextMenuActions.openRepositoryContextMenu(event, node, repository);
+	}
+
 	function openPublishRepositoryDialog(
 		node: ProjectNodeRecord,
 		repository: ProjectRepositoryLinkRecord
 	) {
+		preloadProjectBoardOverlays();
 		openProjectRepositoryPublishDialog(
 			{ node, repository },
 			{
@@ -514,38 +569,31 @@
 		node: ProjectNodeRecord,
 		repository: ProjectRepositoryLinkRecord
 	) {
-		if (!canQueueRepositoryCommitWorkOrder(repository) || repository.path === null) {
-			return;
-		}
-
-		commitWorkOrderTargetRepositoryId = repository.id;
-		formError = null;
-		queueFolderError = null;
-		status = null;
-
-		try {
-			const rootProjectId = resolveRootProjectId(node);
-			const result = await enqueueRepositoryCommitWorkOrder({
+		await queueProjectRepositoryCommitWorkOrder(
+			{
 				workspacePath: workspace.path,
-				repositoryName: repository.name,
-				repositoryPath: repository.path,
-				source: 'project',
-				responseLanguage: languageId,
-				projectIds: rootProjectId === null ? [] : [rootProjectId]
-			});
-
-			if (!result.ok) {
-				queueFolderError = result.error;
-				return;
+				nodes: registry.nodes,
+				node,
+				repository,
+				languageId,
+				queuedMessageTemplate: projectMessages.repository.commitWorkOrderQueued
+			},
+			{
+				canQueueRepositoryCommitWorkOrder,
+				setCommitWorkOrderTargetRepositoryId: (repositoryId) => {
+					commitWorkOrderTargetRepositoryId = repositoryId;
+				},
+				setFormError: (error) => {
+					formError = error;
+				},
+				setQueueFolderError: (error) => {
+					queueFolderError = error;
+				},
+				setStatus: (nextStatus) => {
+					status = nextStatus;
+				}
 			}
-
-			status = projectMessages.repository.commitWorkOrderQueued.replace(
-				'{relativePath}',
-				result.relativePath
-			);
-		} finally {
-			commitWorkOrderTargetRepositoryId = null;
-		}
+		);
 	}
 
 	function createRepositoryActionContext(): ProjectRepositoryActionContext {
@@ -637,23 +685,6 @@
 			...repositoryTaskRunById,
 			[repositoryId]: record
 		};
-	}
-
-	function getAllRepositories() {
-		return registry.nodes.flatMap((node) => node.repositories);
-	}
-
-	async function refreshRepositoryTaskRuns() {
-		const result = await readProjectRepositoryTaskRunRecords(workspace.path);
-
-		if (!result.ok) {
-			return;
-		}
-
-		repositoryTaskRunById = mapLatestTaskRunsByRepositoryId(
-			getAllRepositories(),
-			result.records
-		);
 	}
 
 	function isRepositoryBusy(repositoryId: string) {
@@ -808,48 +839,18 @@
 	}
 
 	function getDefaultRepositoryGithubCredentialSecretId(targetNodeId: string | null) {
-		if (targetNodeId === null) {
-			return '';
-		}
-
-		const node = registry.nodes.find((candidateNode) => candidateNode.id === targetNodeId);
-
-		if (node?.kind !== 'group') {
-			return '';
-		}
-
-		const project = node.parentId === null
-			? null
-			: registry.nodes.find((candidateNode) => candidateNode.id === node.parentId) ?? null;
-
-		return project?.githubCredentialSecretId ?? node.githubCredentialSecretId ?? '';
+		return getDefaultRepositoryGithubCredentialSecretIdFromRegistry(
+			registry.nodes,
+			targetNodeId
+		);
 	}
 
 	function resolveRepositoryDialogForkCredential(secretId: string) {
-		const credentialSecretId = secretId.trim();
-
-		if (credentialSecretId.length === 0) {
-			return 'project-github-credential-required';
-		}
-
-		if (environmentVault === null) {
-			return 'project-github-credential-vault-locked';
-		}
-
-		const credential = githubCredentialOptions.find((option) => option.id === credentialSecretId);
-
-		if (credential === undefined) {
-			return 'project-github-credential-missing';
-		}
-
-		if (credential.kind !== 'token') {
-			return 'project-github-credential-invalid';
-		}
-
-		return {
-			kind: 'github-token',
-			value: credential.value
-		} as const;
+		return resolveRepositoryDialogForkCredentialFromVault(
+			environmentVault,
+			githubCredentialOptions,
+			secretId
+		);
 	}
 
 	function isRepositoryCloneTarget(nodeId: string, repositoryId: string) {
@@ -902,25 +903,13 @@
 	}
 
 	function canQueueRepositoryCommitWorkOrder(repository: ProjectRepositoryLinkRecord) {
-		const gitStatus = repositoryGitStatusById[repository.id];
-
-		return (
-			repository.path !== null &&
-			isRepositoryPathInsideWorkspace(repository.path) &&
-			gitStatus?.isGitRepository === true &&
-			gitStatus.hasUncommittedChanges &&
-			!isRepositoryBusy(repository.id)
-		);
-	}
-
-	function resolveRootProjectId(node: ProjectNodeRecord) {
-		let currentNode: ProjectNodeRecord | undefined = node;
-
-		while (currentNode !== undefined && currentNode.kind !== 'project') {
-			currentNode = registry.nodes.find((candidate) => candidate.id === currentNode?.parentId);
-		}
-
-		return currentNode?.id ?? null;
+		return canQueueProjectRepositoryCommitWorkOrder({
+			repository,
+			gitStatus: repositoryGitStatusById[repository.id],
+			isRepositoryPathInsideWorkspace:
+				repository.path !== null && isRepositoryPathInsideWorkspace(repository.path),
+			isRepositoryBusy: isRepositoryBusy(repository.id)
+		});
 	}
 
 	function isRepositoryPathInsideWorkspace(repositoryPath: string) {
@@ -950,40 +939,13 @@
 		);
 	}
 
-	$effect(() => {
-		const workspacePath = workspace.path;
-		const repositorySignature = registry.nodes
-			.flatMap((node) =>
-				node.repositories.map((repository) => `${repository.id}:${repository.path ?? ''}`)
-			)
-			.join('|');
-		let isCurrent = true;
-
-		void repositorySignature;
-
-		const refresh = async () => {
-			const result = await readProjectRepositoryTaskRunRecords(workspacePath);
-
-			if (!isCurrent || !result.ok) {
-				return;
-			}
-
-			repositoryTaskRunById = mapLatestTaskRunsByRepositoryId(
-				getAllRepositories(),
-				result.records
-			);
-		};
-
-		void refresh();
-		const interval = window.setInterval(() => void refresh(), 2000);
-
-		return () => {
-			isCurrent = false;
-			window.clearInterval(interval);
-		};
-	});
-
 	$effect(() => clearTagFilterDebounce);
+
+	$effect(() => {
+		if (hasActiveOverlay) {
+			void loadProjectBoardOverlays();
+		}
+	});
 
 	function handleWindowKeydown(event: KeyboardEvent) {
 		if (event.key !== 'Escape') {
@@ -1042,6 +1004,7 @@
 <ProjectBoardRepositoryLifecycle
 	{workspace}
 	{projectRows}
+	{selectionIndex}
 	{registry}
 	{persistRegistry}
 	bind:folderRepairError
@@ -1049,6 +1012,12 @@
 	bind:repositoryGitInspectionSignature
 	bind:repositoryGitStatusById
 	bind:repositoryOperationById
+/>
+
+<ProjectBoardRepositoryTaskRunLifecycle
+	{workspace}
+	repositories={selectionIndex.registeredRepositories}
+	bind:repositoryTaskRunById
 />
 
 <ProjectContextMenuLifecycle
@@ -1064,7 +1033,7 @@
 	{tagFilterInput}
 	{repositorySyncFilter}
 	{repositoryFilterStats}
-	registryNodes={registry.nodes}
+	{selectionIndex}
 	{projectNodes}
 	{selectedProject}
 	{selectedProjectGroups}
@@ -1074,11 +1043,12 @@
 	onBoardContextMenu={contextMenuActions.openBoardContextMenu}
 	onRepositorySyncFilterSelect={selectRepositorySyncFilter}
 	onTagFilterInput={handleTagFilterInput}
-	onOpenDialog={dialogActions.openDialog}
+	onOverlayIntent={preloadProjectBoardOverlays}
+	onOpenDialog={openProjectBoardDialog}
 	onSelectProject={selectProject}
 	onSelectGroup={selectGroup}
-	onProjectContextMenu={contextMenuActions.openProjectContextMenu}
-	onRepositoryContextMenu={contextMenuActions.openRepositoryContextMenu}
+	onProjectContextMenu={openProjectBoardProjectContextMenu}
+	onRepositoryContextMenu={openProjectBoardRepositoryContextMenu}
 	{getNodeGithubCredentialName}
 	{getRepositoryGithubCredentialName}
 	{getRepositoryOperation}
@@ -1108,6 +1078,7 @@
 	</p>
 {/if}
 
+{#if hasActiveOverlay && ProjectBoardOverlays !== null}
 <ProjectBoardOverlays
 	{contextMenu}
 	{projectMessages}
@@ -1224,5 +1195,6 @@
 	onDialogBackdropClick={dialogActions.handleDialogBackdropClick}
 	onDialogClose={dialogActions.closeDialog}
 />
+{/if}
 
 <StatusToast message={status} />

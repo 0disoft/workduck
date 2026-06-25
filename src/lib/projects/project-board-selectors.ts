@@ -4,7 +4,8 @@ import {
 	PROJECT_TAGS_MAX_COUNT,
 	type ProjectNodeKind,
 	type ProjectNodeRecord,
-	type ProjectRepositoryLinkRecord
+	type ProjectRepositoryLinkRecord,
+	type ProjectTreeRow
 } from './project-registry';
 
 export type ProjectRepositorySyncFilter = 'all' | 'pull' | 'push' | 'commit';
@@ -27,19 +28,186 @@ export interface ProjectRepositoryFilterStats {
 
 export type ProjectRepositoryGitStatusById = Readonly<Record<string, ProjectRepositoryGitStatus>>;
 
+export type InspectableProjectRepositoryLinkRecord = ProjectRepositoryLinkRecord & {
+	readonly path: string;
+};
+
+export interface ProjectBoardSelectionIndex {
+	readonly projectNodes: readonly ProjectNodeRecord[];
+	readonly projectRows: readonly ProjectTreeRow[];
+	readonly childGroupsByParentId: ReadonlyMap<string, readonly ProjectNodeRecord[]>;
+	readonly registeredRepositories: readonly ProjectRepositoryLinkRecord[];
+	readonly repositoriesToInspect: readonly InspectableProjectRepositoryLinkRecord[];
+	readonly registeredRepositoryIds: ReadonlySet<string>;
+	readonly inspectableRepositoryIds: ReadonlySet<string>;
+	readonly nodeSearchFieldsById: ReadonlyMap<string, readonly string[]>;
+	readonly groupSearchFieldsById: ReadonlyMap<string, readonly string[]>;
+	readonly repositorySearchFieldsById: ReadonlyMap<string, readonly string[]>;
+	readonly groupCountByNodeId: ReadonlyMap<string, number>;
+	readonly repositoryCountByNodeId: ReadonlyMap<string, number>;
+}
+
+export interface ProjectBoardFilterMatchIndex {
+	readonly descendantGroupSearchMatchesByNodeId: ReadonlySet<string>;
+	readonly descendantGroupSyncMatchesByNodeId: ReadonlySet<string>;
+	readonly groupSearchMatchesByNodeId: ReadonlySet<string>;
+	readonly groupSyncMatchesByNodeId: ReadonlySet<string>;
+}
+
 export function getNodeKindLabel(kind: ProjectNodeKind) {
 	return kind === 'project' ? 'Project' : 'Group';
 }
 
-export function getProjectGroupCount(nodes: readonly ProjectNodeRecord[], projectId: string) {
-	return listDescendantGroups(nodes, projectId).length;
+export function createProjectBoardSelectionIndex(
+	nodes: readonly ProjectNodeRecord[]
+): ProjectBoardSelectionIndex {
+	const projectNodes: ProjectNodeRecord[] = [];
+	const projectRows: ProjectTreeRow[] = [];
+	const childGroupsByParentId = new Map<string, ProjectNodeRecord[]>();
+	const registeredRepositories: ProjectRepositoryLinkRecord[] = [];
+	const repositoriesToInspect: InspectableProjectRepositoryLinkRecord[] = [];
+	const registeredRepositoryIds = new Set<string>();
+	const inspectableRepositoryIds = new Set<string>();
+	const nodeSearchFieldsById = new Map<string, string[]>();
+	const groupSearchFieldsById = new Map<string, string[]>();
+	const repositorySearchFieldsById = new Map<string, string[]>();
+
+	for (const node of nodes) {
+		const nodeSearchFields = createProjectNodeSearchFields(node);
+		const groupSearchFields = [...nodeSearchFields];
+
+		for (const repository of node.repositories) {
+			const repositorySearchFields = createProjectRepositorySearchFields(repository);
+
+			registeredRepositories.push(repository);
+			registeredRepositoryIds.add(repository.id);
+			repositorySearchFieldsById.set(repository.id, repositorySearchFields);
+			groupSearchFields.push(...repositorySearchFields);
+
+			if (isInspectableProjectRepositoryLinkRecord(repository)) {
+				repositoriesToInspect.push(repository);
+				inspectableRepositoryIds.add(repository.id);
+			}
+		}
+
+		nodeSearchFieldsById.set(node.id, nodeSearchFields);
+		groupSearchFieldsById.set(node.id, groupSearchFields);
+
+		if (node.kind === 'project' && node.parentId === null) {
+			projectNodes.push(node);
+			continue;
+		}
+
+		if (node.kind !== 'group' || node.parentId === null) {
+			continue;
+		}
+
+		const childGroups = childGroupsByParentId.get(node.parentId) ?? [];
+		childGroups.push(node);
+		childGroupsByParentId.set(node.parentId, childGroups);
+	}
+
+	const groupCountByNodeId = new Map<string, number>();
+	const repositoryCountByNodeId = new Map<string, number>();
+
+	for (const node of nodes) {
+		countDescendantGroupStats(
+			node.id,
+			childGroupsByParentId,
+			groupCountByNodeId,
+			repositoryCountByNodeId
+		);
+	}
+
+	const visitedNodeIds = new Set<string>();
+
+	for (const projectNode of projectNodes) {
+		appendProjectTreeRows(projectRows, childGroupsByParentId, visitedNodeIds, projectNode, 0);
+	}
+
+	return {
+		projectNodes,
+		projectRows,
+		childGroupsByParentId,
+		registeredRepositories,
+		repositoriesToInspect,
+		registeredRepositoryIds,
+		inspectableRepositoryIds,
+		nodeSearchFieldsById,
+		groupSearchFieldsById,
+		repositorySearchFieldsById,
+		groupCountByNodeId,
+		repositoryCountByNodeId
+	};
 }
 
-export function getProjectRepositoryCount(nodes: readonly ProjectNodeRecord[], projectId: string) {
-	return listDescendantGroups(nodes, projectId).reduce(
-		(total, node) => total + node.repositories.length,
-		0
-	);
+export function createProjectBoardFilterMatchIndex(
+	index: ProjectBoardSelectionIndex,
+	gitStatusById: ProjectRepositoryGitStatusById,
+	searchQuery: string,
+	syncFilter: ProjectRepositorySyncFilter
+): ProjectBoardFilterMatchIndex {
+	const descendantGroupSearchMatchesByNodeId = new Set<string>();
+	const descendantGroupSyncMatchesByNodeId = new Set<string>();
+	const groupSearchMatchesByNodeId = new Set<string>();
+	const groupSyncMatchesByNodeId = new Set<string>();
+
+	for (let rowIndex = index.projectRows.length - 1; rowIndex >= 0; rowIndex -= 1) {
+		const row = index.projectRows[rowIndex];
+
+		if (row === undefined) {
+			continue;
+		}
+
+		const childGroups = index.childGroupsByParentId.get(row.node.id) ?? [];
+		const descendantSearchMatches = childGroups.some((childGroup) =>
+			groupSearchMatchesByNodeId.has(childGroup.id)
+		);
+		const descendantSyncMatches = childGroups.some((childGroup) =>
+			groupSyncMatchesByNodeId.has(childGroup.id)
+		);
+
+		if (descendantSearchMatches) {
+			descendantGroupSearchMatchesByNodeId.add(row.node.id);
+		}
+
+		if (descendantSyncMatches) {
+			descendantGroupSyncMatchesByNodeId.add(row.node.id);
+		}
+
+		if (row.node.kind !== 'group') {
+			continue;
+		}
+
+		if (
+			groupNodeMatchesSearchFilter(index, row.node, searchQuery) ||
+			descendantSearchMatches
+		) {
+			groupSearchMatchesByNodeId.add(row.node.id);
+		}
+
+		if (
+			groupNodeMatchesRepositorySyncFilter(gitStatusById, row.node, syncFilter) ||
+			descendantSyncMatches
+		) {
+			groupSyncMatchesByNodeId.add(row.node.id);
+		}
+	}
+
+	return {
+		descendantGroupSearchMatchesByNodeId,
+		descendantGroupSyncMatchesByNodeId,
+		groupSearchMatchesByNodeId,
+		groupSyncMatchesByNodeId
+	};
+}
+
+export function getProjectGroupCount(index: ProjectBoardSelectionIndex, projectId: string) {
+	return index.groupCountByNodeId.get(projectId) ?? 0;
+}
+
+export function getProjectRepositoryCount(index: ProjectBoardSelectionIndex, projectId: string) {
+	return index.repositoryCountByNodeId.get(projectId) ?? 0;
 }
 
 export function formatCountLabel(count: number, singularLabel: string, pluralLabel: string) {
@@ -47,12 +215,13 @@ export function formatCountLabel(count: number, singularLabel: string, pluralLab
 }
 
 export function selectProjectNodes(
-	nodes: readonly ProjectNodeRecord[],
+	index: ProjectBoardSelectionIndex,
+	filterMatchIndex: ProjectBoardFilterMatchIndex,
 	gitStatusById: ProjectRepositoryGitStatusById,
 	searchQuery: string,
 	syncFilter: ProjectRepositorySyncFilter
 ) {
-	const projects = nodes.filter((node) => node.kind === 'project' && node.parentId === null);
+	const projects = index.projectNodes;
 
 	if (searchQuery.length === 0 && syncFilter === 'all') {
 		return projects;
@@ -60,19 +229,20 @@ export function selectProjectNodes(
 
 	return projects.filter(
 		(node) =>
-			projectMatchesSearchFilter(nodes, node, searchQuery) &&
-			projectMatchesRepositorySyncFilter(nodes, gitStatusById, node, syncFilter)
+			projectMatchesSearchFilter(index, filterMatchIndex, node, searchQuery) &&
+			projectMatchesRepositorySyncFilter(filterMatchIndex, node, syncFilter)
 	);
 }
 
 export function selectProjectGroups(
-	nodes: readonly ProjectNodeRecord[],
+	index: ProjectBoardSelectionIndex,
+	filterMatchIndex: ProjectBoardFilterMatchIndex,
 	gitStatusById: ProjectRepositoryGitStatusById,
 	projectId: string,
 	searchQuery: string,
 	syncFilter: ProjectRepositorySyncFilter
 ) {
-	const groups = nodes.filter((node) => node.kind === 'group' && node.parentId === projectId);
+	const groups = index.childGroupsByParentId.get(projectId) ?? [];
 
 	if (searchQuery.length === 0 && syncFilter === 'all') {
 		return groups;
@@ -80,12 +250,13 @@ export function selectProjectGroups(
 
 	return groups.filter(
 		(node) =>
-			groupMatchesSearchFilter(nodes, node, searchQuery) &&
-			groupMatchesRepositorySyncFilter(nodes, gitStatusById, node, syncFilter)
+			groupMatchesSearchFilter(filterMatchIndex, node, searchQuery) &&
+			groupMatchesRepositorySyncFilter(filterMatchIndex, node, syncFilter)
 	);
 }
 
 export function selectGroupRepositories(
+	index: ProjectBoardSelectionIndex,
 	group: ProjectNodeRecord,
 	gitStatusById: ProjectRepositoryGitStatusById,
 	searchQuery: string,
@@ -97,7 +268,7 @@ export function selectGroupRepositories(
 
 	return group.repositories.filter(
 		(repository) =>
-			repositoryMatchesSearchFilter(repository, searchQuery) &&
+			repositoryMatchesSearchFilter(index, repository, searchQuery) &&
 			repositoryMatchesSyncFilter(gitStatusById, repository, syncFilter)
 	);
 }
@@ -121,23 +292,20 @@ export function resolveSelectedGroup(
 }
 
 export function getRepositoryFilterStats(
-	nodes: readonly ProjectNodeRecord[],
+	index: ProjectBoardSelectionIndex,
 	gitStatusById: ProjectRepositoryGitStatusById
 ): ProjectRepositoryFilterStats {
-	return listRegisteredRepositories(nodes).reduce(
-		(stats, repository) => ({
-			pullNeeded:
-				stats.pullNeeded +
-				(repositoryMatchesSyncFilter(gitStatusById, repository, 'pull') ? 1 : 0),
-			pushNeeded:
-				stats.pushNeeded +
-				(repositoryMatchesSyncFilter(gitStatusById, repository, 'push') ? 1 : 0),
-			commitNeeded:
-				stats.commitNeeded +
-				(repositoryMatchesSyncFilter(gitStatusById, repository, 'commit') ? 1 : 0)
-		}),
-		{ pullNeeded: 0, pushNeeded: 0, commitNeeded: 0 }
-	);
+	let pullNeeded = 0;
+	let pushNeeded = 0;
+	let commitNeeded = 0;
+
+	for (const repository of index.registeredRepositories) {
+		pullNeeded += repositoryMatchesSyncFilter(gitStatusById, repository, 'pull') ? 1 : 0;
+		pushNeeded += repositoryMatchesSyncFilter(gitStatusById, repository, 'push') ? 1 : 0;
+		commitNeeded += repositoryMatchesSyncFilter(gitStatusById, repository, 'commit') ? 1 : 0;
+	}
+
+	return { pullNeeded, pushNeeded, commitNeeded };
 }
 
 export function listRegisteredRepositories(nodes: readonly ProjectNodeRecord[]) {
@@ -187,7 +355,8 @@ function normalizeTagInputValue(value: string) {
 }
 
 function projectMatchesSearchFilter(
-	nodes: readonly ProjectNodeRecord[],
+	index: ProjectBoardSelectionIndex,
+	filterMatchIndex: ProjectBoardFilterMatchIndex,
 	node: ProjectNodeRecord,
 	searchQuery: string
 ) {
@@ -196,73 +365,73 @@ function projectMatchesSearchFilter(
 	}
 
 	return (
-		matchesSearchField(node.name, searchQuery) ||
-		matchesTagSearchFilter(node.tags, searchQuery) ||
-		listDescendantGroups(nodes, node.id).some((candidateNode) =>
-			groupNodeMatchesSearchFilter(candidateNode, searchQuery)
-		)
+		matchesSearchFields(
+			index.nodeSearchFieldsById.get(node.id) ?? createProjectNodeSearchFields(node),
+			searchQuery
+		) ||
+		filterMatchIndex.descendantGroupSearchMatchesByNodeId.has(node.id)
 	);
 }
 
 function groupMatchesSearchFilter(
-	nodes: readonly ProjectNodeRecord[],
+	filterMatchIndex: ProjectBoardFilterMatchIndex,
 	node: ProjectNodeRecord,
 	searchQuery: string
 ) {
 	return (
 		searchQuery.length === 0 ||
-		groupNodeMatchesSearchFilter(node, searchQuery) ||
-		listDescendantGroups(nodes, node.id).some((candidateNode) =>
-			groupNodeMatchesSearchFilter(candidateNode, searchQuery)
+		filterMatchIndex.groupSearchMatchesByNodeId.has(node.id)
+	);
+}
+
+function groupNodeMatchesSearchFilter(
+	index: ProjectBoardSelectionIndex,
+	node: ProjectNodeRecord,
+	searchQuery: string
+) {
+	return (
+		searchQuery.length === 0 ||
+		matchesSearchFields(
+			index.groupSearchFieldsById.get(node.id) ?? createProjectGroupSearchFields(node),
+			searchQuery
 		)
 	);
 }
 
-function groupNodeMatchesSearchFilter(node: ProjectNodeRecord, searchQuery: string) {
-	return (
-		matchesSearchField(node.name, searchQuery) ||
-		matchesTagSearchFilter(node.tags, searchQuery) ||
-		node.repositories.some((repository) => repositoryMatchesSearchFilter(repository, searchQuery))
-	);
-}
-
 function repositoryMatchesSearchFilter(
+	index: ProjectBoardSelectionIndex,
 	repository: ProjectRepositoryLinkRecord,
 	searchQuery: string
 ) {
 	return (
 		searchQuery.length === 0 ||
-		matchesSearchField(repository.name, searchQuery) ||
-		matchesTagSearchFilter(repository.tags, searchQuery)
+		matchesSearchFields(
+			index.repositorySearchFieldsById.get(repository.id) ??
+				createProjectRepositorySearchFields(repository),
+			searchQuery
+		)
 	);
 }
 
 function projectMatchesRepositorySyncFilter(
-	nodes: readonly ProjectNodeRecord[],
-	gitStatusById: ProjectRepositoryGitStatusById,
+	filterMatchIndex: ProjectBoardFilterMatchIndex,
 	node: ProjectNodeRecord,
 	syncFilter: ProjectRepositorySyncFilter
 ) {
 	return (
 		syncFilter === 'all' ||
-		listDescendantGroups(nodes, node.id).some((candidateNode) =>
-			groupNodeMatchesRepositorySyncFilter(gitStatusById, candidateNode, syncFilter)
-		)
+		filterMatchIndex.descendantGroupSyncMatchesByNodeId.has(node.id)
 	);
 }
 
 function groupMatchesRepositorySyncFilter(
-	nodes: readonly ProjectNodeRecord[],
-	gitStatusById: ProjectRepositoryGitStatusById,
+	filterMatchIndex: ProjectBoardFilterMatchIndex,
 	node: ProjectNodeRecord,
 	syncFilter: ProjectRepositorySyncFilter
 ) {
 	return (
 		syncFilter === 'all' ||
-		groupNodeMatchesRepositorySyncFilter(gitStatusById, node, syncFilter) ||
-		listDescendantGroups(nodes, node.id).some((candidateNode) =>
-			groupNodeMatchesRepositorySyncFilter(gitStatusById, candidateNode, syncFilter)
-		)
+		filterMatchIndex.groupSyncMatchesByNodeId.has(node.id)
 	);
 }
 
@@ -296,42 +465,92 @@ function repositoryMatchesSyncFilter(
 		: gitStatus?.hasUncommittedChanges === true;
 }
 
-function matchesSearchField(value: string, searchQuery: string) {
-	return value.toLocaleLowerCase('en-US').includes(searchQuery);
-}
-
-function matchesTagSearchFilter(tags: readonly string[], searchQuery: string) {
-	return tags.some((tag) => matchesSearchField(tag, searchQuery));
-}
-
-function listDescendantGroups(nodes: readonly ProjectNodeRecord[], rootNodeId: string) {
-	const childGroupsByParentId = new Map<string, ProjectNodeRecord[]>();
-
-	for (const node of nodes) {
-		if (node.kind !== 'group' || node.parentId === null) {
-			continue;
+function matchesSearchFields(fields: readonly string[], searchQuery: string) {
+	for (const field of fields) {
+		if (field.includes(searchQuery)) {
+			return true;
 		}
-
-		const childGroups = childGroupsByParentId.get(node.parentId) ?? [];
-		childGroups.push(node);
-		childGroupsByParentId.set(node.parentId, childGroups);
 	}
 
-	const descendants: ProjectNodeRecord[] = [];
-	const visitedNodeIds = new Set<string>();
-	const pendingNodes = [...(childGroupsByParentId.get(rootNodeId) ?? [])];
+	return false;
+}
 
-	while (pendingNodes.length > 0) {
-		const node = pendingNodes.shift();
+function createProjectNodeSearchFields(node: ProjectNodeRecord) {
+	return [node.name, ...node.tags].map(normalizeSearchField);
+}
 
-		if (node === undefined || visitedNodeIds.has(node.id)) {
-			continue;
-		}
+function createProjectRepositorySearchFields(repository: ProjectRepositoryLinkRecord) {
+	return [repository.name, ...repository.tags].map(normalizeSearchField);
+}
 
-		visitedNodeIds.add(node.id);
-		descendants.push(node);
-		pendingNodes.push(...(childGroupsByParentId.get(node.id) ?? []));
+function normalizeSearchField(value: string) {
+	return value.toLocaleLowerCase('en-US');
+}
+
+function createProjectGroupSearchFields(node: ProjectNodeRecord) {
+	return [
+		...createProjectNodeSearchFields(node),
+		...node.repositories.flatMap((repository) => createProjectRepositorySearchFields(repository))
+	];
+}
+
+function countDescendantGroupStats(
+	nodeId: string,
+	childGroupsByParentId: ReadonlyMap<string, readonly ProjectNodeRecord[]>,
+	groupCountByNodeId: Map<string, number>,
+	repositoryCountByNodeId: Map<string, number>
+) {
+	const cachedGroupCount = groupCountByNodeId.get(nodeId);
+
+	if (cachedGroupCount !== undefined) {
+		return {
+			groupCount: cachedGroupCount,
+			repositoryCount: repositoryCountByNodeId.get(nodeId) ?? 0
+		};
 	}
 
-	return descendants;
+	let groupCount = 0;
+	let repositoryCount = 0;
+
+	for (const childGroup of childGroupsByParentId.get(nodeId) ?? []) {
+		const childStats = countDescendantGroupStats(
+			childGroup.id,
+			childGroupsByParentId,
+			groupCountByNodeId,
+			repositoryCountByNodeId
+		);
+
+		groupCount += 1 + childStats.groupCount;
+		repositoryCount += childGroup.repositories.length + childStats.repositoryCount;
+	}
+
+	groupCountByNodeId.set(nodeId, groupCount);
+	repositoryCountByNodeId.set(nodeId, repositoryCount);
+
+	return { groupCount, repositoryCount };
+}
+
+function appendProjectTreeRows(
+	rows: ProjectTreeRow[],
+	childGroupsByParentId: ReadonlyMap<string, readonly ProjectNodeRecord[]>,
+	visitedNodeIds: Set<string>,
+	node: ProjectNodeRecord,
+	depth: number
+) {
+	if (visitedNodeIds.has(node.id)) {
+		return;
+	}
+
+	visitedNodeIds.add(node.id);
+	rows.push({ node, depth });
+
+	for (const childGroup of childGroupsByParentId.get(node.id) ?? []) {
+		appendProjectTreeRows(rows, childGroupsByParentId, visitedNodeIds, childGroup, depth + 1);
+	}
+}
+
+function isInspectableProjectRepositoryLinkRecord(
+	repository: ProjectRepositoryLinkRecord
+): repository is InspectableProjectRepositoryLinkRecord {
+	return repository.path !== null;
 }

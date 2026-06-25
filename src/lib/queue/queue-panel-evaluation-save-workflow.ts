@@ -1,0 +1,166 @@
+import {
+	recordAgentEvaluationOnce,
+	type AgentRegistry
+} from '$lib/agents/agent-registry';
+import type { AgentEvaluationScores } from '$lib/agents/agent-evaluation';
+import {
+	readAgentRegistry,
+	writeAgentRegistry
+} from '$lib/agents/agent-registry-storage';
+import {
+	syncPersonaEvaluationSummariesFromAgents,
+	type PersonaRegistry
+} from '$lib/personas/persona-registry';
+import {
+	readPersonaRegistry,
+	writePersonaRegistry
+} from '$lib/personas/persona-registry-storage';
+import {
+	createQueueReportTaskEvaluationKey,
+	recordQueueReportTaskEvaluation,
+	serializeQueueArtifact,
+	type WorkduckQueueResultReport,
+	type WorkduckQueueResultReportTask
+} from './queue-artifacts';
+import { updateQueueResultReportFile } from './queue-folder';
+
+export type QueuePanelEvaluationSaveFailureCode =
+	| 'agent-read-failed'
+	| 'agent-not-found'
+	| 'agent-save-failed'
+	| 'report-write-failed'
+	| 'persona-read-failed'
+	| 'persona-save-failed';
+
+type QueuePanelEvaluationSaveState = {
+	readonly agentRegistry: AgentRegistry | null;
+	readonly personaRegistry: PersonaRegistry | null;
+	readonly report: WorkduckQueueResultReport | null;
+	readonly reportRelativePath: string | null;
+};
+
+export type QueuePanelEvaluationSaveResult =
+	| ({
+			readonly ok: true;
+			readonly applied: boolean;
+	  } & QueuePanelEvaluationSaveState)
+	| ({
+			readonly ok: false;
+			readonly code: QueuePanelEvaluationSaveFailureCode;
+	  } & QueuePanelEvaluationSaveState);
+
+export interface QueuePanelEvaluationSaveInput {
+	readonly workspaceId: string;
+	readonly workspacePath: string;
+	readonly report: WorkduckQueueResultReport;
+	readonly reportPath: string;
+	readonly task: WorkduckQueueResultReportTask;
+	readonly agentId: string;
+	readonly scores: AgentEvaluationScores;
+}
+
+export async function saveQueuePanelEvaluation(
+	input: QueuePanelEvaluationSaveInput
+): Promise<QueuePanelEvaluationSaveResult> {
+	const latestAgentRegistryResult = await readAgentRegistry(
+		input.workspaceId,
+		input.workspacePath
+	);
+
+	if (!latestAgentRegistryResult.ok) {
+		return createFailedQueuePanelEvaluationSaveResult('agent-read-failed');
+	}
+
+	const evaluationKey = createQueueReportTaskEvaluationKey(input.report, input.task);
+	const mutation = recordAgentEvaluationOnce(
+		latestAgentRegistryResult.registry,
+		input.agentId,
+		evaluationKey,
+		input.scores
+	);
+
+	if (!mutation.ok) {
+		return createFailedQueuePanelEvaluationSaveResult('agent-not-found');
+	}
+
+	const agentWriteResult = await writeAgentRegistry(mutation.registry, input.workspacePath);
+
+	if (!agentWriteResult.ok) {
+		return createFailedQueuePanelEvaluationSaveResult('agent-save-failed');
+	}
+
+	let savedReport: WorkduckQueueResultReport | null = null;
+	let savedReportRelativePath: string | null = null;
+
+	if (mutation.applied) {
+		const nextReport = recordQueueReportTaskEvaluation(
+			input.report,
+			input.task.id,
+			input.agentId
+		);
+		const reportWriteResult = await updateQueueResultReportFile(
+			input.workspacePath,
+			input.reportPath,
+			serializeQueueArtifact(nextReport)
+		);
+
+		if (!reportWriteResult.ok) {
+			return createFailedQueuePanelEvaluationSaveResult('report-write-failed', {
+				agentRegistry: agentWriteResult.registry
+			});
+		}
+
+		savedReport = nextReport;
+		savedReportRelativePath = reportWriteResult.relativePath;
+	}
+
+	const latestPersonaRegistryResult = await readPersonaRegistry(
+		input.workspaceId,
+		input.workspacePath
+	);
+
+	if (!latestPersonaRegistryResult.ok) {
+		return createFailedQueuePanelEvaluationSaveResult('persona-read-failed', {
+			agentRegistry: agentWriteResult.registry,
+			report: savedReport,
+			reportRelativePath: savedReportRelativePath
+		});
+	}
+
+	const nextPersonaRegistry = syncPersonaEvaluationSummariesFromAgents(
+		latestPersonaRegistryResult.registry,
+		agentWriteResult.registry.agents
+	);
+	const personaWriteResult = await writePersonaRegistry(nextPersonaRegistry, input.workspacePath);
+
+	if (!personaWriteResult.ok) {
+		return createFailedQueuePanelEvaluationSaveResult('persona-save-failed', {
+			agentRegistry: agentWriteResult.registry,
+			report: savedReport,
+			reportRelativePath: savedReportRelativePath
+		});
+	}
+
+	return {
+		ok: true,
+		applied: mutation.applied,
+		agentRegistry: agentWriteResult.registry,
+		personaRegistry: personaWriteResult.registry,
+		report: savedReport,
+		reportRelativePath: savedReportRelativePath
+	};
+}
+
+function createFailedQueuePanelEvaluationSaveResult(
+	code: QueuePanelEvaluationSaveFailureCode,
+	state: Partial<QueuePanelEvaluationSaveState> = {}
+): QueuePanelEvaluationSaveResult {
+	return {
+		ok: false,
+		code,
+		agentRegistry: state.agentRegistry ?? null,
+		personaRegistry: state.personaRegistry ?? null,
+		report: state.report ?? null,
+		reportRelativePath: state.reportRelativePath ?? null
+	};
+}

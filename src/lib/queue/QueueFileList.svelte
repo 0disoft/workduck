@@ -8,7 +8,9 @@
 		readonly filteredFiles: readonly QueueCardEntry[];
 		readonly messages: WorkduckMessages;
 		readonly isReading: boolean;
+		readonly onAddWorkIntent: () => void;
 		readonly onAddWork: (event: MouseEvent) => void;
+		readonly onCardIntent: (file: QueueCardEntry) => void;
 		readonly onCardClick: (file: QueueCardEntry) => void;
 		readonly onCardContextMenu: (event: MouseEvent, file: QueueCardEntry) => void;
 		readonly getQueueCardClass: (file: QueueCardEntry) => string;
@@ -23,7 +25,9 @@
 		filteredFiles,
 		messages,
 		isReading,
+		onAddWorkIntent,
 		onAddWork,
+		onCardIntent,
 		onCardClick,
 		onCardContextMenu,
 		getQueueCardClass,
@@ -37,6 +41,8 @@
 		class="workduck-list-add-card"
 		type="button"
 		aria-haspopup="dialog"
+		onpointerenter={onAddWorkIntent}
+		onfocus={onAddWorkIntent}
 		onclick={onAddWork}
 	>
 		{messages.queue.addWork}
@@ -51,6 +57,8 @@
 				type="button"
 				disabled={isReading || file.kind === 'unsupported'}
 				aria-pressed={isSelectedQueueFile(file)}
+				onpointerenter={() => onCardIntent(file)}
+				onfocus={() => onCardIntent(file)}
 				onclick={() => onCardClick(file)}
 				oncontextmenu={(event) => onCardContextMenu(event, file)}
 			>

@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { WorkspaceRecord } from '$lib/workspaces/workspace-registry';
+	import './queue-panel.css';
 	import {
 		createQueuePanelController,
 		type QueuePanelController

@@ -1,9 +1,11 @@
 use std::{
+    collections::HashMap,
     ffi::OsString,
     fs,
     io,
     path::{Path, PathBuf},
     process::{Command, Output, Stdio},
+    sync::{Arc, Condvar, Mutex, OnceLock},
     thread,
     time::Duration,
 };
@@ -32,6 +34,7 @@ use std::os::windows::process::CommandExt;
 
 const PROJECT_REPOSITORY_CLONE_TIMEOUT: Duration = Duration::from_secs(900);
 const PROJECT_REPOSITORY_GIT_ACTION_TIMEOUT: Duration = Duration::from_secs(600);
+const PROJECT_REPOSITORY_GIT_INSPECTION_MAX_CONCURRENCY: usize = 4;
 #[cfg(target_os = "windows")]
 const CREATE_NO_WINDOW: u32 = 0x08000000;
 
@@ -97,7 +100,7 @@ pub struct ProjectRepositoryClone {
     error: Option<ProjectRepositoryCloneError>,
 }
 
-#[derive(serde::Serialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, serde::Serialize)]
 pub enum ProjectRepositoryGitError {
     #[serde(rename = "project-repository-git-path-required")]
     PathRequired,
@@ -169,7 +172,7 @@ pub enum ProjectRepositoryGitError {
     GithubCreateFailed,
 }
 
-#[derive(serde::Serialize)]
+#[derive(Clone, Debug, PartialEq, Eq, serde::Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ProjectRepositoryGitInspection {
     ok: bool,
@@ -215,6 +218,11 @@ struct GitStatusSummary {
     ahead_count: u32,
     behind_count: u32,
     has_uncommitted_changes: bool,
+}
+
+struct GitInspectionInFlight {
+    result: Mutex<Option<ProjectRepositoryGitInspection>>,
+    completed: Condvar,
 }
 
 #[tauri::command]
@@ -467,27 +475,168 @@ pub fn inspect_project_repository_git(path: String) -> ProjectRepositoryGitInspe
         Err(error) => return invalid_git_inspection(error),
     };
 
-    match inspect_git_repository(&repository_path) {
-        Ok(inspection) => inspection,
-        Err(failure) => invalid_git_inspection(failure.error),
+    inspect_project_repository_git_coalesced(repository_path)
+}
+
+fn inspect_project_repository_git_coalesced(
+    repository_path: PathBuf,
+) -> ProjectRepositoryGitInspection {
+    inspect_project_repository_git_coalesced_with(repository_path, |repository_path| {
+        match inspect_git_repository(repository_path) {
+            Ok(inspection) => inspection,
+            Err(failure) => invalid_git_inspection(failure.error),
+        }
+    })
+}
+
+fn inspect_project_repository_git_coalesced_with<F>(
+    repository_path: PathBuf,
+    inspect: F,
+) -> ProjectRepositoryGitInspection
+where
+    F: FnOnce(&Path) -> ProjectRepositoryGitInspection,
+{
+    let (in_flight, is_leader) = take_or_create_git_inspection_in_flight(&repository_path);
+
+    if !is_leader {
+        return wait_for_git_inspection_result(&in_flight);
     }
+
+    let inspection = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+        inspect(&repository_path)
+    }))
+    .unwrap_or_else(|_| invalid_git_inspection(ProjectRepositoryGitError::CommandFailed));
+
+    complete_git_inspection_in_flight(&repository_path, &in_flight, inspection.clone());
+    inspection
+}
+
+fn take_or_create_git_inspection_in_flight(
+    repository_path: &Path,
+) -> (Arc<GitInspectionInFlight>, bool) {
+    let mut in_flight_by_path = git_inspection_in_flight_by_path()
+        .lock()
+        .unwrap_or_else(|poisoned| poisoned.into_inner());
+
+    if let Some(in_flight) = in_flight_by_path.get(repository_path) {
+        return (Arc::clone(in_flight), false);
+    }
+
+    let in_flight = Arc::new(GitInspectionInFlight {
+        result: Mutex::new(None),
+        completed: Condvar::new(),
+    });
+    in_flight_by_path.insert(repository_path.to_path_buf(), Arc::clone(&in_flight));
+
+    (in_flight, true)
+}
+
+fn wait_for_git_inspection_result(
+    in_flight: &GitInspectionInFlight,
+) -> ProjectRepositoryGitInspection {
+    let mut result = in_flight
+        .result
+        .lock()
+        .unwrap_or_else(|poisoned| poisoned.into_inner());
+
+    loop {
+        if let Some(inspection) = result.as_ref() {
+            return inspection.clone();
+        }
+
+        result = in_flight
+            .completed
+            .wait(result)
+            .unwrap_or_else(|poisoned| poisoned.into_inner());
+    }
+}
+
+fn complete_git_inspection_in_flight(
+    repository_path: &Path,
+    in_flight: &Arc<GitInspectionInFlight>,
+    inspection: ProjectRepositoryGitInspection,
+) {
+    {
+        let mut result = in_flight
+            .result
+            .lock()
+            .unwrap_or_else(|poisoned| poisoned.into_inner());
+        *result = Some(inspection);
+        in_flight.completed.notify_all();
+    }
+
+    let mut in_flight_by_path = git_inspection_in_flight_by_path()
+        .lock()
+        .unwrap_or_else(|poisoned| poisoned.into_inner());
+
+    if in_flight_by_path
+        .get(repository_path)
+        .is_some_and(|current| Arc::ptr_eq(current, in_flight))
+    {
+        in_flight_by_path.remove(repository_path);
+    }
+}
+
+fn git_inspection_in_flight_by_path(
+) -> &'static Mutex<HashMap<PathBuf, Arc<GitInspectionInFlight>>> {
+    static GIT_INSPECTION_IN_FLIGHT_BY_PATH: OnceLock<
+        Mutex<HashMap<PathBuf, Arc<GitInspectionInFlight>>>,
+    > = OnceLock::new();
+
+    GIT_INSPECTION_IN_FLIGHT_BY_PATH.get_or_init(|| Mutex::new(HashMap::new()))
 }
 
 #[tauri::command]
 pub fn inspect_project_repositories_git(
     repositories: Vec<ProjectRepositoryGitInspectionRequest>,
 ) -> Vec<ProjectRepositoryGitInspectionRecord> {
-    thread::scope(|scope| {
-        let handles = repositories
-            .into_iter()
-            .map(|repository| scope.spawn(move || inspect_project_repository_git_record(repository)))
+    inspect_project_repositories_git_with_concurrency(
+        repositories,
+        repository_git_inspection_concurrency_limit(),
+    )
+}
+
+fn inspect_project_repositories_git_with_concurrency(
+    repositories: Vec<ProjectRepositoryGitInspectionRequest>,
+    concurrency_limit: usize,
+) -> Vec<ProjectRepositoryGitInspectionRecord> {
+    let concurrency_limit = concurrency_limit.max(1);
+    let mut records = Vec::with_capacity(repositories.len());
+    let mut repositories = repositories.into_iter();
+
+    loop {
+        let chunk = repositories
+            .by_ref()
+            .take(concurrency_limit)
             .collect::<Vec<_>>();
 
-        handles
-            .into_iter()
-            .map(|handle| handle.join().expect("repository git inspection worker panicked"))
-            .collect()
-    })
+        if chunk.is_empty() {
+            break;
+        }
+
+        let chunk_records = thread::scope(|scope| {
+            let handles = chunk
+                .into_iter()
+                .map(|repository| scope.spawn(move || inspect_project_repository_git_record(repository)))
+                .collect::<Vec<_>>();
+
+            handles
+                .into_iter()
+                .map(|handle| handle.join().expect("repository git inspection worker panicked"))
+                .collect::<Vec<_>>()
+        });
+
+        records.extend(chunk_records);
+    }
+
+    records
+}
+
+fn repository_git_inspection_concurrency_limit() -> usize {
+    thread::available_parallelism()
+        .map(|parallelism| parallelism.get())
+        .unwrap_or(1)
+        .clamp(1, PROJECT_REPOSITORY_GIT_INSPECTION_MAX_CONCURRENCY)
 }
 
 fn inspect_project_repository_git_record(
@@ -1217,6 +1366,106 @@ mod tests {
     }
 
     #[test]
+    fn repository_git_batch_inspection_preserves_order_across_bounded_chunks() {
+        let records = inspect_project_repositories_git_with_concurrency(
+            vec![
+                ProjectRepositoryGitInspectionRequest {
+                    repository_id: "first".to_string(),
+                    path: String::new(),
+                },
+                ProjectRepositoryGitInspectionRequest {
+                    repository_id: "second".to_string(),
+                    path: "relative/path".to_string(),
+                },
+                ProjectRepositoryGitInspectionRequest {
+                    repository_id: "third".to_string(),
+                    path: String::new(),
+                },
+            ],
+            1,
+        );
+
+        assert_eq!(records.len(), 3);
+        assert_eq!(records[0].repository_id, "first");
+        assert_eq!(records[1].repository_id, "second");
+        assert_eq!(records[2].repository_id, "third");
+        assert_eq!(
+            records[0].inspection.error,
+            Some(ProjectRepositoryGitError::PathRequired)
+        );
+        assert_eq!(
+            records[1].inspection.error,
+            Some(ProjectRepositoryGitError::PathNotAbsolute)
+        );
+        assert_eq!(
+            records[2].inspection.error,
+            Some(ProjectRepositoryGitError::PathRequired)
+        );
+    }
+
+    #[test]
+    fn concurrent_repository_git_inspections_share_in_flight_result() {
+        let repository_path = unique_test_directory("workduck-git-inspection-coalescing");
+        fs::create_dir_all(&repository_path).expect("create inspection test directory");
+        let repository_path = fs::canonicalize(&repository_path).expect("canonical repository path");
+        let expected_inspection = ProjectRepositoryGitInspection {
+            ok: true,
+            is_git_repository: true,
+            has_remote: false,
+            ahead_count: 0,
+            behind_count: 0,
+            has_uncommitted_changes: true,
+            branch: Some("main".to_string()),
+            error: None,
+        };
+        let call_count = std::sync::Arc::new(std::sync::atomic::AtomicUsize::new(0));
+        let (leader_started_tx, leader_started_rx) = std::sync::mpsc::channel();
+        let (release_leader_tx, release_leader_rx) = std::sync::mpsc::channel();
+        let leader_path = repository_path.clone();
+        let leader_call_count = std::sync::Arc::clone(&call_count);
+        let leader_inspection = expected_inspection.clone();
+
+        let leader = thread::spawn(move || {
+            inspect_project_repository_git_coalesced_with(leader_path, move |_| {
+                leader_call_count.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+                leader_started_tx
+                    .send(())
+                    .expect("leader start signal sent");
+                release_leader_rx
+                    .recv()
+                    .expect("leader release signal received");
+                leader_inspection
+            })
+        });
+
+        leader_started_rx
+            .recv()
+            .expect("leader inspection started");
+
+        let waiter_path = repository_path.clone();
+        let waiter_call_count = std::sync::Arc::clone(&call_count);
+        let waiter = thread::spawn(move || {
+            inspect_project_repository_git_coalesced_with(waiter_path, move |_| {
+                waiter_call_count.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
+                invalid_git_inspection(ProjectRepositoryGitError::CommandFailed)
+            })
+        });
+
+        wait_until_git_inspection_has_waiter(&repository_path);
+        release_leader_tx
+            .send(())
+            .expect("leader release signal sent");
+
+        let leader_result = leader.join().expect("leader inspection completed");
+        let waiter_result = waiter.join().expect("waiter inspection completed");
+        fs::remove_dir_all(&repository_path).ok();
+
+        assert_eq!(call_count.load(std::sync::atomic::Ordering::SeqCst), 1);
+        assert_eq!(leader_result, expected_inspection);
+        assert_eq!(waiter_result, expected_inspection);
+    }
+
+    #[test]
     fn repository_inspection_ignores_parent_work_tree() {
         if !git_is_available() {
             return;
@@ -1300,6 +1549,28 @@ mod tests {
             .as_nanos();
 
         std::env::temp_dir().join(format!("{name}-{}-{timestamp}", std::process::id()))
+    }
+
+    fn wait_until_git_inspection_has_waiter(repository_path: &Path) {
+        for _ in 0..1_000 {
+            let has_waiter = {
+                let in_flight_by_path = git_inspection_in_flight_by_path()
+                    .lock()
+                    .unwrap_or_else(|poisoned| poisoned.into_inner());
+
+                in_flight_by_path
+                    .get(repository_path)
+                    .is_some_and(|in_flight| std::sync::Arc::strong_count(in_flight) > 2)
+            };
+
+            if has_waiter {
+                return;
+            }
+
+            thread::yield_now();
+        }
+
+        panic!("repository git inspection waiter did not attach");
     }
 }
 
