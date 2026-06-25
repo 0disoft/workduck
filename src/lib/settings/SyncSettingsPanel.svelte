@@ -852,6 +852,7 @@
 
 		try {
 			const result = await enqueueRepositoryCommitWorkOrder({
+				workspaceId: activeWorkspace.id,
 				workspacePath: activeWorkspace.path,
 				repositoryName: syncSettings.profileName,
 				repositoryPath: syncSettings.folderPath,

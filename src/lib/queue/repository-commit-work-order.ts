@@ -6,6 +6,7 @@ import {
 	type WorkduckQueueResponseLanguage
 } from './queue-artifacts';
 import { writeQueueWorkOrderFile, type QueueFolderError } from './queue-folder';
+import { dispatchQueueFilesChanged } from './queue-read-state';
 
 export type RepositoryCommitWorkOrderSource = 'project' | 'workspace' | 'sync';
 type RepositoryCommitWorkOrderLanguage = Exclude<WorkduckQueueResponseLanguage, 'auto'>;
@@ -21,6 +22,7 @@ export type RepositoryCommitWorkOrderResult =
 	  };
 
 export interface RepositoryCommitWorkOrderInput {
+	readonly workspaceId: string;
 	readonly workspacePath: string;
 	readonly repositoryName: string;
 	readonly repositoryPath: string;
@@ -60,9 +62,13 @@ export async function enqueueRepositoryCommitWorkOrder(
 		serializeQueueArtifact(workOrder)
 	);
 
-	return result.ok
-		? { ok: true, relativePath: result.relativePath }
-		: { ok: false, error: result.error };
+	if (!result.ok) {
+		return { ok: false, error: result.error };
+	}
+
+	dispatchQueueFilesChanged(input.workspaceId);
+
+	return { ok: true, relativePath: result.relativePath };
 }
 
 function createRepositoryCommitWorkOrderBody(

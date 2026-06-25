@@ -571,6 +571,7 @@
 	) {
 		await queueProjectRepositoryCommitWorkOrder(
 			{
+				workspaceId: workspace.id,
 				workspacePath: workspace.path,
 				nodes: registry.nodes,
 				node,

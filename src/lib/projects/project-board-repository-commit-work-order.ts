@@ -21,6 +21,7 @@ export function canQueueProjectRepositoryCommitWorkOrder(input: {
 
 export async function queueProjectRepositoryCommitWorkOrder(
 	input: {
+		readonly workspaceId: string;
 		readonly workspacePath: string;
 		readonly nodes: readonly ProjectNodeRecord[];
 		readonly node: ProjectNodeRecord;
@@ -52,6 +53,7 @@ export async function queueProjectRepositoryCommitWorkOrder(
 	try {
 		const rootProjectId = resolveRootProjectId(input.nodes, node);
 		const result = await enqueueRepositoryCommitWorkOrder({
+			workspaceId: input.workspaceId,
 			workspacePath: input.workspacePath,
 			repositoryName: repository.name,
 			repositoryPath: repository.path,

@@ -155,7 +155,6 @@ import {
 } from './queue-panel-selection';
 import {
 	createEmptyQueuePanelWorkspaceRegistryState,
-	startQueuePanelWorkspaceQueueFolderEnsure,
 	startQueuePanelWorkspaceRegistryReads,
 	subscribeQueuePanelWorkspaceRegistries
 } from './queue-panel-workspace-lifecycle';
@@ -527,18 +526,7 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 			isCurrent: workspaceDataReadIsStillCurrent,
 			...workspaceRegistrySetters
 		});
-		startQueuePanelWorkspaceQueueFolderEnsure({
-			workspacePath,
-			isCurrent: workspaceDataReadIsStillCurrent,
-			onReady: async () => {
-				error = null;
-				await refreshQueueFiles({ silent: true });
-			},
-			onFailure: (folderError) => {
-				error = folderError;
-				status = null;
-			}
-		});
+		void refreshQueueFiles({ silent: true });
 
 		const unsubscribeWorkspaceRegistries = subscribeQueuePanelWorkspaceRegistries(
 			workspaceId,

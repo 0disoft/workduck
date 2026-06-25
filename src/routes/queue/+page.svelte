@@ -20,12 +20,14 @@
 		readWorkspaceRegistryFromBrowser,
 		subscribeWorkspaceRegistry
 	} from '$lib/workspaces/workspace-storage';
+	import { subscribeQueueFilesChanged } from '$lib/queue/queue-read-state';
 
 	type QueuePanelComponent = typeof import('$lib/queue/QueuePanel.svelte').default;
 
 	let appearanceSettings = $state<AppearanceSettings>(createDefaultAppearanceSettings());
 	let registry = $state<WorkspaceRegistry>(createEmptyWorkspaceRegistry());
 	let QueuePanel = $state<QueuePanelComponent | null>(null);
+	let queueRefreshSignal = $state(0);
 	let activeWorkspace = $derived(getActiveWorkspace(registry));
 	let messages = $derived(getWorkduckMessages(appearanceSettings.languageId));
 
@@ -41,10 +43,16 @@
 		const unsubscribeWorkspaceRegistry = subscribeWorkspaceRegistry((nextRegistry) => {
 			registry = nextRegistry;
 		});
+		const unsubscribeQueueFiles = subscribeQueueFilesChanged((workspaceId) => {
+			if (activeWorkspace?.id === workspaceId) {
+				queueRefreshSignal += 1;
+			}
+		});
 
 		return () => {
 			unsubscribeAppearanceSettings();
 			unsubscribeWorkspaceRegistry();
+			unsubscribeQueueFiles();
 		};
 	});
 </script>
@@ -56,7 +64,11 @@
 <main class="workduck-page workduck-page--queue">
 	<WorkspaceGate title={messages.navigation.queue}>
 		{#if activeWorkspace !== null && QueuePanel !== null}
-			<QueuePanel workspace={activeWorkspace} title={messages.navigation.queue} />
+			<QueuePanel
+				workspace={activeWorkspace}
+				title={messages.navigation.queue}
+				refreshSignal={queueRefreshSignal}
+			/>
 		{/if}
 	</WorkspaceGate>
 </main>

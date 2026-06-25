@@ -385,6 +385,7 @@
 
 		try {
 			const result = await enqueueRepositoryCommitWorkOrder({
+				workspaceId: workspace.id,
 				workspacePath: workspace.path,
 				repositoryName: workspace.name,
 				repositoryPath: workspace.path,
