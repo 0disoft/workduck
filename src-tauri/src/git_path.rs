@@ -1,7 +1,9 @@
 use std::{
+    env,
     ffi::OsStr,
+    fs,
     io::{self, Read},
-    path::{Path, PathBuf},
+    path::{Component, Path, PathBuf},
     process::{Child, Command, Output, Stdio},
     thread,
     time::Duration,
@@ -43,8 +45,9 @@ where
     I: IntoIterator<Item = S>,
     S: AsRef<OsStr>,
 {
+    let git_executable = resolve_system_executable("git").map_err(GitProcessError::Spawn)?;
     let git_working_dir = git_process_path(working_dir);
-    let mut command = Command::new("git");
+    let mut command = Command::new(git_executable);
     apply_safe_git_config(&mut command, allow_system_credentials);
     command
         .args(args)
@@ -63,6 +66,85 @@ where
     let child = command.spawn().map_err(GitProcessError::Spawn)?;
 
     wait_for_child_output(child, timeout)
+}
+
+fn resolve_system_executable(program_name: &str) -> io::Result<PathBuf> {
+    let search_path = env::var_os("PATH").ok_or_else(|| executable_not_found(program_name))?;
+    resolve_system_executable_from_path(program_name, &search_path)
+}
+
+fn resolve_system_executable_from_path(
+    program_name: &str,
+    search_path: &OsStr,
+) -> io::Result<PathBuf> {
+    validate_plain_program_name(program_name)?;
+
+    for directory in env::split_paths(search_path).filter(|directory| directory.is_absolute()) {
+        for candidate in executable_candidates(&directory, program_name) {
+            if is_executable_file(&candidate) {
+                return Ok(candidate);
+            }
+        }
+    }
+
+    Err(executable_not_found(program_name))
+}
+
+fn validate_plain_program_name(program_name: &str) -> io::Result<()> {
+    if program_name.contains('/') || program_name.contains('\\') {
+        return Err(invalid_executable_name(program_name));
+    }
+
+    let mut components = Path::new(program_name).components();
+    match (components.next(), components.next()) {
+        (Some(Component::Normal(_)), None) => Ok(()),
+        _ => Err(invalid_executable_name(program_name)),
+    }
+}
+
+fn invalid_executable_name(program_name: &str) -> io::Error {
+    io::Error::new(
+        io::ErrorKind::InvalidInput,
+        format!("executable name must not contain path separators: {program_name}"),
+    )
+}
+
+fn executable_not_found(program_name: &str) -> io::Error {
+    io::Error::new(
+        io::ErrorKind::NotFound,
+        format!("executable not found on absolute PATH entries: {program_name}"),
+    )
+}
+
+#[cfg(target_os = "windows")]
+fn executable_candidates(directory: &Path, program_name: &str) -> Vec<PathBuf> {
+    let program_path = Path::new(program_name);
+    if program_path.extension().is_some() {
+        vec![directory.join(program_name)]
+    } else {
+        vec![directory.join(format!("{program_name}.exe"))]
+    }
+}
+
+#[cfg(not(target_os = "windows"))]
+fn executable_candidates(directory: &Path, program_name: &str) -> Vec<PathBuf> {
+    vec![directory.join(program_name)]
+}
+
+#[cfg(unix)]
+fn is_executable_file(path: &Path) -> bool {
+    use std::os::unix::fs::PermissionsExt;
+
+    fs::metadata(path)
+        .map(|metadata| metadata.is_file() && metadata.permissions().mode() & 0o111 != 0)
+        .unwrap_or(false)
+}
+
+#[cfg(not(unix))]
+fn is_executable_file(path: &Path) -> bool {
+    fs::metadata(path)
+        .map(|metadata| metadata.is_file())
+        .unwrap_or(false)
 }
 
 pub(crate) fn wait_for_child_output(
@@ -149,7 +231,19 @@ fn append_bounded_output(output: &mut Vec<u8>, bytes: &[u8]) {
 
 #[cfg(test)]
 mod tests {
-    use super::{append_bounded_output, CHILD_OUTPUT_MAX_BYTES};
+    use super::{
+        append_bounded_output, resolve_system_executable_from_path, validate_plain_program_name,
+        CHILD_OUTPUT_MAX_BYTES,
+    };
+    use std::{
+        env,
+        ffi::OsString,
+        fs,
+        path::{Path, PathBuf},
+        sync::Mutex,
+    };
+
+    static CURRENT_DIR_TEST_LOCK: Mutex<()> = Mutex::new(());
 
     #[test]
     fn bounded_output_keeps_recent_bytes_after_multiple_chunks() {
@@ -173,4 +267,111 @@ mod tests {
         assert_eq!(output.len(), CHILD_OUTPUT_MAX_BYTES);
         assert_eq!(&output[output.len() - 4..], b"tail");
     }
+
+    #[test]
+    fn system_executable_resolution_ignores_current_directory_path_entries() {
+        let _guard = CURRENT_DIR_TEST_LOCK
+            .lock()
+            .unwrap_or_else(|poisoned| poisoned.into_inner());
+        let original_current_dir = env::current_dir().expect("read current directory");
+        let restore_current_dir = CurrentDirRestore::new(original_current_dir);
+        let sandbox = unique_test_directory("workduck-safe-executable-resolution");
+        let current_dir = sandbox.join("current");
+        let trusted_dir = sandbox.join("trusted");
+        fs::create_dir_all(&current_dir).expect("create current directory");
+        fs::create_dir_all(&trusted_dir).expect("create trusted directory");
+        write_test_executable(&current_dir.join(test_executable_file_name()), "malicious");
+        let trusted_executable = trusted_dir.join(test_executable_file_name());
+        write_test_executable(&trusted_executable, "trusted");
+
+        env::set_current_dir(&current_dir).expect("move into unsafe current directory");
+        let search_path = env::join_paths([
+            OsString::new(),
+            OsString::from("."),
+            trusted_dir.as_os_str().to_owned(),
+        ])
+        .expect("join search path");
+
+        let resolved = resolve_system_executable_from_path(test_program_name(), &search_path)
+            .expect("resolve executable from trusted absolute path");
+
+        assert_eq!(resolved, trusted_executable);
+        drop(restore_current_dir);
+        let _ = fs::remove_dir_all(&sandbox);
+    }
+
+    #[test]
+    fn system_executable_resolution_rejects_program_paths() {
+        assert_eq!(
+            validate_plain_program_name("").unwrap_err().kind(),
+            std::io::ErrorKind::InvalidInput
+        );
+        assert_eq!(
+            validate_plain_program_name("bin/git").unwrap_err().kind(),
+            std::io::ErrorKind::InvalidInput
+        );
+        assert_eq!(
+            validate_plain_program_name("bin\\git").unwrap_err().kind(),
+            std::io::ErrorKind::InvalidInput
+        );
+    }
+
+    struct CurrentDirRestore {
+        original_current_dir: PathBuf,
+    }
+
+    impl CurrentDirRestore {
+        fn new(original_current_dir: PathBuf) -> Self {
+            Self {
+                original_current_dir,
+            }
+        }
+    }
+
+    impl Drop for CurrentDirRestore {
+        fn drop(&mut self) {
+            let _ = env::set_current_dir(&self.original_current_dir);
+        }
+    }
+
+    fn unique_test_directory(name: &str) -> PathBuf {
+        let timestamp = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .expect("system time after Unix epoch")
+            .as_nanos();
+        env::temp_dir().join(format!("{name}-{}-{timestamp}", std::process::id()))
+    }
+
+    fn test_program_name() -> &'static str {
+        "git"
+    }
+
+    #[cfg(target_os = "windows")]
+    fn test_executable_file_name() -> &'static str {
+        "git.exe"
+    }
+
+    #[cfg(not(target_os = "windows"))]
+    fn test_executable_file_name() -> &'static str {
+        "git"
+    }
+
+    fn write_test_executable(path: &Path, contents: &str) {
+        fs::write(path, contents).expect("write test executable");
+        make_test_executable(path);
+    }
+
+    #[cfg(unix)]
+    fn make_test_executable(path: &Path) {
+        use std::os::unix::fs::PermissionsExt;
+
+        let mut permissions = fs::metadata(path)
+            .expect("read test executable metadata")
+            .permissions();
+        permissions.set_mode(0o755);
+        fs::set_permissions(path, permissions).expect("mark test executable");
+    }
+
+    #[cfg(not(unix))]
+    fn make_test_executable(_path: &Path) {}
 }
