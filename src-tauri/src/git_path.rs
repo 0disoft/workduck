@@ -339,7 +339,10 @@ mod tests {
             .duration_since(std::time::UNIX_EPOCH)
             .expect("system time after Unix epoch")
             .as_nanos();
-        env::temp_dir().join(format!("{name}-{}-{timestamp}", std::process::id()))
+        Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("target")
+            .join("workduck-test-sandboxes")
+            .join(format!("{name}-{}-{timestamp}", std::process::id()))
     }
 
     fn test_program_name() -> &'static str {
