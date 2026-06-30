@@ -21,11 +21,12 @@ concurrency:
 jobs:
   windows:
     name: Windows installer
+    if: github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/v')
     runs-on: windows-latest
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       - name: Resolve release tag
         id: release
