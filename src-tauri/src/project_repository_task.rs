@@ -563,15 +563,18 @@ fn resolve_repository_task_commands(
         ProjectRepositoryTask::StartDevServer => {
             let package_command_count = commands.len();
             add_package_task_commands(repository_path, task, &mut commands)?;
-            if !commands[package_command_count..]
+            let has_desktop_dev_package_command = commands[package_command_count..]
                 .iter()
-                .any(|command| is_desktop_dev_package_command(command))
-            {
+                .any(|command| is_desktop_dev_package_command(command));
+
+            if !has_desktop_dev_package_command {
                 add_cargo_task_commands(repository_path, task, &mut commands);
             }
             add_pub_task_commands(repository_path, task, &mut commands);
             add_deno_task_commands(repository_path, task, &mut commands);
-            add_go_task_commands(repository_path, task, &mut commands);
+            if !has_desktop_dev_package_command {
+                add_go_task_commands(repository_path, task, &mut commands);
+            }
         }
         ProjectRepositoryTask::Build => {
             add_package_task_commands(repository_path, task, &mut commands)?;
@@ -2036,6 +2039,51 @@ edition = "2021"
         };
 
         assert_eq!(commands, vec!["bun run desktop:dev"]);
+
+        let _ = fs::remove_dir_all(repository_path);
+    }
+
+    #[test]
+    fn repository_task_commands_use_wails_desktop_dev_without_extra_go_run() {
+        let repository_path = temp_repository_path("wails-desktop-dev");
+        fs::create_dir_all(repository_path.join("frontend")).expect("create frontend package");
+        fs::write(
+            repository_path.join("package.json"),
+            r#"{
+                "packageManager": "npm@11.0.0",
+                "scripts": {
+                    "desktop:dev": "wails3 dev -config ./build/config.yml -port 9245"
+                }
+            }"#,
+        )
+        .expect("write root package");
+        fs::write(
+            repository_path.join("frontend/package.json"),
+            r#"{
+                "scripts": {
+                    "dev": "vite"
+                }
+            }"#,
+        )
+        .expect("write frontend package");
+        fs::write(
+            repository_path.join("go.mod"),
+            r#"module github.com/0disoft/zdp-desktop-wails
+
+go 1.25
+"#,
+        )
+        .expect("write go module");
+
+        let commands = match resolve_repository_task_commands(
+            ProjectRepositoryTask::StartDevServer,
+            &repository_path,
+        ) {
+            Ok(commands) => commands,
+            Err(_) => panic!("resolve dev command"),
+        };
+
+        assert_eq!(commands, vec!["npm run desktop:dev"]);
 
         let _ = fs::remove_dir_all(repository_path);
     }
