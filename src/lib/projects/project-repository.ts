@@ -102,6 +102,8 @@ export type ProjectRepositoryGitInspectionResult =
 			readonly ok: true;
 			readonly isGitRepository: boolean;
 			readonly hasRemote: boolean;
+			readonly originUrl: string | null;
+			readonly upstreamRemoteUrl: string | null;
 			readonly aheadCount: number;
 			readonly behindCount: number;
 			readonly hasUncommittedChanges: boolean;
@@ -162,6 +164,8 @@ interface ProjectRepositoryGitInspectionResponse {
 	readonly ok: boolean;
 	readonly isGitRepository?: boolean | null;
 	readonly hasRemote?: boolean | null;
+	readonly originUrl?: string | null;
+	readonly upstreamRemoteUrl?: string | null;
 	readonly aheadCount?: number | null;
 	readonly behindCount?: number | null;
 	readonly hasUncommittedChanges?: boolean | null;
@@ -989,6 +993,8 @@ function normalizeProjectRepositoryGitInspectionResponse(
 			ok: true,
 			isGitRepository: response.isGitRepository === true,
 			hasRemote: response.hasRemote === true,
+			originUrl: normalizeOptionalGitRemoteUrl(response.originUrl),
+			upstreamRemoteUrl: normalizeOptionalGitRemoteUrl(response.upstreamRemoteUrl),
 			aheadCount: normalizeGitCount(response.aheadCount),
 			behindCount: normalizeGitCount(response.behindCount),
 			hasUncommittedChanges: response.hasUncommittedChanges === true,
@@ -1004,6 +1010,10 @@ function normalizeProjectRepositoryGitInspectionResponse(
 			? response.error
 			: 'project-repository-git-path-unreadable'
 	};
+}
+
+function normalizeOptionalGitRemoteUrl(value: unknown) {
+	return typeof value === 'string' && value.trim().length > 0 ? value.trim() : null;
 }
 
 function isProjectRepositoryGitError(value: unknown): value is ProjectRepositoryGitError {

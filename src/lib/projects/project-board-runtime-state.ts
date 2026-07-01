@@ -10,9 +10,11 @@ import {
 	type ProjectRepositoryGitError,
 	type ProjectRepositoryGitInspectionResult
 } from './project-repository';
+import { backfillProjectRepositoryRemoteUrls } from './project-registry';
 import type {
 	ProjectRegistry,
 	ProjectRepositoryLinkRecord,
+	ProjectRepositoryRemoteUrlBackfillInput,
 	ProjectTreeRow
 } from './project-registry';
 
@@ -28,6 +30,26 @@ export function createRepositoryGitInspectionSignature(
 	repositories: readonly ProjectRepositoryLinkRecord[]
 ) {
 	return `${workspaceId}:${repositories.map((repository) => `${repository.id}:${repository.path}`).join('|')}`;
+}
+
+export function createRepositoryRemoteBackfillSignature(
+	workspaceId: string,
+	repositories: readonly ProjectRepositoryLinkRecord[],
+	gitStatusById: Readonly<Record<string, ProjectRepositoryGitStatus>>
+) {
+	return `${workspaceId}:${repositories
+		.map((repository) => {
+			const gitStatus = gitStatusById[repository.id];
+
+			return [
+				repository.id,
+				repository.remoteUrl ?? '',
+				repository.upstreamRemoteUrl ?? '',
+				gitStatus?.originUrl ?? '',
+				gitStatus?.upstreamRemoteUrl ?? ''
+			].join(':');
+		})
+		.join('|')}`;
 }
 
 export function pruneRepositoryGitStatusRecord(
@@ -76,6 +98,39 @@ export async function ensureProjectFoldersForBoard(
 
 	context.setFolderRepairError(null);
 	await context.persistRegistry(input.registrySnapshot);
+}
+
+export async function backfillProjectRepositoryRemoteUrlsForBoard(
+	input: {
+		readonly expectedSignature: string;
+		readonly registrySnapshot: ProjectRegistry;
+		readonly repositories: readonly ProjectRepositoryLinkRecord[];
+		readonly gitStatusById: Readonly<Record<string, ProjectRepositoryGitStatus>>;
+	},
+	context: {
+		readonly getRepositoryRemoteBackfillSignature: () => string;
+		readonly persistRegistry: (nextRegistry: ProjectRegistry) => Promise<boolean>;
+	}
+) {
+	const backfills = createProjectRepositoryRemoteUrlBackfills(
+		input.repositories,
+		input.gitStatusById
+	);
+
+	if (backfills.length === 0) {
+		return;
+	}
+
+	const result = backfillProjectRepositoryRemoteUrls(input.registrySnapshot, backfills);
+
+	if (
+		!result.changed ||
+		input.expectedSignature !== context.getRepositoryRemoteBackfillSignature()
+	) {
+		return;
+	}
+
+	await context.persistRegistry(result.registry);
 }
 
 export async function refreshProjectRepositoryGitStatusForBoard(
@@ -152,6 +207,8 @@ function createRepositoryGitStatusFromInspectionResult(
 		? {
 				isGitRepository: result.isGitRepository,
 				hasRemote: result.hasRemote,
+				originUrl: result.originUrl,
+				upstreamRemoteUrl: result.upstreamRemoteUrl,
 				aheadCount: result.aheadCount,
 				behindCount: result.behindCount,
 				hasUncommittedChanges: result.hasUncommittedChanges,
@@ -161,12 +218,43 @@ function createRepositoryGitStatusFromInspectionResult(
 		: {
 				isGitRepository: false,
 				hasRemote: false,
+				originUrl: null,
+				upstreamRemoteUrl: null,
 				aheadCount: 0,
 				behindCount: 0,
 				hasUncommittedChanges: false,
 				branch: null,
 				error: result.error as ProjectRepositoryGitError
 			};
+}
+
+function createProjectRepositoryRemoteUrlBackfills(
+	repositories: readonly ProjectRepositoryLinkRecord[],
+	gitStatusById: Readonly<Record<string, ProjectRepositoryGitStatus>>
+) {
+	const backfills: ProjectRepositoryRemoteUrlBackfillInput[] = [];
+
+	for (const repository of repositories) {
+		const gitStatus = gitStatusById[repository.id];
+
+		if (
+			repository.remoteUrl !== null ||
+			gitStatus === undefined ||
+			gitStatus.error !== null ||
+			!gitStatus.isGitRepository ||
+			gitStatus.originUrl === null
+		) {
+			continue;
+		}
+
+		backfills.push({
+			repositoryId: repository.id,
+			remoteUrl: gitStatus.originUrl,
+			upstreamRemoteUrl: gitStatus.upstreamRemoteUrl
+		});
+	}
+
+	return backfills;
 }
 
 function pruneRecordById<T>(record: Readonly<Record<string, T>>, ids: ReadonlySet<string>) {

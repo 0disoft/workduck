@@ -112,6 +112,12 @@ export interface ProjectRepositoryPathUpdateInput {
 	readonly path: string;
 }
 
+export interface ProjectRepositoryRemoteUrlBackfillInput {
+	readonly repositoryId: string;
+	readonly remoteUrl: string | null;
+	readonly upstreamRemoteUrl?: string | null;
+}
+
 export interface ProjectNodeTagsUpdateInput {
 	readonly nodeId: string;
 	readonly tags: readonly string[];
@@ -159,6 +165,11 @@ export type ProjectRegistryMutationResult =
 			readonly registry: ProjectRegistry;
 			readonly error: ProjectRegistryError;
 	  };
+
+export interface ProjectRegistryBackfillResult {
+	readonly registry: ProjectRegistry;
+	readonly changed: boolean;
+}
 
 export interface ProjectTreeRow {
 	readonly node: ProjectNodeRecord;
@@ -683,6 +694,101 @@ export function setProjectRepositoryLocalPath(
 			),
 			updatedAt: timestamp
 		}
+	};
+}
+
+export function backfillProjectRepositoryRemoteUrls(
+	registry: ProjectRegistry,
+	inputs: readonly ProjectRepositoryRemoteUrlBackfillInput[],
+	now = new Date()
+): ProjectRegistryBackfillResult {
+	const normalizedRegistry = normalizeProjectRegistry(registry, registry.workspaceId);
+
+	if (inputs.length === 0) {
+		return { registry: normalizedRegistry, changed: false };
+	}
+
+	const inputByRepositoryId = new Map(
+		inputs.map((input) => [
+			input.repositoryId,
+			{
+				remoteUrl: normalizeRepositoryRemoteUrl(input.remoteUrl ?? ''),
+				upstreamRemoteUrl: normalizeRepositoryRemoteUrl(input.upstreamRemoteUrl ?? '')
+			}
+		])
+	);
+	const seenRepositoryRemoteUrls = new Set<string>();
+
+	for (const node of normalizedRegistry.nodes) {
+		if (node.kind !== 'group') {
+			continue;
+		}
+
+		for (const repository of node.repositories) {
+			if (repository.remoteUrl !== null) {
+				seenRepositoryRemoteUrls.add(createRepositoryRemoteUrlKey(repository.remoteUrl));
+			}
+		}
+	}
+
+	const timestamp = now.toISOString();
+	let changed = false;
+
+	const nodes = normalizedRegistry.nodes.map((node) => {
+		if (node.kind !== 'group') {
+			return node;
+		}
+
+		let nodeChanged = false;
+		const repositories = node.repositories.map((repository) => {
+			if (repository.remoteUrl !== null) {
+				return repository;
+			}
+
+			const input = inputByRepositoryId.get(repository.id);
+
+			if (input === undefined || input.remoteUrl.length === 0) {
+				return repository;
+			}
+
+			const remoteUrlKey = createRepositoryRemoteUrlKey(input.remoteUrl);
+
+			if (seenRepositoryRemoteUrls.has(remoteUrlKey)) {
+				return repository;
+			}
+
+			seenRepositoryRemoteUrls.add(remoteUrlKey);
+			nodeChanged = true;
+			changed = true;
+
+			return {
+				...repository,
+				remoteUrl: input.remoteUrl,
+				upstreamRemoteUrl:
+					repository.upstreamRemoteUrl ??
+					(input.upstreamRemoteUrl.length === 0 ? null : input.upstreamRemoteUrl),
+				updatedAt: timestamp
+			};
+		});
+
+		return nodeChanged
+			? {
+					...node,
+					repositories,
+					updatedAt: timestamp
+				}
+			: node;
+	});
+
+	return {
+		registry: changed
+			? {
+					...normalizedRegistry,
+					nodes,
+					updatedAt: timestamp
+				}
+			: normalizedRegistry,
+		changed
 	};
 }
 

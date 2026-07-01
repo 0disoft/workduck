@@ -3,8 +3,10 @@
 	import type { ProjectFolderError } from './project-folder';
 	import type { ProjectRepositoryOperation } from './project-board-operations';
 	import {
+		backfillProjectRepositoryRemoteUrlsForBoard,
 		createFolderRepairSignature,
 		createRepositoryGitInspectionSignature,
+		createRepositoryRemoteBackfillSignature,
 		ensureProjectFoldersForBoard,
 		pruneRepositoryGitStatusRecord,
 		pruneRepositoryOperationRecord,
@@ -42,6 +44,8 @@
 		persistRegistry
 	}: Props = $props();
 
+	let repositoryRemoteBackfillSignature = $state('');
+
 	async function ensureProjectFoldersForRegistry(
 		expectedSignature: string,
 		workspacePath: string,
@@ -53,6 +57,25 @@
 			{
 				getFolderRepairSignature: () => folderRepairSignature,
 				setFolderRepairError: (error) => { folderRepairError = error; },
+				persistRegistry
+			}
+		);
+	}
+
+	async function backfillProjectRepositoryRemoteUrlsForRegistry(
+		expectedSignature: string,
+		registrySnapshot: ProjectRegistry,
+		gitStatusSnapshot: Readonly<Record<string, ProjectRepositoryGitStatus>>
+	) {
+		await backfillProjectRepositoryRemoteUrlsForBoard(
+			{
+				expectedSignature,
+				registrySnapshot,
+				repositories: selectionIndex.registeredRepositories,
+				gitStatusById: gitStatusSnapshot
+			},
+			{
+				getRepositoryRemoteBackfillSignature: () => repositoryRemoteBackfillSignature,
 				persistRegistry
 			}
 		);
@@ -90,6 +113,26 @@
 					};
 				}
 			}
+		);
+	});
+
+	$effect(() => {
+		const nextSignature = createRepositoryRemoteBackfillSignature(
+			workspace.id,
+			selectionIndex.registeredRepositories,
+			repositoryGitStatusById
+		);
+
+		if (repositoryRemoteBackfillSignature === nextSignature) {
+			return;
+		}
+
+		repositoryRemoteBackfillSignature = nextSignature;
+
+		void backfillProjectRepositoryRemoteUrlsForRegistry(
+			nextSignature,
+			registry,
+			repositoryGitStatusById
 		);
 	});
 

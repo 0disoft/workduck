@@ -178,6 +178,10 @@ pub struct ProjectRepositoryGitInspection {
     ok: bool,
     is_git_repository: bool,
     has_remote: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    origin_url: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    upstream_remote_url: Option<String>,
     ahead_count: u32,
     behind_count: u32,
     has_uncommitted_changes: bool,
@@ -1106,12 +1110,16 @@ fn inspect_git_repository(
         return Ok(not_git_repository_inspection());
     };
 
-    let has_remote = has_git_remote(repository_path)?;
+    let origin_url = read_valid_git_remote_url(repository_path, "origin")?;
+    let upstream_remote_url = read_valid_git_remote_url(repository_path, "upstream")?;
+    let has_remote = origin_url.is_some();
 
     Ok(ProjectRepositoryGitInspection {
         ok: true,
         is_git_repository: true,
         has_remote,
+        origin_url,
+        upstream_remote_url,
         ahead_count: if has_remote { status.ahead_count } else { 0 },
         behind_count: if has_remote { status.behind_count } else { 0 },
         has_uncommitted_changes: status.has_uncommitted_changes,
@@ -1125,6 +1133,8 @@ fn not_git_repository_inspection() -> ProjectRepositoryGitInspection {
         ok: true,
         is_git_repository: false,
         has_remote: false,
+        origin_url: None,
+        upstream_remote_url: None,
         ahead_count: 0,
         behind_count: 0,
         has_uncommitted_changes: false,
@@ -1268,13 +1278,22 @@ fn paths_match(left: &Path, right: &Path) -> bool {
 }
 
 fn has_git_remote(repository_path: &Path) -> Result<bool, GitCommandFailure> {
-    Ok(read_git_origin_remote_url(repository_path)?
-        .as_deref()
-        .is_some_and(|remote_url| validate_remote_url(remote_url).is_ok()))
+    Ok(read_valid_git_remote_url(repository_path, "origin")?.is_some())
 }
 
 fn read_git_origin_remote_url(repository_path: &Path) -> Result<Option<String>, GitCommandFailure> {
     read_git_remote_url(repository_path, "origin")
+}
+
+fn read_valid_git_remote_url(
+    repository_path: &Path,
+    remote_name: &str,
+) -> Result<Option<String>, GitCommandFailure> {
+    let Some(remote_url) = read_git_remote_url(repository_path, remote_name)? else {
+        return Ok(None);
+    };
+
+    Ok(validate_remote_url(&remote_url).ok())
 }
 
 fn read_git_remote_url(
@@ -1412,6 +1431,8 @@ mod tests {
             ok: true,
             is_git_repository: true,
             has_remote: false,
+            origin_url: None,
+            upstream_remote_url: None,
             ahead_count: 0,
             behind_count: 0,
             has_uncommitted_changes: true,
@@ -1493,6 +1514,65 @@ mod tests {
         assert!(!inspection.is_git_repository);
         assert!(!inspection.has_remote);
         assert!(!inspection.has_uncommitted_changes);
+
+        let _ = fs::remove_dir_all(&sandbox);
+    }
+
+    #[test]
+    fn repository_inspection_reports_valid_origin_and_upstream_remote_urls() {
+        if !git_is_available() {
+            return;
+        }
+
+        let sandbox = unique_test_directory("workduck-inspection-remotes");
+        let repository = sandbox.join("repo");
+
+        fs::create_dir_all(&repository).expect("create git test repository");
+
+        let init_status = Command::new("git")
+            .arg("init")
+            .current_dir(&repository)
+            .status()
+            .expect("run git init");
+
+        assert!(init_status.success());
+
+        let add_origin_status = Command::new("git")
+            .args(["remote", "add", "origin", "https://github.com/0disoft/workduck.git"])
+            .current_dir(&repository)
+            .status()
+            .expect("add origin remote");
+
+        assert!(add_origin_status.success());
+
+        let add_upstream_status = Command::new("git")
+            .args([
+                "remote",
+                "add",
+                "upstream",
+                "https://github.com/example/workduck.git",
+            ])
+            .current_dir(&repository)
+            .status()
+            .expect("add upstream remote");
+
+        assert!(add_upstream_status.success());
+
+        let inspection = match inspect_git_repository(&repository) {
+            Ok(inspection) => inspection,
+            Err(_) => panic!("inspect git repository"),
+        };
+
+        assert!(inspection.is_git_repository);
+        assert!(inspection.has_remote);
+        assert_eq!(
+            inspection.origin_url.as_deref(),
+            Some("https://github.com/0disoft/workduck.git")
+        );
+        assert_eq!(
+            inspection.upstream_remote_url.as_deref(),
+            Some("https://github.com/example/workduck.git")
+        );
 
         let _ = fs::remove_dir_all(&sandbox);
     }
@@ -1718,6 +1798,8 @@ fn invalid_git_inspection(error: ProjectRepositoryGitError) -> ProjectRepository
         ok: false,
         is_git_repository: false,
         has_remote: false,
+        origin_url: None,
+        upstream_remote_url: None,
         ahead_count: 0,
         behind_count: 0,
         has_uncommitted_changes: false,

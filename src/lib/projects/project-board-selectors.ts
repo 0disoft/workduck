@@ -13,6 +13,8 @@ export type ProjectRepositorySyncFilter = 'all' | 'pull' | 'push' | 'commit';
 export interface ProjectRepositoryGitStatus {
 	readonly isGitRepository: boolean;
 	readonly hasRemote: boolean;
+	readonly originUrl: string | null;
+	readonly upstreamRemoteUrl: string | null;
 	readonly aheadCount: number;
 	readonly behindCount: number;
 	readonly hasUncommittedChanges: boolean;
