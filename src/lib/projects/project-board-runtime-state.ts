@@ -13,6 +13,7 @@ import {
 import { backfillProjectRepositoryRemoteUrls } from './project-registry';
 import type {
 	ProjectRegistry,
+	ProjectNodeRecord,
 	ProjectRepositoryLinkRecord,
 	ProjectRepositoryRemoteUrlBackfillInput,
 	ProjectTreeRow
@@ -34,22 +35,205 @@ export function createRepositoryGitInspectionSignature(
 
 export function createRepositoryRemoteBackfillSignature(
 	workspaceId: string,
-	repositories: readonly ProjectRepositoryLinkRecord[],
+	registry: ProjectRegistry,
 	gitStatusById: Readonly<Record<string, ProjectRepositoryGitStatus>>
 ) {
+	const repositories = getProjectRegistryRepositories(registry);
+
 	return `${workspaceId}:${repositories
 		.map((repository) => {
 			const gitStatus = gitStatusById[repository.id];
 
 			return [
 				repository.id,
+				repository.name,
+				repository.path ?? '',
 				repository.remoteUrl ?? '',
 				repository.upstreamRemoteUrl ?? '',
+				gitStatus?.error ?? '',
 				gitStatus?.originUrl ?? '',
 				gitStatus?.upstreamRemoteUrl ?? ''
 			].join(':');
 		})
+		.join('|')}:${registry.nodes
+		.map((node) => `${node.id}:${node.parentId ?? ''}:${node.kind}:${node.githubCredentialSecretId ?? ''}`)
 		.join('|')}`;
+}
+
+function getProjectRegistryRepositories(registry: ProjectRegistry) {
+	return registry.nodes.flatMap((node) => node.repositories);
+}
+
+export function createProjectRepositoryRemoteUrlBackfills(
+	registry: ProjectRegistry,
+	gitStatusById: Readonly<Record<string, ProjectRepositoryGitStatus>>
+) {
+	const backfills: ProjectRepositoryRemoteUrlBackfillInput[] = [];
+	const githubOwnersByRootProjectId = createGithubOwnersByRootProjectId(registry.nodes);
+	const repositoryLocations = createRepositoryLocations(registry.nodes);
+
+	for (const { repository, rootProjectId } of repositoryLocations) {
+		if (repository.remoteUrl !== null) {
+			continue;
+		}
+
+		const gitStatus = gitStatusById[repository.id];
+
+		if (
+			gitStatus !== undefined &&
+			gitStatus.error === null &&
+			gitStatus.isGitRepository &&
+			gitStatus.originUrl !== null
+		) {
+			backfills.push({
+				repositoryId: repository.id,
+				remoteUrl: gitStatus.originUrl,
+				upstreamRemoteUrl: gitStatus.upstreamRemoteUrl
+			});
+			continue;
+		}
+
+		if (
+			repository.path === null ||
+			gitStatus?.error !== 'project-repository-git-path-not-found' ||
+			rootProjectId === null ||
+			!isLikelyGithubRepositoryName(repository.name)
+		) {
+			continue;
+		}
+
+		const githubOwner = getSingleGithubOwner(githubOwnersByRootProjectId.get(rootProjectId));
+
+		if (githubOwner === null) {
+			continue;
+		}
+
+		backfills.push({
+			repositoryId: repository.id,
+			remoteUrl: `https://github.com/${githubOwner}/${repository.name}`,
+			upstreamRemoteUrl: null
+		});
+	}
+
+	return backfills;
+}
+
+interface ProjectRepositoryLocation {
+	readonly node: ProjectNodeRecord;
+	readonly repository: ProjectRepositoryLinkRecord;
+	readonly rootProjectId: string | null;
+}
+
+function createRepositoryLocations(nodes: readonly ProjectNodeRecord[]) {
+	const nodeById = new Map(nodes.map((node) => [node.id, node]));
+	const locations: ProjectRepositoryLocation[] = [];
+
+	for (const node of nodes) {
+		const rootProjectId = getRootProjectId(node, nodeById);
+
+		for (const repository of node.repositories) {
+			locations.push({ node, repository, rootProjectId });
+		}
+	}
+
+	return locations;
+}
+
+function createGithubOwnersByRootProjectId(nodes: readonly ProjectNodeRecord[]) {
+	const ownersByRootProjectId = new Map<string, Set<string>>();
+	const nodeById = new Map(nodes.map((node) => [node.id, node]));
+
+	for (const node of nodes) {
+		const rootProjectId = getRootProjectId(node, nodeById);
+
+		if (rootProjectId === null) {
+			continue;
+		}
+
+		for (const repository of node.repositories) {
+			if (repository.remoteUrl === null) {
+				continue;
+			}
+
+			const owner = parseGithubRemoteOwner(repository.remoteUrl);
+
+			if (owner === null) {
+				continue;
+			}
+
+			const owners = ownersByRootProjectId.get(rootProjectId) ?? new Set<string>();
+			owners.add(owner);
+			ownersByRootProjectId.set(rootProjectId, owners);
+		}
+	}
+
+	return ownersByRootProjectId;
+}
+
+function getRootProjectId(
+	node: ProjectNodeRecord,
+	nodeById: ReadonlyMap<string, ProjectNodeRecord>
+) {
+	let current: ProjectNodeRecord | undefined = node;
+	const visitedNodeIds = new Set<string>();
+
+	while (current !== undefined && !visitedNodeIds.has(current.id)) {
+		visitedNodeIds.add(current.id);
+
+		if (current.kind === 'project') {
+			return current.id;
+		}
+
+		current = current.parentId === null ? undefined : nodeById.get(current.parentId);
+	}
+
+	return null;
+}
+
+function getSingleGithubOwner(owners: ReadonlySet<string> | undefined) {
+	if (owners === undefined || owners.size !== 1) {
+		return null;
+	}
+
+	return [...owners][0] ?? null;
+}
+
+function parseGithubRemoteOwner(remoteUrl: string) {
+	const trimmedRemoteUrl = remoteUrl.trim();
+	const scpLikeMatch = /^git@github\.com:([^/]+)\/[^/]+(?:\.git)?$/iu.exec(trimmedRemoteUrl);
+
+	if (scpLikeMatch !== null) {
+		return normalizeGithubOwner(scpLikeMatch[1] ?? '');
+	}
+
+	try {
+		const url = new URL(trimmedRemoteUrl);
+
+		if (url.hostname.toLowerCase() !== 'github.com') {
+			return null;
+		}
+
+		const [owner, repositoryName] = url.pathname
+			.split('/')
+			.map((segment) => segment.trim())
+			.filter((segment) => segment.length > 0);
+
+		if (owner === undefined || repositoryName === undefined) {
+			return null;
+		}
+
+		return normalizeGithubOwner(owner);
+	} catch {
+		return null;
+	}
+}
+
+function normalizeGithubOwner(owner: string) {
+	return /^[a-z\d](?:[a-z\d-]{0,37}[a-z\d])?$/iu.test(owner) ? owner : null;
+}
+
+function isLikelyGithubRepositoryName(repositoryName: string) {
+	return /^[a-z\d._-]+$/iu.test(repositoryName);
 }
 
 export function pruneRepositoryGitStatusRecord(
@@ -113,7 +297,7 @@ export async function backfillProjectRepositoryRemoteUrlsForBoard(
 	}
 ) {
 	const backfills = createProjectRepositoryRemoteUrlBackfills(
-		input.repositories,
+		input.registrySnapshot,
 		input.gitStatusById
 	);
 
@@ -226,35 +410,6 @@ function createRepositoryGitStatusFromInspectionResult(
 				branch: null,
 				error: result.error as ProjectRepositoryGitError
 			};
-}
-
-function createProjectRepositoryRemoteUrlBackfills(
-	repositories: readonly ProjectRepositoryLinkRecord[],
-	gitStatusById: Readonly<Record<string, ProjectRepositoryGitStatus>>
-) {
-	const backfills: ProjectRepositoryRemoteUrlBackfillInput[] = [];
-
-	for (const repository of repositories) {
-		const gitStatus = gitStatusById[repository.id];
-
-		if (
-			repository.remoteUrl !== null ||
-			gitStatus === undefined ||
-			gitStatus.error !== null ||
-			!gitStatus.isGitRepository ||
-			gitStatus.originUrl === null
-		) {
-			continue;
-		}
-
-		backfills.push({
-			repositoryId: repository.id,
-			remoteUrl: gitStatus.originUrl,
-			upstreamRemoteUrl: gitStatus.upstreamRemoteUrl
-		});
-	}
-
-	return backfills;
 }
 
 function pruneRecordById<T>(record: Readonly<Record<string, T>>, ids: ReadonlySet<string>) {

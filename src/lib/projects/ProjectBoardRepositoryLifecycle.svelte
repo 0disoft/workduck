@@ -119,7 +119,7 @@
 	$effect(() => {
 		const nextSignature = createRepositoryRemoteBackfillSignature(
 			workspace.id,
-			selectionIndex.registeredRepositories,
+			registry,
 			repositoryGitStatusById
 		);
 
