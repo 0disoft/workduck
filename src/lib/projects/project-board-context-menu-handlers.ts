@@ -6,6 +6,7 @@ import {
 	resolveContextDeleteCandidate,
 	resolveContextDescriptionEditorTarget,
 	resolveContextGithubCredentialEditorTarget,
+	resolveContextRepositoryRemoteUrlEditorTarget,
 	resolveContextTagEditorTarget
 } from './project-board-context-actions';
 import {
@@ -21,6 +22,7 @@ import type {
 	ProjectContextMenuTarget,
 	ProjectDeleteCandidate,
 	ProjectGithubCredentialEditorTarget,
+	ProjectRepositoryRemoteUrlEditorTarget,
 	ProjectRepositoryTarget,
 	ProjectTagEditorTarget
 } from './project-board-types';
@@ -46,6 +48,7 @@ export function createProjectBoardContextMenuHandlers(context: {
 	readonly setIsOpeningFolder: (isOpening: boolean) => void;
 	readonly openTagEditor: (target: ProjectTagEditorTarget) => void;
 	readonly openGithubCredentialEditor: (target: ProjectGithubCredentialEditorTarget) => void;
+	readonly openRemoteUrlEditor: (target: ProjectRepositoryRemoteUrlEditorTarget) => void;
 	readonly openDescriptionEditor: (node: ProjectNodeRecord) => void;
 	readonly openDetailsEditor: (node: ProjectNodeRecord) => void;
 	readonly openPublishRepositoryDialog: (
@@ -162,6 +165,21 @@ export function createProjectBoardContextMenuHandlers(context: {
 			}
 
 			context.openGithubCredentialEditor(result.value);
+		},
+		openContextRemoteUrlEditor() {
+			const result = resolveContextRepositoryRemoteUrlEditorTarget(
+				context.getRegistryNodes(),
+				context.getContextMenuTarget()
+			);
+
+			closeContextMenu();
+
+			if (!result.ok) {
+				context.setFormError(result.error);
+				return;
+			}
+
+			context.openRemoteUrlEditor(result.value);
 		},
 		openContextDescriptionEditor() {
 			const result = resolveContextDescriptionEditorTarget(

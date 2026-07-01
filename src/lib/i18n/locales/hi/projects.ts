@@ -113,6 +113,7 @@ export const hiProjectsMessages = {
 		editDetails: 'नाम और पथ संपादित करें',
 		editDescription: 'विवरण संपादित करें',
 		githubCredential: 'GitHub क्रेडेंशियल',
+		remoteUrl: 'रिमोट URL',
 		editTags: 'टैग संपादित करें',
 		delete: 'हटाएं',
 		clone: 'क्लोन करें',

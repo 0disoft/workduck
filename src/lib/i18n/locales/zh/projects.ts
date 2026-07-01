@@ -113,6 +113,7 @@ export const zhProjectsMessages = {
 		editDetails: '编辑名称与路径',
 		editDescription: '编辑描述',
 		githubCredential: 'GitHub 凭据',
+		remoteUrl: '远程 URL',
 		editTags: '编辑标签',
 		delete: '删除',
 		clone: '克隆',

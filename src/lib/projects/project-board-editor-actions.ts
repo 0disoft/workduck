@@ -1,11 +1,15 @@
 import type { ProjectFormError } from './project-board-errors';
 import { validateTagsInput } from './project-board-selectors';
-import type { ProjectTagEditorTarget } from './project-board-types';
+import type {
+	ProjectRepositoryRemoteUrlEditorTarget,
+	ProjectTagEditorTarget
+} from './project-board-types';
 import {
 	setProjectNodeDescription,
 	setProjectNodeName,
 	setProjectNodePath,
 	setProjectNodeTags,
+	setProjectRepositoryRemoteUrl,
 	setProjectRepositoryTags,
 	type ProjectNodeRecord,
 	type ProjectRegistry
@@ -158,6 +162,47 @@ export async function saveProjectTags(
 
 	if (await context.persistRegistry(result.registry)) {
 		context.setStatus('Tags saved.');
+		context.closeEditor();
+		return;
+	}
+
+	context.setIsSaving(false);
+}
+
+export async function saveProjectRepositoryRemoteUrl(
+	input: {
+		readonly editor: ProjectRepositoryRemoteUrlEditorTarget | null;
+		readonly remoteUrlInput: string;
+		readonly registry: ProjectRegistry;
+		readonly isSaving: boolean;
+	},
+	context: ProjectEditorActionContext & {
+		readonly setIsSaving: (isSaving: boolean) => void;
+		readonly closeEditor: () => void;
+	}
+) {
+	if (input.editor === null || input.isSaving) {
+		return;
+	}
+
+	context.setIsSaving(true);
+	context.setFormError(null);
+	context.setStatus(null);
+
+	const result = setProjectRepositoryRemoteUrl(input.registry, {
+		nodeId: input.editor.node.id,
+		repositoryId: input.editor.repository.id,
+		remoteUrl: input.remoteUrlInput
+	});
+
+	if (!result.ok) {
+		context.setFormError(result.error);
+		context.setIsSaving(false);
+		return;
+	}
+
+	if (await context.persistRegistry(result.registry)) {
+		context.setStatus('Repository URL saved.');
 		context.closeEditor();
 		return;
 	}

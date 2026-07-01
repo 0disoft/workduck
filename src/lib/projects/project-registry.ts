@@ -112,6 +112,12 @@ export interface ProjectRepositoryPathUpdateInput {
 	readonly path: string;
 }
 
+export interface ProjectRepositoryRemoteUrlUpdateInput {
+	readonly nodeId: string;
+	readonly repositoryId: string;
+	readonly remoteUrl: string | null;
+}
+
 export interface ProjectRepositoryRemoteUrlBackfillInput {
 	readonly repositoryId: string;
 	readonly remoteUrl: string | null;
@@ -684,6 +690,92 @@ export function setProjectRepositoryLocalPath(
 									? {
 											...repository,
 											path,
+											updatedAt: timestamp
+										}
+									: repository
+							),
+							updatedAt: timestamp
+						}
+					: node
+			),
+			updatedAt: timestamp
+		}
+	};
+}
+
+export function setProjectRepositoryRemoteUrl(
+	registry: ProjectRegistry,
+	input: ProjectRepositoryRemoteUrlUpdateInput,
+	now = new Date()
+): ProjectRegistryMutationResult {
+	const normalizedRegistry = normalizeProjectRegistry(registry, registry.workspaceId);
+	const remoteUrl = normalizeRepositoryRemoteUrl(input.remoteUrl ?? '');
+	const targetNode = normalizedRegistry.nodes.find((node) => node.id === input.nodeId);
+
+	if (targetNode === undefined) {
+		return { ok: false, registry: normalizedRegistry, error: 'project-node-not-found' };
+	}
+
+	if (targetNode.kind !== 'group') {
+		return { ok: false, registry: normalizedRegistry, error: 'project-repository-target-invalid' };
+	}
+
+	const targetRepository = targetNode.repositories.find(
+		(repository) => repository.id === input.repositoryId
+	);
+
+	if (targetRepository === undefined) {
+		return { ok: false, registry: normalizedRegistry, error: 'project-repository-not-found' };
+	}
+
+	if ((input.remoteUrl ?? '').trim().length > 0 && remoteUrl.length === 0) {
+		return { ok: false, registry: normalizedRegistry, error: 'project-repository-remote-url-invalid' };
+	}
+
+	if (remoteUrl.length === 0 && targetRepository.path === null) {
+		return { ok: false, registry: normalizedRegistry, error: 'project-repository-source-required' };
+	}
+
+	if (remoteUrl.length > 0) {
+		const remoteUrlKey = createRepositoryRemoteUrlKey(remoteUrl);
+
+		if (
+			normalizedRegistry.nodes.some(
+				(node) =>
+					node.kind === 'group' &&
+					node.repositories.some(
+						(repository) =>
+							repository.id !== input.repositoryId &&
+							repository.remoteUrl !== null &&
+							createRepositoryRemoteUrlKey(repository.remoteUrl) === remoteUrlKey
+					)
+			)
+		) {
+			return {
+				ok: false,
+				registry: normalizedRegistry,
+				error: 'project-repository-remote-url-duplicate'
+			};
+		}
+	}
+
+	const timestamp = now.toISOString();
+
+	return {
+		ok: true,
+		registry: {
+			...normalizedRegistry,
+			nodes: normalizedRegistry.nodes.map((node) =>
+				node.id === targetNode.id
+					? {
+							...node,
+							repositories: node.repositories.map((repository) =>
+								repository.id === input.repositoryId
+									? {
+											...repository,
+											remoteUrl: remoteUrl.length === 0 ? null : remoteUrl,
+											upstreamRemoteUrl:
+												remoteUrl.length === 0 ? null : repository.upstreamRemoteUrl,
 											updatedAt: timestamp
 										}
 									: repository

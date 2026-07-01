@@ -17,6 +17,7 @@
 		readonly onEditDetails: () => void;
 		readonly onEditDescription: () => void;
 		readonly onEditGithubCredential: () => void;
+		readonly onEditRemoteUrl: () => void;
 		readonly onEditTags: () => void;
 		readonly onDelete: () => void;
 		readonly onCloneRepository: () => Promise<void>;
@@ -38,6 +39,7 @@
 		onEditDetails,
 		onEditDescription,
 		onEditGithubCredential,
+		onEditRemoteUrl,
 		onEditTags,
 		onDelete,
 		onCloneRepository,
@@ -206,6 +208,14 @@
 				{projectMessages.contextMenu.githubCredential}
 			</button>
 		{/if}
+		<button
+			class="workduck-context-menu-item"
+			type="button"
+			role="menuitem"
+			onclick={onEditRemoteUrl}
+		>
+			{projectMessages.contextMenu.remoteUrl}
+		</button>
 		<button
 			class="workduck-context-menu-item workduck-context-menu-item-danger"
 			type="button"

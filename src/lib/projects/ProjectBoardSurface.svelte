@@ -124,6 +124,7 @@
 		ProjectDeleteCandidate,
 		ProjectDialogState,
 		ProjectGithubCredentialEditorTarget,
+		ProjectRepositoryRemoteUrlEditorTarget,
 		ProjectRepositoryTarget,
 		ProjectRepositorySourceMode,
 		ProjectTagEditorTarget
@@ -167,6 +168,8 @@
 	let tagEditor = $state<ProjectTagEditorTarget | null>(null);
 	let tagInput = $state('');
 	let githubCredentialEditor = $state<ProjectGithubCredentialEditorTarget | null>(null);
+	let remoteUrlEditor = $state<ProjectRepositoryRemoteUrlEditorTarget | null>(null);
+	let remoteUrlInput = $state('');
 	let detailsEditor = $state<ProjectNodeRecord | null>(null);
 	let detailsNameInput = $state('');
 	let detailsPathInput = $state('');
@@ -207,6 +210,7 @@
 	let isSavingTags = $state(false);
 	let isSavingDescription = $state(false);
 	let isSavingDetails = $state(false);
+	let isSavingRemoteUrl = $state(false);
 	let isOpeningFolder = $state(false);
 	let contextMenuElement = $state<HTMLElement | undefined>(undefined);
 	let ProjectBoardOverlays = $state<ProjectBoardOverlaysComponent | null>(null);
@@ -242,6 +246,7 @@
 	let canSaveGithubCredential = $derived(
 		githubCredentialEditor !== null && !isSubmitting && environmentVault !== null
 	);
+	let canSaveRemoteUrl = $derived(remoteUrlEditor !== null && !isSavingRemoteUrl);
 	let canSaveDescription = $derived(descriptionEditor !== null && !isSavingDescription);
 	let canSubmitDialog = $derived(
 		canSubmitProjectDialog(
@@ -292,6 +297,7 @@
 			detailsEditor !== null ||
 			tagEditor !== null ||
 			githubCredentialEditor !== null ||
+			remoteUrlEditor !== null ||
 			publishTarget !== null ||
 			dialog !== null
 	);
@@ -335,8 +341,11 @@
 		getTagInput: () => tagInput,
 		getIsSavingTags: () => isSavingTags,
 		getGithubCredentialEditor: () => githubCredentialEditor,
+		getRemoteUrlEditor: () => remoteUrlEditor,
+		getRemoteUrlInput: () => remoteUrlInput,
 		getSelectedGithubCredentialSecretId: () => selectedGithubCredentialSecretId,
 		getIsSubmitting: () => isSubmitting,
+		getIsSavingRemoteUrl: () => isSavingRemoteUrl,
 		getEnvironmentVault: () => environmentVault,
 		getEnvironmentVaultEnvelope: () => environmentVaultEnvelope,
 		getEnvironmentVaultPassword: () => environmentVaultPassword,
@@ -354,10 +363,13 @@
 		setTagInput: (input) => { tagInput = input; },
 		setIsSavingTags: (isSaving) => { isSavingTags = isSaving; },
 		setGithubCredentialEditor: (editor) => { githubCredentialEditor = editor; },
+		setRemoteUrlEditor: (editor) => { remoteUrlEditor = editor; },
+		setRemoteUrlInput: (input) => { remoteUrlInput = input; },
 		setSelectedGithubCredentialSecretId: (secretId) => {
 			selectedGithubCredentialSecretId = secretId;
 		},
 		setIsSubmitting: (nextIsSubmitting) => { isSubmitting = nextIsSubmitting; },
+		setIsSavingRemoteUrl: (isSaving) => { isSavingRemoteUrl = isSaving; },
 		setEnvironmentVault: (vault) => { environmentVault = vault; },
 		setEnvironmentVaultPassword: (password) => { environmentVaultPassword = password; },
 		setEnvironmentVaultError: (error) => { environmentVaultError = error; },
@@ -369,6 +381,7 @@
 		clearTagEditor: () => { tagEditor = null; },
 		clearDescriptionEditor: () => { descriptionEditor = null; },
 		clearDetailsEditor: () => { detailsEditor = null; },
+		clearRemoteUrlEditor: () => { remoteUrlEditor = null; },
 		clearDialog: () => { dialog = null; }
 	});
 
@@ -390,6 +403,7 @@
 		setIsOpeningFolder: (isOpening) => { isOpeningFolder = isOpening; },
 		openTagEditor: editorActions.openTagEditor,
 		openGithubCredentialEditor: editorActions.openGithubCredentialEditor,
+		openRemoteUrlEditor: editorActions.openRemoteUrlEditor,
 		openDescriptionEditor: editorActions.openDescriptionEditor,
 		openDetailsEditor: editorActions.openDetailsEditor,
 		openPublishRepositoryDialog
@@ -1118,6 +1132,10 @@
 	{canSaveDetails}
 	{isSavingTags}
 	{canSaveTags}
+	{remoteUrlEditor}
+	bind:remoteUrlInput
+	{isSavingRemoteUrl}
+	{canSaveRemoteUrl}
 	{environmentVaultEnvelope}
 	{environmentVault}
 	{environmentVaultError}
@@ -1147,6 +1165,7 @@
 	onEditDetails={contextMenuActions.openContextDetailsEditor}
 	onEditDescription={contextMenuActions.openContextDescriptionEditor}
 	onEditGithubCredential={contextMenuActions.openContextGithubCredentialEditor}
+	onEditRemoteUrl={contextMenuActions.openContextRemoteUrlEditor}
 	onEditTags={contextMenuActions.openContextTagEditor}
 	onDelete={contextMenuActions.openContextDeleteDialog}
 	onCloneRepository={contextMenuActions.openContextCloneRepository}
@@ -1168,6 +1187,10 @@
 	onTagSubmit={editorActions.handleTagEditorSubmit}
 	onTagBackdropClick={editorActions.handleTagEditorBackdropClick}
 	onTagClose={editorActions.closeTagEditor}
+	onRemoteUrlInput={editorActions.handleRemoteUrlEditorInput}
+	onRemoteUrlSubmit={editorActions.handleRemoteUrlEditorSubmit}
+	onRemoteUrlBackdropClick={editorActions.handleRemoteUrlEditorBackdropClick}
+	onRemoteUrlClose={editorActions.closeRemoteUrlEditor}
 	onUnlock={editorActions.handleUnlockProjectEnvironmentVault}
 	onGithubCredentialSubmit={editorActions.handleGithubCredentialSubmit}
 	onGithubCredentialBackdropClick={editorActions.handleGithubCredentialEditorBackdropClick}

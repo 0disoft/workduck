@@ -49,6 +49,12 @@ export type ProjectGithubCredentialEditorTarget =
 			readonly repository: ProjectRepositoryLinkRecord;
 	  };
 
+export interface ProjectRepositoryRemoteUrlEditorTarget {
+	readonly type: 'repository';
+	readonly node: ProjectNodeRecord;
+	readonly repository: ProjectRepositoryLinkRecord;
+}
+
 export interface ProjectContextMenuState {
 	readonly x: number;
 	readonly y: number;

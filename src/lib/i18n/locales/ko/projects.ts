@@ -113,6 +113,7 @@ export const koProjectsMessages = {
 			editDetails: '이름과 경로 수정',
 			editDescription: '설명 수정',
 			githubCredential: 'GitHub 인증',
+			remoteUrl: 'Remote URL',
 			editTags: '태그 수정',
 			delete: '삭제',
 			clone: 'Clone',

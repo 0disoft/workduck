@@ -113,6 +113,7 @@ export const enProjectsMessages = {
 			editDetails: 'Edit name and path',
 			editDescription: 'Edit description',
 			githubCredential: 'GitHub credential',
+			remoteUrl: 'Remote URL',
 			editTags: 'Edit tags',
 			delete: 'Delete',
 			clone: 'Clone',

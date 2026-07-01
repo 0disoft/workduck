@@ -9,6 +9,7 @@
 		ProjectDeleteCandidate,
 		ProjectDialogState,
 		ProjectGithubCredentialEditorTarget,
+		ProjectRepositoryRemoteUrlEditorTarget,
 		ProjectRepositorySourceMode,
 		ProjectRepositoryTarget,
 		ProjectTagEditorTarget
@@ -23,6 +24,7 @@
 	import ProjectNodeDetailsDialog from './ProjectNodeDetailsDialog.svelte';
 	import ProjectNodeDialog from './ProjectNodeDialog.svelte';
 	import ProjectPublishDialog from './ProjectPublishDialog.svelte';
+	import ProjectRemoteUrlDialog from './ProjectRemoteUrlDialog.svelte';
 	import ProjectTagDialog from './ProjectTagDialog.svelte';
 
 	interface Props {
@@ -34,6 +36,7 @@
 		detailsNameInput: string;
 		detailsPathInput: string;
 		tagInput: string;
+		remoteUrlInput: string;
 		environmentVaultPassword: string;
 		selectedGithubCredentialSecretId: string;
 		githubRepositoryName: string;
@@ -48,6 +51,7 @@
 		readonly detailsEditor: import('./project-registry').ProjectNodeRecord | null;
 		readonly tagEditor: ProjectTagEditorTarget | null;
 		readonly githubCredentialEditor: ProjectGithubCredentialEditorTarget | null;
+		readonly remoteUrlEditor: ProjectRepositoryRemoteUrlEditorTarget | null;
 		readonly publishTarget: ProjectRepositoryTarget | null;
 		readonly dialog: ProjectDialogState | null;
 		readonly dialogTargetNodeName: string | null;
@@ -63,6 +67,8 @@
 		readonly canSaveDetails: boolean;
 		readonly isSavingTags: boolean;
 		readonly canSaveTags: boolean;
+		readonly isSavingRemoteUrl: boolean;
+		readonly canSaveRemoteUrl: boolean;
 		readonly environmentVaultEnvelope: SecretVaultEnvelope | null;
 		readonly environmentVault: EnvironmentVault | null;
 		readonly environmentVaultError: string | null;
@@ -92,6 +98,7 @@
 		readonly onEditDetails: () => void;
 		readonly onEditDescription: () => void;
 		readonly onEditGithubCredential: () => void;
+		readonly onEditRemoteUrl: () => void;
 		readonly onEditTags: () => void;
 		readonly onDelete: () => void;
 		readonly onCloneRepository: () => Promise<void>;
@@ -113,6 +120,10 @@
 		readonly onTagSubmit: (event: SubmitEvent) => Promise<void>;
 		readonly onTagBackdropClick: (event: MouseEvent) => void;
 		readonly onTagClose: () => void;
+		readonly onRemoteUrlInput: () => void;
+		readonly onRemoteUrlSubmit: (event: SubmitEvent) => Promise<void>;
+		readonly onRemoteUrlBackdropClick: (event: MouseEvent) => void;
+		readonly onRemoteUrlClose: () => void;
 		readonly onUnlock: (event: SubmitEvent) => Promise<void>;
 		readonly onGithubCredentialSubmit: (event: SubmitEvent) => Promise<void>;
 		readonly onGithubCredentialBackdropClick: (event: MouseEvent) => void;
@@ -137,14 +148,15 @@
 	let {
 		contextMenu, projectMessages, contextMenuElement = $bindable(), shouldDeleteLocalFolder = $bindable(),
 		descriptionInput = $bindable(), detailsNameInput = $bindable(), detailsPathInput = $bindable(),
-		tagInput = $bindable(), environmentVaultPassword = $bindable(),
+		tagInput = $bindable(), remoteUrlInput = $bindable(), environmentVaultPassword = $bindable(),
 		selectedGithubCredentialSecretId = $bindable(), githubRepositoryName = $bindable(),
 		githubRepositoryCommitMessage = $bindable(), formName = $bindable(), formDescription = $bindable(),
 		formTags = $bindable(), repositoryRemoteUrl = $bindable(),
 		repositoryGithubCredentialSecretId = $bindable(), deleteCandidate, descriptionEditor,
-		detailsEditor, tagEditor, githubCredentialEditor, publishTarget, dialog, dialogTargetNodeName, repositorySourceMode,
+		detailsEditor, tagEditor, githubCredentialEditor, remoteUrlEditor, publishTarget, dialog, dialogTargetNodeName, repositorySourceMode,
 		formError, storageError, isDeleting, canConfirmDelete, canDeleteLocalFolder, isSavingDescription,
-		canSaveDescription, isSavingDetails, canSaveDetails, isSavingTags, canSaveTags, environmentVaultEnvelope, environmentVault,
+		canSaveDescription, isSavingDetails, canSaveDetails, isSavingTags, canSaveTags,
+		isSavingRemoteUrl, canSaveRemoteUrl, environmentVaultEnvelope, environmentVault,
 		environmentVaultError, githubCredentialOptions, isEnvironmentVaultBusy, isSubmitting,
 		canSaveGithubCredential, githubRepositoryVisibility, isPublishingRepository,
 		canSubmitPublishRepository, canSubmitDialog, canOpenContextFolder, canCloneContextRepository,
@@ -152,12 +164,13 @@
 		getDeleteDialogTitle, getDeleteDialogText, getDeleteLocalFolderLabel, getDeleteLocalFolderUnavailableText,
 		getVisibleFormErrorMessage, getTagsInputMaxLength, getDialogTitle, getDialogSubmitLabel,
 		isRepositoryRemoteUrlError, onOpenFolder, onEditDetails, onEditDescription, onEditGithubCredential,
-		onEditTags, onDelete, onCloneRepository, onInitializeRepository, onPublishRepository,
+		onEditRemoteUrl, onEditTags, onDelete, onCloneRepository, onInitializeRepository, onPublishRepository,
 		onRepositoryTask,
 		onDeleteBackdropClick, onDeleteClose, onDeleteConfirm, onDescriptionInput, onDescriptionSubmit,
 		onDescriptionBackdropClick, onDescriptionClose, onDetailsInput, onDetailsSubmit,
 		onDetailsBackdropClick, onDetailsClose, onTagInput, onTagSubmit, onTagBackdropClick,
-		onTagClose, onUnlock, onGithubCredentialSubmit, onGithubCredentialBackdropClick,
+		onTagClose, onRemoteUrlInput, onRemoteUrlSubmit, onRemoteUrlBackdropClick,
+		onRemoteUrlClose, onUnlock, onGithubCredentialSubmit, onGithubCredentialBackdropClick,
 		onGithubCredentialClose, onRepositoryNameInput, onCommitMessageInput, onSelectVisibility,
 		onPublishSubmit, onPublishBackdropClick, onPublishClose, onNameInput, onDialogDescriptionInput,
 		onDialogTagsInput, onRepositoryRemoteUrlInput, onRepositoryGithubCredentialSelect,
@@ -171,7 +184,8 @@
 		{canCloneContextRepository} {canInitializeContextRepository} {canPublishContextRepository}
 		{canEditContextGithubCredential}
 		onOpenFolder={onOpenFolder} onEditDetails={onEditDetails} onEditDescription={onEditDescription}
-		onEditGithubCredential={onEditGithubCredential} onEditTags={onEditTags} onDelete={onDelete}
+		onEditGithubCredential={onEditGithubCredential} onEditRemoteUrl={onEditRemoteUrl}
+		onEditTags={onEditTags} onDelete={onDelete}
 		onCloneRepository={onCloneRepository} onInitializeRepository={onInitializeRepository}
 		onPublishRepository={onPublishRepository} onRepositoryTask={onRepositoryTask} />
 {/if}
@@ -202,6 +216,13 @@
 	<ProjectTagDialog editor={tagEditor} bind:tagInput {formError} {storageError} {isSavingTags}
 		{canSaveTags} {getTagsInputMaxLength} {getVisibleFormErrorMessage} onInput={onTagInput}
 		onSubmit={onTagSubmit} onBackdropClick={onTagBackdropClick} onClose={onTagClose} />
+{/if}
+
+{#if remoteUrlEditor !== null}
+	<ProjectRemoteUrlDialog editor={remoteUrlEditor} bind:remoteUrlInput {formError} {storageError}
+		{isSavingRemoteUrl} {canSaveRemoteUrl} {getVisibleFormErrorMessage}
+		onInput={onRemoteUrlInput} onSubmit={onRemoteUrlSubmit}
+		onBackdropClick={onRemoteUrlBackdropClick} onClose={onRemoteUrlClose} />
 {/if}
 
 {#if githubCredentialEditor !== null}

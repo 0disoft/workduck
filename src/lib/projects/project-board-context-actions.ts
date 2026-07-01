@@ -8,6 +8,7 @@ import type {
 	ProjectContextMenuTarget,
 	ProjectDeleteCandidate,
 	ProjectGithubCredentialEditorTarget,
+	ProjectRepositoryRemoteUrlEditorTarget,
 	ProjectTagEditorTarget
 } from './project-board-types';
 import type { ProjectNodeRecord } from './project-registry';
@@ -136,6 +137,21 @@ export function resolveContextGithubCredentialEditorTarget(
 	target: ProjectContextMenuTarget | null
 ): ResolveResult<ProjectGithubCredentialEditorTarget> {
 	return resolveNodeOrRepositoryTarget(nodes, target);
+}
+
+export function resolveContextRepositoryRemoteUrlEditorTarget(
+	nodes: readonly ProjectNodeRecord[],
+	target: ProjectContextMenuTarget | null
+): ResolveResult<ProjectRepositoryRemoteUrlEditorTarget> {
+	if (target?.type !== 'repository') {
+		return { ok: false, error: null };
+	}
+
+	const repositoryTarget = getProjectRepositoryTarget(nodes, target.nodeId, target.repositoryId);
+
+	return repositoryTarget === null
+		? { ok: false, error: 'project-repository-not-found' }
+		: { ok: true, value: { type: 'repository', ...repositoryTarget } };
 }
 
 export function resolveContextDescriptionEditorTarget(

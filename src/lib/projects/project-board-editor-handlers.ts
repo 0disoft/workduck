@@ -9,11 +9,13 @@ import {
 import {
 	saveProjectDescription,
 	saveProjectNodeDetails,
+	saveProjectRepositoryRemoteUrl,
 	saveProjectTags
 } from './project-board-editor-actions';
 import { formatTagsInput } from './project-board-selectors';
 import type {
 	ProjectGithubCredentialEditorTarget,
+	ProjectRepositoryRemoteUrlEditorTarget,
 	ProjectTagEditorTarget
 } from './project-board-types';
 import type { ProjectNodeRecord, ProjectRegistry } from './project-registry';
@@ -34,8 +36,11 @@ export function createProjectBoardEditorHandlers(context: {
 	readonly getTagInput: () => string;
 	readonly getIsSavingTags: () => boolean;
 	readonly getGithubCredentialEditor: () => ProjectGithubCredentialEditorTarget | null;
+	readonly getRemoteUrlEditor: () => ProjectRepositoryRemoteUrlEditorTarget | null;
+	readonly getRemoteUrlInput: () => string;
 	readonly getSelectedGithubCredentialSecretId: () => string;
 	readonly getIsSubmitting: () => boolean;
+	readonly getIsSavingRemoteUrl: () => boolean;
 	readonly getEnvironmentVault: () => EnvironmentVault | null;
 	readonly getEnvironmentVaultEnvelope: () => SecretVaultEnvelope | null;
 	readonly getEnvironmentVaultPassword: () => string;
@@ -55,8 +60,11 @@ export function createProjectBoardEditorHandlers(context: {
 	readonly setGithubCredentialEditor: (
 		editor: ProjectGithubCredentialEditorTarget | null
 	) => void;
+	readonly setRemoteUrlEditor: (editor: ProjectRepositoryRemoteUrlEditorTarget | null) => void;
+	readonly setRemoteUrlInput: (input: string) => void;
 	readonly setSelectedGithubCredentialSecretId: (secretId: string) => void;
 	readonly setIsSubmitting: (isSubmitting: boolean) => void;
+	readonly setIsSavingRemoteUrl: (isSaving: boolean) => void;
 	readonly setEnvironmentVault: (vault: EnvironmentVault) => void;
 	readonly setEnvironmentVaultPassword: (password: string) => void;
 	readonly setEnvironmentVaultError: (error: string | null) => void;
@@ -68,6 +76,7 @@ export function createProjectBoardEditorHandlers(context: {
 	readonly clearTagEditor: () => void;
 	readonly clearDescriptionEditor: () => void;
 	readonly clearDetailsEditor: () => void;
+	readonly clearRemoteUrlEditor: () => void;
 	readonly clearDialog: () => void;
 }) {
 	function clearFeedback() {
@@ -100,6 +109,12 @@ export function createProjectBoardEditorHandlers(context: {
 		context.setIsSubmitting(false);
 	}
 
+	function closeRemoteUrlEditor() {
+		context.setRemoteUrlEditor(null);
+		context.setRemoteUrlInput('');
+		context.setIsSavingRemoteUrl(false);
+	}
+
 	return {
 		openDescriptionEditor(node: ProjectNodeRecord) {
 			context.setDescriptionEditor(node);
@@ -109,6 +124,7 @@ export function createProjectBoardEditorHandlers(context: {
 			context.clearPublishTarget();
 			context.clearTagEditor();
 			context.clearDetailsEditor();
+			context.clearRemoteUrlEditor();
 			context.clearDialog();
 		},
 		closeDescriptionEditor,
@@ -121,6 +137,7 @@ export function createProjectBoardEditorHandlers(context: {
 			context.clearDescriptionEditor();
 			context.clearPublishTarget();
 			context.clearTagEditor();
+			context.clearRemoteUrlEditor();
 			context.clearDialog();
 		},
 		closeDetailsEditor,
@@ -186,6 +203,7 @@ export function createProjectBoardEditorHandlers(context: {
 			context.clearDescriptionEditor();
 			context.clearDetailsEditor();
 			context.clearPublishTarget();
+			context.clearRemoteUrlEditor();
 			context.clearDialog();
 		},
 		closeTagEditor,
@@ -202,6 +220,7 @@ export function createProjectBoardEditorHandlers(context: {
 			context.clearTagEditor();
 			context.clearDetailsEditor();
 			context.clearPublishTarget();
+			context.clearRemoteUrlEditor();
 			context.clearDialog();
 		},
 		closeGithubCredentialEditor,
@@ -252,6 +271,43 @@ export function createProjectBoardEditorHandlers(context: {
 					setStatus: context.setStatus,
 					getSavedStatus: context.getGithubCredentialSavedStatus,
 					closeEditor: closeGithubCredentialEditor
+				}
+			);
+		},
+		openRemoteUrlEditor(target: ProjectRepositoryRemoteUrlEditorTarget) {
+			context.setRemoteUrlEditor(target);
+			context.setRemoteUrlInput(target.repository.remoteUrl ?? '');
+			clearFeedback();
+			context.clearDeleteCandidate();
+			context.clearDescriptionEditor();
+			context.clearTagEditor();
+			context.clearDetailsEditor();
+			context.clearPublishTarget();
+			context.clearDialog();
+		},
+		closeRemoteUrlEditor,
+		handleRemoteUrlEditorInput: clearFeedback,
+		handleRemoteUrlEditorBackdropClick(event: MouseEvent) {
+			if (event.target === event.currentTarget && !context.getIsSavingRemoteUrl()) {
+				closeRemoteUrlEditor();
+			}
+		},
+		async handleRemoteUrlEditorSubmit(event: SubmitEvent) {
+			event.preventDefault();
+
+			await saveProjectRepositoryRemoteUrl(
+				{
+					editor: context.getRemoteUrlEditor(),
+					remoteUrlInput: context.getRemoteUrlInput(),
+					registry: context.getRegistry(),
+					isSaving: context.getIsSavingRemoteUrl()
+				},
+				{
+					persistRegistry: context.persistRegistry,
+					setFormError: context.setFormError,
+					setStatus: context.setStatus,
+					setIsSaving: context.setIsSavingRemoteUrl,
+					closeEditor: closeRemoteUrlEditor
 				}
 			);
 		},
