@@ -60,9 +60,23 @@ pub async fn show_workduck_tray_menu(
 }
 
 #[tauri::command]
-pub async fn hide_workduck_tray_menu(app: tauri::AppHandle) -> Result<(), String> {
+pub async fn hide_workduck_tray_menu(
+    app: tauri::AppHandle,
+    restore_main_focus: Option<bool>,
+) -> Result<(), String> {
+    hide_workduck_tray_menu_window(&app, restore_main_focus.unwrap_or(false))
+}
+
+fn hide_workduck_tray_menu_window(
+    app: &tauri::AppHandle,
+    restore_main_focus: bool,
+) -> Result<(), String> {
     if let Some(window) = app.get_webview_window(TRAY_MENU_WINDOW_LABEL) {
         window.hide().map_err(|error| error.to_string())?;
+    }
+
+    if restore_main_focus {
+        focus_visible_main_window(app)?;
     }
 
     Ok(())
@@ -70,7 +84,7 @@ pub async fn hide_workduck_tray_menu(app: tauri::AppHandle) -> Result<(), String
 
 #[tauri::command]
 pub async fn show_workduck_main_window(app: tauri::AppHandle) -> Result<(), String> {
-    hide_workduck_tray_menu(app.clone()).await?;
+    hide_workduck_tray_menu_window(&app, false)?;
 
     if let Some(window) = app.get_webview_window(MAIN_WINDOW_LABEL) {
         window.show().map_err(|error| error.to_string())?;
@@ -83,13 +97,25 @@ pub async fn show_workduck_main_window(app: tauri::AppHandle) -> Result<(), Stri
 
 #[tauri::command]
 pub async fn hide_workduck_main_window(app: tauri::AppHandle) -> Result<(), String> {
-    hide_workduck_tray_menu(app.clone()).await?;
+    hide_workduck_tray_menu_window(&app, false)?;
 
     if let Some(window) = app.get_webview_window(MAIN_WINDOW_LABEL) {
         window.hide().map_err(|error| error.to_string())?;
     }
 
     Ok(())
+}
+
+fn focus_visible_main_window(app: &tauri::AppHandle) -> Result<(), String> {
+    let Some(window) = app.get_webview_window(MAIN_WINDOW_LABEL) else {
+        return Ok(());
+    };
+
+    if !window.is_visible().map_err(|error| error.to_string())? {
+        return Ok(());
+    }
+
+    window.set_focus().map_err(|error| error.to_string())
 }
 
 #[tauri::command]

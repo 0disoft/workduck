@@ -11,7 +11,10 @@
 
 	let firstMenuItem: HTMLButtonElement | undefined;
 
-	async function runTrayMenuCommand(command: TrayMenuCommand) {
+	async function runTrayMenuCommand(
+		command: TrayMenuCommand,
+		args: Record<string, unknown> = {}
+	) {
 		const invoke = getTauriInvoke();
 
 		if (invoke === undefined) {
@@ -19,7 +22,7 @@
 		}
 
 		try {
-			await invoke(command);
+			await invoke(command, args);
 		} catch {
 			return;
 		}
@@ -34,7 +37,7 @@
 			}
 
 			event.preventDefault();
-			void runTrayMenuCommand('hide_workduck_tray_menu');
+			void runTrayMenuCommand('hide_workduck_tray_menu', { restoreMainFocus: true });
 		}
 
 		function handleBlur() {

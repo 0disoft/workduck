@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { modalDialog } from '$lib/ui/modal-dialog-action';
 	import type { ProjectFormError } from './project-board-errors';
 	import type { GithubCredentialOption } from './project-board-github-credentials';
 	import {
@@ -89,6 +90,16 @@
 			error === 'project-github-credential-invalid'
 		);
 	}
+
+	function getInitialFocusSelector() {
+		if (mode !== 'repository') {
+			return '#project-dialog-name';
+		}
+
+		return repositorySourceMode === 'folder'
+			? '#project-repository-folder-name'
+			: '#project-repository-url';
+	}
 </script>
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -98,6 +109,10 @@
 		role="dialog"
 		aria-modal="true"
 		aria-labelledby="project-dialog-title"
+		use:modalDialog={{
+			onClose: isSubmitting ? undefined : onClose,
+			initialFocusSelector: getInitialFocusSelector()
+		}}
 	>
 		<form class="workduck-project-dialog-form" onsubmit={onSubmit}>
 			<h2 id="project-dialog-title" class="workduck-dialog-title">{getDialogTitle()}</h2>
