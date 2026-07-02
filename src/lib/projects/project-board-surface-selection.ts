@@ -1,4 +1,5 @@
 import {
+	createEmptyProjectBoardFilterMatchIndex,
 	createProjectBoardFilterMatchIndex,
 	getRepositoryFilterStats,
 	normalizeProjectSearchFilter,
@@ -21,12 +22,15 @@ export function createProjectBoardSurfaceSelection(input: {
 	readonly selectedGroupId: string | null;
 }) {
 	const normalizedTagFilter = normalizeProjectSearchFilter(input.tagFilter);
-	const filterMatchIndex = createProjectBoardFilterMatchIndex(
-		input.selectionIndex,
-		input.repositoryGitStatusById,
-		normalizedTagFilter,
-		input.repositorySyncFilter
-	);
+	const hasActiveFilter = normalizedTagFilter.length > 0 || input.repositorySyncFilter !== 'all';
+	const filterMatchIndex = hasActiveFilter
+		? createProjectBoardFilterMatchIndex(
+				input.selectionIndex,
+				input.repositoryGitStatusById,
+				normalizedTagFilter,
+				input.repositorySyncFilter
+			)
+		: createEmptyProjectBoardFilterMatchIndex();
 	const repositoryFilterStats = getRepositoryFilterStats(
 		input.selectionIndex,
 		input.repositoryGitStatusById

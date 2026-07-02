@@ -3,7 +3,27 @@ import { PROJECT_REPOSITORY_NAME_MAX_LENGTH } from './project-registry';
 export { createProjectFolderNameFromDisplayName } from './project-folder-name';
 
 export function isRepositoryPathInsideWorkspace(workspacePath: string, repositoryPath: string) {
-	const workspacePathKey = createLocalPathBoundaryKey(workspacePath);
+	return isRepositoryPathInsideWorkspaceBoundary(
+		createWorkspacePathBoundaryKey(workspacePath),
+		repositoryPath
+	);
+}
+
+export function isRepositoryPathInsideProjectsFolder(workspacePath: string, repositoryPath: string) {
+	return isRepositoryPathInsideProjectsFolderBoundary(
+		createWorkspacePathBoundaryKey(workspacePath),
+		repositoryPath
+	);
+}
+
+export function createWorkspacePathBoundaryKey(workspacePath: string) {
+	return createLocalPathBoundaryKey(workspacePath);
+}
+
+export function isRepositoryPathInsideWorkspaceBoundary(
+	workspacePathKey: string,
+	repositoryPath: string
+) {
 	const repositoryPathKey = createLocalPathBoundaryKey(repositoryPath);
 
 	return (
@@ -12,8 +32,10 @@ export function isRepositoryPathInsideWorkspace(workspacePath: string, repositor
 	);
 }
 
-export function isRepositoryPathInsideProjectsFolder(workspacePath: string, repositoryPath: string) {
-	const workspacePathKey = createLocalPathBoundaryKey(workspacePath);
+export function isRepositoryPathInsideProjectsFolderBoundary(
+	workspacePathKey: string,
+	repositoryPath: string
+) {
 	const repositoryPathKey = createLocalPathBoundaryKey(repositoryPath);
 	const projectsPathKey = `${workspacePathKey}/projects`;
 

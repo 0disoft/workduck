@@ -56,8 +56,19 @@ export interface ProjectBoardFilterMatchIndex {
 	readonly groupSyncMatchesByNodeId: ReadonlySet<string>;
 }
 
+const EMPTY_PROJECT_BOARD_FILTER_MATCH_INDEX: ProjectBoardFilterMatchIndex = {
+	descendantGroupSearchMatchesByNodeId: new Set<string>(),
+	descendantGroupSyncMatchesByNodeId: new Set<string>(),
+	groupSearchMatchesByNodeId: new Set<string>(),
+	groupSyncMatchesByNodeId: new Set<string>()
+};
+
 export function getNodeKindLabel(kind: ProjectNodeKind) {
 	return kind === 'project' ? 'Project' : 'Group';
+}
+
+export function createEmptyProjectBoardFilterMatchIndex() {
+	return EMPTY_PROJECT_BOARD_FILTER_MATCH_INDEX;
 }
 
 export function createProjectBoardSelectionIndex(

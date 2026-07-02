@@ -473,7 +473,13 @@ fn read_github_cli_git_credential() -> Option<GitCredential> {
 }
 
 #[tauri::command]
-pub fn inspect_project_repository_git(path: String) -> ProjectRepositoryGitInspection {
+pub async fn inspect_project_repository_git(path: String) -> ProjectRepositoryGitInspection {
+    tauri::async_runtime::spawn_blocking(move || inspect_project_repository_git_blocking(path))
+        .await
+        .unwrap_or_else(|_| invalid_git_inspection(ProjectRepositoryGitError::CommandFailed))
+}
+
+fn inspect_project_repository_git_blocking(path: String) -> ProjectRepositoryGitInspection {
     let repository_path = match validate_repository_path(&path) {
         Ok(repository_path) => repository_path,
         Err(error) => return invalid_git_inspection(error),
@@ -591,13 +597,30 @@ fn git_inspection_in_flight_by_path(
 }
 
 #[tauri::command]
-pub fn inspect_project_repositories_git(
+pub async fn inspect_project_repositories_git(
     repositories: Vec<ProjectRepositoryGitInspectionRequest>,
 ) -> Vec<ProjectRepositoryGitInspectionRecord> {
-    inspect_project_repositories_git_with_concurrency(
-        repositories,
-        repository_git_inspection_concurrency_limit(),
-    )
+    let fallback_repository_ids = repositories
+        .iter()
+        .map(|repository| repository.repository_id.clone())
+        .collect::<Vec<_>>();
+
+    tauri::async_runtime::spawn_blocking(move || {
+        inspect_project_repositories_git_with_concurrency(
+            repositories,
+            repository_git_inspection_concurrency_limit(),
+        )
+    })
+    .await
+    .unwrap_or_else(|_| {
+        fallback_repository_ids
+            .into_iter()
+            .map(|repository_id| ProjectRepositoryGitInspectionRecord {
+                repository_id,
+                inspection: invalid_git_inspection(ProjectRepositoryGitError::CommandFailed),
+            })
+            .collect()
+    })
 }
 
 fn inspect_project_repositories_git_with_concurrency(
@@ -650,7 +673,7 @@ fn inspect_project_repository_git_record(
         repository_id,
         path,
     } = repository;
-    let inspection = std::panic::catch_unwind(move || inspect_project_repository_git(path))
+    let inspection = std::panic::catch_unwind(move || inspect_project_repository_git_blocking(path))
         .unwrap_or_else(|_| invalid_git_inspection(ProjectRepositoryGitError::CommandFailed));
 
     ProjectRepositoryGitInspectionRecord {
@@ -1110,8 +1133,9 @@ fn inspect_git_repository(
         return Ok(not_git_repository_inspection());
     };
 
-    let origin_url = read_valid_git_remote_url(repository_path, "origin")?;
-    let upstream_remote_url = read_valid_git_remote_url(repository_path, "upstream")?;
+    let remote_urls = read_valid_git_remote_urls(repository_path)?;
+    let origin_url = remote_urls.get("origin").cloned();
+    let upstream_remote_url = remote_urls.get("upstream").cloned();
     let has_remote = origin_url.is_some();
 
     Ok(ProjectRepositoryGitInspection {
@@ -1294,6 +1318,42 @@ fn read_valid_git_remote_url(
     };
 
     Ok(validate_remote_url(&remote_url).ok())
+}
+
+fn read_valid_git_remote_urls(
+    repository_path: &Path,
+) -> Result<HashMap<String, String>, GitCommandFailure> {
+    let output = run_git_command(
+        repository_path,
+        &["config", "--get-regexp", r"^remote\..*\.url$"],
+        PROJECT_REPOSITORY_GIT_ACTION_TIMEOUT,
+        None,
+    )?;
+
+    if !output.status.success() {
+        return Ok(HashMap::new());
+    }
+
+    let mut remote_urls = HashMap::new();
+
+    for line in String::from_utf8_lossy(&output.stdout).lines() {
+        let Some((key, remote_url)) = line.split_once(' ') else {
+            continue;
+        };
+        let Some(remote_name) = key
+            .strip_prefix("remote.")
+            .and_then(|key| key.strip_suffix(".url"))
+        else {
+            continue;
+        };
+        let remote_url = remote_url.trim();
+
+        if let Ok(remote_url) = validate_remote_url(remote_url) {
+            remote_urls.insert(remote_name.to_owned(), remote_url);
+        }
+    }
+
+    Ok(remote_urls)
 }
 
 fn read_git_remote_url(

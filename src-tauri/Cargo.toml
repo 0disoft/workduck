@@ -1,6 +1,6 @@
 [package]
 name = "workduck"
-version = "1.6.74"
+version = "1.6.75"
 description = "Local-first developer workbench"
 authors = ["Workduck contributors"]
 license = "0BSD"

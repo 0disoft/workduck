@@ -93,8 +93,9 @@
 		type ProjectRepositoryTaskRunRecord
 	} from './project-repository-task';
 	import {
-		isRepositoryPathInsideProjectsFolder as isRepositoryPathInsideProjectsFolderPath,
-		isRepositoryPathInsideWorkspace as isRepositoryPathInsideWorkspacePath
+		createWorkspacePathBoundaryKey,
+		isRepositoryPathInsideProjectsFolderBoundary,
+		isRepositoryPathInsideWorkspaceBoundary
 	} from './project-board-paths';
 	import { DEFAULT_GITHUB_REPOSITORY_COMMIT_MESSAGE } from './project-board-publish-constants';
 	import {
@@ -130,6 +131,7 @@
 		ProjectTagEditorTarget
 	} from './project-board-types';
 	import {
+		createGithubCredentialNameById,
 		getDefaultRepositoryGithubCredentialSecretId as getDefaultRepositoryGithubCredentialSecretIdFromRegistry,
 		getGithubCredentialOptions,
 		resolveRepositoryDialogForkCredential as resolveRepositoryDialogForkCredentialFromVault,
@@ -218,6 +220,7 @@
 
 	let selectionIndex = $derived(createProjectBoardSelectionIndex(registry.nodes));
 	let projectRows = $derived(selectionIndex.projectRows);
+	let workspacePathBoundaryKey = $derived(createWorkspacePathBoundaryKey(workspace.path));
 	let boardSelection = $derived(createProjectBoardSurfaceSelection({
 		selectionIndex,
 		repositoryGitStatusById,
@@ -243,6 +246,7 @@
 	let canSaveTags = $derived(tagEditor !== null && !isSavingTags);
 	let canSaveDetails = $derived(detailsEditor !== null && !isSavingDetails);
 	let githubCredentialOptions = $derived(getGithubCredentialOptions(environmentVault));
+	let githubCredentialNameById = $derived(createGithubCredentialNameById(githubCredentialOptions));
 	let canSaveGithubCredential = $derived(
 		githubCredentialEditor !== null && !isSubmitting && environmentVault !== null
 	);
@@ -811,7 +815,7 @@
 	function getNodeGithubCredentialName(node: ProjectNodeRecord) {
 		return getProjectBoardNodeGithubCredentialName({
 			environmentVault,
-			githubCredentialOptions,
+			githubCredentialNameById,
 			node
 		});
 	}
@@ -823,7 +827,7 @@
 		return getProjectBoardRepositoryGithubCredentialName({
 			nodes: registry.nodes,
 			environmentVault,
-			githubCredentialOptions,
+			githubCredentialNameById,
 			selectedProject,
 			node,
 			repository
@@ -928,11 +932,11 @@
 	}
 
 	function isRepositoryPathInsideWorkspace(repositoryPath: string) {
-		return isRepositoryPathInsideWorkspacePath(workspace.path, repositoryPath);
+		return isRepositoryPathInsideWorkspaceBoundary(workspacePathBoundaryKey, repositoryPath);
 	}
 
 	function isRepositoryPathInsideProjectsFolder(repositoryPath: string) {
-		return isRepositoryPathInsideProjectsFolderPath(workspace.path, repositoryPath);
+		return isRepositoryPathInsideProjectsFolderBoundary(workspacePathBoundaryKey, repositoryPath);
 	}
 
 	async function refreshRepositoryGitStatus(

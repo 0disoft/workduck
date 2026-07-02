@@ -14,6 +14,8 @@ export interface GithubCredentialOption {
 	readonly value: string;
 }
 
+export type GithubCredentialNameById = ReadonlyMap<string, string>;
+
 export function getGithubCredentialOptions(
 	vault: EnvironmentVault | null
 ): readonly GithubCredentialOption[] {
@@ -31,9 +33,15 @@ export function getGithubCredentialOptions(
 		}));
 }
 
+export function createGithubCredentialNameById(
+	options: readonly GithubCredentialOption[]
+): GithubCredentialNameById {
+	return new Map(options.map((option) => [option.id, option.name]));
+}
+
 export function getGithubCredentialName(
 	vault: EnvironmentVault | null,
-	options: readonly GithubCredentialOption[],
+	credentialNameById: GithubCredentialNameById,
 	secretId: string | null
 ) {
 	if (secretId === null || secretId.length === 0) {
@@ -44,27 +52,27 @@ export function getGithubCredentialName(
 		return 'GitHub credential';
 	}
 
-	return options.find((option) => option.id === secretId)?.name ?? 'Missing credential';
+	return credentialNameById.get(secretId) ?? 'Missing credential';
 }
 
 export function getNodeGithubCredentialName(
 	vault: EnvironmentVault | null,
-	options: readonly GithubCredentialOption[],
+	credentialNameById: GithubCredentialNameById,
 	node: ProjectNodeRecord
 ) {
-	return getGithubCredentialName(vault, options, node.githubCredentialSecretId);
+	return getGithubCredentialName(vault, credentialNameById, node.githubCredentialSecretId);
 }
 
 export function getRepositoryGithubCredentialName(
 	nodes: readonly ProjectNodeRecord[],
 	vault: EnvironmentVault | null,
-	options: readonly GithubCredentialOption[],
+	credentialNameById: GithubCredentialNameById,
 	node: ProjectNodeRecord,
 	repository: ProjectRepositoryLinkRecord
 ) {
 	const credentialSecretId = repository.githubCredentialSecretId;
 
-	return getGithubCredentialName(vault, options, credentialSecretId);
+	return getGithubCredentialName(vault, credentialNameById, credentialSecretId);
 }
 
 export function resolveRepositoryGithubCredential(

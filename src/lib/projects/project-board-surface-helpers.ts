@@ -10,6 +10,7 @@ import {
 	getNodeGithubCredentialName,
 	getRepositoryGithubCredentialName,
 	resolveRepositoryGithubCredential,
+	type GithubCredentialNameById,
 	type GithubCredentialOption
 } from './project-board-github-credentials';
 import { getProjectContextMenuNode } from './project-board-targets';
@@ -86,12 +87,12 @@ export function isProjectBoardRepositoryTarget(
 
 export function getProjectBoardNodeGithubCredentialName(input: {
 	readonly environmentVault: EnvironmentVault | null;
-	readonly githubCredentialOptions: readonly GithubCredentialOption[];
+	readonly githubCredentialNameById: GithubCredentialNameById;
 	readonly node: ProjectNodeRecord;
 }) {
 	return getNodeGithubCredentialName(
 		input.environmentVault,
-		input.githubCredentialOptions,
+		input.githubCredentialNameById,
 		input.node
 	);
 }
@@ -99,7 +100,7 @@ export function getProjectBoardNodeGithubCredentialName(input: {
 export function getProjectBoardRepositoryGithubCredentialName(input: {
 	readonly nodes: readonly ProjectNodeRecord[];
 	readonly environmentVault: EnvironmentVault | null;
-	readonly githubCredentialOptions: readonly GithubCredentialOption[];
+	readonly githubCredentialNameById: GithubCredentialNameById;
 	readonly selectedProject: ProjectNodeRecord | null;
 	readonly node: ProjectNodeRecord;
 	readonly repository: ProjectRepositoryLinkRecord;
@@ -111,7 +112,7 @@ export function getProjectBoardRepositoryGithubCredentialName(input: {
 	return getRepositoryGithubCredentialName(
 		input.nodes,
 		input.environmentVault,
-		input.githubCredentialOptions,
+		input.githubCredentialNameById,
 		input.node,
 		input.repository
 	);
