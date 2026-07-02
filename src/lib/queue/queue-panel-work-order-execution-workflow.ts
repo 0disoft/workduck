@@ -13,6 +13,7 @@ import {
 	type QueueExecutionError
 } from './queue-execution';
 import {
+	deleteQueueFile,
 	updateQueueWorkOrderFile,
 	writeQueueResultReportFile,
 	type QueueFolderError
@@ -193,6 +194,8 @@ async function writeQueuePanelWorkOrderExecutionSuccess(input: {
 	);
 
 	if (!archiveResult.ok) {
+		await deleteQueueFile(input.workspacePath, reportWriteResult.relativePath);
+
 		return {
 			ok: false,
 			code: 'archive-write-failed',

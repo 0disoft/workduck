@@ -7,15 +7,19 @@ use crate::workspace_sync_file::{
 use crate::workspace_path::{validate_absolute_directory_path, WorkspacePathValidationError};
 
 use std::{
+    collections::HashMap,
     fs,
     io,
     path::{Path, PathBuf},
     process::Output,
+    sync::{Arc, Mutex, OnceLock},
     time::Duration,
 };
 
 const WORKSPACE_SYNC_GIT_COMMAND_TIMEOUT: Duration = Duration::from_secs(60);
 const WORKSPACE_SYNC_GIT_COMMIT_MESSAGE: &str = "chore: update workduck sync";
+static WORKSPACE_SYNC_GIT_LOCKS_BY_PATH: OnceLock<Mutex<HashMap<PathBuf, Arc<Mutex<()>>>>> =
+    OnceLock::new();
 
 #[derive(serde::Serialize)]
 pub enum WorkspaceSyncGitError {
@@ -239,55 +243,85 @@ fn run_workspace_sync_git_blocking(
         Err(error) => return invalid_run(map_inspection_error(error), None),
     };
 
-    let Some(git_dir) = resolve_git_dir(&folder_path) else {
-        return invalid_run(WorkspaceSyncGitRunError::NotRepository, None);
-    };
+    with_workspace_sync_git_path_lock(&folder_path, || {
+        let Some(git_dir) = resolve_git_dir(&folder_path) else {
+            return invalid_run(WorkspaceSyncGitRunError::NotRepository, None);
+        };
 
-    if read_safe_origin_url(&git_dir).is_none() {
-        return invalid_run(WorkspaceSyncGitRunError::RemoteMissing, None);
-    }
+        if read_safe_origin_url(&git_dir).is_none() {
+            return invalid_run(WorkspaceSyncGitRunError::RemoteMissing, None);
+        }
 
-    let credential = parse_git_credential(credential_kind, credential_value);
+        let credential = parse_git_credential(credential_kind, credential_value);
 
-    match operation {
-        WorkspaceSyncGitOperation::Fetch => {
-            match run_git_success(
-                &folder_path,
-                &["fetch", "origin"],
-                WorkspaceSyncGitPhase::Fetch,
-                credential.as_ref(),
-            ) {
-                Ok(()) => valid_run(WorkspaceSyncGitRunOutcome::Fetched),
-                Err(failure) => invalid_run(failure.error, failure.phase),
+        match operation {
+            WorkspaceSyncGitOperation::Fetch => {
+                match run_git_success(
+                    &folder_path,
+                    &["fetch", "origin"],
+                    WorkspaceSyncGitPhase::Fetch,
+                    credential.as_ref(),
+                ) {
+                    Ok(()) => valid_run(WorkspaceSyncGitRunOutcome::Fetched),
+                    Err(failure) => invalid_run(failure.error, failure.phase),
+                }
+            }
+            WorkspaceSyncGitOperation::Pull => {
+                let Some(branch_name) = read_branch_name(&git_dir) else {
+                    return invalid_run(WorkspaceSyncGitRunError::BranchMissing, None);
+                };
+
+                match run_git_success(
+                    &folder_path,
+                    &["pull", "--ff-only", "origin", branch_name.as_str()],
+                    WorkspaceSyncGitPhase::Pull,
+                    credential.as_ref(),
+                ) {
+                    Ok(()) => valid_run(WorkspaceSyncGitRunOutcome::Pulled),
+                    Err(failure) => invalid_run(failure.error, failure.phase),
+                }
+            }
+            WorkspaceSyncGitOperation::Push => {
+                let Some(branch_name) = read_branch_name(&git_dir) else {
+                    return invalid_run(WorkspaceSyncGitRunError::BranchMissing, None);
+                };
+
+                run_workspace_sync_push(&folder_path, &file_name, &branch_name, credential.as_ref())
             }
         }
-        WorkspaceSyncGitOperation::Pull => {
-            let Some(branch_name) = read_branch_name(&git_dir) else {
-                return invalid_run(WorkspaceSyncGitRunError::BranchMissing, None);
-            };
-
-            match run_git_success(
-                &folder_path,
-                &["pull", "--ff-only", "origin", branch_name.as_str()],
-                WorkspaceSyncGitPhase::Pull,
-                credential.as_ref(),
-            ) {
-                Ok(()) => valid_run(WorkspaceSyncGitRunOutcome::Pulled),
-                Err(failure) => invalid_run(failure.error, failure.phase),
-            }
-        }
-        WorkspaceSyncGitOperation::Push => {
-            let Some(branch_name) = read_branch_name(&git_dir) else {
-                return invalid_run(WorkspaceSyncGitRunError::BranchMissing, None);
-            };
-
-            run_workspace_sync_push(&folder_path, &file_name, &branch_name, credential.as_ref())
-        }
-    }
+    })
 }
 
 fn validate_sync_folder_path(folder_path: &str) -> Result<PathBuf, WorkspaceSyncGitError> {
     validate_absolute_directory_path(folder_path).map_err(map_folder_path_validation_error)
+}
+
+fn with_workspace_sync_git_path_lock<F>(folder_path: &Path, operation: F) -> WorkspaceSyncGitRun
+where
+    F: FnOnce() -> WorkspaceSyncGitRun,
+{
+    let workspace_lock = workspace_sync_git_lock_for(folder_path);
+    let _workspace_guard = workspace_lock
+        .lock()
+        .unwrap_or_else(|poisoned| poisoned.into_inner());
+
+    operation()
+}
+
+fn workspace_sync_git_lock_for(folder_path: &Path) -> Arc<Mutex<()>> {
+    let mut locks_by_path = workspace_sync_git_locks_by_path()
+        .lock()
+        .unwrap_or_else(|poisoned| poisoned.into_inner());
+
+    Arc::clone(
+        locks_by_path
+            .entry(folder_path.to_path_buf())
+            .or_insert_with(|| Arc::new(Mutex::new(()))),
+    )
+}
+
+fn workspace_sync_git_locks_by_path() -> &'static Mutex<HashMap<PathBuf, Arc<Mutex<()>>>> {
+    WORKSPACE_SYNC_GIT_LOCKS_BY_PATH.get_or_init(|| Mutex::new(HashMap::new()))
 }
 
 fn run_workspace_sync_push(
@@ -860,6 +894,8 @@ mod tests {
     use super::*;
     use crate::git_path::wait_for_child_output;
     use std::process::{Command, Stdio};
+    use std::sync::atomic::{AtomicUsize, Ordering};
+    use std::thread;
 
     #[test]
     fn safe_origin_url_redacts_embedded_credentials_before_display() {
@@ -932,6 +968,54 @@ mod tests {
         assert!(output.status.success());
         assert!(output.stdout.len() > 64 * 1024);
         assert!(output.stderr.len() > 64 * 1024);
+    }
+
+    #[test]
+    fn workspace_sync_git_path_lock_serializes_same_path_operations() {
+        let temp_dir = tempfile::tempdir().expect("temporary sync folder");
+        let folder_path = fs::canonicalize(temp_dir.path()).expect("canonical sync folder");
+        let entered_count = Arc::new(AtomicUsize::new(0));
+        let (leader_started_tx, leader_started_rx) = std::sync::mpsc::channel();
+        let (release_leader_tx, release_leader_rx) = std::sync::mpsc::channel();
+        let (waiter_entered_tx, waiter_entered_rx) = std::sync::mpsc::channel();
+        let leader_path = folder_path.clone();
+        let leader_entered_count = Arc::clone(&entered_count);
+
+        let leader = thread::spawn(move || {
+            with_workspace_sync_git_path_lock(&leader_path, || {
+                leader_entered_count.fetch_add(1, Ordering::SeqCst);
+                leader_started_tx.send(()).expect("leader start signal");
+                release_leader_rx.recv().expect("leader release signal");
+                valid_run(WorkspaceSyncGitRunOutcome::Fetched)
+            })
+        });
+
+        leader_started_rx.recv().expect("leader started");
+
+        let waiter_path = folder_path.clone();
+        let waiter_entered_count = Arc::clone(&entered_count);
+        let waiter = thread::spawn(move || {
+            with_workspace_sync_git_path_lock(&waiter_path, || {
+                waiter_entered_count.fetch_add(1, Ordering::SeqCst);
+                waiter_entered_tx.send(()).expect("waiter entered signal");
+                valid_run(WorkspaceSyncGitRunOutcome::Fetched)
+            })
+        });
+
+        assert_eq!(entered_count.load(Ordering::SeqCst), 1);
+        assert!(
+            waiter_entered_rx
+                .recv_timeout(Duration::from_millis(50))
+                .is_err(),
+            "waiter entered while the leader still held the path lock"
+        );
+
+        release_leader_tx.send(()).expect("release leader");
+        waiter_entered_rx.recv().expect("waiter entered after release");
+
+        leader.join().expect("leader completed");
+        waiter.join().expect("waiter completed");
+        assert_eq!(entered_count.load(Ordering::SeqCst), 2);
     }
 
     #[cfg(target_os = "windows")]

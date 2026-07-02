@@ -12,7 +12,7 @@ use std::{
 
 use crate::git_credential::{
     GitCredential, apply_github_cli_credential, clear_git_credential_environment,
-    parse_git_credential,
+    github_token_credential, parse_git_credential,
 };
 use crate::project_repository_failure::{
     CloneFailure, classify_git_clone_failure, classify_git_fetch_failure,
@@ -469,7 +469,7 @@ fn read_github_cli_git_credential() -> Option<GitCredential> {
         return None;
     }
 
-    Some(GitCredential::GithubToken(token))
+    Some(github_token_credential(token))
 }
 
 #[tauri::command]

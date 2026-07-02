@@ -1,10 +1,14 @@
 use std::process::Command;
 
 use base64::{Engine as _, engine::general_purpose::STANDARD};
-use zeroize::Zeroize;
+use zeroize::{Zeroize, Zeroizing};
 
 pub(crate) enum GitCredential {
-    GithubToken(String),
+    GithubToken(Zeroizing<String>),
+}
+
+pub(crate) fn github_token_credential(token: String) -> GitCredential {
+    GitCredential::GithubToken(Zeroizing::new(token))
 }
 
 pub(crate) fn apply_safe_git_config(command: &mut Command, allow_system_credentials: bool) {
@@ -53,7 +57,7 @@ pub(crate) fn parse_git_credential(
         return None;
     }
 
-    Some(GitCredential::GithubToken(trimmed_value.to_owned()))
+    Some(github_token_credential(trimmed_value.to_owned()))
 }
 
 pub(crate) fn apply_git_credential(command: &mut Command, credential: Option<&GitCredential>) {
@@ -61,7 +65,7 @@ pub(crate) fn apply_git_credential(command: &mut Command, credential: Option<&Gi
         return;
     };
 
-    let mut basic_source = format!("x-access-token:{token}");
+    let mut basic_source = format!("x-access-token:{}", token.as_str());
     let mut authorization_value =
         format!("AUTHORIZATION: basic {}", STANDARD.encode(&basic_source));
     basic_source.zeroize();
@@ -90,7 +94,7 @@ pub(crate) fn apply_github_cli_credential(
         return;
     };
 
-    command.env("GH_TOKEN", token);
+    command.env("GH_TOKEN", token.as_str());
 }
 
 #[cfg(test)]
@@ -139,5 +143,58 @@ mod tests {
             .windows(2)
             .any(|pair| pair[0] == "-c" && pair[1] == "core.fsmonitor=false"));
         assert!(!args.windows(2).any(|pair| pair[0] == "-c" && pair[1] == "credential.helper="));
+    }
+
+    #[test]
+    fn git_credential_parser_trims_token_and_rejects_control_characters() {
+        let credential = parse_git_credential(
+            Some(" github-token ".to_string()),
+            Some("  ghp_secret_token  ".to_string()),
+        )
+        .expect("github token credential");
+
+        let GitCredential::GithubToken(token) = credential;
+        assert_eq!(token.as_str(), "ghp_secret_token");
+
+        assert!(parse_git_credential(
+            Some("github-token".to_string()),
+            Some("ghp_\nsecret".to_string())
+        )
+        .is_none());
+        assert!(parse_git_credential(
+            Some("other".to_string()),
+            Some("ghp_secret_token".to_string())
+        )
+        .is_none());
+    }
+
+    #[test]
+    fn git_credential_is_applied_as_github_extraheader() {
+        let credential = github_token_credential("ghp_secret_token".to_string());
+        let mut command = Command::new("git");
+
+        apply_git_credential(&mut command, Some(&credential));
+
+        let envs = command
+            .get_envs()
+            .map(|(key, value)| {
+                (
+                    key.to_string_lossy().into_owned(),
+                    value.map(|value| value.to_string_lossy().into_owned()),
+                )
+            })
+            .collect::<Vec<_>>();
+
+        assert!(envs.contains(&("GIT_CONFIG_COUNT".to_string(), Some("1".to_string()))));
+        assert!(envs.contains(&(
+            "GIT_CONFIG_KEY_0".to_string(),
+            Some("http.https://github.com/.extraheader".to_string())
+        )));
+        assert!(envs.iter().any(|(key, value)| {
+            key == "GIT_CONFIG_VALUE_0"
+                && value
+                    .as_deref()
+                    .is_some_and(|value| value.starts_with("AUTHORIZATION: basic "))
+        }));
     }
 }
