@@ -14,7 +14,14 @@
 		getQueueFolderLocalizedError
 	} from '$lib/queue/queue-panel-errors';
 	import type { QueueFolderError } from '$lib/queue/queue-folder';
-	import { type ProjectFolderError } from './project-folder';
+	import {
+		applySsealedScaffoldToRepository,
+		previewSsealedScaffoldForRepository,
+		type ProjectFolderError,
+		type SsealedScaffoldApplyScope,
+		type SsealedScaffoldPlan,
+		type SsealedScaffoldScope
+	} from './project-folder';
 	import { type ProjectRepositoryGithubVisibility } from './project-repository';
 
 	import {
@@ -186,7 +193,7 @@
 	let repositorySourceMode = $state<ProjectRepositorySourceMode>('folder');
 	let repositoryRemoteUrl = $state('');
 	let repositoryGithubCredentialSecretId = $state('');
-	let repositorySsealedScaffold = $state(false);
+	let repositorySsealedScaffoldScope = $state<SsealedScaffoldScope>('none');
 	let formError = $state<ProjectFormError | null>(null);
 	let status = $state<string | null>(null);
 	let storageError = $state<ProjectRegistryStorageError | null>(null);
@@ -206,10 +213,15 @@
 	let gitActionTarget = $state<ProjectContextMenuTarget | null>(null);
 	let commitWorkOrderTargetRepositoryId = $state<string | null>(null);
 	let publishTarget = $state<ProjectRepositoryPublishTarget | null>(null);
+	let ssealedTarget = $state<ProjectRepositoryTarget | null>(null);
+	let ssealedScaffoldApplyScope = $state<SsealedScaffoldApplyScope>('design');
+	let ssealedPreview = $state<SsealedScaffoldPlan | null>(null);
 	let githubRepositoryName = $state('');
 	let githubRepositoryCommitMessage = $state(DEFAULT_GITHUB_REPOSITORY_COMMIT_MESSAGE);
 	let githubRepositoryVisibility = $state<ProjectRepositoryGithubVisibility>('private');
 	let isPublishingRepository = $state(false);
+	let isPreviewingSsealed = $state(false);
+	let isApplyingSsealed = $state(false);
 	let isSavingTags = $state(false);
 	let isSavingDescription = $state(false);
 	let isSavingDetails = $state(false);
@@ -288,12 +300,23 @@
 		contextMenuRepository !== null &&
 			canPublishRepositoryToGithub(contextMenuRepository.repository)
 	);
+	let canApplySsealedContextRepository = $derived(
+		contextMenuRepository !== null &&
+			canApplySsealedToRepository(contextMenuRepository.repository)
+	);
 	let canSubmitPublishRepository = $derived(
 		publishTarget !== null &&
 			githubRepositoryName.trim().length > 0 &&
 			githubRepositoryCommitMessage.trim().length > 0 &&
 			!isPublishingRepository &&
 			!isRepositoryBusy(publishTarget.repository.id)
+	);
+	let canApplySsealedScaffold = $derived(
+		ssealedTarget !== null &&
+			ssealedPreview !== null &&
+			ssealedPreview.missingCount > 0 &&
+			!isPreviewingSsealed &&
+			!isApplyingSsealed
 	);
 	let hasActiveOverlay = $derived(
 		contextMenu !== null ||
@@ -304,6 +327,7 @@
 			githubCredentialEditor !== null ||
 			remoteUrlEditor !== null ||
 			publishTarget !== null ||
+			ssealedTarget !== null ||
 			dialog !== null
 	);
 
@@ -411,7 +435,8 @@
 		openRemoteUrlEditor: editorActions.openRemoteUrlEditor,
 		openDescriptionEditor: editorActions.openDescriptionEditor,
 		openDetailsEditor: editorActions.openDetailsEditor,
-		openPublishRepositoryDialog
+		openPublishRepositoryDialog,
+		openApplySsealedRepositoryDialog
 	});
 
 	const dialogActions = createProjectBoardDialogHandlers({
@@ -424,7 +449,7 @@
 		getRepositorySourceMode: () => repositorySourceMode,
 		getRepositoryRemoteUrl: () => repositoryRemoteUrl,
 		getRepositoryGithubCredentialSecretId: () => repositoryGithubCredentialSecretId,
-		getRepositorySsealedScaffold: () => repositorySsealedScaffold,
+		getRepositorySsealedScaffoldScope: () => repositorySsealedScaffoldScope,
 		getIsSubmitting: () => isSubmitting,
 		getDeleteCandidate: () => deleteCandidate,
 		getIsDeleting: () => isDeleting,
@@ -444,7 +469,7 @@
 		setRepositoryGithubCredentialSecretId: (secretId) => {
 			repositoryGithubCredentialSecretId = secretId;
 		},
-		setRepositorySsealedScaffold: (enabled) => { repositorySsealedScaffold = enabled; },
+		setRepositorySsealedScaffoldScope: (scope) => { repositorySsealedScaffoldScope = scope; },
 		setFormError: (error) => { formError = error; },
 		setStatus: (nextStatus) => { status = nextStatus; },
 		setDeleteCandidate: (candidate) => { deleteCandidate = candidate; },
@@ -515,6 +540,153 @@
 			setVisibility: (visibility) => { githubRepositoryVisibility = visibility; },
 			setIsPublishing: (isPublishing) => { isPublishingRepository = isPublishing; }
 		});
+	}
+
+	function openApplySsealedRepositoryDialog(target: ProjectRepositoryTarget) {
+		preloadProjectBoardOverlays();
+
+		if (!canApplySsealedToRepository(target.repository)) {
+			formError =
+				target.repository.path === null
+					? 'project-repository-path-required'
+					: 'project-repository-path-outside-workspace';
+			return;
+		}
+
+		ssealedTarget = target;
+		ssealedScaffoldApplyScope = 'design';
+		ssealedPreview = null;
+		isPreviewingSsealed = false;
+		isApplyingSsealed = false;
+		formError = null;
+		status = null;
+		deleteCandidate = null;
+		publishTarget = null;
+		dialog = null;
+		closeContextMenu();
+		void refreshSsealedScaffoldPreview(target, 'design');
+	}
+
+	function closeSsealedScaffoldDialog() {
+		ssealedTarget = null;
+		ssealedScaffoldApplyScope = 'design';
+		ssealedPreview = null;
+		isPreviewingSsealed = false;
+		isApplyingSsealed = false;
+		formError = null;
+	}
+
+	function closeSsealedScaffoldDialogFromBackdrop(event: MouseEvent) {
+		if (event.target === event.currentTarget && !isApplyingSsealed) {
+			closeSsealedScaffoldDialog();
+		}
+	}
+
+	function selectSsealedScaffoldApplyScope(scope: SsealedScaffoldApplyScope) {
+		ssealedScaffoldApplyScope = scope;
+		ssealedPreview = null;
+		formError = null;
+		status = null;
+		void refreshSsealedScaffoldPreview(ssealedTarget, scope);
+	}
+
+	async function refreshSsealedScaffoldPreview(
+		target = ssealedTarget,
+		scope = ssealedScaffoldApplyScope
+	) {
+		if (target === null || target.repository.path === null) {
+			formError = 'project-repository-not-found';
+			return;
+		}
+
+		const repositoryId = target.repository.id;
+
+		isPreviewingSsealed = true;
+		formError = null;
+		status = null;
+
+		try {
+			const result = await previewSsealedScaffoldForRepository(
+				workspace.path,
+				target.repository.path,
+				scope
+			);
+
+			if (
+				ssealedTarget?.repository.id !== repositoryId ||
+				ssealedScaffoldApplyScope !== scope
+			) {
+				return;
+			}
+
+			if (result.ok) {
+				ssealedPreview = result.plan;
+				return;
+			}
+
+			ssealedPreview = null;
+			formError = result.error;
+		} finally {
+			if (
+				ssealedTarget?.repository.id === repositoryId &&
+				ssealedScaffoldApplyScope === scope
+			) {
+				isPreviewingSsealed = false;
+			}
+		}
+	}
+
+	async function applySsealedScaffoldToTarget() {
+		const target = ssealedTarget;
+
+		if (target === null || target.repository.path === null || isApplyingSsealed) {
+			return;
+		}
+
+		if (!canApplySsealedToRepository(target.repository)) {
+			formError = 'project-repository-path-outside-workspace';
+			return;
+		}
+
+		const repositoryId = target.repository.id;
+		const scope = ssealedScaffoldApplyScope;
+
+		isApplyingSsealed = true;
+		formError = null;
+		status = null;
+
+		try {
+			const result = await applySsealedScaffoldToRepository(
+				workspace.path,
+				target.repository.path,
+				scope
+			);
+
+			if (
+				ssealedTarget?.repository.id !== repositoryId ||
+				ssealedScaffoldApplyScope !== scope
+			) {
+				return;
+			}
+
+			if (!result.ok) {
+				formError = result.error;
+				return;
+			}
+
+			ssealedPreview = result.plan;
+			status =
+				result.plan.conflictCount > 0
+					? `ssealed applied. Added ${result.plan.addedCount} files, ${result.plan.conflictCount} conflicts skipped.`
+					: `ssealed applied. Added ${result.plan.addedCount} files.`;
+		} finally {
+			if (
+				ssealedTarget?.repository.id === repositoryId &&
+				ssealedScaffoldApplyScope === scope
+			) {
+				isApplyingSsealed = false;
+			}
+		}
 	}
 
 	function handleGithubRepositoryNameInput() {
@@ -713,7 +885,8 @@
 		return (
 			isProjectBoardRepositoryBusy(repositoryOperationById, repositoryId) ||
 			repositoryTaskRunById[repositoryId]?.state === 'running' ||
-			commitWorkOrderTargetRepositoryId === repositoryId
+			commitWorkOrderTargetRepositoryId === repositoryId ||
+			(isApplyingSsealed && ssealedTarget?.repository.id === repositoryId)
 		);
 	}
 
@@ -911,6 +1084,18 @@
 		);
 	}
 
+	function canApplySsealedToRepository(repository: ProjectRepositoryLinkRecord) {
+		const gitStatus = repositoryGitStatusById[repository.id];
+
+		return (
+			repository.path !== null &&
+			isRepositoryPathInsideWorkspace(repository.path) &&
+			gitStatus !== undefined &&
+			gitStatus.error === null &&
+			!isRepositoryBusy(repository.id)
+		);
+	}
+
 	function canRunRemoteRepositoryGitAction(
 		repository: ProjectRepositoryLinkRecord,
 		action: ProjectRepositoryGitAction
@@ -982,11 +1167,13 @@
 				hasDescriptionEditor: descriptionEditor !== null,
 				hasDetailsEditor: detailsEditor !== null,
 				hasPublishTarget: publishTarget !== null,
+				hasSsealedTarget: ssealedTarget !== null,
 				hasGithubCredentialEditor: githubCredentialEditor !== null,
 				isSavingTags,
 				isSavingDescription,
 				isSavingDetails,
 				isPublishingRepository,
+				isApplyingSsealed,
 				isSubmitting,
 				isEnvironmentVaultBusy
 			},
@@ -997,6 +1184,7 @@
 				closeDescriptionEditor: editorActions.closeDescriptionEditor,
 				closeDetailsEditor: editorActions.closeDetailsEditor,
 				closePublishRepositoryDialog,
+				closeSsealedScaffoldDialog,
 				closeGithubCredentialEditor: editorActions.closeGithubCredentialEditor,
 				closeContextMenu
 			}
@@ -1091,10 +1279,10 @@
 	onGitAction={(node, repository, action) => runRepositoryGitAction({ node, repository }, action)}
 />
 
-{#if standaloneError !== null && dialog === null && deleteCandidate === null && tagEditor === null && descriptionEditor === null && detailsEditor === null && githubCredentialEditor === null && publishTarget === null}
+{#if standaloneError !== null && dialog === null && deleteCandidate === null && tagEditor === null && descriptionEditor === null && detailsEditor === null && githubCredentialEditor === null && publishTarget === null && ssealedTarget === null}
 	<p class="workduck-inline-error" aria-live="polite">{getProjectFormErrorMessage(standaloneError, projectMessages.errors)}</p>
 {/if}
-{#if queueFolderError !== null && dialog === null && deleteCandidate === null && tagEditor === null && descriptionEditor === null && detailsEditor === null && githubCredentialEditor === null && publishTarget === null}
+{#if queueFolderError !== null && dialog === null && deleteCandidate === null && tagEditor === null && descriptionEditor === null && detailsEditor === null && githubCredentialEditor === null && publishTarget === null && ssealedTarget === null}
 	<p class="workduck-inline-error" aria-live="polite">
 		{getQueueFolderLocalizedError(messages, queueFolderError)}
 	</p>
@@ -1119,13 +1307,14 @@
 	bind:formTags
 	bind:repositoryRemoteUrl
 	bind:repositoryGithubCredentialSecretId
-	bind:repositorySsealedScaffold
+	bind:repositorySsealedScaffoldScope
 	{deleteCandidate}
 	{descriptionEditor}
 	{detailsEditor}
 	{tagEditor}
 	{githubCredentialEditor}
 	{publishTarget}
+	{ssealedTarget}
 	{dialog}
 	dialogTargetNodeName={dialogTargetNode?.name ?? null}
 	{repositorySourceMode}
@@ -1153,12 +1342,18 @@
 	{canSaveGithubCredential}
 	{githubRepositoryVisibility}
 	{isPublishingRepository}
+	{isPreviewingSsealed}
+	{isApplyingSsealed}
 	{canSubmitPublishRepository}
+	{canApplySsealedScaffold}
 	{canSubmitDialog}
 	{canOpenContextFolder}
 	{canCloneContextRepository}
 	{canInitializeContextRepository}
 	{canPublishContextRepository}
+	{canApplySsealedContextRepository}
+	{ssealedScaffoldApplyScope}
+	{ssealedPreview}
 	canEditContextGithubCredential={canEditContextGithubCredential()}
 	{getDeleteDialogTitle}
 	{getDeleteDialogText}
@@ -1179,7 +1374,13 @@
 	onCloneRepository={contextMenuActions.openContextCloneRepository}
 	onInitializeRepository={contextMenuActions.openContextInitializeRepository}
 	onPublishRepository={contextMenuActions.openContextPublishRepository}
+	onApplySsealedRepository={contextMenuActions.openContextApplySsealedRepository}
 	onRepositoryTask={contextMenuActions.openContextRepositoryTask}
+	onSsealedScopeSelect={selectSsealedScaffoldApplyScope}
+	onSsealedPreviewRefresh={refreshSsealedScaffoldPreview}
+	onSsealedApply={applySsealedScaffoldToTarget}
+	onSsealedBackdropClick={closeSsealedScaffoldDialogFromBackdrop}
+	onSsealedClose={closeSsealedScaffoldDialog}
 	onDeleteBackdropClick={dialogActions.handleDeleteConfirmationBackdropClick}
 	onDeleteClose={dialogActions.closeDeleteDialog}
 	onDeleteConfirm={dialogActions.handleDeleteConfirm}
@@ -1222,7 +1423,7 @@
 			status = null;
 		}
 	}}
-	onRepositorySsealedScaffoldToggle={dialogActions.handleRepositorySsealedScaffoldToggle}
+	onRepositorySsealedScaffoldScopeSelect={dialogActions.handleRepositorySsealedScaffoldScopeSelect}
 	onSelectRepositorySourceMode={dialogActions.selectRepositorySourceMode}
 	onDialogSubmit={dialogActions.handleDialogSubmit}
 	onDialogBackdropClick={dialogActions.handleDialogBackdropClick}

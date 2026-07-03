@@ -119,6 +119,7 @@ export const koProjectsMessages = {
 			clone: 'Clone',
 			initializeGit: 'Git 초기화',
 			publish: '게시',
+			applySsealed: 'ssealed 적용',
 			openTerminal: '터미널 열기',
 			installDependencies: '의존성 설치 터미널 열기',
 			updateDependencies: '의존성 업데이트 터미널 열기',
@@ -187,6 +188,8 @@ export const koProjectsMessages = {
 			'project-folder-open-path-not-found': '폴더 경로를 찾을 수 없습니다.',
 			'project-folder-open-path-not-directory': '폴더 경로는 폴더여야 합니다.',
 			'project-folder-open-path-permission-denied': '폴더를 열 수 없습니다.',
+			'project-folder-repository-path-outside-workspace':
+				'저장소 폴더는 현재 워크스페이스 안에 있어야 합니다.',
 			'project-folder-open-failed': '폴더를 열지 못했습니다.',
 			'project-folder-delete-path-required': '폴더 경로가 필요합니다.',
 			'project-folder-delete-path-not-absolute': '폴더 경로는 절대 경로여야 합니다.',

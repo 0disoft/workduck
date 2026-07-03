@@ -2,6 +2,7 @@
 	import { modalDialog } from '$lib/ui/modal-dialog-action';
 	import type { ProjectFormError } from './project-board-errors';
 	import type { GithubCredentialOption } from './project-board-github-credentials';
+	import type { SsealedScaffoldScope } from './project-folder';
 	import {
 		PROJECT_DESCRIPTION_MAX_LENGTH,
 		PROJECT_NAME_MAX_LENGTH,
@@ -18,7 +19,7 @@
 		formTags: string;
 		repositoryRemoteUrl: string;
 		repositoryGithubCredentialSecretId: string;
-		repositorySsealedScaffold: boolean;
+		repositorySsealedScaffoldScope: SsealedScaffoldScope;
 		readonly repositorySourceMode: ProjectRepositorySourceMode;
 		readonly githubCredentialOptions: readonly GithubCredentialOption[];
 		readonly formError: ProjectFormError | null;
@@ -35,7 +36,7 @@
 		readonly onTagsInput: () => void;
 		readonly onRepositoryRemoteUrlInput: (event: Event) => void;
 		readonly onRepositoryGithubCredentialSelect: (event: Event) => void;
-		readonly onRepositorySsealedScaffoldToggle: () => void;
+		readonly onRepositorySsealedScaffoldScopeSelect: (event: Event) => void;
 		readonly onSelectRepositorySourceMode: (sourceMode: ProjectRepositorySourceMode) => void;
 		readonly onSubmit: (event: SubmitEvent) => Promise<void>;
 		readonly onBackdropClick: (event: MouseEvent) => void;
@@ -50,7 +51,7 @@
 		formTags = $bindable(),
 		repositoryRemoteUrl = $bindable(),
 		repositoryGithubCredentialSecretId = $bindable(),
-		repositorySsealedScaffold = $bindable(),
+		repositorySsealedScaffoldScope = $bindable(),
 		repositorySourceMode,
 		githubCredentialOptions,
 		formError,
@@ -67,7 +68,7 @@
 		onTagsInput,
 		onRepositoryRemoteUrlInput,
 		onRepositoryGithubCredentialSelect,
-		onRepositorySsealedScaffoldToggle,
+		onRepositorySsealedScaffoldScopeSelect,
 		onSelectRepositorySourceMode,
 		onSubmit,
 		onBackdropClick,
@@ -210,16 +211,21 @@
 								formError === 'project-folder-conflict'}
 						/>
 					</label>
-					<label class="workduck-project-checkbox-field" for="project-repository-ssealed-scaffold">
-						<input
-							id="project-repository-ssealed-scaffold"
-							class="workduck-checkbox"
-							type="checkbox"
-							bind:checked={repositorySsealedScaffold}
+					<label class="workduck-form-field" for="project-repository-ssealed-scaffold-scope">
+						<span>ssealed scaffold</span>
+						<select
+							id="project-repository-ssealed-scaffold-scope"
+							class="workduck-input"
+							bind:value={repositorySsealedScaffoldScope}
 							disabled={isSubmitting}
-							onchange={onRepositorySsealedScaffoldToggle}
-						/>
-						<span>ssealed fullstack scaffold</span>
+							onchange={onRepositorySsealedScaffoldScopeSelect}
+						>
+							<option value="none">None</option>
+							<option value="design">Design</option>
+							<option value="frontend">Frontend</option>
+							<option value="backend">Backend</option>
+							<option value="fullstack">Fullstack</option>
+						</select>
 					</label>
 				{:else}
 					<label class="workduck-form-field" for="project-repository-url">

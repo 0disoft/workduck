@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 
 const scriptDirectory = dirname(fileURLToPath(import.meta.url));
 const repositoryRoot = dirname(scriptDirectory);
-const scaffoldScope = 'fullstack';
+const scaffoldScopes = ['backend', 'frontend', 'fullstack', 'design'];
 const scaffoldRunner = 'none';
 const generatedPath = resolve(
 	repositoryRoot,
@@ -136,8 +136,8 @@ function rustRawString(value) {
 	throw new Error('Unable to encode scaffold content as a Rust raw string.');
 }
 
-function renderGeneratedRust({ version, files }) {
-	const fileEntries = files
+function renderFileEntries(files) {
+	return files
 		.map(
 			(file) =>
 				[
@@ -147,6 +147,22 @@ function renderGeneratedRust({ version, files }) {
 					`\t\tcontent: ${rustRawString(file.content)},`,
 					'\t},'
 				].join('\n')
+		)
+		.join('\n');
+}
+
+function renderGeneratedRust({ version, scaffolds }) {
+	const scaffoldEntries = scaffolds
+		.map((scaffold) =>
+			[
+				'\tSsealedScaffold {',
+				`\t\tscope: ${JSON.stringify(scaffold.scope)},`,
+				`\t\trunner: ${JSON.stringify(scaffold.runner)},`,
+				'\t\tfiles: &[',
+				renderFileEntries(scaffold.files),
+				'\t\t],',
+				'\t},'
+			].join('\n')
 		)
 		.join('\n');
 
@@ -159,24 +175,28 @@ function renderGeneratedRust({ version, files }) {
 		"\tpub content: &'static str,",
 		'}',
 		'',
-		`pub const SSEALED_SCAFFOLD_TOOL_VERSION: &str = ${JSON.stringify(version)};`,
-		`pub const SSEALED_SCAFFOLD_SCOPE: &str = ${JSON.stringify(scaffoldScope)};`,
-		`pub const SSEALED_SCAFFOLD_RUNNER: &str = ${JSON.stringify(scaffoldRunner)};`,
+		'pub struct SsealedScaffold {',
+		"\tpub scope: &'static str,",
+		"\tpub runner: &'static str,",
+		"\tpub files: &'static [SsealedScaffoldFile],",
+		'}',
 		'',
-		'pub const SSEALED_FULLSTACK_SCAFFOLD_FILES: &[SsealedScaffoldFile] = &[',
-		fileEntries,
+		`pub const SSEALED_SCAFFOLD_TOOL_VERSION: &str = ${JSON.stringify(version)};`,
+		'',
+		'pub const SSEALED_SCAFFOLDS: &[SsealedScaffold] = &[',
+		scaffoldEntries,
 		'];',
 		''
 	].join('\n');
 }
 
-async function runSsealedInit(temporaryRoot) {
+async function runSsealedInit(temporaryRoot, scope) {
 	const verbose = process.env.SSEALED_SYNC_VERBOSE === '1';
 	const result = spawnSync(localBinary('ssealed'), [
 		'init',
 		'scaffold',
 		'--scope',
-		scaffoldScope,
+		scope,
 		'--runner',
 		scaffoldRunner
 	], {
@@ -209,29 +229,39 @@ async function main() {
 	await stat(localBinary('ssealed'));
 
 	const version = await readSsealedPackageVersion();
-	const temporaryRoot = await mkdtemp(join(tmpdir(), 'workduck-ssealed-sync-'));
-	const scaffoldPath = join(temporaryRoot, 'scaffold');
+	const scaffolds = [];
 
-	try {
-		await runSsealedInit(temporaryRoot);
-		const kindsByPath = await readManifestKindMap(scaffoldPath);
-		const files = [];
+	for (const scope of scaffoldScopes) {
+		const temporaryRoot = await mkdtemp(join(tmpdir(), 'workduck-ssealed-sync-'));
+		const scaffoldPath = join(temporaryRoot, 'scaffold');
 
-		for (const file of await collectFiles(scaffoldPath)) {
-			files.push({
-				path: file.path,
-				kind: kindsByPath.get(file.path) ?? 'document',
-				content: await readFile(file.absolutePath, 'utf8')
+		try {
+			await runSsealedInit(temporaryRoot, scope);
+			const kindsByPath = await readManifestKindMap(scaffoldPath);
+			const files = [];
+
+			for (const file of await collectFiles(scaffoldPath)) {
+				files.push({
+					path: file.path,
+					kind: kindsByPath.get(file.path) ?? 'document',
+					content: await readFile(file.absolutePath, 'utf8')
+				});
+			}
+
+			scaffolds.push({
+				scope,
+				runner: scaffoldRunner,
+				files
 			});
+		} finally {
+			await rm(temporaryRoot, { recursive: true, force: true });
 		}
-
-		await writeFile(generatedPath, renderGeneratedRust({ version, files }), 'utf8');
-		console.log(
-			`Synced ssealed ${version} ${scaffoldScope}/${scaffoldRunner} scaffold into ${relative(repositoryRoot, generatedPath)} with ${files.length} file(s).`
-		);
-	} finally {
-		await rm(temporaryRoot, { recursive: true, force: true });
 	}
+
+	await writeFile(generatedPath, renderGeneratedRust({ version, scaffolds }), 'utf8');
+	console.log(
+		`Synced ssealed ${version} ${scaffoldScopes.join(',')}/${scaffoldRunner} scaffolds into ${relative(repositoryRoot, generatedPath)}.`
+	);
 }
 
 await main();

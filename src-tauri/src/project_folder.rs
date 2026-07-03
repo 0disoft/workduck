@@ -6,10 +6,7 @@ use std::{
     time::Duration,
 };
 
-use crate::ssealed_scaffold_generated::{
-    SSEALED_FULLSTACK_SCAFFOLD_FILES, SSEALED_SCAFFOLD_RUNNER, SSEALED_SCAFFOLD_SCOPE,
-    SSEALED_SCAFFOLD_TOOL_VERSION,
-};
+use crate::ssealed_scaffold_generated::{SSEALED_SCAFFOLD_TOOL_VERSION, SSEALED_SCAFFOLDS};
 use crate::workspace_path::{validate_absolute_directory_path, WorkspacePathValidationError};
 use crate::windows_filename::is_windows_reserved_name;
 use sha2::{Digest, Sha256};
@@ -66,6 +63,8 @@ pub enum ProjectFolderError {
     OpenPathNotDirectory,
     #[serde(rename = "project-folder-open-path-permission-denied")]
     OpenPathPermissionDenied,
+    #[serde(rename = "project-folder-repository-path-outside-workspace")]
+    RepositoryPathOutsideWorkspace,
     #[serde(rename = "project-folder-open-failed")]
     OpenFailed,
     #[serde(rename = "project-folder-delete-path-required")]
@@ -112,6 +111,38 @@ pub struct ProjectFolderDelete {
     error: Option<ProjectFolderError>,
 }
 
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ProjectFolderSsealedScaffoldFilePlan {
+    path: String,
+    kind: String,
+    checksum: String,
+    status: String,
+}
+
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ProjectFolderSsealedScaffoldPlan {
+    tool_version: &'static str,
+    scope: &'static str,
+    runner: &'static str,
+    files: Vec<ProjectFolderSsealedScaffoldFilePlan>,
+    missing_count: usize,
+    added_count: usize,
+    unchanged_count: usize,
+    conflict_count: usize,
+}
+
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ProjectFolderSsealedScaffoldApply {
+    ok: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    plan: Option<ProjectFolderSsealedScaffoldPlan>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    error: Option<ProjectFolderError>,
+}
+
 #[tauri::command]
 pub fn create_project_folder(workspace_path: String, folder_name: String) -> ProjectFolderCreate {
     let workspace_root = match validate_workspace_root(&workspace_path) {
@@ -128,7 +159,7 @@ pub fn create_project_folder(workspace_path: String, folder_name: String) -> Pro
     };
     let relative_segments = vec![PROJECTS_DIRECTORY_NAME.to_owned(), folder_name.clone()];
 
-    create_folder(&projects_root, relative_segments, folder_name, false)
+    create_folder(&projects_root, relative_segments, folder_name, None)
 }
 
 #[tauri::command]
@@ -136,7 +167,7 @@ pub fn create_project_group_folder(
     workspace_path: String,
     parent_relative_path: String,
     folder_name: String,
-    ssealed_scaffold: Option<bool>,
+    ssealed_scaffold_scope: Option<String>,
 ) -> ProjectFolderCreate {
     let workspace_root = match validate_workspace_root(&workspace_path) {
         Ok(workspace_root) => workspace_root,
@@ -158,6 +189,10 @@ pub fn create_project_group_folder(
         Ok(folder_name) => folder_name,
         Err(error) => return invalid(error),
     };
+    let ssealed_scaffold_scope = match validate_ssealed_scaffold_scope(ssealed_scaffold_scope) {
+        Ok(scope) => scope,
+        Err(error) => return invalid(error),
+    };
     let mut relative_segments = parent_segments;
     relative_segments.push(folder_name.clone());
 
@@ -165,7 +200,7 @@ pub fn create_project_group_folder(
         &parent_path,
         relative_segments,
         folder_name,
-        ssealed_scaffold.unwrap_or(false),
+        ssealed_scaffold_scope,
     )
 }
 
@@ -270,6 +305,69 @@ pub fn delete_project_repository_folder(
     };
 
     delete_folder_tree(&folder_path)
+}
+
+#[tauri::command]
+pub fn preview_ssealed_scaffold_for_repository(
+    workspace_path: String,
+    path: String,
+    ssealed_scaffold_scope: String,
+) -> ProjectFolderSsealedScaffoldApply {
+    inspect_or_apply_ssealed_scaffold_for_repository(
+        workspace_path,
+        path,
+        ssealed_scaffold_scope,
+        false,
+    )
+}
+
+#[tauri::command]
+pub fn apply_ssealed_scaffold_to_repository(
+    workspace_path: String,
+    path: String,
+    ssealed_scaffold_scope: String,
+) -> ProjectFolderSsealedScaffoldApply {
+    inspect_or_apply_ssealed_scaffold_for_repository(
+        workspace_path,
+        path,
+        ssealed_scaffold_scope,
+        true,
+    )
+}
+
+fn inspect_or_apply_ssealed_scaffold_for_repository(
+    workspace_path: String,
+    path: String,
+    ssealed_scaffold_scope: String,
+    should_apply: bool,
+) -> ProjectFolderSsealedScaffoldApply {
+    let workspace_root = match validate_workspace_root(&workspace_path) {
+        Ok(workspace_root) => workspace_root,
+        Err(error) => return invalid_ssealed_apply(error),
+    };
+    let repository_path = match validate_existing_repository_folder_path(&workspace_root, &path) {
+        Ok(repository_path) => repository_path,
+        Err(error) => return invalid_ssealed_apply(error),
+    };
+    let ssealed_scaffold_scope =
+        match validate_ssealed_scaffold_scope(Some(ssealed_scaffold_scope)) {
+            Ok(Some(scope)) => scope,
+            Ok(None) => return invalid_ssealed_apply(ProjectFolderError::SsealedScaffoldFailed),
+            Err(error) => return invalid_ssealed_apply(error),
+        };
+
+    match create_ssealed_repository_scaffold_plan(
+        &repository_path,
+        ssealed_scaffold_scope,
+        should_apply,
+    ) {
+        Ok(plan) => ProjectFolderSsealedScaffoldApply {
+            ok: true,
+            plan: Some(plan),
+            error: None,
+        },
+        Err(error) => invalid_ssealed_apply(error),
+    }
 }
 
 fn validate_workspace_root(path: &str) -> Result<PathBuf, ProjectFolderError> {
@@ -456,6 +554,38 @@ fn validate_deletable_absolute_folder_path(
     validate_deletable_folder_path(projects_root, &folder_path)
 }
 
+fn validate_existing_repository_folder_path(
+    workspace_root: &Path,
+    path: &str,
+) -> Result<PathBuf, ProjectFolderError> {
+    let trimmed_path = path.trim();
+
+    if trimmed_path.is_empty() {
+        return Err(ProjectFolderError::OpenPathRequired);
+    }
+
+    let folder_path = PathBuf::from(trimmed_path);
+
+    if !folder_path.is_absolute() {
+        return Err(ProjectFolderError::OpenPathNotAbsolute);
+    }
+
+    let metadata = fs::symlink_metadata(&folder_path).map_err(map_open_path_error)?;
+
+    if metadata.file_type().is_symlink() || !metadata.is_dir() {
+        return Err(ProjectFolderError::OpenPathNotDirectory);
+    }
+
+    let normalized_folder_path = fs::canonicalize(&folder_path).map_err(map_open_path_error)?;
+
+    if normalized_folder_path == workspace_root || !normalized_folder_path.starts_with(workspace_root)
+    {
+        return Err(ProjectFolderError::RepositoryPathOutsideWorkspace);
+    }
+
+    Ok(normalized_folder_path)
+}
+
 fn validate_deletable_folder_path(
     projects_root: &Path,
     folder_path: &Path,
@@ -505,13 +635,13 @@ fn create_folder(
     parent_path: &Path,
     relative_segments: Vec<String>,
     folder_name: String,
-    ssealed_scaffold: bool,
+    ssealed_scaffold_scope: Option<&'static str>,
 ) -> ProjectFolderCreate {
     let target_path = parent_path.join(&folder_name);
 
     match fs::symlink_metadata(&target_path) {
         Ok(metadata) => {
-            if ssealed_scaffold {
+            if ssealed_scaffold_scope.is_some() {
                 return invalid(ProjectFolderError::Conflict);
             }
 
@@ -552,8 +682,8 @@ fn create_folder(
         return invalid(ProjectFolderError::CreateFailed);
     }
 
-    if ssealed_scaffold {
-        if write_ssealed_fullstack_scaffold(&normalized_target_path).is_err() {
+    if let Some(scope) = ssealed_scaffold_scope {
+        if write_ssealed_scaffold(&normalized_target_path, scope).is_err() {
             let _ = fs::remove_dir_all(&normalized_target_path);
             return invalid(ProjectFolderError::SsealedScaffoldFailed);
         }
@@ -634,10 +764,33 @@ fn valid_existing_folder(
     }
 }
 
-fn write_ssealed_fullstack_scaffold(target_path: &Path) -> Result<(), ProjectFolderError> {
-    let mut manifest_files = Vec::with_capacity(SSEALED_FULLSTACK_SCAFFOLD_FILES.len());
+fn validate_ssealed_scaffold_scope(
+    scope: Option<String>,
+) -> Result<Option<&'static str>, ProjectFolderError> {
+    let Some(scope) = scope else {
+        return Ok(None);
+    };
+    let scope = scope.trim();
 
-    for file in SSEALED_FULLSTACK_SCAFFOLD_FILES {
+    if scope.is_empty() || scope == "none" {
+        return Ok(None);
+    }
+
+    SSEALED_SCAFFOLDS
+        .iter()
+        .find(|scaffold| scaffold.scope == scope)
+        .map(|scaffold| Some(scaffold.scope))
+        .ok_or(ProjectFolderError::SsealedScaffoldFailed)
+}
+
+fn write_ssealed_scaffold(target_path: &Path, scope: &str) -> Result<(), ProjectFolderError> {
+    let scaffold = SSEALED_SCAFFOLDS
+        .iter()
+        .find(|candidate| candidate.scope == scope)
+        .ok_or(ProjectFolderError::SsealedScaffoldFailed)?;
+    let mut manifest_files = Vec::with_capacity(scaffold.files.len());
+
+    for file in scaffold.files {
         write_ssealed_scaffold_file(target_path, file.path, file.content)?;
         manifest_files.push(serde_json::json!({
             "path": file.path,
@@ -654,8 +807,8 @@ fn write_ssealed_fullstack_scaffold(target_path: &Path) -> Result<(), ProjectFol
         "version": SSEALED_SCAFFOLD_TOOL_VERSION,
         "generatedBy": "workduck",
         "generatedAt": generated_at,
-        "scope": SSEALED_SCAFFOLD_SCOPE,
-        "runner": SSEALED_SCAFFOLD_RUNNER,
+        "scope": scaffold.scope,
+        "runner": scaffold.runner,
         "files": manifest_files,
     });
     let manifest_content =
@@ -698,6 +851,303 @@ fn write_ssealed_scaffold_file(
     }
 
     fs::write(file_path, content).map_err(|_| ProjectFolderError::SsealedScaffoldFailed)
+}
+
+fn create_ssealed_repository_scaffold_plan(
+    target_path: &Path,
+    scope: &str,
+    should_apply: bool,
+) -> Result<ProjectFolderSsealedScaffoldPlan, ProjectFolderError> {
+    let scaffold = SSEALED_SCAFFOLDS
+        .iter()
+        .find(|candidate| candidate.scope == scope)
+        .ok_or(ProjectFolderError::SsealedScaffoldFailed)?;
+    let mut files = Vec::with_capacity(scaffold.files.len());
+    let mut missing_count = 0;
+    let mut added_count = 0;
+    let mut unchanged_count = 0;
+    let mut conflict_count = 0;
+
+    for file in scaffold.files {
+        let checksum = sha256_checksum(file.content);
+        let status = inspect_ssealed_repository_scaffold_file(
+            target_path,
+            file.path,
+            file.content,
+        )?;
+
+        let status = if should_apply && status == "missing" {
+            write_missing_ssealed_repository_scaffold_file(target_path, file.path, file.content)?;
+            "added"
+        } else {
+            status
+        };
+
+        match status {
+            "missing" => missing_count += 1,
+            "added" => added_count += 1,
+            "unchanged" => unchanged_count += 1,
+            "conflict" => conflict_count += 1,
+            _ => return Err(ProjectFolderError::SsealedScaffoldFailed),
+        }
+
+        files.push(ProjectFolderSsealedScaffoldFilePlan {
+            path: file.path.to_owned(),
+            kind: file.kind.to_owned(),
+            checksum,
+            status: status.to_owned(),
+        });
+    }
+
+    let plan = ProjectFolderSsealedScaffoldPlan {
+        tool_version: SSEALED_SCAFFOLD_TOOL_VERSION,
+        scope: scaffold.scope,
+        runner: scaffold.runner,
+        files,
+        missing_count,
+        added_count,
+        unchanged_count,
+        conflict_count,
+    };
+
+    if should_apply {
+        write_ssealed_repository_apply_manifest(target_path, &plan)?;
+    }
+
+    Ok(plan)
+}
+
+fn inspect_ssealed_repository_scaffold_file(
+    target_path: &Path,
+    relative_path: &str,
+    content: &str,
+) -> Result<&'static str, ProjectFolderError> {
+    if has_ssealed_repository_scaffold_parent_conflict(target_path, relative_path)? {
+        return Ok("conflict");
+    }
+
+    let file_path = resolve_ssealed_scaffold_file_path(target_path, relative_path)?;
+
+    match fs::symlink_metadata(&file_path) {
+        Ok(metadata) => {
+            if metadata.file_type().is_symlink() || metadata.is_dir() {
+                return Ok("conflict");
+            }
+
+            if !metadata.is_file() {
+                return Ok("conflict");
+            }
+
+            match fs::read_to_string(&file_path) {
+                Ok(existing_content) if existing_content == content => Ok("unchanged"),
+                Ok(_) => Ok("conflict"),
+                Err(_) => Err(ProjectFolderError::SsealedScaffoldFailed),
+            }
+        }
+        Err(error) if error.kind() == io::ErrorKind::NotFound => Ok("missing"),
+        Err(_) => Err(ProjectFolderError::SsealedScaffoldFailed),
+    }
+}
+
+fn has_ssealed_repository_scaffold_parent_conflict(
+    target_path: &Path,
+    relative_path: &str,
+) -> Result<bool, ProjectFolderError> {
+    let mut current_path = target_path.to_path_buf();
+    let segments: Vec<&str> = relative_path.split('/').collect();
+
+    if segments.is_empty() {
+        return Err(ProjectFolderError::SsealedScaffoldFailed);
+    }
+
+    for segment in segments.iter().take(segments.len().saturating_sub(1)) {
+        if segment.is_empty() || *segment == "." || *segment == ".." {
+            return Err(ProjectFolderError::SsealedScaffoldFailed);
+        }
+
+        current_path.push(segment);
+
+        match fs::symlink_metadata(&current_path) {
+            Ok(metadata) => {
+                if metadata.file_type().is_symlink() || !metadata.is_dir() {
+                    return Ok(true);
+                }
+            }
+            Err(error) if error.kind() == io::ErrorKind::NotFound => return Ok(false),
+            Err(_) => return Err(ProjectFolderError::SsealedScaffoldFailed),
+        }
+    }
+
+    Ok(false)
+}
+
+fn write_missing_ssealed_repository_scaffold_file(
+    target_path: &Path,
+    relative_path: &str,
+    content: &str,
+) -> Result<(), ProjectFolderError> {
+    let file_path = resolve_ssealed_scaffold_file_path(target_path, relative_path)?;
+
+    match fs::symlink_metadata(&file_path) {
+        Ok(_) => return Err(ProjectFolderError::Conflict),
+        Err(error) if error.kind() == io::ErrorKind::NotFound => {}
+        Err(_) => return Err(ProjectFolderError::SsealedScaffoldFailed),
+    }
+
+    create_ssealed_scaffold_parent_directories(target_path, relative_path)?;
+    fs::write(file_path, content).map_err(|_| ProjectFolderError::SsealedScaffoldFailed)
+}
+
+fn create_ssealed_scaffold_parent_directories(
+    target_path: &Path,
+    relative_path: &str,
+) -> Result<(), ProjectFolderError> {
+    let mut current_path = target_path.to_path_buf();
+    let segments: Vec<&str> = relative_path.split('/').collect();
+
+    if segments.is_empty() {
+        return Err(ProjectFolderError::SsealedScaffoldFailed);
+    }
+
+    for segment in segments.iter().take(segments.len().saturating_sub(1)) {
+        if segment.is_empty() || *segment == "." || *segment == ".." {
+            return Err(ProjectFolderError::SsealedScaffoldFailed);
+        }
+
+        current_path.push(segment);
+
+        match fs::symlink_metadata(&current_path) {
+            Ok(metadata) => {
+                if metadata.file_type().is_symlink() || !metadata.is_dir() {
+                    return Err(ProjectFolderError::Conflict);
+                }
+            }
+            Err(error) if error.kind() == io::ErrorKind::NotFound => {
+                fs::create_dir(&current_path)
+                    .map_err(|_| ProjectFolderError::SsealedScaffoldFailed)?;
+            }
+            Err(_) => return Err(ProjectFolderError::SsealedScaffoldFailed),
+        }
+
+        let normalized_current_path = fs::canonicalize(&current_path)
+            .map_err(|_| ProjectFolderError::SsealedScaffoldFailed)?;
+
+        if !normalized_current_path.starts_with(target_path) {
+            return Err(ProjectFolderError::SsealedScaffoldFailed);
+        }
+    }
+
+    Ok(())
+}
+
+fn resolve_ssealed_scaffold_file_path(
+    target_path: &Path,
+    relative_path: &str,
+) -> Result<PathBuf, ProjectFolderError> {
+    let mut file_path = target_path.to_path_buf();
+
+    for segment in relative_path.split('/') {
+        if segment.is_empty() || segment == "." || segment == ".." {
+            return Err(ProjectFolderError::SsealedScaffoldFailed);
+        }
+
+        file_path.push(segment);
+    }
+
+    Ok(file_path)
+}
+
+fn write_ssealed_repository_apply_manifest(
+    target_path: &Path,
+    plan: &ProjectFolderSsealedScaffoldPlan,
+) -> Result<(), ProjectFolderError> {
+    let manifest_files: Vec<_> = plan
+        .files
+        .iter()
+        .filter(|file| file.status != "conflict")
+        .map(|file| {
+            serde_json::json!({
+                "path": file.path,
+                "checksum": file.checksum,
+                "kind": file.kind,
+                "status": file.status,
+            })
+        })
+        .collect();
+    let manifest_conflicts: Vec<_> = plan
+        .files
+        .iter()
+        .filter(|file| file.status == "conflict")
+        .map(|file| {
+            serde_json::json!({
+                "path": file.path,
+                "checksum": file.checksum,
+                "kind": file.kind,
+            })
+        })
+        .collect();
+    let generated_at = OffsetDateTime::now_utc()
+        .format(&Rfc3339)
+        .unwrap_or_else(|_| "1970-01-01T00:00:00Z".to_owned());
+    let manifest = serde_json::json!({
+        "tool": "ssealed",
+        "version": plan.tool_version,
+        "generatedBy": "workduck",
+        "generatedAt": generated_at,
+        "scope": plan.scope,
+        "runner": plan.runner,
+        "mode": "existing-repository-missing-files",
+        "files": manifest_files,
+        "conflicts": manifest_conflicts,
+    });
+    let manifest_content =
+        serde_json::to_string_pretty(&manifest).map_err(|_| ProjectFolderError::SsealedScaffoldFailed)?;
+
+    write_ssealed_repository_manifest_file(
+        target_path,
+        &(manifest_content + "\n"),
+    )
+}
+
+fn write_ssealed_repository_manifest_file(
+    target_path: &Path,
+    content: &str,
+) -> Result<(), ProjectFolderError> {
+    let manifest_directory = target_path.join(".ssealed");
+
+    match fs::symlink_metadata(&manifest_directory) {
+        Ok(metadata) => {
+            if metadata.file_type().is_symlink() || !metadata.is_dir() {
+                return Err(ProjectFolderError::Conflict);
+            }
+        }
+        Err(error) if error.kind() == io::ErrorKind::NotFound => {
+            fs::create_dir(&manifest_directory)
+                .map_err(|_| ProjectFolderError::SsealedScaffoldFailed)?;
+        }
+        Err(_) => return Err(ProjectFolderError::SsealedScaffoldFailed),
+    }
+
+    let normalized_manifest_directory = fs::canonicalize(&manifest_directory)
+        .map_err(|_| ProjectFolderError::SsealedScaffoldFailed)?;
+
+    if !normalized_manifest_directory.starts_with(target_path) {
+        return Err(ProjectFolderError::SsealedScaffoldFailed);
+    }
+
+    let manifest_path = manifest_directory.join("manifest.json");
+
+    match fs::symlink_metadata(&manifest_path) {
+        Ok(metadata) => {
+            if metadata.file_type().is_symlink() || metadata.is_dir() {
+                return Err(ProjectFolderError::Conflict);
+            }
+        }
+        Err(error) if error.kind() == io::ErrorKind::NotFound => {}
+        Err(_) => return Err(ProjectFolderError::SsealedScaffoldFailed),
+    }
+
+    fs::write(manifest_path, content).map_err(|_| ProjectFolderError::SsealedScaffoldFailed)
 }
 
 fn sha256_checksum(content: &str) -> String {
@@ -837,6 +1287,14 @@ fn invalid_delete(error: ProjectFolderError) -> ProjectFolderDelete {
     }
 }
 
+fn invalid_ssealed_apply(error: ProjectFolderError) -> ProjectFolderSsealedScaffoldApply {
+    ProjectFolderSsealedScaffoldApply {
+        ok: false,
+        plan: None,
+        error: Some(error),
+    }
+}
+
 fn map_workspace_error(error: io::Error) -> ProjectFolderError {
     match error.kind() {
         io::ErrorKind::NotFound => ProjectFolderError::WorkspaceNotFound,
@@ -903,7 +1361,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn repository_folder_can_include_ssealed_fullstack_scaffold() {
+    fn repository_folder_can_include_ssealed_frontend_scaffold_without_backend_files() {
         let tempdir = tempfile::tempdir().expect("temporary workspace");
         let workspace_path = tempdir.path().to_string_lossy().into_owned();
 
@@ -922,7 +1380,7 @@ mod tests {
             workspace_path,
             "projects/product/apps".to_owned(),
             "web-app".to_owned(),
-            Some(true),
+            Some("frontend".to_owned()),
         );
 
         assert!(result.ok);
@@ -930,10 +1388,10 @@ mod tests {
 
         let repository_path = tempdir.path().join("projects/product/apps/web-app");
         assert!(repository_path.join("AGENTS.md").is_file());
-        assert!(repository_path.join("docs/backend/README.md").is_file());
         assert!(repository_path.join("docs/frontend/FRONTEND_DESIGN.md").is_file());
-        assert!(repository_path.join("api/openapi.yaml").is_file());
-        assert!(repository_path.join("db/schema.dbml").is_file());
+        assert!(!repository_path.join("docs/backend/README.md").exists());
+        assert!(!repository_path.join("api/openapi.yaml").exists());
+        assert!(!repository_path.join("db/schema.dbml").exists());
 
         let manifest_content = fs::read_to_string(repository_path.join(".ssealed/manifest.json"))
             .expect("ssealed manifest");
@@ -943,12 +1401,52 @@ mod tests {
         assert_eq!(manifest["tool"], "ssealed");
         assert_eq!(manifest["version"], SSEALED_SCAFFOLD_TOOL_VERSION);
         assert_eq!(manifest["generatedBy"], "workduck");
-        assert_eq!(manifest["scope"], SSEALED_SCAFFOLD_SCOPE);
-        assert_eq!(manifest["runner"], SSEALED_SCAFFOLD_RUNNER);
+        assert_eq!(manifest["scope"], "frontend");
+        assert_eq!(manifest["runner"], "none");
         assert!(manifest["files"].as_array().is_some_and(|files| {
-            files.iter().any(|file| file["path"] == "docs/backend/README.md")
-                && files.iter().any(|file| file["path"] == "docs/frontend/FRONTEND_DESIGN.md")
+            files.iter().any(|file| file["path"] == "docs/frontend/FRONTEND_DESIGN.md")
+                && !files.iter().any(|file| file["path"] == "docs/backend/README.md")
         }));
+    }
+
+    #[test]
+    fn repository_folder_can_include_ssealed_design_scaffold_for_unknown_stack() {
+        let tempdir = tempfile::tempdir().expect("temporary workspace");
+        let workspace_path = tempdir.path().to_string_lossy().into_owned();
+
+        assert!(create_project_folder(workspace_path.clone(), "product".to_owned()).ok);
+        assert!(
+            create_project_group_folder(
+                workspace_path.clone(),
+                "projects/product".to_owned(),
+                "apps".to_owned(),
+                None,
+            )
+            .ok
+        );
+
+        let result = create_project_group_folder(
+            workspace_path,
+            "projects/product/apps".to_owned(),
+            "idea".to_owned(),
+            Some("design".to_owned()),
+        );
+
+        assert!(result.ok);
+
+        let repository_path = tempdir.path().join("projects/product/apps/idea");
+        assert!(repository_path.join("docs/product/00-product-brief.md").is_file());
+        assert!(!repository_path.join("docs/frontend/FRONTEND_DESIGN.md").exists());
+        assert!(!repository_path.join("api/openapi.yaml").exists());
+        assert!(!repository_path.join("db/schema.dbml").exists());
+
+        let manifest_content = fs::read_to_string(repository_path.join(".ssealed/manifest.json"))
+            .expect("ssealed manifest");
+        let manifest: serde_json::Value =
+            serde_json::from_str(&manifest_content).expect("valid manifest json");
+
+        assert_eq!(manifest["scope"], "design");
+        assert_eq!(manifest["runner"], "none");
     }
 
     #[test]
@@ -980,7 +1478,7 @@ mod tests {
             workspace_path,
             "projects/product/apps".to_owned(),
             "api".to_owned(),
-            Some(true),
+            Some("backend".to_owned()),
         );
 
         assert!(!result.ok);
@@ -989,5 +1487,86 @@ mod tests {
             .path()
             .join("projects/product/apps/api/.ssealed/manifest.json")
             .exists());
+    }
+
+    #[test]
+    fn existing_repository_can_apply_missing_ssealed_files_without_overwriting_conflicts() {
+        let tempdir = tempfile::tempdir().expect("temporary workspace");
+        let workspace_path = tempdir.path().to_string_lossy().into_owned();
+
+        assert!(create_project_folder(workspace_path.clone(), "product".to_owned()).ok);
+        assert!(
+            create_project_group_folder(
+                workspace_path.clone(),
+                "projects/product".to_owned(),
+                "apps".to_owned(),
+                None,
+            )
+            .ok
+        );
+        assert!(
+            create_project_group_folder(
+                workspace_path.clone(),
+                "projects/product/apps".to_owned(),
+                "api".to_owned(),
+                None,
+            )
+            .ok
+        );
+
+        let repository_path = tempdir.path().join("projects/product/apps/api");
+        fs::write(repository_path.join("AGENTS.md"), "custom instructions\n")
+            .expect("custom AGENTS");
+        let repository_path_string = repository_path.to_string_lossy().into_owned();
+
+        let preview = preview_ssealed_scaffold_for_repository(
+            workspace_path.clone(),
+            repository_path_string.clone(),
+            "backend".to_owned(),
+        );
+
+        assert!(preview.ok);
+        let preview_plan = preview.plan.expect("preview plan");
+        assert!(preview_plan.missing_count > 0);
+        assert!(preview_plan.conflict_count > 0);
+        assert!(preview_plan
+            .files
+            .iter()
+            .any(|file| file.path == "AGENTS.md" && file.status == "conflict"));
+        assert!(!repository_path.join("docs/backend/README.md").exists());
+
+        let apply = apply_ssealed_scaffold_to_repository(
+            workspace_path,
+            repository_path_string,
+            "backend".to_owned(),
+        );
+
+        assert!(apply.ok);
+        let apply_plan = apply.plan.expect("apply plan");
+        assert!(apply_plan.added_count > 0);
+        assert_eq!(apply_plan.missing_count, 0);
+        assert!(apply_plan
+            .files
+            .iter()
+            .any(|file| file.path == "AGENTS.md" && file.status == "conflict"));
+        assert_eq!(
+            fs::read_to_string(repository_path.join("AGENTS.md")).expect("AGENTS content"),
+            "custom instructions\n"
+        );
+        assert!(repository_path.join("docs/backend/README.md").is_file());
+
+        let manifest_content = fs::read_to_string(repository_path.join(".ssealed/manifest.json"))
+            .expect("ssealed manifest");
+        let manifest: serde_json::Value =
+            serde_json::from_str(&manifest_content).expect("valid manifest json");
+
+        assert_eq!(manifest["mode"], "existing-repository-missing-files");
+        assert_eq!(manifest["scope"], "backend");
+        assert!(manifest["conflicts"].as_array().is_some_and(|conflicts| {
+            conflicts.iter().any(|file| file["path"] == "AGENTS.md")
+        }));
+        assert!(manifest["files"].as_array().is_some_and(|files| {
+            files.iter().any(|file| file["path"] == "docs/backend/README.md")
+        }));
     }
 }

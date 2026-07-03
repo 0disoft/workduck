@@ -119,6 +119,7 @@ export const esProjectsMessages = {
 			clone: 'Clonar',
 			initializeGit: 'Inicializar Git',
 			publish: 'Publicar',
+			applySsealed: 'Aplicar ssealed',
 			openTerminal: 'Abrir terminal',
 			installDependencies: 'Abrir terminal de instalación de dependencias',
 			updateDependencies: 'Abrir terminal de actualización de dependencias',
@@ -187,6 +188,8 @@ export const esProjectsMessages = {
 			'project-folder-open-path-not-found': 'No se encontró la ruta de la carpeta.',
 			'project-folder-open-path-not-directory': 'La ruta de la carpeta debe ser una carpeta.',
 			'project-folder-open-path-permission-denied': 'No se pudo abrir la ruta de la carpeta.',
+			'project-folder-repository-path-outside-workspace':
+				'La carpeta del repositorio debe estar dentro del workspace actual.',
 			'project-folder-open-failed': 'No se pudo abrir la carpeta.',
 			'project-folder-delete-path-required': 'Se requiere la ruta de la carpeta.',
 			'project-folder-delete-path-not-absolute': 'La ruta de la carpeta debe ser absoluta.',

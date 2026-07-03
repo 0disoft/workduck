@@ -24,6 +24,7 @@ export type ProjectFolderError =
 	| 'project-folder-open-path-not-found'
 	| 'project-folder-open-path-not-directory'
 	| 'project-folder-open-path-permission-denied'
+	| 'project-folder-repository-path-outside-workspace'
 	| 'project-folder-open-failed'
 	| 'project-folder-delete-path-required'
 	| 'project-folder-delete-path-not-absolute'
@@ -33,6 +34,28 @@ export type ProjectFolderError =
 	| 'project-folder-delete-path-permission-denied'
 	| 'project-folder-delete-failed'
 	| 'project-folder-unavailable';
+
+export type SsealedScaffoldScope = 'none' | 'design' | 'frontend' | 'backend' | 'fullstack';
+export type SsealedScaffoldApplyScope = Exclude<SsealedScaffoldScope, 'none'>;
+export type SsealedScaffoldFileStatus = 'missing' | 'added' | 'unchanged' | 'conflict';
+
+export interface SsealedScaffoldFilePlan {
+	readonly path: string;
+	readonly kind: string;
+	readonly checksum: string;
+	readonly status: SsealedScaffoldFileStatus;
+}
+
+export interface SsealedScaffoldPlan {
+	readonly toolVersion: string;
+	readonly scope: SsealedScaffoldApplyScope;
+	readonly runner: string;
+	readonly files: readonly SsealedScaffoldFilePlan[];
+	readonly missingCount: number;
+	readonly addedCount: number;
+	readonly unchangedCount: number;
+	readonly conflictCount: number;
+}
 
 export type ProjectFolderCreateResult =
 	| {
@@ -63,6 +86,16 @@ export type ProjectFolderDeleteResult =
 			readonly error: ProjectFolderError;
 	  };
 
+export type SsealedScaffoldPlanResult =
+	| {
+			readonly ok: true;
+			readonly plan: SsealedScaffoldPlan;
+	  }
+	| {
+			readonly ok: false;
+			readonly error: ProjectFolderError;
+	  };
+
 interface ProjectFolderCreateResponse {
 	readonly ok: boolean;
 	readonly folderName?: string | null;
@@ -77,6 +110,30 @@ interface ProjectFolderOpenResponse {
 
 interface ProjectFolderDeleteResponse {
 	readonly ok: boolean;
+	readonly error?: ProjectFolderError | null;
+}
+
+interface SsealedScaffoldFilePlanResponse {
+	readonly path?: string | null;
+	readonly kind?: string | null;
+	readonly checksum?: string | null;
+	readonly status?: string | null;
+}
+
+interface SsealedScaffoldPlanResponse {
+	readonly toolVersion?: string | null;
+	readonly scope?: string | null;
+	readonly runner?: string | null;
+	readonly files?: readonly SsealedScaffoldFilePlanResponse[] | null;
+	readonly missingCount?: number | null;
+	readonly addedCount?: number | null;
+	readonly unchangedCount?: number | null;
+	readonly conflictCount?: number | null;
+}
+
+interface SsealedScaffoldPlanResultResponse {
+	readonly ok: boolean;
+	readonly plan?: SsealedScaffoldPlanResponse | null;
 	readonly error?: ProjectFolderError | null;
 }
 
@@ -95,14 +152,17 @@ export async function createProjectGroupFolder(
 	parentRelativePath: string,
 	folderName: string,
 	options: {
-		readonly ssealedScaffold?: boolean;
+		readonly ssealedScaffoldScope?: SsealedScaffoldScope;
 	} = {}
 ): Promise<ProjectFolderCreateResult> {
 	return createProjectFolderFromCommand('create_project_group_folder', {
 		workspacePath: normalizeWorkspacePathForStorage(workspacePath),
 		parentRelativePath,
 		folderName,
-		ssealedScaffold: options.ssealedScaffold === true
+		ssealedScaffoldScope:
+			options.ssealedScaffoldScope === undefined || options.ssealedScaffoldScope === 'none'
+				? null
+				: options.ssealedScaffoldScope
 	});
 }
 
@@ -149,6 +209,30 @@ export async function deleteProjectRepositoryFolder(
 	return deleteProjectFolderFromCommand('delete_project_repository_folder', {
 		workspacePath: normalizeWorkspacePathForStorage(workspacePath),
 		path: normalizeWorkspacePathForStorage(path)
+	});
+}
+
+export async function previewSsealedScaffoldForRepository(
+	workspacePath: string,
+	path: string,
+	scope: SsealedScaffoldApplyScope
+): Promise<SsealedScaffoldPlanResult> {
+	return runSsealedScaffoldRepositoryCommand('preview_ssealed_scaffold_for_repository', {
+		workspacePath: normalizeWorkspacePathForStorage(workspacePath),
+		path: normalizeWorkspacePathForStorage(path),
+		ssealedScaffoldScope: scope
+	});
+}
+
+export async function applySsealedScaffoldToRepository(
+	workspacePath: string,
+	path: string,
+	scope: SsealedScaffoldApplyScope
+): Promise<SsealedScaffoldPlanResult> {
+	return runSsealedScaffoldRepositoryCommand('apply_ssealed_scaffold_to_repository', {
+		workspacePath: normalizeWorkspacePathForStorage(workspacePath),
+		path: normalizeWorkspacePathForStorage(path),
+		ssealedScaffoldScope: scope
 	});
 }
 
@@ -248,6 +332,111 @@ async function deleteProjectFolderFromCommand(
 	}
 }
 
+async function runSsealedScaffoldRepositoryCommand(
+	command: 'preview_ssealed_scaffold_for_repository' | 'apply_ssealed_scaffold_to_repository',
+	args: Record<string, unknown>
+): Promise<SsealedScaffoldPlanResult> {
+	const invoke = getTauriInvoke();
+
+	if (invoke === undefined) {
+		return { ok: false, error: 'project-folder-unavailable' };
+	}
+
+	try {
+		const response = await invoke<SsealedScaffoldPlanResultResponse>(command, args);
+		const plan = normalizeSsealedScaffoldPlan(response.plan);
+
+		if (response.ok && plan !== null) {
+			return { ok: true, plan };
+		}
+
+		return {
+			ok: false,
+			error: isProjectFolderError(response.error)
+				? response.error
+				: 'project-folder-ssealed-scaffold-failed'
+		};
+	} catch {
+		return { ok: false, error: 'project-folder-ssealed-scaffold-failed' };
+	}
+}
+
+function normalizeSsealedScaffoldPlan(
+	plan: SsealedScaffoldPlanResponse | null | undefined
+): SsealedScaffoldPlan | null {
+	if (
+		plan === null ||
+		plan === undefined ||
+		typeof plan.toolVersion !== 'string' ||
+		!isSsealedScaffoldApplyScope(plan.scope) ||
+		typeof plan.runner !== 'string' ||
+		!Array.isArray(plan.files) ||
+		typeof plan.missingCount !== 'number' ||
+		typeof plan.addedCount !== 'number' ||
+		typeof plan.unchangedCount !== 'number' ||
+		typeof plan.conflictCount !== 'number'
+	) {
+		return null;
+	}
+
+	const files = plan.files
+		.map(normalizeSsealedScaffoldFilePlan)
+		.filter((file): file is SsealedScaffoldFilePlan => file !== null);
+
+	if (files.length !== plan.files.length) {
+		return null;
+	}
+
+	return {
+		toolVersion: plan.toolVersion,
+		scope: plan.scope,
+		runner: plan.runner,
+		files,
+		missingCount: plan.missingCount,
+		addedCount: plan.addedCount,
+		unchangedCount: plan.unchangedCount,
+		conflictCount: plan.conflictCount
+	};
+}
+
+function normalizeSsealedScaffoldFilePlan(
+	file: SsealedScaffoldFilePlanResponse
+): SsealedScaffoldFilePlan | null {
+	if (
+		typeof file.path !== 'string' ||
+		typeof file.kind !== 'string' ||
+		typeof file.checksum !== 'string' ||
+		!isSsealedScaffoldFileStatus(file.status)
+	) {
+		return null;
+	}
+
+	return {
+		path: file.path,
+		kind: file.kind,
+		checksum: file.checksum,
+		status: file.status
+	};
+}
+
+function isSsealedScaffoldApplyScope(value: unknown): value is SsealedScaffoldApplyScope {
+	return (
+		value === 'design' ||
+		value === 'frontend' ||
+		value === 'backend' ||
+		value === 'fullstack'
+	);
+}
+
+function isSsealedScaffoldFileStatus(value: unknown): value is SsealedScaffoldFileStatus {
+	return (
+		value === 'missing' ||
+		value === 'added' ||
+		value === 'unchanged' ||
+		value === 'conflict'
+	);
+}
+
 function isProjectFolderError(value: unknown): value is ProjectFolderError {
 	return (
 		value === 'project-folder-workspace-required' ||
@@ -272,6 +461,7 @@ function isProjectFolderError(value: unknown): value is ProjectFolderError {
 		value === 'project-folder-open-path-not-found' ||
 		value === 'project-folder-open-path-not-directory' ||
 		value === 'project-folder-open-path-permission-denied' ||
+		value === 'project-folder-repository-path-outside-workspace' ||
 		value === 'project-folder-open-failed' ||
 		value === 'project-folder-delete-path-required' ||
 		value === 'project-folder-delete-path-not-absolute' ||

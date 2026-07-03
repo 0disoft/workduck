@@ -119,6 +119,7 @@ export const zhProjectsMessages = {
 		clone: '克隆',
 		initializeGit: '初始化 Git',
 		publish: '发布',
+		applySsealed: '应用 ssealed',
 		openTerminal: '打开终端',
 		installDependencies: '打开依赖安装终端',
 		updateDependencies: '打开依赖更新终端',
@@ -188,6 +189,8 @@ export const zhProjectsMessages = {
 		'project-folder-open-path-not-found': '未找到文件夹路径。',
 		'project-folder-open-path-not-directory': '文件夹路径必须是一个文件夹。',
 		'project-folder-open-path-permission-denied': '无法打开文件夹路径。',
+		'project-folder-repository-path-outside-workspace':
+			'仓库文件夹必须位于当前工作区内。',
 		'project-folder-open-failed': '无法打开文件夹。',
 		'project-folder-delete-path-required': '文件夹路径为必填项。',
 		'project-folder-delete-path-not-absolute': '文件夹路径必须是绝对路径。',

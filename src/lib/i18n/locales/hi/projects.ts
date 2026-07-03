@@ -119,6 +119,7 @@ export const hiProjectsMessages = {
 		clone: 'क्लोन करें',
 		initializeGit: 'Git प्रारंभ करें',
 		publish: 'प्रकाशित करें',
+		applySsealed: 'ssealed लागू करें',
 		openTerminal: 'टर्मिनल खोलें',
 		installDependencies: 'निर्भरता इंस्टॉल टर्मिनल खोलें',
 		updateDependencies: 'निर्भरता अपडेट टर्मिनल खोलें',
@@ -193,6 +194,8 @@ export const hiProjectsMessages = {
 		'project-folder-open-path-not-found': 'फ़ोल्डर पथ नहीं मिला।',
 		'project-folder-open-path-not-directory': 'फ़ोल्डर पथ एक फ़ोल्डर होना चाहिए।',
 		'project-folder-open-path-permission-denied': 'फ़ोल्डर पथ नहीं खोला जा सका।',
+		'project-folder-repository-path-outside-workspace':
+			'रिपॉजिटरी फ़ोल्डर वर्तमान workspace के अंदर होना चाहिए।',
 		'project-folder-open-failed': 'फ़ोल्डर नहीं खोला जा सका।',
 		'project-folder-delete-path-required': 'फ़ोल्डर पथ आवश्यक है।',
 		'project-folder-delete-path-not-absolute': 'फ़ोल्डर पथ पूर्ण होना चाहिए।',

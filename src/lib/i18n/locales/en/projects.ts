@@ -119,6 +119,7 @@ export const enProjectsMessages = {
 			clone: 'Clone',
 			initializeGit: 'Initialize Git',
 			publish: 'Publish',
+			applySsealed: 'Apply ssealed',
 			openTerminal: 'Open terminal',
 			installDependencies: 'Open dependency install terminal',
 			updateDependencies: 'Open dependency update terminal',
@@ -187,6 +188,8 @@ export const enProjectsMessages = {
 			'project-folder-open-path-not-found': 'Folder path was not found.',
 			'project-folder-open-path-not-directory': 'Folder path must be a folder.',
 			'project-folder-open-path-permission-denied': 'Folder path could not be opened.',
+			'project-folder-repository-path-outside-workspace':
+				'Repository folder must stay inside the current workspace.',
 			'project-folder-open-failed': 'Folder could not be opened.',
 			'project-folder-delete-path-required': 'Folder path is required.',
 			'project-folder-delete-path-not-absolute': 'Folder path must be absolute.',

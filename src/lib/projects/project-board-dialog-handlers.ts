@@ -2,6 +2,7 @@ import type { ProjectFormError } from './project-board-errors';
 import { deleteProjectCandidate } from './project-board-delete-actions';
 import type { WorkduckMessages } from '$lib/i18n/workduck-message-contract';
 import { createRepositoryNameFromRemoteUrl } from './project-board-paths';
+import type { SsealedScaffoldScope } from './project-folder';
 import {
 	submitProjectDialog,
 	type ProjectDialogSubmitContext
@@ -24,7 +25,7 @@ export function createProjectBoardDialogHandlers(context: {
 	readonly getRepositorySourceMode: () => ProjectRepositorySourceMode;
 	readonly getRepositoryRemoteUrl: () => string;
 	readonly getRepositoryGithubCredentialSecretId: () => string;
-	readonly getRepositorySsealedScaffold: () => boolean;
+	readonly getRepositorySsealedScaffoldScope: () => SsealedScaffoldScope;
 	readonly getIsSubmitting: () => boolean;
 	readonly getDeleteCandidate: () => ProjectDeleteCandidate | null;
 	readonly getIsDeleting: () => boolean;
@@ -42,7 +43,7 @@ export function createProjectBoardDialogHandlers(context: {
 	readonly setRepositorySourceMode: (sourceMode: ProjectRepositorySourceMode) => void;
 	readonly setRepositoryRemoteUrl: (remoteUrl: string) => void;
 	readonly setRepositoryGithubCredentialSecretId: (secretId: string) => void;
-	readonly setRepositorySsealedScaffold: (enabled: boolean) => void;
+	readonly setRepositorySsealedScaffoldScope: (scope: SsealedScaffoldScope) => void;
 	readonly setFormError: (error: ProjectFormError | null) => void;
 	readonly setStatus: (status: string | null) => void;
 	readonly setDeleteCandidate: (candidate: ProjectDeleteCandidate | null) => void;
@@ -67,7 +68,7 @@ export function createProjectBoardDialogHandlers(context: {
 		context.setRepositorySourceMode('folder');
 		context.setRepositoryRemoteUrl('');
 		context.setRepositoryGithubCredentialSecretId('');
-		context.setRepositorySsealedScaffold(false);
+		context.setRepositorySsealedScaffoldScope('none');
 		context.setFormError(null);
 		context.setIsSubmitting(false);
 	}
@@ -91,7 +92,7 @@ export function createProjectBoardDialogHandlers(context: {
 					? context.getDefaultRepositoryGithubCredentialSecretId(targetNodeId)
 					: ''
 			);
-			context.setRepositorySsealedScaffold(false);
+			context.setRepositorySsealedScaffoldScope('none');
 			clearFeedback();
 			context.setDeleteCandidate(null);
 			context.clearDescriptionEditor();
@@ -112,7 +113,7 @@ export function createProjectBoardDialogHandlers(context: {
 			context.setRepositorySourceMode(sourceMode);
 			context.setFormName('');
 			context.setRepositoryRemoteUrl('');
-			context.setRepositorySsealedScaffold(false);
+			context.setRepositorySsealedScaffoldScope('none');
 			context.setRepositoryGithubCredentialSecretId(
 				sourceMode === 'fork'
 					? context.getDefaultRepositoryGithubCredentialSecretId(
@@ -135,7 +136,19 @@ export function createProjectBoardDialogHandlers(context: {
 			context.setFormName(createRepositoryNameFromRemoteUrl(target.value));
 			clearFeedback();
 		},
-		handleRepositorySsealedScaffoldToggle: clearFeedback,
+		handleRepositorySsealedScaffoldScopeSelect(event: Event) {
+			const target = event.currentTarget;
+
+			if (!(target instanceof HTMLSelectElement)) {
+				return;
+			}
+
+			if (isSsealedScaffoldScope(target.value)) {
+				context.setRepositorySsealedScaffoldScope(target.value);
+			}
+
+			clearFeedback();
+		},
 		async handleDialogSubmit(event: SubmitEvent) {
 			event.preventDefault();
 
@@ -161,7 +174,7 @@ export function createProjectBoardDialogHandlers(context: {
 						repositoryRemoteUrl: context.getRepositoryRemoteUrl(),
 						repositoryGithubCredentialSecretId:
 							context.getRepositoryGithubCredentialSecretId(),
-						repositorySsealedScaffold: context.getRepositorySsealedScaffold()
+						repositorySsealedScaffoldScope: context.getRepositorySsealedScaffoldScope()
 					},
 					{
 						persistRegistry: context.persistRegistry,
@@ -211,4 +224,14 @@ export function createProjectBoardDialogHandlers(context: {
 			}
 		}
 	};
+}
+
+function isSsealedScaffoldScope(value: string): value is SsealedScaffoldScope {
+	return (
+		value === 'none' ||
+		value === 'design' ||
+		value === 'frontend' ||
+		value === 'backend' ||
+		value === 'fullstack'
+	);
 }

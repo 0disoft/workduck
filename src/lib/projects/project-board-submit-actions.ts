@@ -1,6 +1,7 @@
 import {
 	createProjectFolder,
-	createProjectGroupFolder
+	createProjectGroupFolder,
+	type SsealedScaffoldScope
 } from './project-folder';
 import type { ProjectFormError } from './project-board-errors';
 import {
@@ -40,7 +41,7 @@ export interface ProjectDialogSubmitInput {
 	readonly repositorySourceMode: ProjectRepositorySourceMode;
 	readonly repositoryRemoteUrl: string;
 	readonly repositoryGithubCredentialSecretId: string;
-	readonly repositorySsealedScaffold: boolean;
+	readonly repositorySsealedScaffoldScope: SsealedScaffoldScope;
 }
 
 export interface ProjectDialogSubmitContext {
@@ -185,7 +186,7 @@ async function submitRepositoryLink(
 		input.workspacePath,
 		targetNode.path,
 		createProjectFolderNameFromDisplayName(input.formName),
-		{ ssealedScaffold: input.repositorySsealedScaffold }
+		{ ssealedScaffoldScope: input.repositorySsealedScaffoldScope }
 	);
 
 	if (!folderResult.ok) {
@@ -209,9 +210,9 @@ async function submitRepositoryLink(
 	if (await context.persistRegistry(result.registry)) {
 		context.setSelectedGroupId(targetNode.id);
 		context.setStatus(
-			input.repositorySsealedScaffold
-				? 'Repository folder created with ssealed scaffold.'
-				: 'Repository folder created.'
+			input.repositorySsealedScaffoldScope === 'none'
+				? 'Repository folder created.'
+				: `Repository folder created with ssealed ${input.repositorySsealedScaffoldScope} scaffold.`
 		);
 		context.closeDialog();
 	}

@@ -55,6 +55,7 @@ export function createProjectBoardContextMenuHandlers(context: {
 		node: ProjectNodeRecord,
 		repository: ProjectRepositoryLinkRecord
 	) => void;
+	readonly openApplySsealedRepositoryDialog: (target: ProjectRepositoryTarget) => void;
 }) {
 	function closeContextMenu() {
 		context.setContextMenu(null);
@@ -259,6 +260,18 @@ export function createProjectBoardContextMenuHandlers(context: {
 			}
 
 			context.openPublishRepositoryDialog(target.node, target.repository);
+		},
+		openContextApplySsealedRepository() {
+			const target = context.getContextMenuRepository();
+
+			closeContextMenu();
+
+			if (target === null) {
+				context.setFormError('project-repository-not-found');
+				return;
+			}
+
+			context.openApplySsealedRepositoryDialog(target);
 		},
 		async openInitializeRepositoryForTarget(
 			node: ProjectNodeRecord,

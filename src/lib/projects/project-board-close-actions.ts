@@ -5,11 +5,13 @@ export interface ProjectBoardCloseState {
 	readonly hasDescriptionEditor: boolean;
 	readonly hasDetailsEditor: boolean;
 	readonly hasPublishTarget: boolean;
+	readonly hasSsealedTarget: boolean;
 	readonly hasGithubCredentialEditor: boolean;
 	readonly isSavingTags: boolean;
 	readonly isSavingDescription: boolean;
 	readonly isSavingDetails: boolean;
 	readonly isPublishingRepository: boolean;
+	readonly isApplyingSsealed: boolean;
 	readonly isSubmitting: boolean;
 	readonly isEnvironmentVaultBusy: boolean;
 }
@@ -21,6 +23,7 @@ export interface ProjectBoardCloseActions {
 	readonly closeDescriptionEditor: () => void;
 	readonly closeDetailsEditor: () => void;
 	readonly closePublishRepositoryDialog: () => void;
+	readonly closeSsealedScaffoldDialog: () => void;
 	readonly closeGithubCredentialEditor: () => void;
 	readonly closeContextMenu: () => void;
 }
@@ -63,6 +66,13 @@ export function closeProjectBoardOverlayFromEscape(
 	if (state.hasPublishTarget) {
 		if (!state.isPublishingRepository) {
 			actions.closePublishRepositoryDialog();
+		}
+		return;
+	}
+
+	if (state.hasSsealedTarget) {
+		if (!state.isApplyingSsealed) {
+			actions.closeSsealedScaffoldDialog();
 		}
 		return;
 	}

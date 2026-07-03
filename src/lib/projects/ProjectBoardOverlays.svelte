@@ -5,6 +5,11 @@
 	import type { ProjectFormError } from './project-board-errors';
 	import type { GithubCredentialOption } from './project-board-github-credentials';
 	import type {
+		SsealedScaffoldApplyScope,
+		SsealedScaffoldPlan,
+		SsealedScaffoldScope
+	} from './project-folder';
+	import type {
 		ProjectContextMenuState,
 		ProjectDeleteCandidate,
 		ProjectDialogState,
@@ -25,6 +30,7 @@
 	import ProjectNodeDialog from './ProjectNodeDialog.svelte';
 	import ProjectPublishDialog from './ProjectPublishDialog.svelte';
 	import ProjectRemoteUrlDialog from './ProjectRemoteUrlDialog.svelte';
+	import ProjectSsealedScaffoldDialog from './ProjectSsealedScaffoldDialog.svelte';
 	import ProjectTagDialog from './ProjectTagDialog.svelte';
 
 	interface Props {
@@ -46,7 +52,7 @@
 		formTags: string;
 		repositoryRemoteUrl: string;
 		repositoryGithubCredentialSecretId: string;
-		repositorySsealedScaffold: boolean;
+		repositorySsealedScaffoldScope: SsealedScaffoldScope;
 		readonly deleteCandidate: ProjectDeleteCandidate | null;
 		readonly descriptionEditor: import('./project-registry').ProjectNodeRecord | null;
 		readonly detailsEditor: import('./project-registry').ProjectNodeRecord | null;
@@ -85,7 +91,14 @@
 		readonly canCloneContextRepository: boolean;
 		readonly canInitializeContextRepository: boolean;
 		readonly canPublishContextRepository: boolean;
+		readonly canApplySsealedContextRepository: boolean;
 		readonly canEditContextGithubCredential: boolean;
+		readonly ssealedTarget: ProjectRepositoryTarget | null;
+		readonly ssealedScaffoldApplyScope: SsealedScaffoldApplyScope;
+		readonly ssealedPreview: SsealedScaffoldPlan | null;
+		readonly isPreviewingSsealed: boolean;
+		readonly isApplyingSsealed: boolean;
+		readonly canApplySsealedScaffold: boolean;
 		readonly getDeleteDialogTitle: () => string;
 		readonly getDeleteDialogText: () => string;
 		readonly getDeleteLocalFolderLabel: () => string;
@@ -105,7 +118,13 @@
 		readonly onCloneRepository: () => Promise<void>;
 		readonly onInitializeRepository: () => Promise<void>;
 		readonly onPublishRepository: () => void;
+		readonly onApplySsealedRepository: () => void;
 		readonly onRepositoryTask: (task: ProjectRepositoryTask) => Promise<void>;
+		readonly onSsealedScopeSelect: (scope: SsealedScaffoldApplyScope) => void;
+		readonly onSsealedPreviewRefresh: () => Promise<void>;
+		readonly onSsealedApply: () => Promise<void>;
+		readonly onSsealedBackdropClick: (event: MouseEvent) => void;
+		readonly onSsealedClose: () => void;
 		readonly onDeleteBackdropClick: (event: MouseEvent) => void;
 		readonly onDeleteClose: () => void;
 		readonly onDeleteConfirm: () => Promise<void>;
@@ -140,7 +159,7 @@
 		readonly onDialogTagsInput: () => void;
 		readonly onRepositoryRemoteUrlInput: (event: Event) => void;
 		readonly onRepositoryGithubCredentialSelect: (event: Event) => void;
-		readonly onRepositorySsealedScaffoldToggle: () => void;
+		readonly onRepositorySsealedScaffoldScopeSelect: (event: Event) => void;
 		readonly onSelectRepositorySourceMode: (sourceMode: ProjectRepositorySourceMode) => void;
 		readonly onDialogSubmit: (event: SubmitEvent) => Promise<void>;
 		readonly onDialogBackdropClick: (event: MouseEvent) => void;
@@ -154,7 +173,7 @@
 		selectedGithubCredentialSecretId = $bindable(), githubRepositoryName = $bindable(),
 		githubRepositoryCommitMessage = $bindable(), formName = $bindable(), formDescription = $bindable(),
 		formTags = $bindable(), repositoryRemoteUrl = $bindable(),
-		repositoryGithubCredentialSecretId = $bindable(), repositorySsealedScaffold = $bindable(),
+		repositoryGithubCredentialSecretId = $bindable(), repositorySsealedScaffoldScope = $bindable(),
 		deleteCandidate, descriptionEditor,
 		detailsEditor, tagEditor, githubCredentialEditor, remoteUrlEditor, publishTarget, dialog, dialogTargetNodeName, repositorySourceMode,
 		formError, storageError, isDeleting, canConfirmDelete, canDeleteLocalFolder, isSavingDescription,
@@ -163,12 +182,15 @@
 		environmentVaultError, githubCredentialOptions, isEnvironmentVaultBusy, isSubmitting,
 		canSaveGithubCredential, githubRepositoryVisibility, isPublishingRepository,
 		canSubmitPublishRepository, canSubmitDialog, canOpenContextFolder, canCloneContextRepository,
-		canInitializeContextRepository, canPublishContextRepository, canEditContextGithubCredential,
+		canInitializeContextRepository, canPublishContextRepository, canApplySsealedContextRepository,
+		canEditContextGithubCredential, ssealedTarget, ssealedScaffoldApplyScope, ssealedPreview,
+		isPreviewingSsealed, isApplyingSsealed, canApplySsealedScaffold,
 		getDeleteDialogTitle, getDeleteDialogText, getDeleteLocalFolderLabel, getDeleteLocalFolderUnavailableText,
 		getVisibleFormErrorMessage, getTagsInputMaxLength, getDialogTitle, getDialogSubmitLabel,
 		isRepositoryRemoteUrlError, onOpenFolder, onEditDetails, onEditDescription, onEditGithubCredential,
 		onEditRemoteUrl, onEditTags, onDelete, onCloneRepository, onInitializeRepository, onPublishRepository,
-		onRepositoryTask,
+		onApplySsealedRepository, onRepositoryTask, onSsealedScopeSelect, onSsealedPreviewRefresh,
+		onSsealedApply, onSsealedBackdropClick, onSsealedClose,
 		onDeleteBackdropClick, onDeleteClose, onDeleteConfirm, onDescriptionInput, onDescriptionSubmit,
 		onDescriptionBackdropClick, onDescriptionClose, onDetailsInput, onDetailsSubmit,
 		onDetailsBackdropClick, onDetailsClose, onTagInput, onTagSubmit, onTagBackdropClick,
@@ -177,7 +199,7 @@
 		onGithubCredentialClose, onRepositoryNameInput, onCommitMessageInput, onSelectVisibility,
 		onPublishSubmit, onPublishBackdropClick, onPublishClose, onNameInput, onDialogDescriptionInput,
 		onDialogTagsInput, onRepositoryRemoteUrlInput, onRepositoryGithubCredentialSelect,
-		onRepositorySsealedScaffoldToggle, onSelectRepositorySourceMode, onDialogSubmit,
+		onRepositorySsealedScaffoldScopeSelect, onSelectRepositorySourceMode, onDialogSubmit,
 		onDialogBackdropClick, onDialogClose
 	}: Props = $props();
 </script>
@@ -185,12 +207,13 @@
 {#if contextMenu !== null}
 	<ProjectContextMenu {contextMenu} {projectMessages} bind:contextMenuElement {canOpenContextFolder}
 		{canCloneContextRepository} {canInitializeContextRepository} {canPublishContextRepository}
-		{canEditContextGithubCredential}
+		{canApplySsealedContextRepository} {canEditContextGithubCredential}
 		onOpenFolder={onOpenFolder} onEditDetails={onEditDetails} onEditDescription={onEditDescription}
 		onEditGithubCredential={onEditGithubCredential} onEditRemoteUrl={onEditRemoteUrl}
 		onEditTags={onEditTags} onDelete={onDelete}
 		onCloneRepository={onCloneRepository} onInitializeRepository={onInitializeRepository}
-		onPublishRepository={onPublishRepository} onRepositoryTask={onRepositoryTask} />
+		onPublishRepository={onPublishRepository} onApplySsealedRepository={onApplySsealedRepository}
+		onRepositoryTask={onRepositoryTask} />
 {/if}
 
 {#if deleteCandidate !== null}
@@ -246,17 +269,36 @@
 		onBackdropClick={onPublishBackdropClick} onClose={onPublishClose} />
 {/if}
 
+{#if ssealedTarget !== null}
+	<ProjectSsealedScaffoldDialog
+		target={ssealedTarget}
+		{projectMessages}
+		scope={ssealedScaffoldApplyScope}
+		preview={ssealedPreview}
+		{formError}
+		{storageError}
+		isPreviewing={isPreviewingSsealed}
+		isApplying={isApplyingSsealed}
+		canApply={canApplySsealedScaffold}
+		onScopeSelect={onSsealedScopeSelect}
+		onRefresh={onSsealedPreviewRefresh}
+		onApply={onSsealedApply}
+		onBackdropClick={onSsealedBackdropClick}
+		onClose={onSsealedClose}
+	/>
+{/if}
+
 {#if dialog !== null}
 	<ProjectNodeDialog mode={dialog.mode} targetNodeName={dialogTargetNodeName} bind:formName
 		bind:formDescription bind:formTags bind:repositoryRemoteUrl bind:repositoryGithubCredentialSecretId
-		bind:repositorySsealedScaffold
+		bind:repositorySsealedScaffoldScope
 		{repositorySourceMode} {githubCredentialOptions} {formError} {storageError}
 		{isSubmitting} {canSubmitDialog} {getDialogTitle} {getDialogSubmitLabel}
 		{getTagsInputMaxLength} {getVisibleFormErrorMessage} {isRepositoryRemoteUrlError}
 		onNameInput={onNameInput} onDescriptionInput={onDialogDescriptionInput}
 		onTagsInput={onDialogTagsInput} onRepositoryRemoteUrlInput={onRepositoryRemoteUrlInput}
 		onRepositoryGithubCredentialSelect={onRepositoryGithubCredentialSelect}
-		onRepositorySsealedScaffoldToggle={onRepositorySsealedScaffoldToggle}
+		onRepositorySsealedScaffoldScopeSelect={onRepositorySsealedScaffoldScopeSelect}
 		onSelectRepositorySourceMode={onSelectRepositorySourceMode} onSubmit={onDialogSubmit}
 		onBackdropClick={onDialogBackdropClick} onClose={onDialogClose} />
 {/if}

@@ -12,6 +12,7 @@
 		readonly canCloneContextRepository: boolean;
 		readonly canInitializeContextRepository: boolean;
 		readonly canPublishContextRepository: boolean;
+		readonly canApplySsealedContextRepository: boolean;
 		readonly canEditContextGithubCredential: boolean;
 		readonly onOpenFolder: () => Promise<void>;
 		readonly onEditDetails: () => void;
@@ -23,6 +24,7 @@
 		readonly onCloneRepository: () => Promise<void>;
 		readonly onInitializeRepository: () => Promise<void>;
 		readonly onPublishRepository: () => void;
+		readonly onApplySsealedRepository: () => void;
 		readonly onRepositoryTask: (task: ProjectRepositoryTask) => Promise<void>;
 	}
 
@@ -34,6 +36,7 @@
 		canCloneContextRepository,
 		canInitializeContextRepository,
 		canPublishContextRepository,
+		canApplySsealedContextRepository,
 		canEditContextGithubCredential,
 		onOpenFolder,
 		onEditDetails,
@@ -45,6 +48,7 @@
 		onCloneRepository,
 		onInitializeRepository,
 		onPublishRepository,
+		onApplySsealedRepository,
 		onRepositoryTask
 	}: Props = $props();
 </script>
@@ -133,6 +137,16 @@
 				onclick={onPublishRepository}
 			>
 				{projectMessages.contextMenu.publish}
+			</button>
+		{/if}
+		{#if canApplySsealedContextRepository}
+			<button
+				class="workduck-context-menu-item"
+				type="button"
+				role="menuitem"
+				onclick={onApplySsealedRepository}
+			>
+				{projectMessages.contextMenu.applySsealed}
 			</button>
 		{/if}
 		{#if canOpenContextFolder}

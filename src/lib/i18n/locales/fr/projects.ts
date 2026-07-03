@@ -119,6 +119,7 @@ export const frProjectsMessages = {
 		clone: 'Cloner',
 		initializeGit: 'Initialize Git',
 		publish: 'Publier',
+		applySsealed: 'Appliquer ssealed',
 		openTerminal: 'Ouvrir le terminal',
 		installDependencies: 'Ouvrir le terminal d\'installation des dépendances',
 		updateDependencies: 'Ouvrir le terminal de mise à jour des dépendances',
@@ -187,6 +188,8 @@ export const frProjectsMessages = {
 		'project-folder-open-path-not-found': 'Le dossier n\'a pas été trouvé.',
 		'project-folder-open-path-not-directory': 'Le chemin du dossier doit être un dossier.',
 		'project-folder-open-path-permission-denied': 'Le dossier n\'a pas pu être ouvert.',
+		'project-folder-repository-path-outside-workspace':
+			'Le dossier du dépôt doit rester dans l\'espace de travail actuel.',
 		'project-folder-open-failed': 'Le dossier n\'a pas pu être ouvert.',
 		'project-folder-delete-path-required': 'Le chemin du dossier est obligatoire.',
 		'project-folder-delete-path-not-absolute': 'Le chemin du dossier doit être absolu.',
