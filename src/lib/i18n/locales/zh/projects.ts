@@ -181,6 +181,7 @@ export const zhProjectsMessages = {
 		'project-folder-name-invalid': '该名称不能用作文件夹名称。',
 		'project-folder-conflict': '文件夹路径不可用。',
 		'project-folder-create-failed': '无法创建文件夹。',
+		'project-folder-ssealed-scaffold-failed': '无法创建 ssealed 脚手架。',
 		'project-folder-open-path-required': '文件夹路径为必填项。',
 		'project-folder-open-path-not-absolute':
 			'文件夹路径必须是绝对路径。',

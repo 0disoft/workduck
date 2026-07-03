@@ -24,6 +24,7 @@ export function createProjectBoardDialogHandlers(context: {
 	readonly getRepositorySourceMode: () => ProjectRepositorySourceMode;
 	readonly getRepositoryRemoteUrl: () => string;
 	readonly getRepositoryGithubCredentialSecretId: () => string;
+	readonly getRepositorySsealedScaffold: () => boolean;
 	readonly getIsSubmitting: () => boolean;
 	readonly getDeleteCandidate: () => ProjectDeleteCandidate | null;
 	readonly getIsDeleting: () => boolean;
@@ -41,6 +42,7 @@ export function createProjectBoardDialogHandlers(context: {
 	readonly setRepositorySourceMode: (sourceMode: ProjectRepositorySourceMode) => void;
 	readonly setRepositoryRemoteUrl: (remoteUrl: string) => void;
 	readonly setRepositoryGithubCredentialSecretId: (secretId: string) => void;
+	readonly setRepositorySsealedScaffold: (enabled: boolean) => void;
 	readonly setFormError: (error: ProjectFormError | null) => void;
 	readonly setStatus: (status: string | null) => void;
 	readonly setDeleteCandidate: (candidate: ProjectDeleteCandidate | null) => void;
@@ -65,6 +67,7 @@ export function createProjectBoardDialogHandlers(context: {
 		context.setRepositorySourceMode('folder');
 		context.setRepositoryRemoteUrl('');
 		context.setRepositoryGithubCredentialSecretId('');
+		context.setRepositorySsealedScaffold(false);
 		context.setFormError(null);
 		context.setIsSubmitting(false);
 	}
@@ -88,6 +91,7 @@ export function createProjectBoardDialogHandlers(context: {
 					? context.getDefaultRepositoryGithubCredentialSecretId(targetNodeId)
 					: ''
 			);
+			context.setRepositorySsealedScaffold(false);
 			clearFeedback();
 			context.setDeleteCandidate(null);
 			context.clearDescriptionEditor();
@@ -108,6 +112,7 @@ export function createProjectBoardDialogHandlers(context: {
 			context.setRepositorySourceMode(sourceMode);
 			context.setFormName('');
 			context.setRepositoryRemoteUrl('');
+			context.setRepositorySsealedScaffold(false);
 			context.setRepositoryGithubCredentialSecretId(
 				sourceMode === 'fork'
 					? context.getDefaultRepositoryGithubCredentialSecretId(
@@ -130,6 +135,7 @@ export function createProjectBoardDialogHandlers(context: {
 			context.setFormName(createRepositoryNameFromRemoteUrl(target.value));
 			clearFeedback();
 		},
+		handleRepositorySsealedScaffoldToggle: clearFeedback,
 		async handleDialogSubmit(event: SubmitEvent) {
 			event.preventDefault();
 
@@ -154,7 +160,8 @@ export function createProjectBoardDialogHandlers(context: {
 						repositorySourceMode: context.getRepositorySourceMode(),
 						repositoryRemoteUrl: context.getRepositoryRemoteUrl(),
 						repositoryGithubCredentialSecretId:
-							context.getRepositoryGithubCredentialSecretId()
+							context.getRepositoryGithubCredentialSecretId(),
+						repositorySsealedScaffold: context.getRepositorySsealedScaffold()
 					},
 					{
 						persistRegistry: context.persistRegistry,

@@ -181,6 +181,7 @@ export const esProjectsMessages = {
 			'project-folder-name-invalid': 'El nombre no se puede usar como carpeta.',
 			'project-folder-conflict': 'La ruta de la carpeta no se puede usar.',
 			'project-folder-create-failed': 'No se pudo crear la carpeta.',
+			'project-folder-ssealed-scaffold-failed': 'No se pudo crear el scaffold de ssealed.',
 			'project-folder-open-path-required': 'Se requiere la ruta de la carpeta.',
 			'project-folder-open-path-not-absolute': 'La ruta de la carpeta debe ser absoluta.',
 			'project-folder-open-path-not-found': 'No se encontró la ruta de la carpeta.',

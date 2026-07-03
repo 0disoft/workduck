@@ -18,6 +18,7 @@
 		formTags: string;
 		repositoryRemoteUrl: string;
 		repositoryGithubCredentialSecretId: string;
+		repositorySsealedScaffold: boolean;
 		readonly repositorySourceMode: ProjectRepositorySourceMode;
 		readonly githubCredentialOptions: readonly GithubCredentialOption[];
 		readonly formError: ProjectFormError | null;
@@ -34,6 +35,7 @@
 		readonly onTagsInput: () => void;
 		readonly onRepositoryRemoteUrlInput: (event: Event) => void;
 		readonly onRepositoryGithubCredentialSelect: (event: Event) => void;
+		readonly onRepositorySsealedScaffoldToggle: () => void;
 		readonly onSelectRepositorySourceMode: (sourceMode: ProjectRepositorySourceMode) => void;
 		readonly onSubmit: (event: SubmitEvent) => Promise<void>;
 		readonly onBackdropClick: (event: MouseEvent) => void;
@@ -48,6 +50,7 @@
 		formTags = $bindable(),
 		repositoryRemoteUrl = $bindable(),
 		repositoryGithubCredentialSecretId = $bindable(),
+		repositorySsealedScaffold = $bindable(),
 		repositorySourceMode,
 		githubCredentialOptions,
 		formError,
@@ -64,6 +67,7 @@
 		onTagsInput,
 		onRepositoryRemoteUrlInput,
 		onRepositoryGithubCredentialSelect,
+		onRepositorySsealedScaffoldToggle,
 		onSelectRepositorySourceMode,
 		onSubmit,
 		onBackdropClick,
@@ -205,6 +209,17 @@
 								formError === 'project-folder-name-invalid' ||
 								formError === 'project-folder-conflict'}
 						/>
+					</label>
+					<label class="workduck-project-checkbox-field" for="project-repository-ssealed-scaffold">
+						<input
+							id="project-repository-ssealed-scaffold"
+							class="workduck-checkbox"
+							type="checkbox"
+							bind:checked={repositorySsealedScaffold}
+							disabled={isSubmitting}
+							onchange={onRepositorySsealedScaffoldToggle}
+						/>
+						<span>ssealed fullstack scaffold</span>
 					</label>
 				{:else}
 					<label class="workduck-form-field" for="project-repository-url">

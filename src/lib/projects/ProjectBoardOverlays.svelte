@@ -46,6 +46,7 @@
 		formTags: string;
 		repositoryRemoteUrl: string;
 		repositoryGithubCredentialSecretId: string;
+		repositorySsealedScaffold: boolean;
 		readonly deleteCandidate: ProjectDeleteCandidate | null;
 		readonly descriptionEditor: import('./project-registry').ProjectNodeRecord | null;
 		readonly detailsEditor: import('./project-registry').ProjectNodeRecord | null;
@@ -139,6 +140,7 @@
 		readonly onDialogTagsInput: () => void;
 		readonly onRepositoryRemoteUrlInput: (event: Event) => void;
 		readonly onRepositoryGithubCredentialSelect: (event: Event) => void;
+		readonly onRepositorySsealedScaffoldToggle: () => void;
 		readonly onSelectRepositorySourceMode: (sourceMode: ProjectRepositorySourceMode) => void;
 		readonly onDialogSubmit: (event: SubmitEvent) => Promise<void>;
 		readonly onDialogBackdropClick: (event: MouseEvent) => void;
@@ -152,7 +154,8 @@
 		selectedGithubCredentialSecretId = $bindable(), githubRepositoryName = $bindable(),
 		githubRepositoryCommitMessage = $bindable(), formName = $bindable(), formDescription = $bindable(),
 		formTags = $bindable(), repositoryRemoteUrl = $bindable(),
-		repositoryGithubCredentialSecretId = $bindable(), deleteCandidate, descriptionEditor,
+		repositoryGithubCredentialSecretId = $bindable(), repositorySsealedScaffold = $bindable(),
+		deleteCandidate, descriptionEditor,
 		detailsEditor, tagEditor, githubCredentialEditor, remoteUrlEditor, publishTarget, dialog, dialogTargetNodeName, repositorySourceMode,
 		formError, storageError, isDeleting, canConfirmDelete, canDeleteLocalFolder, isSavingDescription,
 		canSaveDescription, isSavingDetails, canSaveDetails, isSavingTags, canSaveTags,
@@ -174,7 +177,7 @@
 		onGithubCredentialClose, onRepositoryNameInput, onCommitMessageInput, onSelectVisibility,
 		onPublishSubmit, onPublishBackdropClick, onPublishClose, onNameInput, onDialogDescriptionInput,
 		onDialogTagsInput, onRepositoryRemoteUrlInput, onRepositoryGithubCredentialSelect,
-		onSelectRepositorySourceMode, onDialogSubmit,
+		onRepositorySsealedScaffoldToggle, onSelectRepositorySourceMode, onDialogSubmit,
 		onDialogBackdropClick, onDialogClose
 	}: Props = $props();
 </script>
@@ -246,12 +249,14 @@
 {#if dialog !== null}
 	<ProjectNodeDialog mode={dialog.mode} targetNodeName={dialogTargetNodeName} bind:formName
 		bind:formDescription bind:formTags bind:repositoryRemoteUrl bind:repositoryGithubCredentialSecretId
+		bind:repositorySsealedScaffold
 		{repositorySourceMode} {githubCredentialOptions} {formError} {storageError}
 		{isSubmitting} {canSubmitDialog} {getDialogTitle} {getDialogSubmitLabel}
 		{getTagsInputMaxLength} {getVisibleFormErrorMessage} {isRepositoryRemoteUrlError}
 		onNameInput={onNameInput} onDescriptionInput={onDialogDescriptionInput}
 		onTagsInput={onDialogTagsInput} onRepositoryRemoteUrlInput={onRepositoryRemoteUrlInput}
 		onRepositoryGithubCredentialSelect={onRepositoryGithubCredentialSelect}
+		onRepositorySsealedScaffoldToggle={onRepositorySsealedScaffoldToggle}
 		onSelectRepositorySourceMode={onSelectRepositorySourceMode} onSubmit={onDialogSubmit}
 		onBackdropClick={onDialogBackdropClick} onClose={onDialogClose} />
 {/if}

@@ -181,6 +181,7 @@ export const frProjectsMessages = {
 		'project-folder-name-invalid': 'Le nom ne peut pas être utilisé comme dossier.',
 		'project-folder-conflict': 'Le chemin du dossier n\'est pas utilisable.',
 		'project-folder-create-failed': 'Le dossier n\'a pas pu être créé.',
+		'project-folder-ssealed-scaffold-failed': 'Le scaffold ssealed n\'a pas pu être créé.',
 		'project-folder-open-path-required': 'Le chemin du dossier est obligatoire.',
 		'project-folder-open-path-not-absolute': 'Le chemin du dossier doit être absolu.',
 		'project-folder-open-path-not-found': 'Le dossier n\'a pas été trouvé.',

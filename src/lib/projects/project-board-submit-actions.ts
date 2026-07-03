@@ -40,6 +40,7 @@ export interface ProjectDialogSubmitInput {
 	readonly repositorySourceMode: ProjectRepositorySourceMode;
 	readonly repositoryRemoteUrl: string;
 	readonly repositoryGithubCredentialSecretId: string;
+	readonly repositorySsealedScaffold: boolean;
 }
 
 export interface ProjectDialogSubmitContext {
@@ -183,7 +184,8 @@ async function submitRepositoryLink(
 	const folderResult = await createProjectGroupFolder(
 		input.workspacePath,
 		targetNode.path,
-		createProjectFolderNameFromDisplayName(input.formName)
+		createProjectFolderNameFromDisplayName(input.formName),
+		{ ssealedScaffold: input.repositorySsealedScaffold }
 	);
 
 	if (!folderResult.ok) {
@@ -206,7 +208,11 @@ async function submitRepositoryLink(
 
 	if (await context.persistRegistry(result.registry)) {
 		context.setSelectedGroupId(targetNode.id);
-		context.setStatus('Repository folder created.');
+		context.setStatus(
+			input.repositorySsealedScaffold
+				? 'Repository folder created with ssealed scaffold.'
+				: 'Repository folder created.'
+		);
 		context.closeDialog();
 	}
 }

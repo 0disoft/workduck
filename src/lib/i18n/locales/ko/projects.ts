@@ -181,6 +181,7 @@ export const koProjectsMessages = {
 			'project-folder-name-invalid': '폴더 이름으로 사용할 수 없는 이름입니다.',
 			'project-folder-conflict': '폴더 경로를 사용할 수 없습니다.',
 			'project-folder-create-failed': '폴더를 만들지 못했습니다.',
+			'project-folder-ssealed-scaffold-failed': 'ssealed 스캐폴드를 만들지 못했습니다.',
 			'project-folder-open-path-required': '폴더 경로가 필요합니다.',
 			'project-folder-open-path-not-absolute': '폴더 경로는 절대 경로여야 합니다.',
 			'project-folder-open-path-not-found': '폴더 경로를 찾을 수 없습니다.',

@@ -187,6 +187,7 @@ export const hiProjectsMessages = {
 		'project-folder-name-invalid': 'नाम का उपयोग फ़ोल्डर के रूप में नहीं किया जा सकता।',
 		'project-folder-conflict': 'फ़ोल्डर पथ उपयोग करने योग्य नहीं है।',
 		'project-folder-create-failed': 'फ़ोल्डर नहीं बनाया जा सका।',
+		'project-folder-ssealed-scaffold-failed': 'ssealed scaffold नहीं बनाया जा सका।',
 		'project-folder-open-path-required': 'फ़ोल्डर पथ आवश्यक है।',
 		'project-folder-open-path-not-absolute': 'फ़ोल्डर पथ पूर्ण होना चाहिए।',
 		'project-folder-open-path-not-found': 'फ़ोल्डर पथ नहीं मिला।',

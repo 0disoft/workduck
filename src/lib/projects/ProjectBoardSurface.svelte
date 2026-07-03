@@ -186,6 +186,7 @@
 	let repositorySourceMode = $state<ProjectRepositorySourceMode>('folder');
 	let repositoryRemoteUrl = $state('');
 	let repositoryGithubCredentialSecretId = $state('');
+	let repositorySsealedScaffold = $state(false);
 	let formError = $state<ProjectFormError | null>(null);
 	let status = $state<string | null>(null);
 	let storageError = $state<ProjectRegistryStorageError | null>(null);
@@ -423,6 +424,7 @@
 		getRepositorySourceMode: () => repositorySourceMode,
 		getRepositoryRemoteUrl: () => repositoryRemoteUrl,
 		getRepositoryGithubCredentialSecretId: () => repositoryGithubCredentialSecretId,
+		getRepositorySsealedScaffold: () => repositorySsealedScaffold,
 		getIsSubmitting: () => isSubmitting,
 		getDeleteCandidate: () => deleteCandidate,
 		getIsDeleting: () => isDeleting,
@@ -442,6 +444,7 @@
 		setRepositoryGithubCredentialSecretId: (secretId) => {
 			repositoryGithubCredentialSecretId = secretId;
 		},
+		setRepositorySsealedScaffold: (enabled) => { repositorySsealedScaffold = enabled; },
 		setFormError: (error) => { formError = error; },
 		setStatus: (nextStatus) => { status = nextStatus; },
 		setDeleteCandidate: (candidate) => { deleteCandidate = candidate; },
@@ -1116,6 +1119,7 @@
 	bind:formTags
 	bind:repositoryRemoteUrl
 	bind:repositoryGithubCredentialSecretId
+	bind:repositorySsealedScaffold
 	{deleteCandidate}
 	{descriptionEditor}
 	{detailsEditor}
@@ -1218,6 +1222,7 @@
 			status = null;
 		}
 	}}
+	onRepositorySsealedScaffoldToggle={dialogActions.handleRepositorySsealedScaffoldToggle}
 	onSelectRepositorySourceMode={dialogActions.selectRepositorySourceMode}
 	onDialogSubmit={dialogActions.handleDialogSubmit}
 	onDialogBackdropClick={dialogActions.handleDialogBackdropClick}

@@ -403,6 +403,23 @@
 	color: var(--workduck-color-accent);
 }
 
+.workduck-project-checkbox-field {
+	display: inline-flex;
+	min-width: 0;
+	align-items: center;
+	gap: 9px;
+	color: var(--workduck-color-text);
+	font-size: var(--workduck-font-size-sm);
+	font-weight: 800;
+}
+
+.workduck-project-checkbox-field span {
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
 @media (prefers-reduced-motion: no-preference) {
 	.workduck-repository-busy-indicator {
 		animation: workduck-spin 780ms linear infinite;

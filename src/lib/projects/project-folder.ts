@@ -18,6 +18,7 @@ export type ProjectFolderError =
 	| 'project-folder-name-invalid'
 	| 'project-folder-conflict'
 	| 'project-folder-create-failed'
+	| 'project-folder-ssealed-scaffold-failed'
 	| 'project-folder-open-path-required'
 	| 'project-folder-open-path-not-absolute'
 	| 'project-folder-open-path-not-found'
@@ -92,12 +93,16 @@ export async function createProjectFolder(
 export async function createProjectGroupFolder(
 	workspacePath: string,
 	parentRelativePath: string,
-	folderName: string
+	folderName: string,
+	options: {
+		readonly ssealedScaffold?: boolean;
+	} = {}
 ): Promise<ProjectFolderCreateResult> {
 	return createProjectFolderFromCommand('create_project_group_folder', {
 		workspacePath: normalizeWorkspacePathForStorage(workspacePath),
 		parentRelativePath,
-		folderName
+		folderName,
+		ssealedScaffold: options.ssealedScaffold === true
 	});
 }
 
@@ -261,6 +266,7 @@ function isProjectFolderError(value: unknown): value is ProjectFolderError {
 		value === 'project-folder-name-invalid' ||
 		value === 'project-folder-conflict' ||
 		value === 'project-folder-create-failed' ||
+		value === 'project-folder-ssealed-scaffold-failed' ||
 		value === 'project-folder-open-path-required' ||
 		value === 'project-folder-open-path-not-absolute' ||
 		value === 'project-folder-open-path-not-found' ||

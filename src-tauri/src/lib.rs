@@ -27,6 +27,7 @@ mod queue_result_report;
 mod queue_response_parser;
 pub mod queue_execution;
 mod secret_vault_crypto;
+mod ssealed_scaffold_generated;
 mod storage;
 pub mod system_environment;
 mod terminal_catalog;
