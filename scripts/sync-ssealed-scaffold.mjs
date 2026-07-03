@@ -170,17 +170,17 @@ function renderGeneratedRust({ version, files }) {
 	].join('\n');
 }
 
-async function runSsealedInit(scaffoldPath) {
+async function runSsealedInit(temporaryRoot) {
 	const verbose = process.env.SSEALED_SYNC_VERBOSE === '1';
 	const result = spawnSync(localBinary('ssealed'), [
 		'init',
-		scaffoldPath,
+		'scaffold',
 		'--scope',
 		scaffoldScope,
 		'--runner',
 		scaffoldRunner
 	], {
-		cwd: repositoryRoot,
+		cwd: temporaryRoot,
 		env: process.env,
 		encoding: 'utf8',
 		stdio: verbose ? 'inherit' : ['ignore', 'pipe', 'pipe'],
@@ -213,7 +213,7 @@ async function main() {
 	const scaffoldPath = join(temporaryRoot, 'scaffold');
 
 	try {
-		await runSsealedInit(scaffoldPath);
+		await runSsealedInit(temporaryRoot);
 		const kindsByPath = await readManifestKindMap(scaffoldPath);
 		const files = [];
 
