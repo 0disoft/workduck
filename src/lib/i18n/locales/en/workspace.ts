@@ -2,6 +2,7 @@ export const enWorkspaceMessages = {
 		addWorkspaceInSettings: 'Add a workspace in Settings.',
 		locked: 'Workspace locked',
 		folderUnavailable: 'Workspace folder unavailable',
+		checkingFolder: 'Checking workspace folder...',
 		path: 'Path',
 		reconnect: 'Reconnect',
 		chooseFolder: 'Choose workspace folder',

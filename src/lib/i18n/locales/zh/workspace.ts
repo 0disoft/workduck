@@ -2,6 +2,7 @@ export const zhWorkspaceMessages = {
 	addWorkspaceInSettings: '请在“设置”中添加工作区。',
 	locked: '工作区已锁定',
 	folderUnavailable: '工作区文件夹不可用',
+	checkingFolder: '正在检查工作区文件夹...',
 	path: '路径',
 	reconnect: '重新连接',
 	chooseFolder: '选择工作区文件夹',

@@ -7,7 +7,7 @@ use std::{
 
 use base64::{Engine as _, engine::general_purpose::STANDARD as BASE64};
 use chacha20poly1305::{
-    Key, XChaCha20Poly1305, XNonce,
+    XChaCha20Poly1305, XNonce,
     aead::{Aead, KeyInit, Payload},
 };
 use serde::{Deserialize, Serialize};
@@ -1524,10 +1524,17 @@ fn decrypt_secret_vault_payload(
         envelope.kdf.iterations,
         envelope.kdf.parallelism,
     )?;
-    let cipher = XChaCha20Poly1305::new(Key::from_slice(&key));
+    let cipher = XChaCha20Poly1305::new_from_slice(&key).map_err(|_| CliError {
+        code: "vault-decryption-failed",
+        message: "보관함 복호화에 실패했습니다.".to_string(),
+    })?;
+    let xnonce = <&XNonce>::try_from(nonce.as_slice()).map_err(|_| CliError {
+        code: "vault-nonce-invalid",
+        message: "보관함 nonce가 올바르지 않습니다.".to_string(),
+    })?;
     let plaintext = cipher
         .decrypt(
-            XNonce::from_slice(&nonce),
+            xnonce,
             Payload {
                 msg: ciphertext.as_ref(),
                 aad: VAULT_AAD,

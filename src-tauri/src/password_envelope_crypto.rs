@@ -4,11 +4,8 @@ use crate::argon2_kdf::{
 };
 use base64::{Engine as _, engine::general_purpose::STANDARD as BASE64};
 use chacha20poly1305::{
-    Key, XChaCha20Poly1305, XNonce,
-    aead::{
-        Aead, KeyInit, Payload,
-        rand_core::{OsRng, RngCore},
-    },
+    XChaCha20Poly1305, XNonce,
+    aead::{Aead, KeyInit, Payload},
 };
 use zeroize::Zeroize;
 
@@ -70,8 +67,8 @@ pub(crate) fn encrypt_password_envelope(
 ) -> Result<PasswordEnvelope, PasswordEnvelopeCryptoError> {
     let mut salt = [0_u8; ENVELOPE_SALT_LENGTH];
     let mut nonce = [0_u8; ENVELOPE_NONCE_LENGTH];
-    OsRng.fill_bytes(&mut salt);
-    OsRng.fill_bytes(&mut nonce);
+    getrandom::fill(&mut salt).map_err(|_| PasswordEnvelopeCryptoError::EncryptionFailed)?;
+    getrandom::fill(&mut nonce).map_err(|_| PasswordEnvelopeCryptoError::EncryptionFailed)?;
 
     let mut key = derive_envelope_key(
         password,
@@ -80,9 +77,12 @@ pub(crate) fn encrypt_password_envelope(
         ENVELOPE_KDF_ITERATIONS,
         ENVELOPE_KDF_PARALLELISM,
     )?;
-    let cipher = XChaCha20Poly1305::new(Key::from_slice(&key));
+    let cipher = XChaCha20Poly1305::new_from_slice(&key)
+        .map_err(|_| PasswordEnvelopeCryptoError::EncryptionFailed)?;
+    let xnonce = <&XNonce>::try_from(nonce.as_slice())
+        .map_err(|_| PasswordEnvelopeCryptoError::EncryptionFailed)?;
     let ciphertext_result = cipher.encrypt(
-        XNonce::from_slice(&nonce),
+        xnonce,
         Payload {
             msg: plaintext,
             aad: config.aad,
@@ -140,9 +140,12 @@ pub(crate) fn decrypt_password_envelope(
         envelope.kdf.iterations,
         envelope.kdf.parallelism,
     )?;
-    let cipher = XChaCha20Poly1305::new(Key::from_slice(&key));
+    let cipher = XChaCha20Poly1305::new_from_slice(&key)
+        .map_err(|_| PasswordEnvelopeCryptoError::DecryptionFailed)?;
+    let xnonce = <&XNonce>::try_from(nonce.as_slice())
+        .map_err(|_| PasswordEnvelopeCryptoError::DecryptionFailed)?;
     let plaintext_result = cipher.decrypt(
-        XNonce::from_slice(&nonce),
+        xnonce,
         Payload {
             msg: ciphertext.as_ref(),
             aad: config.aad,

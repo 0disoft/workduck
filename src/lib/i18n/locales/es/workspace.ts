@@ -2,6 +2,7 @@ export const esWorkspaceMessages = {
 		addWorkspaceInSettings: 'Añada un espacio de trabajo en Configuración.',
 		locked: 'Espacio de trabajo bloqueado',
 		folderUnavailable: 'Carpeta del espacio de trabajo no disponible',
+		checkingFolder: 'Comprobando la carpeta del espacio de trabajo...',
 		path: 'Ruta',
 		reconnect: 'Reconectar',
 		chooseFolder: 'Elegir carpeta del espacio de trabajo',

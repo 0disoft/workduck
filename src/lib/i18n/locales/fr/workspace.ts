@@ -2,6 +2,7 @@ export const frWorkspaceMessages = {
 	addWorkspaceInSettings: 'Ajoutez un espace de travail dans les Paramètres.',
 	locked: 'Espace de travail verrouillé',
 	folderUnavailable: 'Dossier d\'espace de travail indisponible',
+	checkingFolder: 'Vérification du dossier d\'espace de travail...',
 	path: 'Chemin',
 	reconnect: 'Reconnecter',
 	chooseFolder: 'Choisir le dossier de l\'espace de travail',

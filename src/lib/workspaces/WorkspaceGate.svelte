@@ -39,6 +39,7 @@
 	let registry = $state<WorkspaceRegistry>(createEmptyWorkspaceRegistry());
 	let hasLoaded = $state(false);
 	let unlockRevision = $state(0);
+	let workspacePathState = $state<'idle' | 'checking' | 'valid' | 'invalid'>('idle');
 	let workspacePathError = $state<WorkspacePathValidationError | null>(null);
 	let workspacePathCheckRevision = 0;
 
@@ -83,8 +84,11 @@
 		workspacePathError = null;
 
 		if (checkKey.length === 0 || workspace === null || !canUseActiveWorkspace) {
+			workspacePathState = 'idle';
 			return;
 		}
+
+		workspacePathState = 'checking';
 
 		void validateWorkspacePath(workspace.path).then((result) => {
 			if (checkRevision !== workspacePathCheckRevision) {
@@ -92,10 +96,12 @@
 			}
 
 			if (result.ok || result.error === 'workspace-path-validation-unavailable') {
+				workspacePathState = 'valid';
 				workspacePathError = null;
 				return;
 			}
 
+			workspacePathState = 'invalid';
 			workspacePathError = result.error;
 		});
 	});
@@ -120,7 +126,16 @@
 	}
 </script>
 
-{#if hasLoaded && activeWorkspace === null}
+{#if !hasLoaded}
+	<div class="workduck-gated-state">
+		{#if title !== undefined}
+			<header class="workduck-page-header">
+				<h1 class="workduck-page-title">{title}</h1>
+			</header>
+		{/if}
+		<p class="workduck-empty-state">{messages.workspace.checkingFolder}</p>
+	</div>
+{:else if activeWorkspace === null}
 	<div class="workduck-gated-state">
 		{#if title !== undefined}
 			<header class="workduck-page-header">
@@ -153,9 +168,21 @@
 			<p class="workduck-empty-state">{getPathErrorMessage(workspacePathError)}</p>
 			<WorkspacePathRepairForm
 				workspace={activeWorkspace}
-				onRepaired={() => (workspacePathError = null)}
+				onRepaired={() => {
+					workspacePathState = 'idle';
+					workspacePathError = null;
+				}}
 			/>
 		</section>
+	</div>
+{:else if activeWorkspace !== null && workspacePathState !== 'valid'}
+	<div class="workduck-gated-state">
+		{#if title !== undefined}
+			<header class="workduck-page-header">
+				<h1 class="workduck-page-title">{title}</h1>
+			</header>
+		{/if}
+		<p class="workduck-empty-state">{messages.workspace.checkingFolder}</p>
 	</div>
 {:else}
 	{@render children()}

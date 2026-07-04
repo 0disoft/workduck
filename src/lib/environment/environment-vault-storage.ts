@@ -115,7 +115,17 @@ export async function readEnvironmentVaultEnvelopeForWorkspace(
 		}
 
 		if (fileResult.content !== null) {
-			return parseWorkspaceVaultEnvelope(fileResult.content);
+			const workspaceEnvelopeResult = parseWorkspaceVaultEnvelope(fileResult.content);
+
+			if (workspaceEnvelopeResult.ok) {
+				return workspaceEnvelopeResult;
+			}
+
+			const browserMirrorResult = readEnvironmentVaultEnvelope(workspaceId);
+
+			return browserMirrorResult.ok && browserMirrorResult.envelope !== null
+				? browserMirrorResult
+				: workspaceEnvelopeResult;
 		}
 	}
 

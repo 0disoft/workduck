@@ -1,6 +1,8 @@
 import {
 	createProjectFolder,
 	createProjectGroupFolder,
+	deleteProjectNodeFolder,
+	deleteProjectRepositoryFolder,
 	type SsealedScaffoldScope
 } from './project-folder';
 import type { ProjectFormError } from './project-board-errors';
@@ -72,13 +74,38 @@ export async function submitProjectDialog(
 		return;
 	}
 
+	const folderName = createProjectFolderNameFromDisplayName(input.formName);
+	const predictedRelativePath =
+		input.dialog.mode === 'project'
+			? `projects/${folderName}`
+			: getPredictedGroupRelativePath(input.dialog.targetNodeId, folderName, input, context);
+
+	if (predictedRelativePath === null) {
+		return;
+	}
+
+	const preflightResult = addProjectNode(input.registry, {
+		kind: input.dialog.mode,
+		parentId: input.dialog.targetNodeId,
+		name: input.formName,
+		description: input.formDescription,
+		path: predictedRelativePath,
+		tags: tagsResult.tags
+	});
+
+	if (!preflightResult.ok) {
+		context.setFormError(preflightResult.error);
+		return;
+	}
+
 	const folderResult =
 		input.dialog.mode === 'project'
-			? await createProjectFolder(
+			? await createProjectFolder(input.workspacePath, folderName)
+			: await createProjectGroupFolder(
 					input.workspacePath,
-					createProjectFolderNameFromDisplayName(input.formName)
-				)
-			: await createGroupFolder(input.dialog.targetNodeId, input.formName, input, context);
+					predictedRelativePath.split('/').slice(0, -1).join('/'),
+					folderName
+				);
 
 	if (!folderResult.ok) {
 		context.setFormError(folderResult.error);
@@ -95,6 +122,7 @@ export async function submitProjectDialog(
 	});
 
 	if (!result.ok) {
+		await rollbackCreatedProjectNodeFolder(input.workspacePath, folderResult.relativePath);
 		context.setFormError(result.error);
 		return;
 	}
@@ -113,34 +141,37 @@ export async function submitProjectDialog(
 
 		context.setStatus(input.dialog.mode === 'project' ? 'Project created.' : 'Group created.');
 		context.closeDialog();
+		return;
 	}
+
+	await rollbackCreatedProjectNodeFolder(input.workspacePath, folderResult.relativePath);
+	context.setFormError('project-registry-write-failed');
 }
 
-async function createGroupFolder(
+function getPredictedGroupRelativePath(
 	targetNodeId: string | null,
-	name: string,
+	folderName: string,
 	input: ProjectDialogSubmitInput,
 	context: ProjectDialogSubmitContext
 ) {
 	if (targetNodeId === null) {
-		return { ok: false, error: 'project-parent-not-found' } as const;
+		context.setFormError('project-parent-not-found');
+		return null;
 	}
 
 	const targetNode = input.registry.nodes.find((node) => node.id === targetNodeId);
 
 	if (targetNode === undefined) {
-		return { ok: false, error: 'project-parent-not-found' } as const;
+		context.setFormError('project-parent-not-found');
+		return null;
 	}
 
 	if (targetNode.kind !== 'project') {
-		return { ok: false, error: 'project-parent-invalid' } as const;
+		context.setFormError('project-parent-invalid');
+		return null;
 	}
 
-	return createProjectGroupFolder(
-		input.workspacePath,
-		targetNode.path,
-		createProjectFolderNameFromDisplayName(name)
-	);
+	return `${targetNode.path}/${folderName}`;
 }
 
 async function submitRepositoryLink(
@@ -182,10 +213,29 @@ async function submitRepositoryLink(
 		return;
 	}
 
+	const folderName = createProjectFolderNameFromDisplayName(input.formName);
+	const predictedRelativePath = `${targetNode.path}/${folderName}`;
+	const predictedRepositoryPath = createWorkspaceChildPath(
+		input.workspacePath,
+		predictedRelativePath
+	);
+	const preflightResult = addProjectRepositoryLink(input.registry, {
+		nodeId: targetNodeId,
+		name: input.formName,
+		path: predictedRepositoryPath,
+		remoteUrl: null,
+		tags: tagsResult.tags
+	});
+
+	if (!preflightResult.ok) {
+		context.setFormError(preflightResult.error);
+		return;
+	}
+
 	const folderResult = await createProjectGroupFolder(
 		input.workspacePath,
 		targetNode.path,
-		createProjectFolderNameFromDisplayName(input.formName),
+		folderName,
 		{ ssealedScaffoldScope: input.repositorySsealedScaffoldScope }
 	);
 
@@ -203,6 +253,7 @@ async function submitRepositoryLink(
 	});
 
 	if (!result.ok) {
+		await rollbackCreatedProjectRepositoryFolder(input.workspacePath, folderResult.relativePath);
 		context.setFormError(result.error);
 		return;
 	}
@@ -215,7 +266,11 @@ async function submitRepositoryLink(
 				: `Repository folder created with ssealed ${input.repositorySsealedScaffoldScope} scaffold.`
 		);
 		context.closeDialog();
+		return;
 	}
+
+	await rollbackCreatedProjectRepositoryFolder(input.workspacePath, folderResult.relativePath);
+	context.setFormError('project-registry-write-failed');
 }
 
 async function submitRemoteRepositoryLink(
@@ -498,6 +553,14 @@ async function recordProjectRepositoryImportAttempt(
 	attempt: ProjectRepositoryImportAttemptRecord
 ) {
 	await writeProjectRepositoryImportAttemptRecord(attempt);
+}
+
+async function rollbackCreatedProjectNodeFolder(workspacePath: string, relativePath: string) {
+	await deleteProjectNodeFolder(workspacePath, relativePath);
+}
+
+async function rollbackCreatedProjectRepositoryFolder(workspacePath: string, relativePath: string) {
+	await deleteProjectRepositoryFolder(workspacePath, createWorkspaceChildPath(workspacePath, relativePath));
 }
 
 function createProjectRepositoryImportAttemptRecordId() {

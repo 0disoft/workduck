@@ -491,8 +491,13 @@ fn refresh_agents_manifest_lock_if_present(
 fn sha256_file_hash(path: &Path) -> Result<String, WorkspaceRepositorySetupError> {
     let bytes = fs::read(path).map_err(|_| WorkspaceRepositorySetupError::AgentInstructionsFailed)?;
     let digest = Sha256::digest(bytes);
+    let mut content_hash = String::from("sha256:");
 
-    Ok(format!("sha256:{digest:x}"))
+    for byte in digest {
+        content_hash.push_str(&format!("{byte:02x}"));
+    }
+
+    Ok(content_hash)
 }
 
 fn replace_manifest_lock_agents_entry(

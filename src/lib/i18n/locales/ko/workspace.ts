@@ -2,6 +2,7 @@ export const koWorkspaceMessages = {
 		addWorkspaceInSettings: '설정에서 워크스페이스를 추가하세요.',
 		locked: '워크스페이스 잠김',
 		folderUnavailable: '워크스페이스 폴더를 사용할 수 없음',
+		checkingFolder: '워크스페이스 폴더를 확인하는 중...',
 		path: '경로',
 		reconnect: '다시 연결',
 		chooseFolder: '워크스페이스 폴더 선택',

@@ -2,6 +2,7 @@ export const hiWorkspaceMessages = {
 	addWorkspaceInSettings: 'सेटिंग्स में एक कार्यक्षेत्र जोड़ें।',
 	locked: 'कार्यक्षेत्र लॉक है',
 	folderUnavailable: 'कार्यक्षेत्र फ़ोल्डर अनुपलब्ध है',
+	checkingFolder: 'कार्यक्षेत्र फ़ोल्डर की जांच की जा रही है...',
 	path: 'पथ',
 	reconnect: 'पुनः कनेक्ट करें',
 	chooseFolder: 'कार्यक्षेत्र फ़ोल्डर चुनें',
