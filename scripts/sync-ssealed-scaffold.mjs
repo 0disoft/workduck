@@ -8,6 +8,8 @@ import { fileURLToPath } from 'node:url';
 const scriptDirectory = dirname(fileURLToPath(import.meta.url));
 const repositoryRoot = dirname(scriptDirectory);
 const scaffoldScopes = ['backend', 'frontend', 'fullstack', 'design'];
+const scaffoldProfile = 'generic';
+const scaffoldDensity = 'standard';
 const scaffoldRunner = 'none';
 const generatedPath = resolve(
 	repositoryRoot,
@@ -157,6 +159,8 @@ function renderGeneratedRust({ version, scaffolds }) {
 			[
 				'\tSsealedScaffold {',
 				`\t\tscope: ${JSON.stringify(scaffold.scope)},`,
+				`\t\tprofile: ${JSON.stringify(scaffold.profile)},`,
+				`\t\tdensity: ${JSON.stringify(scaffold.density)},`,
 				`\t\trunner: ${JSON.stringify(scaffold.runner)},`,
 				'\t\tfiles: &[',
 				renderFileEntries(scaffold.files),
@@ -177,6 +181,8 @@ function renderGeneratedRust({ version, scaffolds }) {
 		'',
 		'pub struct SsealedScaffold {',
 		"\tpub scope: &'static str,",
+		"\tpub profile: &'static str,",
+		"\tpub density: &'static str,",
 		"\tpub runner: &'static str,",
 		"\tpub files: &'static [SsealedScaffoldFile],",
 		'}',
@@ -197,8 +203,13 @@ async function runSsealedInit(temporaryRoot, scope) {
 		'scaffold',
 		'--scope',
 		scope,
+		'--profile',
+		scaffoldProfile,
+		'--density',
+		scaffoldDensity,
 		'--runner',
-		scaffoldRunner
+		scaffoldRunner,
+		'--yes'
 	], {
 		cwd: temporaryRoot,
 		env: process.env,
@@ -250,6 +261,8 @@ async function main() {
 
 			scaffolds.push({
 				scope,
+				profile: scaffoldProfile,
+				density: scaffoldDensity,
 				runner: scaffoldRunner,
 				files
 			});

@@ -37,6 +37,13 @@ export type ProjectFolderError =
 
 export type SsealedScaffoldScope = 'none' | 'design' | 'frontend' | 'backend' | 'fullstack';
 export type SsealedScaffoldApplyScope = Exclude<SsealedScaffoldScope, 'none'>;
+export type SsealedScaffoldProfile =
+	| 'generic'
+	| 'cli-tool'
+	| 'api-service'
+	| 'desktop-app'
+	| 'library';
+export type SsealedScaffoldDensity = 'minimal' | 'standard' | 'strict';
 export type SsealedScaffoldFileStatus = 'missing' | 'added' | 'unchanged' | 'conflict';
 
 export interface SsealedScaffoldFilePlan {
@@ -49,6 +56,8 @@ export interface SsealedScaffoldFilePlan {
 export interface SsealedScaffoldPlan {
 	readonly toolVersion: string;
 	readonly scope: SsealedScaffoldApplyScope;
+	readonly profile: SsealedScaffoldProfile;
+	readonly density: SsealedScaffoldDensity;
 	readonly runner: string;
 	readonly files: readonly SsealedScaffoldFilePlan[];
 	readonly missingCount: number;
@@ -123,6 +132,8 @@ interface SsealedScaffoldFilePlanResponse {
 interface SsealedScaffoldPlanResponse {
 	readonly toolVersion?: string | null;
 	readonly scope?: string | null;
+	readonly profile?: string | null;
+	readonly density?: string | null;
 	readonly runner?: string | null;
 	readonly files?: readonly SsealedScaffoldFilePlanResponse[] | null;
 	readonly missingCount?: number | null;
@@ -369,6 +380,8 @@ function normalizeSsealedScaffoldPlan(
 		plan === undefined ||
 		typeof plan.toolVersion !== 'string' ||
 		!isSsealedScaffoldApplyScope(plan.scope) ||
+		!isSsealedScaffoldProfile(plan.profile) ||
+		!isSsealedScaffoldDensity(plan.density) ||
 		typeof plan.runner !== 'string' ||
 		!Array.isArray(plan.files) ||
 		typeof plan.missingCount !== 'number' ||
@@ -390,6 +403,8 @@ function normalizeSsealedScaffoldPlan(
 	return {
 		toolVersion: plan.toolVersion,
 		scope: plan.scope,
+		profile: plan.profile,
+		density: plan.density,
 		runner: plan.runner,
 		files,
 		missingCount: plan.missingCount,
@@ -426,6 +441,20 @@ function isSsealedScaffoldApplyScope(value: unknown): value is SsealedScaffoldAp
 		value === 'backend' ||
 		value === 'fullstack'
 	);
+}
+
+function isSsealedScaffoldProfile(value: unknown): value is SsealedScaffoldProfile {
+	return (
+		value === 'generic' ||
+		value === 'cli-tool' ||
+		value === 'api-service' ||
+		value === 'desktop-app' ||
+		value === 'library'
+	);
+}
+
+function isSsealedScaffoldDensity(value: unknown): value is SsealedScaffoldDensity {
+	return value === 'minimal' || value === 'standard' || value === 'strict';
 }
 
 function isSsealedScaffoldFileStatus(value: unknown): value is SsealedScaffoldFileStatus {

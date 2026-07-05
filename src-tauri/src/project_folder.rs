@@ -125,6 +125,8 @@ pub struct ProjectFolderSsealedScaffoldFilePlan {
 pub struct ProjectFolderSsealedScaffoldPlan {
     tool_version: &'static str,
     scope: &'static str,
+    profile: &'static str,
+    density: &'static str,
     runner: &'static str,
     files: Vec<ProjectFolderSsealedScaffoldFilePlan>,
     missing_count: usize,
@@ -808,6 +810,8 @@ fn write_ssealed_scaffold(target_path: &Path, scope: &str) -> Result<(), Project
         "generatedBy": "workduck",
         "generatedAt": generated_at,
         "scope": scaffold.scope,
+        "profile": scaffold.profile,
+        "density": scaffold.density,
         "runner": scaffold.runner,
         "files": manifest_files,
     });
@@ -902,6 +906,8 @@ fn create_ssealed_repository_scaffold_plan(
     let plan = ProjectFolderSsealedScaffoldPlan {
         tool_version: SSEALED_SCAFFOLD_TOOL_VERSION,
         scope: scaffold.scope,
+        profile: scaffold.profile,
+        density: scaffold.density,
         runner: scaffold.runner,
         files,
         missing_count,
@@ -1095,6 +1101,8 @@ fn write_ssealed_repository_apply_manifest(
         "generatedBy": "workduck",
         "generatedAt": generated_at,
         "scope": plan.scope,
+        "profile": plan.profile,
+        "density": plan.density,
         "runner": plan.runner,
         "mode": "existing-repository-missing-files",
         "files": manifest_files,
@@ -1402,6 +1410,8 @@ mod tests {
         assert_eq!(manifest["version"], SSEALED_SCAFFOLD_TOOL_VERSION);
         assert_eq!(manifest["generatedBy"], "workduck");
         assert_eq!(manifest["scope"], "frontend");
+        assert_eq!(manifest["profile"], "generic");
+        assert_eq!(manifest["density"], "standard");
         assert_eq!(manifest["runner"], "none");
         assert!(manifest["files"].as_array().is_some_and(|files| {
             files.iter().any(|file| file["path"] == "docs/frontend/FRONTEND_DESIGN.md")
@@ -1446,6 +1456,8 @@ mod tests {
             serde_json::from_str(&manifest_content).expect("valid manifest json");
 
         assert_eq!(manifest["scope"], "design");
+        assert_eq!(manifest["profile"], "generic");
+        assert_eq!(manifest["density"], "standard");
         assert_eq!(manifest["runner"], "none");
     }
 
@@ -1562,6 +1574,8 @@ mod tests {
 
         assert_eq!(manifest["mode"], "existing-repository-missing-files");
         assert_eq!(manifest["scope"], "backend");
+        assert_eq!(manifest["profile"], "generic");
+        assert_eq!(manifest["density"], "standard");
         assert!(manifest["conflicts"].as_array().is_some_and(|conflicts| {
             conflicts.iter().any(|file| file["path"] == "AGENTS.md")
         }));

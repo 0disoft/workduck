@@ -8,15 +8,19 @@ pub struct SsealedScaffoldFile {
 
 pub struct SsealedScaffold {
 	pub scope: &'static str,
+	pub profile: &'static str,
+	pub density: &'static str,
 	pub runner: &'static str,
 	pub files: &'static [SsealedScaffoldFile],
 }
 
-pub const SSEALED_SCAFFOLD_TOOL_VERSION: &str = "0.2.3";
+pub const SSEALED_SCAFFOLD_TOOL_VERSION: &str = "0.4.0";
 
 pub const SSEALED_SCAFFOLDS: &[SsealedScaffold] = &[
 	SsealedScaffold {
 		scope: "backend",
+		profile: "generic",
+		density: "standard",
 		runner: "none",
 		files: &[
 	SsealedScaffoldFile {
@@ -625,6 +629,7 @@ tracked secret files, ignored build/cache artifacts, and generated-output drift.
 ## Scope
 
 backend validation routes must stay stack-neutral unless a runner file explicitly defines a command.
+
 "#,
 	},
 	SsealedScaffoldFile {
@@ -668,6 +673,7 @@ tracked secret files, ignored build/cache artifacts, and generated-output drift.
 ## Scope
 
 backend validation routes must stay stack-neutral unless a runner file explicitly defines a command.
+
 "#,
 	},
 	SsealedScaffoldFile {
@@ -711,6 +717,7 @@ tracked secret files, ignored build/cache artifacts, and generated-output drift.
 ## Scope
 
 backend validation routes must stay stack-neutral unless a runner file explicitly defines a command.
+
 "#,
 	},
 	SsealedScaffoldFile {
@@ -754,6 +761,7 @@ tracked secret files, ignored build/cache artifacts, and generated-output drift.
 ## Scope
 
 backend validation routes must stay stack-neutral unless a runner file explicitly defines a command.
+
 "#,
 	},
 	SsealedScaffoldFile {
@@ -797,6 +805,7 @@ tracked secret files, ignored build/cache artifacts, and generated-output drift.
 ## Scope
 
 backend validation routes must stay stack-neutral unless a runner file explicitly defines a command.
+
 "#,
 	},
 	SsealedScaffoldFile {
@@ -1011,6 +1020,7 @@ design tokens, or browser interaction policy.
 
 Frontend-facing behavior is contracted through `api/openapi.yaml`, `api/examples/*.json`,
 `docs/backend/04-http-api-policy.md`, and `docs/backend/05-error-response.md`.
+
 
 ## Source of Truth
 
@@ -2668,6 +2678,7 @@ This repository contains an LLM-friendly design scaffold. It is not application 
 - .agents/context-map.md: agent route map
 - docs/: design, operations, architecture, and engineering standards
 
+
 ## Repository Hygiene
 
 .editorconfig, .gitattributes, and .gitignore are generated to keep line endings,
@@ -2719,12 +2730,15 @@ tracked secret files, ignored build/cache artifacts, and generated-output drift.
 ## Scope
 
 backend validation routes must stay stack-neutral unless a runner file explicitly defines a command.
+
 "#,
 	},
 		],
 	},
 	SsealedScaffold {
 		scope: "frontend",
+		profile: "generic",
+		density: "standard",
 		runner: "none",
 		files: &[
 	SsealedScaffoldFile {
@@ -3288,6 +3302,7 @@ tracked secret files, ignored build/cache artifacts, and generated-output drift.
 ## Scope
 
 frontend validation routes must stay stack-neutral unless a runner file explicitly defines a command.
+
 "#,
 	},
 	SsealedScaffoldFile {
@@ -3331,6 +3346,7 @@ tracked secret files, ignored build/cache artifacts, and generated-output drift.
 ## Scope
 
 frontend validation routes must stay stack-neutral unless a runner file explicitly defines a command.
+
 "#,
 	},
 	SsealedScaffoldFile {
@@ -3374,6 +3390,7 @@ tracked secret files, ignored build/cache artifacts, and generated-output drift.
 ## Scope
 
 frontend validation routes must stay stack-neutral unless a runner file explicitly defines a command.
+
 "#,
 	},
 	SsealedScaffoldFile {
@@ -3417,6 +3434,7 @@ tracked secret files, ignored build/cache artifacts, and generated-output drift.
 ## Scope
 
 frontend validation routes must stay stack-neutral unless a runner file explicitly defines a command.
+
 "#,
 	},
 	SsealedScaffoldFile {
@@ -3631,6 +3649,7 @@ or server-side authorization implementation.
 
 Backend-facing behavior is consumed through `contracts/backend-api/openapi.yaml`
 and `docs/integrations/backend-api.md`.
+
 
 ## Source of Truth
 
@@ -5102,6 +5121,7 @@ This repository contains an LLM-friendly design scaffold. It is not application 
 - .agents/context-map.md: agent route map
 - docs/: design, operations, architecture, and engineering standards
 
+
 ## Repository Hygiene
 
 .editorconfig, .gitattributes, and .gitignore are generated to keep line endings,
@@ -5153,12 +5173,15 @@ tracked secret files, ignored build/cache artifacts, and generated-output drift.
 ## Scope
 
 frontend validation routes must stay stack-neutral unless a runner file explicitly defines a command.
+
 "#,
 	},
 		],
 	},
 	SsealedScaffold {
 		scope: "fullstack",
+		profile: "generic",
+		density: "standard",
 		runner: "none",
 		files: &[
 	SsealedScaffoldFile {
@@ -5865,6 +5888,7 @@ tracked secret files, ignored build/cache artifacts, and generated-output drift.
 ## Scope
 
 fullstack validation routes must stay stack-neutral unless a runner file explicitly defines a command.
+
 "#,
 	},
 	SsealedScaffoldFile {
@@ -5908,6 +5932,7 @@ tracked secret files, ignored build/cache artifacts, and generated-output drift.
 ## Scope
 
 fullstack validation routes must stay stack-neutral unless a runner file explicitly defines a command.
+
 "#,
 	},
 	SsealedScaffoldFile {
@@ -5951,6 +5976,7 @@ tracked secret files, ignored build/cache artifacts, and generated-output drift.
 ## Scope
 
 fullstack validation routes must stay stack-neutral unless a runner file explicitly defines a command.
+
 "#,
 	},
 	SsealedScaffoldFile {
@@ -5994,6 +6020,7 @@ tracked secret files, ignored build/cache artifacts, and generated-output drift.
 ## Scope
 
 fullstack validation routes must stay stack-neutral unless a runner file explicitly defines a command.
+
 "#,
 	},
 	SsealedScaffoldFile {
@@ -6037,6 +6064,7 @@ tracked secret files, ignored build/cache artifacts, and generated-output drift.
 ## Scope
 
 fullstack validation routes must stay stack-neutral unless a runner file explicitly defines a command.
+
 "#,
 	},
 	SsealedScaffoldFile {
@@ -6080,6 +6108,7 @@ tracked secret files, ignored build/cache artifacts, and generated-output drift.
 ## Scope
 
 fullstack validation routes must stay stack-neutral unless a runner file explicitly defines a command.
+
 "#,
 	},
 	SsealedScaffoldFile {
@@ -6292,6 +6321,7 @@ engineering standards, and operational standards.
 API request and response shapes are sourced from `api/openapi.yaml`.
 
 DB structure is sourced from `db/schema.dbml`.
+
 
 ## Source of Truth
 
@@ -8140,6 +8170,7 @@ This repository contains an LLM-friendly design scaffold. It is not application 
 - .agents/context-map.md: agent route map
 - docs/: design, operations, architecture, and engineering standards
 
+
 ## Repository Hygiene
 
 .editorconfig, .gitattributes, and .gitignore are generated to keep line endings,
@@ -8191,12 +8222,15 @@ tracked secret files, ignored build/cache artifacts, and generated-output drift.
 ## Scope
 
 fullstack validation routes must stay stack-neutral unless a runner file explicitly defines a command.
+
 "#,
 	},
 		],
 	},
 	SsealedScaffold {
 		scope: "design",
+		profile: "generic",
+		density: "standard",
 		runner: "none",
 		files: &[
 	SsealedScaffoldFile {
@@ -8665,6 +8699,7 @@ tracked secret files, ignored build/cache artifacts, and generated-output drift.
 ## Scope
 
 design validation routes must stay stack-neutral unless a runner file explicitly defines a command.
+
 "#,
 	},
 	SsealedScaffoldFile {
@@ -8708,6 +8743,7 @@ tracked secret files, ignored build/cache artifacts, and generated-output drift.
 ## Scope
 
 design validation routes must stay stack-neutral unless a runner file explicitly defines a command.
+
 "#,
 	},
 	SsealedScaffoldFile {
@@ -8751,6 +8787,7 @@ tracked secret files, ignored build/cache artifacts, and generated-output drift.
 ## Scope
 
 design validation routes must stay stack-neutral unless a runner file explicitly defines a command.
+
 "#,
 	},
 	SsealedScaffoldFile {
@@ -8960,6 +8997,7 @@ Scope: design
 This repository owns product, architecture, ADR, engineering, and operational design scaffolds only.
 
 It does not own implementation source code.
+
 
 ## Source of Truth
 
@@ -9994,6 +10032,7 @@ This repository contains an LLM-friendly design scaffold. It is not application 
 - .agents/context-map.md: agent route map
 - docs/: design, operations, architecture, and engineering standards
 
+
 ## Repository Hygiene
 
 .editorconfig, .gitattributes, and .gitignore are generated to keep line endings,
@@ -10045,6 +10084,7 @@ tracked secret files, ignored build/cache artifacts, and generated-output drift.
 ## Scope
 
 design validation routes must stay stack-neutral unless a runner file explicitly defines a command.
+
 "#,
 	},
 		],
