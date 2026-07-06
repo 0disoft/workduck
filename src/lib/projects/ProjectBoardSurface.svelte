@@ -16,10 +16,13 @@
 	import type { QueueFolderError } from '$lib/queue/queue-folder';
 	import {
 		applySsealedScaffoldToRepository,
+		getDefaultSsealedScaffoldApplyScope,
+		getDefaultSsealedScaffoldProfile,
 		previewSsealedScaffoldForRepository,
 		type ProjectFolderError,
 		type SsealedScaffoldApplyScope,
 		type SsealedScaffoldPlan,
+		type SsealedScaffoldProfile,
 		type SsealedScaffoldScope
 	} from './project-folder';
 	import { type ProjectRepositoryGithubVisibility } from './project-repository';
@@ -194,6 +197,9 @@
 	let repositoryRemoteUrl = $state('');
 	let repositoryGithubCredentialSecretId = $state('');
 	let repositorySsealedScaffoldScope = $state<SsealedScaffoldScope>('none');
+	let repositorySsealedScaffoldProfile = $state<SsealedScaffoldProfile>(
+		getDefaultSsealedScaffoldProfile()
+	);
 	let formError = $state<ProjectFormError | null>(null);
 	let status = $state<string | null>(null);
 	let storageError = $state<ProjectRegistryStorageError | null>(null);
@@ -214,7 +220,12 @@
 	let commitWorkOrderTargetRepositoryId = $state<string | null>(null);
 	let publishTarget = $state<ProjectRepositoryPublishTarget | null>(null);
 	let ssealedTarget = $state<ProjectRepositoryTarget | null>(null);
-	let ssealedScaffoldApplyScope = $state<SsealedScaffoldApplyScope>('design');
+	let ssealedScaffoldApplyScope = $state<SsealedScaffoldApplyScope>(
+		getDefaultSsealedScaffoldApplyScope()
+	);
+	let ssealedScaffoldApplyProfile = $state<SsealedScaffoldProfile>(
+		getDefaultSsealedScaffoldProfile()
+	);
 	let ssealedPreview = $state<SsealedScaffoldPlan | null>(null);
 	let githubRepositoryName = $state('');
 	let githubRepositoryCommitMessage = $state(DEFAULT_GITHUB_REPOSITORY_COMMIT_MESSAGE);
@@ -450,6 +461,7 @@
 		getRepositoryRemoteUrl: () => repositoryRemoteUrl,
 		getRepositoryGithubCredentialSecretId: () => repositoryGithubCredentialSecretId,
 		getRepositorySsealedScaffoldScope: () => repositorySsealedScaffoldScope,
+		getRepositorySsealedScaffoldProfile: () => repositorySsealedScaffoldProfile,
 		getIsSubmitting: () => isSubmitting,
 		getDeleteCandidate: () => deleteCandidate,
 		getIsDeleting: () => isDeleting,
@@ -470,6 +482,9 @@
 			repositoryGithubCredentialSecretId = secretId;
 		},
 		setRepositorySsealedScaffoldScope: (scope) => { repositorySsealedScaffoldScope = scope; },
+		setRepositorySsealedScaffoldProfile: (profile) => {
+			repositorySsealedScaffoldProfile = profile;
+		},
 		setFormError: (error) => { formError = error; },
 		setStatus: (nextStatus) => { status = nextStatus; },
 		setDeleteCandidate: (candidate) => { deleteCandidate = candidate; },
@@ -554,7 +569,10 @@
 		}
 
 		ssealedTarget = target;
-		ssealedScaffoldApplyScope = 'design';
+		const defaultScope = getDefaultSsealedScaffoldApplyScope();
+		const defaultProfile = getDefaultSsealedScaffoldProfile();
+		ssealedScaffoldApplyScope = defaultScope;
+		ssealedScaffoldApplyProfile = defaultProfile;
 		ssealedPreview = null;
 		isPreviewingSsealed = false;
 		isApplyingSsealed = false;
@@ -564,12 +582,13 @@
 		publishTarget = null;
 		dialog = null;
 		closeContextMenu();
-		void refreshSsealedScaffoldPreview(target, 'design');
+		void refreshSsealedScaffoldPreview(target, defaultScope, defaultProfile);
 	}
 
 	function closeSsealedScaffoldDialog() {
 		ssealedTarget = null;
-		ssealedScaffoldApplyScope = 'design';
+		ssealedScaffoldApplyScope = getDefaultSsealedScaffoldApplyScope();
+		ssealedScaffoldApplyProfile = getDefaultSsealedScaffoldProfile();
 		ssealedPreview = null;
 		isPreviewingSsealed = false;
 		isApplyingSsealed = false;
@@ -587,12 +606,21 @@
 		ssealedPreview = null;
 		formError = null;
 		status = null;
-		void refreshSsealedScaffoldPreview(ssealedTarget, scope);
+		void refreshSsealedScaffoldPreview(ssealedTarget, scope, ssealedScaffoldApplyProfile);
+	}
+
+	function selectSsealedScaffoldApplyProfile(profile: SsealedScaffoldProfile) {
+		ssealedScaffoldApplyProfile = profile;
+		ssealedPreview = null;
+		formError = null;
+		status = null;
+		void refreshSsealedScaffoldPreview(ssealedTarget, ssealedScaffoldApplyScope, profile);
 	}
 
 	async function refreshSsealedScaffoldPreview(
 		target = ssealedTarget,
-		scope = ssealedScaffoldApplyScope
+		scope = ssealedScaffoldApplyScope,
+		profile = ssealedScaffoldApplyProfile
 	) {
 		if (target === null || target.repository.path === null) {
 			formError = 'project-repository-not-found';
@@ -609,12 +637,14 @@
 			const result = await previewSsealedScaffoldForRepository(
 				workspace.path,
 				target.repository.path,
-				scope
+				scope,
+				profile
 			);
 
 			if (
 				ssealedTarget?.repository.id !== repositoryId ||
-				ssealedScaffoldApplyScope !== scope
+				ssealedScaffoldApplyScope !== scope ||
+				ssealedScaffoldApplyProfile !== profile
 			) {
 				return;
 			}
@@ -629,7 +659,8 @@
 		} finally {
 			if (
 				ssealedTarget?.repository.id === repositoryId &&
-				ssealedScaffoldApplyScope === scope
+				ssealedScaffoldApplyScope === scope &&
+				ssealedScaffoldApplyProfile === profile
 			) {
 				isPreviewingSsealed = false;
 			}
@@ -650,6 +681,7 @@
 
 		const repositoryId = target.repository.id;
 		const scope = ssealedScaffoldApplyScope;
+		const profile = ssealedScaffoldApplyProfile;
 
 		isApplyingSsealed = true;
 		formError = null;
@@ -659,12 +691,14 @@
 			const result = await applySsealedScaffoldToRepository(
 				workspace.path,
 				target.repository.path,
-				scope
+				scope,
+				profile
 			);
 
 			if (
 				ssealedTarget?.repository.id !== repositoryId ||
-				ssealedScaffoldApplyScope !== scope
+				ssealedScaffoldApplyScope !== scope ||
+				ssealedScaffoldApplyProfile !== profile
 			) {
 				return;
 			}
@@ -682,7 +716,8 @@
 		} finally {
 			if (
 				ssealedTarget?.repository.id === repositoryId &&
-				ssealedScaffoldApplyScope === scope
+				ssealedScaffoldApplyScope === scope &&
+				ssealedScaffoldApplyProfile === profile
 			) {
 				isApplyingSsealed = false;
 			}
@@ -1308,6 +1343,7 @@
 	bind:repositoryRemoteUrl
 	bind:repositoryGithubCredentialSecretId
 	bind:repositorySsealedScaffoldScope
+	bind:repositorySsealedScaffoldProfile
 	{deleteCandidate}
 	{descriptionEditor}
 	{detailsEditor}
@@ -1353,6 +1389,7 @@
 	{canPublishContextRepository}
 	{canApplySsealedContextRepository}
 	{ssealedScaffoldApplyScope}
+	{ssealedScaffoldApplyProfile}
 	{ssealedPreview}
 	canEditContextGithubCredential={canEditContextGithubCredential()}
 	{getDeleteDialogTitle}
@@ -1377,6 +1414,7 @@
 	onApplySsealedRepository={contextMenuActions.openContextApplySsealedRepository}
 	onRepositoryTask={contextMenuActions.openContextRepositoryTask}
 	onSsealedScopeSelect={selectSsealedScaffoldApplyScope}
+	onSsealedProfileSelect={selectSsealedScaffoldApplyProfile}
 	onSsealedPreviewRefresh={refreshSsealedScaffoldPreview}
 	onSsealedApply={applySsealedScaffoldToTarget}
 	onSsealedBackdropClick={closeSsealedScaffoldDialogFromBackdrop}
@@ -1424,6 +1462,7 @@
 		}
 	}}
 	onRepositorySsealedScaffoldScopeSelect={dialogActions.handleRepositorySsealedScaffoldScopeSelect}
+	onRepositorySsealedScaffoldProfileSelect={dialogActions.handleRepositorySsealedScaffoldProfileSelect}
 	onSelectRepositorySourceMode={dialogActions.selectRepositorySourceMode}
 	onDialogSubmit={dialogActions.handleDialogSubmit}
 	onDialogBackdropClick={dialogActions.handleDialogBackdropClick}

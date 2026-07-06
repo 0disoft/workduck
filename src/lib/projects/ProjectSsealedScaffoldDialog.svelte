@@ -1,27 +1,40 @@
 <script lang="ts">
 	import { modalDialog } from '$lib/ui/modal-dialog-action';
 	import { getProjectFormErrorMessage, type ProjectFormError } from './project-board-errors';
-	import type {
-		SsealedScaffoldApplyScope,
-		SsealedScaffoldFilePlan,
-		SsealedScaffoldPlan
+	import {
+		getSsealedScaffoldProfileDescription,
+		getSsealedScaffoldProfileOptionText,
+		getSsealedScaffoldScopeDescription,
+		getSsealedScaffoldScopeOptionText,
+		isSsealedScaffoldApplyScope,
+		isSsealedScaffoldProfile,
+		type SsealedScaffoldApplyScope,
+		type SsealedScaffoldFilePlan,
+		type SsealedScaffoldPlan,
+		type SsealedScaffoldProfile
 	} from './project-folder';
+	import {
+		SSEALED_SCAFFOLD_PROFILES,
+		SSEALED_SCAFFOLD_SCOPES
+	} from './ssealed-scaffold-generated';
 	import type { ProjectRepositoryTarget } from './project-board-types';
 	import type { ProjectRegistryStorageError } from './project-storage';
 	import type { WorkduckMessages } from '$lib/i18n/workduck-message-contract';
 
 	interface Props {
 		readonly target: ProjectRepositoryTarget;
-		readonly projectMessages: WorkduckMessages['projects'];
-		readonly scope: SsealedScaffoldApplyScope;
-		readonly preview: SsealedScaffoldPlan | null;
+	readonly projectMessages: WorkduckMessages['projects'];
+	readonly scope: SsealedScaffoldApplyScope;
+	readonly profile: SsealedScaffoldProfile;
+	readonly preview: SsealedScaffoldPlan | null;
 		readonly formError: ProjectFormError | null;
 		readonly storageError: ProjectRegistryStorageError | null;
 		readonly isPreviewing: boolean;
 		readonly isApplying: boolean;
-		readonly canApply: boolean;
-		readonly onScopeSelect: (scope: SsealedScaffoldApplyScope) => void;
-		readonly onRefresh: () => Promise<void>;
+	readonly canApply: boolean;
+	readonly onScopeSelect: (scope: SsealedScaffoldApplyScope) => void;
+	readonly onProfileSelect: (profile: SsealedScaffoldProfile) => void;
+	readonly onRefresh: () => Promise<void>;
 		readonly onApply: () => Promise<void>;
 		readonly onBackdropClick: (event: MouseEvent) => void;
 		readonly onClose: () => void;
@@ -31,6 +44,7 @@
 		target,
 		projectMessages,
 		scope,
+		profile,
 		preview,
 		formError,
 		storageError,
@@ -38,6 +52,7 @@
 		isApplying,
 		canApply,
 		onScopeSelect,
+		onProfileSelect,
 		onRefresh,
 		onApply,
 		onBackdropClick,
@@ -55,6 +70,16 @@
 		}
 
 		onScopeSelect(target.value);
+	}
+
+	function handleProfileChange(event: Event) {
+		const target = event.currentTarget;
+
+		if (!(target instanceof HTMLSelectElement) || !isSsealedScaffoldProfile(target.value)) {
+			return;
+		}
+
+		onProfileSelect(target.value);
 	}
 
 	function getSummaryText() {
@@ -95,14 +120,6 @@
 		return error === null ? '' : getProjectFormErrorMessage(error, projectMessages.errors);
 	}
 
-	function isSsealedScaffoldApplyScope(value: string): value is SsealedScaffoldApplyScope {
-		return (
-			value === 'design' ||
-			value === 'frontend' ||
-			value === 'backend' ||
-			value === 'fullstack'
-		);
-	}
 </script>
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -133,11 +150,36 @@
 					disabled={isPreviewing || isApplying}
 					onchange={handleScopeChange}
 				>
-					<option value="design">Design</option>
-					<option value="frontend">Frontend</option>
-					<option value="backend">Backend</option>
-					<option value="fullstack">Fullstack</option>
+					{#each SSEALED_SCAFFOLD_SCOPES as availableScope (availableScope)}
+						<option value={availableScope} title={getSsealedScaffoldScopeDescription(availableScope)}>
+							{getSsealedScaffoldScopeOptionText(availableScope)}
+						</option>
+					{/each}
 				</select>
+				<span class="workduck-form-field-meta">{getSsealedScaffoldScopeDescription(scope)}</span>
+			</label>
+
+			<label class="workduck-form-field" for="project-ssealed-profile">
+				<span>Repository profile</span>
+				<select
+					id="project-ssealed-profile"
+					class="workduck-input"
+					value={profile}
+					disabled={isPreviewing || isApplying}
+					onchange={handleProfileChange}
+				>
+					{#each SSEALED_SCAFFOLD_PROFILES as availableProfile (availableProfile)}
+						<option
+							value={availableProfile}
+							title={getSsealedScaffoldProfileDescription(availableProfile)}
+						>
+							{getSsealedScaffoldProfileOptionText(availableProfile)}
+						</option>
+					{/each}
+				</select>
+				<span class="workduck-form-field-meta">
+					{getSsealedScaffoldProfileDescription(profile)}
+				</span>
 			</label>
 
 			<p class="workduck-dialog-note" aria-live="polite">{getSummaryText()}</p>

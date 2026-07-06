@@ -1,5 +1,9 @@
 import { getTauriInvoke } from '$lib/tauri/tauri-invoke';
 import { normalizeWorkspacePathForStorage } from '$lib/workspaces/workspace-path-format';
+import {
+	SSEALED_SCAFFOLD_PROFILES,
+	SSEALED_SCAFFOLD_SCOPES
+} from './ssealed-scaffold-generated';
 
 export type ProjectFolderError =
 	| 'project-folder-workspace-required'
@@ -35,14 +39,9 @@ export type ProjectFolderError =
 	| 'project-folder-delete-failed'
 	| 'project-folder-unavailable';
 
-export type SsealedScaffoldScope = 'none' | 'design' | 'frontend' | 'backend' | 'fullstack';
-export type SsealedScaffoldApplyScope = Exclude<SsealedScaffoldScope, 'none'>;
-export type SsealedScaffoldProfile =
-	| 'generic'
-	| 'cli-tool'
-	| 'api-service'
-	| 'desktop-app'
-	| 'library';
+export type SsealedScaffoldApplyScope = (typeof SSEALED_SCAFFOLD_SCOPES)[number];
+export type SsealedScaffoldScope = 'none' | SsealedScaffoldApplyScope;
+export type SsealedScaffoldProfile = (typeof SSEALED_SCAFFOLD_PROFILES)[number];
 export type SsealedScaffoldDensity = 'minimal' | 'standard' | 'strict';
 export type SsealedScaffoldFileStatus = 'missing' | 'added' | 'unchanged' | 'conflict';
 
@@ -164,16 +163,23 @@ export async function createProjectGroupFolder(
 	folderName: string,
 	options: {
 		readonly ssealedScaffoldScope?: SsealedScaffoldScope;
+		readonly ssealedScaffoldProfile?: SsealedScaffoldProfile;
 	} = {}
 ): Promise<ProjectFolderCreateResult> {
+	const ssealedScaffoldScope =
+		options.ssealedScaffoldScope === undefined || options.ssealedScaffoldScope === 'none'
+			? null
+			: options.ssealedScaffoldScope;
+
 	return createProjectFolderFromCommand('create_project_group_folder', {
 		workspacePath: normalizeWorkspacePathForStorage(workspacePath),
 		parentRelativePath,
 		folderName,
-		ssealedScaffoldScope:
-			options.ssealedScaffoldScope === undefined || options.ssealedScaffoldScope === 'none'
+		ssealedScaffoldScope,
+		ssealedScaffoldProfile:
+			ssealedScaffoldScope === null
 				? null
-				: options.ssealedScaffoldScope
+				: options.ssealedScaffoldProfile ?? getDefaultSsealedScaffoldProfile()
 	});
 }
 
@@ -226,25 +232,85 @@ export async function deleteProjectRepositoryFolder(
 export async function previewSsealedScaffoldForRepository(
 	workspacePath: string,
 	path: string,
-	scope: SsealedScaffoldApplyScope
+	scope: SsealedScaffoldApplyScope,
+	profile: SsealedScaffoldProfile
 ): Promise<SsealedScaffoldPlanResult> {
 	return runSsealedScaffoldRepositoryCommand('preview_ssealed_scaffold_for_repository', {
 		workspacePath: normalizeWorkspacePathForStorage(workspacePath),
 		path: normalizeWorkspacePathForStorage(path),
-		ssealedScaffoldScope: scope
+		ssealedScaffoldScope: scope,
+		ssealedScaffoldProfile: profile
 	});
 }
 
 export async function applySsealedScaffoldToRepository(
 	workspacePath: string,
 	path: string,
-	scope: SsealedScaffoldApplyScope
+	scope: SsealedScaffoldApplyScope,
+	profile: SsealedScaffoldProfile
 ): Promise<SsealedScaffoldPlanResult> {
 	return runSsealedScaffoldRepositoryCommand('apply_ssealed_scaffold_to_repository', {
 		workspacePath: normalizeWorkspacePathForStorage(workspacePath),
 		path: normalizeWorkspacePathForStorage(path),
-		ssealedScaffoldScope: scope
+		ssealedScaffoldScope: scope,
+		ssealedScaffoldProfile: profile
 	});
+}
+
+export function getDefaultSsealedScaffoldApplyScope(): SsealedScaffoldApplyScope {
+	return (
+		findPreferredSsealedScaffoldOption(SSEALED_SCAFFOLD_SCOPES, ['general', 'design']) ??
+		SSEALED_SCAFFOLD_SCOPES[0]
+	);
+}
+
+export function getDefaultSsealedScaffoldProfile(): SsealedScaffoldProfile {
+	return (
+		SSEALED_SCAFFOLD_PROFILES.find((profile) => profile === 'generic') ??
+		SSEALED_SCAFFOLD_PROFILES[0]
+	);
+}
+
+export function getSsealedScaffoldOptionLabel(value: string) {
+	return value
+		.split('-')
+		.filter((part) => part.length > 0)
+		.map((part) => (part.toLowerCase() === 'cli' ? 'CLI' : capitalizeSsealedOptionPart(part)))
+		.join(' ');
+}
+
+export function getSsealedScaffoldScopeDescription(scope: SsealedScaffoldApplyScope) {
+	return (
+		ssealedScaffoldScopeDescriptions[scope] ??
+		`Use the ${getSsealedScaffoldOptionLabel(scope)} ssealed scaffold.`
+	);
+}
+
+export function getSsealedScaffoldProfileDescription(profile: SsealedScaffoldProfile) {
+	return (
+		ssealedScaffoldProfileDescriptions[profile] ??
+		`Tune the scaffold for a ${getSsealedScaffoldOptionLabel(profile)} repository.`
+	);
+}
+
+export function getSsealedScaffoldScopeOptionText(scope: SsealedScaffoldApplyScope) {
+	return `${getSsealedScaffoldOptionLabel(scope)} - ${getSsealedScaffoldScopeDescription(scope)}`;
+}
+
+export function getSsealedScaffoldProfileOptionText(profile: SsealedScaffoldProfile) {
+	return `${getSsealedScaffoldOptionLabel(profile)} - ${getSsealedScaffoldProfileDescription(profile)}`;
+}
+
+export function isSsealedScaffoldApplyScope(value: unknown): value is SsealedScaffoldApplyScope {
+	return typeof value === 'string' && stringListIncludes(SSEALED_SCAFFOLD_SCOPES, value);
+}
+
+export function isSsealedScaffoldScope(value: unknown): value is SsealedScaffoldScope {
+	return value === 'none' || isSsealedScaffoldApplyScope(value);
+}
+
+export function isSsealedScaffoldProfile(value: unknown): value is SsealedScaffoldProfile {
+	return typeof value === 'string' && stringListIncludes(SSEALED_SCAFFOLD_PROFILES, value);
 }
 
 function normalizeProjectRelativePath(path: string) {
@@ -434,27 +500,56 @@ function normalizeSsealedScaffoldFilePlan(
 	};
 }
 
-function isSsealedScaffoldApplyScope(value: unknown): value is SsealedScaffoldApplyScope {
-	return (
-		value === 'design' ||
-		value === 'frontend' ||
-		value === 'backend' ||
-		value === 'fullstack'
-	);
-}
-
-function isSsealedScaffoldProfile(value: unknown): value is SsealedScaffoldProfile {
-	return (
-		value === 'generic' ||
-		value === 'cli-tool' ||
-		value === 'api-service' ||
-		value === 'desktop-app' ||
-		value === 'library'
-	);
-}
-
 function isSsealedScaffoldDensity(value: unknown): value is SsealedScaffoldDensity {
 	return value === 'minimal' || value === 'standard' || value === 'strict';
+}
+
+function capitalizeSsealedOptionPart(value: string) {
+	const firstCharacter = value.at(0);
+
+	return firstCharacter === undefined
+		? value
+		: `${firstCharacter.toUpperCase()}${value.slice(1)}`;
+}
+
+const ssealedScaffoldScopeDescriptions: Readonly<Record<string, string>> = {
+	backend: 'Server APIs, databases, jobs, and backend ownership docs.',
+	frontend: 'Browser UI, routes, components, and client behavior docs.',
+	fullstack: 'Frontend and backend boundaries for one application repo.',
+	general: 'Product and architecture docs when the stack is not decided yet.',
+	mobile: 'Mobile app ownership, release, device, and runtime docs.',
+	infra: 'Infrastructure, deployment, operations, and runbook docs.',
+	data: 'Data pipeline, lineage, quality, and analytics contract docs.'
+};
+
+const ssealedScaffoldProfileDescriptions: Readonly<Record<string, string>> = {
+	generic: 'Neutral defaults for an ordinary repository.',
+	'cli-tool': 'Command-line tools with command, option, and release docs.',
+	'api-service': 'HTTP or RPC services with API contracts and operation docs.',
+	'desktop-app': 'Desktop apps with packaging, update, and runtime docs.',
+	library: 'Reusable packages with public API and compatibility docs.',
+	'web-app': 'Web applications with routing, rendering, and deployment docs.',
+	'mobile-app': 'Mobile applications with platform, store, and device docs.',
+	sdk: 'Developer SDKs with client API and versioning docs.',
+	'worker-service': 'Background workers, queues, schedulers, and retry docs.',
+	'infra-module': 'Infrastructure modules with plan, apply, and rollback docs.',
+	'data-pipeline': 'Ingestion, transformation, lineage, and data quality docs.',
+	'github-action': 'GitHub Actions with inputs, permissions, and release docs.',
+	'browser-extension': 'Browser extensions with permissions and store release docs.',
+	plugin: 'Plugin-style integrations with host contracts and lifecycle docs.',
+	'docs-site': 'Documentation sites with navigation and publishing docs.',
+	monorepo: 'Multi-package repositories with workspace and ownership docs.'
+};
+
+function findPreferredSsealedScaffoldOption<const Option extends string>(
+	values: readonly Option[],
+	preferredValues: readonly string[]
+): Option | undefined {
+	return preferredValues.find((value): value is Option => stringListIncludes(values, value));
+}
+
+function stringListIncludes(values: readonly string[], value: string) {
+	return values.includes(value);
 }
 
 function isSsealedScaffoldFileStatus(value: unknown): value is SsealedScaffoldFileStatus {

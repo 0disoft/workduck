@@ -6,7 +6,9 @@ use std::{
     time::Duration,
 };
 
-use crate::ssealed_scaffold_generated::{SSEALED_SCAFFOLD_TOOL_VERSION, SSEALED_SCAFFOLDS};
+use crate::ssealed_scaffold_generated::{
+    SsealedScaffold, SSEALED_SCAFFOLD_TOOL_VERSION, SSEALED_SCAFFOLDS,
+};
 use crate::workspace_path::{validate_absolute_directory_path, WorkspacePathValidationError};
 use crate::windows_filename::is_windows_reserved_name;
 use sha2::{Digest, Sha256};
@@ -170,6 +172,7 @@ pub fn create_project_group_folder(
     parent_relative_path: String,
     folder_name: String,
     ssealed_scaffold_scope: Option<String>,
+    ssealed_scaffold_profile: Option<String>,
 ) -> ProjectFolderCreate {
     let workspace_root = match validate_workspace_root(&workspace_path) {
         Ok(workspace_root) => workspace_root,
@@ -191,8 +194,11 @@ pub fn create_project_group_folder(
         Ok(folder_name) => folder_name,
         Err(error) => return invalid(error),
     };
-    let ssealed_scaffold_scope = match validate_ssealed_scaffold_scope(ssealed_scaffold_scope) {
-        Ok(scope) => scope,
+    let ssealed_scaffold = match validate_ssealed_scaffold_selection(
+        ssealed_scaffold_scope,
+        ssealed_scaffold_profile,
+    ) {
+        Ok(scaffold) => scaffold,
         Err(error) => return invalid(error),
     };
     let mut relative_segments = parent_segments;
@@ -202,7 +208,7 @@ pub fn create_project_group_folder(
         &parent_path,
         relative_segments,
         folder_name,
-        ssealed_scaffold_scope,
+        ssealed_scaffold,
     )
 }
 
@@ -314,11 +320,13 @@ pub fn preview_ssealed_scaffold_for_repository(
     workspace_path: String,
     path: String,
     ssealed_scaffold_scope: String,
+    ssealed_scaffold_profile: Option<String>,
 ) -> ProjectFolderSsealedScaffoldApply {
     inspect_or_apply_ssealed_scaffold_for_repository(
         workspace_path,
         path,
         ssealed_scaffold_scope,
+        ssealed_scaffold_profile,
         false,
     )
 }
@@ -328,11 +336,13 @@ pub fn apply_ssealed_scaffold_to_repository(
     workspace_path: String,
     path: String,
     ssealed_scaffold_scope: String,
+    ssealed_scaffold_profile: Option<String>,
 ) -> ProjectFolderSsealedScaffoldApply {
     inspect_or_apply_ssealed_scaffold_for_repository(
         workspace_path,
         path,
         ssealed_scaffold_scope,
+        ssealed_scaffold_profile,
         true,
     )
 }
@@ -341,6 +351,7 @@ fn inspect_or_apply_ssealed_scaffold_for_repository(
     workspace_path: String,
     path: String,
     ssealed_scaffold_scope: String,
+    ssealed_scaffold_profile: Option<String>,
     should_apply: bool,
 ) -> ProjectFolderSsealedScaffoldApply {
     let workspace_root = match validate_workspace_root(&workspace_path) {
@@ -351,16 +362,20 @@ fn inspect_or_apply_ssealed_scaffold_for_repository(
         Ok(repository_path) => repository_path,
         Err(error) => return invalid_ssealed_apply(error),
     };
-    let ssealed_scaffold_scope =
-        match validate_ssealed_scaffold_scope(Some(ssealed_scaffold_scope)) {
-            Ok(Some(scope)) => scope,
+    let ssealed_scaffold =
+        match validate_ssealed_scaffold_selection(
+            Some(ssealed_scaffold_scope),
+            ssealed_scaffold_profile,
+        ) {
+            Ok(Some(scaffold)) => scaffold,
             Ok(None) => return invalid_ssealed_apply(ProjectFolderError::SsealedScaffoldFailed),
             Err(error) => return invalid_ssealed_apply(error),
         };
 
     match create_ssealed_repository_scaffold_plan(
         &repository_path,
-        ssealed_scaffold_scope,
+        ssealed_scaffold.0,
+        ssealed_scaffold.1,
         should_apply,
     ) {
         Ok(plan) => ProjectFolderSsealedScaffoldApply {
@@ -637,13 +652,13 @@ fn create_folder(
     parent_path: &Path,
     relative_segments: Vec<String>,
     folder_name: String,
-    ssealed_scaffold_scope: Option<&'static str>,
+    ssealed_scaffold: Option<(&'static str, &'static str)>,
 ) -> ProjectFolderCreate {
     let target_path = parent_path.join(&folder_name);
 
     match fs::symlink_metadata(&target_path) {
         Ok(metadata) => {
-            if ssealed_scaffold_scope.is_some() {
+            if ssealed_scaffold.is_some() {
                 return invalid(ProjectFolderError::Conflict);
             }
 
@@ -684,8 +699,8 @@ fn create_folder(
         return invalid(ProjectFolderError::CreateFailed);
     }
 
-    if let Some(scope) = ssealed_scaffold_scope {
-        if write_ssealed_scaffold(&normalized_target_path, scope).is_err() {
+    if let Some((scope, profile)) = ssealed_scaffold {
+        if write_ssealed_scaffold(&normalized_target_path, scope, profile).is_err() {
             let _ = fs::remove_dir_all(&normalized_target_path);
             return invalid(ProjectFolderError::SsealedScaffoldFailed);
         }
@@ -766,9 +781,10 @@ fn valid_existing_folder(
     }
 }
 
-fn validate_ssealed_scaffold_scope(
+fn validate_ssealed_scaffold_selection(
     scope: Option<String>,
-) -> Result<Option<&'static str>, ProjectFolderError> {
+    profile: Option<String>,
+) -> Result<Option<(&'static str, &'static str)>, ProjectFolderError> {
     let Some(scope) = scope else {
         return Ok(None);
     };
@@ -778,18 +794,30 @@ fn validate_ssealed_scaffold_scope(
         return Ok(None);
     }
 
-    SSEALED_SCAFFOLDS
-        .iter()
-        .find(|scaffold| scaffold.scope == scope)
-        .map(|scaffold| Some(scaffold.scope))
+    let profile = profile
+        .as_deref()
+        .map(str::trim)
+        .filter(|profile| !profile.is_empty())
+        .unwrap_or("generic");
+
+    find_ssealed_scaffold(scope, profile)
+        .map(|scaffold| Some((scaffold.scope, scaffold.profile)))
         .ok_or(ProjectFolderError::SsealedScaffoldFailed)
 }
 
-fn write_ssealed_scaffold(target_path: &Path, scope: &str) -> Result<(), ProjectFolderError> {
-    let scaffold = SSEALED_SCAFFOLDS
+fn find_ssealed_scaffold(scope: &str, profile: &str) -> Option<&'static SsealedScaffold> {
+    SSEALED_SCAFFOLDS
         .iter()
-        .find(|candidate| candidate.scope == scope)
-        .ok_or(ProjectFolderError::SsealedScaffoldFailed)?;
+        .find(|candidate| candidate.scope == scope && candidate.profile == profile)
+}
+
+fn write_ssealed_scaffold(
+    target_path: &Path,
+    scope: &str,
+    profile: &str,
+) -> Result<(), ProjectFolderError> {
+    let scaffold =
+        find_ssealed_scaffold(scope, profile).ok_or(ProjectFolderError::SsealedScaffoldFailed)?;
     let mut manifest_files = Vec::with_capacity(scaffold.files.len());
 
     for file in scaffold.files {
@@ -860,12 +888,11 @@ fn write_ssealed_scaffold_file(
 fn create_ssealed_repository_scaffold_plan(
     target_path: &Path,
     scope: &str,
+    profile: &str,
     should_apply: bool,
 ) -> Result<ProjectFolderSsealedScaffoldPlan, ProjectFolderError> {
-    let scaffold = SSEALED_SCAFFOLDS
-        .iter()
-        .find(|candidate| candidate.scope == scope)
-        .ok_or(ProjectFolderError::SsealedScaffoldFailed)?;
+    let scaffold =
+        find_ssealed_scaffold(scope, profile).ok_or(ProjectFolderError::SsealedScaffoldFailed)?;
     let mut files = Vec::with_capacity(scaffold.files.len());
     let mut missing_count = 0;
     let mut added_count = 0;
@@ -1380,6 +1407,7 @@ mod tests {
                 "projects/product".to_owned(),
                 "apps".to_owned(),
                 None,
+                None,
             )
             .ok
         );
@@ -1389,6 +1417,7 @@ mod tests {
             "projects/product/apps".to_owned(),
             "web-app".to_owned(),
             Some("frontend".to_owned()),
+            Some("generic".to_owned()),
         );
 
         assert!(result.ok);
@@ -1420,7 +1449,7 @@ mod tests {
     }
 
     #[test]
-    fn repository_folder_can_include_ssealed_design_scaffold_for_unknown_stack() {
+    fn repository_folder_can_include_ssealed_general_scaffold_for_unknown_stack() {
         let tempdir = tempfile::tempdir().expect("temporary workspace");
         let workspace_path = tempdir.path().to_string_lossy().into_owned();
 
@@ -1431,6 +1460,7 @@ mod tests {
                 "projects/product".to_owned(),
                 "apps".to_owned(),
                 None,
+                None,
             )
             .ok
         );
@@ -1439,7 +1469,8 @@ mod tests {
             workspace_path,
             "projects/product/apps".to_owned(),
             "idea".to_owned(),
-            Some("design".to_owned()),
+            Some("general".to_owned()),
+            Some("generic".to_owned()),
         );
 
         assert!(result.ok);
@@ -1455,10 +1486,61 @@ mod tests {
         let manifest: serde_json::Value =
             serde_json::from_str(&manifest_content).expect("valid manifest json");
 
-        assert_eq!(manifest["scope"], "design");
+        assert_eq!(manifest["scope"], "general");
         assert_eq!(manifest["profile"], "generic");
         assert_eq!(manifest["density"], "standard");
         assert_eq!(manifest["runner"], "none");
+    }
+
+    #[test]
+    fn repository_folder_can_include_ssealed_api_service_profile() {
+        let tempdir = tempfile::tempdir().expect("temporary workspace");
+        let workspace_path = tempdir.path().to_string_lossy().into_owned();
+
+        assert!(create_project_folder(workspace_path.clone(), "product".to_owned()).ok);
+        assert!(
+            create_project_group_folder(
+                workspace_path.clone(),
+                "projects/product".to_owned(),
+                "apps".to_owned(),
+                None,
+                None,
+            )
+            .ok
+        );
+
+        let result = create_project_group_folder(
+            workspace_path,
+            "projects/product/apps".to_owned(),
+            "api".to_owned(),
+            Some("backend".to_owned()),
+            Some("api-service".to_owned()),
+        );
+
+        assert!(result.ok);
+
+        let repository_path = tempdir.path().join("projects/product/apps/api");
+        assert!(repository_path.join("docs/backend/README.md").is_file());
+        assert!(repository_path.join("docs/api-service/README.md").is_file());
+        assert!(repository_path
+            .join(".agents/skills/api-service/SKILL.md")
+            .is_file());
+        assert!(!repository_path.join("docs/cli/README.md").exists());
+
+        let manifest_content = fs::read_to_string(repository_path.join(".ssealed/manifest.json"))
+            .expect("ssealed manifest");
+        let manifest: serde_json::Value =
+            serde_json::from_str(&manifest_content).expect("valid manifest json");
+
+        assert_eq!(manifest["scope"], "backend");
+        assert_eq!(manifest["profile"], "api-service");
+        assert_eq!(manifest["density"], "standard");
+        assert!(manifest["files"].as_array().is_some_and(|files| {
+            files.iter().any(|file| file["path"] == "docs/api-service/README.md")
+                && files
+                    .iter()
+                    .any(|file| file["path"] == ".agents/skills/api-service/SKILL.md")
+        }));
     }
 
     #[test]
@@ -1473,6 +1555,7 @@ mod tests {
                 "projects/product".to_owned(),
                 "apps".to_owned(),
                 None,
+                None,
             )
             .ok
         );
@@ -1481,6 +1564,7 @@ mod tests {
                 workspace_path.clone(),
                 "projects/product/apps".to_owned(),
                 "api".to_owned(),
+                None,
                 None,
             )
             .ok
@@ -1491,6 +1575,7 @@ mod tests {
             "projects/product/apps".to_owned(),
             "api".to_owned(),
             Some("backend".to_owned()),
+            Some("generic".to_owned()),
         );
 
         assert!(!result.ok);
@@ -1513,6 +1598,7 @@ mod tests {
                 "projects/product".to_owned(),
                 "apps".to_owned(),
                 None,
+                None,
             )
             .ok
         );
@@ -1521,6 +1607,7 @@ mod tests {
                 workspace_path.clone(),
                 "projects/product/apps".to_owned(),
                 "api".to_owned(),
+                None,
                 None,
             )
             .ok
@@ -1535,6 +1622,7 @@ mod tests {
             workspace_path.clone(),
             repository_path_string.clone(),
             "backend".to_owned(),
+            Some("generic".to_owned()),
         );
 
         assert!(preview.ok);
@@ -1551,6 +1639,7 @@ mod tests {
             workspace_path,
             repository_path_string,
             "backend".to_owned(),
+            Some("generic".to_owned()),
         );
 
         assert!(apply.ok);

@@ -2,7 +2,18 @@
 	import { modalDialog } from '$lib/ui/modal-dialog-action';
 	import type { ProjectFormError } from './project-board-errors';
 	import type { GithubCredentialOption } from './project-board-github-credentials';
-	import type { SsealedScaffoldScope } from './project-folder';
+	import {
+		getSsealedScaffoldProfileDescription,
+		getSsealedScaffoldProfileOptionText,
+		getSsealedScaffoldScopeDescription,
+		getSsealedScaffoldScopeOptionText,
+		type SsealedScaffoldProfile,
+		type SsealedScaffoldScope
+	} from './project-folder';
+	import {
+		SSEALED_SCAFFOLD_PROFILES,
+		SSEALED_SCAFFOLD_SCOPES
+	} from './ssealed-scaffold-generated';
 	import {
 		PROJECT_DESCRIPTION_MAX_LENGTH,
 		PROJECT_NAME_MAX_LENGTH,
@@ -20,6 +31,7 @@
 		repositoryRemoteUrl: string;
 		repositoryGithubCredentialSecretId: string;
 		repositorySsealedScaffoldScope: SsealedScaffoldScope;
+		repositorySsealedScaffoldProfile: SsealedScaffoldProfile;
 		readonly repositorySourceMode: ProjectRepositorySourceMode;
 		readonly githubCredentialOptions: readonly GithubCredentialOption[];
 		readonly formError: ProjectFormError | null;
@@ -37,6 +49,7 @@
 		readonly onRepositoryRemoteUrlInput: (event: Event) => void;
 		readonly onRepositoryGithubCredentialSelect: (event: Event) => void;
 		readonly onRepositorySsealedScaffoldScopeSelect: (event: Event) => void;
+		readonly onRepositorySsealedScaffoldProfileSelect: (event: Event) => void;
 		readonly onSelectRepositorySourceMode: (sourceMode: ProjectRepositorySourceMode) => void;
 		readonly onSubmit: (event: SubmitEvent) => Promise<void>;
 		readonly onBackdropClick: (event: MouseEvent) => void;
@@ -52,6 +65,7 @@
 		repositoryRemoteUrl = $bindable(),
 		repositoryGithubCredentialSecretId = $bindable(),
 		repositorySsealedScaffoldScope = $bindable(),
+		repositorySsealedScaffoldProfile = $bindable(),
 		repositorySourceMode,
 		githubCredentialOptions,
 		formError,
@@ -69,6 +83,7 @@
 		onRepositoryRemoteUrlInput,
 		onRepositoryGithubCredentialSelect,
 		onRepositorySsealedScaffoldScopeSelect,
+		onRepositorySsealedScaffoldProfileSelect,
 		onSelectRepositorySourceMode,
 		onSubmit,
 		onBackdropClick,
@@ -104,6 +119,14 @@
 		return repositorySourceMode === 'folder'
 			? '#project-repository-folder-name'
 			: '#project-repository-url';
+	}
+
+	function getSelectedSsealedScaffoldScopeDescription() {
+		if (repositorySsealedScaffoldScope === 'none') {
+			return 'Create the folder without adding ssealed files.';
+		}
+
+		return getSsealedScaffoldScopeDescription(repositorySsealedScaffoldScope);
 	}
 </script>
 
@@ -221,12 +244,37 @@
 							onchange={onRepositorySsealedScaffoldScopeSelect}
 						>
 							<option value="none">None</option>
-							<option value="design">Design</option>
-							<option value="frontend">Frontend</option>
-							<option value="backend">Backend</option>
-							<option value="fullstack">Fullstack</option>
+							{#each SSEALED_SCAFFOLD_SCOPES as scope (scope)}
+								<option value={scope} title={getSsealedScaffoldScopeDescription(scope)}>
+									{getSsealedScaffoldScopeOptionText(scope)}
+								</option>
+							{/each}
 						</select>
+						<span class="workduck-form-field-meta">
+							{getSelectedSsealedScaffoldScopeDescription()}
+						</span>
 					</label>
+					{#if repositorySsealedScaffoldScope !== 'none'}
+						<label class="workduck-form-field" for="project-repository-ssealed-scaffold-profile">
+							<span>Repository profile</span>
+							<select
+								id="project-repository-ssealed-scaffold-profile"
+								class="workduck-input"
+								bind:value={repositorySsealedScaffoldProfile}
+								disabled={isSubmitting}
+								onchange={onRepositorySsealedScaffoldProfileSelect}
+							>
+								{#each SSEALED_SCAFFOLD_PROFILES as profile (profile)}
+									<option value={profile} title={getSsealedScaffoldProfileDescription(profile)}>
+										{getSsealedScaffoldProfileOptionText(profile)}
+									</option>
+								{/each}
+							</select>
+							<span class="workduck-form-field-meta">
+								{getSsealedScaffoldProfileDescription(repositorySsealedScaffoldProfile)}
+							</span>
+						</label>
+					{/if}
 				{:else}
 					<label class="workduck-form-field" for="project-repository-url">
 						<span>{getRepositoryUrlLabel()}</span>

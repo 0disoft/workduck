@@ -7,6 +7,7 @@
 	import type {
 		SsealedScaffoldApplyScope,
 		SsealedScaffoldPlan,
+		SsealedScaffoldProfile,
 		SsealedScaffoldScope
 	} from './project-folder';
 	import type {
@@ -53,6 +54,7 @@
 		repositoryRemoteUrl: string;
 		repositoryGithubCredentialSecretId: string;
 		repositorySsealedScaffoldScope: SsealedScaffoldScope;
+		repositorySsealedScaffoldProfile: SsealedScaffoldProfile;
 		readonly deleteCandidate: ProjectDeleteCandidate | null;
 		readonly descriptionEditor: import('./project-registry').ProjectNodeRecord | null;
 		readonly detailsEditor: import('./project-registry').ProjectNodeRecord | null;
@@ -95,6 +97,7 @@
 		readonly canEditContextGithubCredential: boolean;
 		readonly ssealedTarget: ProjectRepositoryTarget | null;
 		readonly ssealedScaffoldApplyScope: SsealedScaffoldApplyScope;
+		readonly ssealedScaffoldApplyProfile: SsealedScaffoldProfile;
 		readonly ssealedPreview: SsealedScaffoldPlan | null;
 		readonly isPreviewingSsealed: boolean;
 		readonly isApplyingSsealed: boolean;
@@ -121,6 +124,7 @@
 		readonly onApplySsealedRepository: () => void;
 		readonly onRepositoryTask: (task: ProjectRepositoryTask) => Promise<void>;
 		readonly onSsealedScopeSelect: (scope: SsealedScaffoldApplyScope) => void;
+		readonly onSsealedProfileSelect: (profile: SsealedScaffoldProfile) => void;
 		readonly onSsealedPreviewRefresh: () => Promise<void>;
 		readonly onSsealedApply: () => Promise<void>;
 		readonly onSsealedBackdropClick: (event: MouseEvent) => void;
@@ -160,6 +164,7 @@
 		readonly onRepositoryRemoteUrlInput: (event: Event) => void;
 		readonly onRepositoryGithubCredentialSelect: (event: Event) => void;
 		readonly onRepositorySsealedScaffoldScopeSelect: (event: Event) => void;
+		readonly onRepositorySsealedScaffoldProfileSelect: (event: Event) => void;
 		readonly onSelectRepositorySourceMode: (sourceMode: ProjectRepositorySourceMode) => void;
 		readonly onDialogSubmit: (event: SubmitEvent) => Promise<void>;
 		readonly onDialogBackdropClick: (event: MouseEvent) => void;
@@ -174,6 +179,7 @@
 		githubRepositoryCommitMessage = $bindable(), formName = $bindable(), formDescription = $bindable(),
 		formTags = $bindable(), repositoryRemoteUrl = $bindable(),
 		repositoryGithubCredentialSecretId = $bindable(), repositorySsealedScaffoldScope = $bindable(),
+		repositorySsealedScaffoldProfile = $bindable(),
 		deleteCandidate, descriptionEditor,
 		detailsEditor, tagEditor, githubCredentialEditor, remoteUrlEditor, publishTarget, dialog, dialogTargetNodeName, repositorySourceMode,
 		formError, storageError, isDeleting, canConfirmDelete, canDeleteLocalFolder, isSavingDescription,
@@ -184,12 +190,14 @@
 		canSubmitPublishRepository, canSubmitDialog, canOpenContextFolder, canCloneContextRepository,
 		canInitializeContextRepository, canPublishContextRepository, canApplySsealedContextRepository,
 		canEditContextGithubCredential, ssealedTarget, ssealedScaffoldApplyScope, ssealedPreview,
+		ssealedScaffoldApplyProfile,
 		isPreviewingSsealed, isApplyingSsealed, canApplySsealedScaffold,
 		getDeleteDialogTitle, getDeleteDialogText, getDeleteLocalFolderLabel, getDeleteLocalFolderUnavailableText,
 		getVisibleFormErrorMessage, getTagsInputMaxLength, getDialogTitle, getDialogSubmitLabel,
 		isRepositoryRemoteUrlError, onOpenFolder, onEditDetails, onEditDescription, onEditGithubCredential,
 		onEditRemoteUrl, onEditTags, onDelete, onCloneRepository, onInitializeRepository, onPublishRepository,
 		onApplySsealedRepository, onRepositoryTask, onSsealedScopeSelect, onSsealedPreviewRefresh,
+		onSsealedProfileSelect,
 		onSsealedApply, onSsealedBackdropClick, onSsealedClose,
 		onDeleteBackdropClick, onDeleteClose, onDeleteConfirm, onDescriptionInput, onDescriptionSubmit,
 		onDescriptionBackdropClick, onDescriptionClose, onDetailsInput, onDetailsSubmit,
@@ -199,7 +207,8 @@
 		onGithubCredentialClose, onRepositoryNameInput, onCommitMessageInput, onSelectVisibility,
 		onPublishSubmit, onPublishBackdropClick, onPublishClose, onNameInput, onDialogDescriptionInput,
 		onDialogTagsInput, onRepositoryRemoteUrlInput, onRepositoryGithubCredentialSelect,
-		onRepositorySsealedScaffoldScopeSelect, onSelectRepositorySourceMode, onDialogSubmit,
+		onRepositorySsealedScaffoldScopeSelect, onRepositorySsealedScaffoldProfileSelect,
+		onSelectRepositorySourceMode, onDialogSubmit,
 		onDialogBackdropClick, onDialogClose
 	}: Props = $props();
 </script>
@@ -274,6 +283,7 @@
 		target={ssealedTarget}
 		{projectMessages}
 		scope={ssealedScaffoldApplyScope}
+		profile={ssealedScaffoldApplyProfile}
 		preview={ssealedPreview}
 		{formError}
 		{storageError}
@@ -281,6 +291,7 @@
 		isApplying={isApplyingSsealed}
 		canApply={canApplySsealedScaffold}
 		onScopeSelect={onSsealedScopeSelect}
+		onProfileSelect={onSsealedProfileSelect}
 		onRefresh={onSsealedPreviewRefresh}
 		onApply={onSsealedApply}
 		onBackdropClick={onSsealedBackdropClick}
@@ -291,7 +302,7 @@
 {#if dialog !== null}
 	<ProjectNodeDialog mode={dialog.mode} targetNodeName={dialogTargetNodeName} bind:formName
 		bind:formDescription bind:formTags bind:repositoryRemoteUrl bind:repositoryGithubCredentialSecretId
-		bind:repositorySsealedScaffoldScope
+		bind:repositorySsealedScaffoldScope bind:repositorySsealedScaffoldProfile
 		{repositorySourceMode} {githubCredentialOptions} {formError} {storageError}
 		{isSubmitting} {canSubmitDialog} {getDialogTitle} {getDialogSubmitLabel}
 		{getTagsInputMaxLength} {getVisibleFormErrorMessage} {isRepositoryRemoteUrlError}
@@ -299,6 +310,7 @@
 		onTagsInput={onDialogTagsInput} onRepositoryRemoteUrlInput={onRepositoryRemoteUrlInput}
 		onRepositoryGithubCredentialSelect={onRepositoryGithubCredentialSelect}
 		onRepositorySsealedScaffoldScopeSelect={onRepositorySsealedScaffoldScopeSelect}
+		onRepositorySsealedScaffoldProfileSelect={onRepositorySsealedScaffoldProfileSelect}
 		onSelectRepositorySourceMode={onSelectRepositorySourceMode} onSubmit={onDialogSubmit}
 		onBackdropClick={onDialogBackdropClick} onClose={onDialogClose} />
 {/if}
