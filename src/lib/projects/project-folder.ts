@@ -1,5 +1,6 @@
 import { getTauriInvoke } from '$lib/tauri/tauri-invoke';
 import { normalizeWorkspacePathForStorage } from '$lib/workspaces/workspace-path-format';
+import type { WorkduckMessages } from '$lib/i18n/workduck-message-contract';
 import {
 	SSEALED_SCAFFOLD_PROFILES,
 	SSEALED_SCAFFOLD_SCOPES
@@ -44,6 +45,7 @@ export type SsealedScaffoldScope = 'none' | SsealedScaffoldApplyScope;
 export type SsealedScaffoldProfile = (typeof SSEALED_SCAFFOLD_PROFILES)[number];
 export type SsealedScaffoldDensity = 'minimal' | 'standard' | 'strict';
 export type SsealedScaffoldFileStatus = 'missing' | 'added' | 'unchanged' | 'conflict';
+export type SsealedScaffoldMessages = WorkduckMessages['projects']['ssealedScaffold'];
 
 export interface SsealedScaffoldFilePlan {
 	readonly path: string;
@@ -271,34 +273,68 @@ export function getDefaultSsealedScaffoldProfile(): SsealedScaffoldProfile {
 	);
 }
 
-export function getSsealedScaffoldOptionLabel(value: string) {
-	return value
+export function getSsealedScaffoldOptionLabel(
+	value: string,
+	messages?: SsealedScaffoldMessages
+) {
+	return (
+		getSsealedScaffoldMessageRecordValue(messages?.optionLabels, value) ??
+		value
 		.split('-')
 		.filter((part) => part.length > 0)
 		.map((part) => (part.toLowerCase() === 'cli' ? 'CLI' : capitalizeSsealedOptionPart(part)))
-		.join(' ');
+		.join(' ')
+	);
 }
 
-export function getSsealedScaffoldScopeDescription(scope: SsealedScaffoldApplyScope) {
+export function getSsealedScaffoldScopeDescription(
+	scope: SsealedScaffoldApplyScope,
+	messages?: SsealedScaffoldMessages
+) {
+	const label = getSsealedScaffoldOptionLabel(scope, messages);
+
 	return (
+		messages?.scopeDescriptions[scope] ??
+		messages?.fallbackScopeDescription.replace('{label}', label) ??
 		ssealedScaffoldScopeDescriptions[scope] ??
-		`Use the ${getSsealedScaffoldOptionLabel(scope)} ssealed scaffold.`
+		`Use the ${label} ssealed scaffold.`
 	);
 }
 
-export function getSsealedScaffoldProfileDescription(profile: SsealedScaffoldProfile) {
+export function getSsealedScaffoldProfileDescription(
+	profile: SsealedScaffoldProfile,
+	messages?: SsealedScaffoldMessages
+) {
+	const label = getSsealedScaffoldOptionLabel(profile, messages);
+
 	return (
+		messages?.profileDescriptions[profile] ??
+		messages?.fallbackProfileDescription.replace('{label}', label) ??
 		ssealedScaffoldProfileDescriptions[profile] ??
-		`Tune the scaffold for a ${getSsealedScaffoldOptionLabel(profile)} repository.`
+		`Tune the scaffold for a ${label} repository.`
 	);
 }
 
-export function getSsealedScaffoldScopeOptionText(scope: SsealedScaffoldApplyScope) {
-	return `${getSsealedScaffoldOptionLabel(scope)} - ${getSsealedScaffoldScopeDescription(scope)}`;
+export function getSsealedScaffoldScopeOptionText(
+	scope: SsealedScaffoldApplyScope,
+	messages?: SsealedScaffoldMessages
+) {
+	return formatSsealedScaffoldOptionText(
+		getSsealedScaffoldOptionLabel(scope, messages),
+		getSsealedScaffoldScopeDescription(scope, messages),
+		messages
+	);
 }
 
-export function getSsealedScaffoldProfileOptionText(profile: SsealedScaffoldProfile) {
-	return `${getSsealedScaffoldOptionLabel(profile)} - ${getSsealedScaffoldProfileDescription(profile)}`;
+export function getSsealedScaffoldProfileOptionText(
+	profile: SsealedScaffoldProfile,
+	messages?: SsealedScaffoldMessages
+) {
+	return formatSsealedScaffoldOptionText(
+		getSsealedScaffoldOptionLabel(profile, messages),
+		getSsealedScaffoldProfileDescription(profile, messages),
+		messages
+	);
 }
 
 export function isSsealedScaffoldApplyScope(value: unknown): value is SsealedScaffoldApplyScope {
@@ -510,6 +546,23 @@ function capitalizeSsealedOptionPart(value: string) {
 	return firstCharacter === undefined
 		? value
 		: `${firstCharacter.toUpperCase()}${value.slice(1)}`;
+}
+
+function formatSsealedScaffoldOptionText(
+	label: string,
+	description: string,
+	messages: SsealedScaffoldMessages | undefined
+) {
+	return (messages?.optionText ?? '{label} - {description}')
+		.replace('{label}', label)
+		.replace('{description}', description);
+}
+
+function getSsealedScaffoldMessageRecordValue(
+	messages: Readonly<Record<string, string>> | undefined,
+	key: string
+) {
+	return messages?.[key];
 }
 
 const ssealedScaffoldScopeDescriptions: Readonly<Record<string, string>> = {

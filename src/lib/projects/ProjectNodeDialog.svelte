@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { modalDialog } from '$lib/ui/modal-dialog-action';
+	import type { WorkduckMessages } from '$lib/i18n/workduck-message-contract';
 	import type { ProjectFormError } from './project-board-errors';
 	import type { GithubCredentialOption } from './project-board-github-credentials';
 	import {
@@ -24,6 +25,7 @@
 
 	interface Props {
 		readonly mode: ProjectDialogMode;
+		readonly projectMessages: WorkduckMessages['projects'];
 		readonly targetNodeName: string | null;
 		formName: string;
 		formDescription: string;
@@ -58,6 +60,7 @@
 
 	let {
 		mode,
+		projectMessages,
 		targetNodeName,
 		formName = $bindable(),
 		formDescription = $bindable(),
@@ -123,10 +126,13 @@
 
 	function getSelectedSsealedScaffoldScopeDescription() {
 		if (repositorySsealedScaffoldScope === 'none') {
-			return 'Create the folder without adding ssealed files.';
+			return projectMessages.ssealedScaffold.createWithoutFiles;
 		}
 
-		return getSsealedScaffoldScopeDescription(repositorySsealedScaffoldScope);
+		return getSsealedScaffoldScopeDescription(
+			repositorySsealedScaffoldScope,
+			projectMessages.ssealedScaffold
+		);
 	}
 </script>
 
@@ -235,7 +241,7 @@
 						/>
 					</label>
 					<label class="workduck-form-field" for="project-repository-ssealed-scaffold-scope">
-						<span>ssealed scaffold</span>
+						<span>{projectMessages.ssealedScaffold.createScaffoldLabel}</span>
 						<select
 							id="project-repository-ssealed-scaffold-scope"
 							class="workduck-input"
@@ -243,10 +249,19 @@
 							disabled={isSubmitting}
 							onchange={onRepositorySsealedScaffoldScopeSelect}
 						>
-							<option value="none">None</option>
+							<option value="none">{projectMessages.ssealedScaffold.none}</option>
 							{#each SSEALED_SCAFFOLD_SCOPES as scope (scope)}
-								<option value={scope} title={getSsealedScaffoldScopeDescription(scope)}>
-									{getSsealedScaffoldScopeOptionText(scope)}
+								<option
+									value={scope}
+									title={getSsealedScaffoldScopeDescription(
+										scope,
+										projectMessages.ssealedScaffold
+									)}
+								>
+									{getSsealedScaffoldScopeOptionText(
+										scope,
+										projectMessages.ssealedScaffold
+									)}
 								</option>
 							{/each}
 						</select>
@@ -254,27 +269,37 @@
 							{getSelectedSsealedScaffoldScopeDescription()}
 						</span>
 					</label>
-					{#if repositorySsealedScaffoldScope !== 'none'}
-						<label class="workduck-form-field" for="project-repository-ssealed-scaffold-profile">
-							<span>Repository profile</span>
-							<select
-								id="project-repository-ssealed-scaffold-profile"
-								class="workduck-input"
-								bind:value={repositorySsealedScaffoldProfile}
-								disabled={isSubmitting}
-								onchange={onRepositorySsealedScaffoldProfileSelect}
-							>
-								{#each SSEALED_SCAFFOLD_PROFILES as profile (profile)}
-									<option value={profile} title={getSsealedScaffoldProfileDescription(profile)}>
-										{getSsealedScaffoldProfileOptionText(profile)}
-									</option>
-								{/each}
-							</select>
-							<span class="workduck-form-field-meta">
-								{getSsealedScaffoldProfileDescription(repositorySsealedScaffoldProfile)}
-							</span>
-						</label>
-					{/if}
+					<label class="workduck-form-field" for="project-repository-ssealed-scaffold-profile">
+						<span>{projectMessages.ssealedScaffold.profileLabel}</span>
+						<select
+							id="project-repository-ssealed-scaffold-profile"
+							class="workduck-input"
+							bind:value={repositorySsealedScaffoldProfile}
+							disabled={isSubmitting}
+							onchange={onRepositorySsealedScaffoldProfileSelect}
+						>
+							{#each SSEALED_SCAFFOLD_PROFILES as profile (profile)}
+								<option
+									value={profile}
+									title={getSsealedScaffoldProfileDescription(
+										profile,
+										projectMessages.ssealedScaffold
+									)}
+								>
+									{getSsealedScaffoldProfileOptionText(
+										profile,
+										projectMessages.ssealedScaffold
+									)}
+								</option>
+							{/each}
+						</select>
+						<span class="workduck-form-field-meta">
+							{getSsealedScaffoldProfileDescription(
+								repositorySsealedScaffoldProfile,
+								projectMessages.ssealedScaffold
+							)}
+						</span>
+					</label>
 				{:else}
 					<label class="workduck-form-field" for="project-repository-url">
 						<span>{getRepositoryUrlLabel()}</span>

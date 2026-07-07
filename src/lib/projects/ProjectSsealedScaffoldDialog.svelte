@@ -84,34 +84,44 @@
 
 	function getSummaryText() {
 		if (isPreviewing) {
-			return 'Checking files.';
+			return projectMessages.ssealedScaffold.checkingFiles;
 		}
 
 		if (preview === null) {
-			return 'No preview yet.';
+			return projectMessages.ssealedScaffold.noPreview;
 		}
 
 		if (preview.missingCount === 0 && preview.conflictCount === 0) {
-			return 'All files already match.';
+			return projectMessages.ssealedScaffold.allFilesMatch;
 		}
 
-		return `${preview.missingCount} missing, ${preview.unchangedCount} unchanged, ${preview.conflictCount} conflicts.`;
+		return projectMessages.ssealedScaffold.previewSummary
+			.replace('{missing}', preview.missingCount.toString())
+			.replace('{unchanged}', preview.unchangedCount.toString())
+			.replace('{conflicts}', preview.conflictCount.toString());
 	}
 
 	function getFileStatusLabel(file: SsealedScaffoldFilePlan) {
 		if (file.status === 'missing') {
-			return 'Add';
+			return projectMessages.ssealedScaffold.fileStatuses.missing;
 		}
 
 		if (file.status === 'added') {
-			return 'Added';
+			return projectMessages.ssealedScaffold.fileStatuses.added;
 		}
 
 		if (file.status === 'unchanged') {
-			return 'Keep';
+			return projectMessages.ssealedScaffold.fileStatuses.unchanged;
 		}
 
-		return 'Conflict';
+		return projectMessages.ssealedScaffold.fileStatuses.conflict;
+	}
+
+	function getHiddenFileCountText() {
+		return projectMessages.ssealedScaffold.moreFiles.replace(
+			'{count}',
+			hiddenFileCount.toString()
+		);
 	}
 
 	function getVisibleFormErrorMessage() {
@@ -136,13 +146,13 @@
 	>
 		<div class="workduck-project-dialog-form">
 			<h2 id="project-ssealed-dialog-title" class="workduck-dialog-title">
-				Apply ssealed
+				{projectMessages.ssealedScaffold.title}
 			</h2>
 
 			<span class="workduck-dialog-kicker">{target.repository.name}</span>
 
 			<label class="workduck-form-field" for="project-ssealed-scope">
-				<span>Scaffold</span>
+				<span>{projectMessages.ssealedScaffold.scaffoldLabel}</span>
 				<select
 					id="project-ssealed-scope"
 					class="workduck-input"
@@ -151,16 +161,27 @@
 					onchange={handleScopeChange}
 				>
 					{#each SSEALED_SCAFFOLD_SCOPES as availableScope (availableScope)}
-						<option value={availableScope} title={getSsealedScaffoldScopeDescription(availableScope)}>
-							{getSsealedScaffoldScopeOptionText(availableScope)}
+						<option
+							value={availableScope}
+							title={getSsealedScaffoldScopeDescription(
+								availableScope,
+								projectMessages.ssealedScaffold
+							)}
+						>
+							{getSsealedScaffoldScopeOptionText(
+								availableScope,
+								projectMessages.ssealedScaffold
+							)}
 						</option>
 					{/each}
 				</select>
-				<span class="workduck-form-field-meta">{getSsealedScaffoldScopeDescription(scope)}</span>
+				<span class="workduck-form-field-meta">
+					{getSsealedScaffoldScopeDescription(scope, projectMessages.ssealedScaffold)}
+				</span>
 			</label>
 
 			<label class="workduck-form-field" for="project-ssealed-profile">
-				<span>Repository profile</span>
+				<span>{projectMessages.ssealedScaffold.profileLabel}</span>
 				<select
 					id="project-ssealed-profile"
 					class="workduck-input"
@@ -171,21 +192,30 @@
 					{#each SSEALED_SCAFFOLD_PROFILES as availableProfile (availableProfile)}
 						<option
 							value={availableProfile}
-							title={getSsealedScaffoldProfileDescription(availableProfile)}
+							title={getSsealedScaffoldProfileDescription(
+								availableProfile,
+								projectMessages.ssealedScaffold
+							)}
 						>
-							{getSsealedScaffoldProfileOptionText(availableProfile)}
+							{getSsealedScaffoldProfileOptionText(
+								availableProfile,
+								projectMessages.ssealedScaffold
+							)}
 						</option>
 					{/each}
 				</select>
 				<span class="workduck-form-field-meta">
-					{getSsealedScaffoldProfileDescription(profile)}
+					{getSsealedScaffoldProfileDescription(profile, projectMessages.ssealedScaffold)}
 				</span>
 			</label>
 
 			<p class="workduck-dialog-note" aria-live="polite">{getSummaryText()}</p>
 
 			{#if preview !== null}
-				<div class="workduck-ssealed-file-list" aria-label="ssealed file preview">
+				<div
+					class="workduck-ssealed-file-list"
+					aria-label={projectMessages.ssealedScaffold.filePreviewLabel}
+				>
 					{#each visibleFiles as file (file.path)}
 						<div
 							class="workduck-ssealed-file-row"
@@ -197,7 +227,7 @@
 					{/each}
 				</div>
 				{#if hiddenFileCount > 0}
-					<p class="workduck-dialog-note">{hiddenFileCount} more files.</p>
+					<p class="workduck-dialog-note">{getHiddenFileCountText()}</p>
 				{/if}
 			{/if}
 
@@ -214,7 +244,7 @@
 					disabled={isApplying}
 					onclick={onClose}
 				>
-					Cancel
+					{projectMessages.ssealedScaffold.cancel}
 				</button>
 				<button
 					class="workduck-button workduck-button-secondary"
@@ -222,7 +252,9 @@
 					disabled={isPreviewing || isApplying}
 					onclick={() => void onRefresh()}
 				>
-					{isPreviewing ? 'Checking' : 'Refresh'}
+					{isPreviewing
+						? projectMessages.ssealedScaffold.checking
+						: projectMessages.ssealedScaffold.refresh}
 				</button>
 				<button
 					class="workduck-button workduck-button-primary"
@@ -230,7 +262,9 @@
 					disabled={!canApply}
 					onclick={() => void onApply()}
 				>
-					{isApplying ? 'Applying' : 'Apply'}
+					{isApplying
+						? projectMessages.ssealedScaffold.applying
+						: projectMessages.ssealedScaffold.apply}
 				</button>
 			</div>
 		</div>

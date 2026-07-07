@@ -300,7 +300,7 @@
 {/if}
 
 {#if dialog !== null}
-	<ProjectNodeDialog mode={dialog.mode} targetNodeName={dialogTargetNodeName} bind:formName
+	<ProjectNodeDialog mode={dialog.mode} {projectMessages} targetNodeName={dialogTargetNodeName} bind:formName
 		bind:formDescription bind:formTags bind:repositoryRemoteUrl bind:repositoryGithubCredentialSecretId
 		bind:repositorySsealedScaffoldScope bind:repositorySsealedScaffoldProfile
 		{repositorySourceMode} {githubCredentialOptions} {formError} {storageError}
