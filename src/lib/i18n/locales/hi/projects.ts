@@ -166,13 +166,20 @@ export const hiProjectsMessages = {
 		checkingFiles: 'फ़ाइलों की जांच हो रही है।',
 		noPreview: 'अभी कोई पूर्वावलोकन नहीं है।',
 		allFilesMatch: 'सभी फ़ाइलें पहले से मेल खाती हैं।',
-		previewSummary: '{missing} गायब, {unchanged} अपरिवर्तित, {conflicts} विरोध।',
+		previewSummary:
+			'{missing} गायब, {unchanged} अपरिवर्तित, {conflicts} विरोध छोड़े गए।',
+		conflictSkipNote:
+			'विरोध वाली फ़ाइलों को ओवरराइट नहीं किया जाता। Workduck उन्हें बिना बदले छोड़ता है।',
 		moreFiles: '{count} और फ़ाइलें।',
 		cancel: 'रद्द करें',
 		checking: 'जांच हो रही है',
 		refresh: 'रीफ़्रेश',
 		applying: 'लागू हो रहा है',
 		apply: 'लागू करें',
+		applyWithoutConflicts: 'विरोध छोड़कर लागू करें',
+		appliedSummary: 'ssealed लागू हो गया। {added} फ़ाइलें जोड़ी गईं।',
+		appliedWithSkippedConflictsSummary:
+			'ssealed लागू हो गया। {added} फ़ाइलें जोड़ी गईं और {conflicts} विरोध छोड़े गए।',
 		optionText: '{label} - {description}',
 		fallbackScopeDescription: '{label} ssealed scaffold इस्तेमाल करें।',
 		fallbackProfileDescription: '{label} रिपॉजिटरी के लिए scaffold समायोजित करें।',
@@ -180,7 +187,7 @@ export const hiProjectsMessages = {
 			missing: 'जोड़ें',
 			added: 'जोड़ा गया',
 			unchanged: 'रखें',
-			conflict: 'विरोध'
+			conflict: 'विरोध छोड़ा गया'
 		},
 		optionLabels: {
 			backend: 'Backend',

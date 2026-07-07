@@ -160,13 +160,18 @@ export const koProjectsMessages = {
 			checkingFiles: '파일을 확인하고 있습니다.',
 			noPreview: '아직 미리보기가 없습니다.',
 			allFilesMatch: '모든 파일이 이미 맞춰져 있습니다.',
-			previewSummary: '추가 {missing}개, 유지 {unchanged}개, 충돌 {conflicts}개.',
+			previewSummary: '추가 {missing}개, 유지 {unchanged}개, 충돌 {conflicts}개 건너뜀.',
+			conflictSkipNote: '충돌 파일은 덮어쓰지 않고 그대로 둡니다.',
 			moreFiles: '외 {count}개 파일.',
 			cancel: '취소',
 			checking: '확인 중',
 			refresh: '새로고침',
 			applying: '적용 중',
 			apply: '적용',
+			applyWithoutConflicts: '충돌 제외 적용',
+			appliedSummary: 'ssealed를 적용했습니다. 파일 {added}개를 추가했습니다.',
+			appliedWithSkippedConflictsSummary:
+				'ssealed를 적용했습니다. 파일 {added}개를 추가하고 충돌 {conflicts}개는 건너뛰었습니다.',
 			optionText: '{label} - {description}',
 			fallbackScopeDescription: '{label} ssealed 스캐폴드를 사용합니다.',
 			fallbackProfileDescription: '{label} 저장소에 맞게 스캐폴드를 조정합니다.',
@@ -174,7 +179,7 @@ export const koProjectsMessages = {
 				missing: '추가',
 				added: '추가됨',
 				unchanged: '유지',
-				conflict: '충돌'
+				conflict: '충돌 건너뜀'
 			},
 			optionLabels: {
 				backend: '백엔드',

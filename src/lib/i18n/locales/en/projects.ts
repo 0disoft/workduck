@@ -160,13 +160,19 @@ export const enProjectsMessages = {
 			checkingFiles: 'Checking files.',
 			noPreview: 'No preview yet.',
 			allFilesMatch: 'All files already match.',
-			previewSummary: '{missing} missing, {unchanged} unchanged, {conflicts} conflicts.',
+			previewSummary:
+				'{missing} missing, {unchanged} unchanged, {conflicts} conflicts skipped.',
+			conflictSkipNote: 'Conflicting files are not overwritten. Workduck leaves them unchanged.',
 			moreFiles: '{count} more files.',
 			cancel: 'Cancel',
 			checking: 'Checking',
 			refresh: 'Refresh',
 			applying: 'Applying',
 			apply: 'Apply',
+			applyWithoutConflicts: 'Apply, skip conflicts',
+			appliedSummary: 'ssealed applied. Added {added} files.',
+			appliedWithSkippedConflictsSummary:
+				'ssealed applied. Added {added} files and skipped {conflicts} conflicts.',
 			optionText: '{label} - {description}',
 			fallbackScopeDescription: 'Use the {label} ssealed scaffold.',
 			fallbackProfileDescription: 'Tune the scaffold for a {label} repository.',
@@ -174,7 +180,7 @@ export const enProjectsMessages = {
 				missing: 'Add',
 				added: 'Added',
 				unchanged: 'Keep',
-				conflict: 'Conflict'
+				conflict: 'Conflict skipped'
 			},
 			optionLabels: {
 				backend: 'Backend',

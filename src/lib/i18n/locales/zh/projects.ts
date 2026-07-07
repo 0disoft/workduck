@@ -160,13 +160,18 @@ export const zhProjectsMessages = {
 		checkingFiles: '正在检查文件。',
 		noPreview: '暂无预览。',
 		allFilesMatch: '所有文件都已匹配。',
-		previewSummary: '{missing} 个待添加，{unchanged} 个保持不变，{conflicts} 个冲突。',
+		previewSummary: '{missing} 个待添加，{unchanged} 个保持不变，{conflicts} 个冲突已跳过。',
+		conflictSkipNote: '冲突文件不会被覆盖。Workduck 会保持它们不变。',
 		moreFiles: '另有 {count} 个文件。',
 		cancel: '取消',
 		checking: '检查中',
 		refresh: '刷新',
 		applying: '应用中',
 		apply: '应用',
+		applyWithoutConflicts: '跳过冲突并应用',
+		appliedSummary: '已应用 ssealed。已添加 {added} 个文件。',
+		appliedWithSkippedConflictsSummary:
+			'已应用 ssealed。已添加 {added} 个文件，并跳过 {conflicts} 个冲突。',
 		optionText: '{label} - {description}',
 		fallbackScopeDescription: '使用 {label} ssealed 脚手架。',
 		fallbackProfileDescription: '为 {label} 仓库调整脚手架。',
@@ -174,7 +179,7 @@ export const zhProjectsMessages = {
 			missing: '添加',
 			added: '已添加',
 			unchanged: '保留',
-			conflict: '冲突'
+			conflict: '冲突已跳过'
 		},
 		optionLabels: {
 			backend: '后端',

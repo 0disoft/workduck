@@ -160,13 +160,20 @@ export const esProjectsMessages = {
 			checkingFiles: 'Verificando archivos.',
 			noPreview: 'Aún no hay vista previa.',
 			allFilesMatch: 'Todos los archivos ya coinciden.',
-			previewSummary: '{missing} faltantes, {unchanged} sin cambios, {conflicts} conflictos.',
+			previewSummary:
+				'{missing} faltantes, {unchanged} sin cambios, {conflicts} conflictos omitidos.',
+			conflictSkipNote:
+				'Los archivos en conflicto no se sobrescriben. Workduck los deja sin cambios.',
 			moreFiles: '{count} archivos más.',
 			cancel: 'Cancelar',
 			checking: 'Verificando',
 			refresh: 'Actualizar',
 			applying: 'Aplicando',
 			apply: 'Aplicar',
+			applyWithoutConflicts: 'Aplicar sin conflictos',
+			appliedSummary: 'ssealed aplicado. Se agregaron {added} archivos.',
+			appliedWithSkippedConflictsSummary:
+				'ssealed aplicado. Se agregaron {added} archivos y se omitieron {conflicts} conflictos.',
 			optionText: '{label} - {description}',
 			fallbackScopeDescription: 'Usar el scaffold ssealed de {label}.',
 			fallbackProfileDescription: 'Ajustar el scaffold para un repositorio {label}.',
@@ -174,7 +181,7 @@ export const esProjectsMessages = {
 				missing: 'Añadir',
 				added: 'Añadido',
 				unchanged: 'Mantener',
-				conflict: 'Conflicto'
+				conflict: 'Conflicto omitido'
 			},
 			optionLabels: {
 				backend: 'Backend',

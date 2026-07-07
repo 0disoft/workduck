@@ -711,8 +711,13 @@
 			ssealedPreview = result.plan;
 			status =
 				result.plan.conflictCount > 0
-					? `ssealed applied. Added ${result.plan.addedCount} files, ${result.plan.conflictCount} conflicts skipped.`
-					: `ssealed applied. Added ${result.plan.addedCount} files.`;
+					? projectMessages.ssealedScaffold.appliedWithSkippedConflictsSummary
+							.replace('{added}', result.plan.addedCount.toString())
+							.replace('{conflicts}', result.plan.conflictCount.toString())
+					: projectMessages.ssealedScaffold.appliedSummary.replace(
+							'{added}',
+							result.plan.addedCount.toString()
+						);
 		} finally {
 			if (
 				ssealedTarget?.repository.id === repositoryId &&

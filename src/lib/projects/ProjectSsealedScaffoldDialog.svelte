@@ -23,18 +23,18 @@
 
 	interface Props {
 		readonly target: ProjectRepositoryTarget;
-	readonly projectMessages: WorkduckMessages['projects'];
-	readonly scope: SsealedScaffoldApplyScope;
-	readonly profile: SsealedScaffoldProfile;
-	readonly preview: SsealedScaffoldPlan | null;
+		readonly projectMessages: WorkduckMessages['projects'];
+		readonly scope: SsealedScaffoldApplyScope;
+		readonly profile: SsealedScaffoldProfile;
+		readonly preview: SsealedScaffoldPlan | null;
 		readonly formError: ProjectFormError | null;
 		readonly storageError: ProjectRegistryStorageError | null;
 		readonly isPreviewing: boolean;
 		readonly isApplying: boolean;
-	readonly canApply: boolean;
-	readonly onScopeSelect: (scope: SsealedScaffoldApplyScope) => void;
-	readonly onProfileSelect: (profile: SsealedScaffoldProfile) => void;
-	readonly onRefresh: () => Promise<void>;
+		readonly canApply: boolean;
+		readonly onScopeSelect: (scope: SsealedScaffoldApplyScope) => void;
+		readonly onProfileSelect: (profile: SsealedScaffoldProfile) => void;
+		readonly onRefresh: () => Promise<void>;
 		readonly onApply: () => Promise<void>;
 		readonly onBackdropClick: (event: MouseEvent) => void;
 		readonly onClose: () => void;
@@ -124,6 +124,20 @@
 		);
 	}
 
+	function hasSkippedConflicts() {
+		return preview !== null && preview.conflictCount > 0;
+	}
+
+	function getApplyButtonText() {
+		if (isApplying) {
+			return projectMessages.ssealedScaffold.applying;
+		}
+
+		return hasSkippedConflicts()
+			? projectMessages.ssealedScaffold.applyWithoutConflicts
+			: projectMessages.ssealedScaffold.apply;
+	}
+
 	function getVisibleFormErrorMessage() {
 		const error = formError ?? storageError;
 
@@ -211,6 +225,10 @@
 
 			<p class="workduck-dialog-note" aria-live="polite">{getSummaryText()}</p>
 
+			{#if hasSkippedConflicts()}
+				<p class="workduck-dialog-note">{projectMessages.ssealedScaffold.conflictSkipNote}</p>
+			{/if}
+
 			{#if preview !== null}
 				<div
 					class="workduck-ssealed-file-list"
@@ -262,9 +280,7 @@
 					disabled={!canApply}
 					onclick={() => void onApply()}
 				>
-					{isApplying
-						? projectMessages.ssealedScaffold.applying
-						: projectMessages.ssealedScaffold.apply}
+					{getApplyButtonText()}
 				</button>
 			</div>
 		</div>
