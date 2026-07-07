@@ -19,7 +19,7 @@
 		applyCliEnvironmentVariables,
 		type CliEnvironmentApplyError
 	} from './cli-environment';
-	import { createCliEnvironmentVariables } from './cli-environment-variables';
+	import { createCliEnvironmentVariablePlan } from './cli-environment-variables';
 	import {
 		createEmptyEnvironmentVault,
 		createMaskedSecretValue,
@@ -89,9 +89,12 @@
 			? null
 			: environmentMessages.registeredCount.replace('{count}', vault.secrets.length.toString())
 	);
-	let cliEnvironmentVariables = $derived(
-		vault === null ? [] : createCliEnvironmentVariables(vault.secrets)
+	let cliEnvironmentPlan = $derived(
+		vault === null
+			? { variables: [], skippedSecrets: [] }
+			: createCliEnvironmentVariablePlan(vault.secrets)
 	);
+	let cliEnvironmentVariables = $derived(cliEnvironmentPlan.variables);
 	let submitLabel = $derived(editingSecretId === null ? messages.common.add : messages.common.save);
 	let unlockLabel = $derived(
 		vaultEnvelope === null ? environmentMessages.createVault : environmentMessages.unlockVault
@@ -320,7 +323,8 @@
 			return;
 		}
 
-		const variables = createCliEnvironmentVariables(vault.secrets);
+		const plan = createCliEnvironmentVariablePlan(vault.secrets);
+		const variables = plan.variables;
 
 		if (variables.length === 0) {
 			error = environmentMessages.errors.cliEnvironmentNoVariables;
@@ -340,10 +344,15 @@
 				return;
 			}
 
-			status = environmentMessages.statuses.cliEnvironmentApplied.replace(
-				'{count}',
-				result.appliedNames.length.toString()
-			);
+			status =
+				plan.skippedSecrets.length > 0
+					? environmentMessages.statuses.cliEnvironmentAppliedWithSkipped
+							.replace('{applied}', result.appliedNames.length.toString())
+							.replace('{skipped}', plan.skippedSecrets.length.toString())
+					: environmentMessages.statuses.cliEnvironmentApplied.replace(
+							'{count}',
+							result.appliedNames.length.toString()
+						);
 		} finally {
 			isBusy = false;
 		}

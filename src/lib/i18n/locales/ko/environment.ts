@@ -53,7 +53,9 @@ export const koEnvironmentMessages = {
 			saved: '저장했습니다.',
 			removed: '삭제했습니다.',
 			copied: '복사했습니다.',
-			cliEnvironmentApplied: 'CLI 환경변수 {count}개를 적용했습니다.'
+			cliEnvironmentApplied: 'CLI 환경변수 {count}개를 적용했습니다.',
+			cliEnvironmentAppliedWithSkipped:
+				'CLI 환경변수 {applied}개를 적용했습니다. 저장 항목 {skipped}개는 같은 CLI 이름으로 합쳐졌거나 CLI 변수로 쓸 수 없어 제외했습니다.'
 		},
 		errors: {
 			vaultPasswordRequired: '보안 보관함 암호를 입력하세요.',

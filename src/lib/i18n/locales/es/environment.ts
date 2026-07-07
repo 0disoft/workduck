@@ -53,7 +53,9 @@ export const esEnvironmentMessages = {
 			saved: 'Guardado.',
 			removed: 'Eliminado.',
 			copied: 'Copiado.',
-			cliEnvironmentApplied: 'Se aplicaron {count} variables de entorno de la CLI.'
+			cliEnvironmentApplied: 'Se aplicaron {count} variables de entorno de la CLI.',
+			cliEnvironmentAppliedWithSkipped:
+				'Se aplicaron {applied} variables de entorno de la CLI. Se omitieron {skipped} entradas guardadas porque se asignan al mismo nombre de CLI o no se pueden usar como variables de CLI.'
 		},
 		errors: {
 			vaultPasswordRequired: 'Se requiere la contraseña de la bóveda.',

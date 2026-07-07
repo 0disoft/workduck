@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { describe, test } from 'node:test';
 
 import {
+	createCliEnvironmentVariablePlan,
 	createCliEnvironmentVariables,
 	normalizeCliEnvironmentVariableName,
 	resolveCliEnvironmentVariableName
@@ -60,6 +61,22 @@ describe('CLI environment variable derivation', () => {
 		assert.deepEqual(variables, [
 			{ name: 'CUSTOM_PUBLISH_TOKEN', value: 'first' },
 			{ name: 'OPENAI_API_KEY', value: 'third' }
+		]);
+	});
+
+	test('reports duplicate saved entries that map to the same CLI variable name', () => {
+		const plan = createCliEnvironmentVariablePlan([
+			secret({ name: 'NODE_AUTH_TOKEN', value: 'node-auth-token', kind: 'token' }),
+			secret({ name: 'NPM_PUBLISH_TOKEN', value: 'npm-publish-token', kind: 'token' })
+		]);
+
+		assert.deepEqual(plan.variables, [{ name: 'NODE_AUTH_TOKEN', value: 'node-auth-token' }]);
+		assert.deepEqual(plan.skippedSecrets, [
+			{
+				secretName: 'NPM_PUBLISH_TOKEN',
+				variableName: 'NODE_AUTH_TOKEN',
+				reason: 'duplicate-name'
+			}
 		]);
 	});
 

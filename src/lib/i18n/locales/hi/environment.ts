@@ -53,7 +53,9 @@ export const hiEnvironmentMessages = {
 		saved: 'सहेज लिया गया।',
 		removed: 'हटा दिया गया।',
 		copied: 'कॉपी किया गया।',
-		cliEnvironmentApplied: '{count} CLI पर्यावरण चर लागू किए गए।'
+		cliEnvironmentApplied: '{count} CLI पर्यावरण चर लागू किए गए।',
+		cliEnvironmentAppliedWithSkipped:
+			'{applied} CLI पर्यावरण चर लागू किए गए। {skipped} सहेजी गई प्रविष्टियाँ छोड़ी गईं क्योंकि वे उसी CLI नाम पर मैप होती हैं या CLI चर के रूप में इस्तेमाल नहीं की जा सकतीं।'
 	},
 	errors: {
 		vaultPasswordRequired: 'वॉल्ट पासवर्ड आवश्यक है।',

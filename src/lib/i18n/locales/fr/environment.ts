@@ -53,7 +53,9 @@ export const frEnvironmentMessages = {
 		saved: 'Enregistré.',
 		removed: 'Supprimé.',
 		copied: 'Copié.',
-		cliEnvironmentApplied: '{count} variables d\'environnement CLI appliquées.'
+		cliEnvironmentApplied: '{count} variables d\'environnement CLI appliquées.',
+		cliEnvironmentAppliedWithSkipped:
+			'{applied} variables d\'environnement CLI appliquées. {skipped} entrées enregistrées ont été ignorées car elles correspondent au même nom CLI ou ne peuvent pas être utilisées comme variables CLI.'
 	},
 	errors: {
 		vaultPasswordRequired: 'Le mot de passe du coffre-fort est obligatoire.',

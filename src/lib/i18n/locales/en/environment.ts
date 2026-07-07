@@ -53,7 +53,9 @@ export const enEnvironmentMessages = {
 			saved: 'Saved.',
 			removed: 'Removed.',
 			copied: 'Copied.',
-			cliEnvironmentApplied: '{count} CLI environment variables applied.'
+			cliEnvironmentApplied: '{count} CLI environment variables applied.',
+			cliEnvironmentAppliedWithSkipped:
+				'{applied} CLI environment variables applied. {skipped} saved entries were skipped because they map to the same CLI name or cannot be used as CLI variables.'
 		},
 		errors: {
 			vaultPasswordRequired: 'Vault password is required.',

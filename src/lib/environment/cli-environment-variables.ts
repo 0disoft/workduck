@@ -3,6 +3,19 @@ import type { CliEnvironmentVariableInput } from './cli-environment';
 
 export const CLI_ENVIRONMENT_VARIABLE_NAME_MAX_LENGTH = 128;
 
+export type CliEnvironmentVariableSkipReason = 'duplicate-name' | 'invalid-name';
+
+export interface CliEnvironmentVariableSkippedSecret {
+	readonly secretName: string;
+	readonly variableName: string | null;
+	readonly reason: CliEnvironmentVariableSkipReason;
+}
+
+export interface CliEnvironmentVariablePlan {
+	readonly variables: CliEnvironmentVariableInput[];
+	readonly skippedSecrets: CliEnvironmentVariableSkippedSecret[];
+}
+
 const RESERVED_CLI_ENVIRONMENT_VARIABLE_NAMES = new Set([
 	'ALLUSERSPROFILE',
 	'APPDATA',
@@ -40,19 +53,43 @@ const RESERVED_CLI_ENVIRONMENT_VARIABLE_NAMES = new Set([
 export function createCliEnvironmentVariables(
 	secrets: readonly EnvironmentSecretRecord[]
 ): CliEnvironmentVariableInput[] {
+	return createCliEnvironmentVariablePlan(secrets).variables;
+}
+
+export function createCliEnvironmentVariablePlan(
+	secrets: readonly EnvironmentSecretRecord[]
+): CliEnvironmentVariablePlan {
 	const variables = new Map<string, string>();
+	const skippedSecrets: CliEnvironmentVariableSkippedSecret[] = [];
 
 	for (const secret of secrets) {
 		const variableName = resolveCliEnvironmentVariableName(secret);
 
-		if (variableName === null || variables.has(variableName)) {
+		if (variableName === null) {
+			skippedSecrets.push({
+				secretName: secret.name,
+				variableName: null,
+				reason: 'invalid-name'
+			});
+			continue;
+		}
+
+		if (variables.has(variableName)) {
+			skippedSecrets.push({
+				secretName: secret.name,
+				variableName,
+				reason: 'duplicate-name'
+			});
 			continue;
 		}
 
 		variables.set(variableName, secret.value);
 	}
 
-	return Array.from(variables, ([name, value]) => ({ name, value }));
+	return {
+		variables: Array.from(variables, ([name, value]) => ({ name, value })),
+		skippedSecrets
+	};
 }
 
 export function resolveCliEnvironmentVariableName(secret: EnvironmentSecretRecord): string | null {

@@ -53,7 +53,9 @@ export const zhEnvironmentMessages = {
 		saved: '已保存。',
 		removed: '已移除。',
 		copied: '已复制。',
-		cliEnvironmentApplied: '已应用 {count} 个 CLI 环境变量。'
+		cliEnvironmentApplied: '已应用 {count} 个 CLI 环境变量。',
+		cliEnvironmentAppliedWithSkipped:
+			'已应用 {applied} 个 CLI 环境变量。{skipped} 个已保存条目被跳过，因为它们映射到相同的 CLI 名称或不能用作 CLI 变量。'
 	},
 	errors: {
 		vaultPasswordRequired: '保管箱密码为必填项。',
