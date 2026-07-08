@@ -14,7 +14,7 @@ pub struct SsealedScaffold {
 	pub files: &'static [SsealedScaffoldFile],
 }
 
-pub const SSEALED_SCAFFOLD_TOOL_VERSION: &str = "0.6.3";
+pub const SSEALED_SCAFFOLD_TOOL_VERSION: &str = "0.6.6";
 
 pub const SSEALED_SCAFFOLDS: &[SsealedScaffold] = &[
 	SsealedScaffold {
@@ -631,7 +631,6 @@ tracked secret files, ignored build/cache artifacts, and generated-output drift.
 ## Scope
 
 backend validation routes must stay stack-neutral unless a runner file explicitly defines a command.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -675,7 +674,6 @@ tracked secret files, ignored build/cache artifacts, and generated-output drift.
 ## Scope
 
 backend validation routes must stay stack-neutral unless a runner file explicitly defines a command.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -719,7 +717,6 @@ tracked secret files, ignored build/cache artifacts, and generated-output drift.
 ## Scope
 
 backend validation routes must stay stack-neutral unless a runner file explicitly defines a command.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -763,7 +760,6 @@ tracked secret files, ignored build/cache artifacts, and generated-output drift.
 ## Scope
 
 backend validation routes must stay stack-neutral unless a runner file explicitly defines a command.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -807,7 +803,6 @@ tracked secret files, ignored build/cache artifacts, and generated-output drift.
 ## Scope
 
 backend validation routes must stay stack-neutral unless a runner file explicitly defines a command.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -2737,7 +2732,6 @@ tracked secret files, ignored build/cache artifacts, and generated-output drift.
 ## Scope
 
 backend validation routes must stay stack-neutral unless a runner file explicitly defines a command.
-
 "#,
 	},
 		],
@@ -3431,7 +3425,6 @@ backend validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 cli-tool validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -3479,7 +3472,6 @@ backend validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 cli-tool validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -3527,7 +3519,6 @@ backend validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 cli-tool validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -3575,7 +3566,6 @@ backend validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 cli-tool validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -3623,7 +3613,6 @@ backend validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 cli-tool validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -3671,7 +3660,6 @@ backend validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 cli-tool validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -5750,7 +5738,6 @@ backend validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 cli-tool validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 		],
@@ -6444,7 +6431,6 @@ backend validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 api-service validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -6492,7 +6478,6 @@ backend validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 api-service validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -6540,7 +6525,6 @@ backend validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 api-service validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -6588,7 +6572,6 @@ backend validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 api-service validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -6636,7 +6619,6 @@ backend validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 api-service validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -6684,7 +6666,6 @@ backend validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 api-service validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -8731,7 +8712,6 @@ backend validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 api-service validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 		],
@@ -9425,7 +9405,6 @@ backend validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 desktop-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -9473,7 +9452,6 @@ backend validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 desktop-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -9521,7 +9499,6 @@ backend validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 desktop-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -9569,7 +9546,6 @@ backend validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 desktop-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -9617,7 +9593,6 @@ backend validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 desktop-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -9665,7 +9640,6 @@ backend validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 desktop-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -11745,7 +11719,6 @@ backend validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 desktop-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 		],
@@ -12439,7 +12412,6 @@ backend validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 library validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -12487,7 +12459,6 @@ backend validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 library validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -12535,7 +12506,6 @@ backend validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 library validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -12583,7 +12553,6 @@ backend validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 library validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -12631,7 +12600,6 @@ backend validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 library validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -12679,7 +12647,6 @@ backend validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 library validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -14759,7 +14726,6 @@ backend validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 library validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 		],
@@ -15453,7 +15419,6 @@ backend validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 web-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -15501,7 +15466,6 @@ backend validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 web-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -15549,7 +15513,6 @@ backend validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 web-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -15597,7 +15560,6 @@ backend validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 web-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -15645,7 +15607,6 @@ backend validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 web-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -15693,7 +15654,6 @@ backend validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 web-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -17734,7 +17694,6 @@ backend validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 web-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 		],
@@ -18428,7 +18387,6 @@ backend validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 mobile-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -18476,7 +18434,6 @@ backend validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 mobile-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -18524,7 +18481,6 @@ backend validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 mobile-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -18572,7 +18528,6 @@ backend validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 mobile-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -18620,7 +18575,6 @@ backend validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 mobile-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -18668,7 +18622,6 @@ backend validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 mobile-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -20709,7 +20662,6 @@ backend validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 mobile-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 		],
@@ -21403,7 +21355,6 @@ backend validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 sdk validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -21451,7 +21402,6 @@ backend validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 sdk validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -21499,7 +21449,6 @@ backend validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 sdk validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -21547,7 +21496,6 @@ backend validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 sdk validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -21595,7 +21543,6 @@ backend validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 sdk validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -21643,7 +21590,6 @@ backend validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 sdk validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -23684,7 +23630,6 @@ backend validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 sdk validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 		],
@@ -24378,7 +24323,6 @@ backend validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 worker-service validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -24426,7 +24370,6 @@ backend validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 worker-service validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -24474,7 +24417,6 @@ backend validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 worker-service validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -24522,7 +24464,6 @@ backend validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 worker-service validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -24570,7 +24511,6 @@ backend validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 worker-service validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -24618,7 +24558,6 @@ backend validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 worker-service validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -26659,7 +26598,6 @@ backend validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 worker-service validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 		],
@@ -27353,7 +27291,6 @@ backend validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 infra-module validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -27401,7 +27338,6 @@ backend validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 infra-module validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -27449,7 +27385,6 @@ backend validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 infra-module validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -27497,7 +27432,6 @@ backend validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 infra-module validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -27545,7 +27479,6 @@ backend validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 infra-module validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -27593,7 +27526,6 @@ backend validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 infra-module validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -29634,7 +29566,6 @@ backend validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 infra-module validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 		],
@@ -30328,7 +30259,6 @@ backend validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 data-pipeline validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -30376,7 +30306,6 @@ backend validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 data-pipeline validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -30424,7 +30353,6 @@ backend validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 data-pipeline validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -30472,7 +30400,6 @@ backend validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 data-pipeline validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -30520,7 +30447,6 @@ backend validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 data-pipeline validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -30568,7 +30494,6 @@ backend validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 data-pipeline validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -32609,7 +32534,6 @@ backend validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 data-pipeline validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 		],
@@ -33303,7 +33227,6 @@ backend validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 github-action validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -33351,7 +33274,6 @@ backend validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 github-action validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -33399,7 +33321,6 @@ backend validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 github-action validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -33447,7 +33368,6 @@ backend validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 github-action validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -33495,7 +33415,6 @@ backend validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 github-action validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -33543,7 +33462,6 @@ backend validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 github-action validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -35616,7 +35534,6 @@ backend validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 github-action validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 		],
@@ -36310,7 +36227,6 @@ backend validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 browser-extension validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -36358,7 +36274,6 @@ backend validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 browser-extension validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -36406,7 +36321,6 @@ backend validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 browser-extension validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -36454,7 +36368,6 @@ backend validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 browser-extension validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -36502,7 +36415,6 @@ backend validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 browser-extension validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -36550,7 +36462,6 @@ backend validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 browser-extension validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -38591,7 +38502,6 @@ backend validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 browser-extension validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 		],
@@ -39285,7 +39195,6 @@ backend validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 plugin validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -39333,7 +39242,6 @@ backend validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 plugin validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -39381,7 +39289,6 @@ backend validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 plugin validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -39429,7 +39336,6 @@ backend validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 plugin validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -39477,7 +39383,6 @@ backend validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 plugin validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -39525,7 +39430,6 @@ backend validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 plugin validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -41566,7 +41470,6 @@ backend validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 plugin validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 		],
@@ -42260,7 +42163,6 @@ backend validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 docs-site validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -42308,7 +42210,6 @@ backend validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 docs-site validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -42356,7 +42257,6 @@ backend validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 docs-site validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -42404,7 +42304,6 @@ backend validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 docs-site validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -42452,7 +42351,6 @@ backend validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 docs-site validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -42500,7 +42398,6 @@ backend validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 docs-site validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -44541,7 +44438,6 @@ backend validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 docs-site validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 		],
@@ -45235,7 +45131,6 @@ backend validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 monorepo validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -45283,7 +45178,6 @@ backend validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 monorepo validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -45331,7 +45225,6 @@ backend validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 monorepo validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -45379,7 +45272,6 @@ backend validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 monorepo validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -45427,7 +45319,6 @@ backend validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 monorepo validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -45475,7 +45366,6 @@ backend validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 monorepo validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -47516,7 +47406,6 @@ backend validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 monorepo validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 		],
@@ -48090,7 +47979,6 @@ tracked secret files, ignored build/cache artifacts, and generated-output drift.
 ## Scope
 
 frontend validation routes must stay stack-neutral unless a runner file explicitly defines a command.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -48134,7 +48022,6 @@ tracked secret files, ignored build/cache artifacts, and generated-output drift.
 ## Scope
 
 frontend validation routes must stay stack-neutral unless a runner file explicitly defines a command.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -48178,7 +48065,6 @@ tracked secret files, ignored build/cache artifacts, and generated-output drift.
 ## Scope
 
 frontend validation routes must stay stack-neutral unless a runner file explicitly defines a command.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -48222,7 +48108,6 @@ tracked secret files, ignored build/cache artifacts, and generated-output drift.
 ## Scope
 
 frontend validation routes must stay stack-neutral unless a runner file explicitly defines a command.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -49966,7 +49851,6 @@ tracked secret files, ignored build/cache artifacts, and generated-output drift.
 ## Scope
 
 frontend validation routes must stay stack-neutral unless a runner file explicitly defines a command.
-
 "#,
 	},
 		],
@@ -50615,7 +50499,6 @@ frontend validation routes must stay stack-neutral unless a runner file explicit
 ## Repository Shape
 
 cli-tool validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -50663,7 +50546,6 @@ frontend validation routes must stay stack-neutral unless a runner file explicit
 ## Repository Shape
 
 cli-tool validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -50711,7 +50593,6 @@ frontend validation routes must stay stack-neutral unless a runner file explicit
 ## Repository Shape
 
 cli-tool validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -50759,7 +50640,6 @@ frontend validation routes must stay stack-neutral unless a runner file explicit
 ## Repository Shape
 
 cli-tool validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -50807,7 +50687,6 @@ frontend validation routes must stay stack-neutral unless a runner file explicit
 ## Repository Shape
 
 cli-tool validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -52700,7 +52579,6 @@ frontend validation routes must stay stack-neutral unless a runner file explicit
 ## Repository Shape
 
 cli-tool validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 		],
@@ -53349,7 +53227,6 @@ frontend validation routes must stay stack-neutral unless a runner file explicit
 ## Repository Shape
 
 api-service validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -53397,7 +53274,6 @@ frontend validation routes must stay stack-neutral unless a runner file explicit
 ## Repository Shape
 
 api-service validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -53445,7 +53321,6 @@ frontend validation routes must stay stack-neutral unless a runner file explicit
 ## Repository Shape
 
 api-service validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -53493,7 +53368,6 @@ frontend validation routes must stay stack-neutral unless a runner file explicit
 ## Repository Shape
 
 api-service validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -53541,7 +53415,6 @@ frontend validation routes must stay stack-neutral unless a runner file explicit
 ## Repository Shape
 
 api-service validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -55606,7 +55479,6 @@ frontend validation routes must stay stack-neutral unless a runner file explicit
 ## Repository Shape
 
 api-service validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 		],
@@ -56255,7 +56127,6 @@ frontend validation routes must stay stack-neutral unless a runner file explicit
 ## Repository Shape
 
 desktop-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -56303,7 +56174,6 @@ frontend validation routes must stay stack-neutral unless a runner file explicit
 ## Repository Shape
 
 desktop-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -56351,7 +56221,6 @@ frontend validation routes must stay stack-neutral unless a runner file explicit
 ## Repository Shape
 
 desktop-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -56399,7 +56268,6 @@ frontend validation routes must stay stack-neutral unless a runner file explicit
 ## Repository Shape
 
 desktop-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -56447,7 +56315,6 @@ frontend validation routes must stay stack-neutral unless a runner file explicit
 ## Repository Shape
 
 desktop-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -58341,7 +58208,6 @@ frontend validation routes must stay stack-neutral unless a runner file explicit
 ## Repository Shape
 
 desktop-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 		],
@@ -58990,7 +58856,6 @@ frontend validation routes must stay stack-neutral unless a runner file explicit
 ## Repository Shape
 
 library validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -59038,7 +58903,6 @@ frontend validation routes must stay stack-neutral unless a runner file explicit
 ## Repository Shape
 
 library validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -59086,7 +58950,6 @@ frontend validation routes must stay stack-neutral unless a runner file explicit
 ## Repository Shape
 
 library validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -59134,7 +58997,6 @@ frontend validation routes must stay stack-neutral unless a runner file explicit
 ## Repository Shape
 
 library validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -59182,7 +59044,6 @@ frontend validation routes must stay stack-neutral unless a runner file explicit
 ## Repository Shape
 
 library validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -61076,7 +60937,6 @@ frontend validation routes must stay stack-neutral unless a runner file explicit
 ## Repository Shape
 
 library validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 		],
@@ -61725,7 +61585,6 @@ frontend validation routes must stay stack-neutral unless a runner file explicit
 ## Repository Shape
 
 web-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -61773,7 +61632,6 @@ frontend validation routes must stay stack-neutral unless a runner file explicit
 ## Repository Shape
 
 web-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -61821,7 +61679,6 @@ frontend validation routes must stay stack-neutral unless a runner file explicit
 ## Repository Shape
 
 web-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -61869,7 +61726,6 @@ frontend validation routes must stay stack-neutral unless a runner file explicit
 ## Repository Shape
 
 web-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -61917,7 +61773,6 @@ frontend validation routes must stay stack-neutral unless a runner file explicit
 ## Repository Shape
 
 web-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -63772,7 +63627,6 @@ frontend validation routes must stay stack-neutral unless a runner file explicit
 ## Repository Shape
 
 web-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 		],
@@ -64421,7 +64275,6 @@ frontend validation routes must stay stack-neutral unless a runner file explicit
 ## Repository Shape
 
 mobile-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -64469,7 +64322,6 @@ frontend validation routes must stay stack-neutral unless a runner file explicit
 ## Repository Shape
 
 mobile-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -64517,7 +64369,6 @@ frontend validation routes must stay stack-neutral unless a runner file explicit
 ## Repository Shape
 
 mobile-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -64565,7 +64416,6 @@ frontend validation routes must stay stack-neutral unless a runner file explicit
 ## Repository Shape
 
 mobile-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -64613,7 +64463,6 @@ frontend validation routes must stay stack-neutral unless a runner file explicit
 ## Repository Shape
 
 mobile-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -66468,7 +66317,6 @@ frontend validation routes must stay stack-neutral unless a runner file explicit
 ## Repository Shape
 
 mobile-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 		],
@@ -67117,7 +66965,6 @@ frontend validation routes must stay stack-neutral unless a runner file explicit
 ## Repository Shape
 
 sdk validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -67165,7 +67012,6 @@ frontend validation routes must stay stack-neutral unless a runner file explicit
 ## Repository Shape
 
 sdk validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -67213,7 +67059,6 @@ frontend validation routes must stay stack-neutral unless a runner file explicit
 ## Repository Shape
 
 sdk validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -67261,7 +67106,6 @@ frontend validation routes must stay stack-neutral unless a runner file explicit
 ## Repository Shape
 
 sdk validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -67309,7 +67153,6 @@ frontend validation routes must stay stack-neutral unless a runner file explicit
 ## Repository Shape
 
 sdk validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -69164,7 +69007,6 @@ frontend validation routes must stay stack-neutral unless a runner file explicit
 ## Repository Shape
 
 sdk validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 		],
@@ -69813,7 +69655,6 @@ frontend validation routes must stay stack-neutral unless a runner file explicit
 ## Repository Shape
 
 worker-service validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -69861,7 +69702,6 @@ frontend validation routes must stay stack-neutral unless a runner file explicit
 ## Repository Shape
 
 worker-service validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -69909,7 +69749,6 @@ frontend validation routes must stay stack-neutral unless a runner file explicit
 ## Repository Shape
 
 worker-service validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -69957,7 +69796,6 @@ frontend validation routes must stay stack-neutral unless a runner file explicit
 ## Repository Shape
 
 worker-service validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -70005,7 +69843,6 @@ frontend validation routes must stay stack-neutral unless a runner file explicit
 ## Repository Shape
 
 worker-service validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -71860,7 +71697,6 @@ frontend validation routes must stay stack-neutral unless a runner file explicit
 ## Repository Shape
 
 worker-service validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 		],
@@ -72509,7 +72345,6 @@ frontend validation routes must stay stack-neutral unless a runner file explicit
 ## Repository Shape
 
 infra-module validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -72557,7 +72392,6 @@ frontend validation routes must stay stack-neutral unless a runner file explicit
 ## Repository Shape
 
 infra-module validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -72605,7 +72439,6 @@ frontend validation routes must stay stack-neutral unless a runner file explicit
 ## Repository Shape
 
 infra-module validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -72653,7 +72486,6 @@ frontend validation routes must stay stack-neutral unless a runner file explicit
 ## Repository Shape
 
 infra-module validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -72701,7 +72533,6 @@ frontend validation routes must stay stack-neutral unless a runner file explicit
 ## Repository Shape
 
 infra-module validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -74556,7 +74387,6 @@ frontend validation routes must stay stack-neutral unless a runner file explicit
 ## Repository Shape
 
 infra-module validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 		],
@@ -75205,7 +75035,6 @@ frontend validation routes must stay stack-neutral unless a runner file explicit
 ## Repository Shape
 
 data-pipeline validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -75253,7 +75082,6 @@ frontend validation routes must stay stack-neutral unless a runner file explicit
 ## Repository Shape
 
 data-pipeline validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -75301,7 +75129,6 @@ frontend validation routes must stay stack-neutral unless a runner file explicit
 ## Repository Shape
 
 data-pipeline validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -75349,7 +75176,6 @@ frontend validation routes must stay stack-neutral unless a runner file explicit
 ## Repository Shape
 
 data-pipeline validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -75397,7 +75223,6 @@ frontend validation routes must stay stack-neutral unless a runner file explicit
 ## Repository Shape
 
 data-pipeline validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -77252,7 +77077,6 @@ frontend validation routes must stay stack-neutral unless a runner file explicit
 ## Repository Shape
 
 data-pipeline validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 		],
@@ -77901,7 +77725,6 @@ frontend validation routes must stay stack-neutral unless a runner file explicit
 ## Repository Shape
 
 github-action validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -77949,7 +77772,6 @@ frontend validation routes must stay stack-neutral unless a runner file explicit
 ## Repository Shape
 
 github-action validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -77997,7 +77819,6 @@ frontend validation routes must stay stack-neutral unless a runner file explicit
 ## Repository Shape
 
 github-action validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -78045,7 +77866,6 @@ frontend validation routes must stay stack-neutral unless a runner file explicit
 ## Repository Shape
 
 github-action validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -78093,7 +77913,6 @@ frontend validation routes must stay stack-neutral unless a runner file explicit
 ## Repository Shape
 
 github-action validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -79980,7 +79799,6 @@ frontend validation routes must stay stack-neutral unless a runner file explicit
 ## Repository Shape
 
 github-action validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 		],
@@ -80629,7 +80447,6 @@ frontend validation routes must stay stack-neutral unless a runner file explicit
 ## Repository Shape
 
 browser-extension validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -80677,7 +80494,6 @@ frontend validation routes must stay stack-neutral unless a runner file explicit
 ## Repository Shape
 
 browser-extension validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -80725,7 +80541,6 @@ frontend validation routes must stay stack-neutral unless a runner file explicit
 ## Repository Shape
 
 browser-extension validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -80773,7 +80588,6 @@ frontend validation routes must stay stack-neutral unless a runner file explicit
 ## Repository Shape
 
 browser-extension validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -80821,7 +80635,6 @@ frontend validation routes must stay stack-neutral unless a runner file explicit
 ## Repository Shape
 
 browser-extension validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -82676,7 +82489,6 @@ frontend validation routes must stay stack-neutral unless a runner file explicit
 ## Repository Shape
 
 browser-extension validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 		],
@@ -83325,7 +83137,6 @@ frontend validation routes must stay stack-neutral unless a runner file explicit
 ## Repository Shape
 
 plugin validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -83373,7 +83184,6 @@ frontend validation routes must stay stack-neutral unless a runner file explicit
 ## Repository Shape
 
 plugin validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -83421,7 +83231,6 @@ frontend validation routes must stay stack-neutral unless a runner file explicit
 ## Repository Shape
 
 plugin validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -83469,7 +83278,6 @@ frontend validation routes must stay stack-neutral unless a runner file explicit
 ## Repository Shape
 
 plugin validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -83517,7 +83325,6 @@ frontend validation routes must stay stack-neutral unless a runner file explicit
 ## Repository Shape
 
 plugin validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -85372,7 +85179,6 @@ frontend validation routes must stay stack-neutral unless a runner file explicit
 ## Repository Shape
 
 plugin validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 		],
@@ -86021,7 +85827,6 @@ frontend validation routes must stay stack-neutral unless a runner file explicit
 ## Repository Shape
 
 docs-site validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -86069,7 +85874,6 @@ frontend validation routes must stay stack-neutral unless a runner file explicit
 ## Repository Shape
 
 docs-site validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -86117,7 +85921,6 @@ frontend validation routes must stay stack-neutral unless a runner file explicit
 ## Repository Shape
 
 docs-site validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -86165,7 +85968,6 @@ frontend validation routes must stay stack-neutral unless a runner file explicit
 ## Repository Shape
 
 docs-site validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -86213,7 +86015,6 @@ frontend validation routes must stay stack-neutral unless a runner file explicit
 ## Repository Shape
 
 docs-site validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -88068,7 +87869,6 @@ frontend validation routes must stay stack-neutral unless a runner file explicit
 ## Repository Shape
 
 docs-site validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 		],
@@ -88717,7 +88517,6 @@ frontend validation routes must stay stack-neutral unless a runner file explicit
 ## Repository Shape
 
 monorepo validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -88765,7 +88564,6 @@ frontend validation routes must stay stack-neutral unless a runner file explicit
 ## Repository Shape
 
 monorepo validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -88813,7 +88611,6 @@ frontend validation routes must stay stack-neutral unless a runner file explicit
 ## Repository Shape
 
 monorepo validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -88861,7 +88658,6 @@ frontend validation routes must stay stack-neutral unless a runner file explicit
 ## Repository Shape
 
 monorepo validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -88909,7 +88705,6 @@ frontend validation routes must stay stack-neutral unless a runner file explicit
 ## Repository Shape
 
 monorepo validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -90764,7 +90559,6 @@ frontend validation routes must stay stack-neutral unless a runner file explicit
 ## Repository Shape
 
 monorepo validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 		],
@@ -91481,7 +91275,6 @@ tracked secret files, ignored build/cache artifacts, and generated-output drift.
 ## Scope
 
 fullstack validation routes must stay stack-neutral unless a runner file explicitly defines a command.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -91525,7 +91318,6 @@ tracked secret files, ignored build/cache artifacts, and generated-output drift.
 ## Scope
 
 fullstack validation routes must stay stack-neutral unless a runner file explicitly defines a command.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -91569,7 +91361,6 @@ tracked secret files, ignored build/cache artifacts, and generated-output drift.
 ## Scope
 
 fullstack validation routes must stay stack-neutral unless a runner file explicitly defines a command.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -91613,7 +91404,6 @@ tracked secret files, ignored build/cache artifacts, and generated-output drift.
 ## Scope
 
 fullstack validation routes must stay stack-neutral unless a runner file explicitly defines a command.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -91657,7 +91447,6 @@ tracked secret files, ignored build/cache artifacts, and generated-output drift.
 ## Scope
 
 fullstack validation routes must stay stack-neutral unless a runner file explicitly defines a command.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -91701,7 +91490,6 @@ tracked secret files, ignored build/cache artifacts, and generated-output drift.
 ## Scope
 
 fullstack validation routes must stay stack-neutral unless a runner file explicitly defines a command.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -93820,7 +93608,6 @@ tracked secret files, ignored build/cache artifacts, and generated-output drift.
 ## Scope
 
 fullstack validation routes must stay stack-neutral unless a runner file explicitly defines a command.
-
 "#,
 	},
 		],
@@ -94612,7 +94399,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 cli-tool validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -94660,7 +94446,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 cli-tool validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -94708,7 +94493,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 cli-tool validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -94756,7 +94540,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 cli-tool validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -94804,7 +94587,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 cli-tool validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -94852,7 +94634,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 cli-tool validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -94900,7 +94681,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 cli-tool validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -97168,7 +96948,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 cli-tool validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 		],
@@ -97960,7 +97739,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 api-service validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -98008,7 +97786,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 api-service validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -98056,7 +97833,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 api-service validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -98104,7 +97880,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 api-service validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -98152,7 +97927,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 api-service validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -98200,7 +97974,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 api-service validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -98248,7 +98021,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 api-service validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -100484,7 +100256,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 api-service validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 		],
@@ -101276,7 +101047,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 desktop-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -101324,7 +101094,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 desktop-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -101372,7 +101141,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 desktop-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -101420,7 +101188,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 desktop-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -101468,7 +101235,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 desktop-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -101516,7 +101282,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 desktop-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -101564,7 +101329,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 desktop-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -103833,7 +103597,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 desktop-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 		],
@@ -104625,7 +104388,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 library validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -104673,7 +104435,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 library validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -104721,7 +104482,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 library validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -104769,7 +104529,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 library validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -104817,7 +104576,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 library validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -104865,7 +104623,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 library validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -104913,7 +104670,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 library validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -107182,7 +106938,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 library validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 		],
@@ -107974,7 +107729,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 web-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -108022,7 +107776,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 web-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -108070,7 +107823,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 web-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -108118,7 +107870,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 web-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -108166,7 +107917,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 web-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -108214,7 +107964,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 web-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -108262,7 +108011,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 web-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -110492,7 +110240,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 web-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 		],
@@ -111284,7 +111031,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 mobile-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -111332,7 +111078,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 mobile-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -111380,7 +111125,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 mobile-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -111428,7 +111172,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 mobile-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -111476,7 +111219,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 mobile-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -111524,7 +111266,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 mobile-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -111572,7 +111313,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 mobile-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -113802,7 +113542,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 mobile-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 		],
@@ -114594,7 +114333,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 sdk validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -114642,7 +114380,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 sdk validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -114690,7 +114427,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 sdk validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -114738,7 +114474,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 sdk validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -114786,7 +114521,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 sdk validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -114834,7 +114568,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 sdk validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -114882,7 +114615,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 sdk validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -117112,7 +116844,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 sdk validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 		],
@@ -117904,7 +117635,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 worker-service validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -117952,7 +117682,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 worker-service validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -118000,7 +117729,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 worker-service validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -118048,7 +117776,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 worker-service validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -118096,7 +117823,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 worker-service validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -118144,7 +117870,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 worker-service validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -118192,7 +117917,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 worker-service validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -120422,7 +120146,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 worker-service validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 		],
@@ -121214,7 +120937,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 infra-module validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -121262,7 +120984,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 infra-module validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -121310,7 +121031,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 infra-module validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -121358,7 +121078,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 infra-module validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -121406,7 +121125,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 infra-module validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -121454,7 +121172,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 infra-module validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -121502,7 +121219,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 infra-module validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -123732,7 +123448,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 infra-module validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 		],
@@ -124524,7 +124239,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 data-pipeline validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -124572,7 +124286,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 data-pipeline validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -124620,7 +124333,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 data-pipeline validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -124668,7 +124380,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 data-pipeline validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -124716,7 +124427,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 data-pipeline validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -124764,7 +124474,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 data-pipeline validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -124812,7 +124521,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 data-pipeline validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -127042,7 +126750,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 data-pipeline validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 		],
@@ -127834,7 +127541,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 github-action validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -127882,7 +127588,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 github-action validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -127930,7 +127635,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 github-action validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -127978,7 +127682,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 github-action validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -128026,7 +127729,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 github-action validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -128074,7 +127776,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 github-action validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -128122,7 +127823,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 github-action validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -130384,7 +130084,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 github-action validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 		],
@@ -131176,7 +130875,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 browser-extension validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -131224,7 +130922,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 browser-extension validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -131272,7 +130969,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 browser-extension validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -131320,7 +131016,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 browser-extension validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -131368,7 +131063,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 browser-extension validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -131416,7 +131110,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 browser-extension validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -131464,7 +131157,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 browser-extension validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -133694,7 +133386,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 browser-extension validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 		],
@@ -134486,7 +134177,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 plugin validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -134534,7 +134224,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 plugin validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -134582,7 +134271,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 plugin validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -134630,7 +134318,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 plugin validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -134678,7 +134365,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 plugin validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -134726,7 +134412,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 plugin validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -134774,7 +134459,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 plugin validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -137004,7 +136688,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 plugin validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 		],
@@ -137796,7 +137479,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 docs-site validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -137844,7 +137526,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 docs-site validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -137892,7 +137573,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 docs-site validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -137940,7 +137620,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 docs-site validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -137988,7 +137667,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 docs-site validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -138036,7 +137714,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 docs-site validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -138084,7 +137761,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 docs-site validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -140314,7 +139990,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 docs-site validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 		],
@@ -141106,7 +140781,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 monorepo validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -141154,7 +140828,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 monorepo validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -141202,7 +140875,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 monorepo validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -141250,7 +140922,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 monorepo validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -141298,7 +140969,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 monorepo validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -141346,7 +141016,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 monorepo validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -141394,7 +141063,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 monorepo validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -143624,7 +143292,6 @@ fullstack validation routes must stay stack-neutral unless a runner file explici
 ## Repository Shape
 
 monorepo validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 		],
@@ -144103,7 +143770,6 @@ tracked secret files, ignored build/cache artifacts, and generated-output drift.
 ## Scope
 
 general validation routes must stay stack-neutral unless a runner file explicitly defines a command.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -144147,7 +143813,6 @@ tracked secret files, ignored build/cache artifacts, and generated-output drift.
 ## Scope
 
 general validation routes must stay stack-neutral unless a runner file explicitly defines a command.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -144191,7 +143856,6 @@ tracked secret files, ignored build/cache artifacts, and generated-output drift.
 ## Scope
 
 general validation routes must stay stack-neutral unless a runner file explicitly defines a command.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -144483,7 +144147,6 @@ Use this file as a router. Do not turn it into one giant checklist.
 - Ops changes: .agents/checklists/ops-change.md
 - Dependency changes: .agents/checklists/dependency.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -145493,7 +145156,6 @@ tracked secret files, ignored build/cache artifacts, and generated-output drift.
 ## Scope
 
 general validation routes must stay stack-neutral unless a runner file explicitly defines a command.
-
 "#,
 	},
 		],
@@ -146047,7 +145709,6 @@ general validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 cli-tool validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -146095,7 +145756,6 @@ general validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 cli-tool validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -146143,7 +145803,6 @@ general validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 cli-tool validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -146191,7 +145850,6 @@ general validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 cli-tool validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -147641,7 +147299,6 @@ general validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 cli-tool validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 		],
@@ -148195,7 +147852,6 @@ general validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 api-service validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -148243,7 +147899,6 @@ general validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 api-service validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -148291,7 +147946,6 @@ general validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 api-service validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -148339,7 +147993,6 @@ general validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 api-service validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -149961,7 +149614,6 @@ general validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 api-service validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 		],
@@ -150515,7 +150167,6 @@ general validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 desktop-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -150563,7 +150214,6 @@ general validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 desktop-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -150611,7 +150261,6 @@ general validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 desktop-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -150659,7 +150308,6 @@ general validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 desktop-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -152110,7 +151758,6 @@ general validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 desktop-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 		],
@@ -152664,7 +152311,6 @@ general validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 library validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -152712,7 +152358,6 @@ general validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 library validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -152760,7 +152405,6 @@ general validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 library validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -152808,7 +152452,6 @@ general validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 library validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -154259,7 +153902,6 @@ general validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 library validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 		],
@@ -154813,7 +154455,6 @@ general validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 web-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -154861,7 +154502,6 @@ general validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 web-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -154909,7 +154549,6 @@ general validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 web-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -154957,7 +154596,6 @@ general validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 web-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -156369,7 +156007,6 @@ general validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 web-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 		],
@@ -156923,7 +156560,6 @@ general validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 mobile-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -156971,7 +156607,6 @@ general validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 mobile-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -157019,7 +156654,6 @@ general validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 mobile-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -157067,7 +156701,6 @@ general validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 mobile-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -158479,7 +158112,6 @@ general validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 mobile-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 		],
@@ -159033,7 +158665,6 @@ general validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 sdk validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -159081,7 +158712,6 @@ general validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 sdk validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -159129,7 +158759,6 @@ general validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 sdk validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -159177,7 +158806,6 @@ general validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 sdk validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -160589,7 +160217,6 @@ general validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 sdk validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 		],
@@ -161143,7 +160770,6 @@ general validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 worker-service validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -161191,7 +160817,6 @@ general validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 worker-service validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -161239,7 +160864,6 @@ general validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 worker-service validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -161287,7 +160911,6 @@ general validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 worker-service validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -162699,7 +162322,6 @@ general validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 worker-service validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 		],
@@ -163253,7 +162875,6 @@ general validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 infra-module validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -163301,7 +162922,6 @@ general validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 infra-module validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -163349,7 +162969,6 @@ general validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 infra-module validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -163397,7 +163016,6 @@ general validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 infra-module validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -164809,7 +164427,6 @@ general validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 infra-module validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 		],
@@ -165363,7 +164980,6 @@ general validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 data-pipeline validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -165411,7 +165027,6 @@ general validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 data-pipeline validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -165459,7 +165074,6 @@ general validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 data-pipeline validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -165507,7 +165121,6 @@ general validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 data-pipeline validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -166919,7 +166532,6 @@ general validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 data-pipeline validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 		],
@@ -167473,7 +167085,6 @@ general validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 github-action validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -167521,7 +167132,6 @@ general validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 github-action validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -167569,7 +167179,6 @@ general validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 github-action validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -167617,7 +167226,6 @@ general validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 github-action validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -169061,7 +168669,6 @@ general validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 github-action validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 		],
@@ -169615,7 +169222,6 @@ general validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 browser-extension validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -169663,7 +169269,6 @@ general validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 browser-extension validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -169711,7 +169316,6 @@ general validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 browser-extension validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -169759,7 +169363,6 @@ general validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 browser-extension validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -171171,7 +170774,6 @@ general validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 browser-extension validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 		],
@@ -171725,7 +171327,6 @@ general validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 plugin validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -171773,7 +171374,6 @@ general validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 plugin validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -171821,7 +171421,6 @@ general validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 plugin validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -171869,7 +171468,6 @@ general validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 plugin validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -173281,7 +172879,6 @@ general validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 plugin validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 		],
@@ -173835,7 +173432,6 @@ general validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 docs-site validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -173883,7 +173479,6 @@ general validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 docs-site validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -173931,7 +173526,6 @@ general validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 docs-site validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -173979,7 +173573,6 @@ general validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 docs-site validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -175391,7 +174984,6 @@ general validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 docs-site validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 		],
@@ -175945,7 +175537,6 @@ general validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 monorepo validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -175993,7 +175584,6 @@ general validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 monorepo validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -176041,7 +175631,6 @@ general validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 monorepo validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -176089,7 +175678,6 @@ general validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 monorepo validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -177501,7 +177089,6 @@ general validation routes must stay stack-neutral unless a runner file explicitl
 ## Repository Shape
 
 monorepo validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 		],
@@ -178048,7 +177635,6 @@ tracked secret files, ignored build/cache artifacts, and generated-output drift.
 ## Scope
 
 mobile validation routes must stay stack-neutral unless a runner file explicitly defines a command.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -178092,7 +177678,6 @@ tracked secret files, ignored build/cache artifacts, and generated-output drift.
 ## Scope
 
 mobile validation routes must stay stack-neutral unless a runner file explicitly defines a command.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -178136,7 +177721,6 @@ tracked secret files, ignored build/cache artifacts, and generated-output drift.
 ## Scope
 
 mobile validation routes must stay stack-neutral unless a runner file explicitly defines a command.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -178180,7 +177764,6 @@ tracked secret files, ignored build/cache artifacts, and generated-output drift.
 ## Scope
 
 mobile validation routes must stay stack-neutral unless a runner file explicitly defines a command.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -179627,7 +179210,6 @@ tracked secret files, ignored build/cache artifacts, and generated-output drift.
 ## Scope
 
 mobile validation routes must stay stack-neutral unless a runner file explicitly defines a command.
-
 "#,
 	},
 		],
@@ -180249,7 +179831,6 @@ mobile validation routes must stay stack-neutral unless a runner file explicitly
 ## Repository Shape
 
 cli-tool validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -180297,7 +179878,6 @@ mobile validation routes must stay stack-neutral unless a runner file explicitly
 ## Repository Shape
 
 cli-tool validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -180345,7 +179925,6 @@ mobile validation routes must stay stack-neutral unless a runner file explicitly
 ## Repository Shape
 
 cli-tool validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -180393,7 +179972,6 @@ mobile validation routes must stay stack-neutral unless a runner file explicitly
 ## Repository Shape
 
 cli-tool validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -180441,7 +180019,6 @@ mobile validation routes must stay stack-neutral unless a runner file explicitly
 ## Repository Shape
 
 cli-tool validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -182037,7 +181614,6 @@ mobile validation routes must stay stack-neutral unless a runner file explicitly
 ## Repository Shape
 
 cli-tool validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 		],
@@ -182659,7 +182235,6 @@ mobile validation routes must stay stack-neutral unless a runner file explicitly
 ## Repository Shape
 
 api-service validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -182707,7 +182282,6 @@ mobile validation routes must stay stack-neutral unless a runner file explicitly
 ## Repository Shape
 
 api-service validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -182755,7 +182329,6 @@ mobile validation routes must stay stack-neutral unless a runner file explicitly
 ## Repository Shape
 
 api-service validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -182803,7 +182376,6 @@ mobile validation routes must stay stack-neutral unless a runner file explicitly
 ## Repository Shape
 
 api-service validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -182851,7 +182423,6 @@ mobile validation routes must stay stack-neutral unless a runner file explicitly
 ## Repository Shape
 
 api-service validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -184619,7 +184190,6 @@ mobile validation routes must stay stack-neutral unless a runner file explicitly
 ## Repository Shape
 
 api-service validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 		],
@@ -185241,7 +184811,6 @@ mobile validation routes must stay stack-neutral unless a runner file explicitly
 ## Repository Shape
 
 desktop-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -185289,7 +184858,6 @@ mobile validation routes must stay stack-neutral unless a runner file explicitly
 ## Repository Shape
 
 desktop-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -185337,7 +184905,6 @@ mobile validation routes must stay stack-neutral unless a runner file explicitly
 ## Repository Shape
 
 desktop-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -185385,7 +184952,6 @@ mobile validation routes must stay stack-neutral unless a runner file explicitly
 ## Repository Shape
 
 desktop-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -185433,7 +184999,6 @@ mobile validation routes must stay stack-neutral unless a runner file explicitly
 ## Repository Shape
 
 desktop-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -187030,7 +186595,6 @@ mobile validation routes must stay stack-neutral unless a runner file explicitly
 ## Repository Shape
 
 desktop-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 		],
@@ -187652,7 +187216,6 @@ mobile validation routes must stay stack-neutral unless a runner file explicitly
 ## Repository Shape
 
 library validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -187700,7 +187263,6 @@ mobile validation routes must stay stack-neutral unless a runner file explicitly
 ## Repository Shape
 
 library validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -187748,7 +187310,6 @@ mobile validation routes must stay stack-neutral unless a runner file explicitly
 ## Repository Shape
 
 library validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -187796,7 +187357,6 @@ mobile validation routes must stay stack-neutral unless a runner file explicitly
 ## Repository Shape
 
 library validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -187844,7 +187404,6 @@ mobile validation routes must stay stack-neutral unless a runner file explicitly
 ## Repository Shape
 
 library validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -189441,7 +189000,6 @@ mobile validation routes must stay stack-neutral unless a runner file explicitly
 ## Repository Shape
 
 library validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 		],
@@ -190063,7 +189621,6 @@ mobile validation routes must stay stack-neutral unless a runner file explicitly
 ## Repository Shape
 
 web-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -190111,7 +189668,6 @@ mobile validation routes must stay stack-neutral unless a runner file explicitly
 ## Repository Shape
 
 web-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -190159,7 +189715,6 @@ mobile validation routes must stay stack-neutral unless a runner file explicitly
 ## Repository Shape
 
 web-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -190207,7 +189762,6 @@ mobile validation routes must stay stack-neutral unless a runner file explicitly
 ## Repository Shape
 
 web-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -190255,7 +189809,6 @@ mobile validation routes must stay stack-neutral unless a runner file explicitly
 ## Repository Shape
 
 web-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -191813,7 +191366,6 @@ mobile validation routes must stay stack-neutral unless a runner file explicitly
 ## Repository Shape
 
 web-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 		],
@@ -192365,7 +191917,6 @@ mobile validation routes must stay stack-neutral unless a runner file explicitly
 ## Repository Shape
 
 mobile-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -192413,7 +191964,6 @@ mobile validation routes must stay stack-neutral unless a runner file explicitly
 ## Repository Shape
 
 mobile-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -192461,7 +192011,6 @@ mobile validation routes must stay stack-neutral unless a runner file explicitly
 ## Repository Shape
 
 mobile-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -192509,7 +192058,6 @@ mobile validation routes must stay stack-neutral unless a runner file explicitly
 ## Repository Shape
 
 mobile-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -194067,7 +193615,6 @@ mobile validation routes must stay stack-neutral unless a runner file explicitly
 ## Repository Shape
 
 mobile-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 		],
@@ -194689,7 +194236,6 @@ mobile validation routes must stay stack-neutral unless a runner file explicitly
 ## Repository Shape
 
 sdk validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -194737,7 +194283,6 @@ mobile validation routes must stay stack-neutral unless a runner file explicitly
 ## Repository Shape
 
 sdk validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -194785,7 +194330,6 @@ mobile validation routes must stay stack-neutral unless a runner file explicitly
 ## Repository Shape
 
 sdk validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -194833,7 +194377,6 @@ mobile validation routes must stay stack-neutral unless a runner file explicitly
 ## Repository Shape
 
 sdk validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -194881,7 +194424,6 @@ mobile validation routes must stay stack-neutral unless a runner file explicitly
 ## Repository Shape
 
 sdk validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -196439,7 +195981,6 @@ mobile validation routes must stay stack-neutral unless a runner file explicitly
 ## Repository Shape
 
 sdk validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 		],
@@ -197061,7 +196602,6 @@ mobile validation routes must stay stack-neutral unless a runner file explicitly
 ## Repository Shape
 
 worker-service validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -197109,7 +196649,6 @@ mobile validation routes must stay stack-neutral unless a runner file explicitly
 ## Repository Shape
 
 worker-service validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -197157,7 +196696,6 @@ mobile validation routes must stay stack-neutral unless a runner file explicitly
 ## Repository Shape
 
 worker-service validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -197205,7 +196743,6 @@ mobile validation routes must stay stack-neutral unless a runner file explicitly
 ## Repository Shape
 
 worker-service validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -197253,7 +196790,6 @@ mobile validation routes must stay stack-neutral unless a runner file explicitly
 ## Repository Shape
 
 worker-service validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -198811,7 +198347,6 @@ mobile validation routes must stay stack-neutral unless a runner file explicitly
 ## Repository Shape
 
 worker-service validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 		],
@@ -199433,7 +198968,6 @@ mobile validation routes must stay stack-neutral unless a runner file explicitly
 ## Repository Shape
 
 infra-module validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -199481,7 +199015,6 @@ mobile validation routes must stay stack-neutral unless a runner file explicitly
 ## Repository Shape
 
 infra-module validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -199529,7 +199062,6 @@ mobile validation routes must stay stack-neutral unless a runner file explicitly
 ## Repository Shape
 
 infra-module validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -199577,7 +199109,6 @@ mobile validation routes must stay stack-neutral unless a runner file explicitly
 ## Repository Shape
 
 infra-module validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -199625,7 +199156,6 @@ mobile validation routes must stay stack-neutral unless a runner file explicitly
 ## Repository Shape
 
 infra-module validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -201183,7 +200713,6 @@ mobile validation routes must stay stack-neutral unless a runner file explicitly
 ## Repository Shape
 
 infra-module validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 		],
@@ -201805,7 +201334,6 @@ mobile validation routes must stay stack-neutral unless a runner file explicitly
 ## Repository Shape
 
 data-pipeline validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -201853,7 +201381,6 @@ mobile validation routes must stay stack-neutral unless a runner file explicitly
 ## Repository Shape
 
 data-pipeline validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -201901,7 +201428,6 @@ mobile validation routes must stay stack-neutral unless a runner file explicitly
 ## Repository Shape
 
 data-pipeline validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -201949,7 +201475,6 @@ mobile validation routes must stay stack-neutral unless a runner file explicitly
 ## Repository Shape
 
 data-pipeline validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -201997,7 +201522,6 @@ mobile validation routes must stay stack-neutral unless a runner file explicitly
 ## Repository Shape
 
 data-pipeline validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -203555,7 +203079,6 @@ mobile validation routes must stay stack-neutral unless a runner file explicitly
 ## Repository Shape
 
 data-pipeline validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 		],
@@ -204177,7 +203700,6 @@ mobile validation routes must stay stack-neutral unless a runner file explicitly
 ## Repository Shape
 
 github-action validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -204225,7 +203747,6 @@ mobile validation routes must stay stack-neutral unless a runner file explicitly
 ## Repository Shape
 
 github-action validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -204273,7 +203794,6 @@ mobile validation routes must stay stack-neutral unless a runner file explicitly
 ## Repository Shape
 
 github-action validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -204321,7 +203841,6 @@ mobile validation routes must stay stack-neutral unless a runner file explicitly
 ## Repository Shape
 
 github-action validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -204369,7 +203888,6 @@ mobile validation routes must stay stack-neutral unless a runner file explicitly
 ## Repository Shape
 
 github-action validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -205959,7 +205477,6 @@ mobile validation routes must stay stack-neutral unless a runner file explicitly
 ## Repository Shape
 
 github-action validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 		],
@@ -206581,7 +206098,6 @@ mobile validation routes must stay stack-neutral unless a runner file explicitly
 ## Repository Shape
 
 browser-extension validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -206629,7 +206145,6 @@ mobile validation routes must stay stack-neutral unless a runner file explicitly
 ## Repository Shape
 
 browser-extension validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -206677,7 +206192,6 @@ mobile validation routes must stay stack-neutral unless a runner file explicitly
 ## Repository Shape
 
 browser-extension validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -206725,7 +206239,6 @@ mobile validation routes must stay stack-neutral unless a runner file explicitly
 ## Repository Shape
 
 browser-extension validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -206773,7 +206286,6 @@ mobile validation routes must stay stack-neutral unless a runner file explicitly
 ## Repository Shape
 
 browser-extension validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -208331,7 +207843,6 @@ mobile validation routes must stay stack-neutral unless a runner file explicitly
 ## Repository Shape
 
 browser-extension validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 		],
@@ -208953,7 +208464,6 @@ mobile validation routes must stay stack-neutral unless a runner file explicitly
 ## Repository Shape
 
 plugin validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -209001,7 +208511,6 @@ mobile validation routes must stay stack-neutral unless a runner file explicitly
 ## Repository Shape
 
 plugin validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -209049,7 +208558,6 @@ mobile validation routes must stay stack-neutral unless a runner file explicitly
 ## Repository Shape
 
 plugin validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -209097,7 +208605,6 @@ mobile validation routes must stay stack-neutral unless a runner file explicitly
 ## Repository Shape
 
 plugin validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -209145,7 +208652,6 @@ mobile validation routes must stay stack-neutral unless a runner file explicitly
 ## Repository Shape
 
 plugin validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -210703,7 +210209,6 @@ mobile validation routes must stay stack-neutral unless a runner file explicitly
 ## Repository Shape
 
 plugin validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 		],
@@ -211325,7 +210830,6 @@ mobile validation routes must stay stack-neutral unless a runner file explicitly
 ## Repository Shape
 
 docs-site validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -211373,7 +210877,6 @@ mobile validation routes must stay stack-neutral unless a runner file explicitly
 ## Repository Shape
 
 docs-site validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -211421,7 +210924,6 @@ mobile validation routes must stay stack-neutral unless a runner file explicitly
 ## Repository Shape
 
 docs-site validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -211469,7 +210971,6 @@ mobile validation routes must stay stack-neutral unless a runner file explicitly
 ## Repository Shape
 
 docs-site validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -211517,7 +211018,6 @@ mobile validation routes must stay stack-neutral unless a runner file explicitly
 ## Repository Shape
 
 docs-site validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -213075,7 +212575,6 @@ mobile validation routes must stay stack-neutral unless a runner file explicitly
 ## Repository Shape
 
 docs-site validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 		],
@@ -213697,7 +213196,6 @@ mobile validation routes must stay stack-neutral unless a runner file explicitly
 ## Repository Shape
 
 monorepo validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -213745,7 +213243,6 @@ mobile validation routes must stay stack-neutral unless a runner file explicitly
 ## Repository Shape
 
 monorepo validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -213793,7 +213290,6 @@ mobile validation routes must stay stack-neutral unless a runner file explicitly
 ## Repository Shape
 
 monorepo validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -213841,7 +213337,6 @@ mobile validation routes must stay stack-neutral unless a runner file explicitly
 ## Repository Shape
 
 monorepo validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -213889,7 +213384,6 @@ mobile validation routes must stay stack-neutral unless a runner file explicitly
 ## Repository Shape
 
 monorepo validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -215447,7 +214941,6 @@ mobile validation routes must stay stack-neutral unless a runner file explicitly
 ## Repository Shape
 
 monorepo validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 		],
@@ -215994,7 +215487,6 @@ tracked secret files, ignored build/cache artifacts, and generated-output drift.
 ## Scope
 
 infra validation routes must stay stack-neutral unless a runner file explicitly defines a command.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -216038,7 +215530,6 @@ tracked secret files, ignored build/cache artifacts, and generated-output drift.
 ## Scope
 
 infra validation routes must stay stack-neutral unless a runner file explicitly defines a command.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -216082,7 +215573,6 @@ tracked secret files, ignored build/cache artifacts, and generated-output drift.
 ## Scope
 
 infra validation routes must stay stack-neutral unless a runner file explicitly defines a command.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -216126,7 +215616,6 @@ tracked secret files, ignored build/cache artifacts, and generated-output drift.
 ## Scope
 
 infra validation routes must stay stack-neutral unless a runner file explicitly defines a command.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -217573,7 +217062,6 @@ tracked secret files, ignored build/cache artifacts, and generated-output drift.
 ## Scope
 
 infra validation routes must stay stack-neutral unless a runner file explicitly defines a command.
-
 "#,
 	},
 		],
@@ -218195,7 +217683,6 @@ infra validation routes must stay stack-neutral unless a runner file explicitly 
 ## Repository Shape
 
 cli-tool validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -218243,7 +217730,6 @@ infra validation routes must stay stack-neutral unless a runner file explicitly 
 ## Repository Shape
 
 cli-tool validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -218291,7 +217777,6 @@ infra validation routes must stay stack-neutral unless a runner file explicitly 
 ## Repository Shape
 
 cli-tool validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -218339,7 +217824,6 @@ infra validation routes must stay stack-neutral unless a runner file explicitly 
 ## Repository Shape
 
 cli-tool validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -218387,7 +217871,6 @@ infra validation routes must stay stack-neutral unless a runner file explicitly 
 ## Repository Shape
 
 cli-tool validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -219983,7 +219466,6 @@ infra validation routes must stay stack-neutral unless a runner file explicitly 
 ## Repository Shape
 
 cli-tool validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 		],
@@ -220605,7 +220087,6 @@ infra validation routes must stay stack-neutral unless a runner file explicitly 
 ## Repository Shape
 
 api-service validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -220653,7 +220134,6 @@ infra validation routes must stay stack-neutral unless a runner file explicitly 
 ## Repository Shape
 
 api-service validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -220701,7 +220181,6 @@ infra validation routes must stay stack-neutral unless a runner file explicitly 
 ## Repository Shape
 
 api-service validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -220749,7 +220228,6 @@ infra validation routes must stay stack-neutral unless a runner file explicitly 
 ## Repository Shape
 
 api-service validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -220797,7 +220275,6 @@ infra validation routes must stay stack-neutral unless a runner file explicitly 
 ## Repository Shape
 
 api-service validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -222565,7 +222042,6 @@ infra validation routes must stay stack-neutral unless a runner file explicitly 
 ## Repository Shape
 
 api-service validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 		],
@@ -223187,7 +222663,6 @@ infra validation routes must stay stack-neutral unless a runner file explicitly 
 ## Repository Shape
 
 desktop-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -223235,7 +222710,6 @@ infra validation routes must stay stack-neutral unless a runner file explicitly 
 ## Repository Shape
 
 desktop-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -223283,7 +222757,6 @@ infra validation routes must stay stack-neutral unless a runner file explicitly 
 ## Repository Shape
 
 desktop-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -223331,7 +222804,6 @@ infra validation routes must stay stack-neutral unless a runner file explicitly 
 ## Repository Shape
 
 desktop-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -223379,7 +222851,6 @@ infra validation routes must stay stack-neutral unless a runner file explicitly 
 ## Repository Shape
 
 desktop-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -224976,7 +224447,6 @@ infra validation routes must stay stack-neutral unless a runner file explicitly 
 ## Repository Shape
 
 desktop-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 		],
@@ -225598,7 +225068,6 @@ infra validation routes must stay stack-neutral unless a runner file explicitly 
 ## Repository Shape
 
 library validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -225646,7 +225115,6 @@ infra validation routes must stay stack-neutral unless a runner file explicitly 
 ## Repository Shape
 
 library validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -225694,7 +225162,6 @@ infra validation routes must stay stack-neutral unless a runner file explicitly 
 ## Repository Shape
 
 library validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -225742,7 +225209,6 @@ infra validation routes must stay stack-neutral unless a runner file explicitly 
 ## Repository Shape
 
 library validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -225790,7 +225256,6 @@ infra validation routes must stay stack-neutral unless a runner file explicitly 
 ## Repository Shape
 
 library validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -227387,7 +226852,6 @@ infra validation routes must stay stack-neutral unless a runner file explicitly 
 ## Repository Shape
 
 library validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 		],
@@ -228009,7 +227473,6 @@ infra validation routes must stay stack-neutral unless a runner file explicitly 
 ## Repository Shape
 
 web-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -228057,7 +227520,6 @@ infra validation routes must stay stack-neutral unless a runner file explicitly 
 ## Repository Shape
 
 web-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -228105,7 +227567,6 @@ infra validation routes must stay stack-neutral unless a runner file explicitly 
 ## Repository Shape
 
 web-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -228153,7 +227614,6 @@ infra validation routes must stay stack-neutral unless a runner file explicitly 
 ## Repository Shape
 
 web-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -228201,7 +227661,6 @@ infra validation routes must stay stack-neutral unless a runner file explicitly 
 ## Repository Shape
 
 web-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -229759,7 +229218,6 @@ infra validation routes must stay stack-neutral unless a runner file explicitly 
 ## Repository Shape
 
 web-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 		],
@@ -230381,7 +229839,6 @@ infra validation routes must stay stack-neutral unless a runner file explicitly 
 ## Repository Shape
 
 mobile-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -230429,7 +229886,6 @@ infra validation routes must stay stack-neutral unless a runner file explicitly 
 ## Repository Shape
 
 mobile-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -230477,7 +229933,6 @@ infra validation routes must stay stack-neutral unless a runner file explicitly 
 ## Repository Shape
 
 mobile-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -230525,7 +229980,6 @@ infra validation routes must stay stack-neutral unless a runner file explicitly 
 ## Repository Shape
 
 mobile-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -230573,7 +230027,6 @@ infra validation routes must stay stack-neutral unless a runner file explicitly 
 ## Repository Shape
 
 mobile-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -232131,7 +231584,6 @@ infra validation routes must stay stack-neutral unless a runner file explicitly 
 ## Repository Shape
 
 mobile-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 		],
@@ -232753,7 +232205,6 @@ infra validation routes must stay stack-neutral unless a runner file explicitly 
 ## Repository Shape
 
 sdk validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -232801,7 +232252,6 @@ infra validation routes must stay stack-neutral unless a runner file explicitly 
 ## Repository Shape
 
 sdk validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -232849,7 +232299,6 @@ infra validation routes must stay stack-neutral unless a runner file explicitly 
 ## Repository Shape
 
 sdk validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -232897,7 +232346,6 @@ infra validation routes must stay stack-neutral unless a runner file explicitly 
 ## Repository Shape
 
 sdk validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -232945,7 +232393,6 @@ infra validation routes must stay stack-neutral unless a runner file explicitly 
 ## Repository Shape
 
 sdk validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -234503,7 +233950,6 @@ infra validation routes must stay stack-neutral unless a runner file explicitly 
 ## Repository Shape
 
 sdk validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 		],
@@ -235125,7 +234571,6 @@ infra validation routes must stay stack-neutral unless a runner file explicitly 
 ## Repository Shape
 
 worker-service validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -235173,7 +234618,6 @@ infra validation routes must stay stack-neutral unless a runner file explicitly 
 ## Repository Shape
 
 worker-service validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -235221,7 +234665,6 @@ infra validation routes must stay stack-neutral unless a runner file explicitly 
 ## Repository Shape
 
 worker-service validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -235269,7 +234712,6 @@ infra validation routes must stay stack-neutral unless a runner file explicitly 
 ## Repository Shape
 
 worker-service validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -235317,7 +234759,6 @@ infra validation routes must stay stack-neutral unless a runner file explicitly 
 ## Repository Shape
 
 worker-service validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -236875,7 +236316,6 @@ infra validation routes must stay stack-neutral unless a runner file explicitly 
 ## Repository Shape
 
 worker-service validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 		],
@@ -237497,7 +236937,6 @@ infra validation routes must stay stack-neutral unless a runner file explicitly 
 ## Repository Shape
 
 infra-module validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -237545,7 +236984,6 @@ infra validation routes must stay stack-neutral unless a runner file explicitly 
 ## Repository Shape
 
 infra-module validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -237593,7 +237031,6 @@ infra validation routes must stay stack-neutral unless a runner file explicitly 
 ## Repository Shape
 
 infra-module validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -237641,7 +237078,6 @@ infra validation routes must stay stack-neutral unless a runner file explicitly 
 ## Repository Shape
 
 infra-module validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -237689,7 +237125,6 @@ infra validation routes must stay stack-neutral unless a runner file explicitly 
 ## Repository Shape
 
 infra-module validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -239247,7 +238682,6 @@ infra validation routes must stay stack-neutral unless a runner file explicitly 
 ## Repository Shape
 
 infra-module validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 		],
@@ -239869,7 +239303,6 @@ infra validation routes must stay stack-neutral unless a runner file explicitly 
 ## Repository Shape
 
 data-pipeline validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -239917,7 +239350,6 @@ infra validation routes must stay stack-neutral unless a runner file explicitly 
 ## Repository Shape
 
 data-pipeline validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -239965,7 +239397,6 @@ infra validation routes must stay stack-neutral unless a runner file explicitly 
 ## Repository Shape
 
 data-pipeline validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -240013,7 +239444,6 @@ infra validation routes must stay stack-neutral unless a runner file explicitly 
 ## Repository Shape
 
 data-pipeline validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -240061,7 +239491,6 @@ infra validation routes must stay stack-neutral unless a runner file explicitly 
 ## Repository Shape
 
 data-pipeline validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -241619,7 +241048,6 @@ infra validation routes must stay stack-neutral unless a runner file explicitly 
 ## Repository Shape
 
 data-pipeline validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 		],
@@ -242241,7 +241669,6 @@ infra validation routes must stay stack-neutral unless a runner file explicitly 
 ## Repository Shape
 
 github-action validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -242289,7 +241716,6 @@ infra validation routes must stay stack-neutral unless a runner file explicitly 
 ## Repository Shape
 
 github-action validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -242337,7 +241763,6 @@ infra validation routes must stay stack-neutral unless a runner file explicitly 
 ## Repository Shape
 
 github-action validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -242385,7 +241810,6 @@ infra validation routes must stay stack-neutral unless a runner file explicitly 
 ## Repository Shape
 
 github-action validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -242433,7 +241857,6 @@ infra validation routes must stay stack-neutral unless a runner file explicitly 
 ## Repository Shape
 
 github-action validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -244023,7 +243446,6 @@ infra validation routes must stay stack-neutral unless a runner file explicitly 
 ## Repository Shape
 
 github-action validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 		],
@@ -244645,7 +244067,6 @@ infra validation routes must stay stack-neutral unless a runner file explicitly 
 ## Repository Shape
 
 browser-extension validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -244693,7 +244114,6 @@ infra validation routes must stay stack-neutral unless a runner file explicitly 
 ## Repository Shape
 
 browser-extension validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -244741,7 +244161,6 @@ infra validation routes must stay stack-neutral unless a runner file explicitly 
 ## Repository Shape
 
 browser-extension validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -244789,7 +244208,6 @@ infra validation routes must stay stack-neutral unless a runner file explicitly 
 ## Repository Shape
 
 browser-extension validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -244837,7 +244255,6 @@ infra validation routes must stay stack-neutral unless a runner file explicitly 
 ## Repository Shape
 
 browser-extension validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -246395,7 +245812,6 @@ infra validation routes must stay stack-neutral unless a runner file explicitly 
 ## Repository Shape
 
 browser-extension validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 		],
@@ -247017,7 +246433,6 @@ infra validation routes must stay stack-neutral unless a runner file explicitly 
 ## Repository Shape
 
 plugin validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -247065,7 +246480,6 @@ infra validation routes must stay stack-neutral unless a runner file explicitly 
 ## Repository Shape
 
 plugin validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -247113,7 +246527,6 @@ infra validation routes must stay stack-neutral unless a runner file explicitly 
 ## Repository Shape
 
 plugin validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -247161,7 +246574,6 @@ infra validation routes must stay stack-neutral unless a runner file explicitly 
 ## Repository Shape
 
 plugin validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -247209,7 +246621,6 @@ infra validation routes must stay stack-neutral unless a runner file explicitly 
 ## Repository Shape
 
 plugin validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -248767,7 +248178,6 @@ infra validation routes must stay stack-neutral unless a runner file explicitly 
 ## Repository Shape
 
 plugin validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 		],
@@ -249389,7 +248799,6 @@ infra validation routes must stay stack-neutral unless a runner file explicitly 
 ## Repository Shape
 
 docs-site validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -249437,7 +248846,6 @@ infra validation routes must stay stack-neutral unless a runner file explicitly 
 ## Repository Shape
 
 docs-site validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -249485,7 +248893,6 @@ infra validation routes must stay stack-neutral unless a runner file explicitly 
 ## Repository Shape
 
 docs-site validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -249533,7 +248940,6 @@ infra validation routes must stay stack-neutral unless a runner file explicitly 
 ## Repository Shape
 
 docs-site validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -249581,7 +248987,6 @@ infra validation routes must stay stack-neutral unless a runner file explicitly 
 ## Repository Shape
 
 docs-site validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -251139,7 +250544,6 @@ infra validation routes must stay stack-neutral unless a runner file explicitly 
 ## Repository Shape
 
 docs-site validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 		],
@@ -251761,7 +251165,6 @@ infra validation routes must stay stack-neutral unless a runner file explicitly 
 ## Repository Shape
 
 monorepo validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -251809,7 +251212,6 @@ infra validation routes must stay stack-neutral unless a runner file explicitly 
 ## Repository Shape
 
 monorepo validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -251857,7 +251259,6 @@ infra validation routes must stay stack-neutral unless a runner file explicitly 
 ## Repository Shape
 
 monorepo validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -251905,7 +251306,6 @@ infra validation routes must stay stack-neutral unless a runner file explicitly 
 ## Repository Shape
 
 monorepo validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -251953,7 +251353,6 @@ infra validation routes must stay stack-neutral unless a runner file explicitly 
 ## Repository Shape
 
 monorepo validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -253511,7 +252910,6 @@ infra validation routes must stay stack-neutral unless a runner file explicitly 
 ## Repository Shape
 
 monorepo validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 		],
@@ -254058,7 +253456,6 @@ tracked secret files, ignored build/cache artifacts, and generated-output drift.
 ## Scope
 
 data validation routes must stay stack-neutral unless a runner file explicitly defines a command.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -254102,7 +253499,6 @@ tracked secret files, ignored build/cache artifacts, and generated-output drift.
 ## Scope
 
 data validation routes must stay stack-neutral unless a runner file explicitly defines a command.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -254146,7 +253542,6 @@ tracked secret files, ignored build/cache artifacts, and generated-output drift.
 ## Scope
 
 data validation routes must stay stack-neutral unless a runner file explicitly defines a command.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -254190,7 +253585,6 @@ tracked secret files, ignored build/cache artifacts, and generated-output drift.
 ## Scope
 
 data validation routes must stay stack-neutral unless a runner file explicitly defines a command.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -255637,7 +255031,6 @@ tracked secret files, ignored build/cache artifacts, and generated-output drift.
 ## Scope
 
 data validation routes must stay stack-neutral unless a runner file explicitly defines a command.
-
 "#,
 	},
 		],
@@ -256259,7 +255652,6 @@ data validation routes must stay stack-neutral unless a runner file explicitly d
 ## Repository Shape
 
 cli-tool validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -256307,7 +255699,6 @@ data validation routes must stay stack-neutral unless a runner file explicitly d
 ## Repository Shape
 
 cli-tool validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -256355,7 +255746,6 @@ data validation routes must stay stack-neutral unless a runner file explicitly d
 ## Repository Shape
 
 cli-tool validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -256403,7 +255793,6 @@ data validation routes must stay stack-neutral unless a runner file explicitly d
 ## Repository Shape
 
 cli-tool validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -256451,7 +255840,6 @@ data validation routes must stay stack-neutral unless a runner file explicitly d
 ## Repository Shape
 
 cli-tool validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -258047,7 +257435,6 @@ data validation routes must stay stack-neutral unless a runner file explicitly d
 ## Repository Shape
 
 cli-tool validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 		],
@@ -258669,7 +258056,6 @@ data validation routes must stay stack-neutral unless a runner file explicitly d
 ## Repository Shape
 
 api-service validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -258717,7 +258103,6 @@ data validation routes must stay stack-neutral unless a runner file explicitly d
 ## Repository Shape
 
 api-service validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -258765,7 +258150,6 @@ data validation routes must stay stack-neutral unless a runner file explicitly d
 ## Repository Shape
 
 api-service validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -258813,7 +258197,6 @@ data validation routes must stay stack-neutral unless a runner file explicitly d
 ## Repository Shape
 
 api-service validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -258861,7 +258244,6 @@ data validation routes must stay stack-neutral unless a runner file explicitly d
 ## Repository Shape
 
 api-service validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -260629,7 +260011,6 @@ data validation routes must stay stack-neutral unless a runner file explicitly d
 ## Repository Shape
 
 api-service validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 		],
@@ -261251,7 +260632,6 @@ data validation routes must stay stack-neutral unless a runner file explicitly d
 ## Repository Shape
 
 desktop-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -261299,7 +260679,6 @@ data validation routes must stay stack-neutral unless a runner file explicitly d
 ## Repository Shape
 
 desktop-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -261347,7 +260726,6 @@ data validation routes must stay stack-neutral unless a runner file explicitly d
 ## Repository Shape
 
 desktop-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -261395,7 +260773,6 @@ data validation routes must stay stack-neutral unless a runner file explicitly d
 ## Repository Shape
 
 desktop-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -261443,7 +260820,6 @@ data validation routes must stay stack-neutral unless a runner file explicitly d
 ## Repository Shape
 
 desktop-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -263040,7 +262416,6 @@ data validation routes must stay stack-neutral unless a runner file explicitly d
 ## Repository Shape
 
 desktop-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 		],
@@ -263662,7 +263037,6 @@ data validation routes must stay stack-neutral unless a runner file explicitly d
 ## Repository Shape
 
 library validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -263710,7 +263084,6 @@ data validation routes must stay stack-neutral unless a runner file explicitly d
 ## Repository Shape
 
 library validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -263758,7 +263131,6 @@ data validation routes must stay stack-neutral unless a runner file explicitly d
 ## Repository Shape
 
 library validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -263806,7 +263178,6 @@ data validation routes must stay stack-neutral unless a runner file explicitly d
 ## Repository Shape
 
 library validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -263854,7 +263225,6 @@ data validation routes must stay stack-neutral unless a runner file explicitly d
 ## Repository Shape
 
 library validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -265451,7 +264821,6 @@ data validation routes must stay stack-neutral unless a runner file explicitly d
 ## Repository Shape
 
 library validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 		],
@@ -266073,7 +265442,6 @@ data validation routes must stay stack-neutral unless a runner file explicitly d
 ## Repository Shape
 
 web-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -266121,7 +265489,6 @@ data validation routes must stay stack-neutral unless a runner file explicitly d
 ## Repository Shape
 
 web-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -266169,7 +265536,6 @@ data validation routes must stay stack-neutral unless a runner file explicitly d
 ## Repository Shape
 
 web-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -266217,7 +265583,6 @@ data validation routes must stay stack-neutral unless a runner file explicitly d
 ## Repository Shape
 
 web-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -266265,7 +265630,6 @@ data validation routes must stay stack-neutral unless a runner file explicitly d
 ## Repository Shape
 
 web-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -267823,7 +267187,6 @@ data validation routes must stay stack-neutral unless a runner file explicitly d
 ## Repository Shape
 
 web-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 		],
@@ -268445,7 +267808,6 @@ data validation routes must stay stack-neutral unless a runner file explicitly d
 ## Repository Shape
 
 mobile-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -268493,7 +267855,6 @@ data validation routes must stay stack-neutral unless a runner file explicitly d
 ## Repository Shape
 
 mobile-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -268541,7 +267902,6 @@ data validation routes must stay stack-neutral unless a runner file explicitly d
 ## Repository Shape
 
 mobile-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -268589,7 +267949,6 @@ data validation routes must stay stack-neutral unless a runner file explicitly d
 ## Repository Shape
 
 mobile-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -268637,7 +267996,6 @@ data validation routes must stay stack-neutral unless a runner file explicitly d
 ## Repository Shape
 
 mobile-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -270195,7 +269553,6 @@ data validation routes must stay stack-neutral unless a runner file explicitly d
 ## Repository Shape
 
 mobile-app validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 		],
@@ -270817,7 +270174,6 @@ data validation routes must stay stack-neutral unless a runner file explicitly d
 ## Repository Shape
 
 sdk validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -270865,7 +270221,6 @@ data validation routes must stay stack-neutral unless a runner file explicitly d
 ## Repository Shape
 
 sdk validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -270913,7 +270268,6 @@ data validation routes must stay stack-neutral unless a runner file explicitly d
 ## Repository Shape
 
 sdk validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -270961,7 +270315,6 @@ data validation routes must stay stack-neutral unless a runner file explicitly d
 ## Repository Shape
 
 sdk validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -271009,7 +270362,6 @@ data validation routes must stay stack-neutral unless a runner file explicitly d
 ## Repository Shape
 
 sdk validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -272567,7 +271919,6 @@ data validation routes must stay stack-neutral unless a runner file explicitly d
 ## Repository Shape
 
 sdk validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 		],
@@ -273189,7 +272540,6 @@ data validation routes must stay stack-neutral unless a runner file explicitly d
 ## Repository Shape
 
 worker-service validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -273237,7 +272587,6 @@ data validation routes must stay stack-neutral unless a runner file explicitly d
 ## Repository Shape
 
 worker-service validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -273285,7 +272634,6 @@ data validation routes must stay stack-neutral unless a runner file explicitly d
 ## Repository Shape
 
 worker-service validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -273333,7 +272681,6 @@ data validation routes must stay stack-neutral unless a runner file explicitly d
 ## Repository Shape
 
 worker-service validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -273381,7 +272728,6 @@ data validation routes must stay stack-neutral unless a runner file explicitly d
 ## Repository Shape
 
 worker-service validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -274939,7 +274285,6 @@ data validation routes must stay stack-neutral unless a runner file explicitly d
 ## Repository Shape
 
 worker-service validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 		],
@@ -275561,7 +274906,6 @@ data validation routes must stay stack-neutral unless a runner file explicitly d
 ## Repository Shape
 
 infra-module validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -275609,7 +274953,6 @@ data validation routes must stay stack-neutral unless a runner file explicitly d
 ## Repository Shape
 
 infra-module validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -275657,7 +275000,6 @@ data validation routes must stay stack-neutral unless a runner file explicitly d
 ## Repository Shape
 
 infra-module validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -275705,7 +275047,6 @@ data validation routes must stay stack-neutral unless a runner file explicitly d
 ## Repository Shape
 
 infra-module validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -275753,7 +275094,6 @@ data validation routes must stay stack-neutral unless a runner file explicitly d
 ## Repository Shape
 
 infra-module validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -277311,7 +276651,6 @@ data validation routes must stay stack-neutral unless a runner file explicitly d
 ## Repository Shape
 
 infra-module validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 		],
@@ -277863,7 +277202,6 @@ data validation routes must stay stack-neutral unless a runner file explicitly d
 ## Repository Shape
 
 data-pipeline validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -277911,7 +277249,6 @@ data validation routes must stay stack-neutral unless a runner file explicitly d
 ## Repository Shape
 
 data-pipeline validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -277959,7 +277296,6 @@ data validation routes must stay stack-neutral unless a runner file explicitly d
 ## Repository Shape
 
 data-pipeline validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -278007,7 +277343,6 @@ data validation routes must stay stack-neutral unless a runner file explicitly d
 ## Repository Shape
 
 data-pipeline validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -279565,7 +278900,6 @@ data validation routes must stay stack-neutral unless a runner file explicitly d
 ## Repository Shape
 
 data-pipeline validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 		],
@@ -280187,7 +279521,6 @@ data validation routes must stay stack-neutral unless a runner file explicitly d
 ## Repository Shape
 
 github-action validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -280235,7 +279568,6 @@ data validation routes must stay stack-neutral unless a runner file explicitly d
 ## Repository Shape
 
 github-action validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -280283,7 +279615,6 @@ data validation routes must stay stack-neutral unless a runner file explicitly d
 ## Repository Shape
 
 github-action validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -280331,7 +279662,6 @@ data validation routes must stay stack-neutral unless a runner file explicitly d
 ## Repository Shape
 
 github-action validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -280379,7 +279709,6 @@ data validation routes must stay stack-neutral unless a runner file explicitly d
 ## Repository Shape
 
 github-action validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -281969,7 +281298,6 @@ data validation routes must stay stack-neutral unless a runner file explicitly d
 ## Repository Shape
 
 github-action validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 		],
@@ -282591,7 +281919,6 @@ data validation routes must stay stack-neutral unless a runner file explicitly d
 ## Repository Shape
 
 browser-extension validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -282639,7 +281966,6 @@ data validation routes must stay stack-neutral unless a runner file explicitly d
 ## Repository Shape
 
 browser-extension validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -282687,7 +282013,6 @@ data validation routes must stay stack-neutral unless a runner file explicitly d
 ## Repository Shape
 
 browser-extension validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -282735,7 +282060,6 @@ data validation routes must stay stack-neutral unless a runner file explicitly d
 ## Repository Shape
 
 browser-extension validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -282783,7 +282107,6 @@ data validation routes must stay stack-neutral unless a runner file explicitly d
 ## Repository Shape
 
 browser-extension validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -284341,7 +283664,6 @@ data validation routes must stay stack-neutral unless a runner file explicitly d
 ## Repository Shape
 
 browser-extension validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 		],
@@ -284963,7 +284285,6 @@ data validation routes must stay stack-neutral unless a runner file explicitly d
 ## Repository Shape
 
 plugin validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -285011,7 +284332,6 @@ data validation routes must stay stack-neutral unless a runner file explicitly d
 ## Repository Shape
 
 plugin validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -285059,7 +284379,6 @@ data validation routes must stay stack-neutral unless a runner file explicitly d
 ## Repository Shape
 
 plugin validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -285107,7 +284426,6 @@ data validation routes must stay stack-neutral unless a runner file explicitly d
 ## Repository Shape
 
 plugin validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -285155,7 +284473,6 @@ data validation routes must stay stack-neutral unless a runner file explicitly d
 ## Repository Shape
 
 plugin validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -286713,7 +286030,6 @@ data validation routes must stay stack-neutral unless a runner file explicitly d
 ## Repository Shape
 
 plugin validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 		],
@@ -287335,7 +286651,6 @@ data validation routes must stay stack-neutral unless a runner file explicitly d
 ## Repository Shape
 
 docs-site validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -287383,7 +286698,6 @@ data validation routes must stay stack-neutral unless a runner file explicitly d
 ## Repository Shape
 
 docs-site validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -287431,7 +286745,6 @@ data validation routes must stay stack-neutral unless a runner file explicitly d
 ## Repository Shape
 
 docs-site validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -287479,7 +286792,6 @@ data validation routes must stay stack-neutral unless a runner file explicitly d
 ## Repository Shape
 
 docs-site validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -287527,7 +286839,6 @@ data validation routes must stay stack-neutral unless a runner file explicitly d
 ## Repository Shape
 
 docs-site validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -289085,7 +288396,6 @@ data validation routes must stay stack-neutral unless a runner file explicitly d
 ## Repository Shape
 
 docs-site validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 		],
@@ -289707,7 +289017,6 @@ data validation routes must stay stack-neutral unless a runner file explicitly d
 ## Repository Shape
 
 monorepo validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -289755,7 +289064,6 @@ data validation routes must stay stack-neutral unless a runner file explicitly d
 ## Repository Shape
 
 monorepo validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -289803,7 +289111,6 @@ data validation routes must stay stack-neutral unless a runner file explicitly d
 ## Repository Shape
 
 monorepo validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -289851,7 +289158,6 @@ data validation routes must stay stack-neutral unless a runner file explicitly d
 ## Repository Shape
 
 monorepo validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -289899,7 +289205,6 @@ data validation routes must stay stack-neutral unless a runner file explicitly d
 ## Repository Shape
 
 monorepo validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 	SsealedScaffoldFile {
@@ -291457,7 +290762,6 @@ data validation routes must stay stack-neutral unless a runner file explicitly d
 ## Repository Shape
 
 monorepo validation must stay repository-shape focused and must not imply generated application source code.
-
 "#,
 	},
 		],
