@@ -14,7 +14,7 @@ pub struct SsealedScaffold {
 	pub files: &'static [SsealedScaffoldFile],
 }
 
-pub const SSEALED_SCAFFOLD_TOOL_VERSION: &str = "0.6.0";
+pub const SSEALED_SCAFFOLD_TOOL_VERSION: &str = "0.6.3";
 
 pub const SSEALED_SCAFFOLDS: &[SsealedScaffold] = &[
 	SsealedScaffold {
@@ -994,6 +994,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -3857,6 +3858,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -6869,6 +6871,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -9849,6 +9852,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -12862,6 +12866,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -15875,6 +15880,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -18849,6 +18855,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -21823,6 +21830,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -24797,6 +24805,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -27771,6 +27780,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -30745,6 +30755,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -33719,6 +33730,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -36725,6 +36737,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -39699,6 +39712,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -42673,6 +42687,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -45647,6 +45662,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -48393,6 +48409,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -50977,6 +50994,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -53710,6 +53728,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -56615,6 +56634,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -59349,6 +59369,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -62083,6 +62104,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -64778,6 +64800,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -67473,6 +67496,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -70168,6 +70192,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -72863,6 +72888,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -75558,6 +75584,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -78253,6 +78280,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -80980,6 +81008,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -83675,6 +83704,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -86370,6 +86400,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -89065,6 +89096,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -91856,6 +91888,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -95054,6 +95087,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -98401,6 +98435,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -101716,6 +101751,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -105064,6 +105100,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -108412,6 +108449,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -111721,6 +111759,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -115030,6 +115069,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -118339,6 +118379,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -121648,6 +121689,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -124957,6 +124999,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -128266,6 +128309,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -131607,6 +131651,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -134916,6 +134961,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -138225,6 +138271,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -141534,6 +141581,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -144330,6 +144378,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -146329,6 +146378,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -148476,6 +148526,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -150795,6 +150846,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -152943,6 +152995,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -155091,6 +155144,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -157200,6 +157254,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -159309,6 +159364,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -161418,6 +161474,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -163527,6 +163584,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -165636,6 +165694,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -167745,6 +167804,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -169886,6 +169946,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -171995,6 +172056,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -174104,6 +174166,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -176213,6 +176276,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -178303,6 +178367,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -180563,6 +180628,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -182972,6 +183038,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -185553,6 +185620,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -187963,6 +188031,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -190373,6 +190442,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -192626,6 +192696,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -194997,6 +195068,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -197368,6 +197440,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -199739,6 +199812,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -202110,6 +202184,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -204481,6 +204556,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -206884,6 +206960,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -209255,6 +209332,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -211626,6 +211704,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -213997,6 +214076,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -216233,6 +216313,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -218493,6 +218574,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -220902,6 +220984,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -223483,6 +223566,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -225893,6 +225977,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -228303,6 +228388,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -230674,6 +230760,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -233045,6 +233132,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -235416,6 +235504,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -237787,6 +237876,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -240158,6 +240248,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -242529,6 +242620,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -244932,6 +245024,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -247303,6 +247396,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -249674,6 +249768,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -252045,6 +252140,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -254281,6 +254377,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -256541,6 +256638,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -258950,6 +259048,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -261531,6 +261630,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -263941,6 +264041,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -266351,6 +266452,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -268722,6 +268824,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -271093,6 +271196,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -273464,6 +273568,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -275835,6 +275940,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -278088,6 +278194,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -280459,6 +280566,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -282862,6 +282970,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -285233,6 +285342,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -287604,6 +287714,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
@@ -289975,6 +290086,7 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.ssealed-init.lock
 node_modules/
 dist/
 build/
