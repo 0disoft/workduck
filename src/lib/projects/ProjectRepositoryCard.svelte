@@ -43,6 +43,7 @@
 		readonly onInitialize: () => Promise<void>;
 		readonly onPublish: () => void;
 		readonly onQueueCommitWorkOrder: () => Promise<void>;
+		readonly onFavoriteToggle: () => Promise<void>;
 		readonly onGitAction: (action: ProjectRepositoryGitAction) => Promise<void>;
 	}
 
@@ -71,6 +72,7 @@
 		onInitialize,
 		onPublish,
 		onQueueCommitWorkOrder,
+		onFavoriteToggle,
 		onGitAction
 	}: Props = $props();
 
@@ -104,6 +106,11 @@
 
 		return error;
 	});
+
+	function handleFavoriteToggle(event: MouseEvent) {
+		event.stopPropagation();
+		void onFavoriteToggle();
+	}
 </script>
 
 <!-- svelte-ignore a11y_no_static_element_interactions -->
@@ -116,7 +123,24 @@
 	oncontextmenu={onContextMenu}
 >
 	<div class="workduck-project-card-header">
-		<strong class="workduck-project-card-name">{repository.name}</strong>
+		<div class="workduck-repository-card-title">
+			<button
+				class="workduck-repository-favorite-button"
+				class:workduck-repository-favorite-button-active={repository.favorite}
+				type="button"
+				aria-pressed={repository.favorite}
+				aria-label={repository.favorite
+					? projectMessages.repository.unfavorite
+					: projectMessages.repository.favorite}
+				title={repository.favorite
+					? projectMessages.repository.unfavorite
+					: projectMessages.repository.favorite}
+				onclick={handleFavoriteToggle}
+			>
+				<span aria-hidden="true">★</span>
+			</button>
+			<strong class="workduck-project-card-name">{repository.name}</strong>
+		</div>
 		<span class="workduck-project-card-kind">{repositoryCardKind}</span>
 		{#if repositoryBusy}
 			<span class="workduck-repository-busy-indicator" aria-hidden="true"></span>

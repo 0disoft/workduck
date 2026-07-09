@@ -4,6 +4,7 @@ export const frProjectsMessages = {
 	newRepository: 'Nouveau dépôt',
 	registeredCount: '{count} projets racines',
 	filters: {
+		favorites: 'Favoris',
 		pullNeeded: 'Pull requis',
 		pushNeeded: 'Push requis',
 		commitNeeded: 'Commit requis',
@@ -25,7 +26,11 @@ export const frProjectsMessages = {
 		uncommittedChanges: 'Modifications non validées (uncommitted)',
 		queueCommitWorkOrder: 'Ajouter tâche de commit',
 		commitWorkOrderQueued: 'Tâche de commit ajoutée : {relativePath}',
-		githubCredentialSaved: 'Identifiant GitHub enregistré.'
+		githubCredentialSaved: 'Identifiant GitHub enregistré.',
+		favorite: 'Ajouter aux favoris',
+		unfavorite: 'Retirer des favoris',
+		favoriteAdded: 'Ajouté aux favoris.',
+		favoriteRemoved: 'Retiré des favoris.'
 	},
 	operations: {
 		running: {
@@ -115,6 +120,8 @@ export const frProjectsMessages = {
 		githubCredential: 'Identifiant GitHub',
 		remoteUrl: 'URL distante',
 		editTags: 'Modifier les tags',
+		addFavorite: 'Ajouter aux favoris',
+		removeFavorite: 'Retirer des favoris',
 		delete: 'Supprimer',
 		clone: 'Cloner',
 		initializeGit: 'Initialize Git',

@@ -8,7 +8,7 @@ import {
 	type ProjectTreeRow
 } from './project-registry';
 
-export type ProjectRepositorySyncFilter = 'all' | 'pull' | 'push' | 'commit';
+export type ProjectRepositorySyncFilter = 'all' | 'favorite' | 'pull' | 'push' | 'commit';
 
 export interface ProjectRepositoryGitStatus {
 	readonly isGitRepository: boolean;
@@ -23,6 +23,7 @@ export interface ProjectRepositoryGitStatus {
 }
 
 export interface ProjectRepositoryFilterStats {
+	readonly favorites: number;
 	readonly pullNeeded: number;
 	readonly pushNeeded: number;
 	readonly commitNeeded: number;
@@ -308,17 +309,19 @@ export function getRepositoryFilterStats(
 	index: ProjectBoardSelectionIndex,
 	gitStatusById: ProjectRepositoryGitStatusById
 ): ProjectRepositoryFilterStats {
+	let favorites = 0;
 	let pullNeeded = 0;
 	let pushNeeded = 0;
 	let commitNeeded = 0;
 
 	for (const repository of index.registeredRepositories) {
+		favorites += repository.favorite ? 1 : 0;
 		pullNeeded += repositoryMatchesSyncFilter(gitStatusById, repository, 'pull') ? 1 : 0;
 		pushNeeded += repositoryMatchesSyncFilter(gitStatusById, repository, 'push') ? 1 : 0;
 		commitNeeded += repositoryMatchesSyncFilter(gitStatusById, repository, 'commit') ? 1 : 0;
 	}
 
-	return { pullNeeded, pushNeeded, commitNeeded };
+	return { favorites, pullNeeded, pushNeeded, commitNeeded };
 }
 
 export function listRegisteredRepositories(nodes: readonly ProjectNodeRecord[]) {
@@ -465,6 +468,10 @@ function repositoryMatchesSyncFilter(
 ) {
 	if (syncFilter === 'all') {
 		return true;
+	}
+
+	if (syncFilter === 'favorite') {
+		return repository.favorite;
 	}
 
 	const gitStatus = gitStatusById[repository.id];

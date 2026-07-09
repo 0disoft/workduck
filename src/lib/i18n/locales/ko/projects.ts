@@ -4,6 +4,7 @@ export const koProjectsMessages = {
 		newRepository: '새 저장소',
 		registeredCount: '루트 프로젝트 {count}개',
 		filters: {
+			favorites: '즐겨찾기',
 			pullNeeded: 'Pull 필요',
 			pushNeeded: 'Push 필요',
 			commitNeeded: '커밋 필요',
@@ -25,7 +26,11 @@ export const koProjectsMessages = {
 			uncommittedChanges: '커밋되지 않은 변경 있음',
 			queueCommitWorkOrder: '커밋 작업 추가',
 			commitWorkOrderQueued: '커밋 작업을 추가했습니다: {relativePath}',
-			githubCredentialSaved: 'GitHub 인증을 저장했습니다.'
+			githubCredentialSaved: 'GitHub 인증을 저장했습니다.',
+			favorite: '즐겨찾기 등록',
+			unfavorite: '즐겨찾기 해제',
+			favoriteAdded: '즐겨찾기에 추가했습니다.',
+			favoriteRemoved: '즐겨찾기에서 해제했습니다.'
 		},
 		operations: {
 			running: {
@@ -115,6 +120,8 @@ export const koProjectsMessages = {
 			githubCredential: 'GitHub 인증',
 			remoteUrl: 'Remote URL',
 			editTags: '태그 수정',
+			addFavorite: '즐겨찾기 등록',
+			removeFavorite: '즐겨찾기 해제',
 			delete: '삭제',
 			clone: 'Clone',
 			initializeGit: 'Git 초기화',

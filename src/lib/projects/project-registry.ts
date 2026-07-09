@@ -41,6 +41,7 @@ export interface ProjectRepositoryLinkRecord {
 	readonly remoteUrl: string | null;
 	readonly upstreamRemoteUrl: string | null;
 	readonly githubCredentialSecretId: string | null;
+	readonly favorite: boolean;
 	readonly tags: readonly string[];
 	readonly createdAt: string;
 	readonly updatedAt: string;
@@ -122,6 +123,12 @@ export interface ProjectRepositoryRemoteUrlBackfillInput {
 	readonly repositoryId: string;
 	readonly remoteUrl: string | null;
 	readonly upstreamRemoteUrl?: string | null;
+}
+
+export interface ProjectRepositoryFavoriteUpdateInput {
+	readonly nodeId: string;
+	readonly repositoryId: string;
+	readonly favorite: boolean;
 }
 
 export interface ProjectNodeTagsUpdateInput {
@@ -411,6 +418,7 @@ export function addProjectRepositoryLink(
 		remoteUrl: remoteUrl.length === 0 ? null : remoteUrl,
 		upstreamRemoteUrl: upstreamRemoteUrl.length === 0 ? null : upstreamRemoteUrl,
 		githubCredentialSecretId,
+		favorite: false,
 		tags,
 		createdAt: timestamp,
 		updatedAt: timestamp
@@ -620,6 +628,54 @@ export function setProjectRepositoryTags(
 									? {
 											...repository,
 											tags,
+											updatedAt: timestamp
+										}
+									: repository
+							),
+							updatedAt: timestamp
+						}
+					: node
+			),
+			updatedAt: timestamp
+		}
+	};
+}
+
+export function setProjectRepositoryFavorite(
+	registry: ProjectRegistry,
+	input: ProjectRepositoryFavoriteUpdateInput,
+	now = new Date()
+): ProjectRegistryMutationResult {
+	const normalizedRegistry = normalizeProjectRegistry(registry, registry.workspaceId);
+	const targetNode = normalizedRegistry.nodes.find((node) => node.id === input.nodeId);
+
+	if (targetNode === undefined) {
+		return { ok: false, registry: normalizedRegistry, error: 'project-node-not-found' };
+	}
+
+	if (targetNode.kind !== 'group') {
+		return { ok: false, registry: normalizedRegistry, error: 'project-repository-target-invalid' };
+	}
+
+	if (!targetNode.repositories.some((repository) => repository.id === input.repositoryId)) {
+		return { ok: false, registry: normalizedRegistry, error: 'project-repository-not-found' };
+	}
+
+	const timestamp = now.toISOString();
+
+	return {
+		ok: true,
+		registry: {
+			...normalizedRegistry,
+			nodes: normalizedRegistry.nodes.map((node) =>
+				node.id === targetNode.id
+					? {
+							...node,
+							repositories: node.repositories.map((repository) =>
+								repository.id === input.repositoryId
+									? {
+											...repository,
+											favorite: input.favorite,
 											updatedAt: timestamp
 										}
 									: repository
@@ -1227,6 +1283,7 @@ function filterUniqueRepositories(
 					? null
 					: normalizeRepositoryRemoteUrl(repository.upstreamRemoteUrl) || null,
 			githubCredentialSecretId: normalizeRecordId(repository.githubCredentialSecretId),
+			favorite: repository.favorite === true,
 			tags: normalizeProjectTags(repository.tags)
 		});
 	}
@@ -1286,6 +1343,7 @@ function parseRepositoryLinkRecord(value: unknown): ProjectRepositoryLinkRecord 
 	const remoteUrl = normalizeRepositoryRemoteUrl(readTrimmedString(value.remoteUrl));
 	const upstreamRemoteUrl = normalizeRepositoryRemoteUrl(readTrimmedString(value.upstreamRemoteUrl));
 	const githubCredentialSecretId = normalizeRecordId(value.githubCredentialSecretId);
+	const favorite = value.favorite === true;
 	const tags = normalizeProjectTags(readStringArray(value.tags));
 	const createdAt = readTrimmedString(value.createdAt);
 	const updatedAt = readTrimmedString(value.updatedAt);
@@ -1301,6 +1359,7 @@ function parseRepositoryLinkRecord(value: unknown): ProjectRepositoryLinkRecord 
 		remoteUrl: remoteUrl.length === 0 ? null : remoteUrl,
 		upstreamRemoteUrl: upstreamRemoteUrl.length === 0 ? null : upstreamRemoteUrl,
 		githubCredentialSecretId,
+		favorite,
 		tags,
 		createdAt: createdAt.length === 0 ? updatedAt : createdAt,
 		updatedAt: updatedAt.length === 0 ? createdAt : updatedAt

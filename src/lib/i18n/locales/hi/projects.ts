@@ -4,6 +4,7 @@ export const hiProjectsMessages = {
 	newRepository: 'नई रिपॉजिटरी',
 	registeredCount: '{count} मुख्य परियोजनाएं',
 	filters: {
+		favorites: 'पसंदीदा',
 		pullNeeded: 'पुल की आवश्यकता है',
 		pushNeeded: 'पुश की आवश्यकता है',
 		commitNeeded: 'कमिट की आवश्यकता है',
@@ -25,7 +26,11 @@ export const hiProjectsMessages = {
 		uncommittedChanges: 'अप्रतिबद्ध (Uncommitted) बदलाव',
 		queueCommitWorkOrder: 'कमिट कार्य जोड़ें',
 		commitWorkOrderQueued: 'कमिट कार्य जोड़ा गया: {relativePath}',
-		githubCredentialSaved: 'GitHub क्रेडेंशियल सहेजा गया।'
+		githubCredentialSaved: 'GitHub क्रेडेंशियल सहेजा गया।',
+		favorite: 'पसंदीदा में जोड़ें',
+		unfavorite: 'पसंदीदा से हटाएं',
+		favoriteAdded: 'पसंदीदा में जोड़ा गया।',
+		favoriteRemoved: 'पसंदीदा से हटाया गया।'
 	},
 	operations: {
 		running: {
@@ -115,6 +120,8 @@ export const hiProjectsMessages = {
 		githubCredential: 'GitHub क्रेडेंशियल',
 		remoteUrl: 'रिमोट URL',
 		editTags: 'टैग संपादित करें',
+		addFavorite: 'पसंदीदा में जोड़ें',
+		removeFavorite: 'पसंदीदा से हटाएं',
 		delete: 'हटाएं',
 		clone: 'क्लोन करें',
 		initializeGit: 'Git प्रारंभ करें',

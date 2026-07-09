@@ -95,6 +95,7 @@
 		readonly canPublishContextRepository: boolean;
 		readonly canApplySsealedContextRepository: boolean;
 		readonly canEditContextGithubCredential: boolean;
+		readonly contextRepositoryFavorite: boolean;
 		readonly ssealedTarget: ProjectRepositoryTarget | null;
 		readonly ssealedScaffoldApplyScope: SsealedScaffoldApplyScope;
 		readonly ssealedScaffoldApplyProfile: SsealedScaffoldProfile;
@@ -122,6 +123,7 @@
 		readonly onInitializeRepository: () => Promise<void>;
 		readonly onPublishRepository: () => void;
 		readonly onApplySsealedRepository: () => void;
+		readonly onToggleRepositoryFavorite: () => Promise<void>;
 		readonly onRepositoryTask: (task: ProjectRepositoryTask) => Promise<void>;
 		readonly onSsealedScopeSelect: (scope: SsealedScaffoldApplyScope) => void;
 		readonly onSsealedProfileSelect: (profile: SsealedScaffoldProfile) => void;
@@ -189,14 +191,14 @@
 		canSaveGithubCredential, githubRepositoryVisibility, isPublishingRepository,
 		canSubmitPublishRepository, canSubmitDialog, canOpenContextFolder, canCloneContextRepository,
 		canInitializeContextRepository, canPublishContextRepository, canApplySsealedContextRepository,
-		canEditContextGithubCredential, ssealedTarget, ssealedScaffoldApplyScope, ssealedPreview,
+		canEditContextGithubCredential, contextRepositoryFavorite, ssealedTarget, ssealedScaffoldApplyScope, ssealedPreview,
 		ssealedScaffoldApplyProfile,
 		isPreviewingSsealed, isApplyingSsealed, canApplySsealedScaffold,
 		getDeleteDialogTitle, getDeleteDialogText, getDeleteLocalFolderLabel, getDeleteLocalFolderUnavailableText,
 		getVisibleFormErrorMessage, getTagsInputMaxLength, getDialogTitle, getDialogSubmitLabel,
 		isRepositoryRemoteUrlError, onOpenFolder, onEditDetails, onEditDescription, onEditGithubCredential,
 		onEditRemoteUrl, onEditTags, onDelete, onCloneRepository, onInitializeRepository, onPublishRepository,
-		onApplySsealedRepository, onRepositoryTask, onSsealedScopeSelect, onSsealedPreviewRefresh,
+		onApplySsealedRepository, onToggleRepositoryFavorite, onRepositoryTask, onSsealedScopeSelect, onSsealedPreviewRefresh,
 		onSsealedProfileSelect,
 		onSsealedApply, onSsealedBackdropClick, onSsealedClose,
 		onDeleteBackdropClick, onDeleteClose, onDeleteConfirm, onDescriptionInput, onDescriptionSubmit,
@@ -217,11 +219,13 @@
 	<ProjectContextMenu {contextMenu} {projectMessages} bind:contextMenuElement {canOpenContextFolder}
 		{canCloneContextRepository} {canInitializeContextRepository} {canPublishContextRepository}
 		{canApplySsealedContextRepository} {canEditContextGithubCredential}
+		{contextRepositoryFavorite}
 		onOpenFolder={onOpenFolder} onEditDetails={onEditDetails} onEditDescription={onEditDescription}
 		onEditGithubCredential={onEditGithubCredential} onEditRemoteUrl={onEditRemoteUrl}
 		onEditTags={onEditTags} onDelete={onDelete}
 		onCloneRepository={onCloneRepository} onInitializeRepository={onInitializeRepository}
 		onPublishRepository={onPublishRepository} onApplySsealedRepository={onApplySsealedRepository}
+		onToggleRepositoryFavorite={onToggleRepositoryFavorite}
 		onRepositoryTask={onRepositoryTask} />
 {/if}
 

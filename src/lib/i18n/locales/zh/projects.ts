@@ -4,6 +4,7 @@ export const zhProjectsMessages = {
 	newRepository: '新建仓库',
 	registeredCount: '{count} 个根项目',
 	filters: {
+		favorites: '收藏',
 		pullNeeded: '需拉取',
 		pushNeeded: '需推送',
 		commitNeeded: '需提交',
@@ -25,7 +26,11 @@ export const zhProjectsMessages = {
 		uncommittedChanges: '未提交的修改',
 		queueCommitWorkOrder: '添加提交任务',
 		commitWorkOrderQueued: '已添加提交任务：{relativePath}',
-		githubCredentialSaved: 'GitHub 凭据已保存。'
+		githubCredentialSaved: 'GitHub 凭据已保存。',
+		favorite: '添加收藏',
+		unfavorite: '取消收藏',
+		favoriteAdded: '已添加到收藏。',
+		favoriteRemoved: '已从收藏移除。'
 	},
 	operations: {
 		running: {
@@ -115,6 +120,8 @@ export const zhProjectsMessages = {
 		githubCredential: 'GitHub 凭据',
 		remoteUrl: '远程 URL',
 		editTags: '编辑标签',
+		addFavorite: '添加收藏',
+		removeFavorite: '取消收藏',
 		delete: '删除',
 		clone: '克隆',
 		initializeGit: '初始化 Git',

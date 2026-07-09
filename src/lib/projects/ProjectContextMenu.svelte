@@ -14,6 +14,7 @@
 		readonly canPublishContextRepository: boolean;
 		readonly canApplySsealedContextRepository: boolean;
 		readonly canEditContextGithubCredential: boolean;
+		readonly contextRepositoryFavorite: boolean;
 		readonly onOpenFolder: () => Promise<void>;
 		readonly onEditDetails: () => void;
 		readonly onEditDescription: () => void;
@@ -25,6 +26,7 @@
 		readonly onInitializeRepository: () => Promise<void>;
 		readonly onPublishRepository: () => void;
 		readonly onApplySsealedRepository: () => void;
+		readonly onToggleRepositoryFavorite: () => Promise<void>;
 		readonly onRepositoryTask: (task: ProjectRepositoryTask) => Promise<void>;
 	}
 
@@ -38,6 +40,7 @@
 		canPublishContextRepository,
 		canApplySsealedContextRepository,
 		canEditContextGithubCredential,
+		contextRepositoryFavorite,
 		onOpenFolder,
 		onEditDetails,
 		onEditDescription,
@@ -49,6 +52,7 @@
 		onInitializeRepository,
 		onPublishRepository,
 		onApplySsealedRepository,
+		onToggleRepositoryFavorite,
 		onRepositoryTask
 	}: Props = $props();
 </script>
@@ -149,6 +153,16 @@
 				{projectMessages.contextMenu.applySsealed}
 			</button>
 		{/if}
+		<button
+			class="workduck-context-menu-item"
+			type="button"
+			role="menuitem"
+			onclick={() => void onToggleRepositoryFavorite()}
+		>
+			{contextRepositoryFavorite
+				? projectMessages.contextMenu.removeFavorite
+				: projectMessages.contextMenu.addFavorite}
+		</button>
 		{#if canOpenContextFolder}
 			<button
 				class="workduck-context-menu-item"

@@ -4,6 +4,7 @@ export const enProjectsMessages = {
 		newRepository: 'New repository',
 		registeredCount: '{count} root projects',
 		filters: {
+			favorites: 'Favorites',
 			pullNeeded: 'Pull needed',
 			pushNeeded: 'Push needed',
 			commitNeeded: 'Commit needed',
@@ -25,7 +26,11 @@ export const enProjectsMessages = {
 			uncommittedChanges: 'Uncommitted changes',
 			queueCommitWorkOrder: 'Add commit work',
 			commitWorkOrderQueued: 'Added commit work: {relativePath}',
-			githubCredentialSaved: 'GitHub credential saved.'
+			githubCredentialSaved: 'GitHub credential saved.',
+			favorite: 'Add favorite',
+			unfavorite: 'Remove favorite',
+			favoriteAdded: 'Added to favorites.',
+			favoriteRemoved: 'Removed from favorites.'
 		},
 		operations: {
 			running: {
@@ -115,6 +120,8 @@ export const enProjectsMessages = {
 			githubCredential: 'GitHub credential',
 			remoteUrl: 'Remote URL',
 			editTags: 'Edit tags',
+			addFavorite: 'Add favorite',
+			removeFavorite: 'Remove favorite',
 			delete: 'Delete',
 			clone: 'Clone',
 			initializeGit: 'Initialize Git',

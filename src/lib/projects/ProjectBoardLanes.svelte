@@ -20,6 +20,7 @@
 	import ProjectRepositoryCard from './ProjectRepositoryCard.svelte';
 
 	interface RepositoryFilterStats {
+		readonly favorites: number;
 		readonly pullNeeded: number;
 		readonly pushNeeded: number;
 		readonly commitNeeded: number;
@@ -95,6 +96,10 @@
 			node: ProjectNodeRecord,
 			repository: ProjectRepositoryLinkRecord
 		) => Promise<void>;
+		readonly onRepositoryFavoriteToggle: (
+			node: ProjectNodeRecord,
+			repository: ProjectRepositoryLinkRecord
+		) => Promise<void>;
 		readonly onGitAction: (
 			node: ProjectNodeRecord,
 			repository: ProjectRepositoryLinkRecord,
@@ -113,7 +118,7 @@
 		canPublishRepositoryToGithub, canQueueRepositoryCommitWorkOrder,
 		canRunRemoteRepositoryGitAction, isRepositoryOperationRunning,
 		onCloneRepository, onInitializeRepository, onPublishRepository,
-		onQueueRepositoryCommitWorkOrder, onGitAction
+		onQueueRepositoryCommitWorkOrder, onRepositoryFavoriteToggle, onGitAction
 	}: Props = $props();
 
 	let projectCountLabel = $derived(
@@ -135,6 +140,13 @@
 		<PageTitleRow {title} meta={projectCountLabel} />
 		<div class="workduck-page-actions workduck-project-header-actions">
 			<div class="workduck-project-sync-filters" aria-label="Repository sync filters">
+				<button class="workduck-project-sync-filter-button"
+					class:workduck-project-sync-filter-button-active={repositorySyncFilter === 'favorite'}
+					type="button" aria-pressed={repositorySyncFilter === 'favorite'}
+					onclick={() => onRepositorySyncFilterSelect('favorite')}>
+					{projectMessages.filters.favorites}
+					<span>{repositoryFilterStats.favorites}</span>
+				</button>
 				<button class="workduck-project-sync-filter-button"
 					class:workduck-project-sync-filter-button-active={repositorySyncFilter === 'pull'}
 					type="button" aria-pressed={repositorySyncFilter === 'pull'}
@@ -266,6 +278,7 @@
 												onInitialize={() => onInitializeRepository(node, repository)}
 												onPublish={() => onPublishRepository(node, repository)}
 												onQueueCommitWorkOrder={() => onQueueRepositoryCommitWorkOrder(node, repository)}
+												onFavoriteToggle={() => onRepositoryFavoriteToggle(node, repository)}
 												onGitAction={(action) => onGitAction(node, repository, action)} />
 										{/each}
 									</div>

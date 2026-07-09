@@ -29,6 +29,7 @@
 
 	import {
 		createEmptyProjectRegistry,
+		setProjectRepositoryFavorite,
 		type ProjectNodeRecord,
 		type ProjectRegistry,
 		type ProjectRepositoryLinkRecord
@@ -992,6 +993,55 @@
 		closeContextMenu();
 	}
 
+	async function setRepositoryFavorite(
+		node: ProjectNodeRecord,
+		repository: ProjectRepositoryLinkRecord,
+		favorite: boolean
+	) {
+		const result = setProjectRepositoryFavorite(
+			registry,
+			{
+				nodeId: node.id,
+				repositoryId: repository.id,
+				favorite
+			}
+		);
+
+		if (!result.ok) {
+			formError = result.error;
+			return;
+		}
+
+		formError = null;
+		if (!(await persistRegistry(result.registry))) {
+			return;
+		}
+
+		status = favorite
+			? projectMessages.repository.favoriteAdded
+			: projectMessages.repository.favoriteRemoved;
+	}
+
+	async function toggleRepositoryFavorite(
+		node: ProjectNodeRecord,
+		repository: ProjectRepositoryLinkRecord
+	) {
+		await setRepositoryFavorite(node, repository, !repository.favorite);
+	}
+
+	async function toggleContextRepositoryFavorite() {
+		const target = contextMenuRepository;
+
+		closeContextMenu();
+
+		if (target === null) {
+			formError = 'project-repository-not-found';
+			return;
+		}
+
+		await setRepositoryFavorite(target.node, target.repository, !target.repository.favorite);
+	}
+
 	function getDeleteDialogTitle() { return getProjectDeleteDialogTitle(deleteCandidate, projectMessages.deleteDialog); }
 
 	function getDeleteDialogText() { return getProjectDeleteDialogText(deleteCandidate, projectMessages.deleteDialog); }
@@ -1316,6 +1366,7 @@
 	onInitializeRepository={contextMenuActions.openInitializeRepositoryForTarget}
 	onPublishRepository={openPublishRepositoryDialog}
 	onQueueRepositoryCommitWorkOrder={queueRepositoryCommitWorkOrder}
+	onRepositoryFavoriteToggle={toggleRepositoryFavorite}
 	onGitAction={(node, repository, action) => runRepositoryGitAction({ node, repository }, action)}
 />
 
@@ -1393,6 +1444,7 @@
 	{canInitializeContextRepository}
 	{canPublishContextRepository}
 	{canApplySsealedContextRepository}
+	contextRepositoryFavorite={contextMenuRepository?.repository.favorite === true}
 	{ssealedScaffoldApplyScope}
 	{ssealedScaffoldApplyProfile}
 	{ssealedPreview}
@@ -1417,6 +1469,7 @@
 	onInitializeRepository={contextMenuActions.openContextInitializeRepository}
 	onPublishRepository={contextMenuActions.openContextPublishRepository}
 	onApplySsealedRepository={contextMenuActions.openContextApplySsealedRepository}
+	onToggleRepositoryFavorite={toggleContextRepositoryFavorite}
 	onRepositoryTask={contextMenuActions.openContextRepositoryTask}
 	onSsealedScopeSelect={selectSsealedScaffoldApplyScope}
 	onSsealedProfileSelect={selectSsealedScaffoldApplyProfile}

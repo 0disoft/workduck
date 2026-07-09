@@ -206,6 +206,13 @@
 	gap: 10px;
 }
 
+.workduck-repository-card-title {
+	display: flex;
+	min-width: 0;
+	align-items: center;
+	gap: 7px;
+}
+
 .workduck-project-card-name,
 .workduck-project-card-kind,
 .workduck-project-card-path,
@@ -221,6 +228,38 @@
 	color: var(--workduck-color-text);
 	font-size: var(--workduck-font-size-md);
 	font-weight: 800;
+}
+
+.workduck-repository-favorite-button {
+	display: inline-flex;
+	width: 24px;
+	height: 24px;
+	flex: 0 0 24px;
+	align-items: center;
+	justify-content: center;
+	padding: 0;
+	border: 1px solid oklch(var(--workduck-oklch-border) / 0.82);
+	border-radius: 7px;
+	background: oklch(var(--workduck-oklch-surface) / 0.42);
+	color: var(--workduck-color-muted);
+	font: inherit;
+	font-size: var(--workduck-font-size-sm);
+	font-weight: 900;
+	line-height: 1;
+	cursor: pointer;
+}
+
+.workduck-repository-favorite-button:hover,
+.workduck-repository-favorite-button:focus-visible {
+	border-color: oklch(var(--workduck-oklch-accent) / 0.82);
+	color: var(--workduck-color-accent);
+	outline: 0;
+}
+
+.workduck-repository-favorite-button-active {
+	border-color: oklch(var(--workduck-oklch-accent) / 0.88);
+	background: oklch(var(--workduck-oklch-accent) / 0.14);
+	color: var(--workduck-color-accent);
 }
 
 .workduck-project-card-kind {
