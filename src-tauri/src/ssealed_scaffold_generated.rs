@@ -14,7 +14,7 @@ pub struct SsealedScaffold {
 	pub files: &'static [SsealedScaffoldFile],
 }
 
-pub const SSEALED_SCAFFOLD_TOOL_VERSION: &str = "0.6.6";
+pub const SSEALED_SCAFFOLD_TOOL_VERSION: &str = "0.6.8";
 
 pub const SSEALED_SCAFFOLDS: &[SsealedScaffold] = &[
 	SsealedScaffold {
@@ -190,9 +190,13 @@ Auth bypass, authorization gaps, tenant leakage, unsafe inputs or outputs, secre
 
 - Backend API route: .agents/skills/backend-api/SKILL.md
 - DB migration route: .agents/skills/db-migration/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -1016,8 +1020,7 @@ authorization, persistence, migrations, observability, and backend security.
 This repository does not own frontend routing, visual design, component hierarchy,
 design tokens, or browser interaction policy.
 
-Frontend-facing behavior is contracted through `api/openapi.yaml`, `api/examples/*.json`,
-`docs/backend/04-http-api-policy.md`, and `docs/backend/05-error-response.md`.
+Frontend-facing behavior is contracted through `api/openapi.yaml`, `api/examples/*.json`, `docs/backend/04-http-api-policy.md`, and `docs/backend/05-error-response.md`.
 
 
 
@@ -1297,10 +1300,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Backend API changes: .agents/checklists/backend-api.md
 - DB migration changes: .agents/checklists/db-migration.md
@@ -2935,9 +2938,13 @@ Auth bypass, authorization gaps, tenant leakage, unsafe inputs or outputs, secre
 - Backend API route: .agents/skills/backend-api/SKILL.md
 - DB migration route: .agents/skills/db-migration/SKILL.md
 - CLI tool route: .agents/skills/cli-tool/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -3873,8 +3880,7 @@ authorization, persistence, migrations, observability, and backend security.
 This repository does not own frontend routing, visual design, component hierarchy,
 design tokens, or browser interaction policy.
 
-Frontend-facing behavior is contracted through `api/openapi.yaml`, `api/examples/*.json`,
-`docs/backend/04-http-api-policy.md`, and `docs/backend/05-error-response.md`.
+Frontend-facing behavior is contracted through `api/openapi.yaml`, `api/examples/*.json`, `docs/backend/04-http-api-policy.md`, and `docs/backend/05-error-response.md`.
 
 ## Repository Shape
 
@@ -4160,10 +4166,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Backend API changes: .agents/checklists/backend-api.md
 - DB migration changes: .agents/checklists/db-migration.md
@@ -5654,8 +5660,8 @@ It is intentionally a scaffold and should be filled with project-specific decisi
 - Agent routing source: .agents/context-map.md
 - Repository hygiene source: .editorconfig, .gitattributes, .gitignore
 - CLI command contract source: docs/cli/command-contract.md
-- CLI output and exit-code source: docs/cli/output-and-exit-codes.md
 - CLI config source: docs/cli/configuration.md
+- CLI output and exit-code source: docs/cli/output-and-exit-codes.md
 "#,
 	},
 	SsealedScaffoldFile {
@@ -5941,9 +5947,13 @@ Auth bypass, authorization gaps, tenant leakage, unsafe inputs or outputs, secre
 - Backend API route: .agents/skills/backend-api/SKILL.md
 - DB migration route: .agents/skills/db-migration/SKILL.md
 - API service route: .agents/skills/api-service/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -6879,8 +6889,7 @@ authorization, persistence, migrations, observability, and backend security.
 This repository does not own frontend routing, visual design, component hierarchy,
 design tokens, or browser interaction policy.
 
-Frontend-facing behavior is contracted through `api/openapi.yaml`, `api/examples/*.json`,
-`docs/backend/04-http-api-policy.md`, and `docs/backend/05-error-response.md`.
+Frontend-facing behavior is contracted through `api/openapi.yaml`, `api/examples/*.json`, `docs/backend/04-http-api-policy.md`, and `docs/backend/05-error-response.md`.
 
 ## Repository Shape
 
@@ -7166,10 +7175,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Backend API changes: .agents/checklists/backend-api.md
 - DB migration changes: .agents/checklists/db-migration.md
@@ -8628,8 +8637,6 @@ It is intentionally a scaffold and should be filled with project-specific decisi
 - Repository hygiene source: .editorconfig, .gitattributes, .gitignore
 - API lifecycle source: docs/api-service/api-lifecycle.md
 - API idempotency source: docs/api-service/idempotency.md
-- API rate-limit source: docs/api-service/rate-limits.md
-- API service SLO source: docs/api-service/slo.md
 "#,
 	},
 	SsealedScaffoldFile {
@@ -8915,9 +8922,13 @@ Auth bypass, authorization gaps, tenant leakage, unsafe inputs or outputs, secre
 - Backend API route: .agents/skills/backend-api/SKILL.md
 - DB migration route: .agents/skills/db-migration/SKILL.md
 - Desktop app route: .agents/skills/desktop-app/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -9853,8 +9864,7 @@ authorization, persistence, migrations, observability, and backend security.
 This repository does not own frontend routing, visual design, component hierarchy,
 design tokens, or browser interaction policy.
 
-Frontend-facing behavior is contracted through `api/openapi.yaml`, `api/examples/*.json`,
-`docs/backend/04-http-api-policy.md`, and `docs/backend/05-error-response.md`.
+Frontend-facing behavior is contracted through `api/openapi.yaml`, `api/examples/*.json`, `docs/backend/04-http-api-policy.md`, and `docs/backend/05-error-response.md`.
 
 ## Repository Shape
 
@@ -10140,10 +10150,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Backend API changes: .agents/checklists/backend-api.md
 - DB migration changes: .agents/checklists/db-migration.md
@@ -11636,7 +11646,6 @@ It is intentionally a scaffold and should be filled with project-specific decisi
 - Desktop installer source: docs/desktop/installers.md
 - Desktop auto-update source: docs/desktop/auto-update.md
 - Desktop local data source: docs/desktop/local-data.md
-- Desktop OS support source: docs/desktop/os-support.md
 "#,
 	},
 	SsealedScaffoldFile {
@@ -11922,9 +11931,13 @@ Auth bypass, authorization gaps, tenant leakage, unsafe inputs or outputs, secre
 - Backend API route: .agents/skills/backend-api/SKILL.md
 - DB migration route: .agents/skills/db-migration/SKILL.md
 - Library package route: .agents/skills/library-package/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -12860,8 +12873,7 @@ authorization, persistence, migrations, observability, and backend security.
 This repository does not own frontend routing, visual design, component hierarchy,
 design tokens, or browser interaction policy.
 
-Frontend-facing behavior is contracted through `api/openapi.yaml`, `api/examples/*.json`,
-`docs/backend/04-http-api-policy.md`, and `docs/backend/05-error-response.md`.
+Frontend-facing behavior is contracted through `api/openapi.yaml`, `api/examples/*.json`, `docs/backend/04-http-api-policy.md`, and `docs/backend/05-error-response.md`.
 
 ## Repository Shape
 
@@ -13147,10 +13159,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Backend API changes: .agents/checklists/backend-api.md
 - DB migration changes: .agents/checklists/db-migration.md
@@ -14643,7 +14655,6 @@ It is intentionally a scaffold and should be filled with project-specific decisi
 - Library public API source: docs/library/public-api.md
 - Library semver source: docs/library/semver.md
 - Library compatibility source: docs/library/compatibility.md
-- Library migration source: docs/library/migration-guide.md
 "#,
 	},
 	SsealedScaffoldFile {
@@ -14929,9 +14940,13 @@ Source-of-truth drift, missing validation, missing tests, rollback gaps, and own
 - Backend API route: .agents/skills/backend-api/SKILL.md
 - DB migration route: .agents/skills/db-migration/SKILL.md
 - Web app route: .agents/skills/web-app/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -15867,8 +15882,7 @@ authorization, persistence, migrations, observability, and backend security.
 This repository does not own frontend routing, visual design, component hierarchy,
 design tokens, or browser interaction policy.
 
-Frontend-facing behavior is contracted through `api/openapi.yaml`, `api/examples/*.json`,
-`docs/backend/04-http-api-policy.md`, and `docs/backend/05-error-response.md`.
+Frontend-facing behavior is contracted through `api/openapi.yaml`, `api/examples/*.json`, `docs/backend/04-http-api-policy.md`, and `docs/backend/05-error-response.md`.
 
 ## Repository Shape
 
@@ -16154,10 +16168,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Backend API changes: .agents/checklists/backend-api.md
 - DB migration changes: .agents/checklists/db-migration.md
@@ -17897,9 +17911,13 @@ Auth bypass, authorization gaps, tenant leakage, unsafe inputs or outputs, secre
 - Backend API route: .agents/skills/backend-api/SKILL.md
 - DB migration route: .agents/skills/db-migration/SKILL.md
 - Mobile app route: .agents/skills/mobile-app/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -18835,8 +18853,7 @@ authorization, persistence, migrations, observability, and backend security.
 This repository does not own frontend routing, visual design, component hierarchy,
 design tokens, or browser interaction policy.
 
-Frontend-facing behavior is contracted through `api/openapi.yaml`, `api/examples/*.json`,
-`docs/backend/04-http-api-policy.md`, and `docs/backend/05-error-response.md`.
+Frontend-facing behavior is contracted through `api/openapi.yaml`, `api/examples/*.json`, `docs/backend/04-http-api-policy.md`, and `docs/backend/05-error-response.md`.
 
 ## Repository Shape
 
@@ -19122,10 +19139,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Backend API changes: .agents/checklists/backend-api.md
 - DB migration changes: .agents/checklists/db-migration.md
@@ -20865,9 +20882,13 @@ Auth bypass, authorization gaps, tenant leakage, unsafe inputs or outputs, secre
 - Backend API route: .agents/skills/backend-api/SKILL.md
 - DB migration route: .agents/skills/db-migration/SKILL.md
 - SDK route: .agents/skills/sdk/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -21803,8 +21824,7 @@ authorization, persistence, migrations, observability, and backend security.
 This repository does not own frontend routing, visual design, component hierarchy,
 design tokens, or browser interaction policy.
 
-Frontend-facing behavior is contracted through `api/openapi.yaml`, `api/examples/*.json`,
-`docs/backend/04-http-api-policy.md`, and `docs/backend/05-error-response.md`.
+Frontend-facing behavior is contracted through `api/openapi.yaml`, `api/examples/*.json`, `docs/backend/04-http-api-policy.md`, and `docs/backend/05-error-response.md`.
 
 ## Repository Shape
 
@@ -22090,10 +22110,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Backend API changes: .agents/checklists/backend-api.md
 - DB migration changes: .agents/checklists/db-migration.md
@@ -23833,9 +23853,13 @@ Source-of-truth drift, missing validation, missing tests, rollback gaps, and own
 - Backend API route: .agents/skills/backend-api/SKILL.md
 - DB migration route: .agents/skills/db-migration/SKILL.md
 - Worker service route: .agents/skills/worker-service/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -24771,8 +24795,7 @@ authorization, persistence, migrations, observability, and backend security.
 This repository does not own frontend routing, visual design, component hierarchy,
 design tokens, or browser interaction policy.
 
-Frontend-facing behavior is contracted through `api/openapi.yaml`, `api/examples/*.json`,
-`docs/backend/04-http-api-policy.md`, and `docs/backend/05-error-response.md`.
+Frontend-facing behavior is contracted through `api/openapi.yaml`, `api/examples/*.json`, `docs/backend/04-http-api-policy.md`, and `docs/backend/05-error-response.md`.
 
 ## Repository Shape
 
@@ -25058,10 +25081,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Backend API changes: .agents/checklists/backend-api.md
 - DB migration changes: .agents/checklists/db-migration.md
@@ -26801,9 +26824,13 @@ Auth bypass, authorization gaps, tenant leakage, unsafe inputs or outputs, secre
 - Backend API route: .agents/skills/backend-api/SKILL.md
 - DB migration route: .agents/skills/db-migration/SKILL.md
 - Infrastructure module route: .agents/skills/infra-module/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -27739,8 +27766,7 @@ authorization, persistence, migrations, observability, and backend security.
 This repository does not own frontend routing, visual design, component hierarchy,
 design tokens, or browser interaction policy.
 
-Frontend-facing behavior is contracted through `api/openapi.yaml`, `api/examples/*.json`,
-`docs/backend/04-http-api-policy.md`, and `docs/backend/05-error-response.md`.
+Frontend-facing behavior is contracted through `api/openapi.yaml`, `api/examples/*.json`, `docs/backend/04-http-api-policy.md`, and `docs/backend/05-error-response.md`.
 
 ## Repository Shape
 
@@ -28026,10 +28052,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Backend API changes: .agents/checklists/backend-api.md
 - DB migration changes: .agents/checklists/db-migration.md
@@ -29769,9 +29795,13 @@ Auth bypass, authorization gaps, tenant leakage, unsafe inputs or outputs, secre
 - Backend API route: .agents/skills/backend-api/SKILL.md
 - DB migration route: .agents/skills/db-migration/SKILL.md
 - Data pipeline route: .agents/skills/data-pipeline/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -30707,8 +30737,7 @@ authorization, persistence, migrations, observability, and backend security.
 This repository does not own frontend routing, visual design, component hierarchy,
 design tokens, or browser interaction policy.
 
-Frontend-facing behavior is contracted through `api/openapi.yaml`, `api/examples/*.json`,
-`docs/backend/04-http-api-policy.md`, and `docs/backend/05-error-response.md`.
+Frontend-facing behavior is contracted through `api/openapi.yaml`, `api/examples/*.json`, `docs/backend/04-http-api-policy.md`, and `docs/backend/05-error-response.md`.
 
 ## Repository Shape
 
@@ -30994,10 +31023,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Backend API changes: .agents/checklists/backend-api.md
 - DB migration changes: .agents/checklists/db-migration.md
@@ -32737,9 +32766,13 @@ Auth bypass, authorization gaps, tenant leakage, unsafe inputs or outputs, secre
 - Backend API route: .agents/skills/backend-api/SKILL.md
 - DB migration route: .agents/skills/db-migration/SKILL.md
 - GitHub Action route: .agents/skills/github-action/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -33675,8 +33708,7 @@ authorization, persistence, migrations, observability, and backend security.
 This repository does not own frontend routing, visual design, component hierarchy,
 design tokens, or browser interaction policy.
 
-Frontend-facing behavior is contracted through `api/openapi.yaml`, `api/examples/*.json`,
-`docs/backend/04-http-api-policy.md`, and `docs/backend/05-error-response.md`.
+Frontend-facing behavior is contracted through `api/openapi.yaml`, `api/examples/*.json`, `docs/backend/04-http-api-policy.md`, and `docs/backend/05-error-response.md`.
 
 ## Repository Shape
 
@@ -33962,10 +33994,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Backend API changes: .agents/checklists/backend-api.md
 - DB migration changes: .agents/checklists/db-migration.md
@@ -35737,9 +35769,13 @@ Auth bypass, authorization gaps, tenant leakage, unsafe inputs or outputs, secre
 - Backend API route: .agents/skills/backend-api/SKILL.md
 - DB migration route: .agents/skills/db-migration/SKILL.md
 - Browser extension route: .agents/skills/browser-extension/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -36675,8 +36711,7 @@ authorization, persistence, migrations, observability, and backend security.
 This repository does not own frontend routing, visual design, component hierarchy,
 design tokens, or browser interaction policy.
 
-Frontend-facing behavior is contracted through `api/openapi.yaml`, `api/examples/*.json`,
-`docs/backend/04-http-api-policy.md`, and `docs/backend/05-error-response.md`.
+Frontend-facing behavior is contracted through `api/openapi.yaml`, `api/examples/*.json`, `docs/backend/04-http-api-policy.md`, and `docs/backend/05-error-response.md`.
 
 ## Repository Shape
 
@@ -36962,10 +36997,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Backend API changes: .agents/checklists/backend-api.md
 - DB migration changes: .agents/checklists/db-migration.md
@@ -38705,9 +38740,13 @@ Auth bypass, authorization gaps, tenant leakage, unsafe inputs or outputs, secre
 - Backend API route: .agents/skills/backend-api/SKILL.md
 - DB migration route: .agents/skills/db-migration/SKILL.md
 - Plugin route: .agents/skills/plugin/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -39643,8 +39682,7 @@ authorization, persistence, migrations, observability, and backend security.
 This repository does not own frontend routing, visual design, component hierarchy,
 design tokens, or browser interaction policy.
 
-Frontend-facing behavior is contracted through `api/openapi.yaml`, `api/examples/*.json`,
-`docs/backend/04-http-api-policy.md`, and `docs/backend/05-error-response.md`.
+Frontend-facing behavior is contracted through `api/openapi.yaml`, `api/examples/*.json`, `docs/backend/04-http-api-policy.md`, and `docs/backend/05-error-response.md`.
 
 ## Repository Shape
 
@@ -39930,10 +39968,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Backend API changes: .agents/checklists/backend-api.md
 - DB migration changes: .agents/checklists/db-migration.md
@@ -41673,9 +41711,13 @@ Auth bypass, authorization gaps, tenant leakage, unsafe inputs or outputs, secre
 - Backend API route: .agents/skills/backend-api/SKILL.md
 - DB migration route: .agents/skills/db-migration/SKILL.md
 - Docs site route: .agents/skills/docs-site/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -42611,8 +42653,7 @@ authorization, persistence, migrations, observability, and backend security.
 This repository does not own frontend routing, visual design, component hierarchy,
 design tokens, or browser interaction policy.
 
-Frontend-facing behavior is contracted through `api/openapi.yaml`, `api/examples/*.json`,
-`docs/backend/04-http-api-policy.md`, and `docs/backend/05-error-response.md`.
+Frontend-facing behavior is contracted through `api/openapi.yaml`, `api/examples/*.json`, `docs/backend/04-http-api-policy.md`, and `docs/backend/05-error-response.md`.
 
 ## Repository Shape
 
@@ -42898,10 +42939,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Backend API changes: .agents/checklists/backend-api.md
 - DB migration changes: .agents/checklists/db-migration.md
@@ -44641,9 +44682,13 @@ Auth bypass, authorization gaps, tenant leakage, unsafe inputs or outputs, secre
 - Backend API route: .agents/skills/backend-api/SKILL.md
 - DB migration route: .agents/skills/db-migration/SKILL.md
 - Monorepo route: .agents/skills/monorepo/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -45579,8 +45624,7 @@ authorization, persistence, migrations, observability, and backend security.
 This repository does not own frontend routing, visual design, component hierarchy,
 design tokens, or browser interaction policy.
 
-Frontend-facing behavior is contracted through `api/openapi.yaml`, `api/examples/*.json`,
-`docs/backend/04-http-api-policy.md`, and `docs/backend/05-error-response.md`.
+Frontend-facing behavior is contracted through `api/openapi.yaml`, `api/examples/*.json`, `docs/backend/04-http-api-policy.md`, and `docs/backend/05-error-response.md`.
 
 ## Repository Shape
 
@@ -45866,10 +45910,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Backend API changes: .agents/checklists/backend-api.md
 - DB migration changes: .agents/checklists/db-migration.md
@@ -47583,9 +47627,13 @@ Auth bypass, authorization gaps, tenant leakage, unsafe inputs or outputs, secre
 
 - Frontend UI route: .agents/skills/frontend-ui/SKILL.md
 - Backend API contract consumption: docs/integrations/backend-api.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -48399,10 +48447,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Frontend UI changes: .agents/checklists/frontend-ui.md
 - Accessibility changes: .agents/checklists/accessibility.md
@@ -50054,9 +50102,13 @@ Auth bypass, authorization gaps, tenant leakage, unsafe inputs or outputs, secre
 - Frontend UI route: .agents/skills/frontend-ui/SKILL.md
 - Backend API contract consumption: docs/integrations/backend-api.md
 - CLI tool route: .agents/skills/cli-tool/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -50984,10 +51036,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Frontend UI changes: .agents/checklists/frontend-ui.md
 - Accessibility changes: .agents/checklists/accessibility.md
@@ -52495,8 +52547,8 @@ It is intentionally a scaffold and should be filled with project-specific decisi
 - Agent routing source: .agents/context-map.md
 - Repository hygiene source: .editorconfig, .gitattributes, .gitignore
 - CLI command contract source: docs/cli/command-contract.md
-- CLI output and exit-code source: docs/cli/output-and-exit-codes.md
 - CLI config source: docs/cli/configuration.md
+- CLI output and exit-code source: docs/cli/output-and-exit-codes.md
 "#,
 	},
 	SsealedScaffoldFile {
@@ -52782,9 +52834,13 @@ Auth bypass, authorization gaps, tenant leakage, unsafe inputs or outputs, secre
 - Frontend UI route: .agents/skills/frontend-ui/SKILL.md
 - Backend API contract consumption: docs/integrations/backend-api.md
 - API service route: .agents/skills/api-service/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -53915,10 +53971,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Frontend UI changes: .agents/checklists/frontend-ui.md
 - Accessibility changes: .agents/checklists/accessibility.md
@@ -55395,8 +55451,6 @@ It is intentionally a scaffold and should be filled with project-specific decisi
 - API source for api-service repository type: api/openapi.yaml
 - API lifecycle source: docs/api-service/api-lifecycle.md
 - API idempotency source: docs/api-service/idempotency.md
-- API rate-limit source: docs/api-service/rate-limits.md
-- API service SLO source: docs/api-service/slo.md
 "#,
 	},
 	SsealedScaffoldFile {
@@ -55682,9 +55736,13 @@ Auth bypass, authorization gaps, tenant leakage, unsafe inputs or outputs, secre
 - Frontend UI route: .agents/skills/frontend-ui/SKILL.md
 - Backend API contract consumption: docs/integrations/backend-api.md
 - Desktop app route: .agents/skills/desktop-app/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -56612,10 +56670,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Frontend UI changes: .agents/checklists/frontend-ui.md
 - Accessibility changes: .agents/checklists/accessibility.md
@@ -58125,7 +58183,6 @@ It is intentionally a scaffold and should be filled with project-specific decisi
 - Desktop installer source: docs/desktop/installers.md
 - Desktop auto-update source: docs/desktop/auto-update.md
 - Desktop local data source: docs/desktop/local-data.md
-- Desktop OS support source: docs/desktop/os-support.md
 "#,
 	},
 	SsealedScaffoldFile {
@@ -58411,9 +58468,13 @@ Auth bypass, authorization gaps, tenant leakage, unsafe inputs or outputs, secre
 - Frontend UI route: .agents/skills/frontend-ui/SKILL.md
 - Backend API contract consumption: docs/integrations/backend-api.md
 - Library package route: .agents/skills/library-package/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -59341,10 +59402,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Frontend UI changes: .agents/checklists/frontend-ui.md
 - Accessibility changes: .agents/checklists/accessibility.md
@@ -60854,7 +60915,6 @@ It is intentionally a scaffold and should be filled with project-specific decisi
 - Library public API source: docs/library/public-api.md
 - Library semver source: docs/library/semver.md
 - Library compatibility source: docs/library/compatibility.md
-- Library migration source: docs/library/migration-guide.md
 "#,
 	},
 	SsealedScaffoldFile {
@@ -61140,9 +61200,13 @@ Source-of-truth drift, missing validation, missing tests, rollback gaps, and own
 - Frontend UI route: .agents/skills/frontend-ui/SKILL.md
 - Backend API contract consumption: docs/integrations/backend-api.md
 - Web app route: .agents/skills/web-app/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -62070,10 +62134,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Frontend UI changes: .agents/checklists/frontend-ui.md
 - Accessibility changes: .agents/checklists/accessibility.md
@@ -63830,9 +63894,13 @@ Auth bypass, authorization gaps, tenant leakage, unsafe inputs or outputs, secre
 - Frontend UI route: .agents/skills/frontend-ui/SKILL.md
 - Backend API contract consumption: docs/integrations/backend-api.md
 - Mobile app route: .agents/skills/mobile-app/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -64760,10 +64828,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Frontend UI changes: .agents/checklists/frontend-ui.md
 - Accessibility changes: .agents/checklists/accessibility.md
@@ -66520,9 +66588,13 @@ Auth bypass, authorization gaps, tenant leakage, unsafe inputs or outputs, secre
 - Frontend UI route: .agents/skills/frontend-ui/SKILL.md
 - Backend API contract consumption: docs/integrations/backend-api.md
 - SDK route: .agents/skills/sdk/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -67450,10 +67522,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Frontend UI changes: .agents/checklists/frontend-ui.md
 - Accessibility changes: .agents/checklists/accessibility.md
@@ -69210,9 +69282,13 @@ Source-of-truth drift, missing validation, missing tests, rollback gaps, and own
 - Frontend UI route: .agents/skills/frontend-ui/SKILL.md
 - Backend API contract consumption: docs/integrations/backend-api.md
 - Worker service route: .agents/skills/worker-service/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -70140,10 +70216,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Frontend UI changes: .agents/checklists/frontend-ui.md
 - Accessibility changes: .agents/checklists/accessibility.md
@@ -71900,9 +71976,13 @@ Auth bypass, authorization gaps, tenant leakage, unsafe inputs or outputs, secre
 - Frontend UI route: .agents/skills/frontend-ui/SKILL.md
 - Backend API contract consumption: docs/integrations/backend-api.md
 - Infrastructure module route: .agents/skills/infra-module/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -72830,10 +72910,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Frontend UI changes: .agents/checklists/frontend-ui.md
 - Accessibility changes: .agents/checklists/accessibility.md
@@ -74590,9 +74670,13 @@ Auth bypass, authorization gaps, tenant leakage, unsafe inputs or outputs, secre
 - Frontend UI route: .agents/skills/frontend-ui/SKILL.md
 - Backend API contract consumption: docs/integrations/backend-api.md
 - Data pipeline route: .agents/skills/data-pipeline/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -75520,10 +75604,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Frontend UI changes: .agents/checklists/frontend-ui.md
 - Accessibility changes: .agents/checklists/accessibility.md
@@ -77280,9 +77364,13 @@ Auth bypass, authorization gaps, tenant leakage, unsafe inputs or outputs, secre
 - Frontend UI route: .agents/skills/frontend-ui/SKILL.md
 - Backend API contract consumption: docs/integrations/backend-api.md
 - GitHub Action route: .agents/skills/github-action/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -78210,10 +78298,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Frontend UI changes: .agents/checklists/frontend-ui.md
 - Accessibility changes: .agents/checklists/accessibility.md
@@ -80002,9 +80090,13 @@ Auth bypass, authorization gaps, tenant leakage, unsafe inputs or outputs, secre
 - Frontend UI route: .agents/skills/frontend-ui/SKILL.md
 - Backend API contract consumption: docs/integrations/backend-api.md
 - Browser extension route: .agents/skills/browser-extension/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -80932,10 +81024,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Frontend UI changes: .agents/checklists/frontend-ui.md
 - Accessibility changes: .agents/checklists/accessibility.md
@@ -82692,9 +82784,13 @@ Auth bypass, authorization gaps, tenant leakage, unsafe inputs or outputs, secre
 - Frontend UI route: .agents/skills/frontend-ui/SKILL.md
 - Backend API contract consumption: docs/integrations/backend-api.md
 - Plugin route: .agents/skills/plugin/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -83622,10 +83718,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Frontend UI changes: .agents/checklists/frontend-ui.md
 - Accessibility changes: .agents/checklists/accessibility.md
@@ -85382,9 +85478,13 @@ Auth bypass, authorization gaps, tenant leakage, unsafe inputs or outputs, secre
 - Frontend UI route: .agents/skills/frontend-ui/SKILL.md
 - Backend API contract consumption: docs/integrations/backend-api.md
 - Docs site route: .agents/skills/docs-site/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -86312,10 +86412,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Frontend UI changes: .agents/checklists/frontend-ui.md
 - Accessibility changes: .agents/checklists/accessibility.md
@@ -88072,9 +88172,13 @@ Auth bypass, authorization gaps, tenant leakage, unsafe inputs or outputs, secre
 - Frontend UI route: .agents/skills/frontend-ui/SKILL.md
 - Backend API contract consumption: docs/integrations/backend-api.md
 - Monorepo route: .agents/skills/monorepo/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -89002,10 +89106,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Frontend UI changes: .agents/checklists/frontend-ui.md
 - Accessibility changes: .agents/checklists/accessibility.md
@@ -90789,9 +90893,13 @@ Auth bypass, authorization gaps, tenant leakage, unsafe inputs or outputs, secre
 - DB migration route: .agents/skills/db-migration/SKILL.md
 - Frontend UI route: .agents/skills/frontend-ui/SKILL.md
 - Backend API contract consumption: docs/integrations/backend-api.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -91982,10 +92090,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Backend API changes: .agents/checklists/backend-api.md
 - DB migration changes: .agents/checklists/db-migration.md
@@ -93864,9 +93972,13 @@ Auth bypass, authorization gaps, tenant leakage, unsafe inputs or outputs, secre
 - Frontend UI route: .agents/skills/frontend-ui/SKILL.md
 - Backend API contract consumption: docs/integrations/backend-api.md
 - CLI tool route: .agents/skills/cli-tool/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -95179,10 +95291,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Backend API changes: .agents/checklists/backend-api.md
 - DB migration changes: .agents/checklists/db-migration.md
@@ -96864,8 +96976,8 @@ It is intentionally a scaffold and should be filled with project-specific decisi
 - Agent routing source: .agents/context-map.md
 - Repository hygiene source: .editorconfig, .gitattributes, .gitignore
 - CLI command contract source: docs/cli/command-contract.md
-- CLI output and exit-code source: docs/cli/output-and-exit-codes.md
 - CLI config source: docs/cli/configuration.md
+- CLI output and exit-code source: docs/cli/output-and-exit-codes.md
 "#,
 	},
 	SsealedScaffoldFile {
@@ -97204,9 +97316,13 @@ Auth bypass, authorization gaps, tenant leakage, unsafe inputs or outputs, secre
 - Frontend UI route: .agents/skills/frontend-ui/SKILL.md
 - Backend API contract consumption: docs/integrations/backend-api.md
 - API service route: .agents/skills/api-service/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -98519,10 +98635,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Backend API changes: .agents/checklists/backend-api.md
 - DB migration changes: .agents/checklists/db-migration.md
@@ -100172,8 +100288,6 @@ It is intentionally a scaffold and should be filled with project-specific decisi
 - Repository hygiene source: .editorconfig, .gitattributes, .gitignore
 - API lifecycle source: docs/api-service/api-lifecycle.md
 - API idempotency source: docs/api-service/idempotency.md
-- API rate-limit source: docs/api-service/rate-limits.md
-- API service SLO source: docs/api-service/slo.md
 "#,
 	},
 	SsealedScaffoldFile {
@@ -100512,9 +100626,13 @@ Auth bypass, authorization gaps, tenant leakage, unsafe inputs or outputs, secre
 - Frontend UI route: .agents/skills/frontend-ui/SKILL.md
 - Backend API contract consumption: docs/integrations/backend-api.md
 - Desktop app route: .agents/skills/desktop-app/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -101827,10 +101945,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Backend API changes: .agents/checklists/backend-api.md
 - DB migration changes: .agents/checklists/db-migration.md
@@ -103514,7 +103632,6 @@ It is intentionally a scaffold and should be filled with project-specific decisi
 - Desktop installer source: docs/desktop/installers.md
 - Desktop auto-update source: docs/desktop/auto-update.md
 - Desktop local data source: docs/desktop/local-data.md
-- Desktop OS support source: docs/desktop/os-support.md
 "#,
 	},
 	SsealedScaffoldFile {
@@ -103853,9 +103970,13 @@ Auth bypass, authorization gaps, tenant leakage, unsafe inputs or outputs, secre
 - Frontend UI route: .agents/skills/frontend-ui/SKILL.md
 - Backend API contract consumption: docs/integrations/backend-api.md
 - Library package route: .agents/skills/library-package/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -105168,10 +105289,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Backend API changes: .agents/checklists/backend-api.md
 - DB migration changes: .agents/checklists/db-migration.md
@@ -106855,7 +106976,6 @@ It is intentionally a scaffold and should be filled with project-specific decisi
 - Library public API source: docs/library/public-api.md
 - Library semver source: docs/library/semver.md
 - Library compatibility source: docs/library/compatibility.md
-- Library migration source: docs/library/migration-guide.md
 "#,
 	},
 	SsealedScaffoldFile {
@@ -107194,9 +107314,13 @@ Source-of-truth drift, missing validation, missing tests, rollback gaps, and own
 - Frontend UI route: .agents/skills/frontend-ui/SKILL.md
 - Backend API contract consumption: docs/integrations/backend-api.md
 - Web app route: .agents/skills/web-app/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -108509,10 +108633,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Backend API changes: .agents/checklists/backend-api.md
 - DB migration changes: .agents/checklists/db-migration.md
@@ -110496,9 +110620,13 @@ Auth bypass, authorization gaps, tenant leakage, unsafe inputs or outputs, secre
 - Frontend UI route: .agents/skills/frontend-ui/SKILL.md
 - Backend API contract consumption: docs/integrations/backend-api.md
 - Mobile app route: .agents/skills/mobile-app/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -111811,10 +111939,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Backend API changes: .agents/checklists/backend-api.md
 - DB migration changes: .agents/checklists/db-migration.md
@@ -113798,9 +113926,13 @@ Auth bypass, authorization gaps, tenant leakage, unsafe inputs or outputs, secre
 - Frontend UI route: .agents/skills/frontend-ui/SKILL.md
 - Backend API contract consumption: docs/integrations/backend-api.md
 - SDK route: .agents/skills/sdk/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -115113,10 +115245,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Backend API changes: .agents/checklists/backend-api.md
 - DB migration changes: .agents/checklists/db-migration.md
@@ -117100,9 +117232,13 @@ Source-of-truth drift, missing validation, missing tests, rollback gaps, and own
 - Frontend UI route: .agents/skills/frontend-ui/SKILL.md
 - Backend API contract consumption: docs/integrations/backend-api.md
 - Worker service route: .agents/skills/worker-service/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -118415,10 +118551,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Backend API changes: .agents/checklists/backend-api.md
 - DB migration changes: .agents/checklists/db-migration.md
@@ -120402,9 +120538,13 @@ Auth bypass, authorization gaps, tenant leakage, unsafe inputs or outputs, secre
 - Frontend UI route: .agents/skills/frontend-ui/SKILL.md
 - Backend API contract consumption: docs/integrations/backend-api.md
 - Infrastructure module route: .agents/skills/infra-module/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -121717,10 +121857,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Backend API changes: .agents/checklists/backend-api.md
 - DB migration changes: .agents/checklists/db-migration.md
@@ -123704,9 +123844,13 @@ Auth bypass, authorization gaps, tenant leakage, unsafe inputs or outputs, secre
 - Frontend UI route: .agents/skills/frontend-ui/SKILL.md
 - Backend API contract consumption: docs/integrations/backend-api.md
 - Data pipeline route: .agents/skills/data-pipeline/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -125019,10 +125163,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Backend API changes: .agents/checklists/backend-api.md
 - DB migration changes: .agents/checklists/db-migration.md
@@ -127006,9 +127150,13 @@ Auth bypass, authorization gaps, tenant leakage, unsafe inputs or outputs, secre
 - Frontend UI route: .agents/skills/frontend-ui/SKILL.md
 - Backend API contract consumption: docs/integrations/backend-api.md
 - GitHub Action route: .agents/skills/github-action/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -128321,10 +128469,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Backend API changes: .agents/checklists/backend-api.md
 - DB migration changes: .agents/checklists/db-migration.md
@@ -130340,9 +130488,13 @@ Auth bypass, authorization gaps, tenant leakage, unsafe inputs or outputs, secre
 - Frontend UI route: .agents/skills/frontend-ui/SKILL.md
 - Backend API contract consumption: docs/integrations/backend-api.md
 - Browser extension route: .agents/skills/browser-extension/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -131655,10 +131807,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Backend API changes: .agents/checklists/backend-api.md
 - DB migration changes: .agents/checklists/db-migration.md
@@ -133642,9 +133794,13 @@ Auth bypass, authorization gaps, tenant leakage, unsafe inputs or outputs, secre
 - Frontend UI route: .agents/skills/frontend-ui/SKILL.md
 - Backend API contract consumption: docs/integrations/backend-api.md
 - Plugin route: .agents/skills/plugin/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -134957,10 +135113,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Backend API changes: .agents/checklists/backend-api.md
 - DB migration changes: .agents/checklists/db-migration.md
@@ -136944,9 +137100,13 @@ Auth bypass, authorization gaps, tenant leakage, unsafe inputs or outputs, secre
 - Frontend UI route: .agents/skills/frontend-ui/SKILL.md
 - Backend API contract consumption: docs/integrations/backend-api.md
 - Docs site route: .agents/skills/docs-site/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -138259,10 +138419,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Backend API changes: .agents/checklists/backend-api.md
 - DB migration changes: .agents/checklists/db-migration.md
@@ -140246,9 +140406,13 @@ Auth bypass, authorization gaps, tenant leakage, unsafe inputs or outputs, secre
 - Frontend UI route: .agents/skills/frontend-ui/SKILL.md
 - Backend API contract consumption: docs/integrations/backend-api.md
 - Monorepo route: .agents/skills/monorepo/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -141561,10 +141725,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Backend API changes: .agents/checklists/backend-api.md
 - DB migration changes: .agents/checklists/db-migration.md
@@ -143419,9 +143583,13 @@ Auth bypass, authorization gaps, tenant leakage, unsafe inputs or outputs, secre
 - Product scope route: docs/product/02-spec.md
 - Architecture route: docs/architecture/ and docs/adr/
 - Documentation update route: docs/README.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -144065,7 +144233,7 @@ Scope: general
 
 This repository owns product, architecture, ADR, engineering, and operational design scaffolds.
 
-It does not own implementation source code.
+This scaffold does not generate implementation source code; any existing source remains project-owned.
 
 
 
@@ -144142,10 +144310,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 "#,
 	},
@@ -145309,9 +145477,13 @@ Auth bypass, authorization gaps, tenant leakage, unsafe inputs or outputs, secre
 - Architecture route: docs/architecture/ and docs/adr/
 - Documentation update route: docs/README.md
 - CLI tool route: .agents/skills/cli-tool/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -146059,7 +146231,7 @@ Scope: general
 
 This repository owns product, architecture, ADR, engineering, and operational design scaffolds.
 
-It does not own implementation source code.
+This scaffold does not generate implementation source code; any existing source remains project-owned.
 
 ## Repository Shape
 
@@ -146142,10 +146314,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - CLI tool changes: .agents/checklists/cli-tool.md
 "#,
@@ -147215,8 +147387,8 @@ It is intentionally a scaffold and should be filled with project-specific decisi
 - Agent routing source: .agents/context-map.md
 - Repository hygiene source: .editorconfig, .gitattributes, .gitignore
 - CLI command contract source: docs/cli/command-contract.md
-- CLI output and exit-code source: docs/cli/output-and-exit-codes.md
 - CLI config source: docs/cli/configuration.md
+- CLI output and exit-code source: docs/cli/output-and-exit-codes.md
 "#,
 	},
 	SsealedScaffoldFile {
@@ -147452,9 +147624,13 @@ Auth bypass, authorization gaps, tenant leakage, unsafe inputs or outputs, secre
 - Architecture route: docs/architecture/ and docs/adr/
 - Documentation update route: docs/README.md
 - API service route: .agents/skills/api-service/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -148202,7 +148378,7 @@ Scope: general
 
 This repository owns product, architecture, ADR, engineering, and operational design scaffolds.
 
-It does not own implementation source code.
+This scaffold does not generate implementation source code; any existing source remains project-owned.
 
 ## Repository Shape
 
@@ -148488,10 +148664,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - API service changes: .agents/checklists/api-service.md
 "#,
@@ -149530,8 +149706,6 @@ It is intentionally a scaffold and should be filled with project-specific decisi
 - API source for api-service repository type: api/openapi.yaml
 - API lifecycle source: docs/api-service/api-lifecycle.md
 - API idempotency source: docs/api-service/idempotency.md
-- API rate-limit source: docs/api-service/rate-limits.md
-- API service SLO source: docs/api-service/slo.md
 "#,
 	},
 	SsealedScaffoldFile {
@@ -149767,9 +149941,13 @@ Auth bypass, authorization gaps, tenant leakage, unsafe inputs or outputs, secre
 - Architecture route: docs/architecture/ and docs/adr/
 - Documentation update route: docs/README.md
 - Desktop app route: .agents/skills/desktop-app/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -150517,7 +150695,7 @@ Scope: general
 
 This repository owns product, architecture, ADR, engineering, and operational design scaffolds.
 
-It does not own implementation source code.
+This scaffold does not generate implementation source code; any existing source remains project-owned.
 
 ## Repository Shape
 
@@ -150600,10 +150778,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Desktop app changes: .agents/checklists/desktop-app.md
 "#,
@@ -151675,7 +151853,6 @@ It is intentionally a scaffold and should be filled with project-specific decisi
 - Desktop installer source: docs/desktop/installers.md
 - Desktop auto-update source: docs/desktop/auto-update.md
 - Desktop local data source: docs/desktop/local-data.md
-- Desktop OS support source: docs/desktop/os-support.md
 "#,
 	},
 	SsealedScaffoldFile {
@@ -151911,9 +152088,13 @@ Auth bypass, authorization gaps, tenant leakage, unsafe inputs or outputs, secre
 - Architecture route: docs/architecture/ and docs/adr/
 - Documentation update route: docs/README.md
 - Library package route: .agents/skills/library-package/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -152661,7 +152842,7 @@ Scope: general
 
 This repository owns product, architecture, ADR, engineering, and operational design scaffolds.
 
-It does not own implementation source code.
+This scaffold does not generate implementation source code; any existing source remains project-owned.
 
 ## Repository Shape
 
@@ -152744,10 +152925,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Library package changes: .agents/checklists/library-package.md
 "#,
@@ -153819,7 +154000,6 @@ It is intentionally a scaffold and should be filled with project-specific decisi
 - Library public API source: docs/library/public-api.md
 - Library semver source: docs/library/semver.md
 - Library compatibility source: docs/library/compatibility.md
-- Library migration source: docs/library/migration-guide.md
 "#,
 	},
 	SsealedScaffoldFile {
@@ -154055,9 +154235,13 @@ Source-of-truth drift, missing validation, missing tests, rollback gaps, and own
 - Architecture route: docs/architecture/ and docs/adr/
 - Documentation update route: docs/README.md
 - Web app route: .agents/skills/web-app/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -154805,7 +154989,7 @@ Scope: general
 
 This repository owns product, architecture, ADR, engineering, and operational design scaffolds.
 
-It does not own implementation source code.
+This scaffold does not generate implementation source code; any existing source remains project-owned.
 
 ## Repository Shape
 
@@ -154888,10 +155072,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Web app changes: .agents/checklists/web-app.md
 "#,
@@ -156160,9 +156344,13 @@ Auth bypass, authorization gaps, tenant leakage, unsafe inputs or outputs, secre
 - Architecture route: docs/architecture/ and docs/adr/
 - Documentation update route: docs/README.md
 - Mobile app route: .agents/skills/mobile-app/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -156910,7 +157098,7 @@ Scope: general
 
 This repository owns product, architecture, ADR, engineering, and operational design scaffolds.
 
-It does not own implementation source code.
+This scaffold does not generate implementation source code; any existing source remains project-owned.
 
 ## Repository Shape
 
@@ -156993,10 +157181,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Mobile app changes: .agents/checklists/mobile-app.md
 "#,
@@ -158265,9 +158453,13 @@ Auth bypass, authorization gaps, tenant leakage, unsafe inputs or outputs, secre
 - Architecture route: docs/architecture/ and docs/adr/
 - Documentation update route: docs/README.md
 - SDK route: .agents/skills/sdk/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -159015,7 +159207,7 @@ Scope: general
 
 This repository owns product, architecture, ADR, engineering, and operational design scaffolds.
 
-It does not own implementation source code.
+This scaffold does not generate implementation source code; any existing source remains project-owned.
 
 ## Repository Shape
 
@@ -159098,10 +159290,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - SDK changes: .agents/checklists/sdk.md
 "#,
@@ -160370,9 +160562,13 @@ Source-of-truth drift, missing validation, missing tests, rollback gaps, and own
 - Architecture route: docs/architecture/ and docs/adr/
 - Documentation update route: docs/README.md
 - Worker service route: .agents/skills/worker-service/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -161120,7 +161316,7 @@ Scope: general
 
 This repository owns product, architecture, ADR, engineering, and operational design scaffolds.
 
-It does not own implementation source code.
+This scaffold does not generate implementation source code; any existing source remains project-owned.
 
 ## Repository Shape
 
@@ -161203,10 +161399,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Worker service changes: .agents/checklists/worker-service.md
 "#,
@@ -162475,9 +162671,13 @@ Auth bypass, authorization gaps, tenant leakage, unsafe inputs or outputs, secre
 - Architecture route: docs/architecture/ and docs/adr/
 - Documentation update route: docs/README.md
 - Infrastructure module route: .agents/skills/infra-module/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -163225,7 +163425,7 @@ Scope: general
 
 This repository owns product, architecture, ADR, engineering, and operational design scaffolds.
 
-It does not own implementation source code.
+This scaffold does not generate implementation source code; any existing source remains project-owned.
 
 ## Repository Shape
 
@@ -163308,10 +163508,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Infrastructure module changes: .agents/checklists/infra-module.md
 "#,
@@ -164580,9 +164780,13 @@ Auth bypass, authorization gaps, tenant leakage, unsafe inputs or outputs, secre
 - Architecture route: docs/architecture/ and docs/adr/
 - Documentation update route: docs/README.md
 - Data pipeline route: .agents/skills/data-pipeline/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -165330,7 +165534,7 @@ Scope: general
 
 This repository owns product, architecture, ADR, engineering, and operational design scaffolds.
 
-It does not own implementation source code.
+This scaffold does not generate implementation source code; any existing source remains project-owned.
 
 ## Repository Shape
 
@@ -165413,10 +165617,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Data pipeline changes: .agents/checklists/data-pipeline.md
 "#,
@@ -166685,9 +166889,13 @@ Auth bypass, authorization gaps, tenant leakage, unsafe inputs or outputs, secre
 - Architecture route: docs/architecture/ and docs/adr/
 - Documentation update route: docs/README.md
 - GitHub Action route: .agents/skills/github-action/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -167435,7 +167643,7 @@ Scope: general
 
 This repository owns product, architecture, ADR, engineering, and operational design scaffolds.
 
-It does not own implementation source code.
+This scaffold does not generate implementation source code; any existing source remains project-owned.
 
 ## Repository Shape
 
@@ -167518,10 +167726,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - GitHub Action changes: .agents/checklists/github-action.md
 "#,
@@ -168822,9 +169030,13 @@ Auth bypass, authorization gaps, tenant leakage, unsafe inputs or outputs, secre
 - Architecture route: docs/architecture/ and docs/adr/
 - Documentation update route: docs/README.md
 - Browser extension route: .agents/skills/browser-extension/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -169572,7 +169784,7 @@ Scope: general
 
 This repository owns product, architecture, ADR, engineering, and operational design scaffolds.
 
-It does not own implementation source code.
+This scaffold does not generate implementation source code; any existing source remains project-owned.
 
 ## Repository Shape
 
@@ -169655,10 +169867,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Browser extension changes: .agents/checklists/browser-extension.md
 "#,
@@ -170927,9 +171139,13 @@ Auth bypass, authorization gaps, tenant leakage, unsafe inputs or outputs, secre
 - Architecture route: docs/architecture/ and docs/adr/
 - Documentation update route: docs/README.md
 - Plugin route: .agents/skills/plugin/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -171677,7 +171893,7 @@ Scope: general
 
 This repository owns product, architecture, ADR, engineering, and operational design scaffolds.
 
-It does not own implementation source code.
+This scaffold does not generate implementation source code; any existing source remains project-owned.
 
 ## Repository Shape
 
@@ -171760,10 +171976,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Plugin changes: .agents/checklists/plugin.md
 "#,
@@ -173032,9 +173248,13 @@ Auth bypass, authorization gaps, tenant leakage, unsafe inputs or outputs, secre
 - Architecture route: docs/architecture/ and docs/adr/
 - Documentation update route: docs/README.md
 - Docs site route: .agents/skills/docs-site/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -173782,7 +174002,7 @@ Scope: general
 
 This repository owns product, architecture, ADR, engineering, and operational design scaffolds.
 
-It does not own implementation source code.
+This scaffold does not generate implementation source code; any existing source remains project-owned.
 
 ## Repository Shape
 
@@ -173865,10 +174085,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Docs site changes: .agents/checklists/docs-site.md
 "#,
@@ -175137,9 +175357,13 @@ Auth bypass, authorization gaps, tenant leakage, unsafe inputs or outputs, secre
 - Architecture route: docs/architecture/ and docs/adr/
 - Documentation update route: docs/README.md
 - Monorepo route: .agents/skills/monorepo/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -175887,7 +176111,7 @@ Scope: general
 
 This repository owns product, architecture, ADR, engineering, and operational design scaffolds.
 
-It does not own implementation source code.
+This scaffold does not generate implementation source code; any existing source remains project-owned.
 
 ## Repository Shape
 
@@ -175970,10 +176194,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Monorepo changes: .agents/checklists/monorepo.md
 "#,
@@ -177239,9 +177463,13 @@ Auth bypass, authorization gaps, tenant leakage, unsafe inputs or outputs, secre
 ## Routes
 
 - Mobile app route: .agents/skills/mobile-app/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -178052,10 +178280,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Mobile app changes: .agents/checklists/mobile-app.md
 "#,
@@ -179386,9 +179614,13 @@ Auth bypass, authorization gaps, tenant leakage, unsafe inputs or outputs, secre
 
 - Mobile app route: .agents/skills/mobile-app/SKILL.md
 - CLI tool route: .agents/skills/cli-tool/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -180313,10 +180545,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Mobile app changes: .agents/checklists/mobile-app.md
 - CLI tool changes: .agents/checklists/cli-tool.md
@@ -181530,8 +181762,8 @@ It is intentionally a scaffold and should be filled with project-specific decisi
 - Agent routing source: .agents/context-map.md
 - Repository hygiene source: .editorconfig, .gitattributes, .gitignore
 - CLI command contract source: docs/cli/command-contract.md
-- CLI output and exit-code source: docs/cli/output-and-exit-codes.md
 - CLI config source: docs/cli/configuration.md
+- CLI output and exit-code source: docs/cli/output-and-exit-codes.md
 "#,
 	},
 	SsealedScaffoldFile {
@@ -181790,9 +182022,13 @@ Auth bypass, authorization gaps, tenant leakage, unsafe inputs or outputs, secre
 
 - Mobile app route: .agents/skills/mobile-app/SKILL.md
 - API service route: .agents/skills/api-service/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -182920,10 +183156,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Mobile app changes: .agents/checklists/mobile-app.md
 - API service changes: .agents/checklists/api-service.md
@@ -184106,8 +184342,6 @@ It is intentionally a scaffold and should be filled with project-specific decisi
 - API source for api-service repository type: api/openapi.yaml
 - API lifecycle source: docs/api-service/api-lifecycle.md
 - API idempotency source: docs/api-service/idempotency.md
-- API rate-limit source: docs/api-service/rate-limits.md
-- API service SLO source: docs/api-service/slo.md
 "#,
 	},
 	SsealedScaffoldFile {
@@ -184366,9 +184600,13 @@ Auth bypass, authorization gaps, tenant leakage, unsafe inputs or outputs, secre
 
 - Mobile app route: .agents/skills/mobile-app/SKILL.md
 - Desktop app route: .agents/skills/desktop-app/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -185293,10 +185531,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Mobile app changes: .agents/checklists/mobile-app.md
 - Desktop app changes: .agents/checklists/desktop-app.md
@@ -186512,7 +186750,6 @@ It is intentionally a scaffold and should be filled with project-specific decisi
 - Desktop installer source: docs/desktop/installers.md
 - Desktop auto-update source: docs/desktop/auto-update.md
 - Desktop local data source: docs/desktop/local-data.md
-- Desktop OS support source: docs/desktop/os-support.md
 "#,
 	},
 	SsealedScaffoldFile {
@@ -186771,9 +187008,13 @@ Auth bypass, authorization gaps, tenant leakage, unsafe inputs or outputs, secre
 
 - Mobile app route: .agents/skills/mobile-app/SKILL.md
 - Library package route: .agents/skills/library-package/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -187698,10 +187939,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Mobile app changes: .agents/checklists/mobile-app.md
 - Library package changes: .agents/checklists/library-package.md
@@ -188917,7 +189158,6 @@ It is intentionally a scaffold and should be filled with project-specific decisi
 - Library public API source: docs/library/public-api.md
 - Library semver source: docs/library/semver.md
 - Library compatibility source: docs/library/compatibility.md
-- Library migration source: docs/library/migration-guide.md
 "#,
 	},
 	SsealedScaffoldFile {
@@ -189176,9 +189416,13 @@ Source-of-truth drift, missing validation, missing tests, rollback gaps, and own
 
 - Mobile app route: .agents/skills/mobile-app/SKILL.md
 - Web app route: .agents/skills/web-app/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -190103,10 +190347,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Mobile app changes: .agents/checklists/mobile-app.md
 - Web app changes: .agents/checklists/web-app.md
@@ -191517,9 +191761,13 @@ Auth bypass, authorization gaps, tenant leakage, unsafe inputs or outputs, secre
 
 - Mobile app route: .agents/skills/mobile-app/SKILL.md
 - Mobile app route: .agents/skills/mobile-app/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -192352,10 +192600,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Mobile app changes: .agents/checklists/mobile-app.md
 - Mobile app changes: .agents/checklists/mobile-app.md
@@ -193791,9 +194039,13 @@ Auth bypass, authorization gaps, tenant leakage, unsafe inputs or outputs, secre
 
 - Mobile app route: .agents/skills/mobile-app/SKILL.md
 - SDK route: .agents/skills/sdk/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -194718,10 +194970,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Mobile app changes: .agents/checklists/mobile-app.md
 - SDK changes: .agents/checklists/sdk.md
@@ -196157,9 +196409,13 @@ Source-of-truth drift, missing validation, missing tests, rollback gaps, and own
 
 - Mobile app route: .agents/skills/mobile-app/SKILL.md
 - Worker service route: .agents/skills/worker-service/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -197084,10 +197340,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Mobile app changes: .agents/checklists/mobile-app.md
 - Worker service changes: .agents/checklists/worker-service.md
@@ -198523,9 +198779,13 @@ Auth bypass, authorization gaps, tenant leakage, unsafe inputs or outputs, secre
 
 - Mobile app route: .agents/skills/mobile-app/SKILL.md
 - Infrastructure module route: .agents/skills/infra-module/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -199450,10 +199710,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Mobile app changes: .agents/checklists/mobile-app.md
 - Infrastructure module changes: .agents/checklists/infra-module.md
@@ -200889,9 +201149,13 @@ Auth bypass, authorization gaps, tenant leakage, unsafe inputs or outputs, secre
 
 - Mobile app route: .agents/skills/mobile-app/SKILL.md
 - Data pipeline route: .agents/skills/data-pipeline/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -201816,10 +202080,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Mobile app changes: .agents/checklists/mobile-app.md
 - Data pipeline changes: .agents/checklists/data-pipeline.md
@@ -203255,9 +203519,13 @@ Auth bypass, authorization gaps, tenant leakage, unsafe inputs or outputs, secre
 
 - Mobile app route: .agents/skills/mobile-app/SKILL.md
 - GitHub Action route: .agents/skills/github-action/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -204182,10 +204450,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Mobile app changes: .agents/checklists/mobile-app.md
 - GitHub Action changes: .agents/checklists/github-action.md
@@ -205653,9 +205921,13 @@ Auth bypass, authorization gaps, tenant leakage, unsafe inputs or outputs, secre
 
 - Mobile app route: .agents/skills/mobile-app/SKILL.md
 - Browser extension route: .agents/skills/browser-extension/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -206580,10 +206852,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Mobile app changes: .agents/checklists/mobile-app.md
 - Browser extension changes: .agents/checklists/browser-extension.md
@@ -208019,9 +208291,13 @@ Auth bypass, authorization gaps, tenant leakage, unsafe inputs or outputs, secre
 
 - Mobile app route: .agents/skills/mobile-app/SKILL.md
 - Plugin route: .agents/skills/plugin/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -208946,10 +209222,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Mobile app changes: .agents/checklists/mobile-app.md
 - Plugin changes: .agents/checklists/plugin.md
@@ -210385,9 +210661,13 @@ Auth bypass, authorization gaps, tenant leakage, unsafe inputs or outputs, secre
 
 - Mobile app route: .agents/skills/mobile-app/SKILL.md
 - Docs site route: .agents/skills/docs-site/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -211312,10 +211592,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Mobile app changes: .agents/checklists/mobile-app.md
 - Docs site changes: .agents/checklists/docs-site.md
@@ -212751,9 +213031,13 @@ Auth bypass, authorization gaps, tenant leakage, unsafe inputs or outputs, secre
 
 - Mobile app route: .agents/skills/mobile-app/SKILL.md
 - Monorepo route: .agents/skills/monorepo/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -213678,10 +213962,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Mobile app changes: .agents/checklists/mobile-app.md
 - Monorepo changes: .agents/checklists/monorepo.md
@@ -215091,9 +215375,13 @@ Auth bypass, authorization gaps, tenant leakage, unsafe inputs or outputs, secre
 ## Routes
 
 - Infrastructure route: .agents/skills/infra-change/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -215904,10 +216192,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Infrastructure changes: .agents/checklists/infra-change.md
 "#,
@@ -217238,9 +217526,13 @@ Auth bypass, authorization gaps, tenant leakage, unsafe inputs or outputs, secre
 
 - Infrastructure route: .agents/skills/infra-change/SKILL.md
 - CLI tool route: .agents/skills/cli-tool/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -218165,10 +218457,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Infrastructure changes: .agents/checklists/infra-change.md
 - CLI tool changes: .agents/checklists/cli-tool.md
@@ -219382,8 +219674,8 @@ It is intentionally a scaffold and should be filled with project-specific decisi
 - Agent routing source: .agents/context-map.md
 - Repository hygiene source: .editorconfig, .gitattributes, .gitignore
 - CLI command contract source: docs/cli/command-contract.md
-- CLI output and exit-code source: docs/cli/output-and-exit-codes.md
 - CLI config source: docs/cli/configuration.md
+- CLI output and exit-code source: docs/cli/output-and-exit-codes.md
 "#,
 	},
 	SsealedScaffoldFile {
@@ -219642,9 +219934,13 @@ Auth bypass, authorization gaps, tenant leakage, unsafe inputs or outputs, secre
 
 - Infrastructure route: .agents/skills/infra-change/SKILL.md
 - API service route: .agents/skills/api-service/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -220772,10 +221068,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Infrastructure changes: .agents/checklists/infra-change.md
 - API service changes: .agents/checklists/api-service.md
@@ -221958,8 +222254,6 @@ It is intentionally a scaffold and should be filled with project-specific decisi
 - API source for api-service repository type: api/openapi.yaml
 - API lifecycle source: docs/api-service/api-lifecycle.md
 - API idempotency source: docs/api-service/idempotency.md
-- API rate-limit source: docs/api-service/rate-limits.md
-- API service SLO source: docs/api-service/slo.md
 "#,
 	},
 	SsealedScaffoldFile {
@@ -222218,9 +222512,13 @@ Auth bypass, authorization gaps, tenant leakage, unsafe inputs or outputs, secre
 
 - Infrastructure route: .agents/skills/infra-change/SKILL.md
 - Desktop app route: .agents/skills/desktop-app/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -223145,10 +223443,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Infrastructure changes: .agents/checklists/infra-change.md
 - Desktop app changes: .agents/checklists/desktop-app.md
@@ -224364,7 +224662,6 @@ It is intentionally a scaffold and should be filled with project-specific decisi
 - Desktop installer source: docs/desktop/installers.md
 - Desktop auto-update source: docs/desktop/auto-update.md
 - Desktop local data source: docs/desktop/local-data.md
-- Desktop OS support source: docs/desktop/os-support.md
 "#,
 	},
 	SsealedScaffoldFile {
@@ -224623,9 +224920,13 @@ Auth bypass, authorization gaps, tenant leakage, unsafe inputs or outputs, secre
 
 - Infrastructure route: .agents/skills/infra-change/SKILL.md
 - Library package route: .agents/skills/library-package/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -225550,10 +225851,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Infrastructure changes: .agents/checklists/infra-change.md
 - Library package changes: .agents/checklists/library-package.md
@@ -226769,7 +227070,6 @@ It is intentionally a scaffold and should be filled with project-specific decisi
 - Library public API source: docs/library/public-api.md
 - Library semver source: docs/library/semver.md
 - Library compatibility source: docs/library/compatibility.md
-- Library migration source: docs/library/migration-guide.md
 "#,
 	},
 	SsealedScaffoldFile {
@@ -227028,9 +227328,13 @@ Source-of-truth drift, missing validation, missing tests, rollback gaps, and own
 
 - Infrastructure route: .agents/skills/infra-change/SKILL.md
 - Web app route: .agents/skills/web-app/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -227955,10 +228259,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Infrastructure changes: .agents/checklists/infra-change.md
 - Web app changes: .agents/checklists/web-app.md
@@ -229394,9 +229698,13 @@ Auth bypass, authorization gaps, tenant leakage, unsafe inputs or outputs, secre
 
 - Infrastructure route: .agents/skills/infra-change/SKILL.md
 - Mobile app route: .agents/skills/mobile-app/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -230321,10 +230629,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Infrastructure changes: .agents/checklists/infra-change.md
 - Mobile app changes: .agents/checklists/mobile-app.md
@@ -231760,9 +232068,13 @@ Auth bypass, authorization gaps, tenant leakage, unsafe inputs or outputs, secre
 
 - Infrastructure route: .agents/skills/infra-change/SKILL.md
 - SDK route: .agents/skills/sdk/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -232687,10 +232999,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Infrastructure changes: .agents/checklists/infra-change.md
 - SDK changes: .agents/checklists/sdk.md
@@ -234126,9 +234438,13 @@ Source-of-truth drift, missing validation, missing tests, rollback gaps, and own
 
 - Infrastructure route: .agents/skills/infra-change/SKILL.md
 - Worker service route: .agents/skills/worker-service/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -235053,10 +235369,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Infrastructure changes: .agents/checklists/infra-change.md
 - Worker service changes: .agents/checklists/worker-service.md
@@ -236492,9 +236808,13 @@ Auth bypass, authorization gaps, tenant leakage, unsafe inputs or outputs, secre
 
 - Infrastructure route: .agents/skills/infra-change/SKILL.md
 - Infrastructure module route: .agents/skills/infra-module/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -237419,10 +237739,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Infrastructure changes: .agents/checklists/infra-change.md
 - Infrastructure module changes: .agents/checklists/infra-module.md
@@ -238858,9 +239178,13 @@ Auth bypass, authorization gaps, tenant leakage, unsafe inputs or outputs, secre
 
 - Infrastructure route: .agents/skills/infra-change/SKILL.md
 - Data pipeline route: .agents/skills/data-pipeline/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -239785,10 +240109,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Infrastructure changes: .agents/checklists/infra-change.md
 - Data pipeline changes: .agents/checklists/data-pipeline.md
@@ -241224,9 +241548,13 @@ Auth bypass, authorization gaps, tenant leakage, unsafe inputs or outputs, secre
 
 - Infrastructure route: .agents/skills/infra-change/SKILL.md
 - GitHub Action route: .agents/skills/github-action/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -242151,10 +242479,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Infrastructure changes: .agents/checklists/infra-change.md
 - GitHub Action changes: .agents/checklists/github-action.md
@@ -243622,9 +243950,13 @@ Auth bypass, authorization gaps, tenant leakage, unsafe inputs or outputs, secre
 
 - Infrastructure route: .agents/skills/infra-change/SKILL.md
 - Browser extension route: .agents/skills/browser-extension/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -244549,10 +244881,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Infrastructure changes: .agents/checklists/infra-change.md
 - Browser extension changes: .agents/checklists/browser-extension.md
@@ -245988,9 +246320,13 @@ Auth bypass, authorization gaps, tenant leakage, unsafe inputs or outputs, secre
 
 - Infrastructure route: .agents/skills/infra-change/SKILL.md
 - Plugin route: .agents/skills/plugin/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -246915,10 +247251,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Infrastructure changes: .agents/checklists/infra-change.md
 - Plugin changes: .agents/checklists/plugin.md
@@ -248354,9 +248690,13 @@ Auth bypass, authorization gaps, tenant leakage, unsafe inputs or outputs, secre
 
 - Infrastructure route: .agents/skills/infra-change/SKILL.md
 - Docs site route: .agents/skills/docs-site/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -249281,10 +249621,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Infrastructure changes: .agents/checklists/infra-change.md
 - Docs site changes: .agents/checklists/docs-site.md
@@ -250720,9 +251060,13 @@ Auth bypass, authorization gaps, tenant leakage, unsafe inputs or outputs, secre
 
 - Infrastructure route: .agents/skills/infra-change/SKILL.md
 - Monorepo route: .agents/skills/monorepo/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -251647,10 +251991,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Infrastructure changes: .agents/checklists/infra-change.md
 - Monorepo changes: .agents/checklists/monorepo.md
@@ -253060,9 +253404,13 @@ Auth bypass, authorization gaps, tenant leakage, unsafe inputs or outputs, secre
 ## Routes
 
 - Data pipeline route: .agents/skills/data-pipeline/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -253873,10 +254221,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Data pipeline changes: .agents/checklists/data-pipeline.md
 "#,
@@ -255207,9 +255555,13 @@ Auth bypass, authorization gaps, tenant leakage, unsafe inputs or outputs, secre
 
 - Data pipeline route: .agents/skills/data-pipeline/SKILL.md
 - CLI tool route: .agents/skills/cli-tool/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -256134,10 +256486,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Data pipeline changes: .agents/checklists/data-pipeline.md
 - CLI tool changes: .agents/checklists/cli-tool.md
@@ -257351,8 +257703,8 @@ It is intentionally a scaffold and should be filled with project-specific decisi
 - Agent routing source: .agents/context-map.md
 - Repository hygiene source: .editorconfig, .gitattributes, .gitignore
 - CLI command contract source: docs/cli/command-contract.md
-- CLI output and exit-code source: docs/cli/output-and-exit-codes.md
 - CLI config source: docs/cli/configuration.md
+- CLI output and exit-code source: docs/cli/output-and-exit-codes.md
 "#,
 	},
 	SsealedScaffoldFile {
@@ -257611,9 +257963,13 @@ Auth bypass, authorization gaps, tenant leakage, unsafe inputs or outputs, secre
 
 - Data pipeline route: .agents/skills/data-pipeline/SKILL.md
 - API service route: .agents/skills/api-service/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -258741,10 +259097,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Data pipeline changes: .agents/checklists/data-pipeline.md
 - API service changes: .agents/checklists/api-service.md
@@ -259927,8 +260283,6 @@ It is intentionally a scaffold and should be filled with project-specific decisi
 - API source for api-service repository type: api/openapi.yaml
 - API lifecycle source: docs/api-service/api-lifecycle.md
 - API idempotency source: docs/api-service/idempotency.md
-- API rate-limit source: docs/api-service/rate-limits.md
-- API service SLO source: docs/api-service/slo.md
 "#,
 	},
 	SsealedScaffoldFile {
@@ -260187,9 +260541,13 @@ Auth bypass, authorization gaps, tenant leakage, unsafe inputs or outputs, secre
 
 - Data pipeline route: .agents/skills/data-pipeline/SKILL.md
 - Desktop app route: .agents/skills/desktop-app/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -261114,10 +261472,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Data pipeline changes: .agents/checklists/data-pipeline.md
 - Desktop app changes: .agents/checklists/desktop-app.md
@@ -262333,7 +262691,6 @@ It is intentionally a scaffold and should be filled with project-specific decisi
 - Desktop installer source: docs/desktop/installers.md
 - Desktop auto-update source: docs/desktop/auto-update.md
 - Desktop local data source: docs/desktop/local-data.md
-- Desktop OS support source: docs/desktop/os-support.md
 "#,
 	},
 	SsealedScaffoldFile {
@@ -262592,9 +262949,13 @@ Auth bypass, authorization gaps, tenant leakage, unsafe inputs or outputs, secre
 
 - Data pipeline route: .agents/skills/data-pipeline/SKILL.md
 - Library package route: .agents/skills/library-package/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -263519,10 +263880,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Data pipeline changes: .agents/checklists/data-pipeline.md
 - Library package changes: .agents/checklists/library-package.md
@@ -264738,7 +265099,6 @@ It is intentionally a scaffold and should be filled with project-specific decisi
 - Library public API source: docs/library/public-api.md
 - Library semver source: docs/library/semver.md
 - Library compatibility source: docs/library/compatibility.md
-- Library migration source: docs/library/migration-guide.md
 "#,
 	},
 	SsealedScaffoldFile {
@@ -264997,9 +265357,13 @@ Source-of-truth drift, missing validation, missing tests, rollback gaps, and own
 
 - Data pipeline route: .agents/skills/data-pipeline/SKILL.md
 - Web app route: .agents/skills/web-app/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -265924,10 +266288,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Data pipeline changes: .agents/checklists/data-pipeline.md
 - Web app changes: .agents/checklists/web-app.md
@@ -267363,9 +267727,13 @@ Auth bypass, authorization gaps, tenant leakage, unsafe inputs or outputs, secre
 
 - Data pipeline route: .agents/skills/data-pipeline/SKILL.md
 - Mobile app route: .agents/skills/mobile-app/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -268290,10 +268658,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Data pipeline changes: .agents/checklists/data-pipeline.md
 - Mobile app changes: .agents/checklists/mobile-app.md
@@ -269729,9 +270097,13 @@ Auth bypass, authorization gaps, tenant leakage, unsafe inputs or outputs, secre
 
 - Data pipeline route: .agents/skills/data-pipeline/SKILL.md
 - SDK route: .agents/skills/sdk/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -270656,10 +271028,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Data pipeline changes: .agents/checklists/data-pipeline.md
 - SDK changes: .agents/checklists/sdk.md
@@ -272095,9 +272467,13 @@ Source-of-truth drift, missing validation, missing tests, rollback gaps, and own
 
 - Data pipeline route: .agents/skills/data-pipeline/SKILL.md
 - Worker service route: .agents/skills/worker-service/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -273022,10 +273398,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Data pipeline changes: .agents/checklists/data-pipeline.md
 - Worker service changes: .agents/checklists/worker-service.md
@@ -274461,9 +274837,13 @@ Auth bypass, authorization gaps, tenant leakage, unsafe inputs or outputs, secre
 
 - Data pipeline route: .agents/skills/data-pipeline/SKILL.md
 - Infrastructure module route: .agents/skills/infra-module/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -275388,10 +275768,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Data pipeline changes: .agents/checklists/data-pipeline.md
 - Infrastructure module changes: .agents/checklists/infra-module.md
@@ -276802,9 +277182,13 @@ Auth bypass, authorization gaps, tenant leakage, unsafe inputs or outputs, secre
 
 - Data pipeline route: .agents/skills/data-pipeline/SKILL.md
 - Data pipeline route: .agents/skills/data-pipeline/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -277637,10 +278021,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Data pipeline changes: .agents/checklists/data-pipeline.md
 - Data pipeline changes: .agents/checklists/data-pipeline.md
@@ -279076,9 +279460,13 @@ Auth bypass, authorization gaps, tenant leakage, unsafe inputs or outputs, secre
 
 - Data pipeline route: .agents/skills/data-pipeline/SKILL.md
 - GitHub Action route: .agents/skills/github-action/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -280003,10 +280391,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Data pipeline changes: .agents/checklists/data-pipeline.md
 - GitHub Action changes: .agents/checklists/github-action.md
@@ -281474,9 +281862,13 @@ Auth bypass, authorization gaps, tenant leakage, unsafe inputs or outputs, secre
 
 - Data pipeline route: .agents/skills/data-pipeline/SKILL.md
 - Browser extension route: .agents/skills/browser-extension/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -282401,10 +282793,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Data pipeline changes: .agents/checklists/data-pipeline.md
 - Browser extension changes: .agents/checklists/browser-extension.md
@@ -283840,9 +284232,13 @@ Auth bypass, authorization gaps, tenant leakage, unsafe inputs or outputs, secre
 
 - Data pipeline route: .agents/skills/data-pipeline/SKILL.md
 - Plugin route: .agents/skills/plugin/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -284767,10 +285163,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Data pipeline changes: .agents/checklists/data-pipeline.md
 - Plugin changes: .agents/checklists/plugin.md
@@ -286206,9 +286602,13 @@ Auth bypass, authorization gaps, tenant leakage, unsafe inputs or outputs, secre
 
 - Data pipeline route: .agents/skills/data-pipeline/SKILL.md
 - Docs site route: .agents/skills/docs-site/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -287133,10 +287533,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Data pipeline changes: .agents/checklists/data-pipeline.md
 - Docs site changes: .agents/checklists/docs-site.md
@@ -288572,9 +288972,13 @@ Auth bypass, authorization gaps, tenant leakage, unsafe inputs or outputs, secre
 
 - Data pipeline route: .agents/skills/data-pipeline/SKILL.md
 - Monorepo route: .agents/skills/monorepo/SKILL.md
+- Feature route: .agents/skills/feature/SKILL.md
+- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Security checklist route: .agents/checklists/security.md
+- Ops checklist route: .agents/checklists/ops-change.md
 - Ops route: .agents/skills/ops-change/SKILL.md
 - Dependency route: .agents/skills/dependency-upgrade/SKILL.md
-- Bugfix route: .agents/skills/bugfix/SKILL.md
+- Dependency checklist route: .agents/checklists/dependency.md
 - Refactor route: .agents/skills/refactor/SKILL.md
 - Test hardening route: .agents/skills/test-hardening/SKILL.md
 "#,
@@ -289499,10 +289903,10 @@ UNDECIDED. Add the minimal sequence needed to explain request, state, failure, a
 
 Use this file as a router. Do not turn it into one giant checklist.
 
-- Feature work: .agents/checklists/security.md, .agents/checklists/performance.md
-- Bug fixes: .agents/checklists/security.md when data or access is touched
-- Ops changes: .agents/checklists/ops-change.md
-- Dependency changes: .agents/checklists/dependency.md
+- Feature work: .agents/skills/feature/SKILL.md and .agents/checklists/security.md, plus .agents/checklists/performance.md when performance is touched
+- Bug fixes: .agents/skills/bugfix/SKILL.md and .agents/checklists/security.md when data or access is touched
+- Ops changes: .agents/checklists/ops-change.md and .agents/skills/ops-change/SKILL.md
+- Dependency changes: .agents/checklists/dependency.md and .agents/skills/dependency-upgrade/SKILL.md
 - Repository hygiene changes: .agents/checklists/security.md and .agents/checklists/ops-change.md
 - Data pipeline changes: .agents/checklists/data-pipeline.md
 - Monorepo changes: .agents/checklists/monorepo.md
