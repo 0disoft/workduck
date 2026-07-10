@@ -275,6 +275,8 @@ export const koProjectsMessages = {
 			'project-folder-conflict': '폴더 경로를 사용할 수 없습니다.',
 			'project-folder-create-failed': '폴더를 만들지 못했습니다.',
 			'project-folder-ssealed-scaffold-failed': 'ssealed 스캐폴드를 만들지 못했습니다.',
+			'project-folder-ssealed-scaffold-locked':
+				'이 저장소에서 다른 ssealed 작업이 실행 중입니다. 완료된 후 다시 시도하세요.',
 			'project-folder-open-path-required': '폴더 경로가 필요합니다.',
 			'project-folder-open-path-not-absolute': '폴더 경로는 절대 경로여야 합니다.',
 			'project-folder-open-path-not-found': '폴더 경로를 찾을 수 없습니다.',

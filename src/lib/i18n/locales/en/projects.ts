@@ -276,6 +276,8 @@ export const enProjectsMessages = {
 			'project-folder-conflict': 'Folder path is not usable.',
 			'project-folder-create-failed': 'Folder could not be created.',
 			'project-folder-ssealed-scaffold-failed': 'ssealed scaffold could not be created.',
+			'project-folder-ssealed-scaffold-locked':
+				'Another ssealed operation is running for this repository. Try again when it finishes.',
 			'project-folder-open-path-required': 'Folder path is required.',
 			'project-folder-open-path-not-absolute': 'Folder path must be absolute.',
 			'project-folder-open-path-not-found': 'Folder path was not found.',

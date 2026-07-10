@@ -14,7 +14,7 @@ pub struct SsealedScaffold {
 	pub files: &'static [SsealedScaffoldFile],
 }
 
-pub const SSEALED_SCAFFOLD_TOOL_VERSION: &str = "0.6.8";
+pub const SSEALED_SCAFFOLD_TOOL_VERSION: &str = "0.6.11";
 
 pub const SSEALED_SCAFFOLDS: &[SsealedScaffold] = &[
 	SsealedScaffold {

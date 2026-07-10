@@ -26,7 +26,7 @@
         "svelte-check": "^4.7.2",
         "tailwindcss": "^4.3.2",
         "typescript": "^6.0.3",
-        "vite": "^8.1.3",
+        "vite": "^8.1.4",
       },
     },
     "packages/agents": {
@@ -345,7 +345,7 @@
 
     "source-map-js": ["source-map-js@1.2.1", "", {}, "sha512-UXWMKhLOwVKb728IUtQPXxfYU+usdybtUrK/8uGE8CQMvrhOpwvzDBwj0QhSL7MQc7vIsISBG8VQ8+IDQxpfQA=="],
 
-    "ssealed": ["ssealed@0.6.8", "", { "bin": { "ssealed": "dist/cli.js" } }, "sha512-cKztRnhTwxmbTKNJwophOHlWaLWvaUBjnxeo9bSwyJpcsHn7/YrQVh7jCU1Rg8Ju5D/d/XZLzITPbTEImzhskg=="],
+    "ssealed": ["ssealed@0.6.11", "", { "bin": { "ssealed": "dist/cli.js" } }, "sha512-ZoGsv3Ug1He5srK7bfVuVqiP7xKP3SXdtROfHW1OtyRZE1u2mUZ8LtZJEuSjT/LWYgyaDbW1ta2V+xUGn/+ECQ=="],
 
     "style-to-object": ["style-to-object@1.0.14", "", { "dependencies": { "inline-style-parser": "0.2.7" } }, "sha512-LIN7rULI0jBscWQYaSswptyderlarFkjQ+t79nzty8tcIAceVomEVlLzH5VP4Cmsv6MtKhs7qaAiwlcp+Mgaxw=="],
 

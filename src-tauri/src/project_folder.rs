@@ -1,5 +1,6 @@
 use std::{
-    fs, io,
+    fs,
+    io::{self, Write},
     path::{Path, PathBuf},
     process::{Command, Stdio},
     thread,
@@ -18,6 +19,7 @@ const PROJECTS_DIRECTORY_NAME: &str = "projects";
 const PROJECT_FOLDER_NAME_MAX_CHARS: usize = 80;
 const DELETE_FOLDER_MAX_ATTEMPTS: usize = 4;
 const DELETE_FOLDER_RETRY_DELAY: Duration = Duration::from_millis(75);
+const SSEALED_SCAFFOLD_LOCK_FILE_NAME: &str = ".ssealed-init.lock";
 
 #[derive(serde::Serialize)]
 pub enum ProjectFolderError {
@@ -55,6 +57,8 @@ pub enum ProjectFolderError {
     CreateFailed,
     #[serde(rename = "project-folder-ssealed-scaffold-failed")]
     SsealedScaffoldFailed,
+    #[serde(rename = "project-folder-ssealed-scaffold-locked")]
+    SsealedScaffoldLocked,
     #[serde(rename = "project-folder-open-path-required")]
     OpenPathRequired,
     #[serde(rename = "project-folder-open-path-not-absolute")]
@@ -371,6 +375,10 @@ fn inspect_or_apply_ssealed_scaffold_for_repository(
             Ok(None) => return invalid_ssealed_apply(ProjectFolderError::SsealedScaffoldFailed),
             Err(error) => return invalid_ssealed_apply(error),
         };
+    let _scaffold_lock = match acquire_ssealed_scaffold_lock(&repository_path) {
+        Ok(scaffold_lock) => scaffold_lock,
+        Err(error) => return invalid_ssealed_apply(error),
+    };
 
     match create_ssealed_repository_scaffold_plan(
         &repository_path,
@@ -700,9 +708,20 @@ fn create_folder(
     }
 
     if let Some((scope, profile)) = ssealed_scaffold {
-        if write_ssealed_scaffold(&normalized_target_path, scope, profile).is_err() {
+        let _scaffold_lock = match acquire_ssealed_scaffold_lock(&normalized_target_path) {
+            Ok(scaffold_lock) => scaffold_lock,
+            Err(ProjectFolderError::SsealedScaffoldLocked) => {
+                return invalid(ProjectFolderError::SsealedScaffoldLocked);
+            }
+            Err(error) => {
+                let _ = fs::remove_dir_all(&normalized_target_path);
+                return invalid(error);
+            }
+        };
+
+        if let Err(error) = write_ssealed_scaffold(&normalized_target_path, scope, profile) {
             let _ = fs::remove_dir_all(&normalized_target_path);
-            return invalid(ProjectFolderError::SsealedScaffoldFailed);
+            return invalid(error);
         }
     }
 
@@ -1183,6 +1202,58 @@ fn write_ssealed_repository_manifest_file(
     }
 
     fs::write(manifest_path, content).map_err(|_| ProjectFolderError::SsealedScaffoldFailed)
+}
+
+struct SsealedScaffoldLock {
+    path: PathBuf,
+}
+
+impl Drop for SsealedScaffoldLock {
+    fn drop(&mut self) {
+        let _ = fs::remove_file(&self.path);
+    }
+}
+
+fn acquire_ssealed_scaffold_lock(
+    target_path: &Path,
+) -> Result<SsealedScaffoldLock, ProjectFolderError> {
+    let lock_path = target_path.join(SSEALED_SCAFFOLD_LOCK_FILE_NAME);
+    let mut lock_file = match fs::OpenOptions::new()
+        .write(true)
+        .create_new(true)
+        .open(&lock_path)
+    {
+        Ok(lock_file) => lock_file,
+        Err(error) if error.kind() == io::ErrorKind::AlreadyExists => {
+            return Err(ProjectFolderError::SsealedScaffoldLocked);
+        }
+        Err(_) => return Err(ProjectFolderError::SsealedScaffoldFailed),
+    };
+    let created_at = OffsetDateTime::now_utc()
+        .format(&Rfc3339)
+        .unwrap_or_else(|_| "1970-01-01T00:00:00Z".to_owned());
+    let lock_metadata = serde_json::json!({
+        "tool": "workduck",
+        "pid": std::process::id(),
+        "createdAt": created_at,
+    });
+    let lock_content = serde_json::to_vec_pretty(&lock_metadata)
+        .map_err(|_| ProjectFolderError::SsealedScaffoldFailed);
+
+    if lock_content
+        .and_then(|content| {
+            lock_file
+                .write_all(&content)
+                .map_err(|_| ProjectFolderError::SsealedScaffoldFailed)
+        })
+        .is_err()
+    {
+        drop(lock_file);
+        let _ = fs::remove_file(&lock_path);
+        return Err(ProjectFolderError::SsealedScaffoldFailed);
+    }
+
+    Ok(SsealedScaffoldLock { path: lock_path })
 }
 
 fn sha256_checksum(content: &str) -> String {
@@ -1671,5 +1742,75 @@ mod tests {
         assert!(manifest["files"].as_array().is_some_and(|files| {
             files.iter().any(|file| file["path"] == "docs/backend/README.md")
         }));
+        assert!(!repository_path
+            .join(SSEALED_SCAFFOLD_LOCK_FILE_NAME)
+            .exists());
+    }
+
+    #[test]
+    fn existing_repository_preview_and_apply_respect_active_ssealed_lock() {
+        let tempdir = tempfile::tempdir().expect("temporary workspace");
+        let workspace_path = tempdir.path().to_string_lossy().into_owned();
+
+        assert!(create_project_folder(workspace_path.clone(), "product".to_owned()).ok);
+        let repository_path = tempdir.path().join("projects/product");
+        let repository_path_string = repository_path.to_string_lossy().into_owned();
+        let scaffold_lock = match acquire_ssealed_scaffold_lock(&repository_path) {
+            Ok(scaffold_lock) => scaffold_lock,
+            Err(_) => panic!("active ssealed lock should be acquired"),
+        };
+        let lock_content = fs::read_to_string(
+            repository_path.join(SSEALED_SCAFFOLD_LOCK_FILE_NAME),
+        )
+        .expect("ssealed lock metadata");
+        let lock_metadata: serde_json::Value =
+            serde_json::from_str(&lock_content).expect("valid ssealed lock metadata");
+
+        assert_eq!(lock_metadata["tool"], "workduck");
+        assert_eq!(lock_metadata["pid"], std::process::id());
+        assert!(lock_metadata["createdAt"].as_str().is_some());
+
+        let preview = preview_ssealed_scaffold_for_repository(
+            workspace_path.clone(),
+            repository_path_string.clone(),
+            "backend".to_owned(),
+            Some("generic".to_owned()),
+        );
+        let apply = apply_ssealed_scaffold_to_repository(
+            workspace_path.clone(),
+            repository_path_string.clone(),
+            "backend".to_owned(),
+            Some("generic".to_owned()),
+        );
+
+        assert!(!preview.ok);
+        assert!(matches!(
+            preview.error,
+            Some(ProjectFolderError::SsealedScaffoldLocked)
+        ));
+        assert!(!apply.ok);
+        assert!(matches!(
+            apply.error,
+            Some(ProjectFolderError::SsealedScaffoldLocked)
+        ));
+        assert!(!repository_path.join(".ssealed/manifest.json").exists());
+
+        drop(scaffold_lock);
+        assert!(!repository_path
+            .join(SSEALED_SCAFFOLD_LOCK_FILE_NAME)
+            .exists());
+
+        let apply_after_unlock = apply_ssealed_scaffold_to_repository(
+            workspace_path,
+            repository_path_string,
+            "backend".to_owned(),
+            Some("generic".to_owned()),
+        );
+
+        assert!(apply_after_unlock.ok);
+        assert!(repository_path.join(".ssealed/manifest.json").is_file());
+        assert!(!repository_path
+            .join(SSEALED_SCAFFOLD_LOCK_FILE_NAME)
+            .exists());
     }
 }

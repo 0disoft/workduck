@@ -283,6 +283,8 @@ export const hiProjectsMessages = {
 		'project-folder-conflict': 'फ़ोल्डर पथ उपयोग करने योग्य नहीं है।',
 		'project-folder-create-failed': 'फ़ोल्डर नहीं बनाया जा सका।',
 		'project-folder-ssealed-scaffold-failed': 'ssealed scaffold नहीं बनाया जा सका।',
+		'project-folder-ssealed-scaffold-locked':
+			'इस रिपॉजिटरी के लिए एक अन्य ssealed कार्रवाई चल रही है। उसके पूरा होने के बाद फिर कोशिश करें।',
 		'project-folder-open-path-required': 'फ़ोल्डर पथ आवश्यक है।',
 		'project-folder-open-path-not-absolute': 'फ़ोल्डर पथ पूर्ण होना चाहिए।',
 		'project-folder-open-path-not-found': 'फ़ोल्डर पथ नहीं मिला।',
