@@ -22,6 +22,7 @@
 		readonly workspace: WorkspaceRecord;
 		readonly projectRows: readonly ProjectTreeRow[];
 		readonly selectionIndex: ProjectBoardSelectionIndex;
+		readonly priorityRepositoryIds: ReadonlySet<string>;
 		readonly registry: ProjectRegistry;
 		folderRepairError: ProjectFolderError | null;
 		folderRepairSignature: string;
@@ -35,6 +36,7 @@
 		workspace,
 		projectRows,
 		selectionIndex,
+		priorityRepositoryIds,
 		registry,
 		folderRepairError = $bindable(),
 		folderRepairSignature = $bindable(),
@@ -45,6 +47,7 @@
 	}: Props = $props();
 
 	let repositoryRemoteBackfillSignature = $state('');
+	let repositoryPrioritySignature = $state('');
 
 	async function ensureProjectFoldersForRegistry(
 		expectedSignature: string,
@@ -86,6 +89,7 @@
 			workspace.id,
 			selectionIndex.repositoriesToInspect
 		);
+		const nextPrioritySignature = [...priorityRepositoryIds].sort().join('|');
 
 		repositoryGitStatusById = pruneRepositoryGitStatusRecord(
 			repositoryGitStatusById,
@@ -97,13 +101,42 @@
 		);
 
 		if (repositoryGitInspectionSignature === nextSignature) {
+			if (
+				repositoryPrioritySignature !== nextPrioritySignature &&
+				priorityRepositoryIds.size > 0
+			) {
+				repositoryPrioritySignature = nextPrioritySignature;
+				void refreshProjectRepositoryGitStatusesForBoard(
+					{
+						repositories: selectionIndex.repositoriesToInspect.filter((repository) =>
+							priorityRepositoryIds.has(repository.id)
+						),
+						priorityRepositoryIds,
+						expectedSignature: nextSignature
+					},
+					{
+						getRepositoryGitInspectionSignature: () => repositoryGitInspectionSignature,
+						updateRepositoryGitStatuses: (gitStatuses) => {
+							repositoryGitStatusById = {
+								...repositoryGitStatusById,
+								...gitStatuses
+							};
+						}
+					}
+				);
+			}
 			return;
 		}
 
 		repositoryGitInspectionSignature = nextSignature;
+		repositoryPrioritySignature = nextPrioritySignature;
 
 		void refreshProjectRepositoryGitStatusesForBoard(
-			{ repositories: selectionIndex.repositoriesToInspect, expectedSignature: nextSignature },
+			{
+				repositories: selectionIndex.repositoriesToInspect,
+				priorityRepositoryIds,
+				expectedSignature: nextSignature
+			},
 			{
 				getRepositoryGitInspectionSignature: () => repositoryGitInspectionSignature,
 				updateRepositoryGitStatuses: (gitStatuses) => {

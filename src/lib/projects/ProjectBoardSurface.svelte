@@ -261,6 +261,9 @@
 	let selectedProjectGroups = $derived(boardSelection.selectedProjectGroups);
 	let selectedGroup = $derived(boardSelection.selectedGroup);
 	let selectedRepositories = $derived(boardSelection.selectedRepositories);
+	let priorityRepositoryIds = $derived(
+		new Set(selectedRepositories.map((repository) => repository.id))
+	);
 	let dialogTargetNode = $derived(getDialogTargetNode());
 	let contextMenuRepository = $derived(getContextMenuRepository());
 	let contextMenuNode = $derived(getContextMenuNode());
@@ -1305,6 +1308,7 @@
 	{workspace}
 	{projectRows}
 	{selectionIndex}
+	{priorityRepositoryIds}
 	{registry}
 	{persistRegistry}
 	bind:folderRepairError

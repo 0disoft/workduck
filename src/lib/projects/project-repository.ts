@@ -122,6 +122,9 @@ export interface ProjectRepositoryGitInspectionInput {
 export interface ProjectRepositoryGitInspectionRecord {
 	readonly repositoryId: string;
 	readonly result: ProjectRepositoryGitInspectionResult;
+	readonly gitCommandCount: number;
+	readonly remoteCacheHitCount: number;
+	readonly elapsedMs: number;
 }
 
 export type ProjectRepositoryGitMutationResult =
@@ -176,6 +179,9 @@ interface ProjectRepositoryGitInspectionResponse {
 interface ProjectRepositoryGitInspectionRecordResponse {
 	readonly repositoryId?: string | null;
 	readonly inspection?: ProjectRepositoryGitInspectionResponse | null;
+	readonly gitCommandCount?: number | null;
+	readonly remoteCacheHitCount?: number | null;
+	readonly elapsedMs?: number | null;
 }
 
 interface ProjectRepositoryGitMutationResponse {
@@ -319,7 +325,10 @@ export async function inspectProjectRepositoriesGit(
 	if (invoke === undefined) {
 		return repositories.map((repository) => ({
 			repositoryId: repository.repositoryId,
-			result: { ok: false, error: 'project-repository-git-command-unavailable' }
+			result: { ok: false, error: 'project-repository-git-command-unavailable' },
+			gitCommandCount: 0,
+			remoteCacheHitCount: 0,
+			elapsedMs: 0
 		}));
 	}
 
@@ -340,7 +349,10 @@ export async function inspectProjectRepositoriesGit(
 	} catch {
 		return repositories.map((repository) => ({
 			repositoryId: repository.repositoryId,
-			result: { ok: false, error: 'project-repository-git-path-unreadable' }
+			result: { ok: false, error: 'project-repository-git-path-unreadable' },
+			gitCommandCount: 0,
+			remoteCacheHitCount: 0,
+			elapsedMs: 0
 		}));
 	}
 }
@@ -981,7 +993,10 @@ function normalizeProjectRepositoryGitInspectionRecord(
 
 	return {
 		repositoryId: value.repositoryId,
-		result: normalizeProjectRepositoryGitInspectionResponse(value.inspection)
+		result: normalizeProjectRepositoryGitInspectionResponse(value.inspection),
+		gitCommandCount: normalizeGitCount(value.gitCommandCount),
+		remoteCacheHitCount: normalizeGitCount(value.remoteCacheHitCount),
+		elapsedMs: normalizeGitCount(value.elapsedMs)
 	};
 }
 

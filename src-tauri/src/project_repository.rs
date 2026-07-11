@@ -1,4 +1,5 @@
 use std::{
+    cell::Cell,
     collections::HashMap,
     ffi::OsString,
     fs,
@@ -7,7 +8,7 @@ use std::{
     process::{Command, Output, Stdio},
     sync::{Arc, Condvar, Mutex, OnceLock},
     thread,
-    time::Duration,
+    time::{Duration, Instant, SystemTime},
 };
 
 use crate::git_credential::{
@@ -34,6 +35,11 @@ use std::os::windows::process::CommandExt;
 
 const PROJECT_REPOSITORY_CLONE_TIMEOUT: Duration = Duration::from_secs(900);
 const PROJECT_REPOSITORY_GIT_ACTION_TIMEOUT: Duration = Duration::from_secs(600);
+const PROJECT_REPOSITORY_REMOTE_CACHE_MAX_ENTRIES: usize = 512;
+const PROJECT_REPOSITORY_REMOTE_CACHE_TTL: Duration = Duration::from_secs(30);
+#[cfg(target_os = "windows")]
+const PROJECT_REPOSITORY_GIT_INSPECTION_MAX_CONCURRENCY: usize = 2;
+#[cfg(not(target_os = "windows"))]
 const PROJECT_REPOSITORY_GIT_INSPECTION_MAX_CONCURRENCY: usize = 4;
 #[cfg(target_os = "windows")]
 const CREATE_NO_WINDOW: u32 = 0x08000000;
@@ -203,6 +209,9 @@ pub struct ProjectRepositoryGitInspectionRequest {
 pub struct ProjectRepositoryGitInspectionRecord {
     repository_id: String,
     inspection: ProjectRepositoryGitInspection,
+    git_command_count: u32,
+    remote_cache_hit_count: u32,
+    elapsed_ms: u64,
 }
 
 #[derive(serde::Serialize)]
@@ -227,6 +236,24 @@ struct GitStatusSummary {
 struct GitInspectionInFlight {
     result: Mutex<Option<ProjectRepositoryGitInspection>>,
     completed: Condvar,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+struct GitConfigFingerprint {
+    length: u64,
+    modified: Option<SystemTime>,
+}
+
+#[derive(Clone)]
+struct GitRemoteUrlsCacheEntry {
+    fingerprint: Option<GitConfigFingerprint>,
+    remote_urls: HashMap<String, String>,
+    cached_at: Instant,
+}
+
+thread_local! {
+    static GIT_INSPECTION_COMMAND_COUNT: Cell<u32> = const { Cell::new(0) };
+    static GIT_INSPECTION_REMOTE_CACHE_HIT_COUNT: Cell<u32> = const { Cell::new(0) };
 }
 
 #[tauri::command]
@@ -618,6 +645,9 @@ pub async fn inspect_project_repositories_git(
             .map(|repository_id| ProjectRepositoryGitInspectionRecord {
                 repository_id,
                 inspection: invalid_git_inspection(ProjectRepositoryGitError::CommandFailed),
+                git_command_count: 0,
+                remote_cache_hit_count: 0,
+                elapsed_ms: 0,
             })
             .collect()
     })
@@ -673,13 +703,36 @@ fn inspect_project_repository_git_record(
         repository_id,
         path,
     } = repository;
+    reset_git_inspection_diagnostics();
+    let started_at = Instant::now();
     let inspection = std::panic::catch_unwind(move || inspect_project_repository_git_blocking(path))
         .unwrap_or_else(|_| invalid_git_inspection(ProjectRepositoryGitError::CommandFailed));
+    let elapsed_ms = duration_millis_u64(started_at.elapsed());
+    let (git_command_count, remote_cache_hit_count) = read_git_inspection_diagnostics();
 
     ProjectRepositoryGitInspectionRecord {
         repository_id,
         inspection,
+        git_command_count,
+        remote_cache_hit_count,
+        elapsed_ms,
     }
+}
+
+fn reset_git_inspection_diagnostics() {
+    GIT_INSPECTION_COMMAND_COUNT.set(0);
+    GIT_INSPECTION_REMOTE_CACHE_HIT_COUNT.set(0);
+}
+
+fn read_git_inspection_diagnostics() -> (u32, u32) {
+    (
+        GIT_INSPECTION_COMMAND_COUNT.get(),
+        GIT_INSPECTION_REMOTE_CACHE_HIT_COUNT.get(),
+    )
+}
+
+fn duration_millis_u64(duration: Duration) -> u64 {
+    u64::try_from(duration.as_millis()).unwrap_or(u64::MAX)
 }
 
 #[tauri::command]
@@ -1129,9 +1182,11 @@ fn cleanup_failed_clone_target(clone_target: &Path) {
 fn inspect_git_repository(
     repository_path: &Path,
 ) -> Result<ProjectRepositoryGitInspection, GitCommandFailure> {
-    let Some(status) = read_git_status_summary(repository_path)? else {
+    if !has_repository_git_marker(repository_path)? {
         return Ok(not_git_repository_inspection());
-    };
+    }
+
+    let status = read_git_status_summary(repository_path)?;
 
     let remote_urls = read_valid_git_remote_urls(repository_path)?;
     let origin_url = remote_urls.get("origin").cloned();
@@ -1169,11 +1224,7 @@ fn not_git_repository_inspection() -> ProjectRepositoryGitInspection {
 
 fn read_git_status_summary(
     repository_path: &Path,
-) -> Result<Option<GitStatusSummary>, GitCommandFailure> {
-    if !is_git_repository(repository_path)? {
-        return Ok(None);
-    }
-
+) -> Result<GitStatusSummary, GitCommandFailure> {
     let output = run_git_command(
         repository_path,
         &[
@@ -1187,18 +1238,29 @@ fn read_git_status_summary(
     )?;
 
     if !output.status.success() {
-        return if is_git_repository(repository_path)? {
-            Err(GitCommandFailure {
-                error: ProjectRepositoryGitError::CommandFailed,
-            })
-        } else {
-            Ok(None)
-        };
+        return Err(GitCommandFailure {
+            error: ProjectRepositoryGitError::CommandFailed,
+        });
     }
 
-    Ok(Some(parse_git_status_summary(&String::from_utf8_lossy(
+    Ok(parse_git_status_summary(&String::from_utf8_lossy(
         &output.stdout,
-    ))))
+    )))
+}
+
+fn has_repository_git_marker(repository_path: &Path) -> Result<bool, GitCommandFailure> {
+    match fs::symlink_metadata(repository_path.join(".git")) {
+        Ok(metadata) => {
+            Ok(metadata.is_dir() || metadata.is_file() || metadata.file_type().is_symlink())
+        }
+        Err(error) if error.kind() == io::ErrorKind::NotFound => Ok(false),
+        Err(error) => Err(GitCommandFailure {
+            error: match error.kind() {
+                io::ErrorKind::PermissionDenied => ProjectRepositoryGitError::PathPermissionDenied,
+                _ => ProjectRepositoryGitError::PathUnreadable,
+            },
+        }),
+    }
 }
 
 fn parse_git_status_summary(output: &str) -> GitStatusSummary {
@@ -1323,6 +1385,48 @@ fn read_valid_git_remote_url(
 fn read_valid_git_remote_urls(
     repository_path: &Path,
 ) -> Result<HashMap<String, String>, GitCommandFailure> {
+    let fingerprint = read_git_config_fingerprint(repository_path);
+
+    if let Some(cached) = git_remote_urls_cache()
+        .lock()
+        .expect("git remote URL cache lock poisoned")
+        .get(repository_path)
+        .filter(|entry| {
+            entry.fingerprint == fingerprint
+                && entry.cached_at.elapsed() < PROJECT_REPOSITORY_REMOTE_CACHE_TTL
+        })
+        .cloned()
+    {
+        GIT_INSPECTION_REMOTE_CACHE_HIT_COUNT.with(|count| {
+            count.set(count.get().saturating_add(1));
+        });
+        return Ok(cached.remote_urls);
+    }
+
+    let remote_urls = read_valid_git_remote_urls_uncached(repository_path)?;
+    let mut cache = git_remote_urls_cache()
+        .lock()
+        .expect("git remote URL cache lock poisoned");
+    if cache.len() >= PROJECT_REPOSITORY_REMOTE_CACHE_MAX_ENTRIES
+        && !cache.contains_key(repository_path)
+    {
+        cache.clear();
+    }
+    cache.insert(
+        repository_path.to_path_buf(),
+        GitRemoteUrlsCacheEntry {
+            fingerprint,
+            remote_urls: remote_urls.clone(),
+            cached_at: Instant::now(),
+        },
+    );
+
+    Ok(remote_urls)
+}
+
+fn read_valid_git_remote_urls_uncached(
+    repository_path: &Path,
+) -> Result<HashMap<String, String>, GitCommandFailure> {
     let output = run_git_command(
         repository_path,
         &["config", "--get-regexp", r"^remote\..*\.url$"],
@@ -1354,6 +1458,50 @@ fn read_valid_git_remote_urls(
     }
 
     Ok(remote_urls)
+}
+
+fn read_git_config_fingerprint(repository_path: &Path) -> Option<GitConfigFingerprint> {
+    let config_path = resolve_repository_git_dir(repository_path)?.join("config");
+    let metadata = fs::metadata(config_path).ok()?;
+
+    Some(GitConfigFingerprint {
+        length: metadata.len(),
+        modified: metadata.modified().ok(),
+    })
+}
+
+fn resolve_repository_git_dir(repository_path: &Path) -> Option<PathBuf> {
+    let git_marker = repository_path.join(".git");
+    let metadata = fs::symlink_metadata(&git_marker).ok()?;
+
+    if metadata.is_dir() {
+        return Some(canonicalize_existing_path_or_keep(git_marker));
+    }
+
+    if !metadata.is_file() {
+        return None;
+    }
+
+    let marker = fs::read_to_string(git_marker).ok()?;
+    let git_dir = marker.trim().strip_prefix("gitdir:")?.trim();
+    let git_dir = Path::new(git_dir);
+
+    let git_dir = if git_dir.is_absolute() {
+        git_dir.to_path_buf()
+    } else {
+        repository_path.join(git_dir)
+    };
+
+    Some(canonicalize_existing_path_or_keep(git_dir))
+}
+
+fn canonicalize_existing_path_or_keep(path: PathBuf) -> PathBuf {
+    fs::canonicalize(&path).unwrap_or(path)
+}
+
+fn git_remote_urls_cache() -> &'static Mutex<HashMap<PathBuf, GitRemoteUrlsCacheEntry>> {
+    static CACHE: OnceLock<Mutex<HashMap<PathBuf, GitRemoteUrlsCacheEntry>>> = OnceLock::new();
+    CACHE.get_or_init(|| Mutex::new(HashMap::new()))
 }
 
 fn read_git_remote_url(
@@ -1480,6 +1628,47 @@ mod tests {
             records[2].inspection.error,
             Some(ProjectRepositoryGitError::PathRequired)
         );
+        assert!(records.iter().all(|record| record.git_command_count == 0));
+        assert!(
+            records
+                .iter()
+                .all(|record| record.remote_cache_hit_count == 0)
+        );
+    }
+
+    #[test]
+    fn repository_git_inspection_diagnostics_count_commands_and_remote_cache_hits() {
+        if !git_is_available() {
+            return;
+        }
+
+        let repository = unique_test_directory("workduck-inspection-diagnostics");
+        fs::create_dir_all(&repository).expect("create diagnostic repository");
+
+        let init_status = Command::new("git")
+            .arg("init")
+            .current_dir(&repository)
+            .status()
+            .expect("initialize diagnostic repository");
+        assert!(init_status.success());
+
+        let repository = fs::canonicalize(repository).expect("canonical diagnostic repository");
+        let request = || ProjectRepositoryGitInspectionRequest {
+            repository_id: "diagnostic-repository".to_string(),
+            path: repository.to_string_lossy().into_owned(),
+        };
+
+        let first = inspect_project_repository_git_record(request());
+        let second = inspect_project_repository_git_record(request());
+
+        assert_eq!(first.git_command_count, 2);
+        assert_eq!(first.remote_cache_hit_count, 0);
+        assert_eq!(second.git_command_count, 1);
+        assert_eq!(second.remote_cache_hit_count, 1);
+        assert!(first.inspection.ok);
+        assert!(second.inspection.ok);
+
+        let _ = fs::remove_dir_all(&repository);
     }
 
     #[test]
@@ -1634,6 +1823,48 @@ mod tests {
             Some("https://github.com/example/workduck.git")
         );
 
+        let update_origin_status = Command::new("git")
+            .args([
+                "remote",
+                "set-url",
+                "origin",
+                "https://github.com/0disoft/workduck-renamed.git",
+            ])
+            .current_dir(&repository)
+            .status()
+            .expect("update origin remote");
+
+        assert!(update_origin_status.success());
+
+        let refreshed_inspection = match inspect_git_repository(&repository) {
+            Ok(inspection) => inspection,
+            Err(_) => panic!("reinspect git repository after config change"),
+        };
+
+        assert_eq!(
+            refreshed_inspection.origin_url.as_deref(),
+            Some("https://github.com/0disoft/workduck-renamed.git")
+        );
+
+        let _ = fs::remove_dir_all(&sandbox);
+    }
+
+    #[test]
+    fn repository_git_dir_resolver_supports_relative_worktree_markers() {
+        let sandbox = unique_test_directory("workduck-relative-git-dir");
+        let repository = sandbox.join("repo");
+        let git_dir = sandbox.join("worktrees").join("repo");
+
+        fs::create_dir_all(&repository).expect("create worktree directory");
+        fs::create_dir_all(&git_dir).expect("create worktree git directory");
+        fs::write(repository.join(".git"), "gitdir: ../worktrees/repo\n")
+            .expect("write relative worktree marker");
+
+        assert_eq!(
+            resolve_repository_git_dir(&repository),
+            Some(fs::canonicalize(git_dir).expect("canonical worktree git directory"))
+        );
+
         let _ = fs::remove_dir_all(&sandbox);
     }
 
@@ -1762,6 +1993,9 @@ fn run_git_command(
     timeout: Duration,
     credential: Option<&GitCredential>,
 ) -> Result<Output, GitCommandFailure> {
+    GIT_INSPECTION_COMMAND_COUNT.with(|count| {
+        count.set(count.get().saturating_add(1));
+    });
     run_git_process(
         repository_path,
         args.iter().copied(),
