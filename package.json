@@ -1,6 +1,6 @@
 {
   "name": "workduck",
-  "version": "1.6.93",
+  "version": "1.6.96",
   "private": true,
   "license": "0BSD",
   "type": "module",
@@ -30,6 +30,9 @@
     "check:packages": "tsgo -p packages/core/tsconfig.json --noEmit && tsgo -p packages/schemas/tsconfig.json --noEmit && tsgo -p packages/prompts/tsconfig.json --noEmit && tsgo -p packages/agents/tsconfig.json --noEmit && tsgo -p packages/workbench-engine/tsconfig.json --noEmit",
     "check:packages:tsc": "tsc -p packages/core/tsconfig.json --noEmit && tsc -p packages/schemas/tsconfig.json --noEmit && tsc -p packages/prompts/tsconfig.json --noEmit && tsc -p packages/agents/tsconfig.json --noEmit && tsc -p packages/workbench-engine/tsconfig.json --noEmit",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
+    "test": "bun test",
+    "test:rust": "cargo test --locked --manifest-path src-tauri/Cargo.toml",
+    "verify": "bun run check && bun run test && bun run build && bun run test:rust",
     "test:environment": "bun test src/lib/environment/cli-environment-variables.test.ts"
   },
   "devDependencies": {

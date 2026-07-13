@@ -1196,7 +1196,6 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 				readVault: () => readEnvironmentVaultSession(workspace.id),
 				onRunningWorkOrderSaved: async (runningWorkOrder) => {
 					selectedWorkOrder = runningWorkOrder;
-					await refreshQueueFiles({ silent: true });
 					await prepareDesktopNotificationPermission();
 				}
 			});
@@ -1231,11 +1230,7 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 	async function applyQueuePanelWorkOrderExecutionFailure(
 		result: QueuePanelWorkOrderExecutionFailureResult
 	) {
-		if (result.code === 'execution-failed') {
-			parseError = getQueueExecutionErrorMessage(result.error);
-		} else {
-			error = result.error;
-		}
+		parseError = getQueueExecutionErrorMessage(result.error);
 
 		if (result.workOrder !== null) {
 			selectedWorkOrder = result.workOrder;

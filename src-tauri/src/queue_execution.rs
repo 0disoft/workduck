@@ -20,8 +20,12 @@ pub use crate::queue_result_report::{
 };
 
 use crate::{
+    atomic_file_write::{AtomicFileWriteError, write_file_exclusively},
     path_display::display_path,
     queue_execution_identity::{slugify, timestamp_for_file_name},
+    queue_work_order_execution::{
+        QueueWorkOrderCompletion, begin_queue_work_order_execution,
+    },
     system_environment::read_cli_user_environment_variable,
 };
 
@@ -232,6 +236,8 @@ pub struct AgentExecutionRun {
 #[derive(Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct QueueExecutionRequest {
+    pub workspace_path: String,
+    pub work_order_relative_path: String,
     pub work_order: QueueWorkOrder,
     #[serde(default)]
     pub agents: Vec<AgentRecord>,
@@ -264,6 +270,10 @@ pub struct QueueExecutionCommandResult {
     pub ok: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub report: Option<QueueResultReport>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub work_order: Option<QueueWorkOrder>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub report_relative_path: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub error: Option<&'static str>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -452,31 +462,63 @@ pub struct AgentExecutionAttempt {
 pub async fn execute_queue_work_order(
     request: QueueExecutionRequest,
 ) -> QueueExecutionCommandResult {
-    if let Err(error) = validate_executable_work_order_status(&request.work_order) {
-        return queue_execution_failed(error);
-    }
+    let execution = match begin_queue_work_order_execution(
+        Path::new(&request.workspace_path),
+        &request.work_order_relative_path,
+        &request.work_order.r#ref.id,
+    ) {
+        Ok(execution) => execution,
+        Err(error) => return queue_execution_failed(error),
+    };
+    let work_order = execution.work_order().clone();
+    let _execution_guard = match acquire_queue_work_order_execution(&work_order.r#ref.id) {
+        Ok(guard) => guard,
+        Err(error) => {
+            return queue_execution_failed_with_work_order(error, execution.fail().ok());
+        }
+    };
 
-    if request.work_order.tasks.is_empty() {
-        return queue_execution_failed(QueueExecutionErrorDetail::new(
+    match execute_queue_work_order_inner(&request, &work_order).await {
+        Ok(report) => match execution.complete(&report, QueueWorkOrderCompletion::Archive) {
+            Ok(success) => QueueExecutionCommandResult {
+                ok: true,
+                report: Some(report),
+                work_order: Some(success.work_order),
+                report_relative_path: Some(success.report_relative_path),
+                error: None,
+                message: None,
+            },
+            Err(error) => queue_execution_failed(error),
+        },
+        Err(error) => match execution.fail() {
+            Ok(failed_work_order) => {
+                queue_execution_failed_with_work_order(error, Some(failed_work_order))
+            }
+            Err(state_error) => queue_execution_failed(state_error),
+        },
+    }
+}
+
+async fn execute_queue_work_order_inner(
+    request: &QueueExecutionRequest,
+    work_order: &QueueWorkOrder,
+) -> Result<QueueResultReport, QueueExecutionErrorDetail> {
+    if work_order.tasks.is_empty() {
+        return Err(QueueExecutionErrorDetail::new(
             "queue-execution-no-task",
             "Work order has no task.",
         ));
     }
 
     let Some(vault) = request.vault.as_ref() else {
-        return queue_execution_failed(QueueExecutionErrorDetail::new(
+        return Err(QueueExecutionErrorDetail::new(
             "queue-execution-vault-locked",
             "Environment vault is locked.",
         ));
     };
 
-    let _execution_guard = match acquire_queue_work_order_execution(&request.work_order.r#ref.id) {
-        Ok(guard) => guard,
-        Err(error) => return queue_execution_failed(error),
-    };
-
     let runs = match create_execution_runs(
-        &request.work_order,
+        work_order,
         &request.agents,
         Some(vault),
         &request.personas,
@@ -484,13 +526,11 @@ pub async fn execute_queue_work_order(
         &request.references,
     ) {
         Ok(runs) => runs,
-        Err(error) => return queue_execution_failed(error),
+        Err(error) => return Err(error),
     };
-    let client = match queue_http_client() {
-        Ok(client) => client,
-        Err(error) => return queue_execution_failed(error),
-    };
+    let client = queue_http_client()?;
     let mut handles = Vec::new();
+    let mut local_abort_handles = LocalAbortHandles::default();
 
     for run in runs {
         let task = run.task.clone();
@@ -498,11 +538,13 @@ pub async fn execute_queue_work_order(
         let client = client.clone();
         let (abort_handle, abort_registration) = AbortHandle::new_pair();
 
-        if let Err(error) =
-            register_queue_work_order_abort_handle(&request.work_order.r#ref.id, abort_handle)
-        {
-            return queue_execution_failed(error);
+        if let Err(error) = register_queue_work_order_abort_handle(
+            &work_order.r#ref.id,
+            abort_handle.clone(),
+        ) {
+            return Err(error);
         }
+        local_abort_handles.push(abort_handle);
 
         handles.push(tauri::async_runtime::spawn(async move {
             match Abortable::new(run_agent_prompt(run, client), abort_registration).await {
@@ -531,7 +573,7 @@ pub async fn execute_queue_work_order(
         let output = match handle.await {
             Ok(output) => output,
             Err(_) => {
-                return queue_execution_failed(QueueExecutionErrorDetail::new(
+                return Err(QueueExecutionErrorDetail::new(
                     "agent-execution-failed",
                     "Agent response handling was interrupted.",
                 ));
@@ -544,7 +586,7 @@ pub async fn execute_queue_work_order(
                 ..
             }
         ) {
-            return queue_execution_failed(QueueExecutionErrorDetail::new(
+            return Err(QueueExecutionErrorDetail::new(
                 "queue-execution-cancelled",
                 "작업 실행이 취소되었습니다.",
             ));
@@ -552,15 +594,7 @@ pub async fn execute_queue_work_order(
         outputs.push(output);
     }
 
-    match create_result_report(&request.work_order, outputs) {
-        Ok(report) => QueueExecutionCommandResult {
-            ok: true,
-            report: Some(report),
-            error: None,
-            message: None,
-        },
-        Err(error) => queue_execution_failed(error),
-    }
+    create_result_report(work_order, outputs)
 }
 
 #[tauri::command]
@@ -628,9 +662,18 @@ pub fn preview_queue_work_order_prompt(
 }
 
 fn queue_execution_failed(error: QueueExecutionErrorDetail) -> QueueExecutionCommandResult {
+    queue_execution_failed_with_work_order(error, None)
+}
+
+fn queue_execution_failed_with_work_order(
+    error: QueueExecutionErrorDetail,
+    work_order: Option<QueueWorkOrder>,
+) -> QueueExecutionCommandResult {
     QueueExecutionCommandResult {
         ok: false,
         report: None,
+        work_order,
+        report_relative_path: None,
         error: Some(error.code),
         message: Some(error.message),
     }
@@ -645,6 +688,25 @@ struct QueueWorkOrderExecutionGuard {
 struct RunningQueueWorkOrderExecution {
     abort_handles: Vec<AbortHandle>,
     cancel_requested: bool,
+}
+
+#[derive(Debug, Default)]
+struct LocalAbortHandles {
+    handles: Vec<AbortHandle>,
+}
+
+impl LocalAbortHandles {
+    fn push(&mut self, abort_handle: AbortHandle) {
+        self.handles.push(abort_handle);
+    }
+}
+
+impl Drop for LocalAbortHandles {
+    fn drop(&mut self) {
+        for abort_handle in &self.handles {
+            abort_handle.abort();
+        }
+    }
 }
 
 impl Drop for QueueWorkOrderExecutionGuard {
@@ -1427,6 +1489,39 @@ en-US 표기는 한국어 지원 앱을 영어 전용처럼 보이게 합니다.
     }
 
     #[test]
+    fn local_abort_handles_abort_all_handles_when_execution_scope_ends() {
+        let (first_handle, _first_registration) = AbortHandle::new_pair();
+        let (second_handle, _second_registration) = AbortHandle::new_pair();
+        let first_assertion = first_handle.clone();
+        let second_assertion = second_handle.clone();
+
+        {
+            let mut handles = LocalAbortHandles::default();
+            handles.push(first_handle);
+            handles.push(second_handle);
+        }
+
+        assert!(first_assertion.is_aborted());
+        assert!(second_assertion.is_aborted());
+    }
+
+    #[test]
+    fn write_json_file_does_not_clobber_an_existing_report() {
+        let temp_dir = tempfile::tempdir().expect("temporary report directory");
+        let report_path = temp_dir.path().join("existing.workduck-report.json");
+        fs::write(&report_path, "existing report").expect("existing report fixture");
+
+        let error = write_json_file(&report_path, &serde_json::json!({ "replacement": true }))
+            .expect_err("existing report must not be replaced");
+
+        assert_eq!(error.code, "file-write-failed");
+        assert_eq!(
+            fs::read_to_string(report_path).expect("preserved report"),
+            "existing report"
+        );
+    }
+
+    #[test]
     fn cancel_running_queue_work_order_execution_rejects_missing_running_id() {
         let work_order_id = format!("wo_{}", unique_token());
         let error = cancel_running_queue_work_order_execution(&work_order_id)
@@ -1846,7 +1941,18 @@ fn write_json_file<T: Serialize>(path: &Path, value: &T) -> Result<(), QueueExec
     let content = serde_json::to_string_pretty(value).map_err(|_| {
         QueueExecutionErrorDetail::new("json-serialize-failed", "JSON으로 변환하지 못했습니다.")
     })?;
-    fs::write(path, content).map_err(|error| io_error("file-write-failed", path, error))
+    write_file_exclusively(path, &content).map_err(|error| {
+        let message = match error {
+            AtomicFileWriteError::TargetInvalid => "보고서 파일 경로가 올바르지 않습니다.",
+            AtomicFileWriteError::TargetAlreadyExists => "같은 이름의 보고서 파일이 이미 있습니다.",
+            AtomicFileWriteError::WriteFailed => "보고서 파일을 안전하게 저장하지 못했습니다.",
+        };
+
+        QueueExecutionErrorDetail::new(
+            "file-write-failed",
+            format!("{}: {message}", display_path(path)),
+        )
+    })
 }
 
 fn io_error(code: &'static str, path: &Path, error: io::Error) -> QueueExecutionErrorDetail {

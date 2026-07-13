@@ -26,6 +26,7 @@ mod queue_provider_client;
 mod queue_result_report;
 mod queue_response_parser;
 pub mod queue_execution;
+pub mod queue_work_order_execution;
 mod secret_vault_crypto;
 mod ssealed_scaffold_generated;
 mod storage;

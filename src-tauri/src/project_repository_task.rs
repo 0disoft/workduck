@@ -4,13 +4,14 @@ use std::{
     net::TcpListener,
     path::{Path, PathBuf},
     process::{Command, Stdio},
-    sync::{Mutex, OnceLock},
+    sync::{Arc, Mutex, OnceLock},
     time::SystemTime,
 };
 
 use base64::{Engine as _, engine::general_purpose};
 use time::{OffsetDateTime, format_description::well_known::Rfc3339};
 
+use crate::atomic_file_write::write_file_atomically;
 use crate::workspace_path::{
     WorkspacePathValidationError, validate_absolute_directory_path, validate_workspace_directory_path,
 };
@@ -130,7 +131,7 @@ struct WorkspaceTaskRunRecordCache {
 
 #[derive(Default)]
 struct TaskRunRecordCache {
-    record_dirs: HashMap<PathBuf, WorkspaceTaskRunRecordCache>,
+    record_dirs: HashMap<PathBuf, Arc<Mutex<WorkspaceTaskRunRecordCache>>>,
 }
 
 const DEPENDENCY_DISCOVERY_MAX_DEPTH: usize = 3;
@@ -273,10 +274,10 @@ fn read_latest_cached_task_run_records(
     };
     let dir_len = metadata.len();
     let dir_modified_at = metadata.modified().ok();
-    let mut cache = task_run_record_cache()
+    let workspace_cache = workspace_task_run_record_cache(record_dir)?;
+    let mut workspace_cache = workspace_cache
         .lock()
         .map_err(|_| ProjectRepositoryTaskError::RecordReadFailed)?;
-    let workspace_cache = cache.record_dirs.entry(record_dir.to_path_buf()).or_default();
 
     if workspace_cache.is_fresh(dir_len, dir_modified_at) {
         return Ok(workspace_cache.latest_records.clone());
@@ -348,6 +349,21 @@ fn task_run_record_cache() -> &'static Mutex<TaskRunRecordCache> {
     static TASK_RUN_RECORD_CACHE: OnceLock<Mutex<TaskRunRecordCache>> = OnceLock::new();
 
     TASK_RUN_RECORD_CACHE.get_or_init(|| Mutex::new(TaskRunRecordCache::default()))
+}
+
+fn workspace_task_run_record_cache(
+    record_dir: &Path,
+) -> Result<Arc<Mutex<WorkspaceTaskRunRecordCache>>, ProjectRepositoryTaskError> {
+    let mut cache = task_run_record_cache()
+        .lock()
+        .map_err(|_| ProjectRepositoryTaskError::RecordReadFailed)?;
+
+    Ok(Arc::clone(
+        cache
+            .record_dirs
+            .entry(record_dir.to_path_buf())
+            .or_insert_with(|| Arc::new(Mutex::new(WorkspaceTaskRunRecordCache::default()))),
+    ))
 }
 
 fn clear_cached_task_run_records(record_dir: &Path) {
@@ -1382,7 +1398,8 @@ fn write_task_run_record(
     let record_json = serde_json::to_string_pretty(record)
         .map_err(|_| ProjectRepositoryTaskError::RecordWriteFailed)?;
 
-    fs::write(record_path, record_json).map_err(|_| ProjectRepositoryTaskError::RecordWriteFailed)
+    write_file_atomically(record_path, &record_json)
+        .map_err(|_| ProjectRepositoryTaskError::RecordWriteFailed)
 }
 
 fn failed_launch_task_run_record(
@@ -1799,6 +1816,29 @@ mod tests {
             .collect::<Vec<_>>();
 
         assert_eq!(ids, vec!["repo-a-new", "repo-b"]);
+    }
+
+    #[test]
+    fn task_run_record_caches_are_shared_per_workspace_only() {
+        let token = current_task_run_timestamp().replace([':', '.'], "-");
+        let first_path = PathBuf::from(format!("workspace-a-{token}"));
+        let second_path = PathBuf::from(format!("workspace-b-{token}"));
+
+        let first = match workspace_task_run_record_cache(&first_path) {
+            Ok(cache) => cache,
+            Err(_) => panic!("first workspace cache"),
+        };
+        let first_again = match workspace_task_run_record_cache(&first_path) {
+            Ok(cache) => cache,
+            Err(_) => panic!("same workspace cache"),
+        };
+        let second = match workspace_task_run_record_cache(&second_path) {
+            Ok(cache) => cache,
+            Err(_) => panic!("second workspace cache"),
+        };
+
+        assert!(Arc::ptr_eq(&first, &first_again));
+        assert!(!Arc::ptr_eq(&first, &second));
     }
 
     #[test]

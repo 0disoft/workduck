@@ -22,10 +22,13 @@ export type QueueExecutionResult =
 	| {
 			readonly ok: true;
 			readonly report: WorkduckQueueResultReport;
+			readonly workOrder: WorkduckQueueWorkOrder;
+			readonly reportRelativePath: string;
 	  }
 	| {
 			readonly ok: false;
 			readonly error: QueueExecutionError;
+			readonly workOrder: WorkduckQueueWorkOrder | null;
 	  };
 
 export interface WorkduckQueuePromptPreview {
@@ -70,6 +73,8 @@ export type QueueExecutionInspectResult =
 interface QueueExecutionCommandResponse {
 	readonly ok: boolean;
 	readonly report?: WorkduckQueueResultReport | null;
+	readonly workOrder?: WorkduckQueueWorkOrder | null;
+	readonly reportRelativePath?: string | null;
 	readonly error?: string | null;
 }
 
@@ -91,6 +96,8 @@ interface QueuePromptPreviewCommandResponse {
 }
 
 export async function executeQueueWorkOrder(input: {
+	readonly workspacePath: string;
+	readonly workOrderRelativePath: string;
 	readonly workOrder: WorkduckQueueWorkOrder;
 	readonly agents: readonly AgentRecord[];
 	readonly vault: EnvironmentVault | null;
@@ -101,12 +108,14 @@ export async function executeQueueWorkOrder(input: {
 	const invoke = getTauriInvoke();
 
 	if (invoke === undefined) {
-		return { ok: false, error: 'agent-execution-unavailable' };
+		return { ok: false, error: 'agent-execution-unavailable', workOrder: input.workOrder };
 	}
 
 	try {
 		const response = await invoke<QueueExecutionCommandResponse>('execute_queue_work_order', {
 			request: {
+				workspacePath: input.workspacePath,
+				workOrderRelativePath: input.workOrderRelativePath,
 				workOrder: input.workOrder,
 				agents: input.agents,
 				vault: input.vault,
@@ -116,19 +125,33 @@ export async function executeQueueWorkOrder(input: {
 			}
 		});
 
-		if (response.ok && response.report !== null && response.report !== undefined) {
+		if (
+			response.ok &&
+			response.report !== null &&
+			response.report !== undefined &&
+			response.workOrder !== null &&
+			response.workOrder !== undefined &&
+			typeof response.reportRelativePath === 'string'
+		) {
 			return {
 				ok: true,
-				report: response.report
+				report: response.report,
+				workOrder: response.workOrder,
+				reportRelativePath: response.reportRelativePath
 			};
 		}
 
 		return {
 			ok: false,
-			error: normalizeQueueExecutionError(response.error)
+			error: normalizeQueueExecutionError(response.error),
+			workOrder: response.workOrder ?? input.workOrder
 		};
 	} catch {
-		return { ok: false, error: 'agent-execution-provider-unavailable' };
+		return {
+			ok: false,
+			error: 'agent-execution-provider-unavailable',
+			workOrder: input.workOrder
+		};
 	}
 }
 

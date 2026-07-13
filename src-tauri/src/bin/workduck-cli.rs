@@ -15,6 +15,9 @@ use serde_json::Value;
 use time::{OffsetDateTime, format_description::well_known::Rfc3339};
 use workduck_lib::argon2_kdf::{ARGON2ID_VERSION, derive_argon2id_key, parameters_are_supported};
 use workduck_lib::queue_execution::*;
+use workduck_lib::queue_work_order_execution::{
+    QueueWorkOrderCompletion, begin_queue_work_order_execution_at,
+};
 use zeroize::Zeroize;
 
 const APP_NAME: &str = "workduck";
@@ -61,6 +64,14 @@ struct CliOptions {
     vault_password: Option<String>,
     keep_work_order: bool,
     json: bool,
+}
+
+impl Drop for CliOptions {
+    fn drop(&mut self) {
+        if let Some(password) = self.vault_password.as_mut() {
+            password.zeroize();
+        }
+    }
 }
 
 #[derive(Default)]
@@ -226,10 +237,12 @@ async fn run() -> Result<(), CliError> {
 
     let located = locate_work_order(&options.work_order_id, options.workspace_path.as_deref())?;
     let workspace_id = read_workspace_id(&located.workspace_path)?;
-    let work_order: QueueWorkOrder =
-        read_json_file(&located.work_order_path, "work-order-invalid")?;
-
-    validate_work_order(&work_order, &options.work_order_id)?;
+    let execution = begin_queue_work_order_execution_at(
+        &located.workspace_path,
+        &located.work_order_path,
+        &options.work_order_id,
+    )?;
+    let work_order = execution.work_order().clone();
 
     let agents: AgentRegistry =
         read_optional_workspace_json(&located.workspace_path, AGENTS_FILE_NAME)?
@@ -298,13 +311,13 @@ async fn run() -> Result<(), CliError> {
     }
 
     let report = create_result_report(&work_order, outputs)?;
-    let report_path = write_result_report(&located.workspace_path, &report)?;
-
-    if !options.keep_work_order {
-        let mut archived_work_order = work_order.clone();
-        archived_work_order.status = "archived".to_string();
-        write_json_file(&located.work_order_path, &archived_work_order)?;
-    }
+    let completion = if options.keep_work_order {
+        QueueWorkOrderCompletion::KeepActive
+    } else {
+        QueueWorkOrderCompletion::Archive
+    };
+    let success = execution.complete(&report, completion)?;
+    let report_path = success.report_path;
 
     if options.json {
         let payload = JsonSuccess {
@@ -519,7 +532,24 @@ struct LocatedWorkOrder {
     work_order_path: PathBuf,
 }
 
+#[derive(Deserialize)]
+struct WorkOrderLookupDocument {
+    r#ref: WorkOrderLookupRef,
+}
+
+#[derive(Deserialize)]
+struct WorkOrderLookupRef {
+    id: String,
+}
+
 fn parse_args(args: Vec<String>) -> Result<CliOptions, CliError> {
+    parse_args_with_vault_password(args, env::var("WORKDUCK_VAULT_PASSWORD").ok())
+}
+
+fn parse_args_with_vault_password(
+    args: Vec<String>,
+    vault_password: Option<String>,
+) -> Result<CliOptions, CliError> {
     if args.is_empty() {
         return Err(CliError {
             code: "usage",
@@ -557,10 +587,6 @@ fn parse_args(args: Vec<String>) -> Result<CliOptions, CliError> {
                 index += 1;
                 options.workspace_path = args.get(index).map(PathBuf::from);
             }
-            "--vault-password" => {
-                index += 1;
-                options.vault_password = args.get(index).cloned();
-            }
             "--keep-work-order" => {
                 options.keep_work_order = true;
             }
@@ -584,9 +610,8 @@ fn parse_args(args: Vec<String>) -> Result<CliOptions, CliError> {
         });
     }
 
-    if options.vault_password.is_none() {
-        options.vault_password = env::var("WORKDUCK_VAULT_PASSWORD").ok();
-    }
+    options.work_order_id = options.work_order_id.trim().to_string();
+    options.vault_password = vault_password;
 
     Ok(options)
 }
@@ -807,7 +832,7 @@ fn missing_score_error() -> CliError {
 
 fn usage_text() -> String {
     format!(
-        "{APP_NAME} queue run <work-order-id> [--workspace <path>] [--vault-password <password>] [--json] [--keep-work-order]\n{APP_NAME} agent evaluate <agent-id-or-name> --workspace <path> --problem-understanding <1-9> --logical-validity <1-9> --practical-feasibility <1-9> --creative-insight <1-9> --risk-detection <1-9> [--evaluation-key <key>] [--json]\n{APP_NAME} agent evaluate-batch --workspace <path> --input <path-or-> [--json]"
+        "{APP_NAME} queue run <work-order-id> [--workspace <path>] [--json] [--keep-work-order]\n{APP_NAME} agent evaluate <agent-id-or-name> --workspace <path> --problem-understanding <1-9> --logical-validity <1-9> --practical-feasibility <1-9> --creative-insight <1-9> --risk-detection <1-9> [--evaluation-key <key>] [--json]\n{APP_NAME} agent evaluate-batch --workspace <path> --input <path-or-> [--json]"
     )
 }
 
@@ -819,6 +844,8 @@ fn locate_work_order(
     work_order_id: &str,
     workspace_path: Option<&Path>,
 ) -> Result<LocatedWorkOrder, CliError> {
+    let work_order_id = work_order_id.trim();
+
     if let Some(workspace_path) = workspace_path {
         let workspace_path = canonicalize_directory(workspace_path)?;
         let work_order_path = find_work_order_in_workspace(&workspace_path, work_order_id)?;
@@ -900,9 +927,10 @@ fn collect_work_order_matches(
         .join(WORK_ORDERS_DIRECTORY_NAME);
 
     if queue_work_orders.is_dir() {
-        if let Ok(path) = find_work_order_in_directory(&queue_work_orders, work_order_id) {
-            matches.push(path);
-        }
+        matches.extend(find_work_order_matches_in_directory(
+            &queue_work_orders,
+            work_order_id,
+        )?);
     }
 
     let entries = match fs::read_dir(root) {
@@ -944,24 +972,42 @@ fn find_work_order_in_directory(
     work_orders_path: &Path,
     work_order_id: &str,
 ) -> Result<PathBuf, CliError> {
+    let mut matches = find_work_order_matches_in_directory(work_orders_path, work_order_id)?;
+
+    match matches.len() {
+        0 => Err(CliError {
+            code: "work-order-not-found",
+            message: format!("작업 ID를 찾지 못했습니다: {}", work_order_id.trim()),
+        }),
+        1 => Ok(matches.remove(0)),
+        _ => Err(CliError {
+            code: "work-order-ambiguous",
+            message: format!(
+                "같은 ref.id를 가진 작업 파일이 여러 개입니다: {} ({}개)",
+                work_order_id.trim(),
+                matches.len()
+            ),
+        }),
+    }
+}
+
+fn find_work_order_matches_in_directory(
+    work_orders_path: &Path,
+    work_order_id: &str,
+) -> Result<Vec<PathBuf>, CliError> {
     let entries = fs::read_dir(work_orders_path)
         .map_err(|error| io_error("work-orders-read-failed", work_orders_path, error))?;
+    let work_order_id = work_order_id.trim();
     let mut matches = Vec::new();
 
     for entry in entries.flatten() {
         let path = entry.path();
-
-        if path.extension().and_then(|extension| extension.to_str()) != Some("json") {
-            continue;
-        }
-
         let file_name = path
             .file_name()
             .and_then(|name| name.to_str())
             .unwrap_or("");
 
-        if file_name.contains(work_order_id) {
-            matches.push(path);
+        if !file_name.ends_with(WORK_ORDER_FILE_SUFFIX) || !path.is_file() {
             continue;
         }
 
@@ -970,23 +1016,24 @@ fn find_work_order_in_directory(
             Err(_) => continue,
         };
 
-        if content.contains(work_order_id) {
-            matches.push(path);
+        let lookup = match serde_json::from_str::<WorkOrderLookupDocument>(&content) {
+            Ok(lookup) => lookup,
+            Err(_) => continue,
+        };
+
+        if lookup.r#ref.id != work_order_id {
+            continue;
         }
+
+        matches.push(
+            fs::canonicalize(&path)
+                .map_err(|error| io_error("work-order-path-invalid", &path, error))?,
+        );
     }
 
-    match matches.len() {
-        0 => Err(CliError {
-            code: "work-order-not-found",
-            message: format!("작업 ID를 찾지 못했습니다: {work_order_id}"),
-        }),
-        1 => fs::canonicalize(&matches[0])
-            .map_err(|error| io_error("work-order-path-invalid", &matches[0], error)),
-        _ => Err(CliError {
-            code: "work-order-ambiguous",
-            message: "같은 작업 ID 후보가 여러 개입니다.".to_string(),
-        }),
-    }
+    matches.sort();
+    matches.dedup();
+    Ok(matches)
 }
 
 fn workspace_from_work_order_path(work_order_path: &Path) -> Result<PathBuf, CliError> {
@@ -1711,5 +1758,149 @@ fn io_error(code: &'static str, path: &Path, error: io::Error) -> CliError {
     CliError {
         code,
         message: format!("{}: {error}", path.display()),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn queue_run_args(extra: &[&str]) -> Vec<String> {
+        ["queue", "run", "  wo_test  "]
+            .into_iter()
+            .chain(extra.iter().copied())
+            .map(str::to_string)
+            .collect()
+    }
+
+    fn write_work_order_lookup_fixture(
+        work_orders_path: &Path,
+        file_name: &str,
+        ref_id: &str,
+        label: &str,
+    ) -> PathBuf {
+        fs::create_dir_all(work_orders_path).expect("work-orders directory");
+        let path = work_orders_path.join(file_name);
+        let content = serde_json::json!({
+            "schemaVersion": "workduck.queue-work-order/v1",
+            "ref": {
+                "id": ref_id,
+                "kind": "queue-work-order",
+                "label": label
+            },
+            "status": "active",
+            "tasks": []
+        });
+        fs::write(
+            &path,
+            serde_json::to_string_pretty(&content).expect("fixture JSON"),
+        )
+        .expect("fixture write");
+        path
+    }
+
+    #[test]
+    fn queue_run_reads_vault_password_from_the_environment_boundary() {
+        let options = parse_args_with_vault_password(
+            queue_run_args(&["--json"]),
+            Some("environment-only-password".to_string()),
+        )
+        .expect("environment-backed password should be accepted");
+
+        assert_eq!(options.work_order_id, "wo_test");
+        assert_eq!(options.vault_password.as_deref(), Some("environment-only-password"));
+        assert!(options.json);
+    }
+
+    #[test]
+    fn queue_run_rejects_vault_password_command_line_argument() {
+        let error = match parse_args_with_vault_password(
+            queue_run_args(&["--vault-password", "must-not-enter-argv"]),
+            None,
+        ) {
+            Ok(_) => panic!("password-bearing command-line arguments must be rejected"),
+            Err(error) => error,
+        };
+
+        assert_eq!(error.code, "unknown-option");
+        assert!(!error.message.contains("must-not-enter-argv"));
+        assert!(!usage_text().contains("--vault-password"));
+    }
+
+    #[test]
+    fn work_order_lookup_matches_only_the_exact_ref_id() {
+        let workspace = tempfile::tempdir().expect("workspace");
+        let work_orders_path = workspace.path().join("queue").join("work-orders");
+        let requested_id = "wo_exact";
+        let expected_path = write_work_order_lookup_fixture(
+            &work_orders_path,
+            "unrelated-file-name.workduck-work-order.json",
+            requested_id,
+            "Exact match",
+        );
+        write_work_order_lookup_fixture(
+            &work_orders_path,
+            "wo_exact-filename-trap.workduck-work-order.json",
+            "wo_other",
+            "Body mentions wo_exact but ref.id does not match",
+        );
+
+        let found = find_work_order_in_directory(&work_orders_path, requested_id)
+            .expect("exact ref.id should be found");
+
+        assert_eq!(
+            found,
+            fs::canonicalize(expected_path).expect("canonical fixture path")
+        );
+    }
+
+    #[test]
+    fn work_order_lookup_rejects_duplicate_exact_ref_ids() {
+        let workspace = tempfile::tempdir().expect("workspace");
+        let work_orders_path = workspace.path().join("queue").join("work-orders");
+        write_work_order_lookup_fixture(
+            &work_orders_path,
+            "first.workduck-work-order.json",
+            "wo_duplicate",
+            "First",
+        );
+        write_work_order_lookup_fixture(
+            &work_orders_path,
+            "second.workduck-work-order.json",
+            "wo_duplicate",
+            "Second",
+        );
+
+        let error = match find_work_order_in_directory(&work_orders_path, "wo_duplicate") {
+            Ok(_) => panic!("duplicate ref.id values must be rejected"),
+            Err(error) => error,
+        };
+
+        assert_eq!(error.code, "work-order-ambiguous");
+        assert!(error.message.contains("2개"));
+    }
+
+    #[test]
+    fn work_order_lookup_ignores_non_work_order_json_and_malformed_candidates() {
+        let workspace = tempfile::tempdir().expect("workspace");
+        let work_orders_path = workspace.path().join("queue").join("work-orders");
+        fs::create_dir_all(&work_orders_path).expect("work-orders directory");
+        fs::write(
+            work_orders_path.join("not-a-work-order.json"),
+            r#"{"ref":{"id":"wo_hidden"}}"#,
+        )
+        .expect("non-work-order JSON");
+        fs::write(
+            work_orders_path.join("broken.workduck-work-order.json"),
+            r#"{"ref":{"id":"wo_hidden"}"#,
+        )
+        .expect("malformed work-order JSON");
+
+        let error = match find_work_order_in_directory(&work_orders_path, "wo_hidden") {
+            Ok(_) => panic!("invalid candidates must not be selected"),
+            Err(error) => error,
+        };
+
+        assert_eq!(error.code, "work-order-not-found");
     }
 }

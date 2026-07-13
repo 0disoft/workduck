@@ -46,6 +46,10 @@ includes:
   and proposals inside Workduck, and writes follow-up work-order JSON files.
   Repository commit work orders include cleanup and archive instructions so
   completed Codex handoffs do not remain in the pending queue.
+- Desktop and CLI queue execution share one OS-backed per-work-order lock. Rust
+  owns the durable `running`, `failed`, and `archived` transitions, writes the
+  result report before archiving, and treats its own unlocked, marker-backed
+  `running` state as an interrupted run that can be retried safely.
 - Workspace-owned Workduck metadata folder at `<workspace>/.workduck/` for
   reference, agent, persona, and skill registries that should travel with the
   workspace repository.
@@ -94,16 +98,21 @@ template update plan before applying it.
 
 The local CLI can execute one queued work order by its stable work-order ID,
 write a result report under the workspace `queue/reports` folder, and archive
-the work order after the report is written.
+the work order after the report is written. The desktop app and CLI cannot run
+the same work order concurrently on one machine. `--keep-work-order` returns a
+successful work order to `active` only after its result report is durable.
 
 Workspace repositories prepared by Workduck include an `AGENTS.md` work-order
 handoff block. When a human sends an IDE agent a short request such as
 `작업 ID: wo_... 진행해줘`, the agent should resolve that ID through
-`queue/work-orders/*.workduck-work-order.json`, verify the work order is active,
-follow the task body, then archive the JSON file when the work is complete.
+`queue/work-orders/*.workduck-work-order.json` by an exact `ref.id` match, verify
+the work order is active, follow the task body, then archive the JSON file when
+the work is complete. Duplicate exact IDs are rejected as ambiguous.
 
-Use `WORKDUCK_VAULT_PASSWORD` or `--vault-password` to unlock the workspace
-Environment vault. If the vault is not unlocked, the CLI can use provider
+Set `WORKDUCK_VAULT_PASSWORD` to unlock the workspace Environment vault. The CLI
+intentionally does not accept vault passwords as command-line arguments because
+process arguments may be visible to other local processes and diagnostic tools.
+If the vault is not unlocked, the CLI can use provider
 environment variables for agents with an explicit provider: `OPENROUTER_API_KEY`
 or `OPEN_ROUTER_API_KEY`, `OPENAI_API_KEY`, and `DEEPSEEK_API_KEY`. The CLI does
 not print API keys, vault passwords, or the decrypted vault payload.
@@ -188,7 +197,6 @@ Workspace-level Workduck metadata is split by ownership:
 - `packages/prompts/`: prompt and brief package.
 - `packages/agents/`: agent export and adapter package.
 - `packages/workbench-engine/`: workbench orchestration package.
-- `.mustflow/`: repository-local agent workflow and command contracts.
 
 ## Development
 
@@ -204,28 +212,29 @@ Run the desktop app during development:
 bun run desktop:dev
 ```
 
-Run the configured fast check:
+Check Svelte, TypeScript, and the shared packages:
 
 ```sh
-mf run test_fast
+bun run check
 ```
 
 Build the static frontend:
 
 ```sh
-mf run build
+bun run build
 ```
 
-Check the Tauri Rust crate:
+Run the frontend and Rust tests:
 
 ```sh
-mf run desktop_check
+bun run test
+bun run test:rust
 ```
 
-Validate the mustflow workflow:
+Run the complete local verification sequence:
 
 ```sh
-mf run mustflow_check
+bun run verify
 ```
 
 ## Current Priorities
@@ -237,8 +246,9 @@ The next product work should keep the daily workbench path tight:
 
 ## Agent Workflow
 
-Coding agents should read `AGENTS.md` first and use the configured mustflow
-command intents instead of guessing commands from package scripts.
+Coding agents should read this README, `ROADMAP.md`, and `RELEASING.md` before
+changing the repository. Use the checked-in package scripts above so local and
+GitHub Actions verification stay aligned.
 
 ## License
 
