@@ -1,3 +1,5 @@
+import { Channel } from '@tauri-apps/api/core';
+
 import { isObjectRecord } from '$lib/shared/object-record';
 import { getTauriInvoke } from '$lib/tauri/tauri-invoke';
 import { normalizeWorkspacePathForStorage } from '$lib/workspaces/workspace-path-format';
@@ -127,6 +129,15 @@ export interface ProjectRepositoryGitInspectionRecord {
 	readonly elapsedMs: number;
 }
 
+export interface ProjectRepositoryGitInspectionScan {
+	readonly scanId: string;
+	readonly scheduled: Promise<{
+		readonly scheduledCount: number;
+		readonly rejectedCount: number;
+	}>;
+	readonly cancel: () => Promise<void>;
+}
+
 export type ProjectRepositoryGitMutationResult =
 	| {
 			readonly ok: true;
@@ -182,6 +193,16 @@ interface ProjectRepositoryGitInspectionRecordResponse {
 	readonly gitCommandCount?: number | null;
 	readonly remoteCacheHitCount?: number | null;
 	readonly elapsedMs?: number | null;
+}
+
+interface ProjectRepositoryGitInspectionEventResponse {
+	readonly scanId?: string | null;
+	readonly record?: ProjectRepositoryGitInspectionRecordResponse | null;
+}
+
+interface ProjectRepositoryGitInspectionScheduleResponse {
+	readonly scheduledCount?: number | null;
+	readonly rejectedCount?: number | null;
 }
 
 interface ProjectRepositoryGitMutationResponse {
@@ -317,44 +338,98 @@ export async function inspectProjectRepositoryGit(
 	}
 }
 
-export async function inspectProjectRepositoriesGit(
-	repositories: readonly ProjectRepositoryGitInspectionInput[]
-): Promise<readonly ProjectRepositoryGitInspectionRecord[]> {
+export function scheduleProjectRepositoriesGitInspection(
+	scanId: string,
+	repositories: readonly ProjectRepositoryGitInspectionInput[],
+	onRecord: (record: ProjectRepositoryGitInspectionRecord) => void
+): ProjectRepositoryGitInspectionScan {
 	const invoke = getTauriInvoke();
+	const deliveredRepositoryIds = new Set<string>();
 
 	if (invoke === undefined) {
-		return repositories.map((repository) => ({
-			repositoryId: repository.repositoryId,
-			result: { ok: false, error: 'project-repository-git-command-unavailable' },
-			gitCommandCount: 0,
-			remoteCacheHitCount: 0,
-			elapsedMs: 0
-		}));
-	}
-
-	try {
-		const response = await invoke<readonly ProjectRepositoryGitInspectionRecordResponse[]>(
-			'inspect_project_repositories_git',
-			{
-				repositories: repositories.map((repository) => ({
-					repositoryId: repository.repositoryId,
-					path: normalizeWorkspacePathForStorage(repository.path)
-				}))
+		queueMicrotask(() => {
+			for (const repository of repositories) {
+				onRecord(createUnavailableProjectRepositoryGitInspectionRecord(repository.repositoryId));
 			}
-		);
-
-		return response
-			.map(normalizeProjectRepositoryGitInspectionRecord)
-			.filter((record): record is ProjectRepositoryGitInspectionRecord => record !== null);
-	} catch {
-		return repositories.map((repository) => ({
-			repositoryId: repository.repositoryId,
-			result: { ok: false, error: 'project-repository-git-path-unreadable' },
-			gitCommandCount: 0,
-			remoteCacheHitCount: 0,
-			elapsedMs: 0
-		}));
+		});
+		return {
+			scanId,
+			scheduled: Promise.resolve({ scheduledCount: 0, rejectedCount: repositories.length }),
+			cancel: async () => {}
+		};
 	}
+
+	const onEvent = new Channel<ProjectRepositoryGitInspectionEventResponse>((event) => {
+		if (event.scanId !== scanId || event.record === null || event.record === undefined) {
+			return;
+		}
+
+		const record = normalizeProjectRepositoryGitInspectionRecord(event.record);
+		if (record === null || deliveredRepositoryIds.has(record.repositoryId)) {
+			return;
+		}
+
+		deliveredRepositoryIds.add(record.repositoryId);
+		onRecord(record);
+	});
+	const scheduled = invoke<ProjectRepositoryGitInspectionScheduleResponse>(
+		'schedule_project_repositories_git_inspection',
+		{
+			scanId,
+			repositories: repositories.map((repository) => ({
+				repositoryId: repository.repositoryId,
+				path: normalizeWorkspacePathForStorage(repository.path)
+			})),
+			onEvent
+		}
+	).then((response) => ({
+		scheduledCount: normalizeGitCount(response.scheduledCount),
+		rejectedCount: normalizeGitCount(response.rejectedCount)
+	})).catch(() => {
+		for (const repository of repositories) {
+			if (!deliveredRepositoryIds.has(repository.repositoryId)) {
+				deliveredRepositoryIds.add(repository.repositoryId);
+				onRecord(createUnreadableProjectRepositoryGitInspectionRecord(repository.repositoryId));
+			}
+		}
+		return { scheduledCount: 0, rejectedCount: repositories.length };
+	});
+
+	return {
+		scanId,
+		scheduled,
+		cancel: async () => {
+			try {
+				await invoke('cancel_project_repositories_git_inspection', { scanId });
+			} catch {
+				// Cancellation is best effort after the WebView or native boundary has closed.
+			}
+		}
+	};
+}
+
+function createUnavailableProjectRepositoryGitInspectionRecord(
+	repositoryId: string
+): ProjectRepositoryGitInspectionRecord {
+	return {
+		repositoryId,
+		result: { ok: false, error: 'project-repository-git-command-unavailable' },
+		gitCommandCount: 0,
+		remoteCacheHitCount: 0,
+		elapsedMs: 0
+	};
+}
+
+function createUnreadableProjectRepositoryGitInspectionRecord(
+	repositoryId: string
+): ProjectRepositoryGitInspectionRecord {
+	return {
+		repositoryId,
+		result: { ok: false, error: 'project-repository-git-path-unreadable' },
+		gitCommandCount: 0,
+		remoteCacheHitCount: 0,
+		elapsedMs: 0
+	};
 }
 
 export async function initializeProjectRepositoryGit(

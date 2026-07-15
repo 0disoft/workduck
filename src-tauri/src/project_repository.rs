@@ -7,9 +7,11 @@ use std::{
     path::{Path, PathBuf},
     process::{Command, Output, Stdio},
     sync::{Arc, Condvar, Mutex, OnceLock},
-    thread,
     time::{Duration, Instant, SystemTime},
 };
+
+#[cfg(test)]
+use std::thread;
 
 use crate::git_credential::{
     GitCredential, apply_github_cli_credential, clear_git_credential_environment,
@@ -26,7 +28,10 @@ use crate::project_repository_validation::{
     validate_repository_folder_name, validate_repository_path, validate_workspace_root,
 };
 use crate::{
-    git_path::{GitProcessError, git_process_path, run_git_process, wait_for_child_output},
+    git_path::{
+        GitProcessError, git_process_path, run_git_inspection_process, run_git_process,
+        wait_for_child_output,
+    },
     path_display::display_path,
 };
 
@@ -35,12 +40,10 @@ use std::os::windows::process::CommandExt;
 
 const PROJECT_REPOSITORY_CLONE_TIMEOUT: Duration = Duration::from_secs(900);
 const PROJECT_REPOSITORY_GIT_ACTION_TIMEOUT: Duration = Duration::from_secs(600);
+const PROJECT_REPOSITORY_GIT_STATUS_TIMEOUT: Duration = Duration::from_secs(10);
+const PROJECT_REPOSITORY_GIT_CONFIG_TIMEOUT: Duration = Duration::from_secs(3);
 const PROJECT_REPOSITORY_REMOTE_CACHE_MAX_ENTRIES: usize = 512;
 const PROJECT_REPOSITORY_REMOTE_CACHE_TTL: Duration = Duration::from_secs(30);
-#[cfg(target_os = "windows")]
-const PROJECT_REPOSITORY_GIT_INSPECTION_MAX_CONCURRENCY: usize = 2;
-#[cfg(not(target_os = "windows"))]
-const PROJECT_REPOSITORY_GIT_INSPECTION_MAX_CONCURRENCY: usize = 4;
 #[cfg(target_os = "windows")]
 const CREATE_NO_WINDOW: u32 = 0x08000000;
 
@@ -197,21 +200,41 @@ pub struct ProjectRepositoryGitInspection {
     error: Option<ProjectRepositoryGitError>,
 }
 
-#[derive(serde::Deserialize)]
+#[derive(Clone, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ProjectRepositoryGitInspectionRequest {
-    repository_id: String,
-    path: String,
+    pub(crate) repository_id: String,
+    pub(crate) path: String,
 }
 
-#[derive(serde::Serialize)]
+#[derive(Clone, serde::Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ProjectRepositoryGitInspectionRecord {
-    repository_id: String,
+    pub(crate) repository_id: String,
     inspection: ProjectRepositoryGitInspection,
     git_command_count: u32,
     remote_cache_hit_count: u32,
     elapsed_ms: u64,
+}
+
+impl ProjectRepositoryGitInspectionRecord {
+    pub(crate) fn for_repository(&self, repository_id: String, include_diagnostics: bool) -> Self {
+        Self {
+            repository_id,
+            inspection: self.inspection.clone(),
+            git_command_count: if include_diagnostics {
+                self.git_command_count
+            } else {
+                0
+            },
+            remote_cache_hit_count: if include_diagnostics {
+                self.remote_cache_hit_count
+            } else {
+                0
+            },
+            elapsed_ms: self.elapsed_ms,
+        }
+    }
 }
 
 #[derive(serde::Serialize)]
@@ -623,80 +646,7 @@ fn git_inspection_in_flight_by_path(
     GIT_INSPECTION_IN_FLIGHT_BY_PATH.get_or_init(|| Mutex::new(HashMap::new()))
 }
 
-#[tauri::command]
-pub async fn inspect_project_repositories_git(
-    repositories: Vec<ProjectRepositoryGitInspectionRequest>,
-) -> Vec<ProjectRepositoryGitInspectionRecord> {
-    let fallback_repository_ids = repositories
-        .iter()
-        .map(|repository| repository.repository_id.clone())
-        .collect::<Vec<_>>();
-
-    tauri::async_runtime::spawn_blocking(move || {
-        inspect_project_repositories_git_with_concurrency(
-            repositories,
-            repository_git_inspection_concurrency_limit(),
-        )
-    })
-    .await
-    .unwrap_or_else(|_| {
-        fallback_repository_ids
-            .into_iter()
-            .map(|repository_id| ProjectRepositoryGitInspectionRecord {
-                repository_id,
-                inspection: invalid_git_inspection(ProjectRepositoryGitError::CommandFailed),
-                git_command_count: 0,
-                remote_cache_hit_count: 0,
-                elapsed_ms: 0,
-            })
-            .collect()
-    })
-}
-
-fn inspect_project_repositories_git_with_concurrency(
-    repositories: Vec<ProjectRepositoryGitInspectionRequest>,
-    concurrency_limit: usize,
-) -> Vec<ProjectRepositoryGitInspectionRecord> {
-    let concurrency_limit = concurrency_limit.max(1);
-    let mut records = Vec::with_capacity(repositories.len());
-    let mut repositories = repositories.into_iter();
-
-    loop {
-        let chunk = repositories
-            .by_ref()
-            .take(concurrency_limit)
-            .collect::<Vec<_>>();
-
-        if chunk.is_empty() {
-            break;
-        }
-
-        let chunk_records = thread::scope(|scope| {
-            let handles = chunk
-                .into_iter()
-                .map(|repository| scope.spawn(move || inspect_project_repository_git_record(repository)))
-                .collect::<Vec<_>>();
-
-            handles
-                .into_iter()
-                .map(|handle| handle.join().expect("repository git inspection worker panicked"))
-                .collect::<Vec<_>>()
-        });
-
-        records.extend(chunk_records);
-    }
-
-    records
-}
-
-fn repository_git_inspection_concurrency_limit() -> usize {
-    thread::available_parallelism()
-        .map(|parallelism| parallelism.get())
-        .unwrap_or(1)
-        .clamp(1, PROJECT_REPOSITORY_GIT_INSPECTION_MAX_CONCURRENCY)
-}
-
-fn inspect_project_repository_git_record(
+pub(crate) fn inspect_project_repository_git_record(
     repository: ProjectRepositoryGitInspectionRequest,
 ) -> ProjectRepositoryGitInspectionRecord {
     let ProjectRepositoryGitInspectionRequest {
@@ -716,6 +666,19 @@ fn inspect_project_repository_git_record(
         git_command_count,
         remote_cache_hit_count,
         elapsed_ms,
+    }
+}
+
+pub(crate) fn project_repository_git_inspection_error_record(
+    repository_id: String,
+    error: ProjectRepositoryGitError,
+) -> ProjectRepositoryGitInspectionRecord {
+    ProjectRepositoryGitInspectionRecord {
+        repository_id,
+        inspection: invalid_git_inspection(error),
+        git_command_count: 0,
+        remote_cache_hit_count: 0,
+        elapsed_ms: 0,
     }
 }
 
@@ -1225,7 +1188,7 @@ fn not_git_repository_inspection() -> ProjectRepositoryGitInspection {
 fn read_git_status_summary(
     repository_path: &Path,
 ) -> Result<GitStatusSummary, GitCommandFailure> {
-    let output = run_git_command(
+    let output = run_git_inspection_command(
         repository_path,
         &[
             "status",
@@ -1233,8 +1196,7 @@ fn read_git_status_summary(
             "--branch",
             "--untracked-files=normal",
         ],
-        PROJECT_REPOSITORY_GIT_ACTION_TIMEOUT,
-        None,
+        PROJECT_REPOSITORY_GIT_STATUS_TIMEOUT,
     )?;
 
     if !output.status.success() {
@@ -1315,11 +1277,10 @@ fn parse_git_branch_ahead_behind(output: &str) -> (u32, u32) {
 }
 
 fn is_git_repository(repository_path: &Path) -> Result<bool, GitCommandFailure> {
-    let output = run_git_command(
+    let output = run_git_inspection_command(
         repository_path,
         &["rev-parse", "--show-toplevel"],
-        PROJECT_REPOSITORY_GIT_ACTION_TIMEOUT,
-        None,
+        PROJECT_REPOSITORY_GIT_CONFIG_TIMEOUT,
     )?;
 
     if !output.status.success() {
@@ -1427,11 +1388,10 @@ fn read_valid_git_remote_urls(
 fn read_valid_git_remote_urls_uncached(
     repository_path: &Path,
 ) -> Result<HashMap<String, String>, GitCommandFailure> {
-    let output = run_git_command(
+    let output = run_git_inspection_command(
         repository_path,
         &["config", "--get-regexp", r"^remote\..*\.url$"],
-        PROJECT_REPOSITORY_GIT_ACTION_TIMEOUT,
-        None,
+        PROJECT_REPOSITORY_GIT_CONFIG_TIMEOUT,
     )?;
 
     if !output.status.success() {
@@ -1593,50 +1553,6 @@ mod tests {
     }
 
     #[test]
-    fn repository_git_batch_inspection_preserves_order_across_bounded_chunks() {
-        let records = inspect_project_repositories_git_with_concurrency(
-            vec![
-                ProjectRepositoryGitInspectionRequest {
-                    repository_id: "first".to_string(),
-                    path: String::new(),
-                },
-                ProjectRepositoryGitInspectionRequest {
-                    repository_id: "second".to_string(),
-                    path: "relative/path".to_string(),
-                },
-                ProjectRepositoryGitInspectionRequest {
-                    repository_id: "third".to_string(),
-                    path: String::new(),
-                },
-            ],
-            1,
-        );
-
-        assert_eq!(records.len(), 3);
-        assert_eq!(records[0].repository_id, "first");
-        assert_eq!(records[1].repository_id, "second");
-        assert_eq!(records[2].repository_id, "third");
-        assert_eq!(
-            records[0].inspection.error,
-            Some(ProjectRepositoryGitError::PathRequired)
-        );
-        assert_eq!(
-            records[1].inspection.error,
-            Some(ProjectRepositoryGitError::PathNotAbsolute)
-        );
-        assert_eq!(
-            records[2].inspection.error,
-            Some(ProjectRepositoryGitError::PathRequired)
-        );
-        assert!(records.iter().all(|record| record.git_command_count == 0));
-        assert!(
-            records
-                .iter()
-                .all(|record| record.remote_cache_hit_count == 0)
-        );
-    }
-
-    #[test]
     fn repository_git_inspection_diagnostics_count_commands_and_remote_cache_hits() {
         if !git_is_available() {
             return;
@@ -1667,6 +1583,82 @@ mod tests {
         assert_eq!(second.remote_cache_hit_count, 1);
         assert!(first.inspection.ok);
         assert!(second.inspection.ok);
+
+        let _ = fs::remove_dir_all(&repository);
+    }
+
+    #[test]
+    fn repository_git_inspection_does_not_modify_the_git_index() {
+        if !git_is_available() {
+            return;
+        }
+
+        let repository = unique_test_directory("workduck-inspection-index-invariant");
+        fs::create_dir_all(&repository).expect("create index invariant repository");
+        assert!(
+            Command::new("git")
+                .arg("init")
+                .current_dir(&repository)
+                .status()
+                .expect("initialize index invariant repository")
+                .success()
+        );
+        fs::write(repository.join("tracked.txt"), "tracked\n").expect("write tracked file");
+        assert!(
+            Command::new("git")
+                .args(["add", "tracked.txt"])
+                .current_dir(&repository)
+                .status()
+                .expect("stage tracked file")
+                .success()
+        );
+        assert!(
+            Command::new("git")
+                .args([
+                    "-c",
+                    "user.name=Workduck Test",
+                    "-c",
+                    "user.email=workduck@example.invalid",
+                    "commit",
+                    "-m",
+                    "initial",
+                ])
+                .current_dir(&repository)
+                .status()
+                .expect("commit tracked file")
+                .success()
+        );
+        assert!(
+            Command::new("git")
+                .args(["config", "core.untrackedCache", "true"])
+                .current_dir(&repository)
+                .status()
+                .expect("enable untracked cache")
+                .success()
+        );
+        assert!(
+            Command::new("git")
+                .args(["status", "--porcelain=v2", "--untracked-files=normal"])
+                .current_dir(&repository)
+                .status()
+                .expect("warm untracked cache")
+                .success()
+        );
+
+        let index_path = repository.join(".git").join("index");
+        let index_before = fs::read(&index_path).expect("read index before inspection");
+        fs::create_dir_all(repository.join("untracked")).expect("create untracked directory");
+        fs::write(repository.join("untracked").join("file.txt"), "untracked\n")
+            .expect("write untracked file");
+
+        let inspection = match inspect_git_repository(&repository) {
+            Ok(inspection) => inspection,
+            Err(_) => panic!("inspect repository"),
+        };
+        let index_after = fs::read(&index_path).expect("read index after inspection");
+
+        assert!(inspection.has_uncommitted_changes);
+        assert_eq!(index_after, index_before);
 
         let _ = fs::remove_dir_all(&repository);
     }
@@ -2013,6 +2005,29 @@ fn run_git_command(
             }
             GitProcessError::TimedOut => ProjectRepositoryGitError::CommandTimedOut,
         },
+    })
+}
+
+fn run_git_inspection_command(
+    repository_path: &Path,
+    args: &[&str],
+    timeout: Duration,
+) -> Result<Output, GitCommandFailure> {
+    GIT_INSPECTION_COMMAND_COUNT.with(|count| {
+        count.set(count.get().saturating_add(1));
+    });
+    run_git_inspection_process(repository_path, args.iter().copied(), timeout).map_err(|error| {
+        GitCommandFailure {
+            error: match error {
+                GitProcessError::Spawn(error) if error.kind() == io::ErrorKind::NotFound => {
+                    ProjectRepositoryGitError::CommandUnavailable
+                }
+                GitProcessError::Spawn(_) | GitProcessError::Failed => {
+                    ProjectRepositoryGitError::CommandFailed
+                }
+                GitProcessError::TimedOut => ProjectRepositoryGitError::CommandTimedOut,
+            },
+        }
     })
 }
 

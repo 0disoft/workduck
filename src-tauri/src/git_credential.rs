@@ -7,14 +7,28 @@ pub(crate) enum GitCredential {
     GithubToken(Zeroizing<String>),
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum GitCommandProfile {
+    Inspection,
+    Mutation,
+}
+
 pub(crate) fn github_token_credential(token: String) -> GitCredential {
     GitCredential::GithubToken(Zeroizing::new(token))
 }
 
-pub(crate) fn apply_safe_git_config(command: &mut Command, allow_system_credentials: bool) {
+pub(crate) fn apply_safe_git_config(
+    command: &mut Command,
+    allow_system_credentials: bool,
+    profile: GitCommandProfile,
+) {
+    let untracked_cache = match profile {
+        GitCommandProfile::Inspection => "keep",
+        GitCommandProfile::Mutation => "false",
+    };
     let mut config = vec![
         ("core.fsmonitor", "false"),
-        ("core.untrackedCache", "false"),
+        ("core.untrackedCache", untracked_cache),
         ("core.hooksPath", disabled_hooks_path()),
         ("core.sshCommand", ""),
         ("protocol.ext.allow", "never"),
@@ -104,7 +118,7 @@ mod tests {
     #[test]
     fn safe_git_config_disables_repo_executed_helpers() {
         let mut command = Command::new("git");
-        apply_safe_git_config(&mut command, false);
+        apply_safe_git_config(&mut command, false, GitCommandProfile::Mutation);
 
         let args = command
             .get_args()
@@ -132,7 +146,7 @@ mod tests {
     #[test]
     fn safe_git_config_can_preserve_system_credentials() {
         let mut command = Command::new("git");
-        apply_safe_git_config(&mut command, true);
+        apply_safe_git_config(&mut command, true, GitCommandProfile::Mutation);
 
         let args = command
             .get_args()
@@ -143,6 +157,27 @@ mod tests {
             .windows(2)
             .any(|pair| pair[0] == "-c" && pair[1] == "core.fsmonitor=false"));
         assert!(!args.windows(2).any(|pair| pair[0] == "-c" && pair[1] == "credential.helper="));
+    }
+
+    #[test]
+    fn safe_git_inspection_preserves_the_untracked_cache() {
+        let mut command = Command::new("git");
+        apply_safe_git_config(&mut command, false, GitCommandProfile::Inspection);
+
+        let args = command
+            .get_args()
+            .map(|arg| arg.to_string_lossy().into_owned())
+            .collect::<Vec<_>>();
+
+        assert!(args.windows(2).any(|pair| {
+            pair[0] == "-c" && pair[1] == "core.untrackedCache=keep"
+        }));
+        assert!(!args.windows(2).any(|pair| {
+            pair[0] == "-c" && pair[1] == "core.untrackedCache=false"
+        }));
+        assert!(args
+            .windows(2)
+            .any(|pair| pair[0] == "-c" && pair[1] == "core.fsmonitor=false"));
     }
 
     #[test]

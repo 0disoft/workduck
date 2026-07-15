@@ -1,9 +1,12 @@
 <script lang="ts">
+	import { onDestroy } from 'svelte';
+
 	import type { WorkspaceRecord } from '$lib/workspaces/workspace-registry';
 	import type { ProjectFolderError } from './project-folder';
 	import type { ProjectRepositoryOperation } from './project-board-operations';
 	import {
 		backfillProjectRepositoryRemoteUrlsForBoard,
+		cancelProjectRepositoryGitStatusScanForBoard,
 		createFolderRepairSignature,
 		createRepositoryGitInspectionSignature,
 		createRepositoryRemoteBackfillSignature,
@@ -48,6 +51,10 @@
 
 	let repositoryRemoteBackfillSignature = $state('');
 	let repositoryPrioritySignature = $state('');
+
+	onDestroy(() => {
+		void cancelProjectRepositoryGitStatusScanForBoard();
+	});
 
 	async function ensureProjectFoldersForRegistry(
 		expectedSignature: string,
@@ -108,6 +115,7 @@
 				repositoryPrioritySignature = nextPrioritySignature;
 				void refreshProjectRepositoryGitStatusesForBoard(
 					{
+						workspaceId: workspace.id,
 						repositories: selectionIndex.repositoriesToInspect.filter((repository) =>
 							priorityRepositoryIds.has(repository.id)
 						),
@@ -133,6 +141,7 @@
 
 		void refreshProjectRepositoryGitStatusesForBoard(
 			{
+				workspaceId: workspace.id,
 				repositories: selectionIndex.repositoriesToInspect,
 				priorityRepositoryIds,
 				expectedSignature: nextSignature

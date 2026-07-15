@@ -5,11 +5,18 @@ import type {
 } from './project-board-selectors';
 import { ensureProjectFolderPath, type ProjectFolderError } from './project-folder';
 import {
-	inspectProjectRepositoriesGit,
 	inspectProjectRepositoryGit,
+	scheduleProjectRepositoriesGitInspection,
 	type ProjectRepositoryGitError,
+	type ProjectRepositoryGitInspectionRecord,
+	type ProjectRepositoryGitInspectionScan,
 	type ProjectRepositoryGitInspectionResult
 } from './project-repository';
+import {
+	readProjectRepositoryGitStatusCache,
+	selectProjectRepositoriesForGitInspection,
+	writeSingleProjectRepositoryGitStatusCache
+} from './project-repository-status-cache';
 import { backfillProjectRepositoryRemoteUrls } from './project-registry';
 import type {
 	ProjectRegistry,
@@ -319,6 +326,7 @@ export async function backfillProjectRepositoryRemoteUrlsForBoard(
 
 export async function refreshProjectRepositoryGitStatusForBoard(
 	input: {
+		readonly workspaceId: string;
 		readonly repositoryId: string;
 		readonly path: string | null;
 		readonly expectedSignature: string;
@@ -335,20 +343,47 @@ export async function refreshProjectRepositoryGitStatusForBoard(
 		return;
 	}
 
+	const inspectionStartedAt = Date.now();
 	const result = await inspectProjectRepositoryGit(input.path);
 
 	if (input.expectedSignature !== context.getRepositoryGitInspectionSignature()) {
 		return;
 	}
 
-	context.updateRepositoryGitStatus(
+	const status = createRepositoryGitStatusFromInspectionResult(result);
+	const cacheAccepted = writeSingleProjectRepositoryGitStatusCache(
+		input.workspaceId,
 		input.repositoryId,
-		createRepositoryGitStatusFromInspectionResult(result)
+		input.path,
+		status,
+		inspectionStartedAt
 	);
+	if (cacheAccepted) {
+		context.updateRepositoryGitStatus(input.repositoryId, status);
+	}
+}
+
+let activeProjectRepositoryGitScan:
+	| {
+			readonly generation: number;
+			readonly scan: ProjectRepositoryGitInspectionScan;
+	  }
+	| null = null;
+let projectRepositoryGitScanGeneration = 0;
+let projectRepositoryGitScanSequence = 0;
+
+export async function cancelProjectRepositoryGitStatusScanForBoard() {
+	projectRepositoryGitScanGeneration += 1;
+	const activeScan = activeProjectRepositoryGitScan;
+	activeProjectRepositoryGitScan = null;
+	if (activeScan !== null) {
+		await activeScan.scan.cancel();
+	}
 }
 
 export async function refreshProjectRepositoryGitStatusesForBoard(
 	input: {
+		readonly workspaceId: string;
 		readonly repositories: readonly InspectableProjectRepositoryLinkRecord[];
 		readonly priorityRepositoryIds: ReadonlySet<string>;
 		readonly expectedSignature: string;
@@ -360,170 +395,157 @@ export async function refreshProjectRepositoryGitStatusesForBoard(
 		) => void;
 	}
 ) {
+	const generation = projectRepositoryGitScanGeneration + 1;
+	projectRepositoryGitScanGeneration = generation;
+	const previousScan = activeProjectRepositoryGitScan;
+	activeProjectRepositoryGitScan = null;
+	if (previousScan !== null) {
+		await previousScan.scan.cancel();
+	}
+
+	if (
+		generation !== projectRepositoryGitScanGeneration ||
+		input.expectedSignature !== context.getRepositoryGitInspectionSignature()
+	) {
+		return;
+	}
+
 	if (input.repositories.length === 0) {
 		return;
 	}
 
 	const scanStartedAt = readHighResolutionTime();
 	const scanDiagnostics = createEmptyGitInspectionDiagnostics();
+	const cached = readProjectRepositoryGitStatusCache(input.workspaceId, input.repositories);
+	if (Object.keys(cached.statuses).length > 0) {
+		context.updateRepositoryGitStatuses(cached.statuses);
+	}
+	const repositoriesToInspect = selectProjectRepositoriesForGitInspection(
+		input.repositories,
+		cached.freshRepositoryIds
+	);
+	if (repositoriesToInspect.length === 0) {
+		emitGitInspectionScanDiagnostics(scanDiagnostics, scanStartedAt, false);
+		return;
+	}
 
 	const priorityRepositories: InspectableProjectRepositoryLinkRecord[] = [];
 	const backgroundRepositories: InspectableProjectRepositoryLinkRecord[] = [];
 
-	for (const repository of input.repositories) {
+	for (const repository of repositoriesToInspect) {
 		if (input.priorityRepositoryIds.has(repository.id)) {
 			priorityRepositories.push(repository);
 		} else {
 			backgroundRepositories.push(repository);
 		}
 	}
-
-	const priorityResult = await inspectRepositoryGitStatusBatch(
-		priorityRepositories,
-		'priority',
-		1,
-		input,
-		context
-	);
-	mergeGitInspectionDiagnostics(scanDiagnostics, priorityResult.diagnostics);
-
-	if (!priorityResult.isCurrent) {
-		emitGitInspectionScanDiagnostics(scanDiagnostics, scanStartedAt, true);
+	await yieldToBrowser();
+	if (
+		generation !== projectRepositoryGitScanGeneration ||
+		input.expectedSignature !== context.getRepositoryGitInspectionSignature()
+	) {
 		return;
 	}
 
-	for (let offset = 0; offset < backgroundRepositories.length; offset += 8) {
-		await yieldToBrowser();
-		const chunkIndex = scanDiagnostics.chunkCount + 1;
-		const batchResult = await inspectRepositoryGitStatusBatch(
-			backgroundRepositories.slice(offset, offset + 8),
-			'background',
-			chunkIndex,
-			input,
-			context
-		);
-		mergeGitInspectionDiagnostics(scanDiagnostics, batchResult.diagnostics);
+	const repositories = [...priorityRepositories, ...backgroundRepositories];
+	const repositoriesById = new Map(
+		repositories.map((repository) => [repository.id, repository] as const)
+	);
+	const inspectionStartedAt = Date.now();
+	const scanId = createProjectRepositoryGitScanId();
+	const scan = scheduleProjectRepositoriesGitInspection(
+		scanId,
+		repositories.map((repository) => ({
+			repositoryId: repository.id,
+			path: repository.path
+		})),
+		(record) => {
+			if (
+				generation !== projectRepositoryGitScanGeneration ||
+				input.expectedSignature !== context.getRepositoryGitInspectionSignature()
+			) {
+				return;
+			}
 
-		if (!batchResult.isCurrent) {
-			emitGitInspectionScanDiagnostics(scanDiagnostics, scanStartedAt, true);
-			return;
+			const repository = repositoriesById.get(record.repositoryId);
+			if (repository === undefined) {
+				return;
+			}
+
+			mergeGitInspectionRecordDiagnostics(scanDiagnostics, record);
+			emitGitInspectionRepositoryDiagnostics(record);
+			const status = createRepositoryGitStatusFromInspectionResult(record.result);
+			if (
+				writeSingleProjectRepositoryGitStatusCache(
+					input.workspaceId,
+					repository.id,
+					repository.path,
+					status,
+					inspectionStartedAt
+				)
+			) {
+				context.updateRepositoryGitStatuses({ [repository.id]: status });
+			}
+
+			if (scanDiagnostics.repositoryCount === repositories.length) {
+				emitGitInspectionScanDiagnostics(scanDiagnostics, scanStartedAt, false);
+				if (activeProjectRepositoryGitScan?.generation === generation) {
+					activeProjectRepositoryGitScan = null;
+				}
+			}
 		}
-	}
-
-	emitGitInspectionScanDiagnostics(scanDiagnostics, scanStartedAt, false);
+	);
+	activeProjectRepositoryGitScan = {
+		generation,
+		scan
+	};
+	void scan.scheduled.then((schedule) => {
+		if (schedule.scheduledCount + schedule.rejectedCount !== repositories.length) {
+			emitGitInspectionScanDiagnostics(scanDiagnostics, scanStartedAt, true);
+		}
+	});
 }
 
-type GitInspectionBatchPhase = 'priority' | 'background';
-
 interface GitInspectionDiagnostics {
-	chunkCount: number;
 	repositoryCount: number;
 	gitCommandCount: number;
 	remoteCacheHitCount: number;
 	repositoryElapsedMsTotal: number;
-	frontendElapsedMs: number;
 	errorCount: number;
-}
-
-async function inspectRepositoryGitStatusBatch(
-	repositories: readonly InspectableProjectRepositoryLinkRecord[],
-	phase: GitInspectionBatchPhase,
-	chunkIndex: number,
-	input: { readonly expectedSignature: string },
-	context: {
-		readonly getRepositoryGitInspectionSignature: () => string;
-		readonly updateRepositoryGitStatuses: (
-			gitStatuses: Record<string, ProjectRepositoryGitStatus>
-		) => void;
-	}
-) {
-	if (repositories.length === 0) {
-		return {
-			isCurrent: input.expectedSignature === context.getRepositoryGitInspectionSignature(),
-			diagnostics: createEmptyGitInspectionDiagnostics()
-		};
-	}
-
-	const startedAt = readHighResolutionTime();
-	const records = await inspectProjectRepositoriesGit(
-		repositories.map((repository) => ({
-			repositoryId: repository.id,
-			path: repository.path
-		}))
-	);
-	const diagnostics: GitInspectionDiagnostics = {
-		chunkCount: 1,
-		repositoryCount: records.length,
-		gitCommandCount: records.reduce((total, record) => total + record.gitCommandCount, 0),
-		remoteCacheHitCount: records.reduce(
-			(total, record) => total + record.remoteCacheHitCount,
-			0
-		),
-		repositoryElapsedMsTotal: records.reduce((total, record) => total + record.elapsedMs, 0),
-		frontendElapsedMs: Math.max(0, readHighResolutionTime() - startedAt),
-		errorCount: records.filter((record) => !record.result.ok).length
-	};
-	emitGitInspectionBatchDiagnostics(phase, chunkIndex, diagnostics);
-
-	if (input.expectedSignature !== context.getRepositoryGitInspectionSignature()) {
-		return { isCurrent: false, diagnostics };
-	}
-
-	context.updateRepositoryGitStatuses(
-		Object.fromEntries(
-			records.map((record) => [
-				record.repositoryId,
-				createRepositoryGitStatusFromInspectionResult(record.result)
-			])
-		)
-	);
-
-	return { isCurrent: true, diagnostics };
 }
 
 function createEmptyGitInspectionDiagnostics(): GitInspectionDiagnostics {
 	return {
-		chunkCount: 0,
 		repositoryCount: 0,
 		gitCommandCount: 0,
 		remoteCacheHitCount: 0,
 		repositoryElapsedMsTotal: 0,
-		frontendElapsedMs: 0,
 		errorCount: 0
 	};
 }
 
-function mergeGitInspectionDiagnostics(
+function mergeGitInspectionRecordDiagnostics(
 	target: GitInspectionDiagnostics,
-	source: GitInspectionDiagnostics
+	record: ProjectRepositoryGitInspectionRecord
 ) {
-	target.chunkCount += source.chunkCount;
-	target.repositoryCount += source.repositoryCount;
-	target.gitCommandCount += source.gitCommandCount;
-	target.remoteCacheHitCount += source.remoteCacheHitCount;
-	target.repositoryElapsedMsTotal += source.repositoryElapsedMsTotal;
-	target.frontendElapsedMs += source.frontendElapsedMs;
-	target.errorCount += source.errorCount;
+	target.repositoryCount += 1;
+	target.gitCommandCount += record.gitCommandCount;
+	target.remoteCacheHitCount += record.remoteCacheHitCount;
+	target.repositoryElapsedMsTotal += record.elapsedMs;
+	target.errorCount += record.result.ok ? 0 : 1;
 }
 
-function emitGitInspectionBatchDiagnostics(
-	phase: GitInspectionBatchPhase,
-	chunkIndex: number,
-	diagnostics: GitInspectionDiagnostics
-) {
+function emitGitInspectionRepositoryDiagnostics(record: ProjectRepositoryGitInspectionRecord) {
 	if (!import.meta.env.DEV) {
 		return;
 	}
 
-	console.debug('[workduck:git-inspection:chunk]', {
-		phase,
-		chunkIndex,
-		repositoryCount: diagnostics.repositoryCount,
-		gitCommandCount: diagnostics.gitCommandCount,
-		remoteCacheHitCount: diagnostics.remoteCacheHitCount,
-		repositoryElapsedMsTotal: Math.round(diagnostics.repositoryElapsedMsTotal),
-		frontendElapsedMs: Math.round(diagnostics.frontendElapsedMs),
-		errorCount: diagnostics.errorCount
+	console.debug('[workduck:git-inspection:repository]', {
+		repositoryId: record.repositoryId,
+		gitCommandCount: record.gitCommandCount,
+		remoteCacheHitCount: record.remoteCacheHitCount,
+		elapsedMs: Math.round(record.elapsedMs),
+		hasError: !record.result.ok
 	});
 }
 
@@ -537,16 +559,19 @@ function emitGitInspectionScanDiagnostics(
 	}
 
 	console.debug('[workduck:git-inspection:scan]', {
-		chunkCount: diagnostics.chunkCount,
 		repositoryCount: diagnostics.repositoryCount,
 		gitCommandCount: diagnostics.gitCommandCount,
 		remoteCacheHitCount: diagnostics.remoteCacheHitCount,
 		repositoryElapsedMsTotal: Math.round(diagnostics.repositoryElapsedMsTotal),
-		frontendBatchElapsedMsTotal: Math.round(diagnostics.frontendElapsedMs),
 		frontendScanElapsedMs: Math.round(Math.max(0, readHighResolutionTime() - startedAt)),
 		errorCount: diagnostics.errorCount,
 		cancelled
 	});
+}
+
+function createProjectRepositoryGitScanId() {
+	projectRepositoryGitScanSequence = (projectRepositoryGitScanSequence + 1) % Number.MAX_SAFE_INTEGER;
+	return `scan-${Date.now().toString(36)}-${projectRepositoryGitScanSequence.toString(36)}`;
 }
 
 function readHighResolutionTime() {

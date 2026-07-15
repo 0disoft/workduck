@@ -1226,7 +1226,7 @@
 		expectedSignature = repositoryGitInspectionSignature
 	) {
 		await refreshProjectRepositoryGitStatusForBoard(
-			{ repositoryId, path, expectedSignature },
+			{ workspaceId: workspace.id, repositoryId, path, expectedSignature },
 			{
 				getRepositoryGitInspectionSignature: () => repositoryGitInspectionSignature,
 				updateRepositoryGitStatus: (nextRepositoryId, gitStatus) => {

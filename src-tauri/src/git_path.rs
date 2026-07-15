@@ -1,10 +1,12 @@
 use std::{
+    collections::VecDeque,
     env,
     ffi::OsStr,
     fs,
     io::{self, Read},
     path::{Component, Path, PathBuf},
     process::{Child, Command, Output, Stdio},
+    sync::OnceLock,
     thread,
     time::Duration,
 };
@@ -12,7 +14,8 @@ use std::{
 use wait_timeout::ChildExt;
 
 use crate::git_credential::{
-    GitCredential, apply_git_credential, apply_safe_git_config, clear_git_credential_environment,
+    GitCommandProfile, GitCredential, apply_git_credential, apply_safe_git_config,
+    clear_git_credential_environment,
 };
 
 #[cfg(target_os = "windows")]
@@ -22,6 +25,8 @@ use std::os::windows::process::CommandExt;
 const CREATE_NO_WINDOW: u32 = 0x08000000;
 
 const CHILD_OUTPUT_MAX_BYTES: usize = 128 * 1024;
+const CHILD_OUTPUT_HEAD_MAX_BYTES: usize = CHILD_OUTPUT_MAX_BYTES / 2;
+const CHILD_OUTPUT_TAIL_MAX_BYTES: usize = CHILD_OUTPUT_MAX_BYTES - CHILD_OUTPUT_HEAD_MAX_BYTES;
 
 pub(crate) fn git_process_path(path: &Path) -> PathBuf {
     crate::path_display::non_verbatim_path(path)
@@ -45,10 +50,51 @@ where
     I: IntoIterator<Item = S>,
     S: AsRef<OsStr>,
 {
-    let git_executable = resolve_system_executable("git").map_err(GitProcessError::Spawn)?;
+    run_git_process_with_profile(
+        working_dir,
+        args,
+        timeout,
+        credential,
+        allow_system_credentials,
+        GitCommandProfile::Mutation,
+    )
+}
+
+pub(crate) fn run_git_inspection_process<I, S>(
+    working_dir: &Path,
+    args: I,
+    timeout: Duration,
+) -> Result<Output, GitProcessError>
+where
+    I: IntoIterator<Item = S>,
+    S: AsRef<OsStr>,
+{
+    run_git_process_with_profile(
+        working_dir,
+        args,
+        timeout,
+        None,
+        false,
+        GitCommandProfile::Inspection,
+    )
+}
+
+fn run_git_process_with_profile<I, S>(
+    working_dir: &Path,
+    args: I,
+    timeout: Duration,
+    credential: Option<&GitCredential>,
+    allow_system_credentials: bool,
+    profile: GitCommandProfile,
+) -> Result<Output, GitProcessError>
+where
+    I: IntoIterator<Item = S>,
+    S: AsRef<OsStr>,
+{
+    let git_executable = resolve_git_executable().map_err(GitProcessError::Spawn)?;
     let git_working_dir = git_process_path(working_dir);
     let mut command = Command::new(git_executable);
-    apply_safe_git_config(&mut command, allow_system_credentials);
+    apply_safe_git_config(&mut command, allow_system_credentials, profile);
     command
         .args(args)
         .current_dir(git_working_dir)
@@ -57,6 +103,9 @@ where
         .stdin(Stdio::null())
         .stdout(Stdio::piped())
         .stderr(Stdio::piped());
+    if profile == GitCommandProfile::Inspection {
+        command.env("GIT_OPTIONAL_LOCKS", "0");
+    }
     clear_git_credential_environment(&mut command);
     apply_git_credential(&mut command, credential);
 
@@ -66,6 +115,18 @@ where
     let child = command.spawn().map_err(GitProcessError::Spawn)?;
 
     wait_for_child_output(child, timeout)
+}
+
+fn resolve_git_executable() -> io::Result<PathBuf> {
+    static GIT_EXECUTABLE: OnceLock<PathBuf> = OnceLock::new();
+
+    if let Some(executable) = GIT_EXECUTABLE.get() {
+        return Ok(executable.clone());
+    }
+
+    let executable = resolve_system_executable("git")?;
+    let _ = GIT_EXECUTABLE.set(executable.clone());
+    Ok(GIT_EXECUTABLE.get().cloned().unwrap_or(executable))
 }
 
 fn resolve_system_executable(program_name: &str) -> io::Result<PathBuf> {
@@ -189,18 +250,18 @@ where
     T: Read + Send + 'static,
 {
     thread::spawn(move || {
-        let mut output = Vec::new();
+        let mut output = BoundedOutputBuffer::new();
         let mut buffer = [0_u8; 4096];
 
         loop {
             match reader.read(&mut buffer) {
                 Ok(0) => break,
-                Ok(length) => append_bounded_output(&mut output, &buffer[..length]),
+                Ok(length) => output.append(&buffer[..length]),
                 Err(_) => break,
             }
         }
 
-        output
+        output.into_bytes()
     })
 }
 
@@ -210,30 +271,59 @@ fn join_output_reader(reader: Option<thread::JoinHandle<Vec<u8>>>) -> Vec<u8> {
         .unwrap_or_default()
 }
 
-fn append_bounded_output(output: &mut Vec<u8>, bytes: &[u8]) {
-    if bytes.len() >= CHILD_OUTPUT_MAX_BYTES {
-        output.clear();
-        output.extend_from_slice(&bytes[bytes.len() - CHILD_OUTPUT_MAX_BYTES..]);
-        return;
+struct BoundedOutputBuffer {
+    head: Vec<u8>,
+    tail: VecDeque<u8>,
+}
+
+impl BoundedOutputBuffer {
+    fn new() -> Self {
+        Self {
+            head: Vec::with_capacity(CHILD_OUTPUT_HEAD_MAX_BYTES),
+            tail: VecDeque::with_capacity(CHILD_OUTPUT_TAIL_MAX_BYTES),
+        }
     }
 
-    let overflow = output
-        .len()
-        .saturating_add(bytes.len())
-        .saturating_sub(CHILD_OUTPUT_MAX_BYTES);
+    fn append(&mut self, bytes: &[u8]) {
+        let head_remaining = CHILD_OUTPUT_HEAD_MAX_BYTES.saturating_sub(self.head.len());
+        let head_length = head_remaining.min(bytes.len());
+        self.head.extend_from_slice(&bytes[..head_length]);
+        let tail_bytes = &bytes[head_length..];
 
-    if overflow > 0 {
-        output.drain(..overflow);
+        if tail_bytes.len() >= CHILD_OUTPUT_TAIL_MAX_BYTES {
+            self.tail.clear();
+            self.tail.extend(
+                tail_bytes[tail_bytes.len() - CHILD_OUTPUT_TAIL_MAX_BYTES..]
+                    .iter()
+                    .copied(),
+            );
+            return;
+        }
+
+        let overflow = self
+            .tail
+            .len()
+            .saturating_add(tail_bytes.len())
+            .saturating_sub(CHILD_OUTPUT_TAIL_MAX_BYTES);
+        if overflow > 0 {
+            self.tail.drain(..overflow);
+        }
+        self.tail.extend(tail_bytes.iter().copied());
     }
 
-    output.extend_from_slice(bytes);
+    fn into_bytes(self) -> Vec<u8> {
+        let mut output = Vec::with_capacity(self.head.len().saturating_add(self.tail.len()));
+        output.extend_from_slice(&self.head);
+        output.extend(self.tail);
+        output
+    }
 }
 
 #[cfg(test)]
 mod tests {
     use super::{
-        append_bounded_output, resolve_system_executable_from_path, validate_plain_program_name,
-        CHILD_OUTPUT_MAX_BYTES,
+        BoundedOutputBuffer, CHILD_OUTPUT_HEAD_MAX_BYTES, CHILD_OUTPUT_MAX_BYTES,
+        resolve_system_executable_from_path, validate_plain_program_name,
     };
     use std::{
         env,
@@ -246,10 +336,11 @@ mod tests {
     static CURRENT_DIR_TEST_LOCK: Mutex<()> = Mutex::new(());
 
     #[test]
-    fn bounded_output_keeps_recent_bytes_after_multiple_chunks() {
-        let mut output = Vec::new();
-        append_bounded_output(&mut output, &vec![b'a'; CHILD_OUTPUT_MAX_BYTES - 3]);
-        append_bounded_output(&mut output, b"bcdef");
+    fn bounded_output_keeps_the_head_and_recent_tail_after_multiple_chunks() {
+        let mut buffer = BoundedOutputBuffer::new();
+        buffer.append(&vec![b'a'; CHILD_OUTPUT_MAX_BYTES - 3]);
+        buffer.append(b"bcdef");
+        let output = buffer.into_bytes();
 
         assert_eq!(output.len(), CHILD_OUTPUT_MAX_BYTES);
         assert!(output.iter().take(8).all(|byte| *byte == b'a'));
@@ -257,15 +348,30 @@ mod tests {
     }
 
     #[test]
-    fn bounded_output_keeps_tail_when_single_chunk_exceeds_limit() {
-        let mut output = b"old".to_vec();
-        let mut large = vec![b'a'; CHILD_OUTPUT_MAX_BYTES + 10];
+    fn bounded_output_keeps_head_and_tail_when_single_chunk_exceeds_limit() {
+        let mut large = b"branch-header\n".to_vec();
+        large.extend(vec![b'a'; CHILD_OUTPUT_MAX_BYTES + 10]);
         large.extend_from_slice(b"tail");
-
-        append_bounded_output(&mut output, &large);
+        let mut buffer = BoundedOutputBuffer::new();
+        buffer.append(&large);
+        let output = buffer.into_bytes();
 
         assert_eq!(output.len(), CHILD_OUTPUT_MAX_BYTES);
+        assert!(output.starts_with(b"branch-header\n"));
         assert_eq!(&output[output.len() - 4..], b"tail");
+    }
+
+    #[test]
+    fn bounded_output_preserves_git_status_branch_headers_above_the_limit() {
+        let mut buffer = BoundedOutputBuffer::new();
+        buffer.append(b"# branch.oid abc\n# branch.head main\n# branch.ab +2 -3\n");
+        buffer.append(&vec![b'x'; CHILD_OUTPUT_MAX_BYTES * 2]);
+        let output = buffer.into_bytes();
+        let head = String::from_utf8_lossy(&output[..CHILD_OUTPUT_HEAD_MAX_BYTES]);
+
+        assert!(head.contains("# branch.head main"));
+        assert!(head.contains("# branch.ab +2 -3"));
+        assert_eq!(output.len(), CHILD_OUTPUT_MAX_BYTES);
     }
 
     #[test]

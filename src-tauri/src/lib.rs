@@ -14,6 +14,7 @@ mod project_folder;
 mod project_registry_store;
 mod project_repository_failure;
 mod project_repository;
+mod repository_inspection_scheduler;
 mod project_repository_task;
 mod project_repository_validation;
 mod project_repository_operation_store;
@@ -142,13 +143,14 @@ pub fn run() {
             project_repository::clone_project_repository_fork,
             project_repository::fetch_project_repository_git,
             project_repository::initialize_project_repository_git,
-            project_repository::inspect_project_repositories_git,
             project_repository::inspect_project_repository_git,
             project_repository::pull_project_repository_git,
             project_repository::prepare_project_repository_for_github_publish,
             project_repository::publish_project_repository_to_github,
             project_repository::push_project_repository_to_github,
             project_repository::push_project_repository_git,
+            repository_inspection_scheduler::cancel_project_repositories_git_inspection,
+            repository_inspection_scheduler::schedule_project_repositories_git_inspection,
             project_repository_task::read_project_repository_task_run_records,
             project_repository_task::run_project_repository_task,
             project_repository_operation_store::read_project_repository_operation_records,
