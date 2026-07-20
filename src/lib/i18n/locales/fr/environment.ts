@@ -22,7 +22,9 @@ export const frEnvironmentMessages = {
 	hide: 'Masquer',
 	applyCliEnvironment: 'Appliquer les variables CLI',
 	applyCliEnvironmentTooltip:
-		'Enregistre les entrées comme variables d\'environnement sûres pour les outils CLI.',
+		'Enregistre les valeurs secrètes en clair dans les variables d\'environnement utilisateur. D\'autres processus du même utilisateur peuvent les lire.',
+	cliEnvironmentConfirm:
+		'Enregistrer ces valeurs secrètes en clair dans les variables d\'environnement utilisateur ? D\'autres processus du même utilisateur peuvent les lire.',
 	secretKinds: {
 		'api-key': 'Clé API',
 		token: 'Jeton',

@@ -22,7 +22,9 @@ export const esEnvironmentMessages = {
 		hide: 'Ocultar',
 		applyCliEnvironment: 'Aplicar env de CLI',
 		applyCliEnvironmentTooltip:
-			'Guarda las entradas como variables de entorno seguras para herramientas CLI.',
+			'Guarda los valores secretos como variables de entorno de usuario en texto plano. Otros procesos del mismo usuario pueden leerlos.',
+		cliEnvironmentConfirm:
+			'¿Guardar estos valores secretos como variables de entorno de usuario en texto plano? Otros procesos del mismo usuario pueden leerlos.',
 		secretKinds: {
 			'api-key': 'Clave API',
 			token: 'Token',

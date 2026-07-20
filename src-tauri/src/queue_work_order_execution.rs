@@ -256,22 +256,37 @@ fn canonicalize_work_order_path(
     let work_order_path = fs::canonicalize(work_order_path).map_err(|error| {
         execution_io_error("work-order-file-invalid", work_order_path, error)
     })?;
-    let expected_parent = workspace_path
-        .join(QUEUE_DIRECTORY_NAME)
-        .join(WORK_ORDERS_DIRECTORY_NAME);
+    let queue_path = workspace_path.join(QUEUE_DIRECTORY_NAME);
+    reject_symlink(&queue_path)?;
+    let expected_parent = queue_path.join(WORK_ORDERS_DIRECTORY_NAME);
+    reject_symlink(&expected_parent)?;
     let expected_parent = fs::canonicalize(&expected_parent).map_err(|error| {
         execution_io_error("work-order-file-invalid", &expected_parent, error)
     })?;
+
+    validate_canonical_work_order_path(workspace_path, &work_order_path, &expected_parent)?;
+
+    Ok(work_order_path)
+}
+
+fn validate_canonical_work_order_path(
+    workspace_path: &Path,
+    work_order_path: &Path,
+    expected_parent: &Path,
+) -> Result<(), QueueExecutionErrorDetail> {
     let valid_suffix = work_order_path
         .file_name()
         .and_then(|name| name.to_str())
         .is_some_and(|name| name.ends_with(WORK_ORDER_FILE_SUFFIX));
 
-    if work_order_path.parent() != Some(expected_parent.as_path()) || !valid_suffix {
+    if !expected_parent.starts_with(workspace_path)
+        || work_order_path.parent() != Some(expected_parent)
+        || !valid_suffix
+    {
         return Err(invalid_work_order_path());
     }
 
-    Ok(work_order_path)
+    Ok(())
 }
 
 fn read_work_order(path: &Path) -> Result<QueueWorkOrder, QueueExecutionErrorDetail> {
@@ -385,6 +400,29 @@ mod tests {
         )
         .expect("released execution can be retried");
         drop(retry);
+    }
+
+    #[test]
+    fn canonical_work_order_parent_must_remain_inside_workspace() {
+        let workspace = tempfile::tempdir().expect("workspace");
+        let external = tempfile::tempdir().expect("external directory");
+        let external_work_orders = external.path().join(WORK_ORDERS_DIRECTORY_NAME);
+        fs::create_dir_all(&external_work_orders).expect("external work-orders directory");
+        let work_order_path = external_work_orders.join("outside.workduck-work-order.json");
+        fs::write(&work_order_path, "{}").expect("external work order");
+
+        let workspace_path = fs::canonicalize(workspace.path()).expect("canonical workspace");
+        let work_order_path = fs::canonicalize(work_order_path).expect("canonical work order");
+        let expected_parent =
+            fs::canonicalize(external_work_orders).expect("canonical external parent");
+        let error = validate_canonical_work_order_path(
+            &workspace_path,
+            &work_order_path,
+            &expected_parent,
+        )
+        .expect_err("external canonical parent must be rejected");
+
+        assert_eq!(error.code, "work-order-file-invalid");
     }
 
     #[test]

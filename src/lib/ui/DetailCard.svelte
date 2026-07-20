@@ -6,9 +6,10 @@
 		readonly kind?: string;
 		readonly children: Snippet;
 		readonly actions?: Snippet;
+		readonly actionsAtTop?: boolean;
 	}
 
-	const { title, kind, children, actions }: Props = $props();
+	const { title, kind, children, actions, actionsAtTop = false }: Props = $props();
 </script>
 
 <div class="workduck-detail-card">
@@ -18,6 +19,12 @@
 			<span class="workduck-detail-card-kind">{kind}</span>
 		{/if}
 	</div>
+
+	{#if actions !== undefined && actionsAtTop}
+		<div class="workduck-detail-card-actions">
+			{@render actions()}
+		</div>
+	{/if}
 
 	{@render children()}
 

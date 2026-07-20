@@ -332,6 +332,13 @@
 			return;
 		}
 
+		if (
+			typeof window !== 'undefined' &&
+			!window.confirm(environmentMessages.cliEnvironmentConfirm)
+		) {
+			return;
+		}
+
 		isBusy = true;
 		error = null;
 		status = null;

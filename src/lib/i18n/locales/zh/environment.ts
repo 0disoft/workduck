@@ -22,7 +22,9 @@ export const zhEnvironmentMessages = {
 	hide: '隐藏',
 	applyCliEnvironment: '应用 CLI 环境变量',
 	applyCliEnvironmentTooltip:
-		'将已保存条目作为安全的用户环境变量提供给 CLI 工具。',
+		'将密钥值以明文形式保存为用户环境变量。同一用户运行的其他进程可以读取这些值。',
+	cliEnvironmentConfirm:
+		'要将这些密钥值以明文形式保存为用户环境变量吗？同一用户运行的其他进程可以读取这些值。',
 	secretKinds: {
 		'api-key': 'API 密钥',
 		token: '令牌',

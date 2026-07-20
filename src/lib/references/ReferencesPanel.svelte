@@ -66,7 +66,9 @@
 	let isReferenceFormOpen = $state(false);
 	let isSavingReference = $state(false);
 	let isRemovingReference = $state(false);
+	let isCopyingReference = $state(false);
 	let referenceError = $state<ReferenceRegistryError | ReferenceRegistryStorageError | null>(null);
+	let referenceActionErrorMessage = $state<string | null>(null);
 	let statusMessage = $state<string | null>(null);
 	let messages = $derived(getWorkduckMessages(appearanceSettings.languageId));
 
@@ -125,6 +127,9 @@
 			projectRegistry = createEmptyProjectRegistry(workspaceId);
 			selectedReferenceId = null;
 			editingReferenceId = null;
+			isCopyingReference = false;
+			referenceActionErrorMessage = null;
+			statusMessage = null;
 			clearReferenceForm();
 			void readRegistryFromStorage(workspaceId, workspace.path);
 			void readProjectRegistryFromStorage(workspaceId);
@@ -176,6 +181,7 @@
 	function selectReference(reference: ReferenceRecord) {
 		selectedReferenceId = selectedReferenceId === reference.id ? null : reference.id;
 		statusMessage = null;
+		referenceActionErrorMessage = null;
 		referenceError = null;
 	}
 
@@ -200,6 +206,7 @@
 		referenceRepositorySearchQuery = '';
 		referenceContent = selectedReference.content;
 		statusMessage = null;
+		referenceActionErrorMessage = null;
 		referenceError = null;
 	}
 
@@ -226,6 +233,7 @@
 
 		isSavingReference = true;
 		referenceError = null;
+		referenceActionErrorMessage = null;
 		statusMessage = null;
 
 		try {
@@ -277,6 +285,7 @@
 
 		isRemovingReference = true;
 		referenceError = null;
+		referenceActionErrorMessage = null;
 		statusMessage = null;
 
 		try {
@@ -301,6 +310,36 @@
 			statusMessage = messages.references.removed;
 		} finally {
 			isRemovingReference = false;
+		}
+	}
+
+	async function handleCopySelectedReference() {
+		if (
+			selectedReference === null ||
+			selectedReference.content.length === 0 ||
+			isCopyingReference
+		) {
+			return;
+		}
+		const content = selectedReference.content;
+
+		statusMessage = null;
+		referenceActionErrorMessage = null;
+
+		if (typeof navigator === 'undefined' || navigator.clipboard === undefined) {
+			referenceActionErrorMessage = messages.references.errors.clipboardUnavailable;
+			return;
+		}
+
+		isCopyingReference = true;
+
+		try {
+			await navigator.clipboard.writeText(content);
+			statusMessage = messages.references.copied;
+		} catch {
+			referenceActionErrorMessage = messages.references.errors.copyFailed;
+		} finally {
+			isCopyingReference = false;
 		}
 	}
 
@@ -548,7 +587,11 @@
 
 	{#snippet detail()}
 		{#if selectedReference !== null}
-			<DetailCard title={selectedReference.title} kind={messages.common.reference}>
+			<DetailCard
+				title={selectedReference.title}
+				kind={messages.common.reference}
+				actionsAtTop
+			>
 				<dl class="workduck-agent-details-list">
 					{#if selectedReference.sourceUrl.length > 0}
 						<div>
@@ -608,6 +651,14 @@
 					<button
 						class="workduck-button workduck-button-secondary"
 						type="button"
+						disabled={isCopyingReference || selectedReference.content.length === 0}
+						onclick={() => void handleCopySelectedReference()}
+					>
+						{messages.references.copy}
+					</button>
+					<button
+						class="workduck-button workduck-button-secondary"
+						type="button"
 						onclick={editSelectedReference}
 					>
 						{messages.common.edit}
@@ -628,6 +679,9 @@
 	{#snippet status()}
 		{#if referenceError !== null}
 			<p class="workduck-inline-error" aria-live="polite">{createReferenceErrorMessage(referenceError)}</p>
+		{/if}
+		{#if referenceActionErrorMessage !== null}
+			<p class="workduck-inline-error" aria-live="polite">{referenceActionErrorMessage}</p>
 		{/if}
 
 		<StatusToast message={statusMessage} />

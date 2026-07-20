@@ -12,13 +12,14 @@ use chacha20poly1305::{
 };
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use sha2::{Digest, Sha256};
 use time::{OffsetDateTime, format_description::well_known::Rfc3339};
 use workduck_lib::argon2_kdf::{ARGON2ID_VERSION, derive_argon2id_key, parameters_are_supported};
 use workduck_lib::queue_execution::*;
 use workduck_lib::queue_work_order_execution::{
     QueueWorkOrderCompletion, begin_queue_work_order_execution_at,
 };
-use zeroize::Zeroize;
+use zeroize::{Zeroize, Zeroizing};
 
 const APP_NAME: &str = "workduck";
 const WORKDUCK_DIRECTORY_NAME: &str = ".workduck";
@@ -27,6 +28,7 @@ const WORK_ORDERS_DIRECTORY_NAME: &str = "work-orders";
 const WORK_ORDER_FILE_SUFFIX: &str = ".workduck-work-order.json";
 const VAULT_FILE_NAME: &str = "secrets.sync.json";
 const AGENTS_FILE_NAME: &str = "agents.json";
+const AGENT_REGISTRY_LOCK_DIRECTORY_NAME: &str = "workduck-agent-registry-locks";
 const PERSONAS_FILE_NAME: &str = "personas.json";
 const REFERENCES_FILE_NAME: &str = "references.json";
 const SKILLS_FILE_NAME: &str = "skills.json";
@@ -367,6 +369,7 @@ fn run_agent_evaluate_command(args: Vec<String>) -> Result<(), CliError> {
         .and_then(canonicalize_directory)?;
     let workspace_id = read_workspace_id(&workspace_path)?;
     let agents_path = workspace_data_path(&workspace_path, AGENTS_FILE_NAME);
+    let _agent_registry_lock = acquire_agent_registry_lock(&agents_path)?;
     let mut registry: Value = read_json_file(&agents_path, "agent-registry-invalid")?;
     let personas_path = workspace_data_path(&workspace_path, PERSONAS_FILE_NAME);
     let mut persona_registry: Option<Value> = if personas_path.exists() {
@@ -455,6 +458,7 @@ fn run_agent_evaluate_batch_command(args: Vec<String>) -> Result<(), CliError> {
 
     let workspace_id = read_workspace_id(&workspace_path)?;
     let agents_path = workspace_data_path(&workspace_path, AGENTS_FILE_NAME);
+    let _agent_registry_lock = acquire_agent_registry_lock(&agents_path)?;
     let mut registry: Value = read_json_file(&agents_path, "agent-registry-invalid")?;
     let personas_path = workspace_data_path(&workspace_path, PERSONAS_FILE_NAME);
     let mut persona_registry: Option<Value> = if personas_path.exists() {
@@ -1505,7 +1509,7 @@ fn read_environment_vault(
         "vault-invalid",
     )?;
     let plaintext = decrypt_secret_vault_payload(password, &envelope)?;
-    let vault: EnvironmentVault = serde_json::from_str(&plaintext).map_err(|_| CliError {
+    let vault: EnvironmentVault = serde_json::from_str(plaintext.as_str()).map_err(|_| CliError {
         code: "vault-invalid",
         message: "보관함 데이터를 해석하지 못했습니다.".to_string(),
     })?;
@@ -1523,7 +1527,7 @@ fn read_environment_vault(
 fn decrypt_secret_vault_payload(
     password: &str,
     envelope: &SecretVaultEnvelope,
-) -> Result<String, CliError> {
+) -> Result<Zeroizing<String>, CliError> {
     if password.is_empty() {
         return Err(CliError {
             code: "vault-password-required",
@@ -1593,10 +1597,17 @@ fn decrypt_secret_vault_payload(
         })?;
     key.zeroize();
 
-    String::from_utf8(plaintext).map_err(|_| CliError {
-        code: "vault-plaintext-invalid",
-        message: "보관함 평문이 UTF-8 문자열이 아닙니다.".to_string(),
-    })
+    match String::from_utf8(plaintext) {
+        Ok(plaintext) => Ok(Zeroizing::new(plaintext)),
+        Err(error) => {
+            let mut plaintext = error.into_bytes();
+            plaintext.zeroize();
+            Err(CliError {
+                code: "vault-plaintext-invalid",
+                message: "보관함 평문이 UTF-8 문자열이 아닙니다.".to_string(),
+            })
+        }
+    }
 }
 
 fn derive_vault_key(
@@ -1707,6 +1718,47 @@ fn write_json_file<T: Serialize>(path: &Path, value: &T) -> Result<(), CliError>
     })
 }
 
+fn acquire_agent_registry_lock(agents_path: &Path) -> Result<fs::File, CliError> {
+    let lock_file = open_agent_registry_lock(agents_path)?;
+    lock_file.lock().map_err(|error| {
+        io_error(
+            "agent-registry-lock-failed",
+            &agent_registry_lock_path(agents_path),
+            error,
+        )
+    })?;
+    Ok(lock_file)
+}
+
+fn open_agent_registry_lock(agents_path: &Path) -> Result<fs::File, CliError> {
+    let lock_path = agent_registry_lock_path(agents_path);
+    let lock_root = lock_path.parent().ok_or_else(|| CliError {
+        code: "agent-registry-lock-failed",
+        message: "에이전트 레지스트리 잠금 경로가 올바르지 않습니다.".to_string(),
+    })?;
+    fs::create_dir_all(lock_root)
+        .map_err(|error| io_error("agent-registry-lock-failed", lock_root, error))?;
+    reject_symlink_path(&lock_path)?;
+
+    fs::OpenOptions::new()
+        .read(true)
+        .write(true)
+        .create(true)
+        .open(&lock_path)
+        .map_err(|error| io_error("agent-registry-lock-failed", &lock_path, error))
+}
+
+fn agent_registry_lock_path(agents_path: &Path) -> PathBuf {
+    let digest = Sha256::digest(agents_path.as_os_str().to_string_lossy().as_bytes());
+    let lock_name = digest
+        .iter()
+        .map(|byte| format!("{byte:02x}"))
+        .collect::<String>();
+    env::temp_dir()
+        .join(AGENT_REGISTRY_LOCK_DIRECTORY_NAME)
+        .join(format!("{lock_name}.lock"))
+}
+
 fn reject_symlink_path(path: &Path) -> Result<(), CliError> {
     if let Ok(metadata) = fs::symlink_metadata(path) {
         if metadata.file_type().is_symlink() {
@@ -1764,6 +1816,34 @@ fn io_error(code: &'static str, path: &Path, error: io::Error) -> CliError {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn agent_evaluate_args(
+        workspace_path: &Path,
+        evaluation_key: &str,
+    ) -> Vec<String> {
+        [
+            "agent".to_string(),
+            "evaluate".to_string(),
+            "agent-1".to_string(),
+            "--workspace".to_string(),
+            workspace_path.to_string_lossy().into_owned(),
+            "--evaluation-key".to_string(),
+            evaluation_key.to_string(),
+            "--problem-understanding".to_string(),
+            "5".to_string(),
+            "--logical-validity".to_string(),
+            "5".to_string(),
+            "--practical-feasibility".to_string(),
+            "5".to_string(),
+            "--creative-insight".to_string(),
+            "5".to_string(),
+            "--risk-detection".to_string(),
+            "5".to_string(),
+            "--json".to_string(),
+        ]
+        .into_iter()
+        .collect()
+    }
 
     fn queue_run_args(extra: &[&str]) -> Vec<String> {
         ["queue", "run", "  wo_test  "]
@@ -1902,5 +1982,73 @@ mod tests {
         };
 
         assert_eq!(error.code, "work-order-not-found");
+    }
+
+    #[test]
+    fn agent_registry_lock_is_exclusive_and_releases_on_drop() {
+        let workspace = tempfile::tempdir().expect("workspace");
+        let agents_path = workspace.path().join(WORKDUCK_DIRECTORY_NAME).join(AGENTS_FILE_NAME);
+        let first = open_agent_registry_lock(&agents_path).expect("first lock file");
+        first.try_lock().expect("first lock");
+        let second = open_agent_registry_lock(&agents_path).expect("second lock file");
+
+        assert!(matches!(
+            second.try_lock(),
+            Err(std::fs::TryLockError::WouldBlock)
+        ));
+
+        drop(first);
+        second.try_lock().expect("released lock");
+    }
+
+    #[test]
+    fn concurrent_agent_evaluations_preserve_both_updates() {
+        let workspace = tempfile::tempdir().expect("workspace");
+        let workduck_path = workspace.path().join(WORKDUCK_DIRECTORY_NAME);
+        fs::create_dir_all(&workduck_path).expect("workduck directory");
+        fs::write(
+            workduck_path.join("workspace.json"),
+            serde_json::to_vec_pretty(&serde_json::json!({ "id": "workspace-1" }))
+                .expect("workspace JSON"),
+        )
+        .expect("workspace write");
+        fs::write(
+            workduck_path.join(AGENTS_FILE_NAME),
+            serde_json::to_vec_pretty(&serde_json::json!({
+                "workspaceId": "workspace-1",
+                "agents": [{ "id": "agent-1", "name": "Agent 1" }]
+            }))
+            .expect("agents JSON"),
+        )
+        .expect("agents write");
+
+        let barrier = std::sync::Arc::new(std::sync::Barrier::new(3));
+        let handles = ["evaluation-1", "evaluation-2"].map(|evaluation_key| {
+            let barrier = std::sync::Arc::clone(&barrier);
+            let args = agent_evaluate_args(workspace.path(), evaluation_key);
+
+            std::thread::spawn(move || {
+                barrier.wait();
+                run_agent_evaluate_command(args).expect("concurrent evaluation");
+            })
+        });
+
+        barrier.wait();
+        for handle in handles {
+            handle.join().expect("evaluation thread");
+        }
+
+        let registry: Value = read_json_file(
+            &workduck_path.join(AGENTS_FILE_NAME),
+            "agent-registry-invalid",
+        )
+        .expect("updated registry");
+        let agent = &registry["agents"][0];
+
+        assert_eq!(agent["evaluationSummary"]["totalCount"], 2);
+        assert_eq!(
+            agent["evaluationKeys"].as_array().map(Vec::len),
+            Some(2)
+        );
     }
 }

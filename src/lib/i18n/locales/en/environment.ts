@@ -22,7 +22,9 @@ export const enEnvironmentMessages = {
 		hide: 'Hide',
 		applyCliEnvironment: 'Apply CLI env',
 		applyCliEnvironmentTooltip:
-			'Save stored entries as safe user environment variables for CLI tools.',
+			'Save secret values as plaintext user environment variables. Other processes running as this user may read them.',
+		cliEnvironmentConfirm:
+			'Save these secret values as plaintext user environment variables? Other processes running as this user may read them.',
 		secretKinds: {
 			'api-key': 'API key',
 			token: 'Token',

@@ -22,7 +22,9 @@ export const koEnvironmentMessages = {
 		hide: '숨기기',
 		applyCliEnvironment: 'CLI 환경 적용',
 		applyCliEnvironmentTooltip:
-			'저장된 항목 이름을 안전한 CLI 환경변수 이름으로 바꿔 사용자 환경변수에 저장합니다.',
+			'비밀 값을 사용자 환경변수에 평문으로 저장합니다. 같은 사용자 권한의 다른 프로세스가 읽을 수 있습니다.',
+		cliEnvironmentConfirm:
+			'이 비밀 값들을 사용자 환경변수에 평문으로 저장할까요? 같은 사용자 권한의 다른 프로세스가 읽을 수 있습니다.',
 		secretKinds: {
 			'api-key': 'API 키',
 			token: '토큰',
