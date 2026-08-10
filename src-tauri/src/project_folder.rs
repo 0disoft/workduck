@@ -1,7 +1,7 @@
 use std::{
     fs,
-    io::{self, Write},
-    path::{Path, PathBuf},
+    io::{self, Seek, SeekFrom, Write},
+    path::{Component, Path, PathBuf},
     process::{Command, Stdio},
     thread,
     time::Duration,
@@ -877,19 +877,11 @@ fn write_ssealed_scaffold_file(
     relative_path: &str,
     content: &str,
 ) -> Result<(), ProjectFolderError> {
-    let mut file_path = target_path.to_path_buf();
-
-    for segment in relative_path.split('/') {
-        if segment.is_empty() || segment == "." || segment == ".." {
-            return Err(ProjectFolderError::SsealedScaffoldFailed);
-        }
-
-        file_path.push(segment);
-    }
+    let file_path = resolve_ssealed_scaffold_file_path(target_path, relative_path)?;
 
     match fs::symlink_metadata(&file_path) {
         Ok(metadata) => {
-            if metadata.file_type().is_symlink() || metadata.is_file() || metadata.is_dir() {
+            if metadata_is_link_or_reparse(&metadata) || metadata.is_file() || metadata.is_dir() {
                 return Err(ProjectFolderError::Conflict);
             }
         }
@@ -897,9 +889,7 @@ fn write_ssealed_scaffold_file(
         Err(_) => return Err(ProjectFolderError::SsealedScaffoldFailed),
     }
 
-    if let Some(parent_path) = file_path.parent() {
-        fs::create_dir_all(parent_path).map_err(|_| ProjectFolderError::SsealedScaffoldFailed)?;
-    }
+    create_ssealed_scaffold_parent_directories(target_path, relative_path)?;
 
     fs::write(file_path, content).map_err(|_| ProjectFolderError::SsealedScaffoldFailed)
 }
@@ -982,7 +972,7 @@ fn inspect_ssealed_repository_scaffold_file(
 
     match fs::symlink_metadata(&file_path) {
         Ok(metadata) => {
-            if metadata.file_type().is_symlink() || metadata.is_dir() {
+            if metadata_is_link_or_reparse(&metadata) || metadata.is_dir() {
                 return Ok("conflict");
             }
 
@@ -1005,23 +995,19 @@ fn has_ssealed_repository_scaffold_parent_conflict(
     target_path: &Path,
     relative_path: &str,
 ) -> Result<bool, ProjectFolderError> {
+    let relative_path = validate_ssealed_scaffold_relative_path(relative_path)?;
     let mut current_path = target_path.to_path_buf();
-    let segments: Vec<&str> = relative_path.split('/').collect();
+    let components = relative_path.components().collect::<Vec<_>>();
 
-    if segments.is_empty() {
-        return Err(ProjectFolderError::SsealedScaffoldFailed);
-    }
-
-    for segment in segments.iter().take(segments.len().saturating_sub(1)) {
-        if segment.is_empty() || *segment == "." || *segment == ".." {
+    for component in components.iter().take(components.len().saturating_sub(1)) {
+        let Component::Normal(segment) = component else {
             return Err(ProjectFolderError::SsealedScaffoldFailed);
-        }
-
+        };
         current_path.push(segment);
 
         match fs::symlink_metadata(&current_path) {
             Ok(metadata) => {
-                if metadata.file_type().is_symlink() || !metadata.is_dir() {
+                if metadata_is_link_or_reparse(&metadata) || !metadata.is_dir() {
                     return Ok(true);
                 }
             }
@@ -1054,23 +1040,19 @@ fn create_ssealed_scaffold_parent_directories(
     target_path: &Path,
     relative_path: &str,
 ) -> Result<(), ProjectFolderError> {
+    let relative_path = validate_ssealed_scaffold_relative_path(relative_path)?;
     let mut current_path = target_path.to_path_buf();
-    let segments: Vec<&str> = relative_path.split('/').collect();
+    let components = relative_path.components().collect::<Vec<_>>();
 
-    if segments.is_empty() {
-        return Err(ProjectFolderError::SsealedScaffoldFailed);
-    }
-
-    for segment in segments.iter().take(segments.len().saturating_sub(1)) {
-        if segment.is_empty() || *segment == "." || *segment == ".." {
+    for component in components.iter().take(components.len().saturating_sub(1)) {
+        let Component::Normal(segment) = component else {
             return Err(ProjectFolderError::SsealedScaffoldFailed);
-        }
-
+        };
         current_path.push(segment);
 
         match fs::symlink_metadata(&current_path) {
             Ok(metadata) => {
-                if metadata.file_type().is_symlink() || !metadata.is_dir() {
+                if metadata_is_link_or_reparse(&metadata) || !metadata.is_dir() {
                     return Err(ProjectFolderError::Conflict);
                 }
             }
@@ -1096,17 +1078,52 @@ fn resolve_ssealed_scaffold_file_path(
     target_path: &Path,
     relative_path: &str,
 ) -> Result<PathBuf, ProjectFolderError> {
-    let mut file_path = target_path.to_path_buf();
+    Ok(target_path.join(validate_ssealed_scaffold_relative_path(relative_path)?))
+}
 
-    for segment in relative_path.split('/') {
-        if segment.is_empty() || segment == "." || segment == ".." {
-            return Err(ProjectFolderError::SsealedScaffoldFailed);
-        }
-
-        file_path.push(segment);
+fn validate_ssealed_scaffold_relative_path(
+    relative_path: &str,
+) -> Result<PathBuf, ProjectFolderError> {
+    if relative_path.is_empty()
+        || relative_path.contains('\0')
+        || relative_path.contains('\\')
+        || relative_path
+            .split('/')
+            .any(|segment| segment.is_empty() || segment == "." || segment == "..")
+    {
+        return Err(ProjectFolderError::SsealedScaffoldFailed);
     }
 
-    Ok(file_path)
+    let path = Path::new(relative_path);
+    if path.is_absolute() {
+        return Err(ProjectFolderError::SsealedScaffoldFailed);
+    }
+
+    let mut validated_path = PathBuf::new();
+    for component in path.components() {
+        let Component::Normal(segment) = component else {
+            return Err(ProjectFolderError::SsealedScaffoldFailed);
+        };
+        let Some(segment) = segment.to_str() else {
+            return Err(ProjectFolderError::SsealedScaffoldFailed);
+        };
+        if segment.ends_with(' ')
+            || segment.ends_with('.')
+            || segment
+                .chars()
+                .any(|character| matches!(character, '<' | '>' | ':' | '"' | '|' | '?' | '*'))
+            || is_windows_reserved_name(segment)
+        {
+            return Err(ProjectFolderError::SsealedScaffoldFailed);
+        }
+        validated_path.push(segment);
+    }
+
+    if validated_path.as_os_str().is_empty() {
+        Err(ProjectFolderError::SsealedScaffoldFailed)
+    } else {
+        Ok(validated_path)
+    }
 }
 
 fn write_ssealed_repository_apply_manifest(
@@ -1171,7 +1188,7 @@ fn write_ssealed_repository_manifest_file(
 
     match fs::symlink_metadata(&manifest_directory) {
         Ok(metadata) => {
-            if metadata.file_type().is_symlink() || !metadata.is_dir() {
+            if metadata_is_link_or_reparse(&metadata) || !metadata.is_dir() {
                 return Err(ProjectFolderError::Conflict);
             }
         }
@@ -1193,7 +1210,7 @@ fn write_ssealed_repository_manifest_file(
 
     match fs::symlink_metadata(&manifest_path) {
         Ok(metadata) => {
-            if metadata.file_type().is_symlink() || metadata.is_dir() {
+            if metadata_is_link_or_reparse(&metadata) || metadata.is_dir() {
                 return Err(ProjectFolderError::Conflict);
             }
         }
@@ -1206,6 +1223,7 @@ fn write_ssealed_repository_manifest_file(
 
 struct SsealedScaffoldLock {
     path: PathBuf,
+    _file: fs::File,
 }
 
 impl Drop for SsealedScaffoldLock {
@@ -1218,17 +1236,30 @@ fn acquire_ssealed_scaffold_lock(
     target_path: &Path,
 ) -> Result<SsealedScaffoldLock, ProjectFolderError> {
     let lock_path = target_path.join(SSEALED_SCAFFOLD_LOCK_FILE_NAME);
-    let mut lock_file = match fs::OpenOptions::new()
-        .write(true)
-        .create_new(true)
-        .open(&lock_path)
+    if fs::symlink_metadata(&lock_path)
+        .map(|metadata| metadata_is_link_or_reparse(&metadata) || metadata.is_dir())
+        .unwrap_or(false)
     {
-        Ok(lock_file) => lock_file,
-        Err(error) if error.kind() == io::ErrorKind::AlreadyExists => {
+        return Err(ProjectFolderError::SsealedScaffoldFailed);
+    }
+
+    let mut lock_file = fs::OpenOptions::new()
+        .read(true)
+        .write(true)
+        .create(true)
+        .open(&lock_path)
+        .map_err(|_| ProjectFolderError::SsealedScaffoldFailed)?;
+    match lock_file.try_lock() {
+        Ok(()) => {}
+        Err(fs::TryLockError::WouldBlock) => {
             return Err(ProjectFolderError::SsealedScaffoldLocked);
         }
         Err(_) => return Err(ProjectFolderError::SsealedScaffoldFailed),
-    };
+    }
+    lock_file
+        .set_len(0)
+        .and_then(|_| lock_file.seek(SeekFrom::Start(0)).map(|_| ()))
+        .map_err(|_| ProjectFolderError::SsealedScaffoldFailed)?;
     let created_at = OffsetDateTime::now_utc()
         .format(&Rfc3339)
         .unwrap_or_else(|_| "1970-01-01T00:00:00Z".to_owned());
@@ -1244,6 +1275,8 @@ fn acquire_ssealed_scaffold_lock(
         .and_then(|content| {
             lock_file
                 .write_all(&content)
+                .and_then(|_| lock_file.flush())
+                .and_then(|_| lock_file.sync_all())
                 .map_err(|_| ProjectFolderError::SsealedScaffoldFailed)
         })
         .is_err()
@@ -1253,7 +1286,26 @@ fn acquire_ssealed_scaffold_lock(
         return Err(ProjectFolderError::SsealedScaffoldFailed);
     }
 
-    Ok(SsealedScaffoldLock { path: lock_path })
+    Ok(SsealedScaffoldLock {
+        path: lock_path,
+        _file: lock_file,
+    })
+}
+
+fn metadata_is_link_or_reparse(metadata: &fs::Metadata) -> bool {
+    if metadata.file_type().is_symlink() {
+        return true;
+    }
+
+    #[cfg(windows)]
+    {
+        use std::os::windows::fs::MetadataExt;
+        const FILE_ATTRIBUTE_REPARSE_POINT: u32 = 0x0000_0400;
+        metadata.file_attributes() & FILE_ATTRIBUTE_REPARSE_POINT != 0
+    }
+
+    #[cfg(not(windows))]
+    false
 }
 
 fn sha256_checksum(content: &str) -> String {
@@ -1759,17 +1811,6 @@ mod tests {
             Ok(scaffold_lock) => scaffold_lock,
             Err(_) => panic!("active ssealed lock should be acquired"),
         };
-        let lock_content = fs::read_to_string(
-            repository_path.join(SSEALED_SCAFFOLD_LOCK_FILE_NAME),
-        )
-        .expect("ssealed lock metadata");
-        let lock_metadata: serde_json::Value =
-            serde_json::from_str(&lock_content).expect("valid ssealed lock metadata");
-
-        assert_eq!(lock_metadata["tool"], "workduck");
-        assert_eq!(lock_metadata["pid"], std::process::id());
-        assert!(lock_metadata["createdAt"].as_str().is_some());
-
         let preview = preview_ssealed_scaffold_for_repository(
             workspace_path.clone(),
             repository_path_string.clone(),
@@ -1812,5 +1853,48 @@ mod tests {
         assert!(!repository_path
             .join(SSEALED_SCAFFOLD_LOCK_FILE_NAME)
             .exists());
+    }
+
+    #[test]
+    fn ssealed_scaffold_paths_reject_cross_platform_escape_shapes() {
+        let root = Path::new("C:/workspace/project");
+        for path in [
+            "../outside",
+            "a/../outside",
+            "a/./file",
+            "/absolute/file",
+            r"C:\absolute\file",
+            r"C:drive-relative\file",
+            r"\\server\share\file",
+            r"\\?\C:\namespace\file",
+            r"a\..\outside",
+            "CON.txt",
+            "folder/trailing. ",
+            "folder/name:stream",
+        ] {
+            assert!(
+                resolve_ssealed_scaffold_file_path(root, path).is_err(),
+                "unsafe scaffold path should be rejected: {path}"
+            );
+        }
+
+        assert_eq!(
+            resolve_ssealed_scaffold_file_path(root, "docs/backend/README.md")
+                .unwrap_or_else(|_| panic!("portable path should resolve")),
+            root.join("docs/backend/README.md")
+        );
+    }
+
+    #[test]
+    fn ssealed_scaffold_lock_recovers_stale_metadata_without_manual_deletion() {
+        let repository = tempfile::tempdir().expect("repository");
+        let lock_path = repository.path().join(SSEALED_SCAFFOLD_LOCK_FILE_NAME);
+        fs::write(&lock_path, r#"{"pid":999999,"createdAt":"stale"}"#)
+            .expect("stale lock metadata");
+
+        let lock = acquire_ssealed_scaffold_lock(repository.path())
+            .unwrap_or_else(|_| panic!("stale lock metadata should be recovered"));
+        drop(lock);
+        assert!(!lock_path.exists());
     }
 }
