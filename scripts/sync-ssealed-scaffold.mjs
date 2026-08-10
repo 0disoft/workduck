@@ -1,6 +1,7 @@
+import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
-import { mkdtemp, readFile, rm, stat, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, readdir, rm, stat, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -9,12 +10,9 @@ const scriptDirectory = dirname(fileURLToPath(import.meta.url));
 const repositoryRoot = dirname(scriptDirectory);
 const scaffoldDensity = 'standard';
 const scaffoldRunner = 'none';
-const generatedRustPath = resolve(
-	repositoryRoot,
-	'src-tauri',
-	'src',
-	'ssealed_scaffold_generated.rs'
-);
+const archiveSchemaVersion = 'workduck.ssealed-scaffold-archive/v1';
+const generatedRustPath = resolve(repositoryRoot, 'src-tauri', 'src', 'ssealed_scaffold_generated.rs');
+const archivePath = resolve(repositoryRoot, 'src-tauri', 'resources', 'ssealed-scaffolds-v1.json');
 const generatedTypeScriptPath = resolve(
 	repositoryRoot,
 	'src',
@@ -22,6 +20,12 @@ const generatedTypeScriptPath = resolve(
 	'projects',
 	'ssealed-scaffold-generated.ts'
 );
+const checkOnly = process.argv.includes('--check');
+const writeOutput = process.argv.includes('--write');
+
+if (checkOnly === writeOutput) {
+	throw new Error('Choose exactly one mode: --check or --write.');
+}
 
 const rustKeywordKinds = new Set([
 	'agent',
@@ -43,10 +47,7 @@ function localBinary(name) {
 
 	for (const candidate of candidates) {
 		const candidatePath = resolve(binaryDirectory, candidate);
-
-		if (existsSync(candidatePath)) {
-			return candidatePath;
-		}
+		if (existsSync(candidatePath)) return candidatePath;
 	}
 
 	return resolve(binaryDirectory, candidates[0]);
@@ -55,11 +56,9 @@ function localBinary(name) {
 async function readSsealedPackageVersion() {
 	const packageJsonPath = resolve(repositoryRoot, 'node_modules', 'ssealed', 'package.json');
 	const packageJson = JSON.parse(await readFile(packageJsonPath, 'utf8'));
-
 	if (typeof packageJson.version !== 'string' || packageJson.version.length === 0) {
 		throw new Error('Unable to read ssealed package version.');
 	}
-
 	return packageJson.version;
 }
 
@@ -67,7 +66,6 @@ async function readSsealedOptionList(name) {
 	const typesPath = resolve(repositoryRoot, 'node_modules', 'ssealed', 'dist', 'core', 'types.js');
 	const typesModule = await import(pathToFileURL(typesPath).href);
 	const values = typesModule[name];
-
 	if (
 		!Array.isArray(values) ||
 		values.length === 0 ||
@@ -75,151 +73,60 @@ async function readSsealedOptionList(name) {
 	) {
 		throw new Error(`Unable to read ssealed ${name}.`);
 	}
-
 	return [...values];
 }
 
 async function collectFiles(rootPath) {
 	const entries = [];
-
 	async function visit(directoryPath) {
-		const { readdir } = await import('node:fs/promises');
-		const directoryEntries = await readdir(directoryPath, { withFileTypes: true });
-
-		for (const entry of directoryEntries) {
+		for (const entry of await readdir(directoryPath, { withFileTypes: true })) {
 			const absolutePath = join(directoryPath, entry.name);
-
 			if (entry.isDirectory()) {
 				await visit(absolutePath);
-				continue;
+			} else if (entry.isFile()) {
+				const relativePath = relative(rootPath, absolutePath).split(sep).join('/');
+				if (relativePath !== '.ssealed/manifest.json') entries.push({ path: relativePath, absolutePath });
 			}
-
-			if (!entry.isFile()) {
-				continue;
-			}
-
-			const relativePath = relative(rootPath, absolutePath).split(sep).join('/');
-
-			if (relativePath === '.ssealed/manifest.json') {
-				continue;
-			}
-
-			entries.push({
-				path: relativePath,
-				absolutePath
-			});
 		}
 	}
 
 	await visit(rootPath);
-
 	return entries.sort((left, right) => left.path.localeCompare(right.path));
 }
 
 function normalizeKind(value) {
-	if (typeof value !== 'string' || !rustKeywordKinds.has(value)) {
-		return 'document';
-	}
-
-	return value;
+	return typeof value === 'string' && rustKeywordKinds.has(value) ? value : 'document';
 }
 
 async function readManifestKindMap(scaffoldPath) {
-	const manifestPath = join(scaffoldPath, '.ssealed', 'manifest.json');
-	const manifest = JSON.parse(await readFile(manifestPath, 'utf8'));
+	const manifest = JSON.parse(await readFile(join(scaffoldPath, '.ssealed', 'manifest.json'), 'utf8'));
 	const kindsByPath = new Map();
-
-	if (!Array.isArray(manifest.files)) {
-		return kindsByPath;
-	}
+	if (!Array.isArray(manifest.files)) return kindsByPath;
 
 	for (const file of manifest.files) {
-		if (typeof file?.path !== 'string') {
-			continue;
-		}
-
-		if (!kindsByPath.has(file.path)) {
+		if (typeof file?.path === 'string' && !kindsByPath.has(file.path)) {
 			kindsByPath.set(file.path, normalizeKind(file.kind));
 		}
 	}
-
 	return kindsByPath;
 }
 
-function rustRawString(value) {
-	for (let hashCount = 1; hashCount < 16; hashCount += 1) {
-		const hashes = '#'.repeat(hashCount);
-		const close = `"${hashes}`;
-
-		if (!value.includes(close)) {
-			return `r${hashes}"${value}"${hashes}`;
-		}
-	}
-
-	throw new Error('Unable to encode scaffold content as a Rust raw string.');
-}
-
-function renderFileEntries(files) {
-	return files
-		.map(
-			(file) =>
-				[
-					'\tSsealedScaffoldFile {',
-					`\t\tpath: ${JSON.stringify(file.path)},`,
-					`\t\tkind: ${JSON.stringify(file.kind)},`,
-					`\t\tcontent: ${rustRawString(file.content)},`,
-					'\t},'
-				].join('\n')
-		)
-		.join('\n');
-}
-
-function renderGeneratedRust({ version, scaffolds }) {
-	const scaffoldEntries = scaffolds
-		.map((scaffold) =>
-			[
-				'\tSsealedScaffold {',
-				`\t\tscope: ${JSON.stringify(scaffold.scope)},`,
-				`\t\tprofile: ${JSON.stringify(scaffold.profile)},`,
-				`\t\tdensity: ${JSON.stringify(scaffold.density)},`,
-				`\t\trunner: ${JSON.stringify(scaffold.runner)},`,
-				'\t\tfiles: &[',
-				renderFileEntries(scaffold.files),
-				'\t\t],',
-				'\t},'
-			].join('\n')
-		)
-		.join('\n');
-
+function renderGeneratedRust({ version, archiveChecksum }) {
 	return [
-		'// @generated by scripts/sync-ssealed-scaffold.mjs. Do not edit by hand.',
+		'// @generated by scripts/sync-ssealed-scaffold.mjs --write. Do not edit by hand.',
 		'',
-		'pub struct SsealedScaffoldFile {',
-		"\tpub path: &'static str,",
-		"\tpub kind: &'static str,",
-		"\tpub content: &'static str,",
-		'}',
-		'',
-		'pub struct SsealedScaffold {',
-		"\tpub scope: &'static str,",
-		"\tpub profile: &'static str,",
-		"\tpub density: &'static str,",
-		"\tpub runner: &'static str,",
-		"\tpub files: &'static [SsealedScaffoldFile],",
-		'}',
-		'',
+		`pub const SSEALED_SCAFFOLD_ARCHIVE_SCHEMA_VERSION: &str = ${JSON.stringify(archiveSchemaVersion)};`,
 		`pub const SSEALED_SCAFFOLD_TOOL_VERSION: &str = ${JSON.stringify(version)};`,
-		'',
-		'pub const SSEALED_SCAFFOLDS: &[SsealedScaffold] = &[',
-		scaffoldEntries,
-		'];',
+		`pub const SSEALED_SCAFFOLD_ARCHIVE_SHA256: &str = ${JSON.stringify(archiveChecksum)};`,
+		'pub const SSEALED_SCAFFOLD_ARCHIVE_JSON: &str =',
+		'\tinclude_str!("../resources/ssealed-scaffolds-v1.json");',
 		''
 	].join('\n');
 }
 
 function renderGeneratedTypeScript({ scopes, profiles }) {
 	return [
-		'// @generated by scripts/sync-ssealed-scaffold.mjs. Do not edit by hand.',
+		'// @generated by scripts/sync-ssealed-scaffold.mjs --write. Do not edit by hand.',
 		'',
 		`export const SSEALED_SCAFFOLD_SCOPES = ${JSON.stringify(scopes, null, '\t')} as const;`,
 		'',
@@ -231,17 +138,8 @@ function renderGeneratedTypeScript({ scopes, profiles }) {
 async function runSsealedInit(temporaryRoot, scope, profile) {
 	const verbose = process.env.SSEALED_SYNC_VERBOSE === '1';
 	const result = spawnSync(localBinary('ssealed'), [
-		'init',
-		'scaffold',
-		'--scope',
-		scope,
-		'--profile',
-		profile,
-		'--density',
-		scaffoldDensity,
-		'--runner',
-		scaffoldRunner,
-		'--yes'
+		'init', 'scaffold', '--scope', scope, '--profile', profile,
+		'--density', scaffoldDensity, '--runner', scaffoldRunner, '--yes'
 	], {
 		cwd: temporaryRoot,
 		env: process.env,
@@ -250,27 +148,57 @@ async function runSsealedInit(temporaryRoot, scope, profile) {
 		windowsHide: true
 	});
 
-	if (result.error) {
-		throw result.error;
-	}
-
+	if (result.error) throw result.error;
 	if (result.status !== 0) {
 		if (!verbose) {
-			if (typeof result.stdout === 'string' && result.stdout.length > 0) {
-				console.error(result.stdout);
-			}
-			if (typeof result.stderr === 'string' && result.stderr.length > 0) {
-				console.error(result.stderr);
-			}
+			if (result.stdout) console.error(result.stdout);
+			if (result.stderr) console.error(result.stderr);
 		}
-
 		throw new Error(`ssealed init failed with exit code ${result.status ?? 1}.`);
+	}
+}
+
+function buildArchive(version, scaffolds) {
+	const contents = [];
+	const contentIndexes = new Map();
+	const archivedScaffolds = scaffolds.map((scaffold) => ({
+		scope: scaffold.scope,
+		profile: scaffold.profile,
+		files: scaffold.files.map((file) => {
+			let content = contentIndexes.get(file.content);
+			if (content === undefined) {
+				content = contents.length;
+				contents.push(file.content);
+				contentIndexes.set(file.content, content);
+			}
+			return { path: file.path, kind: file.kind, content };
+		})
+	}));
+
+	return `${JSON.stringify({
+		schemaVersion: archiveSchemaVersion,
+		toolVersion: version,
+		density: scaffoldDensity,
+		runner: scaffoldRunner,
+		contents,
+		scaffolds: archivedScaffolds
+	})}\n`;
+}
+
+async function assertCurrent(path, expected) {
+	let current;
+	try {
+		current = await readFile(path, 'utf8');
+	} catch (error) {
+		throw new Error(`${relative(repositoryRoot, path)} is missing; run bun run sync:ssealed-scaffold.`, { cause: error });
+	}
+	if (current !== expected) {
+		throw new Error(`${relative(repositoryRoot, path)} is stale; run bun run sync:ssealed-scaffold.`);
 	}
 }
 
 async function main() {
 	await stat(localBinary('ssealed'));
-
 	const version = await readSsealedPackageVersion();
 	const scaffoldScopes = await readSsealedOptionList('scopes');
 	const scaffoldProfiles = await readSsealedOptionList('profiles');
@@ -280,12 +208,10 @@ async function main() {
 		for (const profile of scaffoldProfiles) {
 			const temporaryRoot = await mkdtemp(join(tmpdir(), 'workduck-ssealed-sync-'));
 			const scaffoldPath = join(temporaryRoot, 'scaffold');
-
 			try {
 				await runSsealedInit(temporaryRoot, scope, profile);
 				const kindsByPath = await readManifestKindMap(scaffoldPath);
 				const files = [];
-
 				for (const file of await collectFiles(scaffoldPath)) {
 					files.push({
 						path: file.path,
@@ -293,28 +219,32 @@ async function main() {
 						content: await readFile(file.absolutePath, 'utf8')
 					});
 				}
-
-				scaffolds.push({
-					scope,
-					profile,
-					density: scaffoldDensity,
-					runner: scaffoldRunner,
-					files
-				});
+				scaffolds.push({ scope, profile, files });
 			} finally {
 				await rm(temporaryRoot, { recursive: true, force: true });
 			}
 		}
 	}
 
-	await writeFile(generatedRustPath, renderGeneratedRust({ version, scaffolds }), 'utf8');
-	await writeFile(
-		generatedTypeScriptPath,
-		renderGeneratedTypeScript({ scopes: scaffoldScopes, profiles: scaffoldProfiles }),
-		'utf8'
-	);
+	const archive = buildArchive(version, scaffolds);
+	const archiveChecksum = createHash('sha256').update(archive).digest('hex');
+	const rustIndex = renderGeneratedRust({ version, archiveChecksum });
+	const typeScriptIndex = renderGeneratedTypeScript({ scopes: scaffoldScopes, profiles: scaffoldProfiles });
+
+	if (checkOnly) {
+		await assertCurrent(archivePath, archive);
+		await assertCurrent(generatedRustPath, rustIndex);
+		await assertCurrent(generatedTypeScriptPath, typeScriptIndex);
+		console.log(`Verified embedded ssealed ${version} scaffold archive (${archiveChecksum}).`);
+		return;
+	}
+
+	await mkdir(dirname(archivePath), { recursive: true });
+	await writeFile(archivePath, archive, 'utf8');
+	await writeFile(generatedRustPath, rustIndex, 'utf8');
+	await writeFile(generatedTypeScriptPath, typeScriptIndex, 'utf8');
 	console.log(
-		`Synced ssealed ${version} ${scaffoldScopes.join(',')} x ${scaffoldProfiles.join(',')}/${scaffoldRunner} scaffolds into ${relative(repositoryRoot, generatedRustPath)} and ${relative(repositoryRoot, generatedTypeScriptPath)}.`
+		`Synced ssealed ${version} ${scaffoldScopes.length}x${scaffoldProfiles.length} scaffolds into ${relative(repositoryRoot, archivePath)} (${archiveChecksum}).`
 	);
 }
 

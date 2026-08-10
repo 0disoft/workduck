@@ -7,9 +7,8 @@ use std::{
     time::Duration,
 };
 
-use crate::ssealed_scaffold_generated::{
-    SsealedScaffold, SSEALED_SCAFFOLD_TOOL_VERSION, SSEALED_SCAFFOLDS,
-};
+use crate::ssealed_scaffold::{ssealed_scaffolds, SsealedScaffold};
+use crate::ssealed_scaffold_generated::SSEALED_SCAFFOLD_TOOL_VERSION;
 use crate::atomic_file_write::{write_file_atomically, write_file_exclusively};
 use crate::workspace_path::{validate_absolute_directory_path, WorkspacePathValidationError};
 use crate::windows_filename::is_windows_reserved_name;
@@ -842,7 +841,8 @@ fn validate_ssealed_scaffold_selection(
 }
 
 fn find_ssealed_scaffold(scope: &str, profile: &str) -> Option<&'static SsealedScaffold> {
-    SSEALED_SCAFFOLDS
+    ssealed_scaffolds()
+        .ok()?
         .iter()
         .find(|candidate| candidate.scope == scope && candidate.profile == profile)
 }

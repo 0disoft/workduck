@@ -50,12 +50,3 @@ run(localBinary('svelte-kit'), ['sync'], {
 	allowFailure: true,
 	label: 'svelte-kit sync'
 });
-
-if (process.env.GITHUB_ACTIONS === 'true') {
-	console.log('Skipping ssealed scaffold sync during GitHub Actions install.');
-	process.exit(0);
-}
-
-run(process.execPath, [resolve(scriptDirectory, 'sync-ssealed-scaffold.mjs')], {
-	label: 'sync-ssealed-scaffold'
-});

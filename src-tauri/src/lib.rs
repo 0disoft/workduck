@@ -33,6 +33,7 @@ pub mod queue_execution;
 pub mod queue_work_order_execution;
 mod secret_vault_crypto;
 mod ssealed_scaffold_generated;
+mod ssealed_scaffold;
 mod storage;
 pub mod system_environment;
 mod terminal_catalog;
