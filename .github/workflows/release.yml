@@ -149,6 +149,18 @@ jobs:
       - name: Test Rust crate
         run: cargo test --locked --manifest-path src-tauri/Cargo.toml
 
+      - name: Build and verify release source archive
+        id: source_archive
+        shell: pwsh
+        env:
+          RELEASE_TAG: ${{ steps.release.outputs.tag }}
+        run: |
+          $archivePath = "dist/release-source/workduck-$env:RELEASE_TAG-source.zip"
+          ./scripts/verify-source-archive.ps1 `
+            -OutputPath $archivePath `
+            -ExtractPath dist/release-source/extracted
+          "path=$archivePath" >> $env:GITHUB_OUTPUT
+
       - name: Import Windows signing certificate
         if: steps.signing.outputs.enabled == 'true'
         id: import_windows_cert
@@ -216,3 +228,11 @@ jobs:
           uploadUpdaterJson: true
           updaterJsonPreferNsis: true
           args: ${{ steps.signing_config.outputs.args }} -- --locked
+
+      - name: Upload verified source archive
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RELEASE_TAG: ${{ steps.release.outputs.tag }}
+          SOURCE_ARCHIVE: ${{ steps.source_archive.outputs.path }}
+        run: gh release upload $env:RELEASE_TAG $env:SOURCE_ARCHIVE --clobber

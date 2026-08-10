@@ -42,3 +42,10 @@ jobs:
 
       - name: Verify source, tests, and frontend build
         run: bun run verify
+
+      - name: Verify release source archive and CLI
+        shell: pwsh
+        run: >-
+          ./scripts/verify-source-archive.ps1
+          -OutputPath dist/source-smoke/workduck-source.zip
+          -ExtractPath dist/source-smoke/extracted

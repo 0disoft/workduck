@@ -12,6 +12,7 @@ const args = [
   manifestPath,
   '--bin',
   'workduck-cli',
+	'--locked',
   '--quiet',
   '--',
   ...process.argv.slice(2)
