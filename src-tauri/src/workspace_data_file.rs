@@ -164,6 +164,12 @@ pub fn write_workspace_data_file(
         Err(error) => return invalid_write(error),
     };
 
+    if normalized_file_name == SECRETS_SYNC_FILE_NAME
+        && ensure_secrets_sync_gitignore_policy(&workspace_root).is_err()
+    {
+        return invalid_write(WorkspaceDataFileError::FileWriteFailed);
+    }
+
     let file_path = match resolve_workspace_data_file_path(
         &workspace_root,
         &normalized_file_name,
@@ -176,12 +182,6 @@ pub fn write_workspace_data_file(
     let write_result = write_file_atomically(&file_path, &content).map_err(map_atomic_write_error);
     if let Err(error) = write_result {
         return invalid_write(error);
-    }
-
-    if normalized_file_name == SECRETS_SYNC_FILE_NAME
-        && ensure_secrets_sync_gitignore_policy(&workspace_root).is_err()
-    {
-        return invalid_write(WorkspaceDataFileError::FileWriteFailed);
     }
 
     WorkspaceDataFileWriteResponse {
@@ -611,6 +611,26 @@ fn map_create_error(error: io::Error) -> WorkspaceDataFileError {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn secrets_policy_failure_does_not_write_the_vault() {
+        let workspace = tempfile::tempdir().expect("workspace");
+        fs::create_dir(workspace.path().join(".gitignore")).expect("invalid gitignore directory");
+
+        let result = write_workspace_data_file(
+            workspace.path().to_string_lossy().into_owned(),
+            SECRETS_SYNC_FILE_NAME.to_owned(),
+            r#"{"format":"workduck.secret-vault"}"#.to_owned(),
+        );
+
+        assert!(!result.ok);
+        assert_eq!(result.error, Some(WorkspaceDataFileError::FileWriteFailed));
+        assert!(!workspace
+            .path()
+            .join(WORKDUCK_DIRECTORY_NAME)
+            .join(SECRETS_SYNC_FILE_NAME)
+            .exists());
+    }
 
     #[test]
     fn registry_write_increments_revision_and_rejects_stale_writer() {

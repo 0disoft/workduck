@@ -11,6 +11,7 @@
 		subscribeAppearanceSettings
 	} from '$lib/settings/appearance-storage';
 	import type { WorkspaceRecord } from '$lib/workspaces/workspace-registry';
+	import { createWorkspaceScopedResourceStore } from '$lib/workspaces/workspace-scoped-resource';
 	import { DetailCard, EntityCard, EntityWorkbench, StatusToast } from '$lib/ui';
 	import {
 		createEmptyProjectRegistry,
@@ -49,6 +50,8 @@
 	}
 
 	let { workspace, onReferenceCountChange }: Props = $props();
+	const referenceRegistryResource = createWorkspaceScopedResourceStore();
+	const projectRegistryResource = createWorkspaceScopedResourceStore();
 
 	let appearanceSettings = $state<AppearanceSettings>(createDefaultAppearanceSettings());
 	let registry = $state<ReferenceRegistry>(createEmptyReferenceRegistry(''));
@@ -121,8 +124,10 @@
 
 	$effect(() => {
 		const workspaceId = workspace.id;
+		const workspacePath = workspace.path;
 
 		return untrack(() => {
+			const scope = { workspaceId, workspacePath };
 			registry = createEmptyReferenceRegistry(workspaceId);
 			projectRegistry = createEmptyProjectRegistry(workspaceId);
 			selectedReferenceId = null;
@@ -131,18 +136,32 @@
 			referenceActionErrorMessage = null;
 			statusMessage = null;
 			clearReferenceForm();
-			void readRegistryFromStorage(workspaceId, workspace.path);
-			void readProjectRegistryFromStorage(workspaceId);
+			const cancelReferenceRead = referenceRegistryResource.load({
+				scope,
+				load: () => readReferenceRegistry(workspaceId, workspacePath),
+				apply: applyReferenceRegistryRead
+			});
+			const cancelProjectRead = projectRegistryResource.load({
+				scope,
+				load: () => readProjectRegistry(workspaceId),
+				apply: (result) => {
+					projectRegistry = result.registry;
+				}
+			});
 
 			const unsubscribeRegistry = subscribeReferenceRegistry(workspaceId, (nextRegistry) => {
+				referenceRegistryResource.invalidate(scope);
 				registry = nextRegistry;
 				selectedReferenceId = resolveSelectedReferenceId(selectedReferenceId, nextRegistry.references);
 			});
 			const unsubscribeProjectRegistry = subscribeProjectRegistry(workspaceId, (nextRegistry) => {
+				projectRegistryResource.invalidate(scope);
 				projectRegistry = nextRegistry;
 			});
 
 			return () => {
+				cancelReferenceRead();
+				cancelProjectRead();
 				unsubscribeRegistry();
 				unsubscribeProjectRegistry();
 			};
@@ -164,18 +183,10 @@
 		};
 	});
 
-	async function readRegistryFromStorage(workspaceId: string, workspacePath: string) {
-		const result = await readReferenceRegistry(workspaceId, workspacePath);
-
+	function applyReferenceRegistryRead(result: Awaited<ReturnType<typeof readReferenceRegistry>>) {
 		registry = result.registry;
 		referenceError = result.ok ? null : result.error;
 		selectedReferenceId = resolveSelectedReferenceId(selectedReferenceId, result.registry.references);
-	}
-
-	async function readProjectRegistryFromStorage(workspaceId: string) {
-		const result = await readProjectRegistry(workspaceId);
-
-		projectRegistry = result.registry;
 	}
 
 	function selectReference(reference: ReferenceRecord) {
