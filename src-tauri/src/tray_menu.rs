@@ -1,4 +1,7 @@
-use tauri::{Manager, PhysicalPosition, Position, WebviewUrl, WebviewWindowBuilder};
+use tauri::{Manager, PhysicalPosition, Position, State, WebviewUrl, WebviewWindowBuilder};
+
+use crate::terminal_process::{TerminalProcessState, shutdown_all_terminal_sessions};
+use crate::process_tree::shutdown_all_process_trees;
 
 const MAIN_WINDOW_LABEL: &str = "main";
 const TRAY_MENU_WINDOW_LABEL: &str = "tray-menu";
@@ -119,7 +122,12 @@ fn focus_visible_main_window(app: &tauri::AppHandle) -> Result<(), String> {
 }
 
 #[tauri::command]
-pub async fn exit_workduck(app: tauri::AppHandle) -> Result<(), String> {
+pub async fn exit_workduck(
+    app: tauri::AppHandle,
+    terminal_state: State<'_, TerminalProcessState>,
+) -> Result<(), String> {
+    shutdown_all_terminal_sessions(&terminal_state);
+    shutdown_all_process_trees();
     app.exit(0);
     Ok(())
 }

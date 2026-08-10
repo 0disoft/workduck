@@ -2,7 +2,7 @@ use std::{
     collections::HashMap,
     io::{Read, Write},
     path::Path,
-    process::{Child, ChildStdin, Command, Stdio},
+    process::{ChildStdin, Command, Stdio},
     sync::{Arc, Mutex},
     thread,
 };
@@ -10,22 +10,24 @@ use std::{
 use tauri::State;
 
 use crate::terminal_catalog;
+use crate::process_tree::ProcessTreeChild;
 
 #[cfg(target_os = "windows")]
 use std::os::windows::process::CommandExt;
 
 const POWERSHELL_BOOTSTRAP_COMMAND: &str = "[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; if (Get-Variable -Name PSStyle -ErrorAction SilentlyContinue) { $PSStyle.OutputRendering = 'PlainText'; $PSStyle.FileInfo.Directory = ''; $PSStyle.FileInfo.SymbolicLink = ''; $PSStyle.FileInfo.Executable = '' }";
 const TERMINAL_OUTPUT_MAX_BYTES: usize = 128 * 1024;
+const TERMINAL_INPUT_MAX_BYTES: usize = 64 * 1024;
 #[cfg(target_os = "windows")]
 const CREATE_NO_WINDOW: u32 = 0x08000000;
 
 #[derive(Default)]
 pub(crate) struct TerminalProcessState {
-    sessions: Mutex<HashMap<String, TerminalProcess>>,
+    sessions: Mutex<HashMap<String, Arc<TerminalProcess>>>,
 }
 
 struct TerminalProcess {
-    child: Child,
+    child: Mutex<ProcessTreeChild>,
     stdin: Arc<Mutex<ChildStdin>>,
     output: Arc<Mutex<TerminalOutputBuffer>>,
 }
@@ -77,17 +79,16 @@ pub fn start_terminal_session(
         .clone()
         .ok_or_else(|| "terminal-unavailable".to_string())?;
 
-    let mut sessions = state
-        .sessions
-        .lock()
-        .map_err(|_| "terminal-state-unavailable".to_string())?;
-
-    if let Some(existing_session) = sessions.get_mut(&session_id) {
-        if is_child_running(&mut existing_session.child) {
-            return Ok(create_snapshot(true, existing_session));
+    if let Some(existing_session) = find_terminal_session(&state, &session_id)? {
+        let mut existing_child = existing_session
+            .child
+            .lock()
+            .map_err(|_| "terminal-state-unavailable".to_string())?;
+        if is_child_running(&mut existing_child) {
+            return Ok(create_snapshot(true, &existing_session));
         }
-
-        sessions.remove(&session_id);
+        drop(existing_child);
+        remove_terminal_session_if_same(&state, &session_id, &existing_session)?;
     }
 
     let mut command = Command::new(&executable_path);
@@ -104,30 +105,46 @@ pub fn start_terminal_session(
     #[cfg(target_os = "windows")]
     command.creation_flags(CREATE_NO_WINDOW);
 
-    let mut child = command
-        .spawn()
+    let mut child = ProcessTreeChild::spawn(&mut command)
         .map_err(|_| "terminal-start-failed".to_string())?;
     let stdin = Arc::new(Mutex::new(
         child
+            .child_mut()
             .stdin
             .take()
             .ok_or_else(|| "terminal-stdin-unavailable".to_string())?,
     ));
     let output = Arc::new(Mutex::new(TerminalOutputBuffer::default()));
 
-    if let Some(stdout) = child.stdout.take() {
+    if let Some(stdout) = child.child_mut().stdout.take() {
         spawn_output_reader(stdout, Arc::clone(&output));
     }
 
-    if let Some(stderr) = child.stderr.take() {
+    if let Some(stderr) = child.child_mut().stderr.take() {
         spawn_output_reader(stderr, Arc::clone(&output));
     }
 
-    let process = TerminalProcess {
-        child,
+    let process = Arc::new(TerminalProcess {
+        child: Mutex::new(child),
         stdin,
         output,
-    };
+    });
+    let mut sessions = state
+        .sessions
+        .lock()
+        .map_err(|_| "terminal-state-unavailable".to_string())?;
+    if let Some(existing_session) = sessions.get(&session_id).cloned() {
+        drop(sessions);
+        if let Ok(mut redundant_child) = process.child.lock() {
+            let _ = redundant_child.terminate();
+        }
+        let mut existing_child = existing_session
+            .child
+            .lock()
+            .map_err(|_| "terminal-state-unavailable".to_string())?;
+        let connected = is_child_running(&mut existing_child);
+        return Ok(create_snapshot(connected, &existing_session));
+    }
     let snapshot = create_snapshot(true, &process);
     sessions.insert(session_id, process);
 
@@ -140,11 +157,7 @@ pub fn read_terminal_session(
     request: ReadTerminalSessionRequest,
 ) -> Result<TerminalSessionSnapshot, String> {
     let session_id = normalize_session_id(&request.session_id)?;
-    let mut sessions = state
-        .sessions
-        .lock()
-        .map_err(|_| "terminal-state-unavailable".to_string())?;
-    let Some(process) = sessions.get_mut(&session_id) else {
+    let Some(session) = find_terminal_session(&state, &session_id)? else {
         return Ok(TerminalSessionSnapshot {
             ok: true,
             connected: false,
@@ -154,11 +167,16 @@ pub fn read_terminal_session(
         });
     };
 
-    let connected = is_child_running(&mut process.child);
-    let snapshot = create_snapshot_from_cursor(connected, process, request.output_cursor);
+    let mut child = session
+        .child
+        .lock()
+        .map_err(|_| "terminal-state-unavailable".to_string())?;
+    let connected = is_child_running(&mut child);
+    drop(child);
+    let snapshot = create_snapshot_from_cursor(connected, &session, request.output_cursor);
 
     if !connected {
-        sessions.remove(&session_id);
+        remove_terminal_session_if_same(&state, &session_id, &session)?;
     }
 
     Ok(snapshot)
@@ -170,28 +188,29 @@ pub fn write_terminal_session_input(
     request: TerminalSessionInputRequest,
 ) -> Result<TerminalSessionSnapshot, String> {
     let session_id = normalize_session_id(&request.session_id)?;
-    let input = request.input.trim_end_matches(['\r', '\n']);
+    let input = normalize_terminal_input(&request.input)?;
 
-    let mut sessions = state
-        .sessions
+    let session = find_terminal_session(&state, &session_id)?
+        .ok_or_else(|| "terminal-session-not-connected".to_string())?;
+    let mut child = session
+        .child
         .lock()
         .map_err(|_| "terminal-state-unavailable".to_string())?;
-    let process = sessions
-        .get_mut(&session_id)
-        .ok_or_else(|| "terminal-session-not-connected".to_string())?;
 
-    if !is_child_running(&mut process.child) {
-        sessions.remove(&session_id);
+    if !is_child_running(&mut child) {
+        drop(child);
+        remove_terminal_session_if_same(&state, &session_id, &session)?;
         return Err("terminal-session-not-connected".to_string());
     }
+    drop(child);
 
     if is_clear_screen_command(input) {
-        clear_process_output(process)?;
-        return Ok(create_snapshot(true, process));
+        clear_process_output(&session)?;
+        return Ok(create_snapshot(true, &session));
     }
 
     {
-        let mut stdin = process
+        let mut stdin = session
             .stdin
             .lock()
             .map_err(|_| "terminal-stdin-unavailable".to_string())?;
@@ -202,7 +221,7 @@ pub fn write_terminal_session_input(
             .map_err(|_| "terminal-write-failed".to_string())?;
     }
 
-    Ok(create_snapshot(true, process))
+    Ok(create_snapshot(true, &session))
 }
 
 #[tauri::command]
@@ -211,16 +230,21 @@ pub fn stop_terminal_session(
     session_id: String,
 ) -> Result<TerminalSessionSnapshot, String> {
     let session_id = normalize_session_id(&session_id)?;
-    let mut sessions = state
+    let session = state
         .sessions
         .lock()
-        .map_err(|_| "terminal-state-unavailable".to_string())?;
+        .map_err(|_| "terminal-state-unavailable".to_string())?
+        .remove(&session_id);
 
-    if let Some(mut process) = sessions.remove(&session_id) {
-        let _ = process.child.kill();
-        let _ = process.child.wait();
+    if let Some(session) = session {
+        let mut child = session
+            .child
+            .lock()
+            .map_err(|_| "terminal-state-unavailable".to_string())?;
+        let _ = child.terminate();
+        drop(child);
 
-        return Ok(create_snapshot(false, &process));
+        return Ok(create_snapshot(false, &session));
     }
 
     Ok(TerminalSessionSnapshot {
@@ -230,6 +254,49 @@ pub fn stop_terminal_session(
         output_cursor: 0,
         output_reset: true,
     })
+}
+
+pub(crate) fn shutdown_all_terminal_sessions(state: &TerminalProcessState) {
+    let sessions = state
+        .sessions
+        .lock()
+        .map(|mut sessions| std::mem::take(&mut *sessions))
+        .unwrap_or_default();
+
+    for session in sessions.into_values() {
+        if let Ok(mut child) = session.child.lock() {
+            let _ = child.terminate();
+        }
+    }
+}
+
+fn find_terminal_session(
+    state: &TerminalProcessState,
+    session_id: &str,
+) -> Result<Option<Arc<TerminalProcess>>, String> {
+    state
+        .sessions
+        .lock()
+        .map(|sessions| sessions.get(session_id).cloned())
+        .map_err(|_| "terminal-state-unavailable".to_string())
+}
+
+fn remove_terminal_session_if_same(
+    state: &TerminalProcessState,
+    session_id: &str,
+    expected: &Arc<TerminalProcess>,
+) -> Result<(), String> {
+    let mut sessions = state
+        .sessions
+        .lock()
+        .map_err(|_| "terminal-state-unavailable".to_string())?;
+    if sessions
+        .get(session_id)
+        .is_some_and(|session| Arc::ptr_eq(session, expected))
+    {
+        sessions.remove(session_id);
+    }
+    Ok(())
 }
 
 fn create_terminal_args(terminal_id: &str) -> Vec<&'static str> {
@@ -505,7 +572,7 @@ fn strip_ansi_sequences(bytes: &[u8], state: &mut AnsiStripState) -> Vec<u8> {
     cleaned
 }
 
-fn is_child_running(child: &mut Child) -> bool {
+fn is_child_running(child: &mut ProcessTreeChild) -> bool {
     matches!(child.try_wait(), Ok(None))
 }
 
@@ -517,6 +584,14 @@ fn normalize_session_id(value: &str) -> Result<String, String> {
     }
 
     Ok(session_id.to_string())
+}
+
+fn normalize_terminal_input(value: &str) -> Result<&str, String> {
+    if value.len() > TERMINAL_INPUT_MAX_BYTES {
+        Err("terminal-input-too-large".to_string())
+    } else {
+        Ok(value.trim_end_matches(['\r', '\n']))
+    }
 }
 
 fn normalize_terminal_id(value: &str) -> Result<String, String> {
@@ -542,8 +617,8 @@ fn normalize_workspace_path(value: &str) -> Result<String, String> {
 #[cfg(test)]
 mod tests {
     use super::{
-        AnsiStripState, TERMINAL_OUTPUT_MAX_BYTES, TerminalOutputBuffer, create_terminal_args,
-        strip_ansi_sequences,
+        AnsiStripState, TERMINAL_INPUT_MAX_BYTES, TERMINAL_OUTPUT_MAX_BYTES, TerminalOutputBuffer,
+        create_terminal_args, normalize_terminal_input, strip_ansi_sequences,
     };
 
     #[test]
@@ -613,5 +688,14 @@ mod tests {
 
         assert!(snapshot.reset);
         assert_eq!(snapshot.output, "가나다");
+    }
+
+    #[test]
+    fn terminal_input_is_bounded_by_encoded_byte_length() {
+        assert!(normalize_terminal_input(&"a".repeat(TERMINAL_INPUT_MAX_BYTES)).is_ok());
+        assert_eq!(
+            normalize_terminal_input(&"가".repeat(TERMINAL_INPUT_MAX_BYTES)).unwrap_err(),
+            "terminal-input-too-large"
+        );
     }
 }

@@ -33,6 +33,7 @@ use crate::{
         wait_for_child_output,
     },
     path_display::display_path,
+    process_tree::ProcessTreeChild,
 };
 
 #[cfg(target_os = "windows")]
@@ -506,7 +507,7 @@ fn read_github_cli_git_credential() -> Option<GitCredential> {
     #[cfg(target_os = "windows")]
     command.creation_flags(CREATE_NO_WINDOW);
 
-    let child = command.spawn().ok()?;
+    let child = ProcessTreeChild::spawn(&mut command).ok()?;
     let output = wait_for_child_output(child, PROJECT_REPOSITORY_GIT_ACTION_TIMEOUT).ok()?;
 
     if !output.status.success() {
@@ -2066,7 +2067,7 @@ fn run_gh_repo_create(
     #[cfg(target_os = "windows")]
     command.creation_flags(CREATE_NO_WINDOW);
 
-    let child = command.spawn().map_err(|error| GitCommandFailure {
+    let child = ProcessTreeChild::spawn(&mut command).map_err(|error| GitCommandFailure {
         error: if error.kind() == io::ErrorKind::NotFound {
             ProjectRepositoryGitError::GithubCliUnavailable
         } else {

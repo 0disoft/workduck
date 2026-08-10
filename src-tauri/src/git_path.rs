@@ -5,18 +5,17 @@ use std::{
     fs,
     io::{self, Read},
     path::{Component, Path, PathBuf},
-    process::{Child, Command, Output, Stdio},
+    process::{Command, Output, Stdio},
     sync::OnceLock,
     thread,
     time::Duration,
 };
 
-use wait_timeout::ChildExt;
-
 use crate::git_credential::{
     GitCommandProfile, GitCredential, apply_git_credential, apply_safe_git_config,
     clear_git_credential_environment,
 };
+use crate::process_tree::ProcessTreeChild;
 
 #[cfg(target_os = "windows")]
 use std::os::windows::process::CommandExt;
@@ -112,7 +111,7 @@ where
     #[cfg(target_os = "windows")]
     command.creation_flags(CREATE_NO_WINDOW);
 
-    let child = command.spawn().map_err(GitProcessError::Spawn)?;
+    let child = ProcessTreeChild::spawn(&mut command).map_err(GitProcessError::Spawn)?;
 
     wait_for_child_output(child, timeout)
 }
@@ -209,11 +208,11 @@ fn is_executable_file(path: &Path) -> bool {
 }
 
 pub(crate) fn wait_for_child_output(
-    mut child: Child,
+    mut child: ProcessTreeChild,
     timeout: Duration,
 ) -> Result<Output, GitProcessError> {
-    let stdout_reader = child.stdout.take().map(spawn_output_reader);
-    let stderr_reader = child.stderr.take().map(spawn_output_reader);
+    let stdout_reader = child.child_mut().stdout.take().map(spawn_output_reader);
+    let stderr_reader = child.child_mut().stderr.take().map(spawn_output_reader);
 
     match child.wait_timeout(timeout) {
         Ok(Some(status)) => {
@@ -227,16 +226,14 @@ pub(crate) fn wait_for_child_output(
             })
         }
         Ok(None) => {
-            let _ = child.kill();
-            let _ = child.wait();
+            let _ = child.terminate();
             let _ = join_output_reader(stdout_reader);
             let _ = join_output_reader(stderr_reader);
 
             Err(GitProcessError::TimedOut)
         }
         Err(_) => {
-            let _ = child.kill();
-            let _ = child.wait();
+            let _ = child.terminate();
             let _ = join_output_reader(stdout_reader);
             let _ = join_output_reader(stderr_reader);
 

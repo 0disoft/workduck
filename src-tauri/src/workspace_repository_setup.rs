@@ -12,6 +12,7 @@ use std::os::windows::process::CommandExt;
 
 use crate::git_path::{GitProcessError, wait_for_child_output};
 use crate::path_display::display_path;
+use crate::process_tree::ProcessTreeChild;
 use crate::workspace_path::{validate_absolute_directory_path, WorkspacePathValidationError};
 use crate::workspace_repository_gitignore::ensure_workduck_gitignore as ensure_workduck_gitignore_policy;
 
@@ -559,7 +560,7 @@ fn run_command(
     #[cfg(target_os = "windows")]
     command.creation_flags(CREATE_NO_WINDOW);
 
-    let child = command.spawn().map_err(|error| {
+    let child = ProcessTreeChild::spawn(&mut command).map_err(|error| {
         if error.kind() == io::ErrorKind::NotFound {
             unavailable_error
         } else {

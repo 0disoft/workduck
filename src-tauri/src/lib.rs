@@ -10,6 +10,7 @@ mod git_path;
 mod llm_chat;
 mod path_display;
 mod password_envelope_crypto;
+mod process_tree;
 mod project_folder;
 mod project_registry_store;
 mod project_repository_failure;
@@ -96,7 +97,7 @@ fn is_recoverable_storage_setup_error(error: &storage::StorageError) -> bool {
 }
 
 pub fn run() {
-    tauri::Builder::default()
+    let app = tauri::Builder::default()
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_autostart::init(
             tauri_plugin_autostart::MacosLauncher::LaunchAgent,
@@ -191,8 +192,17 @@ pub fn run() {
             queue_execution::preview_queue_work_order_prompt,
             llm_chat::run_llm_chat_completion
         ])
-        .run(tauri::generate_context!())
-        .expect("error while running Workduck");
+        .build(tauri::generate_context!())
+        .expect("error while building Workduck");
+
+    app.run(|app_handle, event| {
+        if matches!(event, tauri::RunEvent::ExitRequested { .. } | tauri::RunEvent::Exit) {
+            terminal_process::shutdown_all_terminal_sessions(
+                &app_handle.state::<terminal_process::TerminalProcessState>(),
+            );
+            process_tree::shutdown_all_process_trees();
+        }
+    });
 }
 
 #[cfg(test)]

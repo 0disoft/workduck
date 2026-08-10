@@ -893,6 +893,7 @@ fn map_folder_path_validation_error(error: WorkspacePathValidationError) -> Work
 mod tests {
     use super::*;
     use crate::git_path::wait_for_child_output;
+    use crate::process_tree::ProcessTreeChild;
     use std::process::{Command, Stdio};
     use std::sync::atomic::{AtomicUsize, Ordering};
     use std::thread;
@@ -961,7 +962,7 @@ mod tests {
             .stdout(Stdio::piped())
             .stderr(Stdio::piped());
 
-        let child = command.spawn().expect("spawn large output command");
+        let child = ProcessTreeChild::spawn(&mut command).expect("spawn large output command");
         let output =
             wait_for_child_output(child, Duration::from_secs(10)).expect("large output completes");
 
