@@ -289,7 +289,7 @@ async fn run() -> Result<(), CliError> {
         let client = client.clone();
 
         handles.push(tauri::async_runtime::spawn(async move {
-            match run_agent_prompt(run, client).await {
+            match run_agent_prompt_bounded(run, client).await {
                 Ok(output) => AgentRunOutcome::Success(output),
                 Err(error) => AgentRunOutcome::Failure {
                     task,

@@ -29,6 +29,7 @@ export async function recoverStaleRunningWorkOrders(input: {
 	}
 
 	const inspectResult = await inspectQueueWorkOrderExecutions({
+		workspacePath: input.workspacePath,
 		workOrderIds: runningWorkOrderFiles.map((file) => file.artifactId)
 	});
 

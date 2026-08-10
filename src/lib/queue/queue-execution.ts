@@ -96,6 +96,7 @@ interface QueuePromptPreviewCommandResponse {
 }
 
 export async function executeQueueWorkOrder(input: {
+	readonly executionId: string;
 	readonly workspacePath: string;
 	readonly workOrderRelativePath: string;
 	readonly workOrder: WorkduckQueueWorkOrder;
@@ -114,6 +115,7 @@ export async function executeQueueWorkOrder(input: {
 	try {
 		const response = await invoke<QueueExecutionCommandResponse>('execute_queue_work_order', {
 			request: {
+				executionId: input.executionId,
 				workspacePath: input.workspacePath,
 				workOrderRelativePath: input.workOrderRelativePath,
 				workOrder: input.workOrder,
@@ -199,7 +201,7 @@ export async function previewQueueWorkOrderPrompt(input: {
 }
 
 export async function cancelQueueWorkOrderExecution(input: {
-	readonly workOrderId: string;
+	readonly executionId: string;
 }): Promise<QueueExecutionCancelResult> {
 	const invoke = getTauriInvoke();
 
@@ -212,7 +214,7 @@ export async function cancelQueueWorkOrderExecution(input: {
 			'cancel_queue_work_order_execution',
 			{
 				request: {
-					workOrderId: input.workOrderId
+					executionId: input.executionId
 				}
 			}
 		);
@@ -231,6 +233,7 @@ export async function cancelQueueWorkOrderExecution(input: {
 }
 
 export async function inspectQueueWorkOrderExecutions(input: {
+	readonly workspacePath: string;
 	readonly workOrderIds: readonly string[];
 }): Promise<QueueExecutionInspectResult> {
 	const invoke = getTauriInvoke();
@@ -244,6 +247,7 @@ export async function inspectQueueWorkOrderExecutions(input: {
 			'inspect_queue_work_order_executions',
 			{
 				request: {
+					workspacePath: input.workspacePath,
 					workOrderIds: input.workOrderIds
 				}
 			}
@@ -274,6 +278,7 @@ function normalizeQueueExecutionError(error: string | null | undefined): QueueEx
 		case 'queue-execution-cancelled':
 			return 'queue-execution-cancelled';
 		case 'work-order-running':
+		case 'execution-id-running':
 			return 'queue-execution-work-order-running';
 		case 'work-order-not-running':
 			return 'queue-execution-work-order-not-running';
@@ -286,6 +291,7 @@ function normalizeQueueExecutionError(error: string | null | undefined): QueueEx
 		case 'work-order-agent-limit':
 		case 'work-order-execution-limit':
 		case 'work-order-file-too-large':
+		case 'execution-id-invalid':
 			return 'agent-execution-request-invalid';
 		case 'agent-not-found':
 			return 'agent-execution-agent-not-found';

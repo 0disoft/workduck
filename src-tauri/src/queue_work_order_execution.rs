@@ -113,7 +113,7 @@ pub fn begin_queue_work_order_execution(
     work_order_relative_path: &str,
     requested_id: &str,
 ) -> Result<QueueWorkOrderExecution, QueueExecutionErrorDetail> {
-    let workspace_path = canonicalize_workspace(workspace_path)?;
+    let workspace_path = canonicalize_queue_workspace(workspace_path)?;
     let work_order_path = resolve_work_order_path(&workspace_path, work_order_relative_path)?;
     begin_queue_work_order_execution_at(&workspace_path, &work_order_path, requested_id)
 }
@@ -123,7 +123,7 @@ pub fn begin_queue_work_order_execution_at(
     work_order_path: &Path,
     requested_id: &str,
 ) -> Result<QueueWorkOrderExecution, QueueExecutionErrorDetail> {
-    let workspace_path = canonicalize_workspace(workspace_path)?;
+    let workspace_path = canonicalize_queue_workspace(workspace_path)?;
     let work_order_path = canonicalize_work_order_path(&workspace_path, work_order_path)?;
     let (mut lock_file, interrupted_execution_marker) = acquire_execution_lock(&work_order_path)?;
     let mut work_order = read_work_order(&work_order_path)?;
@@ -217,7 +217,9 @@ fn lock_marker_error(error: io::Error) -> QueueExecutionErrorDetail {
     QueueExecutionErrorDetail::new("work-order-lock-failed", error.to_string())
 }
 
-fn canonicalize_workspace(workspace_path: &Path) -> Result<PathBuf, QueueExecutionErrorDetail> {
+pub(crate) fn canonicalize_queue_workspace(
+    workspace_path: &Path,
+) -> Result<PathBuf, QueueExecutionErrorDetail> {
     let workspace_path = fs::canonicalize(workspace_path).map_err(|error| {
         execution_io_error("workspace-path-invalid", workspace_path, error)
     })?;

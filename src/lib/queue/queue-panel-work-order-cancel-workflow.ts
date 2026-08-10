@@ -16,6 +16,7 @@ export type QueuePanelWorkOrderCancelResult =
 	  };
 
 export interface QueuePanelWorkOrderCancelInput {
+	readonly executionId: string | null;
 	readonly workspacePath: string;
 	readonly workOrderPath: string | null;
 	readonly workOrderId: string;
@@ -24,9 +25,10 @@ export interface QueuePanelWorkOrderCancelInput {
 export async function cancelQueuePanelWorkOrder(
 	input: QueuePanelWorkOrderCancelInput
 ): Promise<QueuePanelWorkOrderCancelResult> {
-	const cancelResult = await cancelQueueWorkOrderExecution({
-		workOrderId: input.workOrderId
-	});
+	const cancelResult =
+		input.executionId === null
+			? ({ ok: false, error: 'queue-execution-work-order-not-running' } as const)
+			: await cancelQueueWorkOrderExecution({ executionId: input.executionId });
 
 	if (cancelResult.ok) {
 		return { ok: true, recoveredWorkOrder: null };

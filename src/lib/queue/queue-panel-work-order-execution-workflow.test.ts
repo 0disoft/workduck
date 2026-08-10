@@ -48,6 +48,7 @@ describe('queue panel work order execution workflow', () => {
 		);
 		assert.deepEqual(calls[0]?.args, {
 			request: {
+				executionId: '00000000-0000-4000-8000-000000000001',
 				workspacePath: 'C:/workspace',
 				workOrderRelativePath: 'work-orders/test.workduck-work-order.json',
 				workOrder: testWorkOrder,
@@ -82,6 +83,7 @@ describe('queue panel work order execution workflow', () => {
 
 function baseExecutionInput() {
 	return {
+		executionId: '00000000-0000-4000-8000-000000000001',
 		workspacePath: 'C:/workspace',
 		workOrderPath: 'work-orders/test.workduck-work-order.json',
 		workOrder: testWorkOrder,

@@ -276,6 +276,11 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 	let isWriting = $state(false);
 	let isPreviewingPrompt = $state(false);
 	let isCancellingExecution = $state(false);
+	let activeExecution = $state<{
+		readonly executionId: string;
+		readonly workspacePath: string;
+		readonly workOrderId: string;
+	} | null>(null);
 	let isSavingEvaluation = $state(false);
 	const initialEvaluationDialogState = createInitialQueueEvaluationDialogState();
 	let evaluationDialog = $state<AgentEvaluationDialogState | null>(
@@ -1181,6 +1186,12 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 
 		const executableWorkOrder = selectedWorkOrder;
 		const workOrderPath = selectedWorkOrderPath;
+		const executionId = crypto.randomUUID();
+		activeExecution = {
+			executionId,
+			workspacePath: workspace.path,
+			workOrderId: executableWorkOrder.ref.id
+		};
 
 		isWriting = true;
 		error = null;
@@ -1189,6 +1200,7 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 
 		try {
 			const executionResult = await executeQueuePanelWorkOrder({
+				executionId,
 				workspacePath: workspace.path,
 				workOrderPath,
 				workOrder: executableWorkOrder,
@@ -1202,6 +1214,9 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 
 			await applyQueuePanelWorkOrderExecutionResult(executionResult);
 	} finally {
+			if (activeExecution?.executionId === executionId) {
+				activeExecution = null;
+			}
 			isWriting = false;
 	}
 }
@@ -1250,7 +1265,13 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		status = messages.queue.cancellingExecution;
 
 		try {
+			const executionId =
+				activeExecution?.workspacePath === workspace.path &&
+				activeExecution.workOrderId === selectedWorkOrder.ref.id
+					? activeExecution.executionId
+					: null;
 			const cancelResult = await cancelQueuePanelWorkOrder({
+				executionId,
 				workspacePath: workspace.path,
 				workOrderPath: selectedWorkOrderPath,
 				workOrderId: selectedWorkOrder.ref.id
