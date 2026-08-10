@@ -21,9 +21,6 @@ const WORKDUCK_GITIGNORE_BLOCK: &str = "\
 /.workduck/secrets.tmp.json
 /.workduck/agent-evaluation-*.json
 
-/queue/reports/*.workduck-report.json
-/queue/work-orders/*.workduck-work-order.json
-
 .DS_Store
 Thumbs.db
 .vscode/
@@ -127,4 +124,49 @@ fn replace_workduck_gitignore_block(content: &str) -> Option<String> {
     next_content.push_str(content[end_index..].trim_start_matches(|value| value == '\r' || value == '\n'));
 
     Some(next_content)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    const QUEUE_REPORT_IGNORE_RULE: &str = "/queue/reports/*.workduck-report.json";
+    const QUEUE_WORK_ORDER_IGNORE_RULE: &str =
+        "/queue/work-orders/*.workduck-work-order.json";
+
+    #[test]
+    fn new_workspace_gitignore_keeps_queue_artifacts_trackable() {
+        let tempdir = tempfile::tempdir().expect("temporary workspace");
+
+        assert!(ensure_workduck_gitignore(tempdir.path()).expect("write managed gitignore"));
+
+        let content = fs::read_to_string(tempdir.path().join(".gitignore"))
+            .expect("read managed gitignore");
+        assert!(!content.contains(QUEUE_REPORT_IGNORE_RULE));
+        assert!(!content.contains(QUEUE_WORK_ORDER_IGNORE_RULE));
+    }
+
+    #[test]
+    fn managed_gitignore_update_removes_legacy_queue_artifact_rules() {
+        let tempdir = tempfile::tempdir().expect("temporary workspace");
+        let gitignore_path = tempdir.path().join(".gitignore");
+        let legacy_managed_block = WORKDUCK_GITIGNORE_BLOCK.replace(
+            "\n.DS_Store",
+            &format!(
+                "\n{QUEUE_REPORT_IGNORE_RULE}\n{QUEUE_WORK_ORDER_IGNORE_RULE}\n\n.DS_Store"
+            ),
+        );
+        fs::write(
+            &gitignore_path,
+            format!("custom-rule\n\n{legacy_managed_block}"),
+        )
+        .expect("write existing managed gitignore");
+
+        assert!(ensure_workduck_gitignore(tempdir.path()).expect("update managed gitignore"));
+
+        let content = fs::read_to_string(gitignore_path).expect("read updated gitignore");
+        assert!(content.starts_with("custom-rule\n\n"));
+        assert!(!content.contains(QUEUE_REPORT_IGNORE_RULE));
+        assert!(!content.contains(QUEUE_WORK_ORDER_IGNORE_RULE));
+    }
 }
