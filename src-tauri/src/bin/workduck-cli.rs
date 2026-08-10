@@ -12,12 +12,16 @@ use chacha20poly1305::{
 };
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use sha2::{Digest, Sha256};
 use time::{OffsetDateTime, format_description::well_known::Rfc3339};
 use workduck_lib::argon2_kdf::{ARGON2ID_VERSION, derive_argon2id_key, parameters_are_supported};
 use workduck_lib::queue_execution::*;
 use workduck_lib::queue_work_order_execution::{
     QueueWorkOrderCompletion, begin_queue_work_order_execution_at,
+};
+use workduck_lib::workspace_registry_lock::acquire_workspace_registry_lock;
+use workduck_lib::workspace_data_file::{
+    commit_workspace_registry_pair_under_lock,
+    recover_workspace_registry_transaction_under_lock,
 };
 use zeroize::{Zeroize, Zeroizing};
 
@@ -28,7 +32,6 @@ const WORK_ORDERS_DIRECTORY_NAME: &str = "work-orders";
 const WORK_ORDER_FILE_SUFFIX: &str = ".workduck-work-order.json";
 const VAULT_FILE_NAME: &str = "secrets.sync.json";
 const AGENTS_FILE_NAME: &str = "agents.json";
-const AGENT_REGISTRY_LOCK_DIRECTORY_NAME: &str = "workduck-agent-registry-locks";
 const PERSONAS_FILE_NAME: &str = "personas.json";
 const REFERENCES_FILE_NAME: &str = "references.json";
 const SKILLS_FILE_NAME: &str = "skills.json";
@@ -369,7 +372,14 @@ fn run_agent_evaluate_command(args: Vec<String>) -> Result<(), CliError> {
         .and_then(canonicalize_directory)?;
     let workspace_id = read_workspace_id(&workspace_path)?;
     let agents_path = workspace_data_path(&workspace_path, AGENTS_FILE_NAME);
-    let _agent_registry_lock = acquire_agent_registry_lock(&agents_path)?;
+    let _agent_registry_lock = acquire_workspace_registry_lock(&workspace_path).map_err(|error| {
+        io_error("agent-registry-lock-failed", &workspace_path, error)
+    })?;
+    recover_workspace_registry_transaction_under_lock(&workspace_path).map_err(|_| CliError {
+        code: "agent-registry-recovery-failed",
+        message: "미완료 에이전트/페르소나 레지스트리 트랜잭션을 복구하지 못했습니다."
+            .to_string(),
+    })?;
     let mut registry: Value = read_json_file(&agents_path, "agent-registry-invalid")?;
     let personas_path = workspace_data_path(&workspace_path, PERSONAS_FILE_NAME);
     let mut persona_registry: Option<Value> = if personas_path.exists() {
@@ -394,11 +404,32 @@ fn run_agent_evaluate_command(args: Vec<String>) -> Result<(), CliError> {
         false
     };
 
-    write_json_file(&agents_path, &registry)?;
+    increment_registry_revision(&mut registry)?;
     if persona_registry_changed {
-        if let Some(persona_registry) = &persona_registry {
-            write_json_file(&personas_path, persona_registry)?;
+        if let Some(persona_registry) = persona_registry.as_mut() {
+            increment_registry_revision(persona_registry)?;
+            let agents_content = serde_json::to_string_pretty(&registry).map_err(|error| CliError {
+                code: "file-write-failed",
+                message: format!("JSON 직렬화에 실패했습니다: {error}"),
+            })?;
+            let personas_content =
+                serde_json::to_string_pretty(persona_registry).map_err(|error| CliError {
+                    code: "file-write-failed",
+                    message: format!("JSON 직렬화에 실패했습니다: {error}"),
+                })?;
+            commit_workspace_registry_pair_under_lock(
+                &workspace_path,
+                &agents_content,
+                &personas_content,
+            )
+            .map_err(|_| CliError {
+                code: "agent-registry-write-failed",
+                message: "에이전트/페르소나 레지스트리 트랜잭션 저장에 실패했습니다."
+                    .to_string(),
+            })?;
         }
+    } else {
+        write_json_file(&agents_path, &registry)?;
     }
 
     if options.json {
@@ -458,7 +489,14 @@ fn run_agent_evaluate_batch_command(args: Vec<String>) -> Result<(), CliError> {
 
     let workspace_id = read_workspace_id(&workspace_path)?;
     let agents_path = workspace_data_path(&workspace_path, AGENTS_FILE_NAME);
-    let _agent_registry_lock = acquire_agent_registry_lock(&agents_path)?;
+    let _agent_registry_lock = acquire_workspace_registry_lock(&workspace_path).map_err(|error| {
+        io_error("agent-registry-lock-failed", &workspace_path, error)
+    })?;
+    recover_workspace_registry_transaction_under_lock(&workspace_path).map_err(|_| CliError {
+        code: "agent-registry-recovery-failed",
+        message: "미완료 에이전트/페르소나 레지스트리 트랜잭션을 복구하지 못했습니다."
+            .to_string(),
+    })?;
     let mut registry: Value = read_json_file(&agents_path, "agent-registry-invalid")?;
     let personas_path = workspace_data_path(&workspace_path, PERSONAS_FILE_NAME);
     let mut persona_registry: Option<Value> = if personas_path.exists() {
@@ -507,11 +545,32 @@ fn run_agent_evaluate_batch_command(args: Vec<String>) -> Result<(), CliError> {
         false
     };
 
-    write_json_file(&agents_path, &registry)?;
+    increment_registry_revision(&mut registry)?;
     if persona_registry_changed {
-        if let Some(persona_registry) = &persona_registry {
-            write_json_file(&personas_path, persona_registry)?;
+        if let Some(persona_registry) = persona_registry.as_mut() {
+            increment_registry_revision(persona_registry)?;
+            let agents_content = serde_json::to_string_pretty(&registry).map_err(|error| CliError {
+                code: "file-write-failed",
+                message: format!("JSON 직렬화에 실패했습니다: {error}"),
+            })?;
+            let personas_content =
+                serde_json::to_string_pretty(persona_registry).map_err(|error| CliError {
+                    code: "file-write-failed",
+                    message: format!("JSON 직렬화에 실패했습니다: {error}"),
+                })?;
+            commit_workspace_registry_pair_under_lock(
+                &workspace_path,
+                &agents_content,
+                &personas_content,
+            )
+            .map_err(|_| CliError {
+                code: "agent-registry-write-failed",
+                message: "에이전트/페르소나 레지스트리 트랜잭션 저장에 실패했습니다."
+                    .to_string(),
+            })?;
         }
+    } else {
+        write_json_file(&agents_path, &registry)?;
     }
 
     if options.json {
@@ -1718,45 +1777,21 @@ fn write_json_file<T: Serialize>(path: &Path, value: &T) -> Result<(), CliError>
     })
 }
 
-fn acquire_agent_registry_lock(agents_path: &Path) -> Result<fs::File, CliError> {
-    let lock_file = open_agent_registry_lock(agents_path)?;
-    lock_file.lock().map_err(|error| {
-        io_error(
-            "agent-registry-lock-failed",
-            &agent_registry_lock_path(agents_path),
-            error,
-        )
+fn increment_registry_revision(registry: &mut Value) -> Result<(), CliError> {
+    let revision = registry
+        .get("revision")
+        .map(|value| value.as_u64().ok_or_else(|| CliError {
+            code: "agent-registry-invalid",
+            message: "레지스트리 revision은 0 이상의 정수여야 합니다.".to_string(),
+        }))
+        .transpose()?
+        .unwrap_or(0);
+    let next_revision = revision.checked_add(1).ok_or_else(|| CliError {
+        code: "agent-registry-invalid",
+        message: "레지스트리 revision이 허용 범위를 초과했습니다.".to_string(),
     })?;
-    Ok(lock_file)
-}
-
-fn open_agent_registry_lock(agents_path: &Path) -> Result<fs::File, CliError> {
-    let lock_path = agent_registry_lock_path(agents_path);
-    let lock_root = lock_path.parent().ok_or_else(|| CliError {
-        code: "agent-registry-lock-failed",
-        message: "에이전트 레지스트리 잠금 경로가 올바르지 않습니다.".to_string(),
-    })?;
-    fs::create_dir_all(lock_root)
-        .map_err(|error| io_error("agent-registry-lock-failed", lock_root, error))?;
-    reject_symlink_path(&lock_path)?;
-
-    fs::OpenOptions::new()
-        .read(true)
-        .write(true)
-        .create(true)
-        .open(&lock_path)
-        .map_err(|error| io_error("agent-registry-lock-failed", &lock_path, error))
-}
-
-fn agent_registry_lock_path(agents_path: &Path) -> PathBuf {
-    let digest = Sha256::digest(agents_path.as_os_str().to_string_lossy().as_bytes());
-    let lock_name = digest
-        .iter()
-        .map(|byte| format!("{byte:02x}"))
-        .collect::<String>();
-    env::temp_dir()
-        .join(AGENT_REGISTRY_LOCK_DIRECTORY_NAME)
-        .join(format!("{lock_name}.lock"))
+    registry["revision"] = Value::from(next_revision);
+    Ok(())
 }
 
 fn reject_symlink_path(path: &Path) -> Result<(), CliError> {
@@ -1982,23 +2017,6 @@ mod tests {
         };
 
         assert_eq!(error.code, "work-order-not-found");
-    }
-
-    #[test]
-    fn agent_registry_lock_is_exclusive_and_releases_on_drop() {
-        let workspace = tempfile::tempdir().expect("workspace");
-        let agents_path = workspace.path().join(WORKDUCK_DIRECTORY_NAME).join(AGENTS_FILE_NAME);
-        let first = open_agent_registry_lock(&agents_path).expect("first lock file");
-        first.try_lock().expect("first lock");
-        let second = open_agent_registry_lock(&agents_path).expect("second lock file");
-
-        assert!(matches!(
-            second.try_lock(),
-            Err(std::fs::TryLockError::WouldBlock)
-        ));
-
-        drop(first);
-        second.try_lock().expect("released lock");
     }
 
     #[test]

@@ -4,17 +4,16 @@ import {
 } from '$lib/agents/agent-registry';
 import type { AgentEvaluationScores } from '$lib/agents/agent-evaluation';
 import {
-	readAgentRegistry,
-	writeAgentRegistry
+	readAgentRegistry
 } from '$lib/agents/agent-registry-storage';
 import {
 	syncPersonaEvaluationSummariesFromAgents,
 	type PersonaRegistry
 } from '$lib/personas/persona-registry';
 import {
-	readPersonaRegistry,
-	writePersonaRegistry
+	readPersonaRegistry
 } from '$lib/personas/persona-registry-storage';
+import { writeWorkspaceRegistryPairStorage } from '$lib/workspaces/workspace-registry-pair-storage';
 import {
 	createQueueReportTaskEvaluationKey,
 	recordQueueReportTaskEvaluation,
@@ -83,15 +82,35 @@ export async function saveQueuePanelEvaluation(
 		return createFailedQueuePanelEvaluationSaveResult('agent-not-found');
 	}
 
-	const agentWriteResult = await writeAgentRegistry(mutation.registry, input.workspacePath);
+	const latestPersonaRegistryResult = await readPersonaRegistry(
+		input.workspaceId,
+		input.workspacePath
+	);
 
-	if (!agentWriteResult.ok) {
-		return createFailedQueuePanelEvaluationSaveResult('agent-save-failed');
+	if (!latestPersonaRegistryResult.ok) {
+		return createFailedQueuePanelEvaluationSaveResult('persona-read-failed');
+	}
+
+	const nextPersonaRegistry = syncPersonaEvaluationSummariesFromAgents(
+		latestPersonaRegistryResult.registry,
+		mutation.registry.agents
+	);
+	const registryWriteResult = await writeWorkspaceRegistryPairStorage(
+		mutation.registry,
+		nextPersonaRegistry,
+		input.workspacePath
+	);
+
+	if (!registryWriteResult.ok) {
+		return createFailedQueuePanelEvaluationSaveResult(
+			registryWriteResult.error === 'workspace-data-revision-conflict'
+				? 'agent-save-failed'
+				: 'persona-save-failed'
+		);
 	}
 
 	let savedReport: WorkduckQueueResultReport | null = null;
 	let savedReportRelativePath: string | null = null;
-
 	if (mutation.applied) {
 		const nextReport = recordQueueReportTaskEvaluation(
 			input.report,
@@ -106,7 +125,8 @@ export async function saveQueuePanelEvaluation(
 
 		if (!reportWriteResult.ok) {
 			return createFailedQueuePanelEvaluationSaveResult('report-write-failed', {
-				agentRegistry: agentWriteResult.registry
+				agentRegistry: registryWriteResult.agentRegistry,
+				personaRegistry: registryWriteResult.personaRegistry
 			});
 		}
 
@@ -114,38 +134,11 @@ export async function saveQueuePanelEvaluation(
 		savedReportRelativePath = reportWriteResult.relativePath;
 	}
 
-	const latestPersonaRegistryResult = await readPersonaRegistry(
-		input.workspaceId,
-		input.workspacePath
-	);
-
-	if (!latestPersonaRegistryResult.ok) {
-		return createFailedQueuePanelEvaluationSaveResult('persona-read-failed', {
-			agentRegistry: agentWriteResult.registry,
-			report: savedReport,
-			reportRelativePath: savedReportRelativePath
-		});
-	}
-
-	const nextPersonaRegistry = syncPersonaEvaluationSummariesFromAgents(
-		latestPersonaRegistryResult.registry,
-		agentWriteResult.registry.agents
-	);
-	const personaWriteResult = await writePersonaRegistry(nextPersonaRegistry, input.workspacePath);
-
-	if (!personaWriteResult.ok) {
-		return createFailedQueuePanelEvaluationSaveResult('persona-save-failed', {
-			agentRegistry: agentWriteResult.registry,
-			report: savedReport,
-			reportRelativePath: savedReportRelativePath
-		});
-	}
-
 	return {
 		ok: true,
 		applied: mutation.applied,
-		agentRegistry: agentWriteResult.registry,
-		personaRegistry: personaWriteResult.registry,
+		agentRegistry: registryWriteResult.agentRegistry,
+		personaRegistry: registryWriteResult.personaRegistry,
 		report: savedReport,
 		reportRelativePath: savedReportRelativePath
 	};

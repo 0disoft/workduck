@@ -118,6 +118,7 @@ export interface PersonaRecord {
 
 export interface PersonaRegistry {
 	readonly version: typeof PERSONA_REGISTRY_VERSION;
+	readonly revision: number;
 	readonly workspaceId: string;
 	readonly personas: readonly PersonaRecord[];
 	readonly updatedAt: string;
@@ -146,6 +147,7 @@ export type PersonaRegistryMutationResult =
 export function createEmptyPersonaRegistry(workspaceId: string, now = new Date()): PersonaRegistry {
 	return {
 		version: PERSONA_REGISTRY_VERSION,
+		revision: 0,
 		workspaceId,
 		personas: [],
 		updatedAt: now.toISOString()
@@ -380,10 +382,15 @@ function normalizePersonaRegistry(value: unknown, workspaceId: string): PersonaR
 
 	return {
 		version: PERSONA_REGISTRY_VERSION,
+		revision: normalizeRegistryRevision(value.revision),
 		workspaceId,
 		personas: sortPersonas(personas),
 		updatedAt: readTrimmedString(value.updatedAt)
 	};
+}
+
+function normalizeRegistryRevision(value: unknown) {
+	return typeof value === 'number' && Number.isSafeInteger(value) && value >= 0 ? value : 0;
 }
 
 function parsePersonaRecord(value: unknown): PersonaRecord | null {

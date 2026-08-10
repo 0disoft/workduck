@@ -13,6 +13,7 @@
 	} from '$lib/settings/appearance-storage';
 	import { DetailCard, EntityCard, EntityWorkbench, StatusToast } from '$lib/ui';
 	import type { WorkspaceRecord } from '$lib/workspaces/workspace-registry';
+	import { writeWorkspaceRegistryPairStorage } from '$lib/workspaces/workspace-registry-pair-storage';
 	import {
 		AGENT_EVALUATION_SCORE_MAX,
 		agentEvaluationCriteriaDefinitions,
@@ -31,7 +32,6 @@
 	import {
 		readAgentRegistry,
 		subscribeAgentRegistry,
-		writeAgentRegistry,
 		type AgentRegistryStorageError
 	} from '$lib/agents/agent-registry-storage';
 
@@ -276,22 +276,28 @@
 				);
 			}
 
-			const writeResult = await writePersonaRegistry(nextPersonaRegistry, workspace.path);
-
-			registry = writeResult.registry;
-			personaError = writeResult.ok ? null : writeResult.error;
-
-			if (!writeResult.ok) {
-				return;
-			}
-
 			if (nextAgentRegistry !== agentRegistry) {
-				const agentWriteResult = await writeAgentRegistry(nextAgentRegistry, workspace.path);
+				const pairWriteResult = await writeWorkspaceRegistryPairStorage(
+					nextAgentRegistry,
+					nextPersonaRegistry,
+					workspace.path
+				);
+				agentRegistry = pairWriteResult.agentRegistry;
+				registry = pairWriteResult.personaRegistry;
+				personaError = pairWriteResult.ok
+					? null
+					: pairWriteResult.error === 'workspace-registry-pair-invalid'
+						? 'persona-registry-storage-write-failed'
+						: pairWriteResult.error;
 
-				agentRegistry = agentWriteResult.registry;
-				personaError = agentWriteResult.ok ? null : agentWriteResult.error;
-
-				if (!agentWriteResult.ok) {
+				if (!pairWriteResult.ok) {
+					return;
+				}
+			} else {
+				const writeResult = await writePersonaRegistry(nextPersonaRegistry, workspace.path);
+				registry = writeResult.registry;
+				personaError = writeResult.ok ? null : writeResult.error;
+				if (!writeResult.ok) {
 					return;
 				}
 			}
@@ -326,23 +332,29 @@
 			}
 
 			if (assignedAgentCount > 0) {
-				const agentWriteResult = await writeAgentRegistry(nextAgentRegistry, workspace.path);
+				const pairWriteResult = await writeWorkspaceRegistryPairStorage(
+					nextAgentRegistry,
+					mutation.registry,
+					workspace.path
+				);
+				agentRegistry = pairWriteResult.agentRegistry;
+				registry = pairWriteResult.personaRegistry;
+				personaError = pairWriteResult.ok
+					? null
+					: pairWriteResult.error === 'workspace-registry-pair-invalid'
+						? 'persona-registry-storage-write-failed'
+						: pairWriteResult.error;
 
-				agentRegistry = agentWriteResult.registry;
-				personaError = agentWriteResult.ok ? null : agentWriteResult.error;
-
-				if (!agentWriteResult.ok) {
+				if (!pairWriteResult.ok) {
 					return;
 				}
-			}
-
-			const writeResult = await writePersonaRegistry(mutation.registry, workspace.path);
-
-			registry = writeResult.registry;
-			personaError = writeResult.ok ? null : writeResult.error;
-
-			if (!writeResult.ok) {
-				return;
+			} else {
+				const writeResult = await writePersonaRegistry(mutation.registry, workspace.path);
+				registry = writeResult.registry;
+				personaError = writeResult.ok ? null : writeResult.error;
+				if (!writeResult.ok) {
+					return;
+				}
 			}
 
 			selectedPersonaId = null;
@@ -550,6 +562,7 @@
 			case 'persona-registry-storage-read-failed':
 				return messages.personas.errors.readFailed;
 			case 'persona-registry-storage-write-failed':
+			case 'workspace-data-revision-conflict':
 				return messages.personas.errors.saveFailed;
 			case 'agent-registry-storage-read-failed':
 				return messages.agents.errors.readFailed;

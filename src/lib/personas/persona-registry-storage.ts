@@ -8,7 +8,7 @@ import {
 import {
 	readWorkspaceDataFile,
 	workspaceDataFilesAreAvailable,
-	writeWorkspaceDataFile,
+	writeWorkspaceRegistryFile,
 	type WorkspaceDataFileError
 } from '$lib/workspaces/workspace-data-file';
 
@@ -81,7 +81,7 @@ export async function readPersonaRegistry(
 		if (legacyRegistry.personas.length > 0) {
 			const writeResult = await writePersonaRegistry(legacyRegistry, workspacePath);
 
-			return writeResult.ok ? { ok: true, registry: legacyRegistry } : writeResult;
+			return writeResult;
 		}
 
 		return { ok: true, registry: emptyRegistry };
@@ -103,9 +103,10 @@ export async function writePersonaRegistry(
 	}
 
 	if (workspacePath.length > 0 && workspaceDataFilesAreAvailable()) {
-		const writeResult = await writeWorkspaceDataFile(
+		const writeResult = await writeWorkspaceRegistryFile(
 			workspacePath,
 			PERSONA_REGISTRY_FILE_NAME,
+			registry.revision,
 			serializePersonaRegistry(registry)
 		);
 
@@ -117,13 +118,18 @@ export async function writePersonaRegistry(
 			};
 		}
 
-		dispatchPersonaRegistryChanged(registry);
-		return { ok: true, registry };
+		const persistedRegistry = parsePersonaRegistry(writeResult.content, registry.workspaceId);
+		if (persistedRegistry === null) {
+			return { ok: false, registry, error: 'persona-registry-storage-write-failed' };
+		}
+
+		notifyPersonaRegistryChanged(persistedRegistry);
+		return { ok: true, registry: persistedRegistry };
 	}
 
 	try {
 		writeLegacyPersonaRegistry(registry);
-		dispatchPersonaRegistryChanged(registry);
+		notifyPersonaRegistryChanged(registry);
 		return { ok: true, registry };
 	} catch {
 		return {
@@ -237,7 +243,7 @@ function writeLegacyPersonaRegistry(registry: PersonaRegistry) {
 	writeStorageRecord(nextStorage);
 }
 
-function dispatchPersonaRegistryChanged(registry: PersonaRegistry) {
+export function notifyPersonaRegistryChanged(registry: PersonaRegistry) {
 	if (typeof window === 'undefined') {
 		return;
 	}

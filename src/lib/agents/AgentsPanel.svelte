@@ -29,11 +29,11 @@
 	import {
 		readPersonaRegistry,
 		subscribePersonaRegistry,
-		writePersonaRegistry,
 		type PersonaRegistryStorageError
 	} from '$lib/personas/persona-registry-storage';
 	import { DetailCard, EntityCard, EntityWorkbench, StatusToast } from '$lib/ui';
 	import type { WorkspaceRecord } from '$lib/workspaces/workspace-registry';
+	import { writeWorkspaceRegistryPairStorage } from '$lib/workspaces/workspace-registry-pair-storage';
 
 	import {
 		AGENT_EVALUATION_SCORE_MAX,
@@ -63,7 +63,6 @@
 	import {
 		readAgentRegistry,
 		subscribeAgentRegistry,
-		writeAgentRegistry,
 		type AgentRegistryStorageError
 	} from './agent-registry-storage';
 
@@ -319,16 +318,7 @@
 				return;
 			}
 
-			const writeResult = await writeAgentRegistry(mutation.registry, workspace.path);
-
-			registry = writeResult.registry;
-			agentError = writeResult.ok ? null : writeResult.error;
-
-			if (!writeResult.ok) {
-				return;
-			}
-
-			if (!(await syncPersonaEvaluationSummariesForAgents(mutation.registry.agents))) {
+			if (!(await writeAgentAndPersonaRegistries(mutation.registry))) {
 				return;
 			}
 
@@ -366,16 +356,7 @@
 				return;
 			}
 
-			const writeResult = await writeAgentRegistry(mutation.registry, workspace.path);
-
-			registry = writeResult.registry;
-			agentError = writeResult.ok ? null : writeResult.error;
-
-			if (!writeResult.ok) {
-				return;
-			}
-
-			if (!(await syncPersonaEvaluationSummariesForAgents(mutation.registry.agents))) {
+			if (!(await writeAgentAndPersonaRegistries(mutation.registry))) {
 				return;
 			}
 
@@ -417,16 +398,7 @@
 				return;
 			}
 
-			const writeResult = await writeAgentRegistry(mutation.registry, workspace.path);
-
-			registry = writeResult.registry;
-			agentError = writeResult.ok ? null : writeResult.error;
-
-			if (!writeResult.ok) {
-				return;
-			}
-
-			if (!(await syncPersonaEvaluationSummariesForAgents(mutation.registry.agents))) {
+			if (!(await writeAgentAndPersonaRegistries(mutation.registry))) {
 				return;
 			}
 
@@ -611,7 +583,7 @@
 		return left.agent.name.localeCompare(right.agent.name, appearanceSettings.languageId === 'ko' ? 'ko-KR' : 'en-US');
 	}
 
-	async function syncPersonaEvaluationSummariesForAgents(agents: readonly AgentRecord[]) {
+	async function writeAgentAndPersonaRegistries(nextAgentRegistry: AgentRegistry) {
 		const latestPersonaRegistryResult = await readPersonaRegistry(workspace.id, workspace.path);
 
 		if (!latestPersonaRegistryResult.ok) {
@@ -621,14 +593,23 @@
 
 		const nextPersonaRegistry = syncPersonaEvaluationSummariesFromAgents(
 			latestPersonaRegistryResult.registry,
-			agents
+			nextAgentRegistry.agents
 		);
-		const personaWriteResult = await writePersonaRegistry(nextPersonaRegistry, workspace.path);
+		const writeResult = await writeWorkspaceRegistryPairStorage(
+			nextAgentRegistry,
+			nextPersonaRegistry,
+			workspace.path
+		);
 
-		personaRegistry = personaWriteResult.registry;
-		agentError = personaWriteResult.ok ? null : personaWriteResult.error;
+		registry = writeResult.agentRegistry;
+		personaRegistry = writeResult.personaRegistry;
+		agentError = writeResult.ok
+			? null
+			: writeResult.error === 'workspace-registry-pair-invalid'
+				? 'agent-registry-storage-write-failed'
+				: writeResult.error;
 
-		return personaWriteResult.ok;
+		return writeResult.ok;
 	}
 
 	function getEvaluationResetAtLabel(agent: AgentRecord) {
@@ -671,6 +652,7 @@
 			case 'agent-registry-storage-read-failed':
 				return messages.agents.errors.readFailed;
 			case 'agent-registry-storage-write-failed':
+			case 'workspace-data-revision-conflict':
 				return messages.agents.errors.saveFailed;
 			case 'persona-registry-storage-read-failed':
 				return messages.personas.errors.readFailed;

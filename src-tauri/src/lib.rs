@@ -40,7 +40,8 @@ mod tray_menu;
 mod developer_processes;
 mod workspace_password;
 mod workspace_path;
-mod workspace_data_file;
+pub mod workspace_registry_lock;
+pub mod workspace_data_file;
 mod workspace_repository_gitignore;
 mod workspace_repository_setup;
 mod workspace_sync_crypto;
@@ -140,6 +141,8 @@ pub fn run() {
             workspace_path::validate_workspace_path,
             workspace_data_file::read_workspace_data_file,
             workspace_data_file::write_workspace_data_file,
+            workspace_data_file::write_workspace_registry_file,
+            workspace_data_file::write_workspace_registry_pair,
             workspace_repository_setup::setup_workspace_repository,
             project_repository::clone_project_repository,
             project_repository::clone_project_repository_fork,

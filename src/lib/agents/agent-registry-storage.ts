@@ -8,7 +8,7 @@ import {
 import {
 	readWorkspaceDataFile,
 	workspaceDataFilesAreAvailable,
-	writeWorkspaceDataFile,
+	writeWorkspaceRegistryFile,
 	type WorkspaceDataFileError
 } from '$lib/workspaces/workspace-data-file';
 
@@ -81,7 +81,7 @@ export async function readAgentRegistry(
 		if (legacyRegistry.agents.length > 0) {
 			const writeResult = await writeAgentRegistry(legacyRegistry, workspacePath);
 
-			return writeResult.ok ? { ok: true, registry: legacyRegistry } : writeResult;
+			return writeResult;
 		}
 
 		return { ok: true, registry: emptyRegistry };
@@ -103,9 +103,10 @@ export async function writeAgentRegistry(
 	}
 
 	if (workspacePath.length > 0 && workspaceDataFilesAreAvailable()) {
-		const writeResult = await writeWorkspaceDataFile(
+		const writeResult = await writeWorkspaceRegistryFile(
 			workspacePath,
 			AGENT_REGISTRY_FILE_NAME,
+			registry.revision,
 			serializeAgentRegistry(registry)
 		);
 
@@ -117,13 +118,18 @@ export async function writeAgentRegistry(
 			};
 		}
 
-		dispatchAgentRegistryChanged(registry);
-		return { ok: true, registry };
+		const persistedRegistry = parseAgentRegistry(writeResult.content, registry.workspaceId);
+		if (persistedRegistry === null) {
+			return { ok: false, registry, error: 'agent-registry-storage-write-failed' };
+		}
+
+		notifyAgentRegistryChanged(persistedRegistry);
+		return { ok: true, registry: persistedRegistry };
 	}
 
 	try {
 		writeLegacyAgentRegistry(registry);
-		dispatchAgentRegistryChanged(registry);
+		notifyAgentRegistryChanged(registry);
 		return { ok: true, registry };
 	} catch {
 		return {
@@ -237,7 +243,7 @@ function writeLegacyAgentRegistry(registry: AgentRegistry) {
 	writeStorageRecord(nextStorage);
 }
 
-function dispatchAgentRegistryChanged(registry: AgentRegistry) {
+export function notifyAgentRegistryChanged(registry: AgentRegistry) {
 	if (typeof window === 'undefined') {
 		return;
 	}

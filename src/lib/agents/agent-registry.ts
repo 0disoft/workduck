@@ -38,6 +38,7 @@ export interface AgentRecord {
 
 export interface AgentRegistry {
 	readonly version: typeof AGENT_REGISTRY_VERSION;
+	readonly revision: number;
 	readonly workspaceId: string;
 	readonly agents: readonly AgentRecord[];
 	readonly updatedAt: string;
@@ -66,6 +67,7 @@ export type AgentRegistryMutationResult =
 export function createEmptyAgentRegistry(workspaceId: string, now = new Date()): AgentRegistry {
 	return {
 		version: AGENT_REGISTRY_VERSION,
+		revision: 0,
 		workspaceId,
 		agents: [],
 		updatedAt: now.toISOString()
@@ -426,10 +428,15 @@ function normalizeAgentRegistry(value: unknown, workspaceId: string): AgentRegis
 
 	return {
 		version: AGENT_REGISTRY_VERSION,
+		revision: normalizeRegistryRevision(value.revision),
 		workspaceId,
 		agents: sortAgents(agents),
 		updatedAt: readTrimmedString(value.updatedAt)
 	};
+}
+
+function normalizeRegistryRevision(value: unknown) {
+	return typeof value === 'number' && Number.isSafeInteger(value) && value >= 0 ? value : 0;
 }
 
 function isSupportedAgentRegistryVersion(
