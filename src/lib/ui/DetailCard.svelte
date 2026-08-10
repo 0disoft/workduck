@@ -28,7 +28,7 @@
 
 	{@render children()}
 
-	{#if actions !== undefined}
+	{#if actions !== undefined && !actionsAtTop}
 		<div class="workduck-detail-card-actions">
 			{@render actions()}
 		</div>
