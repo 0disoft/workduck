@@ -22,6 +22,10 @@ pub use crate::queue_result_report::{
 use crate::{
     atomic_file_write::{AtomicFileWriteError, write_file_exclusively},
     path_display::display_path,
+    queue_limits::{
+        QUEUE_EXECUTION_MAX_RUNS, QUEUE_TASK_MAX_AGENTS, QUEUE_WORK_ORDER_MAX_TASKS,
+        acquire_queue_execution_permit,
+    },
     queue_execution_identity::{slugify, timestamp_for_file_name},
     queue_work_order_execution::{
         QueueWorkOrderCompletion, begin_queue_work_order_execution,
@@ -547,7 +551,12 @@ async fn execute_queue_work_order_inner(
         local_abort_handles.push(abort_handle);
 
         handles.push(tauri::async_runtime::spawn(async move {
-            match Abortable::new(run_agent_prompt(run, client), abort_registration).await {
+            match Abortable::new(
+                run_agent_prompt_with_limits(run, client),
+                abort_registration,
+            )
+            .await
+            {
                 Ok(Ok(output)) => AgentRunOutcome::Success(output),
                 Ok(Err(error)) => AgentRunOutcome::Failure {
                     task,
@@ -693,6 +702,21 @@ struct RunningQueueWorkOrderExecution {
 #[derive(Debug, Default)]
 struct LocalAbortHandles {
     handles: Vec<AbortHandle>,
+}
+
+async fn run_agent_prompt_with_limits(
+    run: AgentExecutionRun,
+    client: reqwest::Client,
+) -> Result<AgentRunOutput, AgentRunFailure> {
+    let _permit = acquire_queue_execution_permit(&run.provider)
+        .await
+        .map_err(|error| AgentRunFailure {
+            code: "agent-execution-failed",
+            message: format!("작업 실행 제한기를 사용할 수 없습니다: {error:?}"),
+            execution_attempts: Vec::new(),
+        })?;
+
+    run_agent_prompt(run, client).await
 }
 
 impl LocalAbortHandles {
@@ -1395,6 +1419,73 @@ en-US 표기는 한국어 지원 앱을 영어 전용처럼 보이게 합니다.
     }
 
     #[test]
+    fn execution_runs_reject_work_orders_above_the_task_limit_before_agent_resolution() {
+        let work_order = work_order_with_shape(65, 1);
+
+        let error = match create_execution_runs(&work_order, &[], None, &[], &[], &[]) {
+            Ok(_) => panic!("oversized task list must be rejected"),
+            Err(error) => error,
+        };
+
+        assert_eq!(error.code, "work-order-task-limit");
+    }
+
+    #[test]
+    fn execution_runs_reject_tasks_above_the_agent_limit_before_agent_resolution() {
+        let work_order = work_order_with_shape(1, 9);
+
+        let error = match create_execution_runs(&work_order, &[], None, &[], &[], &[]) {
+            Ok(_) => panic!("oversized agent list must be rejected"),
+            Err(error) => error,
+        };
+
+        assert_eq!(error.code, "work-order-agent-limit");
+    }
+
+    #[test]
+    fn execution_runs_reject_total_runs_above_the_hard_cap_before_agent_resolution() {
+        let work_order = work_order_with_shape(17, 8);
+
+        let error = match create_execution_runs(&work_order, &[], None, &[], &[], &[]) {
+            Ok(_) => panic!("oversized execution fanout must be rejected"),
+            Err(error) => error,
+        };
+
+        assert_eq!(error.code, "work-order-execution-limit");
+    }
+
+    fn work_order_with_shape(task_count: usize, agents_per_task: usize) -> QueueWorkOrder {
+        QueueWorkOrder {
+            schema_version: "workduck.queue-work-order/v1".to_string(),
+            r#ref: QueueEntityRef {
+                id: "wo_limits".to_string(),
+                kind: "queue-work-order".to_string(),
+                label: "Limits".to_string(),
+            },
+            status: "active".to_string(),
+            created_at: "2026-08-10T00:00:00Z".to_string(),
+            tasks: (0..task_count)
+                .map(|task_index| QueueWorkOrderTask {
+                    id: format!("task_{task_index}"),
+                    kind: None,
+                    title: format!("Task {task_index}"),
+                    body: "Bound execution fanout".to_string(),
+                    priority: Some("normal".to_string()),
+                    response_language: Some("en".to_string()),
+                    response_format: Some("general".to_string()),
+                    project_ids: Vec::new(),
+                    agent_ids: (0..agents_per_task)
+                        .map(|agent_index| format!("agent_{agent_index}"))
+                        .collect(),
+                    skill_ids: Vec::new(),
+                    reference_ids: Vec::new(),
+                    vote: None,
+                })
+                .collect(),
+        }
+    }
+
+    #[test]
     fn queue_work_order_execution_guard_rejects_duplicate_running_id_until_released() {
         let work_order_id = format!("wo_{}", unique_token());
         let first_guard =
@@ -1556,6 +1647,7 @@ pub fn create_execution_runs(
     skills: &[SkillRecord],
     references: &[ReferenceRecord],
 ) -> Result<Vec<AgentExecutionRun>, QueueExecutionErrorDetail> {
+    validate_work_order_execution_limits(work_order)?;
     let mut runs = Vec::new();
 
     for task in &work_order.tasks {
@@ -1658,6 +1750,7 @@ pub fn create_prompt_previews(
     skills: &[SkillRecord],
     references: &[ReferenceRecord],
 ) -> Result<Vec<QueuePromptPreview>, QueueExecutionErrorDetail> {
+    validate_work_order_execution_limits(work_order)?;
     let mut previews = Vec::new();
 
     for task in &work_order.tasks {
@@ -1720,6 +1813,51 @@ pub fn create_prompt_previews(
     }
 
     Ok(previews)
+}
+
+pub(crate) fn validate_work_order_execution_limits(
+    work_order: &QueueWorkOrder,
+) -> Result<(), QueueExecutionErrorDetail> {
+    if work_order.tasks.len() > QUEUE_WORK_ORDER_MAX_TASKS {
+        return Err(QueueExecutionErrorDetail::new(
+            "work-order-task-limit",
+            format!(
+                "작업 지시서는 최대 {QUEUE_WORK_ORDER_MAX_TASKS}개 작업까지 실행할 수 있습니다."
+            ),
+        ));
+    }
+
+    let mut total_runs = 0usize;
+    for task in &work_order.tasks {
+        if task.agent_ids.len() > QUEUE_TASK_MAX_AGENTS {
+            return Err(QueueExecutionErrorDetail::new(
+                "work-order-agent-limit",
+                format!(
+                    "작업 '{}'에는 최대 {QUEUE_TASK_MAX_AGENTS}개 에이전트만 지정할 수 있습니다.",
+                    task.title
+                ),
+            ));
+        }
+
+        total_runs = total_runs
+            .checked_add(task.agent_ids.len())
+            .ok_or_else(|| {
+                QueueExecutionErrorDetail::new(
+                    "work-order-execution-limit",
+                    "작업 실행 수를 계산할 수 없습니다.",
+                )
+            })?;
+        if total_runs > QUEUE_EXECUTION_MAX_RUNS {
+            return Err(QueueExecutionErrorDetail::new(
+                "work-order-execution-limit",
+                format!(
+                    "작업 지시서는 최대 {QUEUE_EXECUTION_MAX_RUNS}개 에이전트 실행까지 허용됩니다."
+                ),
+            ));
+        }
+    }
+
+    Ok(())
 }
 
 fn resolve_provider_environment_secret(

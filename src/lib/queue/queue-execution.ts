@@ -282,6 +282,11 @@ function normalizeQueueExecutionError(error: string | null | undefined): QueueEx
 		case 'work-order-agent-required':
 		case 'work-order-empty':
 			return 'queue-execution-no-agent';
+		case 'work-order-task-limit':
+		case 'work-order-agent-limit':
+		case 'work-order-execution-limit':
+		case 'work-order-file-too-large':
+			return 'agent-execution-request-invalid';
 		case 'agent-not-found':
 			return 'agent-execution-agent-not-found';
 		case 'agent-secret-not-found':

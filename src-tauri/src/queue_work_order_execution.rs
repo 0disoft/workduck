@@ -13,8 +13,9 @@ use crate::{
     path_display::display_path,
     queue_execution::{
         QueueExecutionErrorDetail, QueueResultReport, QueueWorkOrder, validate_work_order,
-        write_result_report,
+        validate_work_order_execution_limits, write_result_report,
     },
+    queue_limits::QUEUE_FILE_MAX_BYTES,
 };
 
 const QUEUE_DIRECTORY_NAME: &str = "queue";
@@ -132,6 +133,7 @@ pub fn begin_queue_work_order_execution_at(
         Err(error) if error.code == "work-order-running" && interrupted_execution_marker => {}
         Err(error) => return Err(error),
     }
+    validate_work_order_execution_limits(&work_order)?;
 
     write_lock_marker(&mut lock_file, EXECUTION_LOCK_MARKER)?;
     work_order.status = "running".to_string();
@@ -290,6 +292,19 @@ fn validate_canonical_work_order_path(
 }
 
 fn read_work_order(path: &Path) -> Result<QueueWorkOrder, QueueExecutionErrorDetail> {
+    let metadata = fs::metadata(path)
+        .map_err(|error| execution_io_error("work-order-file-read-failed", path, error))?;
+    if metadata.len() > QUEUE_FILE_MAX_BYTES {
+        return Err(QueueExecutionErrorDetail::new(
+            "work-order-file-too-large",
+            format!(
+                "작업 지시서 파일이 허용 크기인 {}바이트를 초과했습니다: {}",
+                QUEUE_FILE_MAX_BYTES,
+                display_path(path)
+            ),
+        ));
+    }
+
     let content = fs::read_to_string(path)
         .map_err(|error| execution_io_error("work-order-file-read-failed", path, error))?;
     serde_json::from_str(&content).map_err(|_| {
@@ -423,6 +438,20 @@ mod tests {
         .expect_err("external canonical parent must be rejected");
 
         assert_eq!(error.code, "work-order-file-invalid");
+    }
+
+    #[test]
+    fn oversized_work_order_is_rejected_before_json_parsing() {
+        let tempdir = tempfile::tempdir().expect("temporary workspace");
+        let work_order_path = tempdir.path().join("oversized.workduck-work-order.json");
+        fs::write(&work_order_path, vec![b' '; 1_048_577]).expect("oversized work order fixture");
+
+        let error = match read_work_order(&work_order_path) {
+            Ok(_) => panic!("oversized work order must fail"),
+            Err(error) => error,
+        };
+
+        assert_eq!(error.code, "work-order-file-too-large");
     }
 
     #[test]

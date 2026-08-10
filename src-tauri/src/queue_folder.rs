@@ -9,6 +9,7 @@ use crate::atomic_file_write::{
     write_file_atomically, write_file_exclusively, AtomicFileWriteError,
 };
 use crate::path_display::display_path;
+use crate::queue_limits::{QUEUE_FILE_MAX_BYTES, QUEUE_FOLDER_MAX_FILES};
 use crate::workspace_path::{validate_absolute_directory_path, WorkspacePathValidationError};
 
 const QUEUE_DIRECTORY_NAME: &str = "queue";
@@ -241,6 +242,10 @@ pub fn read_queue_file(workspace_path: String, relative_path: String) -> QueueFi
         Err(error) => return invalid_file_read(error),
     };
 
+    if queue_file_exceeds_size_limit(&file_path).unwrap_or(true) {
+        return invalid_file_read(QueueFolderError::FileReadFailed);
+    }
+
     match fs::read_to_string(&file_path) {
         Ok(content) => QueueFileReadResult {
             ok: true,
@@ -278,6 +283,12 @@ pub fn write_queue_work_order_file(
         .join(WORK_ORDERS_DIRECTORY_NAME)
         .join(&safe_file_name);
 
+    if content.len() as u64 > QUEUE_FILE_MAX_BYTES {
+        return invalid_file_read(QueueFolderError::FileWriteFailed);
+    }
+    if ensure_queue_file_capacity(&queue_root).is_err() {
+        return invalid_file_read(QueueFolderError::FileWriteFailed);
+    }
     if let Err(error) = ensure_unique_evaluation_delegation(&queue_root, None, &content) {
         return invalid_file_read(error);
     }
@@ -314,6 +325,12 @@ pub fn write_queue_result_report_file(
     let relative_path = format!("{REPORTS_DIRECTORY_NAME}/{safe_file_name}");
     let file_path = queue_root.join(REPORTS_DIRECTORY_NAME).join(&safe_file_name);
 
+    if content.len() as u64 > QUEUE_FILE_MAX_BYTES {
+        return invalid_file_read(QueueFolderError::FileWriteFailed);
+    }
+    if ensure_queue_file_capacity(&queue_root).is_err() {
+        return invalid_file_read(QueueFolderError::FileWriteFailed);
+    }
     match write_file_exclusively(&file_path, &content).map_err(map_atomic_file_write_error) {
         Ok(_) => QueueFileReadResult {
             ok: true,
@@ -350,6 +367,9 @@ pub fn update_queue_work_order_file(
         Err(error) => return invalid_file_read(error),
     };
 
+    if content.len() as u64 > QUEUE_FILE_MAX_BYTES {
+        return invalid_file_read(QueueFolderError::FileWriteFailed);
+    }
     if let Err(error) =
         ensure_unique_evaluation_delegation(&queue_root, Some(&normalized_relative_path), &content)
     {
@@ -392,6 +412,9 @@ pub fn update_queue_result_report_file(
         Err(error) => return invalid_file_read(error),
     };
 
+    if content.len() as u64 > QUEUE_FILE_MAX_BYTES {
+        return invalid_file_read(QueueFolderError::FileWriteFailed);
+    }
     match write_file_atomically(&file_path, &content).map_err(map_atomic_file_write_error) {
         Ok(_) => QueueFileReadResult {
             ok: true,
@@ -503,6 +526,14 @@ fn list_known_queue_files(queue_root: &Path) -> Result<Vec<QueueFileEntry>, Queu
     Ok(files)
 }
 
+fn ensure_queue_file_capacity(queue_root: &Path) -> Result<(), QueueFolderError> {
+    if list_known_queue_files(queue_root)?.len() >= QUEUE_FOLDER_MAX_FILES {
+        return Err(QueueFolderError::FileWriteFailed);
+    }
+
+    Ok(())
+}
+
 fn collect_known_queue_files(
     queue_root: &Path,
     child_dir: &str,
@@ -523,6 +554,10 @@ fn collect_known_queue_files(
 
         if is_queue_placeholder_file(&file_name) {
             continue;
+        }
+
+        if files.len() >= QUEUE_FOLDER_MAX_FILES {
+            return Err(QueueFolderError::ListFailed);
         }
 
         let kind = classify_queue_file(child_dir, &file_name).unwrap_or(QueueFileKind::Unsupported);
@@ -567,8 +602,15 @@ fn read_queue_file_execution_state(
     }
 
     let file_path = resolve_queue_file_path(queue_root, &file.relative_path).ok()?;
+    if queue_file_exceeds_size_limit(&file_path).ok()? {
+        return None;
+    }
     let content = fs::read_to_string(file_path).ok()?;
     read_queue_content_execution_state(&content)
+}
+
+fn queue_file_exceeds_size_limit(path: &Path) -> io::Result<bool> {
+    Ok(fs::metadata(path)?.len() > QUEUE_FILE_MAX_BYTES)
 }
 
 fn read_queue_content_execution_state(content: &str) -> Option<&'static str> {
@@ -962,6 +1004,53 @@ mod tests {
         assert_eq!(result, Ok(()));
         assert_eq!(content, "new content");
         assert!(temp_files.is_empty(), "temporary files left behind: {temp_files:?}");
+    }
+
+    #[test]
+    fn oversized_queue_content_is_rejected_before_file_creation() {
+        let workspace = tempfile::tempdir().expect("temporary workspace");
+        let file_name = "oversized.workduck-work-order.json";
+
+        let result = write_queue_work_order_file(
+            workspace.path().to_string_lossy().into_owned(),
+            file_name.to_string(),
+            "x".repeat(QUEUE_FILE_MAX_BYTES as usize + 1),
+        );
+
+        assert!(!result.ok);
+        assert_eq!(result.error, Some(QueueFolderError::FileWriteFailed));
+        assert!(!workspace
+            .path()
+            .join(QUEUE_DIRECTORY_NAME)
+            .join(WORK_ORDERS_DIRECTORY_NAME)
+            .join(file_name)
+            .exists());
+    }
+
+    #[test]
+    fn queue_listing_stops_before_exceeding_the_file_count_cap() {
+        let queue_root = create_test_queue_root();
+        let file_path = queue_root
+            .join(WORK_ORDERS_DIRECTORY_NAME)
+            .join("overflow.workduck-work-order.json");
+        fs::write(&file_path, "{}").expect("overflow queue file");
+        let mut files = (0..QUEUE_FOLDER_MAX_FILES)
+            .map(|index| QueueFileEntry {
+                relative_path: format!("reports/existing-{index}.workduck-report.json"),
+                file_name: format!("existing-{index}.workduck-report.json"),
+                kind: QueueFileKind::ResultReport,
+            })
+            .collect::<Vec<_>>();
+
+        let result = collect_known_queue_files(
+            &queue_root,
+            WORK_ORDERS_DIRECTORY_NAME,
+            &mut files,
+        );
+        fs::remove_dir_all(&queue_root).ok();
+
+        assert_eq!(result, Err(QueueFolderError::ListFailed));
+        assert_eq!(files.len(), QUEUE_FOLDER_MAX_FILES);
     }
 
     #[test]

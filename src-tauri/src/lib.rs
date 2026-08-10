@@ -21,6 +21,7 @@ mod project_repository_operation_store;
 mod project_repository_import_attempt_store;
 mod queue_execution_identity;
 mod queue_folder;
+mod queue_limits;
 mod queue_model_catalog;
 mod queue_prompt_builder;
 mod queue_provider_client;
