@@ -10,6 +10,7 @@ use std::{
 use crate::ssealed_scaffold_generated::{
     SsealedScaffold, SSEALED_SCAFFOLD_TOOL_VERSION, SSEALED_SCAFFOLDS,
 };
+use crate::atomic_file_write::{write_file_atomically, write_file_exclusively};
 use crate::workspace_path::{validate_absolute_directory_path, WorkspacePathValidationError};
 use crate::windows_filename::is_windows_reserved_name;
 use sha2::{Digest, Sha256};
@@ -20,6 +21,8 @@ const PROJECT_FOLDER_NAME_MAX_CHARS: usize = 80;
 const DELETE_FOLDER_MAX_ATTEMPTS: usize = 4;
 const DELETE_FOLDER_RETRY_DELAY: Duration = Duration::from_millis(75);
 const SSEALED_SCAFFOLD_LOCK_FILE_NAME: &str = ".ssealed-init.lock";
+const SSEALED_SCAFFOLD_APPLY_JOURNAL_FILE_NAME: &str = "apply-journal.json";
+const SSEALED_SCAFFOLD_APPLY_JOURNAL_VERSION: u32 = 1;
 
 #[derive(serde::Serialize)]
 pub enum ProjectFolderError {
@@ -117,7 +120,7 @@ pub struct ProjectFolderDelete {
     error: Option<ProjectFolderError>,
 }
 
-#[derive(serde::Serialize)]
+#[derive(Clone, serde::Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ProjectFolderSsealedScaffoldFilePlan {
     path: String,
@@ -126,7 +129,7 @@ pub struct ProjectFolderSsealedScaffoldFilePlan {
     status: String,
 }
 
-#[derive(serde::Serialize)]
+#[derive(Clone, serde::Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ProjectFolderSsealedScaffoldPlan {
     tool_version: &'static str,
@@ -149,6 +152,20 @@ pub struct ProjectFolderSsealedScaffoldApply {
     plan: Option<ProjectFolderSsealedScaffoldPlan>,
     #[serde(skip_serializing_if = "Option::is_none")]
     error: Option<ProjectFolderError>,
+}
+
+#[derive(serde::Deserialize, serde::Serialize)]
+#[serde(rename_all = "camelCase")]
+struct SsealedScaffoldApplyJournal {
+    version: u32,
+    manifest_checksum: String,
+    files: Vec<SsealedScaffoldApplyJournalFile>,
+}
+
+#[derive(serde::Deserialize, serde::Serialize)]
+struct SsealedScaffoldApplyJournalFile {
+    path: String,
+    checksum: String,
 }
 
 #[tauri::command]
@@ -902,9 +919,11 @@ fn create_ssealed_repository_scaffold_plan(
 ) -> Result<ProjectFolderSsealedScaffoldPlan, ProjectFolderError> {
     let scaffold =
         find_ssealed_scaffold(scope, profile).ok_or(ProjectFolderError::SsealedScaffoldFailed)?;
+    if should_apply {
+        recover_ssealed_repository_apply_journal(target_path)?;
+    }
     let mut files = Vec::with_capacity(scaffold.files.len());
     let mut missing_count = 0;
-    let mut added_count = 0;
     let mut unchanged_count = 0;
     let mut conflict_count = 0;
 
@@ -916,16 +935,8 @@ fn create_ssealed_repository_scaffold_plan(
             file.content,
         )?;
 
-        let status = if should_apply && status == "missing" {
-            write_missing_ssealed_repository_scaffold_file(target_path, file.path, file.content)?;
-            "added"
-        } else {
-            status
-        };
-
         match status {
             "missing" => missing_count += 1,
-            "added" => added_count += 1,
             "unchanged" => unchanged_count += 1,
             "conflict" => conflict_count += 1,
             _ => return Err(ProjectFolderError::SsealedScaffoldFailed),
@@ -947,16 +958,115 @@ fn create_ssealed_repository_scaffold_plan(
         runner: scaffold.runner,
         files,
         missing_count,
-        added_count,
+        added_count: 0,
         unchanged_count,
         conflict_count,
     };
 
     if should_apply {
-        write_ssealed_repository_apply_manifest(target_path, &plan)?;
+        apply_ssealed_repository_scaffold_plan(target_path, scaffold, plan, None)
+    } else {
+        Ok(plan)
+    }
+}
+
+fn apply_ssealed_repository_scaffold_plan(
+    target_path: &Path,
+    scaffold: &SsealedScaffold,
+    plan: ProjectFolderSsealedScaffoldPlan,
+    failure_after_created_files: Option<usize>,
+) -> Result<ProjectFolderSsealedScaffoldPlan, ProjectFolderError> {
+    let mut committed_plan = plan.clone();
+    for file in &mut committed_plan.files {
+        if file.status == "missing" {
+            file.status = "added".to_string();
+        }
+    }
+    committed_plan.added_count = committed_plan.missing_count;
+    committed_plan.missing_count = 0;
+
+    let manifest_content = create_ssealed_repository_apply_manifest_content(&committed_plan)?;
+    let missing_files = scaffold
+        .files
+        .iter()
+        .filter(|file| {
+            plan.files
+                .iter()
+                .any(|planned| planned.path == file.path && planned.status == "missing")
+        })
+        .collect::<Vec<_>>();
+    let staging_directory = tempfile::Builder::new()
+        .prefix(".ssealed-stage.")
+        .tempdir_in(target_path)
+        .map_err(|_| ProjectFolderError::SsealedScaffoldFailed)?;
+
+    for file in &missing_files {
+        let staging_path = resolve_ssealed_scaffold_file_path(staging_directory.path(), file.path)?;
+        create_ssealed_scaffold_parent_directories(staging_directory.path(), file.path)?;
+        fs::write(staging_path, file.content)
+            .map_err(|_| ProjectFolderError::SsealedScaffoldFailed)?;
     }
 
-    Ok(plan)
+    for file in &missing_files {
+        if inspect_ssealed_repository_scaffold_file(target_path, file.path, file.content)? != "missing"
+        {
+            return Err(ProjectFolderError::Conflict);
+        }
+    }
+
+    let journal = SsealedScaffoldApplyJournal {
+        version: SSEALED_SCAFFOLD_APPLY_JOURNAL_VERSION,
+        manifest_checksum: sha256_checksum(&manifest_content),
+        files: missing_files
+            .iter()
+            .map(|file| SsealedScaffoldApplyJournalFile {
+                path: file.path.to_string(),
+                checksum: sha256_checksum(file.content),
+            })
+            .collect(),
+    };
+    let journal_path = write_ssealed_repository_apply_journal(target_path, &journal)?;
+    let mut created_files = Vec::with_capacity(missing_files.len());
+    let mut created_directories = Vec::new();
+
+    let apply_result = (|| {
+        for file in &missing_files {
+            create_ssealed_scaffold_parent_directories_tracking(
+                target_path,
+                file.path,
+                &mut created_directories,
+            )?;
+            let staging_path =
+                resolve_ssealed_scaffold_file_path(staging_directory.path(), file.path)?;
+            let staged_content = fs::read_to_string(staging_path)
+                .map_err(|_| ProjectFolderError::SsealedScaffoldFailed)?;
+            let target_file_path = resolve_ssealed_scaffold_file_path(target_path, file.path)?;
+            write_file_exclusively(&target_file_path, &staged_content).map_err(|error| match error {
+                crate::atomic_file_write::AtomicFileWriteError::TargetAlreadyExists => {
+                    ProjectFolderError::Conflict
+                }
+                _ => ProjectFolderError::SsealedScaffoldFailed,
+            })?;
+            created_files.push(target_file_path);
+
+            if failure_after_created_files
+                .is_some_and(|limit| created_files.len() >= limit)
+            {
+                return Err(ProjectFolderError::SsealedScaffoldFailed);
+            }
+        }
+
+        write_ssealed_repository_manifest_file(target_path, &manifest_content)
+    })();
+
+    if let Err(error) = apply_result {
+        rollback_ssealed_repository_apply(&created_files, &created_directories);
+        let _ = fs::remove_file(&journal_path);
+        return Err(error);
+    }
+
+    let _ = fs::remove_file(journal_path);
+    Ok(committed_plan)
 }
 
 fn inspect_ssealed_repository_scaffold_file(
@@ -1019,26 +1129,17 @@ fn has_ssealed_repository_scaffold_parent_conflict(
     Ok(false)
 }
 
-fn write_missing_ssealed_repository_scaffold_file(
-    target_path: &Path,
-    relative_path: &str,
-    content: &str,
-) -> Result<(), ProjectFolderError> {
-    let file_path = resolve_ssealed_scaffold_file_path(target_path, relative_path)?;
-
-    match fs::symlink_metadata(&file_path) {
-        Ok(_) => return Err(ProjectFolderError::Conflict),
-        Err(error) if error.kind() == io::ErrorKind::NotFound => {}
-        Err(_) => return Err(ProjectFolderError::SsealedScaffoldFailed),
-    }
-
-    create_ssealed_scaffold_parent_directories(target_path, relative_path)?;
-    fs::write(file_path, content).map_err(|_| ProjectFolderError::SsealedScaffoldFailed)
-}
-
 fn create_ssealed_scaffold_parent_directories(
     target_path: &Path,
     relative_path: &str,
+) -> Result<(), ProjectFolderError> {
+    create_ssealed_scaffold_parent_directories_tracking(target_path, relative_path, &mut Vec::new())
+}
+
+fn create_ssealed_scaffold_parent_directories_tracking(
+    target_path: &Path,
+    relative_path: &str,
+    created_directories: &mut Vec<PathBuf>,
 ) -> Result<(), ProjectFolderError> {
     let relative_path = validate_ssealed_scaffold_relative_path(relative_path)?;
     let mut current_path = target_path.to_path_buf();
@@ -1059,6 +1160,7 @@ fn create_ssealed_scaffold_parent_directories(
             Err(error) if error.kind() == io::ErrorKind::NotFound => {
                 fs::create_dir(&current_path)
                     .map_err(|_| ProjectFolderError::SsealedScaffoldFailed)?;
+                created_directories.push(current_path.clone());
             }
             Err(_) => return Err(ProjectFolderError::SsealedScaffoldFailed),
         }
@@ -1126,10 +1228,9 @@ fn validate_ssealed_scaffold_relative_path(
     }
 }
 
-fn write_ssealed_repository_apply_manifest(
-    target_path: &Path,
+fn create_ssealed_repository_apply_manifest_content(
     plan: &ProjectFolderSsealedScaffoldPlan,
-) -> Result<(), ProjectFolderError> {
+) -> Result<String, ProjectFolderError> {
     let manifest_files: Vec<_> = plan
         .files
         .iter()
@@ -1174,16 +1275,31 @@ fn write_ssealed_repository_apply_manifest(
     let manifest_content =
         serde_json::to_string_pretty(&manifest).map_err(|_| ProjectFolderError::SsealedScaffoldFailed)?;
 
-    write_ssealed_repository_manifest_file(
-        target_path,
-        &(manifest_content + "\n"),
-    )
+    Ok(manifest_content + "\n")
 }
 
 fn write_ssealed_repository_manifest_file(
     target_path: &Path,
     content: &str,
 ) -> Result<(), ProjectFolderError> {
+    let manifest_directory = ensure_ssealed_manifest_directory(target_path)?;
+    let manifest_path = manifest_directory.join("manifest.json");
+
+    match fs::symlink_metadata(&manifest_path) {
+        Ok(metadata) => {
+            if metadata_is_link_or_reparse(&metadata) || metadata.is_dir() {
+                return Err(ProjectFolderError::Conflict);
+            }
+        }
+        Err(error) if error.kind() == io::ErrorKind::NotFound => {}
+        Err(_) => return Err(ProjectFolderError::SsealedScaffoldFailed),
+    }
+
+    write_file_atomically(&manifest_path, content)
+        .map_err(|_| ProjectFolderError::SsealedScaffoldFailed)
+}
+
+fn ensure_ssealed_manifest_directory(target_path: &Path) -> Result<PathBuf, ProjectFolderError> {
     let manifest_directory = target_path.join(".ssealed");
 
     match fs::symlink_metadata(&manifest_directory) {
@@ -1206,9 +1322,17 @@ fn write_ssealed_repository_manifest_file(
         return Err(ProjectFolderError::SsealedScaffoldFailed);
     }
 
-    let manifest_path = manifest_directory.join("manifest.json");
+    Ok(normalized_manifest_directory)
+}
 
-    match fs::symlink_metadata(&manifest_path) {
+fn write_ssealed_repository_apply_journal(
+    target_path: &Path,
+    journal: &SsealedScaffoldApplyJournal,
+) -> Result<PathBuf, ProjectFolderError> {
+    let manifest_directory = ensure_ssealed_manifest_directory(target_path)?;
+    let journal_path = manifest_directory.join(SSEALED_SCAFFOLD_APPLY_JOURNAL_FILE_NAME);
+
+    match fs::symlink_metadata(&journal_path) {
         Ok(metadata) => {
             if metadata_is_link_or_reparse(&metadata) || metadata.is_dir() {
                 return Err(ProjectFolderError::Conflict);
@@ -1218,7 +1342,83 @@ fn write_ssealed_repository_manifest_file(
         Err(_) => return Err(ProjectFolderError::SsealedScaffoldFailed),
     }
 
-    fs::write(manifest_path, content).map_err(|_| ProjectFolderError::SsealedScaffoldFailed)
+    let content = serde_json::to_string_pretty(journal)
+        .map_err(|_| ProjectFolderError::SsealedScaffoldFailed)?
+        + "\n";
+    write_file_atomically(&journal_path, &content)
+        .map_err(|_| ProjectFolderError::SsealedScaffoldFailed)?;
+    Ok(journal_path)
+}
+
+fn recover_ssealed_repository_apply_journal(
+    target_path: &Path,
+) -> Result<(), ProjectFolderError> {
+    let manifest_directory = target_path.join(".ssealed");
+    match fs::symlink_metadata(&manifest_directory) {
+        Ok(metadata) => {
+            if metadata_is_link_or_reparse(&metadata) || !metadata.is_dir() {
+                return Err(ProjectFolderError::Conflict);
+            }
+        }
+        Err(error) if error.kind() == io::ErrorKind::NotFound => return Ok(()),
+        Err(_) => return Err(ProjectFolderError::SsealedScaffoldFailed),
+    }
+    let normalized_manifest_directory = fs::canonicalize(&manifest_directory)
+        .map_err(|_| ProjectFolderError::SsealedScaffoldFailed)?;
+    if !normalized_manifest_directory.starts_with(target_path) {
+        return Err(ProjectFolderError::SsealedScaffoldFailed);
+    }
+
+    let journal_path = normalized_manifest_directory.join(SSEALED_SCAFFOLD_APPLY_JOURNAL_FILE_NAME);
+    let journal_content = match fs::read_to_string(&journal_path) {
+        Ok(content) => content,
+        Err(error) if error.kind() == io::ErrorKind::NotFound => return Ok(()),
+        Err(_) => return Err(ProjectFolderError::SsealedScaffoldFailed),
+    };
+    let journal: SsealedScaffoldApplyJournal = serde_json::from_str(&journal_content)
+        .map_err(|_| ProjectFolderError::SsealedScaffoldFailed)?;
+    if journal.version != SSEALED_SCAFFOLD_APPLY_JOURNAL_VERSION {
+        return Err(ProjectFolderError::SsealedScaffoldFailed);
+    }
+
+    let manifest_committed = fs::read_to_string(normalized_manifest_directory.join("manifest.json"))
+        .map(|content| sha256_checksum(&content) == journal.manifest_checksum)
+        .unwrap_or(false);
+    if !manifest_committed {
+        for file in journal.files.iter().rev() {
+            let file_path = resolve_ssealed_scaffold_file_path(target_path, &file.path)?;
+            let should_remove = match fs::symlink_metadata(&file_path) {
+                Ok(metadata)
+                    if !metadata_is_link_or_reparse(&metadata) && metadata.is_file() =>
+                {
+                    fs::read_to_string(&file_path)
+                        .map(|content| sha256_checksum(&content) == file.checksum)
+                        .unwrap_or(false)
+                }
+                Ok(_) => false,
+                Err(error) if error.kind() == io::ErrorKind::NotFound => false,
+                Err(_) => return Err(ProjectFolderError::SsealedScaffoldFailed),
+            };
+            if should_remove {
+                fs::remove_file(file_path)
+                    .map_err(|_| ProjectFolderError::SsealedScaffoldFailed)?;
+            }
+        }
+    }
+
+    fs::remove_file(journal_path).map_err(|_| ProjectFolderError::SsealedScaffoldFailed)
+}
+
+fn rollback_ssealed_repository_apply(
+    created_files: &[PathBuf],
+    created_directories: &[PathBuf],
+) {
+    for file_path in created_files.iter().rev() {
+        let _ = fs::remove_file(file_path);
+    }
+    for directory_path in created_directories.iter().rev() {
+        let _ = fs::remove_dir(directory_path);
+    }
 }
 
 struct SsealedScaffoldLock {
@@ -1896,5 +2096,93 @@ mod tests {
             .unwrap_or_else(|_| panic!("stale lock metadata should be recovered"));
         drop(lock);
         assert!(!lock_path.exists());
+    }
+
+    #[test]
+    fn existing_repository_scaffold_rolls_back_only_new_files_after_mid_commit_failure() {
+        let repository = tempfile::tempdir().expect("repository");
+        let target_path = fs::canonicalize(repository.path()).expect("canonical repository");
+        let scaffold = find_ssealed_scaffold("backend", "generic").expect("backend scaffold");
+        let preserved_file = &scaffold.files[0];
+        create_ssealed_scaffold_parent_directories(&target_path, preserved_file.path)
+            .unwrap_or_else(|_| panic!("preserved file parent should be created"));
+        fs::write(
+            resolve_ssealed_scaffold_file_path(&target_path, preserved_file.path)
+                .unwrap_or_else(|_| panic!("preserved file path")),
+            "user-owned content\n",
+        )
+        .expect("preserved file");
+        let plan = create_ssealed_repository_scaffold_plan(
+            &target_path,
+            scaffold.scope,
+            scaffold.profile,
+            false,
+        )
+        .unwrap_or_else(|_| panic!("scaffold plan"));
+        let missing_paths = plan
+            .files
+            .iter()
+            .filter(|file| file.status == "missing")
+            .map(|file| file.path.clone())
+            .collect::<Vec<_>>();
+
+        let result = apply_ssealed_repository_scaffold_plan(
+            &target_path,
+            scaffold,
+            plan,
+            Some(1),
+        );
+
+        assert!(result.is_err());
+        assert_eq!(
+            fs::read_to_string(
+                resolve_ssealed_scaffold_file_path(&target_path, preserved_file.path)
+                    .unwrap_or_else(|_| panic!("preserved file path"))
+            )
+            .expect("preserved content"),
+            "user-owned content\n"
+        );
+        for missing_path in missing_paths {
+            assert!(
+                !resolve_ssealed_scaffold_file_path(&target_path, &missing_path)
+                    .unwrap_or_else(|_| panic!("missing file path"))
+                    .exists(),
+                "new scaffold file should be rolled back: {missing_path}"
+            );
+        }
+        assert!(!target_path.join(".ssealed/manifest.json").exists());
+        assert!(!target_path
+            .join(".ssealed")
+            .join(SSEALED_SCAFFOLD_APPLY_JOURNAL_FILE_NAME)
+            .exists());
+    }
+
+    #[test]
+    fn stale_scaffold_apply_journal_removes_matching_partial_files() {
+        let repository = tempfile::tempdir().expect("repository");
+        let target_path = fs::canonicalize(repository.path()).expect("canonical repository");
+        let relative_path = "generated/partial.txt";
+        let partial_content = "partial generated content\n";
+        create_ssealed_scaffold_parent_directories(&target_path, relative_path)
+            .unwrap_or_else(|_| panic!("partial parent"));
+        let partial_path = resolve_ssealed_scaffold_file_path(&target_path, relative_path)
+            .unwrap_or_else(|_| panic!("partial path"));
+        fs::write(&partial_path, partial_content).expect("partial file");
+        let journal = SsealedScaffoldApplyJournal {
+            version: SSEALED_SCAFFOLD_APPLY_JOURNAL_VERSION,
+            manifest_checksum: "sha256:not-committed".to_string(),
+            files: vec![SsealedScaffoldApplyJournalFile {
+                path: relative_path.to_string(),
+                checksum: sha256_checksum(partial_content),
+            }],
+        };
+        let journal_path = write_ssealed_repository_apply_journal(&target_path, &journal)
+            .unwrap_or_else(|_| panic!("journal write"));
+
+        recover_ssealed_repository_apply_journal(&target_path)
+            .unwrap_or_else(|_| panic!("journal recovery"));
+
+        assert!(!partial_path.exists());
+        assert!(!journal_path.exists());
     }
 }
