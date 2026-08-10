@@ -1,0 +1,8 @@
+workduck.cli.execution
+workduck.cli.launcher
+workduck.contract.schemas
+workduck.desktop.commands
+workduck.process.tree
+workduck.projects.repository-task
+workduck.projects.storage
+workduck.queue.read-state

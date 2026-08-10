@@ -1,0 +1,104 @@
+{
+  "assembly": {
+    "basePartitionIds": [
+      "package:tool-definitions",
+      "package:agent-protocol",
+      "repository:core"
+    ],
+    "modulePartitionIds": [
+      "module:workduck.cli",
+      "module:workduck.contract",
+      "module:workduck.desktop",
+      "module:workduck.process",
+      "module:workduck.projects",
+      "module:workduck.queue"
+    ],
+    "volatileContextAfter": true
+  },
+  "bundleHash": "3e9826c073c789e707e84237b4ba8e0e524bd7508aee3c16334aff5cb3a1ed6c",
+  "partitions": [
+    {
+      "cacheBoundaryAfter": true,
+      "cacheScope": "package",
+      "content": "[\n  {\n    \"description\": \"Find the most relevant semantic cards for a coding task.\",\n    \"inputSchema\": {\n      \"additionalProperties\": false,\n      \"properties\": {\n        \"task\": {\n          \"description\": \"Task language to search for.\",\n          \"minLength\": 1,\n          \"type\": \"string\"\n        },\n        \"top\": {\n          \"default\": 5,\n          \"description\": \"Maximum results.\",\n          \"maximum\": 100,\n          \"minimum\": 1,\n          \"type\": \"integer\"\n        }\n      },\n      \"required\": [\n        \"task\"\n      ],\n      \"type\": \"object\"\n    },\n    \"name\": \"llmnav_query\",\n    \"schemaVersion\": 1\n  },\n  {\n    \"description\": \"Resolve one local or qualified workspace semantic ID.\",\n    \"inputSchema\": {\n      \"additionalProperties\": false,\n      \"properties\": {\n        \"id\": {\n          \"description\": \"Semantic ID or repository-qualified semantic ID.\",\n          \"minLength\": 1,\n          \"type\": \"string\"\n        }\n      },\n      \"required\": [\n        \"id\"\n      ],\n      \"type\": \"object\"\n    },\n    \"name\": \"llmnav_show\",\n    \"schemaVersion\": 1\n  },\n  {\n    \"description\": \"Build bounded semantic and graph context around one ID.\",\n    \"inputSchema\": {\n      \"additionalProperties\": false,\n      \"properties\": {\n        \"budget\": {\n          \"default\": 2500,\n          \"description\": \"Approximate token budget.\",\n          \"maximum\": 100000,\n          \"minimum\": 128,\n          \"type\": \"integer\"\n        },\n        \"depth\": {\n          \"default\": 1,\n          \"description\": \"Maximum graph traversal depth.\",\n          \"maximum\": 8,\n          \"minimum\": 0,\n          \"type\": \"integer\"\n        },\n        \"id\": {\n          \"description\": \"Semantic ID or repository-qualified semantic ID.\",\n          \"minLength\": 1,\n          \"type\": \"string\"\n        },\n        \"maxEdges\": {\n          \"default\": 24,\n          \"description\": \"Maximum graph edges to inspect and pack.\",\n          \"maximum\": 1000,\n          \"minimum\": 0,\n          \"type\": \"integer\"\n        }\n      },\n      \"required\": [\n        \"id\"\n      ],\n      \"type\": \"object\"\n    },\n    \"name\": \"llmnav_context\",\n    \"schemaVersion\": 1\n  },\n  {\n    \"description\": \"Validate semantic cards and configured graph inputs without mutation.\",\n    \"inputSchema\": {\n      \"additionalProperties\": false,\n      \"properties\": {\n        \"paths\": {\n          \"default\": [],\n          \"description\": \"Optional repository-relative paths to validate.\",\n          \"items\": {\n            \"minLength\": 1,\n            \"type\": \"string\"\n          },\n          \"type\": \"array\"\n        }\n      },\n      \"required\": [],\n      \"type\": \"object\"\n    },\n    \"name\": \"llmnav_check\",\n    \"schemaVersion\": 1\n  }\n]\n",
+      "contentHash": "d0fb5a43b36f123589b217e0ebefaf4f81c43a9c333654b0f9e88e26a3ec7ce1",
+      "contentType": "application/json",
+      "estimatedTokens": 665,
+      "id": "package:tool-definitions"
+    },
+    {
+      "cacheBoundaryAfter": true,
+      "cacheScope": "package",
+      "content": "## LLMNav code navigation\n\n<!-- llmnav:start -->\nBefore broad grep, directory scans, or opening many source files, run `npm exec -- llmnav query \"<task>\" --top 5`.\n\nResolve the selected semantic ID with `npm exec -- llmnav show <id>`. Use `npm exec -- llmnav context <id> --depth 1 --budget 2500` when related policy, workflow, fallback, migration, or test cards are needed.\n\nWhen the host supports structured tools, load the provider-neutral definitions from `npm exec -- llmnav tools --json`. Keep the repository root bound by the host rather than accepting it from model-generated tool input.\n\nRead generated cards and signatures before opening full symbol bodies. Treat paths, line numbers, signatures, imports, and hashes as generated data rather than source-of-truth annotations.\n\nKeep an existing LLMNav ID when a symbol or file is renamed or moved. Change `role`, `invariant`, `effect`, `risk`, and semantic `rel` values only when behavior or contracts change.\n\nDo not add hand-maintained `calls`, `imports`, `references`, `implements`, `exports`, or `overrides` relations. Do not put paths, line numbers, commit hashes, timestamps, callers, or current signatures in LLMNav source comments.\n\nAfter initialization and whenever public entrypoints, commands, routes, schemas, migrations, or high fan-in modules change, run `npm exec -- llmnav audit`. Review high and medium candidates; never add cards automatically. Add a module card only after confirming a durable responsibility, then encode the accepted boundary in a path-specific `coverageRules` entry and add a representative retrieval query.\n\nAfter semantic changes, run `npm exec -- llmnav format`, `npm exec -- llmnav check`, and `npm exec -- llmnav generate`. Use broad text search only when LLMNav returns no credible candidate.\n<!-- llmnav:end -->",
+      "contentHash": "936d109e3437e794f84eaf4da4c7d4adf23fb47013464a494d8c984d147ca43a",
+      "contentType": "text/markdown",
+      "estimatedTokens": 454,
+      "id": "package:agent-protocol"
+    },
+    {
+      "cacheBoundaryAfter": true,
+      "cacheScope": "repository",
+      "content": "llmnav-catalog/1 repository=workduck catalog=repository\nRead semantic cards before opening source. Resolve current paths and signatures with llmnav query or show.\n\n@workduck.cli.execution\nrole Execute queue work orders and agent evaluations from the command line under explicit workspace and vault contracts.\nowns CLI option parsing, work-order discovery, queue execution, agent evaluation\nexcludes Node launcher, Tauri desktop command registry\ninvariant Failures retain stable error codes and JSON mode never reports an unsuccessful operation as success.\n\n@workduck.desktop.commands\nrole Assemble the Tauri desktop runtime, managed state, plugins, and explicit frontend-to-native command registry.\nowns Tauri application lifecycle, invoke handler registry, native managed state\nexcludes individual command implementation, frontend workflow state\ninvariant Frontend-accessible native operations are registered explicitly through the Tauri invoke handler.\n\n@workduck.process.tree\nrole Own spawned process trees and terminate their descendants across Windows jobs and Unix process groups.\nowns process tree spawning, cross-platform termination, active process registry\nexcludes task command selection, terminal output buffering\ninvariant Dropping an active process owner or shutting down the app cannot intentionally leave its registered descendants running.\n\n@workduck.projects.storage\nrole Persist workspace project registries through Tauri SQLite while migrating and preserving the browser legacy fallback.\nowns project registry persistence, legacy registry promotion, registry change notifications\nexcludes project domain normalization, repository Git operations\ninvariant A failed SQLite read or write returns an explicit error together with the safest available registry state.\n",
+      "contentHash": "44e8cc33f6522f3d5c97e58ce596730b6cf919e2547d541bd3f9821190087ac0",
+      "contentType": "text/plain",
+      "estimatedTokens": 446,
+      "id": "repository:core"
+    },
+    {
+      "cacheBoundaryAfter": true,
+      "cacheScope": "module",
+      "content": "llmnav-catalog/1 repository=workduck catalog=workduck.cli\nRead semantic cards before opening source. Resolve current paths and signatures with llmnav query or show.\n\n@workduck.cli.execution\nrole Execute queue work orders and agent evaluations from the command line under explicit workspace and vault contracts.\nowns CLI option parsing, work-order discovery, queue execution, agent evaluation\nexcludes Node launcher, Tauri desktop command registry\ninvariant Failures retain stable error codes and JSON mode never reports an unsuccessful operation as success.\n\n@workduck.cli.launcher\nrole Launch the locked Rust Workduck CLI from the repository while forwarding user arguments and its exit status.\nowns Node CLI shim, Cargo binary invocation, argument forwarding\nexcludes CLI command semantics, desktop application startup\ninvariant The launcher executes the locked workduck-cli binary from this repository and preserves its process result.\n",
+      "contentHash": "7d12975745e8aa322e67bbc51cfe0e064c9424d4fccc9334e7295734e28690e5",
+      "contentType": "text/plain",
+      "estimatedTokens": 235,
+      "id": "module:workduck.cli"
+    },
+    {
+      "cacheBoundaryAfter": true,
+      "cacheScope": "module",
+      "content": "llmnav-catalog/1 repository=workduck catalog=workduck.contract\nRead semantic cards before opening source. Resolve current paths and signatures with llmnav query or show.\n\n@workduck.contract.schemas\nrole Publish closed JSON Schema 2020-12 contracts for Workduck entities, queue artifacts, runs, and gates.\nowns schema identifiers, closed object schemas, domain enum projection\nexcludes runtime persistence, UI form validation\ninvariant Published object schemas reject undeclared properties unless a versioned contract explicitly permits them.\n",
+      "contentHash": "161ea3a95b1ec7ec75bddd48dfbae18026aa580df8f078475c477db90d11d17c",
+      "contentType": "text/plain",
+      "estimatedTokens": 136,
+      "id": "module:workduck.contract"
+    },
+    {
+      "cacheBoundaryAfter": true,
+      "cacheScope": "module",
+      "content": "llmnav-catalog/1 repository=workduck catalog=workduck.desktop\nRead semantic cards before opening source. Resolve current paths and signatures with llmnav query or show.\n\n@workduck.desktop.commands\nrole Assemble the Tauri desktop runtime, managed state, plugins, and explicit frontend-to-native command registry.\nowns Tauri application lifecycle, invoke handler registry, native managed state\nexcludes individual command implementation, frontend workflow state\ninvariant Frontend-accessible native operations are registered explicitly through the Tauri invoke handler.\n",
+      "contentHash": "ee614f66cc778b4a63cf7c8aa1deb4e339957cbce608631b7804e63ca59504a8",
+      "contentType": "text/plain",
+      "estimatedTokens": 142,
+      "id": "module:workduck.desktop"
+    },
+    {
+      "cacheBoundaryAfter": true,
+      "cacheScope": "module",
+      "content": "llmnav-catalog/1 repository=workduck catalog=workduck.process\nRead semantic cards before opening source. Resolve current paths and signatures with llmnav query or show.\n\n@workduck.process.tree\nrole Own spawned process trees and terminate their descendants across Windows jobs and Unix process groups.\nowns process tree spawning, cross-platform termination, active process registry\nexcludes task command selection, terminal output buffering\ninvariant Dropping an active process owner or shutting down the app cannot intentionally leave its registered descendants running.\n",
+      "contentHash": "00884cf236711967f9395817d228fd0d442ac8277705ecade9e8dadf815b8205",
+      "contentType": "text/plain",
+      "estimatedTokens": 143,
+      "id": "module:workduck.process"
+    },
+    {
+      "cacheBoundaryAfter": true,
+      "cacheScope": "module",
+      "content": "llmnav-catalog/1 repository=workduck catalog=workduck.projects\nRead semantic cards before opening source. Resolve current paths and signatures with llmnav query or show.\n\n@workduck.projects.repository-task\nrole Invoke bounded repository tasks through Tauri and normalize their commands, run records, states, and failures for the UI.\nowns repository task invocation, run record normalization, task error mapping\nexcludes native process execution, terminal rendering\ninvariant Malformed native responses never become successful typed task results.\n\n@workduck.projects.storage\nrole Persist workspace project registries through Tauri SQLite while migrating and preserving the browser legacy fallback.\nowns project registry persistence, legacy registry promotion, registry change notifications\nexcludes project domain normalization, repository Git operations\ninvariant A failed SQLite read or write returns an explicit error together with the safest available registry state.\n",
+      "contentHash": "deb4aa38b33d24139465f032d22fd87ff21fd8b921b95922ada7949bb30a4300",
+      "contentType": "text/plain",
+      "estimatedTokens": 243,
+      "id": "module:workduck.projects"
+    },
+    {
+      "cacheBoundaryAfter": true,
+      "cacheScope": "module",
+      "content": "llmnav-catalog/1 repository=workduck catalog=workduck.queue\nRead semantic cards before opening source. Resolve current paths and signatures with llmnav query or show.\n\n@workduck.queue.read-state\nrole Track workspace-scoped Queue read markers, unread counts, pruning, and browser change notifications.\nowns queue read markers, unread count, queue change events\nexcludes queue file persistence, work-order execution\ninvariant Unread counts ignore unsupported entries and stale read markers can be pruned against the current file set.\n",
+      "contentHash": "fa9c919ebb1e3783e493bfa3c1febd7833798e92c7509c4bf229c37745549a9f",
+      "contentType": "text/plain",
+      "estimatedTokens": 133,
+      "id": "module:workduck.queue"
+    }
+  ],
+  "repositoryId": "workduck",
+  "schemaVersion": 1
+}

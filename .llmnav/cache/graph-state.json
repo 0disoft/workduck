@@ -1,0 +1,239 @@
+{
+  "partitions": [
+    {
+      "edges": [],
+      "inputHash": "9fd0b8e0bd23e4738301b2080b293b7c3e1a96ba92b40251b5a66868bb1c0dfe",
+      "key": "card:workduck/workduck.cli.execution",
+      "nodes": [
+        {
+          "definitions": [],
+          "external": false,
+          "key": "workduck/workduck.cli.execution",
+          "location": {
+            "declarationLine": null,
+            "endLine": 9,
+            "exported": null,
+            "kind": null,
+            "language": null,
+            "path": "src-tauri/src/bin/workduck-cli.rs",
+            "receiver": null,
+            "signature": null,
+            "startLine": 1,
+            "symbol": null,
+            "visibility": null
+          },
+          "repositoryId": "workduck",
+          "role": "Execute queue work orders and agent evaluations from the command line under explicit workspace and vault contracts.",
+          "semanticId": "workduck.cli.execution"
+        }
+      ],
+      "outputHash": "d53b7c362b805736bc2fd9426af54bdcf3ae9038e6e41ace5419b56cf940e28b"
+    },
+    {
+      "edges": [],
+      "inputHash": "ed5366cb759348d8ef9bf3bdab3e13c4396c4f568e2fea63fe48d0194700d5f6",
+      "key": "card:workduck/workduck.cli.launcher",
+      "nodes": [
+        {
+          "definitions": [],
+          "external": false,
+          "key": "workduck/workduck.cli.launcher",
+          "location": {
+            "declarationLine": null,
+            "endLine": 10,
+            "exported": null,
+            "kind": null,
+            "language": null,
+            "path": "scripts/workduck.mjs",
+            "receiver": null,
+            "signature": null,
+            "startLine": 2,
+            "symbol": null,
+            "visibility": null
+          },
+          "repositoryId": "workduck",
+          "role": "Launch the locked Rust Workduck CLI from the repository while forwarding user arguments and its exit status.",
+          "semanticId": "workduck.cli.launcher"
+        }
+      ],
+      "outputHash": "f3b60f754959568dae457f1857bafa36bfb5336f1f03a9f54e9f6eaae41028fd"
+    },
+    {
+      "edges": [],
+      "inputHash": "4f7643bfaf36a8f7538c3fd424f20b2c42c9ddcb645cb0bc4f0b582f618d7bcf",
+      "key": "card:workduck/workduck.contract.schemas",
+      "nodes": [
+        {
+          "definitions": [],
+          "external": false,
+          "key": "workduck/workduck.contract.schemas",
+          "location": {
+            "declarationLine": null,
+            "endLine": 9,
+            "exported": null,
+            "kind": null,
+            "language": null,
+            "path": "packages/schemas/src/index.ts",
+            "receiver": null,
+            "signature": null,
+            "startLine": 1,
+            "symbol": null,
+            "visibility": null
+          },
+          "repositoryId": "workduck",
+          "role": "Publish closed JSON Schema 2020-12 contracts for Workduck entities, queue artifacts, runs, and gates.",
+          "semanticId": "workduck.contract.schemas"
+        }
+      ],
+      "outputHash": "5289013174fd9f6eac9c07a86b03a457f5b2d8a60731a73cea7eef9d202f212d"
+    },
+    {
+      "edges": [],
+      "inputHash": "0294d12c7819b544754854c0e1ecc017c8833724dfb0911f4f4fbcf079ee7880",
+      "key": "card:workduck/workduck.desktop.commands",
+      "nodes": [
+        {
+          "definitions": [],
+          "external": false,
+          "key": "workduck/workduck.desktop.commands",
+          "location": {
+            "declarationLine": null,
+            "endLine": 9,
+            "exported": null,
+            "kind": null,
+            "language": null,
+            "path": "src-tauri/src/lib.rs",
+            "receiver": null,
+            "signature": null,
+            "startLine": 1,
+            "symbol": null,
+            "visibility": null
+          },
+          "repositoryId": "workduck",
+          "role": "Assemble the Tauri desktop runtime, managed state, plugins, and explicit frontend-to-native command registry.",
+          "semanticId": "workduck.desktop.commands"
+        }
+      ],
+      "outputHash": "ef525672838b9b624e82bd208469ef319182bbae55ff6c7f8323cd1b3a38664f"
+    },
+    {
+      "edges": [],
+      "inputHash": "491e555e1c993464685adbafc1a18a545cb0654df2a5145adba6c88016cfc88d",
+      "key": "card:workduck/workduck.process.tree",
+      "nodes": [
+        {
+          "definitions": [],
+          "external": false,
+          "key": "workduck/workduck.process.tree",
+          "location": {
+            "declarationLine": null,
+            "endLine": 9,
+            "exported": null,
+            "kind": null,
+            "language": null,
+            "path": "src-tauri/src/process_tree.rs",
+            "receiver": null,
+            "signature": null,
+            "startLine": 1,
+            "symbol": null,
+            "visibility": null
+          },
+          "repositoryId": "workduck",
+          "role": "Own spawned process trees and terminate their descendants across Windows jobs and Unix process groups.",
+          "semanticId": "workduck.process.tree"
+        }
+      ],
+      "outputHash": "fc973378c77ef0f28c7df48b5c6105337af70dae579a82c524ff77db05159718"
+    },
+    {
+      "edges": [],
+      "inputHash": "68ccacc220195ff3c25b6fcff09ea4b70e495fcebdd0d55d517bda63a62502e0",
+      "key": "card:workduck/workduck.projects.repository-task",
+      "nodes": [
+        {
+          "definitions": [],
+          "external": false,
+          "key": "workduck/workduck.projects.repository-task",
+          "location": {
+            "declarationLine": null,
+            "endLine": 9,
+            "exported": null,
+            "kind": null,
+            "language": null,
+            "path": "src/lib/projects/project-repository-task.ts",
+            "receiver": null,
+            "signature": null,
+            "startLine": 1,
+            "symbol": null,
+            "visibility": null
+          },
+          "repositoryId": "workduck",
+          "role": "Invoke bounded repository tasks through Tauri and normalize their commands, run records, states, and failures for the UI.",
+          "semanticId": "workduck.projects.repository-task"
+        }
+      ],
+      "outputHash": "b9190f909a0997e32ad4fcce38d403a8c1baa50bb7de3ae8f5ab51f0be56f6ed"
+    },
+    {
+      "edges": [],
+      "inputHash": "def7792262c739413fa7ec0d7a15ead495a64a03e4f542b06df68a7d516230b2",
+      "key": "card:workduck/workduck.projects.storage",
+      "nodes": [
+        {
+          "definitions": [],
+          "external": false,
+          "key": "workduck/workduck.projects.storage",
+          "location": {
+            "declarationLine": null,
+            "endLine": 9,
+            "exported": null,
+            "kind": null,
+            "language": null,
+            "path": "src/lib/projects/project-storage.ts",
+            "receiver": null,
+            "signature": null,
+            "startLine": 1,
+            "symbol": null,
+            "visibility": null
+          },
+          "repositoryId": "workduck",
+          "role": "Persist workspace project registries through Tauri SQLite while migrating and preserving the browser legacy fallback.",
+          "semanticId": "workduck.projects.storage"
+        }
+      ],
+      "outputHash": "5c2662f042ecd2bc9d999c930e85e7fdab99b2b21ce2ba2957fafe44b75140a7"
+    },
+    {
+      "edges": [],
+      "inputHash": "029d41593c36f62a314574700e47f7f3174b89cd237490958f3f4cfcda6ad39d",
+      "key": "card:workduck/workduck.queue.read-state",
+      "nodes": [
+        {
+          "definitions": [],
+          "external": false,
+          "key": "workduck/workduck.queue.read-state",
+          "location": {
+            "declarationLine": null,
+            "endLine": 9,
+            "exported": null,
+            "kind": null,
+            "language": null,
+            "path": "src/lib/queue/queue-read-state.ts",
+            "receiver": null,
+            "signature": null,
+            "startLine": 1,
+            "symbol": null,
+            "visibility": null
+          },
+          "repositoryId": "workduck",
+          "role": "Track workspace-scoped Queue read markers, unread counts, pruning, and browser change notifications.",
+          "semanticId": "workduck.queue.read-state"
+        }
+      ],
+      "outputHash": "7d66682a594dea525bd6e10e813b0a18f9a2023aad378b0157825a63a04dfb87"
+    }
+  ],
+  "repositoryId": "workduck",
+  "resolutionHash": "ba86d38a074d468333142881d61b7ef592d2b8c71a20682ec62aefd5f9aa2502",
+  "schemaVersion": 1
+}

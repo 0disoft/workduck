@@ -1,3 +1,13 @@
+/* llmnav/1 module
+id=workduck.desktop.commands
+role=Assemble the Tauri desktop runtime, managed state, plugins, and explicit frontend-to-native command registry.
+owns=Tauri application lifecycle|invoke handler registry|native managed state
+excludes=individual command implementation|frontend workflow state
+search=tauri command registry|desktop runtime assembly|native invoke boundary
+invariant=Frontend-accessible native operations are registered explicitly through the Tauri invoke handler.
+stability=architecture
+*/
+
 use tauri::Manager;
 
 pub mod argon2_kdf;

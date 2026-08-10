@@ -1,0 +1,9 @@
+# One JSON object per line: {"query":"...","expected":["domain.feature.action"]}
+{"query":"where are Workduck queue and entity JSON schemas defined","expected":["workduck.contract.schemas"]}
+{"query":"forward arguments from the Node shim into the locked Cargo workduck-cli binary","expected":["workduck.cli.launcher"]}
+{"query":"execute a queue work order from the command line","expected":["workduck.cli.execution"]}
+{"query":"register a frontend callable Tauri command","expected":["workduck.desktop.commands"]}
+{"query":"migrate project registry storage from localStorage to SQLite","expected":["workduck.projects.storage"]}
+{"query":"run dependency install or build for a project repository","expected":["workduck.projects.repository-task"]}
+{"query":"calculate unread Queue files for one workspace","expected":["workduck.queue.read-state"]}
+{"query":"terminate descendant processes when Workduck exits","expected":["workduck.process.tree"]}

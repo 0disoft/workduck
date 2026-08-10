@@ -1,0 +1,32 @@
+{
+  "cardCount": 8,
+  "fileStateSchemaVersion": 1,
+  "files": {
+    ".llmnav/cache/agent-context.md": "da9df253e0476b6793ff0f74bf23ebea134571eb10ff799f2c60716262882abe",
+    ".llmnav/cache/cards.jsonl": "c529a34157f3b4e1aa79bc196f3291563136e5d9c683603b9de67ebb82d6b119",
+    ".llmnav/cache/file-state.json": "e49ea2467c7acad268c1962f6cfff38c4e361ecce46003238e3327720b3a308a",
+    ".llmnav/cache/graph-state.json": "fb6997172d6fd9dc89f0d6dba005addcea9e9372b9129d8a4d6b9687d6407bd2",
+    ".llmnav/cache/graph.json": "885f19931f9c24fccdb35cc372497debf056fbc37ee2cd1764eac42547b60a11",
+    ".llmnav/cache/index.json": "c58262d49f601d085405422ce78bf140cdb6ed3a7a076d7999ddb7bd39d0d1d6",
+    ".llmnav/cache/modules/workduck.cli.txt": "7d12975745e8aa322e67bbc51cfe0e064c9424d4fccc9334e7295734e28690e5",
+    ".llmnav/cache/modules/workduck.contract.txt": "161ea3a95b1ec7ec75bddd48dfbae18026aa580df8f078475c477db90d11d17c",
+    ".llmnav/cache/modules/workduck.desktop.txt": "ee614f66cc778b4a63cf7c8aa1deb4e339957cbce608631b7804e63ca59504a8",
+    ".llmnav/cache/modules/workduck.process.txt": "00884cf236711967f9395817d228fd0d442ac8277705ecade9e8dadf815b8205",
+    ".llmnav/cache/modules/workduck.projects.txt": "deb4aa38b33d24139465f032d22fd87ff21fd8b921b95922ada7949bb30a4300",
+    ".llmnav/cache/modules/workduck.queue.txt": "fa9c919ebb1e3783e493bfa3c1febd7833798e92c7509c4bf229c37745549a9f",
+    ".llmnav/cache/prompt-prefix.json": "17b816d63a418db3d726b301df9d043057fc46c53e5ff6b1a529c17890a87668",
+    ".llmnav/cache/repo-core.txt": "44e8cc33f6522f3d5c97e58ce596730b6cf919e2547d541bd3f9821190087ac0",
+    ".llmnav/cache/search-index.json": "689aa96af3e641712f31c32ac5ba40b8bb7cb92103fa55c301248109bc6e68d5"
+  },
+  "graphSchemaVersion": 1,
+  "graphStateSchemaVersion": 1,
+  "moduleCount": 6,
+  "promptBundleSchemaVersion": 1,
+  "repositoryId": "workduck",
+  "schemaVersion": 1,
+  "searchCardSetHash": "73a349d024c8c97985c8ce5e69f577fd0c7600d790e957fbad05f3f4c6add1fa",
+  "searchIndexSchemaVersion": 2,
+  "searchShardSchemaVersion": null,
+  "sourceHash": "51c656121e2d0ec38482e502b43dafa8f4ff43fbaca243ecb2c2ecd9e1b50884",
+  "specVersion": "1"
+}

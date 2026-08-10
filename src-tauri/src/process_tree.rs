@@ -1,3 +1,13 @@
+/* llmnav/1 module
+id=workduck.process.tree
+role=Own spawned process trees and terminate their descendants across Windows jobs and Unix process groups.
+owns=process tree spawning|cross-platform termination|active process registry
+excludes=task command selection|terminal output buffering
+search=process tree shutdown|descendant process termination|application shutdown|windows job object|unix process group
+invariant=Dropping an active process owner or shutting down the app cannot intentionally leave its registered descendants running.
+stability=architecture
+*/
+
 use std::{
     collections::HashMap,
     io,

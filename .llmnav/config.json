@@ -1,0 +1,163 @@
+{
+  "$schema": "./schema/config.schema.json",
+  "coverageRules": [
+    {
+      "match": [
+        "packages/schemas/src/index.ts",
+        "scripts/workduck.mjs",
+        "src-tauri/src/bin/workduck-cli.rs",
+        "src-tauri/src/lib.rs",
+        "src-tauri/src/process_tree.rs",
+        "src/lib/projects/project-storage.ts",
+        "src/lib/projects/project-repository-task.ts",
+        "src/lib/queue/queue-read-state.ts"
+      ],
+      "name": "initial Workduck navigation boundaries",
+      "requiredFields": [
+        "owns",
+        "invariant"
+      ],
+      "scope": "module"
+    }
+  ],
+  "evaluation": {
+    "minimumRecallAt1": 0.75,
+    "minimumRecallAt5": 0.9,
+    "queryFile": ".llmnav/eval/queries.jsonl"
+  },
+  "excludeDirectories": [
+    ".git",
+    ".hg",
+    ".svn",
+    ".idea",
+    ".vscode",
+    "node_modules",
+    "vendor",
+    "dist",
+    "build",
+    "coverage",
+    ".next",
+    ".nuxt",
+    ".svelte-kit",
+    ".astro",
+    ".turbo",
+    ".cache",
+    ".bun-cache",
+    "target",
+    "obj"
+  ],
+  "excludeFiles": [
+    "*.min.js",
+    "*.bundle.js",
+    "*.generated.*",
+    "*.gen.*",
+    "src-tauri/src/ssealed_scaffold_generated.rs",
+    "src/lib/projects/ssealed-scaffold-generated.ts"
+  ],
+  "generation": {
+    "cacheDirectory": ".llmnav/cache",
+    "moduleCatalogStabilities": [
+      "architecture",
+      "contract"
+    ],
+    "moduleDepth": 2,
+    "repositoryCatalogStabilities": [
+      "architecture"
+    ],
+    "searchShardSize": 0
+  },
+  "graph": {
+    "indexFiles": []
+  },
+  "includeExtensions": [
+    ".ts",
+    ".tsx",
+    ".js",
+    ".jsx",
+    ".mjs",
+    ".cjs",
+    ".go",
+    ".rs",
+    ".py",
+    ".java",
+    ".kt",
+    ".kts",
+    ".c",
+    ".cc",
+    ".cpp",
+    ".h",
+    ".hpp",
+    ".cs",
+    ".swift",
+    ".dart",
+    ".php",
+    ".rb",
+    ".sh",
+    ".bash",
+    ".zsh",
+    ".sql",
+    ".svelte",
+    ".astro",
+    ".vue"
+  ],
+  "lint": {
+    "additionalEffects": [],
+    "additionalRelations": [],
+    "additionalRisks": [],
+    "genericSearchTerms": [
+      "service",
+      "manager",
+      "handler",
+      "helper",
+      "utility",
+      "util",
+      "data",
+      "process",
+      "logic",
+      "common",
+      "shared"
+    ],
+    "maxBlockBytes": {
+      "file": 400,
+      "module": 1200,
+      "symbol": 900
+    },
+    "maxEffects": 6,
+    "maxInvariants": 4,
+    "maxRelations": 6,
+    "maxRoleLength": 180,
+    "maxSearchTerms": 6,
+    "maxSemanticRatio": 0.015,
+    "minSearchTerms": 2,
+    "minimumCardsForSaturation": 20,
+    "minimumSourceBytesForRatio": 50000,
+    "requireCanonicalFormatting": true,
+    "requireCanonicalOrder": true,
+    "searchTermSaturation": 0.05,
+    "strictRisks": [
+      "auth",
+      "money",
+      "privacy"
+    ],
+    "vagueRoleWords": [
+      "handle",
+      "handles",
+      "manage",
+      "manages",
+      "process",
+      "processes",
+      "utility",
+      "helper",
+      "service"
+    ]
+  },
+  "repositoryId": "workduck",
+  "sourceRoots": [
+    "src",
+    "packages",
+    "src-tauri/src",
+    "src-tauri/migrations",
+    "scripts"
+  ],
+  "version": 1
+}

@@ -1,3 +1,13 @@
+/* llmnav/1 module
+id=workduck.projects.repository-task
+role=Invoke bounded repository tasks through Tauri and normalize their commands, run records, states, and failures for the UI.
+owns=repository task invocation|run record normalization|task error mapping
+excludes=native process execution|terminal rendering
+search=repository task run|dependency install task|project build command
+invariant=Malformed native responses never become successful typed task results.
+stability=contract
+*/
+
 import { getTauriInvoke } from '$lib/tauri/tauri-invoke';
 import { normalizeWorkspacePathForStorage } from '$lib/workspaces/workspace-path-format';
 

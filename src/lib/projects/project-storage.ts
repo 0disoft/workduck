@@ -1,3 +1,13 @@
+/* llmnav/1 module
+id=workduck.projects.storage
+role=Persist workspace project registries through Tauri SQLite while migrating and preserving the browser legacy fallback.
+owns=project registry persistence|legacy registry promotion|registry change notifications
+excludes=project domain normalization|repository Git operations
+search=project registry storage|sqlite registry migration|legacy project registry
+invariant=A failed SQLite read or write returns an explicit error together with the safest available registry state.
+stability=architecture
+*/
+
 import { isObjectRecord } from '$lib/shared/object-record';
 import { getTauriInvoke } from '$lib/tauri/tauri-invoke';
 import {

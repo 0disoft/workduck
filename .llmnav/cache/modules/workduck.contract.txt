@@ -1,0 +1,8 @@
+llmnav-catalog/1 repository=workduck catalog=workduck.contract
+Read semantic cards before opening source. Resolve current paths and signatures with llmnav query or show.
+
+@workduck.contract.schemas
+role Publish closed JSON Schema 2020-12 contracts for Workduck entities, queue artifacts, runs, and gates.
+owns schema identifiers, closed object schemas, domain enum projection
+excludes runtime persistence, UI form validation
+invariant Published object schemas reject undeclared properties unless a versioned contract explicitly permits them.

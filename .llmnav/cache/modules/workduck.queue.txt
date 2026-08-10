@@ -1,0 +1,8 @@
+llmnav-catalog/1 repository=workduck catalog=workduck.queue
+Read semantic cards before opening source. Resolve current paths and signatures with llmnav query or show.
+
+@workduck.queue.read-state
+role Track workspace-scoped Queue read markers, unread counts, pruning, and browser change notifications.
+owns queue read markers, unread count, queue change events
+excludes queue file persistence, work-order execution
+invariant Unread counts ignore unsupported entries and stale read markers can be pruned against the current file set.

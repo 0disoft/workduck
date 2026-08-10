@@ -1,3 +1,13 @@
+/* llmnav/1 module
+id=workduck.contract.schemas
+role=Publish closed JSON Schema 2020-12 contracts for Workduck entities, queue artifacts, runs, and gates.
+owns=schema identifiers|closed object schemas|domain enum projection
+excludes=runtime persistence|UI form validation
+search=workduck json schema|queue artifact contract|entity schema
+invariant=Published object schemas reject undeclared properties unless a versioned contract explicitly permits them.
+stability=contract
+*/
+
 import {
   type WorkduckCatalogArtifactKind,
   type WorkduckEntityKind,

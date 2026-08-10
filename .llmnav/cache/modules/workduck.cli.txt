@@ -1,0 +1,14 @@
+llmnav-catalog/1 repository=workduck catalog=workduck.cli
+Read semantic cards before opening source. Resolve current paths and signatures with llmnav query or show.
+
+@workduck.cli.execution
+role Execute queue work orders and agent evaluations from the command line under explicit workspace and vault contracts.
+owns CLI option parsing, work-order discovery, queue execution, agent evaluation
+excludes Node launcher, Tauri desktop command registry
+invariant Failures retain stable error codes and JSON mode never reports an unsuccessful operation as success.
+
+@workduck.cli.launcher
+role Launch the locked Rust Workduck CLI from the repository while forwarding user arguments and its exit status.
+owns Node CLI shim, Cargo binary invocation, argument forwarding
+excludes CLI command semantics, desktop application startup
+invariant The launcher executes the locked workduck-cli binary from this repository and preserves its process result.

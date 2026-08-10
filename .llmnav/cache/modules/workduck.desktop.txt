@@ -1,0 +1,8 @@
+llmnav-catalog/1 repository=workduck catalog=workduck.desktop
+Read semantic cards before opening source. Resolve current paths and signatures with llmnav query or show.
+
+@workduck.desktop.commands
+role Assemble the Tauri desktop runtime, managed state, plugins, and explicit frontend-to-native command registry.
+owns Tauri application lifecycle, invoke handler registry, native managed state
+excludes individual command implementation, frontend workflow state
+invariant Frontend-accessible native operations are registered explicitly through the Tauri invoke handler.

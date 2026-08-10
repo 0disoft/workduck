@@ -1,3 +1,13 @@
+/* llmnav/1 module
+id=workduck.cli.execution
+role=Execute queue work orders and agent evaluations from the command line under explicit workspace and vault contracts.
+owns=CLI option parsing|work-order discovery|queue execution|agent evaluation
+excludes=Node launcher|Tauri desktop command registry
+search=workduck cli execution|queue work order command|agent evaluation cli
+invariant=Failures retain stable error codes and JSON mode never reports an unsuccessful operation as success.
+stability=architecture
+*/
+
 use std::{
     collections::{HashMap, HashSet},
     env, fs,

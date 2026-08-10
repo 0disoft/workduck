@@ -1,3 +1,13 @@
+/* llmnav/1 module
+id=workduck.queue.read-state
+role=Track workspace-scoped Queue read markers, unread counts, pruning, and browser change notifications.
+owns=queue read markers|unread count|queue change events
+excludes=queue file persistence|work-order execution
+search=queue unread state|read file markers|queue changed event
+invariant=Unread counts ignore unsupported entries and stale read markers can be pruned against the current file set.
+stability=contract
+*/
+
 import type { QueueFileEntry } from './queue-folder';
 
 export const QUEUE_READ_STATE_CHANGED_EVENT = 'workduck:queue-read-state-changed';

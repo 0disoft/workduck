@@ -1,0 +1,14 @@
+llmnav-catalog/1 repository=workduck catalog=workduck.projects
+Read semantic cards before opening source. Resolve current paths and signatures with llmnav query or show.
+
+@workduck.projects.repository-task
+role Invoke bounded repository tasks through Tauri and normalize their commands, run records, states, and failures for the UI.
+owns repository task invocation, run record normalization, task error mapping
+excludes native process execution, terminal rendering
+invariant Malformed native responses never become successful typed task results.
+
+@workduck.projects.storage
+role Persist workspace project registries through Tauri SQLite while migrating and preserving the browser legacy fallback.
+owns project registry persistence, legacy registry promotion, registry change notifications
+excludes project domain normalization, repository Git operations
+invariant A failed SQLite read or write returns an explicit error together with the safest available registry state.

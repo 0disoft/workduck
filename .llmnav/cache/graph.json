@@ -1,0 +1,190 @@
+{
+  "edges": [],
+  "nodes": [
+    {
+      "definitions": [],
+      "external": false,
+      "key": "workduck/workduck.cli.execution",
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src-tauri/src/bin/workduck-cli.rs",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "repositoryId": "workduck",
+      "role": "Execute queue work orders and agent evaluations from the command line under explicit workspace and vault contracts.",
+      "semanticId": "workduck.cli.execution",
+      "unresolved": false
+    },
+    {
+      "definitions": [],
+      "external": false,
+      "key": "workduck/workduck.cli.launcher",
+      "location": {
+        "declarationLine": null,
+        "endLine": 10,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "scripts/workduck.mjs",
+        "receiver": null,
+        "signature": null,
+        "startLine": 2,
+        "symbol": null,
+        "visibility": null
+      },
+      "repositoryId": "workduck",
+      "role": "Launch the locked Rust Workduck CLI from the repository while forwarding user arguments and its exit status.",
+      "semanticId": "workduck.cli.launcher",
+      "unresolved": false
+    },
+    {
+      "definitions": [],
+      "external": false,
+      "key": "workduck/workduck.contract.schemas",
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "packages/schemas/src/index.ts",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "repositoryId": "workduck",
+      "role": "Publish closed JSON Schema 2020-12 contracts for Workduck entities, queue artifacts, runs, and gates.",
+      "semanticId": "workduck.contract.schemas",
+      "unresolved": false
+    },
+    {
+      "definitions": [],
+      "external": false,
+      "key": "workduck/workduck.desktop.commands",
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src-tauri/src/lib.rs",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "repositoryId": "workduck",
+      "role": "Assemble the Tauri desktop runtime, managed state, plugins, and explicit frontend-to-native command registry.",
+      "semanticId": "workduck.desktop.commands",
+      "unresolved": false
+    },
+    {
+      "definitions": [],
+      "external": false,
+      "key": "workduck/workduck.process.tree",
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src-tauri/src/process_tree.rs",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "repositoryId": "workduck",
+      "role": "Own spawned process trees and terminate their descendants across Windows jobs and Unix process groups.",
+      "semanticId": "workduck.process.tree",
+      "unresolved": false
+    },
+    {
+      "definitions": [],
+      "external": false,
+      "key": "workduck/workduck.projects.repository-task",
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src/lib/projects/project-repository-task.ts",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "repositoryId": "workduck",
+      "role": "Invoke bounded repository tasks through Tauri and normalize their commands, run records, states, and failures for the UI.",
+      "semanticId": "workduck.projects.repository-task",
+      "unresolved": false
+    },
+    {
+      "definitions": [],
+      "external": false,
+      "key": "workduck/workduck.projects.storage",
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src/lib/projects/project-storage.ts",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "repositoryId": "workduck",
+      "role": "Persist workspace project registries through Tauri SQLite while migrating and preserving the browser legacy fallback.",
+      "semanticId": "workduck.projects.storage",
+      "unresolved": false
+    },
+    {
+      "definitions": [],
+      "external": false,
+      "key": "workduck/workduck.queue.read-state",
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src/lib/queue/queue-read-state.ts",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "repositoryId": "workduck",
+      "role": "Track workspace-scoped Queue read markers, unread counts, pruning, and browser change notifications.",
+      "semanticId": "workduck.queue.read-state",
+      "unresolved": false
+    }
+  ],
+  "repositoryId": "workduck",
+  "schemaVersion": 1,
+  "sourceHash": "5092a1f5c0060609ca98260f18587a4040aff5758e9d7331d5d2c94be22d4139",
+  "stats": {
+    "edgeCount": 0,
+    "importedIndexCount": 0,
+    "nodeCount": 8,
+    "unresolvedNodeCount": 0
+  }
+}
