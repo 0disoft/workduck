@@ -68,6 +68,7 @@ struct CliOptions {
     workspace_path: Option<PathBuf>,
     vault_password: Option<String>,
     keep_work_order: bool,
+    confirmed: bool,
     json: bool,
 }
 
@@ -242,12 +243,8 @@ async fn run() -> Result<(), CliError> {
 
     let located = locate_work_order(&options.work_order_id, options.workspace_path.as_deref())?;
     let workspace_id = read_workspace_id(&located.workspace_path)?;
-    let execution = begin_queue_work_order_execution_at(
-        &located.workspace_path,
-        &located.work_order_path,
-        &options.work_order_id,
-    )?;
-    let work_order = execution.work_order().clone();
+    let work_order: QueueWorkOrder = read_json_file(&located.work_order_path, "work-order-invalid")?;
+    validate_work_order(&work_order, &options.work_order_id)?;
 
     let agents: AgentRegistry =
         read_optional_workspace_json(&located.workspace_path, AGENTS_FILE_NAME)?
@@ -280,6 +277,42 @@ async fn run() -> Result<(), CliError> {
         &skills.skills,
         &references.references,
     )?;
+    let estimate = create_execution_estimate_from_runs(&runs);
+    if !options.confirmed {
+        return Err(CliError {
+            code: "queue-execution-confirmation-required",
+            message: format!(
+                "실행 계획: 요청 {}회, 예상 입력 토큰 약 {}개, 재시도 포함 최대 요청 {}회/입력 토큰 약 {}개. 출력 토큰과 실제 공급자 과금은 포함하지 않습니다. 검토 후 --yes를 추가해 다시 실행하세요.",
+                estimate.request_count,
+                estimate.estimated_input_tokens,
+                estimate.maximum_provider_attempt_count,
+                estimate.maximum_estimated_input_tokens,
+            ),
+        });
+    }
+    let execution = begin_queue_work_order_execution_at(
+        &located.workspace_path,
+        &located.work_order_path,
+        &options.work_order_id,
+    )?;
+    let work_order = execution.work_order().clone();
+    let runs = create_execution_runs(
+        &work_order,
+        &agents.agents,
+        vault.as_ref(),
+        &personas.personas,
+        &skills.skills,
+        &references.references,
+    )?;
+    let current_estimate = create_execution_estimate_from_runs(&runs);
+    if current_estimate.confirmation_token != estimate.confirmation_token {
+        let _ = execution.fail();
+        return Err(CliError {
+            code: "queue-execution-confirmation-stale",
+            message: "승인 후 작업 지시서나 실행 컨텍스트가 바뀌었습니다. 현재 계획을 다시 확인하세요."
+                .to_string(),
+        });
+    }
     let client = queue_http_client().map_err(|error| CliError {
         code: error.code,
         message: error.message,
@@ -653,6 +686,9 @@ fn parse_args_with_vault_password(
             "--keep-work-order" => {
                 options.keep_work_order = true;
             }
+            "--yes" => {
+                options.confirmed = true;
+            }
             "--json" => {
                 options.json = true;
             }
@@ -895,7 +931,7 @@ fn missing_score_error() -> CliError {
 
 fn usage_text() -> String {
     format!(
-        "{APP_NAME} queue run <work-order-id> [--workspace <path>] [--json] [--keep-work-order]\n{APP_NAME} agent evaluate <agent-id-or-name> --workspace <path> --problem-understanding <1-9> --logical-validity <1-9> --practical-feasibility <1-9> --creative-insight <1-9> --risk-detection <1-9> [--evaluation-key <key>] [--json]\n{APP_NAME} agent evaluate-batch --workspace <path> --input <path-or-> [--json]"
+        "{APP_NAME} queue run <work-order-id> [--workspace <path>] [--json] [--keep-work-order] [--yes]\n{APP_NAME} agent evaluate <agent-id-or-name> --workspace <path> --problem-understanding <1-9> --logical-validity <1-9> --practical-feasibility <1-9> --creative-insight <1-9> --risk-detection <1-9> [--evaluation-key <key>] [--json]\n{APP_NAME} agent evaluate-batch --workspace <path> --input <path-or-> [--json]"
     )
 }
 
@@ -1925,6 +1961,18 @@ mod tests {
         assert_eq!(options.work_order_id, "wo_test");
         assert_eq!(options.vault_password.as_deref(), Some("environment-only-password"));
         assert!(options.json);
+    }
+
+    #[test]
+    fn queue_run_requires_explicit_cost_confirmation() {
+        let preview = parse_args_with_vault_password(queue_run_args(&[]), None)
+            .expect("preview invocation");
+        let confirmed = parse_args_with_vault_password(queue_run_args(&["--yes"]), None)
+            .expect("confirmed invocation");
+
+        assert!(!preview.confirmed);
+        assert!(confirmed.confirmed);
+        assert!(usage_text().contains("--yes"));
     }
 
     #[test]

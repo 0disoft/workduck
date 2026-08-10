@@ -224,6 +224,13 @@ export const esQueueMessages = {
 		promptPreview: {
 			title: 'Vista previa del prompt',
 			description: 'Revise los prompts del sistema y de usuario exactos antes de ejecutar la orden de trabajo.',
+			estimateTitle: 'Estimación de ejecución',
+			requestCount: 'Solicitudes previstas',
+			estimatedInputTokens: 'Tokens de entrada estimados',
+			maximumAttempts: 'Intentos máximos con reintentos',
+			maximumInputTokens: 'Máximo estimado de tokens de entrada',
+			estimateNotice: 'Los tokens son una estimación local. No incluye tokens de salida, precios del proveedor, descuentos de caché ni facturación real.',
+			confirmExecution: 'Confirmar y ejecutar',
 			systemPrompt: 'Prompt del sistema',
 			userPrompt: 'Prompt de usuario',
 			characterCount: '{count} caracteres'
@@ -302,6 +309,8 @@ export const esQueueMessages = {
 			executionWorkOrderNotRunning: 'Esta orden de trabajo no se está ejecutando.',
 			executionWorkOrderArchived: 'Esta orden de trabajo ya está completada.',
 			executionCancelled: 'La ejecución de la orden de trabajo se canceló.',
+			executionConfirmationRequired: 'Revise y confirme la estimación antes de ejecutar.',
+			executionConfirmationStale: 'El plan cambió después de confirmarlo. Revise la nueva estimación.',
 			executionAgentNotFound: 'No se encontró el agente seleccionado.',
 			executionSecretNotFound: 'No se encontró la clave API vinculada al agente.',
 			executionProviderUnsupported:

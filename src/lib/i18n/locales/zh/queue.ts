@@ -224,6 +224,13 @@ export const zhQueueMessages = {
 	promptPreview: {
 		title: '提示词预览',
 		description: '在运行此工单之前，审查确切的系统和用户提示词。',
+		estimateTitle: '执行估算',
+		requestCount: '计划请求数',
+		estimatedInputTokens: '预计输入令牌',
+		maximumAttempts: '含重试的最大请求数',
+		maximumInputTokens: '最大预计输入令牌',
+		estimateNotice: '令牌数量为本地启发式估算，不包含输出令牌、供应商价格、缓存折扣和实际账单。',
+		confirmExecution: '确认并运行',
 		systemPrompt: '系统提示词',
 		userPrompt: '用户提示词',
 		characterCount: '{count} 个字符'
@@ -302,6 +309,8 @@ export const zhQueueMessages = {
 		executionWorkOrderNotRunning: '此工单未在运行。',
 		executionWorkOrderArchived: '此工单已经完成。',
 		executionCancelled: '工单运行已取消。',
+		executionConfirmationRequired: '请先审查并确认执行估算。',
+		executionConfirmationStale: '确认后执行计划已更改，请审查新的估算。',
 		executionAgentNotFound: '未找到所选智能体。',
 		executionSecretNotFound: '未找到绑定至该智能体的 API 密钥。',
 		executionProviderUnsupported:

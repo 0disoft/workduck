@@ -63,6 +63,10 @@ export function getQueueExecutionErrorMessage(
 			return messages.queue.errors.executionWorkOrderArchived;
 		case 'queue-execution-cancelled':
 			return messages.queue.errors.executionCancelled;
+		case 'queue-execution-confirmation-required':
+			return messages.queue.errors.executionConfirmationRequired;
+		case 'queue-execution-confirmation-stale':
+			return messages.queue.errors.executionConfirmationStale;
 		case 'queue-execution-unknown':
 			return messages.queue.errors.executionUnknown;
 		default:

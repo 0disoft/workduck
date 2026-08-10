@@ -56,7 +56,8 @@ describe('queue panel work order execution workflow', () => {
 				vault: null,
 				skills: [],
 				references: [],
-				personas: []
+				personas: [],
+				confirmationToken: 'confirmed-estimate'
 			}
 		});
 	});
@@ -87,6 +88,7 @@ function baseExecutionInput() {
 		workspacePath: 'C:/workspace',
 		workOrderPath: 'work-orders/test.workduck-work-order.json',
 		workOrder: testWorkOrder,
+		confirmationToken: 'confirmed-estimate',
 		readExecutionContext: async () => ({
 			agents: [],
 			skills: [],

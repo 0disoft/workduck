@@ -15,6 +15,8 @@ export type QueueExecutionError =
 	| 'queue-execution-work-order-not-running'
 	| 'queue-execution-work-order-archived'
 	| 'queue-execution-cancelled'
+	| 'queue-execution-confirmation-required'
+	| 'queue-execution-confirmation-stale'
 	| 'queue-execution-unknown'
 	| AgentExecutionError;
 
@@ -41,10 +43,19 @@ export interface WorkduckQueuePromptPreview {
 	readonly userPrompt: string;
 }
 
+export interface WorkduckQueueExecutionEstimate {
+	readonly requestCount: number;
+	readonly maximumProviderAttemptCount: number;
+	readonly estimatedInputTokens: number;
+	readonly maximumEstimatedInputTokens: number;
+	readonly confirmationToken: string;
+}
+
 export type QueuePromptPreviewResult =
 	| {
 			readonly ok: true;
 			readonly previews: readonly WorkduckQueuePromptPreview[];
+			readonly estimate: WorkduckQueueExecutionEstimate;
 	  }
 	| {
 			readonly ok: false;
@@ -92,6 +103,7 @@ interface QueueExecutionInspectCommandResponse {
 interface QueuePromptPreviewCommandResponse {
 	readonly ok: boolean;
 	readonly previews?: readonly WorkduckQueuePromptPreview[] | null;
+	readonly estimate?: WorkduckQueueExecutionEstimate | null;
 	readonly error?: string | null;
 }
 
@@ -105,6 +117,7 @@ export async function executeQueueWorkOrder(input: {
 	readonly skills: readonly WorkduckSkillRecord[];
 	readonly references: readonly ReferenceRecord[];
 	readonly personas: readonly PersonaRecord[];
+	readonly confirmationToken: string;
 }): Promise<QueueExecutionResult> {
 	const invoke = getTauriInvoke();
 
@@ -123,7 +136,8 @@ export async function executeQueueWorkOrder(input: {
 				vault: input.vault,
 				skills: input.skills,
 				references: input.references,
-				personas: input.personas
+				personas: input.personas,
+				confirmationToken: input.confirmationToken
 			}
 		});
 
@@ -184,10 +198,17 @@ export async function previewQueueWorkOrderPrompt(input: {
 			}
 		);
 
-		if (response.ok && response.previews !== null && response.previews !== undefined) {
+		if (
+			response.ok &&
+			response.previews !== null &&
+			response.previews !== undefined &&
+			response.estimate !== null &&
+			response.estimate !== undefined
+		) {
 			return {
 				ok: true,
-				previews: response.previews
+				previews: response.previews,
+				estimate: response.estimate
 			};
 		}
 
@@ -277,6 +298,10 @@ function normalizeQueueExecutionError(error: string | null | undefined): QueueEx
 			return 'queue-execution-vault-locked';
 		case 'queue-execution-cancelled':
 			return 'queue-execution-cancelled';
+		case 'queue-execution-confirmation-required':
+			return 'queue-execution-confirmation-required';
+		case 'queue-execution-confirmation-stale':
+			return 'queue-execution-confirmation-stale';
 		case 'work-order-running':
 		case 'execution-id-running':
 			return 'queue-execution-work-order-running';

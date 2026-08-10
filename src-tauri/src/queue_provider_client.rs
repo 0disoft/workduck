@@ -15,7 +15,7 @@ use crate::{
     queue_prompt_builder::{create_agent_prompt_plan, create_system_prompt, create_user_prompt},
 };
 
-const CHAT_COMPLETION_MAX_ATTEMPTS: u8 = 3;
+pub(crate) const CHAT_COMPLETION_MAX_ATTEMPTS: u8 = 3;
 const CHAT_COMPLETION_RETRY_BASE_DELAY_MILLIS: u64 = 500;
 const CHAT_COMPLETION_RETRY_MAX_DELAY_MILLIS: u64 = 2_000;
 const CHAT_COMPLETION_RETRY_JITTER_MILLIS: u64 = 250;

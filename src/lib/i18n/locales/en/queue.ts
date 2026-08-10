@@ -224,6 +224,13 @@ export const enQueueMessages = {
 		promptPreview: {
 			title: 'Prompt preview',
 			description: 'Review the exact system and user prompts before running this work order.',
+			estimateTitle: 'Execution estimate',
+			requestCount: 'Planned requests',
+			estimatedInputTokens: 'Estimated input tokens',
+			maximumAttempts: 'Maximum attempts with retries',
+			maximumInputTokens: 'Maximum estimated input tokens',
+			estimateNotice: 'Token counts are a local heuristic. Output tokens, provider pricing, cache discounts, and actual billing are not included.',
+			confirmExecution: 'Confirm and run',
 			systemPrompt: 'System prompt',
 			userPrompt: 'User prompt',
 			characterCount: '{count} characters'
@@ -302,6 +309,8 @@ export const enQueueMessages = {
 			executionWorkOrderNotRunning: 'This work order is not running.',
 			executionWorkOrderArchived: 'This work order is already completed.',
 			executionCancelled: 'The work order run was cancelled.',
+			executionConfirmationRequired: 'Review and confirm the execution estimate before running.',
+			executionConfirmationStale: 'The execution plan changed after confirmation. Review the new estimate.',
 			executionAgentNotFound: 'The selected agent was not found.',
 			executionSecretNotFound: 'The API key linked to the agent was not found.',
 			executionProviderUnsupported:

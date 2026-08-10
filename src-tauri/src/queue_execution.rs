@@ -6,6 +6,7 @@ use std::{
 use futures_util::future::{AbortHandle, Abortable};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
+use sha2::{Digest, Sha256};
 
 pub use crate::queue_prompt_builder::{
     create_agent_prompt_plan, create_system_prompt, create_user_prompt,
@@ -253,6 +254,7 @@ pub struct QueueExecutionRequest {
     pub references: Vec<ReferenceRecord>,
     #[serde(default)]
     pub personas: Vec<PersonaRecord>,
+    pub confirmation_token: String,
 }
 
 #[derive(Deserialize)]
@@ -328,6 +330,8 @@ pub struct QueuePromptPreviewCommandResult {
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub previews: Vec<QueuePromptPreview>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub estimate: Option<QueueExecutionEstimate>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub error: Option<&'static str>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub message: Option<String>,
@@ -343,6 +347,16 @@ pub struct QueuePromptPreview {
     pub agent_name: String,
     pub system_prompt: String,
     pub user_prompt: String,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct QueueExecutionEstimate {
+    pub request_count: usize,
+    pub maximum_provider_attempt_count: usize,
+    pub estimated_input_tokens: usize,
+    pub maximum_estimated_input_tokens: usize,
+    pub confirmation_token: String,
 }
 
 #[derive(Serialize)]
@@ -467,6 +481,9 @@ pub struct AgentExecutionAttempt {
 pub async fn execute_queue_work_order(
     request: QueueExecutionRequest,
 ) -> QueueExecutionCommandResult {
+    if let Err(error) = validate_queue_execution_confirmation(&request) {
+        return queue_execution_failed(error);
+    }
     let workspace_path = match canonicalize_queue_workspace(Path::new(&request.workspace_path)) {
         Ok(workspace_path) => workspace_path,
         Err(error) => return queue_execution_failed(error),
@@ -666,22 +683,24 @@ pub fn inspect_queue_work_order_executions(
 pub fn preview_queue_work_order_prompt(
     request: QueuePromptPreviewRequest,
 ) -> QueuePromptPreviewCommandResult {
-    match create_prompt_previews(
+    match create_prompt_preview_plan(
         &request.work_order,
         &request.agents,
         &request.personas,
         &request.skills,
         &request.references,
     ) {
-        Ok(previews) => QueuePromptPreviewCommandResult {
+        Ok((previews, estimate)) => QueuePromptPreviewCommandResult {
             ok: true,
             previews,
+            estimate: Some(estimate),
             error: None,
             message: None,
         },
         Err(error) => QueuePromptPreviewCommandResult {
             ok: false,
             previews: Vec::new(),
+            estimate: None,
             error: Some(error.code),
             message: Some(error.message),
         },
@@ -960,11 +979,19 @@ Final answer:
             tags: vec!["release".to_string()],
         }];
 
-        let previews =
-            create_prompt_previews(&work_order, &agents, &personas, &skills, &references)
+        let (previews, estimate) =
+            create_prompt_preview_plan(&work_order, &agents, &personas, &skills, &references)
                 .expect("prompt previews");
 
         assert_eq!(previews.len(), 1);
+        assert_eq!(estimate.request_count, 1);
+        assert_eq!(estimate.maximum_provider_attempt_count, 3);
+        assert!(estimate.estimated_input_tokens > 0);
+        assert_eq!(
+            estimate.maximum_estimated_input_tokens,
+            estimate.estimated_input_tokens * 3
+        );
+        assert_eq!(estimate.confirmation_token.len(), 64);
         assert_eq!(previews[0].agent_name, "검토 에이전트");
         assert!(previews[0].system_prompt.contains("검토 에이전트"));
         assert!(previews[0].system_prompt.contains("근거를 먼저 확인한다."));
@@ -1561,6 +1588,115 @@ pub fn create_prompt_previews(
     }
 
     Ok(previews)
+}
+
+pub fn create_prompt_preview_plan(
+    work_order: &QueueWorkOrder,
+    agents: &[AgentRecord],
+    personas: &[PersonaRecord],
+    skills: &[SkillRecord],
+    references: &[ReferenceRecord],
+) -> Result<(Vec<QueuePromptPreview>, QueueExecutionEstimate), QueueExecutionErrorDetail> {
+    let previews = create_prompt_previews(work_order, agents, personas, skills, references)?;
+    let estimate = create_queue_execution_estimate(&previews);
+    Ok((previews, estimate))
+}
+
+pub fn create_execution_estimate_from_runs(runs: &[AgentExecutionRun]) -> QueueExecutionEstimate {
+    let previews = runs
+        .iter()
+        .map(|run| {
+            let prompt_plan = create_agent_prompt_plan(&run.task);
+            QueuePromptPreview {
+                id: format!("{}:{}", run.task.id, run.agent.id),
+                task_id: run.task.id.clone(),
+                task_title: run.task.title.clone(),
+                agent_id: run.agent.id.clone(),
+                agent_name: run.agent.name.clone(),
+                system_prompt: create_system_prompt(run, &prompt_plan),
+                user_prompt: create_user_prompt(run, &prompt_plan),
+            }
+        })
+        .collect::<Vec<_>>();
+    create_queue_execution_estimate(&previews)
+}
+
+fn validate_queue_execution_confirmation(
+    request: &QueueExecutionRequest,
+) -> Result<(), QueueExecutionErrorDetail> {
+    let (_, estimate) = create_prompt_preview_plan(
+        &request.work_order,
+        &request.agents,
+        &request.personas,
+        &request.skills,
+        &request.references,
+    )?;
+    if request.confirmation_token != estimate.confirmation_token {
+        return Err(QueueExecutionErrorDetail::new(
+            "queue-execution-confirmation-required",
+            "The queue execution estimate must be reviewed and confirmed before execution.",
+        ));
+    }
+    Ok(())
+}
+
+fn create_queue_execution_estimate(previews: &[QueuePromptPreview]) -> QueueExecutionEstimate {
+    let request_count = previews.len();
+    let estimated_input_tokens = previews
+        .iter()
+        .map(|preview| {
+            estimate_prompt_tokens(&preview.system_prompt)
+                .saturating_add(estimate_prompt_tokens(&preview.user_prompt))
+                .saturating_add(32)
+        })
+        .sum::<usize>();
+    let maximum_provider_attempt_count = request_count
+        .saturating_mul(usize::from(crate::queue_provider_client::CHAT_COMPLETION_MAX_ATTEMPTS));
+    let maximum_estimated_input_tokens = estimated_input_tokens
+        .saturating_mul(usize::from(crate::queue_provider_client::CHAT_COMPLETION_MAX_ATTEMPTS));
+    let mut digest = Sha256::new();
+    digest.update(b"workduck.queue-execution-estimate/v1\0");
+    for preview in previews {
+        for value in [
+            preview.id.as_str(),
+            preview.task_id.as_str(),
+            preview.agent_id.as_str(),
+            preview.system_prompt.as_str(),
+            preview.user_prompt.as_str(),
+        ] {
+            digest.update(value.len().to_le_bytes());
+            digest.update(value.as_bytes());
+        }
+    }
+    digest.update(request_count.to_le_bytes());
+    digest.update(estimated_input_tokens.to_le_bytes());
+
+    QueueExecutionEstimate {
+        request_count,
+        maximum_provider_attempt_count,
+        estimated_input_tokens,
+        maximum_estimated_input_tokens,
+        confirmation_token: digest
+            .finalize()
+            .iter()
+            .map(|byte| format!("{byte:02x}"))
+            .collect(),
+    }
+}
+
+fn estimate_prompt_tokens(prompt: &str) -> usize {
+    let mut ascii_characters = 0usize;
+    let mut non_ascii_characters = 0usize;
+    for character in prompt.chars() {
+        if character.is_ascii() {
+            ascii_characters += 1;
+        } else {
+            non_ascii_characters += 1;
+        }
+    }
+    ascii_characters
+        .div_ceil(4)
+        .saturating_add(non_ascii_characters)
 }
 
 pub(crate) fn validate_work_order_execution_limits(

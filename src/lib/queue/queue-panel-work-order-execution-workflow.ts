@@ -12,7 +12,7 @@ import type { QueueExecutionContext } from './queue-panel-types';
 
 type QueueWorkOrderExecutionRequest = Omit<
 	Parameters<typeof executeQueueWorkOrder>[0],
-	'executionId' | 'workspacePath' | 'workOrderRelativePath'
+	'executionId' | 'workspacePath' | 'workOrderRelativePath' | 'confirmationToken'
 >;
 
 interface QueuePanelWorkOrderExecutionRequestInput {
@@ -42,6 +42,7 @@ export interface QueuePanelWorkOrderExecutionInput {
 	readonly workspacePath: string;
 	readonly workOrderPath: string;
 	readonly workOrder: WorkduckQueueWorkOrder;
+	readonly confirmationToken: string;
 	readonly readExecutionContext: () => Promise<QueueExecutionContext>;
 	readonly readVault: () => EnvironmentVault | null;
 	readonly onRunningWorkOrderSaved?: (workOrder: WorkduckQueueWorkOrder) => Promise<void>;
@@ -59,7 +60,8 @@ export async function executeQueuePanelWorkOrder(
 		...executionRequest,
 		executionId: input.executionId,
 		workspacePath: input.workspacePath,
-		workOrderRelativePath: input.workOrderPath
+		workOrderRelativePath: input.workOrderPath,
+		confirmationToken: input.confirmationToken
 	});
 
 	await input.onRunningWorkOrderSaved?.(startQueueWorkOrderExecution(input.workOrder));

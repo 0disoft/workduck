@@ -1,15 +1,20 @@
 <script lang="ts">
 	import type { WorkduckMessages } from '$lib/i18n/workduck-message-contract';
 	import { modalDialog } from '$lib/ui/modal-dialog-action';
-	import type { WorkduckQueuePromptPreview } from './queue-execution';
+	import type {
+		WorkduckQueueExecutionEstimate,
+		WorkduckQueuePromptPreview
+	} from './queue-execution';
 
 	interface Props {
 		readonly messages: WorkduckMessages;
 		readonly previews: readonly WorkduckQueuePromptPreview[];
+		readonly estimate: WorkduckQueueExecutionEstimate;
+		readonly onExecute: () => Promise<void>;
 		readonly onClose: () => void;
 	}
 
-	let { messages, previews, onClose }: Props = $props();
+	let { messages, previews, estimate, onExecute, onClose }: Props = $props();
 </script>
 
 <div
@@ -43,6 +48,29 @@
 				{messages.common.close}
 			</button>
 		</header>
+
+		<section class="workduck-queue-prompt-preview-estimate" aria-label={messages.queue.promptPreview.estimateTitle}>
+			<h3>{messages.queue.promptPreview.estimateTitle}</h3>
+			<dl>
+				<div>
+					<dt>{messages.queue.promptPreview.requestCount}</dt>
+					<dd>{estimate.requestCount}</dd>
+				</div>
+				<div>
+					<dt>{messages.queue.promptPreview.estimatedInputTokens}</dt>
+					<dd>{estimate.estimatedInputTokens.toString()}</dd>
+				</div>
+				<div>
+					<dt>{messages.queue.promptPreview.maximumAttempts}</dt>
+					<dd>{estimate.maximumProviderAttemptCount}</dd>
+				</div>
+				<div>
+					<dt>{messages.queue.promptPreview.maximumInputTokens}</dt>
+					<dd>{estimate.maximumEstimatedInputTokens.toString()}</dd>
+				</div>
+			</dl>
+			<p>{messages.queue.promptPreview.estimateNotice}</p>
+		</section>
 
 		<div class="workduck-queue-prompt-preview-list">
 			{#each previews as preview, index (preview.id)}
@@ -86,5 +114,18 @@
 				</article>
 			{/each}
 		</div>
+
+		<footer class="workduck-dialog-actions">
+			<button class="workduck-button workduck-button-secondary" type="button" onclick={onClose}>
+				{messages.common.cancel}
+			</button>
+			<button
+				class="workduck-button workduck-button-primary"
+				type="button"
+				onclick={() => void onExecute()}
+			>
+				{messages.queue.promptPreview.confirmExecution}
+			</button>
+		</footer>
 	</div>
 </div>

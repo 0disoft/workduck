@@ -224,6 +224,13 @@ export const hiQueueMessages = {
 	promptPreview: {
 		title: 'प्रॉम्प्ट पूर्वावलोकन',
 		description: 'इस कार्य आदेश को चलाने से पहले सिस्टम और उपयोगकर्ता प्रॉम्प्ट की समीक्षा करें।',
+		estimateTitle: 'निष्पादन अनुमान',
+		requestCount: 'नियोजित अनुरोध',
+		estimatedInputTokens: 'अनुमानित इनपुट टोकन',
+		maximumAttempts: 'पुनः प्रयास सहित अधिकतम अनुरोध',
+		maximumInputTokens: 'अधिकतम अनुमानित इनपुट टोकन',
+		estimateNotice: 'टोकन संख्या स्थानीय अनुमान है। आउटपुट टोकन, प्रदाता मूल्य, कैश छूट और वास्तविक बिलिंग शामिल नहीं हैं।',
+		confirmExecution: 'पुष्टि करके चलाएँ',
 		systemPrompt: 'सिस्टम प्रॉम्प्ट',
 		userPrompt: 'उपयोगकर्ता प्रॉम्प्ट',
 		characterCount: '{count} वर्ण'
@@ -301,6 +308,8 @@ export const hiQueueMessages = {
 		executionWorkOrderNotRunning: 'यह कार्य आदेश चल नहीं रहा है।',
 		executionWorkOrderArchived: 'यह कार्य आदेश पहले ही पूरा हो चुका है।',
 		executionCancelled: 'कार्य आदेश रन रद्द कर दिया गया।',
+		executionConfirmationRequired: 'चलाने से पहले निष्पादन अनुमान की समीक्षा और पुष्टि करें।',
+		executionConfirmationStale: 'पुष्टि के बाद योजना बदल गई। नया अनुमान देखें।',
 		executionAgentNotFound: 'चयनित एजेंट नहीं मिला।',
 		executionSecretNotFound: 'एजेंट से लिंक्ड एपीआई कुंजी नहीं मिली।',
 		executionProviderUnsupported: 'एलएलएम प्रदाता का पता नहीं लगाया जा सका। एजेंट पर एक प्रदाता चुनें या एपीआई कुंजी नाम या टैग में DeepSeek, OpenAI, OpenRouter, या Umans शामिल करें।',

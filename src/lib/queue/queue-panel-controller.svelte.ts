@@ -60,7 +60,10 @@ import {
 	type WorkduckQueueReviewDecision
 } from './queue-artifacts';
 import { readEnvironmentVaultSession } from '$lib/environment/environment-vault-session';
-import type { WorkduckQueuePromptPreview } from './queue-execution';
+import type {
+	WorkduckQueueExecutionEstimate,
+	WorkduckQueuePromptPreview
+} from './queue-execution';
 import {
 	type QueueFileEntry,
 	type QueueFolderError
@@ -240,6 +243,7 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 	let selectedProposal = $state<WorkduckQueueProposal | null>(null);
 	let selectedProposalPath = $state<string | null>(null);
 	let promptPreviews = $state<readonly WorkduckQueuePromptPreview[] | null>(null);
+	let promptEstimate = $state<WorkduckQueueExecutionEstimate | null>(null);
 	let reviews = $state<readonly QueueReportTaskReview[]>([]);
 	let isNewWorkOrderDialogOpen = $state(false);
 	let workOrderDialogMode = $state<WorkOrderDialogMode>('create');
@@ -481,6 +485,7 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		selectedProposal = null;
 		selectedProposalPath = null;
 		promptPreviews = null;
+		promptEstimate = null;
 		queueContextMenu = null;
 		queueContextMenuElement = undefined;
 		reviews = [];
@@ -691,6 +696,7 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		selectedProposal = null;
 		selectedProposalPath = null;
 		promptPreviews = null;
+		promptEstimate = null;
 		reviews = [];
 	}
 
@@ -731,6 +737,7 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		selectedProposal = null;
 		selectedProposalPath = null;
 		promptPreviews = null;
+		promptEstimate = null;
 		reviews = [];
 		parseError = null;
 		status = null;
@@ -747,6 +754,7 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 			selectedWorkOrder = null;
 			selectedWorkOrderPath = null;
 			promptPreviews = null;
+			promptEstimate = null;
 	}
 
 		if (selectedProposalPath === relativePath) {
@@ -1166,10 +1174,12 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 			if (!previewResult.ok) {
 				parseError = getQueueExecutionErrorMessage(previewResult.error);
 				promptPreviews = null;
+				promptEstimate = null;
 				return;
-		}
+			}
 
 			promptPreviews = previewResult.previews;
+			promptEstimate = previewResult.estimate;
 	} finally {
 			isPreviewingPrompt = false;
 	}
@@ -1177,15 +1187,26 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 
 	function closePromptPreviewDialog() {
 		promptPreviews = null;
-}
+		promptEstimate = null;
+	}
 
 	async function handleExecuteWorkOrder() {
+		await handlePreviewWorkOrderPrompt();
+	}
+
+	async function handleConfirmExecuteWorkOrder() {
 		if (selectedWorkOrder === null || selectedWorkOrderPath === null || !canExecuteSelectedWorkOrder) {
 			return;
-	}
+		}
+		if (promptEstimate === null) {
+			parseError = getQueueExecutionErrorMessage('queue-execution-confirmation-required');
+			return;
+		}
 
 		const executableWorkOrder = selectedWorkOrder;
 		const workOrderPath = selectedWorkOrderPath;
+		const confirmationToken = promptEstimate.confirmationToken;
+		closePromptPreviewDialog();
 		const executionId = crypto.randomUUID();
 		activeExecution = {
 			executionId,
@@ -1204,6 +1225,7 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 				workspacePath: workspace.path,
 				workOrderPath,
 				workOrder: executableWorkOrder,
+				confirmationToken,
 				readExecutionContext: readExecutionContextForWorkspace,
 				readVault: () => readEnvironmentVaultSession(workspace.id),
 				onRunningWorkOrderSaved: async (runningWorkOrder) => {
@@ -1789,6 +1811,7 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		get selectedProposal() { return selectedProposal; },
 		get selectedProposalPath() { return selectedProposalPath; },
 		get promptPreviews() { return promptPreviews; },
+		get promptEstimate() { return promptEstimate; },
 		get reviews() { return reviews; },
 		get reviewDecisionOptions() { return reviewDecisionOptions; },
 		get isNewWorkOrderDialogOpen() { return isNewWorkOrderDialogOpen; },
@@ -1869,6 +1892,7 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		handlePreviewWorkOrderPrompt,
 		closePromptPreviewDialog,
 		handleExecuteWorkOrder,
+		handleConfirmExecuteWorkOrder,
 		handleCancelWorkOrderExecution,
 		handleCompleteWorkOrder,
 		openEditWorkOrderTaskDialog,

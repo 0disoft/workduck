@@ -224,6 +224,13 @@ export const koQueueMessages = {
 		promptPreview: {
 			title: '지시문 미리보기',
 			description: '이 작업 지시서를 실행하기 전에 실제로 전송될 시스템 지시문과 사용자 지시문을 확인합니다.',
+			estimateTitle: '실행 예상치',
+			requestCount: '계획 요청 수',
+			estimatedInputTokens: '예상 입력 토큰',
+			maximumAttempts: '재시도 포함 최대 요청 수',
+			maximumInputTokens: '재시도 포함 최대 예상 입력 토큰',
+			estimateNotice: '토큰 수는 로컬 휴리스틱 추정치입니다. 출력 토큰, 공급자 단가, 캐시 할인과 실제 청구액은 포함하지 않습니다.',
+			confirmExecution: '확인하고 실행',
 			systemPrompt: '시스템 지시문',
 			userPrompt: '사용자 지시문',
 			characterCount: '{count}자'
@@ -302,6 +309,8 @@ export const koQueueMessages = {
 			executionWorkOrderNotRunning: '실행 중인 작업이 아닙니다.',
 			executionWorkOrderArchived: '이미 완료 처리된 작업입니다.',
 			executionCancelled: '작업 실행을 취소했습니다.',
+			executionConfirmationRequired: '실행 예상치를 확인하고 승인한 뒤 실행하세요.',
+			executionConfirmationStale: '승인 후 실행 계획이 바뀌었습니다. 새 예상치를 다시 확인하세요.',
 			executionAgentNotFound: '선택한 에이전트를 찾을 수 없습니다.',
 			executionSecretNotFound: '에이전트에 연결된 API 키를 찾을 수 없습니다.',
 			executionProviderUnsupported: '지원하는 LLM 제공업체를 확인하지 못했습니다. API 키 이름/태그에 DeepSeek, OpenAI, OpenRouter, Umans 중 하나를 포함하세요.',

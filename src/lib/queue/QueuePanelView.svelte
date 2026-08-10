@@ -453,10 +453,12 @@
 	/>
 {/if}
 
-{#if controller.promptPreviews !== null && QueuePromptPreviewDialog !== null}
+{#if controller.promptPreviews !== null && controller.promptEstimate !== null && QueuePromptPreviewDialog !== null}
 	<QueuePromptPreviewDialog
 		messages={controller.messages}
 		previews={controller.promptPreviews}
+		estimate={controller.promptEstimate}
+		onExecute={controller.handleConfirmExecuteWorkOrder}
 		onClose={controller.closePromptPreviewDialog}
 	/>
 {/if}

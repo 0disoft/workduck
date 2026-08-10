@@ -1,6 +1,7 @@
 import {
 	previewQueueWorkOrderPrompt,
 	type QueueExecutionError,
+	type WorkduckQueueExecutionEstimate,
 	type WorkduckQueuePromptPreview
 } from './queue-execution';
 import type { WorkduckQueueWorkOrder } from './queue-artifacts';
@@ -10,6 +11,7 @@ export type QueuePanelPromptPreviewResult =
 	| {
 			readonly ok: true;
 			readonly previews: readonly WorkduckQueuePromptPreview[];
+			readonly estimate: WorkduckQueueExecutionEstimate;
 	  }
 	| {
 			readonly ok: false;

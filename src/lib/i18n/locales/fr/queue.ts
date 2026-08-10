@@ -224,6 +224,13 @@ export const frQueueMessages = {
 	promptPreview: {
 		title: 'Aperçu du prompt',
 		description: 'Examinez les prompts système et utilisateur exacts avant d\'exécuter cet ordre de travail.',
+		estimateTitle: 'Estimation de l’exécution',
+		requestCount: 'Requêtes prévues',
+		estimatedInputTokens: 'Jetons d’entrée estimés',
+		maximumAttempts: 'Tentatives maximales avec reprises',
+		maximumInputTokens: 'Maximum estimé de jetons d’entrée',
+		estimateNotice: 'Le nombre de jetons est une estimation locale. Les jetons de sortie, tarifs fournisseur, remises de cache et la facturation réelle sont exclus.',
+		confirmExecution: 'Confirmer et exécuter',
 		systemPrompt: 'Prompt système',
 		userPrompt: 'Prompt utilisateur',
 		characterCount: '{count} caractères'
@@ -302,6 +309,8 @@ export const frQueueMessages = {
 		executionWorkOrderNotRunning: 'Cet ordre de travail n\'est pas en cours.',
 		executionWorkOrderArchived: 'Cet ordre de travail est déjà terminé.',
 		executionCancelled: 'L\'exécution de l\'ordre de travail a été annulée.',
+		executionConfirmationRequired: 'Examinez et confirmez l’estimation avant l’exécution.',
+		executionConfirmationStale: 'Le plan a changé après confirmation. Examinez la nouvelle estimation.',
 		executionAgentNotFound: 'L\'agent sélectionné n\'a pas été trouvé.',
 		executionSecretNotFound: 'La clé API liée à l\'agent n\'a pas été trouvée.',
 		executionProviderUnsupported:
