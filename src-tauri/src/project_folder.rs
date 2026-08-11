@@ -1,12 +1,13 @@
 use std::{
     fs,
-    io::{self, Seek, SeekFrom, Write},
+    io::{self, Read, Write},
     path::{Component, Path, PathBuf},
     process::{Command, Stdio},
     thread,
     time::Duration,
 };
 
+use crate::queue_execution_identity::unique_token;
 use crate::ssealed_scaffold::{ssealed_scaffolds, SsealedScaffold};
 use crate::ssealed_scaffold_generated::SSEALED_SCAFFOLD_TOOL_VERSION;
 use crate::atomic_file_write::{write_file_atomically, write_file_exclusively};
@@ -1447,32 +1448,44 @@ fn rollback_ssealed_repository_apply(
 
 struct SsealedScaffoldLock {
     path: PathBuf,
+    lock_id: String,
     _file: fs::File,
 }
 
 impl Drop for SsealedScaffoldLock {
     fn drop(&mut self) {
-        let _ = fs::remove_file(&self.path);
+        let _ = self._file.unlock();
+        let owned = fs::read(&self.path)
+            .ok()
+            .and_then(|content| serde_json::from_slice::<serde_json::Value>(&content).ok())
+            .and_then(|metadata| {
+                metadata
+                    .get("lockId")
+                    .and_then(serde_json::Value::as_str)
+                    .map(str::to_owned)
+            })
+            .is_some_and(|lock_id| lock_id == self.lock_id);
+        if owned {
+            let _ = fs::remove_file(&self.path);
+        }
     }
 }
 
-fn acquire_ssealed_scaffold_lock(
-    target_path: &Path,
-) -> Result<SsealedScaffoldLock, ProjectFolderError> {
-    let lock_path = target_path.join(SSEALED_SCAFFOLD_LOCK_FILE_NAME);
-    if fs::symlink_metadata(&lock_path)
+fn recover_abandoned_workduck_scaffold_lock(
+    lock_path: &Path,
+) -> Result<bool, ProjectFolderError> {
+    if fs::symlink_metadata(lock_path)
         .map(|metadata| metadata_is_link_or_reparse(&metadata) || metadata.is_dir())
         .unwrap_or(false)
     {
         return Err(ProjectFolderError::SsealedScaffoldFailed);
     }
 
-    let mut lock_file = fs::OpenOptions::new()
-        .read(true)
-        .write(true)
-        .create(true)
-        .open(&lock_path)
-        .map_err(|_| ProjectFolderError::SsealedScaffoldFailed)?;
+    let mut lock_file = match fs::OpenOptions::new().read(true).write(true).open(lock_path) {
+        Ok(lock_file) => lock_file,
+        Err(error) if error.kind() == io::ErrorKind::NotFound => return Ok(true),
+        Err(_) => return Err(ProjectFolderError::SsealedScaffoldFailed),
+    };
     match lock_file.try_lock() {
         Ok(()) => {}
         Err(fs::TryLockError::WouldBlock) => {
@@ -1480,40 +1493,92 @@ fn acquire_ssealed_scaffold_lock(
         }
         Err(_) => return Err(ProjectFolderError::SsealedScaffoldFailed),
     }
-    lock_file
-        .set_len(0)
-        .and_then(|_| lock_file.seek(SeekFrom::Start(0)).map(|_| ()))
-        .map_err(|_| ProjectFolderError::SsealedScaffoldFailed)?;
-    let created_at = OffsetDateTime::now_utc()
-        .format(&Rfc3339)
-        .unwrap_or_else(|_| "1970-01-01T00:00:00Z".to_owned());
-    let lock_metadata = serde_json::json!({
-        "tool": "workduck",
-        "pid": std::process::id(),
-        "createdAt": created_at,
-    });
-    let lock_content = serde_json::to_vec_pretty(&lock_metadata)
-        .map_err(|_| ProjectFolderError::SsealedScaffoldFailed);
 
-    if lock_content
-        .and_then(|content| {
-            lock_file
-                .write_all(&content)
-                .and_then(|_| lock_file.flush())
-                .and_then(|_| lock_file.sync_all())
-                .map_err(|_| ProjectFolderError::SsealedScaffoldFailed)
-        })
-        .is_err()
-    {
-        drop(lock_file);
-        let _ = fs::remove_file(&lock_path);
-        return Err(ProjectFolderError::SsealedScaffoldFailed);
+    let mut content = Vec::new();
+    lock_file
+        .read_to_end(&mut content)
+        .map_err(|_| ProjectFolderError::SsealedScaffoldFailed)?;
+    let metadata: serde_json::Value = serde_json::from_slice(&content)
+        .map_err(|_| ProjectFolderError::SsealedScaffoldLocked)?;
+    let tool = metadata.get("tool").and_then(serde_json::Value::as_str);
+    if !matches!(tool, None | Some("workduck")) {
+        return Err(ProjectFolderError::SsealedScaffoldLocked);
     }
 
-    Ok(SsealedScaffoldLock {
-        path: lock_path,
-        _file: lock_file,
-    })
+    fs::remove_file(lock_path).map_err(|error| {
+        if error.kind() == io::ErrorKind::NotFound {
+            ProjectFolderError::SsealedScaffoldLocked
+        } else {
+            ProjectFolderError::SsealedScaffoldFailed
+        }
+    })?;
+    Ok(true)
+}
+
+fn acquire_ssealed_scaffold_lock(
+    target_path: &Path,
+) -> Result<SsealedScaffoldLock, ProjectFolderError> {
+    let lock_path = target_path.join(SSEALED_SCAFFOLD_LOCK_FILE_NAME);
+    for _ in 0..2 {
+        if fs::symlink_metadata(&lock_path)
+            .map(|metadata| metadata_is_link_or_reparse(&metadata) || metadata.is_dir())
+            .unwrap_or(false)
+        {
+            return Err(ProjectFolderError::SsealedScaffoldFailed);
+        }
+
+        let mut lock_file = match fs::OpenOptions::new()
+            .read(true)
+            .write(true)
+            .create_new(true)
+            .open(&lock_path)
+        {
+            Ok(lock_file) => lock_file,
+            Err(error) if error.kind() == io::ErrorKind::AlreadyExists => {
+                recover_abandoned_workduck_scaffold_lock(&lock_path)?;
+                continue;
+            }
+            Err(_) => return Err(ProjectFolderError::SsealedScaffoldFailed),
+        };
+        lock_file
+            .try_lock()
+            .map_err(|_| ProjectFolderError::SsealedScaffoldFailed)?;
+        let lock_id = unique_token();
+        let created_at = OffsetDateTime::now_utc()
+            .format(&Rfc3339)
+            .unwrap_or_else(|_| "1970-01-01T00:00:00Z".to_owned());
+        let lock_metadata = serde_json::json!({
+            "tool": "workduck",
+            "lockId": lock_id,
+            "pid": std::process::id(),
+            "createdAt": created_at,
+        });
+        let lock_content = serde_json::to_vec_pretty(&lock_metadata)
+            .map_err(|_| ProjectFolderError::SsealedScaffoldFailed);
+
+        if lock_content
+            .and_then(|content| {
+                lock_file
+                    .write_all(&content)
+                    .and_then(|_| lock_file.flush())
+                    .and_then(|_| lock_file.sync_all())
+                    .map_err(|_| ProjectFolderError::SsealedScaffoldFailed)
+            })
+            .is_err()
+        {
+            let _ = lock_file.unlock();
+            let _ = fs::remove_file(&lock_path);
+            return Err(ProjectFolderError::SsealedScaffoldFailed);
+        }
+
+        return Ok(SsealedScaffoldLock {
+            path: lock_path,
+            lock_id,
+            _file: lock_file,
+        });
+    }
+
+    Err(ProjectFolderError::SsealedScaffoldLocked)
 }
 
 fn metadata_is_link_or_reparse(metadata: &fs::Metadata) -> bool {
@@ -2093,6 +2158,56 @@ mod tests {
         assert!(!repository_path
             .join(SSEALED_SCAFFOLD_LOCK_FILE_NAME)
             .exists());
+    }
+
+    #[test]
+    fn ssealed_presence_lock_is_preserved_without_an_os_lock() {
+        let repository = tempfile::tempdir().expect("repository");
+        let lock_path = repository.path().join(SSEALED_SCAFFOLD_LOCK_FILE_NAME);
+        let lock_content = r#"{
+  "tool": "ssealed",
+  "lockId": "ssealed-owner",
+  "pid": 4242,
+  "hostname": "another-host",
+  "createdAt": "2026-08-11T00:00:00Z"
+}"#;
+        fs::write(&lock_path, lock_content).expect("ssealed presence lock");
+
+        let result = acquire_ssealed_scaffold_lock(repository.path());
+
+        assert!(matches!(
+            result,
+            Err(ProjectFolderError::SsealedScaffoldLocked)
+        ));
+        assert_eq!(
+            fs::read_to_string(&lock_path).expect("preserved ssealed lock"),
+            lock_content
+        );
+    }
+
+    #[test]
+    fn ssealed_scaffold_lock_release_preserves_a_replacement_owner() {
+        let repository = tempfile::tempdir().expect("repository");
+        let lock_path = repository.path().join(SSEALED_SCAFFOLD_LOCK_FILE_NAME);
+        let lock = acquire_ssealed_scaffold_lock(repository.path())
+            .unwrap_or_else(|_| panic!("workduck lock should be acquired"));
+        lock._file.unlock().expect("release the OS lock for replacement");
+        let metadata: serde_json::Value = serde_json::from_slice(
+            &fs::read(&lock_path).expect("workduck lock metadata"),
+        )
+        .expect("valid workduck lock metadata");
+        assert_eq!(metadata["tool"], "workduck");
+        assert!(metadata["lockId"]
+            .as_str()
+            .is_some_and(|lock_id| !lock_id.is_empty()));
+        let replacement = r#"{"tool":"ssealed","lockId":"replacement-owner"}"#;
+        fs::write(&lock_path, replacement).expect("replacement lock owner");
+        drop(lock);
+
+        assert_eq!(
+            fs::read_to_string(&lock_path).expect("replacement lock preserved"),
+            replacement
+        );
     }
 
     #[test]
