@@ -448,8 +448,11 @@ mod windows_ffi {
 #[cfg(all(test, windows))]
 mod tests {
     use super::*;
-    use std::{fs, thread, time::Instant};
     use core::ffi::c_void;
+    use std::{
+        io::{BufRead, BufReader},
+        process::Stdio,
+    };
 
     const PROCESS_SYNCHRONIZE: u32 = 0x0010_0000;
     const WAIT_OBJECT_0: u32 = 0;
@@ -462,8 +465,6 @@ mod tests {
 
     #[test]
     fn windows_job_termination_stops_descendant_process() {
-        let temporary_directory = tempfile::tempdir().expect("temporary directory");
-        let pid_file = temporary_directory.path().join("child.pid");
         let powershell = std::env::var_os("SystemRoot")
             .map(std::path::PathBuf::from)
             .expect("SystemRoot")
@@ -475,20 +476,26 @@ mod tests {
             "$child = Start-Process -FilePath $env:ComSpec ",
             "-ArgumentList '/D','/C','ping 127.0.0.1 -n 30 >nul' ",
             "-WindowStyle Hidden -PassThru; ",
-            "[IO.File]::WriteAllText($env:WORKDUCK_CHILD_PID_FILE, [string]$child.Id); ",
+            "[Console]::Out.WriteLine([string]$child.Id); ",
+            "[Console]::Out.Flush(); ",
             "Wait-Process -Id $child.Id"
         );
         let mut command = Command::new(powershell);
         command
             .args(["-NoLogo", "-NoProfile", "-NonInteractive", "-Command", script])
-            .env("WORKDUCK_CHILD_PID_FILE", &pid_file);
+            .stdout(Stdio::piped());
         let mut process = ProcessTreeChild::spawn(&mut command).expect("process tree");
-        let deadline = Instant::now() + Duration::from_secs(10);
-        while !pid_file.exists() && Instant::now() < deadline {
-            thread::sleep(Duration::from_millis(25));
-        }
-        let descendant_pid = fs::read_to_string(&pid_file)
-            .expect("descendant pid")
+        let stdout = process
+            .child_mut()
+            .stdout
+            .take()
+            .expect("captured process-tree stdout");
+        let mut descendant_pid = String::new();
+        let bytes_read = BufReader::new(stdout)
+            .read_line(&mut descendant_pid)
+            .expect("descendant pid readiness signal");
+        assert!(bytes_read > 0, "descendant pid readiness signal was missing");
+        let descendant_pid = descendant_pid
             .trim()
             .parse::<u32>()
             .expect("numeric descendant pid");
