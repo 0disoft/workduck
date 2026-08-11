@@ -858,11 +858,11 @@ fn write_ssealed_scaffold(
 
     for file in scaffold.files {
         write_ssealed_scaffold_file(target_path, file.path, file.content)?;
-        manifest_files.push(serde_json::json!({
-            "path": file.path,
-            "checksum": sha256_checksum(file.content),
-            "kind": file.kind,
-        }));
+        manifest_files.push(create_ssealed_manifest_file(
+            file.path,
+            file.kind,
+            &sha256_checksum(file.content),
+        ));
     }
 
     let generated_at = OffsetDateTime::now_utc()
@@ -870,11 +870,14 @@ fn write_ssealed_scaffold(
         .unwrap_or_else(|_| "1970-01-01T00:00:00Z".to_owned());
     let manifest = serde_json::json!({
         "tool": "ssealed",
+        "schemaVersion": 1,
+        "generatorVersion": SSEALED_SCAFFOLD_TOOL_VERSION,
         "version": SSEALED_SCAFFOLD_TOOL_VERSION,
         "generatedBy": "workduck",
         "generatedAt": generated_at,
         "scope": scaffold.scope,
         "profile": scaffold.profile,
+        "addons": [],
         "density": scaffold.density,
         "runner": scaffold.runner,
         "files": manifest_files,
@@ -1235,14 +1238,7 @@ fn create_ssealed_repository_apply_manifest_content(
         .files
         .iter()
         .filter(|file| file.status != "conflict")
-        .map(|file| {
-            serde_json::json!({
-                "path": file.path,
-                "checksum": file.checksum,
-                "kind": file.kind,
-                "status": file.status,
-            })
-        })
+        .map(|file| create_ssealed_manifest_file(&file.path, &file.kind, &file.checksum))
         .collect();
     let manifest_conflicts: Vec<_> = plan
         .files
@@ -1261,11 +1257,14 @@ fn create_ssealed_repository_apply_manifest_content(
         .unwrap_or_else(|_| "1970-01-01T00:00:00Z".to_owned());
     let manifest = serde_json::json!({
         "tool": "ssealed",
+        "schemaVersion": 1,
+        "generatorVersion": plan.tool_version,
         "version": plan.tool_version,
         "generatedBy": "workduck",
         "generatedAt": generated_at,
         "scope": plan.scope,
         "profile": plan.profile,
+        "addons": [],
         "density": plan.density,
         "runner": plan.runner,
         "mode": "existing-repository-missing-files",
@@ -1276,6 +1275,31 @@ fn create_ssealed_repository_apply_manifest_content(
         serde_json::to_string_pretty(&manifest).map_err(|_| ProjectFolderError::SsealedScaffoldFailed)?;
 
     Ok(manifest_content + "\n")
+}
+
+fn create_ssealed_manifest_file(path: &str, kind: &str, checksum: &str) -> serde_json::Value {
+    let ownership = if path == ".gitignore" || path == "package.json" {
+        "block-managed"
+    } else {
+        "seeded"
+    };
+    let presence = if ownership == "block-managed" {
+        "required"
+    } else {
+        "optional"
+    };
+
+    serde_json::json!({
+        "path": path,
+        "checksum": checksum,
+        "kind": kind,
+        "ownership": ownership,
+        "presence": presence,
+        "status": "active",
+        "initialChecksum": checksum,
+        "acceptedChecksum": checksum,
+        "generatedChecksum": checksum,
+    })
 }
 
 fn write_ssealed_repository_manifest_file(
@@ -1759,15 +1783,22 @@ mod tests {
             serde_json::from_str(&manifest_content).expect("valid manifest json");
 
         assert_eq!(manifest["tool"], "ssealed");
+        assert_eq!(manifest["schemaVersion"], 1);
+        assert_eq!(
+            manifest["generatorVersion"],
+            SSEALED_SCAFFOLD_TOOL_VERSION
+        );
         assert_eq!(manifest["version"], SSEALED_SCAFFOLD_TOOL_VERSION);
         assert_eq!(manifest["generatedBy"], "workduck");
         assert_eq!(manifest["scope"], "frontend");
         assert_eq!(manifest["profile"], "generic");
         assert_eq!(manifest["density"], "standard");
         assert_eq!(manifest["runner"], "none");
+        assert_eq!(manifest["addons"], serde_json::json!([]));
         assert!(manifest["files"].as_array().is_some_and(|files| {
             files.iter().any(|file| file["path"] == "docs/frontend/FRONTEND_DESIGN.md")
                 && !files.iter().any(|file| file["path"] == "docs/backend/README.md")
+                && files.iter().all(is_canonical_ssealed_manifest_file)
         }));
     }
 
@@ -1985,14 +2016,23 @@ mod tests {
             serde_json::from_str(&manifest_content).expect("valid manifest json");
 
         assert_eq!(manifest["mode"], "existing-repository-missing-files");
+        assert_eq!(manifest["schemaVersion"], 1);
+        assert_eq!(
+            manifest["generatorVersion"],
+            SSEALED_SCAFFOLD_TOOL_VERSION
+        );
+        assert_eq!(manifest["version"], SSEALED_SCAFFOLD_TOOL_VERSION);
         assert_eq!(manifest["scope"], "backend");
         assert_eq!(manifest["profile"], "generic");
         assert_eq!(manifest["density"], "standard");
+        assert_eq!(manifest["runner"], "none");
+        assert_eq!(manifest["addons"], serde_json::json!([]));
         assert!(manifest["conflicts"].as_array().is_some_and(|conflicts| {
             conflicts.iter().any(|file| file["path"] == "AGENTS.md")
         }));
         assert!(manifest["files"].as_array().is_some_and(|files| {
             files.iter().any(|file| file["path"] == "docs/backend/README.md")
+                && files.iter().all(is_canonical_ssealed_manifest_file)
         }));
         assert!(!repository_path
             .join(SSEALED_SCAFFOLD_LOCK_FILE_NAME)
@@ -2184,5 +2224,29 @@ mod tests {
 
         assert!(!partial_path.exists());
         assert!(!journal_path.exists());
+    }
+
+    fn is_canonical_ssealed_manifest_file(file: &serde_json::Value) -> bool {
+        let path = file["path"].as_str().unwrap_or_default();
+        let checksum = file["checksum"].as_str().unwrap_or_default();
+        let expected_ownership = if path == ".gitignore" || path == "package.json" {
+            "block-managed"
+        } else {
+            "seeded"
+        };
+        let expected_presence = if expected_ownership == "block-managed" {
+            "required"
+        } else {
+            "optional"
+        };
+
+        !path.is_empty()
+            && checksum.starts_with("sha256:")
+            && file["ownership"] == expected_ownership
+            && file["presence"] == expected_presence
+            && file["status"] == "active"
+            && file["initialChecksum"] == checksum
+            && file["acceptedChecksum"] == checksum
+            && file["generatedChecksum"] == checksum
     }
 }
