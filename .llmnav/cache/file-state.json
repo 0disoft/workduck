@@ -877,7 +877,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "a8a29515cf46f37a94cdb07f34629ed2d5ad7a25e9c6b08a606f1cff72963cb8",
+      "contentHash": "e92092acc30b858d48144f1104bc0a636757a900417bbbe1232e6d67273c69e4",
       "declarations": [
         null
       ],
@@ -885,8 +885,8 @@
         "core::ffi::c_void",
         "std::os::unix::process::CommandExt",
         "std::os::windows::io::AsRawHandle",
+        "std::{\n        io::{BufRead, BufReader},\n        process::Stdio,\n    }",
         "std::{\n    collections::HashMap,\n    io,\n    process::{Child, Command, ExitStatus},\n    sync::{Mutex, MutexGuard, OnceLock, atomic::{AtomicU64, Ordering}},\n    thread,\n    time::Duration,\n}",
-        "std::{fs, thread, time::Instant}",
         "std::{mem::size_of, ptr}",
         "tests {\n    use super::*",
         "wait_timeout::ChildExt",
@@ -894,27 +894,28 @@
       ],
       "path": "src-tauri/src/process_tree.rs",
       "semanticBytes": 563,
-      "sourceBytes": 15732
+      "sourceBytes": 15785
     },
     {
       "blocks": [],
-      "contentHash": "36744d6529da8e8f1447ffd8def81d90edb5196c39494d93d16c4de75135d36f",
+      "contentHash": "3c597249655a3b5fcc718d668fe2a62d6f723530888883d77813503be08a408f",
       "declarations": [],
       "imports": [
         "crate::atomic_file_write::{write_file_atomically, write_file_exclusively}",
+        "crate::queue_execution_identity::unique_token",
         "crate::ssealed_scaffold::{ssealed_scaffolds, SsealedScaffold}",
         "crate::ssealed_scaffold_generated::SSEALED_SCAFFOLD_TOOL_VERSION",
         "crate::windows_filename::is_windows_reserved_name",
         "crate::workspace_path::{validate_absolute_directory_path, WorkspacePathValidationError}",
         "sha2::{Digest, Sha256}",
         "std::os::windows::fs::MetadataExt",
-        "std::{\n    fs,\n    io::{self, Seek, SeekFrom, Write},\n    path::{Component, Path, PathBuf},\n    process::{Command, Stdio},\n    thread,\n    time::Duration,\n}",
+        "std::{\n    fs,\n    io::{self, Read, Write},\n    path::{Component, Path, PathBuf},\n    process::{Command, Stdio},\n    thread,\n    time::Duration,\n}",
         "tests {\n    use super::*",
         "time::{format_description::well_known::Rfc3339, OffsetDateTime}"
       ],
       "path": "src-tauri/src/project_folder.rs",
       "semanticBytes": 0,
-      "sourceBytes": 76072
+      "sourceBytes": 82801
     },
     {
       "blocks": [],
@@ -5849,6 +5850,6 @@
       "sourceBytes": 3575
     }
   ],
-  "indexerVersion": 4,
+  "indexerVersion": 5,
   "schemaVersion": 1
 }

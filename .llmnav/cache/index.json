@@ -167,7 +167,15 @@
       "stability": "contract"
     },
     {
-      "boundaries": [],
+      "boundaries": [
+        {
+          "confidence": "high",
+          "evidence": [
+            "tauri-command"
+          ],
+          "kind": "command"
+        }
+      ],
       "excludes": [
         "individual command implementation",
         "frontend workflow state"
@@ -175,7 +183,7 @@
       "hashes": {
         "body": "86daeefdd9c0b89d3cc0c0f6a0e2638fd4fd3447029f113c216cc5d5f500fffd",
         "semantic": "a8dc9ec3df04251e644264a0c040ef3a382459508eeaef5bce2497bec2fee50c",
-        "structure": "67f7255435c767539ccafaa52c6fa4062c78b60cc9b185bf2138f6461c04100f"
+        "structure": "d38a76250f4ae58d0759a62b725569e48e4a445ad86ae31d34f9039fa799e3e4"
       },
       "id": "workduck.desktop.commands",
       "imports": [
@@ -257,23 +265,31 @@
       "stability": "architecture"
     },
     {
-      "boundaries": [],
+      "boundaries": [
+        {
+          "confidence": "medium",
+          "evidence": [
+            "platform-lifecycle"
+          ],
+          "kind": "runtime"
+        }
+      ],
       "excludes": [
         "task command selection",
         "terminal output buffering"
       ],
       "hashes": {
-        "body": "a8a29515cf46f37a94cdb07f34629ed2d5ad7a25e9c6b08a606f1cff72963cb8",
+        "body": "e92092acc30b858d48144f1104bc0a636757a900417bbbe1232e6d67273c69e4",
         "semantic": "5ab2b16387c2f5fd5e910bc21c12e7cc7c2db50ff68cb4190084e90fe3f5ef51",
-        "structure": "f2e6d6679cf449259abbf5ffc85d774c0d47cecf13a5e2f2dca58b09cae442de"
+        "structure": "9b9a4dcd9931a356d4cfa6d70382e072aceb1b34bdbd431906f7d0bcb6842514"
       },
       "id": "workduck.process.tree",
       "imports": [
         "core::ffi::c_void",
         "std::os::unix::process::CommandExt",
         "std::os::windows::io::AsRawHandle",
+        "std::{\n        io::{BufRead, BufReader},\n        process::Stdio,\n    }",
         "std::{\n    collections::HashMap,\n    io,\n    process::{Child, Command, ExitStatus},\n    sync::{Mutex, MutexGuard, OnceLock, atomic::{AtomicU64, Ordering}},\n    thread,\n    time::Duration,\n}",
-        "std::{fs, thread, time::Instant}",
         "std::{mem::size_of, ptr}",
         "tests {\n    use super::*",
         "wait_timeout::ChildExt",
@@ -312,7 +328,15 @@
       "stability": "architecture"
     },
     {
-      "boundaries": [],
+      "boundaries": [
+        {
+          "confidence": "high",
+          "evidence": [
+            "tauri-invoke"
+          ],
+          "kind": "command"
+        }
+      ],
       "excludes": [
         "native process execution",
         "terminal rendering"
@@ -320,7 +344,7 @@
       "hashes": {
         "body": "914199ae667696fb7bc9d0b1fa2ab07e1dae6b3bea2bbb0721484d36f9fa5bbd",
         "semantic": "adc3fe9dac58b5b264623986e2c1e8d71788bb6d94c500a008ab7614e9864f27",
-        "structure": "8b0d94d739c0eaa037c2ff2caecaae224962e2fcc2c1c35de05b5784015126c6"
+        "structure": "98c85cfe3416775b10b4014e81c90d6f7d44c6a4fcdfc6b75d26cbfe64f06498"
       },
       "id": "workduck.projects.repository-task",
       "imports": [
@@ -358,7 +382,15 @@
       "stability": "contract"
     },
     {
-      "boundaries": [],
+      "boundaries": [
+        {
+          "confidence": "high",
+          "evidence": [
+            "tauri-invoke"
+          ],
+          "kind": "command"
+        }
+      ],
       "excludes": [
         "project domain normalization",
         "repository Git operations"
@@ -366,7 +398,7 @@
       "hashes": {
         "body": "989104fff04409d0f323d6bc088eea23df893b3dc7fccaf2e13a568ac0eba6ad",
         "semantic": "6cc132a951e2eeb149ec919af40348de53078c5b6780a09cfc061ed7c09997a3",
-        "structure": "7ac76a99a01db8e7bb212f22c0eeb78960b4160891e8f343957e9f0a84cf2276"
+        "structure": "fb299b1a43d9d0af9d9ceea58887d5b230ee2c07ca74f6f4cd2ba0af12269e7b"
       },
       "id": "workduck.projects.storage",
       "imports": [
@@ -460,9 +492,9 @@
     },
     "schemaVersion": 1
   },
-  "generatedBy": "llmnav@0.6.0",
+  "generatedBy": "llmnav@0.6.5",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "51c656121e2d0ec38482e502b43dafa8f4ff43fbaca243ecb2c2ecd9e1b50884",
+  "sourceHash": "093d5b68b3bdc3492fc310a3a55dae8a2dd6cafddff83d1c5413785bb278bbd4",
   "specVersion": "1"
 }
