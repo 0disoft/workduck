@@ -167,7 +167,15 @@
       "stability": "contract"
     },
     {
-      "boundaries": [],
+      "boundaries": [
+        {
+          "confidence": "high",
+          "evidence": [
+            "tauri-command"
+          ],
+          "kind": "command"
+        }
+      ],
       "excludes": [
         "individual command implementation",
         "frontend workflow state"
@@ -175,7 +183,7 @@
       "hashes": {
         "body": "86daeefdd9c0b89d3cc0c0f6a0e2638fd4fd3447029f113c216cc5d5f500fffd",
         "semantic": "a8dc9ec3df04251e644264a0c040ef3a382459508eeaef5bce2497bec2fee50c",
-        "structure": "67f7255435c767539ccafaa52c6fa4062c78b60cc9b185bf2138f6461c04100f"
+        "structure": "d38a76250f4ae58d0759a62b725569e48e4a445ad86ae31d34f9039fa799e3e4"
       },
       "id": "workduck.desktop.commands",
       "imports": [
@@ -257,7 +265,15 @@
       "stability": "architecture"
     },
     {
-      "boundaries": [],
+      "boundaries": [
+        {
+          "confidence": "medium",
+          "evidence": [
+            "platform-lifecycle"
+          ],
+          "kind": "runtime"
+        }
+      ],
       "excludes": [
         "task command selection",
         "terminal output buffering"
@@ -265,7 +281,7 @@
       "hashes": {
         "body": "e92092acc30b858d48144f1104bc0a636757a900417bbbe1232e6d67273c69e4",
         "semantic": "5ab2b16387c2f5fd5e910bc21c12e7cc7c2db50ff68cb4190084e90fe3f5ef51",
-        "structure": "9a18ba2ea7ae7713a710ae832c01172632bc0ed617f36da6fab28973287fd448"
+        "structure": "9b9a4dcd9931a356d4cfa6d70382e072aceb1b34bdbd431906f7d0bcb6842514"
       },
       "id": "workduck.process.tree",
       "imports": [
@@ -312,7 +328,15 @@
       "stability": "architecture"
     },
     {
-      "boundaries": [],
+      "boundaries": [
+        {
+          "confidence": "high",
+          "evidence": [
+            "tauri-invoke"
+          ],
+          "kind": "command"
+        }
+      ],
       "excludes": [
         "native process execution",
         "terminal rendering"
@@ -320,7 +344,7 @@
       "hashes": {
         "body": "914199ae667696fb7bc9d0b1fa2ab07e1dae6b3bea2bbb0721484d36f9fa5bbd",
         "semantic": "adc3fe9dac58b5b264623986e2c1e8d71788bb6d94c500a008ab7614e9864f27",
-        "structure": "8b0d94d739c0eaa037c2ff2caecaae224962e2fcc2c1c35de05b5784015126c6"
+        "structure": "98c85cfe3416775b10b4014e81c90d6f7d44c6a4fcdfc6b75d26cbfe64f06498"
       },
       "id": "workduck.projects.repository-task",
       "imports": [
@@ -358,7 +382,15 @@
       "stability": "contract"
     },
     {
-      "boundaries": [],
+      "boundaries": [
+        {
+          "confidence": "high",
+          "evidence": [
+            "tauri-invoke"
+          ],
+          "kind": "command"
+        }
+      ],
       "excludes": [
         "project domain normalization",
         "repository Git operations"
@@ -366,7 +398,7 @@
       "hashes": {
         "body": "989104fff04409d0f323d6bc088eea23df893b3dc7fccaf2e13a568ac0eba6ad",
         "semantic": "6cc132a951e2eeb149ec919af40348de53078c5b6780a09cfc061ed7c09997a3",
-        "structure": "7ac76a99a01db8e7bb212f22c0eeb78960b4160891e8f343957e9f0a84cf2276"
+        "structure": "fb299b1a43d9d0af9d9ceea58887d5b230ee2c07ca74f6f4cd2ba0af12269e7b"
       },
       "id": "workduck.projects.storage",
       "imports": [
@@ -496,7 +528,15 @@
       "stability": "contract"
     },
     {
-      "boundaries": [],
+      "boundaries": [
+        {
+          "confidence": "high",
+          "evidence": [
+            "versioned-schema-literal"
+          ],
+          "kind": "schema"
+        }
+      ],
       "excludes": [
         "JSON Schema documents",
         "persistence adapters"
@@ -504,7 +544,7 @@
       "hashes": {
         "body": "0736547c4ebb8cb7cabb1e4e55f1e1560b9ebfdc997b417e6cb348e82b4f30a3",
         "semantic": "f9972c413d81170dd530a62c64f9d6ac2e1840a41c50b2f448d309aac23b563c",
-        "structure": "021eaeb1acea62caef29ef155e8bfa856dde7ed9f0d1525da45b4a6db5ea007e"
+        "structure": "70b3810daf2fabd1c24c8c9a1e453fd7ea6a69f971293250012211b03e3d567a"
       },
       "id": "workduck.domain.core",
       "imports": [],
@@ -539,7 +579,15 @@
       "stability": "contract"
     },
     {
-      "boundaries": [],
+      "boundaries": [
+        {
+          "confidence": "high",
+          "evidence": [
+            "tauri-invoke"
+          ],
+          "kind": "command"
+        }
+      ],
       "excludes": [
         "secret-vault encryption",
         "process spawning"
@@ -547,7 +595,7 @@
       "hashes": {
         "body": "f2d41884e8db539610eccd193276ea6f223020fcaaa79a2a1ae81cf1eb76dbd2",
         "semantic": "c07a23b54260d60d4b907e03dce7ef60e6671353c0db7522d3652161944801a0",
-        "structure": "45a3efea212db9833c19f1878709253af5972d1617df574b612d9b263b691a3b"
+        "structure": "6b782a4414e9d45e9575777b586c8a2e756f2fdca485a0fec3961812616ddcfd"
       },
       "id": "workduck.environment.cli",
       "imports": [
@@ -584,7 +632,15 @@
       "stability": "contract"
     },
     {
-      "boundaries": [],
+      "boundaries": [
+        {
+          "confidence": "high",
+          "evidence": [
+            "tauri-invoke"
+          ],
+          "kind": "command"
+        }
+      ],
       "excludes": [
         "repository Git operations",
         "project registry persistence"
@@ -592,7 +648,7 @@
       "hashes": {
         "body": "981d53da11e452ef9e27511d4dc3bffa568b9c2f840fc6eb2598bf2d6b139d63",
         "semantic": "137d450fb766b67a65a156364fbcccb1a03ad4037c9480a313a0d39a972749b5",
-        "structure": "02a2465e68cff7d59578287fc391f7a9c57e1713b9a01256f6fb204ccd8717b2"
+        "structure": "d53dd15f3209120515e3ebc92702be75e7dca55575f0c1f882bbe75c7598600e"
       },
       "id": "workduck.projects.folder",
       "imports": [
@@ -632,7 +688,15 @@
       "stability": "architecture"
     },
     {
-      "boundaries": [],
+      "boundaries": [
+        {
+          "confidence": "high",
+          "evidence": [
+            "tauri-invoke"
+          ],
+          "kind": "command"
+        }
+      ],
       "excludes": [
         "repository task processes",
         "project registry storage"
@@ -640,7 +704,7 @@
       "hashes": {
         "body": "31cf1ed39576adc9b6039d7e47f81a892b358dd82795274a8c7349a16d1463c9",
         "semantic": "7543f9c330f2933c27e50e7f15b77907a91cb7ddb52bc1b501f1507dc5d6f72d",
-        "structure": "1778237561a07341c0b2b662c0845d5b4e5e0ab28b29b6b3b928c21223f168db"
+        "structure": "d8b1ba0ecab2d3bbf0afe25283d3b0efdbbc80382129c224cfa48e2c1140bff5"
       },
       "id": "workduck.projects.repository",
       "imports": [
@@ -726,7 +790,15 @@
       "stability": "contract"
     },
     {
-      "boundaries": [],
+      "boundaries": [
+        {
+          "confidence": "high",
+          "evidence": [
+            "versioned-schema-literal"
+          ],
+          "kind": "schema"
+        }
+      ],
       "excludes": [
         "Queue file I/O",
         "provider execution"
@@ -734,7 +806,7 @@
       "hashes": {
         "body": "722e8303fb88342957a041767a3d58a1b2b7a8abff1d766717433060e6b4aa39",
         "semantic": "386f07db6055e5416e2832515a5217c93b9fbd3de0cf4e94cf3d0fcef4c9bfb5",
-        "structure": "ee73c56b3e88e38609a60c0a0bccc0ec2d55ae114af790cc67de9edc16ff8e04"
+        "structure": "652fd0d63ff7ab590fdbf63894fcc8cd14994fcb6bb8f0c7ace530ce41af8953"
       },
       "id": "workduck.queue.artifacts",
       "imports": [
@@ -775,7 +847,15 @@
       "stability": "contract"
     },
     {
-      "boundaries": [],
+      "boundaries": [
+        {
+          "confidence": "high",
+          "evidence": [
+            "tauri-invoke"
+          ],
+          "kind": "command"
+        }
+      ],
       "excludes": [
         "provider implementation",
         "Queue artifact file storage"
@@ -783,7 +863,7 @@
       "hashes": {
         "body": "4f23543cbebd891abb4f250e668c4f4a8e5c8c045379c998eb76e7cb89b1240c",
         "semantic": "25e678811be8fc32a5ef62b61918006dd3b6a37938d29d89bcfb59549dd07279",
-        "structure": "47a27c4bee74a3a744e99c58d4661e77eb204fcb11d3e0ba2449949243544e93"
+        "structure": "ad793e5179bf2887030abf2311ae521ac864e010d62a1b8eb1e40ae44f846004"
       },
       "id": "workduck.queue.execution",
       "imports": [
@@ -827,7 +907,15 @@
       "stability": "architecture"
     },
     {
-      "boundaries": [],
+      "boundaries": [
+        {
+          "confidence": "high",
+          "evidence": [
+            "tauri-invoke"
+          ],
+          "kind": "command"
+        }
+      ],
       "excludes": [
         "Queue artifact semantics",
         "agent execution"
@@ -835,7 +923,7 @@
       "hashes": {
         "body": "2b09be91f95baa8962f1a128713dc20e7e907a27e052ac8c3d64a03623f345a5",
         "semantic": "7b2278fd3969464a5b620176491febc7a114547f926baa9f84ad8623d769efaf",
-        "structure": "65162251fd6e74bb21c9d29e99975f2551b46a4c3c70f66969d0c21c78737b91"
+        "structure": "6956a12759b2f469636dbfbbdb78248305b1675726977ec0ad45ef642f2c7dde"
       },
       "id": "workduck.queue.folder",
       "imports": [
@@ -873,7 +961,22 @@
       "stability": "architecture"
     },
     {
-      "boundaries": [],
+      "boundaries": [
+        {
+          "confidence": "high",
+          "evidence": [
+            "tauri-command"
+          ],
+          "kind": "command"
+        },
+        {
+          "confidence": "medium",
+          "evidence": [
+            "platform-lifecycle"
+          ],
+          "kind": "runtime"
+        }
+      ],
       "excludes": [
         "Git inspection implementation",
         "repository mutations"
@@ -881,7 +984,7 @@
       "hashes": {
         "body": "92b4af9c0938ff2d5d8024336a11d3a6966602c632360408106decab4ea1ff1b",
         "semantic": "710586279ef3802a9cbb0f1e9ed74a440aa90ab506414501d127355edc3db3b6",
-        "structure": "52cd2e40ff2bd0212b231308d9ba48cb122bdf35313854dab8c901f639a4d92f"
+        "structure": "550107f9ad4d420a5b4b3e2e27d59022075426bfb9fc020e32ef2385414b43d2"
       },
       "id": "workduck.repository.inspection",
       "imports": [
@@ -921,7 +1024,15 @@
       "stability": "architecture"
     },
     {
-      "boundaries": [],
+      "boundaries": [
+        {
+          "confidence": "high",
+          "evidence": [
+            "tauri-invoke"
+          ],
+          "kind": "command"
+        }
+      ],
       "excludes": [
         "vault record storage",
         "password UI"
@@ -929,7 +1040,7 @@
       "hashes": {
         "body": "f1bbbc8d624f2876258ae25035d8b6ea3090faa8dd82f441f85fbab58fd1085b",
         "semantic": "b7d6d7e11cf8691266150409182a03311bc68914dec11274bcc7dba75eb3ec04",
-        "structure": "d81a9c6a78f0adca94f9ad6a199331f612a3b493645a4337c2558b90cf79fa6e"
+        "structure": "d4999d8c151ed070c9449ac2a8665d25ee06d7cd9837f8dde5e6dcaa549383a5"
       },
       "id": "workduck.secret-vault.crypto",
       "imports": [
@@ -967,7 +1078,22 @@
       "stability": "contract"
     },
     {
-      "boundaries": [],
+      "boundaries": [
+        {
+          "confidence": "high",
+          "evidence": [
+            "tauri-command"
+          ],
+          "kind": "command"
+        },
+        {
+          "confidence": "medium",
+          "evidence": [
+            "platform-lifecycle"
+          ],
+          "kind": "runtime"
+        }
+      ],
       "excludes": [
         "terminal discovery",
         "frontend terminal rendering"
@@ -975,7 +1101,7 @@
       "hashes": {
         "body": "87cab031b665c3bbc9513858cfc017fd5c3981c04e23328cdb5c03e5934d2918",
         "semantic": "9c2182fe01424569825939eea8693e4ba37263ca63e5026bc1cd85ec9d6601c2",
-        "structure": "a83f09ae820f88d606f5959b76cfa5b057a3bed4157a38685f3e55bec688408f"
+        "structure": "3c1c9ffe3c14c958ffbf6fa90e1bdfbb68620d2c778a15ede840f6b967891a57"
       },
       "id": "workduck.terminal.process",
       "imports": [
@@ -1064,7 +1190,15 @@
       "stability": "architecture"
     },
     {
-      "boundaries": [],
+      "boundaries": [
+        {
+          "confidence": "high",
+          "evidence": [
+            "tauri-command"
+          ],
+          "kind": "command"
+        }
+      ],
       "excludes": [
         "workspace registry storage",
         "repository containment"
@@ -1072,7 +1206,7 @@
       "hashes": {
         "body": "06577b680344bc29ec3935e6fad086d037c52175c0b97793e57af2c2b6626c78",
         "semantic": "63bcdb989620ebf744325e27d748da0c655fa023583fa6fa77be34a8df03a09b",
-        "structure": "0f1c7fee0b640eb5c06f0d694fdbb7b077fa4fe3b015845613961b92caab3750"
+        "structure": "0991342ebbb0af178a3cfdae419c9efd02207043e44cebcf472a7c484fa82d0b"
       },
       "id": "workduck.workspace.path",
       "imports": [
@@ -1111,7 +1245,15 @@
       "stability": "contract"
     },
     {
-      "boundaries": [],
+      "boundaries": [
+        {
+          "confidence": "high",
+          "evidence": [
+            "tauri-invoke"
+          ],
+          "kind": "command"
+        }
+      ],
       "excludes": [
         "Git synchronization",
         "sync file transport"
@@ -1119,7 +1261,7 @@
       "hashes": {
         "body": "9eac5c4c3cf612c7b48c0cff12fdbee94a61d3452ca74c8f09f0e39483eea38e",
         "semantic": "48fadb054a73ad79cdaf1a22e022e5922dadac755784925fb727208b57c497af",
-        "structure": "aa7be139de366f4c68caf850da80a7b7e0c0e164b396de6630331c7167b4cd0d"
+        "structure": "3f392a7890c8e14266ea54ee72258cc9acd26196fa8845f7fa95ec8137aee5ce"
       },
       "id": "workduck.workspace.sync",
       "imports": [
@@ -1173,6 +1315,6 @@
   "generatedBy": "llmnav@0.6.5",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "3cdc546e59efe31600d67f89705512560b6f91369e6a82afad03bf0dbed8f1b9",
+  "sourceHash": "3e8ebe62458b59bc1c4c4113ea5f24db7f263a514bfecdef8739eaa4b3bc1507",
   "specVersion": "1"
 }
