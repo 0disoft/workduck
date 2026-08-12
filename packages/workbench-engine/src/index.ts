@@ -1,3 +1,12 @@
+/* llmnav/1 module
+id=workduck.workbench.engine
+role=Compile agent run briefs and deterministic local run, shell, gate, and project-inventory summaries from core domain records.
+owns=workbench run plans|gate evaluation summaries|project inventory grouping
+excludes=process execution|artifact persistence
+search=compile workbench run|evaluate gate checks|summarize project inventory
+invariant=A failed gate check blocks its gate and shell-run records preserve their explicit approval and execution states.
+stability=architecture
+*/
 import type {
   AgentBriefRef,
   ArtifactRef,

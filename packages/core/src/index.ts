@@ -1,3 +1,12 @@
+/* llmnav/1 module
+id=workduck.domain.core
+role=Define the shared Workduck entity, queue, run, gate, risk, and lifecycle vocabulary used across packages.
+owns=domain entity types|shared enum values|domain type guards
+excludes=JSON Schema documents|persistence adapters
+search=workduck domain model|entity kinds and statuses|queue core types
+invariant=Runtime guard values and their exported TypeScript unions describe the same closed vocabulary.
+stability=contract
+*/
 export const workduckEntityKinds = [
   "project",
   "repo",

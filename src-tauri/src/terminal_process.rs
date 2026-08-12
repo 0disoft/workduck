@@ -1,3 +1,12 @@
+// llmnav/1 module
+// id=workduck.terminal.process
+// role=Own bounded interactive terminal sessions, process trees, input, output cursors, and lifecycle commands for the desktop runtime.
+// owns=terminal session registry|terminal process spawning|bounded terminal I/O
+// excludes=terminal discovery|frontend terminal rendering
+// search=start terminal session|read terminal output|stop terminal process
+// invariant=Session output and input stay within byte limits and replacing or stopping a session does not intentionally orphan its process tree.
+// stability=architecture
+// /llmnav
 use std::{
     collections::HashMap,
     io::{Read, Write},

@@ -1,3 +1,12 @@
+/* llmnav/1 module
+id=workduck.secret-vault.crypto
+role=Encrypt and decrypt versioned secret-vault payloads through the native Argon2id and XChaCha20-Poly1305 boundary.
+owns=secret-vault envelope|vault crypto invocation|crypto error normalization
+excludes=vault record storage|password UI
+search=encrypt secret vault|decrypt vault payload|argon2 xchacha envelope
+invariant=Empty credentials, malformed envelopes, and unknown native responses fail without returning plaintext or a valid envelope.
+stability=contract
+*/
 import { isObjectRecord } from '$lib/shared/object-record';
 import { getTauriInvoke } from '$lib/tauri/tauri-invoke';
 export const SECRET_VAULT_FORMAT = 'workduck.secret-vault';

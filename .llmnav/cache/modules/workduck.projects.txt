@@ -12,3 +12,15 @@ role Persist workspace project registries through Tauri SQLite while migrating a
 owns project registry persistence, legacy registry promotion, registry change notifications
 excludes project domain normalization, repository Git operations
 invariant A failed SQLite read or write returns an explicit error together with the safest available registry state.
+
+@workduck.projects.folder
+role Create, open, and delete bounded project folders and preview or apply ssealed scaffolds through Tauri commands.
+owns project folder operations, ssealed scaffold options, folder error normalization
+excludes repository Git operations, project registry persistence
+invariant Repository folder operations are normalized against the selected workspace and surface closed error codes.
+
+@workduck.projects.repository
+role Clone, inspect, initialize, synchronize, fork, and publish project repositories through bounded native Git operations.
+owns repository clone and fork, Git inspection scheduling, Git mutation results
+excludes repository task processes, project registry storage
+invariant Native and GitHub failures are returned as closed domain error codes rather than successful repository state.

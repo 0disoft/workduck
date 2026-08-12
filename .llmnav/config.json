@@ -18,6 +18,31 @@
         "invariant"
       ],
       "scope": "module"
+    },
+    {
+      "match": [
+        "packages/agents/src/index.ts",
+        "packages/core/src/index.ts",
+        "packages/prompts/src/index.ts",
+        "packages/workbench-engine/src/index.ts",
+        "src-tauri/src/repository_inspection_scheduler.rs",
+        "src-tauri/src/terminal_process.rs",
+        "src-tauri/src/workspace_path.rs",
+        "src/lib/environment/cli-environment.ts",
+        "src/lib/environment/secret-vault-crypto.ts",
+        "src/lib/projects/project-folder.ts",
+        "src/lib/projects/project-repository.ts",
+        "src/lib/queue/queue-artifacts.ts",
+        "src/lib/queue/queue-execution.ts",
+        "src/lib/queue/queue-folder.ts",
+        "src/lib/workspaces/workspace-sync.ts"
+      ],
+      "name": "expanded Workduck public and runtime boundaries",
+      "requiredFields": [
+        "owns",
+        "invariant"
+      ],
+      "scope": "module"
     }
   ],
   "evaluation": {

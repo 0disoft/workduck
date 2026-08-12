@@ -167,15 +167,7 @@
       "stability": "contract"
     },
     {
-      "boundaries": [
-        {
-          "confidence": "high",
-          "evidence": [
-            "tauri-command"
-          ],
-          "kind": "command"
-        }
-      ],
+      "boundaries": [],
       "excludes": [
         "individual command implementation",
         "frontend workflow state"
@@ -183,7 +175,7 @@
       "hashes": {
         "body": "86daeefdd9c0b89d3cc0c0f6a0e2638fd4fd3447029f113c216cc5d5f500fffd",
         "semantic": "a8dc9ec3df04251e644264a0c040ef3a382459508eeaef5bce2497bec2fee50c",
-        "structure": "d38a76250f4ae58d0759a62b725569e48e4a445ad86ae31d34f9039fa799e3e4"
+        "structure": "67f7255435c767539ccafaa52c6fa4062c78b60cc9b185bf2138f6461c04100f"
       },
       "id": "workduck.desktop.commands",
       "imports": [
@@ -265,15 +257,7 @@
       "stability": "architecture"
     },
     {
-      "boundaries": [
-        {
-          "confidence": "medium",
-          "evidence": [
-            "platform-lifecycle"
-          ],
-          "kind": "runtime"
-        }
-      ],
+      "boundaries": [],
       "excludes": [
         "task command selection",
         "terminal output buffering"
@@ -281,7 +265,7 @@
       "hashes": {
         "body": "e92092acc30b858d48144f1104bc0a636757a900417bbbe1232e6d67273c69e4",
         "semantic": "5ab2b16387c2f5fd5e910bc21c12e7cc7c2db50ff68cb4190084e90fe3f5ef51",
-        "structure": "9b9a4dcd9931a356d4cfa6d70382e072aceb1b34bdbd431906f7d0bcb6842514"
+        "structure": "9a18ba2ea7ae7713a710ae832c01172632bc0ed617f36da6fab28973287fd448"
       },
       "id": "workduck.process.tree",
       "imports": [
@@ -328,15 +312,7 @@
       "stability": "architecture"
     },
     {
-      "boundaries": [
-        {
-          "confidence": "high",
-          "evidence": [
-            "tauri-invoke"
-          ],
-          "kind": "command"
-        }
-      ],
+      "boundaries": [],
       "excludes": [
         "native process execution",
         "terminal rendering"
@@ -344,7 +320,7 @@
       "hashes": {
         "body": "914199ae667696fb7bc9d0b1fa2ab07e1dae6b3bea2bbb0721484d36f9fa5bbd",
         "semantic": "adc3fe9dac58b5b264623986e2c1e8d71788bb6d94c500a008ab7614e9864f27",
-        "structure": "98c85cfe3416775b10b4014e81c90d6f7d44c6a4fcdfc6b75d26cbfe64f06498"
+        "structure": "8b0d94d739c0eaa037c2ff2caecaae224962e2fcc2c1c35de05b5784015126c6"
       },
       "id": "workduck.projects.repository-task",
       "imports": [
@@ -382,15 +358,7 @@
       "stability": "contract"
     },
     {
-      "boundaries": [
-        {
-          "confidence": "high",
-          "evidence": [
-            "tauri-invoke"
-          ],
-          "kind": "command"
-        }
-      ],
+      "boundaries": [],
       "excludes": [
         "project domain normalization",
         "repository Git operations"
@@ -398,7 +366,7 @@
       "hashes": {
         "body": "989104fff04409d0f323d6bc088eea23df893b3dc7fccaf2e13a568ac0eba6ad",
         "semantic": "6cc132a951e2eeb149ec919af40348de53078c5b6780a09cfc061ed7c09997a3",
-        "structure": "fb299b1a43d9d0af9d9ceea58887d5b230ee2c07ca74f6f4cd2ba0af12269e7b"
+        "structure": "7ac76a99a01db8e7bb212f22c0eeb78960b4160891e8f343957e9f0a84cf2276"
       },
       "id": "workduck.projects.storage",
       "imports": [
@@ -480,11 +448,721 @@
         "queue changed event"
       ],
       "stability": "contract"
+    },
+    {
+      "boundaries": [],
+      "excludes": [
+        "agent process execution",
+        "provider credentials"
+      ],
+      "hashes": {
+        "body": "101a7ecd0649a16ccb117ba88c2a396fe4632b9e3c4478b74661e7e1d6ad39c4",
+        "semantic": "0df6e04bb5a9954c2858130d0c1a2df58ae777c00f0591038aaa9a2d2783e83a",
+        "structure": "56b9792023692fe268a92414eb6fa31d740b4f9872117834021720e2e447e9cc"
+      },
+      "id": "workduck.agent.adapters",
+      "imports": [
+        "@workduck/prompts",
+        "@workduck/workbench-engine"
+      ],
+      "invariant": [
+        "Every adapter remains export-only and declares its supported artifacts through an explicit profile."
+      ],
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "packages/agents/src/index.ts",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "owns": [
+        "agent adapter profiles",
+        "brief export formats",
+        "AGENTS.md compilation"
+      ],
+      "role": "Export agent briefs and AGENTS.md documents for supported coding hosts without granting execution authority.",
+      "scope": "module",
+      "search": [
+        "export agent brief",
+        "compile agents markdown",
+        "coding agent adapter"
+      ],
+      "stability": "contract"
+    },
+    {
+      "boundaries": [],
+      "excludes": [
+        "JSON Schema documents",
+        "persistence adapters"
+      ],
+      "hashes": {
+        "body": "0736547c4ebb8cb7cabb1e4e55f1e1560b9ebfdc997b417e6cb348e82b4f30a3",
+        "semantic": "f9972c413d81170dd530a62c64f9d6ac2e1840a41c50b2f448d309aac23b563c",
+        "structure": "021eaeb1acea62caef29ef155e8bfa856dde7ed9f0d1525da45b4a6db5ea007e"
+      },
+      "id": "workduck.domain.core",
+      "imports": [],
+      "invariant": [
+        "Runtime guard values and their exported TypeScript unions describe the same closed vocabulary."
+      ],
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "packages/core/src/index.ts",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "owns": [
+        "domain entity types",
+        "shared enum values",
+        "domain type guards"
+      ],
+      "role": "Define the shared Workduck entity, queue, run, gate, risk, and lifecycle vocabulary used across packages.",
+      "scope": "module",
+      "search": [
+        "workduck domain model",
+        "entity kinds and statuses",
+        "queue core types"
+      ],
+      "stability": "contract"
+    },
+    {
+      "boundaries": [],
+      "excludes": [
+        "secret-vault encryption",
+        "process spawning"
+      ],
+      "hashes": {
+        "body": "f2d41884e8db539610eccd193276ea6f223020fcaaa79a2a1ae81cf1eb76dbd2",
+        "semantic": "c07a23b54260d60d4b907e03dce7ef60e6671353c0db7522d3652161944801a0",
+        "structure": "45a3efea212db9833c19f1878709253af5972d1617df574b612d9b263b691a3b"
+      },
+      "id": "workduck.environment.cli",
+      "imports": [
+        "$lib/tauri/tauri-invoke"
+      ],
+      "invariant": [
+        "Unavailable or malformed native responses fail closed and never report variables as applied."
+      ],
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src/lib/environment/cli-environment.ts",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "owns": [
+        "CLI environment input",
+        "native apply command",
+        "apply result normalization"
+      ],
+      "role": "Apply an explicit set of CLI environment variables through Tauri and normalize native validation or write failures.",
+      "scope": "module",
+      "search": [
+        "apply cli environment",
+        "set command variables",
+        "environment write failure"
+      ],
+      "stability": "contract"
+    },
+    {
+      "boundaries": [],
+      "excludes": [
+        "repository Git operations",
+        "project registry persistence"
+      ],
+      "hashes": {
+        "body": "981d53da11e452ef9e27511d4dc3bffa568b9c2f840fc6eb2598bf2d6b139d63",
+        "semantic": "137d450fb766b67a65a156364fbcccb1a03ad4037c9480a313a0d39a972749b5",
+        "structure": "02a2465e68cff7d59578287fc391f7a9c57e1713b9a01256f6fb204ccd8717b2"
+      },
+      "id": "workduck.projects.folder",
+      "imports": [
+        "$lib/i18n/workduck-message-contract",
+        "$lib/tauri/tauri-invoke",
+        "$lib/workspaces/workspace-path-format",
+        "./ssealed-scaffold-generated"
+      ],
+      "invariant": [
+        "Repository folder operations are normalized against the selected workspace and surface closed error codes."
+      ],
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src/lib/projects/project-folder.ts",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "owns": [
+        "project folder operations",
+        "ssealed scaffold options",
+        "folder error normalization"
+      ],
+      "role": "Create, open, and delete bounded project folders and preview or apply ssealed scaffolds through Tauri commands.",
+      "scope": "module",
+      "search": [
+        "create project folder",
+        "apply ssealed scaffold",
+        "open repository folder"
+      ],
+      "stability": "architecture"
+    },
+    {
+      "boundaries": [],
+      "excludes": [
+        "repository task processes",
+        "project registry storage"
+      ],
+      "hashes": {
+        "body": "31cf1ed39576adc9b6039d7e47f81a892b358dd82795274a8c7349a16d1463c9",
+        "semantic": "7543f9c330f2933c27e50e7f15b77907a91cb7ddb52bc1b501f1507dc5d6f72d",
+        "structure": "1778237561a07341c0b2b662c0845d5b4e5e0ab28b29b6b3b928c21223f168db"
+      },
+      "id": "workduck.projects.repository",
+      "imports": [
+        "$lib/shared/object-record",
+        "$lib/tauri/tauri-invoke",
+        "$lib/workspaces/workspace-path-format",
+        "@tauri-apps/api/core"
+      ],
+      "invariant": [
+        "Native and GitHub failures are returned as closed domain error codes rather than successful repository state."
+      ],
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src/lib/projects/project-repository.ts",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "owns": [
+        "repository clone and fork",
+        "Git inspection scheduling",
+        "Git mutation results"
+      ],
+      "role": "Clone, inspect, initialize, synchronize, fork, and publish project repositories through bounded native Git operations.",
+      "scope": "module",
+      "search": [
+        "clone project repository",
+        "inspect git status",
+        "publish repository github"
+      ],
+      "stability": "architecture"
+    },
+    {
+      "boundaries": [],
+      "excludes": [
+        "provider invocation",
+        "prompt persistence"
+      ],
+      "hashes": {
+        "body": "a6976afe9c47398c3e7d185e248b2656b6f3562370052f28206352f135d186cb",
+        "semantic": "33dd9b212ece472b0c5697ab4ef9e6e9bff595bf8fce3ffdb630e2a68e4612b1",
+        "structure": "bb30d8dd6dcf01e6f5a8c53fa4a3c067d1263bdd6e1dc07a00cd519bb0d08b07"
+      },
+      "id": "workduck.prompt.compiler",
+      "imports": [
+        "@workduck/core",
+        "@workduck/schemas"
+      ],
+      "invariant": [
+        "Prompt output preserves the declared section order and ends with one normalized newline."
+      ],
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "packages/prompts/src/index.ts",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "owns": [
+        "prompt section rendering",
+        "agent brief composition",
+        "entity reference formatting"
+      ],
+      "role": "Compile deterministic Markdown prompt documents and agent briefs from typed sections and Workduck entity references.",
+      "scope": "module",
+      "search": [
+        "compile agent prompt",
+        "markdown prompt sections",
+        "format entity reference"
+      ],
+      "stability": "contract"
+    },
+    {
+      "boundaries": [],
+      "excludes": [
+        "Queue file I/O",
+        "provider execution"
+      ],
+      "hashes": {
+        "body": "722e8303fb88342957a041767a3d58a1b2b7a8abff1d766717433060e6b4aa39",
+        "semantic": "386f07db6055e5416e2832515a5217c93b9fbd3de0cf4e94cf3d0fcef4c9bfb5",
+        "structure": "ee73c56b3e88e38609a60c0a0bccc0ec2d55ae114af790cc67de9edc16ff8e04"
+      },
+      "id": "workduck.queue.artifacts",
+      "imports": [
+        "./domain/queue-artifact-files",
+        "./domain/queue-artifact-ids",
+        "./domain/queue-artifact-parsers",
+        "./domain/queue-artifact-readers",
+        "./queue-voting"
+      ],
+      "invariant": [
+        "Constructed and transitioned artifacts retain their versioned schema identity and valid lifecycle states."
+      ],
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src/lib/queue/queue-artifacts.ts",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "owns": [
+        "Queue artifact contracts",
+        "work-order state transitions",
+        "artifact serialization"
+      ],
+      "role": "Define, construct, transition, parse, and serialize versioned Queue work orders, result reports, proposals, and task evaluations.",
+      "scope": "module",
+      "search": [
+        "queue work order model",
+        "archive queue artifact",
+        "record report evaluation"
+      ],
+      "stability": "contract"
+    },
+    {
+      "boundaries": [],
+      "excludes": [
+        "provider implementation",
+        "Queue artifact file storage"
+      ],
+      "hashes": {
+        "body": "4f23543cbebd891abb4f250e668c4f4a8e5c8c045379c998eb76e7cb89b1240c",
+        "semantic": "25e678811be8fc32a5ef62b61918006dd3b6a37938d29d89bcfb59549dd07279",
+        "structure": "47a27c4bee74a3a744e99c58d4661e77eb204fcb11d3e0ba2449949243544e93"
+      },
+      "id": "workduck.queue.execution",
+      "imports": [
+        "$lib/agents/agent-execution",
+        "$lib/agents/agent-registry",
+        "$lib/environment/environment-vault",
+        "$lib/personas/persona-registry",
+        "$lib/references/reference-registry",
+        "$lib/skills/skill-registry",
+        "$lib/tauri/tauri-invoke",
+        "./queue-artifacts"
+      ],
+      "invariant": [
+        "Execution requires an explicit confirmation token and never converts an unknown native response into success."
+      ],
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src/lib/queue/queue-execution.ts",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "owns": [
+        "Queue execution requests",
+        "confirmation estimates",
+        "execution result normalization"
+      ],
+      "role": "Preview, estimate, execute, cancel, and inspect Queue work-order runs through the native execution boundary.",
+      "scope": "module",
+      "search": [
+        "execute queue work order",
+        "preview agent prompts",
+        "cancel queue execution"
+      ],
+      "stability": "architecture"
+    },
+    {
+      "boundaries": [],
+      "excludes": [
+        "Queue artifact semantics",
+        "agent execution"
+      ],
+      "hashes": {
+        "body": "2b09be91f95baa8962f1a128713dc20e7e907a27e052ac8c3d64a03623f345a5",
+        "semantic": "7b2278fd3969464a5b620176491febc7a114547f926baa9f84ad8623d769efaf",
+        "structure": "65162251fd6e74bb21c9d29e99975f2551b46a4c3c70f66969d0c21c78737b91"
+      },
+      "id": "workduck.queue.folder",
+      "imports": [
+        "$lib/tauri/tauri-invoke",
+        "$lib/workspaces/workspace-path-format"
+      ],
+      "invariant": [
+        "All Queue paths are workspace-relative native results and malformed responses fail with explicit Queue folder errors."
+      ],
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src/lib/queue/queue-folder.ts",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "owns": [
+        "Queue directory commands",
+        "Queue file I/O",
+        "Queue status summaries"
+      ],
+      "role": "Create and inspect the workspace Queue directory and perform bounded reads, writes, updates, and deletes of Queue files.",
+      "scope": "module",
+      "search": [
+        "list queue files",
+        "write work order file",
+        "open queue folder"
+      ],
+      "stability": "architecture"
+    },
+    {
+      "boundaries": [],
+      "excludes": [
+        "Git inspection implementation",
+        "repository mutations"
+      ],
+      "hashes": {
+        "body": "92b4af9c0938ff2d5d8024336a11d3a6966602c632360408106decab4ea1ff1b",
+        "semantic": "710586279ef3802a9cbb0f1e9ed74a440aa90ab506414501d127355edc3db3b6",
+        "structure": "52cd2e40ff2bd0212b231308d9ba48cb122bdf35313854dab8c901f639a4d92f"
+      },
+      "id": "workduck.repository.inspection",
+      "imports": [
+        "crate::{\n    project_repository::{\n        ProjectRepositoryGitError, ProjectRepositoryGitInspectionRecord,\n        ProjectRepositoryGitInspectionRequest, inspect_project_repository_git_record,\n        project_repository_git_inspection_error_record,\n    },\n    project_repository_validation::validate_repository_path,\n}",
+        "std::{\n    collections::{HashMap, VecDeque},\n    io,\n    path::PathBuf,\n    sync::{Arc, Condvar, Mutex, OnceLock},\n    thread,\n}",
+        "tauri::ipc::Channel",
+        "tests {\n    use super::*"
+      ],
+      "invariant": [
+        "The queue is capacity-bounded and duplicate subscribers do not create duplicate inspection jobs for the same path."
+      ],
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src-tauri/src/repository_inspection_scheduler.rs",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "owns": [
+        "inspection job queue",
+        "path request coalescing",
+        "inspection result channels"
+      ],
+      "role": "Schedule bounded concurrent Git inspections, coalesce shared paths, and stream repository-specific results to subscribers.",
+      "scope": "module",
+      "search": [
+        "schedule git inspection",
+        "repository scan queue",
+        "cancel inspection scan"
+      ],
+      "stability": "architecture"
+    },
+    {
+      "boundaries": [],
+      "excludes": [
+        "vault record storage",
+        "password UI"
+      ],
+      "hashes": {
+        "body": "f1bbbc8d624f2876258ae25035d8b6ea3090faa8dd82f441f85fbab58fd1085b",
+        "semantic": "b7d6d7e11cf8691266150409182a03311bc68914dec11274bcc7dba75eb3ec04",
+        "structure": "d81a9c6a78f0adca94f9ad6a199331f612a3b493645a4337c2558b90cf79fa6e"
+      },
+      "id": "workduck.secret-vault.crypto",
+      "imports": [
+        "$lib/shared/object-record",
+        "$lib/tauri/tauri-invoke"
+      ],
+      "invariant": [
+        "Empty credentials, malformed envelopes, and unknown native responses fail without returning plaintext or a valid envelope."
+      ],
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src/lib/environment/secret-vault-crypto.ts",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "owns": [
+        "secret-vault envelope",
+        "vault crypto invocation",
+        "crypto error normalization"
+      ],
+      "role": "Encrypt and decrypt versioned secret-vault payloads through the native Argon2id and XChaCha20-Poly1305 boundary.",
+      "scope": "module",
+      "search": [
+        "encrypt secret vault",
+        "decrypt vault payload",
+        "argon2 xchacha envelope"
+      ],
+      "stability": "contract"
+    },
+    {
+      "boundaries": [],
+      "excludes": [
+        "terminal discovery",
+        "frontend terminal rendering"
+      ],
+      "hashes": {
+        "body": "87cab031b665c3bbc9513858cfc017fd5c3981c04e23328cdb5c03e5934d2918",
+        "semantic": "9c2182fe01424569825939eea8693e4ba37263ca63e5026bc1cd85ec9d6601c2",
+        "structure": "a83f09ae820f88d606f5959b76cfa5b057a3bed4157a38685f3e55bec688408f"
+      },
+      "id": "workduck.terminal.process",
+      "imports": [
+        "crate::process_tree::ProcessTreeChild",
+        "crate::terminal_catalog",
+        "std::os::windows::process::CommandExt",
+        "std::{\n    collections::HashMap,\n    io::{Read, Write},\n    path::Path,\n    process::{ChildStdin, Command, Stdio},\n    sync::{Arc, Mutex},\n    thread,\n}",
+        "tauri::State",
+        "tests {\n    use super::{\n        AnsiStripState, TERMINAL_INPUT_MAX_BYTES, TERMINAL_OUTPUT_MAX_BYTES, TerminalOutputBuffer,\n        create_terminal_args, normalize_terminal_input, strip_ansi_sequences,\n    }"
+      ],
+      "invariant": [
+        "Session output and input stay within byte limits and replacing or stopping a session does not intentionally orphan its process tree."
+      ],
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src-tauri/src/terminal_process.rs",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "owns": [
+        "terminal session registry",
+        "terminal process spawning",
+        "bounded terminal I/O"
+      ],
+      "role": "Own bounded interactive terminal sessions, process trees, input, output cursors, and lifecycle commands for the desktop runtime.",
+      "scope": "module",
+      "search": [
+        "start terminal session",
+        "read terminal output",
+        "stop terminal process"
+      ],
+      "stability": "architecture"
+    },
+    {
+      "boundaries": [],
+      "excludes": [
+        "process execution",
+        "artifact persistence"
+      ],
+      "hashes": {
+        "body": "b1e8fa95bf0d9b13fae10b859b8843e78e51d206bdb022563862ffe4dbfa656b",
+        "semantic": "533cfc9a7ed50561ba15580cb8bce579447f35a5e841b492ba15b7f56dc25c0e",
+        "structure": "7cfd9ee96836425231bbf40b8d3e21a2e784152026df3423b38a1d84039f630c"
+      },
+      "id": "workduck.workbench.engine",
+      "imports": [
+        "@workduck/core",
+        "@workduck/prompts",
+        "@workduck/schemas"
+      ],
+      "invariant": [
+        "A failed gate check blocks its gate and shell-run records preserve their explicit approval and execution states."
+      ],
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "packages/workbench-engine/src/index.ts",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "owns": [
+        "workbench run plans",
+        "gate evaluation summaries",
+        "project inventory grouping"
+      ],
+      "role": "Compile agent run briefs and deterministic local run, shell, gate, and project-inventory summaries from core domain records.",
+      "scope": "module",
+      "search": [
+        "compile workbench run",
+        "evaluate gate checks",
+        "summarize project inventory"
+      ],
+      "stability": "architecture"
+    },
+    {
+      "boundaries": [],
+      "excludes": [
+        "workspace registry storage",
+        "repository containment"
+      ],
+      "hashes": {
+        "body": "06577b680344bc29ec3935e6fad086d037c52175c0b97793e57af2c2b6626c78",
+        "semantic": "63bcdb989620ebf744325e27d748da0c655fa023583fa6fa77be34a8df03a09b",
+        "structure": "0f1c7fee0b640eb5c06f0d694fdbb7b077fa4fe3b015845613961b92caab3750"
+      },
+      "id": "workduck.workspace.path",
+      "imports": [
+        "crate::path_display::display_path",
+        "std::{\n    fs, io,\n    path::{Path, PathBuf},\n}",
+        "tests {\n    use super::*"
+      ],
+      "invariant": [
+        "Only existing readable absolute directories produce a successful normalized workspace path."
+      ],
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src-tauri/src/workspace_path.rs",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "owns": [
+        "workspace path validation",
+        "directory readability check",
+        "path error mapping"
+      ],
+      "role": "Validate workspace paths as readable absolute directories and return canonical display paths with closed error codes.",
+      "scope": "module",
+      "search": [
+        "validate workspace path",
+        "canonical workspace directory",
+        "workspace unreadable error"
+      ],
+      "stability": "contract"
+    },
+    {
+      "boundaries": [],
+      "excludes": [
+        "Git synchronization",
+        "sync file transport"
+      ],
+      "hashes": {
+        "body": "9eac5c4c3cf612c7b48c0cff12fdbee94a61d3452ca74c8f09f0e39483eea38e",
+        "semantic": "48fadb054a73ad79cdaf1a22e022e5922dadac755784925fb727208b57c497af",
+        "structure": "aa7be139de366f4c68caf850da80a7b7e0c0e164b396de6630331c7167b4cd0d"
+      },
+      "id": "workduck.workspace.sync",
+      "imports": [
+        "$lib/projects/project-registry",
+        "$lib/shared/object-record",
+        "$lib/tauri/tauri-invoke",
+        "./workspace-path-format",
+        "./workspace-registry"
+      ],
+      "invariant": [
+        "Decrypted data is accepted only when envelope algorithms, versions, and normalized registry payloads match the closed sync contract."
+      ],
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src/lib/workspaces/workspace-sync.ts",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "owns": [
+        "workspace sync format",
+        "encrypted sync envelope",
+        "registry payload normalization"
+      ],
+      "role": "Serialize, encrypt, parse, decrypt, and normalize versioned workspace and project-registry synchronization envelopes.",
+      "scope": "module",
+      "search": [
+        "encrypt workspace sync",
+        "decrypt registry envelope",
+        "workspace sync payload"
+      ],
+      "stability": "contract"
     }
   ],
   "contractFingerprints": {
     "configuration": {
-      "sha256": "41a4dbaf34e543de455aa2a8367bb8dcb68933de511c23d4723caac4e29c591f"
+      "sha256": "d5f132e25a2b5d85ee0d15c10313df00dc06c7e634c93fcc66cf4e247c6ac5c0"
     },
     "exportedApi": {
       "count": 0,
@@ -492,9 +1170,9 @@
     },
     "schemaVersion": 1
   },
-  "generatedBy": "llmnav@0.6.5",
+  "generatedBy": "llmnav@0.6.2",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "093d5b68b3bdc3492fc310a3a55dae8a2dd6cafddff83d1c5413785bb278bbd4",
+  "sourceHash": "3cdc546e59efe31600d67f89705512560b6f91369e6a82afad03bf0dbed8f1b9",
   "specVersion": "1"
 }

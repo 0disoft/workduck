@@ -1,3 +1,12 @@
+/* llmnav/1 module
+id=workduck.prompt.compiler
+role=Compile deterministic Markdown prompt documents and agent briefs from typed sections and Workduck entity references.
+owns=prompt section rendering|agent brief composition|entity reference formatting
+excludes=provider invocation|prompt persistence
+search=compile agent prompt|markdown prompt sections|format entity reference
+invariant=Prompt output preserves the declared section order and ends with one normalized newline.
+stability=contract
+*/
 import type {
   AgentBriefRef,
   ArtifactRef,

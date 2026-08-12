@@ -1,3 +1,12 @@
+/* llmnav/1 module
+id=workduck.agent.adapters
+role=Export agent briefs and AGENTS.md documents for supported coding hosts without granting execution authority.
+owns=agent adapter profiles|brief export formats|AGENTS.md compilation
+excludes=agent process execution|provider credentials
+search=export agent brief|compile agents markdown|coding agent adapter
+invariant=Every adapter remains export-only and declares its supported artifacts through an explicit profile.
+stability=contract
+*/
 import {
   compileAgentBriefPrompt,
   formatEntityRef,

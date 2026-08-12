@@ -6,16 +6,25 @@
       "repository:core"
     ],
     "modulePartitionIds": [
+      "module:workduck.agent",
       "module:workduck.cli",
       "module:workduck.contract",
       "module:workduck.desktop",
+      "module:workduck.domain",
+      "module:workduck.environment",
       "module:workduck.process",
       "module:workduck.projects",
-      "module:workduck.queue"
+      "module:workduck.prompt",
+      "module:workduck.queue",
+      "module:workduck.repository",
+      "module:workduck.secret-vault",
+      "module:workduck.terminal",
+      "module:workduck.workbench",
+      "module:workduck.workspace"
     ],
     "volatileContextAfter": true
   },
-  "bundleHash": "3e9826c073c789e707e84237b4ba8e0e524bd7508aee3c16334aff5cb3a1ed6c",
+  "bundleHash": "8fbe32ceec098c96fc87bc1bb4f2ab711b5ef9c2cd1e52e999d7ea6390b9ddf4",
   "partitions": [
     {
       "cacheBoundaryAfter": true,
@@ -38,11 +47,20 @@
     {
       "cacheBoundaryAfter": true,
       "cacheScope": "repository",
-      "content": "llmnav-catalog/1 repository=workduck catalog=repository\nRead semantic cards before opening source. Resolve current paths and signatures with llmnav query or show.\n\n@workduck.cli.execution\nrole Execute queue work orders and agent evaluations from the command line under explicit workspace and vault contracts.\nowns CLI option parsing, work-order discovery, queue execution, agent evaluation\nexcludes Node launcher, Tauri desktop command registry\ninvariant Failures retain stable error codes and JSON mode never reports an unsuccessful operation as success.\n\n@workduck.desktop.commands\nrole Assemble the Tauri desktop runtime, managed state, plugins, and explicit frontend-to-native command registry.\nowns Tauri application lifecycle, invoke handler registry, native managed state\nexcludes individual command implementation, frontend workflow state\ninvariant Frontend-accessible native operations are registered explicitly through the Tauri invoke handler.\n\n@workduck.process.tree\nrole Own spawned process trees and terminate their descendants across Windows jobs and Unix process groups.\nowns process tree spawning, cross-platform termination, active process registry\nexcludes task command selection, terminal output buffering\ninvariant Dropping an active process owner or shutting down the app cannot intentionally leave its registered descendants running.\n\n@workduck.projects.storage\nrole Persist workspace project registries through Tauri SQLite while migrating and preserving the browser legacy fallback.\nowns project registry persistence, legacy registry promotion, registry change notifications\nexcludes project domain normalization, repository Git operations\ninvariant A failed SQLite read or write returns an explicit error together with the safest available registry state.\n",
-      "contentHash": "44e8cc33f6522f3d5c97e58ce596730b6cf919e2547d541bd3f9821190087ac0",
+      "content": "llmnav-catalog/1 repository=workduck catalog=repository\nRead semantic cards before opening source. Resolve current paths and signatures with llmnav query or show.\n\n@workduck.cli.execution\nrole Execute queue work orders and agent evaluations from the command line under explicit workspace and vault contracts.\nowns CLI option parsing, work-order discovery, queue execution, agent evaluation\nexcludes Node launcher, Tauri desktop command registry\ninvariant Failures retain stable error codes and JSON mode never reports an unsuccessful operation as success.\n\n@workduck.desktop.commands\nrole Assemble the Tauri desktop runtime, managed state, plugins, and explicit frontend-to-native command registry.\nowns Tauri application lifecycle, invoke handler registry, native managed state\nexcludes individual command implementation, frontend workflow state\ninvariant Frontend-accessible native operations are registered explicitly through the Tauri invoke handler.\n\n@workduck.process.tree\nrole Own spawned process trees and terminate their descendants across Windows jobs and Unix process groups.\nowns process tree spawning, cross-platform termination, active process registry\nexcludes task command selection, terminal output buffering\ninvariant Dropping an active process owner or shutting down the app cannot intentionally leave its registered descendants running.\n\n@workduck.projects.storage\nrole Persist workspace project registries through Tauri SQLite while migrating and preserving the browser legacy fallback.\nowns project registry persistence, legacy registry promotion, registry change notifications\nexcludes project domain normalization, repository Git operations\ninvariant A failed SQLite read or write returns an explicit error together with the safest available registry state.\n\n@workduck.projects.folder\nrole Create, open, and delete bounded project folders and preview or apply ssealed scaffolds through Tauri commands.\nowns project folder operations, ssealed scaffold options, folder error normalization\nexcludes repository Git operations, project registry persistence\ninvariant Repository folder operations are normalized against the selected workspace and surface closed error codes.\n\n@workduck.projects.repository\nrole Clone, inspect, initialize, synchronize, fork, and publish project repositories through bounded native Git operations.\nowns repository clone and fork, Git inspection scheduling, Git mutation results\nexcludes repository task processes, project registry storage\ninvariant Native and GitHub failures are returned as closed domain error codes rather than successful repository state.\n\n@workduck.queue.execution\nrole Preview, estimate, execute, cancel, and inspect Queue work-order runs through the native execution boundary.\nowns Queue execution requests, confirmation estimates, execution result normalization\nexcludes provider implementation, Queue artifact file storage\ninvariant Execution requires an explicit confirmation token and never converts an unknown native response into success.\n\n@workduck.queue.folder\nrole Create and inspect the workspace Queue directory and perform bounded reads, writes, updates, and deletes of Queue files.\nowns Queue directory commands, Queue file I/O, Queue status summaries\nexcludes Queue artifact semantics, agent execution\ninvariant All Queue paths are workspace-relative native results and malformed responses fail with explicit Queue folder errors.\n\n@workduck.repository.inspection\nrole Schedule bounded concurrent Git inspections, coalesce shared paths, and stream repository-specific results to subscribers.\nowns inspection job queue, path request coalescing, inspection result channels\nexcludes Git inspection implementation, repository mutations\ninvariant The queue is capacity-bounded and duplicate subscribers do not create duplicate inspection jobs for the same path.\n\n@workduck.terminal.process\nrole Own bounded interactive terminal sessions, process trees, input, output cursors, and lifecycle commands for the desktop runtime.\nowns terminal session registry, terminal process spawning, bounded terminal I/O\nexcludes terminal discovery, frontend terminal rendering\ninvariant Session output and input stay within byte limits and replacing or stopping a session does not intentionally orphan its process tree.\n\n@workduck.workbench.engine\nrole Compile agent run briefs and deterministic local run, shell, gate, and project-inventory summaries from core domain records.\nowns workbench run plans, gate evaluation summaries, project inventory grouping\nexcludes process execution, artifact persistence\ninvariant A failed gate check blocks its gate and shell-run records preserve their explicit approval and execution states.\n",
+      "contentHash": "718dc192f7add1c671e08cf74dbe1c1b9a3914a0f39ca7173a6b22828b228b01",
       "contentType": "text/plain",
-      "estimatedTokens": 446,
+      "estimatedTokens": 1174,
       "id": "repository:core"
+    },
+    {
+      "cacheBoundaryAfter": true,
+      "cacheScope": "module",
+      "content": "llmnav-catalog/1 repository=workduck catalog=workduck.agent\nRead semantic cards before opening source. Resolve current paths and signatures with llmnav query or show.\n\n@workduck.agent.adapters\nrole Export agent briefs and AGENTS.md documents for supported coding hosts without granting execution authority.\nowns agent adapter profiles, brief export formats, AGENTS.md compilation\nexcludes agent process execution, provider credentials\ninvariant Every adapter remains export-only and declares its supported artifacts through an explicit profile.\n",
+      "contentHash": "2a96e26cd350e59095471635ba6d94a464d3762ba027ae8320fbd5117fc8c4fb",
+      "contentType": "text/plain",
+      "estimatedTokens": 137,
+      "id": "module:workduck.agent"
     },
     {
       "cacheBoundaryAfter": true,
@@ -74,6 +92,24 @@
     {
       "cacheBoundaryAfter": true,
       "cacheScope": "module",
+      "content": "llmnav-catalog/1 repository=workduck catalog=workduck.domain\nRead semantic cards before opening source. Resolve current paths and signatures with llmnav query or show.\n\n@workduck.domain.core\nrole Define the shared Workduck entity, queue, run, gate, risk, and lifecycle vocabulary used across packages.\nowns domain entity types, shared enum values, domain type guards\nexcludes JSON Schema documents, persistence adapters\ninvariant Runtime guard values and their exported TypeScript unions describe the same closed vocabulary.\n",
+      "contentHash": "f38f6641a01f008771d85c929c9e919f386a162fe1d04f49fc9cc32c93a11f04",
+      "contentType": "text/plain",
+      "estimatedTokens": 132,
+      "id": "module:workduck.domain"
+    },
+    {
+      "cacheBoundaryAfter": true,
+      "cacheScope": "module",
+      "content": "llmnav-catalog/1 repository=workduck catalog=workduck.environment\nRead semantic cards before opening source. Resolve current paths and signatures with llmnav query or show.\n\n@workduck.environment.cli\nrole Apply an explicit set of CLI environment variables through Tauri and normalize native validation or write failures.\nowns CLI environment input, native apply command, apply result normalization\nexcludes secret-vault encryption, process spawning\ninvariant Unavailable or malformed native responses fail closed and never report variables as applied.\n",
+      "contentHash": "c870b0ed34b31adabecb71d6377051629f1d6dc3343f6ce81626c168e4e9d3b4",
+      "contentType": "text/plain",
+      "estimatedTokens": 138,
+      "id": "module:workduck.environment"
+    },
+    {
+      "cacheBoundaryAfter": true,
+      "cacheScope": "module",
       "content": "llmnav-catalog/1 repository=workduck catalog=workduck.process\nRead semantic cards before opening source. Resolve current paths and signatures with llmnav query or show.\n\n@workduck.process.tree\nrole Own spawned process trees and terminate their descendants across Windows jobs and Unix process groups.\nowns process tree spawning, cross-platform termination, active process registry\nexcludes task command selection, terminal output buffering\ninvariant Dropping an active process owner or shutting down the app cannot intentionally leave its registered descendants running.\n",
       "contentHash": "00884cf236711967f9395817d228fd0d442ac8277705ecade9e8dadf815b8205",
       "contentType": "text/plain",
@@ -83,20 +119,74 @@
     {
       "cacheBoundaryAfter": true,
       "cacheScope": "module",
-      "content": "llmnav-catalog/1 repository=workduck catalog=workduck.projects\nRead semantic cards before opening source. Resolve current paths and signatures with llmnav query or show.\n\n@workduck.projects.repository-task\nrole Invoke bounded repository tasks through Tauri and normalize their commands, run records, states, and failures for the UI.\nowns repository task invocation, run record normalization, task error mapping\nexcludes native process execution, terminal rendering\ninvariant Malformed native responses never become successful typed task results.\n\n@workduck.projects.storage\nrole Persist workspace project registries through Tauri SQLite while migrating and preserving the browser legacy fallback.\nowns project registry persistence, legacy registry promotion, registry change notifications\nexcludes project domain normalization, repository Git operations\ninvariant A failed SQLite read or write returns an explicit error together with the safest available registry state.\n",
-      "contentHash": "deb4aa38b33d24139465f032d22fd87ff21fd8b921b95922ada7949bb30a4300",
+      "content": "llmnav-catalog/1 repository=workduck catalog=workduck.projects\nRead semantic cards before opening source. Resolve current paths and signatures with llmnav query or show.\n\n@workduck.projects.repository-task\nrole Invoke bounded repository tasks through Tauri and normalize their commands, run records, states, and failures for the UI.\nowns repository task invocation, run record normalization, task error mapping\nexcludes native process execution, terminal rendering\ninvariant Malformed native responses never become successful typed task results.\n\n@workduck.projects.storage\nrole Persist workspace project registries through Tauri SQLite while migrating and preserving the browser legacy fallback.\nowns project registry persistence, legacy registry promotion, registry change notifications\nexcludes project domain normalization, repository Git operations\ninvariant A failed SQLite read or write returns an explicit error together with the safest available registry state.\n\n@workduck.projects.folder\nrole Create, open, and delete bounded project folders and preview or apply ssealed scaffolds through Tauri commands.\nowns project folder operations, ssealed scaffold options, folder error normalization\nexcludes repository Git operations, project registry persistence\ninvariant Repository folder operations are normalized against the selected workspace and surface closed error codes.\n\n@workduck.projects.repository\nrole Clone, inspect, initialize, synchronize, fork, and publish project repositories through bounded native Git operations.\nowns repository clone and fork, Git inspection scheduling, Git mutation results\nexcludes repository task processes, project registry storage\ninvariant Native and GitHub failures are returned as closed domain error codes rather than successful repository state.\n",
+      "contentHash": "f030028324ac1987265c83b446c8a31be7dd07e9ea012fe7efea6f34a604b3a8",
       "contentType": "text/plain",
-      "estimatedTokens": 243,
+      "estimatedTokens": 450,
       "id": "module:workduck.projects"
     },
     {
       "cacheBoundaryAfter": true,
       "cacheScope": "module",
-      "content": "llmnav-catalog/1 repository=workduck catalog=workduck.queue\nRead semantic cards before opening source. Resolve current paths and signatures with llmnav query or show.\n\n@workduck.queue.read-state\nrole Track workspace-scoped Queue read markers, unread counts, pruning, and browser change notifications.\nowns queue read markers, unread count, queue change events\nexcludes queue file persistence, work-order execution\ninvariant Unread counts ignore unsupported entries and stale read markers can be pruned against the current file set.\n",
-      "contentHash": "fa9c919ebb1e3783e493bfa3c1febd7833798e92c7509c4bf229c37745549a9f",
+      "content": "llmnav-catalog/1 repository=workduck catalog=workduck.prompt\nRead semantic cards before opening source. Resolve current paths and signatures with llmnav query or show.\n\n@workduck.prompt.compiler\nrole Compile deterministic Markdown prompt documents and agent briefs from typed sections and Workduck entity references.\nowns prompt section rendering, agent brief composition, entity reference formatting\nexcludes provider invocation, prompt persistence\ninvariant Prompt output preserves the declared section order and ends with one normalized newline.\n",
+      "contentHash": "95da38b9959905451278ae4f6cfeb2d78faa0f30e07cde9ae0dfd1f113dba0ee",
       "contentType": "text/plain",
-      "estimatedTokens": 133,
+      "estimatedTokens": 138,
+      "id": "module:workduck.prompt"
+    },
+    {
+      "cacheBoundaryAfter": true,
+      "cacheScope": "module",
+      "content": "llmnav-catalog/1 repository=workduck catalog=workduck.queue\nRead semantic cards before opening source. Resolve current paths and signatures with llmnav query or show.\n\n@workduck.queue.read-state\nrole Track workspace-scoped Queue read markers, unread counts, pruning, and browser change notifications.\nowns queue read markers, unread count, queue change events\nexcludes queue file persistence, work-order execution\ninvariant Unread counts ignore unsupported entries and stale read markers can be pruned against the current file set.\n\n@workduck.queue.artifacts\nrole Define, construct, transition, parse, and serialize versioned Queue work orders, result reports, proposals, and task evaluations.\nowns Queue artifact contracts, work-order state transitions, artifact serialization\nexcludes Queue file I/O, provider execution\ninvariant Constructed and transitioned artifacts retain their versioned schema identity and valid lifecycle states.\n\n@workduck.queue.execution\nrole Preview, estimate, execute, cancel, and inspect Queue work-order runs through the native execution boundary.\nowns Queue execution requests, confirmation estimates, execution result normalization\nexcludes provider implementation, Queue artifact file storage\ninvariant Execution requires an explicit confirmation token and never converts an unknown native response into success.\n\n@workduck.queue.folder\nrole Create and inspect the workspace Queue directory and perform bounded reads, writes, updates, and deletes of Queue files.\nowns Queue directory commands, Queue file I/O, Queue status summaries\nexcludes Queue artifact semantics, agent execution\ninvariant All Queue paths are workspace-relative native results and malformed responses fail with explicit Queue folder errors.\n",
+      "contentHash": "a77a5f79e280edafc5d38da8414d1252d04fa5d716606c062d0feb6bc6b5d5c1",
+      "contentType": "text/plain",
+      "estimatedTokens": 437,
       "id": "module:workduck.queue"
+    },
+    {
+      "cacheBoundaryAfter": true,
+      "cacheScope": "module",
+      "content": "llmnav-catalog/1 repository=workduck catalog=workduck.repository\nRead semantic cards before opening source. Resolve current paths and signatures with llmnav query or show.\n\n@workduck.repository.inspection\nrole Schedule bounded concurrent Git inspections, coalesce shared paths, and stream repository-specific results to subscribers.\nowns inspection job queue, path request coalescing, inspection result channels\nexcludes Git inspection implementation, repository mutations\ninvariant The queue is capacity-bounded and duplicate subscribers do not create duplicate inspection jobs for the same path.\n",
+      "contentHash": "03b0675fa16563ae308b74077e5b1caf372333d5d3bae0e651b3ee3e381b3192",
+      "contentType": "text/plain",
+      "estimatedTokens": 150,
+      "id": "module:workduck.repository"
+    },
+    {
+      "cacheBoundaryAfter": true,
+      "cacheScope": "module",
+      "content": "llmnav-catalog/1 repository=workduck catalog=workduck.secret-vault\nRead semantic cards before opening source. Resolve current paths and signatures with llmnav query or show.\n\n@workduck.secret-vault.crypto\nrole Encrypt and decrypt versioned secret-vault payloads through the native Argon2id and XChaCha20-Poly1305 boundary.\nowns secret-vault envelope, vault crypto invocation, crypto error normalization\nexcludes vault record storage, password UI\ninvariant Empty credentials, malformed envelopes, and unknown native responses fail without returning plaintext or a valid envelope.\n",
+      "contentHash": "72c39d1f1c082e87e2084a512ce912dcc161ce18439407a7c34a3b5119759549",
+      "contentType": "text/plain",
+      "estimatedTokens": 145,
+      "id": "module:workduck.secret-vault"
+    },
+    {
+      "cacheBoundaryAfter": true,
+      "cacheScope": "module",
+      "content": "llmnav-catalog/1 repository=workduck catalog=workduck.terminal\nRead semantic cards before opening source. Resolve current paths and signatures with llmnav query or show.\n\n@workduck.terminal.process\nrole Own bounded interactive terminal sessions, process trees, input, output cursors, and lifecycle commands for the desktop runtime.\nowns terminal session registry, terminal process spawning, bounded terminal I/O\nexcludes terminal discovery, frontend terminal rendering\ninvariant Session output and input stay within byte limits and replacing or stopping a session does not intentionally orphan its process tree.\n",
+      "contentHash": "711c1a907e58991d6e3235081183d2007c7e9814170246bd18f1f6ae6a3c3aac",
+      "contentType": "text/plain",
+      "estimatedTokens": 153,
+      "id": "module:workduck.terminal"
+    },
+    {
+      "cacheBoundaryAfter": true,
+      "cacheScope": "module",
+      "content": "llmnav-catalog/1 repository=workduck catalog=workduck.workbench\nRead semantic cards before opening source. Resolve current paths and signatures with llmnav query or show.\n\n@workduck.workbench.engine\nrole Compile agent run briefs and deterministic local run, shell, gate, and project-inventory summaries from core domain records.\nowns workbench run plans, gate evaluation summaries, project inventory grouping\nexcludes process execution, artifact persistence\ninvariant A failed gate check blocks its gate and shell-run records preserve their explicit approval and execution states.\n",
+      "contentHash": "1a3a87d3fde5a711e2b6f995e025ada344440cf572b0fb51e8a3ed58d8b32b47",
+      "contentType": "text/plain",
+      "estimatedTokens": 146,
+      "id": "module:workduck.workbench"
+    },
+    {
+      "cacheBoundaryAfter": true,
+      "cacheScope": "module",
+      "content": "llmnav-catalog/1 repository=workduck catalog=workduck.workspace\nRead semantic cards before opening source. Resolve current paths and signatures with llmnav query or show.\n\n@workduck.workspace.path\nrole Validate workspace paths as readable absolute directories and return canonical display paths with closed error codes.\nowns workspace path validation, directory readability check, path error mapping\nexcludes workspace registry storage, repository containment\ninvariant Only existing readable absolute directories produce a successful normalized workspace path.\n\n@workduck.workspace.sync\nrole Serialize, encrypt, parse, decrypt, and normalize versioned workspace and project-registry synchronization envelopes.\nowns workspace sync format, encrypted sync envelope, registry payload normalization\nexcludes Git synchronization, sync file transport\ninvariant Decrypted data is accepted only when envelope algorithms, versions, and normalized registry payloads match the closed sync contract.\n",
+      "contentHash": "c59bd2f9398642c8211b0785bdb0c95ace67d060a98d1624ae55432ea57b376d",
+      "contentType": "text/plain",
+      "estimatedTokens": 247,
+      "id": "module:workduck.workspace"
     }
   ],
   "repositoryId": "workduck",

@@ -1,0 +1,8 @@
+llmnav-catalog/1 repository=workduck catalog=workduck.agent
+Read semantic cards before opening source. Resolve current paths and signatures with llmnav query or show.
+
+@workduck.agent.adapters
+role Export agent briefs and AGENTS.md documents for supported coding hosts without granting execution authority.
+owns agent adapter profiles, brief export formats, AGENTS.md compilation
+excludes agent process execution, provider credentials
+invariant Every adapter remains export-only and declares its supported artifacts through an explicit profile.

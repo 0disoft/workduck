@@ -1,3 +1,12 @@
+/* llmnav/1 module
+id=workduck.environment.cli
+role=Apply an explicit set of CLI environment variables through Tauri and normalize native validation or write failures.
+owns=CLI environment input|native apply command|apply result normalization
+excludes=secret-vault encryption|process spawning
+search=apply cli environment|set command variables|environment write failure
+invariant=Unavailable or malformed native responses fail closed and never report variables as applied.
+stability=contract
+*/
 import { getTauriInvoke } from '$lib/tauri/tauri-invoke';
 export type CliEnvironmentApplyError =
 	| 'cli-environment-empty'

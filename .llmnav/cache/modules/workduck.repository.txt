@@ -1,0 +1,8 @@
+llmnav-catalog/1 repository=workduck catalog=workduck.repository
+Read semantic cards before opening source. Resolve current paths and signatures with llmnav query or show.
+
+@workduck.repository.inspection
+role Schedule bounded concurrent Git inspections, coalesce shared paths, and stream repository-specific results to subscribers.
+owns inspection job queue, path request coalescing, inspection result channels
+excludes Git inspection implementation, repository mutations
+invariant The queue is capacity-bounded and duplicate subscribers do not create duplicate inspection jobs for the same path.

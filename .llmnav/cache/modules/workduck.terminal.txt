@@ -1,0 +1,8 @@
+llmnav-catalog/1 repository=workduck catalog=workduck.terminal
+Read semantic cards before opening source. Resolve current paths and signatures with llmnav query or show.
+
+@workduck.terminal.process
+role Own bounded interactive terminal sessions, process trees, input, output cursors, and lifecycle commands for the desktop runtime.
+owns terminal session registry, terminal process spawning, bounded terminal I/O
+excludes terminal discovery, frontend terminal rendering
+invariant Session output and input stay within byte limits and replacing or stopping a session does not intentionally orphan its process tree.

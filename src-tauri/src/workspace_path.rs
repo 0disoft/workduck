@@ -1,3 +1,12 @@
+// llmnav/1 module
+// id=workduck.workspace.path
+// role=Validate workspace paths as readable absolute directories and return canonical display paths with closed error codes.
+// owns=workspace path validation|directory readability check|path error mapping
+// excludes=workspace registry storage|repository containment
+// search=validate workspace path|canonical workspace directory|workspace unreadable error
+// invariant=Only existing readable absolute directories produce a successful normalized workspace path.
+// stability=contract
+// /llmnav
 use std::{
     fs, io,
     path::{Path, PathBuf},

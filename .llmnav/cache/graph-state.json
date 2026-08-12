@@ -2,7 +2,36 @@
   "partitions": [
     {
       "edges": [],
-      "inputHash": "9fd0b8e0bd23e4738301b2080b293b7c3e1a96ba92b40251b5a66868bb1c0dfe",
+      "inputHash": "3c299ca90d5046947055028ef54fd1adc0f989fdd0f4b898b7f4ed66decba646",
+      "key": "card:workduck/workduck.agent.adapters",
+      "nodes": [
+        {
+          "definitions": [],
+          "external": false,
+          "key": "workduck/workduck.agent.adapters",
+          "location": {
+            "declarationLine": null,
+            "endLine": 9,
+            "exported": null,
+            "kind": null,
+            "language": null,
+            "path": "packages/agents/src/index.ts",
+            "receiver": null,
+            "signature": null,
+            "startLine": 1,
+            "symbol": null,
+            "visibility": null
+          },
+          "repositoryId": "workduck",
+          "role": "Export agent briefs and AGENTS.md documents for supported coding hosts without granting execution authority.",
+          "semanticId": "workduck.agent.adapters"
+        }
+      ],
+      "outputHash": "eb314f0b0abfd74001b6efdee1eaa6161304e5f26a4a7932f61b9f97510b3288"
+    },
+    {
+      "edges": [],
+      "inputHash": "c2a6bea6ecbb3a383ca9128b1a84ef948a62bdd13fdfd7a0edb64f5c7802760e",
       "key": "card:workduck/workduck.cli.execution",
       "nodes": [
         {
@@ -31,7 +60,7 @@
     },
     {
       "edges": [],
-      "inputHash": "ed5366cb759348d8ef9bf3bdab3e13c4396c4f568e2fea63fe48d0194700d5f6",
+      "inputHash": "1c694f16676261123f2ad5fbeef89d32210a5443c7c83c2af25969be9b7c662e",
       "key": "card:workduck/workduck.cli.launcher",
       "nodes": [
         {
@@ -60,7 +89,7 @@
     },
     {
       "edges": [],
-      "inputHash": "4f7643bfaf36a8f7538c3fd424f20b2c42c9ddcb645cb0bc4f0b582f618d7bcf",
+      "inputHash": "3eae16eb042cba01af471d0751ce6642569bbba3aac2995ad9c4bd85a50b9f6b",
       "key": "card:workduck/workduck.contract.schemas",
       "nodes": [
         {
@@ -89,7 +118,7 @@
     },
     {
       "edges": [],
-      "inputHash": "0294d12c7819b544754854c0e1ecc017c8833724dfb0911f4f4fbcf079ee7880",
+      "inputHash": "6e572b36c0624b4051e0d70725273459a5dacb2f1f8e925531e4635e8bd74be9",
       "key": "card:workduck/workduck.desktop.commands",
       "nodes": [
         {
@@ -118,7 +147,65 @@
     },
     {
       "edges": [],
-      "inputHash": "ed3a2eaa01d493dff1f3dc94c51100e6a04a9928e4dd93a07cc27ee424a96234",
+      "inputHash": "2124f2af1776de8cd7af280c9b3e957aaa02ffb043e84d28a102a6c523f6c96d",
+      "key": "card:workduck/workduck.domain.core",
+      "nodes": [
+        {
+          "definitions": [],
+          "external": false,
+          "key": "workduck/workduck.domain.core",
+          "location": {
+            "declarationLine": null,
+            "endLine": 9,
+            "exported": null,
+            "kind": null,
+            "language": null,
+            "path": "packages/core/src/index.ts",
+            "receiver": null,
+            "signature": null,
+            "startLine": 1,
+            "symbol": null,
+            "visibility": null
+          },
+          "repositoryId": "workduck",
+          "role": "Define the shared Workduck entity, queue, run, gate, risk, and lifecycle vocabulary used across packages.",
+          "semanticId": "workduck.domain.core"
+        }
+      ],
+      "outputHash": "4d0816ea01cc65720ef4db86ba9a4b94d70a27ed122044de4adc6a87b3e4d6a8"
+    },
+    {
+      "edges": [],
+      "inputHash": "aa474739d0dde1f87df11b57e348ba76fad5a1ab357abd0492388d61a9d881d0",
+      "key": "card:workduck/workduck.environment.cli",
+      "nodes": [
+        {
+          "definitions": [],
+          "external": false,
+          "key": "workduck/workduck.environment.cli",
+          "location": {
+            "declarationLine": null,
+            "endLine": 9,
+            "exported": null,
+            "kind": null,
+            "language": null,
+            "path": "src/lib/environment/cli-environment.ts",
+            "receiver": null,
+            "signature": null,
+            "startLine": 1,
+            "symbol": null,
+            "visibility": null
+          },
+          "repositoryId": "workduck",
+          "role": "Apply an explicit set of CLI environment variables through Tauri and normalize native validation or write failures.",
+          "semanticId": "workduck.environment.cli"
+        }
+      ],
+      "outputHash": "d727e5600b5d474e04cddfa3334f9b1347952cd01e54741e02f594c95191f908"
+    },
+    {
+      "edges": [],
+      "inputHash": "54892365539bb89c291d1878cafa64da0675903e06999fd093dcdc28d9ee218c",
       "key": "card:workduck/workduck.process.tree",
       "nodes": [
         {
@@ -147,7 +234,65 @@
     },
     {
       "edges": [],
-      "inputHash": "68ccacc220195ff3c25b6fcff09ea4b70e495fcebdd0d55d517bda63a62502e0",
+      "inputHash": "ecbb3d8a50762d8c546147630e34b9b29b29914770005f8fd17289441816702d",
+      "key": "card:workduck/workduck.projects.folder",
+      "nodes": [
+        {
+          "definitions": [],
+          "external": false,
+          "key": "workduck/workduck.projects.folder",
+          "location": {
+            "declarationLine": null,
+            "endLine": 9,
+            "exported": null,
+            "kind": null,
+            "language": null,
+            "path": "src/lib/projects/project-folder.ts",
+            "receiver": null,
+            "signature": null,
+            "startLine": 1,
+            "symbol": null,
+            "visibility": null
+          },
+          "repositoryId": "workduck",
+          "role": "Create, open, and delete bounded project folders and preview or apply ssealed scaffolds through Tauri commands.",
+          "semanticId": "workduck.projects.folder"
+        }
+      ],
+      "outputHash": "27ae392cfa0b29d057b5644d7ee014b992413dce3ba753a43095d868941194b0"
+    },
+    {
+      "edges": [],
+      "inputHash": "3c4382fa04fcf6f0d14b670daf13518bd880d962eacc2ba682626d1faa4a3ba7",
+      "key": "card:workduck/workduck.projects.repository",
+      "nodes": [
+        {
+          "definitions": [],
+          "external": false,
+          "key": "workduck/workduck.projects.repository",
+          "location": {
+            "declarationLine": null,
+            "endLine": 9,
+            "exported": null,
+            "kind": null,
+            "language": null,
+            "path": "src/lib/projects/project-repository.ts",
+            "receiver": null,
+            "signature": null,
+            "startLine": 1,
+            "symbol": null,
+            "visibility": null
+          },
+          "repositoryId": "workduck",
+          "role": "Clone, inspect, initialize, synchronize, fork, and publish project repositories through bounded native Git operations.",
+          "semanticId": "workduck.projects.repository"
+        }
+      ],
+      "outputHash": "b84f5c841f600cc3ff8ba0393e2448640e18e49974ea4b13cab31c04679b6433"
+    },
+    {
+      "edges": [],
+      "inputHash": "d582710e9000b7cfa7ed0ae6e52d1d11e9bd501b97cc461eecddcc1a6c221030",
       "key": "card:workduck/workduck.projects.repository-task",
       "nodes": [
         {
@@ -176,7 +321,7 @@
     },
     {
       "edges": [],
-      "inputHash": "def7792262c739413fa7ec0d7a15ead495a64a03e4f542b06df68a7d516230b2",
+      "inputHash": "6a354ef39d664bfea00ae63a11d245922179f8ceedaa8a958333d33e19454483",
       "key": "card:workduck/workduck.projects.storage",
       "nodes": [
         {
@@ -205,9 +350,173 @@
     },
     {
       "edges": [],
-      "inputHash": "029d41593c36f62a314574700e47f7f3174b89cd237490958f3f4cfcda6ad39d",
+      "inputHash": "43f4eab7229578cce18673e3927c339e7fc2665fbbb2c02ff9e325c0a59017ce",
+      "key": "card:workduck/workduck.prompt.compiler",
+      "nodes": [
+        {
+          "definitions": [],
+          "external": false,
+          "key": "workduck/workduck.prompt.compiler",
+          "location": {
+            "declarationLine": null,
+            "endLine": 9,
+            "exported": null,
+            "kind": null,
+            "language": null,
+            "path": "packages/prompts/src/index.ts",
+            "receiver": null,
+            "signature": null,
+            "startLine": 1,
+            "symbol": null,
+            "visibility": null
+          },
+          "repositoryId": "workduck",
+          "role": "Compile deterministic Markdown prompt documents and agent briefs from typed sections and Workduck entity references.",
+          "semanticId": "workduck.prompt.compiler"
+        }
+      ],
+      "outputHash": "fb4990ec87a5097828a4d87e611c2784216bfe8b272f71e6c2df50162c48b51f"
+    },
+    {
+      "edges": [],
+      "inputHash": "3f390523b51cc82c28bf733974f66f4775fd10af2f2409e04de5a595b5ae31ca",
+      "key": "card:workduck/workduck.queue.artifacts",
+      "nodes": [
+        {
+          "definitions": [],
+          "external": false,
+          "key": "workduck/workduck.queue.artifacts",
+          "location": {
+            "declarationLine": null,
+            "endLine": 9,
+            "exported": null,
+            "kind": null,
+            "language": null,
+            "path": "src/lib/queue/queue-artifacts.ts",
+            "receiver": null,
+            "signature": null,
+            "startLine": 1,
+            "symbol": null,
+            "visibility": null
+          },
+          "repositoryId": "workduck",
+          "role": "Define, construct, transition, parse, and serialize versioned Queue work orders, result reports, proposals, and task evaluations.",
+          "semanticId": "workduck.queue.artifacts"
+        }
+      ],
+      "outputHash": "1929610bf2831a1d75e3416c785c826027ead59358ec9ba9483371c0fefc92b2"
+    },
+    {
+      "edges": [
+        {
+          "confidence": 0.85,
+          "from": "workduck/workduck.queue.execution",
+          "id": "268d6ad14bde561af494351ff6a78b888341e38014c1223d0c878c6a6ff5e6a7",
+          "kind": "imports",
+          "provenance": {
+            "generator": "llmnav",
+            "line": null,
+            "path": "src/lib/queue/queue-execution.ts",
+            "source": "src/lib/queue/queue-execution.ts",
+            "type": "local-import"
+          },
+          "to": "workduck/workduck.queue.artifacts"
+        }
+      ],
+      "inputHash": "b873a3d04599bcde0ccd6c915690e8f10f3f2631fd90e8ce49bcb2a655aa3ca5",
+      "key": "card:workduck/workduck.queue.execution",
+      "nodes": [
+        {
+          "definitions": [],
+          "external": false,
+          "key": "workduck/workduck.queue.artifacts",
+          "location": null,
+          "repositoryId": "workduck",
+          "role": null,
+          "semanticId": "workduck.queue.artifacts"
+        },
+        {
+          "definitions": [],
+          "external": false,
+          "key": "workduck/workduck.queue.execution",
+          "location": {
+            "declarationLine": null,
+            "endLine": 9,
+            "exported": null,
+            "kind": null,
+            "language": null,
+            "path": "src/lib/queue/queue-execution.ts",
+            "receiver": null,
+            "signature": null,
+            "startLine": 1,
+            "symbol": null,
+            "visibility": null
+          },
+          "repositoryId": "workduck",
+          "role": "Preview, estimate, execute, cancel, and inspect Queue work-order runs through the native execution boundary.",
+          "semanticId": "workduck.queue.execution"
+        }
+      ],
+      "outputHash": "9978d8e828b02b6c522b466591d79f4efa3b0925f2a3fb84aca179039609156d"
+    },
+    {
+      "edges": [],
+      "inputHash": "264d61e2f59b0381130074ecb05c82d17beed28f4ebe27620062e6847f6bf2a6",
+      "key": "card:workduck/workduck.queue.folder",
+      "nodes": [
+        {
+          "definitions": [],
+          "external": false,
+          "key": "workduck/workduck.queue.folder",
+          "location": {
+            "declarationLine": null,
+            "endLine": 9,
+            "exported": null,
+            "kind": null,
+            "language": null,
+            "path": "src/lib/queue/queue-folder.ts",
+            "receiver": null,
+            "signature": null,
+            "startLine": 1,
+            "symbol": null,
+            "visibility": null
+          },
+          "repositoryId": "workduck",
+          "role": "Create and inspect the workspace Queue directory and perform bounded reads, writes, updates, and deletes of Queue files.",
+          "semanticId": "workduck.queue.folder"
+        }
+      ],
+      "outputHash": "1b09a91a21f2289f21ab9211b18e8075d629f7e7754b21d12c35fc1b4205be6c"
+    },
+    {
+      "edges": [
+        {
+          "confidence": 0.85,
+          "from": "workduck/workduck.queue.read-state",
+          "id": "85b7139d503861aa49ab5e8eed4415bc16d649501787f762b0de56aa1b494059",
+          "kind": "imports",
+          "provenance": {
+            "generator": "llmnav",
+            "line": null,
+            "path": "src/lib/queue/queue-read-state.ts",
+            "source": "src/lib/queue/queue-read-state.ts",
+            "type": "local-import"
+          },
+          "to": "workduck/workduck.queue.folder"
+        }
+      ],
+      "inputHash": "adb57e7bfcdf47e2a9d391f11b9ee538a945318b837f82e4752da88283eff6e0",
       "key": "card:workduck/workduck.queue.read-state",
       "nodes": [
+        {
+          "definitions": [],
+          "external": false,
+          "key": "workduck/workduck.queue.folder",
+          "location": null,
+          "repositoryId": "workduck",
+          "role": null,
+          "semanticId": "workduck.queue.folder"
+        },
         {
           "definitions": [],
           "external": false,
@@ -230,10 +539,184 @@
           "semanticId": "workduck.queue.read-state"
         }
       ],
-      "outputHash": "7d66682a594dea525bd6e10e813b0a18f9a2023aad378b0157825a63a04dfb87"
+      "outputHash": "c19df344f9ec3869e304bc66c9de4a934c7bfca970efe94bd2d2b91fec8a0cc8"
+    },
+    {
+      "edges": [],
+      "inputHash": "63ce76e171bf43fb62cff15bd7a91ff66cb07414d8df8d7e0115b6ee3d3aa8c2",
+      "key": "card:workduck/workduck.repository.inspection",
+      "nodes": [
+        {
+          "definitions": [],
+          "external": false,
+          "key": "workduck/workduck.repository.inspection",
+          "location": {
+            "declarationLine": null,
+            "endLine": 9,
+            "exported": null,
+            "kind": null,
+            "language": null,
+            "path": "src-tauri/src/repository_inspection_scheduler.rs",
+            "receiver": null,
+            "signature": null,
+            "startLine": 1,
+            "symbol": null,
+            "visibility": null
+          },
+          "repositoryId": "workduck",
+          "role": "Schedule bounded concurrent Git inspections, coalesce shared paths, and stream repository-specific results to subscribers.",
+          "semanticId": "workduck.repository.inspection"
+        }
+      ],
+      "outputHash": "7c6e56abd76a295a2a82cb2c5411f99d8fdacff199b20a0e49d2e2952a69f5ba"
+    },
+    {
+      "edges": [],
+      "inputHash": "e28a52cd1693d8c64f252b4c49919e822f05c26a0e5dd02864ff712cc8302fb2",
+      "key": "card:workduck/workduck.secret-vault.crypto",
+      "nodes": [
+        {
+          "definitions": [],
+          "external": false,
+          "key": "workduck/workduck.secret-vault.crypto",
+          "location": {
+            "declarationLine": null,
+            "endLine": 9,
+            "exported": null,
+            "kind": null,
+            "language": null,
+            "path": "src/lib/environment/secret-vault-crypto.ts",
+            "receiver": null,
+            "signature": null,
+            "startLine": 1,
+            "symbol": null,
+            "visibility": null
+          },
+          "repositoryId": "workduck",
+          "role": "Encrypt and decrypt versioned secret-vault payloads through the native Argon2id and XChaCha20-Poly1305 boundary.",
+          "semanticId": "workduck.secret-vault.crypto"
+        }
+      ],
+      "outputHash": "a2eebe44cd7173ec0c406d01d7cc21827c68b70a2a7b16aa5780f5ecc202f3c9"
+    },
+    {
+      "edges": [],
+      "inputHash": "48acf65fb41d903efea0104fa44bfd5b0e01b5c633d471ef903be79e887da93f",
+      "key": "card:workduck/workduck.terminal.process",
+      "nodes": [
+        {
+          "definitions": [],
+          "external": false,
+          "key": "workduck/workduck.terminal.process",
+          "location": {
+            "declarationLine": null,
+            "endLine": 9,
+            "exported": null,
+            "kind": null,
+            "language": null,
+            "path": "src-tauri/src/terminal_process.rs",
+            "receiver": null,
+            "signature": null,
+            "startLine": 1,
+            "symbol": null,
+            "visibility": null
+          },
+          "repositoryId": "workduck",
+          "role": "Own bounded interactive terminal sessions, process trees, input, output cursors, and lifecycle commands for the desktop runtime.",
+          "semanticId": "workduck.terminal.process"
+        }
+      ],
+      "outputHash": "dfa8f86fb6934ac532279e7784e69304dd0204d2e8c1b58fc03cbf05d1d63a6b"
+    },
+    {
+      "edges": [],
+      "inputHash": "32be4c29157e856c14e5c4f37127ce20378158801d47fed2be465c8b778f09de",
+      "key": "card:workduck/workduck.workbench.engine",
+      "nodes": [
+        {
+          "definitions": [],
+          "external": false,
+          "key": "workduck/workduck.workbench.engine",
+          "location": {
+            "declarationLine": null,
+            "endLine": 9,
+            "exported": null,
+            "kind": null,
+            "language": null,
+            "path": "packages/workbench-engine/src/index.ts",
+            "receiver": null,
+            "signature": null,
+            "startLine": 1,
+            "symbol": null,
+            "visibility": null
+          },
+          "repositoryId": "workduck",
+          "role": "Compile agent run briefs and deterministic local run, shell, gate, and project-inventory summaries from core domain records.",
+          "semanticId": "workduck.workbench.engine"
+        }
+      ],
+      "outputHash": "cd7b531efa7407a774acf30f974b064f11163408b400d426fff372ab93636fb9"
+    },
+    {
+      "edges": [],
+      "inputHash": "080e021d30f6bb8d53f955ca5fc2f3e42957c9266ded58ebaeea7a0b8240e052",
+      "key": "card:workduck/workduck.workspace.path",
+      "nodes": [
+        {
+          "definitions": [],
+          "external": false,
+          "key": "workduck/workduck.workspace.path",
+          "location": {
+            "declarationLine": null,
+            "endLine": 9,
+            "exported": null,
+            "kind": null,
+            "language": null,
+            "path": "src-tauri/src/workspace_path.rs",
+            "receiver": null,
+            "signature": null,
+            "startLine": 1,
+            "symbol": null,
+            "visibility": null
+          },
+          "repositoryId": "workduck",
+          "role": "Validate workspace paths as readable absolute directories and return canonical display paths with closed error codes.",
+          "semanticId": "workduck.workspace.path"
+        }
+      ],
+      "outputHash": "5d2f786c9ec61d831e5d3ab71f5e645f9adf4abdbc9079f1e327fb95caf8ab9b"
+    },
+    {
+      "edges": [],
+      "inputHash": "8a7cbbe9bd4cfddb358ed89c62cfab457ded7bfbddaee28add23b82388eec47b",
+      "key": "card:workduck/workduck.workspace.sync",
+      "nodes": [
+        {
+          "definitions": [],
+          "external": false,
+          "key": "workduck/workduck.workspace.sync",
+          "location": {
+            "declarationLine": null,
+            "endLine": 9,
+            "exported": null,
+            "kind": null,
+            "language": null,
+            "path": "src/lib/workspaces/workspace-sync.ts",
+            "receiver": null,
+            "signature": null,
+            "startLine": 1,
+            "symbol": null,
+            "visibility": null
+          },
+          "repositoryId": "workduck",
+          "role": "Serialize, encrypt, parse, decrypt, and normalize versioned workspace and project-registry synchronization envelopes.",
+          "semanticId": "workduck.workspace.sync"
+        }
+      ],
+      "outputHash": "66d4a6606e2a1778a1bad94f748cf721f63ddf1098e29e9a03b0eb8750a76e83"
     }
   ],
   "repositoryId": "workduck",
-  "resolutionHash": "ba86d38a074d468333142881d61b7ef592d2b8c71a20682ec62aefd5f9aa2502",
+  "resolutionHash": "07a920ee3c136c5907caf146d8e19b4f0da3d3e87a4bae99a2dec247f41da756",
   "schemaVersion": 1
 }

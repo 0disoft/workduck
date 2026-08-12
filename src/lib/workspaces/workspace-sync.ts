@@ -1,3 +1,12 @@
+/* llmnav/1 module
+id=workduck.workspace.sync
+role=Serialize, encrypt, parse, decrypt, and normalize versioned workspace and project-registry synchronization envelopes.
+owns=workspace sync format|encrypted sync envelope|registry payload normalization
+excludes=Git synchronization|sync file transport
+search=encrypt workspace sync|decrypt registry envelope|workspace sync payload
+invariant=Decrypted data is accepted only when envelope algorithms, versions, and normalized registry payloads match the closed sync contract.
+stability=contract
+*/
 import { isObjectRecord } from '$lib/shared/object-record';
 import { getTauriInvoke } from '$lib/tauri/tauri-invoke';
 import {

@@ -1,0 +1,8 @@
+llmnav-catalog/1 repository=workduck catalog=workduck.workbench
+Read semantic cards before opening source. Resolve current paths and signatures with llmnav query or show.
+
+@workduck.workbench.engine
+role Compile agent run briefs and deterministic local run, shell, gate, and project-inventory summaries from core domain records.
+owns workbench run plans, gate evaluation summaries, project inventory grouping
+excludes process execution, artifact persistence
+invariant A failed gate check blocks its gate and shell-run records preserve their explicit approval and execution states.

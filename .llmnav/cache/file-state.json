@@ -1,37 +1,304 @@
 {
   "files": [
     {
-      "blocks": [],
-      "contentHash": "2aba2ba3edd7718a9af776525eb615c6e80b6f044ad8697a4466047c968dd584",
-      "declarations": [],
+      "blocks": [
+        {
+          "card": {
+            "effect": [],
+            "excludes": [
+              "agent process execution",
+              "provider credentials"
+            ],
+            "id": "workduck.agent.adapters",
+            "invariant": [
+              "Every adapter remains export-only and declares its supported artifacts through an explicit profile."
+            ],
+            "owns": [
+              "agent adapter profiles",
+              "brief export formats",
+              "AGENTS.md compilation"
+            ],
+            "rel": [],
+            "risk": [],
+            "role": "Export agent briefs and AGENTS.md documents for supported coding hosts without granting execution authority.",
+            "scope": "module",
+            "search": [
+              "export agent brief",
+              "compile agents markdown",
+              "coding agent adapter"
+            ],
+            "stability": "contract",
+            "unknown": []
+          },
+          "end": 487,
+          "endLine": 9,
+          "entries": [
+            {
+              "key": "id",
+              "line": 2,
+              "order": 0,
+              "value": "workduck.agent.adapters"
+            },
+            {
+              "key": "role",
+              "line": 3,
+              "order": 1,
+              "value": "Export agent briefs and AGENTS.md documents for supported coding hosts without granting execution authority."
+            },
+            {
+              "key": "owns",
+              "line": 4,
+              "order": 2,
+              "value": "agent adapter profiles|brief export formats|AGENTS.md compilation"
+            },
+            {
+              "key": "excludes",
+              "line": 5,
+              "order": 3,
+              "value": "agent process execution|provider credentials"
+            },
+            {
+              "key": "search",
+              "line": 6,
+              "order": 4,
+              "value": "export agent brief|compile agents markdown|coding agent adapter"
+            },
+            {
+              "key": "invariant",
+              "line": 7,
+              "order": 5,
+              "value": "Every adapter remains export-only and declares its supported artifacts through an explicit profile."
+            },
+            {
+              "key": "stability",
+              "line": 8,
+              "order": 6,
+              "value": "contract"
+            }
+          ],
+          "filePath": "packages/agents/src/index.ts",
+          "indent": "",
+          "newline": "\n",
+          "prefix": null,
+          "raw": "/* llmnav/1 module\nid=workduck.agent.adapters\nrole=Export agent briefs and AGENTS.md documents for supported coding hosts without granting execution authority.\nowns=agent adapter profiles|brief export formats|AGENTS.md compilation\nexcludes=agent process execution|provider credentials\nsearch=export agent brief|compile agents markdown|coding agent adapter\ninvariant=Every adapter remains export-only and declares its supported artifacts through an explicit profile.\nstability=contract\n*/",
+          "scope": "module",
+          "specVersion": "1",
+          "start": 0,
+          "startLine": 1,
+          "style": "block",
+          "syntaxErrors": []
+        }
+      ],
+      "contentHash": "101a7ecd0649a16ccb117ba88c2a396fe4632b9e3c4478b74661e7e1d6ad39c4",
+      "declarations": [
+        null
+      ],
       "imports": [
         "@workduck/prompts",
         "@workduck/workbench-engine"
       ],
       "path": "packages/agents/src/index.ts",
-      "semanticBytes": 0,
-      "sourceBytes": 8937
+      "semanticBytes": 487,
+      "sourceBytes": 9425
     },
     {
-      "blocks": [],
-      "contentHash": "297596a4a177c027baf8cdfbdbb83c83e17d659293b5668cb478fd07edefd01c",
-      "declarations": [],
+      "blocks": [
+        {
+          "card": {
+            "effect": [],
+            "excludes": [
+              "JSON Schema documents",
+              "persistence adapters"
+            ],
+            "id": "workduck.domain.core",
+            "invariant": [
+              "Runtime guard values and their exported TypeScript unions describe the same closed vocabulary."
+            ],
+            "owns": [
+              "domain entity types",
+              "shared enum values",
+              "domain type guards"
+            ],
+            "rel": [],
+            "risk": [],
+            "role": "Define the shared Workduck entity, queue, run, gate, risk, and lifecycle vocabulary used across packages.",
+            "scope": "module",
+            "search": [
+              "workduck domain model",
+              "entity kinds and statuses",
+              "queue core types"
+            ],
+            "stability": "contract",
+            "unknown": []
+          },
+          "end": 467,
+          "endLine": 9,
+          "entries": [
+            {
+              "key": "id",
+              "line": 2,
+              "order": 0,
+              "value": "workduck.domain.core"
+            },
+            {
+              "key": "role",
+              "line": 3,
+              "order": 1,
+              "value": "Define the shared Workduck entity, queue, run, gate, risk, and lifecycle vocabulary used across packages."
+            },
+            {
+              "key": "owns",
+              "line": 4,
+              "order": 2,
+              "value": "domain entity types|shared enum values|domain type guards"
+            },
+            {
+              "key": "excludes",
+              "line": 5,
+              "order": 3,
+              "value": "JSON Schema documents|persistence adapters"
+            },
+            {
+              "key": "search",
+              "line": 6,
+              "order": 4,
+              "value": "workduck domain model|entity kinds and statuses|queue core types"
+            },
+            {
+              "key": "invariant",
+              "line": 7,
+              "order": 5,
+              "value": "Runtime guard values and their exported TypeScript unions describe the same closed vocabulary."
+            },
+            {
+              "key": "stability",
+              "line": 8,
+              "order": 6,
+              "value": "contract"
+            }
+          ],
+          "filePath": "packages/core/src/index.ts",
+          "indent": "",
+          "newline": "\n",
+          "prefix": null,
+          "raw": "/* llmnav/1 module\nid=workduck.domain.core\nrole=Define the shared Workduck entity, queue, run, gate, risk, and lifecycle vocabulary used across packages.\nowns=domain entity types|shared enum values|domain type guards\nexcludes=JSON Schema documents|persistence adapters\nsearch=workduck domain model|entity kinds and statuses|queue core types\ninvariant=Runtime guard values and their exported TypeScript unions describe the same closed vocabulary.\nstability=contract\n*/",
+          "scope": "module",
+          "specVersion": "1",
+          "start": 0,
+          "startLine": 1,
+          "style": "block",
+          "syntaxErrors": []
+        }
+      ],
+      "contentHash": "0736547c4ebb8cb7cabb1e4e55f1e1560b9ebfdc997b417e6cb348e82b4f30a3",
+      "declarations": [
+        null
+      ],
       "imports": [],
       "path": "packages/core/src/index.ts",
-      "semanticBytes": 0,
-      "sourceBytes": 11689
+      "semanticBytes": 467,
+      "sourceBytes": 12157
     },
     {
-      "blocks": [],
-      "contentHash": "84b4c9583f1b22795de07caf18efc5baf7ffddb816d41658e7916a1e2326b232",
-      "declarations": [],
+      "blocks": [
+        {
+          "card": {
+            "effect": [],
+            "excludes": [
+              "provider invocation",
+              "prompt persistence"
+            ],
+            "id": "workduck.prompt.compiler",
+            "invariant": [
+              "Prompt output preserves the declared section order and ends with one normalized newline."
+            ],
+            "owns": [
+              "prompt section rendering",
+              "agent brief composition",
+              "entity reference formatting"
+            ],
+            "rel": [],
+            "risk": [],
+            "role": "Compile deterministic Markdown prompt documents and agent briefs from typed sections and Workduck entity references.",
+            "scope": "module",
+            "search": [
+              "compile agent prompt",
+              "markdown prompt sections",
+              "format entity reference"
+            ],
+            "stability": "contract",
+            "unknown": []
+          },
+          "end": 496,
+          "endLine": 9,
+          "entries": [
+            {
+              "key": "id",
+              "line": 2,
+              "order": 0,
+              "value": "workduck.prompt.compiler"
+            },
+            {
+              "key": "role",
+              "line": 3,
+              "order": 1,
+              "value": "Compile deterministic Markdown prompt documents and agent briefs from typed sections and Workduck entity references."
+            },
+            {
+              "key": "owns",
+              "line": 4,
+              "order": 2,
+              "value": "prompt section rendering|agent brief composition|entity reference formatting"
+            },
+            {
+              "key": "excludes",
+              "line": 5,
+              "order": 3,
+              "value": "provider invocation|prompt persistence"
+            },
+            {
+              "key": "search",
+              "line": 6,
+              "order": 4,
+              "value": "compile agent prompt|markdown prompt sections|format entity reference"
+            },
+            {
+              "key": "invariant",
+              "line": 7,
+              "order": 5,
+              "value": "Prompt output preserves the declared section order and ends with one normalized newline."
+            },
+            {
+              "key": "stability",
+              "line": 8,
+              "order": 6,
+              "value": "contract"
+            }
+          ],
+          "filePath": "packages/prompts/src/index.ts",
+          "indent": "",
+          "newline": "\n",
+          "prefix": null,
+          "raw": "/* llmnav/1 module\nid=workduck.prompt.compiler\nrole=Compile deterministic Markdown prompt documents and agent briefs from typed sections and Workduck entity references.\nowns=prompt section rendering|agent brief composition|entity reference formatting\nexcludes=provider invocation|prompt persistence\nsearch=compile agent prompt|markdown prompt sections|format entity reference\ninvariant=Prompt output preserves the declared section order and ends with one normalized newline.\nstability=contract\n*/",
+          "scope": "module",
+          "specVersion": "1",
+          "start": 0,
+          "startLine": 1,
+          "style": "block",
+          "syntaxErrors": []
+        }
+      ],
+      "contentHash": "a6976afe9c47398c3e7d185e248b2656b6f3562370052f28206352f135d186cb",
+      "declarations": [
+        null
+      ],
       "imports": [
         "@workduck/core",
         "@workduck/schemas"
       ],
       "path": "packages/prompts/src/index.ts",
-      "semanticBytes": 0,
-      "sourceBytes": 3726
+      "semanticBytes": 496,
+      "sourceBytes": 4223
     },
     {
       "blocks": [
@@ -134,17 +401,106 @@
       "sourceBytes": 18571
     },
     {
-      "blocks": [],
-      "contentHash": "b8b7dcf8eea71d6b77113b6713c806b1e0a2a3767eca8132d9a3587921c7ab68",
-      "declarations": [],
+      "blocks": [
+        {
+          "card": {
+            "effect": [],
+            "excludes": [
+              "process execution",
+              "artifact persistence"
+            ],
+            "id": "workduck.workbench.engine",
+            "invariant": [
+              "A failed gate check blocks its gate and shell-run records preserve their explicit approval and execution states."
+            ],
+            "owns": [
+              "workbench run plans",
+              "gate evaluation summaries",
+              "project inventory grouping"
+            ],
+            "rel": [],
+            "risk": [],
+            "role": "Compile agent run briefs and deterministic local run, shell, gate, and project-inventory summaries from core domain records.",
+            "scope": "module",
+            "search": [
+              "compile workbench run",
+              "evaluate gate checks",
+              "summarize project inventory"
+            ],
+            "stability": "architecture",
+            "unknown": []
+          },
+          "end": 530,
+          "endLine": 9,
+          "entries": [
+            {
+              "key": "id",
+              "line": 2,
+              "order": 0,
+              "value": "workduck.workbench.engine"
+            },
+            {
+              "key": "role",
+              "line": 3,
+              "order": 1,
+              "value": "Compile agent run briefs and deterministic local run, shell, gate, and project-inventory summaries from core domain records."
+            },
+            {
+              "key": "owns",
+              "line": 4,
+              "order": 2,
+              "value": "workbench run plans|gate evaluation summaries|project inventory grouping"
+            },
+            {
+              "key": "excludes",
+              "line": 5,
+              "order": 3,
+              "value": "process execution|artifact persistence"
+            },
+            {
+              "key": "search",
+              "line": 6,
+              "order": 4,
+              "value": "compile workbench run|evaluate gate checks|summarize project inventory"
+            },
+            {
+              "key": "invariant",
+              "line": 7,
+              "order": 5,
+              "value": "A failed gate check blocks its gate and shell-run records preserve their explicit approval and execution states."
+            },
+            {
+              "key": "stability",
+              "line": 8,
+              "order": 6,
+              "value": "architecture"
+            }
+          ],
+          "filePath": "packages/workbench-engine/src/index.ts",
+          "indent": "",
+          "newline": "\n",
+          "prefix": null,
+          "raw": "/* llmnav/1 module\nid=workduck.workbench.engine\nrole=Compile agent run briefs and deterministic local run, shell, gate, and project-inventory summaries from core domain records.\nowns=workbench run plans|gate evaluation summaries|project inventory grouping\nexcludes=process execution|artifact persistence\nsearch=compile workbench run|evaluate gate checks|summarize project inventory\ninvariant=A failed gate check blocks its gate and shell-run records preserve their explicit approval and execution states.\nstability=architecture\n*/",
+          "scope": "module",
+          "specVersion": "1",
+          "start": 0,
+          "startLine": 1,
+          "style": "block",
+          "syntaxErrors": []
+        }
+      ],
+      "contentHash": "b1e8fa95bf0d9b13fae10b859b8843e78e51d206bdb022563862ffe4dbfa656b",
+      "declarations": [
+        null
+      ],
       "imports": [
         "@workduck/core",
         "@workduck/prompts",
         "@workduck/schemas"
       ],
       "path": "packages/workbench-engine/src/index.ts",
-      "semanticBytes": 0,
-      "sourceBytes": 16151
+      "semanticBytes": 530,
+      "sourceBytes": 16682
     },
     {
       "blocks": [],
@@ -1176,9 +1532,98 @@
       "sourceBytes": 21583
     },
     {
-      "blocks": [],
-      "contentHash": "153c2d983a3a387619e37bd4aa9e88d1fa9959e7532044c00e518b3e53662b72",
-      "declarations": [],
+      "blocks": [
+        {
+          "card": {
+            "effect": [],
+            "excludes": [
+              "Git inspection implementation",
+              "repository mutations"
+            ],
+            "id": "workduck.repository.inspection",
+            "invariant": [
+              "The queue is capacity-bounded and duplicate subscribers do not create duplicate inspection jobs for the same path."
+            ],
+            "owns": [
+              "inspection job queue",
+              "path request coalescing",
+              "inspection result channels"
+            ],
+            "rel": [],
+            "risk": [],
+            "role": "Schedule bounded concurrent Git inspections, coalesce shared paths, and stream repository-specific results to subscribers.",
+            "scope": "module",
+            "search": [
+              "schedule git inspection",
+              "repository scan queue",
+              "cancel inspection scan"
+            ],
+            "stability": "architecture",
+            "unknown": []
+          },
+          "end": 574,
+          "endLine": 9,
+          "entries": [
+            {
+              "key": "id",
+              "line": 2,
+              "order": 0,
+              "value": "workduck.repository.inspection"
+            },
+            {
+              "key": "role",
+              "line": 3,
+              "order": 1,
+              "value": "Schedule bounded concurrent Git inspections, coalesce shared paths, and stream repository-specific results to subscribers."
+            },
+            {
+              "key": "owns",
+              "line": 4,
+              "order": 2,
+              "value": "inspection job queue|path request coalescing|inspection result channels"
+            },
+            {
+              "key": "excludes",
+              "line": 5,
+              "order": 3,
+              "value": "Git inspection implementation|repository mutations"
+            },
+            {
+              "key": "search",
+              "line": 6,
+              "order": 4,
+              "value": "schedule git inspection|repository scan queue|cancel inspection scan"
+            },
+            {
+              "key": "invariant",
+              "line": 7,
+              "order": 5,
+              "value": "The queue is capacity-bounded and duplicate subscribers do not create duplicate inspection jobs for the same path."
+            },
+            {
+              "key": "stability",
+              "line": 8,
+              "order": 6,
+              "value": "architecture"
+            }
+          ],
+          "filePath": "src-tauri/src/repository_inspection_scheduler.rs",
+          "indent": "",
+          "newline": "\n",
+          "prefix": "//",
+          "raw": "// llmnav/1 module\n// id=workduck.repository.inspection\n// role=Schedule bounded concurrent Git inspections, coalesce shared paths, and stream repository-specific results to subscribers.\n// owns=inspection job queue|path request coalescing|inspection result channels\n// excludes=Git inspection implementation|repository mutations\n// search=schedule git inspection|repository scan queue|cancel inspection scan\n// invariant=The queue is capacity-bounded and duplicate subscribers do not create duplicate inspection jobs for the same path.\n// stability=architecture\n// /llmnav\n",
+          "scope": "module",
+          "specVersion": "1",
+          "start": 0,
+          "startLine": 1,
+          "style": "line",
+          "syntaxErrors": []
+        }
+      ],
+      "contentHash": "92b4af9c0938ff2d5d8024336a11d3a6966602c632360408106decab4ea1ff1b",
+      "declarations": [
+        null
+      ],
       "imports": [
         "crate::{\n    project_repository::{\n        ProjectRepositoryGitError, ProjectRepositoryGitInspectionRecord,\n        ProjectRepositoryGitInspectionRequest, inspect_project_repository_git_record,\n        project_repository_git_inspection_error_record,\n    },\n    project_repository_validation::validate_repository_path,\n}",
         "std::{\n    collections::{HashMap, VecDeque},\n    io,\n    path::PathBuf,\n    sync::{Arc, Condvar, Mutex, OnceLock},\n    thread,\n}",
@@ -1186,8 +1631,8 @@
         "tests {\n    use super::*"
       ],
       "path": "src-tauri/src/repository_inspection_scheduler.rs",
-      "semanticBytes": 0,
-      "sourceBytes": 19590
+      "semanticBytes": 574,
+      "sourceBytes": 20164
     },
     {
       "blocks": [],
@@ -1262,9 +1707,98 @@
       "sourceBytes": 3764
     },
     {
-      "blocks": [],
-      "contentHash": "1c9665626c6993a7b75c6ef66f0cdcd6cd4505cb4dc6f123131045100cdea1f8",
-      "declarations": [],
+      "blocks": [
+        {
+          "card": {
+            "effect": [],
+            "excludes": [
+              "terminal discovery",
+              "frontend terminal rendering"
+            ],
+            "id": "workduck.terminal.process",
+            "invariant": [
+              "Session output and input stay within byte limits and replacing or stopping a session does not intentionally orphan its process tree."
+            ],
+            "owns": [
+              "terminal session registry",
+              "terminal process spawning",
+              "bounded terminal I/O"
+            ],
+            "rel": [],
+            "risk": [],
+            "role": "Own bounded interactive terminal sessions, process trees, input, output cursors, and lifecycle commands for the desktop runtime.",
+            "scope": "module",
+            "search": [
+              "start terminal session",
+              "read terminal output",
+              "stop terminal process"
+            ],
+            "stability": "architecture",
+            "unknown": []
+          },
+          "end": 587,
+          "endLine": 9,
+          "entries": [
+            {
+              "key": "id",
+              "line": 2,
+              "order": 0,
+              "value": "workduck.terminal.process"
+            },
+            {
+              "key": "role",
+              "line": 3,
+              "order": 1,
+              "value": "Own bounded interactive terminal sessions, process trees, input, output cursors, and lifecycle commands for the desktop runtime."
+            },
+            {
+              "key": "owns",
+              "line": 4,
+              "order": 2,
+              "value": "terminal session registry|terminal process spawning|bounded terminal I/O"
+            },
+            {
+              "key": "excludes",
+              "line": 5,
+              "order": 3,
+              "value": "terminal discovery|frontend terminal rendering"
+            },
+            {
+              "key": "search",
+              "line": 6,
+              "order": 4,
+              "value": "start terminal session|read terminal output|stop terminal process"
+            },
+            {
+              "key": "invariant",
+              "line": 7,
+              "order": 5,
+              "value": "Session output and input stay within byte limits and replacing or stopping a session does not intentionally orphan its process tree."
+            },
+            {
+              "key": "stability",
+              "line": 8,
+              "order": 6,
+              "value": "architecture"
+            }
+          ],
+          "filePath": "src-tauri/src/terminal_process.rs",
+          "indent": "",
+          "newline": "\n",
+          "prefix": "//",
+          "raw": "// llmnav/1 module\n// id=workduck.terminal.process\n// role=Own bounded interactive terminal sessions, process trees, input, output cursors, and lifecycle commands for the desktop runtime.\n// owns=terminal session registry|terminal process spawning|bounded terminal I/O\n// excludes=terminal discovery|frontend terminal rendering\n// search=start terminal session|read terminal output|stop terminal process\n// invariant=Session output and input stay within byte limits and replacing or stopping a session does not intentionally orphan its process tree.\n// stability=architecture\n// /llmnav\n",
+          "scope": "module",
+          "specVersion": "1",
+          "start": 0,
+          "startLine": 1,
+          "style": "line",
+          "syntaxErrors": []
+        }
+      ],
+      "contentHash": "87cab031b665c3bbc9513858cfc017fd5c3981c04e23328cdb5c03e5934d2918",
+      "declarations": [
+        null
+      ],
       "imports": [
         "crate::process_tree::ProcessTreeChild",
         "crate::terminal_catalog",
@@ -1274,8 +1808,8 @@
         "tests {\n    use super::{\n        AnsiStripState, TERMINAL_INPUT_MAX_BYTES, TERMINAL_OUTPUT_MAX_BYTES, TerminalOutputBuffer,\n        create_terminal_args, normalize_terminal_input, strip_ansi_sequences,\n    }"
       ],
       "path": "src-tauri/src/terminal_process.rs",
-      "semanticBytes": 0,
-      "sourceBytes": 20592
+      "semanticBytes": 587,
+      "sourceBytes": 21179
     },
     {
       "blocks": [],
@@ -1329,17 +1863,106 @@
       "sourceBytes": 2678
     },
     {
-      "blocks": [],
-      "contentHash": "828b5f7a1c2ddf78c04bfe71956c2a074adbf590b6299270dec6436e2ef397cb",
-      "declarations": [],
+      "blocks": [
+        {
+          "card": {
+            "effect": [],
+            "excludes": [
+              "workspace registry storage",
+              "repository containment"
+            ],
+            "id": "workduck.workspace.path",
+            "invariant": [
+              "Only existing readable absolute directories produce a successful normalized workspace path."
+            ],
+            "owns": [
+              "workspace path validation",
+              "directory readability check",
+              "path error mapping"
+            ],
+            "rel": [],
+            "risk": [],
+            "role": "Validate workspace paths as readable absolute directories and return canonical display paths with closed error codes.",
+            "scope": "module",
+            "search": [
+              "validate workspace path",
+              "canonical workspace directory",
+              "workspace unreadable error"
+            ],
+            "stability": "contract",
+            "unknown": []
+          },
+          "end": 547,
+          "endLine": 9,
+          "entries": [
+            {
+              "key": "id",
+              "line": 2,
+              "order": 0,
+              "value": "workduck.workspace.path"
+            },
+            {
+              "key": "role",
+              "line": 3,
+              "order": 1,
+              "value": "Validate workspace paths as readable absolute directories and return canonical display paths with closed error codes."
+            },
+            {
+              "key": "owns",
+              "line": 4,
+              "order": 2,
+              "value": "workspace path validation|directory readability check|path error mapping"
+            },
+            {
+              "key": "excludes",
+              "line": 5,
+              "order": 3,
+              "value": "workspace registry storage|repository containment"
+            },
+            {
+              "key": "search",
+              "line": 6,
+              "order": 4,
+              "value": "validate workspace path|canonical workspace directory|workspace unreadable error"
+            },
+            {
+              "key": "invariant",
+              "line": 7,
+              "order": 5,
+              "value": "Only existing readable absolute directories produce a successful normalized workspace path."
+            },
+            {
+              "key": "stability",
+              "line": 8,
+              "order": 6,
+              "value": "contract"
+            }
+          ],
+          "filePath": "src-tauri/src/workspace_path.rs",
+          "indent": "",
+          "newline": "\n",
+          "prefix": "//",
+          "raw": "// llmnav/1 module\n// id=workduck.workspace.path\n// role=Validate workspace paths as readable absolute directories and return canonical display paths with closed error codes.\n// owns=workspace path validation|directory readability check|path error mapping\n// excludes=workspace registry storage|repository containment\n// search=validate workspace path|canonical workspace directory|workspace unreadable error\n// invariant=Only existing readable absolute directories produce a successful normalized workspace path.\n// stability=contract\n// /llmnav\n",
+          "scope": "module",
+          "specVersion": "1",
+          "start": 0,
+          "startLine": 1,
+          "style": "line",
+          "syntaxErrors": []
+        }
+      ],
+      "contentHash": "06577b680344bc29ec3935e6fad086d037c52175c0b97793e57af2c2b6626c78",
+      "declarations": [
+        null
+      ],
       "imports": [
         "crate::path_display::display_path",
         "std::{\n    fs, io,\n    path::{Path, PathBuf},\n}",
         "tests {\n    use super::*"
       ],
       "path": "src-tauri/src/workspace_path.rs",
-      "semanticBytes": 0,
-      "sourceBytes": 4820
+      "semanticBytes": 547,
+      "sourceBytes": 5367
     },
     {
       "blocks": [],
@@ -1603,15 +2226,104 @@
       "sourceBytes": 4146
     },
     {
-      "blocks": [],
-      "contentHash": "53c9b7fa77efeebd9a2af9f1952315aaf2a46f361e9bf1c33ffcb3889befade5",
-      "declarations": [],
+      "blocks": [
+        {
+          "card": {
+            "effect": [],
+            "excludes": [
+              "secret-vault encryption",
+              "process spawning"
+            ],
+            "id": "workduck.environment.cli",
+            "invariant": [
+              "Unavailable or malformed native responses fail closed and never report variables as applied."
+            ],
+            "owns": [
+              "CLI environment input",
+              "native apply command",
+              "apply result normalization"
+            ],
+            "rel": [],
+            "risk": [],
+            "role": "Apply an explicit set of CLI environment variables through Tauri and normalize native validation or write failures.",
+            "scope": "module",
+            "search": [
+              "apply cli environment",
+              "set command variables",
+              "environment write failure"
+            ],
+            "stability": "contract",
+            "unknown": []
+          },
+          "end": 494,
+          "endLine": 9,
+          "entries": [
+            {
+              "key": "id",
+              "line": 2,
+              "order": 0,
+              "value": "workduck.environment.cli"
+            },
+            {
+              "key": "role",
+              "line": 3,
+              "order": 1,
+              "value": "Apply an explicit set of CLI environment variables through Tauri and normalize native validation or write failures."
+            },
+            {
+              "key": "owns",
+              "line": 4,
+              "order": 2,
+              "value": "CLI environment input|native apply command|apply result normalization"
+            },
+            {
+              "key": "excludes",
+              "line": 5,
+              "order": 3,
+              "value": "secret-vault encryption|process spawning"
+            },
+            {
+              "key": "search",
+              "line": 6,
+              "order": 4,
+              "value": "apply cli environment|set command variables|environment write failure"
+            },
+            {
+              "key": "invariant",
+              "line": 7,
+              "order": 5,
+              "value": "Unavailable or malformed native responses fail closed and never report variables as applied."
+            },
+            {
+              "key": "stability",
+              "line": 8,
+              "order": 6,
+              "value": "contract"
+            }
+          ],
+          "filePath": "src/lib/environment/cli-environment.ts",
+          "indent": "",
+          "newline": "\n",
+          "prefix": null,
+          "raw": "/* llmnav/1 module\nid=workduck.environment.cli\nrole=Apply an explicit set of CLI environment variables through Tauri and normalize native validation or write failures.\nowns=CLI environment input|native apply command|apply result normalization\nexcludes=secret-vault encryption|process spawning\nsearch=apply cli environment|set command variables|environment write failure\ninvariant=Unavailable or malformed native responses fail closed and never report variables as applied.\nstability=contract\n*/",
+          "scope": "module",
+          "specVersion": "1",
+          "start": 0,
+          "startLine": 1,
+          "style": "block",
+          "syntaxErrors": []
+        }
+      ],
+      "contentHash": "f2d41884e8db539610eccd193276ea6f223020fcaaa79a2a1ae81cf1eb76dbd2",
+      "declarations": [
+        null
+      ],
       "imports": [
         "$lib/tauri/tauri-invoke"
       ],
       "path": "src/lib/environment/cli-environment.ts",
-      "semanticBytes": 0,
-      "sourceBytes": 2068
+      "semanticBytes": 494,
+      "sourceBytes": 2563
     },
     {
       "blocks": [],
@@ -1686,16 +2398,105 @@
       "sourceBytes": 542
     },
     {
-      "blocks": [],
-      "contentHash": "c2000ff0b49c4568f4ff8ddba37f07cc342883e4a9b242fc769fd2767295e46f",
-      "declarations": [],
+      "blocks": [
+        {
+          "card": {
+            "effect": [],
+            "excludes": [
+              "vault record storage",
+              "password UI"
+            ],
+            "id": "workduck.secret-vault.crypto",
+            "invariant": [
+              "Empty credentials, malformed envelopes, and unknown native responses fail without returning plaintext or a valid envelope."
+            ],
+            "owns": [
+              "secret-vault envelope",
+              "vault crypto invocation",
+              "crypto error normalization"
+            ],
+            "rel": [],
+            "risk": [],
+            "role": "Encrypt and decrypt versioned secret-vault payloads through the native Argon2id and XChaCha20-Poly1305 boundary.",
+            "scope": "module",
+            "search": [
+              "encrypt secret vault",
+              "decrypt vault payload",
+              "argon2 xchacha envelope"
+            ],
+            "stability": "contract",
+            "unknown": []
+          },
+          "end": 517,
+          "endLine": 9,
+          "entries": [
+            {
+              "key": "id",
+              "line": 2,
+              "order": 0,
+              "value": "workduck.secret-vault.crypto"
+            },
+            {
+              "key": "role",
+              "line": 3,
+              "order": 1,
+              "value": "Encrypt and decrypt versioned secret-vault payloads through the native Argon2id and XChaCha20-Poly1305 boundary."
+            },
+            {
+              "key": "owns",
+              "line": 4,
+              "order": 2,
+              "value": "secret-vault envelope|vault crypto invocation|crypto error normalization"
+            },
+            {
+              "key": "excludes",
+              "line": 5,
+              "order": 3,
+              "value": "vault record storage|password UI"
+            },
+            {
+              "key": "search",
+              "line": 6,
+              "order": 4,
+              "value": "encrypt secret vault|decrypt vault payload|argon2 xchacha envelope"
+            },
+            {
+              "key": "invariant",
+              "line": 7,
+              "order": 5,
+              "value": "Empty credentials, malformed envelopes, and unknown native responses fail without returning plaintext or a valid envelope."
+            },
+            {
+              "key": "stability",
+              "line": 8,
+              "order": 6,
+              "value": "contract"
+            }
+          ],
+          "filePath": "src/lib/environment/secret-vault-crypto.ts",
+          "indent": "",
+          "newline": "\n",
+          "prefix": null,
+          "raw": "/* llmnav/1 module\nid=workduck.secret-vault.crypto\nrole=Encrypt and decrypt versioned secret-vault payloads through the native Argon2id and XChaCha20-Poly1305 boundary.\nowns=secret-vault envelope|vault crypto invocation|crypto error normalization\nexcludes=vault record storage|password UI\nsearch=encrypt secret vault|decrypt vault payload|argon2 xchacha envelope\ninvariant=Empty credentials, malformed envelopes, and unknown native responses fail without returning plaintext or a valid envelope.\nstability=contract\n*/",
+          "scope": "module",
+          "specVersion": "1",
+          "start": 0,
+          "startLine": 1,
+          "style": "block",
+          "syntaxErrors": []
+        }
+      ],
+      "contentHash": "f1bbbc8d624f2876258ae25035d8b6ea3090faa8dd82f441f85fbab58fd1085b",
+      "declarations": [
+        null
+      ],
       "imports": [
         "$lib/shared/object-record",
         "$lib/tauri/tauri-invoke"
       ],
       "path": "src/lib/environment/secret-vault-crypto.ts",
-      "semanticBytes": 0,
-      "sourceBytes": 4887
+      "semanticBytes": 517,
+      "sourceBytes": 5405
     },
     {
       "blocks": [],
@@ -3588,9 +4389,98 @@
       "sourceBytes": 796
     },
     {
-      "blocks": [],
-      "contentHash": "63b23a0252228891127fdb6cc4184a8c30c0e65f2d72bcf91e258da488b9ff92",
-      "declarations": [],
+      "blocks": [
+        {
+          "card": {
+            "effect": [],
+            "excludes": [
+              "repository Git operations",
+              "project registry persistence"
+            ],
+            "id": "workduck.projects.folder",
+            "invariant": [
+              "Repository folder operations are normalized against the selected workspace and surface closed error codes."
+            ],
+            "owns": [
+              "project folder operations",
+              "ssealed scaffold options",
+              "folder error normalization"
+            ],
+            "rel": [],
+            "risk": [],
+            "role": "Create, open, and delete bounded project folders and preview or apply ssealed scaffolds through Tauri commands.",
+            "scope": "module",
+            "search": [
+              "create project folder",
+              "apply ssealed scaffold",
+              "open repository folder"
+            ],
+            "stability": "architecture",
+            "unknown": []
+          },
+          "end": 528,
+          "endLine": 9,
+          "entries": [
+            {
+              "key": "id",
+              "line": 2,
+              "order": 0,
+              "value": "workduck.projects.folder"
+            },
+            {
+              "key": "role",
+              "line": 3,
+              "order": 1,
+              "value": "Create, open, and delete bounded project folders and preview or apply ssealed scaffolds through Tauri commands."
+            },
+            {
+              "key": "owns",
+              "line": 4,
+              "order": 2,
+              "value": "project folder operations|ssealed scaffold options|folder error normalization"
+            },
+            {
+              "key": "excludes",
+              "line": 5,
+              "order": 3,
+              "value": "repository Git operations|project registry persistence"
+            },
+            {
+              "key": "search",
+              "line": 6,
+              "order": 4,
+              "value": "create project folder|apply ssealed scaffold|open repository folder"
+            },
+            {
+              "key": "invariant",
+              "line": 7,
+              "order": 5,
+              "value": "Repository folder operations are normalized against the selected workspace and surface closed error codes."
+            },
+            {
+              "key": "stability",
+              "line": 8,
+              "order": 6,
+              "value": "architecture"
+            }
+          ],
+          "filePath": "src/lib/projects/project-folder.ts",
+          "indent": "",
+          "newline": "\n",
+          "prefix": null,
+          "raw": "/* llmnav/1 module\nid=workduck.projects.folder\nrole=Create, open, and delete bounded project folders and preview or apply ssealed scaffolds through Tauri commands.\nowns=project folder operations|ssealed scaffold options|folder error normalization\nexcludes=repository Git operations|project registry persistence\nsearch=create project folder|apply ssealed scaffold|open repository folder\ninvariant=Repository folder operations are normalized against the selected workspace and surface closed error codes.\nstability=architecture\n*/",
+          "scope": "module",
+          "specVersion": "1",
+          "start": 0,
+          "startLine": 1,
+          "style": "block",
+          "syntaxErrors": []
+        }
+      ],
+      "contentHash": "981d53da11e452ef9e27511d4dc3bffa568b9c2f840fc6eb2598bf2d6b139d63",
+      "declarations": [
+        null
+      ],
       "imports": [
         "$lib/i18n/workduck-message-contract",
         "$lib/tauri/tauri-invoke",
@@ -3598,8 +4488,8 @@
         "./ssealed-scaffold-generated"
       ],
       "path": "src/lib/projects/project-folder.ts",
-      "semanticBytes": 0,
-      "sourceBytes": 20495
+      "semanticBytes": 528,
+      "sourceBytes": 21024
     },
     {
       "blocks": [],
@@ -3802,9 +4692,98 @@
       "sourceBytes": 8676
     },
     {
-      "blocks": [],
-      "contentHash": "ef9a227335c7330876ed16d143d9d76666303c850539eaac308627b353603a69",
-      "declarations": [],
+      "blocks": [
+        {
+          "card": {
+            "effect": [],
+            "excludes": [
+              "repository task processes",
+              "project registry storage"
+            ],
+            "id": "workduck.projects.repository",
+            "invariant": [
+              "Native and GitHub failures are returned as closed domain error codes rather than successful repository state."
+            ],
+            "owns": [
+              "repository clone and fork",
+              "Git inspection scheduling",
+              "Git mutation results"
+            ],
+            "rel": [],
+            "risk": [],
+            "role": "Clone, inspect, initialize, synchronize, fork, and publish project repositories through bounded native Git operations.",
+            "scope": "module",
+            "search": [
+              "clone project repository",
+              "inspect git status",
+              "publish repository github"
+            ],
+            "stability": "architecture",
+            "unknown": []
+          },
+          "end": 535,
+          "endLine": 9,
+          "entries": [
+            {
+              "key": "id",
+              "line": 2,
+              "order": 0,
+              "value": "workduck.projects.repository"
+            },
+            {
+              "key": "role",
+              "line": 3,
+              "order": 1,
+              "value": "Clone, inspect, initialize, synchronize, fork, and publish project repositories through bounded native Git operations."
+            },
+            {
+              "key": "owns",
+              "line": 4,
+              "order": 2,
+              "value": "repository clone and fork|Git inspection scheduling|Git mutation results"
+            },
+            {
+              "key": "excludes",
+              "line": 5,
+              "order": 3,
+              "value": "repository task processes|project registry storage"
+            },
+            {
+              "key": "search",
+              "line": 6,
+              "order": 4,
+              "value": "clone project repository|inspect git status|publish repository github"
+            },
+            {
+              "key": "invariant",
+              "line": 7,
+              "order": 5,
+              "value": "Native and GitHub failures are returned as closed domain error codes rather than successful repository state."
+            },
+            {
+              "key": "stability",
+              "line": 8,
+              "order": 6,
+              "value": "architecture"
+            }
+          ],
+          "filePath": "src/lib/projects/project-repository.ts",
+          "indent": "",
+          "newline": "\n",
+          "prefix": null,
+          "raw": "/* llmnav/1 module\nid=workduck.projects.repository\nrole=Clone, inspect, initialize, synchronize, fork, and publish project repositories through bounded native Git operations.\nowns=repository clone and fork|Git inspection scheduling|Git mutation results\nexcludes=repository task processes|project registry storage\nsearch=clone project repository|inspect git status|publish repository github\ninvariant=Native and GitHub failures are returned as closed domain error codes rather than successful repository state.\nstability=architecture\n*/",
+          "scope": "module",
+          "specVersion": "1",
+          "start": 0,
+          "startLine": 1,
+          "style": "block",
+          "syntaxErrors": []
+        }
+      ],
+      "contentHash": "31cf1ed39576adc9b6039d7e47f81a892b358dd82795274a8c7349a16d1463c9",
+      "declarations": [
+        null
+      ],
       "imports": [
         "$lib/shared/object-record",
         "$lib/tauri/tauri-invoke",
@@ -3812,8 +4791,8 @@
         "@tauri-apps/api/core"
       ],
       "path": "src/lib/projects/project-repository.ts",
-      "semanticBytes": 0,
-      "sourceBytes": 35293
+      "semanticBytes": 535,
+      "sourceBytes": 35829
     },
     {
       "blocks": [
@@ -4111,9 +5090,98 @@
       "sourceBytes": 6112
     },
     {
-      "blocks": [],
-      "contentHash": "a267fb7e94e3edd06880c3e30f6ea7b4e9fa6759e1e678e1461ba4dd8f9b36b8",
-      "declarations": [],
+      "blocks": [
+        {
+          "card": {
+            "effect": [],
+            "excludes": [
+              "Queue file I/O",
+              "provider execution"
+            ],
+            "id": "workduck.queue.artifacts",
+            "invariant": [
+              "Constructed and transitioned artifacts retain their versioned schema identity and valid lifecycle states."
+            ],
+            "owns": [
+              "Queue artifact contracts",
+              "work-order state transitions",
+              "artifact serialization"
+            ],
+            "rel": [],
+            "risk": [],
+            "role": "Define, construct, transition, parse, and serialize versioned Queue work orders, result reports, proposals, and task evaluations.",
+            "scope": "module",
+            "search": [
+              "queue work order model",
+              "archive queue artifact",
+              "record report evaluation"
+            ],
+            "stability": "contract",
+            "unknown": []
+          },
+          "end": 522,
+          "endLine": 9,
+          "entries": [
+            {
+              "key": "id",
+              "line": 2,
+              "order": 0,
+              "value": "workduck.queue.artifacts"
+            },
+            {
+              "key": "role",
+              "line": 3,
+              "order": 1,
+              "value": "Define, construct, transition, parse, and serialize versioned Queue work orders, result reports, proposals, and task evaluations."
+            },
+            {
+              "key": "owns",
+              "line": 4,
+              "order": 2,
+              "value": "Queue artifact contracts|work-order state transitions|artifact serialization"
+            },
+            {
+              "key": "excludes",
+              "line": 5,
+              "order": 3,
+              "value": "Queue file I/O|provider execution"
+            },
+            {
+              "key": "search",
+              "line": 6,
+              "order": 4,
+              "value": "queue work order model|archive queue artifact|record report evaluation"
+            },
+            {
+              "key": "invariant",
+              "line": 7,
+              "order": 5,
+              "value": "Constructed and transitioned artifacts retain their versioned schema identity and valid lifecycle states."
+            },
+            {
+              "key": "stability",
+              "line": 8,
+              "order": 6,
+              "value": "contract"
+            }
+          ],
+          "filePath": "src/lib/queue/queue-artifacts.ts",
+          "indent": "",
+          "newline": "\n",
+          "prefix": null,
+          "raw": "/* llmnav/1 module\nid=workduck.queue.artifacts\nrole=Define, construct, transition, parse, and serialize versioned Queue work orders, result reports, proposals, and task evaluations.\nowns=Queue artifact contracts|work-order state transitions|artifact serialization\nexcludes=Queue file I/O|provider execution\nsearch=queue work order model|archive queue artifact|record report evaluation\ninvariant=Constructed and transitioned artifacts retain their versioned schema identity and valid lifecycle states.\nstability=contract\n*/",
+          "scope": "module",
+          "specVersion": "1",
+          "start": 0,
+          "startLine": 1,
+          "style": "block",
+          "syntaxErrors": []
+        }
+      ],
+      "contentHash": "722e8303fb88342957a041767a3d58a1b2b7a8abff1d766717433060e6b4aa39",
+      "declarations": [
+        null
+      ],
       "imports": [
         "./domain/queue-artifact-files",
         "./domain/queue-artifact-ids",
@@ -4122,8 +5190,8 @@
         "./queue-voting"
       ],
       "path": "src/lib/queue/queue-artifacts.ts",
-      "semanticBytes": 0,
-      "sourceBytes": 30507
+      "semanticBytes": 522,
+      "sourceBytes": 31030
     },
     {
       "blocks": [],
@@ -4159,9 +5227,98 @@
       "sourceBytes": 1440
     },
     {
-      "blocks": [],
-      "contentHash": "43f927cf55a38cc780e4070274d5e1cf78026eb3abfdbeab88e0185ed178b3e3",
-      "declarations": [],
+      "blocks": [
+        {
+          "card": {
+            "effect": [],
+            "excludes": [
+              "provider implementation",
+              "Queue artifact file storage"
+            ],
+            "id": "workduck.queue.execution",
+            "invariant": [
+              "Execution requires an explicit confirmation token and never converts an unknown native response into success."
+            ],
+            "owns": [
+              "Queue execution requests",
+              "confirmation estimates",
+              "execution result normalization"
+            ],
+            "rel": [],
+            "risk": [],
+            "role": "Preview, estimate, execute, cancel, and inspect Queue work-order runs through the native execution boundary.",
+            "scope": "module",
+            "search": [
+              "execute queue work order",
+              "preview agent prompts",
+              "cancel queue execution"
+            ],
+            "stability": "architecture",
+            "unknown": []
+          },
+          "end": 528,
+          "endLine": 9,
+          "entries": [
+            {
+              "key": "id",
+              "line": 2,
+              "order": 0,
+              "value": "workduck.queue.execution"
+            },
+            {
+              "key": "role",
+              "line": 3,
+              "order": 1,
+              "value": "Preview, estimate, execute, cancel, and inspect Queue work-order runs through the native execution boundary."
+            },
+            {
+              "key": "owns",
+              "line": 4,
+              "order": 2,
+              "value": "Queue execution requests|confirmation estimates|execution result normalization"
+            },
+            {
+              "key": "excludes",
+              "line": 5,
+              "order": 3,
+              "value": "provider implementation|Queue artifact file storage"
+            },
+            {
+              "key": "search",
+              "line": 6,
+              "order": 4,
+              "value": "execute queue work order|preview agent prompts|cancel queue execution"
+            },
+            {
+              "key": "invariant",
+              "line": 7,
+              "order": 5,
+              "value": "Execution requires an explicit confirmation token and never converts an unknown native response into success."
+            },
+            {
+              "key": "stability",
+              "line": 8,
+              "order": 6,
+              "value": "architecture"
+            }
+          ],
+          "filePath": "src/lib/queue/queue-execution.ts",
+          "indent": "",
+          "newline": "\n",
+          "prefix": null,
+          "raw": "/* llmnav/1 module\nid=workduck.queue.execution\nrole=Preview, estimate, execute, cancel, and inspect Queue work-order runs through the native execution boundary.\nowns=Queue execution requests|confirmation estimates|execution result normalization\nexcludes=provider implementation|Queue artifact file storage\nsearch=execute queue work order|preview agent prompts|cancel queue execution\ninvariant=Execution requires an explicit confirmation token and never converts an unknown native response into success.\nstability=architecture\n*/",
+          "scope": "module",
+          "specVersion": "1",
+          "start": 0,
+          "startLine": 1,
+          "style": "block",
+          "syntaxErrors": []
+        }
+      ],
+      "contentHash": "4f23543cbebd891abb4f250e668c4f4a8e5c8c045379c998eb76e7cb89b1240c",
+      "declarations": [
+        null
+      ],
       "imports": [
         "$lib/agents/agent-execution",
         "$lib/agents/agent-registry",
@@ -4173,20 +5330,109 @@
         "./queue-artifacts"
       ],
       "path": "src/lib/queue/queue-execution.ts",
-      "semanticBytes": 0,
-      "sourceBytes": 10081
+      "semanticBytes": 528,
+      "sourceBytes": 10610
     },
     {
-      "blocks": [],
-      "contentHash": "8d97bdac5bed6300a1861749d2b5be9c87b0bb82b73b189a3608d130e295775a",
-      "declarations": [],
+      "blocks": [
+        {
+          "card": {
+            "effect": [],
+            "excludes": [
+              "Queue artifact semantics",
+              "agent execution"
+            ],
+            "id": "workduck.queue.folder",
+            "invariant": [
+              "All Queue paths are workspace-relative native results and malformed responses fail with explicit Queue folder errors."
+            ],
+            "owns": [
+              "Queue directory commands",
+              "Queue file I/O",
+              "Queue status summaries"
+            ],
+            "rel": [],
+            "risk": [],
+            "role": "Create and inspect the workspace Queue directory and perform bounded reads, writes, updates, and deletes of Queue files.",
+            "scope": "module",
+            "search": [
+              "list queue files",
+              "write work order file",
+              "open queue folder"
+            ],
+            "stability": "architecture",
+            "unknown": []
+          },
+          "end": 505,
+          "endLine": 9,
+          "entries": [
+            {
+              "key": "id",
+              "line": 2,
+              "order": 0,
+              "value": "workduck.queue.folder"
+            },
+            {
+              "key": "role",
+              "line": 3,
+              "order": 1,
+              "value": "Create and inspect the workspace Queue directory and perform bounded reads, writes, updates, and deletes of Queue files."
+            },
+            {
+              "key": "owns",
+              "line": 4,
+              "order": 2,
+              "value": "Queue directory commands|Queue file I/O|Queue status summaries"
+            },
+            {
+              "key": "excludes",
+              "line": 5,
+              "order": 3,
+              "value": "Queue artifact semantics|agent execution"
+            },
+            {
+              "key": "search",
+              "line": 6,
+              "order": 4,
+              "value": "list queue files|write work order file|open queue folder"
+            },
+            {
+              "key": "invariant",
+              "line": 7,
+              "order": 5,
+              "value": "All Queue paths are workspace-relative native results and malformed responses fail with explicit Queue folder errors."
+            },
+            {
+              "key": "stability",
+              "line": 8,
+              "order": 6,
+              "value": "architecture"
+            }
+          ],
+          "filePath": "src/lib/queue/queue-folder.ts",
+          "indent": "",
+          "newline": "\n",
+          "prefix": null,
+          "raw": "/* llmnav/1 module\nid=workduck.queue.folder\nrole=Create and inspect the workspace Queue directory and perform bounded reads, writes, updates, and deletes of Queue files.\nowns=Queue directory commands|Queue file I/O|Queue status summaries\nexcludes=Queue artifact semantics|agent execution\nsearch=list queue files|write work order file|open queue folder\ninvariant=All Queue paths are workspace-relative native results and malformed responses fail with explicit Queue folder errors.\nstability=architecture\n*/",
+          "scope": "module",
+          "specVersion": "1",
+          "start": 0,
+          "startLine": 1,
+          "style": "block",
+          "syntaxErrors": []
+        }
+      ],
+      "contentHash": "2b09be91f95baa8962f1a128713dc20e7e907a27e052ac8c3d64a03623f345a5",
+      "declarations": [
+        null
+      ],
       "imports": [
         "$lib/tauri/tauri-invoke",
         "$lib/workspaces/workspace-path-format"
       ],
       "path": "src/lib/queue/queue-folder.ts",
-      "semanticBytes": 0,
-      "sourceBytes": 14308
+      "semanticBytes": 505,
+      "sourceBytes": 14814
     },
     {
       "blocks": [],
@@ -5590,9 +6836,98 @@
       "sourceBytes": 8432
     },
     {
-      "blocks": [],
-      "contentHash": "d9983475f14668306028bc4590e3a044c7fa7485308eba5514ccadeb99efb555",
-      "declarations": [],
+      "blocks": [
+        {
+          "card": {
+            "effect": [],
+            "excludes": [
+              "Git synchronization",
+              "sync file transport"
+            ],
+            "id": "workduck.workspace.sync",
+            "invariant": [
+              "Decrypted data is accepted only when envelope algorithms, versions, and normalized registry payloads match the closed sync contract."
+            ],
+            "owns": [
+              "workspace sync format",
+              "encrypted sync envelope",
+              "registry payload normalization"
+            ],
+            "rel": [],
+            "risk": [],
+            "role": "Serialize, encrypt, parse, decrypt, and normalize versioned workspace and project-registry synchronization envelopes.",
+            "scope": "module",
+            "search": [
+              "encrypt workspace sync",
+              "decrypt registry envelope",
+              "workspace sync payload"
+            ],
+            "stability": "contract",
+            "unknown": []
+          },
+          "end": 543,
+          "endLine": 9,
+          "entries": [
+            {
+              "key": "id",
+              "line": 2,
+              "order": 0,
+              "value": "workduck.workspace.sync"
+            },
+            {
+              "key": "role",
+              "line": 3,
+              "order": 1,
+              "value": "Serialize, encrypt, parse, decrypt, and normalize versioned workspace and project-registry synchronization envelopes."
+            },
+            {
+              "key": "owns",
+              "line": 4,
+              "order": 2,
+              "value": "workspace sync format|encrypted sync envelope|registry payload normalization"
+            },
+            {
+              "key": "excludes",
+              "line": 5,
+              "order": 3,
+              "value": "Git synchronization|sync file transport"
+            },
+            {
+              "key": "search",
+              "line": 6,
+              "order": 4,
+              "value": "encrypt workspace sync|decrypt registry envelope|workspace sync payload"
+            },
+            {
+              "key": "invariant",
+              "line": 7,
+              "order": 5,
+              "value": "Decrypted data is accepted only when envelope algorithms, versions, and normalized registry payloads match the closed sync contract."
+            },
+            {
+              "key": "stability",
+              "line": 8,
+              "order": 6,
+              "value": "contract"
+            }
+          ],
+          "filePath": "src/lib/workspaces/workspace-sync.ts",
+          "indent": "",
+          "newline": "\n",
+          "prefix": null,
+          "raw": "/* llmnav/1 module\nid=workduck.workspace.sync\nrole=Serialize, encrypt, parse, decrypt, and normalize versioned workspace and project-registry synchronization envelopes.\nowns=workspace sync format|encrypted sync envelope|registry payload normalization\nexcludes=Git synchronization|sync file transport\nsearch=encrypt workspace sync|decrypt registry envelope|workspace sync payload\ninvariant=Decrypted data is accepted only when envelope algorithms, versions, and normalized registry payloads match the closed sync contract.\nstability=contract\n*/",
+          "scope": "module",
+          "specVersion": "1",
+          "start": 0,
+          "startLine": 1,
+          "style": "block",
+          "syntaxErrors": []
+        }
+      ],
+      "contentHash": "9eac5c4c3cf612c7b48c0cff12fdbee94a61d3452ca74c8f09f0e39483eea38e",
+      "declarations": [
+        null
+      ],
       "imports": [
         "$lib/projects/project-registry",
         "$lib/shared/object-record",
@@ -5601,8 +6936,8 @@
         "./workspace-registry"
       ],
       "path": "src/lib/workspaces/workspace-sync.ts",
-      "semanticBytes": 0,
-      "sourceBytes": 14092
+      "semanticBytes": 543,
+      "sourceBytes": 14636
     },
     {
       "blocks": [],
@@ -5850,6 +7185,6 @@
       "sourceBytes": 3575
     }
   ],
-  "indexerVersion": 5,
+  "indexerVersion": 4,
   "schemaVersion": 1
 }

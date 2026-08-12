@@ -1,3 +1,12 @@
+/* llmnav/1 module
+id=workduck.projects.folder
+role=Create, open, and delete bounded project folders and preview or apply ssealed scaffolds through Tauri commands.
+owns=project folder operations|ssealed scaffold options|folder error normalization
+excludes=repository Git operations|project registry persistence
+search=create project folder|apply ssealed scaffold|open repository folder
+invariant=Repository folder operations are normalized against the selected workspace and surface closed error codes.
+stability=architecture
+*/
 import { getTauriInvoke } from '$lib/tauri/tauri-invoke';
 import { normalizeWorkspacePathForStorage } from '$lib/workspaces/workspace-path-format';
 import type { WorkduckMessages } from '$lib/i18n/workduck-message-contract';

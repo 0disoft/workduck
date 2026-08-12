@@ -1,0 +1,14 @@
+llmnav-catalog/1 repository=workduck catalog=workduck.workspace
+Read semantic cards before opening source. Resolve current paths and signatures with llmnav query or show.
+
+@workduck.workspace.path
+role Validate workspace paths as readable absolute directories and return canonical display paths with closed error codes.
+owns workspace path validation, directory readability check, path error mapping
+excludes workspace registry storage, repository containment
+invariant Only existing readable absolute directories produce a successful normalized workspace path.
+
+@workduck.workspace.sync
+role Serialize, encrypt, parse, decrypt, and normalize versioned workspace and project-registry synchronization envelopes.
+owns workspace sync format, encrypted sync envelope, registry payload normalization
+excludes Git synchronization, sync file transport
+invariant Decrypted data is accepted only when envelope algorithms, versions, and normalized registry payloads match the closed sync contract.

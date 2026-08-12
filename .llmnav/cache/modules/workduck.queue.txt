@@ -6,3 +6,21 @@ role Track workspace-scoped Queue read markers, unread counts, pruning, and brow
 owns queue read markers, unread count, queue change events
 excludes queue file persistence, work-order execution
 invariant Unread counts ignore unsupported entries and stale read markers can be pruned against the current file set.
+
+@workduck.queue.artifacts
+role Define, construct, transition, parse, and serialize versioned Queue work orders, result reports, proposals, and task evaluations.
+owns Queue artifact contracts, work-order state transitions, artifact serialization
+excludes Queue file I/O, provider execution
+invariant Constructed and transitioned artifacts retain their versioned schema identity and valid lifecycle states.
+
+@workduck.queue.execution
+role Preview, estimate, execute, cancel, and inspect Queue work-order runs through the native execution boundary.
+owns Queue execution requests, confirmation estimates, execution result normalization
+excludes provider implementation, Queue artifact file storage
+invariant Execution requires an explicit confirmation token and never converts an unknown native response into success.
+
+@workduck.queue.folder
+role Create and inspect the workspace Queue directory and perform bounded reads, writes, updates, and deletes of Queue files.
+owns Queue directory commands, Queue file I/O, Queue status summaries
+excludes Queue artifact semantics, agent execution
+invariant All Queue paths are workspace-relative native results and malformed responses fail with explicit Queue folder errors.

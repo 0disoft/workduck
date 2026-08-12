@@ -1,0 +1,8 @@
+llmnav-catalog/1 repository=workduck catalog=workduck.environment
+Read semantic cards before opening source. Resolve current paths and signatures with llmnav query or show.
+
+@workduck.environment.cli
+role Apply an explicit set of CLI environment variables through Tauri and normalize native validation or write failures.
+owns CLI environment input, native apply command, apply result normalization
+excludes secret-vault encryption, process spawning
+invariant Unavailable or malformed native responses fail closed and never report variables as applied.

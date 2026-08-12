@@ -1,3 +1,12 @@
+// llmnav/1 module
+// id=workduck.repository.inspection
+// role=Schedule bounded concurrent Git inspections, coalesce shared paths, and stream repository-specific results to subscribers.
+// owns=inspection job queue|path request coalescing|inspection result channels
+// excludes=Git inspection implementation|repository mutations
+// search=schedule git inspection|repository scan queue|cancel inspection scan
+// invariant=The queue is capacity-bounded and duplicate subscribers do not create duplicate inspection jobs for the same path.
+// stability=architecture
+// /llmnav
 use std::{
     collections::{HashMap, VecDeque},
     io,

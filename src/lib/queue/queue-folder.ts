@@ -1,3 +1,12 @@
+/* llmnav/1 module
+id=workduck.queue.folder
+role=Create and inspect the workspace Queue directory and perform bounded reads, writes, updates, and deletes of Queue files.
+owns=Queue directory commands|Queue file I/O|Queue status summaries
+excludes=Queue artifact semantics|agent execution
+search=list queue files|write work order file|open queue folder
+invariant=All Queue paths are workspace-relative native results and malformed responses fail with explicit Queue folder errors.
+stability=architecture
+*/
 import { getTauriInvoke } from '$lib/tauri/tauri-invoke';
 import { normalizeWorkspacePathForStorage } from '$lib/workspaces/workspace-path-format';
 

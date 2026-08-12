@@ -7,3 +7,18 @@
 {"query":"run dependency install or build for a project repository","expected":["workduck.projects.repository-task"]}
 {"query":"calculate unread Queue files for one workspace","expected":["workduck.queue.read-state"]}
 {"query":"terminate descendant processes when Workduck exits","expected":["workduck.process.tree"]}
+{"query":"find the shared Workduck entity queue run gate and lifecycle type vocabulary","expected":["workduck.domain.core"]}
+{"query":"compile a local workbench run loop and evaluate its gate checks","expected":["workduck.workbench.engine"]}
+{"query":"export an agent brief or AGENTS.md for Codex Claude Cursor and OpenCode","expected":["workduck.agent.adapters"]}
+{"query":"compile deterministic Markdown prompt sections and agent brief entity references","expected":["workduck.prompt.compiler"]}
+{"query":"create a project folder and preview or apply its ssealed scaffold","expected":["workduck.projects.folder"]}
+{"query":"clone inspect fetch pull push fork or publish a project Git repository","expected":["workduck.projects.repository"]}
+{"query":"list read write update or delete files in the workspace Queue folder","expected":["workduck.queue.folder"]}
+{"query":"construct transition serialize and archive versioned Queue artifacts","expected":["workduck.queue.artifacts"]}
+{"query":"preview estimate execute cancel or inspect a Queue work-order run","expected":["workduck.queue.execution"]}
+{"query":"encrypt and decrypt a versioned workspace registry synchronization payload","expected":["workduck.workspace.sync"]}
+{"query":"apply explicit CLI environment variables through the native desktop boundary","expected":["workduck.environment.cli"]}
+{"query":"encrypt a secret vault using Argon2id and XChaCha20-Poly1305","expected":["workduck.secret-vault.crypto"]}
+{"query":"start read write or stop an interactive desktop terminal session","expected":["workduck.terminal.process"]}
+{"query":"schedule concurrent Git inspections and coalesce repositories sharing one path","expected":["workduck.repository.inspection"]}
+{"query":"validate that a workspace path is an existing readable absolute directory","expected":["workduck.workspace.path"]}

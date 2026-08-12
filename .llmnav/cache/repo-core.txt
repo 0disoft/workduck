@@ -24,3 +24,45 @@ role Persist workspace project registries through Tauri SQLite while migrating a
 owns project registry persistence, legacy registry promotion, registry change notifications
 excludes project domain normalization, repository Git operations
 invariant A failed SQLite read or write returns an explicit error together with the safest available registry state.
+
+@workduck.projects.folder
+role Create, open, and delete bounded project folders and preview or apply ssealed scaffolds through Tauri commands.
+owns project folder operations, ssealed scaffold options, folder error normalization
+excludes repository Git operations, project registry persistence
+invariant Repository folder operations are normalized against the selected workspace and surface closed error codes.
+
+@workduck.projects.repository
+role Clone, inspect, initialize, synchronize, fork, and publish project repositories through bounded native Git operations.
+owns repository clone and fork, Git inspection scheduling, Git mutation results
+excludes repository task processes, project registry storage
+invariant Native and GitHub failures are returned as closed domain error codes rather than successful repository state.
+
+@workduck.queue.execution
+role Preview, estimate, execute, cancel, and inspect Queue work-order runs through the native execution boundary.
+owns Queue execution requests, confirmation estimates, execution result normalization
+excludes provider implementation, Queue artifact file storage
+invariant Execution requires an explicit confirmation token and never converts an unknown native response into success.
+
+@workduck.queue.folder
+role Create and inspect the workspace Queue directory and perform bounded reads, writes, updates, and deletes of Queue files.
+owns Queue directory commands, Queue file I/O, Queue status summaries
+excludes Queue artifact semantics, agent execution
+invariant All Queue paths are workspace-relative native results and malformed responses fail with explicit Queue folder errors.
+
+@workduck.repository.inspection
+role Schedule bounded concurrent Git inspections, coalesce shared paths, and stream repository-specific results to subscribers.
+owns inspection job queue, path request coalescing, inspection result channels
+excludes Git inspection implementation, repository mutations
+invariant The queue is capacity-bounded and duplicate subscribers do not create duplicate inspection jobs for the same path.
+
+@workduck.terminal.process
+role Own bounded interactive terminal sessions, process trees, input, output cursors, and lifecycle commands for the desktop runtime.
+owns terminal session registry, terminal process spawning, bounded terminal I/O
+excludes terminal discovery, frontend terminal rendering
+invariant Session output and input stay within byte limits and replacing or stopping a session does not intentionally orphan its process tree.
+
+@workduck.workbench.engine
+role Compile agent run briefs and deterministic local run, shell, gate, and project-inventory summaries from core domain records.
+owns workbench run plans, gate evaluation summaries, project inventory grouping
+excludes process execution, artifact persistence
+invariant A failed gate check blocks its gate and shell-run records preserve their explicit approval and execution states.

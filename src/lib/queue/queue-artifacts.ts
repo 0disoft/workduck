@@ -1,3 +1,12 @@
+/* llmnav/1 module
+id=workduck.queue.artifacts
+role=Define, construct, transition, parse, and serialize versioned Queue work orders, result reports, proposals, and task evaluations.
+owns=Queue artifact contracts|work-order state transitions|artifact serialization
+excludes=Queue file I/O|provider execution
+search=queue work order model|archive queue artifact|record report evaluation
+invariant=Constructed and transitioned artifacts retain their versioned schema identity and valid lifecycle states.
+stability=contract
+*/
 import type {
 	WorkduckQueueTaskKind,
 	WorkduckQueueVoteResult,

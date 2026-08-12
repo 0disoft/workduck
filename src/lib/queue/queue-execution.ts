@@ -1,3 +1,12 @@
+/* llmnav/1 module
+id=workduck.queue.execution
+role=Preview, estimate, execute, cancel, and inspect Queue work-order runs through the native execution boundary.
+owns=Queue execution requests|confirmation estimates|execution result normalization
+excludes=provider implementation|Queue artifact file storage
+search=execute queue work order|preview agent prompts|cancel queue execution
+invariant=Execution requires an explicit confirmation token and never converts an unknown native response into success.
+stability=architecture
+*/
 import { getTauriInvoke } from '$lib/tauri/tauri-invoke';
 import type { AgentExecutionError } from '$lib/agents/agent-execution';
 import type { AgentRecord } from '$lib/agents/agent-registry';

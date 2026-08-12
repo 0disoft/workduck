@@ -1,0 +1,8 @@
+llmnav-catalog/1 repository=workduck catalog=workduck.domain
+Read semantic cards before opening source. Resolve current paths and signatures with llmnav query or show.
+
+@workduck.domain.core
+role Define the shared Workduck entity, queue, run, gate, risk, and lifecycle vocabulary used across packages.
+owns domain entity types, shared enum values, domain type guards
+excludes JSON Schema documents, persistence adapters
+invariant Runtime guard values and their exported TypeScript unions describe the same closed vocabulary.

@@ -1,0 +1,8 @@
+llmnav-catalog/1 repository=workduck catalog=workduck.prompt
+Read semantic cards before opening source. Resolve current paths and signatures with llmnav query or show.
+
+@workduck.prompt.compiler
+role Compile deterministic Markdown prompt documents and agent briefs from typed sections and Workduck entity references.
+owns prompt section rendering, agent brief composition, entity reference formatting
+excludes provider invocation, prompt persistence
+invariant Prompt output preserves the declared section order and ends with one normalized newline.

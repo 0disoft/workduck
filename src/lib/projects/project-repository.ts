@@ -1,3 +1,12 @@
+/* llmnav/1 module
+id=workduck.projects.repository
+role=Clone, inspect, initialize, synchronize, fork, and publish project repositories through bounded native Git operations.
+owns=repository clone and fork|Git inspection scheduling|Git mutation results
+excludes=repository task processes|project registry storage
+search=clone project repository|inspect git status|publish repository github
+invariant=Native and GitHub failures are returned as closed domain error codes rather than successful repository state.
+stability=architecture
+*/
 import { Channel } from '@tauri-apps/api/core';
 
 import { isObjectRecord } from '$lib/shared/object-record';
