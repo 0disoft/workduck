@@ -4,10 +4,10 @@
   "files": {
     ".llmnav/cache/agent-context.md": "4f5d2ed017b89217f14b743b85758497567384b2ed66e0411f90524b92a79ab5",
     ".llmnav/cache/cards.jsonl": "122e6671deece46ffbd6b3d2f1b31c80b30f4dcbb190262705db88e627b723be",
-    ".llmnav/cache/file-state.json": "9f8d76165393309ee255e042e1036f1ba1291e45723b9ba85edc630bf45ad905",
+    ".llmnav/cache/file-state.json": "b182bdc9e99c78e0c36bcd3b03a696b0835cae4c72b9e1e1b3a4864e78e0d36e",
     ".llmnav/cache/graph-state.json": "4c477bb003d10178ab0263639e853c29f0dd53881423085188848c25e6b86b89",
     ".llmnav/cache/graph.json": "9ea263d62a3903278634121a0b57a146622fbfedd88ed3efb70af43a0eec5ca4",
-    ".llmnav/cache/index.json": "a4033fb1a98836ce9f770622e05045f8871337784ac027dd44999ce88773e91f",
+    ".llmnav/cache/index.json": "90b6e374b8aa6bfcf0d428899bd862fa0470d8dbb1b4aee4d1401bebaae94c3a",
     ".llmnav/cache/modules/workduck.agent.txt": "2a96e26cd350e59095471635ba6d94a464d3762ba027ae8320fbd5117fc8c4fb",
     ".llmnav/cache/modules/workduck.cli.txt": "7d12975745e8aa322e67bbc51cfe0e064c9424d4fccc9334e7295734e28690e5",
     ".llmnav/cache/modules/workduck.contract.txt": "161ea3a95b1ec7ec75bddd48dfbae18026aa580df8f078475c477db90d11d17c",
