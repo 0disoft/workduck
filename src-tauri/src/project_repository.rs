@@ -1,3 +1,12 @@
+// llmnav/1 module
+// id=workduck.projects.repository-native
+// role=Execute bounded native clone, inspection, Git mutation, fork, and GitHub publication operations with explicit credential and cache boundaries.
+// owns=native repository Git commands|GitHub publication flow|remote inspection cache
+// excludes=frontend result normalization|repository task terminals
+// search=native repository Git|GitHub publish repository|clone with credential
+// invariant=Inspections avoid credentials and optional locks, while mutations use bounded processes and return closed repository errors.
+// stability=architecture
+// /llmnav
 use std::{
     cell::Cell,
     collections::HashMap,

@@ -1,3 +1,12 @@
+/* llmnav/1 module
+id=workduck.workspace.sync-file-client
+role=Normalize workspace sync-file names and expose closed Tauri read and write results to the frontend.
+owns=sync file client adapter|sync file name normalization|sync file error mapping
+excludes=encrypted sync envelope semantics|native filesystem containment
+search=workspace sync file client|normalize sync filename|read sync file
+invariant=A successful client result requires an explicit normalized native path and, for reads, string content; malformed responses fail closed.
+stability=contract
+*/
 import { getTauriInvoke } from '$lib/tauri/tauri-invoke';
 import { normalizeWorkspacePathForStorage } from './workspace-path-format';
 

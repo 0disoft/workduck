@@ -24,3 +24,15 @@ role Create and inspect the workspace Queue directory and perform bounded reads,
 owns Queue directory commands, Queue file I/O, Queue status summaries
 excludes Queue artifact semantics, agent execution
 invariant All Queue paths are workspace-relative native results and malformed responses fail with explicit Queue folder errors.
+
+@workduck.queue.execution-native
+role Validate and coordinate native multi-agent Queue execution, secret resolution, cancellation, confirmation, and exclusive result-report creation.
+owns native Queue execution, agent run coordination, execution confirmation tokens
+excludes frontend execution adapter, Queue folder CRUD
+invariant Execution requires the current estimate token, respects global and provider permits, and never exposes resolved secrets through prompt previews.
+
+@workduck.queue.folder-native
+role Enforce native Queue directory, path, size, count, exclusive-write, update, delete, and evaluation-delegation constraints.
+owns native Queue file I/O, Queue path containment, Queue file capacity
+excludes Queue artifact semantics, agent execution
+invariant Only known Queue child directories and file suffixes are addressable, and create operations never overwrite an existing artifact.

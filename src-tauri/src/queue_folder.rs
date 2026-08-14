@@ -1,3 +1,12 @@
+// llmnav/1 module
+// id=workduck.queue.folder-native
+// role=Enforce native Queue directory, path, size, count, exclusive-write, update, delete, and evaluation-delegation constraints.
+// owns=native Queue file I/O|Queue path containment|Queue file capacity
+// excludes=Queue artifact semantics|agent execution
+// search=native Queue files|Queue path validation|exclusive work order write
+// invariant=Only known Queue child directories and file suffixes are addressable, and create operations never overwrite an existing artifact.
+// stability=architecture
+// /llmnav
 use std::{
     fs,
     io,

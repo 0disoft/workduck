@@ -1,3 +1,12 @@
+// llmnav/1 module
+// id=workduck.workspace.sync-git-native
+// role=Inspect and serialize native Git fetch, pull, commit, and push operations for a workspace sync file with safe remote reporting.
+// owns=sync Git inspection|per-folder sync locking|sync file commit and push
+// excludes=sync envelope encryption|general project Git operations
+// search=workspace sync Git|push sync file|safe sync remote
+// invariant=Operations for the same folder are serialized, credential-bearing remotes are never displayed, and divergent remote state fails closed.
+// stability=contract
+// /llmnav
 use crate::git_credential::{GitCredential, parse_git_credential};
 use crate::git_path::{GitProcessError, run_git_process};
 use crate::path_display::display_path;

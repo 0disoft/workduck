@@ -43,6 +43,32 @@
         "invariant"
       ],
       "scope": "module"
+    },
+    {
+      "match": [
+        "src-tauri/src/agent_api_snapshot.rs",
+        "src-tauri/src/developer_processes.rs",
+        "src-tauri/src/git_path.rs",
+        "src-tauri/src/project_folder.rs",
+        "src-tauri/src/project_repository.rs",
+        "src-tauri/src/project_repository_import_attempt_store.rs",
+        "src-tauri/src/project_repository_task.rs",
+        "src-tauri/src/queue_execution.rs",
+        "src-tauri/src/queue_folder.rs",
+        "src-tauri/src/workspace_data_file.rs",
+        "src-tauri/src/workspace_repository_setup.rs",
+        "src-tauri/src/workspace_sync_file.rs",
+        "src-tauri/src/workspace_sync_git.rs",
+        "src/lib/projects/project-operation-storage.ts",
+        "src/lib/workspaces/workspace-path.ts",
+        "src/lib/workspaces/workspace-sync-file.ts"
+      ],
+      "name": "native command and persistence boundaries",
+      "requiredFields": [
+        "owns",
+        "invariant"
+      ],
+      "scope": "module"
     }
   ],
   "evaluation": {

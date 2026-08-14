@@ -1,3 +1,14 @@
+// llmnav/1 module
+// id=workduck.agent.snapshot
+// role=Build a bounded read-only workspace snapshot for agents while omitting secrets, terminal input, command text, and output bodies.
+// owns=agent API snapshot|workspace summary redaction|snapshot capability declaration
+// excludes=workspace mutation endpoints|secret decryption
+// search=agent workspace snapshot|read-only agent API|redacted workspace summary
+// invariant=Snapshot generation never creates missing Queue state or exposes secret identifiers, encrypted payloads, commands, or output tails.
+// risk=privacy
+// rel=test>workduck.agent.snapshot.contract
+// stability=contract
+// /llmnav
 use std::{
     collections::BTreeMap,
     fs, io,
@@ -893,6 +904,12 @@ mod tests {
         let _ = fs::remove_dir_all(workspace);
     }
 
+    // llmnav/1 symbol
+    // id=workduck.agent.snapshot.contract
+    // role=Verify the agent snapshot replaces credential references with presence flags and never serializes their secret identifiers.
+    // search=agent snapshot contract|credential reference redaction|snapshot privacy test
+    // stability=contract
+    // /llmnav
     #[test]
     fn project_registry_summary_omits_secret_ids() {
         let value = serde_json::json!({

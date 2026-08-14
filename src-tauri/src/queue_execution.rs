@@ -1,3 +1,12 @@
+// llmnav/1 module
+// id=workduck.queue.execution-native
+// role=Validate and coordinate native multi-agent Queue execution, secret resolution, cancellation, confirmation, and exclusive result-report creation.
+// owns=native Queue execution|agent run coordination|execution confirmation tokens
+// excludes=frontend execution adapter|Queue folder CRUD
+// search=native Queue execution|confirm work order run|cancel agent execution
+// invariant=Execution requires the current estimate token, respects global and provider permits, and never exposes resolved secrets through prompt previews.
+// stability=architecture
+// /llmnav
 use std::{
     env, fs, io,
     path::{Path, PathBuf},

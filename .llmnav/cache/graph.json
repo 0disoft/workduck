@@ -1,6 +1,20 @@
 {
   "edges": [
     {
+      "confidence": 1,
+      "from": "workduck/workduck.agent.snapshot",
+      "id": "237fd9d5c0609415fe72089bdc92c00ac5e770dfdc3c4cb4069674c47b6fed7f",
+      "kind": "test",
+      "provenance": {
+        "generator": null,
+        "line": 1,
+        "path": "src-tauri/src/agent_api_snapshot.rs",
+        "source": "src-tauri/src/agent_api_snapshot.rs",
+        "type": "source-card"
+      },
+      "to": "workduck/workduck.agent.snapshot.contract"
+    },
+    {
       "confidence": 0.85,
       "from": "workduck/workduck.queue.execution",
       "id": "268d6ad14bde561af494351ff6a78b888341e38014c1223d0c878c6a6ff5e6a7",
@@ -50,6 +64,62 @@
       "repositoryId": "workduck",
       "role": "Export agent briefs and AGENTS.md documents for supported coding hosts without granting execution authority.",
       "semanticId": "workduck.agent.adapters",
+      "unresolved": false
+    },
+    {
+      "definitions": [],
+      "external": false,
+      "key": "workduck/workduck.agent.snapshot",
+      "location": {
+        "declarationLine": null,
+        "endLine": 11,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src-tauri/src/agent_api_snapshot.rs",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "repositoryId": "workduck",
+      "role": "Build a bounded read-only workspace snapshot for agents while omitting secrets, terminal input, command text, and output bodies.",
+      "semanticId": "workduck.agent.snapshot",
+      "unresolved": false
+    },
+    {
+      "definitions": [
+        {
+          "kind": "function",
+          "line": 914,
+          "path": "src-tauri/src/agent_api_snapshot.rs",
+          "provenance": {
+            "generator": null,
+            "source": ".llmnav/cache/index.json",
+            "type": "llmnav-index"
+          },
+          "symbol": "project_registry_summary_omits_secret_ids"
+        }
+      ],
+      "external": false,
+      "key": "workduck/workduck.agent.snapshot.contract",
+      "location": {
+        "declarationLine": 914,
+        "endLine": 912,
+        "exported": false,
+        "kind": "function",
+        "language": "rust",
+        "path": "src-tauri/src/agent_api_snapshot.rs",
+        "receiver": null,
+        "signature": "fn project_registry_summary_omits_secret_ids()",
+        "startLine": 907,
+        "symbol": "project_registry_summary_omits_secret_ids",
+        "visibility": "private"
+      },
+      "repositoryId": "workduck",
+      "role": "Verify the agent snapshot replaces credential references with presence flags and never serializes their secret identifiers.",
+      "semanticId": "workduck.agent.snapshot.contract",
       "unresolved": false
     },
     {
@@ -187,6 +257,50 @@
     {
       "definitions": [],
       "external": false,
+      "key": "workduck/workduck.git.process-boundary",
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src-tauri/src/git_path.rs",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "repositoryId": "workduck",
+      "role": "Resolve Git from trusted absolute PATH entries and run prompt-free bounded child processes with separate inspection and mutation profiles.",
+      "semanticId": "workduck.git.process-boundary",
+      "unresolved": false
+    },
+    {
+      "definitions": [],
+      "external": false,
+      "key": "workduck/workduck.process.developer-control",
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src-tauri/src/developer_processes.rs",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "repositoryId": "workduck",
+      "role": "Enumerate local developer processes and force-stop a selected instance only after identity revalidation while redacting display commands.",
+      "semanticId": "workduck.process.developer-control",
+      "unresolved": false
+    },
+    {
+      "definitions": [],
+      "external": false,
       "key": "workduck/workduck.process.tree",
       "location": {
         "declarationLine": null,
@@ -231,6 +345,72 @@
     {
       "definitions": [],
       "external": false,
+      "key": "workduck/workduck.projects.folder-native",
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src-tauri/src/project_folder.rs",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "repositoryId": "workduck",
+      "role": "Enforce native project-folder containment and apply ssealed scaffolds with locking, journaling, recovery, and conflict-safe rollback.",
+      "semanticId": "workduck.projects.folder-native",
+      "unresolved": false
+    },
+    {
+      "definitions": [],
+      "external": false,
+      "key": "workduck/workduck.projects.import-attempt-store",
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src-tauri/src/project_repository_import_attempt_store.rs",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "repositoryId": "workduck",
+      "role": "Validate, persist, and read bounded repository-import attempt state and phase records from the native SQLite store.",
+      "semanticId": "workduck.projects.import-attempt-store",
+      "unresolved": false
+    },
+    {
+      "definitions": [],
+      "external": false,
+      "key": "workduck/workduck.projects.operation-storage",
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src/lib/projects/project-operation-storage.ts",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "repositoryId": "workduck",
+      "role": "Read and persist terminal repository-operation records through Tauri and normalize the latest valid record for each repository.",
+      "semanticId": "workduck.projects.operation-storage",
+      "unresolved": false
+    },
+    {
+      "definitions": [],
+      "external": false,
       "key": "workduck/workduck.projects.repository",
       "location": {
         "declarationLine": null,
@@ -253,6 +433,28 @@
     {
       "definitions": [],
       "external": false,
+      "key": "workduck/workduck.projects.repository-native",
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src-tauri/src/project_repository.rs",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "repositoryId": "workduck",
+      "role": "Execute bounded native clone, inspection, Git mutation, fork, and GitHub publication operations with explicit credential and cache boundaries.",
+      "semanticId": "workduck.projects.repository-native",
+      "unresolved": false
+    },
+    {
+      "definitions": [],
+      "external": false,
       "key": "workduck/workduck.projects.repository-task",
       "location": {
         "declarationLine": null,
@@ -270,6 +472,28 @@
       "repositoryId": "workduck",
       "role": "Invoke bounded repository tasks through Tauri and normalize their commands, run records, states, and failures for the UI.",
       "semanticId": "workduck.projects.repository-task",
+      "unresolved": false
+    },
+    {
+      "definitions": [],
+      "external": false,
+      "key": "workduck/workduck.projects.repository-task-native",
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src-tauri/src/project_repository_task.rs",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "repositoryId": "workduck",
+      "role": "Discover toolchain commands, launch bounded repository tasks in terminals, and persist or reconcile native task-run records.",
+      "semanticId": "workduck.projects.repository-task-native",
       "unresolved": false
     },
     {
@@ -363,6 +587,28 @@
     {
       "definitions": [],
       "external": false,
+      "key": "workduck/workduck.queue.execution-native",
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src-tauri/src/queue_execution.rs",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "repositoryId": "workduck",
+      "role": "Validate and coordinate native multi-agent Queue execution, secret resolution, cancellation, confirmation, and exclusive result-report creation.",
+      "semanticId": "workduck.queue.execution-native",
+      "unresolved": false
+    },
+    {
+      "definitions": [],
+      "external": false,
       "key": "workduck/workduck.queue.folder",
       "location": {
         "declarationLine": null,
@@ -380,6 +626,28 @@
       "repositoryId": "workduck",
       "role": "Create and inspect the workspace Queue directory and perform bounded reads, writes, updates, and deletes of Queue files.",
       "semanticId": "workduck.queue.folder",
+      "unresolved": false
+    },
+    {
+      "definitions": [],
+      "external": false,
+      "key": "workduck/workduck.queue.folder-native",
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src-tauri/src/queue_folder.rs",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "repositoryId": "workduck",
+      "role": "Enforce native Queue directory, path, size, count, exclusive-write, update, delete, and evaluation-delegation constraints.",
+      "semanticId": "workduck.queue.folder-native",
       "unresolved": false
     },
     {
@@ -495,6 +763,28 @@
     {
       "definitions": [],
       "external": false,
+      "key": "workduck/workduck.workspace.data-files",
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src-tauri/src/workspace_data_file.rs",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "repositoryId": "workduck",
+      "role": "Read and atomically update allowlisted workspace data files with registry revision checks, paired commits, and crash recovery.",
+      "semanticId": "workduck.workspace.data-files",
+      "unresolved": false
+    },
+    {
+      "definitions": [],
+      "external": false,
       "key": "workduck/workduck.workspace.path",
       "location": {
         "declarationLine": null,
@@ -512,6 +802,50 @@
       "repositoryId": "workduck",
       "role": "Validate workspace paths as readable absolute directories and return canonical display paths with closed error codes.",
       "semanticId": "workduck.workspace.path",
+      "unresolved": false
+    },
+    {
+      "definitions": [],
+      "external": false,
+      "key": "workduck/workduck.workspace.path-client",
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src/lib/workspaces/workspace-path.ts",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "repositoryId": "workduck",
+      "role": "Select a workspace directory and normalize closed native validation responses for frontend callers.",
+      "semanticId": "workduck.workspace.path-client",
+      "unresolved": false
+    },
+    {
+      "definitions": [],
+      "external": false,
+      "key": "workduck/workduck.workspace.repository-setup",
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src-tauri/src/workspace_repository_setup.rs",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "repositoryId": "workduck",
+      "role": "Initialize a workspace repository layout, Git, Mustflow, managed work-order instructions, and Workduck ignore policy through bounded native steps.",
+      "semanticId": "workduck.workspace.repository-setup",
       "unresolved": false
     },
     {
@@ -535,15 +869,81 @@
       "role": "Serialize, encrypt, parse, decrypt, and normalize versioned workspace and project-registry synchronization envelopes.",
       "semanticId": "workduck.workspace.sync",
       "unresolved": false
+    },
+    {
+      "definitions": [],
+      "external": false,
+      "key": "workduck/workduck.workspace.sync-file-client",
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src/lib/workspaces/workspace-sync-file.ts",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "repositoryId": "workduck",
+      "role": "Normalize workspace sync-file names and expose closed Tauri read and write results to the frontend.",
+      "semanticId": "workduck.workspace.sync-file-client",
+      "unresolved": false
+    },
+    {
+      "definitions": [],
+      "external": false,
+      "key": "workduck/workduck.workspace.sync-file-native",
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src-tauri/src/workspace_sync_file.rs",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "repositoryId": "workduck",
+      "role": "Resolve, validate, atomically write, and size-bound reads of a native workspace synchronization file.",
+      "semanticId": "workduck.workspace.sync-file-native",
+      "unresolved": false
+    },
+    {
+      "definitions": [],
+      "external": false,
+      "key": "workduck/workduck.workspace.sync-git-native",
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src-tauri/src/workspace_sync_git.rs",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "repositoryId": "workduck",
+      "role": "Inspect and serialize native Git fetch, pull, commit, and push operations for a workspace sync file with safe remote reporting.",
+      "semanticId": "workduck.workspace.sync-git-native",
+      "unresolved": false
     }
   ],
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "d54e59f2c858a2edc9dff4328d8ef5d88a0d1cba43e5d0c28071696fe7057b73",
+  "sourceHash": "bd4ae0294c096aa1fdcc7b9b85215018337b6bd775d376415f4d2ee150845864",
   "stats": {
-    "edgeCount": 2,
+    "edgeCount": 3,
     "importedIndexCount": 0,
-    "nodeCount": 23,
+    "nodeCount": 40,
     "unresolvedNodeCount": 0
   }
 }

@@ -6,3 +6,14 @@ role Export agent briefs and AGENTS.md documents for supported coding hosts with
 owns agent adapter profiles, brief export formats, AGENTS.md compilation
 excludes agent process execution, provider credentials
 invariant Every adapter remains export-only and declares its supported artifacts through an explicit profile.
+
+@workduck.agent.snapshot
+role Build a bounded read-only workspace snapshot for agents while omitting secrets, terminal input, command text, and output bodies.
+owns agent API snapshot, workspace summary redaction, snapshot capability declaration
+excludes workspace mutation endpoints, secret decryption
+invariant Snapshot generation never creates missing Queue state or exposes secret identifiers, encrypted payloads, commands, or output tails.
+risk privacy
+rel test>workduck.agent.snapshot.contract
+
+@workduck.agent.snapshot.contract
+role Verify the agent snapshot replaces credential references with presence flags and never serializes their secret identifiers.

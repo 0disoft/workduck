@@ -1,0 +1,8 @@
+llmnav-catalog/1 repository=workduck catalog=workduck.git
+Read semantic cards before opening source. Resolve current paths and signatures with llmnav query or show.
+
+@workduck.git.process-boundary
+role Resolve Git from trusted absolute PATH entries and run prompt-free bounded child processes with separate inspection and mutation profiles.
+owns Git executable resolution, Git process policy, bounded child output
+excludes repository operation semantics, Git failure domain mapping
+invariant Git is never resolved from the current directory or a caller-supplied path, and captured output retains only bounded head and tail bytes.

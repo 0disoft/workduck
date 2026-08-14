@@ -727,9 +727,186 @@
       "sourceBytes": 1490
     },
     {
-      "blocks": [],
-      "contentHash": "66abdb461d82ed6b5bc41aaf9e68fa5b57c7ad6d83dfb881ec2439883dd16978",
-      "declarations": [],
+      "blocks": [
+        {
+          "card": {
+            "effect": [],
+            "excludes": [
+              "workspace mutation endpoints",
+              "secret decryption"
+            ],
+            "id": "workduck.agent.snapshot",
+            "invariant": [
+              "Snapshot generation never creates missing Queue state or exposes secret identifiers, encrypted payloads, commands, or output tails."
+            ],
+            "owns": [
+              "agent API snapshot",
+              "workspace summary redaction",
+              "snapshot capability declaration"
+            ],
+            "rel": [
+              "test>workduck.agent.snapshot.contract"
+            ],
+            "risk": [
+              "privacy"
+            ],
+            "role": "Build a bounded read-only workspace snapshot for agents while omitting secrets, terminal input, command text, and output bodies.",
+            "scope": "module",
+            "search": [
+              "agent workspace snapshot",
+              "read-only agent API",
+              "redacted workspace summary"
+            ],
+            "stability": "contract",
+            "unknown": []
+          },
+          "end": 653,
+          "endLine": 11,
+          "entries": [
+            {
+              "key": "id",
+              "line": 2,
+              "order": 0,
+              "value": "workduck.agent.snapshot"
+            },
+            {
+              "key": "role",
+              "line": 3,
+              "order": 1,
+              "value": "Build a bounded read-only workspace snapshot for agents while omitting secrets, terminal input, command text, and output bodies."
+            },
+            {
+              "key": "owns",
+              "line": 4,
+              "order": 2,
+              "value": "agent API snapshot|workspace summary redaction|snapshot capability declaration"
+            },
+            {
+              "key": "excludes",
+              "line": 5,
+              "order": 3,
+              "value": "workspace mutation endpoints|secret decryption"
+            },
+            {
+              "key": "search",
+              "line": 6,
+              "order": 4,
+              "value": "agent workspace snapshot|read-only agent API|redacted workspace summary"
+            },
+            {
+              "key": "invariant",
+              "line": 7,
+              "order": 5,
+              "value": "Snapshot generation never creates missing Queue state or exposes secret identifiers, encrypted payloads, commands, or output tails."
+            },
+            {
+              "key": "risk",
+              "line": 8,
+              "order": 6,
+              "value": "privacy"
+            },
+            {
+              "key": "rel",
+              "line": 9,
+              "order": 7,
+              "value": "test>workduck.agent.snapshot.contract"
+            },
+            {
+              "key": "stability",
+              "line": 10,
+              "order": 8,
+              "value": "contract"
+            }
+          ],
+          "filePath": "src-tauri/src/agent_api_snapshot.rs",
+          "indent": "",
+          "newline": "\n",
+          "prefix": "//",
+          "raw": "// llmnav/1 module\n// id=workduck.agent.snapshot\n// role=Build a bounded read-only workspace snapshot for agents while omitting secrets, terminal input, command text, and output bodies.\n// owns=agent API snapshot|workspace summary redaction|snapshot capability declaration\n// excludes=workspace mutation endpoints|secret decryption\n// search=agent workspace snapshot|read-only agent API|redacted workspace summary\n// invariant=Snapshot generation never creates missing Queue state or exposes secret identifiers, encrypted payloads, commands, or output tails.\n// risk=privacy\n// rel=test>workduck.agent.snapshot.contract\n// stability=contract\n// /llmnav\n",
+          "scope": "module",
+          "specVersion": "1",
+          "start": 0,
+          "startLine": 1,
+          "style": "line",
+          "syntaxErrors": []
+        },
+        {
+          "card": {
+            "effect": [],
+            "excludes": [],
+            "id": "workduck.agent.snapshot.contract",
+            "invariant": [],
+            "owns": [],
+            "rel": [],
+            "risk": [],
+            "role": "Verify the agent snapshot replaces credential references with presence flags and never serializes their secret identifiers.",
+            "scope": "symbol",
+            "search": [
+              "agent snapshot contract",
+              "credential reference redaction",
+              "snapshot privacy test"
+            ],
+            "stability": "contract",
+            "unknown": []
+          },
+          "end": 28985,
+          "endLine": 912,
+          "entries": [
+            {
+              "key": "id",
+              "line": 908,
+              "order": 0,
+              "value": "workduck.agent.snapshot.contract"
+            },
+            {
+              "key": "role",
+              "line": 909,
+              "order": 1,
+              "value": "Verify the agent snapshot replaces credential references with presence flags and never serializes their secret identifiers."
+            },
+            {
+              "key": "search",
+              "line": 910,
+              "order": 2,
+              "value": "agent snapshot contract|credential reference redaction|snapshot privacy test"
+            },
+            {
+              "key": "stability",
+              "line": 911,
+              "order": 3,
+              "value": "contract"
+            }
+          ],
+          "filePath": "src-tauri/src/agent_api_snapshot.rs",
+          "indent": "    ",
+          "newline": "\n",
+          "prefix": "//",
+          "raw": "    // llmnav/1 symbol\n    // id=workduck.agent.snapshot.contract\n    // role=Verify the agent snapshot replaces credential references with presence flags and never serializes their secret identifiers.\n    // search=agent snapshot contract|credential reference redaction|snapshot privacy test\n    // stability=contract\n    // /llmnav\n",
+          "scope": "symbol",
+          "specVersion": "1",
+          "start": 28651,
+          "startLine": 907,
+          "style": "line",
+          "syntaxErrors": []
+        }
+      ],
+      "contentHash": "309826a93b08f373aac214d8c6d62c11fb5cfd823677c0f27f1a5d6d19e8b0e3",
+      "declarations": [
+        null,
+        {
+          "bodyHash": "d6670fee44dd98c43b5cf3f36ff0207a2c7c4f7bfc86033cf473793bae4ad2da",
+          "endOffset": 30623,
+          "exported": false,
+          "kind": "function",
+          "language": "rust",
+          "line": 914,
+          "offset": 29001,
+          "receiver": null,
+          "signature": "fn project_registry_summary_omits_secret_ids()",
+          "symbol": "project_registry_summary_omits_secret_ids",
+          "visibility": "private"
+        }
+      ],
       "imports": [
         "crate::{\n    path_display::display_path,\n    storage,\n    workspace_path::{validate_absolute_directory_path, WorkspacePathValidationError},\n}",
         "rusqlite::{OptionalExtension, params}",
@@ -740,8 +917,8 @@
         "time::{OffsetDateTime, format_description::well_known::Rfc3339}"
       ],
       "path": "src-tauri/src/agent_api_snapshot.rs",
-      "semanticBytes": 0,
-      "sourceBytes": 32545
+      "semanticBytes": 987,
+      "sourceBytes": 33532
     },
     {
       "blocks": [],
@@ -906,9 +1083,98 @@
       "sourceBytes": 6207
     },
     {
-      "blocks": [],
-      "contentHash": "79d286d9eaada0a9e38c6432a5b43fc5d8a3d060b3828ac451ac556989e582ee",
-      "declarations": [],
+      "blocks": [
+        {
+          "card": {
+            "effect": [],
+            "excludes": [
+              "repository task run reconciliation",
+              "generic operating system process management"
+            ],
+            "id": "workduck.process.developer-control",
+            "invariant": [
+              "A kill rechecks an identity derived from unsanitized process facts, while user-visible command text remains redacted."
+            ],
+            "owns": [
+              "developer process discovery",
+              "process identity tokens",
+              "verified process kill"
+            ],
+            "rel": [],
+            "risk": [],
+            "role": "Enumerate local developer processes and force-stop a selected instance only after identity revalidation while redacting display commands.",
+            "scope": "module",
+            "search": [
+              "list developer processes",
+              "kill developer process",
+              "verify process identity"
+            ],
+            "stability": "contract",
+            "unknown": []
+          },
+          "end": 625,
+          "endLine": 9,
+          "entries": [
+            {
+              "key": "id",
+              "line": 2,
+              "order": 0,
+              "value": "workduck.process.developer-control"
+            },
+            {
+              "key": "role",
+              "line": 3,
+              "order": 1,
+              "value": "Enumerate local developer processes and force-stop a selected instance only after identity revalidation while redacting display commands."
+            },
+            {
+              "key": "owns",
+              "line": 4,
+              "order": 2,
+              "value": "developer process discovery|process identity tokens|verified process kill"
+            },
+            {
+              "key": "excludes",
+              "line": 5,
+              "order": 3,
+              "value": "repository task run reconciliation|generic operating system process management"
+            },
+            {
+              "key": "search",
+              "line": 6,
+              "order": 4,
+              "value": "list developer processes|kill developer process|verify process identity"
+            },
+            {
+              "key": "invariant",
+              "line": 7,
+              "order": 5,
+              "value": "A kill rechecks an identity derived from unsanitized process facts, while user-visible command text remains redacted."
+            },
+            {
+              "key": "stability",
+              "line": 8,
+              "order": 6,
+              "value": "contract"
+            }
+          ],
+          "filePath": "src-tauri/src/developer_processes.rs",
+          "indent": "",
+          "newline": "\n",
+          "prefix": "//",
+          "raw": "// llmnav/1 module\n// id=workduck.process.developer-control\n// role=Enumerate local developer processes and force-stop a selected instance only after identity revalidation while redacting display commands.\n// owns=developer process discovery|process identity tokens|verified process kill\n// excludes=repository task run reconciliation|generic operating system process management\n// search=list developer processes|kill developer process|verify process identity\n// invariant=A kill rechecks an identity derived from unsanitized process facts, while user-visible command text remains redacted.\n// stability=contract\n// /llmnav\n",
+          "scope": "module",
+          "specVersion": "1",
+          "start": 0,
+          "startLine": 1,
+          "style": "line",
+          "syntaxErrors": []
+        }
+      ],
+      "contentHash": "99125149361189296825538d1f79a01f73c70e25fbd5430d749cb3adb2389d94",
+      "declarations": [
+        null
+      ],
       "imports": [
         "crate::path_display::display_path_text",
         "sha2::{Digest, Sha256}",
@@ -917,8 +1183,8 @@
         "tests {\n    use super::*"
       ],
       "path": "src-tauri/src/developer_processes.rs",
-      "semanticBytes": 0,
-      "sourceBytes": 19153
+      "semanticBytes": 625,
+      "sourceBytes": 19778
     },
     {
       "blocks": [],
@@ -935,9 +1201,98 @@
       "sourceBytes": 7395
     },
     {
-      "blocks": [],
-      "contentHash": "6b36927a0fc74e78b2a4417b61545c9d376e78bf38157af47fdb2fd6ab0b4842",
-      "declarations": [],
+      "blocks": [
+        {
+          "card": {
+            "effect": [],
+            "excludes": [
+              "repository operation semantics",
+              "Git failure domain mapping"
+            ],
+            "id": "workduck.git.process-boundary",
+            "invariant": [
+              "Git is never resolved from the current directory or a caller-supplied path, and captured output retains only bounded head and tail bytes."
+            ],
+            "owns": [
+              "Git executable resolution",
+              "Git process policy",
+              "bounded child output"
+            ],
+            "rel": [],
+            "risk": [],
+            "role": "Resolve Git from trusted absolute PATH entries and run prompt-free bounded child processes with separate inspection and mutation profiles.",
+            "scope": "module",
+            "search": [
+              "resolve Git executable",
+              "bounded Git output",
+              "disable Git prompts"
+            ],
+            "stability": "contract",
+            "unknown": []
+          },
+          "end": 602,
+          "endLine": 9,
+          "entries": [
+            {
+              "key": "id",
+              "line": 2,
+              "order": 0,
+              "value": "workduck.git.process-boundary"
+            },
+            {
+              "key": "role",
+              "line": 3,
+              "order": 1,
+              "value": "Resolve Git from trusted absolute PATH entries and run prompt-free bounded child processes with separate inspection and mutation profiles."
+            },
+            {
+              "key": "owns",
+              "line": 4,
+              "order": 2,
+              "value": "Git executable resolution|Git process policy|bounded child output"
+            },
+            {
+              "key": "excludes",
+              "line": 5,
+              "order": 3,
+              "value": "repository operation semantics|Git failure domain mapping"
+            },
+            {
+              "key": "search",
+              "line": 6,
+              "order": 4,
+              "value": "resolve Git executable|bounded Git output|disable Git prompts"
+            },
+            {
+              "key": "invariant",
+              "line": 7,
+              "order": 5,
+              "value": "Git is never resolved from the current directory or a caller-supplied path, and captured output retains only bounded head and tail bytes."
+            },
+            {
+              "key": "stability",
+              "line": 8,
+              "order": 6,
+              "value": "contract"
+            }
+          ],
+          "filePath": "src-tauri/src/git_path.rs",
+          "indent": "",
+          "newline": "\n",
+          "prefix": "//",
+          "raw": "// llmnav/1 module\n// id=workduck.git.process-boundary\n// role=Resolve Git from trusted absolute PATH entries and run prompt-free bounded child processes with separate inspection and mutation profiles.\n// owns=Git executable resolution|Git process policy|bounded child output\n// excludes=repository operation semantics|Git failure domain mapping\n// search=resolve Git executable|bounded Git output|disable Git prompts\n// invariant=Git is never resolved from the current directory or a caller-supplied path, and captured output retains only bounded head and tail bytes.\n// stability=contract\n// /llmnav\n",
+          "scope": "module",
+          "specVersion": "1",
+          "start": 0,
+          "startLine": 1,
+          "style": "line",
+          "syntaxErrors": []
+        }
+      ],
+      "contentHash": "78e216dfb3d528fcdc65c5189c354f6d6f768c3a54018c0d69e7de5e5317bdc1",
+      "declarations": [
+        null
+      ],
       "imports": [
         "crate::git_credential::{\n    GitCommandProfile, GitCredential, apply_git_credential, apply_safe_git_config,\n    clear_git_credential_environment,\n}",
         "crate::process_tree::ProcessTreeChild",
@@ -948,8 +1303,8 @@
         "tests {\n    use super::{\n        BoundedOutputBuffer, CHILD_OUTPUT_HEAD_MAX_BYTES, CHILD_OUTPUT_MAX_BYTES,\n        resolve_system_executable_from_path, validate_plain_program_name,\n    }"
       ],
       "path": "src-tauri/src/git_path.rs",
-      "semanticBytes": 0,
-      "sourceBytes": 14911
+      "semanticBytes": 602,
+      "sourceBytes": 15513
     },
     {
       "blocks": [
@@ -1253,9 +1608,98 @@
       "sourceBytes": 15785
     },
     {
-      "blocks": [],
-      "contentHash": "3c597249655a3b5fcc718d668fe2a62d6f723530888883d77813503be08a408f",
-      "declarations": [],
+      "blocks": [
+        {
+          "card": {
+            "effect": [],
+            "excludes": [
+              "repository Git operations",
+              "project registry persistence"
+            ],
+            "id": "workduck.projects.folder-native",
+            "invariant": [
+              "Scaffold apply never overwrites conflicts, and recovery or rollback removes only files whose recorded checksums still match."
+            ],
+            "owns": [
+              "native project folder commands",
+              "ssealed scaffold transaction",
+              "folder containment checks"
+            ],
+            "rel": [],
+            "risk": [],
+            "role": "Enforce native project-folder containment and apply ssealed scaffolds with locking, journaling, recovery, and conflict-safe rollback.",
+            "scope": "module",
+            "search": [
+              "native project folder",
+              "ssealed scaffold journal",
+              "rollback scaffold apply"
+            ],
+            "stability": "architecture",
+            "unknown": []
+          },
+          "end": 616,
+          "endLine": 9,
+          "entries": [
+            {
+              "key": "id",
+              "line": 2,
+              "order": 0,
+              "value": "workduck.projects.folder-native"
+            },
+            {
+              "key": "role",
+              "line": 3,
+              "order": 1,
+              "value": "Enforce native project-folder containment and apply ssealed scaffolds with locking, journaling, recovery, and conflict-safe rollback."
+            },
+            {
+              "key": "owns",
+              "line": 4,
+              "order": 2,
+              "value": "native project folder commands|ssealed scaffold transaction|folder containment checks"
+            },
+            {
+              "key": "excludes",
+              "line": 5,
+              "order": 3,
+              "value": "repository Git operations|project registry persistence"
+            },
+            {
+              "key": "search",
+              "line": 6,
+              "order": 4,
+              "value": "native project folder|ssealed scaffold journal|rollback scaffold apply"
+            },
+            {
+              "key": "invariant",
+              "line": 7,
+              "order": 5,
+              "value": "Scaffold apply never overwrites conflicts, and recovery or rollback removes only files whose recorded checksums still match."
+            },
+            {
+              "key": "stability",
+              "line": 8,
+              "order": 6,
+              "value": "architecture"
+            }
+          ],
+          "filePath": "src-tauri/src/project_folder.rs",
+          "indent": "",
+          "newline": "\n",
+          "prefix": "//",
+          "raw": "// llmnav/1 module\n// id=workduck.projects.folder-native\n// role=Enforce native project-folder containment and apply ssealed scaffolds with locking, journaling, recovery, and conflict-safe rollback.\n// owns=native project folder commands|ssealed scaffold transaction|folder containment checks\n// excludes=repository Git operations|project registry persistence\n// search=native project folder|ssealed scaffold journal|rollback scaffold apply\n// invariant=Scaffold apply never overwrites conflicts, and recovery or rollback removes only files whose recorded checksums still match.\n// stability=architecture\n// /llmnav\n",
+          "scope": "module",
+          "specVersion": "1",
+          "start": 0,
+          "startLine": 1,
+          "style": "line",
+          "syntaxErrors": []
+        }
+      ],
+      "contentHash": "c5694034ddf88bdbe932ce43c91532f32281e2fb31a5e12a73873be92c030ab9",
+      "declarations": [
+        null
+      ],
       "imports": [
         "crate::atomic_file_write::{write_file_atomically, write_file_exclusively}",
         "crate::queue_execution_identity::unique_token",
@@ -1270,8 +1714,8 @@
         "time::{format_description::well_known::Rfc3339, OffsetDateTime}"
       ],
       "path": "src-tauri/src/project_folder.rs",
-      "semanticBytes": 0,
-      "sourceBytes": 82801
+      "semanticBytes": 616,
+      "sourceBytes": 83417
     },
     {
       "blocks": [],
@@ -1288,9 +1732,98 @@
       "sourceBytes": 8446
     },
     {
-      "blocks": [],
-      "contentHash": "81b20bfc1a7bacbe9f2f4c23662a0adcffe82546fc0f798f57eee35c5c270ea4",
-      "declarations": [],
+      "blocks": [
+        {
+          "card": {
+            "effect": [],
+            "excludes": [
+              "frontend result normalization",
+              "repository task terminals"
+            ],
+            "id": "workduck.projects.repository-native",
+            "invariant": [
+              "Inspections avoid credentials and optional locks, while mutations use bounded processes and return closed repository errors."
+            ],
+            "owns": [
+              "native repository Git commands",
+              "GitHub publication flow",
+              "remote inspection cache"
+            ],
+            "rel": [],
+            "risk": [],
+            "role": "Execute bounded native clone, inspection, Git mutation, fork, and GitHub publication operations with explicit credential and cache boundaries.",
+            "scope": "module",
+            "search": [
+              "native repository Git",
+              "GitHub publish repository",
+              "clone with credential"
+            ],
+            "stability": "architecture",
+            "unknown": []
+          },
+          "end": 622,
+          "endLine": 9,
+          "entries": [
+            {
+              "key": "id",
+              "line": 2,
+              "order": 0,
+              "value": "workduck.projects.repository-native"
+            },
+            {
+              "key": "role",
+              "line": 3,
+              "order": 1,
+              "value": "Execute bounded native clone, inspection, Git mutation, fork, and GitHub publication operations with explicit credential and cache boundaries."
+            },
+            {
+              "key": "owns",
+              "line": 4,
+              "order": 2,
+              "value": "native repository Git commands|GitHub publication flow|remote inspection cache"
+            },
+            {
+              "key": "excludes",
+              "line": 5,
+              "order": 3,
+              "value": "frontend result normalization|repository task terminals"
+            },
+            {
+              "key": "search",
+              "line": 6,
+              "order": 4,
+              "value": "native repository Git|GitHub publish repository|clone with credential"
+            },
+            {
+              "key": "invariant",
+              "line": 7,
+              "order": 5,
+              "value": "Inspections avoid credentials and optional locks, while mutations use bounded processes and return closed repository errors."
+            },
+            {
+              "key": "stability",
+              "line": 8,
+              "order": 6,
+              "value": "architecture"
+            }
+          ],
+          "filePath": "src-tauri/src/project_repository.rs",
+          "indent": "",
+          "newline": "\n",
+          "prefix": "//",
+          "raw": "// llmnav/1 module\n// id=workduck.projects.repository-native\n// role=Execute bounded native clone, inspection, Git mutation, fork, and GitHub publication operations with explicit credential and cache boundaries.\n// owns=native repository Git commands|GitHub publication flow|remote inspection cache\n// excludes=frontend result normalization|repository task terminals\n// search=native repository Git|GitHub publish repository|clone with credential\n// invariant=Inspections avoid credentials and optional locks, while mutations use bounded processes and return closed repository errors.\n// stability=architecture\n// /llmnav\n",
+          "scope": "module",
+          "specVersion": "1",
+          "start": 0,
+          "startLine": 1,
+          "style": "line",
+          "syntaxErrors": []
+        }
+      ],
+      "contentHash": "db3203253dc7794ddd074e697637d37d4f4a940a113cc9761d97eb43d17cb6b2",
+      "declarations": [
+        null
+      ],
       "imports": [
         "crate::git_credential::{\n    GitCredential, apply_github_cli_credential, clear_git_credential_environment,\n    github_token_credential, parse_git_credential,\n}",
         "crate::project_repository_failure::{\n    CloneFailure, classify_git_clone_failure, classify_git_fetch_failure,\n    classify_git_pull_failure, classify_git_push_failure, classify_github_initial_commit_failure,\n    classify_github_publish_failure,\n}",
@@ -1302,8 +1835,8 @@
         "tests {\n    use super::*"
       ],
       "path": "src-tauri/src/project_repository.rs",
-      "semanticBytes": 0,
-      "sourceBytes": 69868
+      "semanticBytes": 622,
+      "sourceBytes": 70490
     },
     {
       "blocks": [],
@@ -1319,17 +1852,106 @@
       "sourceBytes": 8835
     },
     {
-      "blocks": [],
-      "contentHash": "fc00292b224a0b4da93d6dce20c1809bc77add589c3813417e45bb7fd7463cba",
-      "declarations": [],
+      "blocks": [
+        {
+          "card": {
+            "effect": [],
+            "excludes": [
+              "repository clone execution",
+              "frontend attempt orchestration"
+            ],
+            "id": "workduck.projects.import-attempt-store",
+            "invariant": [
+              "Only closed source-kind, state, and phase values with required repository identity and timestamps are written."
+            ],
+            "owns": [
+              "import attempt persistence",
+              "import state validation",
+              "recent attempt queries"
+            ],
+            "rel": [],
+            "risk": [],
+            "role": "Validate, persist, and read bounded repository-import attempt state and phase records from the native SQLite store.",
+            "scope": "module",
+            "search": [
+              "repository import attempt",
+              "persist import phase",
+              "read recent imports"
+            ],
+            "stability": "contract",
+            "unknown": []
+          },
+          "end": 574,
+          "endLine": 9,
+          "entries": [
+            {
+              "key": "id",
+              "line": 2,
+              "order": 0,
+              "value": "workduck.projects.import-attempt-store"
+            },
+            {
+              "key": "role",
+              "line": 3,
+              "order": 1,
+              "value": "Validate, persist, and read bounded repository-import attempt state and phase records from the native SQLite store."
+            },
+            {
+              "key": "owns",
+              "line": 4,
+              "order": 2,
+              "value": "import attempt persistence|import state validation|recent attempt queries"
+            },
+            {
+              "key": "excludes",
+              "line": 5,
+              "order": 3,
+              "value": "repository clone execution|frontend attempt orchestration"
+            },
+            {
+              "key": "search",
+              "line": 6,
+              "order": 4,
+              "value": "repository import attempt|persist import phase|read recent imports"
+            },
+            {
+              "key": "invariant",
+              "line": 7,
+              "order": 5,
+              "value": "Only closed source-kind, state, and phase values with required repository identity and timestamps are written."
+            },
+            {
+              "key": "stability",
+              "line": 8,
+              "order": 6,
+              "value": "contract"
+            }
+          ],
+          "filePath": "src-tauri/src/project_repository_import_attempt_store.rs",
+          "indent": "",
+          "newline": "\n",
+          "prefix": "//",
+          "raw": "// llmnav/1 module\n// id=workduck.projects.import-attempt-store\n// role=Validate, persist, and read bounded repository-import attempt state and phase records from the native SQLite store.\n// owns=import attempt persistence|import state validation|recent attempt queries\n// excludes=repository clone execution|frontend attempt orchestration\n// search=repository import attempt|persist import phase|read recent imports\n// invariant=Only closed source-kind, state, and phase values with required repository identity and timestamps are written.\n// stability=contract\n// /llmnav\n",
+          "scope": "module",
+          "specVersion": "1",
+          "start": 0,
+          "startLine": 1,
+          "style": "line",
+          "syntaxErrors": []
+        }
+      ],
+      "contentHash": "25fde651eb74e0bfc40b86cbf6ea4378d22861957270a476904aa6b97cae592e",
+      "declarations": [
+        null
+      ],
       "imports": [
         "crate::storage",
         "rusqlite::params",
         "tauri::AppHandle"
       ],
       "path": "src-tauri/src/project_repository_import_attempt_store.rs",
-      "semanticBytes": 0,
-      "sourceBytes": 12602
+      "semanticBytes": 574,
+      "sourceBytes": 13176
     },
     {
       "blocks": [],
@@ -1345,9 +1967,98 @@
       "sourceBytes": 10674
     },
     {
-      "blocks": [],
-      "contentHash": "4f25a3c7ec0a2ed526003dc989c4369c5289174956848b2c7b57f798c84830fc",
-      "declarations": [],
+      "blocks": [
+        {
+          "card": {
+            "effect": [],
+            "excludes": [
+              "frontend task normalization",
+              "arbitrary shell command input"
+            ],
+            "id": "workduck.projects.repository-task-native",
+            "invariant": [
+              "Tasks are selected from a closed vocabulary, repository paths remain inside the workspace, and running records are revalidated against live process identity."
+            ],
+            "owns": [
+              "native repository task launch",
+              "toolchain command discovery",
+              "task run reconciliation"
+            ],
+            "rel": [],
+            "risk": [],
+            "role": "Discover toolchain commands, launch bounded repository tasks in terminals, and persist or reconcile native task-run records.",
+            "scope": "module",
+            "search": [
+              "native repository task",
+              "discover build command",
+              "reconcile dev server"
+            ],
+            "stability": "architecture",
+            "unknown": []
+          },
+          "end": 644,
+          "endLine": 9,
+          "entries": [
+            {
+              "key": "id",
+              "line": 2,
+              "order": 0,
+              "value": "workduck.projects.repository-task-native"
+            },
+            {
+              "key": "role",
+              "line": 3,
+              "order": 1,
+              "value": "Discover toolchain commands, launch bounded repository tasks in terminals, and persist or reconcile native task-run records."
+            },
+            {
+              "key": "owns",
+              "line": 4,
+              "order": 2,
+              "value": "native repository task launch|toolchain command discovery|task run reconciliation"
+            },
+            {
+              "key": "excludes",
+              "line": 5,
+              "order": 3,
+              "value": "frontend task normalization|arbitrary shell command input"
+            },
+            {
+              "key": "search",
+              "line": 6,
+              "order": 4,
+              "value": "native repository task|discover build command|reconcile dev server"
+            },
+            {
+              "key": "invariant",
+              "line": 7,
+              "order": 5,
+              "value": "Tasks are selected from a closed vocabulary, repository paths remain inside the workspace, and running records are revalidated against live process identity."
+            },
+            {
+              "key": "stability",
+              "line": 8,
+              "order": 6,
+              "value": "architecture"
+            }
+          ],
+          "filePath": "src-tauri/src/project_repository_task.rs",
+          "indent": "",
+          "newline": "\n",
+          "prefix": "//",
+          "raw": "// llmnav/1 module\n// id=workduck.projects.repository-task-native\n// role=Discover toolchain commands, launch bounded repository tasks in terminals, and persist or reconcile native task-run records.\n// owns=native repository task launch|toolchain command discovery|task run reconciliation\n// excludes=frontend task normalization|arbitrary shell command input\n// search=native repository task|discover build command|reconcile dev server\n// invariant=Tasks are selected from a closed vocabulary, repository paths remain inside the workspace, and running records are revalidated against live process identity.\n// stability=architecture\n// /llmnav\n",
+          "scope": "module",
+          "specVersion": "1",
+          "start": 0,
+          "startLine": 1,
+          "style": "line",
+          "syntaxErrors": []
+        }
+      ],
+      "contentHash": "b3e536efb02d2f3aceaa4b98b0b0f24c8f192e8f782b26d1284fec09cad1854f",
+      "declarations": [
+        null
+      ],
       "imports": [
         "base64::{Engine as _, engine::general_purpose}",
         "crate::atomic_file_write::write_file_atomically",
@@ -1358,8 +2069,8 @@
         "time::{OffsetDateTime, format_description::well_known::Rfc3339}"
       ],
       "path": "src-tauri/src/project_repository_task.rs",
-      "semanticBytes": 0,
-      "sourceBytes": 88486
+      "semanticBytes": 644,
+      "sourceBytes": 89130
     },
     {
       "blocks": [],
@@ -1377,9 +2088,98 @@
       "sourceBytes": 14380
     },
     {
-      "blocks": [],
-      "contentHash": "3452ca692a9a3fc5e4526b8b6a0cc2dddacfb3f941b62880fbd9032bea28e74c",
-      "declarations": [],
+      "blocks": [
+        {
+          "card": {
+            "effect": [],
+            "excludes": [
+              "frontend execution adapter",
+              "Queue folder CRUD"
+            ],
+            "id": "workduck.queue.execution-native",
+            "invariant": [
+              "Execution requires the current estimate token, respects global and provider permits, and never exposes resolved secrets through prompt previews."
+            ],
+            "owns": [
+              "native Queue execution",
+              "agent run coordination",
+              "execution confirmation tokens"
+            ],
+            "rel": [],
+            "risk": [],
+            "role": "Validate and coordinate native multi-agent Queue execution, secret resolution, cancellation, confirmation, and exclusive result-report creation.",
+            "scope": "module",
+            "search": [
+              "native Queue execution",
+              "confirm work order run",
+              "cancel agent execution"
+            ],
+            "stability": "architecture",
+            "unknown": []
+          },
+          "end": 625,
+          "endLine": 9,
+          "entries": [
+            {
+              "key": "id",
+              "line": 2,
+              "order": 0,
+              "value": "workduck.queue.execution-native"
+            },
+            {
+              "key": "role",
+              "line": 3,
+              "order": 1,
+              "value": "Validate and coordinate native multi-agent Queue execution, secret resolution, cancellation, confirmation, and exclusive result-report creation."
+            },
+            {
+              "key": "owns",
+              "line": 4,
+              "order": 2,
+              "value": "native Queue execution|agent run coordination|execution confirmation tokens"
+            },
+            {
+              "key": "excludes",
+              "line": 5,
+              "order": 3,
+              "value": "frontend execution adapter|Queue folder CRUD"
+            },
+            {
+              "key": "search",
+              "line": 6,
+              "order": 4,
+              "value": "native Queue execution|confirm work order run|cancel agent execution"
+            },
+            {
+              "key": "invariant",
+              "line": 7,
+              "order": 5,
+              "value": "Execution requires the current estimate token, respects global and provider permits, and never exposes resolved secrets through prompt previews."
+            },
+            {
+              "key": "stability",
+              "line": 8,
+              "order": 6,
+              "value": "architecture"
+            }
+          ],
+          "filePath": "src-tauri/src/queue_execution.rs",
+          "indent": "",
+          "newline": "\n",
+          "prefix": "//",
+          "raw": "// llmnav/1 module\n// id=workduck.queue.execution-native\n// role=Validate and coordinate native multi-agent Queue execution, secret resolution, cancellation, confirmation, and exclusive result-report creation.\n// owns=native Queue execution|agent run coordination|execution confirmation tokens\n// excludes=frontend execution adapter|Queue folder CRUD\n// search=native Queue execution|confirm work order run|cancel agent execution\n// invariant=Execution requires the current estimate token, respects global and provider permits, and never exposes resolved secrets through prompt previews.\n// stability=architecture\n// /llmnav\n",
+          "scope": "module",
+          "specVersion": "1",
+          "start": 0,
+          "startLine": 1,
+          "style": "line",
+          "syntaxErrors": []
+        }
+      ],
+      "contentHash": "f35c7e2a9c87af9dfb73ec22d9ad0c6c301c4ba6d9041b1da437f478a096329a",
+      "declarations": [
+        null
+      ],
       "imports": [
         "crate::queue_execution_identity::unique_token",
         "crate::queue_prompt_builder::{create_work_order_user_prompt_blocks, queue_prompt_labels}",
@@ -1394,8 +2194,8 @@
         "tests {\n    use super::*"
       ],
       "path": "src-tauri/src/queue_execution.rs",
-      "semanticBytes": 0,
-      "sourceBytes": 67692
+      "semanticBytes": 625,
+      "sourceBytes": 68317
     },
     {
       "blocks": [],
@@ -1426,9 +2226,98 @@
       "sourceBytes": 10639
     },
     {
-      "blocks": [],
-      "contentHash": "dfeeaf0d8bf56a14f50ac96b97d476202f148b52795ccce8b143702b5150680e",
-      "declarations": [],
+      "blocks": [
+        {
+          "card": {
+            "effect": [],
+            "excludes": [
+              "Queue artifact semantics",
+              "agent execution"
+            ],
+            "id": "workduck.queue.folder-native",
+            "invariant": [
+              "Only known Queue child directories and file suffixes are addressable, and create operations never overwrite an existing artifact."
+            ],
+            "owns": [
+              "native Queue file I/O",
+              "Queue path containment",
+              "Queue file capacity"
+            ],
+            "rel": [],
+            "risk": [],
+            "role": "Enforce native Queue directory, path, size, count, exclusive-write, update, delete, and evaluation-delegation constraints.",
+            "scope": "module",
+            "search": [
+              "native Queue files",
+              "Queue path validation",
+              "exclusive work order write"
+            ],
+            "stability": "architecture",
+            "unknown": []
+          },
+          "end": 569,
+          "endLine": 9,
+          "entries": [
+            {
+              "key": "id",
+              "line": 2,
+              "order": 0,
+              "value": "workduck.queue.folder-native"
+            },
+            {
+              "key": "role",
+              "line": 3,
+              "order": 1,
+              "value": "Enforce native Queue directory, path, size, count, exclusive-write, update, delete, and evaluation-delegation constraints."
+            },
+            {
+              "key": "owns",
+              "line": 4,
+              "order": 2,
+              "value": "native Queue file I/O|Queue path containment|Queue file capacity"
+            },
+            {
+              "key": "excludes",
+              "line": 5,
+              "order": 3,
+              "value": "Queue artifact semantics|agent execution"
+            },
+            {
+              "key": "search",
+              "line": 6,
+              "order": 4,
+              "value": "native Queue files|Queue path validation|exclusive work order write"
+            },
+            {
+              "key": "invariant",
+              "line": 7,
+              "order": 5,
+              "value": "Only known Queue child directories and file suffixes are addressable, and create operations never overwrite an existing artifact."
+            },
+            {
+              "key": "stability",
+              "line": 8,
+              "order": 6,
+              "value": "architecture"
+            }
+          ],
+          "filePath": "src-tauri/src/queue_folder.rs",
+          "indent": "",
+          "newline": "\n",
+          "prefix": "//",
+          "raw": "// llmnav/1 module\n// id=workduck.queue.folder-native\n// role=Enforce native Queue directory, path, size, count, exclusive-write, update, delete, and evaluation-delegation constraints.\n// owns=native Queue file I/O|Queue path containment|Queue file capacity\n// excludes=Queue artifact semantics|agent execution\n// search=native Queue files|Queue path validation|exclusive work order write\n// invariant=Only known Queue child directories and file suffixes are addressable, and create operations never overwrite an existing artifact.\n// stability=architecture\n// /llmnav\n",
+          "scope": "module",
+          "specVersion": "1",
+          "start": 0,
+          "startLine": 1,
+          "style": "line",
+          "syntaxErrors": []
+        }
+      ],
+      "contentHash": "05111a8293df805ded9d669cda862b0d80a2dbda42a4c5724347dead6f849720",
+      "declarations": [
+        null
+      ],
       "imports": [
         "crate::atomic_file_write::{\n    write_file_atomically, write_file_exclusively, AtomicFileWriteError,\n}",
         "crate::path_display::display_path",
@@ -1439,8 +2328,8 @@
         "tests {\n    use super::*"
       ],
       "path": "src-tauri/src/queue_folder.rs",
-      "semanticBytes": 0,
-      "sourceBytes": 39494
+      "semanticBytes": 569,
+      "sourceBytes": 40063
     },
     {
       "blocks": [],
@@ -1836,9 +2725,98 @@
       "sourceBytes": 1167
     },
     {
-      "blocks": [],
-      "contentHash": "bb438065d9ab4e99158c815a3b84b1451725bc5e9e1da0b08a6faf2e57966245",
-      "declarations": [],
+      "blocks": [
+        {
+          "card": {
+            "effect": [],
+            "excludes": [
+              "encrypted sync envelope",
+              "project registry SQLite storage"
+            ],
+            "id": "workduck.workspace.data-files",
+            "invariant": [
+              "Generic writes cannot bypass registry revisions, paired agent and persona updates commit under one lock, and secrets sync first enforces ignore policy."
+            ],
+            "owns": [
+              "workspace data allowlist",
+              "registry compare-and-swap",
+              "registry transaction recovery"
+            ],
+            "rel": [],
+            "risk": [],
+            "role": "Read and atomically update allowlisted workspace data files with registry revision checks, paired commits, and crash recovery.",
+            "scope": "module",
+            "search": [
+              "workspace data file",
+              "registry revision conflict",
+              "recover registry transaction"
+            ],
+            "stability": "contract",
+            "unknown": []
+          },
+          "end": 631,
+          "endLine": 9,
+          "entries": [
+            {
+              "key": "id",
+              "line": 2,
+              "order": 0,
+              "value": "workduck.workspace.data-files"
+            },
+            {
+              "key": "role",
+              "line": 3,
+              "order": 1,
+              "value": "Read and atomically update allowlisted workspace data files with registry revision checks, paired commits, and crash recovery."
+            },
+            {
+              "key": "owns",
+              "line": 4,
+              "order": 2,
+              "value": "workspace data allowlist|registry compare-and-swap|registry transaction recovery"
+            },
+            {
+              "key": "excludes",
+              "line": 5,
+              "order": 3,
+              "value": "encrypted sync envelope|project registry SQLite storage"
+            },
+            {
+              "key": "search",
+              "line": 6,
+              "order": 4,
+              "value": "workspace data file|registry revision conflict|recover registry transaction"
+            },
+            {
+              "key": "invariant",
+              "line": 7,
+              "order": 5,
+              "value": "Generic writes cannot bypass registry revisions, paired agent and persona updates commit under one lock, and secrets sync first enforces ignore policy."
+            },
+            {
+              "key": "stability",
+              "line": 8,
+              "order": 6,
+              "value": "contract"
+            }
+          ],
+          "filePath": "src-tauri/src/workspace_data_file.rs",
+          "indent": "",
+          "newline": "\n",
+          "prefix": "//",
+          "raw": "// llmnav/1 module\n// id=workduck.workspace.data-files\n// role=Read and atomically update allowlisted workspace data files with registry revision checks, paired commits, and crash recovery.\n// owns=workspace data allowlist|registry compare-and-swap|registry transaction recovery\n// excludes=encrypted sync envelope|project registry SQLite storage\n// search=workspace data file|registry revision conflict|recover registry transaction\n// invariant=Generic writes cannot bypass registry revisions, paired agent and persona updates commit under one lock, and secrets sync first enforces ignore policy.\n// stability=contract\n// /llmnav\n",
+          "scope": "module",
+          "specVersion": "1",
+          "start": 0,
+          "startLine": 1,
+          "style": "line",
+          "syntaxErrors": []
+        }
+      ],
+      "contentHash": "e2569c96c81e893954d8bcf60ddad174fa6666e5f603326f1666064a3883948c",
+      "declarations": [
+        null
+      ],
       "imports": [
         "crate::atomic_file_write::{write_file_atomically, AtomicFileWriteError}",
         "crate::workspace_path::{validate_absolute_directory_path, WorkspacePathValidationError}",
@@ -1848,8 +2826,8 @@
         "tests {\n    use super::*"
       ],
       "path": "src-tauri/src/workspace_data_file.rs",
-      "semanticBytes": 0,
-      "sourceBytes": 27959
+      "semanticBytes": 631,
+      "sourceBytes": 28590
     },
     {
       "blocks": [],
@@ -1990,9 +2968,98 @@
       "sourceBytes": 5441
     },
     {
-      "blocks": [],
-      "contentHash": "d1c43c4290cb5b4489ec2f63a88e30d9ab556f7ff4930ba9b9b6f27dfd3a0644",
-      "declarations": [],
+      "blocks": [
+        {
+          "card": {
+            "effect": [],
+            "excludes": [
+              "project repository creation",
+              "workspace registry data"
+            ],
+            "id": "workduck.workspace.repository-setup",
+            "invariant": [
+              "Managed instructions remain single-copy and any protected AGENTS change refreshes its existing manifest-lock entry."
+            ],
+            "owns": [
+              "workspace repository bootstrap",
+              "managed AGENTS block",
+              "Mustflow package setup"
+            ],
+            "rel": [],
+            "risk": [],
+            "role": "Initialize a workspace repository layout, Git, Mustflow, managed work-order instructions, and Workduck ignore policy through bounded native steps.",
+            "scope": "module",
+            "search": [
+              "setup workspace repository",
+              "install Mustflow workspace",
+              "managed work order instructions"
+            ],
+            "stability": "architecture",
+            "unknown": []
+          },
+          "end": 625,
+          "endLine": 9,
+          "entries": [
+            {
+              "key": "id",
+              "line": 2,
+              "order": 0,
+              "value": "workduck.workspace.repository-setup"
+            },
+            {
+              "key": "role",
+              "line": 3,
+              "order": 1,
+              "value": "Initialize a workspace repository layout, Git, Mustflow, managed work-order instructions, and Workduck ignore policy through bounded native steps."
+            },
+            {
+              "key": "owns",
+              "line": 4,
+              "order": 2,
+              "value": "workspace repository bootstrap|managed AGENTS block|Mustflow package setup"
+            },
+            {
+              "key": "excludes",
+              "line": 5,
+              "order": 3,
+              "value": "project repository creation|workspace registry data"
+            },
+            {
+              "key": "search",
+              "line": 6,
+              "order": 4,
+              "value": "setup workspace repository|install Mustflow workspace|managed work order instructions"
+            },
+            {
+              "key": "invariant",
+              "line": 7,
+              "order": 5,
+              "value": "Managed instructions remain single-copy and any protected AGENTS change refreshes its existing manifest-lock entry."
+            },
+            {
+              "key": "stability",
+              "line": 8,
+              "order": 6,
+              "value": "architecture"
+            }
+          ],
+          "filePath": "src-tauri/src/workspace_repository_setup.rs",
+          "indent": "",
+          "newline": "\n",
+          "prefix": "//",
+          "raw": "// llmnav/1 module\n// id=workduck.workspace.repository-setup\n// role=Initialize a workspace repository layout, Git, Mustflow, managed work-order instructions, and Workduck ignore policy through bounded native steps.\n// owns=workspace repository bootstrap|managed AGENTS block|Mustflow package setup\n// excludes=project repository creation|workspace registry data\n// search=setup workspace repository|install Mustflow workspace|managed work order instructions\n// invariant=Managed instructions remain single-copy and any protected AGENTS change refreshes its existing manifest-lock entry.\n// stability=architecture\n// /llmnav\n",
+          "scope": "module",
+          "specVersion": "1",
+          "start": 0,
+          "startLine": 1,
+          "style": "line",
+          "syntaxErrors": []
+        }
+      ],
+      "contentHash": "3071f4abf32373e98ece979e817eb7dea750f530be63d389b542d0a504064494",
+      "declarations": [
+        null
+      ],
       "imports": [
         "crate::git_path::{GitProcessError, wait_for_child_output}",
         "crate::path_display::display_path",
@@ -2006,8 +3073,8 @@
         "tests {\n    use super::*"
       ],
       "path": "src-tauri/src/workspace_repository_setup.rs",
-      "semanticBytes": 0,
-      "sourceBytes": 27335
+      "semanticBytes": 625,
+      "sourceBytes": 27960
     },
     {
       "blocks": [],
@@ -2025,9 +3092,98 @@
       "sourceBytes": 10848
     },
     {
-      "blocks": [],
-      "contentHash": "2f90792af50a37ce6344671685abe145370dafa43ff5870e5e9a618f881fbe99",
-      "declarations": [],
+      "blocks": [
+        {
+          "card": {
+            "effect": [],
+            "excludes": [
+              "sync payload encryption",
+              "Git synchronization"
+            ],
+            "id": "workduck.workspace.sync-file-native",
+            "invariant": [
+              "The target is a plain file under an existing absolute folder, never a symlink or directory, and reads are capped at five MiB."
+            ],
+            "owns": [
+              "native sync file I/O",
+              "sync filename validation",
+              "sync target safety"
+            ],
+            "rel": [],
+            "risk": [],
+            "role": "Resolve, validate, atomically write, and size-bound reads of a native workspace synchronization file.",
+            "scope": "module",
+            "search": [
+              "native sync file",
+              "validate sync target",
+              "atomic sync write"
+            ],
+            "stability": "contract",
+            "unknown": []
+          },
+          "end": 538,
+          "endLine": 9,
+          "entries": [
+            {
+              "key": "id",
+              "line": 2,
+              "order": 0,
+              "value": "workduck.workspace.sync-file-native"
+            },
+            {
+              "key": "role",
+              "line": 3,
+              "order": 1,
+              "value": "Resolve, validate, atomically write, and size-bound reads of a native workspace synchronization file."
+            },
+            {
+              "key": "owns",
+              "line": 4,
+              "order": 2,
+              "value": "native sync file I/O|sync filename validation|sync target safety"
+            },
+            {
+              "key": "excludes",
+              "line": 5,
+              "order": 3,
+              "value": "sync payload encryption|Git synchronization"
+            },
+            {
+              "key": "search",
+              "line": 6,
+              "order": 4,
+              "value": "native sync file|validate sync target|atomic sync write"
+            },
+            {
+              "key": "invariant",
+              "line": 7,
+              "order": 5,
+              "value": "The target is a plain file under an existing absolute folder, never a symlink or directory, and reads are capped at five MiB."
+            },
+            {
+              "key": "stability",
+              "line": 8,
+              "order": 6,
+              "value": "contract"
+            }
+          ],
+          "filePath": "src-tauri/src/workspace_sync_file.rs",
+          "indent": "",
+          "newline": "\n",
+          "prefix": "//",
+          "raw": "// llmnav/1 module\n// id=workduck.workspace.sync-file-native\n// role=Resolve, validate, atomically write, and size-bound reads of a native workspace synchronization file.\n// owns=native sync file I/O|sync filename validation|sync target safety\n// excludes=sync payload encryption|Git synchronization\n// search=native sync file|validate sync target|atomic sync write\n// invariant=The target is a plain file under an existing absolute folder, never a symlink or directory, and reads are capped at five MiB.\n// stability=contract\n// /llmnav\n",
+          "scope": "module",
+          "specVersion": "1",
+          "start": 0,
+          "startLine": 1,
+          "style": "line",
+          "syntaxErrors": []
+        }
+      ],
+      "contentHash": "bddeed95fa917932d4e86aaa987b0beca714aab4c5c0f45951c3122e01462e9d",
+      "declarations": [
+        null
+      ],
       "imports": [
         "crate::atomic_file_write::{AtomicFileWriteError, write_file_atomically}",
         "crate::path_display::display_path",
@@ -2035,13 +3191,102 @@
         "std::{\n    fs, io,\n    path::{Path, PathBuf},\n}"
       ],
       "path": "src-tauri/src/workspace_sync_file.rs",
-      "semanticBytes": 0,
-      "sourceBytes": 7884
+      "semanticBytes": 538,
+      "sourceBytes": 8422
     },
     {
-      "blocks": [],
-      "contentHash": "78aee97cda21366f324e03dc54fcf4391c434303ecfc56c0a56c1a525c8a5083",
-      "declarations": [],
+      "blocks": [
+        {
+          "card": {
+            "effect": [],
+            "excludes": [
+              "sync envelope encryption",
+              "general project Git operations"
+            ],
+            "id": "workduck.workspace.sync-git-native",
+            "invariant": [
+              "Operations for the same folder are serialized, credential-bearing remotes are never displayed, and divergent remote state fails closed."
+            ],
+            "owns": [
+              "sync Git inspection",
+              "per-folder sync locking",
+              "sync file commit and push"
+            ],
+            "rel": [],
+            "risk": [],
+            "role": "Inspect and serialize native Git fetch, pull, commit, and push operations for a workspace sync file with safe remote reporting.",
+            "scope": "module",
+            "search": [
+              "workspace sync Git",
+              "push sync file",
+              "safe sync remote"
+            ],
+            "stability": "contract",
+            "unknown": []
+          },
+          "end": 585,
+          "endLine": 9,
+          "entries": [
+            {
+              "key": "id",
+              "line": 2,
+              "order": 0,
+              "value": "workduck.workspace.sync-git-native"
+            },
+            {
+              "key": "role",
+              "line": 3,
+              "order": 1,
+              "value": "Inspect and serialize native Git fetch, pull, commit, and push operations for a workspace sync file with safe remote reporting."
+            },
+            {
+              "key": "owns",
+              "line": 4,
+              "order": 2,
+              "value": "sync Git inspection|per-folder sync locking|sync file commit and push"
+            },
+            {
+              "key": "excludes",
+              "line": 5,
+              "order": 3,
+              "value": "sync envelope encryption|general project Git operations"
+            },
+            {
+              "key": "search",
+              "line": 6,
+              "order": 4,
+              "value": "workspace sync Git|push sync file|safe sync remote"
+            },
+            {
+              "key": "invariant",
+              "line": 7,
+              "order": 5,
+              "value": "Operations for the same folder are serialized, credential-bearing remotes are never displayed, and divergent remote state fails closed."
+            },
+            {
+              "key": "stability",
+              "line": 8,
+              "order": 6,
+              "value": "contract"
+            }
+          ],
+          "filePath": "src-tauri/src/workspace_sync_git.rs",
+          "indent": "",
+          "newline": "\n",
+          "prefix": "//",
+          "raw": "// llmnav/1 module\n// id=workduck.workspace.sync-git-native\n// role=Inspect and serialize native Git fetch, pull, commit, and push operations for a workspace sync file with safe remote reporting.\n// owns=sync Git inspection|per-folder sync locking|sync file commit and push\n// excludes=sync envelope encryption|general project Git operations\n// search=workspace sync Git|push sync file|safe sync remote\n// invariant=Operations for the same folder are serialized, credential-bearing remotes are never displayed, and divergent remote state fails closed.\n// stability=contract\n// /llmnav\n",
+          "scope": "module",
+          "specVersion": "1",
+          "start": 0,
+          "startLine": 1,
+          "style": "line",
+          "syntaxErrors": []
+        }
+      ],
+      "contentHash": "15fc628f4820610b868e9a0b946c46c6fdaab8fef591e8380ddec8da7b782f1e",
+      "declarations": [
+        null
+      ],
       "imports": [
         "crate::git_credential::{GitCredential, parse_git_credential}",
         "crate::git_path::wait_for_child_output",
@@ -2057,8 +3302,8 @@
         "tests {\n    use super::*"
       ],
       "path": "src-tauri/src/workspace_sync_git.rs",
-      "semanticBytes": 0,
-      "sourceBytes": 35175
+      "semanticBytes": 585,
+      "sourceBytes": 35760
     },
     {
       "blocks": [],
@@ -4503,15 +5748,104 @@
       "sourceBytes": 6714
     },
     {
-      "blocks": [],
-      "contentHash": "d1ea4174c22c43322cf8402bbaccf55fe76b7abf540da6aa53851cbb3ebac1be",
-      "declarations": [],
+      "blocks": [
+        {
+          "card": {
+            "effect": [],
+            "excludes": [
+              "Git command execution",
+              "project registry storage"
+            ],
+            "id": "workduck.projects.operation-storage",
+            "invariant": [
+              "Only complete succeeded or failed records with every required identity and timestamp field enter the repository-indexed result."
+            ],
+            "owns": [
+              "repository operation history",
+              "operation record normalization",
+              "operation storage errors"
+            ],
+            "rel": [],
+            "risk": [],
+            "role": "Read and persist terminal repository-operation records through Tauri and normalize the latest valid record for each repository.",
+            "scope": "module",
+            "search": [
+              "repository operation history",
+              "latest Git operation",
+              "persist operation record"
+            ],
+            "stability": "contract",
+            "unknown": []
+          },
+          "end": 578,
+          "endLine": 9,
+          "entries": [
+            {
+              "key": "id",
+              "line": 2,
+              "order": 0,
+              "value": "workduck.projects.operation-storage"
+            },
+            {
+              "key": "role",
+              "line": 3,
+              "order": 1,
+              "value": "Read and persist terminal repository-operation records through Tauri and normalize the latest valid record for each repository."
+            },
+            {
+              "key": "owns",
+              "line": 4,
+              "order": 2,
+              "value": "repository operation history|operation record normalization|operation storage errors"
+            },
+            {
+              "key": "excludes",
+              "line": 5,
+              "order": 3,
+              "value": "Git command execution|project registry storage"
+            },
+            {
+              "key": "search",
+              "line": 6,
+              "order": 4,
+              "value": "repository operation history|latest Git operation|persist operation record"
+            },
+            {
+              "key": "invariant",
+              "line": 7,
+              "order": 5,
+              "value": "Only complete succeeded or failed records with every required identity and timestamp field enter the repository-indexed result."
+            },
+            {
+              "key": "stability",
+              "line": 8,
+              "order": 6,
+              "value": "contract"
+            }
+          ],
+          "filePath": "src/lib/projects/project-operation-storage.ts",
+          "indent": "",
+          "newline": "\n",
+          "prefix": null,
+          "raw": "/* llmnav/1 module\nid=workduck.projects.operation-storage\nrole=Read and persist terminal repository-operation records through Tauri and normalize the latest valid record for each repository.\nowns=repository operation history|operation record normalization|operation storage errors\nexcludes=Git command execution|project registry storage\nsearch=repository operation history|latest Git operation|persist operation record\ninvariant=Only complete succeeded or failed records with every required identity and timestamp field enter the repository-indexed result.\nstability=contract\n*/",
+          "scope": "module",
+          "specVersion": "1",
+          "start": 0,
+          "startLine": 1,
+          "style": "block",
+          "syntaxErrors": []
+        }
+      ],
+      "contentHash": "436ed63307bcb151a990ba1f0aea0170e869b94f74333ed6911f6916d31d42b8",
+      "declarations": [
+        null
+      ],
       "imports": [
         "$lib/tauri/tauri-invoke"
       ],
       "path": "src/lib/projects/project-operation-storage.ts",
-      "semanticBytes": 0,
-      "sourceBytes": 6217
+      "semanticBytes": 578,
+      "sourceBytes": 6796
     },
     {
       "blocks": [],
@@ -6715,17 +8049,106 @@
       "sourceBytes": 1042
     },
     {
-      "blocks": [],
-      "contentHash": "d7e0394215a77ee5f40fc6bd7b8bdc95d2850bd9cb53372700d79a9ece55fb65",
-      "declarations": [],
+      "blocks": [
+        {
+          "card": {
+            "effect": [],
+            "excludes": [
+              "native filesystem validation",
+              "workspace registry persistence"
+            ],
+            "id": "workduck.workspace.path-client",
+            "invariant": [
+              "Validation succeeds only when the native boundary returns a non-empty normalized path; unavailable or malformed responses fail closed."
+            ],
+            "owns": [
+              "workspace directory picker",
+              "workspace validation client",
+              "path validation errors"
+            ],
+            "rel": [],
+            "risk": [],
+            "role": "Select a workspace directory and normalize closed native validation responses for frontend callers.",
+            "scope": "module",
+            "search": [
+              "select workspace directory",
+              "validate workspace client",
+              "workspace picker"
+            ],
+            "stability": "contract",
+            "unknown": []
+          },
+          "end": 553,
+          "endLine": 9,
+          "entries": [
+            {
+              "key": "id",
+              "line": 2,
+              "order": 0,
+              "value": "workduck.workspace.path-client"
+            },
+            {
+              "key": "role",
+              "line": 3,
+              "order": 1,
+              "value": "Select a workspace directory and normalize closed native validation responses for frontend callers."
+            },
+            {
+              "key": "owns",
+              "line": 4,
+              "order": 2,
+              "value": "workspace directory picker|workspace validation client|path validation errors"
+            },
+            {
+              "key": "excludes",
+              "line": 5,
+              "order": 3,
+              "value": "native filesystem validation|workspace registry persistence"
+            },
+            {
+              "key": "search",
+              "line": 6,
+              "order": 4,
+              "value": "select workspace directory|validate workspace client|workspace picker"
+            },
+            {
+              "key": "invariant",
+              "line": 7,
+              "order": 5,
+              "value": "Validation succeeds only when the native boundary returns a non-empty normalized path; unavailable or malformed responses fail closed."
+            },
+            {
+              "key": "stability",
+              "line": 8,
+              "order": 6,
+              "value": "contract"
+            }
+          ],
+          "filePath": "src/lib/workspaces/workspace-path.ts",
+          "indent": "",
+          "newline": "\n",
+          "prefix": null,
+          "raw": "/* llmnav/1 module\nid=workduck.workspace.path-client\nrole=Select a workspace directory and normalize closed native validation responses for frontend callers.\nowns=workspace directory picker|workspace validation client|path validation errors\nexcludes=native filesystem validation|workspace registry persistence\nsearch=select workspace directory|validate workspace client|workspace picker\ninvariant=Validation succeeds only when the native boundary returns a non-empty normalized path; unavailable or malformed responses fail closed.\nstability=contract\n*/",
+          "scope": "module",
+          "specVersion": "1",
+          "start": 0,
+          "startLine": 1,
+          "style": "block",
+          "syntaxErrors": []
+        }
+      ],
+      "contentHash": "07beeca3d05bfcc6bd201bfae21bf6a42f0aee46f3f64e5df056261e080168a8",
+      "declarations": [
+        null
+      ],
       "imports": [
         "$lib/tauri/tauri-invoke",
         "./workspace-path-format",
         "@tauri-apps/plugin-dialog"
       ],
       "path": "src/lib/workspaces/workspace-path.ts",
-      "semanticBytes": 0,
-      "sourceBytes": 3338
+      "semanticBytes": 553,
+      "sourceBytes": 3892
     },
     {
       "blocks": [],
@@ -6811,16 +8234,105 @@
       "sourceBytes": 3093
     },
     {
-      "blocks": [],
-      "contentHash": "621a1303e6cee8164632cf9e8da6204b1c35289cdd306d58d2b4e9b5c1813e09",
-      "declarations": [],
+      "blocks": [
+        {
+          "card": {
+            "effect": [],
+            "excludes": [
+              "encrypted sync envelope semantics",
+              "native filesystem containment"
+            ],
+            "id": "workduck.workspace.sync-file-client",
+            "invariant": [
+              "A successful client result requires an explicit normalized native path and, for reads, string content; malformed responses fail closed."
+            ],
+            "owns": [
+              "sync file client adapter",
+              "sync file name normalization",
+              "sync file error mapping"
+            ],
+            "rel": [],
+            "risk": [],
+            "role": "Normalize workspace sync-file names and expose closed Tauri read and write results to the frontend.",
+            "scope": "module",
+            "search": [
+              "workspace sync file client",
+              "normalize sync filename",
+              "read sync file"
+            ],
+            "stability": "contract",
+            "unknown": []
+          },
+          "end": 559,
+          "endLine": 9,
+          "entries": [
+            {
+              "key": "id",
+              "line": 2,
+              "order": 0,
+              "value": "workduck.workspace.sync-file-client"
+            },
+            {
+              "key": "role",
+              "line": 3,
+              "order": 1,
+              "value": "Normalize workspace sync-file names and expose closed Tauri read and write results to the frontend."
+            },
+            {
+              "key": "owns",
+              "line": 4,
+              "order": 2,
+              "value": "sync file client adapter|sync file name normalization|sync file error mapping"
+            },
+            {
+              "key": "excludes",
+              "line": 5,
+              "order": 3,
+              "value": "encrypted sync envelope semantics|native filesystem containment"
+            },
+            {
+              "key": "search",
+              "line": 6,
+              "order": 4,
+              "value": "workspace sync file client|normalize sync filename|read sync file"
+            },
+            {
+              "key": "invariant",
+              "line": 7,
+              "order": 5,
+              "value": "A successful client result requires an explicit normalized native path and, for reads, string content; malformed responses fail closed."
+            },
+            {
+              "key": "stability",
+              "line": 8,
+              "order": 6,
+              "value": "contract"
+            }
+          ],
+          "filePath": "src/lib/workspaces/workspace-sync-file.ts",
+          "indent": "",
+          "newline": "\n",
+          "prefix": null,
+          "raw": "/* llmnav/1 module\nid=workduck.workspace.sync-file-client\nrole=Normalize workspace sync-file names and expose closed Tauri read and write results to the frontend.\nowns=sync file client adapter|sync file name normalization|sync file error mapping\nexcludes=encrypted sync envelope semantics|native filesystem containment\nsearch=workspace sync file client|normalize sync filename|read sync file\ninvariant=A successful client result requires an explicit normalized native path and, for reads, string content; malformed responses fail closed.\nstability=contract\n*/",
+          "scope": "module",
+          "specVersion": "1",
+          "start": 0,
+          "startLine": 1,
+          "style": "block",
+          "syntaxErrors": []
+        }
+      ],
+      "contentHash": "0b5ffc45fd34e755029f4d087a08416dec1dd8f6aed85502cac46fc7ac49e2cc",
+      "declarations": [
+        null
+      ],
       "imports": [
         "$lib/tauri/tauri-invoke",
         "./workspace-path-format"
       ],
       "path": "src/lib/workspaces/workspace-sync-file.ts",
-      "semanticBytes": 0,
-      "sourceBytes": 4720
+      "semanticBytes": 559,
+      "sourceBytes": 5280
     },
     {
       "blocks": [],

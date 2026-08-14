@@ -1,3 +1,12 @@
+// llmnav/1 module
+// id=workduck.git.process-boundary
+// role=Resolve Git from trusted absolute PATH entries and run prompt-free bounded child processes with separate inspection and mutation profiles.
+// owns=Git executable resolution|Git process policy|bounded child output
+// excludes=repository operation semantics|Git failure domain mapping
+// search=resolve Git executable|bounded Git output|disable Git prompts
+// invariant=Git is never resolved from the current directory or a caller-supplied path, and captured output retains only bounded head and tail bytes.
+// stability=contract
+// /llmnav
 use std::{
     collections::VecDeque,
     env,

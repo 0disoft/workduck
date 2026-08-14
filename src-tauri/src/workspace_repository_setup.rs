@@ -1,3 +1,12 @@
+// llmnav/1 module
+// id=workduck.workspace.repository-setup
+// role=Initialize a workspace repository layout, Git, Mustflow, managed work-order instructions, and Workduck ignore policy through bounded native steps.
+// owns=workspace repository bootstrap|managed AGENTS block|Mustflow package setup
+// excludes=project repository creation|workspace registry data
+// search=setup workspace repository|install Mustflow workspace|managed work order instructions
+// invariant=Managed instructions remain single-copy and any protected AGENTS change refreshes its existing manifest-lock entry.
+// stability=architecture
+// /llmnav
 use std::{
     fs, io,
     path::{Path, PathBuf},

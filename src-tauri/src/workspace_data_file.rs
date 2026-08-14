@@ -1,3 +1,12 @@
+// llmnav/1 module
+// id=workduck.workspace.data-files
+// role=Read and atomically update allowlisted workspace data files with registry revision checks, paired commits, and crash recovery.
+// owns=workspace data allowlist|registry compare-and-swap|registry transaction recovery
+// excludes=encrypted sync envelope|project registry SQLite storage
+// search=workspace data file|registry revision conflict|recover registry transaction
+// invariant=Generic writes cannot bypass registry revisions, paired agent and persona updates commit under one lock, and secrets sync first enforces ignore policy.
+// stability=contract
+// /llmnav
 use std::{
     fs,
     io,

@@ -6,3 +6,9 @@ role Own spawned process trees and terminate their descendants across Windows jo
 owns process tree spawning, cross-platform termination, active process registry
 excludes task command selection, terminal output buffering
 invariant Dropping an active process owner or shutting down the app cannot intentionally leave its registered descendants running.
+
+@workduck.process.developer-control
+role Enumerate local developer processes and force-stop a selected instance only after identity revalidation while redacting display commands.
+owns developer process discovery, process identity tokens, verified process kill
+excludes repository task run reconciliation, generic operating system process management
+invariant A kill rechecks an identity derived from unsanitized process facts, while user-visible command text remains redacted.

@@ -1,3 +1,12 @@
+/* llmnav/1 module
+id=workduck.projects.operation-storage
+role=Read and persist terminal repository-operation records through Tauri and normalize the latest valid record for each repository.
+owns=repository operation history|operation record normalization|operation storage errors
+excludes=Git command execution|project registry storage
+search=repository operation history|latest Git operation|persist operation record
+invariant=Only complete succeeded or failed records with every required identity and timestamp field enter the repository-indexed result.
+stability=contract
+*/
 import { getTauriInvoke } from '$lib/tauri/tauri-invoke';
 export type ProjectRepositoryOperationName = 'clone' | 'init' | 'fetch' | 'pull' | 'push' | 'publish';
 export type ProjectRepositoryOperationFinalState = 'succeeded' | 'failed';

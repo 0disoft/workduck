@@ -1,3 +1,12 @@
+// llmnav/1 module
+// id=workduck.process.developer-control
+// role=Enumerate local developer processes and force-stop a selected instance only after identity revalidation while redacting display commands.
+// owns=developer process discovery|process identity tokens|verified process kill
+// excludes=repository task run reconciliation|generic operating system process management
+// search=list developer processes|kill developer process|verify process identity
+// invariant=A kill rechecks an identity derived from unsanitized process facts, while user-visible command text remains redacted.
+// stability=contract
+// /llmnav
 use std::{
     collections::BTreeMap,
     env,

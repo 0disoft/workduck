@@ -66,3 +66,39 @@ role Compile agent run briefs and deterministic local run, shell, gate, and proj
 owns workbench run plans, gate evaluation summaries, project inventory grouping
 excludes process execution, artifact persistence
 invariant A failed gate check blocks its gate and shell-run records preserve their explicit approval and execution states.
+
+@workduck.projects.folder-native
+role Enforce native project-folder containment and apply ssealed scaffolds with locking, journaling, recovery, and conflict-safe rollback.
+owns native project folder commands, ssealed scaffold transaction, folder containment checks
+excludes repository Git operations, project registry persistence
+invariant Scaffold apply never overwrites conflicts, and recovery or rollback removes only files whose recorded checksums still match.
+
+@workduck.projects.repository-native
+role Execute bounded native clone, inspection, Git mutation, fork, and GitHub publication operations with explicit credential and cache boundaries.
+owns native repository Git commands, GitHub publication flow, remote inspection cache
+excludes frontend result normalization, repository task terminals
+invariant Inspections avoid credentials and optional locks, while mutations use bounded processes and return closed repository errors.
+
+@workduck.projects.repository-task-native
+role Discover toolchain commands, launch bounded repository tasks in terminals, and persist or reconcile native task-run records.
+owns native repository task launch, toolchain command discovery, task run reconciliation
+excludes frontend task normalization, arbitrary shell command input
+invariant Tasks are selected from a closed vocabulary, repository paths remain inside the workspace, and running records are revalidated against live process identity.
+
+@workduck.queue.execution-native
+role Validate and coordinate native multi-agent Queue execution, secret resolution, cancellation, confirmation, and exclusive result-report creation.
+owns native Queue execution, agent run coordination, execution confirmation tokens
+excludes frontend execution adapter, Queue folder CRUD
+invariant Execution requires the current estimate token, respects global and provider permits, and never exposes resolved secrets through prompt previews.
+
+@workduck.queue.folder-native
+role Enforce native Queue directory, path, size, count, exclusive-write, update, delete, and evaluation-delegation constraints.
+owns native Queue file I/O, Queue path containment, Queue file capacity
+excludes Queue artifact semantics, agent execution
+invariant Only known Queue child directories and file suffixes are addressable, and create operations never overwrite an existing artifact.
+
+@workduck.workspace.repository-setup
+role Initialize a workspace repository layout, Git, Mustflow, managed work-order instructions, and Workduck ignore policy through bounded native steps.
+owns workspace repository bootstrap, managed AGENTS block, Mustflow package setup
+excludes project repository creation, workspace registry data
+invariant Managed instructions remain single-copy and any protected AGENTS change refreshes its existing manifest-lock entry.

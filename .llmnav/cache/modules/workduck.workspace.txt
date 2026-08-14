@@ -12,3 +12,39 @@ role Serialize, encrypt, parse, decrypt, and normalize versioned workspace and p
 owns workspace sync format, encrypted sync envelope, registry payload normalization
 excludes Git synchronization, sync file transport
 invariant Decrypted data is accepted only when envelope algorithms, versions, and normalized registry payloads match the closed sync contract.
+
+@workduck.workspace.data-files
+role Read and atomically update allowlisted workspace data files with registry revision checks, paired commits, and crash recovery.
+owns workspace data allowlist, registry compare-and-swap, registry transaction recovery
+excludes encrypted sync envelope, project registry SQLite storage
+invariant Generic writes cannot bypass registry revisions, paired agent and persona updates commit under one lock, and secrets sync first enforces ignore policy.
+
+@workduck.workspace.path-client
+role Select a workspace directory and normalize closed native validation responses for frontend callers.
+owns workspace directory picker, workspace validation client, path validation errors
+excludes native filesystem validation, workspace registry persistence
+invariant Validation succeeds only when the native boundary returns a non-empty normalized path; unavailable or malformed responses fail closed.
+
+@workduck.workspace.repository-setup
+role Initialize a workspace repository layout, Git, Mustflow, managed work-order instructions, and Workduck ignore policy through bounded native steps.
+owns workspace repository bootstrap, managed AGENTS block, Mustflow package setup
+excludes project repository creation, workspace registry data
+invariant Managed instructions remain single-copy and any protected AGENTS change refreshes its existing manifest-lock entry.
+
+@workduck.workspace.sync-file-client
+role Normalize workspace sync-file names and expose closed Tauri read and write results to the frontend.
+owns sync file client adapter, sync file name normalization, sync file error mapping
+excludes encrypted sync envelope semantics, native filesystem containment
+invariant A successful client result requires an explicit normalized native path and, for reads, string content; malformed responses fail closed.
+
+@workduck.workspace.sync-file-native
+role Resolve, validate, atomically write, and size-bound reads of a native workspace synchronization file.
+owns native sync file I/O, sync filename validation, sync target safety
+excludes sync payload encryption, Git synchronization
+invariant The target is a plain file under an existing absolute folder, never a symlink or directory, and reads are capped at five MiB.
+
+@workduck.workspace.sync-git-native
+role Inspect and serialize native Git fetch, pull, commit, and push operations for a workspace sync file with safe remote reporting.
+owns sync Git inspection, per-folder sync locking, sync file commit and push
+excludes sync envelope encryption, general project Git operations
+invariant Operations for the same folder are serialized, credential-bearing remotes are never displayed, and divergent remote state fails closed.

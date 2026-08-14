@@ -1,3 +1,12 @@
+/* llmnav/1 module
+id=workduck.workspace.path-client
+role=Select a workspace directory and normalize closed native validation responses for frontend callers.
+owns=workspace directory picker|workspace validation client|path validation errors
+excludes=native filesystem validation|workspace registry persistence
+search=select workspace directory|validate workspace client|workspace picker
+invariant=Validation succeeds only when the native boundary returns a non-empty normalized path; unavailable or malformed responses fail closed.
+stability=contract
+*/
 import { getTauriInvoke } from '$lib/tauri/tauri-invoke';
 import { open } from '@tauri-apps/plugin-dialog';
 

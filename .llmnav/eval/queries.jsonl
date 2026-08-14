@@ -22,3 +22,19 @@
 {"query":"start read write or stop an interactive desktop terminal session","expected":["workduck.terminal.process"]}
 {"query":"schedule concurrent Git inspections and coalesce repositories sharing one path","expected":["workduck.repository.inspection"]}
 {"query":"validate that a workspace path is an existing readable absolute directory","expected":["workduck.workspace.path"]}
+{"query":"verify process identity before force killing a developer process while redacting display commands","expected":["workduck.process.developer-control"]}
+{"query":"recover and roll back a native ssealed scaffold apply journal without overwriting conflicts","expected":["workduck.projects.folder-native"]}
+{"query":"read and persist the latest completed repository operation record for each repository","expected":["workduck.projects.operation-storage"]}
+{"query":"normalize a workspace sync filename before invoking native file read or write","expected":["workduck.workspace.sync-file-client"]}
+{"query":"run native clone inspection Git mutations and GitHub repository publication with bounded processes","expected":["workduck.projects.repository-native"]}
+{"query":"build a read-only agent workspace snapshot that omits secrets commands and output text","expected":["workduck.agent.snapshot"]}
+{"query":"resolve Git from absolute PATH entries disable prompts and cap child output","expected":["workduck.git.process-boundary"]}
+{"query":"persist validated repository import attempt states and phases in SQLite","expected":["workduck.projects.import-attempt-store"]}
+{"query":"discover toolchain commands launch native repository tasks and reconcile running records","expected":["workduck.projects.repository-task-native"]}
+{"query":"coordinate native multi-agent Queue execution with confirmation permits and result reports","expected":["workduck.queue.execution-native"]}
+{"query":"enforce native Queue file path size count and exclusive write boundaries","expected":["workduck.queue.folder-native"]}
+{"query":"initialize workspace layout Git Mustflow managed work-order instructions and ignore policy","expected":["workduck.workspace.repository-setup"]}
+{"query":"serialize workspace sync Git operations per folder and reject unsafe credential-bearing remotes","expected":["workduck.workspace.sync-git-native"]}
+{"query":"open the workspace directory picker and validate its path through Tauri","expected":["workduck.workspace.path-client"]}
+{"query":"atomically update workspace registry files with revision checks paired commits and crash recovery","expected":["workduck.workspace.data-files"]}
+{"query":"validate a native sync file target is not a symlink and cap reads at five MiB","expected":["workduck.workspace.sync-file-native"]}

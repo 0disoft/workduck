@@ -1,3 +1,12 @@
+// llmnav/1 module
+// id=workduck.projects.repository-task-native
+// role=Discover toolchain commands, launch bounded repository tasks in terminals, and persist or reconcile native task-run records.
+// owns=native repository task launch|toolchain command discovery|task run reconciliation
+// excludes=frontend task normalization|arbitrary shell command input
+// search=native repository task|discover build command|reconcile dev server
+// invariant=Tasks are selected from a closed vocabulary, repository paths remain inside the workspace, and running records are revalidated against live process identity.
+// stability=architecture
+// /llmnav
 use std::{
     collections::{HashMap, HashSet},
     fs,

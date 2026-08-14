@@ -24,3 +24,33 @@ role Clone, inspect, initialize, synchronize, fork, and publish project reposito
 owns repository clone and fork, Git inspection scheduling, Git mutation results
 excludes repository task processes, project registry storage
 invariant Native and GitHub failures are returned as closed domain error codes rather than successful repository state.
+
+@workduck.projects.folder-native
+role Enforce native project-folder containment and apply ssealed scaffolds with locking, journaling, recovery, and conflict-safe rollback.
+owns native project folder commands, ssealed scaffold transaction, folder containment checks
+excludes repository Git operations, project registry persistence
+invariant Scaffold apply never overwrites conflicts, and recovery or rollback removes only files whose recorded checksums still match.
+
+@workduck.projects.import-attempt-store
+role Validate, persist, and read bounded repository-import attempt state and phase records from the native SQLite store.
+owns import attempt persistence, import state validation, recent attempt queries
+excludes repository clone execution, frontend attempt orchestration
+invariant Only closed source-kind, state, and phase values with required repository identity and timestamps are written.
+
+@workduck.projects.operation-storage
+role Read and persist terminal repository-operation records through Tauri and normalize the latest valid record for each repository.
+owns repository operation history, operation record normalization, operation storage errors
+excludes Git command execution, project registry storage
+invariant Only complete succeeded or failed records with every required identity and timestamp field enter the repository-indexed result.
+
+@workduck.projects.repository-native
+role Execute bounded native clone, inspection, Git mutation, fork, and GitHub publication operations with explicit credential and cache boundaries.
+owns native repository Git commands, GitHub publication flow, remote inspection cache
+excludes frontend result normalization, repository task terminals
+invariant Inspections avoid credentials and optional locks, while mutations use bounded processes and return closed repository errors.
+
+@workduck.projects.repository-task-native
+role Discover toolchain commands, launch bounded repository tasks in terminals, and persist or reconcile native task-run records.
+owns native repository task launch, toolchain command discovery, task run reconciliation
+excludes frontend task normalization, arbitrary shell command input
+invariant Tasks are selected from a closed vocabulary, repository paths remain inside the workspace, and running records are revalidated against live process identity.

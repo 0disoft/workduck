@@ -1,3 +1,12 @@
+// llmnav/1 module
+// id=workduck.projects.import-attempt-store
+// role=Validate, persist, and read bounded repository-import attempt state and phase records from the native SQLite store.
+// owns=import attempt persistence|import state validation|recent attempt queries
+// excludes=repository clone execution|frontend attempt orchestration
+// search=repository import attempt|persist import phase|read recent imports
+// invariant=Only closed source-kind, state, and phase values with required repository identity and timestamps are written.
+// stability=contract
+// /llmnav
 use rusqlite::params;
 use tauri::AppHandle;
 

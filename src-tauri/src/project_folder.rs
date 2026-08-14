@@ -1,3 +1,12 @@
+// llmnav/1 module
+// id=workduck.projects.folder-native
+// role=Enforce native project-folder containment and apply ssealed scaffolds with locking, journaling, recovery, and conflict-safe rollback.
+// owns=native project folder commands|ssealed scaffold transaction|folder containment checks
+// excludes=repository Git operations|project registry persistence
+// search=native project folder|ssealed scaffold journal|rollback scaffold apply
+// invariant=Scaffold apply never overwrites conflicts, and recovery or rollback removes only files whose recorded checksums still match.
+// stability=architecture
+// /llmnav
 use std::{
     fs,
     io::{self, Read, Write},

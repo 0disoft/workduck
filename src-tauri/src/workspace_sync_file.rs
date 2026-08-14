@@ -1,3 +1,12 @@
+// llmnav/1 module
+// id=workduck.workspace.sync-file-native
+// role=Resolve, validate, atomically write, and size-bound reads of a native workspace synchronization file.
+// owns=native sync file I/O|sync filename validation|sync target safety
+// excludes=sync payload encryption|Git synchronization
+// search=native sync file|validate sync target|atomic sync write
+// invariant=The target is a plain file under an existing absolute folder, never a symlink or directory, and reads are capped at five MiB.
+// stability=contract
+// /llmnav
 use std::{
     fs, io,
     path::{Path, PathBuf},
