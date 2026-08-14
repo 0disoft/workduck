@@ -20,7 +20,7 @@
         "@types/node": "^26.2.0",
         "@typescript/native-preview": "^7.0.0-dev.20260707.2",
         "bits-ui": "^2.18.1",
-        "llmnav": "^0.7.1",
+        "llmnav": "^0.7.4",
         "pretendard": "^1.3.9",
         "ssealed": "^0.6.12",
         "svelte": "^5.56.8",
@@ -298,7 +298,7 @@
 
     "lightningcss-win32-x64-msvc": ["lightningcss-win32-x64-msvc@1.33.0", "", { "os": "win32", "cpu": "x64" }, "sha512-OlEICDx/Xl0FqSp4bry8zFnCvGpig3Gl4gCquvYwHuqJKEC1+n9NgDniFvqHGmMv1ZkqDJrDqKKSykTDX+ehuA=="],
 
-    "llmnav": ["llmnav@0.7.1", "", { "bin": { "llmnav": "bin/llmnav.js" } }, "sha512-ykF/CpY8xg7Hki3shwCuvUsSPoGVghjxYtqyTCMhbE0V/F4CbRaAgtmb4RRMoU5/mLflxVAdcKVOptG7lPq6Yg=="],
+    "llmnav": ["llmnav@0.7.4", "", { "bin": { "llmnav": "bin/llmnav.js" } }, "sha512-Fj07HGILzb4Pvc4D3FIR6bMUN2/zR1aGBMl+irSJBP/r5awgfUKjaCzHLzP15W32ekyIG0sNhWd0DTLTDZR6uQ=="],
 
     "locate-character": ["locate-character@3.0.0", "", {}, "sha512-SW13ws7BjaeJ6p7Q6CO2nchbYEc3X3J6WrmTTDto7yMPqVSZTUyY5Tjbid+Ab8gLnATtygYtiDIJGQRRn2ZOiA=="],
 
