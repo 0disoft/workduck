@@ -1,0 +1,8 @@
+llmnav-catalog/1 repository=workduck catalog=workduck.migration
+Read semantic cards before opening source. Resolve current paths and signatures with llmnav query or show.
+
+@workduck.migration.project-registries
+role Create the strict SQLite authority row for each workspace's canonical project-registry JSON snapshot.
+owns project registry table, workspace registry uniqueness, registry JSON validity
+excludes registry domain normalization, repository operation history
+invariant Each workspace has at most one row and every stored registry payload is valid JSON.

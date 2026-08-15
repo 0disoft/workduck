@@ -38,3 +38,12 @@ workduck.workspace.repository-setup
 workduck.workspace.sync-file-client
 workduck.workspace.sync-file-native
 workduck.workspace.sync-git-native
+workduck.llm.chat-native
+workduck.migration.project-registries
+workduck.projects.board-selection
+workduck.projects.registry-domain
+workduck.queue.response-parser
+workduck.secret-vault.crypto-native
+workduck.system.autostart-native
+workduck.terminal.session-client
+workduck.workspace.data-files-client

@@ -2,6 +2,15 @@ import { isObjectRecord } from '$lib/shared/object-record';
 import { normalizeWorkspacePathForStorage } from '$lib/workspaces/workspace-path-format';
 import { createProjectFolderNameFromDisplayName } from './project-folder-name';
 
+/* llmnav/1 module
+id=workduck.projects.registry-domain
+role=Define and enforce versioned project, group, and repository registry normalization, hierarchy, and immutable mutations.
+owns=project registry domain|project hierarchy validation|repository link mutations
+excludes=registry storage transport|Git repository operations
+search=project registry model|validate project hierarchy|mutate repository links
+invariant=Every successful parse or mutation passes through the same normalization rules before returning a versioned registry.
+stability=contract
+*/
 export const WORKDUCK_PROJECT_REGISTRY_VERSION = 1;
 export const PROJECT_NAME_MAX_LENGTH = 80;
 export const PROJECT_DESCRIPTION_MAX_LENGTH = 160;

@@ -1,3 +1,12 @@
+/* llmnav/1 module
+id=workduck.workspace.data-files-client
+role=Invoke native workspace registry and data-file reads and writes while validating closed result shapes and revision failures.
+owns=workspace data client|registry pair writes|native response normalization
+excludes=filesystem containment|atomic commit recovery
+search=workspace data file client|write registry pair|workspace revision conflict
+invariant=Success requires the expected string payloads; unavailable or malformed native results fail closed.
+stability=contract
+*/
 import { getTauriInvoke } from '$lib/tauri/tauri-invoke';
 export type WorkspaceDataFileName =
 	| 'agents.json'

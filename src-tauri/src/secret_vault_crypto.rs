@@ -1,3 +1,12 @@
+// llmnav/1 module
+// id=workduck.secret-vault.crypto-native
+// role=Bind secret-vault envelopes to native password crypto with versioned associated data and closed result errors.
+// owns=native secret-vault encryption|vault envelope conversion|vault crypto error mapping
+// excludes=vault persistence|password interface
+// search=native secret vault crypto|vault envelope aad|encrypt vault payload
+// invariant=Passwords remain zeroized and plaintext is returned only after authenticated envelope validation succeeds.
+// stability=contract
+// /llmnav
 use crate::password_envelope_crypto::{
     PasswordEnvelope, PasswordEnvelopeCipher, PasswordEnvelopeConfig, PasswordEnvelopeCryptoError,
     PasswordEnvelopeKdf, decrypt_password_envelope, encrypt_password_envelope,

@@ -38,3 +38,12 @@
 {"query":"open the workspace directory picker and validate its path through Tauri","expected":["workduck.workspace.path-client"]}
 {"query":"atomically update workspace registry files with revision checks paired commits and crash recovery","expected":["workduck.workspace.data-files"]}
 {"query":"validate a native sync file target is not a symlink and cap reads at five MiB","expected":["workduck.workspace.sync-file-native"]}
+{"query":"read or change operating-system login autostart and verify the applied state","expected":["workduck.system.autostart-native"]}
+{"query":"run a bounded non-streaming desktop LLM chat completion with closed provider errors","expected":["workduck.llm.chat-native"]}
+{"query":"encrypt and decrypt the native secret-vault envelope with versioned associated data","expected":["workduck.secret-vault.crypto-native"]}
+{"query":"normalize frontend start read write and stop terminal session calls","expected":["workduck.terminal.session-client"]}
+{"query":"build project-board search indexes and filter repositories by synchronization state","expected":["workduck.projects.board-selection"]}
+{"query":"normalize and immutably mutate the versioned project group and repository registry","expected":["workduck.projects.registry-domain"]}
+{"query":"invoke workspace data-file and paired registry writes with revision conflict errors","expected":["workduck.workspace.data-files-client"]}
+{"query":"parse structured agent summaries and validate queue vote ballot choices","expected":["workduck.queue.response-parser"]}
+{"query":"create the strict SQLite project registry JSON table keyed by workspace","expected":["workduck.migration.project-registries"]}

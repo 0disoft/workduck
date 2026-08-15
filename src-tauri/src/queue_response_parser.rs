@@ -1,3 +1,12 @@
+// llmnav/1 module
+// id=workduck.queue.response-parser
+// role=Recover bounded structured summaries and vote ballots from JSON or labeled agent responses with explicit parse status.
+// owns=structured agent response parsing|vote ballot parsing|tool transcript detection
+// excludes=prompt construction|Queue execution
+// search=parse agent result|queue vote ballot|structured response fallback
+// invariant=Vote ballots are parsed only when the selected choice belongs to the supplied specification; other responses remain unparsed.
+// stability=contract
+// /llmnav
 use serde_json::Value;
 
 use crate::queue_execution::{

@@ -48,3 +48,9 @@ role Inspect and serialize native Git fetch, pull, commit, and push operations f
 owns sync Git inspection, per-folder sync locking, sync file commit and push
 excludes sync envelope encryption, general project Git operations
 invariant Operations for the same folder are serialized, credential-bearing remotes are never displayed, and divergent remote state fails closed.
+
+@workduck.workspace.data-files-client
+role Invoke native workspace registry and data-file reads and writes while validating closed result shapes and revision failures.
+owns workspace data client, registry pair writes, native response normalization
+excludes filesystem containment, atomic commit recovery
+invariant Success requires the expected string payloads; unavailable or malformed native results fail closed.

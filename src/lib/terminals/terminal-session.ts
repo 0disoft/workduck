@@ -1,3 +1,12 @@
+/* llmnav/1 module
+id=workduck.terminal.session-client
+role=Normalize start, read, write, and stop Tauri terminal commands into closed frontend snapshots and errors.
+owns=terminal session client|output cursor normalization|native failure mapping
+excludes=terminal process ownership|terminal rendering
+search=terminal session client|read terminal output|write terminal input
+invariant=Unknown or failed native responses never report connected success and return a disconnected snapshot.
+stability=contract
+*/
 import { getTauriInvoke } from '$lib/tauri/tauri-invoke';
 export type TerminalSessionError =
 	| 'terminal-session-unavailable'

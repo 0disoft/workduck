@@ -1,0 +1,8 @@
+llmnav-catalog/1 repository=workduck catalog=workduck.llm
+Read semantic cards before opening source. Resolve current paths and signatures with llmnav query or show.
+
+@workduck.llm.chat-native
+role Validate and execute bounded non-streaming provider chat completions from desktop command requests.
+owns provider allowlist, prompt and model bounds, chat error normalization
+excludes provider credential storage, streaming chat
+invariant Requests require a non-empty API key, model, and bounded prompts before any provider network call.

@@ -1,3 +1,12 @@
+/* llmnav/1 module
+id=workduck.projects.board-selection
+role=Precompute project-board search and filter indexes and derive visible project, group, and repository selections.
+owns=project board index|search matching|repository sync filters
+excludes=registry mutation|Git inspection execution
+search=project board filters|repository selection index|project sync statistics
+invariant=Derived sets and counts come only from supplied registry nodes and status snapshots without mutating them.
+stability=architecture
+*/
 import type { ProjectRepositoryGitError } from './project-repository';
 import {
 	PROJECT_TAG_MAX_LENGTH,

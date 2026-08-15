@@ -16,6 +16,48 @@
     },
     {
       "confidence": 0.85,
+      "from": "workduck/workduck.projects.board-selection",
+      "id": "35a359dd9a5f91ded40c569bcba4538f9ffb7da8bd377be8bbcc8875f691494f",
+      "kind": "imports",
+      "provenance": {
+        "generator": "llmnav",
+        "line": null,
+        "path": "src/lib/projects/project-board-selectors.ts",
+        "source": "src/lib/projects/project-board-selectors.ts",
+        "type": "local-import"
+      },
+      "to": "workduck/workduck.projects.registry-domain"
+    },
+    {
+      "confidence": 0.85,
+      "from": "workduck/workduck.projects.board-selection",
+      "id": "317b25f3e78096311899a6a5f71425c6efc6967e5ebc232d1bba488dddc8ef67",
+      "kind": "imports",
+      "provenance": {
+        "generator": "llmnav",
+        "line": null,
+        "path": "src/lib/projects/project-board-selectors.ts",
+        "source": "src/lib/projects/project-board-selectors.ts",
+        "type": "local-import"
+      },
+      "to": "workduck/workduck.projects.repository"
+    },
+    {
+      "confidence": 0.85,
+      "from": "workduck/workduck.projects.storage",
+      "id": "6e72254523f39c91dcaea8aa753d3782c30978d4ea28e3a21dd4f9a76e90c26d",
+      "kind": "imports",
+      "provenance": {
+        "generator": "llmnav",
+        "line": null,
+        "path": "src/lib/projects/project-storage.ts",
+        "source": "src/lib/projects/project-storage.ts",
+        "type": "local-import"
+      },
+      "to": "workduck/workduck.projects.registry-domain"
+    },
+    {
+      "confidence": 0.85,
       "from": "workduck/workduck.queue.execution",
       "id": "268d6ad14bde561af494351ff6a78b888341e38014c1223d0c878c6a6ff5e6a7",
       "kind": "imports",
@@ -279,6 +321,50 @@
     {
       "definitions": [],
       "external": false,
+      "key": "workduck/workduck.llm.chat-native",
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src-tauri/src/llm_chat.rs",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "repositoryId": "workduck",
+      "role": "Validate and execute bounded non-streaming provider chat completions from desktop command requests.",
+      "semanticId": "workduck.llm.chat-native",
+      "unresolved": false
+    },
+    {
+      "definitions": [],
+      "external": false,
+      "key": "workduck/workduck.migration.project-registries",
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src-tauri/migrations/004_project_registries.sql",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "repositoryId": "workduck",
+      "role": "Create the strict SQLite authority row for each workspace's canonical project-registry JSON snapshot.",
+      "semanticId": "workduck.migration.project-registries",
+      "unresolved": false
+    },
+    {
+      "definitions": [],
+      "external": false,
       "key": "workduck/workduck.process.developer-control",
       "location": {
         "declarationLine": null,
@@ -318,6 +404,28 @@
       "repositoryId": "workduck",
       "role": "Own spawned process trees and terminate their descendants across Windows jobs and Unix process groups.",
       "semanticId": "workduck.process.tree",
+      "unresolved": false
+    },
+    {
+      "definitions": [],
+      "external": false,
+      "key": "workduck/workduck.projects.board-selection",
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src/lib/projects/project-board-selectors.ts",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "repositoryId": "workduck",
+      "role": "Precompute project-board search and filter indexes and derive visible project, group, and repository selections.",
+      "semanticId": "workduck.projects.board-selection",
       "unresolved": false
     },
     {
@@ -406,6 +514,28 @@
       "repositoryId": "workduck",
       "role": "Read and persist terminal repository-operation records through Tauri and normalize the latest valid record for each repository.",
       "semanticId": "workduck.projects.operation-storage",
+      "unresolved": false
+    },
+    {
+      "definitions": [],
+      "external": false,
+      "key": "workduck/workduck.projects.registry-domain",
+      "location": {
+        "declarationLine": null,
+        "endLine": 13,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src/lib/projects/project-registry.ts",
+        "receiver": null,
+        "signature": null,
+        "startLine": 5,
+        "symbol": null,
+        "visibility": null
+      },
+      "repositoryId": "workduck",
+      "role": "Define and enforce versioned project, group, and repository registry normalization, hierarchy, and immutable mutations.",
+      "semanticId": "workduck.projects.registry-domain",
       "unresolved": false
     },
     {
@@ -675,6 +805,28 @@
     {
       "definitions": [],
       "external": false,
+      "key": "workduck/workduck.queue.response-parser",
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src-tauri/src/queue_response_parser.rs",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "repositoryId": "workduck",
+      "role": "Recover bounded structured summaries and vote ballots from JSON or labeled agent responses with explicit parse status.",
+      "semanticId": "workduck.queue.response-parser",
+      "unresolved": false
+    },
+    {
+      "definitions": [],
+      "external": false,
       "key": "workduck/workduck.repository.inspection",
       "location": {
         "declarationLine": null,
@@ -719,6 +871,50 @@
     {
       "definitions": [],
       "external": false,
+      "key": "workduck/workduck.secret-vault.crypto-native",
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src-tauri/src/secret_vault_crypto.rs",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "repositoryId": "workduck",
+      "role": "Bind secret-vault envelopes to native password crypto with versioned associated data and closed result errors.",
+      "semanticId": "workduck.secret-vault.crypto-native",
+      "unresolved": false
+    },
+    {
+      "definitions": [],
+      "external": false,
+      "key": "workduck/workduck.system.autostart-native",
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src-tauri/src/autostart_control.rs",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "repositoryId": "workduck",
+      "role": "Read and update operating-system login autostart through Tauri, verifying actual state after each mutation.",
+      "semanticId": "workduck.system.autostart-native",
+      "unresolved": false
+    },
+    {
+      "definitions": [],
+      "external": false,
       "key": "workduck/workduck.terminal.process",
       "location": {
         "declarationLine": null,
@@ -736,6 +932,28 @@
       "repositoryId": "workduck",
       "role": "Own bounded interactive terminal sessions, process trees, input, output cursors, and lifecycle commands for the desktop runtime.",
       "semanticId": "workduck.terminal.process",
+      "unresolved": false
+    },
+    {
+      "definitions": [],
+      "external": false,
+      "key": "workduck/workduck.terminal.session-client",
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src/lib/terminals/terminal-session.ts",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "repositoryId": "workduck",
+      "role": "Normalize start, read, write, and stop Tauri terminal commands into closed frontend snapshots and errors.",
+      "semanticId": "workduck.terminal.session-client",
       "unresolved": false
     },
     {
@@ -780,6 +998,28 @@
       "repositoryId": "workduck",
       "role": "Read and atomically update allowlisted workspace data files with registry revision checks, paired commits, and crash recovery.",
       "semanticId": "workduck.workspace.data-files",
+      "unresolved": false
+    },
+    {
+      "definitions": [],
+      "external": false,
+      "key": "workduck/workduck.workspace.data-files-client",
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src/lib/workspaces/workspace-data-file.ts",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "repositoryId": "workduck",
+      "role": "Invoke native workspace registry and data-file reads and writes while validating closed result shapes and revision failures.",
+      "semanticId": "workduck.workspace.data-files-client",
       "unresolved": false
     },
     {
@@ -939,11 +1179,11 @@
   ],
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "bd4ae0294c096aa1fdcc7b9b85215018337b6bd775d376415f4d2ee150845864",
+  "sourceHash": "3e6a7f02275f9cd2f9c33190c43d67b2a622c60e45a0515730ba784c043de975",
   "stats": {
-    "edgeCount": 3,
+    "edgeCount": 6,
     "importedIndexCount": 0,
-    "nodeCount": 40,
+    "nodeCount": 49,
     "unresolvedNodeCount": 0
   }
 }

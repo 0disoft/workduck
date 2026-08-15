@@ -38,3 +38,12 @@
 {"id":"workduck.projects.operation-storage","state":"active"}
 {"id":"workduck.workspace.path-client","state":"active"}
 {"id":"workduck.workspace.sync-file-client","state":"active"}
+{"id":"workduck.migration.project-registries","state":"active"}
+{"id":"workduck.system.autostart-native","state":"active"}
+{"id":"workduck.llm.chat-native","state":"active"}
+{"id":"workduck.queue.response-parser","state":"active"}
+{"id":"workduck.secret-vault.crypto-native","state":"active"}
+{"id":"workduck.projects.board-selection","state":"active"}
+{"id":"workduck.projects.registry-domain","state":"active"}
+{"id":"workduck.terminal.session-client","state":"active"}
+{"id":"workduck.workspace.data-files-client","state":"active"}

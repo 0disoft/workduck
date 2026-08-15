@@ -1,3 +1,12 @@
+// llmnav/1 module
+// id=workduck.system.autostart-native
+// role=Read and update operating-system login autostart through Tauri, verifying actual state after each mutation.
+// owns=autostart command boundary|post-write verification|autostart error mapping
+// excludes=frontend toggle state|autostart plugin initialization
+// search=workduck autostart|login startup toggle|verify autolaunch state
+// invariant=A successful mutation reports the plugin's re-read state rather than assuming the requested state was applied.
+// stability=contract
+// /llmnav
 use tauri_plugin_autostart::ManagerExt;
 
 #[derive(serde::Serialize)]

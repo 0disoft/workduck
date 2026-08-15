@@ -54,3 +54,15 @@ role Discover toolchain commands, launch bounded repository tasks in terminals, 
 owns native repository task launch, toolchain command discovery, task run reconciliation
 excludes frontend task normalization, arbitrary shell command input
 invariant Tasks are selected from a closed vocabulary, repository paths remain inside the workspace, and running records are revalidated against live process identity.
+
+@workduck.projects.board-selection
+role Precompute project-board search and filter indexes and derive visible project, group, and repository selections.
+owns project board index, search matching, repository sync filters
+excludes registry mutation, Git inspection execution
+invariant Derived sets and counts come only from supplied registry nodes and status snapshots without mutating them.
+
+@workduck.projects.registry-domain
+role Define and enforce versioned project, group, and repository registry normalization, hierarchy, and immutable mutations.
+owns project registry domain, project hierarchy validation, repository link mutations
+excludes registry storage transport, Git repository operations
+invariant Every successful parse or mutation passes through the same normalization rules before returning a versioned registry.

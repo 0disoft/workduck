@@ -6,3 +6,9 @@ role Own bounded interactive terminal sessions, process trees, input, output cur
 owns terminal session registry, terminal process spawning, bounded terminal I/O
 excludes terminal discovery, frontend terminal rendering
 invariant Session output and input stay within byte limits and replacing or stopping a session does not intentionally orphan its process tree.
+
+@workduck.terminal.session-client
+role Normalize start, read, write, and stop Tauri terminal commands into closed frontend snapshots and errors.
+owns terminal session client, output cursor normalization, native failure mapping
+excludes terminal process ownership, terminal rendering
+invariant Unknown or failed native responses never report connected success and return a disconnected snapshot.

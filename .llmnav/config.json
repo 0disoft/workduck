@@ -69,8 +69,55 @@
         "invariant"
       ],
       "scope": "module"
+    },
+    {
+      "match": [
+        "src-tauri/migrations/004_project_registries.sql",
+        "src-tauri/src/autostart_control.rs",
+        "src-tauri/src/llm_chat.rs",
+        "src-tauri/src/queue_response_parser.rs",
+        "src-tauri/src/secret_vault_crypto.rs",
+        "src/lib/projects/project-board-selectors.ts",
+        "src/lib/projects/project-registry.ts",
+        "src/lib/terminals/terminal-session.ts",
+        "src/lib/workspaces/workspace-data-file.ts"
+      ],
+      "name": "reviewed Workduck domain, native command, and client adapter boundaries",
+      "requiredFields": [
+        "owns",
+        "invariant"
+      ],
+      "scope": "module"
     }
   ],
+  "audit": {
+    "dispositions": [
+      {
+        "path": "src/lib/i18n/workduck-message-contract.ts",
+        "reason": "Compile-time mapped type widens locale literals only; it has no runtime validation or message-selection behavior."
+      },
+      {
+        "path": "src/lib/projects/project-board-errors.ts",
+        "reason": "Maps already-classified project errors to localized copy; error ownership remains in the source modules and locale catalogs."
+      },
+      {
+        "path": "src/lib/queue/domain/queue-artifact-files.ts",
+        "reason": "Thin filename composition delegates ID and slug rules and owns no independent artifact lifecycle or storage contract."
+      },
+      {
+        "path": "src/lib/queue/queue-panel-types.ts",
+        "reason": "Collects view-model types and fixed filter option IDs; it owns no queue filtering, execution, or persistence policy."
+      },
+      {
+        "path": "src/routes/processes/+page.svelte",
+        "reason": "Client fallback mirrors the legacy redirect only; process interface ownership remains on the root page."
+      },
+      {
+        "path": "src/routes/processes/+page.ts",
+        "reason": "Legacy route redirects immediately to the root page and owns no process workflow."
+      }
+    ]
+  },
   "evaluation": {
     "minimumRecallAt1": 0.75,
     "minimumRecallAt5": 0.9,

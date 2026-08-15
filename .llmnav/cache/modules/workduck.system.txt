@@ -1,0 +1,8 @@
+llmnav-catalog/1 repository=workduck catalog=workduck.system
+Read semantic cards before opening source. Resolve current paths and signatures with llmnav query or show.
+
+@workduck.system.autostart-native
+role Read and update operating-system login autostart through Tauri, verifying actual state after each mutation.
+owns autostart command boundary, post-write verification, autostart error mapping
+excludes frontend toggle state, autostart plugin initialization
+invariant A successful mutation reports the plugin's re-read state rather than assuming the requested state was applied.

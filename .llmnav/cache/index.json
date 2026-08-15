@@ -2310,11 +2310,471 @@
         "safe sync remote"
       ],
       "stability": "contract"
+    },
+    {
+      "boundaries": [
+        {
+          "confidence": "high",
+          "evidence": [
+            "tauri-command"
+          ],
+          "kind": "command"
+        }
+      ],
+      "excludes": [
+        "provider credential storage",
+        "streaming chat"
+      ],
+      "hashes": {
+        "body": "107b0e36902f0f68d1453c5271d05b40269b2d57469275c4ea743e29d04ab240",
+        "semantic": "c4d6891afa9e97ec0dd5f968ed698efc34a3fe12832ed233440d18fb082e2bbc",
+        "structure": "4a1585cf919fa72aa3e6f376577881b7bf9140e7c51bfb1a5a00df5ac8667179"
+      },
+      "id": "workduck.llm.chat-native",
+      "imports": [
+        "crate::chat_completion::{\n    ChatCompletionError, CHAT_COMPLETION_MODEL_MAX_LENGTH, chat_completion_endpoint,\n    chat_completion_http_client,\n    send_chat_completion_json,\n}",
+        "serde_json::json"
+      ],
+      "invariant": [
+        "Requests require a non-empty API key, model, and bounded prompts before any provider network call."
+      ],
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src-tauri/src/llm_chat.rs",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "owns": [
+        "provider allowlist",
+        "prompt and model bounds",
+        "chat error normalization"
+      ],
+      "role": "Validate and execute bounded non-streaming provider chat completions from desktop command requests.",
+      "scope": "module",
+      "search": [
+        "native llm chat",
+        "desktop chat completion",
+        "provider chat errors"
+      ],
+      "stability": "contract"
+    },
+    {
+      "boundaries": [
+        {
+          "confidence": "high",
+          "evidence": [
+            "path"
+          ],
+          "kind": "migration"
+        }
+      ],
+      "excludes": [
+        "registry domain normalization",
+        "repository operation history"
+      ],
+      "hashes": {
+        "body": "aea4d181e80346a323bf19aeead27f4de1113eba8efd0f0ca7551555a8e49daf",
+        "semantic": "d08aa7cb2572838799b60e0e7d596c4c941c262b5409086471703778b4be0b95",
+        "structure": "279e98d1719351cb4e8134d27e2dc28e1ce34c99e4bb3053e89c36418a323b4c"
+      },
+      "id": "workduck.migration.project-registries",
+      "imports": [],
+      "invariant": [
+        "Each workspace has at most one row and every stored registry payload is valid JSON."
+      ],
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src-tauri/migrations/004_project_registries.sql",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "owns": [
+        "project registry table",
+        "workspace registry uniqueness",
+        "registry JSON validity"
+      ],
+      "role": "Create the strict SQLite authority row for each workspace's canonical project-registry JSON snapshot.",
+      "scope": "module",
+      "search": [
+        "project registry migration",
+        "workspace registry table",
+        "sqlite registry json"
+      ],
+      "stability": "contract"
+    },
+    {
+      "boundaries": [],
+      "excludes": [
+        "registry mutation",
+        "Git inspection execution"
+      ],
+      "hashes": {
+        "body": "7140ca28f6d2edaa0c4a8f68861158b3f505b588fe466d36e0f3e16e342554bf",
+        "semantic": "d454096b970243a23b1f23d600a0ea3e0bd8dc66add7137777cf3ce7325ba36c",
+        "structure": "68c11815d910e7ccfd9160ec33b59e875cda0c4d5f224927331b53275ffa5027"
+      },
+      "id": "workduck.projects.board-selection",
+      "imports": [
+        "./project-registry",
+        "./project-repository"
+      ],
+      "invariant": [
+        "Derived sets and counts come only from supplied registry nodes and status snapshots without mutating them."
+      ],
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src/lib/projects/project-board-selectors.ts",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "owns": [
+        "project board index",
+        "search matching",
+        "repository sync filters"
+      ],
+      "role": "Precompute project-board search and filter indexes and derive visible project, group, and repository selections.",
+      "scope": "module",
+      "search": [
+        "project board filters",
+        "repository selection index",
+        "project sync statistics"
+      ],
+      "stability": "architecture"
+    },
+    {
+      "boundaries": [],
+      "excludes": [
+        "registry storage transport",
+        "Git repository operations"
+      ],
+      "hashes": {
+        "body": "2209cec26e612c58242f6e62875cf5a83a5f2465ba19970053076dcffe2d38a5",
+        "semantic": "ca655fa9bfd05c32048cc0f3bba042ed434da677b8b7ea27ebca1be0313833be",
+        "structure": "6215c37324d0aae281ca1d98cdb5bf4ca9cf98526793067b32915ae02f739242"
+      },
+      "id": "workduck.projects.registry-domain",
+      "imports": [
+        "$lib/shared/object-record",
+        "$lib/workspaces/workspace-path-format",
+        "./project-folder-name"
+      ],
+      "invariant": [
+        "Every successful parse or mutation passes through the same normalization rules before returning a versioned registry."
+      ],
+      "location": {
+        "declarationLine": null,
+        "endLine": 13,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src/lib/projects/project-registry.ts",
+        "receiver": null,
+        "signature": null,
+        "startLine": 5,
+        "symbol": null,
+        "visibility": null
+      },
+      "owns": [
+        "project registry domain",
+        "project hierarchy validation",
+        "repository link mutations"
+      ],
+      "role": "Define and enforce versioned project, group, and repository registry normalization, hierarchy, and immutable mutations.",
+      "scope": "module",
+      "search": [
+        "project registry model",
+        "validate project hierarchy",
+        "mutate repository links"
+      ],
+      "stability": "contract"
+    },
+    {
+      "boundaries": [],
+      "excludes": [
+        "prompt construction",
+        "Queue execution"
+      ],
+      "hashes": {
+        "body": "e6a5b98ffce05c687b377006886aace8a4eba28323518ee1999332fabdc85bce",
+        "semantic": "c259bf9c03f584dffc67411af96c5893e465c783c6e6a40b920510c85507ced2",
+        "structure": "3ac57d8c49a39c475e5f7366c6aab2094aca3e6b4af0f98e34613674a3f05f05"
+      },
+      "id": "workduck.queue.response-parser",
+      "imports": [
+        "crate::queue_execution::{\n    QueueReportLanguage, QueueStructuredResponse, QueueVoteBallot, QueueVoteResult,\n    QueueVoteSpec,\n}",
+        "serde_json::Value"
+      ],
+      "invariant": [
+        "Vote ballots are parsed only when the selected choice belongs to the supplied specification; other responses remain unparsed."
+      ],
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src-tauri/src/queue_response_parser.rs",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "owns": [
+        "structured agent response parsing",
+        "vote ballot parsing",
+        "tool transcript detection"
+      ],
+      "role": "Recover bounded structured summaries and vote ballots from JSON or labeled agent responses with explicit parse status.",
+      "scope": "module",
+      "search": [
+        "parse agent result",
+        "queue vote ballot",
+        "structured response fallback"
+      ],
+      "stability": "contract"
+    },
+    {
+      "boundaries": [
+        {
+          "confidence": "high",
+          "evidence": [
+            "tauri-command"
+          ],
+          "kind": "command"
+        }
+      ],
+      "excludes": [
+        "vault persistence",
+        "password interface"
+      ],
+      "hashes": {
+        "body": "567b34acb0662249a2d54319907ce91a7b6bd549d2ec12412924785232edeeed",
+        "semantic": "12ec8a198953868d12e06732146ee55950287c3d7e8ec88c9edef88e956eabe3",
+        "structure": "549347fc61f5e118a19e99a0482f358009723b75b5587e3ee467239629517881"
+      },
+      "id": "workduck.secret-vault.crypto-native",
+      "imports": [
+        "base64::{Engine as _, engine::general_purpose::STANDARD as BASE64}",
+        "crate::password_envelope_crypto::{\n        ENVELOPE_CIPHER_ALGORITHM, ENVELOPE_KDF_ALGORITHM, ENVELOPE_KDF_ITERATIONS,\n        ENVELOPE_KDF_MEMORY_KIB, ENVELOPE_KDF_PARALLELISM, ENVELOPE_KDF_VERSION,\n        ENVELOPE_NONCE_LENGTH, ENVELOPE_SALT_LENGTH,\n    }",
+        "crate::password_envelope_crypto::{\n    PasswordEnvelope, PasswordEnvelopeCipher, PasswordEnvelopeConfig, PasswordEnvelopeCryptoError,\n    PasswordEnvelopeKdf, decrypt_password_envelope, encrypt_password_envelope,\n}",
+        "tests {\n    use super::*",
+        "zeroize::Zeroizing"
+      ],
+      "invariant": [
+        "Passwords remain zeroized and plaintext is returned only after authenticated envelope validation succeeds."
+      ],
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src-tauri/src/secret_vault_crypto.rs",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "owns": [
+        "native secret-vault encryption",
+        "vault envelope conversion",
+        "vault crypto error mapping"
+      ],
+      "role": "Bind secret-vault envelopes to native password crypto with versioned associated data and closed result errors.",
+      "scope": "module",
+      "search": [
+        "native secret vault crypto",
+        "vault envelope aad",
+        "encrypt vault payload"
+      ],
+      "stability": "contract"
+    },
+    {
+      "boundaries": [
+        {
+          "confidence": "high",
+          "evidence": [
+            "tauri-command"
+          ],
+          "kind": "command"
+        }
+      ],
+      "excludes": [
+        "frontend toggle state",
+        "autostart plugin initialization"
+      ],
+      "hashes": {
+        "body": "5b19a33dc41b98ef8716ea9d84960da71decadbee6cf1476980de85debf0dd1f",
+        "semantic": "d6407a076a42b6b4a96668f0fd3bc18482723e0c671316e429cc2e254950a02c",
+        "structure": "9e9e8b0547d34995a78c1668c6b53939b74fe49d47dead9478d043335eaa030a"
+      },
+      "id": "workduck.system.autostart-native",
+      "imports": [
+        "tauri_plugin_autostart::ManagerExt"
+      ],
+      "invariant": [
+        "A successful mutation reports the plugin's re-read state rather than assuming the requested state was applied."
+      ],
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src-tauri/src/autostart_control.rs",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "owns": [
+        "autostart command boundary",
+        "post-write verification",
+        "autostart error mapping"
+      ],
+      "role": "Read and update operating-system login autostart through Tauri, verifying actual state after each mutation.",
+      "scope": "module",
+      "search": [
+        "workduck autostart",
+        "login startup toggle",
+        "verify autolaunch state"
+      ],
+      "stability": "contract"
+    },
+    {
+      "boundaries": [
+        {
+          "confidence": "high",
+          "evidence": [
+            "tauri-invoke"
+          ],
+          "kind": "command"
+        }
+      ],
+      "excludes": [
+        "terminal process ownership",
+        "terminal rendering"
+      ],
+      "hashes": {
+        "body": "888945fd7a7aca0f89103cfeba0779b385c257661b15ba0664db1a77bb465dbc",
+        "semantic": "15b7026750d55e0c0e67153b221915a0aad248a2e5551cdac05196ab0377cfe6",
+        "structure": "2063c675fab21ed394b88b53d629c74518d0f7042ec892cc9c3a8b9b96b31e44"
+      },
+      "id": "workduck.terminal.session-client",
+      "imports": [
+        "$lib/tauri/tauri-invoke"
+      ],
+      "invariant": [
+        "Unknown or failed native responses never report connected success and return a disconnected snapshot."
+      ],
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src/lib/terminals/terminal-session.ts",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "owns": [
+        "terminal session client",
+        "output cursor normalization",
+        "native failure mapping"
+      ],
+      "role": "Normalize start, read, write, and stop Tauri terminal commands into closed frontend snapshots and errors.",
+      "scope": "module",
+      "search": [
+        "terminal session client",
+        "read terminal output",
+        "write terminal input"
+      ],
+      "stability": "contract"
+    },
+    {
+      "boundaries": [
+        {
+          "confidence": "high",
+          "evidence": [
+            "tauri-invoke"
+          ],
+          "kind": "command"
+        }
+      ],
+      "excludes": [
+        "filesystem containment",
+        "atomic commit recovery"
+      ],
+      "hashes": {
+        "body": "78a14aea7f0528a7fe19f53d11d3c236d2dd34e0b048ddbc22aaf535ebc81f77",
+        "semantic": "5ee03f0983caaa670ae07f672874d81bf3803f4ae72dd687206de8835f038d91",
+        "structure": "e76d2548a8aa4dc8d0f5f3d61f9466e3eba7e72b4ddf674d33715064da825ab7"
+      },
+      "id": "workduck.workspace.data-files-client",
+      "imports": [
+        "$lib/tauri/tauri-invoke"
+      ],
+      "invariant": [
+        "Success requires the expected string payloads; unavailable or malformed native results fail closed."
+      ],
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src/lib/workspaces/workspace-data-file.ts",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "owns": [
+        "workspace data client",
+        "registry pair writes",
+        "native response normalization"
+      ],
+      "role": "Invoke native workspace registry and data-file reads and writes while validating closed result shapes and revision failures.",
+      "scope": "module",
+      "search": [
+        "workspace data file client",
+        "write registry pair",
+        "workspace revision conflict"
+      ],
+      "stability": "contract"
     }
   ],
   "contractFingerprints": {
     "configuration": {
-      "sha256": "df20a5a68fe6c5ae784ee42310f5b9e0709b6204f547548ecd397f74867d9f44"
+      "sha256": "9960088a953dfa5d8bb5411baf42ec14c482aae5458cb0dceb6505f9bbefef8c"
     },
     "exportedApi": {
       "count": 0,
@@ -2322,9 +2782,9 @@
     },
     "schemaVersion": 1
   },
-  "generatedBy": "llmnav@0.7.4",
+  "generatedBy": "llmnav@0.8.0",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "03342f03bbdc4cf193958d85ad70408215dddb1443da184ea2947afaa0d10e07",
+  "sourceHash": "07c576ac7620ab4a5c09994bfe854632136874711b759280880176c81650fc34",
   "specVersion": "1"
 }

@@ -1,3 +1,12 @@
+// llmnav/1 module
+// id=workduck.llm.chat-native
+// role=Validate and execute bounded non-streaming provider chat completions from desktop command requests.
+// owns=provider allowlist|prompt and model bounds|chat error normalization
+// excludes=provider credential storage|streaming chat
+// search=native llm chat|desktop chat completion|provider chat errors
+// invariant=Requests require a non-empty API key, model, and bounded prompts before any provider network call.
+// stability=contract
+// /llmnav
 use serde_json::json;
 
 use crate::chat_completion::{

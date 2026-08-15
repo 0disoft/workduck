@@ -102,3 +102,9 @@ role Initialize a workspace repository layout, Git, Mustflow, managed work-order
 owns workspace repository bootstrap, managed AGENTS block, Mustflow package setup
 excludes project repository creation, workspace registry data
 invariant Managed instructions remain single-copy and any protected AGENTS change refreshes its existing manifest-lock entry.
+
+@workduck.projects.board-selection
+role Precompute project-board search and filter indexes and derive visible project, group, and repository selections.
+owns project board index, search matching, repository sync filters
+excludes registry mutation, Git inspection execution
+invariant Derived sets and counts come only from supplied registry nodes and status snapshots without mutating them.
