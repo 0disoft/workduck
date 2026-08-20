@@ -12,6 +12,7 @@ use tauri::Manager;
 
 pub mod argon2_kdf;
 mod agent_api_snapshot;
+mod app_state_store;
 mod atomic_file_write;
 mod autostart_control;
 mod chat_completion;
@@ -126,6 +127,8 @@ pub fn run() {
             runtime_status,
             storage_status,
             agent_api_snapshot::read_agent_api_snapshot,
+            app_state_store::read_app_state_records,
+            app_state_store::write_app_state_records,
             autostart_control::read_workduck_autostart_enabled,
             autostart_control::set_workduck_autostart_enabled,
             tray_menu::exit_workduck,
@@ -223,8 +226,8 @@ mod tests {
     #[test]
     fn newer_schema_storage_error_is_recoverable_during_setup() {
         let error = storage::StorageError::IncompatibleSchemaVersion {
-            database_version: 7,
-            current_version: 6,
+            database_version: 8,
+            current_version: 7,
         };
 
         assert!(is_recoverable_storage_setup_error(&error));
