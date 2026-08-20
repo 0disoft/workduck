@@ -10,7 +10,8 @@
     "node": ">=22"
   },
   "bin": {
-    "workduck": "scripts/workduck.mjs"
+    "workduck": "scripts/workduck.mjs",
+    "workduck-mcp": "scripts/workduck-mcp.mjs"
   },
   "workspaces": [
     "packages/*"
@@ -23,6 +24,7 @@
     "desktop:preview": "bun run build && tauri dev --no-watch --config src-tauri/tauri.preview.conf.json",
     "desktop:build": "tauri build",
     "workduck": "bun ./scripts/workduck.mjs",
+    "mcp": "bun ./scripts/workduck-mcp.mjs",
     "preview": "vite preview",
     "prepare": "bun ./scripts/prepare-workduck.mjs",
     "sync:ssealed-scaffold": "bun ./scripts/sync-ssealed-scaffold.mjs --write",
