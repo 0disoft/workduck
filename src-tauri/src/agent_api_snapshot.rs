@@ -15,14 +15,14 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use rusqlite::{OptionalExtension, params};
+use rusqlite::{Connection, OptionalExtension, params};
 use tauri::AppHandle;
 use time::{OffsetDateTime, format_description::well_known::Rfc3339};
 
 use crate::{
     path_display::display_path,
     storage,
-    workspace_path::{validate_absolute_directory_path, WorkspacePathValidationError},
+    workspace_path::{WorkspacePathValidationError, validate_absolute_directory_path},
 };
 
 const SNAPSHOT_VERSION: u16 = 1;
@@ -43,6 +43,15 @@ const REPOSITORY_IMPORT_ATTEMPT_LIMIT: i64 = 20;
 pub struct AgentApiSnapshotRequest {
     workspace_id: String,
     workspace_path: String,
+}
+
+impl AgentApiSnapshotRequest {
+    pub(crate) fn new(workspace_id: impl Into<String>, workspace_path: impl Into<String>) -> Self {
+        Self {
+            workspace_id: workspace_id.into(),
+            workspace_path: workspace_path.into(),
+        }
+    }
 }
 
 #[derive(serde::Serialize)]
@@ -250,6 +259,15 @@ pub fn read_agent_api_snapshot(
     app: AppHandle,
     request: AgentApiSnapshotRequest,
 ) -> AgentApiSnapshotResult {
+    let connection = storage::app_read_connection(&app).ok();
+
+    build_agent_api_snapshot(request, connection.as_deref())
+}
+
+pub(crate) fn build_agent_api_snapshot(
+    request: AgentApiSnapshotRequest,
+    connection: Option<&Connection>,
+) -> AgentApiSnapshotResult {
     let workspace_id = match validate_workspace_id(&request.workspace_id) {
         Ok(workspace_id) => workspace_id,
         Err(error) => return invalid(error),
@@ -275,8 +293,11 @@ pub fn read_agent_api_snapshot(
                 path: display_path(&workspace_path),
             },
             queue: summarize_queue(&workspace_path),
-            project_registry: summarize_project_registry(&app, &workspace_id),
-            repository_import_attempts: summarize_repository_import_attempts(&app, &workspace_id),
+            project_registry: summarize_project_registry(connection, &workspace_id),
+            repository_import_attempts: summarize_repository_import_attempts(
+                connection,
+                &workspace_id,
+            ),
             repository_task_runs: summarize_repository_task_runs(&workspace_path),
             workspace_metadata: summarize_workspace_metadata(&workspace_path),
         }),
@@ -337,7 +358,11 @@ fn summarize_queue(workspace_path: &Path) -> AgentApiQueueSnapshot {
         }
     }
 
-    for child_dir in [REPORTS_DIRECTORY_NAME, WORK_ORDERS_DIRECTORY_NAME, PROPOSALS_DIRECTORY_NAME] {
+    for child_dir in [
+        REPORTS_DIRECTORY_NAME,
+        WORK_ORDERS_DIRECTORY_NAME,
+        PROPOSALS_DIRECTORY_NAME,
+    ] {
         let child_path = queue_path.join(child_dir);
         let Ok(entries) = fs::read_dir(&child_path) else {
             continue;
@@ -404,21 +429,12 @@ fn classify_queue_file(child_dir: &str, file_name: &str) -> &'static str {
 }
 
 fn summarize_project_registry(
-    app: &AppHandle,
+    connection: Option<&Connection>,
     workspace_id: &str,
 ) -> AgentApiProjectRegistrySnapshot {
-    let registry_json = match read_project_registry_json(app, workspace_id) {
+    let registry_json = match read_project_registry_json(connection, workspace_id) {
         Ok(registry_json) => registry_json,
-        Err(_) => {
-            return AgentApiProjectRegistrySnapshot {
-                ok: false,
-                exists: false,
-                counts: AgentApiProjectRegistryCounts::default(),
-                updated_at: None,
-                nodes: Vec::new(),
-                error: Some("agent-api-project-registry-read-failed"),
-            };
-        }
+        Err(_) => return project_registry_read_failure(),
     };
     let Some(registry_json) = registry_json else {
         return AgentApiProjectRegistrySnapshot {
@@ -447,11 +463,22 @@ fn summarize_project_registry(
     summarize_project_registry_value(&value)
 }
 
+fn project_registry_read_failure() -> AgentApiProjectRegistrySnapshot {
+    AgentApiProjectRegistrySnapshot {
+        ok: false,
+        exists: false,
+        counts: AgentApiProjectRegistryCounts::default(),
+        updated_at: None,
+        nodes: Vec::new(),
+        error: Some("agent-api-project-registry-read-failed"),
+    }
+}
+
 fn read_project_registry_json(
-    app: &AppHandle,
+    connection: Option<&Connection>,
     workspace_id: &str,
 ) -> Result<Option<String>, rusqlite::Error> {
-    let connection = storage::app_read_connection(app).map_err(|_| rusqlite::Error::InvalidQuery)?;
+    let connection = connection.ok_or(rusqlite::Error::InvalidQuery)?;
 
     connection
         .query_row(
@@ -547,18 +574,11 @@ fn summarize_project_repository(
 }
 
 fn summarize_repository_import_attempts(
-    app: &AppHandle,
+    connection: Option<&Connection>,
     workspace_id: &str,
 ) -> AgentApiRepositoryImportAttemptsSnapshot {
-    let connection = match storage::app_read_connection(app) {
-        Ok(connection) => connection,
-        Err(_) => {
-            return AgentApiRepositoryImportAttemptsSnapshot {
-                ok: false,
-                records: Vec::new(),
-                error: Some("agent-api-repository-import-attempts-read-failed"),
-            };
-        }
+    let Some(connection) = connection else {
+        return repository_import_attempts_read_failure();
     };
     let mut statement = match connection.prepare(
         "SELECT
@@ -580,13 +600,7 @@ fn summarize_repository_import_attempts(
         LIMIT ?2",
     ) {
         Ok(statement) => statement,
-        Err(_) => {
-            return AgentApiRepositoryImportAttemptsSnapshot {
-                ok: false,
-                records: Vec::new(),
-                error: Some("agent-api-repository-import-attempts-read-failed"),
-            };
-        }
+        Err(_) => return repository_import_attempts_read_failure(),
     };
     let rows = match statement.query_map(
         params![workspace_id, REPOSITORY_IMPORT_ATTEMPT_LIMIT],
@@ -608,26 +622,14 @@ fn summarize_repository_import_attempts(
         },
     ) {
         Ok(rows) => rows,
-        Err(_) => {
-            return AgentApiRepositoryImportAttemptsSnapshot {
-                ok: false,
-                records: Vec::new(),
-                error: Some("agent-api-repository-import-attempts-read-failed"),
-            };
-        }
+        Err(_) => return repository_import_attempts_read_failure(),
     };
     let mut records = Vec::new();
 
     for row in rows {
         match row {
             Ok(record) => records.push(record),
-            Err(_) => {
-                return AgentApiRepositoryImportAttemptsSnapshot {
-                    ok: false,
-                    records: Vec::new(),
-                    error: Some("agent-api-repository-import-attempts-read-failed"),
-                };
-            }
+            Err(_) => return repository_import_attempts_read_failure(),
         }
     }
 
@@ -635,6 +637,14 @@ fn summarize_repository_import_attempts(
         ok: true,
         records,
         error: None,
+    }
+}
+
+fn repository_import_attempts_read_failure() -> AgentApiRepositoryImportAttemptsSnapshot {
+    AgentApiRepositoryImportAttemptsSnapshot {
+        ok: false,
+        records: Vec::new(),
+        error: Some("agent-api-repository-import-attempts-read-failed"),
     }
 }
 
@@ -664,7 +674,12 @@ fn summarize_repository_task_runs(workspace_path: &Path) -> AgentApiRepositoryTa
         .filter_map(|entry| read_repository_task_run_record(&entry.path()))
         .collect::<Vec<_>>();
 
-    records.sort_by(|left, right| right.started_at.cmp(&left.started_at).then(right.id.cmp(&left.id)));
+    records.sort_by(|left, right| {
+        right
+            .started_at
+            .cmp(&left.started_at)
+            .then(right.id.cmp(&left.id))
+    });
     records.truncate(REPOSITORY_TASK_RUN_LIMIT);
 
     AgentApiRepositoryTaskRunsSnapshot {
@@ -691,7 +706,9 @@ fn read_repository_task_run_record(path: &Path) -> Option<AgentApiRepositoryTask
         has_output_tail: has_non_empty_string(&value, "outputTail"),
         started_at: read_required_string(&value, "startedAt")?,
         finished_at: read_optional_string(&value, "finishedAt"),
-        exit_code: value.get("exitCode").and_then(serde_json::Value::as_i64),
+        exit_code: value
+            .get("exitCode")
+            .and_then(serde_json::Value::as_i64),
     })
 }
 
@@ -728,7 +745,9 @@ fn summarize_metadata_file(
     array_key: &str,
     encrypted: bool,
 ) -> AgentApiMetadataFileSnapshot {
-    let file_path = workspace_path.join(WORKDUCK_DIRECTORY_NAME).join(file_name);
+    let file_path = workspace_path
+        .join(WORKDUCK_DIRECTORY_NAME)
+        .join(file_name);
 
     match fs::symlink_metadata(&file_path) {
         Ok(metadata) if metadata.file_type().is_symlink() || metadata.is_dir() => {
@@ -782,7 +801,12 @@ fn summarize_metadata_file(
     let count = fs::read_to_string(file_path)
         .ok()
         .and_then(|content| serde_json::from_str::<serde_json::Value>(&content).ok())
-        .and_then(|value| value.get(array_key).and_then(serde_json::Value::as_array).map(Vec::len))
+        .and_then(|value| {
+            value
+                .get(array_key)
+                .and_then(serde_json::Value::as_array)
+                .map(Vec::len)
+        })
         .unwrap_or(0);
 
     AgentApiMetadataFileSnapshot {
@@ -814,7 +838,12 @@ fn read_string_array(value: &serde_json::Value, key: &str) -> Vec<String> {
         .map(|values| {
             values
                 .iter()
-                .filter_map(|value| value.as_str().map(str::trim).filter(|value| !value.is_empty()))
+                .filter_map(|value| {
+                    value
+                        .as_str()
+                        .map(str::trim)
+                        .filter(|value| !value.is_empty())
+                })
                 .map(str::to_owned)
                 .collect()
         })
@@ -943,11 +972,67 @@ mod tests {
         assert!(snapshot.nodes[0].has_github_credential);
         assert!(snapshot.nodes[0].repositories[0].has_github_credential);
         assert_eq!(
-            snapshot.nodes[0].repositories[0].upstream_remote_url.as_deref(),
+            snapshot.nodes[0].repositories[0]
+                .upstream_remote_url
+                .as_deref(),
             Some("https://example.invalid/upstream.git")
         );
         assert!(!serialized.contains("secret_project"));
         assert!(!serialized.contains("secret_repo"));
+    }
+
+    #[test]
+    fn supplied_database_connection_populates_registry_without_secret_ids() {
+        let workspace = create_test_workspace("database-snapshot");
+        let connection = Connection::open_in_memory().expect("in-memory database");
+        connection
+            .execute_batch(
+                "CREATE TABLE project_registries (
+                    workspace_id TEXT PRIMARY KEY NOT NULL,
+                    registry_json TEXT NOT NULL
+                );
+                CREATE TABLE project_repository_import_attempt_records (
+                    id TEXT PRIMARY KEY NOT NULL,
+                    workspace_id TEXT NOT NULL,
+                    node_id TEXT NOT NULL,
+                    repository_name TEXT NOT NULL,
+                    state TEXT NOT NULL,
+                    phase TEXT NOT NULL,
+                    upstream_remote_url TEXT NOT NULL,
+                    fork_remote_url TEXT,
+                    target_path TEXT,
+                    error_code TEXT,
+                    started_at TEXT NOT NULL,
+                    updated_at TEXT NOT NULL,
+                    finished_at TEXT
+                );",
+            )
+            .expect("snapshot tables");
+        connection
+            .execute(
+                "INSERT INTO project_registries (workspace_id, registry_json) VALUES (?1, ?2)",
+                params![
+                    "workspace_1",
+                    r#"{"version":1,"nodes":[{"id":"project_1","kind":"project","name":"Workduck","path":"projects/workduck","githubCredentialSecretId":"secret_1","repositories":[]]}"#
+                ],
+            )
+            .expect("registry row");
+
+        let result = build_agent_api_snapshot(
+            AgentApiSnapshotRequest::new("workspace_1", display_path(&workspace)),
+            Some(&connection),
+        );
+        let serialized = serde_json::to_value(result).expect("serialized snapshot");
+
+        assert_eq!(serialized["ok"], true);
+        assert_eq!(serialized["snapshot"]["projectRegistry"]["ok"], true);
+        assert_eq!(
+            serialized["snapshot"]["projectRegistry"]["counts"]["projects"],
+            1
+        );
+        assert!(!serialized.to_string().contains("secret_1"));
+
+        let _ = fs::remove_dir_all(workspace);
     }
 
     #[test]
@@ -967,10 +1052,20 @@ mod tests {
         .expect("secrets file");
 
         let snapshot = summarize_workspace_metadata(&workspace);
-        let secrets = snapshot.files.get("secrets.sync.json").expect("secrets summary");
+        let secrets = snapshot
+            .files
+            .get("secrets.sync.json")
+            .expect("secrets summary");
 
         assert!(snapshot.ok);
-        assert_eq!(snapshot.files.get("agents.json").expect("agents summary").count, 1);
+        assert_eq!(
+            snapshot
+                .files
+                .get("agents.json")
+                .expect("agents summary")
+                .count,
+            1
+        );
         assert!(secrets.exists);
         assert!(secrets.encrypted);
         assert_eq!(secrets.count, 0);
