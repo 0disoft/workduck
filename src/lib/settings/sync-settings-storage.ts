@@ -6,6 +6,7 @@ import {
 	type SyncSettings
 } from './sync-settings';
 import {
+	isWorkduckAppStateBrowserStorageActive,
 	readWorkduckAppStateValue,
 	subscribeWorkduckAppStateValue,
 	WORKDUCK_SYNC_APP_STATE_KEY,
@@ -93,6 +94,7 @@ export function subscribeSyncSettings(callback: (settings: SyncSettings) => void
 
 	function handleStorage(event: StorageEvent) {
 		if (
+			!isWorkduckAppStateBrowserStorageActive() ||
 			event.storageArea !== window.localStorage ||
 			event.key !== WORKDUCK_SYNC_SETTINGS_STORAGE_KEY
 		) {

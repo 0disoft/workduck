@@ -280,6 +280,12 @@ export async function flushWorkduckAppStateWrites(): Promise<boolean> {
 	return pendingFlush;
 }
 
+export function isWorkduckAppStateBrowserStorageActive() {
+	const invoke = getTauriInvoke();
+
+	return backend === 'browser' || (backend === 'uninitialized' && invoke === undefined);
+}
+
 async function flushPendingWrites(): Promise<boolean> {
 	const storage = getBrowserStorage();
 	const invoke = getTauriInvoke();
@@ -288,35 +294,29 @@ async function flushPendingWrites(): Promise<boolean> {
 		return false;
 	}
 
-	const pendingWrites = readPendingWrites(storage);
+	while (true) {
+		const pendingWrites = readPendingWrites(storage);
 
-	if (!hasRecords(pendingWrites)) {
-		return true;
-	}
+		if (!hasRecords(pendingWrites)) {
+			return true;
+		}
 
-	try {
-		const response = await invoke<NativeAppStateWriteResponse>('write_app_state_records', {
-			records: pendingWrites
-		});
+		try {
+			const response = await invoke<NativeAppStateWriteResponse>('write_app_state_records', {
+				records: pendingWrites
+			});
 
-		if (!isSuccessfulNativeWriteResponse(response)) {
+			if (!isSuccessfulNativeWriteResponse(response)) {
+				return false;
+			}
+
+			removeFlushedPendingWrites(storage, pendingWrites);
+			removeLegacyValuesForRecords(storage, pendingWrites);
+			backend = 'sqlite';
+			initializationError = null;
+		} catch {
 			return false;
 		}
-
-		removeFlushedPendingWrites(storage, pendingWrites);
-		removeLegacyValuesForRecords(storage, pendingWrites);
-		backend = 'sqlite';
-		initializationError = null;
-
-		if (hasRecords(readPendingWrites(storage))) {
-			queueMicrotask(() => {
-				void flushWorkduckAppStateWrites();
-			});
-		}
-
-		return true;
-	} catch {
-		return false;
 	}
 }
 

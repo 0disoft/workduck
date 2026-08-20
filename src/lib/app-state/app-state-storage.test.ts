@@ -23,6 +23,8 @@ const SYSTEM_DEFAULT_VALUE =
 	'{"showTrayIcon":true,"minimizeToTray":false,"workspaceIdleLockMinutes":15}';
 const SYSTEM_PENDING_VALUE =
 	'{"showTrayIcon":true,"minimizeToTray":true,"workspaceIdleLockMinutes":30}';
+const SYSTEM_LATEST_VALUE =
+	'{"showTrayIcon":false,"minimizeToTray":false,"workspaceIdleLockMinutes":60}';
 
 const seeds: readonly WorkduckAppStateSeed[] = [
 	{
@@ -174,6 +176,55 @@ describe('persistent app state storage', () => {
 		assert.equal(storage.getItem(pendingStorageKey(WORKDUCK_SYSTEM_APP_STATE_KEY)), null);
 		assert.equal(writes.length, 1);
 		assert.deepEqual(Object.keys(readRecordsArgument(writes[0])), [WORKDUCK_SYSTEM_APP_STATE_KEY]);
+	});
+
+	test('drains a newer write that arrives while an older native write is in flight', async () => {
+		const storage = new MemoryStorage();
+		const writes: Record<string, unknown>[] = [];
+		const finishWrites: ((value: unknown) => void)[] = [];
+		setTauriInvokeForTest(async <T>(command: string, args?: Record<string, unknown>) => {
+			if (command === 'read_app_state_records') {
+				return response<T>({
+					ok: true,
+					records: {
+						[WORKDUCK_APPEARANCE_APP_STATE_KEY]: APPEARANCE_SQLITE_VALUE,
+						[WORKDUCK_SYSTEM_APP_STATE_KEY]: SYSTEM_DEFAULT_VALUE
+					}
+				});
+			}
+
+			writes.push(args ?? {});
+			return new Promise<T>((resolve) => {
+				finishWrites.push((value) => resolve(response<T>(value)));
+			});
+		});
+		setWorkduckAppStateBrowserStorageForTest(storage);
+		await initializeWorkduckAppState(seeds);
+
+		writeWorkduckAppStateValue(
+			WORKDUCK_SYSTEM_APP_STATE_KEY,
+			SYSTEM_LEGACY_KEY,
+			SYSTEM_PENDING_VALUE
+		);
+		const flushPromise = flushWorkduckAppStateWrites();
+		await waitFor(() => finishWrites.length === 1);
+
+		writeWorkduckAppStateValue(
+			WORKDUCK_SYSTEM_APP_STATE_KEY,
+			SYSTEM_LEGACY_KEY,
+			SYSTEM_LATEST_VALUE
+		);
+		finishWrites[0]?.({ ok: true });
+		await waitFor(() => finishWrites.length === 2);
+		finishWrites[1]?.({ ok: true });
+
+		assert.equal(await flushPromise, true);
+		assert.equal(writes.length, 2);
+		assert.equal(storage.getItem(pendingStorageKey(WORKDUCK_SYSTEM_APP_STATE_KEY)), null);
+		assert.equal(
+			readWorkduckAppStateValue(WORKDUCK_SYSTEM_APP_STATE_KEY, SYSTEM_LEGACY_KEY).valueJson,
+			SYSTEM_LATEST_VALUE
+		);
 	});
 
 	test('retains the crash journal when SQLite rejects a write', async () => {

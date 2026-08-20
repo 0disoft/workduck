@@ -6,6 +6,7 @@ import {
 	type SystemSettings
 } from './system-settings';
 import {
+	isWorkduckAppStateBrowserStorageActive,
 	readWorkduckAppStateValue,
 	subscribeWorkduckAppStateValue,
 	WORKDUCK_SYSTEM_APP_STATE_KEY,
@@ -93,6 +94,7 @@ export function subscribeSystemSettings(callback: (settings: SystemSettings) => 
 
 	function handleStorage(event: StorageEvent) {
 		if (
+			!isWorkduckAppStateBrowserStorageActive() ||
 			event.storageArea !== window.localStorage ||
 			event.key !== WORKDUCK_SYSTEM_SETTINGS_STORAGE_KEY
 		) {

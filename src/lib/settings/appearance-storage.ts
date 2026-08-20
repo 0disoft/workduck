@@ -11,6 +11,7 @@ import {
 	WORKDUCK_MESSAGES_LOADED_EVENT
 } from '$lib/i18n/workduck-language';
 import {
+	isWorkduckAppStateBrowserStorageActive,
 	readWorkduckAppStateValue,
 	subscribeWorkduckAppStateValue,
 	WORKDUCK_APPEARANCE_APP_STATE_KEY,
@@ -128,6 +129,7 @@ export function subscribeAppearanceSettings(
 
 	function handleStorage(event: StorageEvent) {
 		if (
+			!isWorkduckAppStateBrowserStorageActive() ||
 			event.storageArea !== window.localStorage ||
 			event.key !== WORKDUCK_APPEARANCE_SETTINGS_STORAGE_KEY
 		) {

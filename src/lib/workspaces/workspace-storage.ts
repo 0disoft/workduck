@@ -6,6 +6,7 @@ import {
 	type WorkspaceRegistry
 } from './workspace-registry';
 import {
+	isWorkduckAppStateBrowserStorageActive,
 	readWorkduckAppStateValue,
 	subscribeWorkduckAppStateValue,
 	WORKDUCK_WORKSPACE_REGISTRY_APP_STATE_KEY,
@@ -99,6 +100,7 @@ export function subscribeWorkspaceRegistry(
 
 	function handleStorageChanged(event: StorageEvent) {
 		if (
+			!isWorkduckAppStateBrowserStorageActive() ||
 			event.storageArea !== window.localStorage ||
 			event.key !== WORKDUCK_WORKSPACE_REGISTRY_STORAGE_KEY
 		) {
