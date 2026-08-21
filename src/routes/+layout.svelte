@@ -5,10 +5,12 @@
 	import '../app.css';
 
 	type WorkbenchShellComponent = typeof import('$lib/shell/WorkbenchShell.svelte').default;
+	type CommandPaletteComponent = typeof import('$lib/search/CommandPalette.svelte').default;
 
 	let { children } = $props();
 
 	let WorkbenchShell = $state<WorkbenchShellComponent | null>(null);
+	let CommandPalette = $state<CommandPaletteComponent | null>(null);
 	let isTrayMenuWindow = $derived(
 		page.url.pathname === '/tray-menu' || page.url.pathname === '/tray-menu/'
 	);
@@ -21,6 +23,9 @@
 		void import('$lib/shell/WorkbenchShell.svelte').then((module) => {
 			WorkbenchShell = module.default;
 		});
+		void import('$lib/search/CommandPalette.svelte').then((module) => {
+			CommandPalette = module.default;
+		});
 	});
 </script>
 
@@ -32,4 +37,7 @@
 	<WorkbenchShell>
 		{@render children()}
 	</WorkbenchShell>
+	{#if CommandPalette !== null}
+		<CommandPalette />
+	{/if}
 {/if}

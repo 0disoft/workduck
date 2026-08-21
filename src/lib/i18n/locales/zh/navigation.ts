@@ -15,5 +15,29 @@ export const zhNavigationMessages = {
 	waitForOperation: '请等待当前操作完成。',
 	primary: '主工作区',
 	settingsArea: '设置',
-	resizeSidebar: '调整侧边栏大小'
+	resizeSidebar: '调整侧边栏大小',
+	commandPalette: {
+		title: '搜索 Workduck',
+		placeholder: '搜索项目、仓库、队列、智能体、参考资料、运行记录和制品',
+		openPage: '打开{page}',
+		noResults: '没有匹配的命令或工作区项目。',
+		loading: '正在加载工作区索引…',
+		searching: '正在搜索制品索引…',
+		degraded: '部分工作区数据无法读取。',
+		workspaceLocked: '请解锁当前工作区后再搜索其内容。',
+		keyboardHint: '使用 ↑ 和 ↓ 移动，Enter 打开，Esc 关闭。',
+		kinds: {
+			command: '命令',
+			project: '项目',
+			group: '分组',
+			repository: '仓库',
+			queueWorkOrder: '工作单',
+			queueResultReport: '结果报告',
+			queueProposal: '提案',
+			agent: '智能体',
+			reference: '参考资料',
+			run: '运行记录',
+			artifact: '制品'
+		}
+	}
 } as const;
