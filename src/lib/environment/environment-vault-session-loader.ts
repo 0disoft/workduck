@@ -1,16 +1,13 @@
-import {
-	parseEnvironmentVault,
-	type EnvironmentVault
-} from './environment-vault';
+import type { EnvironmentVault } from './environment-vault';
 import {
 	readEnvironmentVaultEnvelopeForWorkspace,
 	type EnvironmentVaultStorageError
 } from './environment-vault-storage';
 import {
+	openEnvironmentVaultSession,
 	readEnvironmentVaultSession,
-	setEnvironmentVaultSession
+	type EnvironmentVaultSessionError
 } from './environment-vault-session';
-import { decryptSecretVaultPayload } from './secret-vault-crypto';
 import { readWorkspaceUnlockPasswordSession } from '$lib/workspaces/workspace-unlock';
 
 export type EnvironmentVaultSessionOpenStatus =
@@ -21,8 +18,7 @@ export type EnvironmentVaultSessionOpenStatus =
 
 export type EnvironmentVaultSessionOpenError =
 	| EnvironmentVaultStorageError
-	| 'environment-vault-session-decrypt-failed'
-	| 'environment-vault-session-invalid';
+	| EnvironmentVaultSessionError;
 
 export type EnvironmentVaultSessionOpenResult =
 	| {
@@ -78,34 +74,23 @@ export async function openEnvironmentVaultSessionFromWorkspaceUnlock(
 		};
 	}
 
-	const decryptResult = await decryptSecretVaultPayload(
-		envelopeResult.envelope,
-		workspacePassword
+	const openResult = await openEnvironmentVaultSession(
+		workspaceId,
+		workspacePassword,
+		envelopeResult.envelope
 	);
 
-	if (!decryptResult.ok) {
+	if (!openResult.ok) {
 		return {
 			ok: false,
 			vault: null,
-			error: 'environment-vault-session-decrypt-failed'
+			error: openResult.error
 		};
 	}
-
-	const vault = parseEnvironmentVault(decryptResult.plaintext, workspaceId);
-
-	if (vault === null) {
-		return {
-			ok: false,
-			vault: null,
-			error: 'environment-vault-session-invalid'
-		};
-	}
-
-	setEnvironmentVaultSession(vault);
 
 	return {
 		ok: true,
-		vault,
+		vault: openResult.vault,
 		status: 'opened'
 	};
 }

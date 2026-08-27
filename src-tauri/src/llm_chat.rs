@@ -4,15 +4,17 @@
 // owns=provider allowlist|prompt and model bounds|chat error normalization
 // excludes=provider credential storage|streaming chat
 // search=native llm chat|desktop chat completion|provider chat errors
-// invariant=Requests require a non-empty API key, model, and bounded prompts before any provider network call.
+// invariant=Requests resolve API keys through the native vault broker and validate bounded models and prompts before any provider network call.
 // stability=contract
 // /llmnav
 use serde_json::json;
 
-use crate::chat_completion::{
-    ChatCompletionError, CHAT_COMPLETION_MODEL_MAX_LENGTH, chat_completion_endpoint,
-    chat_completion_http_client,
-    send_chat_completion_json,
+use crate::{
+    chat_completion::{
+        ChatCompletionError, CHAT_COMPLETION_MODEL_MAX_LENGTH, chat_completion_endpoint,
+        chat_completion_http_client, send_chat_completion_json,
+    },
+    secret_vault_session::resolve_secret_reference_or_value,
 };
 
 const MAX_PROMPT_LENGTH: usize = 48_000;
@@ -41,6 +43,7 @@ pub struct LlmChatCompletionRequest {
 pub enum LlmChatCompletionError {
     ProviderUnsupported,
     ApiKeyRequired,
+    SecretUnavailable,
     PromptRequired,
     ModelRequired,
     RequestInvalid,
@@ -65,7 +68,11 @@ pub struct LlmChatCompletionResult {
 pub async fn run_llm_chat_completion(
     request: LlmChatCompletionRequest,
 ) -> LlmChatCompletionResult {
-    let api_key = request.api_key.trim();
+    let api_key = match resolve_secret_reference_or_value(&request.api_key) {
+        Ok(api_key) => api_key,
+        Err(_) => return failed(LlmChatCompletionError::SecretUnavailable),
+    };
+    let api_key = api_key.trim();
     let model = request.model.trim();
     let system_prompt = request.system_prompt.trim();
     let user_prompt = request.user_prompt.trim();
