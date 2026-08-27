@@ -84,27 +84,14 @@ export function touchWorkspaceUnlockSessions(nowMs = Date.now()) {
 	}
 }
 
-export function lockIdleWorkspaceSessions(idleTimeoutMs: number, nowMs = Date.now()) {
+export function readIdleWorkspaceSessionIds(idleTimeoutMs: number, nowMs = Date.now()) {
 	if (!Number.isFinite(idleTimeoutMs) || idleTimeoutMs <= 0) {
 		return [] as string[];
 	}
 
-	const lockedWorkspaceIds: string[] = [];
-
-	for (const [workspaceId, session] of unlockedWorkspaceSessions.entries()) {
-		if (nowMs - session.lastActiveAt < idleTimeoutMs) {
-			continue;
-		}
-
-		unlockedWorkspaceSessions.delete(workspaceId);
-		lockedWorkspaceIds.push(workspaceId);
-	}
-
-	if (lockedWorkspaceIds.length > 0) {
-		dispatchWorkspaceUnlockChanged();
-	}
-
-	return lockedWorkspaceIds;
+	return Array.from(unlockedWorkspaceSessions.entries()).flatMap(([workspaceId, session]) =>
+		nowMs - session.lastActiveAt >= idleTimeoutMs ? [workspaceId] : []
+	);
 }
 
 export async function unlockWorkspace(

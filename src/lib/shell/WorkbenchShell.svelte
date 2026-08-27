@@ -23,7 +23,7 @@
 		readSystemSettingsFromBrowser,
 		subscribeSystemSettings
 	} from '$lib/settings/system-storage';
-	import { clearEnvironmentVaultSession } from '$lib/environment/environment-vault-session';
+	import { lockIdleWorkspaceEnvironmentVaultSessions } from '$lib/environment/environment-vault-session';
 	import { summarizeQueueFiles } from '$lib/queue/queue-folder';
 	import { subscribeQueueFilesChanged } from '$lib/queue/queue-read-state';
 	import { syncWorkduckTrayIconEnabled } from '$lib/system/tray';
@@ -45,7 +45,6 @@
 	} from '$lib/workspaces/workspace-storage';
 	import {
 		isWorkspaceUnlocked,
-		lockIdleWorkspaceSessions,
 		subscribeWorkspaceUnlocks,
 		touchWorkspaceUnlockSessions,
 		workspaceRequiresUnlock
@@ -693,11 +692,6 @@
 		});
 		const unsubscribeWorkspaceUnlocks = subscribeWorkspaceUnlocks(() => {
 			workspaceUnlockRevision += 1;
-			for (const workspace of workspaceRegistry.workspaces) {
-				if (workspaceRequiresUnlock(workspace) && !isWorkspaceUnlocked(workspace)) {
-					clearEnvironmentVaultSession(workspace.id);
-				}
-			}
 		});
 		const unsubscribeQueueFiles = subscribeQueueFilesChanged((workspaceId) => {
 			if (activeWorkspace?.id !== workspaceId) {
@@ -709,18 +703,16 @@
 		const recordUserActivity = () => {
 			touchWorkspaceUnlockSessions();
 		};
-		const lockIdleSessions = () => {
+		const lockIdleSessions = async () => {
 			const idleTimeoutMs = getWorkspaceIdleLockTimeoutMs(currentSystemSettings);
 
 			if (idleTimeoutMs === null) {
 				return;
 			}
 
-			for (const lockedWorkspaceId of lockIdleWorkspaceSessions(idleTimeoutMs)) {
-				clearEnvironmentVaultSession(lockedWorkspaceId);
-			}
+			await lockIdleWorkspaceEnvironmentVaultSessions(idleTimeoutMs);
 		};
-		const idleLockIntervalId = window.setInterval(lockIdleSessions, 15_000);
+		const idleLockIntervalId = window.setInterval(() => void lockIdleSessions(), 15_000);
 		const queuePendingRefreshIntervalId = window.setInterval(
 			() => void refreshQueuePendingCount(),
 			QUEUE_PENDING_REFRESH_INTERVAL_MS

@@ -3,6 +3,7 @@ export const ENVIRONMENT_VAULT_VERSION = 1;
 export const ENVIRONMENT_SECRET_NAME_MAX_LENGTH = 120;
 export const ENVIRONMENT_SECRET_VALUE_MAX_LENGTH = 16_384;
 export const ENVIRONMENT_SECRET_TAGS_MAX_COUNT = 8;
+export const ENVIRONMENT_SECRET_NATIVE_REFERENCE_PREFIX = 'workduck-secret-ref:v2:';
 
 export const environmentSecretKindOptions = [
 	{ id: 'api-key', label: 'API key' },
@@ -48,7 +49,12 @@ export interface EnvironmentSecretRecord {
 	readonly name: string;
 	readonly kind: EnvironmentSecretKind;
 	readonly tags: readonly EnvironmentSecretTag[];
+	/**
+	 * Stored payloads use the plaintext value immediately before native encryption.
+	 * Native session views replace it with an opaque workduck-secret-ref handle.
+	 */
 	readonly value: string;
+	readonly valueLength?: number;
 	readonly createdAt: string;
 	readonly updatedAt: string;
 }
@@ -58,6 +64,7 @@ export interface EnvironmentVault {
 	readonly workspaceId: string;
 	readonly secrets: readonly EnvironmentSecretRecord[];
 	readonly updatedAt: string;
+	readonly nativeManaged?: true;
 }
 
 export interface EnvironmentSecretInput {
@@ -167,7 +174,8 @@ export function upsertEnvironmentSecret(
 	return {
 		ok: true,
 		vault: {
-			...normalizedVault,
+			version: normalizedVault.version,
+			workspaceId: normalizedVault.workspaceId,
 			secrets: sortEnvironmentSecrets(secrets),
 			updatedAt: timestamp
 		}
@@ -188,7 +196,8 @@ export function removeEnvironmentSecret(
 	return {
 		ok: true,
 		vault: {
-			...normalizedVault,
+			version: normalizedVault.version,
+			workspaceId: normalizedVault.workspaceId,
 			secrets: normalizedVault.secrets.filter((secret) => secret.id !== secretId),
 			updatedAt: now.toISOString()
 		}
@@ -196,7 +205,15 @@ export function removeEnvironmentSecret(
 }
 
 export function createMaskedSecretValue(value: string) {
-	return value.length === 0 ? '' : '•'.repeat(Math.min(12, Math.max(6, value.length)));
+	return createMaskedSecretValueForLength(value.length);
+}
+
+export function createMaskedSecretValueForLength(valueLength: number) {
+	return valueLength <= 0 ? '' : '•'.repeat(Math.min(12, Math.max(6, Math.floor(valueLength))));
+}
+
+export function isEnvironmentSecretNativeReference(value: string) {
+	return value.startsWith(ENVIRONMENT_SECRET_NATIVE_REFERENCE_PREFIX);
 }
 
 function normalizeEnvironmentVault(value: unknown, workspaceId: string): EnvironmentVault | null {
@@ -235,7 +252,8 @@ function normalizeEnvironmentVault(value: unknown, workspaceId: string): Environ
 		version: ENVIRONMENT_VAULT_VERSION,
 		workspaceId,
 		secrets: sortEnvironmentSecrets(secrets),
-		updatedAt: readTrimmedString(value.updatedAt)
+		updatedAt: readTrimmedString(value.updatedAt),
+		...(value.nativeManaged === true ? { nativeManaged: true as const } : {})
 	};
 }
 
@@ -249,6 +267,7 @@ function parseSecretRecord(value: unknown): EnvironmentSecretRecord | null {
 	const kind = normalizeSecretKind(value.kind);
 	const tags = normalizeSecretTags(value.tags);
 	const secretValue = normalizeSecretValue(readRawString(value.value));
+	const valueLength = normalizeOptionalSecretValueLength(value.valueLength);
 	const createdAt = readTrimmedString(value.createdAt);
 	const updatedAt = readTrimmedString(value.updatedAt);
 
@@ -262,6 +281,7 @@ function parseSecretRecord(value: unknown): EnvironmentSecretRecord | null {
 		kind,
 		tags,
 		value: secretValue,
+		...(valueLength === null ? {} : { valueLength }),
 		createdAt: createdAt.length === 0 ? updatedAt : createdAt,
 		updatedAt: updatedAt.length === 0 ? createdAt : updatedAt
 	};
@@ -279,6 +299,14 @@ function normalizeSecretName(value: string) {
 
 function normalizeSecretValue(value: string) {
 	return value.slice(0, ENVIRONMENT_SECRET_VALUE_MAX_LENGTH);
+}
+
+function normalizeOptionalSecretValueLength(value: unknown) {
+	if (typeof value !== 'number' || !Number.isFinite(value)) {
+		return null;
+	}
+
+	return Math.min(ENVIRONMENT_SECRET_VALUE_MAX_LENGTH, Math.max(0, Math.floor(value)));
 }
 
 function normalizeSecretKind(value: unknown): EnvironmentSecretKind {

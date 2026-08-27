@@ -12,6 +12,7 @@ use tauri::Manager;
 
 pub mod argon2_kdf;
 mod agent_api_snapshot;
+mod app_state_store;
 mod atomic_file_write;
 mod autostart_control;
 mod chat_completion;
@@ -43,6 +44,7 @@ mod queue_response_parser;
 pub mod queue_execution;
 pub mod queue_work_order_execution;
 mod secret_vault_crypto;
+mod secret_vault_session;
 mod ssealed_scaffold_generated;
 mod ssealed_scaffold;
 mod storage;
@@ -128,6 +130,8 @@ pub fn run() {
             storage_status,
             agent_api_snapshot::read_agent_api_snapshot,
             command_palette_search::search_command_palette_artifacts,
+            app_state_store::read_app_state_records,
+            app_state_store::write_app_state_records,
             autostart_control::read_workduck_autostart_enabled,
             autostart_control::set_workduck_autostart_enabled,
             tray_menu::exit_workduck,
@@ -141,8 +145,13 @@ pub fn run() {
             terminal_process::write_terminal_session_input,
             developer_processes::kill_developer_process,
             developer_processes::list_developer_processes,
-            secret_vault_crypto::decrypt_secret_vault_payload,
-            secret_vault_crypto::encrypt_secret_vault_payload,
+            secret_vault_session::create_environment_vault_session,
+            secret_vault_session::open_environment_vault_session,
+            secret_vault_session::read_environment_vault_session,
+            secret_vault_session::close_environment_vault_session,
+            secret_vault_session::upsert_environment_vault_secret,
+            secret_vault_session::remove_environment_vault_secret,
+            secret_vault_session::read_environment_vault_secret_value,
             system_environment::apply_cli_environment_variables,
             workspace_sync_crypto::decrypt_workspace_sync_payload,
             workspace_sync_crypto::encrypt_workspace_sync_payload,
@@ -210,6 +219,7 @@ pub fn run() {
 
     app.run(|app_handle, event| {
         if matches!(event, tauri::RunEvent::ExitRequested { .. } | tauri::RunEvent::Exit) {
+            secret_vault_session::shutdown_all_secret_vault_sessions();
             terminal_process::shutdown_all_terminal_sessions(
                 &app_handle.state::<terminal_process::TerminalProcessState>(),
             );
@@ -225,8 +235,8 @@ mod tests {
     #[test]
     fn newer_schema_storage_error_is_recoverable_during_setup() {
         let error = storage::StorageError::IncompatibleSchemaVersion {
-            database_version: 7,
-            current_version: 6,
+            database_version: 8,
+            current_version: 7,
         };
 
         assert!(is_recoverable_storage_setup_error(&error));
