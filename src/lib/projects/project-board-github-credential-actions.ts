@@ -1,9 +1,9 @@
-import { parseEnvironmentVault, type EnvironmentVault } from '$lib/environment/environment-vault';
-import { createSecretVaultCryptoErrorMessage } from '$lib/environment/secret-vault-error-messages';
+import type { EnvironmentVault } from '$lib/environment/environment-vault';
 import {
-	decryptSecretVaultPayload,
-	type SecretVaultEnvelope
-} from '$lib/environment/secret-vault-crypto';
+	openEnvironmentVaultSession,
+	type EnvironmentVaultSessionError
+} from '$lib/environment/environment-vault-session';
+import type { SecretVaultEnvelope } from '$lib/environment/secret-vault-crypto';
 import type { WorkduckMessages } from '$lib/i18n/workduck-message-contract';
 import type { ProjectFormError } from './project-board-errors';
 import type { ProjectGithubCredentialEditorTarget } from './project-board-types';
@@ -42,24 +42,21 @@ export async function unlockProjectEnvironmentVault(
 	context.setFormError(null);
 
 	try {
-		const decryptResult = await decryptSecretVaultPayload(input.envelope, input.password);
+		const openResult = await openEnvironmentVaultSession(
+			input.workspaceId,
+			input.password,
+			input.envelope
+		);
 		const environmentMessages = context.getEnvironmentMessages();
 
-		if (!decryptResult.ok) {
+		if (!openResult.ok) {
 			context.setVaultError(
-				createSecretVaultCryptoErrorMessage(decryptResult.error, environmentMessages.errors)
+				createEnvironmentVaultSessionErrorMessage(openResult.error, environmentMessages.errors)
 			);
 			return;
 		}
 
-		const parsedVault = parseEnvironmentVault(decryptResult.plaintext, input.workspaceId);
-
-		if (parsedVault === null) {
-			context.setVaultError(environmentMessages.errors.vaultInvalid);
-			return;
-		}
-
-		context.setVault(parsedVault);
+		context.setVault(openResult.vault);
 		context.setPassword('');
 	} finally {
 		context.setIsBusy(false);
@@ -120,4 +117,21 @@ export async function saveProjectGithubCredential(
 	}
 
 	context.setIsSubmitting(false);
+}
+
+function createEnvironmentVaultSessionErrorMessage(
+	error: EnvironmentVaultSessionError,
+	messages: WorkduckMessages['environment']['errors']
+) {
+	switch (error) {
+		case 'environment-vault-session-password-required':
+			return messages.vaultPasswordRequired;
+		case 'environment-vault-session-unavailable':
+			return messages.vaultUnavailable;
+		case 'environment-vault-session-decrypt-failed':
+		case 'environment-vault-session-invalid':
+			return messages.vaultPasswordMismatch;
+		default:
+			return messages.vaultOperationFailed;
+	}
 }

@@ -11,6 +11,9 @@ stability=contract
 import { getTauriInvoke } from '$lib/tauri/tauri-invoke';
 import { normalizeWorkspacePathForStorage } from '$lib/workspaces/workspace-path-format';
 
+export const WORKDUCK_PROJECT_REPOSITORY_TASK_RUN_CHANGED_EVENT =
+	'workduck:project-repository-task-run-changed';
+
 export type ProjectRepositoryTask =
 	| 'open-terminal'
 	| 'install-dependencies'
@@ -109,6 +112,17 @@ interface ProjectRepositoryTaskRunRecordsResponse {
 	readonly error?: ProjectRepositoryTaskError | null;
 }
 
+
+const projectRepositoryTaskRunRecordsReadByWorkspace = new Map<
+	string,
+	Promise<ProjectRepositoryTaskRunRecordsResult>
+>();
+
+interface ProjectRepositoryTaskRunChangedDetail {
+	readonly workspacePath: string;
+	readonly runRecord: ProjectRepositoryTaskRunRecord;
+}
+
 export async function runProjectRepositoryTask(
 	input: ProjectRepositoryTaskInput
 ): Promise<ProjectRepositoryTaskResult> {
@@ -118,33 +132,70 @@ export async function runProjectRepositoryTask(
 		return { ok: false, error: 'project-repository-task-unavailable' };
 	}
 
+	const workspacePath = normalizeWorkspacePathForStorage(input.workspacePath);
+
 	try {
 		const response = await invoke<ProjectRepositoryTaskResponse>('run_project_repository_task', {
 			request: {
-				workspacePath: normalizeWorkspacePathForStorage(input.workspacePath),
+				workspacePath,
 				repositoryPath: normalizeWorkspacePathForStorage(input.repositoryPath),
 				task: input.task
 			}
 		});
 
-		return response.ok
-			? {
-					ok: true,
-					command: normalizeTaskCommand(response.command),
-					runRecord: normalizeTaskRunRecord(response.runRecord)
-				}
-			: {
-					ok: false,
-					error: isProjectRepositoryTaskError(response.error)
-						? response.error
-						: 'project-repository-task-launch-failed'
-				};
+		if (!response.ok) {
+			return {
+				ok: false,
+				error: isProjectRepositoryTaskError(response.error)
+					? response.error
+					: 'project-repository-task-launch-failed'
+			};
+		}
+
+		const runRecord = normalizeTaskRunRecord(response.runRecord);
+
+		if (runRecord !== null) {
+			dispatchProjectRepositoryTaskRunChanged(workspacePath, runRecord);
+		}
+
+		return {
+			ok: true,
+			command: normalizeTaskCommand(response.command),
+			runRecord
+		};
 	} catch {
 		return { ok: false, error: 'project-repository-task-launch-failed' };
 	}
 }
 
-export async function readProjectRepositoryTaskRunRecords(
+export function readProjectRepositoryTaskRunRecords(
+	workspacePath: string
+): Promise<ProjectRepositoryTaskRunRecordsResult> {
+	const normalizedWorkspacePath = normalizeWorkspacePathForStorage(workspacePath);
+	const activeRead = projectRepositoryTaskRunRecordsReadByWorkspace.get(
+		normalizedWorkspacePath
+	);
+
+	if (activeRead !== undefined) {
+		return activeRead;
+	}
+
+	const nextRead = readProjectRepositoryTaskRunRecordsFromNative(
+		normalizedWorkspacePath
+	).finally(() => {
+		if (
+			projectRepositoryTaskRunRecordsReadByWorkspace.get(normalizedWorkspacePath) ===
+			nextRead
+		) {
+			projectRepositoryTaskRunRecordsReadByWorkspace.delete(normalizedWorkspacePath);
+		}
+	});
+
+	projectRepositoryTaskRunRecordsReadByWorkspace.set(normalizedWorkspacePath, nextRead);
+	return nextRead;
+}
+
+async function readProjectRepositoryTaskRunRecordsFromNative(
 	workspacePath: string
 ): Promise<ProjectRepositoryTaskRunRecordsResult> {
 	const invoke = getTauriInvoke();
@@ -156,7 +207,7 @@ export async function readProjectRepositoryTaskRunRecords(
 	try {
 		const response = await invoke<ProjectRepositoryTaskRunRecordsResponse>(
 			'read_project_repository_task_run_records',
-			{ workspacePath: normalizeWorkspacePathForStorage(workspacePath) }
+			{ workspacePath }
 		);
 		const records = Array.isArray(response.records)
 			? response.records
@@ -176,6 +227,60 @@ export async function readProjectRepositoryTaskRunRecords(
 	} catch {
 		return { ok: false, records: [], error: 'project-repository-task-record-read-failed' };
 	}
+}
+
+export function subscribeProjectRepositoryTaskRunChanges(
+	workspacePath: string,
+	callback: (runRecord: ProjectRepositoryTaskRunRecord) => void
+) {
+	if (typeof window === 'undefined') {
+		return () => {};
+	}
+
+	const normalizedWorkspacePath = normalizeWorkspacePathForStorage(workspacePath);
+
+	function handleTaskRunChanged(event: Event) {
+		const detail = (event as CustomEvent<ProjectRepositoryTaskRunChangedDetail>).detail;
+
+		if (detail?.workspacePath !== normalizedWorkspacePath) {
+			return;
+		}
+
+		callback(detail.runRecord);
+	}
+
+	window.addEventListener(
+		WORKDUCK_PROJECT_REPOSITORY_TASK_RUN_CHANGED_EVENT,
+		handleTaskRunChanged
+	);
+
+	return () => {
+		window.removeEventListener(
+			WORKDUCK_PROJECT_REPOSITORY_TASK_RUN_CHANGED_EVENT,
+			handleTaskRunChanged
+		);
+	};
+}
+
+function dispatchProjectRepositoryTaskRunChanged(
+	workspacePath: string,
+	runRecord: ProjectRepositoryTaskRunRecord
+) {
+	if (typeof window === 'undefined') {
+		return;
+	}
+
+	window.dispatchEvent(
+		new CustomEvent<ProjectRepositoryTaskRunChangedDetail>(
+			WORKDUCK_PROJECT_REPOSITORY_TASK_RUN_CHANGED_EVENT,
+			{
+				detail: {
+					workspacePath,
+					runRecord
+				}
+			}
+		)
+	);
 }
 
 function normalizeTaskCommand(value: unknown) {
@@ -214,9 +319,10 @@ function normalizeTaskRunRecord(
 		exitCode: typeof value.exitCode === 'number' ? value.exitCode : null,
 		startedAt: value.startedAt,
 		finishedAt: typeof value.finishedAt === 'string' ? value.finishedAt : null,
-		outputTail: typeof value.outputTail === 'string' && value.outputTail.trim().length > 0
-			? value.outputTail
-			: null,
+		outputTail:
+			typeof value.outputTail === 'string' && value.outputTail.trim().length > 0
+				? value.outputTail
+				: null,
 		recordPath: normalizeWorkspacePathForStorage(value.recordPath)
 	};
 }

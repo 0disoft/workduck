@@ -1,6 +1,5 @@
 import {
 	createAppearanceSettingsCssVariables,
-	createDefaultAppearanceSettings,
 	normalizeAppearanceSettings,
 	parseAppearanceSettings,
 	serializeAppearanceSettings,
@@ -11,6 +10,13 @@ import {
 	getWorkduckLanguageOption,
 	WORKDUCK_MESSAGES_LOADED_EVENT
 } from '$lib/i18n/workduck-language';
+import {
+	isWorkduckAppStateBrowserStorageActive,
+	readWorkduckAppStateValue,
+	subscribeWorkduckAppStateValue,
+	WORKDUCK_APPEARANCE_APP_STATE_KEY,
+	writeWorkduckAppStateValue
+} from '$lib/app-state/app-state-storage';
 
 export const WORKDUCK_APPEARANCE_SETTINGS_CHANGED_EVENT = 'workduck:appearance-settings-changed';
 const WORKDUCK_APPEARANCE_SETTINGS_SCOPE_SELECTOR = '.workduck-window-frame';
@@ -52,54 +58,50 @@ export function applyAppearanceSettingsToBrowserDocument(settings: AppearanceSet
 }
 
 export function readAppearanceSettingsFromBrowser(): AppearanceSettingsStorageResult {
-	if (typeof window === 'undefined') {
-		return { ok: true, settings: createDefaultAppearanceSettings() };
-	}
+	const result = readWorkduckAppStateValue(
+		WORKDUCK_APPEARANCE_APP_STATE_KEY,
+		WORKDUCK_APPEARANCE_SETTINGS_STORAGE_KEY
+	);
+	const settings = parseAppearanceSettings(result.valueJson);
 
-	try {
-		return {
-			ok: true,
-			settings: parseAppearanceSettings(
-				window.localStorage.getItem(WORKDUCK_APPEARANCE_SETTINGS_STORAGE_KEY)
-			)
-		};
-	} catch {
-		return {
-			ok: false,
-			settings: createDefaultAppearanceSettings(),
-			error: 'appearance-settings-storage-unavailable'
-		};
-	}
+	return result.ok
+		? { ok: true, settings }
+		: {
+				ok: false,
+				settings,
+				error: 'appearance-settings-storage-unavailable'
+			};
 }
 
 export function writeAppearanceSettingsToBrowser(
 	settings: AppearanceSettings
 ): AppearanceSettingsStorageResult {
 	const normalizedSettings = normalizeAppearanceSettings(settings);
+	const result = writeWorkduckAppStateValue(
+		WORKDUCK_APPEARANCE_APP_STATE_KEY,
+		WORKDUCK_APPEARANCE_SETTINGS_STORAGE_KEY,
+		serializeAppearanceSettings(normalizedSettings)
+	);
 
-	if (typeof window === 'undefined') {
-		return { ok: true, settings: normalizedSettings };
-	}
-
-	try {
-		window.localStorage.setItem(
-			WORKDUCK_APPEARANCE_SETTINGS_STORAGE_KEY,
-			serializeAppearanceSettings(normalizedSettings)
-		);
-		applyAppearanceSettingsToBrowserDocument(normalizedSettings);
-		window.dispatchEvent(
-			new CustomEvent<AppearanceSettingsChangedDetail>(WORKDUCK_APPEARANCE_SETTINGS_CHANGED_EVENT, {
-				detail: { settings: normalizedSettings }
-			})
-		);
-		return { ok: true, settings: normalizedSettings };
-	} catch {
+	if (!result.ok) {
 		return {
 			ok: false,
 			settings: normalizedSettings,
 			error: 'appearance-settings-storage-unavailable'
 		};
 	}
+
+	applyAppearanceSettingsToBrowserDocument(normalizedSettings);
+
+	if (typeof window !== 'undefined') {
+		window.dispatchEvent(
+			new CustomEvent<AppearanceSettingsChangedDetail>(WORKDUCK_APPEARANCE_SETTINGS_CHANGED_EVENT, {
+				detail: { settings: normalizedSettings }
+			})
+		);
+	}
+
+	return { ok: true, settings: normalizedSettings };
 }
 
 export function subscribeAppearanceSettings(
@@ -109,49 +111,51 @@ export function subscribeAppearanceSettings(
 		return () => undefined;
 	}
 
+	function applyAndNotify(settings: AppearanceSettings) {
+		applyAppearanceSettingsToBrowserDocument(settings);
+		callback(settings);
+	}
+
 	function handleAppearanceSettingsChanged(event: Event) {
 		const detail = (event as CustomEvent<AppearanceSettingsChangedDetail>).detail;
 
 		if (detail === undefined) {
-			const storedSettings = readAppearanceSettingsFromBrowser().settings;
-
-			applyAppearanceSettingsToBrowserDocument(storedSettings);
-			callback(storedSettings);
+			applyAndNotify(readAppearanceSettingsFromBrowser().settings);
 			return;
 		}
 
-		const normalizedSettings = normalizeAppearanceSettings(detail.settings);
-
-		applyAppearanceSettingsToBrowserDocument(normalizedSettings);
-		callback(normalizedSettings);
+		applyAndNotify(normalizeAppearanceSettings(detail.settings));
 	}
 
 	function handleStorage(event: StorageEvent) {
 		if (
+			!isWorkduckAppStateBrowserStorageActive() ||
 			event.storageArea !== window.localStorage ||
 			event.key !== WORKDUCK_APPEARANCE_SETTINGS_STORAGE_KEY
 		) {
 			return;
 		}
 
-		const storedSettings = parseAppearanceSettings(event.newValue);
-
-		applyAppearanceSettingsToBrowserDocument(storedSettings);
-		callback(storedSettings);
+		applyAndNotify(parseAppearanceSettings(event.newValue));
 	}
 
 	function handleWorkduckMessagesLoaded() {
-		const storedSettings = readAppearanceSettingsFromBrowser().settings;
-
-		applyAppearanceSettingsToBrowserDocument(storedSettings);
-		callback(storedSettings);
+		applyAndNotify(readAppearanceSettingsFromBrowser().settings);
 	}
+
+	const unsubscribeAppState = subscribeWorkduckAppStateValue(
+		WORKDUCK_APPEARANCE_APP_STATE_KEY,
+		(valueJson) => {
+			applyAndNotify(parseAppearanceSettings(valueJson));
+		}
+	);
 
 	window.addEventListener(WORKDUCK_APPEARANCE_SETTINGS_CHANGED_EVENT, handleAppearanceSettingsChanged);
 	window.addEventListener('storage', handleStorage);
 	window.addEventListener(WORKDUCK_MESSAGES_LOADED_EVENT, handleWorkduckMessagesLoaded);
 
 	return () => {
+		unsubscribeAppState();
 		window.removeEventListener(
 			WORKDUCK_APPEARANCE_SETTINGS_CHANGED_EVENT,
 			handleAppearanceSettingsChanged

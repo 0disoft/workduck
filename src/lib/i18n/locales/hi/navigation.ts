@@ -15,5 +15,29 @@ export const hiNavigationMessages = {
 	waitForOperation: 'वर्तमान ऑपरेशन पूरा होने तक प्रतीक्षा करें।',
 	primary: 'प्राथमिक',
 	settingsArea: 'सेटिंग्स',
-	resizeSidebar: 'साइडबार का आकार बदलें'
+	resizeSidebar: 'साइडबार का आकार बदलें',
+	commandPalette: {
+		title: 'Workduck में खोजें',
+		placeholder: 'परियोजनाएं, रिपॉजिटरी, कतार, एजेंट, संदर्भ, रन और आर्टिफैक्ट खोजें',
+		openPage: '{page} खोलें',
+		noResults: 'कोई मेल खाता कमांड या कार्यक्षेत्र आइटम नहीं मिला।',
+		loading: 'कार्यक्षेत्र इंडेक्स लोड हो रहा है…',
+		searching: 'आर्टिफैक्ट इंडेक्स खोजा जा रहा है…',
+		degraded: 'कार्यक्षेत्र के कुछ स्रोत पढ़े नहीं जा सके।',
+		workspaceLocked: 'सामग्री खोजने के लिए सक्रिय कार्यक्षेत्र को अनलॉक करें।',
+		keyboardHint: 'चलने के लिए ↑ और ↓, खोलने के लिए Enter और बंद करने के लिए Esc दबाएं।',
+		kinds: {
+			command: 'कमांड',
+			project: 'परियोजना',
+			group: 'समूह',
+			repository: 'रिपॉजिटरी',
+			queueWorkOrder: 'कार्य आदेश',
+			queueResultReport: 'परिणाम रिपोर्ट',
+			queueProposal: 'प्रस्ताव',
+			agent: 'एजेंट',
+			reference: 'संदर्भ',
+			run: 'रन',
+			artifact: 'आर्टिफैक्ट'
+		}
+	}
 } as const;

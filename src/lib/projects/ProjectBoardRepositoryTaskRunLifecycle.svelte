@@ -1,7 +1,8 @@
 <script lang="ts">
 	import type { WorkspaceRecord } from '$lib/workspaces/workspace-registry';
 	import {
-		readProjectRepositoryTaskRunRecords
+		readProjectRepositoryTaskRunRecords,
+		subscribeProjectRepositoryTaskRunChanges
 	} from './project-repository-task';
 	import {
 		mapLatestTaskRunsByRepositoryId,
@@ -42,6 +43,7 @@
 		let isCurrent = true;
 		let refreshTimeoutId: number | undefined;
 		let isRefreshingTaskRuns = false;
+		let refreshRequestedWhileActive = false;
 
 		void currentRepositorySignature;
 
@@ -66,6 +68,7 @@
 
 		const refresh = async () => {
 			if (isRefreshingTaskRuns) {
+				refreshRequestedWhileActive = true;
 				return;
 			}
 
@@ -93,6 +96,12 @@
 				scheduleRefresh(getRepositoryTaskRunRefreshDelayMs(nextTaskRunById));
 			} finally {
 				isRefreshingTaskRuns = false;
+
+				if (refreshRequestedWhileActive && isCurrent) {
+					refreshRequestedWhileActive = false;
+					clearRefreshTimeout();
+					void refresh();
+				}
 			}
 		};
 
@@ -110,6 +119,10 @@
 
 			scheduleRefresh(PROJECT_REPOSITORY_TASK_RUN_HIDDEN_REFRESH_MS);
 		};
+		const unsubscribeTaskRunChanges = subscribeProjectRepositoryTaskRunChanges(
+			workspacePath,
+			() => refreshNowForLifecycle()
+		);
 
 		void refresh();
 		document.addEventListener('visibilitychange', handleVisibilityChange);
@@ -121,6 +134,7 @@
 				refreshNow = null;
 			}
 			clearRefreshTimeout();
+			unsubscribeTaskRunChanges();
 			document.removeEventListener('visibilitychange', handleVisibilityChange);
 			window.removeEventListener('focus', refreshNowForLifecycle);
 		};
