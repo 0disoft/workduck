@@ -1,6 +1,6 @@
 [package]
 name = "workduck"
-version = "1.6.118"
+version = "1.6.119"
 description = "Local-first developer workbench"
 authors = ["Workduck contributors"]
 license = "0BSD"
@@ -16,7 +16,7 @@ tauri-build = { version = "2", features = [] }
 
 [dependencies]
 argon2 = { version = "0.5.3", features = ["std"] }
-base64 = "0.22.1"
+base64 = "0.23.1"
 chacha20poly1305 = "0.11.0"
 futures-util = "0.3.32"
 getrandom = "0.4.3"
