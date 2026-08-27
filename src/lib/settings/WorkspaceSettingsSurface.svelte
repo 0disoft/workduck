@@ -21,7 +21,7 @@
 		createWorkspacePasswordHash,
 	} from '$lib/workspaces/workspace-password';
 	import { resolveDefaultGithubTokenCredential } from '$lib/environment/github-credential';
-	import { clearEnvironmentVaultSession } from '$lib/environment/environment-vault-session';
+	import { lockWorkspaceEnvironmentVaultSession } from '$lib/environment/environment-vault-session';
 	import {
 		runProjectRepositoryTask,
 		type ProjectRepositoryTaskError
@@ -52,7 +52,6 @@
 	} from '$lib/workspaces/workspace-storage';
 	import {
 		isWorkspaceUnlocked,
-		markWorkspaceLocked,
 		markWorkspaceUnlocked,
 		subscribeWorkspaceUnlocks,
 		workspaceRequiresUnlock
@@ -878,7 +877,7 @@
 		workspaceRemoveConfirmationId = workspace.id;
 	}
 
-	function handleWorkspaceLock(workspaceId: string) {
+	async function handleWorkspaceLock(workspaceId: string) {
 		formError = null;
 		const workspace = registry.workspaces.find((candidate) => candidate.id === workspaceId);
 
@@ -891,15 +890,16 @@
 			return;
 		}
 
-		markWorkspaceLocked(workspaceId);
-		clearEnvironmentVaultSession(workspaceId);
+		if (!(await lockWorkspaceEnvironmentVaultSession(workspaceId))) {
+			return;
+		}
 
 		if (workspaceUnlockId === workspaceId) {
 			clearWorkspaceUnlockRequest();
 		}
 	}
 
-	function removeWorkspaceById(workspaceId: string) {
+	async function removeWorkspaceById(workspaceId: string) {
 		const result = removeWorkspace(registry, workspaceId);
 
 		if (!result.ok) {
@@ -907,9 +907,11 @@
 			return;
 		}
 
+		if (!(await lockWorkspaceEnvironmentVaultSession(workspaceId))) {
+			return;
+		}
+
 		if (persistRegistry(result.registry)) {
-			markWorkspaceLocked(workspaceId);
-			clearEnvironmentVaultSession(workspaceId);
 
 			if (workspaceUnlockId === workspaceId) {
 				clearWorkspaceUnlockRequest();
@@ -937,12 +939,12 @@
 		switchWorkspaceById(workspaceId);
 	}
 
-	function confirmWorkspaceRemove() {
+	async function confirmWorkspaceRemove() {
 		if (workspaceRemoveConfirmationId === null) {
 			return;
 		}
 
-		removeWorkspaceById(workspaceRemoveConfirmationId);
+		await removeWorkspaceById(workspaceRemoveConfirmationId);
 	}
 
 	async function confirmWorkspaceRepositorySetup() {

@@ -21,19 +21,13 @@
 	} from './cli-environment';
 	import { createCliEnvironmentVariablePlan } from './cli-environment-variables';
 	import {
-		createEmptyEnvironmentVault,
-		createMaskedSecretValue,
+		createMaskedSecretValueForLength,
 		environmentSecretKindOptions,
 		environmentSecretTagOptions,
-		parseEnvironmentVault,
-		removeEnvironmentSecret,
-		serializeEnvironmentVault,
-		upsertEnvironmentSecret,
 		type EnvironmentSecretKind,
 		type EnvironmentSecretRecord,
 		type EnvironmentSecretTag,
-		type EnvironmentVault,
-		type EnvironmentVaultError
+		type EnvironmentVault
 	} from './environment-vault';
 	import {
 		readEnvironmentVaultEnvelopeForWorkspace,
@@ -41,20 +35,21 @@
 		writeEnvironmentVaultEnvelopeForWorkspace
 	} from './environment-vault-storage';
 	import {
-		clearEnvironmentVaultSession,
-		setEnvironmentVaultSession
+		closeEnvironmentVaultSession,
+		createEnvironmentVaultSession,
+		openEnvironmentVaultSession,
+		readEnvironmentVaultSessionSecretValue,
+		removeEnvironmentVaultSessionSecret,
+		upsertEnvironmentVaultSessionSecret,
+		type EnvironmentVaultSessionError,
+		type EnvironmentVaultSessionMutationResult
 	} from './environment-vault-session';
 	import {
 		clearEnvironmentVaultUnlockAttempts,
 		getEnvironmentVaultUnlockLockout,
 		recordEnvironmentVaultUnlockFailure
 	} from './environment-vault-unlock';
-	import {
-		decryptSecretVaultPayload,
-		encryptSecretVaultPayload,
-		type SecretVaultEnvelope
-	} from './secret-vault-crypto';
-	import { createSecretVaultCryptoErrorMessage } from './secret-vault-error-messages';
+	import type { SecretVaultEnvelope } from './secret-vault-crypto';
 
 	interface Props {
 		readonly workspace: WorkspaceRecord;
@@ -74,12 +69,12 @@
 	let secretTagFilter = $state<EnvironmentSecretTag | 'all'>('all');
 	let secretValue = $state('');
 	let editingSecretId = $state<string | null>(null);
-	let visibleSecretIds = $state<ReadonlySet<string>>(new Set());
+	let visibleSecretValues = $state<ReadonlyMap<string, string>>(new Map());
 	let isBusy = $state(false);
 	let error = $state<string | null>(null);
 	let status = $state<string | null>(null);
 	let nowMs = $state(Date.now());
-	let autoUnlockPasswordTried = $state<string | null>(null);
+	let autoUnlockAttempted = $state(false);
 
 	let messages = $derived(getWorkduckMessages(appearanceSettings.languageId));
 	let environmentMessages = $derived(messages.environment);
@@ -101,6 +96,11 @@
 	);
 	let vaultLockout = $derived(getEnvironmentVaultUnlockLockout(workspace.id, nowMs));
 	let vaultUnlockIsLocked = $derived(vaultEnvelope !== null && vaultLockout.isLocked);
+	let editingSecret = $derived(
+		editingSecretId === null
+			? null
+			: vault?.secrets.find((secret) => secret.id === editingSecretId) ?? null
+	);
 	let filteredSecrets = $derived(
 		(vault?.secrets ?? []).filter((secret) => {
 			if (secretKindFilter !== 'all' && secret.kind !== secretKindFilter) {
@@ -115,10 +115,9 @@
 		})
 	);
 
-	function resetVaultSession(nextEnvelope: SecretVaultEnvelope | null) {
+	function resetLocalVaultState(nextEnvelope: SecretVaultEnvelope | null) {
 		vaultEnvelope = nextEnvelope;
 		vault = null;
-		clearEnvironmentVaultSession(workspace.id);
 		vaultPassword = '';
 		secretName = '';
 		secretKind = '';
@@ -127,29 +126,27 @@
 		secretTagFilter = 'all';
 		secretValue = '';
 		editingSecretId = null;
-		visibleSecretIds = new Set();
+		visibleSecretValues = new Map();
 		error = null;
 		status = null;
-		autoUnlockPasswordTried = null;
+		autoUnlockAttempted = false;
 	}
 
 	async function tryOpenVaultWithWorkspaceSession(nextEnvelope: SecretVaultEnvelope | null) {
-		if (vault !== null || isBusy) {
+		if (vault !== null || isBusy || autoUnlockAttempted) {
 			return;
 		}
 
 		const sessionPassword = readWorkspaceUnlockPasswordSession(workspace.id);
 
-		if (sessionPassword === null || autoUnlockPasswordTried === sessionPassword) {
+		if (sessionPassword === null) {
 			return;
 		}
 
-		autoUnlockPasswordTried = sessionPassword;
-		vaultPassword = sessionPassword;
+		autoUnlockAttempted = true;
 
 		if (nextEnvelope === null) {
-			await saveVault(createEmptyEnvironmentVault(workspace.id));
-			status = null;
+			await createAndPersistVault(sessionPassword, null);
 			return;
 		}
 
@@ -158,22 +155,17 @@
 		status = null;
 
 		try {
-			const decryptResult = await decryptSecretVaultPayload(nextEnvelope, sessionPassword);
+			const openResult = await openEnvironmentVaultSession(
+				workspace.id,
+				sessionPassword,
+				nextEnvelope
+			);
 
-			if (!decryptResult.ok) {
-				vaultPassword = '';
+			if (!openResult.ok) {
 				return;
 			}
 
-			const parsedVault = parseEnvironmentVault(decryptResult.plaintext, workspace.id);
-
-			if (parsedVault === null) {
-				vaultPassword = '';
-				return;
-			}
-
-			vault = parsedVault;
-			setEnvironmentVaultSession(parsedVault);
+			vault = openResult.vault;
 			clearEnvironmentVaultUnlockAttempts(workspace.id);
 		} finally {
 			isBusy = false;
@@ -200,44 +192,68 @@
 			return;
 		}
 
+		if (vaultEnvelope === null) {
+			await createAndPersistVault(vaultPassword, environmentMessages.statuses.created);
+			return;
+		}
+
 		isBusy = true;
 		error = null;
 		status = null;
 
 		try {
-			if (vaultEnvelope === null) {
-				await saveVault(createEmptyEnvironmentVault(workspace.id));
-				status = environmentMessages.statuses.created;
+			const openResult = await openEnvironmentVaultSession(
+				workspace.id,
+				vaultPassword,
+				vaultEnvelope
+			);
+
+			if (!openResult.ok) {
+				if (openResult.error === 'environment-vault-session-decrypt-failed') {
+					const lockout = recordEnvironmentVaultUnlockFailure(workspace.id, Date.now());
+					error = lockout.isLocked
+						? environmentMessages.errors.vaultPasswordTryAgain.replace(
+								'{seconds}',
+								lockout.secondsRemaining.toString()
+							)
+						: environmentMessages.errors.vaultPasswordMismatchWithAttempts.replace(
+								'{attemptsRemaining}',
+								lockout.attemptsRemaining.toString()
+							);
+				} else {
+					error = createEnvironmentVaultSessionErrorMessage(openResult.error);
+				}
 				return;
 			}
 
-			const decryptResult = await decryptSecretVaultPayload(vaultEnvelope, vaultPassword);
-
-			if (!decryptResult.ok) {
-				const lockout = recordEnvironmentVaultUnlockFailure(workspace.id, Date.now());
-				error = lockout.isLocked
-					? environmentMessages.errors.vaultPasswordTryAgain.replace(
-							'{seconds}',
-							lockout.secondsRemaining.toString()
-						)
-					: environmentMessages.errors.vaultPasswordMismatchWithAttempts.replace(
-							'{attemptsRemaining}',
-							lockout.attemptsRemaining.toString()
-						);
-				return;
-			}
-
-			const parsedVault = parseEnvironmentVault(decryptResult.plaintext, workspace.id);
-
-			if (parsedVault === null) {
-				error = environmentMessages.errors.vaultInvalid;
-				return;
-			}
-
-			vault = parsedVault;
-			setEnvironmentVaultSession(parsedVault);
+			vault = openResult.vault;
+			vaultPassword = '';
 			clearEnvironmentVaultUnlockAttempts(workspace.id);
-			status = null;
+		} finally {
+			isBusy = false;
+		}
+	}
+
+	async function createAndPersistVault(password: string, successStatus: string | null) {
+		isBusy = true;
+		error = null;
+		status = null;
+
+		try {
+			const createResult = await createEnvironmentVaultSession(workspace.id, password);
+
+			if (!createResult.ok) {
+				error = createEnvironmentVaultSessionErrorMessage(createResult.error);
+				return;
+			}
+
+			if (!(await persistVaultMutation(createResult))) {
+				return;
+			}
+
+			vaultPassword = '';
+			clearEnvironmentVaultUnlockAttempts(workspace.id);
+			status = successStatus;
 		} finally {
 			isBusy = false;
 		}
@@ -250,22 +266,33 @@
 			return;
 		}
 
-		const mutation = upsertEnvironmentSecret(vault, {
-			id: editingSecretId,
-			name: secretName,
-			kind: secretKind,
-			tags: secretTag === '' ? [] : [secretTag],
-			value: secretValue
-		});
+		isBusy = true;
+		error = null;
+		status = null;
 
-		if (!mutation.ok) {
-			error = createEnvironmentVaultErrorMessage(mutation.error);
-			return;
+		try {
+			const mutation = await upsertEnvironmentVaultSessionSecret(workspace.id, {
+				id: editingSecretId,
+				name: secretName,
+				kind: secretKind,
+				tags: secretTag === '' ? [] : [secretTag],
+				value: secretValue
+			});
+
+			if (!mutation.ok) {
+				error = createEnvironmentVaultSessionErrorMessage(mutation.error);
+				return;
+			}
+
+			if (!(await persistVaultMutation(mutation))) {
+				return;
+			}
+
+			clearSecretForm();
+			status = environmentMessages.statuses.saved;
+		} finally {
+			isBusy = false;
 		}
-
-		await saveVault(mutation.vault);
-		clearSecretForm();
-		status = environmentMessages.statuses.saved;
 	}
 
 	async function handleRemoveSecret(secret: EnvironmentSecretRecord) {
@@ -273,16 +300,27 @@
 			return;
 		}
 
-		const mutation = removeEnvironmentSecret(vault, secret.id);
+		isBusy = true;
+		error = null;
+		status = null;
 
-		if (!mutation.ok) {
-			error = createEnvironmentVaultErrorMessage(mutation.error);
-			return;
+		try {
+			const mutation = await removeEnvironmentVaultSessionSecret(workspace.id, secret.id);
+
+			if (!mutation.ok) {
+				error = createEnvironmentVaultSessionErrorMessage(mutation.error);
+				return;
+			}
+
+			if (!(await persistVaultMutation(mutation))) {
+				return;
+			}
+
+			visibleSecretValues = createNextVisibleSecretValues(secret.id, null);
+			status = environmentMessages.statuses.removed;
+		} finally {
+			isBusy = false;
 		}
-
-		await saveVault(mutation.vault);
-		visibleSecretIds = createNextVisibleSecretIds(secret.id, false);
-		status = environmentMessages.statuses.removed;
 	}
 
 	function handleEditSecret(secret: EnvironmentSecretRecord) {
@@ -290,7 +328,7 @@
 		secretName = secret.name;
 		secretKind = secret.kind;
 		secretTag = secret.tags[0] ?? '';
-		secretValue = secret.value;
+		secretValue = '';
 		error = null;
 		status = null;
 	}
@@ -301,8 +339,14 @@
 			return;
 		}
 
+		const valueResult = await readEnvironmentVaultSessionSecretValue(workspace.id, secret.id);
+		if (!valueResult.ok) {
+			error = createEnvironmentVaultSessionErrorMessage(valueResult.error);
+			return;
+		}
+
 		try {
-			await navigator.clipboard.writeText(secret.value);
+			await navigator.clipboard.writeText(valueResult.value);
 			status = environmentMessages.statuses.copied;
 			error = null;
 		} catch {
@@ -310,12 +354,41 @@
 		}
 	}
 
-	function handleToggleSecretVisibility(secret: EnvironmentSecretRecord) {
-		visibleSecretIds = createNextVisibleSecretIds(secret.id, !visibleSecretIds.has(secret.id));
+	async function handleToggleSecretVisibility(secret: EnvironmentSecretRecord) {
+		if (visibleSecretValues.has(secret.id)) {
+			visibleSecretValues = createNextVisibleSecretValues(secret.id, null);
+			return;
+		}
+
+		const valueResult = await readEnvironmentVaultSessionSecretValue(workspace.id, secret.id);
+		if (!valueResult.ok) {
+			error = createEnvironmentVaultSessionErrorMessage(valueResult.error);
+			return;
+		}
+
+		visibleSecretValues = createNextVisibleSecretValues(secret.id, valueResult.value);
+		error = null;
+		status = null;
 	}
 
-	function handleLockVault() {
-		resetVaultSession(vaultEnvelope);
+	async function handleLockVault() {
+		if (isBusy) {
+			return;
+		}
+
+		isBusy = true;
+		const closeResult = await closeEnvironmentVaultSession(workspace.id);
+		isBusy = false;
+
+		if (
+			!closeResult.ok &&
+			closeResult.error !== 'environment-vault-session-unavailable'
+		) {
+			error = createEnvironmentVaultSessionErrorMessage(closeResult.error);
+			return;
+		}
+
+		resetLocalVaultState(vaultEnvelope);
 	}
 
 	async function handleApplyCliEnvironmentVariables() {
@@ -373,6 +446,13 @@
 		return environmentMessages.secretTags[tag] ?? tag;
 	}
 
+	function getSecretDisplayValue(secret: EnvironmentSecretRecord) {
+		return (
+			visibleSecretValues.get(secret.id) ??
+			createMaskedSecretValueForLength(secret.valueLength ?? 8)
+		);
+	}
+
 	function clearSecretForm() {
 		editingSecretId = null;
 		secretName = '';
@@ -382,53 +462,45 @@
 		error = null;
 	}
 
-	async function saveVault(nextVault: EnvironmentVault) {
-		isBusy = true;
-		error = null;
-
-		try {
-			const encryptResult = await encryptSecretVaultPayload(
-				serializeEnvironmentVault(nextVault),
-				vaultPassword
-			);
-
-			if (!encryptResult.ok) {
-				error = createSecretVaultCryptoErrorMessage(encryptResult.error, environmentMessages.errors);
-				return;
-			}
-
-			const writeResult = await writeEnvironmentVaultEnvelopeForWorkspace(
-				workspace.id,
-				encryptResult.envelope,
-				workspace.path
-			);
-
-			if (!writeResult.ok) {
-				error = environmentMessages.errors.vaultSaveFailed;
-				return;
-			}
-
-			vaultEnvelope = encryptResult.envelope;
-			vault = nextVault;
-			setEnvironmentVaultSession(nextVault);
-		} finally {
-			isBusy = false;
+	async function persistVaultMutation(mutation: EnvironmentVaultSessionMutationResult) {
+		if (!mutation.ok) {
+			return false;
 		}
+
+		const previousEnvelope = vaultEnvelope;
+		const writeResult = await writeEnvironmentVaultEnvelopeForWorkspace(
+			workspace.id,
+			mutation.envelope,
+			workspace.path
+		);
+
+		if (!writeResult.ok) {
+			await closeEnvironmentVaultSession(workspace.id);
+			vault = null;
+			vaultEnvelope = previousEnvelope;
+			visibleSecretValues = new Map();
+			error = environmentMessages.errors.vaultSaveFailed;
+			return false;
+		}
+
+		vaultEnvelope = mutation.envelope;
+		vault = mutation.vault;
+		return true;
 	}
 
-	function createNextVisibleSecretIds(secretId: string, shouldShow: boolean) {
-		const nextVisibleSecretIds = new Set(visibleSecretIds);
+	function createNextVisibleSecretValues(secretId: string, value: string | null) {
+		const nextVisibleSecretValues = new Map(visibleSecretValues);
 
-		if (shouldShow) {
-			nextVisibleSecretIds.add(secretId);
+		if (value === null) {
+			nextVisibleSecretValues.delete(secretId);
 		} else {
-			nextVisibleSecretIds.delete(secretId);
+			nextVisibleSecretValues.set(secretId, value);
 		}
 
-		return nextVisibleSecretIds;
+		return nextVisibleSecretValues;
 	}
 
-	function createEnvironmentVaultErrorMessage(nextError: EnvironmentVaultError) {
+	function createEnvironmentVaultSessionErrorMessage(nextError: EnvironmentVaultSessionError) {
 		switch (nextError) {
 			case 'environment-secret-name-required':
 				return environmentMessages.errors.nameRequired;
@@ -442,8 +514,13 @@
 				return environmentMessages.errors.valueRequired;
 			case 'environment-secret-not-found':
 				return environmentMessages.errors.notFound;
+			case 'environment-vault-session-invalid':
 			case 'environment-vault-invalid':
 				return environmentMessages.errors.vaultInvalid;
+			case 'environment-vault-session-password-required':
+				return environmentMessages.errors.vaultPasswordRequired;
+			default:
+				return environmentMessages.errors.vaultOperationFailed;
 		}
 	}
 
@@ -476,23 +553,43 @@
 		return untrack(() => {
 			let isCurrentWorkspace = true;
 
-			resetVaultSession(null);
-			void readEnvironmentVaultEnvelopeForWorkspace(workspaceId, workspacePath).then(
-				(initialEnvelopeResult) => {
-					if (!isCurrentWorkspace) {
-						return;
-					}
+			resetLocalVaultState(null);
 
-					if (!initialEnvelopeResult.ok) {
-						resetVaultSession(null);
-						error = environmentMessages.errors.vaultOperationFailed;
-						return;
-					}
-
-					resetVaultSession(initialEnvelopeResult.envelope);
-					void tryOpenVaultWithWorkspaceSession(initialEnvelopeResult.envelope);
+			async function initializeVault() {
+				await closeEnvironmentVaultSession(workspaceId);
+				if (!isCurrentWorkspace) {
+					return;
 				}
-			);
+
+				const initialEnvelopeResult = await readEnvironmentVaultEnvelopeForWorkspace(
+					workspaceId,
+					workspacePath
+				);
+				if (!isCurrentWorkspace) {
+					return;
+				}
+
+				if (!initialEnvelopeResult.ok) {
+					resetLocalVaultState(null);
+					error = environmentMessages.errors.vaultOperationFailed;
+					return;
+				}
+
+				resetLocalVaultState(initialEnvelopeResult.envelope);
+				await tryOpenVaultWithWorkspaceSession(initialEnvelopeResult.envelope);
+			}
+
+			async function reopenVault(nextEnvelope: SecretVaultEnvelope | null) {
+				await closeEnvironmentVaultSession(workspaceId);
+				if (!isCurrentWorkspace) {
+					return;
+				}
+
+				resetLocalVaultState(nextEnvelope);
+				await tryOpenVaultWithWorkspaceSession(nextEnvelope);
+			}
+
+			void initializeVault();
 
 			const unsubscribeVault = subscribeEnvironmentVaultEnvelopeForWorkspace(
 				workspaceId,
@@ -503,19 +600,14 @@
 						return;
 					}
 
-					if (vault === null) {
-						resetVaultSession(nextEnvelope);
-						void tryOpenVaultWithWorkspaceSession(nextEnvelope);
-						return;
-					}
-
-					vaultEnvelope = nextEnvelope;
+					void reopenVault(nextEnvelope);
 				}
 			);
 
 			return () => {
 				isCurrentWorkspace = false;
 				unsubscribeVault();
+				void closeEnvironmentVaultSession(workspaceId);
 			};
 		});
 	});
@@ -654,6 +746,9 @@
 					class="workduck-input"
 					type="password"
 					bind:value={secretValue}
+					placeholder={editingSecret === null
+						? ''
+						: createMaskedSecretValueForLength(editingSecret.valueLength ?? 8)}
 					autocomplete="off"
 					disabled={isBusy}
 				/>
@@ -663,7 +758,7 @@
 				<button
 					class="workduck-button workduck-button-primary"
 					type="submit"
-					disabled={isBusy || secretName.length === 0 || secretKind === '' || secretTag === '' || secretValue.length === 0}
+					disabled={isBusy || secretName.length === 0 || secretKind === '' || secretTag === '' || (editingSecretId === null && secretValue.length === 0)}
 				>
 					{submitLabel}
 				</button>
@@ -701,11 +796,7 @@
 									{/if}
 								</div>
 								<span class="workduck-environment-kind">{getSecretKindLabel(secret.kind)}</span>
-								<code class="workduck-environment-value">
-									{visibleSecretIds.has(secret.id)
-										? secret.value
-										: createMaskedSecretValue(secret.value)}
-								</code>
+								<code class="workduck-environment-value">{getSecretDisplayValue(secret)}</code>
 							</div>
 
 							<div class="workduck-environment-actions">
@@ -723,7 +814,7 @@
 									disabled={isBusy}
 									onclick={() => handleToggleSecretVisibility(secret)}
 								>
-									{visibleSecretIds.has(secret.id)
+									{visibleSecretValues.has(secret.id)
 										? environmentMessages.hide
 										: environmentMessages.show}
 								</button>

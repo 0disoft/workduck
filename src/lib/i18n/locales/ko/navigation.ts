@@ -15,5 +15,29 @@ export const koNavigationMessages = {
 		waitForOperation: '현재 작업이 끝날 때까지 기다리세요.',
 		primary: '기본 메뉴',
 		settingsArea: '설정',
-		resizeSidebar: '사이드바 너비 조절'
+		resizeSidebar: '사이드바 너비 조절',
+		commandPalette: {
+			title: 'Workduck 검색',
+			placeholder: '프로젝트, 저장소, 대기열, 에이전트, 참고자료, 실행 기록, 아티팩트 검색',
+			openPage: '{page} 열기',
+			noResults: '일치하는 명령이나 워크스페이스 항목이 없습니다.',
+			loading: '워크스페이스 색인을 불러오는 중…',
+			searching: '아티팩트 색인을 검색하는 중…',
+			degraded: '일부 워크스페이스 데이터를 읽지 못했습니다.',
+			workspaceLocked: '내용을 검색하려면 현재 워크스페이스 잠금을 해제하세요.',
+			keyboardHint: '↑와 ↓로 이동하고 Enter로 열며 Esc로 닫습니다.',
+			kinds: {
+				command: '명령',
+				project: '프로젝트',
+				group: '그룹',
+				repository: '저장소',
+				queueWorkOrder: '작업 주문서',
+				queueResultReport: '결과 보고서',
+				queueProposal: '제안서',
+				agent: '에이전트',
+				reference: '참고자료',
+				run: '실행 기록',
+				artifact: '아티팩트'
+			}
+		}
 	} as const;

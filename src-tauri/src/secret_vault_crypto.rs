@@ -4,7 +4,7 @@
 // owns=native secret-vault encryption|vault envelope conversion|vault crypto error mapping
 // excludes=vault persistence|password interface
 // search=native secret vault crypto|vault envelope aad|encrypt vault payload
-// invariant=Passwords remain zeroized and plaintext is returned only after authenticated envelope validation succeeds.
+// invariant=Passwords and encryption plaintext remain zeroized, and decrypted plaintext is available only to native callers after authenticated envelope validation succeeds.
 // stability=contract
 // /llmnav
 use crate::password_envelope_crypto::{
@@ -17,7 +17,7 @@ const VAULT_FORMAT: &str = "workduck.secret-vault";
 const VAULT_VERSION: u8 = 1;
 const VAULT_AAD: &[u8] = b"workduck.secret-vault.v1";
 
-#[derive(serde::Deserialize, serde::Serialize)]
+#[derive(Clone, serde::Deserialize, serde::Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SecretVaultEnvelope {
     format: String,
@@ -27,7 +27,7 @@ pub struct SecretVaultEnvelope {
     ciphertext: String,
 }
 
-#[derive(serde::Deserialize, serde::Serialize)]
+#[derive(Clone, serde::Deserialize, serde::Serialize)]
 #[serde(rename_all = "camelCase")]
 struct SecretVaultKdf {
     algorithm: String,
@@ -39,7 +39,7 @@ struct SecretVaultKdf {
     salt: String,
 }
 
-#[derive(serde::Deserialize, serde::Serialize)]
+#[derive(Clone, serde::Deserialize, serde::Serialize)]
 #[serde(rename_all = "camelCase")]
 struct SecretVaultCipher {
     algorithm: String,
@@ -73,26 +73,26 @@ pub enum SecretVaultCryptoError {
 #[derive(serde::Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SecretVaultEncryption {
-    ok: bool,
+    pub(crate) ok: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
-    envelope: Option<SecretVaultEnvelope>,
+    pub(crate) envelope: Option<SecretVaultEnvelope>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    error: Option<SecretVaultCryptoError>,
+    pub(crate) error: Option<SecretVaultCryptoError>,
 }
 
 #[derive(serde::Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SecretVaultDecryption {
-    ok: bool,
+    pub(crate) ok: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
-    plaintext: Option<String>,
+    pub(crate) plaintext: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    error: Option<SecretVaultCryptoError>,
+    pub(crate) error: Option<SecretVaultCryptoError>,
 }
 
-#[tauri::command]
 pub fn encrypt_secret_vault_payload(password: String, plaintext: String) -> SecretVaultEncryption {
     let password = Zeroizing::new(password);
+    let plaintext = Zeroizing::new(plaintext);
 
     if password.is_empty() {
         return invalid_encryption(SecretVaultCryptoError::PasswordRequired);
@@ -118,7 +118,6 @@ pub fn encrypt_secret_vault_payload(password: String, plaintext: String) -> Secr
     }
 }
 
-#[tauri::command]
 pub fn decrypt_secret_vault_payload(
     password: String,
     envelope: SecretVaultEnvelope,

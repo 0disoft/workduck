@@ -13,6 +13,7 @@ use crate::{
         QueueExecutionErrorDetail,
     },
     queue_prompt_builder::{create_agent_prompt_plan, create_system_prompt, create_user_prompt},
+    secret_vault_session::resolve_secret_reference_or_value,
 };
 
 pub(crate) const CHAT_COMPLETION_MAX_ATTEMPTS: u8 = 3;
@@ -43,7 +44,17 @@ pub async fn run_agent_prompt(
     run: AgentExecutionRun,
     client: reqwest::Client,
 ) -> Result<AgentRunOutput, AgentRunFailure> {
-    if run.secret.value.trim().is_empty() {
+    let api_key = resolve_secret_reference_or_value(&run.secret.value).map_err(|_| {
+        AgentRunFailure::new(
+            "agent-secret-not-found",
+            format!(
+                "에이전트 '{}'의 API 키를 네이티브 보관함에서 찾지 못했습니다.",
+                run.agent.name
+            ),
+        )
+    })?;
+
+    if api_key.trim().is_empty() {
         return Err(AgentRunFailure::new(
             "agent-api-key-required",
             format!("에이전트 '{}'의 API 키가 비어 있습니다.", run.agent.name),
@@ -92,7 +103,7 @@ pub async fn run_agent_prompt(
         match send_agent_chat_completion_request(
             &client,
             endpoint,
-            run.secret.value.trim(),
+            api_key.trim(),
             &body,
             &run.agent.name,
         )

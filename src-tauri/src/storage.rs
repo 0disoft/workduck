@@ -13,7 +13,7 @@ use tauri::{AppHandle, Manager, State};
 const DATABASE_DRIVER: &str = "sqlite";
 const DATABASE_FILE_NAME: &str = "workduck.sqlite3";
 const SQLITE_BUSY_TIMEOUT_MILLIS: u64 = 5_000;
-const CURRENT_SCHEMA_VERSION: i64 = 6;
+const CURRENT_SCHEMA_VERSION: i64 = 7;
 
 struct Migration {
     version: i64,
@@ -92,6 +92,12 @@ const MIGRATIONS: &[Migration] = &[
         checksum: "sha256:c75f5c9a500ffee7ea54363ea347cb2c594f719a3a4860283713d0a5e0774ebb",
         sql: include_str!("../migrations/006_project_repository_import_attempt_records.sql"),
     },
+    Migration {
+        version: 7,
+        name: "007_app_state_records",
+        checksum: "sha256:291b0b66a6ab5eac0924cb3842565047265469b411b12b1f94c5037aaebe714c",
+        sql: include_str!("../migrations/007_app_state_records.sql"),
+    },
 ];
 
 #[derive(serde::Serialize)]
@@ -109,6 +115,7 @@ pub struct StorageStatus {
     latest_migration: Option<String>,
     artifact_blob_count: i64,
     artifact_search_indexed_row_count: i64,
+    app_state_record_count: i64,
     project_registry_count: i64,
     project_repository_operation_record_count: i64,
     project_repository_import_attempt_record_count: i64,
@@ -449,6 +456,7 @@ fn inspect_connection(
     let artifact_blob_count = query_i64(connection, "SELECT COUNT(*) FROM artifact_blobs")?;
     let artifact_search_indexed_row_count =
         query_i64(connection, "SELECT COUNT(*) FROM artifact_blob_search")?;
+    let app_state_record_count = query_i64(connection, "SELECT COUNT(*) FROM app_state_records")?;
     let project_registry_count = query_i64(connection, "SELECT COUNT(*) FROM project_registries")?;
     let project_repository_operation_record_count = query_i64(
         connection,
@@ -472,6 +480,7 @@ fn inspect_connection(
         latest_migration,
         artifact_blob_count,
         artifact_search_indexed_row_count,
+        app_state_record_count,
         project_registry_count,
         project_repository_operation_record_count,
         project_repository_import_attempt_record_count,
@@ -553,7 +562,10 @@ mod tests {
             let read_connection =
                 checkout_read_connection(database_path.clone(), Arc::clone(&read_connections))
                     .expect("first read connection");
-            assert_eq!(query_i64(&read_connection, "PRAGMA user_version").expect("schema version"), 6);
+            assert_eq!(
+                query_i64(&read_connection, "PRAGMA user_version").expect("schema version"),
+                7
+            );
             assert_eq!(read_connections.lock().expect("read pool").len(), 0);
         }
 

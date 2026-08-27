@@ -15,5 +15,29 @@ export const esNavigationMessages = {
 		waitForOperation: 'Espere a que termine la operación actual.',
 		primary: 'Principal',
 		settingsArea: 'Configuración',
-		resizeSidebar: 'Redimensionar barra lateral'
+		resizeSidebar: 'Redimensionar barra lateral',
+		commandPalette: {
+			title: 'Buscar en Workduck',
+			placeholder: 'Buscar proyectos, repositorios, cola, agentes, referencias, ejecuciones y artefactos',
+			openPage: 'Abrir {page}',
+			noResults: 'No hay comandos ni elementos coincidentes.',
+			loading: 'Cargando el índice del espacio de trabajo…',
+			searching: 'Buscando en el índice de artefactos…',
+			degraded: 'No se pudieron leer algunas fuentes del espacio de trabajo.',
+			workspaceLocked: 'Desbloquee el espacio de trabajo activo para buscar su contenido.',
+			keyboardHint: 'Use ↑ y ↓ para moverse, Enter para abrir y Esc para cerrar.',
+			kinds: {
+				command: 'Comando',
+				project: 'Proyecto',
+				group: 'Grupo',
+				repository: 'Repositorio',
+				queueWorkOrder: 'Orden de trabajo',
+				queueResultReport: 'Informe de resultados',
+				queueProposal: 'Propuesta',
+				agent: 'Agente',
+				reference: 'Referencia',
+				run: 'Ejecución',
+				artifact: 'Artefacto'
+			}
+		}
 	} as const;

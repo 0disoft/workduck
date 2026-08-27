@@ -139,7 +139,7 @@ export interface WorkspaceSettingsActions {
 	) => Promise<void>;
 	readonly handleWorkspaceRepair: (workspaceId: string) => void;
 	readonly handleWorkspaceSwitch: (workspaceId: string) => void;
-	readonly handleWorkspaceLock: (workspaceId: string) => void;
+	readonly handleWorkspaceLock: (workspaceId: string) => Promise<void>;
 	readonly handleWorkspaceRemove: (workspaceId: string) => void;
 	readonly clearWorkspaceRepositorySetup: () => void;
 	readonly setPrepareWorkspaceGit: (checked: boolean) => void;
