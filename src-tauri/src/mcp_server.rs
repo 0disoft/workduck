@@ -6,6 +6,7 @@ excludes=workspace mutation|secret values|network transport
 search=read-only MCP server|workspace MCP tools|stdio agent snapshot
 invariant=Tool input cannot select paths, every tool result is projected from the redacted snapshot, and stdout contains only MCP JSON messages.
 risk=privacy
+rel=test>workduck.mcp.server.contract
 stability=contract
 */
 use std::{

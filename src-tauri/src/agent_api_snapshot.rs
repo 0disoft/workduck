@@ -985,6 +985,7 @@ mod tests {
     fn supplied_database_connection_populates_registry_without_secret_ids() {
         let workspace = create_test_workspace("database-snapshot");
         let connection = Connection::open_in_memory().expect("in-memory database");
+        let registry_json = r#"{"version":1,"nodes":[{"id":"project_1","kind":"project","name":"Workduck","path":"projects/workduck","githubCredentialSecretId":"secret_1","repositories":[]}]}"#;
         connection
             .execute_batch(
                 "CREATE TABLE project_registries (
@@ -1013,10 +1014,16 @@ mod tests {
                 "INSERT INTO project_registries (workspace_id, registry_json) VALUES (?1, ?2)",
                 params![
                     "workspace_1",
-                    r#"{"version":1,"nodes":[{"id":"project_1","kind":"project","name":"Workduck","path":"projects/workduck","githubCredentialSecretId":"secret_1","repositories":[]]}"#
+                    registry_json
                 ],
             )
             .expect("registry row");
+
+        assert_eq!(
+            read_project_registry_json(Some(&connection), "workspace_1")
+                .expect("registry query"),
+            Some(registry_json.to_owned())
+        );
 
         let result = build_agent_api_snapshot(
             AgentApiSnapshotRequest::new("workspace_1", display_path(&workspace)),
