@@ -148,7 +148,8 @@ fn write_records_to_connection(
                 ON CONFLICT(state_key) DO UPDATE SET
                   value_json = excluded.value_json,
                   updated_at = excluded.updated_at,
-                  stored_at = CURRENT_TIMESTAMP",
+                  stored_at = CURRENT_TIMESTAMP
+                WHERE excluded.updated_at >= app_state_records.updated_at",
                 params![key, record.value_json, record.updated_at],
             )
             .map_err(|_| AppStateStoreError::WriteFailed)?;
@@ -169,7 +170,7 @@ fn validate_records(
             let value_json = validate_value_json(&record.value_json)?;
             let updated_at = record.updated_at.trim();
 
-            if updated_at.is_empty() {
+            if !is_sortable_utc_timestamp(updated_at) {
                 return Err(AppStateStoreError::UpdatedAtRequired);
             }
 
@@ -182,6 +183,22 @@ fn validate_records(
             ))
         })
         .collect()
+}
+
+fn is_sortable_utc_timestamp(value: &str) -> bool {
+    let bytes = value.as_bytes();
+
+    bytes.len() == 24
+        && bytes[4] == b'-'
+        && bytes[7] == b'-'
+        && bytes[10] == b'T'
+        && bytes[13] == b':'
+        && bytes[16] == b':'
+        && bytes[19] == b'.'
+        && bytes[23] == b'Z'
+        && bytes.iter().enumerate().all(|(index, byte)| {
+            matches!(index, 4 | 7 | 10 | 13 | 16 | 19 | 23) || byte.is_ascii_digit()
+        })
 }
 
 fn validate_keys(keys: Vec<String>) -> Result<Vec<String>, AppStateStoreError> {
@@ -308,7 +325,9 @@ mod tests {
             Err(AppStateStoreError::KeyInvalid)
         );
         let count: i64 = connection
-            .query_row("SELECT COUNT(*) FROM app_state_records", [], |row| row.get(0))
+            .query_row("SELECT COUNT(*) FROM app_state_records", [], |row| {
+                row.get(0)
+            })
             .expect("app state count");
 
         assert_eq!(count, 0);
@@ -324,5 +343,49 @@ mod tests {
             validate_value_json("true"),
             Err(AppStateStoreError::ValueJsonInvalid)
         );
+    }
+
+    #[test]
+    fn older_timestamp_cannot_overwrite_a_newer_record() {
+        let mut connection = test_connection();
+
+        write_records_to_connection(
+            &mut connection,
+            BTreeMap::from([(
+                "appearance-settings".to_string(),
+                AppStateWriteInput {
+                    value_json: r#"{"languageId":"ko"}"#.to_string(),
+                    updated_at: "2026-08-20T00:00:01.000Z".to_string(),
+                },
+            )]),
+        )
+        .expect("newer app state write");
+        write_records_to_connection(
+            &mut connection,
+            BTreeMap::from([(
+                "appearance-settings".to_string(),
+                AppStateWriteInput {
+                    value_json: r#"{"languageId":"en"}"#.to_string(),
+                    updated_at: "2026-08-20T00:00:00.000Z".to_string(),
+                },
+            )]),
+        )
+        .expect("stale app state write is ignored");
+
+        let records =
+            read_records_from_connection(&connection, &["appearance-settings".to_string()])
+                .expect("app state read");
+
+        assert_eq!(
+            records.get("appearance-settings").map(String::as_str),
+            Some(r#"{"languageId":"ko"}"#)
+        );
+    }
+
+    #[test]
+    fn timestamp_must_keep_the_sortable_utc_shape() {
+        assert!(is_sortable_utc_timestamp("2026-08-20T00:00:00.000Z"));
+        assert!(!is_sortable_utc_timestamp("2026-08-20T00:00:00Z"));
+        assert!(!is_sortable_utc_timestamp("not-a-timestamp"));
     }
 }
