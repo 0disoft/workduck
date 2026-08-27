@@ -20,6 +20,7 @@ use rusqlite::{Connection, OpenFlags};
 use serde_json::{Map, Value, json};
 
 use crate::agent_api_snapshot::{AgentApiSnapshotRequest, build_agent_api_snapshot};
+use crate::storage::CURRENT_SCHEMA_VERSION;
 
 const SERVER_NAME: &str = "workduck";
 const SERVER_DESCRIPTION: &str =
@@ -31,7 +32,6 @@ const LEGACY_PROTOCOL_VERSIONS: [&str; 4] = [
     "2025-03-26",
     "2024-11-05",
 ];
-const CURRENT_SCHEMA_VERSION: i64 = 6;
 const MAX_STDIO_MESSAGE_BYTES: usize = 1_048_576;
 const SQLITE_BUSY_TIMEOUT_MILLIS: u64 = 5_000;
 const PROTOCOL_VERSION_META_KEY: &str = "io.modelcontextprotocol/protocolVersion";
@@ -893,7 +893,7 @@ mod tests {
         let connection = Connection::open(database.path()).expect("create database");
         connection
             .execute_batch(
-                r#"PRAGMA user_version = 6;
+                r#"PRAGMA user_version = 7;
                 CREATE TABLE project_registries (
                     workspace_id TEXT PRIMARY KEY NOT NULL,
                     registry_json TEXT NOT NULL
