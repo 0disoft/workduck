@@ -364,7 +364,7 @@
 		role="presentation"
 		onclick={handleBackdropClick}
 	>
-		<section
+		<div
 			class="workduck-command-palette"
 			role="dialog"
 			aria-modal="true"
@@ -439,6 +439,6 @@
 				</span>
 				<span>{visibleItems.length}</span>
 			</footer>
-		</section>
+		</div>
 	</div>
 {/if}
