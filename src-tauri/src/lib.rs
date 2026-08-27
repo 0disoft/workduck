@@ -20,6 +20,7 @@ mod command_palette_search;
 mod git_credential;
 mod git_path;
 mod llm_chat;
+pub mod mcp_server;
 mod path_display;
 mod password_envelope_crypto;
 mod process_tree;

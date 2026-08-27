@@ -13,7 +13,7 @@ use tauri::{AppHandle, Manager, State};
 const DATABASE_DRIVER: &str = "sqlite";
 const DATABASE_FILE_NAME: &str = "workduck.sqlite3";
 const SQLITE_BUSY_TIMEOUT_MILLIS: u64 = 5_000;
-const CURRENT_SCHEMA_VERSION: i64 = 7;
+pub(crate) const CURRENT_SCHEMA_VERSION: i64 = 7;
 
 struct Migration {
     version: i64,
