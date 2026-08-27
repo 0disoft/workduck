@@ -21,6 +21,7 @@ export interface ProjectRepositoryBatchMessages {
 	readonly summary: string;
 	readonly noSelection: string;
 	readonly selectRepository: string;
+	readonly confirmUpdateDependencies: string;
 	readonly actions: Readonly<Record<ProjectRepositoryBatchAction, string>>;
 	readonly states: Readonly<Record<ProjectRepositoryBatchItemState, string>>;
 	readonly errors: Readonly<Record<ProjectRepositoryBatchOwnError, string>>;
@@ -50,6 +51,7 @@ const projectRepositoryBatchMessages = {
 		summary: 'Succeeded {succeeded} · Failed {failed} · Skipped {skipped}',
 		noSelection: 'Select repositories to run a bounded batch action.',
 		selectRepository: 'Select {repository} for batch actions',
+		confirmUpdateDependencies: 'Update dependencies in {count} selected repositories?',
 		actions: {
 			fetch: 'Fetch',
 			pull: 'Pull',
@@ -75,6 +77,7 @@ const projectRepositoryBatchMessages = {
 		summary: '성공 {succeeded} · 실패 {failed} · 건너뜀 {skipped}',
 		noSelection: '저장소를 선택한 뒤 제한 병렬 작업을 실행하세요.',
 		selectRepository: '{repository} 저장소를 일괄 작업 대상으로 선택',
+		confirmUpdateDependencies: '선택한 저장소 {count}개의 의존성을 갱신할까요?',
 		actions: {
 			fetch: '가져오기',
 			pull: '당겨오기',
@@ -111,6 +114,7 @@ const projectRepositoryBatchMessages = {
 		summary: 'Correctos {succeeded} · Fallidos {failed} · Omitidos {skipped}',
 		noSelection: 'Selecciona repositorios para ejecutar una acción por lotes limitada.',
 		selectRepository: 'Seleccionar {repository} para acciones por lotes',
+		confirmUpdateDependencies: '¿Actualizar las dependencias de {count} repositorios seleccionados?',
 		actions: {
 			fetch: 'Obtener',
 			pull: 'Actualizar',
@@ -136,6 +140,7 @@ const projectRepositoryBatchMessages = {
 		summary: 'Réussis {succeeded} · Échecs {failed} · Ignorés {skipped}',
 		noSelection: 'Sélectionnez des dépôts pour lancer une action groupée limitée.',
 		selectRepository: 'Sélectionner {repository} pour les actions groupées',
+		confirmUpdateDependencies: 'Mettre à jour les dépendances des {count} dépôts sélectionnés ?',
 		actions: {
 			fetch: 'Récupérer',
 			pull: 'Tirer',
@@ -161,6 +166,7 @@ const projectRepositoryBatchMessages = {
 		summary: '成功 {succeeded} · 失败 {failed} · 跳过 {skipped}',
 		noSelection: '选择仓库后运行受限并行批量操作。',
 		selectRepository: '选择 {repository} 进行批量操作',
+		confirmUpdateDependencies: '要更新所选 {count} 个仓库的依赖吗？',
 		actions: {
 			fetch: '获取',
 			pull: '拉取',
@@ -186,6 +192,7 @@ const projectRepositoryBatchMessages = {
 		summary: 'सफल {succeeded} · विफल {failed} · छोड़े गए {skipped}',
 		noSelection: 'सीमित बैच क्रिया चलाने के लिए रिपॉज़िटरी चुनें।',
 		selectRepository: 'बैच क्रियाओं के लिए {repository} चुनें',
+		confirmUpdateDependencies: 'क्या चुनी गई {count} रिपॉज़िटरी की निर्भरताएँ अपडेट करनी हैं?',
 		actions: {
 			fetch: 'फ़ेच',
 			pull: 'पुल',

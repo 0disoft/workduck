@@ -222,19 +222,20 @@ export function createProjectRepositoryBatchSkip(error: string): ProjectReposito
 
 export function isProjectRepositoryBatchOwnError(
 	value: string
-value is ProjectRepositoryBatchOwnError {
+): value is ProjectRepositoryBatchOwnError {
 	return (
-	value === 'project-repository-batch-action-unavailable' ||
-	value === 'project-repository-batch-operation-failed' ||
+		value === 'project-repository-batch-action-unavailable' ||
+		value === 'project-repository-batch-operation-failed' ||
 		value === 'project-repository-batch-operation-not-started' ||
-	value === 'project-repository-batch-repository-busy' ||
-	value === 'project-repository-batch-repository-path-missing' ||
+		value === 'project-repository-batch-repository-busy' ||
+		value === 'project-repository-batch-repository-path-missing' ||
 		value === 'project-repository-batch-task-failed' ||
 		value === 'project-repository-batch-task-stopped' ||
-	value === 'project-repository-batch-task-timeout' ||
-	value === 'project-repository-batch-unexpected-failure' ||
-	value === 'project-repository-batch-workspace-unavailable'
-	);}
+		value === 'project-repository-batch-task-timeout' ||
+		value === 'project-repository-batch-unexpected-failure' ||
+		value === 'project-repository-batch-workspace-unavailable'
+	);
+}
 
 function normalizeProjectRepositoryBatchOutcome(
 	outcome: ProjectRepositoryBatchOutcome

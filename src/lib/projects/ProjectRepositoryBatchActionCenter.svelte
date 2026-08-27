@@ -320,7 +320,7 @@
 
 	function isProjectRepositoryGitBatchAction(
 		action: ProjectRepositoryBatchAction
-	): action is ProjectRepositoryGitAction {
+	): action is Extract<ProjectRepositoryBatchAction, ProjectRepositoryGitAction> {
 		return action === 'fetch' || action === 'pull';
 	}
 </script>
