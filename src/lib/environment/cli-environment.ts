@@ -14,6 +14,7 @@ export type CliEnvironmentApplyError =
 	| 'cli-environment-name-unsupported'
 	| 'cli-environment-name-duplicate'
 	| 'cli-environment-value-invalid'
+	| 'cli-environment-secret-unavailable'
 	| 'cli-environment-write-failed'
 	| 'cli-environment-unsupported'
 	| 'cli-environment-unavailable';
@@ -81,6 +82,7 @@ function isCliEnvironmentApplyError(value: unknown): value is CliEnvironmentAppl
 		value === 'cli-environment-name-unsupported' ||
 		value === 'cli-environment-name-duplicate' ||
 		value === 'cli-environment-value-invalid' ||
+		value === 'cli-environment-secret-unavailable' ||
 		value === 'cli-environment-write-failed' ||
 		value === 'cli-environment-unsupported' ||
 		value === 'cli-environment-unavailable'

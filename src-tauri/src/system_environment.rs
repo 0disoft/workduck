@@ -1,5 +1,9 @@
 use std::collections::HashSet;
 
+use zeroize::Zeroizing;
+
+use crate::secret_vault_session::resolve_secret_reference_or_value;
+
 const MAX_CLI_ENVIRONMENT_VARIABLES: usize = 64;
 const MAX_CLI_ENVIRONMENT_NAME_LENGTH: usize = 128;
 const MAX_CLI_ENVIRONMENT_VALUE_LENGTH: usize = 16_384;
@@ -90,11 +94,11 @@ fn apply_cli_environment_variables_to_user_scope(
     }
 
     let mut seen_names = HashSet::new();
-    let mut applied_names = Vec::with_capacity(variables.len());
+    let mut resolved_variables: Vec<(String, Zeroizing<String>)> =
+        Vec::with_capacity(variables.len());
 
     for variable in variables {
         let name = variable.name.trim();
-        let value = variable.value.as_str();
 
         if !is_allowed_cli_environment_variable_name(name) {
             return Err("cli-environment-name-unsupported");
@@ -104,6 +108,9 @@ fn apply_cli_environment_variables_to_user_scope(
             return Err("cli-environment-name-duplicate");
         }
 
+        let value = resolve_secret_reference_or_value(&variable.value)
+            .map_err(|_| "cli-environment-secret-unavailable")?;
+
         if value.trim().is_empty() || value.len() > MAX_CLI_ENVIRONMENT_VALUE_LENGTH {
             return Err("cli-environment-value-invalid");
         }
@@ -112,8 +119,14 @@ fn apply_cli_environment_variables_to_user_scope(
             return Err("cli-environment-value-invalid");
         }
 
-        write_user_environment_variable(name, value)?;
-        applied_names.push(name.to_string());
+        resolved_variables.push((name.to_string(), value));
+    }
+
+    let mut applied_names = Vec::with_capacity(resolved_variables.len());
+
+    for (name, value) in &resolved_variables {
+        write_user_environment_variable(name, value.as_str())?;
+        applied_names.push(name.clone());
     }
 
     notify_user_environment_changed();

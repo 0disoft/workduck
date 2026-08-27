@@ -3,6 +3,8 @@ use std::process::Command;
 use base64::{Engine as _, engine::general_purpose::STANDARD};
 use zeroize::{Zeroize, Zeroizing};
 
+use crate::secret_vault_session::resolve_secret_reference_or_value;
+
 pub(crate) enum GitCredential {
     GithubToken(Zeroizing<String>),
 }
@@ -62,7 +64,8 @@ pub(crate) fn parse_git_credential(
 ) -> Option<GitCredential> {
     let kind = credential_kind?.trim().to_ascii_lowercase();
     let value = credential_value?;
-    let trimmed_value = value.trim();
+    let resolved_value = resolve_secret_reference_or_value(&value).ok()?;
+    let trimmed_value = resolved_value.trim();
 
     if kind != "github-token"
         || trimmed_value.is_empty()
