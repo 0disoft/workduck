@@ -3,7 +3,7 @@ export const ENVIRONMENT_VAULT_VERSION = 1;
 export const ENVIRONMENT_SECRET_NAME_MAX_LENGTH = 120;
 export const ENVIRONMENT_SECRET_VALUE_MAX_LENGTH = 16_384;
 export const ENVIRONMENT_SECRET_TAGS_MAX_COUNT = 8;
-export const ENVIRONMENT_SECRET_NATIVE_REFERENCE_PREFIX = 'workduck-secret-ref:v1:';
+export const ENVIRONMENT_SECRET_NATIVE_REFERENCE_PREFIX = 'workduck-secret-ref:v2:';
 
 export const environmentSecretKindOptions = [
 	{ id: 'api-key', label: 'API key' },

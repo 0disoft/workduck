@@ -1,5 +1,9 @@
 import { getTauriInvoke } from '$lib/tauri/tauri-invoke';
 import {
+	markWorkspaceLocked,
+	readIdleWorkspaceSessionIds
+} from '$lib/workspaces/workspace-unlock';
+import {
 	isEnvironmentSecretNativeReference,
 	parseEnvironmentVault,
 	type EnvironmentSecretInput,
@@ -76,9 +80,29 @@ export function setEnvironmentVaultSession(vault: EnvironmentVault) {
 	notifyEnvironmentVaultSessionSubscribers(vault.workspaceId);
 }
 
-export function clearEnvironmentVaultSession(workspaceId: string) {
-	clearLocalEnvironmentVaultSession(workspaceId);
-	void closeNativeEnvironmentVaultSession(workspaceId);
+export async function lockWorkspaceEnvironmentVaultSession(workspaceId: string) {
+	const closeResult = await closeEnvironmentVaultSession(workspaceId);
+
+	if (!closeResult.ok && closeResult.error !== 'environment-vault-session-unavailable') {
+		return false;
+	}
+
+	markWorkspaceLocked(workspaceId);
+	return true;
+}
+
+export async function lockIdleWorkspaceEnvironmentVaultSessions(
+	idleTimeoutMs: number,
+	nowMs = Date.now()
+) {
+	const results = await Promise.all(
+		readIdleWorkspaceSessionIds(idleTimeoutMs, nowMs).map(async (workspaceId) => ({
+			workspaceId,
+			locked: await lockWorkspaceEnvironmentVaultSession(workspaceId)
+		}))
+	);
+
+	return results.flatMap(({ workspaceId, locked }) => (locked ? [workspaceId] : []));
 }
 
 export async function closeEnvironmentVaultSession(workspaceId: string) {
@@ -253,19 +277,6 @@ async function invokeVaultCommand(
 			: { ok: false, error: normalizeEnvironmentVaultSessionError(response.error) };
 	} catch {
 		return { ok: false, error: 'environment-vault-session-store-failed' };
-	}
-}
-
-async function closeNativeEnvironmentVaultSession(workspaceId: string) {
-	const invoke = getTauriInvoke();
-	if (invoke === undefined) {
-		return;
-	}
-
-	try {
-		await invoke('close_environment_vault_session', { workspaceId });
-	} catch {
-		// Closing is best effort when the native window is already shutting down.
 	}
 }
 

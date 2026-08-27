@@ -1,3 +1,12 @@
+/* llmnav/1 module
+id=workduck.secret-vault.crypto
+role=Validate versioned encrypted secret-vault envelopes at the renderer persistence boundary.
+owns=secret-vault envelope shape|encrypted vault format constants
+excludes=plaintext vault access|native session lifecycle|password crypto
+search=secret vault envelope|validate encrypted vault|native vault boundary
+invariant=Renderer code may validate and persist encrypted envelopes but cannot encrypt or decrypt vault plaintext.
+stability=contract
+*/
 import { isObjectRecord } from '$lib/shared/object-record';
 export const SECRET_VAULT_FORMAT = 'workduck.secret-vault';
 export const SECRET_VAULT_VERSION = 1;

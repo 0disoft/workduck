@@ -371,8 +371,23 @@
 		status = null;
 	}
 
-	function handleLockVault() {
-		void closeEnvironmentVaultSession(workspace.id);
+	async function handleLockVault() {
+		if (isBusy) {
+			return;
+		}
+
+		isBusy = true;
+		const closeResult = await closeEnvironmentVaultSession(workspace.id);
+		isBusy = false;
+
+		if (
+			!closeResult.ok &&
+			closeResult.error !== 'environment-vault-session-unavailable'
+		) {
+			error = createEnvironmentVaultSessionErrorMessage(closeResult.error);
+			return;
+		}
+
 		resetLocalVaultState(vaultEnvelope);
 	}
 

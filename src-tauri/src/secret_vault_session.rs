@@ -18,7 +18,8 @@ const ENVIRONMENT_SECRET_ID_MAX_LENGTH: usize = 200;
 const ENVIRONMENT_SECRET_NAME_MAX_LENGTH: usize = 120;
 const ENVIRONMENT_SECRET_VALUE_MAX_LENGTH: usize = 16_384;
 const ENVIRONMENT_SECRET_TAGS_MAX_COUNT: usize = 8;
-const SECRET_REFERENCE_PREFIX: &str = "workduck-secret-ref:v1:";
+const SECRET_REFERENCE_RESERVED_PREFIX: &str = "workduck-secret-ref:";
+const SECRET_REFERENCE_PREFIX: &str = "workduck-secret-ref:v2:";
 
 const ERROR_WORKSPACE_REQUIRED: &str = "environment-vault-session-workspace-required";
 const ERROR_PASSWORD_REQUIRED: &str = "environment-vault-session-password-required";
@@ -38,6 +39,7 @@ static ENVIRONMENT_VAULT_SESSIONS: OnceLock<
 > = OnceLock::new();
 
 struct EnvironmentVaultSession {
+    reference_generation: Zeroizing<String>,
     password: Zeroizing<String>,
     vault: EnvironmentVaultPayload,
 }
@@ -173,7 +175,11 @@ pub fn create_environment_vault_session(
         Ok(envelope) => envelope,
         Err(error) => return failed(error),
     };
-    let view = create_session_view(&vault);
+    let reference_generation = match create_reference_generation() {
+        Ok(reference_generation) => reference_generation,
+        Err(error) => return failed(error),
+    };
+    let view = create_session_view(&vault, reference_generation.as_str());
 
     let mut sessions = match environment_vault_sessions().write() {
         Ok(sessions) => sessions,
@@ -182,6 +188,7 @@ pub fn create_environment_vault_session(
     sessions.insert(
         workspace_id,
         EnvironmentVaultSession {
+            reference_generation,
             password,
             vault,
         },
@@ -225,7 +232,11 @@ pub fn open_environment_vault_session(
         return failed(ERROR_INVALID);
     }
 
-    let view = create_session_view(&vault);
+    let reference_generation = match create_reference_generation() {
+        Ok(reference_generation) => reference_generation,
+        Err(error) => return failed(error),
+    };
+    let view = create_session_view(&vault, reference_generation.as_str());
     let mut sessions = match environment_vault_sessions().write() {
         Ok(sessions) => sessions,
         Err(_) => return failed(ERROR_STORE_FAILED),
@@ -233,6 +244,7 @@ pub fn open_environment_vault_session(
     sessions.insert(
         workspace_id,
         EnvironmentVaultSession {
+            reference_generation,
             password,
             vault,
         },
@@ -259,7 +271,10 @@ pub fn read_environment_vault_session(
         return failed(ERROR_LOCKED);
     };
 
-    succeeded_with_vault(create_session_view(&session.vault))
+    succeeded_with_vault(create_session_view(
+        &session.vault,
+        session.reference_generation.as_str(),
+    ))
 }
 
 #[tauri::command]
@@ -309,7 +324,7 @@ pub fn upsert_environment_vault_secret(
         Ok(envelope) => envelope,
         Err(error) => return failed(error),
     };
-    let view = create_session_view(&next_vault);
+    let view = create_session_view(&next_vault, session.reference_generation.as_str());
     session.vault = next_vault;
 
     succeeded_with_vault_and_envelope(view, envelope)
@@ -347,7 +362,7 @@ pub fn remove_environment_vault_secret(
         Ok(envelope) => envelope,
         Err(error) => return failed(error),
     };
-    let view = create_session_view(&next_vault);
+    let view = create_session_view(&next_vault, session.reference_generation.as_str());
     session.vault = next_vault;
 
     succeeded_with_vault_and_envelope(view, envelope)
@@ -393,17 +408,23 @@ pub fn read_environment_vault_secret_value(
 pub(crate) fn resolve_secret_reference_or_value(
     value: &str,
 ) -> Result<Zeroizing<String>, SecretReferenceError> {
-    if !value.starts_with(SECRET_REFERENCE_PREFIX) {
+    if !value.starts_with(SECRET_REFERENCE_RESERVED_PREFIX) {
         return Ok(Zeroizing::new(value.to_owned()));
     }
+    if !value.starts_with(SECRET_REFERENCE_PREFIX) {
+        return Err(SecretReferenceError::InvalidReference);
+    }
 
-    let (workspace_id, secret_id) = parse_secret_reference(value)?;
+    let (workspace_id, reference_generation, secret_id) = parse_secret_reference(value)?;
     let sessions = environment_vault_sessions()
         .read()
         .map_err(|_| SecretReferenceError::StoreUnavailable)?;
     let session = sessions
         .get(&workspace_id)
         .ok_or(SecretReferenceError::SessionLocked)?;
+    if session.reference_generation.as_str() != reference_generation {
+        return Err(SecretReferenceError::InvalidReference);
+    }
     let secret = session
         .vault
         .secrets
@@ -572,7 +593,10 @@ fn apply_secret_upsert(
     Ok(())
 }
 
-fn create_session_view(vault: &EnvironmentVaultPayload) -> EnvironmentVaultSessionView {
+fn create_session_view(
+    vault: &EnvironmentVaultPayload,
+    reference_generation: &str,
+) -> EnvironmentVaultSessionView {
     EnvironmentVaultSessionView {
         version: vault.version,
         workspace_id: vault.workspace_id.clone(),
@@ -584,7 +608,11 @@ fn create_session_view(vault: &EnvironmentVaultPayload) -> EnvironmentVaultSessi
                 name: secret.name.clone(),
                 kind: secret.kind.clone(),
                 tags: secret.tags.clone(),
-                value: create_secret_reference(&vault.workspace_id, &secret.id),
+                value: create_secret_reference(
+                    &vault.workspace_id,
+                    reference_generation,
+                    &secret.id,
+                ),
                 value_length: secret.value.chars().count(),
                 created_at: secret.created_at.clone(),
                 updated_at: secret.updated_at.clone(),
@@ -595,16 +623,26 @@ fn create_session_view(vault: &EnvironmentVaultPayload) -> EnvironmentVaultSessi
     }
 }
 
-fn create_secret_reference(workspace_id: &str, secret_id: &str) -> String {
-    let mut raw = String::with_capacity(workspace_id.len() + secret_id.len() + 1);
+fn create_secret_reference(
+    workspace_id: &str,
+    reference_generation: &str,
+    secret_id: &str,
+) -> String {
+    let mut raw = String::with_capacity(
+        workspace_id.len() + reference_generation.len() + secret_id.len() + 2,
+    );
     raw.push_str(workspace_id);
+    raw.push('\0');
+    raw.push_str(reference_generation);
     raw.push('\0');
     raw.push_str(secret_id);
 
     format!("{SECRET_REFERENCE_PREFIX}{}", URL_SAFE_NO_PAD.encode(raw.as_bytes()))
 }
 
-fn parse_secret_reference(value: &str) -> Result<(String, String), SecretReferenceError> {
+fn parse_secret_reference(
+    value: &str,
+) -> Result<(String, String, String), SecretReferenceError> {
     let encoded = value
         .strip_prefix(SECRET_REFERENCE_PREFIX)
         .ok_or(SecretReferenceError::InvalidReference)?;
@@ -615,16 +653,31 @@ fn parse_secret_reference(value: &str) -> Result<(String, String), SecretReferen
         .map_err(|_| SecretReferenceError::InvalidReference)?;
     let mut parts = decoded.split('\0');
     let workspace_id = parts.next().unwrap_or_default();
+    let reference_generation = parts.next().unwrap_or_default();
     let secret_id = parts.next().unwrap_or_default();
 
     if parts.next().is_some()
         || !workspace_id_is_valid(workspace_id)
+        || !secret_id_is_valid(reference_generation)
         || !secret_id_is_valid(secret_id)
     {
         return Err(SecretReferenceError::InvalidReference);
     }
 
-    Ok((workspace_id.to_owned(), secret_id.to_owned()))
+    Ok((
+        workspace_id.to_owned(),
+        reference_generation.to_owned(),
+        secret_id.to_owned(),
+    ))
+}
+
+fn create_reference_generation() -> Result<Zeroizing<String>, &'static str> {
+    let mut random = [0_u8; 16];
+    getrandom::fill(&mut random).map_err(|_| ERROR_STORE_FAILED)?;
+    let encoded = URL_SAFE_NO_PAD.encode(random);
+    random.zeroize();
+
+    Ok(Zeroizing::new(encoded))
 }
 
 fn create_secret_id() -> Result<String, &'static str> {
@@ -808,7 +861,7 @@ mod tests {
         assert!(serialized.contains("\"nativeManaged\":true"));
         assert!(serialized.contains("\"valueLength\":21"));
 
-        shutdown_all_secret_vault_sessions();
+        assert!(close_environment_vault_session(workspace_id).ok);
     }
 
     #[test]
@@ -820,6 +873,7 @@ mod tests {
         )
         .ok);
         let updated = add_secret(&workspace_id, "native-only-value");
+        let envelope = updated.envelope.clone().expect("updated envelope");
         let secret_reference = updated
             .vault
             .expect("session view")
@@ -838,6 +892,47 @@ mod tests {
         assert_eq!(
             resolve_secret_reference_or_value(&secret_reference),
             Err(SecretReferenceError::SessionLocked)
+        );
+
+        let reopened = open_environment_vault_session(
+            workspace_id.clone(),
+            "password".to_owned(),
+            envelope,
+        );
+        assert!(reopened.ok);
+        assert_eq!(
+            resolve_secret_reference_or_value(&secret_reference),
+            Err(SecretReferenceError::InvalidReference)
+        );
+
+        let current_reference = reopened
+            .vault
+            .expect("reopened session view")
+            .secrets
+            .first()
+            .expect("reopened secret metadata")
+            .value
+            .clone();
+        assert_eq!(
+            resolve_secret_reference_or_value(&current_reference)
+                .expect("current reference")
+                .as_str(),
+            "native-only-value"
+        );
+
+        assert!(close_environment_vault_session(workspace_id).ok);
+    }
+
+    #[test]
+    fn legacy_reference_shape_fails_closed() {
+        let legacy = format!(
+            "workduck-secret-ref:v1:{}",
+            URL_SAFE_NO_PAD.encode(b"workspace\0secret_id")
+        );
+
+        assert_eq!(
+            resolve_secret_reference_or_value(&legacy),
+            Err(SecretReferenceError::InvalidReference)
         );
     }
 
