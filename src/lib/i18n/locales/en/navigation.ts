@@ -15,5 +15,29 @@ export const enNavigationMessages = {
 		waitForOperation: 'Wait for the current operation to finish.',
 		primary: 'Primary',
 		settingsArea: 'Settings',
-		resizeSidebar: 'Resize sidebar'
+		resizeSidebar: 'Resize sidebar',
+		commandPalette: {
+			title: 'Search Workduck',
+			placeholder: 'Search projects, repositories, queue items, agents, references, runs, and artifacts',
+			openPage: 'Open {page}',
+			noResults: 'No matching commands or workspace items.',
+			loading: 'Loading the workspace index…',
+			searching: 'Searching the artifact index…',
+			degraded: 'Some workspace sources could not be read.',
+			workspaceLocked: 'Unlock the active workspace to search its contents.',
+			keyboardHint: 'Use ↑ and ↓ to move, Enter to open, and Esc to close.',
+			kinds: {
+				command: 'Command',
+				project: 'Project',
+				group: 'Group',
+				repository: 'Repository',
+				queueWorkOrder: 'Work order',
+				queueResultReport: 'Result report',
+				queueProposal: 'Proposal',
+				agent: 'Agent',
+				reference: 'Reference',
+				run: 'Run',
+				artifact: 'Artifact'
+			}
+		}
 	} as const;

@@ -6,10 +6,12 @@
 	import '../app.css';
 
 	type WorkbenchShellComponent = typeof import('$lib/shell/WorkbenchShell.svelte').default;
+	type CommandPaletteComponent = typeof import('$lib/search/CommandPalette.svelte').default;
 
 	let { children } = $props();
 
 	let WorkbenchShell = $state<WorkbenchShellComponent | null>(null);
+	let CommandPalette = $state<CommandPaletteComponent | null>(null);
 	let isAppStateReady = $state(false);
 	let isTrayMenuWindow = $derived(
 		page.url.pathname === '/tray-menu' || page.url.pathname === '/tray-menu/'
@@ -23,8 +25,12 @@
 				return;
 			}
 
-			const module = await import('$lib/shell/WorkbenchShell.svelte');
-			WorkbenchShell = module.default;
+			const [shellModule, paletteModule] = await Promise.all([
+				import('$lib/shell/WorkbenchShell.svelte'),
+				import('$lib/search/CommandPalette.svelte')
+			]);
+			WorkbenchShell = shellModule.default;
+			CommandPalette = paletteModule.default;
 		});
 	});
 </script>
@@ -39,4 +45,7 @@
 	<WorkbenchShell>
 		{@render children()}
 	</WorkbenchShell>
+	{#if CommandPalette !== null}
+		<CommandPalette />
+	{/if}
 {/if}
