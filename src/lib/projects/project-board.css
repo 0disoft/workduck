@@ -99,6 +99,7 @@
 .workduck-project-repository-track {
 	display: grid;
 	grid-template-columns: minmax(0, 1fr);
+	grid-auto-rows: max-content;
 	align-content: start;
 	align-items: start;
 	overflow: visible;

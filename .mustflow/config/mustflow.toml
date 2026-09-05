@@ -1,0 +1,23 @@
+schema_version = "1"
+
+[approval]
+required_for = [
+  "git_commit", "git_push", "dependency_install", "dependency_upgrade",
+  "network_access", "database_migration", "destructive_command",
+  "secret_access", "release", "cross_repository_change",
+]
+on_required = "stop_and_request_approval"
+
+[budget]
+enabled = true
+max_iterations = 6
+max_wall_clock_minutes = 60
+max_command_runs = 20
+max_total_output_mb = 8
+max_failures_per_intent = 2
+on_limit = "stop_and_report"
+
+[isolation]
+preferred = "git_worktree"
+required_for_long_running = true
+allow_dirty_main_worktree = false
