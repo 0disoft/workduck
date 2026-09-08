@@ -1,5 +1,104 @@
 schema_version = "1"
 
+[intents.delivery_status]
+status = "configured"
+lifecycle = "oneshot"
+run_policy = "agent_allowed"
+description = "Inspect local delivery identity, remote main and v1.9.0 tag, CI runs and published releases without mutations."
+argv = ["node", "--input-type=module", "-e", '''
+import {spawnSync} from 'node:child_process';
+for(const [cmd,args] of [
+ ['git',['status','--short','--branch']],['git',['log','-7','--oneline']],
+ ['git',['ls-remote','origin','refs/heads/main','refs/tags/v1.9.0','refs/tags/v1.9.0^{}']],
+]) {const r=spawnSync(cmd,args,{encoding:'utf8',shell:false,timeout:45000}); console.log(JSON.stringify({command:[cmd,...args],status:r.status,output:r.stdout,error:r.stderr})); if(r.status!==0) process.exit(r.status??1);}
+for(const path of ['actions/runs?per_page=6','releases?per_page=2']) {
+ const r=await fetch('https://api.github.com/repos/0disoft/workduck/'+path,{signal:AbortSignal.timeout(30000)}); if(!r.ok) throw Error('GitHub HTTP '+r.status); const data=await r.json();
+ console.log(JSON.stringify(path.startsWith('actions') ? data.workflow_runs.map(x=>({id:x.id,name:x.name,sha:x.head_sha,status:x.status,conclusion:x.conclusion,url:x.html_url})) : data.map(x=>({tag:x.tag_name,draft:x.draft,url:x.html_url,assets:x.assets.map(a=>({name:a.name,size:a.size,url:a.browser_download_url}))})));
+}
+''']
+cwd = "."
+timeout_seconds = 240
+stdin = "closed"
+success_exit_codes = [0]
+max_output_bytes = 32768
+writes = []
+network = true
+destructive = false
+approval_actions = ["network_access"]
+
+[intents.delivery_contract_check]
+status = "configured"
+lifecycle = "oneshot"
+run_policy = "agent_allowed"
+description = "Parse the child command contract and check delivery patch whitespace."
+argv = ["bun", "-e", "import {readFileSync} from 'node:fs'; const c=Bun.TOML.parse(readFileSync('.mustflow/config/commands.toml','utf8')); for(const name of ['delivery_status','delivery_contract_check']) if(c.intents[name].status!=='configured') throw Error(name); const r=Bun.spawnSync(['git','diff','--check']); console.log(r.stdout.toString()); console.error(r.stderr.toString()); process.exit(r.exitCode);"]
+cwd = "."
+timeout_seconds = 30
+stdin = "closed"
+success_exit_codes = [0]
+max_output_bytes = 8192
+writes = []
+network = false
+destructive = false
+
+[intents.delivery_commit_push]
+status = "configured"
+lifecycle = "oneshot"
+run_policy = "agent_allowed"
+description = "Commit only the reviewed delivery intents after the exact Brief gate commit, then push clean main without force."
+argv = ["node", "--input-type=module", "-e", '''
+import {spawnSync} from 'node:child_process';
+const git=args=>{const r=spawnSync('git',args,{encoding:'utf8',shell:false,timeout:90000}); if(r.status!==0) throw Error(r.stderr||r.stdout); return r.stdout.trim();};
+if(git(['rev-parse','HEAD'])!=='27d820793f388ae3b09fc0a7438e6519006b24bc'||git(['branch','--show-current'])!=='main') throw Error('Unexpected release base');
+if(git(['remote','get-url','origin'])!=='https://github.com/0disoft/workduck') throw Error('Unexpected remote');
+if(git(['diff','--cached','--name-only'])) throw Error('Index not empty');
+if(git(['status','--porcelain']).trim()!=='M .mustflow/config/commands.toml') throw Error('Unexpected dirty paths');
+git(['diff','--check']); git(['add','--','.mustflow/config/commands.toml']);
+console.log(git(['commit','-m','🔧 chore: configure bounded v1.9.0 delivery','-m','Add exact-scope push, CI-gated tag publication, and public release evidence checks. Validation: command TOML parsing and diff whitespace checks passed.']));
+if(git(['status','--porcelain'])) throw Error('Worktree not clean');
+console.log(git(['push','origin','main'])); console.log(git(['rev-parse','HEAD']));
+''']
+cwd = "."
+timeout_seconds = 180
+stdin = "closed"
+success_exit_codes = [0]
+max_output_bytes = 16384
+writes = [".git/**"]
+network = true
+destructive = false
+approval_actions = ["git_commit", "git_push", "network_access"]
+
+[intents.delivery_publish_tag]
+status = "configured"
+lifecycle = "oneshot"
+run_policy = "agent_allowed"
+description = "Publish only v1.9.0 from clean origin-matched main after exact-commit push CI success; never replace an existing tag."
+argv = ["node", "--input-type=module", "-e", '''
+import fs from 'node:fs'; import {spawnSync} from 'node:child_process';
+const git=args=>{const r=spawnSync('git',args,{encoding:'utf8',shell:false,timeout:90000}); if(r.status!==0) throw Error(r.stderr||r.stdout); return r.stdout.trim();};
+const sha=git(['rev-parse','HEAD']);
+if(git(['branch','--show-current'])!=='main'||git(['status','--porcelain'])) throw Error('Clean main required');
+git(['merge-base','--is-ancestor','27d820793f388ae3b09fc0a7438e6519006b24bc',sha]);
+if(git(['remote','get-url','origin'])!=='https://github.com/0disoft/workduck') throw Error('Unexpected remote');
+if(git(['ls-remote','origin','refs/heads/main']).split(/\s/u)[0]!==sha) throw Error('Remote main differs');
+if(JSON.parse(fs.readFileSync('package.json','utf8')).version!=='1.9.0') throw Error('Package version differs');
+for(const p of ['src-tauri/Cargo.toml','src-tauri/Cargo.lock']) if(fs.readFileSync(p,'utf8').match(/name = "workduck"\r?\nversion = "([^"]+)"/u)?.[1]!=='1.9.0') throw Error('Native version differs');
+const r=await fetch('https://api.github.com/repos/0disoft/workduck/actions/workflows/ci.yml/runs?event=push&head_sha='+sha,{signal:AbortSignal.timeout(30000)}); if(!r.ok) throw Error('GitHub HTTP '+r.status);
+const runs=(await r.json()).workflow_runs; if(!runs.some(x=>x.head_sha===sha&&x.status==='completed'&&x.conclusion==='success')) throw Error('Exact commit push CI has not passed');
+if(git(['ls-remote','origin','refs/tags/v1.9.0'])) throw Error('Remote tag already exists');
+if(git(['tag','--list','v1.9.0'])) throw Error('Local tag already exists');
+git(['tag','-a','v1.9.0',sha,'-m','Workduck v1.9.0']); console.log(git(['push','origin','refs/tags/v1.9.0'])); console.log(JSON.stringify({sha,tag:'v1.9.0'}));
+''']
+cwd = "."
+timeout_seconds = 240
+stdin = "closed"
+success_exit_codes = [0]
+max_output_bytes = 16384
+writes = [".git/**"]
+network = true
+destructive = false
+approval_actions = ["git_push", "network_access", "release"]
+
 [intents.commit_brief_gate]
 status = "configured"
 lifecycle = "oneshot"
