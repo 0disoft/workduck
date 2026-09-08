@@ -31,7 +31,7 @@
     ],
     "volatileContextAfter": true
   },
-  "bundleHash": "0c2fddec4a729fce691adb983f59be994a8e97aa82aabee5b8e8f89f878aabe5",
+  "bundleHash": "a46aa3fab76af0b3a6592a1d8edf228afae93132ec6c4ac8fb6539878f271fe6",
   "partitions": [
     {
       "cacheBoundaryAfter": true,
@@ -72,10 +72,10 @@
     {
       "cacheBoundaryAfter": true,
       "cacheScope": "module",
-      "content": "llmnav-catalog/1 repository=workduck catalog=workduck.briefs\nRead semantic cards before opening source. Resolve current paths and signatures with llmnav query or show.\n\n@workduck.briefs.registry\nrole Validate workspace-owned task briefs, preserve stable repository references, and compile Codex exports.\nowns brief lifecycle, strict registry parsing, repository selection, Codex brief export\nexcludes filesystem writes, agent execution\ninvariant Invalid registries fail closed and brief identity survives edits and archive transitions.\n\n@workduck.briefs.runs\nrole Validate durable links between saved brief snapshots and existing repository or queue executions.\nowns run link identity, link-time brief snapshots, duplicate link rejection\nexcludes execution launch, source record reads, gate evaluation\ninvariant Each brief and source pair is unique and unlinking never mutates the original execution.\n",
-      "contentHash": "be73d4bdaaa3a834671dc7dcf5e221f29b2ed9a1e96f81086c973b2a85d28aa8",
+      "content": "llmnav-catalog/1 repository=workduck catalog=workduck.briefs\nRead semantic cards before opening source. Resolve current paths and signatures with llmnav query or show.\n\n@workduck.briefs.registry\nrole Validate workspace-owned task briefs, preserve stable repository references, and compile Codex exports.\nowns brief lifecycle, strict registry parsing, repository selection, Codex brief export\nexcludes filesystem writes, agent execution\ninvariant Invalid registries fail closed and brief identity survives edits and archive transitions.\n\n@workduck.briefs.runs\nrole Validate durable links between saved brief snapshots and existing repository or queue executions.\nowns run link identity, link-time brief snapshots, duplicate link rejection\nexcludes execution launch, source record reads, gate evaluation\ninvariant Each brief and source pair is unique and unlinking never mutates the original execution.\n\n@workduck.briefs.gate\nrole Derive a local run and gate from linked execution evidence without treating report prose as verified checks.\nowns execution evidence classification, build gate projection, brief run graph\nexcludes execution launch, manual approval, report author claims\ninvariant Only a completed native build with exit code zero can pass; missing or prose-only evidence remains pending.\n",
+      "contentHash": "a20ca785daff81d2c464c701f83cd93be9ae631a41b7451bd51367e19a539fa0",
       "contentType": "text/plain",
-      "estimatedTokens": 226,
+      "estimatedTokens": 325,
       "id": "module:workduck.briefs"
     },
     {

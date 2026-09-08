@@ -1,5 +1,74 @@
 schema_version = "1"
 
+[intents.commit_brief_gate]
+status = "configured"
+lifecycle = "oneshot"
+run_policy = "agent_allowed"
+description = "Commit the reviewed evidence-derived Brief gate, scoped report projection, tests, and synchronized metadata."
+argv = ["node", "--input-type=module", "-e", '''
+import fs from 'node:fs';
+import { spawnSync } from 'node:child_process';
+const git = args => { const r = spawnSync('git',args,{encoding:'utf8',shell:false}); if(r.status !== 0) throw new Error(r.stderr || r.stdout); return r.stdout.trim(); };
+const paths = [
+  '.mustflow/config/commands.toml','README.md','ROADMAP.md','package.json','src-tauri/Cargo.toml','src-tauri/Cargo.lock',
+  ...['BriefRunsPanel.svelte','brief-gate.ts','brief-gate-messages.ts','brief-run-evidence.ts','brief-run.test.ts','briefs.css'].map(f => 'src/lib/briefs/'+f),
+  '.llmnav/config.json','.llmnav/eval/queries.jsonl','.llmnav/ids.jsonl','.llmnav/order.lock',
+  ...['agent-context.md','cards.jsonl','file-state.json','graph-state.json','graph.json','index.json','manifest.json','prompt-prefix.json','search-index.json','modules/workduck.briefs.txt'].map(f => '.llmnav/cache/'+f)
+];
+if(git(['diff','--cached','--name-only'])) throw new Error('Index must be empty');
+const version = JSON.parse(fs.readFileSync('package.json','utf8')).version;
+for(const p of ['src-tauri/Cargo.toml','src-tauri/Cargo.lock']) if(fs.readFileSync(p,'utf8').match(/name = "workduck"\r?\nversion = "([^"]+)"/u)?.[1] !== version) throw new Error('Version mismatch');
+git(['diff','--check']); git(['add','--',...paths]);
+const actual = git(['diff','--cached','--name-only']).split(/\r?\n/u);
+if(actual.some(p => !paths.includes(p)) || !actual.includes('src/lib/briefs/brief-gate.ts')) throw new Error('Unexpected staged paths');
+git(['diff','--cached','--check']);
+console.log(git(['commit','-m','✨ feat: derive brief gates from execution evidence','-m','Connect the shared Brief Run Gate engine to native build evidence. Keep report prose unverified, block failed or stopped executions, and scope multi-repository report tasks by exact IDs.\n\nValidation: 23 focused tests, zero Svelte diagnostics, static frontend build and navigation checks passed. Native registry tests passed in the preceding unchanged persistence slice; desktop click-through remains unverified.']));
+''']
+cwd = "."
+timeout_seconds = 90
+stdin = "closed"
+success_exit_codes = [0]
+max_output_bytes = 32768
+writes = [".git/**"]
+network = false
+destructive = false
+approval_actions = ["git_commit"]
+
+[intents.brief_gate_verify]
+status = "configured"
+lifecycle = "oneshot"
+run_policy = "agent_allowed"
+description = "Verify the Brief Run Gate slice with focused regression tests, frontend diagnostics/build, and scoped navigation audit output."
+argv = ["node", "--input-type=module", "-e", '''
+import { spawnSync } from 'node:child_process';
+const steps = [
+  ['bun',['test','src/lib/briefs']],
+  ['node',['node_modules/@sveltejs/kit/svelte-kit.js','sync']],
+  ['node',['node_modules/svelte-check/bin/svelte-check','--tsgo','--tsconfig','./tsconfig.json']],
+  ['bun',['run','build']],
+  ['node',['node_modules/llmnav/bin/llmnav.js','format','--check']],
+  ['node',['node_modules/llmnav/bin/llmnav.js','check']],
+  ['node',['node_modules/llmnav/bin/llmnav.js','generate']]
+];
+for(const [cmd,args] of steps) {
+  const r = spawnSync(cmd,args,{encoding:'utf8',shell:false,timeout:180000,maxBuffer:1048576});
+  console.log(r.stdout); if(r.stderr) console.error(r.stderr);
+  if(r.status !== 0) process.exit(r.status ?? 1);
+}
+const audit = spawnSync(process.execPath,['node_modules/llmnav/bin/llmnav.js','audit','--json'],{encoding:'utf8',shell:false,timeout:90000,maxBuffer:2097152});
+if(audit.status !== 0) throw new Error(audit.stderr || 'Navigation audit failed');
+const report = JSON.parse(audit.stdout);
+console.log(JSON.stringify({summary:report.summary,briefCandidates:report.candidates.filter(c=>c.priority !== 'low' && c.path.startsWith('src/lib/briefs/')).map(({path,priority,reasons})=>({path,priority,reasons}))}));
+''']
+cwd = "."
+timeout_seconds = 600
+stdin = "closed"
+success_exit_codes = [0]
+max_output_bytes = 65536
+writes = [".svelte-kit/**", "build/**", ".llmnav/cache/**", ".llmnav/ids.jsonl", ".llmnav/order.lock"]
+network = false
+destructive = false
+
 [intents.commit_brief_runs]
 status = "configured"
 lifecycle = "oneshot"

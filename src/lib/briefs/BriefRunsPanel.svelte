@@ -8,6 +8,8 @@
 	import { findLinkedReports, findLinkedTask, findLinkedWorkOrder, listBriefRunCandidates, readBriefRunEvidence, type BriefRunEvidence } from './brief-run-evidence';
 	import { readBriefRunRegistry, writeBriefRunRegistry } from './brief-run-storage';
 	import { briefRunMessages } from './brief-run-messages';
+	import { deriveBriefGate } from './brief-gate';
+	import { briefGateMessages } from './brief-gate-messages';
 
 	let { workspace, brief, languageId }: { workspace: WorkspaceRecord; brief: BriefRecord; languageId: WorkduckLanguageId } = $props();
 	let registry = $state(createEmptyBriefRunRegistry(''));
@@ -21,6 +23,7 @@
 	let disposed = false;
 	let readController: AbortController | null = null;
 	let messages = $derived(briefRunMessages[languageId]);
+	let gateMessages = $derived(briefGateMessages[languageId]);
 	let common = $derived(getWorkduckMessages(languageId).common);
 	let links = $derived(registry.links.filter((link) => link.brief.id === brief.id));
 	let candidates = $derived(listBriefRunCandidates(brief, workspace.path, evidence).filter((candidate) =>
@@ -96,8 +99,11 @@
 	{#each links as link (link.id)}
 		{@const task = findLinkedTask(link, workspace.path, evidence)}
 		{@const reports = findLinkedReports(link, evidence)}
+		{@const gate = deriveBriefGate(link, workspace.path, evidence)}
 		<article class="brief-run-card">
 			<strong>{runState(link)}</strong>
+			<p class="brief-gate" data-state={gate.state}><strong>{gateMessages.title}: {gateMessages[gate.state]}</strong> — {gateMessages[gate.reason]}</p>
+			<p class="brief-storage-note">{gateMessages.scope}</p>
 			<p>{messages.sourceId}: <code>{link.sourceId}</code></p>
 			{#if task}<p>{task.task} · {task.startedAt}{task.exitCode === null ? '' : ` · exit ${task.exitCode}`}</p>{/if}
 			<details><summary>{messages.snapshot}</summary><pre>{link.brief.instructions}</pre></details>

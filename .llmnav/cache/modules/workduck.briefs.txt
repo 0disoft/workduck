@@ -12,3 +12,9 @@ role Validate durable links between saved brief snapshots and existing repositor
 owns run link identity, link-time brief snapshots, duplicate link rejection
 excludes execution launch, source record reads, gate evaluation
 invariant Each brief and source pair is unique and unlinking never mutates the original execution.
+
+@workduck.briefs.gate
+role Derive a local run and gate from linked execution evidence without treating report prose as verified checks.
+owns execution evidence classification, build gate projection, brief run graph
+excludes execution launch, manual approval, report author claims
+invariant Only a completed native build with exit code zero can pass; missing or prose-only evidence remains pending.

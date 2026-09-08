@@ -88,9 +88,17 @@ their `sourceWorkOrder` ID, not their titles. Refresh reloads the original recor
 and unlinking removes only the association. Queue scans are bounded to 200 files
 and four concurrent reads; partial scans disable new queue associations.
 
-The remaining boundary is explicit gate evaluation from these execution records.
+Each linked run has a derived gate: a completed native build with exit code 0
+passes, failed or stopped executions block, and missing or prose-only evidence
+remains unverified. Queue reports are scoped to the linked repository's task IDs.
+Report verification text and an archived work order cannot prove a passing check.
+The gate is recalculated from the original records on refresh; it does not
+certify code correctness or authorize a release or another task.
+
 Brief editing, export, and run linking do not run agents or shell commands, and
-the new stores have no browser-only persistence fallback.
+the new stores have no browser-only persistence fallback. Creating a new queue
+work order from a brief and manually approving report-based checks remain outside
+this first local loop.
 
 Encrypted sync includes project, group, and repository metadata. Repository
 local paths are stored relative to the workspace when possible, not as raw
@@ -275,8 +283,8 @@ bun run verify
 
 The next product work should keep the daily workbench path tight:
 
-1. Derive explicit gate evidence from linked runs before adding runtime agent
-   adapters.
+1. Exercise the saved Brief -> linked Run -> evidence Gate workflow on real
+   repository tasks before adding runtime agent adapters or automatic execution.
 
 ## Agent Workflow
 

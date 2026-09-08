@@ -6,6 +6,8 @@ import { addBriefRunLink, createEmptyBriefRunRegistry, parseBriefRunRegistry, re
 import { findLinkedReports, findLinkedTask, listBriefRunCandidates, readBriefRunEvidence, type BriefRunEvidence } from './brief-run-evidence';
 import { readBriefRunRegistry, writeBriefRunRegistry } from './brief-run-storage';
 import { briefRunMessages } from './brief-run-messages';
+import { deriveBriefGate } from './brief-gate';
+import { briefGateMessages } from './brief-gate-messages';
 
 const brief: BriefRecord = saveBriefDraft(createEmptyBriefRegistry('ws-1'), {
 	id: 'brief-1', title: 'Same title', instructions: 'Check the repository build.',
@@ -80,5 +82,51 @@ describe('Brief run links', () => {
 	});
 	test('keeps run messages complete across all six languages', () => {
 		for (const messages of Object.values(briefRunMessages)) assert.deepEqual(Object.keys(messages).sort(), Object.keys(briefRunMessages.en).sort());
+	});
+	test('keeps report tasks from another repository out of the linked result', () => {
+		const mixed: BriefRunEvidence = {
+			...evidence,
+			workOrders: [{ ...evidence.workOrders[0]!, tasks: [...evidence.workOrders[0]!.tasks, { id: 't-other', title: 'Same title', body: 'Another repo', repositoryIds: ['r-other'] }] }],
+			reports: [{ ...evidence.reports[0]!, tasks: [...evidence.reports[0]!.tasks, { ...evidence.reports[0]!.tasks[0]!, id: 't-other' }] }]
+		};
+		const reports = findLinkedReports({ ...link, sourceKind: 'queue-work-order', sourceId: 'wo-1' }, mixed);
+		assert.deepEqual(reports[0]?.tasks.map((task) => task.id), ['t-1']);
+	});
+
+	test('passes only a completed native build and constructs the shared Brief Run Gate graph', () => {
+		const gate = deriveBriefGate(link, 'C:/workspace', evidence);
+		assert.equal(gate.state, 'passed');
+		assert.equal(gate.reason, 'buildPassed');
+		assert.equal(gate.loop.run.brief?.id, brief.id);
+		assert.equal(gate.loop.run.repoRefs[0]?.id, 'r-1');
+		assert.equal(gate.loop.gateEvaluations[0]?.state, 'passed');
+		for (const task of [
+			{ ...evidence.taskRuns[0]!, exitCode: null },
+			{ ...evidence.taskRuns[0]!, finishedAt: null },
+			{ ...evidence.taskRuns[0]!, finishedAt: 'invalid' },
+			{ ...evidence.taskRuns[0]!, finishedAt: '2020-01-01T00:00:00Z' },
+			{ ...evidence.taskRuns[0]!, task: 'install-dependencies' as const },
+			{ ...evidence.taskRuns[0]!, state: 'running' as const }
+		]) assert.equal(deriveBriefGate(link, 'C:/workspace', { ...evidence, taskRuns: [task] }).state, 'pending');
+	});
+
+	test('blocks failures and stops, and clears a passed gate if its source disappears', () => {
+		for (const state of ['failed', 'stopped'] as const) {
+			assert.equal(deriveBriefGate(link, 'C:/workspace', { ...evidence, taskRuns: [{ ...evidence.taskRuns[0]!, state }] }).state, 'blocked');
+		}
+		assert.equal(deriveBriefGate(link, 'C:/workspace', { ...evidence, taskRuns: [{ ...evidence.taskRuns[0]!, exitCode: 1 }] }).state, 'blocked');
+		assert.equal(deriveBriefGate(link, 'C:/workspace', { ...evidence, taskRuns: [] }).state, 'pending');
+	});
+
+	test('does not turn archived work orders or report claims into a passing gate', () => {
+		const queueLink: BriefRunLink = { ...link, sourceKind: 'queue-work-order', sourceId: 'wo-1' };
+		const gate = deriveBriefGate(queueLink, 'C:/workspace', evidence);
+		assert.equal(gate.state, 'pending');
+		assert.equal(gate.reason, 'reportNeedsReview');
+		assert.equal(deriveBriefGate(queueLink, 'C:/workspace', { ...evidence, workOrders: [{ ...evidence.workOrders[0]!, status: 'failed' }] }).state, 'blocked');
+	});
+
+	test('localizes all gate states and evidence reasons', () => {
+		for (const messages of Object.values(briefGateMessages)) assert.deepEqual(Object.keys(messages).sort(), Object.keys(briefGateMessages.en).sort());
 	});
 });

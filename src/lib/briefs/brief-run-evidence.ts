@@ -69,9 +69,14 @@ export function findLinkedWorkOrder(link: BriefRunLink, evidence: BriefRunEviden
 }
 
 export function findLinkedReports(link: BriefRunLink, evidence: BriefRunEvidence): readonly WorkduckQueueResultReport[] {
-	if (!findLinkedWorkOrder(link, evidence)) return [];
+	const order = findLinkedWorkOrder(link, evidence);
+	if (!order) return [];
+	const taskIds = new Set(order.tasks.filter((task) => task.repositoryIds?.includes(link.brief.repository.id) &&
+		order.tasks.filter((other) => other.id === task.id).length === 1).map((task) => task.id));
 	return evidence.reports.filter((report) => report.sourceWorkOrder?.id === link.sourceId &&
-		evidence.reports.filter((other) => other.ref.id === report.ref.id).length === 1);
+		evidence.reports.filter((other) => other.ref.id === report.ref.id).length === 1)
+		.map((report) => ({ ...report, tasks: report.tasks.filter((task) => taskIds.has(task.id)) }))
+		.filter((report) => report.tasks.length > 0);
 }
 
 function repositoryPathKey(workspacePath: string, path: string): string | null {

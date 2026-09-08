@@ -16,6 +16,20 @@
     },
     {
       "confidence": 0.85,
+      "from": "workduck/workduck.briefs.gate",
+      "id": "c8b4f703b5c411caea0e3d3f718fa7f8927af112ac674adb02799ae9ca213c89",
+      "kind": "imports",
+      "provenance": {
+        "generator": "llmnav",
+        "line": null,
+        "path": "src/lib/briefs/brief-gate.ts",
+        "source": "src/lib/briefs/brief-gate.ts",
+        "type": "local-import"
+      },
+      "to": "workduck/workduck.briefs.runs"
+    },
+    {
+      "confidence": 0.85,
       "from": "workduck/workduck.briefs.runs",
       "id": "afd1cf00f68a8b9c973b6d7ec9a8ca88356e3c536dd0805726cd5966283fdb5d",
       "kind": "imports",
@@ -190,6 +204,28 @@
       "repositoryId": "workduck",
       "role": "Verify the agent snapshot replaces credential references with presence flags and never serializes their secret identifiers.",
       "semanticId": "workduck.agent.snapshot.contract",
+      "unresolved": false
+    },
+    {
+      "definitions": [],
+      "external": false,
+      "key": "workduck/workduck.briefs.gate",
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src/lib/briefs/brief-gate.ts",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "repositoryId": "workduck",
+      "role": "Derive a local run and gate from linked execution evidence without treating report prose as verified checks.",
+      "semanticId": "workduck.briefs.gate",
       "unresolved": false
     },
     {
@@ -1373,11 +1409,11 @@
   ],
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "ba61417187f573d26cac2a4c2051088dbb38d037f56f35e245c4c714692b8ce3",
+  "sourceHash": "1ae7026d61c74839146ffb631b246f3dcb7df854dc3d2b239ea6a0ea01a2d777",
   "stats": {
-    "edgeCount": 8,
+    "edgeCount": 9,
     "importedIndexCount": 0,
-    "nodeCount": 56,
+    "nodeCount": 57,
     "unresolvedNodeCount": 0
   }
 }

@@ -2778,11 +2778,60 @@
         "link time instructions"
       ],
       "stability": "contract"
+    },
+    {
+      "boundaries": [],
+      "excludes": [
+        "execution launch",
+        "manual approval",
+        "report author claims"
+      ],
+      "hashes": {
+        "body": "b7992774d7349421dcb97af6f1dd51ecf1715b2f8a29a7bd002ef085c9a8c663",
+        "semantic": "a3f5501eb67b420ef93e0d152446d5821b27a95d93b53028beba9e09b867812b",
+        "structure": "b520645bb2777e85f2cf06b1e4a0186e5ef4075c8db98f91c34fabf0c203350e"
+      },
+      "id": "workduck.briefs.gate",
+      "imports": [
+        "./brief-run-evidence",
+        "./brief-run-registry",
+        "@workduck/core",
+        "@workduck/workbench-engine"
+      ],
+      "invariant": [
+        "Only a completed native build with exit code zero can pass; missing or prose-only evidence remains pending."
+      ],
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src/lib/briefs/brief-gate.ts",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "owns": [
+        "execution evidence classification",
+        "build gate projection",
+        "brief run graph"
+      ],
+      "role": "Derive a local run and gate from linked execution evidence without treating report prose as verified checks.",
+      "scope": "module",
+      "search": [
+        "brief gate evidence",
+        "verified build result",
+        "unverified report checks"
+      ],
+      "stability": "contract"
     }
   ],
   "contractFingerprints": {
     "configuration": {
-      "sha256": "b2bdb9a07bba6fc612c9cb6a5c3cbcb05db55229e55ffab2a10720b5d960fbd6"
+      "sha256": "f63e8d144818e38e841bcbe6e955b2da3dac0d501bd680055cbbf3f58b03c847"
     },
     "exportedApi": {
       "count": 0,
@@ -2793,6 +2842,6 @@
   "generatedBy": "llmnav@0.9.0",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "fae5a428dc72bd01a48bb2750662c09b9e651f860dbaadb08b52050dba63a9aa",
+  "sourceHash": "4bdce14bea66df5045b114d6d97a2a98997590af166328931dc151f5f6e95969",
   "specVersion": "1"
 }

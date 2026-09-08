@@ -12,3 +12,6 @@
 .brief-runs select { flex: 1 1 240px; min-width: 0; }
 .brief-run-card { display: grid; gap: 10px; padding: 16px; border: 1px solid var(--workduck-color-border); border-radius: 12px; overflow-wrap: anywhere; }
 .brief-run-card pre { white-space: pre-wrap; overflow-wrap: anywhere; font-family: inherit; }
+.brief-gate { border-inline-start: 3px solid var(--workduck-color-muted); padding-inline-start: 10px; }
+.brief-gate[data-state='passed'] { border-color: var(--workduck-color-success); }
+.brief-gate[data-state='blocked'] { border-color: var(--workduck-color-danger); }

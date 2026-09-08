@@ -100,6 +100,10 @@ work.
 - Durable links from a brief snapshot to an existing repository task run or
   repository-scoped queue work order, with source-ID report matching and
   link-only removal. Original execution records remain the source of truth.
+- Brief run gates derive passed, blocked, or unverified state through the shared
+  local workbench engine. Only a completed native build with exit code zero
+  passes; stopped/failed runs block, while report prose and missing evidence
+  remain unverified. This is an execution check, not a release approval.
 - Export-only adapter profiles for Claude Code, Codex, Cursor, OpenCode, and
   generic Markdown consumers. These profiles describe supported local artifacts
   without calling model SDKs or running external agents.
@@ -129,7 +133,8 @@ work.
 - Svelte Flow: wait until task graphs or run handoff graphs are being built.
 - Tiptap: wait until rich-text narrative documents need a dedicated editor.
 - shadcn-svelte: wait until concrete copied component ownership is useful.
-- Runtime agent SDKs: wait until Agent Briefs, Runs, and Gates have real data.
+- Runtime agent SDKs: wait until the local saved Brief, linked Run, and evidence
+  Gate loop has been exercised in daily use.
 - MCP write tools and client integrations: wait until local queue items and
   briefs have stable write commands. The read-only stdio server is already in
   place.
