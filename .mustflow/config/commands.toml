@@ -1,5 +1,57 @@
 schema_version = "1"
 
+[intents.delivery_diff_check]
+status = "configured"
+lifecycle = "oneshot"
+run_policy = "agent_allowed"
+description = "Check whitespace in the current Workduck delivery diff."
+argv = ["git", "diff", "--check"]
+cwd = "."
+timeout_seconds = 30
+stdin = "closed"
+success_exit_codes = [0]
+max_output_bytes = 32768
+writes = []
+network = false
+destructive = false
+
+[intents.commit_mcp_status_docs]
+status = "configured"
+lifecycle = "oneshot"
+run_policy = "agent_allowed"
+description = "Commit only MCP status documentation, patch version parity, and its bounded delivery intents."
+argv = ["node", "--input-type=module", "-e", '''
+import fs from 'node:fs';
+import { spawnSync } from 'node:child_process';
+const git = (args) => {
+  const r = spawnSync('git', args, { encoding: 'utf8', shell: false });
+  if (r.status !== 0) throw new Error(r.stderr || r.stdout);
+  return r.stdout.trim();
+};
+const paths = ['README.md', 'ROADMAP.md', 'package.json', 'src-tauri/Cargo.toml', 'src-tauri/Cargo.lock', '.mustflow/config/commands.toml'].sort();
+if (git(['diff', '--cached', '--name-only'])) throw new Error('Index must be empty');
+const version = JSON.parse(fs.readFileSync('package.json', 'utf8')).version;
+for (const p of ['src-tauri/Cargo.toml', 'src-tauri/Cargo.lock']) {
+  const match = fs.readFileSync(p, 'utf8').match(/name = "workduck"\r?\nversion = "([^"]+)"/u);
+  if (match?.[1] !== version) throw new Error('Version mismatch: ' + p);
+}
+git(['diff', '--check']);
+git(['add', '--', ...paths]);
+const actual = git(['diff', '--cached', '--name-only']).split(/\r?\n/u).sort();
+if (JSON.stringify(actual) !== JSON.stringify(paths)) throw new Error('Unexpected staged paths');
+git(['diff', '--cached', '--check']);
+console.log(git(['commit', '-m', '📝 docs: align MCP status with the read-only bridge', '-m', 'Document the implemented bridge and keep write integrations deferred. Synchronize patch metadata.\n\nValidation: source-to-doc review, version parity, and diff whitespace checks.']));
+''']
+cwd = "."
+timeout_seconds = 60
+stdin = "closed"
+success_exit_codes = [0]
+max_output_bytes = 32768
+writes = [".git/**"]
+network = false
+destructive = false
+approval_actions = ["git_commit"]
+
 [intents.frontend_check]
 status = "configured"
 lifecycle = "oneshot"

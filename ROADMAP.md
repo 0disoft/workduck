@@ -76,6 +76,9 @@ work.
   registry, repository task-run, and `.workduck` metadata status for automation
   clients while keeping plaintext secrets, secret IDs, command text, output
   tails, writes, and terminal input out of the contract.
+- Read-only stdio MCP server projects the same redacted snapshot through a fixed
+  tool catalog. The workspace and optional database are selected at startup;
+  model-generated tool arguments cannot select paths or perform writes.
 - Repository filters for tags, pull-needed repositories, and push-needed
   repositories.
 - Project board metadata is stored in SQLite by workspace, with legacy
@@ -119,8 +122,9 @@ work.
 - Tiptap: wait until rich-text narrative documents need a dedicated editor.
 - shadcn-svelte: wait until concrete copied component ownership is useful.
 - Runtime agent SDKs: wait until Agent Briefs, Runs, and Gates have real data.
-- MCP server/client: wait until local queue items and briefs can be read and
-  written through stable commands.
+- MCP write tools and client integrations: wait until local queue items and
+  briefs have stable write commands. The read-only stdio server is already in
+  place.
 - Observability and evaluation services: wait until local run traces exist.
 - Cloud runners and sandboxes: wait until local approval-gated execution works.
 - Vector search: wait until there is meaningful report, brief, and run data.

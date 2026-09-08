@@ -66,6 +66,8 @@ includes:
 - Read-only agent API snapshot command for local automation clients that need
   workspace, project registry, queue, repository task-run, and `.workduck`
   metadata status without decrypting or returning secret values.
+- Read-only stdio MCP bridge for the same redacted local snapshot, bound to one
+  workspace at startup rather than accepting paths from tool arguments.
 - Project board metadata stored in the local SQLite database, with legacy
   browser-stored project metadata promoted on first read.
 - Skills menu for workspace-local Workduck skills, including a built-in
@@ -130,8 +132,23 @@ workspace metadata file status.
 
 The snapshot intentionally does not expose plaintext secrets, encrypted vault
 payloads, secret IDs, repository task command text, terminal output tails, or
-terminal input endpoints. Future HTTP, MCP, or work-order write APIs should wrap
-the same safe core instead of duplicating filesystem reads.
+terminal input endpoints. The stdio MCP bridge wraps this same safe core rather
+than duplicating filesystem reads. HTTP and work-order write APIs remain outside
+the current bridge's scope.
+
+### Read-only MCP Bridge
+
+The repository includes a `workduck-mcp` Rust binary and a Node launcher at
+`scripts/workduck-mcp.mjs`. Configure the launcher with `serve --workspace`
+followed by an absolute workspace path. The launcher uses Cargo and therefore
+requires the Rust build toolchain; it is not a standalone installed desktop
+command.
+
+The server resolves the workspace before serving and exposes metadata queries
+only. Tool calls cannot select paths, mutate work orders, start processes, or
+read secret values. If the local Workduck database cannot be discovered, project
+and import-attempt data are reported as unavailable; an explicit `--database`
+path can select the existing database at startup.
 
 ### Sync Repository And Workspace Repository
 
