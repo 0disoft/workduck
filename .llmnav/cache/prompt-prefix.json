@@ -7,13 +7,16 @@
     ],
     "modulePartitionIds": [
       "module:workduck.agent",
+      "module:workduck.briefs",
       "module:workduck.cli",
+      "module:workduck.command-palette",
       "module:workduck.contract",
       "module:workduck.desktop",
       "module:workduck.domain",
       "module:workduck.environment",
       "module:workduck.git",
       "module:workduck.llm",
+      "module:workduck.mcp",
       "module:workduck.migration",
       "module:workduck.process",
       "module:workduck.projects",
@@ -28,7 +31,7 @@
     ],
     "volatileContextAfter": true
   },
-  "bundleHash": "7f929c4aacf49f131df7f9f603afec0d9825c73f4224b594fde6a328285b1cc0",
+  "bundleHash": "73955d5ff25c842a268dcc5a73042507ec2ebac09d339d9e77293d583eebcfb9",
   "partitions": [
     {
       "cacheBoundaryAfter": true,
@@ -69,11 +72,29 @@
     {
       "cacheBoundaryAfter": true,
       "cacheScope": "module",
+      "content": "llmnav-catalog/1 repository=workduck catalog=workduck.briefs\nRead semantic cards before opening source. Resolve current paths and signatures with llmnav query or show.\n\n@workduck.briefs.registry\nrole Validate workspace-owned task briefs, preserve stable repository references, and compile Codex exports.\nowns brief lifecycle, strict registry parsing, repository selection, Codex brief export\nexcludes filesystem writes, agent execution\ninvariant Invalid registries fail closed and brief identity survives edits and archive transitions.\n",
+      "contentHash": "eca9a88f21d64fb2bc2fa9f32d4b76f159e3f7f3622d558a2591aa707b5111e0",
+      "contentType": "text/plain",
+      "estimatedTokens": 134,
+      "id": "module:workduck.briefs"
+    },
+    {
+      "cacheBoundaryAfter": true,
+      "cacheScope": "module",
       "content": "llmnav-catalog/1 repository=workduck catalog=workduck.cli\nRead semantic cards before opening source. Resolve current paths and signatures with llmnav query or show.\n\n@workduck.cli.execution\nrole Execute queue work orders and agent evaluations from the command line under explicit workspace and vault contracts.\nowns CLI option parsing, work-order discovery, queue execution, agent evaluation\nexcludes Node launcher, Tauri desktop command registry\ninvariant Failures retain stable error codes and JSON mode never reports an unsuccessful operation as success.\n\n@workduck.cli.launcher\nrole Launch the locked Rust Workduck CLI from the repository while forwarding user arguments and its exit status.\nowns Node CLI shim, Cargo binary invocation, argument forwarding\nexcludes CLI command semantics, desktop application startup\ninvariant The launcher executes the locked workduck-cli binary from this repository and preserves its process result.\n",
       "contentHash": "7d12975745e8aa322e67bbc51cfe0e064c9424d4fccc9334e7295734e28690e5",
       "contentType": "text/plain",
       "estimatedTokens": 235,
       "id": "module:workduck.cli"
+    },
+    {
+      "cacheBoundaryAfter": true,
+      "cacheScope": "module",
+      "content": "llmnav-catalog/1 repository=workduck catalog=workduck.command-palette\nRead semantic cards before opening source. Resolve current paths and signatures with llmnav query or show.\n\n@workduck.command-palette.search\nrole Search workspace-scoped SQLite artifact content for the desktop command palette through a bounded read-only query.\nowns command palette artifact search, FTS query normalization, workspace artifact scoping\nexcludes workspace registry loading, command palette rendering, navigation actions\ninvariant Searches are read-only, length-bounded, result-bounded, and never return artifacts outside the requested workspace project registry.\n",
+      "contentHash": "571493ea7d22d46259ece4673fa801697973d470eb8f8c69eb5a18811ac82659",
+      "contentType": "text/plain",
+      "estimatedTokens": 162,
+      "id": "module:workduck.command-palette"
     },
     {
       "cacheBoundaryAfter": true,
@@ -123,11 +144,20 @@
     {
       "cacheBoundaryAfter": true,
       "cacheScope": "module",
-      "content": "llmnav-catalog/1 repository=workduck catalog=workduck.llm\nRead semantic cards before opening source. Resolve current paths and signatures with llmnav query or show.\n\n@workduck.llm.chat-native\nrole Validate and execute bounded non-streaming provider chat completions from desktop command requests.\nowns provider allowlist, prompt and model bounds, chat error normalization\nexcludes provider credential storage, streaming chat\ninvariant Requests require a non-empty API key, model, and bounded prompts before any provider network call.\n",
-      "contentHash": "22985c8949c4900fe2701565d4bafbdfd6a95af894679aa644ea1b3e60a4f33d",
+      "content": "llmnav-catalog/1 repository=workduck catalog=workduck.llm\nRead semantic cards before opening source. Resolve current paths and signatures with llmnav query or show.\n\n@workduck.llm.chat-native\nrole Validate and execute bounded non-streaming provider chat completions from desktop command requests.\nowns provider allowlist, prompt and model bounds, chat error normalization\nexcludes provider credential storage, streaming chat\ninvariant Requests resolve API keys through the native vault broker and validate bounded models and prompts before any provider network call.\n",
+      "contentHash": "62aff2ebccadac45641b926cf99263b4d25c7388610a05b6252302a3137aa197",
       "contentType": "text/plain",
-      "estimatedTokens": 134,
+      "estimatedTokens": 142,
       "id": "module:workduck.llm"
+    },
+    {
+      "cacheBoundaryAfter": true,
+      "cacheScope": "module",
+      "content": "llmnav-catalog/1 repository=workduck catalog=workduck.mcp\nRead semantic cards before opening source. Resolve current paths and signatures with llmnav query or show.\n\n@workduck.mcp.cli\nrole Resolve one fixed Workduck workspace and launch its read-only stdio MCP server.\nowns MCP command options, workspace ID discovery, local database discovery\nexcludes MCP protocol handling, snapshot redaction, workspace mutation\ninvariant The workspace and optional database are resolved before serving and are never accepted from model-generated tool arguments.\n\n@workduck.mcp.launcher\nrole Launch the locked Rust Workduck MCP stdio server from the repository while preserving its streams and exit status.\nowns Node MCP shim, Cargo MCP binary invocation, argument forwarding\nexcludes MCP protocol semantics, workspace discovery\ninvariant The launcher keeps stdin, stdout, and stderr directly attached and executes the locked workduck-mcp binary from this repository.\n\n@workduck.mcp.server\nrole Serve one workspace's redacted Agent API snapshot through bounded read-only stdio MCP tools.\nowns stdio MCP protocol, read-only tool catalog, workspace-bound snapshot projection\nexcludes workspace mutation, secret values, network transport\ninvariant Tool input cannot select paths, every tool result is projected from the redacted snapshot, and stdout contains only MCP JSON messages.\nrisk privacy\nrel test>workduck.mcp.server.contract\n\n@workduck.mcp.server.contract\nrole Verify MCP projections retain Agent API redaction and never return command or output bodies.\n",
+      "contentHash": "19de20909999bb633695671dffe5b676e98122d1a7453aee7980516e4357eb75",
+      "contentType": "text/plain",
+      "estimatedTokens": 387,
+      "id": "module:workduck.mcp"
     },
     {
       "cacheBoundaryAfter": true,
@@ -186,10 +216,10 @@
     {
       "cacheBoundaryAfter": true,
       "cacheScope": "module",
-      "content": "llmnav-catalog/1 repository=workduck catalog=workduck.secret-vault\nRead semantic cards before opening source. Resolve current paths and signatures with llmnav query or show.\n\n@workduck.secret-vault.crypto\nrole Encrypt and decrypt versioned secret-vault payloads through the native Argon2id and XChaCha20-Poly1305 boundary.\nowns secret-vault envelope, vault crypto invocation, crypto error normalization\nexcludes vault record storage, password UI\ninvariant Empty credentials, malformed envelopes, and unknown native responses fail without returning plaintext or a valid envelope.\n\n@workduck.secret-vault.crypto-native\nrole Bind secret-vault envelopes to native password crypto with versioned associated data and closed result errors.\nowns native secret-vault encryption, vault envelope conversion, vault crypto error mapping\nexcludes vault persistence, password interface\ninvariant Passwords remain zeroized and plaintext is returned only after authenticated envelope validation succeeds.\n",
-      "contentHash": "eff62f793c86d17b61009ae85cbb8bd9b157c9e3678eac75a412fb90ef672408",
+      "content": "llmnav-catalog/1 repository=workduck catalog=workduck.secret-vault\nRead semantic cards before opening source. Resolve current paths and signatures with llmnav query or show.\n\n@workduck.secret-vault.crypto\nrole Validate versioned encrypted secret-vault envelopes at the renderer persistence boundary.\nowns secret-vault envelope shape, encrypted vault format constants\nexcludes plaintext vault access, native session lifecycle, password crypto\ninvariant Renderer code may validate and persist encrypted envelopes but cannot encrypt or decrypt vault plaintext.\n\n@workduck.secret-vault.crypto-native\nrole Bind secret-vault envelopes to native password crypto with versioned associated data and closed result errors.\nowns native secret-vault encryption, vault envelope conversion, vault crypto error mapping\nexcludes vault persistence, password interface\ninvariant Passwords and encryption plaintext remain zeroized, and decrypted plaintext is available only to native callers after authenticated envelope validation succeeds.\n",
+      "contentHash": "8a2fce3b5eca755c5e0550e51dce3142386f20f156feb06d6c70b8da5ba04807",
       "contentType": "text/plain",
-      "estimatedTokens": 247,
+      "estimatedTokens": 256,
       "id": "module:workduck.secret-vault"
     },
     {

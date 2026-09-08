@@ -1,5 +1,6 @@
 export const enNavigationMessages = {
 		projects: 'Projects',
+		briefs: 'Agent briefs',
 		queue: 'Work queue',
 		references: 'References',
 		agents: 'Agents',

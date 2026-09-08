@@ -576,6 +576,120 @@
           "card": {
             "effect": [],
             "excludes": [
+              "MCP protocol semantics",
+              "workspace discovery"
+            ],
+            "id": "workduck.mcp.launcher",
+            "invariant": [
+              "The launcher keeps stdin, stdout, and stderr directly attached and executes the locked workduck-mcp binary from this repository."
+            ],
+            "owns": [
+              "Node MCP shim",
+              "Cargo MCP binary invocation",
+              "argument forwarding"
+            ],
+            "rel": [],
+            "risk": [],
+            "role": "Launch the locked Rust Workduck MCP stdio server from the repository while preserving its streams and exit status.",
+            "scope": "module",
+            "search": [
+              "workduck MCP launcher",
+              "cargo MCP shim",
+              "stdio server command"
+            ],
+            "stability": "contract",
+            "unknown": []
+          },
+          "end": 528,
+          "endLine": 10,
+          "entries": [
+            {
+              "key": "id",
+              "line": 3,
+              "order": 0,
+              "value": "workduck.mcp.launcher"
+            },
+            {
+              "key": "role",
+              "line": 4,
+              "order": 1,
+              "value": "Launch the locked Rust Workduck MCP stdio server from the repository while preserving its streams and exit status."
+            },
+            {
+              "key": "owns",
+              "line": 5,
+              "order": 2,
+              "value": "Node MCP shim|Cargo MCP binary invocation|argument forwarding"
+            },
+            {
+              "key": "excludes",
+              "line": 6,
+              "order": 3,
+              "value": "MCP protocol semantics|workspace discovery"
+            },
+            {
+              "key": "search",
+              "line": 7,
+              "order": 4,
+              "value": "workduck MCP launcher|cargo MCP shim|stdio server command"
+            },
+            {
+              "key": "invariant",
+              "line": 8,
+              "order": 5,
+              "value": "The launcher keeps stdin, stdout, and stderr directly attached and executes the locked workduck-mcp binary from this repository."
+            },
+            {
+              "key": "stability",
+              "line": 9,
+              "order": 6,
+              "value": "contract"
+            }
+          ],
+          "filePath": "scripts/workduck-mcp.mjs",
+          "indent": "",
+          "newline": "\n",
+          "prefix": null,
+          "raw": "/* llmnav/1 module\nid=workduck.mcp.launcher\nrole=Launch the locked Rust Workduck MCP stdio server from the repository while preserving its streams and exit status.\nowns=Node MCP shim|Cargo MCP binary invocation|argument forwarding\nexcludes=MCP protocol semantics|workspace discovery\nsearch=workduck MCP launcher|cargo MCP shim|stdio server command\ninvariant=The launcher keeps stdin, stdout, and stderr directly attached and executes the locked workduck-mcp binary from this repository.\nstability=contract\n*/",
+          "scope": "module",
+          "specVersion": "1",
+          "start": 20,
+          "startLine": 2,
+          "style": "block",
+          "syntaxErrors": []
+        }
+      ],
+      "contentHash": "248e08bdd13732d49d7ea67072883d1fe667829e237868dace44b176c68005a7",
+      "declarations": [
+        null
+      ],
+      "imports": [
+        "node:child_process",
+        "node:path",
+        "node:url"
+      ],
+      "path": "scripts/workduck-mcp.mjs",
+      "semanticBytes": 508,
+      "sourceBytes": 1267
+    },
+    {
+      "blocks": [],
+      "contentHash": "3eb9dd879adacb732ccbf0e68f02852684526a697f1fcc26308578889dc7f2cf",
+      "declarations": [],
+      "imports": [
+        "bun:test",
+        "node:fs"
+      ],
+      "path": "scripts/workduck-mcp.test.mjs",
+      "semanticBytes": 0,
+      "sourceBytes": 451
+    },
+    {
+      "blocks": [
+        {
+          "card": {
+            "effect": [],
+            "excludes": [
               "CLI command semantics",
               "desktop application startup"
             ],
@@ -816,6 +930,15 @@
       "sourceBytes": 1490
     },
     {
+      "blocks": [],
+      "contentHash": "291b0b66a6ab5eac0924cb3842565047265469b411b12b1f94c5037aaebe714c",
+      "declarations": [],
+      "imports": [],
+      "path": "src-tauri/migrations/007_app_state_records.sql",
+      "semanticBytes": 0,
+      "sourceBytes": 462
+    },
+    {
       "blocks": [
         {
           "card": {
@@ -938,30 +1061,30 @@
             "stability": "contract",
             "unknown": []
           },
-          "end": 28985,
-          "endLine": 912,
+          "end": 29410,
+          "endLine": 941,
           "entries": [
             {
               "key": "id",
-              "line": 908,
+              "line": 937,
               "order": 0,
               "value": "workduck.agent.snapshot.contract"
             },
             {
               "key": "role",
-              "line": 909,
+              "line": 938,
               "order": 1,
               "value": "Verify the agent snapshot replaces credential references with presence flags and never serializes their secret identifiers."
             },
             {
               "key": "search",
-              "line": 910,
+              "line": 939,
               "order": 2,
               "value": "agent snapshot contract|credential reference redaction|snapshot privacy test"
             },
             {
               "key": "stability",
-              "line": 911,
+              "line": 940,
               "order": 3,
               "value": "contract"
             }
@@ -973,23 +1096,23 @@
           "raw": "    // llmnav/1 symbol\n    // id=workduck.agent.snapshot.contract\n    // role=Verify the agent snapshot replaces credential references with presence flags and never serializes their secret identifiers.\n    // search=agent snapshot contract|credential reference redaction|snapshot privacy test\n    // stability=contract\n    // /llmnav\n",
           "scope": "symbol",
           "specVersion": "1",
-          "start": 28651,
-          "startLine": 907,
+          "start": 29076,
+          "startLine": 936,
           "style": "line",
           "syntaxErrors": []
         }
       ],
-      "contentHash": "309826a93b08f373aac214d8c6d62c11fb5cfd823677c0f27f1a5d6d19e8b0e3",
+      "contentHash": "6e8f6326f7da2a5c018f350d0fae44eb3051b4a14b4f88aa8a4a87b2207cabdd",
       "declarations": [
         null,
         {
-          "bodyHash": "d6670fee44dd98c43b5cf3f36ff0207a2c7c4f7bfc86033cf473793bae4ad2da",
-          "endOffset": 30623,
+          "bodyHash": "01bf2716df9736badddd55953f58939db2ff51968d8bf051f07f9f8c97947ea6",
+          "endOffset": 31082,
           "exported": false,
           "kind": "function",
           "language": "rust",
-          "line": 914,
-          "offset": 29001,
+          "line": 943,
+          "offset": 29426,
           "receiver": null,
           "signature": "fn project_registry_summary_omits_secret_ids()",
           "symbol": "project_registry_summary_omits_secret_ids",
@@ -997,8 +1120,8 @@
         }
       ],
       "imports": [
-        "crate::{\n    path_display::display_path,\n    storage,\n    workspace_path::{validate_absolute_directory_path, WorkspacePathValidationError},\n}",
-        "rusqlite::{OptionalExtension, params}",
+        "crate::{\n    path_display::display_path,\n    storage,\n    workspace_path::{WorkspacePathValidationError, validate_absolute_directory_path},\n}",
+        "rusqlite::{Connection, OptionalExtension, params}",
         "std::time::{SystemTime, UNIX_EPOCH}",
         "std::{\n    collections::BTreeMap,\n    fs, io,\n    path::{Path, PathBuf},\n}",
         "tauri::AppHandle",
@@ -1007,7 +1130,22 @@
       ],
       "path": "src-tauri/src/agent_api_snapshot.rs",
       "semanticBytes": 987,
-      "sourceBytes": 33532
+      "sourceBytes": 36627
+    },
+    {
+      "blocks": [],
+      "contentHash": "45132ad84d60a372d7d2f3e3fbc230320a0143f1756023cd2d7113b97a088763",
+      "declarations": [],
+      "imports": [
+        "crate::storage",
+        "rusqlite::{Connection, params, params_from_iter}",
+        "std::collections::{BTreeMap, BTreeSet}",
+        "tauri::AppHandle",
+        "tests {\n    use super::*"
+      ],
+      "path": "src-tauri/src/app_state_store.rs",
+      "semanticBytes": 0,
+      "sourceBytes": 11914
     },
     {
       "blocks": [],
@@ -1247,6 +1385,110 @@
       "sourceBytes": 70376
     },
     {
+      "blocks": [
+        {
+          "card": {
+            "effect": [],
+            "excludes": [
+              "MCP protocol handling",
+              "snapshot redaction",
+              "workspace mutation"
+            ],
+            "id": "workduck.mcp.cli",
+            "invariant": [
+              "The workspace and optional database are resolved before serving and are never accepted from model-generated tool arguments."
+            ],
+            "owns": [
+              "MCP command options",
+              "workspace ID discovery",
+              "local database discovery"
+            ],
+            "rel": [],
+            "risk": [],
+            "role": "Resolve one fixed Workduck workspace and launch its read-only stdio MCP server.",
+            "scope": "module",
+            "search": [
+              "workduck MCP command",
+              "stdio MCP launcher",
+              "workspace MCP configuration"
+            ],
+            "stability": "contract",
+            "unknown": []
+          },
+          "end": 496,
+          "endLine": 9,
+          "entries": [
+            {
+              "key": "id",
+              "line": 2,
+              "order": 0,
+              "value": "workduck.mcp.cli"
+            },
+            {
+              "key": "role",
+              "line": 3,
+              "order": 1,
+              "value": "Resolve one fixed Workduck workspace and launch its read-only stdio MCP server."
+            },
+            {
+              "key": "owns",
+              "line": 4,
+              "order": 2,
+              "value": "MCP command options|workspace ID discovery|local database discovery"
+            },
+            {
+              "key": "excludes",
+              "line": 5,
+              "order": 3,
+              "value": "MCP protocol handling|snapshot redaction|workspace mutation"
+            },
+            {
+              "key": "search",
+              "line": 6,
+              "order": 4,
+              "value": "workduck MCP command|stdio MCP launcher|workspace MCP configuration"
+            },
+            {
+              "key": "invariant",
+              "line": 7,
+              "order": 5,
+              "value": "The workspace and optional database are resolved before serving and are never accepted from model-generated tool arguments."
+            },
+            {
+              "key": "stability",
+              "line": 8,
+              "order": 6,
+              "value": "contract"
+            }
+          ],
+          "filePath": "src-tauri/src/bin/workduck-mcp.rs",
+          "indent": "",
+          "newline": "\n",
+          "prefix": null,
+          "raw": "/* llmnav/1 module\nid=workduck.mcp.cli\nrole=Resolve one fixed Workduck workspace and launch its read-only stdio MCP server.\nowns=MCP command options|workspace ID discovery|local database discovery\nexcludes=MCP protocol handling|snapshot redaction|workspace mutation\nsearch=workduck MCP command|stdio MCP launcher|workspace MCP configuration\ninvariant=The workspace and optional database are resolved before serving and are never accepted from model-generated tool arguments.\nstability=contract\n*/",
+          "scope": "module",
+          "specVersion": "1",
+          "start": 0,
+          "startLine": 1,
+          "style": "block",
+          "syntaxErrors": []
+        }
+      ],
+      "contentHash": "86077396b54e2d9892f0a971928a03a3693a8cb20b6ada6efce2f554d1e6cc24",
+      "declarations": [
+        null
+      ],
+      "imports": [
+        "serde_json::Value",
+        "std::{\n    env, fs,\n    path::{Path, PathBuf},\n    process::ExitCode,\n}",
+        "tests {\n    use super::*",
+        "workduck_lib::mcp_server::{McpServerConfig, run_stdio}"
+      ],
+      "path": "src-tauri/src/bin/workduck-mcp.rs",
+      "semanticBytes": 496,
+      "sourceBytes": 10412
+    },
+    {
       "blocks": [],
       "contentHash": "aa367e7d327e6a5a53eb0105f1d61e02762f0b21a737e128774effe91a859be6",
       "declarations": [],
@@ -1259,6 +1501,111 @@
       "path": "src-tauri/src/chat_completion.rs",
       "semanticBytes": 0,
       "sourceBytes": 6207
+    },
+    {
+      "blocks": [
+        {
+          "card": {
+            "effect": [],
+            "excludes": [
+              "workspace registry loading",
+              "command palette rendering",
+              "navigation actions"
+            ],
+            "id": "workduck.command-palette.search",
+            "invariant": [
+              "Searches are read-only, length-bounded, result-bounded, and never return artifacts outside the requested workspace project registry."
+            ],
+            "owns": [
+              "command palette artifact search",
+              "FTS query normalization",
+              "workspace artifact scoping"
+            ],
+            "rel": [],
+            "risk": [],
+            "role": "Search workspace-scoped SQLite artifact content for the desktop command palette through a bounded read-only query.",
+            "scope": "module",
+            "search": [
+              "command palette artifact search",
+              "workspace global search",
+              "fts artifact lookup"
+            ],
+            "stability": "contract",
+            "unknown": []
+          },
+          "end": 590,
+          "endLine": 9,
+          "entries": [
+            {
+              "key": "id",
+              "line": 2,
+              "order": 0,
+              "value": "workduck.command-palette.search"
+            },
+            {
+              "key": "role",
+              "line": 3,
+              "order": 1,
+              "value": "Search workspace-scoped SQLite artifact content for the desktop command palette through a bounded read-only query."
+            },
+            {
+              "key": "owns",
+              "line": 4,
+              "order": 2,
+              "value": "command palette artifact search|FTS query normalization|workspace artifact scoping"
+            },
+            {
+              "key": "excludes",
+              "line": 5,
+              "order": 3,
+              "value": "workspace registry loading|command palette rendering|navigation actions"
+            },
+            {
+              "key": "search",
+              "line": 6,
+              "order": 4,
+              "value": "command palette artifact search|workspace global search|fts artifact lookup"
+            },
+            {
+              "key": "invariant",
+              "line": 7,
+              "order": 5,
+              "value": "Searches are read-only, length-bounded, result-bounded, and never return artifacts outside the requested workspace project registry."
+            },
+            {
+              "key": "stability",
+              "line": 8,
+              "order": 6,
+              "value": "contract"
+            }
+          ],
+          "filePath": "src-tauri/src/command_palette_search.rs",
+          "indent": "",
+          "newline": "\n",
+          "prefix": null,
+          "raw": "/* llmnav/1 module\nid=workduck.command-palette.search\nrole=Search workspace-scoped SQLite artifact content for the desktop command palette through a bounded read-only query.\nowns=command palette artifact search|FTS query normalization|workspace artifact scoping\nexcludes=workspace registry loading|command palette rendering|navigation actions\nsearch=command palette artifact search|workspace global search|fts artifact lookup\ninvariant=Searches are read-only, length-bounded, result-bounded, and never return artifacts outside the requested workspace project registry.\nstability=contract\n*/",
+          "scope": "module",
+          "specVersion": "1",
+          "start": 0,
+          "startLine": 1,
+          "style": "block",
+          "syntaxErrors": []
+        }
+      ],
+      "contentHash": "6f331a6b96b8bdd2082642014edcde7f894189cccecf28d219f45fd2cbf3149b",
+      "declarations": [
+        null
+      ],
+      "imports": [
+        "crate::storage",
+        "rusqlite::params",
+        "rusqlite::{params, Connection}",
+        "tauri::AppHandle",
+        "tests {\n    use super::*"
+      ],
+      "path": "src-tauri/src/command_palette_search.rs",
+      "semanticBytes": 590,
+      "sourceBytes": 9008
     },
     {
       "blocks": [
@@ -1366,17 +1713,18 @@
     },
     {
       "blocks": [],
-      "contentHash": "694f7e4618b143c67311b987cbab572b3417130268099ec89e7befdfd5a8df35",
+      "contentHash": "04e067ffa4b061eaeed8a05bd0a9867d78dbd4d7a01cb5a15047c92b39972187",
       "declarations": [],
       "imports": [
         "base64::{Engine as _, engine::general_purpose::STANDARD}",
+        "crate::secret_vault_session::resolve_secret_reference_or_value",
         "std::process::Command",
         "tests {\n    use super::*",
         "zeroize::{Zeroize, Zeroizing}"
       ],
       "path": "src-tauri/src/git_credential.rs",
       "semanticBytes": 0,
-      "sourceBytes": 7395
+      "sourceBytes": 7547
     },
     {
       "blocks": [
@@ -1573,15 +1921,17 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "86daeefdd9c0b89d3cc0c0f6a0e2638fd4fd3447029f113c216cc5d5f500fffd",
+      "contentHash": "b2941533d42458d7a06407eefbbade2ab183b8969d2243051a8f74745e7afd7f",
       "declarations": [
         null
       ],
       "imports": [
         "agent_api_snapshot",
+        "app_state_store",
         "atomic_file_write",
         "autostart_control",
         "chat_completion",
+        "command_palette_search",
         "developer_processes",
         "git_credential",
         "git_path",
@@ -1608,6 +1958,7 @@
         "queue_result_report",
         "repository_inspection_scheduler",
         "secret_vault_crypto",
+        "secret_vault_session",
         "ssealed_scaffold",
         "ssealed_scaffold_generated",
         "storage",
@@ -1627,7 +1978,7 @@
       ],
       "path": "src-tauri/src/lib.rs",
       "semanticBytes": 519,
-      "sourceBytes": 9542
+      "sourceBytes": 10232
     },
     {
       "blocks": [
@@ -1640,7 +1991,7 @@
             ],
             "id": "workduck.llm.chat-native",
             "invariant": [
-              "Requests require a non-empty API key, model, and bounded prompts before any provider network call."
+              "Requests resolve API keys through the native vault broker and validate bounded models and prompts before any provider network call."
             ],
             "owns": [
               "provider allowlist",
@@ -1659,7 +2010,7 @@
             "stability": "contract",
             "unknown": []
           },
-          "end": 505,
+          "end": 538,
           "endLine": 9,
           "entries": [
             {
@@ -1696,7 +2047,7 @@
               "key": "invariant",
               "line": 7,
               "order": 5,
-              "value": "Requests require a non-empty API key, model, and bounded prompts before any provider network call."
+              "value": "Requests resolve API keys through the native vault broker and validate bounded models and prompts before any provider network call."
             },
             {
               "key": "stability",
@@ -1709,7 +2060,7 @@
           "indent": "",
           "newline": "\n",
           "prefix": "//",
-          "raw": "// llmnav/1 module\n// id=workduck.llm.chat-native\n// role=Validate and execute bounded non-streaming provider chat completions from desktop command requests.\n// owns=provider allowlist|prompt and model bounds|chat error normalization\n// excludes=provider credential storage|streaming chat\n// search=native llm chat|desktop chat completion|provider chat errors\n// invariant=Requests require a non-empty API key, model, and bounded prompts before any provider network call.\n// stability=contract\n// /llmnav\n",
+          "raw": "// llmnav/1 module\n// id=workduck.llm.chat-native\n// role=Validate and execute bounded non-streaming provider chat completions from desktop command requests.\n// owns=provider allowlist|prompt and model bounds|chat error normalization\n// excludes=provider credential storage|streaming chat\n// search=native llm chat|desktop chat completion|provider chat errors\n// invariant=Requests resolve API keys through the native vault broker and validate bounded models and prompts before any provider network call.\n// stability=contract\n// /llmnav\n",
           "scope": "module",
           "specVersion": "1",
           "start": 0,
@@ -1718,17 +2069,17 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "107b0e36902f0f68d1453c5271d05b40269b2d57469275c4ea743e29d04ab240",
+      "contentHash": "7e4ba5beec709ad0c0601f39b387b565035e23c2a0d61d9fd23a19ba86fdddd3",
       "declarations": [
         null
       ],
       "imports": [
-        "crate::chat_completion::{\n    ChatCompletionError, CHAT_COMPLETION_MODEL_MAX_LENGTH, chat_completion_endpoint,\n    chat_completion_http_client,\n    send_chat_completion_json,\n}",
+        "crate::{\n    chat_completion::{\n        ChatCompletionError, CHAT_COMPLETION_MODEL_MAX_LENGTH, chat_completion_endpoint,\n        chat_completion_http_client, send_chat_completion_json,\n    },\n    secret_vault_session::resolve_secret_reference_or_value,\n}",
         "serde_json::json"
       ],
       "path": "src-tauri/src/llm_chat.rs",
-      "semanticBytes": 505,
-      "sourceBytes": 4720
+      "semanticBytes": 538,
+      "sourceBytes": 5039
     },
     {
       "blocks": [],
@@ -1738,6 +2089,200 @@
       "path": "src-tauri/src/main.rs",
       "semanticBytes": 0,
       "sourceBytes": 107
+    },
+    {
+      "blocks": [
+        {
+          "card": {
+            "effect": [],
+            "excludes": [
+              "workspace mutation",
+              "secret values",
+              "network transport"
+            ],
+            "id": "workduck.mcp.server",
+            "invariant": [
+              "Tool input cannot select paths, every tool result is projected from the redacted snapshot, and stdout contains only MCP JSON messages."
+            ],
+            "owns": [
+              "stdio MCP protocol",
+              "read-only tool catalog",
+              "workspace-bound snapshot projection"
+            ],
+            "rel": [
+              "test>workduck.mcp.server.contract"
+            ],
+            "risk": [
+              "privacy"
+            ],
+            "role": "Serve one workspace's redacted Agent API snapshot through bounded read-only stdio MCP tools.",
+            "scope": "module",
+            "search": [
+              "read-only MCP server",
+              "workspace MCP tools",
+              "stdio agent snapshot"
+            ],
+            "stability": "contract",
+            "unknown": []
+          },
+          "end": 569,
+          "endLine": 11,
+          "entries": [
+            {
+              "key": "id",
+              "line": 2,
+              "order": 0,
+              "value": "workduck.mcp.server"
+            },
+            {
+              "key": "role",
+              "line": 3,
+              "order": 1,
+              "value": "Serve one workspace's redacted Agent API snapshot through bounded read-only stdio MCP tools."
+            },
+            {
+              "key": "owns",
+              "line": 4,
+              "order": 2,
+              "value": "stdio MCP protocol|read-only tool catalog|workspace-bound snapshot projection"
+            },
+            {
+              "key": "excludes",
+              "line": 5,
+              "order": 3,
+              "value": "workspace mutation|secret values|network transport"
+            },
+            {
+              "key": "search",
+              "line": 6,
+              "order": 4,
+              "value": "read-only MCP server|workspace MCP tools|stdio agent snapshot"
+            },
+            {
+              "key": "invariant",
+              "line": 7,
+              "order": 5,
+              "value": "Tool input cannot select paths, every tool result is projected from the redacted snapshot, and stdout contains only MCP JSON messages."
+            },
+            {
+              "key": "risk",
+              "line": 8,
+              "order": 6,
+              "value": "privacy"
+            },
+            {
+              "key": "rel",
+              "line": 9,
+              "order": 7,
+              "value": "test>workduck.mcp.server.contract"
+            },
+            {
+              "key": "stability",
+              "line": 10,
+              "order": 8,
+              "value": "contract"
+            }
+          ],
+          "filePath": "src-tauri/src/mcp_server.rs",
+          "indent": "",
+          "newline": "\n",
+          "prefix": null,
+          "raw": "/* llmnav/1 module\nid=workduck.mcp.server\nrole=Serve one workspace's redacted Agent API snapshot through bounded read-only stdio MCP tools.\nowns=stdio MCP protocol|read-only tool catalog|workspace-bound snapshot projection\nexcludes=workspace mutation|secret values|network transport\nsearch=read-only MCP server|workspace MCP tools|stdio agent snapshot\ninvariant=Tool input cannot select paths, every tool result is projected from the redacted snapshot, and stdout contains only MCP JSON messages.\nrisk=privacy\nrel=test>workduck.mcp.server.contract\nstability=contract\n*/",
+          "scope": "module",
+          "specVersion": "1",
+          "start": 0,
+          "startLine": 1,
+          "style": "block",
+          "syntaxErrors": []
+        },
+        {
+          "card": {
+            "effect": [],
+            "excludes": [],
+            "id": "workduck.mcp.server.contract",
+            "invariant": [],
+            "owns": [],
+            "rel": [],
+            "risk": [],
+            "role": "Verify MCP projections retain Agent API redaction and never return command or output bodies.",
+            "scope": "symbol",
+            "search": [
+              "MCP redaction contract",
+              "read-only tool privacy",
+              "MCP secret omission"
+            ],
+            "stability": "contract",
+            "unknown": []
+          },
+          "end": 25167,
+          "endLine": 784,
+          "entries": [
+            {
+              "key": "id",
+              "line": 780,
+              "order": 0,
+              "value": "workduck.mcp.server.contract"
+            },
+            {
+              "key": "role",
+              "line": 781,
+              "order": 1,
+              "value": "Verify MCP projections retain Agent API redaction and never return command or output bodies."
+            },
+            {
+              "key": "search",
+              "line": 782,
+              "order": 2,
+              "value": "MCP redaction contract|read-only tool privacy|MCP secret omission"
+            },
+            {
+              "key": "stability",
+              "line": 783,
+              "order": 3,
+              "value": "contract"
+            }
+          ],
+          "filePath": "src-tauri/src/mcp_server.rs",
+          "indent": "    ",
+          "newline": "\n",
+          "prefix": "//",
+          "raw": "    // llmnav/1 symbol\n    // id=workduck.mcp.server.contract\n    // role=Verify MCP projections retain Agent API redaction and never return command or output bodies.\n    // search=MCP redaction contract|read-only tool privacy|MCP secret omission\n    // stability=contract\n    // /llmnav\n",
+          "scope": "symbol",
+          "specVersion": "1",
+          "start": 24879,
+          "startLine": 779,
+          "style": "line",
+          "syntaxErrors": []
+        }
+      ],
+      "contentHash": "2238bd2adc7a51890757386e52fa3ed5cba5fc2bcae0f41ace0c38ee7e971628",
+      "declarations": [
+        null,
+        {
+          "bodyHash": "921fd29fff73406f47e3b9d07e0903d3373759930212d6a0a0cdec967be0e7dc",
+          "endOffset": 26737,
+          "exported": false,
+          "kind": "function",
+          "language": "rust",
+          "line": 786,
+          "offset": 25183,
+          "receiver": null,
+          "signature": "fn run_tool_projects_redacted_snapshot_without_command_or_output_text()",
+          "symbol": "run_tool_projects_redacted_snapshot_without_command_or_output_text",
+          "visibility": "private"
+        }
+      ],
+      "imports": [
+        "crate::agent_api_snapshot::{AgentApiSnapshotRequest, build_agent_api_snapshot}",
+        "crate::storage::CURRENT_SCHEMA_VERSION",
+        "rusqlite::{Connection, OpenFlags}",
+        "serde_json::{Map, Value, json}",
+        "std::{\n    fmt, fs,\n    io::{self, BufRead, BufReader, BufWriter, Read, Write},\n    path::{Path, PathBuf},\n    time::Duration,\n}",
+        "tests {\n    use super::*"
+      ],
+      "path": "src-tauri/src/mcp_server.rs",
+      "semanticBytes": 857,
+      "sourceBytes": 31596
     },
     {
       "blocks": [],
@@ -2636,17 +3181,17 @@
     },
     {
       "blocks": [],
-      "contentHash": "47cdd0fa6ea63790fff14790e2286c0bc3e00f9cee6709bea5d522303fa41ea5",
+      "contentHash": "b5e396b003ec111a39823fb161a253a03551f2723b401731ebed681ce954867f",
       "declarations": [],
       "imports": [
-        "crate::{\n    chat_completion::{\n        ChatCompletionError, CHAT_COMPLETION_MODEL_MAX_LENGTH, chat_completion_endpoint,\n        chat_completion_http_client, create_chat_completion_http_client, send_chat_completion_json,\n    },\n    queue_execution::{\n        AgentExecutionAttempt, AgentExecutionRun, AgentRunFailure, AgentRunOutput,\n        QueueExecutionErrorDetail,\n    },\n    queue_prompt_builder::{create_agent_prompt_plan, create_system_prompt, create_user_prompt},\n}",
+        "crate::{\n    chat_completion::{\n        ChatCompletionError, CHAT_COMPLETION_MODEL_MAX_LENGTH, chat_completion_endpoint,\n        chat_completion_http_client, create_chat_completion_http_client, send_chat_completion_json,\n    },\n    queue_execution::{\n        AgentExecutionAttempt, AgentExecutionRun, AgentRunFailure, AgentRunOutput,\n        QueueExecutionErrorDetail,\n    },\n    queue_prompt_builder::{create_agent_prompt_plan, create_system_prompt, create_user_prompt},\n    secret_vault_session::resolve_secret_reference_or_value,\n}",
         "serde_json::Value",
         "std::time::Duration",
         "time::OffsetDateTime"
       ],
       "path": "src-tauri/src/queue_provider_client.rs",
       "semanticBytes": 0,
-      "sourceBytes": 7788
+      "sourceBytes": 8175
     },
     {
       "blocks": [
@@ -2890,7 +3435,7 @@
             ],
             "id": "workduck.secret-vault.crypto-native",
             "invariant": [
-              "Passwords remain zeroized and plaintext is returned only after authenticated envelope validation succeeds."
+              "Passwords and encryption plaintext remain zeroized, and decrypted plaintext is available only to native callers after authenticated envelope validation succeeds."
             ],
             "owns": [
               "native secret-vault encryption",
@@ -2909,7 +3454,7 @@
             "stability": "contract",
             "unknown": []
           },
-          "end": 552,
+          "end": 607,
           "endLine": 9,
           "entries": [
             {
@@ -2946,7 +3491,7 @@
               "key": "invariant",
               "line": 7,
               "order": 5,
-              "value": "Passwords remain zeroized and plaintext is returned only after authenticated envelope validation succeeds."
+              "value": "Passwords and encryption plaintext remain zeroized, and decrypted plaintext is available only to native callers after authenticated envelope validation succeeds."
             },
             {
               "key": "stability",
@@ -2959,7 +3504,7 @@
           "indent": "",
           "newline": "\n",
           "prefix": "//",
-          "raw": "// llmnav/1 module\n// id=workduck.secret-vault.crypto-native\n// role=Bind secret-vault envelopes to native password crypto with versioned associated data and closed result errors.\n// owns=native secret-vault encryption|vault envelope conversion|vault crypto error mapping\n// excludes=vault persistence|password interface\n// search=native secret vault crypto|vault envelope aad|encrypt vault payload\n// invariant=Passwords remain zeroized and plaintext is returned only after authenticated envelope validation succeeds.\n// stability=contract\n// /llmnav\n",
+          "raw": "// llmnav/1 module\n// id=workduck.secret-vault.crypto-native\n// role=Bind secret-vault envelopes to native password crypto with versioned associated data and closed result errors.\n// owns=native secret-vault encryption|vault envelope conversion|vault crypto error mapping\n// excludes=vault persistence|password interface\n// search=native secret vault crypto|vault envelope aad|encrypt vault payload\n// invariant=Passwords and encryption plaintext remain zeroized, and decrypted plaintext is available only to native callers after authenticated envelope validation succeeds.\n// stability=contract\n// /llmnav\n",
           "scope": "module",
           "specVersion": "1",
           "start": 0,
@@ -2968,7 +3513,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "567b34acb0662249a2d54319907ce91a7b6bd549d2ec12412924785232edeeed",
+      "contentHash": "5be85a625b85e36ada36503b014df534a6a808dc69e5e5260deba8c6a052d715",
       "declarations": [
         null
       ],
@@ -2980,8 +3525,25 @@
         "zeroize::Zeroizing"
       ],
       "path": "src-tauri/src/secret_vault_crypto.rs",
-      "semanticBytes": 552,
-      "sourceBytes": 11245
+      "semanticBytes": 607,
+      "sourceBytes": 11398
+    },
+    {
+      "blocks": [],
+      "contentHash": "f106160d981f3902869eeaacfea21afe209bc8f21562ec6c6c7b96194cdf1e7c",
+      "declarations": [],
+      "imports": [
+        "base64::{Engine as _, engine::general_purpose::URL_SAFE_NO_PAD}",
+        "crate::secret_vault_crypto::{\n    SecretVaultEnvelope, decrypt_secret_vault_payload, encrypt_secret_vault_payload,\n}",
+        "serde::Serializer",
+        "std::{\n    collections::{HashMap, HashSet},\n    sync::{OnceLock, RwLock},\n}",
+        "tests {\n    use super::*",
+        "time::{OffsetDateTime, format_description::well_known::Rfc3339}",
+        "zeroize::{Zeroize, Zeroizing}"
+      ],
+      "path": "src-tauri/src/secret_vault_session.rs",
+      "semanticBytes": 0,
+      "sourceBytes": 30751
     },
     {
       "blocks": [],
@@ -3000,7 +3562,7 @@
     },
     {
       "blocks": [],
-      "contentHash": "571e0225bd1aac4e7741dc10935da16cda10e20557bc62a1e46d9b8576964d84",
+      "contentHash": "b0c4ada930103f1ed36d03d6365ddb0576da2944cd1099f1be8b3709aee3d60b",
       "declarations": [],
       "imports": [
         "crate::path_display::display_path",
@@ -3011,22 +3573,24 @@
       ],
       "path": "src-tauri/src/storage.rs",
       "semanticBytes": 0,
-      "sourceBytes": 18717
+      "sourceBytes": 19183
     },
     {
       "blocks": [],
-      "contentHash": "d4a3423e9f4e33011518a56a0a172b35215f4620f8d1dd054f52ac05d7fa035c",
+      "contentHash": "43f75a115292a8e3a5d860b6f90ed9da41529a6e22d41530dbf75f8a6a4d2089",
       "declarations": [],
       "imports": [
+        "crate::secret_vault_session::resolve_secret_reference_or_value",
         "std::collections::HashSet",
         "std::ffi::c_void",
         "std::ptr",
         "tests {\n    use super::is_allowed_cli_environment_variable_name",
-        "winreg::{RegKey, enums::HKEY_CURRENT_USER}"
+        "winreg::{RegKey, enums::HKEY_CURRENT_USER}",
+        "zeroize::Zeroizing"
       ],
       "path": "src-tauri/src/system_environment.rs",
       "semanticBytes": 0,
-      "sourceBytes": 6986
+      "sourceBytes": 7413
     },
     {
       "blocks": [],
@@ -3258,7 +3822,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "e2569c96c81e893954d8bcf60ddad174fa6666e5f603326f1666064a3883948c",
+      "contentHash": "afacf645a4d926cc08f3a62f7831844794283eb3a5a8b929c7f9ce41ce0d0c5c",
       "declarations": [
         null
       ],
@@ -3272,7 +3836,7 @@
       ],
       "path": "src-tauri/src/workspace_data_file.rs",
       "semanticBytes": 631,
-      "sourceBytes": 28590
+      "sourceBytes": 29784
     },
     {
       "blocks": [],
@@ -3856,6 +4420,47 @@
     },
     {
       "blocks": [],
+      "contentHash": "b70751f02878772cc984d4f35ac044d8400dfdd487648e88c27389bea6fbdf8c",
+      "declarations": [],
+      "imports": [
+        "$lib/tauri/tauri-invoke",
+        "./app-state-storage",
+        "node:assert/strict",
+        "node:test"
+      ],
+      "path": "src/lib/app-state/app-state-storage.test.ts",
+      "semanticBytes": 0,
+      "sourceBytes": 9649
+    },
+    {
+      "blocks": [],
+      "contentHash": "e90c5ee813050129096a203092e510fc8aa6b06ce9b2448eb16aa220f3e485a4",
+      "declarations": [],
+      "imports": [
+        "$lib/shared/object-record",
+        "$lib/tauri/tauri-invoke"
+      ],
+      "path": "src/lib/app-state/app-state-storage.ts",
+      "semanticBytes": 0,
+      "sourceBytes": 14120
+    },
+    {
+      "blocks": [],
+      "contentHash": "d6d83616e884e97af4e511262ed2289d3b7f4963b79f99029021d4420f1346a5",
+      "declarations": [],
+      "imports": [
+        "$lib/settings/appearance-settings",
+        "$lib/settings/sync-settings",
+        "$lib/settings/system-settings",
+        "$lib/workspaces/workspace-registry",
+        "./app-state-storage"
+      ],
+      "path": "src/lib/app-state/persistent-app-state.ts",
+      "semanticBytes": 0,
+      "sourceBytes": 2263
+    },
+    {
+      "blocks": [],
       "contentHash": "90e8aa5d948182fb563397a18e06ec769ebcd6b3b506d4cc2cd06c9cf65a6de6",
       "declarations": [],
       "imports": [],
@@ -3865,7 +4470,186 @@
     },
     {
       "blocks": [],
-      "contentHash": "8db50d75819a5efaebbf4bb1eb230ccda1f0f2c7ce572d45cea012fb66c27303",
+      "contentHash": "5c03a6da86a8d321108c221772acfdbfbc95e2cc396852c58238f14ea6dfdeca",
+      "declarations": [],
+      "imports": [
+        "$app/navigation",
+        "$lib/i18n/workduck-language",
+        "$lib/projects/project-storage",
+        "$lib/ui",
+        "$lib/ui/modal-dialog-action",
+        "$lib/workspaces/workspace-registry",
+        "./brief-messages",
+        "./brief-registry",
+        "./brief-storage",
+        "./briefs.css",
+        "svelte"
+      ],
+      "path": "src/lib/briefs/BriefsPanel.svelte",
+      "semanticBytes": 0,
+      "sourceBytes": 9224
+    },
+    {
+      "blocks": [],
+      "contentHash": "0b084a744c29e4d3f12253d15f9306ae6d9f71ed0c62ef01dc215597b461c7d7",
+      "declarations": [],
+      "imports": [
+        "$lib/i18n/workduck-language-options"
+      ],
+      "path": "src/lib/briefs/brief-messages.ts",
+      "semanticBytes": 0,
+      "sourceBytes": 9078
+    },
+    {
+      "blocks": [],
+      "contentHash": "91ea59c7c01e312ac17249e18e1799130acc699e6f94d242cbbd85d2ce89af54",
+      "declarations": [],
+      "imports": [
+        "$lib/i18n/workduck-language-options",
+        "$lib/projects/project-registry",
+        "./brief-messages",
+        "./brief-registry",
+        "node:assert/strict",
+        "node:test"
+      ],
+      "path": "src/lib/briefs/brief-registry.test.ts",
+      "semanticBytes": 0,
+      "sourceBytes": 4684
+    },
+    {
+      "blocks": [
+        {
+          "card": {
+            "effect": [],
+            "excludes": [
+              "filesystem writes",
+              "agent execution"
+            ],
+            "id": "workduck.briefs.registry",
+            "invariant": [
+              "Invalid registries fail closed and brief identity survives edits and archive transitions."
+            ],
+            "owns": [
+              "brief lifecycle",
+              "strict registry parsing",
+              "repository selection",
+              "Codex brief export"
+            ],
+            "rel": [],
+            "risk": [],
+            "role": "Validate workspace-owned task briefs, preserve stable repository references, and compile Codex exports.",
+            "scope": "module",
+            "search": [
+              "saved agent brief",
+              "brief archive restore",
+              "repository brief instructions"
+            ],
+            "stability": "contract",
+            "unknown": []
+          },
+          "end": 482,
+          "endLine": 9,
+          "entries": [
+            {
+              "key": "id",
+              "line": 2,
+              "order": 0,
+              "value": "workduck.briefs.registry"
+            },
+            {
+              "key": "role",
+              "line": 3,
+              "order": 1,
+              "value": "Validate workspace-owned task briefs, preserve stable repository references, and compile Codex exports."
+            },
+            {
+              "key": "owns",
+              "line": 4,
+              "order": 2,
+              "value": "brief lifecycle|strict registry parsing|repository selection|Codex brief export"
+            },
+            {
+              "key": "excludes",
+              "line": 5,
+              "order": 3,
+              "value": "filesystem writes|agent execution"
+            },
+            {
+              "key": "search",
+              "line": 6,
+              "order": 4,
+              "value": "saved agent brief|brief archive restore|repository brief instructions"
+            },
+            {
+              "key": "invariant",
+              "line": 7,
+              "order": 5,
+              "value": "Invalid registries fail closed and brief identity survives edits and archive transitions."
+            },
+            {
+              "key": "stability",
+              "line": 8,
+              "order": 6,
+              "value": "contract"
+            }
+          ],
+          "filePath": "src/lib/briefs/brief-registry.ts",
+          "indent": "",
+          "newline": "\n",
+          "prefix": null,
+          "raw": "/* llmnav/1 module\nid=workduck.briefs.registry\nrole=Validate workspace-owned task briefs, preserve stable repository references, and compile Codex exports.\nowns=brief lifecycle|strict registry parsing|repository selection|Codex brief export\nexcludes=filesystem writes|agent execution\nsearch=saved agent brief|brief archive restore|repository brief instructions\ninvariant=Invalid registries fail closed and brief identity survives edits and archive transitions.\nstability=contract\n*/",
+          "scope": "module",
+          "specVersion": "1",
+          "start": 0,
+          "startLine": 1,
+          "style": "block",
+          "syntaxErrors": []
+        }
+      ],
+      "contentHash": "bbfe8d2e9ebc6c342f7b749ac1b7f232b8cc0de80ecdb4e4b9ce3a8c721676c2",
+      "declarations": [
+        null
+      ],
+      "imports": [
+        "$lib/projects/project-registry",
+        "$lib/shared/object-record",
+        "@workduck/agents",
+        "@workduck/core"
+      ],
+      "path": "src/lib/briefs/brief-registry.ts",
+      "semanticBytes": 482,
+      "sourceBytes": 6266
+    },
+    {
+      "blocks": [],
+      "contentHash": "2b1a77245a28108afccb782f95ae1bffba2834e33dfe17c509ccf45ad134e763",
+      "declarations": [],
+      "imports": [
+        "$lib/tauri/tauri-invoke",
+        "./brief-registry",
+        "./brief-storage",
+        "node:assert/strict",
+        "node:test"
+      ],
+      "path": "src/lib/briefs/brief-storage.test.ts",
+      "semanticBytes": 0,
+      "sourceBytes": 2898
+    },
+    {
+      "blocks": [],
+      "contentHash": "01dd15b5b4372455263c526c94922a98e6494aa46ccdb6f69b3aa627adaac2ec",
+      "declarations": [],
+      "imports": [
+        "$lib/workspaces/workspace-data-file",
+        "./brief-registry"
+      ],
+      "path": "src/lib/briefs/brief-storage.ts",
+      "semanticBytes": 0,
+      "sourceBytes": 1580
+    },
+    {
+      "blocks": [],
+      "contentHash": "81f063eecdff0e023e2b6d8d316ac79619718a505a9aea845d19affa8e95a76a",
       "declarations": [],
       "imports": [
         "$lib/i18n/workduck-language",
@@ -3882,12 +4666,11 @@
         "./environment-vault-storage",
         "./environment-vault-unlock",
         "./secret-vault-crypto",
-        "./secret-vault-error-messages",
         "svelte"
       ],
       "path": "src/lib/environment/EnvironmentVaultPanel.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 22165
+      "sourceBytes": 24442
     },
     {
       "blocks": [],
@@ -4004,7 +4787,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "f2d41884e8db539610eccd193276ea6f223020fcaaa79a2a1ae81cf1eb76dbd2",
+      "contentHash": "d34f6c4420e89f16f347f5146e3c2cdff202527f8d82e6baeff67adea562300f",
       "declarations": [
         null
       ],
@@ -4013,33 +4796,50 @@
       ],
       "path": "src/lib/environment/cli-environment.ts",
       "semanticBytes": 494,
-      "sourceBytes": 2563
+      "sourceBytes": 2655
     },
     {
       "blocks": [],
-      "contentHash": "edaff5456016906a15da6839aa94c3dbc10ef21b194e51b1d66797ebb82a2f2b",
+      "contentHash": "6520a90c24530b0dfa218a7ffa2cdc9413245d6f7cb69603754d8c134fa728cc",
       "declarations": [],
       "imports": [
         "$lib/workspaces/workspace-unlock",
         "./environment-vault",
         "./environment-vault-session",
-        "./environment-vault-storage",
-        "./secret-vault-crypto"
+        "./environment-vault-storage"
       ],
       "path": "src/lib/environment/environment-vault-session-loader.ts",
       "semanticBytes": 0,
-      "sourceBytes": 2455
+      "sourceBytes": 2117
     },
     {
       "blocks": [],
-      "contentHash": "dace5367bdf279cee924a50df084c4906e65946c425699e2baf0c34836755e80",
+      "contentHash": "5ab330cea8119eccbabbfd75cfbe4350a6137d96440c59c5136213e4c8f639fe",
       "declarations": [],
       "imports": [
-        "./environment-vault"
+        "$lib/tauri/tauri-invoke",
+        "$lib/workspaces/workspace-unlock",
+        "./environment-vault-session",
+        "node:assert/strict",
+        "node:test"
+      ],
+      "path": "src/lib/environment/environment-vault-session.test.ts",
+      "semanticBytes": 0,
+      "sourceBytes": 3299
+    },
+    {
+      "blocks": [],
+      "contentHash": "71cbd04f3ffebea4fef0f80eba9b2481d2248bd19472cf78cf742de06adede31",
+      "declarations": [],
+      "imports": [
+        "$lib/tauri/tauri-invoke",
+        "$lib/workspaces/workspace-unlock",
+        "./environment-vault",
+        "./secret-vault-crypto"
       ],
       "path": "src/lib/environment/environment-vault-session.ts",
       "semanticBytes": 0,
-      "sourceBytes": 1544
+      "sourceBytes": 9853
     },
     {
       "blocks": [],
@@ -4067,14 +4867,14 @@
     },
     {
       "blocks": [],
-      "contentHash": "2b566fc3894582b19176ac709ec831eb4d56ebf1c1aa8a78a726a34186655220",
+      "contentHash": "6632372b4bd8330904b783df00bf9c84e4a1d015d93a91ead9ec9a0ead0d2f97",
       "declarations": [],
       "imports": [
         "$lib/shared/object-record"
       ],
       "path": "src/lib/environment/environment-vault.ts",
       "semanticBytes": 0,
-      "sourceBytes": 10114
+      "sourceBytes": 11270
     },
     {
       "blocks": [],
@@ -4093,31 +4893,31 @@
           "card": {
             "effect": [],
             "excludes": [
-              "vault record storage",
-              "password UI"
+              "plaintext vault access",
+              "native session lifecycle",
+              "password crypto"
             ],
             "id": "workduck.secret-vault.crypto",
             "invariant": [
-              "Empty credentials, malformed envelopes, and unknown native responses fail without returning plaintext or a valid envelope."
+              "Renderer code may validate and persist encrypted envelopes but cannot encrypt or decrypt vault plaintext."
             ],
             "owns": [
-              "secret-vault envelope",
-              "vault crypto invocation",
-              "crypto error normalization"
+              "secret-vault envelope shape",
+              "encrypted vault format constants"
             ],
             "rel": [],
             "risk": [],
-            "role": "Encrypt and decrypt versioned secret-vault payloads through the native Argon2id and XChaCha20-Poly1305 boundary.",
+            "role": "Validate versioned encrypted secret-vault envelopes at the renderer persistence boundary.",
             "scope": "module",
             "search": [
-              "encrypt secret vault",
-              "decrypt vault payload",
-              "argon2 xchacha envelope"
+              "secret vault envelope",
+              "validate encrypted vault",
+              "native vault boundary"
             ],
             "stability": "contract",
             "unknown": []
           },
-          "end": 517,
+          "end": 498,
           "endLine": 9,
           "entries": [
             {
@@ -4130,31 +4930,31 @@
               "key": "role",
               "line": 3,
               "order": 1,
-              "value": "Encrypt and decrypt versioned secret-vault payloads through the native Argon2id and XChaCha20-Poly1305 boundary."
+              "value": "Validate versioned encrypted secret-vault envelopes at the renderer persistence boundary."
             },
             {
               "key": "owns",
               "line": 4,
               "order": 2,
-              "value": "secret-vault envelope|vault crypto invocation|crypto error normalization"
+              "value": "secret-vault envelope shape|encrypted vault format constants"
             },
             {
               "key": "excludes",
               "line": 5,
               "order": 3,
-              "value": "vault record storage|password UI"
+              "value": "plaintext vault access|native session lifecycle|password crypto"
             },
             {
               "key": "search",
               "line": 6,
               "order": 4,
-              "value": "encrypt secret vault|decrypt vault payload|argon2 xchacha envelope"
+              "value": "secret vault envelope|validate encrypted vault|native vault boundary"
             },
             {
               "key": "invariant",
               "line": 7,
               "order": 5,
-              "value": "Empty credentials, malformed envelopes, and unknown native responses fail without returning plaintext or a valid envelope."
+              "value": "Renderer code may validate and persist encrypted envelopes but cannot encrypt or decrypt vault plaintext."
             },
             {
               "key": "stability",
@@ -4167,7 +4967,7 @@
           "indent": "",
           "newline": "\n",
           "prefix": null,
-          "raw": "/* llmnav/1 module\nid=workduck.secret-vault.crypto\nrole=Encrypt and decrypt versioned secret-vault payloads through the native Argon2id and XChaCha20-Poly1305 boundary.\nowns=secret-vault envelope|vault crypto invocation|crypto error normalization\nexcludes=vault record storage|password UI\nsearch=encrypt secret vault|decrypt vault payload|argon2 xchacha envelope\ninvariant=Empty credentials, malformed envelopes, and unknown native responses fail without returning plaintext or a valid envelope.\nstability=contract\n*/",
+          "raw": "/* llmnav/1 module\nid=workduck.secret-vault.crypto\nrole=Validate versioned encrypted secret-vault envelopes at the renderer persistence boundary.\nowns=secret-vault envelope shape|encrypted vault format constants\nexcludes=plaintext vault access|native session lifecycle|password crypto\nsearch=secret vault envelope|validate encrypted vault|native vault boundary\ninvariant=Renderer code may validate and persist encrypted envelopes but cannot encrypt or decrypt vault plaintext.\nstability=contract\n*/",
           "scope": "module",
           "specVersion": "1",
           "start": 0,
@@ -4176,17 +4976,16 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "f1bbbc8d624f2876258ae25035d8b6ea3090faa8dd82f441f85fbab58fd1085b",
+      "contentHash": "db664f88b84376be87a0558816a574b46bad1d7023835c2f386eee2359f2c269",
       "declarations": [
         null
       ],
       "imports": [
-        "$lib/shared/object-record",
-        "$lib/tauri/tauri-invoke"
+        "$lib/shared/object-record"
       ],
       "path": "src/lib/environment/secret-vault-crypto.ts",
-      "semanticBytes": 517,
-      "sourceBytes": 5405
+      "semanticBytes": 498,
+      "sourceBytes": 2441
     },
     {
       "blocks": [],
@@ -4253,12 +5052,12 @@
     },
     {
       "blocks": [],
-      "contentHash": "42d4fed628024116b10f79006dff0b89946b9636b580cf4be130b78d562e077b",
+      "contentHash": "e801a2b75d6fa6bd225d05472af549a022b20c3594baea571c8fc23e6e35eb8e",
       "declarations": [],
       "imports": [],
       "path": "src/lib/i18n/locales/en/navigation.ts",
       "semanticBytes": 0,
-      "sourceBytes": 602
+      "sourceBytes": 1486
     },
     {
       "blocks": [],
@@ -4404,12 +5203,12 @@
     },
     {
       "blocks": [],
-      "contentHash": "f31ff69294b960a02cf00afa0d422b37c62bd62f91c437da619b88fff6d65635",
+      "contentHash": "0ac41e870ac5fa630ef42edbe8f3a2d3aaa150cbf79f2f323a3cf16156578fba",
       "declarations": [],
       "imports": [],
       "path": "src/lib/i18n/locales/es/navigation.ts",
       "semanticBytes": 0,
-      "sourceBytes": 681
+      "sourceBytes": 1670
     },
     {
       "blocks": [],
@@ -4555,12 +5354,12 @@
     },
     {
       "blocks": [],
-      "contentHash": "d89190de22171fd64116c5ec720c140f62b6c727d2977fff60b42667433c636c",
+      "contentHash": "b0cabcf67d155b984f9ea9a636dfe5ba87cea576c50ef1e27b0a1a86ae0d6622",
       "declarations": [],
       "imports": [],
       "path": "src/lib/i18n/locales/fr/navigation.ts",
       "semanticBytes": 0,
-      "sourceBytes": 689
+      "sourceBytes": 1681
     },
     {
       "blocks": [],
@@ -4706,12 +5505,12 @@
     },
     {
       "blocks": [],
-      "contentHash": "f1a570b074ec6b1e0107eb8a3ac7edb6b0e3ef4224725a1b42d2ab9c055f4695",
+      "contentHash": "f9ec9640bb88005414a4b02b09d3759c61c193a05f1507aff35739ccd23fb548",
       "declarations": [],
       "imports": [],
       "path": "src/lib/i18n/locales/hi/navigation.ts",
       "semanticBytes": 0,
-      "sourceBytes": 1075
+      "sourceBytes": 2721
     },
     {
       "blocks": [],
@@ -4857,12 +5656,12 @@
     },
     {
       "blocks": [],
-      "contentHash": "fd3c19c9ab8655dde9db4d2cd5047e8f4040713572ee48181d0b46b1bb81526a",
+      "contentHash": "ef24283ce07c944cb94efd4c48a6ab3456d69de8a48f4a12dfda97b9790a30f9",
       "declarations": [],
       "imports": [],
       "path": "src/lib/i18n/locales/ko/navigation.ts",
       "semanticBytes": 0,
-      "sourceBytes": 702
+      "sourceBytes": 1756
     },
     {
       "blocks": [],
@@ -5008,12 +5807,12 @@
     },
     {
       "blocks": [],
-      "contentHash": "95c8d69d50c90520023d878d95a2a51436e58bc68ad8c04347cf6acc1b3021e5",
+      "contentHash": "4083269001de9f6c756ea80d397b7b160dfe284742c3229dac05f53c6e4bc162",
       "declarations": [],
       "imports": [],
       "path": "src/lib/i18n/locales/zh/navigation.ts",
       "semanticBytes": 0,
-      "sourceBytes": 573
+      "sourceBytes": 1425
     },
     {
       "blocks": [],
@@ -5258,6 +6057,20 @@
     },
     {
       "blocks": [],
+      "contentHash": "401481cdf4a50533fdb071678b26217e266b2943dbadeb9189760e29508d6245",
+      "declarations": [],
+      "imports": [
+        "./ProjectBoardLanesBase.svelte",
+        "./ProjectRepositoryBatchActionCenter.svelte",
+        "./project-repository-batch.css",
+        "svelte"
+      ],
+      "path": "src/lib/projects/ProjectBoardLanes.svelte",
+      "semanticBytes": 0,
+      "sourceBytes": 2748
+    },
+    {
+      "blocks": [],
       "contentHash": "2f3a08a46c770ff8c0a346540c7d3b1cab43de263ba120096966120abd3af5fe",
       "declarations": [],
       "imports": [
@@ -5271,7 +6084,7 @@
         "./project-registry",
         "./project-repository-task"
       ],
-      "path": "src/lib/projects/ProjectBoardLanes.svelte",
+      "path": "src/lib/projects/ProjectBoardLanesBase.svelte",
       "semanticBytes": 0,
       "sourceBytes": 13727
     },
@@ -5325,7 +6138,7 @@
     },
     {
       "blocks": [],
-      "contentHash": "e8f30d1723fa4a2dd1dabfd536d65c267eec1d2132d3d2bb831db6f3b737abc1",
+      "contentHash": "bdb59c66e6ac0b7ba625233831793c24e0b21ae561ee22e0e7d49fa627122548",
       "declarations": [],
       "imports": [
         "$lib/workspaces/workspace-registry",
@@ -5335,7 +6148,7 @@
       ],
       "path": "src/lib/projects/ProjectBoardRepositoryTaskRunLifecycle.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 4641
+      "sourceBytes": 5085
     },
     {
       "blocks": [],
@@ -5556,6 +6369,26 @@
     },
     {
       "blocks": [],
+      "contentHash": "7b99d5fd995fa2cc97ad29d2ff6c911ceef11f43244d8825ed809ddb4f769846",
+      "declarations": [],
+      "imports": [
+        "$lib/i18n/workduck-language",
+        "$lib/i18n/workduck-message-contract",
+        "$lib/workspaces/workspace-registry",
+        "$lib/workspaces/workspace-storage",
+        "./project-board-operations",
+        "./project-registry",
+        "./project-repository-batch",
+        "./project-repository-batch-messages",
+        "./project-repository-batch.css",
+        "./project-repository-task"
+      ],
+      "path": "src/lib/projects/ProjectRepositoryBatchActionCenter.svelte",
+      "semanticBytes": 0,
+      "sourceBytes": 13531
+    },
+    {
+      "blocks": [],
       "contentHash": "33072ace55d1f33e363708d031c05129cb8b58d2139cbd8b04386865748e21fc",
       "declarations": [],
       "imports": [
@@ -5771,12 +6604,12 @@
     },
     {
       "blocks": [],
-      "contentHash": "693f1542901aaf41c83f2638f349c63d8a0bdff3ecf4afa26861f642a8d45c72",
+      "contentHash": "c55c6c6e5b3a2a073b312228a4cd1c59be082214e403090ebdbc62799f59830c",
       "declarations": [],
       "imports": [
         "$lib/environment/environment-vault",
+        "$lib/environment/environment-vault-session",
         "$lib/environment/secret-vault-crypto",
-        "$lib/environment/secret-vault-error-messages",
         "$lib/i18n/workduck-message-contract",
         "./project-board-errors",
         "./project-board-types",
@@ -5784,7 +6617,7 @@
       ],
       "path": "src/lib/projects/project-board-github-credential-actions.ts",
       "semanticBytes": 0,
-      "sourceBytes": 3931
+      "sourceBytes": 4280
     },
     {
       "blocks": [],
@@ -6498,6 +7331,45 @@
     },
     {
       "blocks": [],
+      "contentHash": "6c7e97959cd192d509017eeb1e3ff688079dfa34532dee8dbd8cc4cefca57f2b",
+      "declarations": [],
+      "imports": [
+        "$lib/i18n/workduck-language",
+        "$lib/i18n/workduck-message-contract",
+        "./project-board-errors",
+        "./project-repository-batch"
+      ],
+      "path": "src/lib/projects/project-repository-batch-messages.ts",
+      "semanticBytes": 0,
+      "sourceBytes": 9781
+    },
+    {
+      "blocks": [],
+      "contentHash": "75ceecf8c357db2bb1638ccd62e5987b7498495ef83049f7dd46f9d3e95d86d9",
+      "declarations": [],
+      "imports": [
+        "./project-repository-batch",
+        "./project-repository-task",
+        "node:assert/strict",
+        "node:test"
+      ],
+      "path": "src/lib/projects/project-repository-batch.test.ts",
+      "semanticBytes": 0,
+      "sourceBytes": 4449
+    },
+    {
+      "blocks": [],
+      "contentHash": "95c54d9decc258e6a6bc11b402a753884431f9b0ed704afab8555047222decd3",
+      "declarations": [],
+      "imports": [
+        "./project-repository-task"
+      ],
+      "path": "src/lib/projects/project-repository-batch.ts",
+      "semanticBytes": 0,
+      "sourceBytes": 7863
+    },
+    {
+      "blocks": [],
       "contentHash": "285b7ba38cfe72d67051160cf7cb2b01eb6b841449bb7fbf9f465a38ce79bff4",
       "declarations": [],
       "imports": [
@@ -6636,7 +7508,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "914199ae667696fb7bc9d0b1fa2ab07e1dae6b3bea2bbb0721484d36f9fa5bbd",
+      "contentHash": "4f7783668db80ba693d1d0b2476eea23dd228113b7036f2d973f6b305321d244",
       "declarations": [
         null
       ],
@@ -6646,7 +7518,7 @@
       ],
       "path": "src/lib/projects/project-repository-task.ts",
       "semanticBytes": 487,
-      "sourceBytes": 8676
+      "sourceBytes": 11127
     },
     {
       "blocks": [
@@ -7985,6 +8857,87 @@
     },
     {
       "blocks": [],
+      "contentHash": "7f290b43a961808a770557441f99b771c0511ec6134c65f157693f6009df78ac",
+      "declarations": [],
+      "imports": [
+        "$app/navigation",
+        "$lib/i18n/workduck-language",
+        "$lib/settings/appearance-settings",
+        "$lib/settings/appearance-storage",
+        "$lib/ui/modal-dialog-action",
+        "$lib/workspaces/workspace-registry",
+        "$lib/workspaces/workspace-storage",
+        "$lib/workspaces/workspace-unlock",
+        "./artifact-search",
+        "./command-palette-data",
+        "./command-palette-index",
+        "./command-palette.css",
+        "svelte"
+      ],
+      "path": "src/lib/search/CommandPalette.svelte",
+      "semanticBytes": 0,
+      "sourceBytes": 12313
+    },
+    {
+      "blocks": [],
+      "contentHash": "1b391f48e0568b974d74fa3f29cdac2f4b3a0c89d932a8d26f5c00339cc7375c",
+      "declarations": [],
+      "imports": [
+        "$lib/tauri/tauri-invoke",
+        "./command-palette-index"
+      ],
+      "path": "src/lib/search/artifact-search.ts",
+      "semanticBytes": 0,
+      "sourceBytes": 4173
+    },
+    {
+      "blocks": [],
+      "contentHash": "62d5c5d93a4dfd0d98b00a15861b26063472800a23e72b80ffbf9e016fdc4f34",
+      "declarations": [],
+      "imports": [
+        "$lib/agents/agent-registry-storage",
+        "$lib/projects/project-repository-task",
+        "$lib/projects/project-storage",
+        "$lib/queue/queue-folder",
+        "$lib/references/reference-registry-storage",
+        "$lib/workspaces/workspace-registry",
+        "./command-palette-index"
+      ],
+      "path": "src/lib/search/command-palette-data.ts",
+      "semanticBytes": 0,
+      "sourceBytes": 1587
+    },
+    {
+      "blocks": [],
+      "contentHash": "4d2f25067e73646c177f9defbe0b7e775a19fcea19612364f0488a60d0d1921b",
+      "declarations": [],
+      "imports": [
+        "$lib/agents/agent-evaluation",
+        "./command-palette-index",
+        "node:assert/strict",
+        "node:test"
+      ],
+      "path": "src/lib/search/command-palette-index.test.ts",
+      "semanticBytes": 0,
+      "sourceBytes": 5096
+    },
+    {
+      "blocks": [],
+      "contentHash": "82fcc32a122e4ef9138bc3c188c2eaf38b149cb3edfae09d4ae886ce4f14efbf",
+      "declarations": [],
+      "imports": [
+        "$lib/agents/agent-registry",
+        "$lib/projects/project-registry",
+        "$lib/projects/project-repository-task",
+        "$lib/queue/queue-folder",
+        "$lib/references/reference-registry"
+      ],
+      "path": "src/lib/search/command-palette-index.ts",
+      "semanticBytes": 0,
+      "sourceBytes": 8262
+    },
+    {
+      "blocks": [],
       "contentHash": "5c0dc77279c5c7c9d0c47acaf4b8f07a569f322ab6683ff62878c5261a267bfa",
       "declarations": [],
       "imports": [
@@ -8070,7 +9023,7 @@
     },
     {
       "blocks": [],
-      "contentHash": "a5602c9451ff2f4b9c307c847a5da42c26f9c82925327ad575905f597f79042b",
+      "contentHash": "916f07d950362ca96cafeeb47539f30dd4ed7549d8ba0f4f599305f8f0db5b1b",
       "declarations": [],
       "imports": [
         "$lib/environment/environment-vault-session",
@@ -8098,7 +9051,7 @@
       ],
       "path": "src/lib/settings/WorkspaceSettingsSurface.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 35117
+      "sourceBytes": 35129
     },
     {
       "blocks": [],
@@ -8131,15 +9084,16 @@
     },
     {
       "blocks": [],
-      "contentHash": "17c39e0aec3639a56fabb3e300bfe2b4559d13883b68411d767c799456f12ce6",
+      "contentHash": "96cbebf1c8d15ea2f2d248458eeb445750253bca17d84f1805bd7e4efda93b2b",
       "declarations": [],
       "imports": [
+        "$lib/app-state/app-state-storage",
         "$lib/i18n/workduck-language",
         "./appearance-settings"
       ],
       "path": "src/lib/settings/appearance-storage.ts",
       "semanticBytes": 0,
-      "sourceBytes": 4682
+      "sourceBytes": 4775
     },
     {
       "blocks": [],
@@ -8152,14 +9106,15 @@
     },
     {
       "blocks": [],
-      "contentHash": "7e375d33ee1fdc3f63be7dd42abb6616e79532ceb86e95bebfca031818d2d38c",
+      "contentHash": "a3b24326d1d0078e730f19f8265939ccb81d5aed696f297d3d1a1c2008348ca0",
       "declarations": [],
       "imports": [
+        "$lib/app-state/app-state-storage",
         "./sync-settings"
       ],
       "path": "src/lib/settings/sync-settings-storage.ts",
       "semanticBytes": 0,
-      "sourceBytes": 2746
+      "sourceBytes": 3129
     },
     {
       "blocks": [],
@@ -8187,14 +9142,15 @@
     },
     {
       "blocks": [],
-      "contentHash": "4d664f528aafd1de9ba08744a8a002f7a53f6271c0bbf899e2e2064535dfd5a2",
+      "contentHash": "e8849e0a7cd80c782c7c814940f4cb519808b73eebb839db5f7e4382714f1da8",
       "declarations": [],
       "imports": [
+        "$lib/app-state/app-state-storage",
         "./system-settings"
       ],
       "path": "src/lib/settings/system-storage.ts",
       "semanticBytes": 0,
-      "sourceBytes": 2903
+      "sourceBytes": 3223
     },
     {
       "blocks": [],
@@ -8213,7 +9169,7 @@
     },
     {
       "blocks": [],
-      "contentHash": "e8b4a852ff1b81b017a83c05ad5ab726c5c87f9afcc8dfdb615833a443eb923c",
+      "contentHash": "a798183ed7558649031cbae0b6ca1aefdec4416849aee1061d2966954c113266",
       "declarations": [],
       "imports": [
         "$lib/i18n/workduck-message-contract",
@@ -8226,7 +9182,7 @@
       ],
       "path": "src/lib/settings/workspace-settings-types.ts",
       "semanticBytes": 0,
-      "sourceBytes": 7842
+      "sourceBytes": 7851
     },
     {
       "blocks": [],
@@ -8239,7 +9195,7 @@
     },
     {
       "blocks": [],
-      "contentHash": "0550738394f849fe4d4fb4a4a5a92e086e53decbf2017fbf3839d099b33cdda4",
+      "contentHash": "c1ea7d49c0de00213b8be8a7facc449a84b9bb4b07c15957db2c281df7da432b",
       "declarations": [],
       "imports": [
         "$app/state",
@@ -8269,7 +9225,7 @@
       ],
       "path": "src/lib/shell/WorkbenchShell.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 32179
+      "sourceBytes": 31980
     },
     {
       "blocks": [],
@@ -8807,7 +9763,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "78a14aea7f0528a7fe19f53d11d3c236d2dd34e0b048ddbc22aaf535ebc81f77",
+      "contentHash": "434de00159a048f14bdc798037b4c7fafd047a6fe3b2f4d9c7cf728fd11a7e40",
       "declarations": [
         null
       ],
@@ -8816,7 +9772,7 @@
       ],
       "path": "src/lib/workspaces/workspace-data-file.ts",
       "semanticBytes": 535,
-      "sourceBytes": 6950
+      "sourceBytes": 6983
     },
     {
       "blocks": [],
@@ -9025,14 +9981,15 @@
     },
     {
       "blocks": [],
-      "contentHash": "53b0793e64c4c1c3e4ea8d3fcdbb417defd353f46de38f2175a360d6884c0854",
+      "contentHash": "e1ddd3b12a84d5e901936bfca4a56f93e3569e8e183b0d0175f1af8c66e84e1d",
       "declarations": [],
       "imports": [
+        "$lib/app-state/app-state-storage",
         "./workspace-registry"
       ],
       "path": "src/lib/workspaces/workspace-storage.ts",
       "semanticBytes": 0,
-      "sourceBytes": 3093
+      "sourceBytes": 3438
     },
     {
       "blocks": [
@@ -9254,7 +10211,7 @@
     },
     {
       "blocks": [],
-      "contentHash": "55767e37da3a897a3961c0daeb2c4cc4e982dc12c86b08d722d6c85e178bb3ef",
+      "contentHash": "8889117ee7263e8d2517aa0a5e30d7c16f06fc7f3f573843ae66ce0d9f7304d4",
       "declarations": [],
       "imports": [
         "./workspace-password",
@@ -9262,21 +10219,23 @@
       ],
       "path": "src/lib/workspaces/workspace-unlock.ts",
       "semanticBytes": 0,
-      "sourceBytes": 8920
+      "sourceBytes": 8696
     },
     {
       "blocks": [],
-      "contentHash": "e0c44d64c06848c73ce16788bac809f6756f83bfe8abe2ba976db4f3a1184ad3",
+      "contentHash": "31825244c68d1f69783df45cdd46924e47fb7e97c9f5ffac53b08c0b5e71e7bd",
       "declarations": [],
       "imports": [
         "$app/state",
+        "$lib/app-state/persistent-app-state",
+        "$lib/search/CommandPalette.svelte",
         "$lib/shell/WorkbenchShell.svelte",
         "../app.css",
         "svelte"
       ],
       "path": "src/routes/+layout.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 821
+      "sourceBytes": 1482
     },
     {
       "blocks": [],
@@ -9323,6 +10282,25 @@
       "path": "src/routes/agents/+page.svelte",
       "semanticBytes": 0,
       "sourceBytes": 2422
+    },
+    {
+      "blocks": [],
+      "contentHash": "c5da458de800262bd20e58cd4b2ce733ed431da96eb5481e27a55fb245433c3e",
+      "declarations": [],
+      "imports": [
+        "$lib/briefs/BriefsPanel.svelte",
+        "$lib/briefs/brief-messages",
+        "$lib/settings/appearance-settings",
+        "$lib/settings/appearance-storage",
+        "$lib/ui/PageTitleRow.svelte",
+        "$lib/workspaces/WorkspaceGate.svelte",
+        "$lib/workspaces/workspace-registry",
+        "$lib/workspaces/workspace-storage",
+        "svelte"
+      ],
+      "path": "src/routes/briefs/+page.svelte",
+      "semanticBytes": 0,
+      "sourceBytes": 1700
     },
     {
       "blocks": [],

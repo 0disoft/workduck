@@ -1,5 +1,6 @@
 export const esNavigationMessages = {
 		projects: 'Proyectos',
+		briefs: 'Instrucciones de tarea',
 		queue: 'Cola de trabajo',
 		references: 'Referencias',
 		agents: 'Agentes',

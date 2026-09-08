@@ -47,3 +47,9 @@ workduck.secret-vault.crypto-native
 workduck.system.autostart-native
 workduck.terminal.session-client
 workduck.workspace.data-files-client
+workduck.briefs.registry
+workduck.command-palette.search
+workduck.mcp.cli
+workduck.mcp.launcher
+workduck.mcp.server
+workduck.mcp.server.contract

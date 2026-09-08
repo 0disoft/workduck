@@ -5,4 +5,4 @@ Read semantic cards before opening source. Resolve current paths and signatures 
 role Validate and execute bounded non-streaming provider chat completions from desktop command requests.
 owns provider allowlist, prompt and model bounds, chat error normalization
 excludes provider credential storage, streaming chat
-invariant Requests require a non-empty API key, model, and bounded prompts before any provider network call.
+invariant Requests resolve API keys through the native vault broker and validate bounded models and prompts before any provider network call.

@@ -1,0 +1,8 @@
+llmnav-catalog/1 repository=workduck catalog=workduck.briefs
+Read semantic cards before opening source. Resolve current paths and signatures with llmnav query or show.
+
+@workduck.briefs.registry
+role Validate workspace-owned task briefs, preserve stable repository references, and compile Codex exports.
+owns brief lifecycle, strict registry parsing, repository selection, Codex brief export
+excludes filesystem writes, agent execution
+invariant Invalid registries fail closed and brief identity survives edits and archive transitions.

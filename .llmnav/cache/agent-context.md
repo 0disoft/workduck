@@ -10,13 +10,16 @@ Keep semantic IDs stable across moves and renames.
 ## Module catalogs
 
 * workduck.agent: .llmnav/cache/modules/workduck.agent.txt (3 cards)
+* workduck.briefs: .llmnav/cache/modules/workduck.briefs.txt (1 cards)
 * workduck.cli: .llmnav/cache/modules/workduck.cli.txt (2 cards)
+* workduck.command-palette: .llmnav/cache/modules/workduck.command-palette.txt (1 cards)
 * workduck.contract: .llmnav/cache/modules/workduck.contract.txt (1 cards)
 * workduck.desktop: .llmnav/cache/modules/workduck.desktop.txt (1 cards)
 * workduck.domain: .llmnav/cache/modules/workduck.domain.txt (1 cards)
 * workduck.environment: .llmnav/cache/modules/workduck.environment.txt (1 cards)
 * workduck.git: .llmnav/cache/modules/workduck.git.txt (1 cards)
 * workduck.llm: .llmnav/cache/modules/workduck.llm.txt (1 cards)
+* workduck.mcp: .llmnav/cache/modules/workduck.mcp.txt (4 cards)
 * workduck.migration: .llmnav/cache/modules/workduck.migration.txt (1 cards)
 * workduck.process: .llmnav/cache/modules/workduck.process.txt (2 cards)
 * workduck.projects: .llmnav/cache/modules/workduck.projects.txt (11 cards)

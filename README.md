@@ -68,6 +68,11 @@ includes:
   metadata status without decrypting or returning secret values.
 - Read-only stdio MCP bridge for the same redacted local snapshot, bound to one
   workspace at startup rather than accepting paths from tool arguments.
+- Agent Briefs menu for repository-linked instructions, workspace-local saving,
+  editing, archive/restore, and Codex Markdown preview and clipboard export.
+  Briefs use stable project/repository IDs and revision-checked atomic writes to
+  `<workspace>/.workduck/briefs.json`. Conflicts and unreadable data are reported
+  without overwriting the file; a failed save keeps the editor draft open.
 - Project board metadata stored in the local SQLite database, with legacy
   browser-stored project metadata promoted on first read.
 - Skills menu for workspace-local Workduck skills, including a built-in
@@ -76,8 +81,9 @@ includes:
   from the Environment vault without copying secret values.
 - Custom title bar, sidebar resizing, and tray integration.
 
-The main unfinished product boundary is now connecting briefs, runs, and gates
-to durable local data.
+The main unfinished product boundary is now connecting saved briefs to existing
+execution records and gate results. Brief editing and export do not run agents
+or shell commands, and the new store has no browser-only persistence fallback.
 
 Encrypted sync includes project, group, and repository metadata. Repository
 local paths are stored relative to the workspace when possible, not as raw
@@ -180,6 +186,10 @@ Workspace-level Workduck metadata is split by ownership:
   workspace-owned metadata and can be versioned with the workspace repository.
 - `<workspace>/.workduck/references.json` stores research references that work
   orders can cite without copying notes into each task.
+- `<workspace>/.workduck/briefs.json` stores task instructions and their stable
+  repository references. It can travel with the workspace repository; do not
+  put passwords or API keys in briefs. Clipboard Markdown is an export, not a
+  complete registry backup.
 - `<workspace>/queue/` contains work orders, result reports, and proposals and
   can also be versioned with the workspace repository.
 - `<workspace>/projects/` is ignored by the workspace repository because each
@@ -258,8 +268,8 @@ bun run verify
 
 The next product work should keep the daily workbench path tight:
 
-1. Build the first Agent Brief, Run, and Gate loop before adding runtime agent
-   adapters.
+1. Connect saved Agent Briefs to existing runs and explicit gate evidence before
+   adding runtime agent adapters.
 
 ## Agent Workflow
 

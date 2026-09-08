@@ -1,5 +1,145 @@
 schema_version = "1"
 
+[intents.brief_navigation_sync]
+status = "configured"
+lifecycle = "oneshot"
+run_policy = "agent_allowed"
+description = "Check canonical navigation cards, validate them, and regenerate the checked-in semantic catalog."
+argv = ["node", "--input-type=module", "-e", '''
+import { spawnSync } from 'node:child_process';
+for (const args of [['format', '--check'], ['check'], ['generate']]) {
+  const r = spawnSync(process.execPath, ['node_modules/llmnav/bin/llmnav.js', ...args], { encoding: 'utf8', shell: false, timeout: 90000, maxBuffer: 1048576 });
+  console.log(r.stdout); if (r.stderr) console.error(r.stderr);
+  if (r.status !== 0) process.exit(r.status ?? 1);
+}
+''']
+cwd = "."
+timeout_seconds = 300
+stdin = "closed"
+success_exit_codes = [0]
+max_output_bytes = 32768
+writes = [".llmnav/cache/**", ".llmnav/ids.jsonl", ".llmnav/order.lock"]
+network = false
+destructive = false
+
+[intents.commit_durable_briefs]
+status = "configured"
+lifecycle = "oneshot"
+run_policy = "agent_allowed"
+description = "Commit the reviewed Brief vertical slice and its exact navigation and version outputs."
+argv = ["node", "--input-type=module", "-e", '''
+import fs from 'node:fs';
+import { spawnSync } from 'node:child_process';
+const git = args => { const r = spawnSync('git', args, {encoding:'utf8', shell:false}); if(r.status !== 0) throw new Error(r.stderr || r.stdout); return r.stdout.trim(); };
+const paths = [
+  '.mustflow/config/commands.toml', 'README.md', 'ROADMAP.md', 'package.json', 'src-tauri/Cargo.toml', 'src-tauri/Cargo.lock', 'svelte.config.js',
+  'src-tauri/src/workspace_data_file.rs', 'src/lib/workspaces/workspace-data-file.ts',
+  'src/lib/shell/WorkbenchShell.svelte', 'src/lib/search/CommandPalette.svelte',
+  ...['en','ko','es','fr','zh','hi'].map(l => 'src/lib/i18n/locales/'+l+'/navigation.ts'),
+  ...['BriefsPanel.svelte','brief-registry.ts','brief-storage.ts','brief-messages.ts','briefs.css','brief-registry.test.ts','brief-storage.test.ts'].map(f => 'src/lib/briefs/'+f),
+  'src/routes/briefs/+page.svelte', '.llmnav/config.json', '.llmnav/eval/queries.jsonl', '.llmnav/ids.jsonl', '.llmnav/order.lock',
+  ...['agent-context.md','cards.jsonl','file-state.json','graph-state.json','graph.json','index.json','manifest.json','prompt-prefix.json','search-index.json','modules/workduck.briefs.txt','modules/workduck.command-palette.txt','modules/workduck.mcp.txt','modules/workduck.llm.txt','modules/workduck.secret-vault.txt'].map(f => '.llmnav/cache/'+f)
+].sort();
+if (git(['diff','--cached','--name-only'])) throw new Error('Index must be empty');
+const version = JSON.parse(fs.readFileSync('package.json','utf8')).version;
+for (const p of ['src-tauri/Cargo.toml','src-tauri/Cargo.lock']) if(fs.readFileSync(p,'utf8').match(/name = "workduck"\r?\nversion = "([^"]+)"/u)?.[1] !== version) throw new Error('Version mismatch');
+git(['diff','--check']); git(['add','--',...paths]);
+const actual = git(['diff','--cached','--name-only']).split(/\r?\n/u).sort();
+if(JSON.stringify(actual) !== JSON.stringify(paths)) throw new Error('Unexpected staged paths');
+git(['diff','--cached','--check']);
+console.log(git(['commit','-m','✨ feat: save and export repository agent briefs','-m','Add workspace-local revision-checked Brief editing, archive/restore, and Codex exports in six languages. Connect the existing shared compilers and regenerate navigation metadata.\n\nValidation: 10 focused frontend tests, 6 native registry tests, frontend checks and static build passed. Native GUI interaction remains unverified.']));
+''']
+cwd = "."
+timeout_seconds = 90
+stdin = "closed"
+success_exit_codes = [0]
+max_output_bytes = 32768
+writes = [".git/**"]
+network = false
+destructive = false
+approval_actions = ["git_commit"]
+
+[intents.brief_frontend_test]
+status = "configured"
+lifecycle = "oneshot"
+run_policy = "agent_allowed"
+description = "Test Brief lifecycle, persistence adapters, run linkage, and multilingual messages."
+argv = ["bun", "test", "src/lib/briefs"]
+cwd = "."
+timeout_seconds = 120
+stdin = "closed"
+success_exit_codes = [0]
+max_output_bytes = 32768
+writes = []
+network = false
+destructive = false
+
+[intents.frontend_build]
+status = "configured"
+lifecycle = "oneshot"
+run_policy = "agent_allowed"
+description = "Build the static frontend with the repository CSP postprocessor."
+argv = ["bun", "run", "build"]
+cwd = "."
+timeout_seconds = 180
+stdin = "closed"
+success_exit_codes = [0]
+max_output_bytes = 32768
+writes = [".svelte-kit/**", "build/**"]
+network = false
+destructive = false
+
+[intents.brief_navigation_audit]
+status = "configured"
+lifecycle = "oneshot"
+run_policy = "agent_allowed"
+description = "Review LLMNav coverage candidates after the Brief route and storage allowlist changes."
+argv = ["node", "--input-type=module", "-e", '''
+import { spawnSync } from 'node:child_process';
+const r = spawnSync(process.execPath, ['node_modules/llmnav/bin/llmnav.js', 'audit', '--json'], { encoding: 'utf8', shell: false, timeout: 90000, maxBuffer: 2097152 });
+if (r.status !== 0) throw new Error(r.stderr || 'Navigation audit failed');
+const report = JSON.parse(r.stdout);
+console.log(JSON.stringify({summary: report.summary, candidates: report.candidates.filter(c => c.priority !== 'low').map(({path, priority, reasons}) => ({path, priority, reasons}))}));
+''']
+cwd = "."
+timeout_seconds = 120
+stdin = "closed"
+success_exit_codes = [0]
+max_output_bytes = 65536
+writes = [".llmnav/cache/**"]
+network = false
+destructive = false
+
+[intents.brief_navigation]
+status = "configured"
+lifecycle = "oneshot"
+run_policy = "agent_allowed"
+description = "Find existing Brief, export, registry, and run boundaries with the installed LLMNav."
+argv = ["node", "node_modules/llmnav/bin/llmnav.js", "query", "agent brief registry persistence export local run gate", "--top", "5"]
+cwd = "."
+timeout_seconds = 90
+stdin = "closed"
+success_exit_codes = [0]
+max_output_bytes = 16384
+writes = [".llmnav/cache/**"]
+network = false
+destructive = false
+
+[intents.brief_native_test]
+status = "configured"
+lifecycle = "oneshot"
+run_policy = "agent_allowed"
+description = "Test workspace registry containment, recovery, and Brief revision writes offline using the native Rust toolchain."
+argv = ["cargo", "test", "--offline", "--locked", "--manifest-path", "src-tauri/Cargo.toml", "--lib", "workspace_data_file::tests"]
+cwd = "."
+timeout_seconds = 600
+stdin = "closed"
+success_exit_codes = [0]
+max_output_bytes = 32768
+writes = ["src-tauri/target/**", "src-tauri/gen/**"]
+network = false
+destructive = false
+
 [intents.delivery_diff_check]
 status = "configured"
 lifecycle = "oneshot"

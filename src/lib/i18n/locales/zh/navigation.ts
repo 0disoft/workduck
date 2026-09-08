@@ -1,5 +1,6 @@
 export const zhNavigationMessages = {
 	projects: '项目',
+	briefs: '任务简报',
 	queue: '工作队列',
 	references: '参考资料',
 	agents: '智能体',

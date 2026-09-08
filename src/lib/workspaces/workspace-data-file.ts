@@ -10,6 +10,7 @@ stability=contract
 import { getTauriInvoke } from '$lib/tauri/tauri-invoke';
 export type WorkspaceDataFileName =
 	| 'agents.json'
+	| 'briefs.json'
 	| 'personas.json'
 	| 'references.json'
 	| 'secrets.sync.json'
@@ -94,7 +95,7 @@ interface WorkspaceRegistryPairWriteResponse {
 
 export async function writeWorkspaceRegistryFile(
 	workspacePath: string,
-	fileName: 'agents.json' | 'personas.json',
+	fileName: 'agents.json' | 'personas.json' | 'briefs.json',
 	expectedRevision: number,
 	content: string
 ): Promise<WorkspaceRegistryFileWriteResult> {

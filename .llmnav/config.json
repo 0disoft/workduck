@@ -2,6 +2,12 @@
   "$schema": "./schema/config.schema.json",
   "coverageRules": [
     {
+      "match": ["src/lib/briefs/brief-registry.ts"],
+      "name": "durable agent brief registry",
+      "requiredFields": ["owns", "invariant"],
+      "scope": "module"
+    },
+    {
       "match": [
         "packages/schemas/src/index.ts",
         "scripts/workduck.mjs",
@@ -92,6 +98,10 @@
   ],
   "audit": {
     "dispositions": [
+      {
+        "path": "src/routes/briefs/+page.svelte",
+        "reason": "Route composes the existing workspace gate, appearance subscription, and BriefsPanel; brief lifecycle and storage policy are owned by the brief registry and storage adapter."
+      },
       {
         "path": "src/lib/i18n/workduck-message-contract.ts",
         "reason": "Compile-time mapped type widens locale literals only; it has no runtime validation or message-selection behavior."

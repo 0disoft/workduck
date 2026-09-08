@@ -1,5 +1,6 @@
 export const koNavigationMessages = {
 		projects: '프로젝트',
+		briefs: '작업 지시서',
 		queue: '작업 대기열',
 		references: '참고자료',
 		agents: '에이전트',

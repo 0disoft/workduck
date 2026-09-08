@@ -35,6 +35,7 @@
 	const navigationCommands = [
 		{ id: 'projects', href: '/', labelKey: 'projects' },
 		{ id: 'queue', href: '/queue', labelKey: 'queue' },
+		{ id: 'briefs', href: '/briefs', labelKey: 'briefs' },
 		{ id: 'references', href: '/references', labelKey: 'references' },
 		{ id: 'agents', href: '/agents', labelKey: 'agents' },
 		{ id: 'personas', href: '/personas', labelKey: 'personas' },

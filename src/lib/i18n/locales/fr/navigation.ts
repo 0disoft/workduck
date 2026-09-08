@@ -1,5 +1,6 @@
 export const frNavigationMessages = {
 	projects: 'Projets',
+	briefs: 'Consignes de tâche',
 	queue: 'File d\'attente de travail',
 	references: 'Références',
 	agents: 'Agents',

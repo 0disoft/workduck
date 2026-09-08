@@ -47,3 +47,9 @@
 {"id":"workduck.projects.registry-domain","state":"active"}
 {"id":"workduck.terminal.session-client","state":"active"}
 {"id":"workduck.workspace.data-files-client","state":"active"}
+{"id":"workduck.mcp.launcher","state":"active"}
+{"id":"workduck.mcp.cli","state":"active"}
+{"id":"workduck.command-palette.search","state":"active"}
+{"id":"workduck.mcp.server","state":"active"}
+{"id":"workduck.mcp.server.contract","state":"active"}
+{"id":"workduck.briefs.registry","state":"active"}

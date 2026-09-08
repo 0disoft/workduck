@@ -1,5 +1,6 @@
 export const hiNavigationMessages = {
 	projects: 'परियोजनाएं',
+	briefs: 'कार्य निर्देश',
 	queue: 'कार्य कतार',
 	references: 'संदर्भ',
 	agents: 'एजेंट',

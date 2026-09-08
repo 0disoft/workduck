@@ -15,6 +15,20 @@
       "to": "workduck/workduck.agent.snapshot.contract"
     },
     {
+      "confidence": 1,
+      "from": "workduck/workduck.mcp.server",
+      "id": "e2dae8edc1b0dc16dc24093380afff2fd51ff1deaa039b00387ff4a4879b9b7e",
+      "kind": "test",
+      "provenance": {
+        "generator": null,
+        "line": 1,
+        "path": "src-tauri/src/mcp_server.rs",
+        "source": "src-tauri/src/mcp_server.rs",
+        "type": "source-card"
+      },
+      "to": "workduck/workduck.mcp.server.contract"
+    },
+    {
       "confidence": 0.85,
       "from": "workduck/workduck.projects.board-selection",
       "id": "35a359dd9a5f91ded40c569bcba4538f9ffb7da8bd377be8bbcc8875f691494f",
@@ -134,7 +148,7 @@
       "definitions": [
         {
           "kind": "function",
-          "line": 914,
+          "line": 943,
           "path": "src-tauri/src/agent_api_snapshot.rs",
           "provenance": {
             "generator": null,
@@ -147,21 +161,43 @@
       "external": false,
       "key": "workduck/workduck.agent.snapshot.contract",
       "location": {
-        "declarationLine": 914,
-        "endLine": 912,
+        "declarationLine": 943,
+        "endLine": 941,
         "exported": false,
         "kind": "function",
         "language": "rust",
         "path": "src-tauri/src/agent_api_snapshot.rs",
         "receiver": null,
         "signature": "fn project_registry_summary_omits_secret_ids()",
-        "startLine": 907,
+        "startLine": 936,
         "symbol": "project_registry_summary_omits_secret_ids",
         "visibility": "private"
       },
       "repositoryId": "workduck",
       "role": "Verify the agent snapshot replaces credential references with presence flags and never serializes their secret identifiers.",
       "semanticId": "workduck.agent.snapshot.contract",
+      "unresolved": false
+    },
+    {
+      "definitions": [],
+      "external": false,
+      "key": "workduck/workduck.briefs.registry",
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src/lib/briefs/brief-registry.ts",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "repositoryId": "workduck",
+      "role": "Validate workspace-owned task briefs, preserve stable repository references, and compile Codex exports.",
+      "semanticId": "workduck.briefs.registry",
       "unresolved": false
     },
     {
@@ -206,6 +242,28 @@
       "repositoryId": "workduck",
       "role": "Launch the locked Rust Workduck CLI from the repository while forwarding user arguments and its exit status.",
       "semanticId": "workduck.cli.launcher",
+      "unresolved": false
+    },
+    {
+      "definitions": [],
+      "external": false,
+      "key": "workduck/workduck.command-palette.search",
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src-tauri/src/command_palette_search.rs",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "repositoryId": "workduck",
+      "role": "Search workspace-scoped SQLite artifact content for the desktop command palette through a bounded read-only query.",
+      "semanticId": "workduck.command-palette.search",
       "unresolved": false
     },
     {
@@ -338,6 +396,106 @@
       "repositoryId": "workduck",
       "role": "Validate and execute bounded non-streaming provider chat completions from desktop command requests.",
       "semanticId": "workduck.llm.chat-native",
+      "unresolved": false
+    },
+    {
+      "definitions": [],
+      "external": false,
+      "key": "workduck/workduck.mcp.cli",
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src-tauri/src/bin/workduck-mcp.rs",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "repositoryId": "workduck",
+      "role": "Resolve one fixed Workduck workspace and launch its read-only stdio MCP server.",
+      "semanticId": "workduck.mcp.cli",
+      "unresolved": false
+    },
+    {
+      "definitions": [],
+      "external": false,
+      "key": "workduck/workduck.mcp.launcher",
+      "location": {
+        "declarationLine": null,
+        "endLine": 10,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "scripts/workduck-mcp.mjs",
+        "receiver": null,
+        "signature": null,
+        "startLine": 2,
+        "symbol": null,
+        "visibility": null
+      },
+      "repositoryId": "workduck",
+      "role": "Launch the locked Rust Workduck MCP stdio server from the repository while preserving its streams and exit status.",
+      "semanticId": "workduck.mcp.launcher",
+      "unresolved": false
+    },
+    {
+      "definitions": [],
+      "external": false,
+      "key": "workduck/workduck.mcp.server",
+      "location": {
+        "declarationLine": null,
+        "endLine": 11,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src-tauri/src/mcp_server.rs",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "repositoryId": "workduck",
+      "role": "Serve one workspace's redacted Agent API snapshot through bounded read-only stdio MCP tools.",
+      "semanticId": "workduck.mcp.server",
+      "unresolved": false
+    },
+    {
+      "definitions": [
+        {
+          "kind": "function",
+          "line": 786,
+          "path": "src-tauri/src/mcp_server.rs",
+          "provenance": {
+            "generator": null,
+            "source": ".llmnav/cache/index.json",
+            "type": "llmnav-index"
+          },
+          "symbol": "run_tool_projects_redacted_snapshot_without_command_or_output_text"
+        }
+      ],
+      "external": false,
+      "key": "workduck/workduck.mcp.server.contract",
+      "location": {
+        "declarationLine": 786,
+        "endLine": 784,
+        "exported": false,
+        "kind": "function",
+        "language": "rust",
+        "path": "src-tauri/src/mcp_server.rs",
+        "receiver": null,
+        "signature": "fn run_tool_projects_redacted_snapshot_without_command_or_output_text()",
+        "startLine": 779,
+        "symbol": "run_tool_projects_redacted_snapshot_without_command_or_output_text",
+        "visibility": "private"
+      },
+      "repositoryId": "workduck",
+      "role": "Verify MCP projections retain Agent API redaction and never return command or output bodies.",
+      "semanticId": "workduck.mcp.server.contract",
       "unresolved": false
     },
     {
@@ -864,7 +1022,7 @@
         "visibility": null
       },
       "repositoryId": "workduck",
-      "role": "Encrypt and decrypt versioned secret-vault payloads through the native Argon2id and XChaCha20-Poly1305 boundary.",
+      "role": "Validate versioned encrypted secret-vault envelopes at the renderer persistence boundary.",
       "semanticId": "workduck.secret-vault.crypto",
       "unresolved": false
     },
@@ -1179,11 +1337,11 @@
   ],
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "3e6a7f02275f9cd2f9c33190c43d67b2a622c60e45a0515730ba784c043de975",
+  "sourceHash": "623af13254ffddcb0566756bf2323434eb565e1db0244eb02eca5aac84ac5d4d",
   "stats": {
-    "edgeCount": 6,
+    "edgeCount": 7,
     "importedIndexCount": 0,
-    "nodeCount": 49,
+    "nodeCount": 55,
     "unresolvedNodeCount": 0
   }
 }

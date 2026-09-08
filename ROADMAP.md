@@ -92,6 +92,11 @@ work.
   agent export, and workbench orchestration.
 - Agent Brief Markdown export targets for Claude Code, Codex, Cursor, and
   OpenCode.
+- Agent Briefs page with repository selection, saved instruction editing,
+  archive/restore, and Codex Markdown preview and clipboard export. Its
+  workspace-owned `briefs.json` registry uses atomic writes and revision checks;
+  unavailable or malformed storage cannot silently become an empty writable
+  registry. Saving a brief does not execute it.
 - Export-only adapter profiles for Claude Code, Codex, Cursor, OpenCode, and
   generic Markdown consumers. These profiles describe supported local artifacts
   without calling model SDKs or running external agents.

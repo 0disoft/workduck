@@ -89,6 +89,7 @@
 	const primaryNavigationItems = [
 		{ href: '/', labelKey: 'projects', requiresWorkspace: true },
 		{ href: '/queue', labelKey: 'queue', requiresWorkspace: true },
+		{ href: '/briefs', labelKey: 'briefs', requiresWorkspace: true },
 		{ href: '/references', labelKey: 'references', requiresWorkspace: true },
 		{ href: '/agents', labelKey: 'agents', requiresWorkspace: true },
 		{ href: '/personas', labelKey: 'personas', requiresWorkspace: true },
