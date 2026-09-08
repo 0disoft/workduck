@@ -1,0 +1,84 @@
+import assert from 'node:assert/strict';
+import { afterEach, describe, test } from 'node:test';
+import { setTauriInvokeForTest, type TauriInvoke } from '$lib/tauri/tauri-invoke';
+import { createEmptyBriefRegistry, saveBriefDraft, type BriefRecord } from './brief-registry';
+import { addBriefRunLink, createEmptyBriefRunRegistry, parseBriefRunRegistry, removeBriefRunLink, type BriefRunLink } from './brief-run-registry';
+import { findLinkedReports, findLinkedTask, listBriefRunCandidates, readBriefRunEvidence, type BriefRunEvidence } from './brief-run-evidence';
+import { readBriefRunRegistry, writeBriefRunRegistry } from './brief-run-storage';
+import { briefRunMessages } from './brief-run-messages';
+
+const brief: BriefRecord = saveBriefDraft(createEmptyBriefRegistry('ws-1'), {
+	id: 'brief-1', title: 'Same title', instructions: 'Check the repository build.',
+	project: { kind: 'project', id: 'p-1', label: 'Project' },
+	repository: { kind: 'repo', id: 'r-1', label: 'Repository' }, repositoryPath: 'projects/repo'
+}, '2026-09-08T00:00:00.000Z')!.briefs[0]!;
+const link: BriefRunLink = { id: 'link-1', brief, sourceKind: 'repository-task', sourceId: 'task-1', createdAt: brief.createdAt };
+const evidence: BriefRunEvidence = {
+	incomplete: false,
+	taskRuns: [{ id: 'task-1', task: 'build', repositoryPath: 'C:\\workspace\\projects\\repo', command: 'build', state: 'succeeded', exitCode: 0, startedAt: brief.createdAt, finishedAt: brief.updatedAt, outputTail: null, recordPath: 'C:/workspace/.workduck/runs/task-1.json' }],
+	workOrders: [{ schemaVersion: 'workduck.queue-work-order/v1', ref: { kind: 'queue-work-order', id: 'wo-1', label: 'Same title' }, status: 'archived', createdAt: brief.createdAt, tasks: [{ id: 't-1', title: 'Same title', body: 'Check build', repositoryIds: ['r-1'] }] }],
+	reports: [{ schemaVersion: 'workduck.queue-result-report/v1', ref: { kind: 'queue-result-report', id: 'report-1', label: 'Same title' }, sourceWorkOrder: { kind: 'queue-work-order', id: 'wo-1', label: 'Same title' }, status: 'archived', createdAt: brief.createdAt, tasks: [{ id: 't-1', title: 'Same title', summary: 'Done', filesChanged: ['README.md'], verification: ['All tests passed'], risks: [] }] }]
+};
+
+describe('Brief run links', () => {
+	afterEach(() => setTauriInvokeForTest(undefined));
+	test('roundtrips immutable link-time instructions and rejects duplicate links', () => {
+		const registry = addBriefRunLink(createEmptyBriefRunRegistry('ws-1'), link)!;
+		assert.deepEqual(parseBriefRunRegistry(JSON.stringify(registry), 'ws-1'), registry);
+		assert.equal(addBriefRunLink(registry, { ...link, id: 'another-link' }), null);
+		assert.equal(parseBriefRunRegistry(JSON.stringify(registry), 'another-workspace'), null);
+		assert.equal(removeBriefRunLink(registry, link.id).links.length, 0);
+		assert.equal(registry.links[0]?.brief.instructions, brief.instructions);
+	});
+	test('matches native task paths across Windows separators without matching other repositories', () => {
+		assert.equal(findLinkedTask(link, 'C:/workspace', evidence)?.id, 'task-1');
+		assert.equal(findLinkedTask({ ...link, brief: { ...brief, repositoryPath: 'projects/other' } }, 'C:/workspace', evidence), null);
+		assert.equal(findLinkedTask({ ...link, brief: { ...brief, repositoryPath: '../outside' } }, 'C:/workspace', { ...evidence, taskRuns: [{ ...evidence.taskRuns[0]!, repositoryPath: '../outside' }] }), null);
+	});
+	test('does not confuse case-sensitive Unix paths', () => {
+		assert.equal(findLinkedTask(link, '/workspace', { ...evidence, taskRuns: [{ ...evidence.taskRuns[0]!, repositoryPath: '/workspace/projects/Repo' }] }), null);
+	});
+	test('requires exact repository and work-order IDs, not matching report titles', () => {
+		const queueLink: BriefRunLink = { ...link, sourceKind: 'queue-work-order', sourceId: 'wo-1' };
+		assert.equal(findLinkedReports(queueLink, evidence).length, 1);
+		assert.equal(findLinkedReports({ ...queueLink, sourceId: 'wo-2' }, evidence).length, 0);
+		const unrelated = { ...evidence.reports[0]!, sourceWorkOrder: { kind: 'queue-work-order' as const, id: 'wo-other', label: 'Same title' } };
+		assert.equal(findLinkedReports(queueLink, { ...evidence, reports: [unrelated] }).length, 0);
+		assert.equal(listBriefRunCandidates({ ...brief, repository: { ...brief.repository, id: 'r-2' }, repositoryPath: null }, 'C:/workspace', evidence).length, 0);
+	});
+	test('does not select duplicate IDs or offer queue links from an incomplete scan', () => {
+		assert.equal(findLinkedTask(link, 'C:/workspace', { ...evidence, taskRuns: [evidence.taskRuns[0]!, evidence.taskRuns[0]!] }), null);
+		assert.deepEqual(listBriefRunCandidates(brief, 'C:/workspace', { ...evidence, incomplete: true }).map((item) => item.kind), ['repository-task']);
+		assert.equal(findLinkedReports({ ...link, sourceKind: 'queue-work-order', sourceId: 'wo-1' }, { ...evidence, workOrders: [evidence.workOrders[0]!, evidence.workOrders[0]!] }).length, 0);
+	});
+	test('saves link metadata through native revision checks and restores it on read', async () => {
+		let content: string | null = null;
+		setTauriInvokeForTest((async (command, args) => {
+			assert.equal(args?.fileName, 'brief-runs.json');
+			if (command === 'read_workspace_data_file') return { ok: true, content };
+			assert.equal(command, 'write_workspace_registry_file');
+			content = JSON.stringify({ ...JSON.parse(String(args?.content)), revision: 1 });
+			return { ok: true, content };
+		}) as TauriInvoke);
+		const saved = await writeBriefRunRegistry(addBriefRunLink(createEmptyBriefRunRegistry('ws-1'), link)!, 'C:/workspace');
+		assert.equal(saved.ok, true);
+		assert.deepEqual(await readBriefRunRegistry('ws-1', 'C:/workspace'), saved);
+	});
+	test('limits concurrent queue reads and cancels the remaining scan when the panel closes', async () => {
+		let reads = 0;
+		const controller = new AbortController();
+		setTauriInvokeForTest((async (command, args) => {
+			if (command === 'read_project_repository_task_run_records') return { ok: true, records: [] };
+			if (command === 'list_queue_files') return { ok: true, path: 'C:/workspace/queue', files: Array.from({ length: 12 }, (_, index) => ({ relativePath: `queue/work-orders/${index}.workduck-work-order.json`, fileName: `${index}.workduck-work-order.json`, kind: 'work-order' })) };
+			assert.equal(command, 'read_queue_file');
+			reads += 1; controller.abort();
+			return { ok: true, relativePath: args?.relativePath, content: JSON.stringify(evidence.workOrders[0]) };
+		}) as TauriInvoke);
+		const result = await readBriefRunEvidence('C:/workspace', controller.signal);
+		assert.equal(reads, 4);
+		assert.equal(result.incomplete, true);
+	});
+	test('keeps run messages complete across all six languages', () => {
+		for (const messages of Object.values(briefRunMessages)) assert.deepEqual(Object.keys(messages).sort(), Object.keys(briefRunMessages.en).sort());
+	});
+});

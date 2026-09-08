@@ -6,3 +6,9 @@ role Validate workspace-owned task briefs, preserve stable repository references
 owns brief lifecycle, strict registry parsing, repository selection, Codex brief export
 excludes filesystem writes, agent execution
 invariant Invalid registries fail closed and brief identity survives edits and archive transitions.
+
+@workduck.briefs.runs
+role Validate durable links between saved brief snapshots and existing repository or queue executions.
+owns run link identity, link-time brief snapshots, duplicate link rejection
+excludes execution launch, source record reads, gate evaluation
+invariant Each brief and source pair is unique and unlinking never mutates the original execution.

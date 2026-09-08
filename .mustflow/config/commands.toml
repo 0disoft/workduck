@@ -1,5 +1,71 @@
 schema_version = "1"
 
+[intents.commit_brief_runs]
+status = "configured"
+lifecycle = "oneshot"
+run_policy = "agent_allowed"
+description = "Commit only reviewed Brief execution links, source evidence, metadata and semantic catalog outputs."
+argv = ["node", "--input-type=module", "-e", '''
+import fs from 'node:fs';
+import { spawnSync } from 'node:child_process';
+const git = args => { const r = spawnSync('git',args,{encoding:'utf8',shell:false}); if(r.status !== 0) throw new Error(r.stderr || r.stdout); return r.stdout.trim(); };
+const paths = [
+  '.mustflow/config/commands.toml','README.md','ROADMAP.md','package.json','src-tauri/Cargo.toml','src-tauri/Cargo.lock',
+  'src-tauri/src/workspace_data_file.rs','src/lib/workspaces/workspace-data-file.ts',
+  ...['BriefsPanel.svelte','BriefRunsPanel.svelte','brief-registry.ts','briefs.css','brief-run-registry.ts','brief-run-evidence.ts','brief-run-storage.ts','brief-run-messages.ts','brief-run.test.ts'].map(f => 'src/lib/briefs/'+f),
+  '.llmnav/config.json','.llmnav/eval/queries.jsonl','.llmnav/ids.jsonl','.llmnav/order.lock',
+  ...['agent-context.md','cards.jsonl','file-state.json','graph-state.json','graph.json','index.json','manifest.json','prompt-prefix.json','search-index.json','modules/workduck.briefs.txt'].map(f => '.llmnav/cache/'+f)
+];
+if(git(['diff','--cached','--name-only'])) throw new Error('Index must be empty');
+const version = JSON.parse(fs.readFileSync('package.json','utf8')).version;
+for(const p of ['src-tauri/Cargo.toml','src-tauri/Cargo.lock']) if(fs.readFileSync(p,'utf8').match(/name = "workduck"\r?\nversion = "([^"]+)"/u)?.[1] !== version) throw new Error('Version mismatch');
+git(['diff','--check']); git(['add','--',...paths]);
+const actual = git(['diff','--cached','--name-only']).split(/\r?\n/u);
+if(actual.some(p => !paths.includes(p)) || !actual.includes('src/lib/briefs/BriefRunsPanel.svelte')) throw new Error('Unexpected staged paths');
+git(['diff','--cached','--check']);
+console.log(git(['commit','-m','✨ feat: connect briefs to existing execution records','-m','Persist link-time instructions and stable source IDs. Reuse repository task records and repository-scoped queue work orders, resolve reports by sourceWorkOrder, and leave original records untouched when unlinking.\n\nValidation: 18 focused frontend tests, 6 native registry tests, Svelte diagnostics and navigation checks passed.']));
+''']
+cwd = "."
+timeout_seconds = 90
+stdin = "closed"
+success_exit_codes = [0]
+max_output_bytes = 32768
+writes = [".git/**"]
+network = false
+destructive = false
+approval_actions = ["git_commit"]
+
+[intents.brief_run_verify]
+status = "configured"
+lifecycle = "oneshot"
+run_policy = "agent_allowed"
+description = "Verify run linking with targeted tests, native registry checks, Svelte diagnostics, and regenerated navigation; do not rerun unrelated scaffold generation."
+argv = ["node", "--input-type=module", "-e", '''
+import { spawnSync } from 'node:child_process';
+const steps = [
+  ['bun', ['test','src/lib/briefs']],
+  ['cargo', ['test','--offline','--locked','--manifest-path','src-tauri/Cargo.toml','--lib','workspace_data_file::tests']],
+  ['node', ['node_modules/@sveltejs/kit/svelte-kit.js','sync']],
+  ['node', ['node_modules/svelte-check/bin/svelte-check','--tsgo','--tsconfig','./tsconfig.json']],
+  ['node', ['node_modules/llmnav/bin/llmnav.js','format','--check']],
+  ['node', ['node_modules/llmnav/bin/llmnav.js','check']],
+  ['node', ['node_modules/llmnav/bin/llmnav.js','generate']]
+];
+for (const [cmd,args] of steps) {
+  const r = spawnSync(cmd,args,{encoding:'utf8',shell:false,timeout:240000,maxBuffer:1048576});
+  console.log(r.stdout); if(r.stderr) console.error(r.stderr);
+  if(r.status !== 0) process.exit(r.status ?? 1);
+}
+''']
+cwd = "."
+timeout_seconds = 600
+stdin = "closed"
+success_exit_codes = [0]
+max_output_bytes = 65536
+writes = [".svelte-kit/**", "src-tauri/target/**", "src-tauri/gen/**", ".llmnav/cache/**", ".llmnav/ids.jsonl", ".llmnav/order.lock"]
+network = false
+destructive = false
+
 [intents.brief_navigation_sync]
 status = "configured"
 lifecycle = "oneshot"

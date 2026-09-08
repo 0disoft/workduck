@@ -1720,7 +1720,7 @@
         "project registry SQLite storage"
       ],
       "hashes": {
-        "body": "afacf645a4d926cc08f3a62f7831844794283eb3a5a8b929c7f9ce41ce0d0c5c",
+        "body": "e557859cce000801384ca07f6b3df1b315eac33a3403e522a0e7c6d0965e0dbb",
         "semantic": "7832a5772cd4cbae8eb46bdfb3a0dfccbb2f7cc6dc87348ef54b5c51124c667e",
         "structure": "cdf138d81bba4e11f120b6fe663d8abcd7ff5628887792a39641f01e4024eb70"
       },
@@ -2396,7 +2396,7 @@
         "atomic commit recovery"
       ],
       "hashes": {
-        "body": "434de00159a048f14bdc798037b4c7fafd047a6fe3b2f4d9c7cf728fd11a7e40",
+        "body": "914b2012bd4c47ef2c490f57514eb2c15348499524cf75d3c6e6a571b8055129",
         "semantic": "5ee03f0983caaa670ae07f672874d81bf3803f4ae72dd687206de8835f038d91",
         "structure": "d667a8431072098db25db34f60ea22d7a1fe3f864b4cdf821e4838f814723c0b"
       },
@@ -2441,7 +2441,7 @@
         "agent execution"
       ],
       "hashes": {
-        "body": "bbfe8d2e9ebc6c342f7b749ac1b7f232b8cc0de80ecdb4e4b9ce3a8c721676c2",
+        "body": "aa3accf8eaebc2c025cf823ffa6ed862cd2466565e569983893bae9df5fa73c7",
         "semantic": "be046bcc6277e77df86fd1e086bf94e58b70c1ce59088174927f1803d3376b67",
         "structure": "e39ef8f7df30d96637946b4a379a29a08e7c5e204725ea6d1fe209d66ac1453c"
       },
@@ -2731,11 +2731,58 @@
         "MCP secret omission"
       ],
       "stability": "contract"
+    },
+    {
+      "boundaries": [],
+      "excludes": [
+        "execution launch",
+        "source record reads",
+        "gate evaluation"
+      ],
+      "hashes": {
+        "body": "b0b339e27a9203e84e7dd9edea8e7b0a9b3548591b20104b69b3c36462c1e536",
+        "semantic": "4ed472d5030c8c2033be1bf8ab3c5be2b88e56ae2b9b6851d7579456f71af8a6",
+        "structure": "e5a65a7ea8ebf8d2ff17358dd96216a9c07ae8f1d7acdb73c0f6250e9733faa6"
+      },
+      "id": "workduck.briefs.runs",
+      "imports": [
+        "$lib/shared/object-record",
+        "./brief-registry"
+      ],
+      "invariant": [
+        "Each brief and source pair is unique and unlinking never mutates the original execution."
+      ],
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src/lib/briefs/brief-run-registry.ts",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "owns": [
+        "run link identity",
+        "link-time brief snapshots",
+        "duplicate link rejection"
+      ],
+      "role": "Validate durable links between saved brief snapshots and existing repository or queue executions.",
+      "scope": "module",
+      "search": [
+        "brief run links",
+        "saved execution association",
+        "link time instructions"
+      ],
+      "stability": "contract"
     }
   ],
   "contractFingerprints": {
     "configuration": {
-      "sha256": "9736b95d081897e0a8d6cd994bccffd62972b7740040cb94d94e8aaf5e8a6a52"
+      "sha256": "b2bdb9a07bba6fc612c9cb6a5c3cbcb05db55229e55ffab2a10720b5d960fbd6"
     },
     "exportedApi": {
       "count": 0,
@@ -2746,6 +2793,6 @@
   "generatedBy": "llmnav@0.9.0",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "a2c1ee30d374813ddc5e8dc1d64bc493fdf74feba418597c6d84f83a27de22da",
+  "sourceHash": "fae5a428dc72bd01a48bb2750662c09b9e651f860dbaadb08b52050dba63a9aa",
   "specVersion": "1"
 }

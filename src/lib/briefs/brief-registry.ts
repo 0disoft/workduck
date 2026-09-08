@@ -136,7 +136,7 @@ export function exportBriefForCodex(brief: BriefRecord) {
 	});
 }
 
-function isBriefRecord(value: unknown): value is BriefRecord {
+export function isBriefRecord(value: unknown): value is BriefRecord {
 	return isObjectRecord(value) &&
 		onlyKeys(value, ['id', 'title', 'project', 'repository', 'repositoryPath', 'instructions', 'archived', 'createdAt', 'updatedAt']) &&
 		boundedString(value.id, 160) && boundedString(value.title, BRIEF_TITLE_MAX_LENGTH) &&

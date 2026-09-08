@@ -20,12 +20,13 @@ use crate::workspace_repository_gitignore::ensure_secrets_sync_gitignore_policy;
 
 const WORKDUCK_DIRECTORY_NAME: &str = ".workduck";
 const SECRETS_SYNC_FILE_NAME: &str = "secrets.sync.json";
-const REGISTRY_FILE_NAMES: &[&str] = &["agents.json", "personas.json", "briefs.json"];
+const REGISTRY_FILE_NAMES: &[&str] = &["agents.json", "personas.json", "briefs.json", "brief-runs.json"];
 const REGISTRY_TRANSACTION_FILE_NAME: &str = ".registry-transaction.json";
 const WORKSPACE_DATA_FILE_MAX_BYTES: u64 = 1_048_576;
 const ALLOWED_WORKSPACE_DATA_FILES: &[&str] = &[
     "agents.json",
     "briefs.json",
+    "brief-runs.json",
     "personas.json",
     "references.json",
     "secrets.sync.json",
@@ -692,23 +693,25 @@ mod tests {
 
     #[test]
     fn brief_registry_roundtrip_rejects_stale_and_generic_writes() {
+        for name in ["briefs.json", "brief-runs.json"] {
         let workspace = tempfile::tempdir().expect("workspace");
         let path = workspace.path().to_string_lossy().into_owned();
         let content = r#"{"version":1,"workspaceId":"workspace-1","revision":0,"briefs":[{"id":"brief-1","instructions":"Keep this draft"}]}"#;
         let saved = write_workspace_registry_file(
-            path.clone(), "briefs.json".into(), 0, content.into(),
+            path.clone(), name.into(), 0, content.into(),
         );
         assert!(saved.ok);
-        let read = read_workspace_data_file(path.clone(), "briefs.json".into());
+        let read = read_workspace_data_file(path.clone(), name.into());
         assert!(read.ok);
         assert_eq!(read.content, saved.content);
         let stale = write_workspace_registry_file(
-            path.clone(), "briefs.json".into(), 0, content.into(),
+            path.clone(), name.into(), 0, content.into(),
         );
         assert_eq!(stale.error, Some(WorkspaceDataFileError::RevisionConflict));
-        let generic = write_workspace_data_file(path.clone(), "briefs.json".into(), "{}".into());
+        let generic = write_workspace_data_file(path.clone(), name.into(), "{}".into());
         assert_eq!(generic.error, Some(WorkspaceDataFileError::FileInvalid));
-        assert_eq!(read_workspace_data_file(path, "briefs.json".into()).content, saved.content);
+        assert_eq!(read_workspace_data_file(path, name.into()).content, saved.content);
+        }
     }
 
     #[test]

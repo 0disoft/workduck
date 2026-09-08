@@ -81,9 +81,16 @@ includes:
   from the Environment vault without copying secret values.
 - Custom title bar, sidebar resizing, and tray integration.
 
-The main unfinished product boundary is now connecting saved briefs to existing
-execution records and gate results. Brief editing and export do not run agents
-or shell commands, and the new store has no browser-only persistence fallback.
+Saved briefs can link existing repository task runs and queue work orders that
+explicitly reference the same repository ID. Run links preserve the instructions
+at link time in `.workduck/brief-runs.json`; result reports are matched through
+their `sourceWorkOrder` ID, not their titles. Refresh reloads the original records,
+and unlinking removes only the association. Queue scans are bounded to 200 files
+and four concurrent reads; partial scans disable new queue associations.
+
+The remaining boundary is explicit gate evaluation from these execution records.
+Brief editing, export, and run linking do not run agents or shell commands, and
+the new stores have no browser-only persistence fallback.
 
 Encrypted sync includes project, group, and repository metadata. Repository
 local paths are stored relative to the workspace when possible, not as raw
@@ -268,8 +275,8 @@ bun run verify
 
 The next product work should keep the daily workbench path tight:
 
-1. Connect saved Agent Briefs to existing runs and explicit gate evidence before
-   adding runtime agent adapters.
+1. Derive explicit gate evidence from linked runs before adding runtime agent
+   adapters.
 
 ## Agent Workflow
 

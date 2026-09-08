@@ -2,7 +2,7 @@
   "$schema": "./schema/config.schema.json",
   "coverageRules": [
     {
-      "match": ["src/lib/briefs/brief-registry.ts"],
+      "match": ["src/lib/briefs/brief-registry.ts", "src/lib/briefs/brief-run-registry.ts"],
       "name": "durable agent brief registry",
       "requiredFields": ["owns", "invariant"],
       "scope": "module"

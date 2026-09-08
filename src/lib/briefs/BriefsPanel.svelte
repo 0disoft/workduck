@@ -7,6 +7,7 @@
 	import { EntityWorkbench, DetailCard } from '$lib/ui';
 	import { modalDialog } from '$lib/ui/modal-dialog-action';
 	import { briefMessages } from './brief-messages';
+	import BriefRunsPanel from './BriefRunsPanel.svelte';
 	import {
 		BRIEF_TITLE_MAX_LENGTH, BRIEF_INSTRUCTIONS_MAX_LENGTH, createEmptyBriefRegistry,
 		listBriefRepositoryChoices, saveBriefDraft, setBriefArchived, exportBriefForCodex,
@@ -154,6 +155,7 @@
 				{#if !repositories.some((item) => item.repository.id === selected?.repository.id)}<p>{messages.missingRepository}</p>{/if}
 				<label class="workduck-form-field" for="brief-preview"><span>{messages.preview}</span><textarea id="brief-preview" class="workduck-input brief-preview" readonly value={preview} rows="16"></textarea></label>
 				<p class="brief-storage-note">{messages.storage}</p>
+				{#key `${selected.id}:${selected.updatedAt}`}<BriefRunsPanel {workspace} brief={selected} {languageId} />{/key}
 			</DetailCard>
 		{:else}<p>{messages.select}</p>{/if}
 	{/snippet}

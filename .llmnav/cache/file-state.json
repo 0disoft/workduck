@@ -3822,7 +3822,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "afacf645a4d926cc08f3a62f7831844794283eb3a5a8b929c7f9ce41ce0d0c5c",
+      "contentHash": "e557859cce000801384ca07f6b3df1b315eac33a3403e522a0e7c6d0965e0dbb",
       "declarations": [
         null
       ],
@@ -3836,7 +3836,7 @@
       ],
       "path": "src-tauri/src/workspace_data_file.rs",
       "semanticBytes": 631,
-      "sourceBytes": 29784
+      "sourceBytes": 29848
     },
     {
       "blocks": [],
@@ -4470,7 +4470,26 @@
     },
     {
       "blocks": [],
-      "contentHash": "5c03a6da86a8d321108c221772acfdbfbc95e2cc396852c58238f14ea6dfdeca",
+      "contentHash": "6dab9273156e0bb333d6ee8a78a8505e82c7b96ac3039c4000bc73a108ece511",
+      "declarations": [],
+      "imports": [
+        "$lib/i18n/workduck-language",
+        "$lib/i18n/workduck-language-options",
+        "$lib/workspaces/workspace-registry",
+        "./brief-registry",
+        "./brief-run-evidence",
+        "./brief-run-messages",
+        "./brief-run-registry",
+        "./brief-run-storage",
+        "svelte"
+      ],
+      "path": "src/lib/briefs/BriefRunsPanel.svelte",
+      "semanticBytes": 0,
+      "sourceBytes": 6519
+    },
+    {
+      "blocks": [],
+      "contentHash": "fac47856a4e1a12263261ab816591569cf491d51384575c164d5ac3be3ead9dc",
       "declarations": [],
       "imports": [
         "$app/navigation",
@@ -4479,6 +4498,7 @@
         "$lib/ui",
         "$lib/ui/modal-dialog-action",
         "$lib/workspaces/workspace-registry",
+        "./BriefRunsPanel.svelte",
         "./brief-messages",
         "./brief-registry",
         "./brief-storage",
@@ -4487,7 +4507,7 @@
       ],
       "path": "src/lib/briefs/BriefsPanel.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 9224
+      "sourceBytes": 9395
     },
     {
       "blocks": [],
@@ -4606,7 +4626,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "bbfe8d2e9ebc6c342f7b749ac1b7f232b8cc0de80ecdb4e4b9ce3a8c721676c2",
+      "contentHash": "aa3accf8eaebc2c025cf823ffa6ed862cd2466565e569983893bae9df5fa73c7",
       "declarations": [
         null
       ],
@@ -4618,7 +4638,166 @@
       ],
       "path": "src/lib/briefs/brief-registry.ts",
       "semanticBytes": 482,
-      "sourceBytes": 6266
+      "sourceBytes": 6273
+    },
+    {
+      "blocks": [],
+      "contentHash": "a8c5bcec193b94a1a6f6520356bf8ef648c2de81aeab9e9fe9ad01d1185ed8dc",
+      "declarations": [],
+      "imports": [
+        "$lib/projects/project-repository-task",
+        "$lib/queue/queue-artifacts",
+        "$lib/queue/queue-folder",
+        "$lib/workspaces/workspace-path-format",
+        "./brief-registry",
+        "./brief-run-registry"
+      ],
+      "path": "src/lib/briefs/brief-run-evidence.ts",
+      "semanticBytes": 0,
+      "sourceBytes": 5362
+    },
+    {
+      "blocks": [],
+      "contentHash": "346bfd982db6c5f95b5e5b8a20093aeabe30409d520e7f2b93301ec26c765713",
+      "declarations": [],
+      "imports": [
+        "$lib/i18n/workduck-language-options"
+      ],
+      "path": "src/lib/briefs/brief-run-messages.ts",
+      "semanticBytes": 0,
+      "sourceBytes": 8332
+    },
+    {
+      "blocks": [
+        {
+          "card": {
+            "effect": [],
+            "excludes": [
+              "execution launch",
+              "source record reads",
+              "gate evaluation"
+            ],
+            "id": "workduck.briefs.runs",
+            "invariant": [
+              "Each brief and source pair is unique and unlinking never mutates the original execution."
+            ],
+            "owns": [
+              "run link identity",
+              "link-time brief snapshots",
+              "duplicate link rejection"
+            ],
+            "rel": [],
+            "risk": [],
+            "role": "Validate durable links between saved brief snapshots and existing repository or queue executions.",
+            "scope": "module",
+            "search": [
+              "brief run links",
+              "saved execution association",
+              "link time instructions"
+            ],
+            "stability": "contract",
+            "unknown": []
+          },
+          "end": 476,
+          "endLine": 9,
+          "entries": [
+            {
+              "key": "id",
+              "line": 2,
+              "order": 0,
+              "value": "workduck.briefs.runs"
+            },
+            {
+              "key": "role",
+              "line": 3,
+              "order": 1,
+              "value": "Validate durable links between saved brief snapshots and existing repository or queue executions."
+            },
+            {
+              "key": "owns",
+              "line": 4,
+              "order": 2,
+              "value": "run link identity|link-time brief snapshots|duplicate link rejection"
+            },
+            {
+              "key": "excludes",
+              "line": 5,
+              "order": 3,
+              "value": "execution launch|source record reads|gate evaluation"
+            },
+            {
+              "key": "search",
+              "line": 6,
+              "order": 4,
+              "value": "brief run links|saved execution association|link time instructions"
+            },
+            {
+              "key": "invariant",
+              "line": 7,
+              "order": 5,
+              "value": "Each brief and source pair is unique and unlinking never mutates the original execution."
+            },
+            {
+              "key": "stability",
+              "line": 8,
+              "order": 6,
+              "value": "contract"
+            }
+          ],
+          "filePath": "src/lib/briefs/brief-run-registry.ts",
+          "indent": "",
+          "newline": "\n",
+          "prefix": null,
+          "raw": "/* llmnav/1 module\nid=workduck.briefs.runs\nrole=Validate durable links between saved brief snapshots and existing repository or queue executions.\nowns=run link identity|link-time brief snapshots|duplicate link rejection\nexcludes=execution launch|source record reads|gate evaluation\nsearch=brief run links|saved execution association|link time instructions\ninvariant=Each brief and source pair is unique and unlinking never mutates the original execution.\nstability=contract\n*/",
+          "scope": "module",
+          "specVersion": "1",
+          "start": 0,
+          "startLine": 1,
+          "style": "block",
+          "syntaxErrors": []
+        }
+      ],
+      "contentHash": "b0b339e27a9203e84e7dd9edea8e7b0a9b3548591b20104b69b3c36462c1e536",
+      "declarations": [
+        null
+      ],
+      "imports": [
+        "$lib/shared/object-record",
+        "./brief-registry"
+      ],
+      "path": "src/lib/briefs/brief-run-registry.ts",
+      "semanticBytes": 476,
+      "sourceBytes": 3316
+    },
+    {
+      "blocks": [],
+      "contentHash": "dbf5920cada7e319cafb493ad9bad056efdb7218301fe5157fe84337427540d6",
+      "declarations": [],
+      "imports": [
+        "$lib/workspaces/workspace-data-file",
+        "./brief-run-registry"
+      ],
+      "path": "src/lib/briefs/brief-run-storage.ts",
+      "semanticBytes": 0,
+      "sourceBytes": 1525
+    },
+    {
+      "blocks": [],
+      "contentHash": "61694567e72399225a9f8f1db10436d6f9c24c396ed61fcb40a25521db250dbf",
+      "declarations": [],
+      "imports": [
+        "$lib/tauri/tauri-invoke",
+        "./brief-registry",
+        "./brief-run-evidence",
+        "./brief-run-messages",
+        "./brief-run-registry",
+        "./brief-run-storage",
+        "node:assert/strict",
+        "node:test"
+      ],
+      "path": "src/lib/briefs/brief-run.test.ts",
+      "semanticBytes": 0,
+      "sourceBytes": 6881
     },
     {
       "blocks": [],
@@ -9763,7 +9942,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "434de00159a048f14bdc798037b4c7fafd047a6fe3b2f4d9c7cf728fd11a7e40",
+      "contentHash": "914b2012bd4c47ef2c490f57514eb2c15348499524cf75d3c6e6a571b8055129",
       "declarations": [
         null
       ],
@@ -9772,7 +9951,7 @@
       ],
       "path": "src/lib/workspaces/workspace-data-file.ts",
       "semanticBytes": 535,
-      "sourceBytes": 6983
+      "sourceBytes": 7024
     },
     {
       "blocks": [],

@@ -97,6 +97,9 @@ work.
   workspace-owned `briefs.json` registry uses atomic writes and revision checks;
   unavailable or malformed storage cannot silently become an empty writable
   registry. Saving a brief does not execute it.
+- Durable links from a brief snapshot to an existing repository task run or
+  repository-scoped queue work order, with source-ID report matching and
+  link-only removal. Original execution records remain the source of truth.
 - Export-only adapter profiles for Claude Code, Codex, Cursor, OpenCode, and
   generic Markdown consumers. These profiles describe supported local artifacts
   without calling model SDKs or running external agents.

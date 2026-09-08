@@ -15,6 +15,20 @@
       "to": "workduck/workduck.agent.snapshot.contract"
     },
     {
+      "confidence": 0.85,
+      "from": "workduck/workduck.briefs.runs",
+      "id": "afd1cf00f68a8b9c973b6d7ec9a8ca88356e3c536dd0805726cd5966283fdb5d",
+      "kind": "imports",
+      "provenance": {
+        "generator": "llmnav",
+        "line": null,
+        "path": "src/lib/briefs/brief-run-registry.ts",
+        "source": "src/lib/briefs/brief-run-registry.ts",
+        "type": "local-import"
+      },
+      "to": "workduck/workduck.briefs.registry"
+    },
+    {
       "confidence": 1,
       "from": "workduck/workduck.mcp.server",
       "id": "e2dae8edc1b0dc16dc24093380afff2fd51ff1deaa039b00387ff4a4879b9b7e",
@@ -198,6 +212,28 @@
       "repositoryId": "workduck",
       "role": "Validate workspace-owned task briefs, preserve stable repository references, and compile Codex exports.",
       "semanticId": "workduck.briefs.registry",
+      "unresolved": false
+    },
+    {
+      "definitions": [],
+      "external": false,
+      "key": "workduck/workduck.briefs.runs",
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src/lib/briefs/brief-run-registry.ts",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "repositoryId": "workduck",
+      "role": "Validate durable links between saved brief snapshots and existing repository or queue executions.",
+      "semanticId": "workduck.briefs.runs",
       "unresolved": false
     },
     {
@@ -1337,11 +1373,11 @@
   ],
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "623af13254ffddcb0566756bf2323434eb565e1db0244eb02eca5aac84ac5d4d",
+  "sourceHash": "ba61417187f573d26cac2a4c2051088dbb38d037f56f35e245c4c714692b8ce3",
   "stats": {
-    "edgeCount": 7,
+    "edgeCount": 8,
     "importedIndexCount": 0,
-    "nodeCount": 55,
+    "nodeCount": 56,
     "unresolvedNodeCount": 0
   }
 }
