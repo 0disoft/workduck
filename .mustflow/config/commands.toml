@@ -13,7 +13,10 @@ for(const [cmd,args] of [
 ]) {const r=spawnSync(cmd,args,{encoding:'utf8',shell:false,timeout:45000}); console.log(JSON.stringify({command:[cmd,...args],status:r.status,output:r.stdout,error:r.stderr})); if(r.status!==0) process.exit(r.status??1);}
 for(const path of ['actions/runs?per_page=6','releases?per_page=2']) {
  const r=await fetch('https://api.github.com/repos/0disoft/workduck/'+path,{signal:AbortSignal.timeout(30000)}); if(!r.ok) throw Error('GitHub HTTP '+r.status); const data=await r.json();
- console.log(JSON.stringify(path.startsWith('actions') ? data.workflow_runs.map(x=>({id:x.id,name:x.name,sha:x.head_sha,status:x.status,conclusion:x.conclusion,url:x.html_url})) : data.map(x=>({tag:x.tag_name,draft:x.draft,url:x.html_url,assets:x.assets.map(a=>({name:a.name,size:a.size,url:a.browser_download_url}))})));
+ const summary = path.startsWith('actions')
+  ? data.workflow_runs.map(x=>({id:x.id,name:x.name,sha:x.head_sha,status:x.status,conclusion:x.conclusion,url:x.html_url}))
+  : data.map(x=>({tag:x.tag_name,draft:x.draft,url:x.html_url,assets:x.assets.map(a=>({name:a.name,size:a.size,url:a.browser_download_url}))}));
+ console.log(JSON.stringify(summary));
 }
 ''']
 cwd = "."
@@ -31,7 +34,18 @@ status = "configured"
 lifecycle = "oneshot"
 run_policy = "agent_allowed"
 description = "Parse the child command contract and check delivery patch whitespace."
-argv = ["bun", "-e", "import {readFileSync} from 'node:fs'; const c=Bun.TOML.parse(readFileSync('.mustflow/config/commands.toml','utf8')); for(const name of ['delivery_status','delivery_contract_check']) if(c.intents[name].status!=='configured') throw Error(name); const r=Bun.spawnSync(['git','diff','--check']); console.log(r.stdout.toString()); console.error(r.stderr.toString()); process.exit(r.exitCode);"]
+argv = ["bun", "-e", '''
+import {readFileSync} from 'node:fs';
+const c=Bun.TOML.parse(readFileSync('.mustflow/config/commands.toml','utf8'));
+for(const [name,intent] of Object.entries(c.intents)) {
+ if(!name.startsWith('delivery_') || intent.argv[0]!=='node') continue;
+ const source=intent.argv[intent.argv.indexOf('-e')+1];
+ const check=Bun.spawnSync(['node','--input-type=module','--check'],{stdin:Buffer.from(source)});
+ if(check.exitCode!==0) throw Error(name+': '+check.stderr.toString());
+ console.log(name+' syntax OK');
+}
+const r=Bun.spawnSync(['git','diff','--check']); console.log(r.stdout.toString()); console.error(r.stderr.toString()); process.exit(r.exitCode);
+''']
 cwd = "."
 timeout_seconds = 30
 stdin = "closed"
@@ -45,16 +59,16 @@ destructive = false
 status = "configured"
 lifecycle = "oneshot"
 run_policy = "agent_allowed"
-description = "Commit only the reviewed delivery intents after the exact Brief gate commit, then push clean main without force."
+description = "Commit only the reviewed delivery syntax fix after the exact delivery contract commit, then push clean main without force."
 argv = ["node", "--input-type=module", "-e", '''
 import {spawnSync} from 'node:child_process';
 const git=args=>{const r=spawnSync('git',args,{encoding:'utf8',shell:false,timeout:90000}); if(r.status!==0) throw Error(r.stderr||r.stdout); return r.stdout.trim();};
-if(git(['rev-parse','HEAD'])!=='27d820793f388ae3b09fc0a7438e6519006b24bc'||git(['branch','--show-current'])!=='main') throw Error('Unexpected release base');
+if(git(['rev-parse','HEAD'])!=='0e55da2f84b0f828bbfd1c2a0500687e2f8f3913'||git(['branch','--show-current'])!=='main') throw Error('Unexpected release base');
 if(git(['remote','get-url','origin'])!=='https://github.com/0disoft/workduck') throw Error('Unexpected remote');
 if(git(['diff','--cached','--name-only'])) throw Error('Index not empty');
 if(git(['status','--porcelain']).trim()!=='M .mustflow/config/commands.toml') throw Error('Unexpected dirty paths');
 git(['diff','--check']); git(['add','--','.mustflow/config/commands.toml']);
-console.log(git(['commit','-m','🔧 chore: configure bounded v1.9.0 delivery','-m','Add exact-scope push, CI-gated tag publication, and public release evidence checks. Validation: command TOML parsing and diff whitespace checks passed.']));
+console.log(git(['commit','-m','🐛 fix: validate delivery scripts before publication','-m','Correct release status serialization and syntax-check every inline Node delivery script. Validation: TOML parsing, Node syntax checks, and diff whitespace checks passed.']));
 if(git(['status','--porcelain'])) throw Error('Worktree not clean');
 console.log(git(['push','origin','main'])); console.log(git(['rev-parse','HEAD']));
 ''']
