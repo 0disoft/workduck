@@ -3426,11 +3426,59 @@
         "task run state labels"
       ],
       "stability": "contract"
+    },
+    {
+      "boundaries": [],
+      "excludes": [
+        "registry storage implementation",
+        "dialog busy state",
+        "repository operations"
+      ],
+      "hashes": {
+        "body": "20c48ecaf708639de20a766658c058229b4678a9b40949facdd9394b8925a1f3",
+        "semantic": "fbd786db6dc8e8d49c83c5ca5b664a1ebc5a87d04a90e54d83b532e62bcd22fe",
+        "structure": "56699083df122d04b5b6eb2628291781de9f19a2d86fa2ac22822af1bd18f563"
+      },
+      "id": "workduck.projects.registry-writer",
+      "imports": [
+        "#lib/workspaces/workspace-registry.ts",
+        "./project-board-storage-actions",
+        "./project-registry"
+      ],
+      "invariant": [
+        "Writes return their storage outcome, but only the live initiating view receives feedback; foreign workspace drafts and disposed views cannot start writes."
+      ],
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src/lib/projects/project-board-registry-writer.svelte.ts",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "owns": [
+        "registry write admission",
+        "save result ownership",
+        "workspace view lifetime"
+      ],
+      "role": "Own project registry save feedback within the initiating workspace view lifetime.",
+      "scope": "module",
+      "search": [
+        "project registry save",
+        "late registry write response",
+        "workspace save ownership"
+      ],
+      "stability": "architecture"
     }
   ],
   "contractFingerprints": {
     "configuration": {
-      "sha256": "59a3fce47f9e66be1ff9eebbfdad6adfea0516ebb37a2a72003c6e60d24ac17c"
+      "sha256": "8562f48dceca8563f94f60d45ccfc354926c6469a3f20440b6242584b14fdafe"
     },
     "exportedApi": {
       "count": 0,
@@ -3441,6 +3489,6 @@
   "generatedBy": "llmnav@0.9.7",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "037e31d36ad8cfde775935125cf5059220012e75e938b3503eaa0ba0ad41acfe",
+  "sourceHash": "389b53e42a9fc1ec85146c8f8bc8360d8e7d1de05ae7ce82802fc21249eea722",
   "specVersion": "1"
 }

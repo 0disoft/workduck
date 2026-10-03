@@ -86,6 +86,20 @@
     },
     {
       "confidence": 0.85,
+      "from": "workduck/workduck.projects.registry-writer",
+      "id": "d0db31fad88b85acdace7875a59ddbdca149a1733ba999437d7e7577ded3c4e2",
+      "kind": "imports",
+      "provenance": {
+        "generator": "llmnav",
+        "line": null,
+        "path": "src/lib/projects/project-board-registry-writer.svelte.ts",
+        "source": "src/lib/projects/project-board-registry-writer.svelte.ts",
+        "type": "local-import"
+      },
+      "to": "workduck/workduck.projects.registry-domain"
+    },
+    {
+      "confidence": 0.85,
       "from": "workduck/workduck.projects.scaffold-dialog",
       "id": "05443f783b5bf656ef712a294c8e910452bdf197c422982ab8a1af64ace044f8",
       "kind": "imports",
@@ -1017,6 +1031,28 @@
     {
       "definitions": [],
       "external": false,
+      "key": "workduck/workduck.projects.registry-writer",
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src/lib/projects/project-board-registry-writer.svelte.ts",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "repositoryId": "workduck",
+      "role": "Own project registry save feedback within the initiating workspace view lifetime.",
+      "semanticId": "workduck.projects.registry-writer",
+      "unresolved": false
+    },
+    {
+      "definitions": [],
+      "external": false,
       "key": "workduck/workduck.projects.repository",
       "location": {
         "declarationLine": null,
@@ -1875,11 +1911,11 @@
   ],
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "58cc74e96825343b845c24a3461c027644175efe8c1b5190fe52b324ebc0f0c1",
+  "sourceHash": "94d9ee0325b0cf5d26adcad037cc22dae6ef209e024fdff6a33582d659411955",
   "stats": {
-    "edgeCount": 25,
+    "edgeCount": 26,
     "importedIndexCount": 0,
-    "nodeCount": 68,
+    "nodeCount": 69,
     "unresolvedNodeCount": 0
   }
 }

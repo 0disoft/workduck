@@ -123,9 +123,7 @@
 		getProjectDialogTargetNode,
 		getProjectRepositoryTarget
 	} from './project-board-targets';
-	import {
-		writeProjectRegistryForBoard
-	} from './project-board-storage-actions';
+	import { createProjectBoardRegistryWriter } from './project-board-registry-writer.svelte';
 	import type {
 		ProjectContextMenuState,
 		ProjectContextMenuTarget,
@@ -353,12 +351,13 @@
 			dialog !== null
 	);
 
-	async function persistRegistry(nextRegistry: ProjectRegistry) {
-		return writeProjectRegistryForBoard(nextRegistry, (next) => {
+	const persistRegistry = createProjectBoardRegistryWriter({
+		workspace: () => workspace,
+		update: (next) => {
 			registry = next.registry;
 			storageError = next.storageError;
-		});
-	}
+		}
+	});
 
 	function loadProjectBoardOverlays() {
 		if (ProjectBoardOverlays !== null) {

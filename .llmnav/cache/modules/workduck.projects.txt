@@ -114,3 +114,9 @@ role Match native task records to registered repositories and format task state 
 owns task run path identity, latest record mapping, task state labels
 excludes task history reads, poll scheduling, native process execution
 invariant Windows path spellings share a comparison key while Unix names remain case-sensitive; record order selects the latest run.
+
+@workduck.projects.registry-writer
+role Own project registry save feedback within the initiating workspace view lifetime.
+owns registry write admission, save result ownership, workspace view lifetime
+excludes registry storage implementation, dialog busy state, repository operations
+invariant Writes return their storage outcome, but only the live initiating view receives feedback; foreign workspace drafts and disposed views cannot start writes.

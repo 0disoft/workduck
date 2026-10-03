@@ -61,3 +61,4 @@
 {"query":"project board workspace switch late project registry read and workspace board subscriptions","expected":["workduck.projects.workspace-lifecycle"]}
 {"query":"task run polling repository task refresh and task history visibility interval","expected":["workduck.projects.task-run-lifecycle"]}
 {"query":"Windows task path matching latest repository task mapping and task run state labels","expected":["workduck.projects.task-run-mapping"]}
+{"query":"project registry save late registry write response and workspace save ownership","expected":["workduck.projects.registry-writer"]}

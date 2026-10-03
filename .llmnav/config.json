@@ -222,6 +222,17 @@
         "invariant"
       ],
       "scope": "module"
+    },
+    {
+      "match": [
+        "src/lib/projects/project-board-registry-writer.svelte.ts"
+      ],
+      "name": "project registry save view ownership",
+      "requiredFields": [
+        "owns",
+        "invariant"
+      ],
+      "scope": "module"
     }
   ],
   "audit": {

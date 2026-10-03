@@ -162,3 +162,9 @@ role Poll repository task run history within a workspace and repository mapping 
 owns task run polling, refresh coalescing, visibility scheduling, task run result ownership
 excludes native task execution, durable task history persistence, repository Git status scans
 invariant Scope changes clear foreign run state while retaining matching repositories; metadata-only changes reuse polling, queued refreshes supersede snapshots, and teardown removes listeners and timers.
+
+@workduck.projects.registry-writer
+role Own project registry save feedback within the initiating workspace view lifetime.
+owns registry write admission, save result ownership, workspace view lifetime
+excludes registry storage implementation, dialog busy state, repository operations
+invariant Writes return their storage outcome, but only the live initiating view receives feedback; foreign workspace drafts and disposed views cannot start writes.
