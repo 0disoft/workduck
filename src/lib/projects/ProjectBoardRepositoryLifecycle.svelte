@@ -59,15 +59,13 @@
 	async function ensureProjectFoldersForRegistry(
 		expectedSignature: string,
 		workspacePath: string,
-		registrySnapshot: ProjectRegistry,
 		rows: readonly ProjectTreeRow[]
 	) {
 		await ensureProjectFoldersForBoard(
-			{ expectedSignature, workspacePath, registrySnapshot, rows },
+			{ expectedSignature, workspacePath, rows },
 			{
 				getFolderRepairSignature: () => folderRepairSignature,
-				setFolderRepairError: (error) => { folderRepairError = error; },
-				persistRegistry
+				setFolderRepairError: (error) => { folderRepairError = error; }
 			}
 		);
 	}
@@ -193,6 +191,6 @@
 			return;
 		}
 
-		void ensureProjectFoldersForRegistry(nextSignature, workspace.path, registry, rows);
+		void ensureProjectFoldersForRegistry(nextSignature, workspace.path, rows);
 	});
 </script>

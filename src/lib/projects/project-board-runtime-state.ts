@@ -261,13 +261,11 @@ export async function ensureProjectFoldersForBoard(
 	input: {
 		readonly expectedSignature: string;
 		readonly workspacePath: string;
-		readonly registrySnapshot: ProjectRegistry;
 		readonly rows: readonly ProjectTreeRow[];
 	},
 	context: {
 		readonly getFolderRepairSignature: () => string;
 		readonly setFolderRepairError: (error: ProjectFolderError | null) => void;
-		readonly persistRegistry: (nextRegistry: ProjectRegistry) => Promise<boolean>;
 	}
 ) {
 	for (const row of input.rows) {
@@ -288,7 +286,6 @@ export async function ensureProjectFoldersForBoard(
 	}
 
 	context.setFolderRepairError(null);
-	await context.persistRegistry(input.registrySnapshot);
 }
 
 export async function backfillProjectRepositoryRemoteUrlsForBoard(

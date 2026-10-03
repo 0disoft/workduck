@@ -6998,7 +6998,7 @@
     },
     {
       "blocks": [],
-      "contentHash": "8512c560916584073f3a02ebb5510d7e1a5eecd9c504e26029fb94c91cef4538",
+      "contentHash": "068a15f3bf8f559baa2a64ac28aa927b9b251a4cd65f0f6b00906ef999459525",
       "declarations": [],
       "imports": [
         "#lib/workspaces/workspace-registry.ts",
@@ -7011,7 +7011,7 @@
       ],
       "path": "src/lib/projects/ProjectBoardRepositoryLifecycle.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 5679
+      "sourceBytes": 5593
     },
     {
       "blocks": [
@@ -7665,6 +7665,21 @@
     },
     {
       "blocks": [],
+      "contentHash": "7af452b335fe7eb22533ac12cbf4b7c4b0c5e50f9fde714a02447e33e8304a14",
+      "declarations": [],
+      "imports": [
+        "#lib/tauri/tauri-invoke.ts",
+        "./project-board-runtime-state",
+        "./project-folder",
+        "./project-registry",
+        "bun:test"
+      ],
+      "path": "src/lib/projects/project-board-folder-repair.test.ts",
+      "semanticBytes": 0,
+      "sourceBytes": 4486
+    },
+    {
+      "blocks": [],
       "contentHash": "27ebc3be26bd054aa4a5c41ca8ec1f5aad62f753d6aaf84ea52b32e93432e606",
       "declarations": [],
       "imports": [
@@ -7987,7 +8002,7 @@
     },
     {
       "blocks": [],
-      "contentHash": "db394e90f64976e271f43de216d0a842e8cea844d04a457cd843b725944baeaa",
+      "contentHash": "cb2a15ee45b69b90e552b38a4ccf427ec098674f969649b60fb35a5e9f2bd0d3",
       "declarations": [],
       "imports": [
         "./project-board-operations",
@@ -7999,7 +8014,7 @@
       ],
       "path": "src/lib/projects/project-board-runtime-state.ts",
       "semanticBytes": 0,
-      "sourceBytes": 17567
+      "sourceBytes": 17384
     },
     {
       "blocks": [
