@@ -1365,7 +1365,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "f018b95fd6bf1b32a06414fa0c999e58efb1c11d3d71249e7da468615c44e37a",
+      "contentHash": "5ff4f3db59093c8d75ab23e64e1b46456c556885fec3491802d15fbb2b17036c",
       "declarations": [
         null
       ],
@@ -1382,7 +1382,7 @@
       ],
       "path": "src-tauri/src/bin/cli/agent_evaluation.rs",
       "semanticBytes": 659,
-      "sourceBytes": 41210
+      "sourceBytes": 44755
     },
     {
       "blocks": [

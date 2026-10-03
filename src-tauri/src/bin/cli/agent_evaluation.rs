@@ -658,7 +658,7 @@ fn record_agent_evaluation_in_registry(
         }
     }
 
-    let total_count = record_evaluation_summary_on_record(agent, &timestamp, scores);
+    let total_count = record_evaluation_summary_on_record(agent, &timestamp, scores)?;
 
     registry_object.insert("updatedAt".to_string(), Value::String(timestamp));
 
@@ -768,7 +768,7 @@ fn sync_persona_evaluation_summaries_from_agents(
             .entry(persona_id.to_string())
             .or_default();
 
-        merge_evaluation_summary_snapshots(persona_summary, agent_summary);
+        merge_evaluation_summary_snapshots(persona_summary, agent_summary)?;
     }
 
     let mut changed = false;
@@ -816,7 +816,7 @@ fn read_evaluation_summary_snapshot(value: Option<&Value>) -> EvaluationSummaryS
         let count = read_json_u64(raw_criterion.and_then(|criterion| criterion.get("count")));
         let score_sum =
             read_json_u64(raw_criterion.and_then(|criterion| criterion.get("scoreSum")))
-                .min(count * 9);
+                .min(count.saturating_mul(9));
 
         summary.counts[index] = count;
         summary.score_sums[index] = score_sum;
@@ -832,13 +832,24 @@ fn read_evaluation_summary_snapshot(value: Option<&Value>) -> EvaluationSummaryS
 fn merge_evaluation_summary_snapshots(
     target: &mut EvaluationSummarySnapshot,
     source: EvaluationSummarySnapshot,
-) {
-    target.total_count += source.total_count;
+) -> Result<(), CliError> {
+    let mut merged = *target;
+    merged.total_count = checked_summary_add(merged.total_count, source.total_count)?;
 
     for index in 0..AGENT_EVALUATION_CRITERION_IDS.len() {
-        target.counts[index] += source.counts[index];
-        target.score_sums[index] += source.score_sums[index];
+        merged.counts[index] = checked_summary_add(merged.counts[index], source.counts[index])?;
+        merged.score_sums[index] =
+            checked_summary_add(merged.score_sums[index], source.score_sums[index])?;
     }
+    *target = merged;
+    Ok(())
+}
+
+fn checked_summary_add(left: u64, right: u64) -> Result<u64, CliError> {
+    left.checked_add(right).ok_or_else(|| CliError {
+        code: "agent-registry-invalid",
+        message: "에이전트 평가 통계가 허용 범위를 초과했습니다.".to_string(),
+    })
 }
 
 fn evaluation_summary_snapshot_to_value(summary: EvaluationSummarySnapshot) -> Value {
@@ -864,40 +875,57 @@ fn record_evaluation_summary_on_record(
     record: &mut Value,
     timestamp: &str,
     scores: AgentEvaluationScores,
-) -> u64 {
+) -> Result<u64, CliError> {
+    // Check every counter before changing the record or its timestamp.
+    let summary = record.get("evaluationSummary");
+    let next_total_count = checked_summary_add(
+        read_json_u64(summary.and_then(|value| value.get("totalCount"))),
+        1,
+    )?;
+    let mut next_criteria = [("", 0_u64, 0_u64); 5];
+    for (index, (criterion_id, score)) in [
+        ("problemUnderstanding", scores.problem_understanding),
+        ("logicalValidity", scores.logical_validity),
+        ("practicalFeasibility", scores.practical_feasibility),
+        ("creativeInsight", scores.creative_insight),
+        ("riskDetection", scores.risk_detection),
+    ]
+    .into_iter()
+    .enumerate()
+    {
+        let criterion = summary
+            .and_then(|value| value.get("criteria"))
+            .and_then(|value| value.get(criterion_id));
+        next_criteria[index] = (
+            criterion_id,
+            checked_summary_add(
+                read_json_u64(criterion.and_then(|value| value.get("count"))),
+                1,
+            )?,
+            checked_summary_add(
+                read_json_u64(criterion.and_then(|value| value.get("scoreSum"))),
+                u64::from(score),
+            )?,
+        );
+    }
     let record_object = ensure_json_object(record);
     let summary = record_object
         .entry("evaluationSummary")
         .or_insert_with(|| serde_json::json!({}));
     let summary_object = ensure_json_object(summary);
-    let previous_total_count = read_json_u64(summary_object.get("totalCount"));
-    let next_total_count = previous_total_count + 1;
-
     summary_object.insert("totalCount".to_string(), Value::from(next_total_count));
     let criteria_value = summary_object
         .entry("criteria")
         .or_insert_with(|| serde_json::json!({}));
     let criteria_object = ensure_json_object(criteria_value);
 
-    for (criterion_id, score) in [
-        ("problemUnderstanding", scores.problem_understanding),
-        ("logicalValidity", scores.logical_validity),
-        ("practicalFeasibility", scores.practical_feasibility),
-        ("creativeInsight", scores.creative_insight),
-        ("riskDetection", scores.risk_detection),
-    ] {
+    for (criterion_id, next_count, next_score_sum) in next_criteria {
         let criterion_value = criteria_object
             .entry(criterion_id.to_string())
             .or_insert_with(|| serde_json::json!({}));
         let criterion_object = ensure_json_object(criterion_value);
-        let previous_count = read_json_u64(criterion_object.get("count"));
-        let previous_score_sum = read_json_u64(criterion_object.get("scoreSum"));
-
-        criterion_object.insert("count".to_string(), Value::from(previous_count + 1));
-        criterion_object.insert(
-            "scoreSum".to_string(),
-            Value::from(previous_score_sum + u64::from(score)),
-        );
+        criterion_object.insert("count".to_string(), Value::from(next_count));
+        criterion_object.insert("scoreSum".to_string(), Value::from(next_score_sum));
     }
 
     record_object.insert(
@@ -905,7 +933,7 @@ fn record_evaluation_summary_on_record(
         Value::String(timestamp.to_string()),
     );
 
-    next_total_count
+    Ok(next_total_count)
 }
 
 fn resolve_agent_index(agents: &[Value], agent_key: &str) -> Result<usize, CliError> {
@@ -1184,5 +1212,57 @@ mod tests {
         .unwrap_err();
         assert_eq!(error.code, "agent-evaluation-score-invalid");
         assert_eq!(registry_bytes(workspace.path()), before);
+    }
+
+    #[test]
+    fn maximum_summary_counts_normalize_without_panicking() {
+        let summary = serde_json::json!({
+            "totalCount": u64::MAX,
+            "criteria": {"riskDetection": {"count": u64::MAX, "scoreSum": u64::MAX}}
+        });
+        let normalized = read_evaluation_summary_snapshot(Some(&summary));
+        assert_eq!(normalized.total_count, u64::MAX);
+        assert_eq!(normalized.score_sums[4], u64::MAX);
+    }
+
+    #[test]
+    fn saturated_agent_summary_returns_an_error_without_writing() {
+        for summary in [
+            serde_json::json!({"totalCount": u64::MAX}),
+            serde_json::json!({"criteria": {"riskDetection": {"count": u64::MAX}}}),
+            serde_json::json!({"criteria": {"riskDetection": {"scoreSum": u64::MAX}}}),
+        ] {
+            let workspace = evaluation_workspace();
+            let agents_path = workspace_data_path(workspace.path(), AGENTS_FILE_NAME);
+            let mut registry: Value =
+                read_json_file(&agents_path, "agent-registry-invalid").unwrap();
+            registry["agents"][0]["evaluationSummary"] = summary;
+            fs::write(&agents_path, serde_json::to_vec(&registry).unwrap()).unwrap();
+            let before = registry_bytes(workspace.path());
+            let error =
+                run_agent_evaluate_command(agent_evaluate_args(workspace.path(), "overflow"))
+                    .unwrap_err();
+            assert_eq!(error.code, "agent-registry-invalid");
+            assert!(registry_bytes(workspace.path()) == before);
+        }
+    }
+
+    #[test]
+    fn overflowing_persona_totals_return_an_error_without_mutating_personas() {
+        let agents = serde_json::json!({
+            "workspaceId": "workspace-1", "agents": [
+                {"id": "first", "personaId": "persona-1", "evaluationSummary": {"totalCount": u64::MAX}},
+                {"id": "second", "personaId": "persona-1", "evaluationSummary": {"totalCount": 1}}
+            ]
+        });
+        let mut personas = serde_json::json!({
+            "workspaceId": "workspace-1", "personas": [{"id": "persona-1"}]
+        });
+        let before = personas.clone();
+        let error =
+            sync_persona_evaluation_summaries_from_agents(&mut personas, &agents, "workspace-1")
+                .unwrap_err();
+        assert_eq!(error.code, "agent-registry-invalid");
+        assert_eq!(personas, before);
     }
 }
