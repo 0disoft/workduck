@@ -66,7 +66,7 @@
     "workduck.workspace.sync-file-native",
     "workduck.workspace.sync-git-native"
   ],
-  "cardSetHash": "0420771bb19c8fc69a6dced15534615385a280eb9ff63c63dde45f92f1f98f6c",
+  "cardSetHash": "f873ebb8b27d3ad5ee0b48410ed2fc48bb2405a15b60082bfe14d9783b621ea9",
   "documentCount": 65,
   "documents": [
     [
@@ -495,13 +495,13 @@
       ]
     ],
     [
-      "6f51bb0e87e72329fe67ec5cd40a3b213a26521bfc654eb3f917cc717668a46e",
+      "444c1c6826d68fd35efdbc42869a49c29602e5f3188775fae8b7401cbef3fd0f",
       [
         "own reactive repository scaffold dialog state, profile selection, preview, and apply workflows.",
         "repository scaffold preview",
         "apply ssealed profile",
         "scaffold dialog lifecycle",
-        "preview and apply results update only the selected repository, scope, and profile; board state stays outside the dialog owner.",
+        "only the latest preview request in the open dialog updates preview and busy state; apply results stay bound to the selected repository, scope, and profile.",
         "scaffold dialog lifecycle",
         "preview selection ownership",
         "scaffold busy state",
@@ -3097,8 +3097,6 @@
         [
           4,
           1,
-          5,
-          1,
           9,
           1
         ]
@@ -3134,6 +3132,13 @@
         17,
         [
           3,
+          1
+        ]
+      ],
+      [
+        33,
+        [
+          5,
           1
         ]
       ],
@@ -3572,6 +3577,8 @@
         33,
         [
           3,
+          1,
+          5,
           1
         ]
       ]
@@ -9513,6 +9520,13 @@
           1,
           1
         ]
+      ],
+      [
+        33,
+        [
+          5,
+          1
+        ]
       ]
     ],
     [
@@ -10352,6 +10366,13 @@
           1,
           1,
           2,
+          1
+        ]
+      ],
+      [
+        33,
+        [
+          5,
           1
         ]
       ],
@@ -12792,6 +12813,13 @@
         ]
       ],
       [
+        33,
+        [
+          5,
+          1
+        ]
+      ],
+      [
         43,
         [
           2,
@@ -13364,13 +13392,6 @@
           5,
           1
         ]
-      ],
-      [
-        33,
-        [
-          5,
-          1
-        ]
       ]
     ],
     [
@@ -13449,13 +13470,6 @@
     [
       [
         21,
-        [
-          5,
-          1
-        ]
-      ],
-      [
-        33,
         [
           5,
           1
@@ -14425,7 +14439,7 @@
           3,
           1,
           5,
-          1
+          2
         ]
       ],
       [
@@ -17203,6 +17217,13 @@
         ]
       ],
       [
+        33,
+        [
+          5,
+          1
+        ]
+      ],
+      [
         49,
         [
           3,
@@ -20477,6 +20498,13 @@
     ],
     [
       [
+        33,
+        [
+          5,
+          1
+        ]
+      ],
+      [
         45,
         [
           5,
@@ -20485,15 +20513,6 @@
       ],
       [
         53,
-        [
-          5,
-          1
-        ]
-      ]
-    ],
-    [
-      [
-        33,
         [
           5,
           1
@@ -22003,7 +22022,7 @@
         33,
         [
           5,
-          2
+          3
         ]
       ],
       [
@@ -22389,6 +22408,13 @@
         10,
         [
           1,
+          1
+        ]
+      ],
+      [
+        33,
+        [
+          5,
           1
         ]
       ],
@@ -23217,13 +23243,6 @@
     ],
     [
       [
-        33,
-        [
-          5,
-          1
-        ]
-      ],
-      [
         44,
         [
           1,
@@ -23253,6 +23272,13 @@
       ]
     ],
     [
+      [
+        33,
+        [
+          5,
+          1
+        ]
+      ],
       [
         43,
         [
@@ -26026,7 +26052,6 @@
     "status",
     "statuses",
     "stay",
-    "stays",
     "stderr",
     "stdin",
     "stdio",

@@ -7696,7 +7696,7 @@
             ],
             "id": "workduck.projects.scaffold-dialog",
             "invariant": [
-              "Preview and apply results update only the selected repository, scope, and profile; board state stays outside the dialog owner."
+              "Only the latest preview request in the open dialog updates preview and busy state; apply results stay bound to the selected repository, scope, and profile."
             ],
             "owns": [
               "scaffold dialog lifecycle",
@@ -7716,7 +7716,7 @@
             "stability": "architecture",
             "unknown": []
           },
-          "end": 576,
+          "end": 605,
           "endLine": 9,
           "entries": [
             {
@@ -7753,7 +7753,7 @@
               "key": "invariant",
               "line": 7,
               "order": 5,
-              "value": "Preview and apply results update only the selected repository, scope, and profile; board state stays outside the dialog owner."
+              "value": "Only the latest preview request in the open dialog updates preview and busy state; apply results stay bound to the selected repository, scope, and profile."
             },
             {
               "key": "stability",
@@ -7766,7 +7766,7 @@
           "indent": "",
           "newline": "\n",
           "prefix": null,
-          "raw": "/* llmnav/1 module\nid=workduck.projects.scaffold-dialog\nrole=Own reactive repository scaffold dialog state, profile selection, preview, and apply workflows.\nowns=scaffold dialog lifecycle|preview selection ownership|scaffold busy state|apply feedback\nexcludes=board selection|native scaffold persistence|new repository scaffolding\nsearch=repository scaffold preview|apply ssealed profile|scaffold dialog lifecycle\ninvariant=Preview and apply results update only the selected repository, scope, and profile; board state stays outside the dialog owner.\nstability=architecture\n*/",
+          "raw": "/* llmnav/1 module\nid=workduck.projects.scaffold-dialog\nrole=Own reactive repository scaffold dialog state, profile selection, preview, and apply workflows.\nowns=scaffold dialog lifecycle|preview selection ownership|scaffold busy state|apply feedback\nexcludes=board selection|native scaffold persistence|new repository scaffolding\nsearch=repository scaffold preview|apply ssealed profile|scaffold dialog lifecycle\ninvariant=Only the latest preview request in the open dialog updates preview and busy state; apply results stay bound to the selected repository, scope, and profile.\nstability=architecture\n*/",
           "scope": "module",
           "specVersion": "1",
           "start": 0,
@@ -7775,7 +7775,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "aa201020510c86df672e032b111d472651af6d7ed3a610cb05c950e8e7d351b2",
+      "contentHash": "1eb0eb2158e417582aab85602d99d99a58dc92a14a8ec23701df53e380d34316",
       "declarations": [
         null
       ],
@@ -7787,12 +7787,12 @@
         "./project-registry"
       ],
       "path": "src/lib/projects/project-board-scaffold-dialog.svelte.ts",
-      "semanticBytes": 576,
-      "sourceBytes": 7526
+      "semanticBytes": 605,
+      "sourceBytes": 7731
     },
     {
       "blocks": [],
-      "contentHash": "d3ee812de0c96466a3637e35e9e1dad13b952d4c9d8559280586b6e75c7fc220",
+      "contentHash": "e35c97f0bec88e60ce04a9c4c2753855572ac1ab451108bad1931608d5ca0261",
       "declarations": [],
       "imports": [
         "#lib/i18n/workduck-language.ts",
@@ -7806,7 +7806,7 @@
       ],
       "path": "src/lib/projects/project-board-scaffold-dialog.test.ts",
       "semanticBytes": 0,
-      "sourceBytes": 5719
+      "sourceBytes": 7348
     },
     {
       "blocks": [

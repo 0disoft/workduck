@@ -149,4 +149,4 @@ invariant Operation results update only their captured workspace lifetime; execu
 role Own reactive repository scaffold dialog state, profile selection, preview, and apply workflows.
 owns scaffold dialog lifecycle, preview selection ownership, scaffold busy state, apply feedback
 excludes board selection, native scaffold persistence, new repository scaffolding
-invariant Preview and apply results update only the selected repository, scope, and profile; board state stays outside the dialog owner.
+invariant Only the latest preview request in the open dialog updates preview and busy state; apply results stay bound to the selected repository, scope, and profile.

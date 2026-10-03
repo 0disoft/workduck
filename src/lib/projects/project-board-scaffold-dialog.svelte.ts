@@ -4,7 +4,7 @@ role=Own reactive repository scaffold dialog state, profile selection, preview, 
 owns=scaffold dialog lifecycle|preview selection ownership|scaffold busy state|apply feedback
 excludes=board selection|native scaffold persistence|new repository scaffolding
 search=repository scaffold preview|apply ssealed profile|scaffold dialog lifecycle
-invariant=Preview and apply results update only the selected repository, scope, and profile; board state stays outside the dialog owner.
+invariant=Only the latest preview request in the open dialog updates preview and busy state; apply results stay bound to the selected repository, scope, and profile.
 stability=architecture
 */
 import type { WorkduckMessages } from '#lib/i18n/workduck-message-contract.ts';
@@ -40,6 +40,7 @@ export function createProjectBoardScaffoldDialog(input: ProjectBoardScaffoldDial
 		getDefaultSsealedScaffoldProfile()
 	);
 	let ssealedPreview = $state<SsealedScaffoldPlan | null>(null);
+	let previewGeneration = 0;
 	let isPreviewingSsealed = $state(false);
 	let isApplyingSsealed = $state(false);
 	let canApplySsealedScaffold = $derived(
@@ -77,6 +78,7 @@ export function createProjectBoardScaffoldDialog(input: ProjectBoardScaffoldDial
 	}
 
 	function closeSsealedScaffoldDialog() {
+		previewGeneration += 1;
 		ssealedTarget = null;
 		ssealedScaffoldApplyScope = getDefaultSsealedScaffoldApplyScope();
 		ssealedScaffoldApplyProfile = getDefaultSsealedScaffoldProfile();
@@ -119,6 +121,7 @@ export function createProjectBoardScaffoldDialog(input: ProjectBoardScaffoldDial
 		}
 
 		const repositoryId = target.repository.id;
+		const generation = ++previewGeneration;
 
 		isPreviewingSsealed = true;
 		input.setFormError(null);
@@ -133,6 +136,7 @@ export function createProjectBoardScaffoldDialog(input: ProjectBoardScaffoldDial
 			);
 
 			if (
+				previewGeneration !== generation ||
 				ssealedTarget?.repository.id !== repositoryId ||
 				ssealedScaffoldApplyScope !== scope ||
 				ssealedScaffoldApplyProfile !== profile
@@ -149,6 +153,7 @@ export function createProjectBoardScaffoldDialog(input: ProjectBoardScaffoldDial
 			input.setFormError(result.error);
 		} finally {
 			if (
+				previewGeneration === generation &&
 				ssealedTarget?.repository.id === repositoryId &&
 				ssealedScaffoldApplyScope === scope &&
 				ssealedScaffoldApplyProfile === profile

@@ -63,6 +63,48 @@ async function settlePreview() {
 afterEach(() => setTauriInvokeForTest(undefined));
 
 describe('repository scaffold dialog', () => {
+	for (const order of ['old-first', 'new-first', 'old-error']) {
+		test(`ignores the previous dialog preview after reopening the same repository (${order})`, async () => {
+			const replies: (() => void)[] = [];
+			setTauriInvokeForTest(async <T>(_command: string, args?: Record<string, unknown>) => {
+				const request = replies.length;
+				await new Promise<void>((resolve) => { replies.push(resolve); });
+				if (order === 'old-error' && request === 0) {
+					return { ok: false, error: 'project-folder-ssealed-scaffold-failed' } as T;
+				}
+				const response = scaffoldResponse(args);
+				return { ...response, plan: { ...response.plan, missingCount: request + 1 } } as T;
+			});
+			const harness = createDialog();
+			try {
+				harness.dialog.openApplySsealedRepositoryDialog(target);
+				harness.dialog.closeSsealedScaffoldDialog();
+				harness.dialog.openApplySsealedRepositoryDialog(target);
+				expect(replies.length).toBe(2);
+				if (order === 'new-first') {
+					replies[1]!();
+					await settlePreview();
+					expect(harness.dialog.ssealedPreview?.missingCount).toBe(2);
+					replies[0]!();
+					await settlePreview();
+					expect(harness.dialog.ssealedPreview?.missingCount).toBe(2);
+				} else {
+					replies[0]!();
+					await settlePreview();
+					expect(harness.dialog.isPreviewingSsealed).toBe(true);
+					expect(harness.dialog.ssealedPreview).toBeNull();
+					expect(harness.error).toBeNull();
+					replies[1]!();
+					await settlePreview();
+					expect(harness.dialog.ssealedPreview?.missingCount).toBe(2);
+				}
+			} finally {
+				for (const reply of replies) reply();
+				await settlePreview();
+			}
+		});
+	}
+
 	test('rejects an unavailable repository before opening or requesting native preview', () => {
 		let calls = 0;
 		setTauriInvokeForTest(async <T>() => { calls += 1; return {} as T; });
