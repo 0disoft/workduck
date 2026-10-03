@@ -1563,7 +1563,7 @@
         "arbitrary shell command input"
       ],
       "hashes": {
-        "body": "6c4731a3ebc6fc45627230d5fc3852bfa7b8e570573db70050330ec128d756b7",
+        "body": "2edbae35b37fa5a5f712cca6d322fc03a089fd7e4d128028d73cf473a7ca8c3c",
         "semantic": "b5fb2ee97a32b44f5965f20f0c95cf6b3f03e0d1d51c91258c280ba55101f857",
         "structure": "b5122d9939628fb569605ebee461119c8532e018d75a3a27998fab08d397a2bb"
       },
@@ -2886,14 +2886,14 @@
         "latest repository card projection"
       ],
       "hashes": {
-        "body": "4c6ac4de4eb45675e45b0b47d150253f54fe1787359b414966516c1f872e845a",
+        "body": "8f0fcd61028817cb159dca97ce1a58dab0fc44d71d1875d1d4eb731f4e6a8a7d",
         "semantic": "a6283d6e9a1e63c31545ecc22c79a588f9679582df2f62f815e20773d557e199",
-        "structure": "f45449ab2a0fa8a5812ac1a5620d4d905a89fa637d57d35c52ecd77ba1375c6b"
+        "structure": "8c6dc031a73aed758f1fdea5f60d61084b53554c3d331953f39baff3ef9047c8"
       },
       "id": "workduck.projects.task-history",
       "imports": [
         "std::{collections::HashSet, fs, io::Read, path::Path}",
-        "super::{\n    ProjectRepositoryTaskError, ProjectRepositoryTaskRunRecord, collect_live_task_processes,\n    compare_task_run_records_descending, persist_reconciled_task_run_records,\n    reconcile_running_task_run_records, task_run_record_dir,\n}",
+        "super::{\n    ProjectRepositoryTaskError, ProjectRepositoryTaskRunRecord, collect_live_task_processes,\n    compare_task_run_records_descending, refresh_running_task_run_records, task_run_record_dir,\n}",
         "tests {\n    use super::*"
       ],
       "invariant": [
@@ -2940,6 +2940,6 @@
   "generatedBy": "llmnav@0.9.7",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "d0ebe23bd6b4aef2fa26deee705deee41943f4567a55b118e55cc5c448f6a0dc",
+  "sourceHash": "cf7dd26ead25b91fa8aac6f621f2936e7828ef9e8b953dbe4f13e4b9639cc041",
   "specVersion": "1"
 }

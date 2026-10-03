@@ -341,9 +341,7 @@ fn read_latest_cached_task_run_records(
         .values()
         .filter_map(|cached| cached.record.clone())
         .collect();
-    let live_processes = collect_live_task_processes().ok();
-    let records = reconcile_running_task_run_records(records, live_processes.as_deref());
-    persist_reconciled_task_run_records(&records);
+    let records = refresh_running_task_run_records(records, collect_live_task_processes);
     workspace_cache.dir_len = dir_len;
     workspace_cache.dir_modified_at = dir_modified_at;
     workspace_cache.latest_records = latest_task_run_records_by_repository(records);
@@ -813,8 +811,35 @@ fn stopped_task_run_record(
     }
 }
 
-fn persist_reconciled_task_run_records(records: &[ProjectRepositoryTaskRunRecord]) {
-    for record in records.iter().filter(|record| record.state == "stopped") {
+fn refresh_running_task_run_records(
+    records: Vec<ProjectRepositoryTaskRunRecord>,
+    collect_processes: impl FnOnce() -> Result<Vec<LiveTaskProcess>, ProjectRepositoryTaskError>,
+) -> Vec<ProjectRepositoryTaskRunRecord> {
+    let running_ids: HashSet<_> = records
+        .iter()
+        .filter(|record| record.state == "running")
+        .map(|record| record.id.clone())
+        .collect();
+    if running_ids.is_empty() {
+        return records;
+    }
+    let live_processes = collect_processes().ok();
+    let records = reconcile_running_task_run_records(records, live_processes.as_deref());
+    persist_reconciled_task_run_records(
+        records
+            .iter()
+            .filter(|record| running_ids.contains(&record.id) && record.state == "stopped"),
+    );
+    records
+}
+
+fn persist_reconciled_task_run_records<'a>(
+    records: impl IntoIterator<Item = &'a ProjectRepositoryTaskRunRecord>,
+) {
+    for record in records
+        .into_iter()
+        .filter(|record| record.state == "stopped")
+    {
         let _ = write_task_run_record(&PathBuf::from(&record.record_path), record);
     }
 }

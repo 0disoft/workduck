@@ -5,6 +5,78 @@ use super::commands::{
 use super::*;
 
 #[test]
+fn completed_records_do_not_enumerate_system_processes() {
+    let completed = task_run_record("done", "C:/workspace/repo", "2026-10-01T00:00:00Z");
+    let mut stopped = completed.clone();
+    stopped.id = "already-stopped".into();
+    stopped.state = "stopped".into();
+    let records = refresh_running_task_run_records(vec![completed, stopped], || {
+        panic!("completed records must not enumerate system processes")
+    });
+    assert_eq!(records.len(), 2);
+    assert_eq!(records[0].state, "succeeded");
+    assert_eq!(records[1].state, "stopped");
+}
+
+#[test]
+fn reconciliation_writes_only_newly_stopped_records() {
+    let temp = tempfile::tempdir().unwrap();
+    let old_path = temp.path().join("already-stopped.json");
+    let new_path = temp.path().join("running.json");
+    let mut old = task_run_record(
+        "already-stopped",
+        "C:/workspace/repo",
+        "2026-10-01T00:00:00Z",
+    );
+    old.state = "stopped".into();
+    old.record_path = old_path.to_string_lossy().into_owned();
+    let mut running = task_run_record("running", "C:/workspace/repo", "2026-10-02T00:00:00Z");
+    running.state = "running".into();
+    running.finished_at = None;
+    running.exit_code = None;
+    running.record_path = new_path.to_string_lossy().into_owned();
+    let original = serde_json::to_vec(&old).unwrap();
+    fs::write(&old_path, &original).unwrap();
+    fs::write(&new_path, serde_json::to_vec(&running).unwrap()).unwrap();
+    let records = refresh_running_task_run_records(vec![old, running], || Ok(Vec::new()));
+    assert!(records.iter().all(|record| record.state == "stopped"));
+    assert_eq!(fs::read(old_path).unwrap(), original);
+    let updated: serde_json::Value = serde_json::from_slice(&fs::read(new_path).unwrap()).unwrap();
+    assert_eq!(updated["state"], "stopped");
+    assert!(updated["finishedAt"].is_string());
+}
+
+#[test]
+fn stopped_record_reads_preserve_the_file_and_populate_a_stable_cache() {
+    let temp = tempfile::tempdir().unwrap();
+    let workspace = fs::canonicalize(temp.path()).unwrap();
+    let visible = crate::git_path::git_process_path(&workspace);
+    let dir = task_run_record_dir(&workspace);
+    fs::create_dir_all(&dir).unwrap();
+    let path = dir.join("stopped.json");
+    let mut stopped = task_run_record(
+        "stopped",
+        &visible.join("repo").to_string_lossy(),
+        "2026-10-01T00:00:00Z",
+    );
+    stopped.state = "stopped".into();
+    stopped.record_path = path.to_string_lossy().into_owned();
+    let original = serde_json::to_vec(&stopped).unwrap();
+    fs::write(&path, &original).unwrap();
+    for _ in 0..2 {
+        let records = read_latest_cached_task_run_records(&dir, &visible)
+            .unwrap_or_else(|_| panic!("read stopped records"));
+        assert_eq!(records.len(), 1);
+        assert_eq!(records[0].state, "stopped");
+        assert_eq!(fs::read(&path).unwrap(), original);
+    }
+    let cache = workspace_task_run_record_cache(&dir).unwrap_or_else(|_| panic!("workspace cache"));
+    let cache = cache.lock().unwrap();
+    let metadata = fs::metadata(&dir).unwrap();
+    assert!(cache.is_fresh(metadata.len(), metadata.modified().ok()));
+}
+
+#[test]
 fn latest_task_run_records_keep_newest_record_per_repository() {
     let records = latest_task_run_records_by_repository(vec![
         task_run_record("repo-a-old", "C:/workspace/repo-a", "2026-05-23T01:00:00Z"),

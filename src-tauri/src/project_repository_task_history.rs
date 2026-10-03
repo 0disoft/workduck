@@ -11,8 +11,7 @@ use std::{collections::HashSet, fs, io::Read, path::Path};
 
 use super::{
     ProjectRepositoryTaskError, ProjectRepositoryTaskRunRecord, collect_live_task_processes,
-    compare_task_run_records_descending, persist_reconciled_task_run_records,
-    reconcile_running_task_run_records, task_run_record_dir,
+    compare_task_run_records_descending, refresh_running_task_run_records, task_run_record_dir,
 };
 
 const MAX_SELECTED_RUNS: usize = 200;
@@ -82,21 +81,7 @@ pub(super) fn read_selected_task_run_records(
             .into_owned();
         records.push(record);
     }
-    if records.iter().any(|record| record.state == "running") {
-        let running_ids: HashSet<_> = records
-            .iter()
-            .filter(|record| record.state == "running")
-            .map(|record| record.id.clone())
-            .collect();
-        let processes = collect_live_task_processes().ok();
-        records = reconcile_running_task_run_records(records, processes.as_deref());
-        let transitioned = records
-            .iter()
-            .filter(|record| running_ids.contains(&record.id) && record.state == "stopped")
-            .cloned()
-            .collect::<Vec<_>>();
-        persist_reconciled_task_run_records(&transitioned);
-    }
+    records = refresh_running_task_run_records(records, collect_live_task_processes);
     records.sort_by(compare_task_run_records_descending);
     Ok(records)
 }

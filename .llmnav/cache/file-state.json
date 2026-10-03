@@ -2868,7 +2868,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "6c4731a3ebc6fc45627230d5fc3852bfa7b8e570573db70050330ec128d756b7",
+      "contentHash": "2edbae35b37fa5a5f712cca6d322fc03a089fd7e4d128028d73cf473a7ca8c3c",
       "declarations": [
         null
       ],
@@ -2886,7 +2886,7 @@
       ],
       "path": "src-tauri/src/project_repository_task.rs",
       "semanticBytes": 644,
-      "sourceBytes": 38420
+      "sourceBytes": 39167
     },
     {
       "blocks": [
@@ -3080,22 +3080,22 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "4c6ac4de4eb45675e45b0b47d150253f54fe1787359b414966516c1f872e845a",
+      "contentHash": "8f0fcd61028817cb159dca97ce1a58dab0fc44d71d1875d1d4eb731f4e6a8a7d",
       "declarations": [
         null
       ],
       "imports": [
         "std::{collections::HashSet, fs, io::Read, path::Path}",
-        "super::{\n    ProjectRepositoryTaskError, ProjectRepositoryTaskRunRecord, collect_live_task_processes,\n    compare_task_run_records_descending, persist_reconciled_task_run_records,\n    reconcile_running_task_run_records, task_run_record_dir,\n}",
+        "super::{\n    ProjectRepositoryTaskError, ProjectRepositoryTaskRunRecord, collect_live_task_processes,\n    compare_task_run_records_descending, refresh_running_task_run_records, task_run_record_dir,\n}",
         "tests {\n    use super::*"
       ],
       "path": "src-tauri/src/project_repository_task_history.rs",
       "semanticBytes": 639,
-      "sourceBytes": 9020
+      "sourceBytes": 8394
     },
     {
       "blocks": [],
-      "contentHash": "d17298eed64c3a1570a1e7197ccd6f7b474fb06b0df2d3881da1905c42d8c06c",
+      "contentHash": "4fc43c04b51aee8f2fa63bdec0433c3ccad76bc3ba2ec616800090d60363e7e0",
       "declarations": [],
       "imports": [
         "super::*",
@@ -3103,7 +3103,7 @@
       ],
       "path": "src-tauri/src/project_repository_task_tests.rs",
       "semanticBytes": 0,
-      "sourceBytes": 22740
+      "sourceBytes": 25903
     },
     {
       "blocks": [],
