@@ -75,7 +75,7 @@
     "workduck.workspace.sync-file-native",
     "workduck.workspace.sync-git-native"
   ],
-  "cardSetHash": "7d3862c08cb1eef0b59a925e48eb23b8a338f83c259057d98c4b13baba1f073d",
+  "cardSetHash": "4c66bcdd572accf224ab8b9e9b7f29ae82a70abbc47d42d481735edba406c8fc",
   "documentCount": 74,
   "documents": [
     [
@@ -154,14 +154,14 @@
       ]
     ],
     [
-      "a588e081064c04de14aba9adfd1879d17a88f9c622bb3fe6bb78dfb81c21a0e2",
+      "b704c7d05e110a2462aac3191a9bba98765246c5aa95b43d75f316fb7f7db94f",
       [
         "parse agent evaluation commands, update agent score history, and synchronize persona summaries under a workspace lock.",
         "agent evaluation cli",
         "evaluation score history",
         "persona evaluation summaries",
         "evaluate batch command",
-        "single and batch evaluations validate scores, serialize workspace writes, and preserve evaluation-key deduplication.",
+        "single and batch evaluations share one locked commit owner, unchanged retries do not rewrite registries, and failed batches commit no evaluations.",
         "agent evaluation options",
         "evaluation deduplication",
         "score accumulation",
@@ -3250,6 +3250,15 @@
     ],
     [
       [
+        6,
+        [
+          5,
+          1
+        ]
+      ]
+    ],
+    [
+      [
         52,
         [
           5,
@@ -5253,6 +5262,13 @@
     ],
     [
       [
+        6,
+        [
+          5,
+          2
+        ]
+      ],
+      [
         65,
         [
           5,
@@ -6343,8 +6359,6 @@
         6,
         [
           3,
-          1,
-          5,
           1
         ]
       ]
@@ -6926,6 +6940,13 @@
       ]
     ],
     [
+      [
+        6,
+        [
+          5,
+          1
+        ]
+      ],
       [
         55,
         [
@@ -7850,8 +7871,6 @@
           3,
           3,
           3,
-          5,
-          1,
           9,
           1
         ]
@@ -7892,7 +7911,7 @@
         6,
         [
           5,
-          1
+          2
         ]
       ],
       [
@@ -8605,6 +8624,13 @@
       ]
     ],
     [
+      [
+        6,
+        [
+          5,
+          1
+        ]
+      ],
       [
         28,
         [
@@ -11379,13 +11405,6 @@
       ]
     ],
     [
-      [
-        6,
-        [
-          5,
-          1
-        ]
-      ],
       [
         42,
         [
@@ -12270,6 +12289,13 @@
     ],
     [
       [
+        6,
+        [
+          5,
+          1
+        ]
+      ],
+      [
         8,
         [
           1,
@@ -13632,6 +13658,15 @@
     ],
     [
       [
+        6,
+        [
+          5,
+          1
+        ]
+      ]
+    ],
+    [
+      [
         7,
         [
           4,
@@ -13914,6 +13949,13 @@
     ],
     [
       [
+        6,
+        [
+          5,
+          1
+        ]
+      ],
+      [
         55,
         [
           5,
@@ -14077,6 +14119,13 @@
       ]
     ],
     [
+      [
+        6,
+        [
+          5,
+          1
+        ]
+      ],
       [
         16,
         [
@@ -15161,6 +15210,13 @@
     ],
     [
       [
+        6,
+        [
+          5,
+          1
+        ]
+      ],
+      [
         22,
         [
           5,
@@ -16202,13 +16258,6 @@
         4,
         [
           1,
-          1
-        ]
-      ],
-      [
-        6,
-        [
-          5,
           1
         ]
       ],
@@ -18535,6 +18584,13 @@
         ]
       ],
       [
+        6,
+        [
+          5,
+          1
+        ]
+      ],
+      [
         20,
         [
           0,
@@ -20196,6 +20252,15 @@
     ],
     [
       [
+        6,
+        [
+          5,
+          1
+        ]
+      ]
+    ],
+    [
+      [
         9,
         [
           5,
@@ -20317,6 +20382,15 @@
     [
       [
         65,
+        [
+          5,
+          1
+        ]
+      ]
+    ],
+    [
+      [
+        6,
         [
           5,
           1
@@ -21321,15 +21395,6 @@
     ],
     [
       [
-        6,
-        [
-          5,
-          1
-        ]
-      ]
-    ],
-    [
-      [
         39,
         [
           3,
@@ -21810,13 +21875,6 @@
     ],
     [
       [
-        6,
-        [
-          5,
-          1
-        ]
-      ],
-      [
         45,
         [
           1,
@@ -22022,6 +22080,13 @@
       ]
     ],
     [
+      [
+        6,
+        [
+          5,
+          1
+        ]
+      ],
       [
         26,
         [
@@ -26258,6 +26323,15 @@
     ],
     [
       [
+        6,
+        [
+          5,
+          1
+        ]
+      ]
+    ],
+    [
+      [
         10,
         [
           5,
@@ -26634,13 +26708,6 @@
         5,
         [
           1,
-          1
-        ]
-      ],
-      [
-        6,
-        [
-          5,
           1
         ]
       ],
@@ -28302,8 +28369,6 @@
         6,
         [
           1,
-          1,
-          5,
           1
         ]
       ],
@@ -28788,8 +28853,6 @@
         6,
         [
           3,
-          1,
-          5,
           1
         ]
       ],
@@ -28971,6 +29034,7 @@
     "ballot",
     "ballots",
     "batch",
+    "batches",
     "be",
     "bearing",
     "become",
@@ -29405,6 +29469,7 @@
     "new",
     "newer",
     "newline",
+    "no",
     "node",
     "nodes",
     "non",
@@ -29607,6 +29672,7 @@
     "retain",
     "retaining",
     "retains",
+    "retries",
     "return",
     "returned",
     "returning",
@@ -29617,6 +29683,7 @@
     "reviewed",
     "revision",
     "revisions",
+    "rewrite",
     "risk",
     "rollback",
     "rolls",
@@ -29649,7 +29716,6 @@
     "scoped",
     "scoping",
     "score",
-    "scores",
     "script",
     "scripts",
     "search",
@@ -29803,6 +29869,7 @@
     "typescript",
     "ui",
     "unavailable",
+    "unchanged",
     "undeclared",
     "under",
     "unions",

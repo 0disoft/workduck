@@ -17,4 +17,4 @@ invariant The launcher executes the locked workduck-cli binary from this reposit
 role Parse agent evaluation commands, update agent score history, and synchronize persona summaries under a workspace lock.
 owns agent evaluation options, evaluation deduplication, score accumulation, persona summary synchronization, evaluation registry writes
 excludes queue execution, work-order discovery, vault decryption
-invariant Single and batch evaluations validate scores, serialize workspace writes, and preserve evaluation-key deduplication.
+invariant Single and batch evaluations share one locked commit owner, unchanged retries do not rewrite registries, and failed batches commit no evaluations.

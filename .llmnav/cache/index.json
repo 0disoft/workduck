@@ -3688,8 +3688,8 @@
         "vault decryption"
       ],
       "hashes": {
-        "body": "3601f1e5423941d7bf90442fbc4cebce77006fc7e3756e99d60543fb3c8090f7",
-        "semantic": "0148556f66fa36d18ae0e5c1252f61adf04b4165bb9eeab8ab205fd7076862b5",
+        "body": "f018b95fd6bf1b32a06414fa0c999e58efb1c11d3d71249e7da468615c44e37a",
+        "semantic": "02b8b31119c0c254d5373b7fd5071f1cdd6fe01f1f5a27bd4eacd7302ae6846d",
         "structure": "c725e4c5488671a7953004a088f17f2ae75c490324aa9eade34b2f8cb1a13435"
       },
       "id": "workduck.cli.agent-evaluation",
@@ -3705,7 +3705,7 @@
         "workduck_lib::workspace_registry_lock::acquire_workspace_registry_lock"
       ],
       "invariant": [
-        "Single and batch evaluations validate scores, serialize workspace writes, and preserve evaluation-key deduplication."
+        "Single and batch evaluations share one locked commit owner, unchanged retries do not rewrite registries, and failed batches commit no evaluations."
       ],
       "location": {
         "declarationLine": null,
@@ -3751,6 +3751,6 @@
   "generatedBy": "llmnav@0.9.7",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "43258391d2bb01a0530c38efbf80adb84a4ec9e57f11073ce79a2aef955c84a0",
+  "sourceHash": "942e2f771620a787dda3dc1da15b48bbb9c513f845e45f4ad0af40c67fb546e2",
   "specVersion": "1"
 }

@@ -1284,7 +1284,7 @@
             ],
             "id": "workduck.cli.agent-evaluation",
             "invariant": [
-              "Single and batch evaluations validate scores, serialize workspace writes, and preserve evaluation-key deduplication."
+              "Single and batch evaluations share one locked commit owner, unchanged retries do not rewrite registries, and failed batches commit no evaluations."
             ],
             "owns": [
               "agent evaluation options",
@@ -1306,7 +1306,7 @@
             "stability": "architecture",
             "unknown": []
           },
-          "end": 629,
+          "end": 659,
           "endLine": 9,
           "entries": [
             {
@@ -1343,7 +1343,7 @@
               "key": "invariant",
               "line": 7,
               "order": 5,
-              "value": "Single and batch evaluations validate scores, serialize workspace writes, and preserve evaluation-key deduplication."
+              "value": "Single and batch evaluations share one locked commit owner, unchanged retries do not rewrite registries, and failed batches commit no evaluations."
             },
             {
               "key": "stability",
@@ -1356,7 +1356,7 @@
           "indent": "",
           "newline": "\n",
           "prefix": null,
-          "raw": "/* llmnav/1 module\nid=workduck.cli.agent-evaluation\nrole=Parse agent evaluation commands, update agent score history, and synchronize persona summaries under a workspace lock.\nowns=agent evaluation options|evaluation deduplication|score accumulation|persona summary synchronization|evaluation registry writes\nexcludes=queue execution|work-order discovery|vault decryption\nsearch=agent evaluation cli|evaluation score history|persona evaluation summaries|evaluate batch command\ninvariant=Single and batch evaluations validate scores, serialize workspace writes, and preserve evaluation-key deduplication.\nstability=architecture\n*/",
+          "raw": "/* llmnav/1 module\nid=workduck.cli.agent-evaluation\nrole=Parse agent evaluation commands, update agent score history, and synchronize persona summaries under a workspace lock.\nowns=agent evaluation options|evaluation deduplication|score accumulation|persona summary synchronization|evaluation registry writes\nexcludes=queue execution|work-order discovery|vault decryption\nsearch=agent evaluation cli|evaluation score history|persona evaluation summaries|evaluate batch command\ninvariant=Single and batch evaluations share one locked commit owner, unchanged retries do not rewrite registries, and failed batches commit no evaluations.\nstability=architecture\n*/",
           "scope": "module",
           "specVersion": "1",
           "start": 0,
@@ -1365,7 +1365,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "3601f1e5423941d7bf90442fbc4cebce77006fc7e3756e99d60543fb3c8090f7",
+      "contentHash": "f018b95fd6bf1b32a06414fa0c999e58efb1c11d3d71249e7da468615c44e37a",
       "declarations": [
         null
       ],
@@ -1381,8 +1381,8 @@
         "workduck_lib::workspace_registry_lock::acquire_workspace_registry_lock"
       ],
       "path": "src-tauri/src/bin/cli/agent_evaluation.rs",
-      "semanticBytes": 629,
-      "sourceBytes": 35817
+      "semanticBytes": 659,
+      "sourceBytes": 41210
     },
     {
       "blocks": [

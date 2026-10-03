@@ -4,7 +4,7 @@ role=Parse agent evaluation commands, update agent score history, and synchroniz
 owns=agent evaluation options|evaluation deduplication|score accumulation|persona summary synchronization|evaluation registry writes
 excludes=queue execution|work-order discovery|vault decryption
 search=agent evaluation cli|evaluation score history|persona evaluation summaries|evaluate batch command
-invariant=Single and batch evaluations validate scores, serialize workspace writes, and preserve evaluation-key deduplication.
+invariant=Single and batch evaluations share one locked commit owner, unchanged retries do not rewrite registries, and failed batches commit no evaluations.
 stability=architecture
 */
 use super::{
@@ -128,65 +128,17 @@ fn run_agent_evaluate_command(args: Vec<String>) -> Result<(), CliError> {
             message: "--workspace 옵션으로 워크스페이스를 지정해야 합니다.".to_string(),
         })
         .and_then(canonicalize_directory)?;
-    let workspace_id = read_workspace_id(&workspace_path)?;
-    let agents_path = workspace_data_path(&workspace_path, AGENTS_FILE_NAME);
-    let _agent_registry_lock = acquire_workspace_registry_lock(&workspace_path)
-        .map_err(|error| io_error("agent-registry-lock-failed", &workspace_path, error))?;
-    recover_workspace_registry_transaction_under_lock(&workspace_path).map_err(|_| CliError {
-        code: "agent-registry-recovery-failed",
-        message: "미완료 에이전트/페르소나 레지스트리 트랜잭션을 복구하지 못했습니다.".to_string(),
-    })?;
-    let mut registry: Value = read_json_file(&agents_path, "agent-registry-invalid")?;
-    let personas_path = workspace_data_path(&workspace_path, PERSONAS_FILE_NAME);
-    let mut persona_registry: Option<Value> = if personas_path.exists() {
-        Some(read_json_file(&personas_path, "persona-registry-invalid")?)
-    } else {
-        None
-    };
+    let mut transaction = EvaluationRegistryTransaction::open(&workspace_path)?;
     let scores = options.scores.ok_or_else(|| CliError {
         code: "agent-evaluation-score-required",
         message: "다섯 평가 점수를 모두 지정해야 합니다.".to_string(),
     })?;
-    let result = record_agent_evaluation_in_registry(
-        &mut registry,
-        &workspace_id,
+    let result = transaction.record(
         &options.agent_key,
         options.evaluation_key.as_deref(),
         scores,
     )?;
-    let persona_registry_changed = if let Some(persona_registry) = persona_registry.as_mut() {
-        sync_persona_evaluation_summaries_from_agents(persona_registry, &registry, &workspace_id)?
-    } else {
-        false
-    };
-
-    increment_registry_revision(&mut registry)?;
-    if persona_registry_changed {
-        if let Some(persona_registry) = persona_registry.as_mut() {
-            increment_registry_revision(persona_registry)?;
-            let agents_content =
-                serde_json::to_string_pretty(&registry).map_err(|error| CliError {
-                    code: "file-write-failed",
-                    message: format!("JSON 직렬화에 실패했습니다: {error}"),
-                })?;
-            let personas_content =
-                serde_json::to_string_pretty(persona_registry).map_err(|error| CliError {
-                    code: "file-write-failed",
-                    message: format!("JSON 직렬화에 실패했습니다: {error}"),
-                })?;
-            commit_workspace_registry_pair_under_lock(
-                &workspace_path,
-                &agents_content,
-                &personas_content,
-            )
-            .map_err(|_| CliError {
-                code: "agent-registry-write-failed",
-                message: "에이전트/페르소나 레지스트리 트랜잭션 저장에 실패했습니다.".to_string(),
-            })?;
-        }
-    } else {
-        write_json_file(&agents_path, &registry)?;
-    }
+    transaction.commit()?;
 
     if options.json {
         let payload = AgentEvaluationJsonSuccess {
@@ -243,21 +195,7 @@ fn run_agent_evaluate_batch_command(args: Vec<String>) -> Result<(), CliError> {
         });
     }
 
-    let workspace_id = read_workspace_id(&workspace_path)?;
-    let agents_path = workspace_data_path(&workspace_path, AGENTS_FILE_NAME);
-    let _agent_registry_lock = acquire_workspace_registry_lock(&workspace_path)
-        .map_err(|error| io_error("agent-registry-lock-failed", &workspace_path, error))?;
-    recover_workspace_registry_transaction_under_lock(&workspace_path).map_err(|_| CliError {
-        code: "agent-registry-recovery-failed",
-        message: "미완료 에이전트/페르소나 레지스트리 트랜잭션을 복구하지 못했습니다.".to_string(),
-    })?;
-    let mut registry: Value = read_json_file(&agents_path, "agent-registry-invalid")?;
-    let personas_path = workspace_data_path(&workspace_path, PERSONAS_FILE_NAME);
-    let mut persona_registry: Option<Value> = if personas_path.exists() {
-        Some(read_json_file(&personas_path, "persona-registry-invalid")?)
-    } else {
-        None
-    };
+    let mut transaction = EvaluationRegistryTransaction::open(&workspace_path)?;
     let mut results = Vec::new();
 
     for (index, item) in input.evaluations.into_iter().enumerate() {
@@ -275,13 +213,7 @@ fn run_agent_evaluate_batch_command(args: Vec<String>) -> Result<(), CliError> {
                     index + 1
                 ),
             })?;
-        let result = record_agent_evaluation_in_registry(
-            &mut registry,
-            &workspace_id,
-            agent_key,
-            item.evaluation_key.as_deref(),
-            item.scores,
-        )?;
+        let result = transaction.record(agent_key, item.evaluation_key.as_deref(), item.scores)?;
 
         results.push(AgentEvaluationBatchJsonItem {
             agent_id: result.agent_id,
@@ -293,39 +225,7 @@ fn run_agent_evaluate_batch_command(args: Vec<String>) -> Result<(), CliError> {
         });
     }
 
-    let persona_registry_changed = if let Some(persona_registry) = persona_registry.as_mut() {
-        sync_persona_evaluation_summaries_from_agents(persona_registry, &registry, &workspace_id)?
-    } else {
-        false
-    };
-
-    increment_registry_revision(&mut registry)?;
-    if persona_registry_changed {
-        if let Some(persona_registry) = persona_registry.as_mut() {
-            increment_registry_revision(persona_registry)?;
-            let agents_content =
-                serde_json::to_string_pretty(&registry).map_err(|error| CliError {
-                    code: "file-write-failed",
-                    message: format!("JSON 직렬화에 실패했습니다: {error}"),
-                })?;
-            let personas_content =
-                serde_json::to_string_pretty(persona_registry).map_err(|error| CliError {
-                    code: "file-write-failed",
-                    message: format!("JSON 직렬화에 실패했습니다: {error}"),
-                })?;
-            commit_workspace_registry_pair_under_lock(
-                &workspace_path,
-                &agents_content,
-                &personas_content,
-            )
-            .map_err(|_| CliError {
-                code: "agent-registry-write-failed",
-                message: "에이전트/페르소나 레지스트리 트랜잭션 저장에 실패했습니다.".to_string(),
-            })?;
-        }
-    } else {
-        write_json_file(&agents_path, &registry)?;
-    }
+    transaction.commit()?;
 
     if options.json {
         let payload = AgentEvaluationBatchJsonSuccess {
@@ -555,6 +455,112 @@ fn missing_score_error() -> CliError {
     CliError {
         code: "agent-evaluation-score-required",
         message: "다섯 평가 점수를 모두 지정해야 합니다.".to_string(),
+    }
+}
+
+struct EvaluationRegistryTransaction {
+    workspace_path: PathBuf,
+    workspace_id: String,
+    agents: Value,
+    personas: Option<Value>,
+    agents_changed: bool,
+    _lock: std::fs::File,
+}
+
+impl EvaluationRegistryTransaction {
+    fn open(workspace_path: &Path) -> Result<Self, CliError> {
+        let lock = acquire_workspace_registry_lock(workspace_path)
+            .map_err(|error| io_error("agent-registry-lock-failed", workspace_path, error))?;
+        recover_workspace_registry_transaction_under_lock(workspace_path).map_err(|_| {
+            CliError {
+                code: "agent-registry-recovery-failed",
+                message: "미완료 에이전트/페르소나 레지스트리 트랜잭션을 복구하지 못했습니다."
+                    .to_string(),
+            }
+        })?;
+        let workspace_id = read_workspace_id(workspace_path)?;
+        let agents = read_json_file(
+            &workspace_data_path(workspace_path, AGENTS_FILE_NAME),
+            "agent-registry-invalid",
+        )?;
+        let personas_path = workspace_data_path(workspace_path, PERSONAS_FILE_NAME);
+        let personas = if personas_path.exists() {
+            Some(read_json_file(&personas_path, "persona-registry-invalid")?)
+        } else {
+            None
+        };
+        Ok(Self {
+            workspace_path: workspace_path.to_owned(),
+            workspace_id,
+            agents,
+            personas,
+            agents_changed: false,
+            _lock: lock,
+        })
+    }
+
+    fn record(
+        &mut self,
+        agent_key: &str,
+        evaluation_key: Option<&str>,
+        scores: AgentEvaluationScores,
+    ) -> Result<AgentEvaluationWriteResult, CliError> {
+        let result = record_agent_evaluation_in_registry(
+            &mut self.agents,
+            &self.workspace_id,
+            agent_key,
+            evaluation_key,
+            scores,
+        )?;
+        self.agents_changed |= result.applied;
+        Ok(result)
+    }
+
+    fn commit(mut self) -> Result<(), CliError> {
+        let personas_changed = match self.personas.as_mut() {
+            Some(personas) => sync_persona_evaluation_summaries_from_agents(
+                personas,
+                &self.agents,
+                &self.workspace_id,
+            )?,
+            None => false,
+        };
+        if !self.agents_changed && !personas_changed {
+            return Ok(());
+        }
+        if self.agents_changed {
+            increment_registry_revision(&mut self.agents)?;
+        }
+        if personas_changed {
+            // A changed persona summary always has an existing persona registry.
+            if let Some(personas) = self.personas.as_mut() {
+                increment_registry_revision(personas)?;
+                let serialize = |value: &Value| {
+                    serde_json::to_string_pretty(value).map_err(|error| CliError {
+                        code: "file-write-failed",
+                        message: format!("JSON 직렬화에 실패했습니다: {error}"),
+                    })
+                };
+                let agents_content = serialize(&self.agents)?;
+                let personas_content = serialize(personas)?;
+                commit_workspace_registry_pair_under_lock(
+                    &self.workspace_path,
+                    &agents_content,
+                    &personas_content,
+                )
+                .map_err(|_| CliError {
+                    code: "agent-registry-write-failed",
+                    message: "에이전트/페르소나 레지스트리 트랜잭션 저장에 실패했습니다."
+                        .to_string(),
+                })?;
+            }
+            Ok(())
+        } else {
+            write_json_file(
+                &workspace_data_path(&self.workspace_path, AGENTS_FILE_NAME),
+                &self.agents,
+            )
+        }
     }
 }
 
@@ -1028,5 +1034,155 @@ mod tests {
 
         assert_eq!(agent["evaluationSummary"]["totalCount"], 2);
         assert_eq!(agent["evaluationKeys"].as_array().map(Vec::len), Some(2));
+    }
+
+    fn evaluation_workspace() -> tempfile::TempDir {
+        let workspace = tempfile::tempdir().expect("workspace");
+        let directory = workspace.path().join(WORKDUCK_DIRECTORY_NAME);
+        fs::create_dir_all(&directory).expect("registry directory");
+        for (name, value) in [
+            ("workspace.json", serde_json::json!({"id": "workspace-1"})),
+            (
+                AGENTS_FILE_NAME,
+                serde_json::json!({
+                    "workspaceId": "workspace-1", "revision": 0,
+                    "agents": [{"id": "agent-1", "name": "Agent 1", "personaId": "persona-1"}]
+                }),
+            ),
+            (
+                PERSONAS_FILE_NAME,
+                serde_json::json!({
+                    "workspaceId": "workspace-1", "revision": 0,
+                    "personas": [{"id": "persona-1", "name": "Persona 1"}]
+                }),
+            ),
+        ] {
+            fs::write(
+                directory.join(name),
+                serde_json::to_vec_pretty(&value).unwrap(),
+            )
+            .unwrap();
+        }
+        workspace
+    }
+
+    fn registry_bytes(workspace: &Path) -> (Vec<u8>, Vec<u8>) {
+        (
+            fs::read(workspace_data_path(workspace, AGENTS_FILE_NAME)).unwrap(),
+            fs::read(workspace_data_path(workspace, PERSONAS_FILE_NAME)).unwrap(),
+        )
+    }
+
+    fn run_evaluation_batch(workspace: &Path, evaluations: Value) -> Result<(), CliError> {
+        let input = workspace.join("evaluation-input.json");
+        fs::write(
+            &input,
+            serde_json::to_vec(&serde_json::json!({"evaluations": evaluations})).unwrap(),
+        )
+        .unwrap();
+        run_agent_evaluate_batch_command(vec![
+            "agent".into(),
+            "evaluate-batch".into(),
+            "--workspace".into(),
+            workspace.to_string_lossy().into_owned(),
+            "--input".into(),
+            input.to_string_lossy().into_owned(),
+            "--json".into(),
+        ])
+    }
+
+    fn batch_item(key: &str, score: u8) -> Value {
+        serde_json::json!({
+            "agentId": "agent-1", "evaluationKey": key,
+            "scores": {
+                "problemUnderstanding": score, "logicalValidity": score,
+                "practicalFeasibility": score, "creativeInsight": score, "riskDetection": score
+            }
+        })
+    }
+
+    #[test]
+    fn duplicate_single_evaluation_does_not_rewrite_registry_files() {
+        let workspace = evaluation_workspace();
+        run_agent_evaluate_command(agent_evaluate_args(workspace.path(), "same-key")).unwrap();
+        let before = registry_bytes(workspace.path());
+        run_agent_evaluate_command(agent_evaluate_args(workspace.path(), "same-key")).unwrap();
+        assert_eq!(registry_bytes(workspace.path()), before);
+    }
+
+    #[test]
+    fn duplicate_evaluation_without_a_persona_registry_keeps_the_agent_snapshot() {
+        let workspace = evaluation_workspace();
+        fs::remove_file(workspace_data_path(workspace.path(), PERSONAS_FILE_NAME)).unwrap();
+        run_agent_evaluate_command(agent_evaluate_args(workspace.path(), "same-key")).unwrap();
+        let path = workspace_data_path(workspace.path(), AGENTS_FILE_NAME);
+        let before = fs::read(&path).unwrap();
+        run_agent_evaluate_command(agent_evaluate_args(workspace.path(), "same-key")).unwrap();
+        assert!(fs::read(&path).unwrap() == before);
+    }
+
+    #[test]
+    fn duplicate_evaluation_repairs_a_stale_persona_without_advancing_agent_revision() {
+        let workspace = evaluation_workspace();
+        run_agent_evaluate_command(agent_evaluate_args(workspace.path(), "same-key")).unwrap();
+        let agents_before = registry_bytes(workspace.path()).0;
+        let personas_path = workspace_data_path(workspace.path(), PERSONAS_FILE_NAME);
+        let mut personas: Value =
+            read_json_file(&personas_path, "persona-registry-invalid").unwrap();
+        personas["personas"][0]["evaluationSummary"] = serde_json::json!({});
+        fs::write(&personas_path, serde_json::to_vec(&personas).unwrap()).unwrap();
+        run_agent_evaluate_command(agent_evaluate_args(workspace.path(), "same-key")).unwrap();
+        let personas: Value = read_json_file(&personas_path, "persona-registry-invalid").unwrap();
+        assert!(registry_bytes(workspace.path()).0 == agents_before);
+        assert_eq!(personas["revision"], 2);
+        assert_eq!(
+            personas["personas"][0]["evaluationSummary"]["totalCount"],
+            1
+        );
+    }
+
+    #[test]
+    fn duplicate_batch_does_not_rewrite_but_new_evaluations_commit_once() {
+        let workspace = evaluation_workspace();
+        run_evaluation_batch(
+            workspace.path(),
+            serde_json::json!([batch_item("existing", 5)]),
+        )
+        .unwrap();
+        let before = registry_bytes(workspace.path());
+        run_evaluation_batch(
+            workspace.path(),
+            serde_json::json!([batch_item("existing", 5)]),
+        )
+        .unwrap();
+        assert_eq!(registry_bytes(workspace.path()), before);
+        run_evaluation_batch(
+            workspace.path(),
+            serde_json::json!([batch_item("existing", 5), batch_item("new", 6)]),
+        )
+        .unwrap();
+        let (agents, personas) = registry_bytes(workspace.path());
+        let agents: Value = serde_json::from_slice(&agents).unwrap();
+        let personas: Value = serde_json::from_slice(&personas).unwrap();
+        assert_eq!(agents["revision"], 2);
+        assert_eq!(personas["revision"], 2);
+        assert_eq!(agents["agents"][0]["evaluationSummary"]["totalCount"], 2);
+        assert_eq!(
+            personas["personas"][0]["evaluationSummary"]["criteria"]["riskDetection"]["scoreSum"],
+            11
+        );
+    }
+
+    #[test]
+    fn an_invalid_later_batch_item_keeps_both_registries_unchanged() {
+        let workspace = evaluation_workspace();
+        let before = registry_bytes(workspace.path());
+        let error = run_evaluation_batch(
+            workspace.path(),
+            serde_json::json!([batch_item("valid", 5), batch_item("invalid", 0)]),
+        )
+        .unwrap_err();
+        assert_eq!(error.code, "agent-evaluation-score-invalid");
+        assert_eq!(registry_bytes(workspace.path()), before);
     }
 }
