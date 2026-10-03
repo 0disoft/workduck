@@ -108,3 +108,9 @@ role Precompute project-board search and filter indexes and derive visible proje
 owns project board index, search matching, repository sync filters
 excludes registry mutation, Git inspection execution
 invariant Derived sets and counts come only from supplied registry nodes and status snapshots without mutating them.
+
+@workduck.projects.task-commands
+role Resolve repository tasks into commands using package scripts, local dependency ownership, and supported toolchain manifests.
+owns toolchain command selection, bounded manifest discovery, package manager and dev script policy
+excludes process launch, task run persistence, frontend invocation
+invariant Only closed repository task variants select commands, discovery skips generated dependencies, and root scripts retain priority over nested projects.

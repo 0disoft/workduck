@@ -2,9 +2,16 @@
   "$schema": "./schema/config.schema.json",
   "coverageRules": [
     {
-      "match": ["src/lib/briefs/brief-registry.ts", "src/lib/briefs/brief-run-registry.ts", "src/lib/briefs/brief-gate.ts"],
+      "match": [
+        "src/lib/briefs/brief-registry.ts",
+        "src/lib/briefs/brief-run-registry.ts",
+        "src/lib/briefs/brief-gate.ts"
+      ],
       "name": "durable agent brief registry",
-      "requiredFields": ["owns", "invariant"],
+      "requiredFields": [
+        "owns",
+        "invariant"
+      ],
       "scope": "module"
     },
     {
@@ -89,6 +96,17 @@
         "src/lib/workspaces/workspace-data-file.ts"
       ],
       "name": "reviewed Workduck domain, native command, and client adapter boundaries",
+      "requiredFields": [
+        "owns",
+        "invariant"
+      ],
+      "scope": "module"
+    },
+    {
+      "match": [
+        "src-tauri/src/project_repository_task_commands.rs"
+      ],
+      "name": "repository toolchain command discovery",
       "requiredFields": [
         "owns",
         "invariant"

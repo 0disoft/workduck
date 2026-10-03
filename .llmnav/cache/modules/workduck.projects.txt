@@ -66,3 +66,9 @@ role Define and enforce versioned project, group, and repository registry normal
 owns project registry domain, project hierarchy validation, repository link mutations
 excludes registry storage transport, Git repository operations
 invariant Every successful parse or mutation passes through the same normalization rules before returning a versioned registry.
+
+@workduck.projects.task-commands
+role Resolve repository tasks into commands using package scripts, local dependency ownership, and supported toolchain manifests.
+owns toolchain command selection, bounded manifest discovery, package manager and dev script policy
+excludes process launch, task run persistence, frontend invocation
+invariant Only closed repository task variants select commands, discovery skips generated dependencies, and root scripts retain priority over nested projects.

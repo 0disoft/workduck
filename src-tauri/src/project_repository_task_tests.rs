@@ -1,0 +1,698 @@
+use super::commands::{
+    PackageManager, PackageProject, resolve_package_dev_server_command,
+    resolve_package_task_command,
+};
+use super::*;
+
+#[test]
+fn latest_task_run_records_keep_newest_record_per_repository() {
+    let records = latest_task_run_records_by_repository(vec![
+        task_run_record("repo-a-old", "C:/workspace/repo-a", "2026-05-23T01:00:00Z"),
+        task_run_record("repo-b", "C:/workspace/repo-b", "2026-05-23T02:00:00Z"),
+        task_run_record("repo-a-new", "C:/workspace/repo-a", "2026-05-23T03:00:00Z"),
+    ]);
+
+    let ids = records
+        .iter()
+        .map(|record| record.id.as_str())
+        .collect::<Vec<_>>();
+
+    assert_eq!(ids, vec!["repo-a-new", "repo-b"]);
+}
+
+#[test]
+fn task_run_record_caches_are_shared_per_workspace_only() {
+    let token = current_task_run_timestamp().replace([':', '.'], "-");
+    let first_path = PathBuf::from(format!("workspace-a-{token}"));
+    let second_path = PathBuf::from(format!("workspace-b-{token}"));
+
+    let first = match workspace_task_run_record_cache(&first_path) {
+        Ok(cache) => cache,
+        Err(_) => panic!("first workspace cache"),
+    };
+    let first_again = match workspace_task_run_record_cache(&first_path) {
+        Ok(cache) => cache,
+        Err(_) => panic!("same workspace cache"),
+    };
+    let second = match workspace_task_run_record_cache(&second_path) {
+        Ok(cache) => cache,
+        Err(_) => panic!("second workspace cache"),
+    };
+
+    assert!(Arc::ptr_eq(&first, &first_again));
+    assert!(!Arc::ptr_eq(&first, &second));
+}
+
+#[test]
+fn latest_task_run_records_use_id_as_timestamp_tie_breaker() {
+    let records = latest_task_run_records_by_repository(vec![
+        task_run_record("repo-a-1", "C:/workspace/repo-a", "2026-05-23T01:00:00Z"),
+        task_run_record("repo-a-2", "C:/workspace/repo-a", "2026-05-23T01:00:00Z"),
+    ]);
+
+    assert_eq!(records[0].id, "repo-a-2");
+}
+
+fn task_run_record(
+    id: &str,
+    repository_path: &str,
+    started_at: &str,
+) -> ProjectRepositoryTaskRunRecord {
+    ProjectRepositoryTaskRunRecord {
+        id: id.to_owned(),
+        task: ProjectRepositoryTask::Build.as_str().to_owned(),
+        repository_path: repository_path.to_owned(),
+        command: "bun run build".to_owned(),
+        state: "succeeded".to_owned(),
+        process_id: None,
+        exit_code: Some(0),
+        started_at: started_at.to_owned(),
+        finished_at: Some(started_at.to_owned()),
+        output_tail: None,
+        record_path: format!("{id}.json"),
+    }
+}
+
+fn temp_repository_path(name: &str) -> PathBuf {
+    let nanos = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|duration| duration.as_nanos())
+        .unwrap_or_default();
+    let repository_path = std::env::temp_dir().join(format!(
+        "workduck-project-repository-task-{name}-{}-{nanos}",
+        std::process::id()
+    ));
+
+    fs::create_dir_all(&repository_path).expect("create temporary repository");
+
+    repository_path
+}
+
+fn live_task_process(
+    pid: u32,
+    parent_process_id: Option<u32>,
+    command_line: &str,
+) -> LiveTaskProcess {
+    LiveTaskProcess {
+        pid,
+        parent_process_id,
+        command_line: command_line.to_owned(),
+    }
+}
+
+#[test]
+fn package_dev_server_command_uses_start_script_when_dev_is_missing() {
+    let project = PackageProject {
+        package_manager: PackageManager::Bun,
+        scripts: HashMap::from([("start".to_owned(), "bun server.ts".to_owned())]),
+        local_dependency_paths: Vec::new(),
+    };
+
+    let command = match resolve_package_dev_server_command(&project) {
+        Ok(command) => command,
+        Err(_) => panic!("resolve command"),
+    };
+
+    assert_eq!(command, Some("bun run start".to_owned()));
+}
+
+#[test]
+fn package_dev_server_command_prefers_dev_over_start() {
+    let project = PackageProject {
+        package_manager: PackageManager::Bun,
+        scripts: HashMap::from([
+            ("dev".to_owned(), "vite dev".to_owned()),
+            ("start".to_owned(), "bun server.ts".to_owned()),
+        ]),
+        local_dependency_paths: Vec::new(),
+    };
+
+    let command = match resolve_package_dev_server_command(&project) {
+        Ok(command) => command,
+        Err(_) => panic!("resolve command"),
+    };
+
+    assert_eq!(command, Some("bun run dev".to_owned()));
+}
+
+#[test]
+fn package_dev_server_command_prefers_desktop_dev_over_web_dev() {
+    let project = PackageProject {
+        package_manager: PackageManager::Bun,
+        scripts: HashMap::from([
+            ("desktop:dev".to_owned(), "tauri dev".to_owned()),
+            ("dev".to_owned(), "vite dev".to_owned()),
+            ("start".to_owned(), "bun server.ts".to_owned()),
+        ]),
+        local_dependency_paths: Vec::new(),
+    };
+
+    let command = match resolve_package_dev_server_command(&project) {
+        Ok(command) => command,
+        Err(_) => panic!("resolve command"),
+    };
+
+    assert_eq!(command, Some("bun run desktop:dev".to_owned()));
+}
+
+#[test]
+fn package_preview_command_uses_preview_script() {
+    let project = PackageProject {
+        package_manager: PackageManager::Bun,
+        scripts: HashMap::from([("preview".to_owned(), "vite preview".to_owned())]),
+        local_dependency_paths: Vec::new(),
+    };
+
+    let command = match resolve_package_task_command(ProjectRepositoryTask::Preview, &project) {
+        Ok(command) => command,
+        Err(_) => panic!("resolve command"),
+    };
+
+    assert_eq!(command, Some("bun run preview".to_owned()));
+}
+
+#[test]
+fn package_preview_command_is_missing_without_preview_script() {
+    let project = PackageProject {
+        package_manager: PackageManager::Bun,
+        scripts: HashMap::from([("build".to_owned(), "vite build".to_owned())]),
+        local_dependency_paths: Vec::new(),
+    };
+
+    let command = match resolve_package_task_command(ProjectRepositoryTask::Preview, &project) {
+        Ok(command) => command,
+        Err(_) => panic!("resolve command"),
+    };
+
+    assert_eq!(command, None);
+}
+
+#[test]
+fn repository_task_commands_prefer_root_script_over_nested_package_scripts() {
+    let repository_path = temp_repository_path("root-script");
+    fs::create_dir_all(repository_path.join("apps/workbench")).expect("create nested package");
+    fs::write(
+        repository_path.join("package.json"),
+        r#"{
+            "packageManager": "bun@1.0.0",
+            "scripts": {
+                "dev": "bun run ./scripts/dev-workbench.ts",
+                "build": "bun run ./scripts/build-workbench.ts",
+                "preview": "bun run ./scripts/preview-workbench.ts"
+            }
+        }"#,
+    )
+    .expect("write root package");
+    fs::write(
+        repository_path.join("apps/workbench/package.json"),
+        r#"{
+            "packageManager": "bun@1.0.0",
+            "scripts": {
+                "dev": "astro dev",
+                "build": "astro build",
+                "preview": "astro preview"
+            }
+        }"#,
+    )
+    .expect("write nested package");
+
+    let dev_commands = match resolve_repository_task_commands(
+        ProjectRepositoryTask::StartDevServer,
+        &repository_path,
+    ) {
+        Ok(commands) => commands,
+        Err(_) => panic!("resolve dev command"),
+    };
+    let build_commands =
+        match resolve_repository_task_commands(ProjectRepositoryTask::Build, &repository_path) {
+            Ok(commands) => commands,
+            Err(_) => panic!("resolve build command"),
+        };
+    let preview_commands =
+        match resolve_repository_task_commands(ProjectRepositoryTask::Preview, &repository_path) {
+            Ok(commands) => commands,
+            Err(_) => panic!("resolve preview command"),
+        };
+
+    assert_eq!(dev_commands, vec!["bun run dev"]);
+    assert_eq!(build_commands, vec!["bun run build"]);
+    assert_eq!(preview_commands, vec!["bun run preview"]);
+
+    let _ = fs::remove_dir_all(repository_path);
+}
+
+#[test]
+fn repository_task_commands_use_desktop_dev_without_extra_cargo_run() {
+    let repository_path = temp_repository_path("tauri-desktop-dev");
+    fs::create_dir_all(repository_path.join("src-tauri")).expect("create tauri package");
+    fs::write(
+        repository_path.join("package.json"),
+        r#"{
+            "packageManager": "bun@1.0.0",
+            "scripts": {
+                "dev": "vite --host 127.0.0.1 --port 5173 --strictPort",
+                "desktop:dev": "tauri dev"
+            }
+        }"#,
+    )
+    .expect("write package");
+    fs::write(
+        repository_path.join("src-tauri/Cargo.toml"),
+        r#"[package]
+name = "tauri-desktop-dev"
+version = "0.1.0"
+edition = "2021"
+"#,
+    )
+    .expect("write cargo manifest");
+
+    let commands = match resolve_repository_task_commands(
+        ProjectRepositoryTask::StartDevServer,
+        &repository_path,
+    ) {
+        Ok(commands) => commands,
+        Err(_) => panic!("resolve dev command"),
+    };
+
+    assert_eq!(commands, vec!["bun run desktop:dev"]);
+
+    let _ = fs::remove_dir_all(repository_path);
+}
+
+#[test]
+fn repository_task_commands_use_wails_desktop_dev_without_extra_go_run() {
+    let repository_path = temp_repository_path("wails-desktop-dev");
+    fs::create_dir_all(repository_path.join("frontend")).expect("create frontend package");
+    fs::write(
+        repository_path.join("package.json"),
+        r#"{
+            "packageManager": "npm@11.0.0",
+            "scripts": {
+                "desktop:dev": "wails3 dev -config ./build/config.yml -port 9245"
+            }
+        }"#,
+    )
+    .expect("write root package");
+    fs::write(
+        repository_path.join("frontend/package.json"),
+        r#"{
+            "scripts": {
+                "dev": "vite"
+            }
+        }"#,
+    )
+    .expect("write frontend package");
+    fs::write(
+        repository_path.join("go.mod"),
+        r#"module github.com/0disoft/zdp-desktop-wails
+
+go 1.25
+"#,
+    )
+    .expect("write go module");
+
+    let commands = match resolve_repository_task_commands(
+        ProjectRepositoryTask::StartDevServer,
+        &repository_path,
+    ) {
+        Ok(commands) => commands,
+        Err(_) => panic!("resolve dev command"),
+    };
+
+    assert_eq!(commands, vec!["npm run desktop:dev"]);
+
+    let _ = fs::remove_dir_all(repository_path);
+}
+
+#[test]
+fn install_dependency_commands_skip_local_file_package_targets() {
+    let repository_path = temp_repository_path("local-file-dependencies");
+    fs::create_dir_all(repository_path.join("apps/workbench")).expect("create nested package");
+    fs::create_dir_all(repository_path.join("scripts/telemetry")).expect("create local package");
+    fs::write(
+        repository_path.join("package.json"),
+        r#"{
+            "packageManager": "bun@1.0.0",
+            "dependencies": {
+                "@taskmesh/telemetry": "file:./scripts/telemetry"
+            }
+        }"#,
+    )
+    .expect("write root package");
+    fs::write(
+        repository_path.join("apps/workbench/package.json"),
+        r#"{
+            "packageManager": "bun@1.0.0",
+            "devDependencies": {
+                "@taskmesh/telemetry": "file:../../scripts/telemetry"
+            }
+        }"#,
+    )
+    .expect("write nested package");
+    fs::write(
+        repository_path.join("scripts/telemetry/package.json"),
+        r#"{
+            "name": "@taskmesh/telemetry",
+            "version": "0.0.0"
+        }"#,
+    )
+    .expect("write local package");
+
+    let commands = match resolve_repository_task_commands(
+        ProjectRepositoryTask::InstallDependencies,
+        &repository_path,
+    ) {
+        Ok(commands) => commands,
+        Err(_) => panic!("resolve install commands"),
+    };
+
+    assert_eq!(
+        commands,
+        vec![
+            "bun install",
+            "Push-Location -LiteralPath 'apps/workbench'; bun install; Pop-Location"
+        ]
+    );
+
+    let _ = fs::remove_dir_all(repository_path);
+}
+
+#[cfg(target_os = "windows")]
+#[test]
+fn powershell_script_executes_each_tracked_command_line_once() {
+    let run_record = ProjectRepositoryTaskRunRecord {
+        command:
+            "bun install\nPush-Location -LiteralPath 'apps/workbench'; bun install; Pop-Location"
+                .to_owned(),
+        ..task_run_record(
+            "repo-a-install",
+            "C:/workspace/repo-a",
+            "2026-05-23T01:00:00Z",
+        )
+    };
+    let script = create_powershell_script(
+        Path::new("C:/workspace/repo-a"),
+        Some(&run_record.command),
+        Some(&run_record),
+    );
+
+    assert!(script.contains("Write-Host 'Workduck: bun install'"));
+    assert!(script.contains(
+        "Write-Host 'Workduck: Push-Location -LiteralPath ''apps/workbench''; bun install; Pop-Location'"
+    ));
+    assert!(script.contains("$workduckCommand = 'bun install';"));
+    assert!(script.contains(
+        "$workduckCommand = 'Push-Location -LiteralPath ''apps/workbench''; bun install; Pop-Location';"
+    ));
+    assert!(script.contains("command = $workduckRecordCommand;"));
+    assert!(!script.contains("Invoke-Expression $workduckRecordCommand"));
+}
+
+#[test]
+fn stale_running_dev_server_records_are_reported_as_stopped() {
+    let records = reconcile_running_task_run_records(
+        vec![ProjectRepositoryTaskRunRecord {
+            task: ProjectRepositoryTask::StartDevServer.as_str().to_owned(),
+            state: "running".to_owned(),
+            ..task_run_record("repo-a-dev", "C:/workspace/repo-a", "2026-05-23T01:00:00Z")
+        }],
+        Some(&[]),
+    );
+
+    assert_eq!(records[0].state, "stopped");
+    assert!(records[0].finished_at.is_some());
+}
+
+#[test]
+fn running_dev_server_records_stop_when_process_id_was_reused() {
+    let records = reconcile_running_task_run_records(
+        vec![ProjectRepositoryTaskRunRecord {
+            task: ProjectRepositoryTask::StartDevServer.as_str().to_owned(),
+            state: "running".to_owned(),
+            process_id: Some(42),
+            ..task_run_record("repo-a-dev", "C:/workspace/repo-a", "2026-05-23T01:00:00Z")
+        }],
+        Some(&[live_task_process(42, None, "powershell")]),
+    );
+
+    assert_eq!(records[0].state, "stopped");
+    assert!(records[0].finished_at.is_some());
+}
+
+#[test]
+fn running_dev_server_records_stay_running_when_process_id_matches_task_command() {
+    let records = reconcile_running_task_run_records(
+        vec![ProjectRepositoryTaskRunRecord {
+            task: ProjectRepositoryTask::StartDevServer.as_str().to_owned(),
+            state: "running".to_owned(),
+            process_id: Some(42),
+            ..task_run_record("repo-a-dev", "C:/workspace/repo-a", "2026-05-23T01:00:00Z")
+        }],
+        Some(&[
+            live_task_process(
+                42,
+                None,
+                &encoded_powershell_command_line(
+                    "Set-Location -LiteralPath 'C:/workspace/repo-a'; bun run dev",
+                ),
+            ),
+            live_task_process(43, Some(42), "bun run dev"),
+        ]),
+    );
+
+    assert_eq!(records[0].state, "running");
+}
+
+#[test]
+fn running_dev_server_records_stop_when_only_terminal_process_remains() {
+    let records = reconcile_running_task_run_records(
+        vec![ProjectRepositoryTaskRunRecord {
+            task: ProjectRepositoryTask::StartDevServer.as_str().to_owned(),
+            state: "running".to_owned(),
+            process_id: Some(42),
+            ..task_run_record("repo-a-dev", "C:/workspace/repo-a", "2026-05-23T01:00:00Z")
+        }],
+        Some(&[live_task_process(
+            42,
+            None,
+            &encoded_powershell_command_line(
+                "Set-Location -LiteralPath 'C:/workspace/repo-a'; bun run dev",
+            ),
+        )]),
+    );
+
+    assert_eq!(records[0].state, "stopped");
+    assert!(records[0].finished_at.is_some());
+}
+
+#[test]
+fn stale_running_preview_records_are_reported_as_stopped() {
+    let records = reconcile_running_task_run_records(
+        vec![ProjectRepositoryTaskRunRecord {
+            task: ProjectRepositoryTask::Preview.as_str().to_owned(),
+            state: "running".to_owned(),
+            command: "bun run preview".to_owned(),
+            ..task_run_record(
+                "repo-a-preview",
+                "C:/workspace/repo-a",
+                "2026-05-23T01:00:00Z",
+            )
+        }],
+        Some(&[]),
+    );
+
+    assert_eq!(records[0].state, "stopped");
+    assert!(records[0].finished_at.is_some());
+}
+
+#[test]
+fn legacy_running_preview_records_match_repository_path_processes() {
+    let records = reconcile_running_task_run_records(
+        vec![ProjectRepositoryTaskRunRecord {
+            task: ProjectRepositoryTask::Preview.as_str().to_owned(),
+            state: "running".to_owned(),
+            command: "bun run preview".to_owned(),
+            ..task_run_record(
+                "repo-a-preview",
+                "C:/workspace/repo-a",
+                "2026-05-23T01:00:00Z",
+            )
+        }],
+        Some(&[live_task_process(
+            43,
+            None,
+            "node C:\\workspace\\repo-a\\node_modules\\vite\\bin\\vite.js preview",
+        )]),
+    );
+
+    assert_eq!(records[0].state, "running");
+}
+
+#[test]
+fn stale_running_dependency_update_records_are_reported_as_stopped() {
+    let records = reconcile_running_task_run_records(
+        vec![ProjectRepositoryTaskRunRecord {
+            task: ProjectRepositoryTask::UpdateDependencies
+                .as_str()
+                .to_owned(),
+            state: "running".to_owned(),
+            process_id: Some(42),
+            command: "bun update".to_owned(),
+            ..task_run_record(
+                "repo-a-update",
+                "C:/workspace/repo-a",
+                "2026-05-23T01:00:00Z",
+            )
+        }],
+        Some(&[]),
+    );
+
+    assert_eq!(records[0].state, "stopped");
+    assert!(records[0].finished_at.is_some());
+}
+
+#[test]
+fn running_dependency_update_records_stay_running_when_encoded_terminal_matches_task() {
+    let records = reconcile_running_task_run_records(
+        vec![ProjectRepositoryTaskRunRecord {
+            task: ProjectRepositoryTask::UpdateDependencies
+                .as_str()
+                .to_owned(),
+            state: "running".to_owned(),
+            process_id: Some(42),
+            command: "bun update".to_owned(),
+            ..task_run_record(
+                "repo-a-update",
+                "C:/workspace/repo-a",
+                "2026-05-23T01:00:00Z",
+            )
+        }],
+        Some(&[live_task_process(
+            42,
+            None,
+            &encoded_powershell_command_line(
+                "Set-Location -LiteralPath 'C:/workspace/repo-a'; bun update",
+            ),
+        )]),
+    );
+
+    assert_eq!(records[0].state, "running");
+}
+
+#[test]
+fn running_dependency_update_records_stop_when_process_id_was_reused() {
+    let records = reconcile_running_task_run_records(
+        vec![ProjectRepositoryTaskRunRecord {
+            task: ProjectRepositoryTask::UpdateDependencies
+                .as_str()
+                .to_owned(),
+            state: "running".to_owned(),
+            process_id: Some(42),
+            command: "bun update".to_owned(),
+            ..task_run_record(
+                "repo-a-update",
+                "C:/workspace/repo-a",
+                "2026-05-23T01:00:00Z",
+            )
+        }],
+        Some(&[live_task_process(42, None, "powershell")]),
+    );
+
+    assert_eq!(records[0].state, "stopped");
+}
+
+#[test]
+fn reconciled_stopped_records_are_persisted_to_disk() {
+    let unique = current_task_run_timestamp()
+        .chars()
+        .filter(|character| character.is_ascii_alphanumeric())
+        .collect::<String>();
+    let temp_dir = std::env::temp_dir().join(format!(
+        "workduck-task-run-reconcile-{}-{unique}",
+        std::process::id()
+    ));
+    fs::create_dir_all(&temp_dir).expect("create temp dir");
+    let record_path = temp_dir.join("repo_task_update.json");
+    let running_record = ProjectRepositoryTaskRunRecord {
+        task: ProjectRepositoryTask::UpdateDependencies
+            .as_str()
+            .to_owned(),
+        state: "running".to_owned(),
+        process_id: Some(42),
+        command: "bun update".to_owned(),
+        record_path: record_path.to_string_lossy().to_string(),
+        ..task_run_record(
+            "repo-a-update",
+            "C:/workspace/repo-a",
+            "2026-05-23T01:00:00Z",
+        )
+    };
+    assert!(write_task_run_record(&record_path, &running_record).is_ok());
+
+    let stopped_record = stopped_task_run_record(&running_record);
+    persist_reconciled_task_run_records(&[stopped_record]);
+
+    let persisted_json = fs::read_to_string(&record_path).expect("read persisted record");
+    let persisted_record = serde_json::from_str::<ProjectRepositoryTaskRunRecord>(&persisted_json)
+        .expect("parse persisted record");
+
+    assert_eq!(persisted_record.state, "stopped");
+    assert_eq!(persisted_record.process_id, Some(42));
+    assert!(persisted_record.finished_at.is_some());
+
+    fs::remove_dir_all(temp_dir).expect("remove temp dir");
+}
+
+#[test]
+fn legacy_running_dev_server_records_match_repository_path_processes() {
+    let records = reconcile_running_task_run_records(
+        vec![ProjectRepositoryTaskRunRecord {
+            task: ProjectRepositoryTask::StartDevServer.as_str().to_owned(),
+            state: "running".to_owned(),
+            ..task_run_record("repo-a-dev", "C:/workspace/repo-a", "2026-05-23T01:00:00Z")
+        }],
+        Some(&[live_task_process(
+            43,
+            None,
+            "node C:\\workspace\\repo-a\\node_modules\\astro\\bin\\astro.mjs preview",
+        )]),
+    );
+
+    assert_eq!(records[0].state, "running");
+}
+
+#[test]
+fn legacy_running_dependency_update_records_without_process_id_stop() {
+    let records = reconcile_running_task_run_records(
+        vec![ProjectRepositoryTaskRunRecord {
+            task: ProjectRepositoryTask::UpdateDependencies
+                .as_str()
+                .to_owned(),
+            state: "running".to_owned(),
+            command: "bun update".to_owned(),
+            ..task_run_record(
+                "repo-a-update",
+                "C:/workspace/repo-a",
+                "2026-05-23T01:00:00Z",
+            )
+        }],
+        Some(&[live_task_process(
+            43,
+            None,
+            "node C:\\workspace\\repo-a\\node_modules\\vite\\bin\\vite.js dev",
+        )]),
+    );
+
+    assert_eq!(records[0].state, "stopped");
+}
+
+fn encoded_powershell_command_line(script: &str) -> String {
+    let encoded = general_purpose::STANDARD.encode(
+        script
+            .encode_utf16()
+            .flat_map(u16::to_le_bytes)
+            .collect::<Vec<_>>(),
+    );
+
+    format!("powershell.exe -NoLogo -NoProfile -NoExit -EncodedCommand {encoded}")
+}

@@ -1149,14 +1149,15 @@
     },
     {
       "blocks": [],
-      "contentHash": "89b2fbc92ef3c3187e40b8e95c07f8d4c3bc591d51894734c5f04f9fb5bce487",
+      "contentHash": "31cbcb8623d3e7082c830981e9666c3db5f4de1be51bcd96a3d80eb8d2f9517c",
       "declarations": [],
       "imports": [
-        "argon2::{Algorithm, Argon2, Params, Version}"
+        "argon2::{Algorithm, Argon2, Params, Version}",
+        "tests {\n    use super::*"
       ],
       "path": "src-tauri/src/argon2_kdf.rs",
       "semanticBytes": 0,
-      "sourceBytes": 1310
+      "sourceBytes": 1916
     },
     {
       "blocks": [],
@@ -2867,22 +2868,138 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "b3e536efb02d2f3aceaa4b98b0b0f24c8f192e8f782b26d1284fec09cad1854f",
+      "contentHash": "884c3f629e1b5905cee24c9c9171a69c6c0a0ad2e9a5681cd688ae09e9ba61eb",
       "declarations": [
         null
       ],
       "imports": [
         "base64::{Engine as _, engine::general_purpose}",
+        "commands",
+        "commands::resolve_repository_task_commands",
         "crate::atomic_file_write::write_file_atomically",
-        "crate::workspace_path::{\n    WorkspacePathValidationError, validate_absolute_directory_path, validate_workspace_directory_path,\n}",
+        "crate::workspace_path::{\n    WorkspacePathValidationError, validate_absolute_directory_path,\n    validate_workspace_directory_path,\n}",
         "std::os::windows::process::CommandExt",
-        "std::{\n    collections::{HashMap, HashSet},\n    fs,\n    net::TcpListener,\n    path::{Path, PathBuf},\n    process::{Command, Stdio},\n    sync::{Arc, Mutex, OnceLock},\n    time::SystemTime,\n}",
-        "tests {\n    use super::*",
+        "std::{\n    collections::{HashMap, HashSet},\n    fs,\n    path::{Path, PathBuf},\n    process::{Command, Stdio},\n    sync::{Arc, Mutex, OnceLock},\n    time::SystemTime,\n}",
+        "tests",
         "time::{OffsetDateTime, format_description::well_known::Rfc3339}"
       ],
       "path": "src-tauri/src/project_repository_task.rs",
       "semanticBytes": 644,
-      "sourceBytes": 89130
+      "sourceBytes": 38166
+    },
+    {
+      "blocks": [
+        {
+          "card": {
+            "effect": [],
+            "excludes": [
+              "process launch",
+              "task run persistence",
+              "frontend invocation"
+            ],
+            "id": "workduck.projects.task-commands",
+            "invariant": [
+              "Only closed repository task variants select commands, discovery skips generated dependencies, and root scripts retain priority over nested projects."
+            ],
+            "owns": [
+              "toolchain command selection",
+              "bounded manifest discovery",
+              "package manager and dev script policy"
+            ],
+            "rel": [],
+            "risk": [],
+            "role": "Resolve repository tasks into commands using package scripts, local dependency ownership, and supported toolchain manifests.",
+            "scope": "module",
+            "search": [
+              "repository task command discovery",
+              "nested package scripts",
+              "desktop dev command"
+            ],
+            "stability": "architecture",
+            "unknown": []
+          },
+          "end": 645,
+          "endLine": 9,
+          "entries": [
+            {
+              "key": "id",
+              "line": 2,
+              "order": 0,
+              "value": "workduck.projects.task-commands"
+            },
+            {
+              "key": "role",
+              "line": 3,
+              "order": 1,
+              "value": "Resolve repository tasks into commands using package scripts, local dependency ownership, and supported toolchain manifests."
+            },
+            {
+              "key": "owns",
+              "line": 4,
+              "order": 2,
+              "value": "toolchain command selection|bounded manifest discovery|package manager and dev script policy"
+            },
+            {
+              "key": "excludes",
+              "line": 5,
+              "order": 3,
+              "value": "process launch|task run persistence|frontend invocation"
+            },
+            {
+              "key": "search",
+              "line": 6,
+              "order": 4,
+              "value": "repository task command discovery|nested package scripts|desktop dev command"
+            },
+            {
+              "key": "invariant",
+              "line": 7,
+              "order": 5,
+              "value": "Only closed repository task variants select commands, discovery skips generated dependencies, and root scripts retain priority over nested projects."
+            },
+            {
+              "key": "stability",
+              "line": 8,
+              "order": 6,
+              "value": "architecture"
+            }
+          ],
+          "filePath": "src-tauri/src/project_repository_task_commands.rs",
+          "indent": "",
+          "newline": "\n",
+          "prefix": "//",
+          "raw": "// llmnav/1 module\n// id=workduck.projects.task-commands\n// role=Resolve repository tasks into commands using package scripts, local dependency ownership, and supported toolchain manifests.\n// owns=toolchain command selection|bounded manifest discovery|package manager and dev script policy\n// excludes=process launch|task run persistence|frontend invocation\n// search=repository task command discovery|nested package scripts|desktop dev command\n// invariant=Only closed repository task variants select commands, discovery skips generated dependencies, and root scripts retain priority over nested projects.\n// stability=architecture\n// /llmnav\n",
+          "scope": "module",
+          "specVersion": "1",
+          "start": 0,
+          "startLine": 1,
+          "style": "line",
+          "syntaxErrors": []
+        }
+      ],
+      "contentHash": "407b460e7c2409d3c255d4313e954531dfdea3e59c0c7f197e51e99304c99cfa",
+      "declarations": [
+        null
+      ],
+      "imports": [
+        "std::{\n    collections::{HashMap, HashSet},\n    fs,\n    net::TcpListener,\n    path::{Path, PathBuf},\n}",
+        "super::{ProjectRepositoryTask, ProjectRepositoryTaskError, escape_powershell_single_quoted}"
+      ],
+      "path": "src-tauri/src/project_repository_task_commands.rs",
+      "semanticBytes": 645,
+      "sourceBytes": 27617
+    },
+    {
+      "blocks": [],
+      "contentHash": "d17298eed64c3a1570a1e7197ccd6f7b474fb06b0df2d3881da1905c42d8c06c",
+      "declarations": [],
+      "imports": [
+        "super::*",
+        "super::commands::{\n    PackageManager, PackageProject, resolve_package_dev_server_command,\n    resolve_package_task_command,\n}"
+      ],
+      "path": "src-tauri/src/project_repository_task_tests.rs",
+      "semanticBytes": 0,
+      "sourceBytes": 22740
     },
     {
       "blocks": [],
@@ -3840,14 +3957,15 @@
     },
     {
       "blocks": [],
-      "contentHash": "29fd6325c3fd0e20ab469d9f9d7ab5dfa9a84bf3d9361e8853852d64b0c3aeb1",
+      "contentHash": "a6aaffe89bf1380b88fddb3eb837602747d07d5d6746280489a127f2c9297ae6",
       "declarations": [],
       "imports": [
-        "argon2::{\n    Argon2,\n    password_hash::{PasswordHash, PasswordHasher, PasswordVerifier, SaltString, rand_core::OsRng},\n}"
+        "argon2::{Argon2, PasswordHash, PasswordHasher, PasswordVerifier}",
+        "tests {\n    use super::*"
       ],
       "path": "src-tauri/src/workspace_password.rs",
       "semanticBytes": 0,
-      "sourceBytes": 2678
+      "sourceBytes": 4545
     },
     {
       "blocks": [
@@ -10775,6 +10893,6 @@
       "sourceBytes": 3575
     }
   ],
-  "indexerVersion": 6,
+  "indexerVersion": 8,
   "schemaVersion": 1
 }

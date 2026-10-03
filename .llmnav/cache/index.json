@@ -1563,18 +1563,20 @@
         "arbitrary shell command input"
       ],
       "hashes": {
-        "body": "b3e536efb02d2f3aceaa4b98b0b0f24c8f192e8f782b26d1284fec09cad1854f",
+        "body": "884c3f629e1b5905cee24c9c9171a69c6c0a0ad2e9a5681cd688ae09e9ba61eb",
         "semantic": "b5fb2ee97a32b44f5965f20f0c95cf6b3f03e0d1d51c91258c280ba55101f857",
-        "structure": "1826a17cea6afd267ea3b88bed95b123d3da2b30df543889521bc1a0e6c0c9e6"
+        "structure": "e4b4883ba3be5772c1d6566eebf5b5ad8fa9510779562e41444d54f55cb6e470"
       },
       "id": "workduck.projects.repository-task-native",
       "imports": [
         "base64::{Engine as _, engine::general_purpose}",
+        "commands",
+        "commands::resolve_repository_task_commands",
         "crate::atomic_file_write::write_file_atomically",
-        "crate::workspace_path::{\n    WorkspacePathValidationError, validate_absolute_directory_path, validate_workspace_directory_path,\n}",
+        "crate::workspace_path::{\n    WorkspacePathValidationError, validate_absolute_directory_path,\n    validate_workspace_directory_path,\n}",
         "std::os::windows::process::CommandExt",
-        "std::{\n    collections::{HashMap, HashSet},\n    fs,\n    net::TcpListener,\n    path::{Path, PathBuf},\n    process::{Command, Stdio},\n    sync::{Arc, Mutex, OnceLock},\n    time::SystemTime,\n}",
-        "tests {\n    use super::*",
+        "std::{\n    collections::{HashMap, HashSet},\n    fs,\n    path::{Path, PathBuf},\n    process::{Command, Stdio},\n    sync::{Arc, Mutex, OnceLock},\n    time::SystemTime,\n}",
+        "tests",
         "time::{OffsetDateTime, format_description::well_known::Rfc3339}"
       ],
       "invariant": [
@@ -2827,11 +2829,58 @@
         "unverified report checks"
       ],
       "stability": "contract"
+    },
+    {
+      "boundaries": [],
+      "excludes": [
+        "process launch",
+        "task run persistence",
+        "frontend invocation"
+      ],
+      "hashes": {
+        "body": "407b460e7c2409d3c255d4313e954531dfdea3e59c0c7f197e51e99304c99cfa",
+        "semantic": "bbf6079866ab704cde8c0f65ac267c92c0fe2c8314b9347bcb521304767b1c6c",
+        "structure": "8c883c8975452d4cc73f59c71f3ca9b10825bc992a4f31f493708a9bc5d9d7a2"
+      },
+      "id": "workduck.projects.task-commands",
+      "imports": [
+        "std::{\n    collections::{HashMap, HashSet},\n    fs,\n    net::TcpListener,\n    path::{Path, PathBuf},\n}",
+        "super::{ProjectRepositoryTask, ProjectRepositoryTaskError, escape_powershell_single_quoted}"
+      ],
+      "invariant": [
+        "Only closed repository task variants select commands, discovery skips generated dependencies, and root scripts retain priority over nested projects."
+      ],
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src-tauri/src/project_repository_task_commands.rs",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "owns": [
+        "toolchain command selection",
+        "bounded manifest discovery",
+        "package manager and dev script policy"
+      ],
+      "role": "Resolve repository tasks into commands using package scripts, local dependency ownership, and supported toolchain manifests.",
+      "scope": "module",
+      "search": [
+        "repository task command discovery",
+        "nested package scripts",
+        "desktop dev command"
+      ],
+      "stability": "architecture"
     }
   ],
   "contractFingerprints": {
     "configuration": {
-      "sha256": "f63e8d144818e38e841bcbe6e955b2da3dac0d501bd680055cbbf3f58b03c847"
+      "sha256": "252751c079bc5fff314e3ba19c937268d1c9d241ddb11ea2acf7a8a6c0508014"
     },
     "exportedApi": {
       "count": 0,
@@ -2839,9 +2888,9 @@
     },
     "schemaVersion": 1
   },
-  "generatedBy": "llmnav@0.9.0",
+  "generatedBy": "llmnav@0.9.7",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "4bdce14bea66df5045b114d6d97a2a98997590af166328931dc151f5f6e95969",
+  "sourceHash": "ed9bdc74d35877ffdd8a7e7329861cfeaa0e35469d7de395509d88c520475b3d",
   "specVersion": "1"
 }

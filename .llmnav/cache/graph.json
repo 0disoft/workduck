@@ -881,6 +881,28 @@
     {
       "definitions": [],
       "external": false,
+      "key": "workduck/workduck.projects.task-commands",
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src-tauri/src/project_repository_task_commands.rs",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "repositoryId": "workduck",
+      "role": "Resolve repository tasks into commands using package scripts, local dependency ownership, and supported toolchain manifests.",
+      "semanticId": "workduck.projects.task-commands",
+      "unresolved": false
+    },
+    {
+      "definitions": [],
+      "external": false,
       "key": "workduck/workduck.prompt.compiler",
       "location": {
         "declarationLine": null,
@@ -1409,11 +1431,11 @@
   ],
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "1ae7026d61c74839146ffb631b246f3dcb7df854dc3d2b239ea6a0ea01a2d777",
+  "sourceHash": "587a10fb2ec2d0bb67937dd502a978dbc1936ff17406643cab733965c223f165",
   "stats": {
     "edgeCount": 9,
     "importedIndexCount": 0,
-    "nodeCount": 57,
+    "nodeCount": 58,
     "unresolvedNodeCount": 0
   }
 }
