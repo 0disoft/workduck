@@ -1,10 +1,21 @@
 <script lang="ts">
+	/* llmnav/1 module
+	id=workduck.projects.task-run-lifecycle
+	role=Poll repository task run history within a workspace and repository mapping lifetime.
+	owns=task run polling|refresh coalescing|visibility scheduling|task run result ownership
+	excludes=native task execution|durable task history persistence|repository Git status scans
+	search=task run polling|repository task refresh|task history visibility interval
+	invariant=Metadata-only changes reuse polling; queued refreshes supersede older snapshots, and teardown removes listeners and timers.
+	stability=architecture
+	*/
+	import { untrack } from 'svelte';
 	import type { WorkspaceRecord } from '#lib/workspaces/workspace-registry.ts';
 	import {
 		readProjectRepositoryTaskRunRecords,
 		subscribeProjectRepositoryTaskRunChanges
 	} from './project-repository-task';
 	import {
+		createRepositoryTaskRunPathKey,
 		mapLatestTaskRunsByRepositoryId,
 		type ProjectRepositoryTaskRunRecordByRepositoryId
 	} from './project-repository-task-runs';
@@ -30,16 +41,25 @@
 	let lastKnownTaskRunStateSignature = '';
 
 	const repositorySignature = $derived(
-		`${workspace.id}|${repositories
-			.map((repository) => `${repository.id}:${repository.path ?? ''}`)
-			.join('|')}`
+		JSON.stringify([
+			workspace.id,
+			workspace.path,
+			repositories
+				.filter((repository) => repository.path !== null)
+				.map((repository) => [
+					repository.id,
+					createRepositoryTaskRunPathKey(repository.path ?? '')
+				] as const)
+				// Equal paths keep their order because the mapper uses the last repository for each path.
+				.sort((left, right) => left[1] === right[1] ? 0 : left[1] < right[1] ? -1 : 1)
+		])
 	);
 	const taskRunStateSignature = $derived(createRepositoryTaskRunStateSignature(repositoryTaskRunById));
 
 	$effect(() => {
-		const workspacePath = workspace.path;
-		const repositorySnapshot = repositories;
 		const currentRepositorySignature = repositorySignature;
+		const workspacePath = untrack(() => workspace.path);
+		const repositorySnapshot = untrack(() => repositories);
 		let isCurrent = true;
 		let refreshTimeoutId: number | undefined;
 		let isRefreshingTaskRuns = false;
@@ -77,7 +97,7 @@
 			try {
 				const result = await readProjectRepositoryTaskRunRecords(workspacePath);
 
-				if (!isCurrent) {
+				if (!isCurrent || refreshRequestedWhileActive) {
 					return;
 				}
 

@@ -156,3 +156,9 @@ role Load project board registries, operation history, and vault views within th
 owns workspace view reset, initial read ownership, workspace subscriptions, board resource teardown
 excludes repository mutations, native vault operations, project selection rules
 invariant Initial reads yield to newer published and live state; only the active workspace lifetime updates the board, and metadata changes preserve selections.
+
+@workduck.projects.task-run-lifecycle
+role Poll repository task run history within a workspace and repository mapping lifetime.
+owns task run polling, refresh coalescing, visibility scheduling, task run result ownership
+excludes native task execution, durable task history persistence, repository Git status scans
+invariant Metadata-only changes reuse polling; queued refreshes supersede older snapshots, and teardown removes listeners and timers.

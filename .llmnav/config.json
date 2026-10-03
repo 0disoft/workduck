@@ -200,6 +200,28 @@
         "invariant"
       ],
       "scope": "module"
+    },
+    {
+      "match": [
+        "src/lib/projects/ProjectBoardRepositoryTaskRunLifecycle.svelte"
+      ],
+      "name": "repository task run polling lifetime",
+      "requiredFields": [
+        "owns",
+        "invariant"
+      ],
+      "scope": "module"
+    },
+    {
+      "match": [
+        "src/lib/projects/project-repository-task-runs.ts"
+      ],
+      "name": "repository task run identity and mapping",
+      "requiredFields": [
+        "owns",
+        "invariant"
+      ],
+      "scope": "module"
     }
   ],
   "audit": {

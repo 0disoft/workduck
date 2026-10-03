@@ -59,3 +59,5 @@
 {"query":"Queue workspace switch late Queue read results and Queue panel controller","expected":["workduck.queue.panel-controller"]}
 {"query":"repository scaffold preview apply ssealed profile and scaffold dialog lifecycle","expected":["workduck.projects.scaffold-dialog"]}
 {"query":"project board workspace switch late project registry read and workspace board subscriptions","expected":["workduck.projects.workspace-lifecycle"]}
+{"query":"task run polling repository task refresh and task history visibility interval","expected":["workduck.projects.task-run-lifecycle"]}
+{"query":"Windows task path matching latest repository task mapping and task run state labels","expected":["workduck.projects.task-run-mapping"]}

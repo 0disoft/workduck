@@ -128,6 +128,76 @@
     },
     {
       "confidence": 0.85,
+      "from": "workduck/workduck.projects.task-run-lifecycle",
+      "id": "6142ee81a03e541c1d1deba911646c858be19bf686b46dd54e610a0f48c9927e",
+      "kind": "imports",
+      "provenance": {
+        "generator": "llmnav",
+        "line": null,
+        "path": "src/lib/projects/ProjectBoardRepositoryTaskRunLifecycle.svelte",
+        "source": "src/lib/projects/ProjectBoardRepositoryTaskRunLifecycle.svelte",
+        "type": "local-import"
+      },
+      "to": "workduck/workduck.projects.registry-domain"
+    },
+    {
+      "confidence": 0.85,
+      "from": "workduck/workduck.projects.task-run-lifecycle",
+      "id": "ad20570ad365e1679179bd319427ed8cc2dade39895920e5bf078fa8cb38e221",
+      "kind": "imports",
+      "provenance": {
+        "generator": "llmnav",
+        "line": null,
+        "path": "src/lib/projects/ProjectBoardRepositoryTaskRunLifecycle.svelte",
+        "source": "src/lib/projects/ProjectBoardRepositoryTaskRunLifecycle.svelte",
+        "type": "local-import"
+      },
+      "to": "workduck/workduck.projects.repository-task"
+    },
+    {
+      "confidence": 0.85,
+      "from": "workduck/workduck.projects.task-run-lifecycle",
+      "id": "9e1ab23b30ea1b913249ec5c41d05585290fce9da20c3a86b6e010db38188525",
+      "kind": "imports",
+      "provenance": {
+        "generator": "llmnav",
+        "line": null,
+        "path": "src/lib/projects/ProjectBoardRepositoryTaskRunLifecycle.svelte",
+        "source": "src/lib/projects/ProjectBoardRepositoryTaskRunLifecycle.svelte",
+        "type": "local-import"
+      },
+      "to": "workduck/workduck.projects.task-run-mapping"
+    },
+    {
+      "confidence": 0.85,
+      "from": "workduck/workduck.projects.task-run-mapping",
+      "id": "fb80bca5093af1d388b789bf3526ef600ead16388e9fd03a776f7001a861c8fe",
+      "kind": "imports",
+      "provenance": {
+        "generator": "llmnav",
+        "line": null,
+        "path": "src/lib/projects/project-repository-task-runs.ts",
+        "source": "src/lib/projects/project-repository-task-runs.ts",
+        "type": "local-import"
+      },
+      "to": "workduck/workduck.projects.registry-domain"
+    },
+    {
+      "confidence": 0.85,
+      "from": "workduck/workduck.projects.task-run-mapping",
+      "id": "78aea25acde07d750088530e24907f16fa029acbbcdd823dedd9aa6fed70c259",
+      "kind": "imports",
+      "provenance": {
+        "generator": "llmnav",
+        "line": null,
+        "path": "src/lib/projects/project-repository-task-runs.ts",
+        "source": "src/lib/projects/project-repository-task-runs.ts",
+        "type": "local-import"
+      },
+      "to": "workduck/workduck.projects.repository-task"
+    },
+    {
+      "confidence": 0.85,
       "from": "workduck/workduck.projects.workspace-lifecycle",
       "id": "04ca1a4aab5e6b2e1539d2bf2a79636038775bd0caf4f0d426f1d8ec8576abc6",
       "kind": "imports",
@@ -1145,6 +1215,50 @@
     {
       "definitions": [],
       "external": false,
+      "key": "workduck/workduck.projects.task-run-lifecycle",
+      "location": {
+        "declarationLine": null,
+        "endLine": 10,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src/lib/projects/ProjectBoardRepositoryTaskRunLifecycle.svelte",
+        "receiver": null,
+        "signature": null,
+        "startLine": 2,
+        "symbol": null,
+        "visibility": null
+      },
+      "repositoryId": "workduck",
+      "role": "Poll repository task run history within a workspace and repository mapping lifetime.",
+      "semanticId": "workduck.projects.task-run-lifecycle",
+      "unresolved": false
+    },
+    {
+      "definitions": [],
+      "external": false,
+      "key": "workduck/workduck.projects.task-run-mapping",
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src/lib/projects/project-repository-task-runs.ts",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "repositoryId": "workduck",
+      "role": "Match native task records to registered repositories and format task state feedback.",
+      "semanticId": "workduck.projects.task-run-mapping",
+      "unresolved": false
+    },
+    {
+      "definitions": [],
+      "external": false,
       "key": "workduck/workduck.projects.workspace-lifecycle",
       "location": {
         "declarationLine": null,
@@ -1761,11 +1875,11 @@
   ],
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "bacd65c784570802d7d94a23b40b0b7ed8402510b2732e6bd2c91202a9fdc544",
+  "sourceHash": "58cc74e96825343b845c24a3461c027644175efe8c1b5190fe52b324ebc0f0c1",
   "stats": {
-    "edgeCount": 20,
+    "edgeCount": 25,
     "importedIndexCount": 0,
-    "nodeCount": 66,
+    "nodeCount": 68,
     "unresolvedNodeCount": 0
   }
 }

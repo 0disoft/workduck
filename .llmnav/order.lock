@@ -64,3 +64,5 @@ workduck.queue.work-order-editor
 workduck.queue.panel-controller
 workduck.projects.scaffold-dialog
 workduck.projects.workspace-lifecycle
+workduck.projects.task-run-lifecycle
+workduck.projects.task-run-mapping

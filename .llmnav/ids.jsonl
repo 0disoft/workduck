@@ -64,3 +64,5 @@
 {"id":"workduck.queue.panel-controller","state":"active"}
 {"id":"workduck.projects.scaffold-dialog","state":"active"}
 {"id":"workduck.projects.workspace-lifecycle","state":"active"}
+{"id":"workduck.projects.task-run-lifecycle","state":"active"}
+{"id":"workduck.projects.task-run-mapping","state":"active"}

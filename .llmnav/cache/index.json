@@ -3325,11 +3325,112 @@
         "workspace board subscriptions"
       ],
       "stability": "architecture"
+    },
+    {
+      "boundaries": [],
+      "excludes": [
+        "native task execution",
+        "durable task history persistence",
+        "repository Git status scans"
+      ],
+      "hashes": {
+        "body": "bfffbb0834bd8960e7a6cd1c2d0e0e511339b60b1da26ff60d94b8441adf0bc2",
+        "semantic": "9548a9988f1133b306efbfdc9d5e83e13725480d0546e12b3a193499d9655fcb",
+        "structure": "fd8ee49c9a6a3296f5fca68bf8497df95de51f442ad3620a29ec06c8ad87afd0"
+      },
+      "id": "workduck.projects.task-run-lifecycle",
+      "imports": [
+        "#lib/workspaces/workspace-registry.ts",
+        "./project-registry",
+        "./project-repository-task",
+        "./project-repository-task-runs",
+        "svelte"
+      ],
+      "invariant": [
+        "Metadata-only changes reuse polling; queued refreshes supersede older snapshots, and teardown removes listeners and timers."
+      ],
+      "location": {
+        "declarationLine": null,
+        "endLine": 10,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src/lib/projects/ProjectBoardRepositoryTaskRunLifecycle.svelte",
+        "receiver": null,
+        "signature": null,
+        "startLine": 2,
+        "symbol": null,
+        "visibility": null
+      },
+      "owns": [
+        "task run polling",
+        "refresh coalescing",
+        "visibility scheduling",
+        "task run result ownership"
+      ],
+      "role": "Poll repository task run history within a workspace and repository mapping lifetime.",
+      "scope": "module",
+      "search": [
+        "task run polling",
+        "repository task refresh",
+        "task history visibility interval"
+      ],
+      "stability": "architecture"
+    },
+    {
+      "boundaries": [],
+      "excludes": [
+        "task history reads",
+        "poll scheduling",
+        "native process execution"
+      ],
+      "hashes": {
+        "body": "8e5423c8c71a3bb20553cd6b15ea4dcd072d871ce3542f7b58c957d7339966d6",
+        "semantic": "bdf97afaf082791c43fedd8f6c38391e15c979a26c91bf1228a2ef5a54315cbd",
+        "structure": "088a7b20836a779cbdf081d40073b92679a4af22a0aabacd195bcbdfb0e96a1c"
+      },
+      "id": "workduck.projects.task-run-mapping",
+      "imports": [
+        "#lib/i18n/workduck-language.ts",
+        "#lib/i18n/workduck-message-contract.ts",
+        "#lib/workspaces/workspace-path-format.ts",
+        "./project-registry",
+        "./project-repository-task"
+      ],
+      "invariant": [
+        "Windows path spellings share a comparison key while Unix names remain case-sensitive; record order selects the latest run."
+      ],
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src/lib/projects/project-repository-task-runs.ts",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "owns": [
+        "task run path identity",
+        "latest record mapping",
+        "task state labels"
+      ],
+      "role": "Match native task records to registered repositories and format task state feedback.",
+      "scope": "module",
+      "search": [
+        "Windows task path matching",
+        "latest repository task mapping",
+        "task run state labels"
+      ],
+      "stability": "contract"
     }
   ],
   "contractFingerprints": {
     "configuration": {
-      "sha256": "25ff693fe2d71a324d9b099ba8228034298928e8363c74302fb80b08169439da"
+      "sha256": "59a3fce47f9e66be1ff9eebbfdad6adfea0516ebb37a2a72003c6e60d24ac17c"
     },
     "exportedApi": {
       "count": 0,
@@ -3340,6 +3441,6 @@
   "generatedBy": "llmnav@0.9.7",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "a3318c73f7cc64bdac8510be09be97c6a21ecb452191bbfb1f2d5daec185df8c",
+  "sourceHash": "16120e15e53dbf4de0c6e8774bc4718369bd9087a5b9767b3b6c3e848c098b91",
   "specVersion": "1"
 }

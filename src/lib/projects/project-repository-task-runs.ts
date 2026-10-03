@@ -1,3 +1,12 @@
+/* llmnav/1 module
+id=workduck.projects.task-run-mapping
+role=Match native task records to registered repositories and format task state feedback.
+owns=task run path identity|latest record mapping|task state labels
+excludes=task history reads|poll scheduling|native process execution
+search=Windows task path matching|latest repository task mapping|task run state labels
+invariant=Windows path spellings share a comparison key while Unix names remain case-sensitive; record order selects the latest run.
+stability=contract
+*/
 import type { WorkduckMessages } from '#lib/i18n/workduck-message-contract.ts';
 import type { WorkduckLanguageId } from '#lib/i18n/workduck-language.ts';
 import { normalizeWorkspacePathForStorage } from '#lib/workspaces/workspace-path-format.ts';
@@ -9,6 +18,14 @@ export type ProjectRepositoryTaskRunRecordByRepositoryId = Record<
 	ProjectRepositoryTaskRunRecord
 >;
 
+export function createRepositoryTaskRunPathKey(path: string) {
+	const normalized = normalizeWorkspacePathForStorage(path);
+	if (/^(?:[a-z]:[\\/]|\\\\|\/\/)/iu.test(normalized)) {
+		return normalized.replaceAll('\\', '/').replace(/\/+$/u, '').toLocaleLowerCase('en-US');
+	}
+	return normalized.replace(/\/+$/u, '') || (normalized.startsWith('/') ? '/' : '');
+}
+
 export function mapLatestTaskRunsByRepositoryId(
 	repositories: readonly ProjectRepositoryLinkRecord[],
 	records: readonly ProjectRepositoryTaskRunRecord[]
@@ -17,7 +34,7 @@ export function mapLatestTaskRunsByRepositoryId(
 		repositories
 			.filter((repository) => repository.path !== null)
 			.map((repository) => [
-				normalizeWorkspacePathForStorage(repository.path ?? ''),
+				createRepositoryTaskRunPathKey(repository.path ?? ''),
 				repository.id
 			])
 	);
@@ -25,7 +42,7 @@ export function mapLatestTaskRunsByRepositoryId(
 
 	for (const record of records) {
 		const repositoryId = repositoryIdByPath.get(
-			normalizeWorkspacePathForStorage(record.repositoryPath)
+			createRepositoryTaskRunPathKey(record.repositoryPath)
 		);
 
 		if (repositoryId === undefined || nextRecords[repositoryId] !== undefined) {
