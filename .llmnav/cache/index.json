@@ -3138,8 +3138,8 @@
         "native file persistence"
       ],
       "hashes": {
-        "body": "de4b94d2e39c76563e25aa9ee91c1a437584b73a20ede0f453604db77c0459c3",
-        "semantic": "de00e7af136545aced2bc9efd7d34e8fd58289498ebe34d0219b48c36720229c",
+        "body": "2ff71b6fba6a7127ec56fadce0f88b07173f2f8213e1cf7ab35f4f566c61fcaf",
+        "semantic": "560088d388d1a4884c7ed275507680bde68b82f1ce1c82930376757341869b65",
         "structure": "449d2a3e024377be70250c20564dcf357fcafa539f7499ad1f3cfad28a1d4879"
       },
       "id": "workduck.queue.panel-controller",
@@ -3187,7 +3187,7 @@
         "svelte"
       ],
       "invariant": [
-        "Read results update only their captured workspace and selection generation; workspace metadata changes preserve the view lifetime."
+        "Operation results update only their captured workspace lifetime; execution context and vault stay bound to the initiating workspace."
       ],
       "location": {
         "declarationLine": null,
@@ -3204,7 +3204,7 @@
       },
       "owns": [
         "workspace view lifetime",
-        "read result ownership",
+        "operation result ownership",
         "artifact selection",
         "Queue workflow UI state"
       ],
@@ -3231,6 +3231,6 @@
   "generatedBy": "llmnav@0.9.7",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "c8a8e773ff996bafb63bc94c1944e73a6c9a9e1f338348116fb2327c0b19224a",
+  "sourceHash": "92e51b55a2bca1d70eeebf7cc85c176c5c4f4150300882e3b9d7a8aff9d68b35",
   "specVersion": "1"
 }

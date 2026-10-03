@@ -1,10 +1,10 @@
 /* llmnav/1 module
 id=workduck.queue.panel-controller
 role=Coordinate Queue panel state, workspace lifetimes, artifact selection, prompt previews, and user-initiated workflows.
-owns=workspace view lifetime|read result ownership|artifact selection|Queue workflow UI state
+owns=workspace view lifetime|operation result ownership|artifact selection|Queue workflow UI state
 excludes=manual draft editing|provider execution|native file persistence
 search=Queue workspace switch|late Queue read results|Queue panel controller
-invariant=Read results update only their captured workspace and selection generation; workspace metadata changes preserve the view lifetime.
+invariant=Operation results update only their captured workspace lifetime; execution context and vault stay bound to the initiating workspace.
 stability=architecture
 */
 import { onMount, tick, untrack } from 'svelte';
@@ -243,11 +243,7 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 	let isWriting = $state(false);
 	let isPreviewingPrompt = $state(false);
 	let isCancellingExecution = $state(false);
-	let activeExecution = $state<{
-		readonly executionId: string;
-		readonly workspacePath: string;
-		readonly workOrderId: string;
-	} | null>(null);
+	const activeExecutions = new Map<string, string>();
 	let isSavingEvaluation = $state(false);
 	const initialEvaluationDialogState = createInitialQueueEvaluationDialogState();
 	let evaluationDialog = $state<AgentEvaluationDialogState | null>(
@@ -407,6 +403,13 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 			isRefreshing = false;
 			isReading = false;
 			isPreviewingPrompt = false;
+			isWriting = false;
+			isCancellingExecution = false;
+			isSavingEvaluation = false;
+			workOrderEditor.finishManualWorkOrderDialog();
+			const closedEvaluation = createClosedQueueEvaluationDialogState();
+			evaluationDialog = closedEvaluation.dialog;
+			evaluationScores = closedEvaluation.scores;
 			artifactReadGeneration += 1;
 			promptPreviewGeneration += 1;
 			const emptyWorkspaceRegistries = createEmptyQueuePanelWorkspaceRegistryState(workspace.id);
@@ -500,6 +503,10 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 			workspace.id === workspaceId &&
 			workspace.path === workspacePath
 		);
+	}
+
+	function createExecutionKey(workspacePath: string, workOrderId: string) {
+		return JSON.stringify([workspacePath, workOrderId]);
 	}
 
 	function captureWorkspaceOperationTarget() {
@@ -758,6 +765,7 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 	}
 
 		closeQueueContextMenu();
+		const target = captureWorkspaceOperationTarget();
 		isWriting = true;
 		error = null;
 		parseError = null;
@@ -765,9 +773,10 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 
 		try {
 			const result = await deleteQueuePanelFiles({
-				workspacePath: workspace.path,
+				workspacePath: target.workspacePath,
 				relativePaths: [targetFile.relativePath]
 			});
+			if (!target.isCurrent()) return;
 
 			if (!result.ok) {
 				applyDeletedQueueFiles(result.deletedRelativePaths);
@@ -781,7 +790,7 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 				result.deletedRelativePaths[0] ?? targetFile.relativePath
 			);
 	} finally {
-			isWriting = false;
+			if (target.isCurrent()) isWriting = false;
 	}
 }
 
@@ -796,6 +805,7 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 			return;
 		}
 
+		const target = captureWorkspaceOperationTarget();
 		isWriting = true;
 		error = null;
 		parseError = null;
@@ -803,9 +813,10 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 
 		try {
 			const result = await deleteQueuePanelFiles({
-				workspacePath: workspace.path,
+				workspacePath: target.workspacePath,
 				relativePaths: targetFiles.map((targetFile) => targetFile.relativePath)
 			});
+			if (!target.isCurrent()) return;
 
 			if (!result.ok) {
 				applyDeletedQueueFiles(result.deletedRelativePaths);
@@ -819,7 +830,7 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 				result.deletedRelativePaths.length.toString()
 			);
 	} finally {
-			isWriting = false;
+			if (target.isCurrent()) isWriting = false;
 	}
 }
 
@@ -952,6 +963,7 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 			return;
 		}
 
+		const target = captureWorkspaceOperationTarget();
 		isWriting = true;
 		error = null;
 		parseError = null;
@@ -959,11 +971,12 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 
 		try {
 			const result = await delegateQueuePanelReportEvaluation({
-				workspacePath: workspace.path,
+				workspacePath: target.workspacePath,
 				reportPath: selectedReportPath,
 				report: selectedReport,
 				evaluatorSkillId: WORKDUCK_AGENT_RESPONSE_EVALUATOR_SKILL_ID
 			});
+			if (!target.isCurrent()) return;
 
 			if (result.ok) {
 				status = messages.queue.evaluationDelegated.replace('{relativePath}', result.relativePath);
@@ -973,7 +986,7 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 
 			error = result.error;
 		} finally {
-			isWriting = false;
+			if (target.isCurrent()) isWriting = false;
 		}
 	}
 
@@ -984,20 +997,22 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 			return;
 		}
 
+		const target = captureWorkspaceOperationTarget();
 		isWriting = true;
 		error = null;
 		status = null;
 
 		try {
 			if (workOrderEditor.workOrderDialogMode === 'edit') {
-				await handleUpdateManualWorkOrder();
+				await handleUpdateManualWorkOrder(target);
 				return;
 			}
 
 			const result = await createQueuePanelManualWorkOrder({
-				workspacePath: workspace.path,
+				workspacePath: target.workspacePath,
 				draft: workOrderEditor.createManualWorkOrderSaveDraft()
 			});
+			if (!target.isCurrent()) return;
 
 			if (result.ok) {
 				status = messages.queue.createdFile.replace('{relativePath}', result.relativePath);
@@ -1008,11 +1023,13 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 
 			error = result.error;
 		} finally {
-			isWriting = false;
+			if (target.isCurrent()) isWriting = false;
 		}
 	}
 
-	async function handleUpdateManualWorkOrder() {
+	async function handleUpdateManualWorkOrder(
+		target: ReturnType<typeof captureWorkspaceOperationTarget>
+	) {
 		if (
 			selectedWorkOrder === null ||
 			selectedWorkOrderPath === null ||
@@ -1022,12 +1039,13 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		}
 
 		const result = await updateQueuePanelManualWorkOrder({
-			workspacePath: workspace.path,
+			workspacePath: target.workspacePath,
 			workOrderPath: selectedWorkOrderPath,
 			workOrder: selectedWorkOrder,
 			taskId: workOrderEditor.editingWorkOrderTaskId,
 			draft: workOrderEditor.createManualWorkOrderSaveDraft()
 		});
+		if (!target.isCurrent()) return;
 
 		if (result.ok) {
 			selectedWorkOrder = result.workOrder;
@@ -1105,16 +1123,14 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 			return;
 		}
 
+		const target = captureWorkspaceOperationTarget();
 		const executableWorkOrder = selectedWorkOrder;
 		const workOrderPath = selectedWorkOrderPath;
 		const confirmationToken = promptEstimate.confirmationToken;
 		closePromptPreviewDialog();
 		const executionId = crypto.randomUUID();
-		activeExecution = {
-			executionId,
-			workspacePath: workspace.path,
-			workOrderId: executableWorkOrder.ref.id
-		};
+		const executionKey = createExecutionKey(target.workspacePath, executableWorkOrder.ref.id);
+		activeExecutions.set(executionKey, executionId);
 
 		isWriting = true;
 		error = null;
@@ -1124,42 +1140,52 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		try {
 			const executionResult = await executeQueuePanelWorkOrder({
 				executionId,
-				workspacePath: workspace.path,
+				workspacePath: target.workspacePath,
 				workOrderPath,
 				workOrder: executableWorkOrder,
 				confirmationToken,
-				readExecutionContext: readExecutionContextForWorkspace,
-				readVault: () => readEnvironmentVaultSession(workspace.id),
+				readExecutionContext: () => readExecutionContextForWorkspace(target),
+				readVault: () => readEnvironmentVaultSession(target.workspaceId),
 				onRunningWorkOrderSaved: async (runningWorkOrder) => {
-					selectedWorkOrder = runningWorkOrder;
+					if (!target.isCurrent()) return;
+					if (
+						selectedWorkOrder?.ref.id === executableWorkOrder.ref.id &&
+						selectedWorkOrderPath === workOrderPath
+					) {
+						selectedWorkOrder = runningWorkOrder;
+					}
 					await prepareDesktopNotificationPermission();
 				}
 			});
 
-			await applyQueuePanelWorkOrderExecutionResult(executionResult);
+			if (target.isCurrent()) await applyQueuePanelWorkOrderExecutionResult(executionResult, target);
 	} finally {
-			if (activeExecution?.executionId === executionId) {
-				activeExecution = null;
+			if (activeExecutions.get(executionKey) === executionId) {
+				activeExecutions.delete(executionKey);
 			}
-			isWriting = false;
+			if (target.isCurrent()) isWriting = false;
 	}
 }
 
 	async function applyQueuePanelWorkOrderExecutionResult(
-		result: QueuePanelWorkOrderExecutionResult
+		result: QueuePanelWorkOrderExecutionResult,
+		target: ReturnType<typeof captureWorkspaceOperationTarget>
 	) {
+		if (!target.isCurrent()) return;
 		if (!result.ok) {
-			await applyQueuePanelWorkOrderExecutionFailure(result);
+			await applyQueuePanelWorkOrderExecutionFailure(result, target);
 			return;
 		}
 
-		await applyQueuePanelWorkOrderExecutionSuccess(result);
+		await applyQueuePanelWorkOrderExecutionSuccess(result, target);
 }
 
 	async function applyQueuePanelWorkOrderExecutionSuccess(
-		result: QueuePanelWorkOrderExecutionSuccessResult
+		result: QueuePanelWorkOrderExecutionSuccessResult,
+		target: ReturnType<typeof captureWorkspaceOperationTarget>
 	) {
-		selectedWorkOrder = result.workOrder;
+		if (!target.isCurrent()) return;
+		if (selectedWorkOrder?.ref.id === result.workOrder.ref.id) selectedWorkOrder = result.workOrder;
 		status = messages.queue.executedFile.replace('{relativePath}', result.reportRelativePath);
 		completedReportNotifications.rememberPath(result.reportRelativePath);
 		showCompletedReportNotification(result.report.ref.label, result.reportRelativePath);
@@ -1167,16 +1193,18 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 }
 
 	async function applyQueuePanelWorkOrderExecutionFailure(
-		result: QueuePanelWorkOrderExecutionFailureResult
+		result: QueuePanelWorkOrderExecutionFailureResult,
+		target: ReturnType<typeof captureWorkspaceOperationTarget>
 	) {
+		if (!target.isCurrent()) return;
 		parseError = getQueueExecutionErrorMessage(result.error);
 
 		if (result.workOrder !== null) {
-			selectedWorkOrder = result.workOrder;
+			if (selectedWorkOrder?.ref.id === result.workOrder.ref.id) selectedWorkOrder = result.workOrder;
 			await refreshQueueFiles({ silent: true });
 		}
 
-		status = null;
+		if (target.isCurrent()) status = null;
 }
 
 	async function handleCancelWorkOrderExecution() {
@@ -1184,22 +1212,21 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 			return;
 	}
 
+		const target = captureWorkspaceOperationTarget();
 		isCancellingExecution = true;
 		parseError = null;
 		status = messages.queue.cancellingExecution;
 
 		try {
 			const executionId =
-				activeExecution?.workspacePath === workspace.path &&
-				activeExecution.workOrderId === selectedWorkOrder.ref.id
-					? activeExecution.executionId
-					: null;
+				activeExecutions.get(createExecutionKey(target.workspacePath, selectedWorkOrder.ref.id)) ?? null;
 			const cancelResult = await cancelQueuePanelWorkOrder({
 				executionId,
-				workspacePath: workspace.path,
+				workspacePath: target.workspacePath,
 				workOrderPath: selectedWorkOrderPath,
 				workOrderId: selectedWorkOrder.ref.id
 			});
+			if (!target.isCurrent()) return;
 
 			if (cancelResult.ok && cancelResult.recoveredWorkOrder !== null) {
 				selectedWorkOrder = cancelResult.recoveredWorkOrder;
@@ -1213,7 +1240,7 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 				status = null;
 			}
 		} finally {
-			isCancellingExecution = false;
+			if (target.isCurrent()) isCancellingExecution = false;
 		}
 	}
 
@@ -1226,16 +1253,18 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 			return;
 		}
 
+		const target = captureWorkspaceOperationTarget();
 		isWriting = true;
 		error = null;
 		parseError = null;
 
 		try {
 			const completionResult = await completeQueuePanelWorkOrder({
-				workspacePath: workspace.path,
+				workspacePath: target.workspacePath,
 				workOrderPath: selectedWorkOrderPath,
 				workOrder: selectedWorkOrder
 			});
+			if (!target.isCurrent()) return;
 
 			if (!completionResult.ok) {
 				error = completionResult.error;
@@ -1249,7 +1278,7 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 			);
 			await refreshQueueFiles({ silent: true });
 		} finally {
-			isWriting = false;
+			if (target.isCurrent()) isWriting = false;
 		}
 	}
 
@@ -1440,6 +1469,7 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 			return;
 		}
 
+		const target = captureWorkspaceOperationTarget();
 		isSavingEvaluation = true;
 		error = null;
 		parseError = null;
@@ -1447,16 +1477,18 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 
 		try {
 			const saveResult = await saveQueuePanelEvaluation({
-				workspaceId: workspace.id,
-				workspacePath: workspace.path,
+				workspaceId: target.workspaceId,
+				workspacePath: target.workspacePath,
 				report: selectedReport,
 				reportPath: selectedReportPath,
 				task: evaluationDialog.task,
 				agentId: evaluationDialog.agent.id,
 				scores: evaluationScores
 			});
+			if (!target.isCurrent()) return;
 
-			await applyQueuePanelEvaluationSaveState(saveResult);
+			await applyQueuePanelEvaluationSaveState(saveResult, target);
+			if (!target.isCurrent()) return;
 
 			if (!saveResult.ok) {
 				parseError = getQueuePanelEvaluationSaveFailureMessage(saveResult.code);
@@ -1471,11 +1503,15 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 			evaluationDialog = nextState.dialog;
 			evaluationScores = nextState.scores;
 	} finally {
-			isSavingEvaluation = false;
+			if (target.isCurrent()) isSavingEvaluation = false;
 	}
 }
 
-	async function applyQueuePanelEvaluationSaveState(result: QueuePanelEvaluationSaveResult) {
+	async function applyQueuePanelEvaluationSaveState(
+		result: QueuePanelEvaluationSaveResult,
+		target: ReturnType<typeof captureWorkspaceOperationTarget>
+	) {
+		if (!target.isCurrent()) return;
 		if (result.agentRegistry !== null) {
 			agentRegistry = result.agentRegistry;
 		}
@@ -1486,7 +1522,7 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 			await refreshQueueFiles({ silent: true });
 		}
 
-		if (result.personaRegistry !== null) {
+		if (target.isCurrent() && result.personaRegistry !== null) {
 			personaRegistry = result.personaRegistry;
 		}
 }

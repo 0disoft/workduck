@@ -141,6 +141,6 @@ invariant Each editor owns its draft and keeps form bindings reactive; save valu
 
 @workduck.queue.panel-controller
 role Coordinate Queue panel state, workspace lifetimes, artifact selection, prompt previews, and user-initiated workflows.
-owns workspace view lifetime, read result ownership, artifact selection, Queue workflow UI state
+owns workspace view lifetime, operation result ownership, artifact selection, Queue workflow UI state
 excludes manual draft editing, provider execution, native file persistence
-invariant Read results update only their captured workspace and selection generation; workspace metadata changes preserve the view lifetime.
+invariant Operation results update only their captured workspace lifetime; execution context and vault stay bound to the initiating workspace.

@@ -9175,11 +9175,11 @@
             ],
             "id": "workduck.queue.panel-controller",
             "invariant": [
-              "Read results update only their captured workspace and selection generation; workspace metadata changes preserve the view lifetime."
+              "Operation results update only their captured workspace lifetime; execution context and vault stay bound to the initiating workspace."
             ],
             "owns": [
               "workspace view lifetime",
-              "read result ownership",
+              "operation result ownership",
               "artifact selection",
               "Queue workflow UI state"
             ],
@@ -9195,7 +9195,7 @@
             "stability": "architecture",
             "unknown": []
           },
-          "end": 587,
+          "end": 594,
           "endLine": 9,
           "entries": [
             {
@@ -9214,7 +9214,7 @@
               "key": "owns",
               "line": 4,
               "order": 2,
-              "value": "workspace view lifetime|read result ownership|artifact selection|Queue workflow UI state"
+              "value": "workspace view lifetime|operation result ownership|artifact selection|Queue workflow UI state"
             },
             {
               "key": "excludes",
@@ -9232,7 +9232,7 @@
               "key": "invariant",
               "line": 7,
               "order": 5,
-              "value": "Read results update only their captured workspace and selection generation; workspace metadata changes preserve the view lifetime."
+              "value": "Operation results update only their captured workspace lifetime; execution context and vault stay bound to the initiating workspace."
             },
             {
               "key": "stability",
@@ -9245,7 +9245,7 @@
           "indent": "",
           "newline": "\n",
           "prefix": null,
-          "raw": "/* llmnav/1 module\nid=workduck.queue.panel-controller\nrole=Coordinate Queue panel state, workspace lifetimes, artifact selection, prompt previews, and user-initiated workflows.\nowns=workspace view lifetime|read result ownership|artifact selection|Queue workflow UI state\nexcludes=manual draft editing|provider execution|native file persistence\nsearch=Queue workspace switch|late Queue read results|Queue panel controller\ninvariant=Read results update only their captured workspace and selection generation; workspace metadata changes preserve the view lifetime.\nstability=architecture\n*/",
+          "raw": "/* llmnav/1 module\nid=workduck.queue.panel-controller\nrole=Coordinate Queue panel state, workspace lifetimes, artifact selection, prompt previews, and user-initiated workflows.\nowns=workspace view lifetime|operation result ownership|artifact selection|Queue workflow UI state\nexcludes=manual draft editing|provider execution|native file persistence\nsearch=Queue workspace switch|late Queue read results|Queue panel controller\ninvariant=Operation results update only their captured workspace lifetime; execution context and vault stay bound to the initiating workspace.\nstability=architecture\n*/",
           "scope": "module",
           "specVersion": "1",
           "start": 0,
@@ -9254,7 +9254,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "de4b94d2e39c76563e25aa9ee91c1a437584b73a20ede0f453604db77c0459c3",
+      "contentHash": "2ff71b6fba6a7127ec56fadce0f88b07173f2f8213e1cf7ab35f4f566c61fcaf",
       "declarations": [
         null
       ],
@@ -9302,14 +9302,16 @@
         "svelte"
       ],
       "path": "src/lib/queue/queue-panel-controller.svelte.ts",
-      "semanticBytes": 587,
-      "sourceBytes": 50222
+      "semanticBytes": 594,
+      "sourceBytes": 52420
     },
     {
       "blocks": [],
-      "contentHash": "8ac58e8049f3d072465263d86b98c11d7bd3c007c23b488a9a0a246d28c2f0a0",
+      "contentHash": "f4d1daba972640bf2d4485a973ef0c186bf82b2ebcd6bddae68683e2f088d22f",
       "declarations": [],
       "imports": [
+        "#lib/environment/environment-vault-session.ts",
+        "#lib/environment/environment-vault.ts",
         "#lib/tauri/tauri-invoke.ts",
         "#lib/workspaces/workspace-registry.ts",
         "./queue-panel-types",
@@ -9320,7 +9322,7 @@
       ],
       "path": "src/lib/queue/queue-panel-controller.test.ts",
       "semanticBytes": 0,
-      "sourceBytes": 7620
+      "sourceBytes": 12746
     },
     {
       "blocks": [],
