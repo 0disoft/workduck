@@ -258,6 +258,17 @@
         "invariant"
       ],
       "scope": "module"
+    },
+    {
+      "match": [
+        "src-tauri/src/atomic_file_write.rs"
+      ],
+      "name": "shared native atomic file writer",
+      "requiredFields": [
+        "owns",
+        "invariant"
+      ],
+      "scope": "module"
     }
   ],
   "audit": {
@@ -289,6 +300,10 @@
       {
         "path": "src/routes/processes/+page.ts",
         "reason": "Legacy route redirects immediately to the root page and owns no process workflow."
+      },
+      {
+        "path": "src-tauri/src/bin/cli/agent_evaluation/tests.rs",
+        "reason": "Contains CLI evaluation regression tests and fixtures only; runtime evaluation admission, aggregation and persistence are owned by the parent evaluation module."
       }
     ]
   },

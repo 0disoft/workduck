@@ -1791,6 +1791,28 @@
     {
       "definitions": [],
       "external": false,
+      "key": "workduck/workduck.storage.atomic-file-write",
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src-tauri/src/atomic_file_write.rs",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "repositoryId": "workduck",
+      "role": "Publish native file contents through synced temporary files with atomic replacement or exclusive creation.",
+      "semanticId": "workduck.storage.atomic-file-write",
+      "unresolved": false
+    },
+    {
+      "definitions": [],
+      "external": false,
       "key": "workduck/workduck.system.autostart-native",
       "location": {
         "declarationLine": null,
@@ -2077,11 +2099,11 @@
   ],
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "fa6c827371fbb1de4311fcaee11b5904589be6112905af2f3b3600667a19e285",
+  "sourceHash": "b42a45079d85e1db42677e7618da0cf3ef93b0d6f2b95a5d20cf2443d391d076",
   "stats": {
     "edgeCount": 30,
     "importedIndexCount": 0,
-    "nodeCount": 74,
+    "nodeCount": 75,
     "unresolvedNodeCount": 0
   }
 }

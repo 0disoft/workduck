@@ -9,8 +9,7 @@ stability=architecture
 */
 
 use std::{
-    env, fs,
-    io::{self, Write},
+    env, fs, io,
     path::{Path, PathBuf},
 };
 
@@ -842,54 +841,9 @@ fn write_json_file<T: Serialize>(path: &Path, value: &T) -> Result<(), CliError>
     let content = serde_json::to_string_pretty(value)
         .map_err(to_json_error)
         .map(|content| format!("{content}\n"))?;
-    reject_symlink_path(path)?;
-
-    let parent = path.parent().ok_or_else(|| CliError {
+    workduck_lib::write_file_atomically(path, &content).map_err(|_| CliError {
         code: "file-write-failed",
-        message: format!("파일 경로에 상위 디렉터리가 없습니다: {}", path.display()),
-    })?;
-    let file_name = path
-        .file_name()
-        .and_then(|name| name.to_str())
-        .ok_or_else(|| CliError {
-            code: "file-write-failed",
-            message: format!("파일 이름이 유효하지 않습니다: {}", path.display()),
-        })?;
-    let process_id = std::process::id();
-
-    for index in 0..32 {
-        let temporary_path = parent.join(format!(".{file_name}.tmp.{process_id}.{index}"));
-        reject_symlink_path(&temporary_path)?;
-
-        let mut temporary_file = match fs::OpenOptions::new()
-            .write(true)
-            .create_new(true)
-            .open(&temporary_path)
-        {
-            Ok(file) => file,
-            Err(error) if error.kind() == io::ErrorKind::AlreadyExists => continue,
-            Err(error) => return Err(io_error("file-write-failed", &temporary_path, error)),
-        };
-
-        let write_result = temporary_file
-            .write_all(content.as_bytes())
-            .and_then(|_| temporary_file.flush());
-        drop(temporary_file);
-
-        if let Err(error) = write_result {
-            let _ = fs::remove_file(&temporary_path);
-            return Err(io_error("file-write-failed", &temporary_path, error));
-        }
-
-        return fs::rename(&temporary_path, path).map_err(|error| {
-            let _ = fs::remove_file(&temporary_path);
-            io_error("file-write-failed", path, error)
-        });
-    }
-
-    Err(CliError {
-        code: "file-write-failed",
-        message: format!("임시 파일 이름을 확보하지 못했습니다: {}", path.display()),
+        message: format!("파일 저장에 실패했습니다: {}", path.display()),
     })
 }
 
@@ -909,19 +863,6 @@ fn increment_registry_revision(registry: &mut Value) -> Result<(), CliError> {
         message: "레지스트리 revision이 허용 범위를 초과했습니다.".to_string(),
     })?;
     registry["revision"] = Value::from(next_revision);
-    Ok(())
-}
-
-fn reject_symlink_path(path: &Path) -> Result<(), CliError> {
-    if let Ok(metadata) = fs::symlink_metadata(path) {
-        if metadata.file_type().is_symlink() {
-            return Err(CliError {
-                code: "file-write-failed",
-                message: format!("심볼릭 링크에는 쓸 수 없습니다: {}", path.display()),
-            });
-        }
-    }
-
     Ok(())
 }
 

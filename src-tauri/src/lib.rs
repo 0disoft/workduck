@@ -65,6 +65,8 @@ mod workspace_sync_file;
 mod workspace_sync_git;
 mod windows_filename;
 
+pub use atomic_file_write::{AtomicFileWriteError, write_file_atomically};
+
 #[derive(serde::Serialize)]
 struct RuntimeStatus {
     app: &'static str,

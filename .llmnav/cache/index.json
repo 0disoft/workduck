@@ -16,9 +16,9 @@
         "agent evaluation implementation"
       ],
       "hashes": {
-        "body": "9f9722813ad928de3013ed54ed7241a792d93a1703df212866166d242d1c2a6a",
+        "body": "7cce0dba12d6ef8c61869a7016cc573cd8eafe4986a79550e09b275ef60c4922",
         "semantic": "2b2ca23baafe3dca3abb96be0a3108be435e53b22938c806aabd7d0ec602a811",
-        "structure": "a5ffa4087ca317dbddc6fbea6b2bb1b936bcd31f49cf36fc39f9c27a20cd6788"
+        "structure": "306a30e917d7e704b601f1acaedc2a9e0c00903e410c248fb3670eebd7c8d4e3"
       },
       "id": "workduck.cli.execution",
       "imports": [
@@ -28,7 +28,7 @@
         "chacha20poly1305::{\n    XChaCha20Poly1305, XNonce,\n    aead::{Aead, KeyInit, Payload},\n}",
         "serde::{Deserialize, Serialize}",
         "serde_json::Value",
-        "std::{\n    env, fs,\n    io::{self, Write},\n    path::{Path, PathBuf},\n}",
+        "std::{\n    env, fs, io,\n    path::{Path, PathBuf},\n}",
         "tests {\n    use super::*",
         "time::{OffsetDateTime, format_description::well_known::Rfc3339}",
         "workduck_lib::argon2_kdf::{ARGON2ID_VERSION, derive_argon2id_key, parameters_are_supported}",
@@ -174,7 +174,7 @@
         "frontend workflow state"
       ],
       "hashes": {
-        "body": "b2941533d42458d7a06407eefbbade2ab183b8969d2243051a8f74745e7afd7f",
+        "body": "21656bc0d552dc8309813fb272e8377a0dfe969f2b2577dad4ef42f8b65320a8",
         "semantic": "a8dc9ec3df04251e644264a0c040ef3a382459508eeaef5bce2497bec2fee50c",
         "structure": "33347f48d65a0cb759d69ff9535b0de832ab51c8a5abc9ed2419b2c54d27f3d0"
       },
@@ -3688,19 +3688,17 @@
         "vault decryption"
       ],
       "hashes": {
-        "body": "5ff4f3db59093c8d75ab23e64e1b46456c556885fec3491802d15fbb2b17036c",
+        "body": "97a3bf4b6e60b1b50ba742697cd13bd102880cf731f04ec9ac88fbda3f0dec70",
         "semantic": "02b8b31119c0c254d5373b7fd5071f1cdd6fe01f1f5a27bd4eacd7302ae6846d",
-        "structure": "c725e4c5488671a7953004a088f17f2ae75c490324aa9eade34b2f8cb1a13435"
+        "structure": "06cf72a81b10857fd68910a15030b62dd3932817e471f707ae86de6703300265"
       },
       "id": "workduck.cli.agent-evaluation",
       "imports": [
-        "crate::WORKDUCK_DIRECTORY_NAME",
         "serde::{Deserialize, Serialize}",
         "serde_json::Value",
-        "std::fs",
         "std::{\n    collections::{HashMap, HashSet},\n    io::{self, Read},\n    path::{Path, PathBuf},\n}",
         "super::{\n    AGENTS_FILE_NAME, CliError, PERSONAS_FILE_NAME, canonicalize_directory, current_timestamp,\n    increment_registry_revision, io_error, read_json_file, read_workspace_id, to_json_error,\n    usage_text, workspace_data_path, write_json_file,\n}",
-        "tests {\n    use super::*",
+        "tests",
         "workduck_lib::workspace_data_file::{\n    commit_workspace_registry_pair_under_lock, recover_workspace_registry_transaction_under_lock,\n}",
         "workduck_lib::workspace_registry_lock::acquire_workspace_registry_lock"
       ],
@@ -3736,11 +3734,61 @@
         "evaluate batch command"
       ],
       "stability": "architecture"
+    },
+    {
+      "boundaries": [],
+      "excludes": [
+        "workspace lock policy",
+        "registry transactions",
+        "content validation"
+      ],
+      "hashes": {
+        "body": "3dee12024c3d055c35456af2909fd430feea6168b5d9bfc4b4654c23b19f5904",
+        "semantic": "33e676fdf5c98974daaaa834268047aa13c6046d65e41e05fc3d8f321b9a6563",
+        "structure": "5f918d60efa6c6d7d0660864208e0bd3516f9b35800b1116ef6d92cdaaae70d5"
+      },
+      "id": "workduck.storage.atomic-file-write",
+      "imports": [
+        "std::time::{SystemTime, UNIX_EPOCH}",
+        "std::{\n    fs,\n    io::{self, Write},\n    path::Path,\n}",
+        "tests {\n    use super::*"
+      ],
+      "invariant": [
+        "Writers reject existing symlink targets, sync temporary contents before publishing, and clean up failed writes."
+      ],
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src-tauri/src/atomic_file_write.rs",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "owns": [
+        "atomic file replacement",
+        "exclusive file creation",
+        "temporary file cleanup",
+        "file synchronization"
+      ],
+      "role": "Publish native file contents through synced temporary files with atomic replacement or exclusive creation.",
+      "scope": "module",
+      "search": [
+        "atomic file replacement",
+        "shared atomic writer",
+        "temporary file cleanup",
+        "file durability"
+      ],
+      "stability": "implementation"
     }
   ],
   "contractFingerprints": {
     "configuration": {
-      "sha256": "604765e94ebd7925f1973f4b054377c33323e5323363f08b01232ef6f6a4b211"
+      "sha256": "7e2a1a14f93b8cf951d70c6322f86be032da9e4f5f8e44a4eed4ef9a19478cc4"
     },
     "exportedApi": {
       "count": 0,
@@ -3751,6 +3799,6 @@
   "generatedBy": "llmnav@0.9.7",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "32d3734f628efd9c52cc0ba519fa76aaceaa154cf6e890955f8ba217445121ae",
+  "sourceHash": "8fb3d33d452d77647b262d2971e53d004fb237269253e6e06938c4c224d3ae11",
   "specVersion": "1"
 }

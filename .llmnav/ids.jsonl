@@ -72,3 +72,4 @@
 {"id":"workduck.skills.registry","state":"active"}
 {"id":"workduck.skills.schema","state":"active"}
 {"id":"workduck.cli.agent-evaluation","state":"active"}
+{"id":"workduck.storage.atomic-file-write","state":"active"}

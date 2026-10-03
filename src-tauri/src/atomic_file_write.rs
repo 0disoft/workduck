@@ -1,3 +1,12 @@
+/* llmnav/1 module
+id=workduck.storage.atomic-file-write
+role=Publish native file contents through synced temporary files with atomic replacement or exclusive creation.
+owns=atomic file replacement|exclusive file creation|temporary file cleanup|file synchronization
+excludes=workspace lock policy|registry transactions|content validation
+search=atomic file replacement|shared atomic writer|temporary file cleanup|file durability
+invariant=Writers reject existing symlink targets, sync temporary contents before publishing, and clean up failed writes.
+stability=implementation
+*/
 use std::{
     fs,
     io::{self, Write},
