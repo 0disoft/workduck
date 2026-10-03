@@ -78,3 +78,9 @@ role Read selected durable repository task runs by identity without reducing his
 owns bounded task history lookup, run identity and file binding, historical running state refresh
 excludes command selection, execution launch, latest repository card projection
 invariant Requested IDs resolve only to bounded workspace-owned files, completed runs retain identity, and missing records never become passing evidence.
+
+@workduck.projects.scaffold-transaction
+role Plan and apply repository scaffolds with exclusive ownership, durable journals, conflict preservation, and recovery.
+owns scaffold selection and planning, scaffold file and manifest writes, scaffold locking and recovery
+excludes folder command DTOs, workspace and repository root validation, Git operations
+invariant Apply writes missing files only, and journal recovery removes only files whose recorded checksums still match.

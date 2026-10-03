@@ -52,3 +52,4 @@
 {"query":"derive brief gate from completed build evidence without trusting report prose","expected":["workduck.briefs.gate"]}
 {"query":"resolve supported toolchain commands nested manifests root scripts and package manager","expected":["workduck.projects.task-commands"]}
 {"query":"read historical repository task records by saved brief source ID","expected":["workduck.projects.task-history"]}
+{"query":"apply repository scaffolds recover interrupted journals and preserve existing conflicts","expected":["workduck.projects.scaffold-transaction"]}

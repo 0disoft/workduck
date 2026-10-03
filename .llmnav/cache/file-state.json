@@ -2509,26 +2509,143 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "c5694034ddf88bdbe932ce43c91532f32281e2fb31a5e12a73873be92c030ab9",
+      "contentHash": "d35626f4e04a6b07a4c7c9e4f238922482429dde90a0495a6a987409b260e20b",
+      "declarations": [
+        null
+      ],
+      "imports": [
+        "crate::windows_filename::is_windows_reserved_name",
+        "crate::workspace_path::{WorkspacePathValidationError, validate_absolute_directory_path}",
+        "scaffold",
+        "scaffold::{\n    acquire_ssealed_scaffold_lock, create_ssealed_repository_scaffold_plan,\n    validate_ssealed_scaffold_selection, write_ssealed_scaffold,\n}",
+        "std::{\n    fs, io,\n    path::{Path, PathBuf},\n    process::{Command, Stdio},\n    thread,\n    time::Duration,\n}"
+      ],
+      "path": "src-tauri/src/project_folder.rs",
+      "semanticBytes": 616,
+      "sourceBytes": 32908
+    },
+    {
+      "blocks": [
+        {
+          "card": {
+            "effect": [],
+            "excludes": [
+              "folder command DTOs",
+              "workspace and repository root validation",
+              "Git operations"
+            ],
+            "id": "workduck.projects.scaffold-transaction",
+            "invariant": [
+              "Apply writes missing files only, and journal recovery removes only files whose recorded checksums still match."
+            ],
+            "owns": [
+              "scaffold selection and planning",
+              "scaffold file and manifest writes",
+              "scaffold locking and recovery"
+            ],
+            "rel": [],
+            "risk": [],
+            "role": "Plan and apply repository scaffolds with exclusive ownership, durable journals, conflict preservation, and recovery.",
+            "scope": "module",
+            "search": [
+              "scaffold apply transaction",
+              "recover scaffold journal",
+              "preserve scaffold conflicts"
+            ],
+            "stability": "architecture",
+            "unknown": []
+          },
+          "end": 632,
+          "endLine": 9,
+          "entries": [
+            {
+              "key": "id",
+              "line": 2,
+              "order": 0,
+              "value": "workduck.projects.scaffold-transaction"
+            },
+            {
+              "key": "role",
+              "line": 3,
+              "order": 1,
+              "value": "Plan and apply repository scaffolds with exclusive ownership, durable journals, conflict preservation, and recovery."
+            },
+            {
+              "key": "owns",
+              "line": 4,
+              "order": 2,
+              "value": "scaffold selection and planning|scaffold file and manifest writes|scaffold locking and recovery"
+            },
+            {
+              "key": "excludes",
+              "line": 5,
+              "order": 3,
+              "value": "folder command DTOs|workspace and repository root validation|Git operations"
+            },
+            {
+              "key": "search",
+              "line": 6,
+              "order": 4,
+              "value": "scaffold apply transaction|recover scaffold journal|preserve scaffold conflicts"
+            },
+            {
+              "key": "invariant",
+              "line": 7,
+              "order": 5,
+              "value": "Apply writes missing files only, and journal recovery removes only files whose recorded checksums still match."
+            },
+            {
+              "key": "stability",
+              "line": 8,
+              "order": 6,
+              "value": "architecture"
+            }
+          ],
+          "filePath": "src-tauri/src/project_folder_scaffold.rs",
+          "indent": "",
+          "newline": "\n",
+          "prefix": "//",
+          "raw": "// llmnav/1 module\n// id=workduck.projects.scaffold-transaction\n// role=Plan and apply repository scaffolds with exclusive ownership, durable journals, conflict preservation, and recovery.\n// owns=scaffold selection and planning|scaffold file and manifest writes|scaffold locking and recovery\n// excludes=folder command DTOs|workspace and repository root validation|Git operations\n// search=scaffold apply transaction|recover scaffold journal|preserve scaffold conflicts\n// invariant=Apply writes missing files only, and journal recovery removes only files whose recorded checksums still match.\n// stability=architecture\n// /llmnav\n",
+          "scope": "module",
+          "specVersion": "1",
+          "start": 0,
+          "startLine": 1,
+          "style": "line",
+          "syntaxErrors": []
+        }
+      ],
+      "contentHash": "79cff09af73fc0c179c7465ae8d66062e2613320857393a225be57025ba6ba96",
       "declarations": [
         null
       ],
       "imports": [
         "crate::atomic_file_write::{write_file_atomically, write_file_exclusively}",
         "crate::queue_execution_identity::unique_token",
-        "crate::ssealed_scaffold::{ssealed_scaffolds, SsealedScaffold}",
+        "crate::ssealed_scaffold::{SsealedScaffold, ssealed_scaffolds}",
         "crate::ssealed_scaffold_generated::SSEALED_SCAFFOLD_TOOL_VERSION",
         "crate::windows_filename::is_windows_reserved_name",
-        "crate::workspace_path::{validate_absolute_directory_path, WorkspacePathValidationError}",
         "sha2::{Digest, Sha256}",
         "std::os::windows::fs::MetadataExt",
-        "std::{\n    fs,\n    io::{self, Read, Write},\n    path::{Component, Path, PathBuf},\n    process::{Command, Stdio},\n    thread,\n    time::Duration,\n}",
-        "tests {\n    use super::*",
-        "time::{format_description::well_known::Rfc3339, OffsetDateTime}"
+        "std::{\n    fs,\n    io::{self, Read, Write},\n    path::{Component, Path, PathBuf},\n}",
+        "super::{\n    ProjectFolderError, ProjectFolderSsealedScaffoldFilePlan, ProjectFolderSsealedScaffoldPlan,\n}",
+        "tests",
+        "time::{OffsetDateTime, format_description::well_known::Rfc3339}"
       ],
-      "path": "src-tauri/src/project_folder.rs",
-      "semanticBytes": 616,
-      "sourceBytes": 83417
+      "path": "src-tauri/src/project_folder_scaffold.rs",
+      "semanticBytes": 632,
+      "sourceBytes": 29669
+    },
+    {
+      "blocks": [],
+      "contentHash": "0d807c4ea4f3f21cf5ec01a5d0729d267fe5632669c98253eec63f66300c86ba",
+      "declarations": [],
+      "imports": [
+        "super::*",
+        "super::super::{\n    apply_ssealed_scaffold_to_repository, create_project_folder, create_project_group_folder,\n    preview_ssealed_scaffold_for_repository,\n}"
+      ],
+      "path": "src-tauri/src/project_folder_scaffold_tests.rs",
+      "semanticBytes": 0,
+      "sourceBytes": 20575
     },
     {
       "blocks": [],

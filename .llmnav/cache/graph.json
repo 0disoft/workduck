@@ -859,6 +859,28 @@
     {
       "definitions": [],
       "external": false,
+      "key": "workduck/workduck.projects.scaffold-transaction",
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src-tauri/src/project_folder_scaffold.rs",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "repositoryId": "workduck",
+      "role": "Plan and apply repository scaffolds with exclusive ownership, durable journals, conflict preservation, and recovery.",
+      "semanticId": "workduck.projects.scaffold-transaction",
+      "unresolved": false
+    },
+    {
+      "definitions": [],
+      "external": false,
       "key": "workduck/workduck.projects.storage",
       "location": {
         "declarationLine": null,
@@ -1453,11 +1475,11 @@
   ],
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "6cc5ea4c8e03cb40c96d995b965eacb12cdfdb2fe2f557f7f02b072bcc004771",
+  "sourceHash": "9c4c1ca7c492d31937a0a512e492f1f6ae8978c7971b6bbae768e3b1dc7a5a90",
   "stats": {
     "edgeCount": 9,
     "importedIndexCount": 0,
-    "nodeCount": 59,
+    "nodeCount": 60,
     "unresolvedNodeCount": 0
   }
 }

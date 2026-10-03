@@ -1364,23 +1364,17 @@
         "project registry persistence"
       ],
       "hashes": {
-        "body": "c5694034ddf88bdbe932ce43c91532f32281e2fb31a5e12a73873be92c030ab9",
+        "body": "d35626f4e04a6b07a4c7c9e4f238922482429dde90a0495a6a987409b260e20b",
         "semantic": "00f64b28d04c28f4f45e21dc6cb5123fcb33e952b9dd252ca0f0039d0dcda289",
-        "structure": "712ec149236d5ff440b942a24a9d874534f63ac057ffc8394ff77c39c107dc1e"
+        "structure": "d5446bacd6228913a6915b84e7a19c1ae28f51ea874dc5e121bdd634a1f6168b"
       },
       "id": "workduck.projects.folder-native",
       "imports": [
-        "crate::atomic_file_write::{write_file_atomically, write_file_exclusively}",
-        "crate::queue_execution_identity::unique_token",
-        "crate::ssealed_scaffold::{ssealed_scaffolds, SsealedScaffold}",
-        "crate::ssealed_scaffold_generated::SSEALED_SCAFFOLD_TOOL_VERSION",
         "crate::windows_filename::is_windows_reserved_name",
-        "crate::workspace_path::{validate_absolute_directory_path, WorkspacePathValidationError}",
-        "sha2::{Digest, Sha256}",
-        "std::os::windows::fs::MetadataExt",
-        "std::{\n    fs,\n    io::{self, Read, Write},\n    path::{Component, Path, PathBuf},\n    process::{Command, Stdio},\n    thread,\n    time::Duration,\n}",
-        "tests {\n    use super::*",
-        "time::{format_description::well_known::Rfc3339, OffsetDateTime}"
+        "crate::workspace_path::{WorkspacePathValidationError, validate_absolute_directory_path}",
+        "scaffold",
+        "scaffold::{\n    acquire_ssealed_scaffold_lock, create_ssealed_repository_scaffold_plan,\n    validate_ssealed_scaffold_selection, write_ssealed_scaffold,\n}",
+        "std::{\n    fs, io,\n    path::{Path, PathBuf},\n    process::{Command, Stdio},\n    thread,\n    time::Duration,\n}"
       ],
       "invariant": [
         "Scaffold apply never overwrites conflicts, and recovery or rollback removes only files whose recorded checksums still match."
@@ -2925,11 +2919,67 @@
         "task record ID lookup"
       ],
       "stability": "contract"
+    },
+    {
+      "boundaries": [],
+      "excludes": [
+        "folder command DTOs",
+        "workspace and repository root validation",
+        "Git operations"
+      ],
+      "hashes": {
+        "body": "79cff09af73fc0c179c7465ae8d66062e2613320857393a225be57025ba6ba96",
+        "semantic": "81315e44964b9d2e87f9bbe64ea33202cf807dd6432210279bce965c3ac2d3f2",
+        "structure": "a202add9bebddb32cb3f06fcc0397d3eb9f8627d4ce7831479adc71d4498d13a"
+      },
+      "id": "workduck.projects.scaffold-transaction",
+      "imports": [
+        "crate::atomic_file_write::{write_file_atomically, write_file_exclusively}",
+        "crate::queue_execution_identity::unique_token",
+        "crate::ssealed_scaffold::{SsealedScaffold, ssealed_scaffolds}",
+        "crate::ssealed_scaffold_generated::SSEALED_SCAFFOLD_TOOL_VERSION",
+        "crate::windows_filename::is_windows_reserved_name",
+        "sha2::{Digest, Sha256}",
+        "std::os::windows::fs::MetadataExt",
+        "std::{\n    fs,\n    io::{self, Read, Write},\n    path::{Component, Path, PathBuf},\n}",
+        "super::{\n    ProjectFolderError, ProjectFolderSsealedScaffoldFilePlan, ProjectFolderSsealedScaffoldPlan,\n}",
+        "tests",
+        "time::{OffsetDateTime, format_description::well_known::Rfc3339}"
+      ],
+      "invariant": [
+        "Apply writes missing files only, and journal recovery removes only files whose recorded checksums still match."
+      ],
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src-tauri/src/project_folder_scaffold.rs",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "owns": [
+        "scaffold selection and planning",
+        "scaffold file and manifest writes",
+        "scaffold locking and recovery"
+      ],
+      "role": "Plan and apply repository scaffolds with exclusive ownership, durable journals, conflict preservation, and recovery.",
+      "scope": "module",
+      "search": [
+        "scaffold apply transaction",
+        "recover scaffold journal",
+        "preserve scaffold conflicts"
+      ],
+      "stability": "architecture"
     }
   ],
   "contractFingerprints": {
     "configuration": {
-      "sha256": "4f0b4f650db9d343013b9ede66be234a835feca09ef787a4bfdc86466a3de895"
+      "sha256": "a0515f8316fca773336a632bebbf57249ecfad2df1d2b12476440aeb295fe8f7"
     },
     "exportedApi": {
       "count": 0,
@@ -2940,6 +2990,6 @@
   "generatedBy": "llmnav@0.9.7",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "893b779a8f79dce26c353e919bb13461d6c00d72ab155db9e10d00c05aad7d0b",
+  "sourceHash": "f70df0349764ad98cc3df0a62b7d964bab40badb69ffcce3bfe2fe23ea309f25",
   "specVersion": "1"
 }
