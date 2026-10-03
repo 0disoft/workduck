@@ -178,6 +178,17 @@
         "invariant"
       ],
       "scope": "module"
+    },
+    {
+      "match": [
+        "src/lib/projects/project-board-scaffold-dialog.svelte.ts"
+      ],
+      "name": "repository scaffold dialog owner",
+      "requiredFields": [
+        "owns",
+        "invariant"
+      ],
+      "scope": "module"
     }
   ],
   "audit": {

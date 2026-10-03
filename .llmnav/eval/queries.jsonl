@@ -57,3 +57,4 @@
 {"query":"plan queue execution estimate prompt tokens validate confirmation and resolve agent context","expected":["workduck.queue.execution-planning"]}
 {"query":"manual work order draft edit Queue task form and work order skill options","expected":["workduck.queue.work-order-editor"]}
 {"query":"Queue workspace switch late Queue read results and Queue panel controller","expected":["workduck.queue.panel-controller"]}
+{"query":"repository scaffold preview apply ssealed profile and scaffold dialog lifecycle","expected":["workduck.projects.scaffold-dialog"]}

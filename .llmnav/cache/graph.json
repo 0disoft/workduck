@@ -86,6 +86,34 @@
     },
     {
       "confidence": 0.85,
+      "from": "workduck/workduck.projects.scaffold-dialog",
+      "id": "05443f783b5bf656ef712a294c8e910452bdf197c422982ab8a1af64ace044f8",
+      "kind": "imports",
+      "provenance": {
+        "generator": "llmnav",
+        "line": null,
+        "path": "src/lib/projects/project-board-scaffold-dialog.svelte.ts",
+        "source": "src/lib/projects/project-board-scaffold-dialog.svelte.ts",
+        "type": "local-import"
+      },
+      "to": "workduck/workduck.projects.folder"
+    },
+    {
+      "confidence": 0.85,
+      "from": "workduck/workduck.projects.scaffold-dialog",
+      "id": "efd777e939abd74d18744dabb844c398c32fd8fb02c8c5ec219cc7a2115c1521",
+      "kind": "imports",
+      "provenance": {
+        "generator": "llmnav",
+        "line": null,
+        "path": "src/lib/projects/project-board-scaffold-dialog.svelte.ts",
+        "source": "src/lib/projects/project-board-scaffold-dialog.svelte.ts",
+        "type": "local-import"
+      },
+      "to": "workduck/workduck.projects.registry-domain"
+    },
+    {
+      "confidence": 0.85,
       "from": "workduck/workduck.projects.storage",
       "id": "6e72254523f39c91dcaea8aa753d3782c30978d4ea28e3a21dd4f9a76e90c26d",
       "kind": "imports",
@@ -951,6 +979,28 @@
     {
       "definitions": [],
       "external": false,
+      "key": "workduck/workduck.projects.scaffold-dialog",
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src/lib/projects/project-board-scaffold-dialog.svelte.ts",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "repositoryId": "workduck",
+      "role": "Own reactive repository scaffold dialog state, profile selection, preview, and apply workflows.",
+      "semanticId": "workduck.projects.scaffold-dialog",
+      "unresolved": false
+    },
+    {
+      "definitions": [],
+      "external": false,
       "key": "workduck/workduck.projects.scaffold-transaction",
       "location": {
         "declarationLine": null,
@@ -1633,11 +1683,11 @@
   ],
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "2b0719049a5f07f4dbcadbc0423594f72b7526cc7cd7fac8b73e65aed3c85b5c",
+  "sourceHash": "987f9dd97358599e81b070e6e5cc01d3440aeedb2b88cf271a739f6dcf2b8e9b",
   "stats": {
-    "edgeCount": 14,
+    "edgeCount": 16,
     "importedIndexCount": 0,
-    "nodeCount": 64,
+    "nodeCount": 65,
     "unresolvedNodeCount": 0
   }
 }

@@ -3216,11 +3216,62 @@
         "Queue panel controller"
       ],
       "stability": "architecture"
+    },
+    {
+      "boundaries": [],
+      "excludes": [
+        "board selection",
+        "native scaffold persistence",
+        "new repository scaffolding"
+      ],
+      "hashes": {
+        "body": "aa201020510c86df672e032b111d472651af6d7ed3a610cb05c950e8e7d351b2",
+        "semantic": "9167dba82057b0cf84080861172644f0011a32ac2cdd7e6e4a89fc1f159fb9eb",
+        "structure": "86dddb747ec8bf78b9fc4109aa5ce1449096b611630a3f7a1fa48fb3478e6f4b"
+      },
+      "id": "workduck.projects.scaffold-dialog",
+      "imports": [
+        "#lib/i18n/workduck-message-contract.ts",
+        "./project-board-errors",
+        "./project-board-types",
+        "./project-folder",
+        "./project-registry"
+      ],
+      "invariant": [
+        "Preview and apply results update only the selected repository, scope, and profile; board state stays outside the dialog owner."
+      ],
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src/lib/projects/project-board-scaffold-dialog.svelte.ts",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "owns": [
+        "scaffold dialog lifecycle",
+        "preview selection ownership",
+        "scaffold busy state",
+        "apply feedback"
+      ],
+      "role": "Own reactive repository scaffold dialog state, profile selection, preview, and apply workflows.",
+      "scope": "module",
+      "search": [
+        "repository scaffold preview",
+        "apply ssealed profile",
+        "scaffold dialog lifecycle"
+      ],
+      "stability": "architecture"
     }
   ],
   "contractFingerprints": {
     "configuration": {
-      "sha256": "17ba9ccb9c647ebfddb35fc8a5a2fe237375be0355b8403ce1fab6ef95a4718c"
+      "sha256": "027c0484393ce0cc1883a078e383f07291f15002ddba274c3b715a4414227dfc"
     },
     "exportedApi": {
       "count": 0,
@@ -3231,6 +3282,6 @@
   "generatedBy": "llmnav@0.9.7",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "92e51b55a2bca1d70eeebf7cc85c176c5c4f4150300882e3b9d7a8aff9d68b35",
+  "sourceHash": "06a19ac1559b64f4d5bf9c795b1583f0f9b18e2d945598f1e6c2f08f13805d16",
   "specVersion": "1"
 }

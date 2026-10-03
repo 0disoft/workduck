@@ -62,3 +62,4 @@
 {"id":"workduck.queue.execution-planning","state":"active"}
 {"id":"workduck.queue.work-order-editor","state":"active"}
 {"id":"workduck.queue.panel-controller","state":"active"}
+{"id":"workduck.projects.scaffold-dialog","state":"active"}

@@ -7029,7 +7029,7 @@
     },
     {
       "blocks": [],
-      "contentHash": "27408dbac3563db87e5323488aef778f97bf8d6755e8476c77cd155bddaaa2d5",
+      "contentHash": "fc86b1e03c00037b3957866eb115a1d0943da70466b81dbfa0677e4fdde65565",
       "declarations": [],
       "imports": [
         "#lib/environment/environment-vault.ts",
@@ -7062,6 +7062,7 @@
         "./project-board-repository-commit-work-order",
         "./project-board-repository-rules",
         "./project-board-runtime-state",
+        "./project-board-scaffold-dialog.svelte",
         "./project-board-selectors",
         "./project-board-storage-actions",
         "./project-board-surface-helpers",
@@ -7078,7 +7079,7 @@
       ],
       "path": "src/lib/projects/ProjectBoardSurface.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 54034
+      "sourceBytes": 50442
     },
     {
       "blocks": [],
@@ -7682,6 +7683,130 @@
       "path": "src/lib/projects/project-board-runtime-state.ts",
       "semanticBytes": 0,
       "sourceBytes": 17567
+    },
+    {
+      "blocks": [
+        {
+          "card": {
+            "effect": [],
+            "excludes": [
+              "board selection",
+              "native scaffold persistence",
+              "new repository scaffolding"
+            ],
+            "id": "workduck.projects.scaffold-dialog",
+            "invariant": [
+              "Preview and apply results update only the selected repository, scope, and profile; board state stays outside the dialog owner."
+            ],
+            "owns": [
+              "scaffold dialog lifecycle",
+              "preview selection ownership",
+              "scaffold busy state",
+              "apply feedback"
+            ],
+            "rel": [],
+            "risk": [],
+            "role": "Own reactive repository scaffold dialog state, profile selection, preview, and apply workflows.",
+            "scope": "module",
+            "search": [
+              "repository scaffold preview",
+              "apply ssealed profile",
+              "scaffold dialog lifecycle"
+            ],
+            "stability": "architecture",
+            "unknown": []
+          },
+          "end": 576,
+          "endLine": 9,
+          "entries": [
+            {
+              "key": "id",
+              "line": 2,
+              "order": 0,
+              "value": "workduck.projects.scaffold-dialog"
+            },
+            {
+              "key": "role",
+              "line": 3,
+              "order": 1,
+              "value": "Own reactive repository scaffold dialog state, profile selection, preview, and apply workflows."
+            },
+            {
+              "key": "owns",
+              "line": 4,
+              "order": 2,
+              "value": "scaffold dialog lifecycle|preview selection ownership|scaffold busy state|apply feedback"
+            },
+            {
+              "key": "excludes",
+              "line": 5,
+              "order": 3,
+              "value": "board selection|native scaffold persistence|new repository scaffolding"
+            },
+            {
+              "key": "search",
+              "line": 6,
+              "order": 4,
+              "value": "repository scaffold preview|apply ssealed profile|scaffold dialog lifecycle"
+            },
+            {
+              "key": "invariant",
+              "line": 7,
+              "order": 5,
+              "value": "Preview and apply results update only the selected repository, scope, and profile; board state stays outside the dialog owner."
+            },
+            {
+              "key": "stability",
+              "line": 8,
+              "order": 6,
+              "value": "architecture"
+            }
+          ],
+          "filePath": "src/lib/projects/project-board-scaffold-dialog.svelte.ts",
+          "indent": "",
+          "newline": "\n",
+          "prefix": null,
+          "raw": "/* llmnav/1 module\nid=workduck.projects.scaffold-dialog\nrole=Own reactive repository scaffold dialog state, profile selection, preview, and apply workflows.\nowns=scaffold dialog lifecycle|preview selection ownership|scaffold busy state|apply feedback\nexcludes=board selection|native scaffold persistence|new repository scaffolding\nsearch=repository scaffold preview|apply ssealed profile|scaffold dialog lifecycle\ninvariant=Preview and apply results update only the selected repository, scope, and profile; board state stays outside the dialog owner.\nstability=architecture\n*/",
+          "scope": "module",
+          "specVersion": "1",
+          "start": 0,
+          "startLine": 1,
+          "style": "block",
+          "syntaxErrors": []
+        }
+      ],
+      "contentHash": "aa201020510c86df672e032b111d472651af6d7ed3a610cb05c950e8e7d351b2",
+      "declarations": [
+        null
+      ],
+      "imports": [
+        "#lib/i18n/workduck-message-contract.ts",
+        "./project-board-errors",
+        "./project-board-types",
+        "./project-folder",
+        "./project-registry"
+      ],
+      "path": "src/lib/projects/project-board-scaffold-dialog.svelte.ts",
+      "semanticBytes": 576,
+      "sourceBytes": 7526
+    },
+    {
+      "blocks": [],
+      "contentHash": "d3ee812de0c96466a3637e35e9e1dad13b952d4c9d8559280586b6e75c7fc220",
+      "declarations": [],
+      "imports": [
+        "#lib/i18n/workduck-language.ts",
+        "#lib/tauri/tauri-invoke.ts",
+        "./project-board-errors",
+        "./project-board-scaffold-dialog.svelte",
+        "./project-board-types",
+        "bun",
+        "bun:test",
+        "svelte/compiler"
+      ],
+      "path": "src/lib/projects/project-board-scaffold-dialog.test.ts",
+      "semanticBytes": 0,
+      "sourceBytes": 5719
     },
     {
       "blocks": [

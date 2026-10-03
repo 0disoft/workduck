@@ -144,3 +144,9 @@ role Coordinate Queue panel state, workspace lifetimes, artifact selection, prom
 owns workspace view lifetime, operation result ownership, artifact selection, Queue workflow UI state
 excludes manual draft editing, provider execution, native file persistence
 invariant Operation results update only their captured workspace lifetime; execution context and vault stay bound to the initiating workspace.
+
+@workduck.projects.scaffold-dialog
+role Own reactive repository scaffold dialog state, profile selection, preview, and apply workflows.
+owns scaffold dialog lifecycle, preview selection ownership, scaffold busy state, apply feedback
+excludes board selection, native scaffold persistence, new repository scaffolding
+invariant Preview and apply results update only the selected repository, scope, and profile; board state stays outside the dialog owner.

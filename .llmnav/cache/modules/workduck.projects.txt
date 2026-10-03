@@ -90,3 +90,9 @@ role Inspect repository status and remotes with bounded read-only Git processes,
 owns repository Git status parsing, inspection request coalescing, remote URL cache and diagnostics
 excludes Git mutations, GitHub publication, clone credentials
 invariant Inspections avoid credential helpers and index writes, and concurrent callers for one repository share the same in-flight result.
+
+@workduck.projects.scaffold-dialog
+role Own reactive repository scaffold dialog state, profile selection, preview, and apply workflows.
+owns scaffold dialog lifecycle, preview selection ownership, scaffold busy state, apply feedback
+excludes board selection, native scaffold persistence, new repository scaffolding
+invariant Preview and apply results update only the selected repository, scope, and profile; board state stays outside the dialog owner.

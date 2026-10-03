@@ -15,16 +15,12 @@
 	} from '#lib/queue/queue-panel-errors.ts';
 	import type { QueueFolderError } from '#lib/queue/queue-folder.ts';
 	import {
-		applySsealedScaffoldToRepository,
-		getDefaultSsealedScaffoldApplyScope,
 		getDefaultSsealedScaffoldProfile,
-		previewSsealedScaffoldForRepository,
 		type ProjectFolderError,
-		type SsealedScaffoldApplyScope,
-		type SsealedScaffoldPlan,
 		type SsealedScaffoldProfile,
 		type SsealedScaffoldScope
 	} from './project-folder';
+	import { createProjectBoardScaffoldDialog } from './project-board-scaffold-dialog.svelte';
 	import { type ProjectRepositoryGithubVisibility } from './project-repository';
 
 	import {
@@ -220,20 +216,37 @@
 	let gitActionTarget = $state<ProjectContextMenuTarget | null>(null);
 	let commitWorkOrderTargetRepositoryId = $state<string | null>(null);
 	let publishTarget = $state<ProjectRepositoryPublishTarget | null>(null);
-	let ssealedTarget = $state<ProjectRepositoryTarget | null>(null);
-	let ssealedScaffoldApplyScope = $state<SsealedScaffoldApplyScope>(
-		getDefaultSsealedScaffoldApplyScope()
-	);
-	let ssealedScaffoldApplyProfile = $state<SsealedScaffoldProfile>(
-		getDefaultSsealedScaffoldProfile()
-	);
-	let ssealedPreview = $state<SsealedScaffoldPlan | null>(null);
+	const scaffoldDialog = createProjectBoardScaffoldDialog({
+		workspacePath: () => workspace.path,
+		messages: () => projectMessages,
+		canApplyToRepository: canApplySsealedToRepository,
+		preloadOverlays: preloadProjectBoardOverlays,
+		onOpen: () => {
+			deleteCandidate = null;
+			publishTarget = null;
+			dialog = null;
+			closeContextMenu();
+		},
+		setFormError: (error) => { formError = error; },
+		setStatus: (value) => { status = value; }
+	});
+	let ssealedTarget = $derived(scaffoldDialog.ssealedTarget);
+	let ssealedScaffoldApplyScope = $derived(scaffoldDialog.ssealedScaffoldApplyScope);
+	let ssealedScaffoldApplyProfile = $derived(scaffoldDialog.ssealedScaffoldApplyProfile);
+	let ssealedPreview = $derived(scaffoldDialog.ssealedPreview);
+	let isPreviewingSsealed = $derived(scaffoldDialog.isPreviewingSsealed);
+	let isApplyingSsealed = $derived(scaffoldDialog.isApplyingSsealed);
+	const openApplySsealedRepositoryDialog = scaffoldDialog.openApplySsealedRepositoryDialog;
+	const closeSsealedScaffoldDialog = scaffoldDialog.closeSsealedScaffoldDialog;
+	const closeSsealedScaffoldDialogFromBackdrop = scaffoldDialog.closeSsealedScaffoldDialogFromBackdrop;
+	const selectSsealedScaffoldApplyScope = scaffoldDialog.selectSsealedScaffoldApplyScope;
+	const selectSsealedScaffoldApplyProfile = scaffoldDialog.selectSsealedScaffoldApplyProfile;
+	const refreshSsealedScaffoldPreview = scaffoldDialog.refreshSsealedScaffoldPreview;
+	const applySsealedScaffoldToTarget = scaffoldDialog.applySsealedScaffoldToTarget;
 	let githubRepositoryName = $state('');
 	let githubRepositoryCommitMessage = $state(DEFAULT_GITHUB_REPOSITORY_COMMIT_MESSAGE);
 	let githubRepositoryVisibility = $state<ProjectRepositoryGithubVisibility>('private');
 	let isPublishingRepository = $state(false);
-	let isPreviewingSsealed = $state(false);
-	let isApplyingSsealed = $state(false);
 	let isSavingTags = $state(false);
 	let isSavingDescription = $state(false);
 	let isSavingDetails = $state(false);
@@ -326,13 +339,7 @@
 			!isPublishingRepository &&
 			!isRepositoryBusy(publishTarget.repository.id)
 	);
-	let canApplySsealedScaffold = $derived(
-		ssealedTarget !== null &&
-			ssealedPreview !== null &&
-			ssealedPreview.missingCount > 0 &&
-			!isPreviewingSsealed &&
-			!isApplyingSsealed
-	);
+	let canApplySsealedScaffold = $derived(scaffoldDialog.canApplySsealedScaffold);
 	let hasActiveOverlay = $derived(
 		contextMenu !== null ||
 			deleteCandidate !== null ||
@@ -559,178 +566,6 @@
 			setVisibility: (visibility) => { githubRepositoryVisibility = visibility; },
 			setIsPublishing: (isPublishing) => { isPublishingRepository = isPublishing; }
 		});
-	}
-
-	function openApplySsealedRepositoryDialog(target: ProjectRepositoryTarget) {
-		preloadProjectBoardOverlays();
-
-		if (!canApplySsealedToRepository(target.repository)) {
-			formError =
-				target.repository.path === null
-					? 'project-repository-path-required'
-					: 'project-repository-path-outside-workspace';
-			return;
-		}
-
-		ssealedTarget = target;
-		const defaultScope = getDefaultSsealedScaffoldApplyScope();
-		const defaultProfile = getDefaultSsealedScaffoldProfile();
-		ssealedScaffoldApplyScope = defaultScope;
-		ssealedScaffoldApplyProfile = defaultProfile;
-		ssealedPreview = null;
-		isPreviewingSsealed = false;
-		isApplyingSsealed = false;
-		formError = null;
-		status = null;
-		deleteCandidate = null;
-		publishTarget = null;
-		dialog = null;
-		closeContextMenu();
-		void refreshSsealedScaffoldPreview(target, defaultScope, defaultProfile);
-	}
-
-	function closeSsealedScaffoldDialog() {
-		ssealedTarget = null;
-		ssealedScaffoldApplyScope = getDefaultSsealedScaffoldApplyScope();
-		ssealedScaffoldApplyProfile = getDefaultSsealedScaffoldProfile();
-		ssealedPreview = null;
-		isPreviewingSsealed = false;
-		isApplyingSsealed = false;
-		formError = null;
-	}
-
-	function closeSsealedScaffoldDialogFromBackdrop(event: MouseEvent) {
-		if (event.target === event.currentTarget && !isApplyingSsealed) {
-			closeSsealedScaffoldDialog();
-		}
-	}
-
-	function selectSsealedScaffoldApplyScope(scope: SsealedScaffoldApplyScope) {
-		ssealedScaffoldApplyScope = scope;
-		ssealedPreview = null;
-		formError = null;
-		status = null;
-		void refreshSsealedScaffoldPreview(ssealedTarget, scope, ssealedScaffoldApplyProfile);
-	}
-
-	function selectSsealedScaffoldApplyProfile(profile: SsealedScaffoldProfile) {
-		ssealedScaffoldApplyProfile = profile;
-		ssealedPreview = null;
-		formError = null;
-		status = null;
-		void refreshSsealedScaffoldPreview(ssealedTarget, ssealedScaffoldApplyScope, profile);
-	}
-
-	async function refreshSsealedScaffoldPreview(
-		target = ssealedTarget,
-		scope = ssealedScaffoldApplyScope,
-		profile = ssealedScaffoldApplyProfile
-	) {
-		if (target === null || target.repository.path === null) {
-			formError = 'project-repository-not-found';
-			return;
-		}
-
-		const repositoryId = target.repository.id;
-
-		isPreviewingSsealed = true;
-		formError = null;
-		status = null;
-
-		try {
-			const result = await previewSsealedScaffoldForRepository(
-				workspace.path,
-				target.repository.path,
-				scope,
-				profile
-			);
-
-			if (
-				ssealedTarget?.repository.id !== repositoryId ||
-				ssealedScaffoldApplyScope !== scope ||
-				ssealedScaffoldApplyProfile !== profile
-			) {
-				return;
-			}
-
-			if (result.ok) {
-				ssealedPreview = result.plan;
-				return;
-			}
-
-			ssealedPreview = null;
-			formError = result.error;
-		} finally {
-			if (
-				ssealedTarget?.repository.id === repositoryId &&
-				ssealedScaffoldApplyScope === scope &&
-				ssealedScaffoldApplyProfile === profile
-			) {
-				isPreviewingSsealed = false;
-			}
-		}
-	}
-
-	async function applySsealedScaffoldToTarget() {
-		const target = ssealedTarget;
-
-		if (target === null || target.repository.path === null || isApplyingSsealed) {
-			return;
-		}
-
-		if (!canApplySsealedToRepository(target.repository)) {
-			formError = 'project-repository-path-outside-workspace';
-			return;
-		}
-
-		const repositoryId = target.repository.id;
-		const scope = ssealedScaffoldApplyScope;
-		const profile = ssealedScaffoldApplyProfile;
-
-		isApplyingSsealed = true;
-		formError = null;
-		status = null;
-
-		try {
-			const result = await applySsealedScaffoldToRepository(
-				workspace.path,
-				target.repository.path,
-				scope,
-				profile
-			);
-
-			if (
-				ssealedTarget?.repository.id !== repositoryId ||
-				ssealedScaffoldApplyScope !== scope ||
-				ssealedScaffoldApplyProfile !== profile
-			) {
-				return;
-			}
-
-			if (!result.ok) {
-				formError = result.error;
-				return;
-			}
-
-			ssealedPreview = result.plan;
-			status =
-				result.plan.conflictCount > 0
-					? projectMessages.ssealedScaffold.appliedWithSkippedConflictsSummary
-							.replace('{added}', result.plan.addedCount.toString())
-							.replace('{conflicts}', result.plan.conflictCount.toString())
-					: projectMessages.ssealedScaffold.appliedSummary.replace(
-							'{added}',
-							result.plan.addedCount.toString()
-						);
-		} finally {
-			if (
-				ssealedTarget?.repository.id === repositoryId &&
-				ssealedScaffoldApplyScope === scope &&
-				ssealedScaffoldApplyProfile === profile
-			) {
-				isApplyingSsealed = false;
-			}
-		}
 	}
 
 	function handleGithubRepositoryNameInput() {
