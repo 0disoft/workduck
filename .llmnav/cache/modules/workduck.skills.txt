@@ -1,0 +1,14 @@
+llmnav-catalog/1 repository=workduck catalog=workduck.skills
+Read semantic cards before opening source. Resolve current paths and signatures with llmnav query or show.
+
+@workduck.skills.registry
+role Normalize and migrate workspace skill registries while preserving custom skills and built-in overrides.
+owns skill registry normalization, legacy skill migration, skill mutations, built-in override detection
+excludes default prompt authoring, skill persistence, queue execution
+invariant Legacy registries receive version-appropriate defaults, current removals persist, and invalid mutations preserve the registry.
+
+@workduck.skills.schema
+role Define skill record contracts, stable built-in identities, output kinds, and validation limits.
+owns skill record schema, skill registry versions, skill validation limits, built-in skill identities
+excludes default prompt content, registry mutations, skill persistence
+invariant Skill records and validation share one contract independent of catalog content and storage.

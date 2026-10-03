@@ -68,3 +68,6 @@ workduck.projects.task-run-lifecycle
 workduck.projects.task-run-mapping
 workduck.projects.registry-writer
 workduck.projects.storage-native
+workduck.skills.defaults
+workduck.skills.registry
+workduck.skills.schema

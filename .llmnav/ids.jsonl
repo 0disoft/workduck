@@ -68,3 +68,6 @@
 {"id":"workduck.projects.task-run-mapping","state":"active"}
 {"id":"workduck.projects.registry-writer","state":"active"}
 {"id":"workduck.projects.storage-native","state":"active"}
+{"id":"workduck.skills.defaults","state":"active"}
+{"id":"workduck.skills.registry","state":"active"}
+{"id":"workduck.skills.schema","state":"active"}

@@ -168,3 +168,9 @@ role Own pending project registry edits and save feedback within the initiating 
 owns registry write admission, pending and failed registry drafts, save result ownership, workspace view lifetime, conflict recovery
 excludes registry storage implementation, dialog busy state, repository operations
 invariant Edits build on the latest draft, writes compare the last accepted snapshot, conflicts require reload, and only the live initiating view receives feedback.
+
+@workduck.skills.registry
+role Normalize and migrate workspace skill registries while preserving custom skills and built-in overrides.
+owns skill registry normalization, legacy skill migration, skill mutations, built-in override detection
+excludes default prompt authoring, skill persistence, queue execution
+invariant Legacy registries receive version-appropriate defaults, current removals persist, and invalid mutations preserve the registry.

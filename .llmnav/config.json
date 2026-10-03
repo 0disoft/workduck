@@ -234,6 +234,19 @@
         "invariant"
       ],
       "scope": "module"
+    },
+    {
+      "match": [
+        "src/lib/skills/skill-registry.ts",
+        "src/lib/skills/skill-schema.ts",
+        "src/lib/skills/skill-defaults.ts"
+      ],
+      "name": "skill registry contract and authored catalog boundaries",
+      "requiredFields": [
+        "owns",
+        "invariant"
+      ],
+      "scope": "module"
     }
   ],
   "audit": {

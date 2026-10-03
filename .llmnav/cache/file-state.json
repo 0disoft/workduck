@@ -11166,6 +11166,108 @@
       "sourceBytes": 31897
     },
     {
+      "blocks": [
+        {
+          "card": {
+            "effect": [],
+            "excludes": [
+              "user skill validation",
+              "registry migrations",
+              "skill persistence"
+            ],
+            "id": "workduck.skills.defaults",
+            "invariant": [
+              "Built-in skill content is declared once using the shared skill schema."
+            ],
+            "owns": [
+              "built-in skill catalog",
+              "default prompt content",
+              "default option presets"
+            ],
+            "rel": [],
+            "risk": [],
+            "role": "Own the built-in skill catalog with authored prompts, option presets, and original timestamps.",
+            "scope": "module",
+            "search": [
+              "built-in skills",
+              "default skill prompts",
+              "default skill options"
+            ],
+            "stability": "implementation",
+            "unknown": []
+          },
+          "end": 465,
+          "endLine": 9,
+          "entries": [
+            {
+              "key": "id",
+              "line": 2,
+              "order": 0,
+              "value": "workduck.skills.defaults"
+            },
+            {
+              "key": "role",
+              "line": 3,
+              "order": 1,
+              "value": "Own the built-in skill catalog with authored prompts, option presets, and original timestamps."
+            },
+            {
+              "key": "owns",
+              "line": 4,
+              "order": 2,
+              "value": "built-in skill catalog|default prompt content|default option presets"
+            },
+            {
+              "key": "excludes",
+              "line": 5,
+              "order": 3,
+              "value": "user skill validation|registry migrations|skill persistence"
+            },
+            {
+              "key": "search",
+              "line": 6,
+              "order": 4,
+              "value": "built-in skills|default skill prompts|default skill options"
+            },
+            {
+              "key": "invariant",
+              "line": 7,
+              "order": 5,
+              "value": "Built-in skill content is declared once using the shared skill schema."
+            },
+            {
+              "key": "stability",
+              "line": 8,
+              "order": 6,
+              "value": "implementation"
+            }
+          ],
+          "filePath": "src/lib/skills/skill-defaults.ts",
+          "indent": "",
+          "newline": "\n",
+          "prefix": null,
+          "raw": "/* llmnav/1 module\nid=workduck.skills.defaults\nrole=Own the built-in skill catalog with authored prompts, option presets, and original timestamps.\nowns=built-in skill catalog|default prompt content|default option presets\nexcludes=user skill validation|registry migrations|skill persistence\nsearch=built-in skills|default skill prompts|default skill options\ninvariant=Built-in skill content is declared once using the shared skill schema.\nstability=implementation\n*/",
+          "scope": "module",
+          "specVersion": "1",
+          "start": 0,
+          "startLine": 1,
+          "style": "block",
+          "syntaxErrors": []
+        }
+      ],
+      "contentHash": "c4ca3deb99ddab93422b4a2950b91bd2a32f8ae9bb4e6e8e48d7aa3a909e3813",
+      "declarations": [
+        null
+      ],
+      "imports": [
+        "#lib/agents/agent-evaluation.ts",
+        "./skill-schema"
+      ],
+      "path": "src/lib/skills/skill-defaults.ts",
+      "semanticBytes": 465,
+      "sourceBytes": 37915
+    },
+    {
       "blocks": [],
       "contentHash": "8eb1d87e2d93eeedd907de984a75590e9b5080a2e86069c35bee6ac057d9475d",
       "declarations": [],
@@ -11179,16 +11281,208 @@
       "sourceBytes": 6388
     },
     {
-      "blocks": [],
-      "contentHash": "9551675d0d527bf19e6d880650d415fc3db1edfcf5d7efabb39035280db31488",
-      "declarations": [],
+      "blocks": [
+        {
+          "card": {
+            "effect": [],
+            "excludes": [
+              "default prompt authoring",
+              "skill persistence",
+              "queue execution"
+            ],
+            "id": "workduck.skills.registry",
+            "invariant": [
+              "Legacy registries receive version-appropriate defaults, current removals persist, and invalid mutations preserve the registry."
+            ],
+            "owns": [
+              "skill registry normalization",
+              "legacy skill migration",
+              "skill mutations",
+              "built-in override detection"
+            ],
+            "rel": [],
+            "risk": [],
+            "role": "Normalize and migrate workspace skill registries while preserving custom skills and built-in overrides.",
+            "scope": "module",
+            "search": [
+              "skill registry migration",
+              "custom skill validation",
+              "skill editing"
+            ],
+            "stability": "architecture",
+            "unknown": []
+          },
+          "end": 557,
+          "endLine": 9,
+          "entries": [
+            {
+              "key": "id",
+              "line": 2,
+              "order": 0,
+              "value": "workduck.skills.registry"
+            },
+            {
+              "key": "role",
+              "line": 3,
+              "order": 1,
+              "value": "Normalize and migrate workspace skill registries while preserving custom skills and built-in overrides."
+            },
+            {
+              "key": "owns",
+              "line": 4,
+              "order": 2,
+              "value": "skill registry normalization|legacy skill migration|skill mutations|built-in override detection"
+            },
+            {
+              "key": "excludes",
+              "line": 5,
+              "order": 3,
+              "value": "default prompt authoring|skill persistence|queue execution"
+            },
+            {
+              "key": "search",
+              "line": 6,
+              "order": 4,
+              "value": "skill registry migration|custom skill validation|skill editing"
+            },
+            {
+              "key": "invariant",
+              "line": 7,
+              "order": 5,
+              "value": "Legacy registries receive version-appropriate defaults, current removals persist, and invalid mutations preserve the registry."
+            },
+            {
+              "key": "stability",
+              "line": 8,
+              "order": 6,
+              "value": "architecture"
+            }
+          ],
+          "filePath": "src/lib/skills/skill-registry.ts",
+          "indent": "",
+          "newline": "\n",
+          "prefix": null,
+          "raw": "/* llmnav/1 module\nid=workduck.skills.registry\nrole=Normalize and migrate workspace skill registries while preserving custom skills and built-in overrides.\nowns=skill registry normalization|legacy skill migration|skill mutations|built-in override detection\nexcludes=default prompt authoring|skill persistence|queue execution\nsearch=skill registry migration|custom skill validation|skill editing\ninvariant=Legacy registries receive version-appropriate defaults, current removals persist, and invalid mutations preserve the registry.\nstability=architecture\n*/",
+          "scope": "module",
+          "specVersion": "1",
+          "start": 0,
+          "startLine": 1,
+          "style": "block",
+          "syntaxErrors": []
+        }
+      ],
+      "contentHash": "f7fef5df96f0a411addc1a6eabbbd4d1998561b7422601da7b6185d490371101",
+      "declarations": [
+        null
+      ],
       "imports": [
-        "#lib/agents/agent-evaluation.ts",
-        "#lib/shared/object-record.ts"
+        "#lib/shared/object-record.ts",
+        "./skill-defaults",
+        "./skill-schema"
       ],
       "path": "src/lib/skills/skill-registry.ts",
-      "semanticBytes": 0,
-      "sourceBytes": 53493
+      "semanticBytes": 557,
+      "sourceBytes": 14557
+    },
+    {
+      "blocks": [
+        {
+          "card": {
+            "effect": [],
+            "excludes": [
+              "default prompt content",
+              "registry mutations",
+              "skill persistence"
+            ],
+            "id": "workduck.skills.schema",
+            "invariant": [
+              "Skill records and validation share one contract independent of catalog content and storage."
+            ],
+            "owns": [
+              "skill record schema",
+              "skill registry versions",
+              "skill validation limits",
+              "built-in skill identities"
+            ],
+            "rel": [],
+            "risk": [],
+            "role": "Define skill record contracts, stable built-in identities, output kinds, and validation limits.",
+            "scope": "module",
+            "search": [
+              "skill record schema",
+              "skill validation limits",
+              "skill output types"
+            ],
+            "stability": "contract",
+            "unknown": []
+          },
+          "end": 507,
+          "endLine": 9,
+          "entries": [
+            {
+              "key": "id",
+              "line": 2,
+              "order": 0,
+              "value": "workduck.skills.schema"
+            },
+            {
+              "key": "role",
+              "line": 3,
+              "order": 1,
+              "value": "Define skill record contracts, stable built-in identities, output kinds, and validation limits."
+            },
+            {
+              "key": "owns",
+              "line": 4,
+              "order": 2,
+              "value": "skill record schema|skill registry versions|skill validation limits|built-in skill identities"
+            },
+            {
+              "key": "excludes",
+              "line": 5,
+              "order": 3,
+              "value": "default prompt content|registry mutations|skill persistence"
+            },
+            {
+              "key": "search",
+              "line": 6,
+              "order": 4,
+              "value": "skill record schema|skill validation limits|skill output types"
+            },
+            {
+              "key": "invariant",
+              "line": 7,
+              "order": 5,
+              "value": "Skill records and validation share one contract independent of catalog content and storage."
+            },
+            {
+              "key": "stability",
+              "line": 8,
+              "order": 6,
+              "value": "contract"
+            }
+          ],
+          "filePath": "src/lib/skills/skill-schema.ts",
+          "indent": "",
+          "newline": "\n",
+          "prefix": null,
+          "raw": "/* llmnav/1 module\nid=workduck.skills.schema\nrole=Define skill record contracts, stable built-in identities, output kinds, and validation limits.\nowns=skill record schema|skill registry versions|skill validation limits|built-in skill identities\nexcludes=default prompt content|registry mutations|skill persistence\nsearch=skill record schema|skill validation limits|skill output types\ninvariant=Skill records and validation share one contract independent of catalog content and storage.\nstability=contract\n*/",
+          "scope": "module",
+          "specVersion": "1",
+          "start": 0,
+          "startLine": 1,
+          "style": "block",
+          "syntaxErrors": []
+        }
+      ],
+      "contentHash": "14c7f330c7fd67d6082d570ed44a4c67bd6f667ae1e57b3be91e6502785e58d5",
+      "declarations": [
+        null
+      ],
+      "imports": [],
+      "path": "src/lib/skills/skill-schema.ts",
+      "semanticBytes": 507,
+      "sourceBytes": 3819
     },
     {
       "blocks": [],

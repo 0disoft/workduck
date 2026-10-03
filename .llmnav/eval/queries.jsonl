@@ -65,3 +65,6 @@
 {"query":"Windows task path matching latest repository task mapping and task run state labels","expected":["workduck.projects.task-run-mapping"]}
 {"query":"project registry save late registry write response and workspace save ownership","expected":["workduck.projects.registry-writer"]}
 {"query":"preserve concurrent project field edits in the latest pending registry draft","expected":["workduck.projects.registry-writer"]}
+{"query":"skill registry migration custom skill validation and editing","expected":["workduck.skills.registry"]}
+{"query":"built-in skills default skill prompts and option presets","expected":["workduck.skills.defaults"]}
+{"query":"skill record schema validation limits and output types","expected":["workduck.skills.schema"]}

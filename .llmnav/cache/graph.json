@@ -377,6 +377,48 @@
         "type": "local-import"
       },
       "to": "workduck/workduck.queue.artifacts"
+    },
+    {
+      "confidence": 0.85,
+      "from": "workduck/workduck.skills.defaults",
+      "id": "f796e688c82ed8d07cd6ce0a5761be1ccbc21fc9a5330dd6d3dd5cc0ebdde122",
+      "kind": "imports",
+      "provenance": {
+        "generator": "llmnav",
+        "line": null,
+        "path": "src/lib/skills/skill-defaults.ts",
+        "source": "src/lib/skills/skill-defaults.ts",
+        "type": "local-import"
+      },
+      "to": "workduck/workduck.skills.schema"
+    },
+    {
+      "confidence": 0.85,
+      "from": "workduck/workduck.skills.registry",
+      "id": "648b31f3a9d07138928ca2d47c58b6fcf06e84c6891e25076ab5eae8fbe7a071",
+      "kind": "imports",
+      "provenance": {
+        "generator": "llmnav",
+        "line": null,
+        "path": "src/lib/skills/skill-registry.ts",
+        "source": "src/lib/skills/skill-registry.ts",
+        "type": "local-import"
+      },
+      "to": "workduck/workduck.skills.defaults"
+    },
+    {
+      "confidence": 0.85,
+      "from": "workduck/workduck.skills.registry",
+      "id": "a544b47f9ba81e16508104db5b9e1095d83d9f5f113aea8a09d42ea4a901d715",
+      "kind": "imports",
+      "provenance": {
+        "generator": "llmnav",
+        "line": null,
+        "path": "src/lib/skills/skill-registry.ts",
+        "source": "src/lib/skills/skill-registry.ts",
+        "type": "local-import"
+      },
+      "to": "workduck/workduck.skills.schema"
     }
   ],
   "nodes": [
@@ -1661,6 +1703,72 @@
     {
       "definitions": [],
       "external": false,
+      "key": "workduck/workduck.skills.defaults",
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src/lib/skills/skill-defaults.ts",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "repositoryId": "workduck",
+      "role": "Own the built-in skill catalog with authored prompts, option presets, and original timestamps.",
+      "semanticId": "workduck.skills.defaults",
+      "unresolved": false
+    },
+    {
+      "definitions": [],
+      "external": false,
+      "key": "workduck/workduck.skills.registry",
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src/lib/skills/skill-registry.ts",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "repositoryId": "workduck",
+      "role": "Normalize and migrate workspace skill registries while preserving custom skills and built-in overrides.",
+      "semanticId": "workduck.skills.registry",
+      "unresolved": false
+    },
+    {
+      "definitions": [],
+      "external": false,
+      "key": "workduck/workduck.skills.schema",
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src/lib/skills/skill-schema.ts",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "repositoryId": "workduck",
+      "role": "Define skill record contracts, stable built-in identities, output kinds, and validation limits.",
+      "semanticId": "workduck.skills.schema",
+      "unresolved": false
+    },
+    {
+      "definitions": [],
+      "external": false,
       "key": "workduck/workduck.system.autostart-native",
       "location": {
         "declarationLine": null,
@@ -1947,11 +2055,11 @@
   ],
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "f470c63778722f05456a8145abd8c376fc88072560562eab659add187d5cbc83",
+  "sourceHash": "d62ba965b99875ac4d9608f87f5d5d62cea4a3f26820c324480a6da4e40ce9dd",
   "stats": {
-    "edgeCount": 27,
+    "edgeCount": 30,
     "importedIndexCount": 0,
-    "nodeCount": 70,
+    "nodeCount": 73,
     "unresolvedNodeCount": 0
   }
 }
