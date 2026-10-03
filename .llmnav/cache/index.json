@@ -367,8 +367,8 @@
         "repository Git operations"
       ],
       "hashes": {
-        "body": "0786108d362ae07b1a3d1e6a33289a56e56f41ffa44aa00388d08a27495a3f1e",
-        "semantic": "6cc132a951e2eeb149ec919af40348de53078c5b6780a09cfc061ed7c09997a3",
+        "body": "823f2988ab901f5219af061962a4e517ac99dcb63b3ca4742448e4ab3f75bae0",
+        "semantic": "7c1ae604e5cb809bbd383568019038396430b27b557aa1c78ce73b3ccc2fdc08",
         "structure": "6f6256f66daa5025ebca5d499e7e432b3a7c7493036fdb4605216d014e1f4b64"
       },
       "id": "workduck.projects.storage",
@@ -378,7 +378,7 @@
         "./project-registry"
       ],
       "invariant": [
-        "A failed SQLite read or write returns an explicit error together with the safest available registry state."
+        "Overlapping writes run in request order, legacy promotion rechecks SQLite before writing, and independent reads or workspaces remain concurrent."
       ],
       "location": {
         "declarationLine": null,
@@ -396,7 +396,8 @@
       "owns": [
         "project registry persistence",
         "legacy registry promotion",
-        "registry change notifications"
+        "registry change notifications",
+        "workspace operation ordering"
       ],
       "role": "Persist workspace project registries through Tauri SQLite while migrating and preserving the browser legacy fallback.",
       "scope": "module",
@@ -3489,6 +3490,6 @@
   "generatedBy": "llmnav@0.9.7",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "389b53e42a9fc1ec85146c8f8bc8360d8e7d1de05ae7ce82802fc21249eea722",
+  "sourceHash": "bc01a7d851765e744ea8f895d11cec97a8d71fcc1161cc0e987790aa26fc90bb",
   "specVersion": "1"
 }

@@ -7665,7 +7665,7 @@
     },
     {
       "blocks": [],
-      "contentHash": "7af452b335fe7eb22533ac12cbf4b7c4b0c5e50f9fde714a02447e33e8304a14",
+      "contentHash": "489a3ae611f880a348e2c3c7d4916f34550abd2e49122a94205d64424ab8c2fa",
       "declarations": [],
       "imports": [
         "#lib/tauri/tauri-invoke.ts",
@@ -7676,7 +7676,7 @@
       ],
       "path": "src/lib/projects/project-board-folder-repair.test.ts",
       "semanticBytes": 0,
-      "sourceBytes": 4486
+      "sourceBytes": 4515
     },
     {
       "blocks": [],
@@ -9134,6 +9134,20 @@
       "sourceBytes": 35838
     },
     {
+      "blocks": [],
+      "contentHash": "f74ab46b5e198fca28d5d577d5e539901f37e4c0e6a94b620977e1f914d1d8b5",
+      "declarations": [],
+      "imports": [
+        "#lib/tauri/tauri-invoke.ts",
+        "./project-registry",
+        "./project-storage",
+        "bun:test"
+      ],
+      "path": "src/lib/projects/project-storage.test.ts",
+      "semanticBytes": 0,
+      "sourceBytes": 7236
+    },
+    {
       "blocks": [
         {
           "card": {
@@ -9144,12 +9158,13 @@
             ],
             "id": "workduck.projects.storage",
             "invariant": [
-              "A failed SQLite read or write returns an explicit error together with the safest available registry state."
+              "Overlapping writes run in request order, legacy promotion rechecks SQLite before writing, and independent reads or workspaces remain concurrent."
             ],
             "owns": [
               "project registry persistence",
               "legacy registry promotion",
-              "registry change notifications"
+              "registry change notifications",
+              "workspace operation ordering"
             ],
             "rel": [],
             "risk": [],
@@ -9163,7 +9178,7 @@
             "stability": "architecture",
             "unknown": []
           },
-          "end": 549,
+          "end": 616,
           "endLine": 9,
           "entries": [
             {
@@ -9182,7 +9197,7 @@
               "key": "owns",
               "line": 4,
               "order": 2,
-              "value": "project registry persistence|legacy registry promotion|registry change notifications"
+              "value": "project registry persistence|legacy registry promotion|registry change notifications|workspace operation ordering"
             },
             {
               "key": "excludes",
@@ -9200,7 +9215,7 @@
               "key": "invariant",
               "line": 7,
               "order": 5,
-              "value": "A failed SQLite read or write returns an explicit error together with the safest available registry state."
+              "value": "Overlapping writes run in request order, legacy promotion rechecks SQLite before writing, and independent reads or workspaces remain concurrent."
             },
             {
               "key": "stability",
@@ -9213,7 +9228,7 @@
           "indent": "",
           "newline": "\n",
           "prefix": null,
-          "raw": "/* llmnav/1 module\nid=workduck.projects.storage\nrole=Persist workspace project registries through Tauri SQLite while migrating and preserving the browser legacy fallback.\nowns=project registry persistence|legacy registry promotion|registry change notifications\nexcludes=project domain normalization|repository Git operations\nsearch=project registry storage|sqlite registry migration|legacy project registry\ninvariant=A failed SQLite read or write returns an explicit error together with the safest available registry state.\nstability=architecture\n*/",
+          "raw": "/* llmnav/1 module\nid=workduck.projects.storage\nrole=Persist workspace project registries through Tauri SQLite while migrating and preserving the browser legacy fallback.\nowns=project registry persistence|legacy registry promotion|registry change notifications|workspace operation ordering\nexcludes=project domain normalization|repository Git operations\nsearch=project registry storage|sqlite registry migration|legacy project registry\ninvariant=Overlapping writes run in request order, legacy promotion rechecks SQLite before writing, and independent reads or workspaces remain concurrent.\nstability=architecture\n*/",
           "scope": "module",
           "specVersion": "1",
           "start": 0,
@@ -9222,7 +9237,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "0786108d362ae07b1a3d1e6a33289a56e56f41ffa44aa00388d08a27495a3f1e",
+      "contentHash": "823f2988ab901f5219af061962a4e517ac99dcb63b3ca4742448e4ab3f75bae0",
       "declarations": [
         null
       ],
@@ -9232,8 +9247,8 @@
         "./project-registry"
       ],
       "path": "src/lib/projects/project-storage.ts",
-      "semanticBytes": 549,
-      "sourceBytes": 19132
+      "semanticBytes": 616,
+      "sourceBytes": 21203
     },
     {
       "blocks": [],

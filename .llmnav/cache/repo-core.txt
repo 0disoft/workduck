@@ -21,9 +21,9 @@ invariant Dropping an active process owner or shutting down the app cannot inten
 
 @workduck.projects.storage
 role Persist workspace project registries through Tauri SQLite while migrating and preserving the browser legacy fallback.
-owns project registry persistence, legacy registry promotion, registry change notifications
+owns project registry persistence, legacy registry promotion, registry change notifications, workspace operation ordering
 excludes project domain normalization, repository Git operations
-invariant A failed SQLite read or write returns an explicit error together with the safest available registry state.
+invariant Overlapping writes run in request order, legacy promotion rechecks SQLite before writing, and independent reads or workspaces remain concurrent.
 
 @workduck.projects.folder
 role Create, open, and delete bounded project folders and preview or apply ssealed scaffolds through Tauri commands.

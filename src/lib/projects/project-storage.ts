@@ -1,10 +1,10 @@
 /* llmnav/1 module
 id=workduck.projects.storage
 role=Persist workspace project registries through Tauri SQLite while migrating and preserving the browser legacy fallback.
-owns=project registry persistence|legacy registry promotion|registry change notifications
+owns=project registry persistence|legacy registry promotion|registry change notifications|workspace operation ordering
 excludes=project domain normalization|repository Git operations
 search=project registry storage|sqlite registry migration|legacy project registry
-invariant=A failed SQLite read or write returns an explicit error together with the safest available registry state.
+invariant=Overlapping writes run in request order, legacy promotion rechecks SQLite before writing, and independent reads or workspaces remain concurrent.
 stability=architecture
 */
 
@@ -25,6 +25,25 @@ const PROJECT_REGISTRY_SQLITE_MIGRATION_STORAGE_KEY = 'workduck.projectRegistrie
 const PROJECT_REGISTRY_SQLITE_RETRY_ATTEMPTS = 3;
 const PROJECT_REGISTRY_SQLITE_RETRY_DELAY_MS = 150;
 export const WORKDUCK_PROJECT_REGISTRY_CHANGED_EVENT = 'workduck:project-registry-changed';
+const workspaceOperationTails = new Map<string, Promise<void>>();
+
+function sequenceProjectRegistryOperation<T>(workspaceIds: readonly string[], operation: () => Promise<T>) {
+	const ids = [...new Set(workspaceIds)];
+	const dependencies = ids.flatMap((id) => {
+		const pending = workspaceOperationTails.get(id);
+		return pending === undefined ? [] : [pending];
+	});
+	const result = Promise.all(dependencies).then(operation);
+	// Completion tails release dependent operations even when the current operation fails.
+	const completion = result.then(() => {}, () => {});
+	for (const id of ids) workspaceOperationTails.set(id, completion);
+	void completion.then(() => {
+		for (const id of ids) {
+			if (workspaceOperationTails.get(id) === completion) workspaceOperationTails.delete(id);
+		}
+	});
+	return result;
+}
 
 export type ProjectRegistryStorageError =
 	| 'project-registry-read-failed'
@@ -81,6 +100,10 @@ interface ProjectRegistryWriteResponse {
 }
 
 export async function readProjectRegistry(workspaceId: string): Promise<ProjectRegistryStorageResult> {
+	return readProjectRegistryNow(workspaceId);
+}
+
+async function readProjectRegistryNow(workspaceId: string, promotionQueued = false): Promise<ProjectRegistryStorageResult> {
 	const emptyRegistry = createEmptyProjectRegistry(workspaceId);
 	const legacyRegistry = readLegacyProjectRegistry(workspaceId);
 
@@ -118,6 +141,9 @@ export async function readProjectRegistry(workspaceId: string): Promise<ProjectR
 	const sqliteRegistry = sqliteRegistryResult.registry;
 
 	if (shouldPromoteLegacyRegistry(workspaceId, sqliteRegistry, legacyRegistry)) {
+		if (!promotionQueued) {
+			return sequenceProjectRegistryOperation([workspaceId], () => readProjectRegistryNow(workspaceId, true));
+		}
 		const writeResult = await writeProjectRegistryToSqlite(legacyRegistry);
 
 		if (!writeResult.ok) {
@@ -143,6 +169,12 @@ export async function writeProjectRegistry(
 	registry: ProjectRegistry
 ): Promise<ProjectRegistryStorageResult> {
 	const normalizedRegistry = normalizeProjectRegistry(registry, registry.workspaceId);
+	return sequenceProjectRegistryOperation([normalizedRegistry.workspaceId], () =>
+		writeProjectRegistryNow(normalizedRegistry)
+	);
+}
+
+async function writeProjectRegistryNow(normalizedRegistry: ProjectRegistry): Promise<ProjectRegistryStorageResult> {
 
 	if (typeof window === 'undefined') {
 		return { ok: false, registry: normalizedRegistry, error: 'project-registry-write-failed' };
@@ -179,6 +211,11 @@ export async function writeProjectRegistry(
 export async function readProjectRegistries(
 	workspaceIds: readonly string[]
 ): Promise<ProjectRegistriesStorageResult> {
+	const ids = [...workspaceIds];
+	return readProjectRegistriesNow(ids);
+}
+
+async function readProjectRegistriesNow(workspaceIds: readonly string[], promotionQueued = false): Promise<ProjectRegistriesStorageResult> {
 	const fallbackRegistries: Record<string, ProjectRegistry> = Object.fromEntries(
 		workspaceIds.map((workspaceId) => [workspaceId, readLegacyProjectRegistry(workspaceId)])
 	);
@@ -229,6 +266,9 @@ export async function readProjectRegistries(
 	}
 
 	if (Object.keys(registriesToPromote).length > 0) {
+		if (!promotionQueued) {
+			return sequenceProjectRegistryOperation(workspaceIds, () => readProjectRegistriesNow(workspaceIds, true));
+		}
 		const writeResult = await writeProjectRegistriesToSqlite(registriesToPromote);
 
 		if (!writeResult.ok) {
@@ -273,6 +313,12 @@ export async function writeProjectRegistries(
 			normalizeProjectRegistry(registry, workspaceId)
 		])
 	);
+	return sequenceProjectRegistryOperation(Object.keys(normalizedRegistries), () =>
+		writeProjectRegistriesNow(normalizedRegistries)
+	);
+}
+
+async function writeProjectRegistriesNow(normalizedRegistries: Record<string, ProjectRegistry>): Promise<ProjectRegistriesStorageResult> {
 
 	if (typeof window === 'undefined') {
 		return {
