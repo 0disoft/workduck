@@ -3444,26 +3444,23 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "f35c7e2a9c87af9dfb73ec22d9ad0c6c301c4ba6d9041b1da437f478a096329a",
+      "contentHash": "d5d5be7f5bdcd81dd322cb01d5443cf415545b17e6e482b548b3312a4db3380f",
       "declarations": [
         null
       ],
       "imports": [
-        "crate::queue_execution_identity::unique_token",
-        "crate::queue_prompt_builder::{create_work_order_user_prompt_blocks, queue_prompt_labels}",
-        "crate::queue_response_parser::{parse_structured_agent_response, parse_vote_ballot}",
-        "crate::queue_result_report::create_success_report_task",
-        "crate::{\n    atomic_file_write::{AtomicFileWriteError, write_file_exclusively},\n    path_display::display_path,\n    queue_execution_registry::{\n        acquire_queue_execution, cancel_running_queue_execution,\n        register_queue_execution_abort_handle, running_queue_work_order_ids,\n    },\n    queue_limits::{\n        QUEUE_EXECUTION_MAX_RUNS, QUEUE_TASK_MAX_AGENTS, QUEUE_WORK_ORDER_MAX_TASKS,\n        acquire_queue_execution_permit,\n    },\n    queue_execution_identity::{slugify, timestamp_for_file_name},\n    queue_work_order_execution::{\n        QueueWorkOrderCompletion, begin_queue_work_order_execution, canonicalize_queue_workspace,\n    },\n    system_environment::read_cli_user_environment_variable,\n}",
+        "crate::{\n    atomic_file_write::{AtomicFileWriteError, write_file_exclusively},\n    path_display::display_path,\n    queue_execution_identity::{slugify, timestamp_for_file_name},\n    queue_execution_registry::{\n        acquire_queue_execution, cancel_running_queue_execution,\n        register_queue_execution_abort_handle, running_queue_work_order_ids,\n    },\n    queue_limits::acquire_queue_execution_permit,\n    queue_work_order_execution::{\n        QueueWorkOrderCompletion, begin_queue_work_order_execution, canonicalize_queue_workspace,\n    },\n}",
         "futures_util::future::{AbortHandle, Abortable}",
+        "planning",
+        "planning::validate_queue_execution_confirmation",
         "serde::{Deserialize, Serialize}",
         "serde_json::Value",
-        "sha2::{Digest, Sha256}",
-        "std::{\n    env, fs, io,\n    path::{Path, PathBuf},\n}",
-        "tests {\n    use super::*"
+        "std::{\n    fs, io,\n    path::{Path, PathBuf},\n}",
+        "tests"
       ],
       "path": "src-tauri/src/queue_execution.rs",
       "semanticBytes": 625,
-      "sourceBytes": 68317
+      "sourceBytes": 24631
     },
     {
       "blocks": [],
@@ -3479,6 +3476,113 @@
       "sourceBytes": 1543
     },
     {
+      "blocks": [
+        {
+          "card": {
+            "effect": [],
+            "excludes": [
+              "provider HTTP requests",
+              "execution cancellation",
+              "report persistence"
+            ],
+            "id": "workduck.queue.execution-planning",
+            "invariant": [
+              "Previews never resolve API secrets, run and task caps are checked before resolution, and execution validates the current prompt estimate token."
+            ],
+            "owns": [
+              "agent and context selection",
+              "provider model and secret resolution",
+              "execution estimates and confirmation tokens",
+              "work order limits"
+            ],
+            "rel": [],
+            "risk": [],
+            "role": "Build secret-free prompt previews and bounded execution plans, resolve run configuration, and bind execution confirmation to the reviewed prompts.",
+            "scope": "module",
+            "search": [
+              "queue execution plan",
+              "prompt preview estimate",
+              "confirm queue execution token"
+            ],
+            "stability": "architecture",
+            "unknown": []
+          },
+          "end": 705,
+          "endLine": 9,
+          "entries": [
+            {
+              "key": "id",
+              "line": 2,
+              "order": 0,
+              "value": "workduck.queue.execution-planning"
+            },
+            {
+              "key": "role",
+              "line": 3,
+              "order": 1,
+              "value": "Build secret-free prompt previews and bounded execution plans, resolve run configuration, and bind execution confirmation to the reviewed prompts."
+            },
+            {
+              "key": "owns",
+              "line": 4,
+              "order": 2,
+              "value": "agent and context selection|provider model and secret resolution|execution estimates and confirmation tokens|work order limits"
+            },
+            {
+              "key": "excludes",
+              "line": 5,
+              "order": 3,
+              "value": "provider HTTP requests|execution cancellation|report persistence"
+            },
+            {
+              "key": "search",
+              "line": 6,
+              "order": 4,
+              "value": "queue execution plan|prompt preview estimate|confirm queue execution token"
+            },
+            {
+              "key": "invariant",
+              "line": 7,
+              "order": 5,
+              "value": "Previews never resolve API secrets, run and task caps are checked before resolution, and execution validates the current prompt estimate token."
+            },
+            {
+              "key": "stability",
+              "line": 8,
+              "order": 6,
+              "value": "architecture"
+            }
+          ],
+          "filePath": "src-tauri/src/queue_execution_planning.rs",
+          "indent": "",
+          "newline": "\n",
+          "prefix": "//",
+          "raw": "// llmnav/1 module\n// id=workduck.queue.execution-planning\n// role=Build secret-free prompt previews and bounded execution plans, resolve run configuration, and bind execution confirmation to the reviewed prompts.\n// owns=agent and context selection|provider model and secret resolution|execution estimates and confirmation tokens|work order limits\n// excludes=provider HTTP requests|execution cancellation|report persistence\n// search=queue execution plan|prompt preview estimate|confirm queue execution token\n// invariant=Previews never resolve API secrets, run and task caps are checked before resolution, and execution validates the current prompt estimate token.\n// stability=architecture\n// /llmnav\n",
+          "scope": "module",
+          "specVersion": "1",
+          "start": 0,
+          "startLine": 1,
+          "style": "line",
+          "syntaxErrors": []
+        }
+      ],
+      "contentHash": "904d74a38dd461ce99b17e137d334d1e053c5098b76af322f1291f00035ded6b",
+      "declarations": [
+        null
+      ],
+      "imports": [
+        "crate::queue_limits::{\n    QUEUE_EXECUTION_MAX_RUNS, QUEUE_TASK_MAX_AGENTS, QUEUE_WORK_ORDER_MAX_TASKS,\n}",
+        "crate::queue_prompt_builder::{\n    create_agent_prompt_plan, create_system_prompt, create_user_prompt,\n}",
+        "crate::system_environment::read_cli_user_environment_variable",
+        "sha2::{Digest, Sha256}",
+        "std::env",
+        "super::{\n    AgentExecutionRun, AgentRecord, EnvironmentSecretRecord, EnvironmentVault, PersonaRecord,\n    QueueExecutionErrorDetail, QueueExecutionEstimate, QueueExecutionRequest, QueuePromptPreview,\n    QueueWorkOrder, ReferenceRecord, ResolvedSecret, SkillRecord,\n}"
+      ],
+      "path": "src-tauri/src/queue_execution_planning.rs",
+      "semanticBytes": 705,
+      "sourceBytes": 20189
+    },
+    {
       "blocks": [],
       "contentHash": "9fe36308c6176070cb77e2ef90160a3fd2a82e289db857634f3e1da24d0bb971",
       "declarations": [],
@@ -3492,6 +3596,22 @@
       "path": "src-tauri/src/queue_execution_registry.rs",
       "semanticBytes": 0,
       "sourceBytes": 10639
+    },
+    {
+      "blocks": [],
+      "contentHash": "c0d393773ac8872180fb35a4d0934598b77994ad0b6469c2082c5a118ac1ca54",
+      "declarations": [],
+      "imports": [
+        "crate::queue_execution_identity::unique_token",
+        "crate::queue_prompt_builder::{create_work_order_user_prompt_blocks, queue_prompt_labels}",
+        "crate::queue_response_parser::{parse_structured_agent_response, parse_vote_ballot}",
+        "crate::queue_result_report::create_success_report_task",
+        "super::*",
+        "super::planning::resolve_agent_linked_secret"
+      ],
+      "path": "src-tauri/src/queue_execution_tests.rs",
+      "semanticBytes": 0,
+      "sourceBytes": 22754
     },
     {
       "blocks": [

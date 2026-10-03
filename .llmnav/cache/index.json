@@ -1611,23 +1611,20 @@
         "Queue folder CRUD"
       ],
       "hashes": {
-        "body": "f35c7e2a9c87af9dfb73ec22d9ad0c6c301c4ba6d9041b1da437f478a096329a",
+        "body": "d5d5be7f5bdcd81dd322cb01d5443cf415545b17e6e482b548b3312a4db3380f",
         "semantic": "76d96e39212faa79a8367d5cdbc043ea7df2c73c3de7483e1f2526280f8eb5a1",
-        "structure": "ef93a368f1826de51b3c90f51f2d9da573372d5c64099a6eff22f188cd01ce03"
+        "structure": "13df21975fec43803bb8adda9648982824fb3355a1b84eefe8eb7f1e072c0305"
       },
       "id": "workduck.queue.execution-native",
       "imports": [
-        "crate::queue_execution_identity::unique_token",
-        "crate::queue_prompt_builder::{create_work_order_user_prompt_blocks, queue_prompt_labels}",
-        "crate::queue_response_parser::{parse_structured_agent_response, parse_vote_ballot}",
-        "crate::queue_result_report::create_success_report_task",
-        "crate::{\n    atomic_file_write::{AtomicFileWriteError, write_file_exclusively},\n    path_display::display_path,\n    queue_execution_registry::{\n        acquire_queue_execution, cancel_running_queue_execution,\n        register_queue_execution_abort_handle, running_queue_work_order_ids,\n    },\n    queue_limits::{\n        QUEUE_EXECUTION_MAX_RUNS, QUEUE_TASK_MAX_AGENTS, QUEUE_WORK_ORDER_MAX_TASKS,\n        acquire_queue_execution_permit,\n    },\n    queue_execution_identity::{slugify, timestamp_for_file_name},\n    queue_work_order_execution::{\n        QueueWorkOrderCompletion, begin_queue_work_order_execution, canonicalize_queue_workspace,\n    },\n    system_environment::read_cli_user_environment_variable,\n}",
+        "crate::{\n    atomic_file_write::{AtomicFileWriteError, write_file_exclusively},\n    path_display::display_path,\n    queue_execution_identity::{slugify, timestamp_for_file_name},\n    queue_execution_registry::{\n        acquire_queue_execution, cancel_running_queue_execution,\n        register_queue_execution_abort_handle, running_queue_work_order_ids,\n    },\n    queue_limits::acquire_queue_execution_permit,\n    queue_work_order_execution::{\n        QueueWorkOrderCompletion, begin_queue_work_order_execution, canonicalize_queue_workspace,\n    },\n}",
         "futures_util::future::{AbortHandle, Abortable}",
+        "planning",
+        "planning::validate_queue_execution_confirmation",
         "serde::{Deserialize, Serialize}",
         "serde_json::Value",
-        "sha2::{Digest, Sha256}",
-        "std::{\n    env, fs, io,\n    path::{Path, PathBuf},\n}",
-        "tests {\n    use super::*"
+        "std::{\n    fs, io,\n    path::{Path, PathBuf},\n}",
+        "tests"
       ],
       "invariant": [
         "Execution requires the current estimate token, respects global and provider permits, and never exposes resolved secrets through prompt previews."
@@ -3025,11 +3022,63 @@
         "coalesce Git status reads"
       ],
       "stability": "architecture"
+    },
+    {
+      "boundaries": [],
+      "excludes": [
+        "provider HTTP requests",
+        "execution cancellation",
+        "report persistence"
+      ],
+      "hashes": {
+        "body": "904d74a38dd461ce99b17e137d334d1e053c5098b76af322f1291f00035ded6b",
+        "semantic": "8e02983829df85da4bb360678606dd54225e69504b1445214b264690bd15fb69",
+        "structure": "823b8f27ce38867bc84da9a2ffbb3736963c823a37d631f0c1ff18e4822942cd"
+      },
+      "id": "workduck.queue.execution-planning",
+      "imports": [
+        "crate::queue_limits::{\n    QUEUE_EXECUTION_MAX_RUNS, QUEUE_TASK_MAX_AGENTS, QUEUE_WORK_ORDER_MAX_TASKS,\n}",
+        "crate::queue_prompt_builder::{\n    create_agent_prompt_plan, create_system_prompt, create_user_prompt,\n}",
+        "crate::system_environment::read_cli_user_environment_variable",
+        "sha2::{Digest, Sha256}",
+        "std::env",
+        "super::{\n    AgentExecutionRun, AgentRecord, EnvironmentSecretRecord, EnvironmentVault, PersonaRecord,\n    QueueExecutionErrorDetail, QueueExecutionEstimate, QueueExecutionRequest, QueuePromptPreview,\n    QueueWorkOrder, ReferenceRecord, ResolvedSecret, SkillRecord,\n}"
+      ],
+      "invariant": [
+        "Previews never resolve API secrets, run and task caps are checked before resolution, and execution validates the current prompt estimate token."
+      ],
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src-tauri/src/queue_execution_planning.rs",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "owns": [
+        "agent and context selection",
+        "provider model and secret resolution",
+        "execution estimates and confirmation tokens",
+        "work order limits"
+      ],
+      "role": "Build secret-free prompt previews and bounded execution plans, resolve run configuration, and bind execution confirmation to the reviewed prompts.",
+      "scope": "module",
+      "search": [
+        "queue execution plan",
+        "prompt preview estimate",
+        "confirm queue execution token"
+      ],
+      "stability": "architecture"
     }
   ],
   "contractFingerprints": {
     "configuration": {
-      "sha256": "b9373d986572cf03d0afc01cada2ebfb444bb9c646a5ce9f20a802d63c9dc1e3"
+      "sha256": "8ad86f60f7c0db3c4e65754fd03ff723cf0ce092d90edfba55581e728fcb09bf"
     },
     "exportedApi": {
       "count": 0,
@@ -3040,6 +3089,6 @@
   "generatedBy": "llmnav@0.9.7",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "59ee5370d713a179cd330d1236b90ba9389c102679861a7811f4d4aa9af34338",
+  "sourceHash": "1a90b62b7653c59a75f5795ec174a68c799109ec6c1942095b8c5855b8381a15",
   "specVersion": "1"
 }

@@ -126,3 +126,9 @@ role Inspect repository status and remotes with bounded read-only Git processes,
 owns repository Git status parsing, inspection request coalescing, remote URL cache and diagnostics
 excludes Git mutations, GitHub publication, clone credentials
 invariant Inspections avoid credential helpers and index writes, and concurrent callers for one repository share the same in-flight result.
+
+@workduck.queue.execution-planning
+role Build secret-free prompt previews and bounded execution plans, resolve run configuration, and bind execution confirmation to the reviewed prompts.
+owns agent and context selection, provider model and secret resolution, execution estimates and confirmation tokens, work order limits
+excludes provider HTTP requests, execution cancellation, report persistence
+invariant Previews never resolve API secrets, run and task caps are checked before resolution, and execution validates the current prompt estimate token.

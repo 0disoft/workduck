@@ -42,3 +42,9 @@ role Recover bounded structured summaries and vote ballots from JSON or labeled 
 owns structured agent response parsing, vote ballot parsing, tool transcript detection
 excludes prompt construction, Queue execution
 invariant Vote ballots are parsed only when the selected choice belongs to the supplied specification; other responses remain unparsed.
+
+@workduck.queue.execution-planning
+role Build secret-free prompt previews and bounded execution plans, resolve run configuration, and bind execution confirmation to the reviewed prompts.
+owns agent and context selection, provider model and secret resolution, execution estimates and confirmation tokens, work order limits
+excludes provider HTTP requests, execution cancellation, report persistence
+invariant Previews never resolve API secrets, run and task caps are checked before resolution, and execution validates the current prompt estimate token.

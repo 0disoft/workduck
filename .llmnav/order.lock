@@ -59,3 +59,4 @@ workduck.projects.task-commands
 workduck.projects.task-history
 workduck.projects.scaffold-transaction
 workduck.projects.git-inspection
+workduck.queue.execution-planning

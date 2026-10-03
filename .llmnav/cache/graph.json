@@ -1057,6 +1057,28 @@
     {
       "definitions": [],
       "external": false,
+      "key": "workduck/workduck.queue.execution-planning",
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src-tauri/src/queue_execution_planning.rs",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "repositoryId": "workduck",
+      "role": "Build secret-free prompt previews and bounded execution plans, resolve run configuration, and bind execution confirmation to the reviewed prompts.",
+      "semanticId": "workduck.queue.execution-planning",
+      "unresolved": false
+    },
+    {
+      "definitions": [],
+      "external": false,
       "key": "workduck/workduck.queue.folder",
       "location": {
         "declarationLine": null,
@@ -1497,11 +1519,11 @@
   ],
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "c3aeeff96a8d59608bf5a66095011a05c6bc67f6630ce8bee1717a4a43ebdd0f",
+  "sourceHash": "1acba5f5a2e342b34af03d3ae68c568fcbbdf83d425bef2e82c101b41f1f619f",
   "stats": {
     "edgeCount": 9,
     "importedIndexCount": 0,
-    "nodeCount": 61,
+    "nodeCount": 62,
     "unresolvedNodeCount": 0
   }
 }
