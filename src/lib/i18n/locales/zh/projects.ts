@@ -1,5 +1,6 @@
 export const zhProjectsMessages = {
 	newProject: '新建项目',
+	reloadProjects: '重新加载当前项目',
 	newGroup: '新建分组',
 	newRepository: '新建仓库',
 	registeredCount: '{count} 个根项目',
@@ -406,6 +407,7 @@ export const zhProjectsMessages = {
 		'project-registry-version-unsupported':
 			'项目数据采用更新的格式。请在更新 Workduck 后重新打开项目。',
 		'project-registry-write-failed': '无法保存项目。',
+		'project-registry-revision-conflict': '项目已在其他地方被更改。请先重新加载当前项目，然后再试。',
 		'project-repository-operation-read-failed':
 			'无法加载仓库操作记录。',
 		'project-repository-operation-write-failed':

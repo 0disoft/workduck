@@ -1,5 +1,6 @@
 export const esProjectsMessages = {
 		newProject: 'Nuevo proyecto',
+		reloadProjects: 'Recargar proyectos actuales',
 		newGroup: 'Nuevo grupo',
 		newRepository: 'Nuevo repositorio',
 		registeredCount: '{count} proyectos raíz',
@@ -407,6 +408,7 @@ export const esProjectsMessages = {
 			'project-registry-version-unsupported':
 				'Los datos del proyecto usan un formato más nuevo. Actualice Workduck antes de abrir proyectos de nuevo.',
 			'project-registry-write-failed': 'No se pudieron guardar los proyectos.',
+			'project-registry-revision-conflict': 'Los proyectos han cambiado en otro lugar. Recarga los proyectos actuales antes de volver a intentarlo.',
 			'project-repository-operation-read-failed':
 				'No se pudieron cargar los registros de operaciones de repositorio.',
 			'project-repository-operation-write-failed':

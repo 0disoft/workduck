@@ -367,7 +367,7 @@
         "repository Git operations"
       ],
       "hashes": {
-        "body": "823f2988ab901f5219af061962a4e517ac99dcb63b3ca4742448e4ab3f75bae0",
+        "body": "fa2fdb602a0a089956c2271fb99cdb52a7981ffa30efaa65f2e5d145faee09c5",
         "semantic": "7c1ae604e5cb809bbd383568019038396430b27b557aa1c78ce73b3ccc2fdc08",
         "structure": "6f6256f66daa5025ebca5d499e7e432b3a7c7493036fdb4605216d014e1f4b64"
       },
@@ -3436,8 +3436,8 @@
         "repository operations"
       ],
       "hashes": {
-        "body": "fbc2abcb8582de74718a5eacaf1d55b87ee9ff41f0876d03808ab9d6a68989c6",
-        "semantic": "ec99a8c17d3bfa43ec9034651aff00ac0e69fee294ce36a1ce2de792c0f4be35",
+        "body": "961b8441a0e6fd8efd86e5f23919560dd3ec68ced81b23fdda8a586c2c2af4d0",
+        "semantic": "92066aafc434970189b7e3eab404800b4c08beb735b0589cd95689e0bd13d06b",
         "structure": "74113e8fed36d5b327ad167efdf5acc71e446d7c0dc18ef751dde4194107b8f4"
       },
       "id": "workduck.projects.registry-writer",
@@ -3448,7 +3448,7 @@
         "./project-storage"
       ],
       "invariant": [
-        "Edits build on the latest draft, failed drafts remain available for retry, and only the live initiating view receives save feedback."
+        "Edits build on the latest draft, writes compare the last accepted snapshot, conflicts require reload, and only the live initiating view receives feedback."
       ],
       "location": {
         "declarationLine": null,
@@ -3467,7 +3467,8 @@
         "registry write admission",
         "pending and failed registry drafts",
         "save result ownership",
-        "workspace view lifetime"
+        "workspace view lifetime",
+        "conflict recovery"
       ],
       "role": "Own pending project registry edits and save feedback within the initiating workspace view lifetime.",
       "scope": "module",
@@ -3543,6 +3544,6 @@
   "generatedBy": "llmnav@0.9.7",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "26aaffd2874570e617bfed6767fb2ba5ef2b6a7272cf20f5921d0ee7ba417c78",
+  "sourceHash": "db8b1bb8d43e7248abe71d2ea4b073e5517966760edd1a5778eafe483ea77fa3",
   "specVersion": "1"
 }

@@ -513,6 +513,18 @@
 		contextMenuActions.closeContextMenu();
 	}
 
+	async function reloadConflictedProjects() {
+		if (!(await persistRegistry.reload())) return;
+		formError = null;
+		dialogActions.closeDialog();
+		dialogActions.closeDeleteDialog();
+		editorActions.closeTagEditor();
+		editorActions.closeDescriptionEditor();
+		editorActions.closeDetailsEditor();
+		editorActions.closeRemoteUrlEditor();
+		editorActions.closeGithubCredentialEditor();
+	}
+
 	function openProjectBoardDialog(
 		mode: 'project' | 'group' | 'repository',
 		targetNodeId?: string
@@ -1209,6 +1221,12 @@
 	onRepositoryFavoriteToggle={toggleRepositoryFavorite}
 	onGitAction={(node, repository, action) => runRepositoryGitAction({ node, repository }, action)}
 />
+
+{#if persistRegistry.hasConflict()}
+	<button type="button" class="workduck-button" disabled={persistRegistry.isReloading()} onclick={reloadConflictedProjects}>
+		{projectMessages.reloadProjects}
+	</button>
+{/if}
 
 {#if standaloneError !== null && dialog === null && deleteCandidate === null && tagEditor === null && descriptionEditor === null && detailsEditor === null && githubCredentialEditor === null && publishTarget === null && ssealedTarget === null}
 	<p class="workduck-inline-error" aria-live="polite">{getProjectFormErrorMessage(standaloneError, projectMessages.errors)}</p>

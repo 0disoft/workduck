@@ -43,6 +43,47 @@ afterEach(() => {
 });
 
 describe('project registry storage write ordering', () => {
+	test('compares SQLite snapshots and passes the raw revision into the atomic native write', async () => {
+		const original = registry('demo', 1);
+		const raw = JSON.stringify(original, null, 2);
+		let writes = 0;
+		setTauriInvokeForTest(async <T>(command: string, args?: Record<string, unknown>) => {
+			if (command === 'read_project_registry') return { ok: true, registryJson: raw } as T;
+			writes += 1;
+			expect(args?.expectedRegistryJson).toBe(raw);
+			return { ok: false, error: 'project-registry-revision-conflict' } as T;
+		});
+		const conflict = await writeProjectRegistry(registry('demo', 2), async () => original);
+		expect(conflict.ok).toBe(false);
+		if (!conflict.ok) expect(conflict.error).toBe('project-registry-revision-conflict');
+		expect(writes).toBe(1);
+		const stale = await writeProjectRegistry(registry('demo', 3), async () => registry('demo', 2));
+		expect(stale.ok).toBe(false);
+		expect(writes).toBe(1);
+	});
+
+	test('guards first creation against a row appearing after the read', async () => {
+		setTauriInvokeForTest(async <T>(command: string, args?: Record<string, unknown>) => {
+			if (command === 'read_project_registry') return { ok: true, registryJson: null } as T;
+			expect(args?.expectedRegistryJson).toBe('null');
+			return { ok: false, error: 'project-registry-revision-conflict' } as T;
+		});
+		const result = await writeProjectRegistry(registry('demo', 2), async () => registry('demo', 1));
+		expect(result.ok).toBe(false);
+		if (!result.ok) expect(result.error).toBe('project-registry-revision-conflict');
+	});
+
+	test('protects browser fallback snapshots and rejects a different workspace baseline', async () => {
+		const original = registry('demo', 1);
+		expect((await writeProjectRegistry(original)).ok).toBe(true);
+		expect((await writeProjectRegistry(registry('demo', 2), async () => original)).ok).toBe(true);
+		const stale = await writeProjectRegistry(registry('demo', 3), async () => original);
+		expect(stale.ok).toBe(false);
+		if (!stale.ok) expect(stale.error).toBe('project-registry-revision-conflict');
+		expect((await readProjectRegistry('demo')).registry.updatedAt).toBe(registry('demo', 2).updatedAt);
+		const wrongScope = await writeProjectRegistry(registry('other', 3), async () => original);
+		expect(wrongScope.ok).toBe(false);
+	});
 	test('keeps the last requested snapshot when an earlier native write is delayed', async () => {
 		const entered = deferred();
 		const pending = deferred();

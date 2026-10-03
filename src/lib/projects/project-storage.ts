@@ -48,6 +48,7 @@ function sequenceProjectRegistryOperation<T>(workspaceIds: readonly string[], op
 export type ProjectRegistryStorageError =
 	| 'project-registry-read-failed'
 	| 'project-registry-version-unsupported'
+	| 'project-registry-revision-conflict'
 	| 'project-registry-write-failed';
 
 export type ProjectRegistryStorageResult =
@@ -166,22 +167,35 @@ async function readProjectRegistryNow(workspaceId: string, promotionQueued = fal
 }
 
 export async function writeProjectRegistry(
-	registry: ProjectRegistry
+	registry: ProjectRegistry,
+	expectedRegistry?: () => Promise<ProjectRegistry>
 ): Promise<ProjectRegistryStorageResult> {
 	const normalizedRegistry = normalizeProjectRegistry(registry, registry.workspaceId);
-	return sequenceProjectRegistryOperation([normalizedRegistry.workspaceId], () =>
-		writeProjectRegistryNow(normalizedRegistry)
-	);
+	return sequenceProjectRegistryOperation([normalizedRegistry.workspaceId], async () => {
+		try {
+			return await writeProjectRegistryNow(normalizedRegistry, await expectedRegistry?.());
+		} catch {
+			return { ok: false, registry: normalizedRegistry, error: 'project-registry-write-failed' } as const;
+		}
+	});
 }
 
-async function writeProjectRegistryNow(normalizedRegistry: ProjectRegistry): Promise<ProjectRegistryStorageResult> {
+async function writeProjectRegistryNow(normalizedRegistry: ProjectRegistry, expectedRegistry?: ProjectRegistry): Promise<ProjectRegistryStorageResult> {
 
 	if (typeof window === 'undefined') {
 		return { ok: false, registry: normalizedRegistry, error: 'project-registry-write-failed' };
 	}
+	if (expectedRegistry !== undefined && expectedRegistry.workspaceId !== normalizedRegistry.workspaceId) {
+		return { ok: false, registry: normalizedRegistry, error: 'project-registry-revision-conflict' };
+	}
 
 	if (getTauriInvoke() === undefined) {
 		try {
+			if (expectedRegistry !== undefined && !matchesExpectedRegistry(
+				readLegacyStorageRecord().registries[normalizedRegistry.workspaceId], expectedRegistry
+			)) {
+				return { ok: false, registry: normalizedRegistry, error: 'project-registry-revision-conflict' };
+			}
 			writeLegacyProjectRegistries({
 				...readLegacyStorageRecord().registries,
 				[normalizedRegistry.workspaceId]: normalizedRegistry
@@ -193,7 +207,20 @@ async function writeProjectRegistryNow(normalizedRegistry: ProjectRegistry): Pro
 		}
 	}
 
-	const writeResult = await writeProjectRegistryToSqlite(normalizedRegistry);
+	let expectedRegistryJson: string | undefined;
+	if (expectedRegistry !== undefined) {
+		const current = await readProjectRegistryFromSqliteOnce(normalizedRegistry.workspaceId);
+		if (!current.ok) return { ok: false, registry: normalizedRegistry, error: current.error };
+		const parsed = current.registryJson === null ? null : parseProjectRegistryJson(current.registryJson, normalizedRegistry.workspaceId);
+		if (parsed !== null && !parsed.ok) {
+			return { ok: false, registry: normalizedRegistry, error: mapProjectRegistryParseError(parsed.error) };
+		}
+		if (!matchesExpectedRegistry(parsed?.registry, expectedRegistry)) {
+			return { ok: false, registry: normalizedRegistry, error: 'project-registry-revision-conflict' };
+		}
+		expectedRegistryJson = current.registryJson ?? 'null';
+	}
+	const writeResult = await writeProjectRegistryToSqlite(normalizedRegistry, expectedRegistryJson);
 
 	if (!writeResult.ok) {
 		return {
@@ -206,6 +233,12 @@ async function writeProjectRegistryNow(normalizedRegistry: ProjectRegistry): Pro
 	markWorkspaceRegistryMigrated(normalizedRegistry.workspaceId);
 	dispatchProjectRegistryChanged(normalizedRegistry.workspaceId, normalizedRegistry);
 	return { ok: true, registry: normalizedRegistry };
+}
+
+function matchesExpectedRegistry(current: ProjectRegistry | undefined, expected: ProjectRegistry) {
+	// A missing row has no timestamp; its domain state is an empty registry.
+	return current === undefined ? expected.nodes.length === 0 :
+		serializeProjectRegistry(current) === serializeProjectRegistry(expected);
 }
 
 export async function readProjectRegistries(
@@ -507,7 +540,7 @@ function waitForProjectRegistrySqliteRetry() {
 	});
 }
 
-async function writeProjectRegistryToSqlite(registry: ProjectRegistry) {
+async function writeProjectRegistryToSqlite(registry: ProjectRegistry, expectedRegistryJson?: string) {
 	const invoke = getTauriInvoke();
 
 	if (invoke === undefined) {
@@ -526,7 +559,8 @@ async function writeProjectRegistryToSqlite(registry: ProjectRegistry) {
 		const response = await invoke<ProjectRegistryWriteResponse>('write_project_registry', {
 			workspaceId: registry.workspaceId,
 			registryJson: serializeProjectRegistry(registry),
-			updatedAt: registry.updatedAt
+			updatedAt: registry.updatedAt,
+			...(expectedRegistryJson === undefined ? {} : { expectedRegistryJson })
 		});
 
 		return response.ok
@@ -729,6 +763,7 @@ function isProjectRegistryStorageError(value: unknown): value is ProjectRegistry
 	return (
 		value === 'project-registry-read-failed' ||
 		value === 'project-registry-version-unsupported' ||
+		value === 'project-registry-revision-conflict' ||
 		value === 'project-registry-write-failed'
 	);
 }

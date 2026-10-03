@@ -68,9 +68,10 @@ export async function writeProjectRegistryForBoard(
 	update: (next: {
 		readonly registry: ProjectRegistry;
 		readonly storageError: ProjectRegistryStorageError | null;
-	}) => void
+	}) => void,
+	expectedRegistry?: () => Promise<ProjectRegistry>
 ) {
-	const result = await writeProjectRegistry(nextRegistry);
+	const result = await writeProjectRegistry(nextRegistry, expectedRegistry);
 
 	update({
 		registry: result.registry,

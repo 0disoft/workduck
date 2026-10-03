@@ -1,5 +1,6 @@
 export const koProjectsMessages = {
 		newProject: '새 프로젝트',
+		reloadProjects: '현재 프로젝트 새로 고치기',
 		newGroup: '새 그룹',
 		newRepository: '새 저장소',
 		registeredCount: '루트 프로젝트 {count}개',
@@ -404,6 +405,7 @@ export const koProjectsMessages = {
 			'project-registry-version-unsupported':
 				'프로젝트 데이터가 현재 앱보다 새 포맷입니다. Workduck을 업데이트한 뒤 다시 열어주세요.',
 			'project-registry-write-failed': '프로젝트를 저장하지 못했습니다.',
+			'project-registry-revision-conflict': '프로젝트가 다른 곳에서 변경되었습니다. 다시 시도하기 전에 현재 프로젝트를 새로 고쳐 주세요.',
 			'project-repository-operation-read-failed':
 				'저장소 작업 기록을 불러오지 못했습니다.',
 			'project-repository-operation-write-failed':

@@ -6047,12 +6047,12 @@
     },
     {
       "blocks": [],
-      "contentHash": "2ece80dc64aa2cae92101f40f1c969bc26df71dac67fe8e024a5744f5ce3ee15",
+      "contentHash": "88162f55d154768688fa29e2ad5ed4a58facd21ae72f2b9fa79d2ed2551e1fc6",
       "declarations": [],
       "imports": [],
       "path": "src/lib/i18n/locales/en/projects.ts",
       "semanticBytes": 0,
-      "sourceBytes": 21372
+      "sourceBytes": 21538
     },
     {
       "blocks": [],
@@ -6198,12 +6198,12 @@
     },
     {
       "blocks": [],
-      "contentHash": "761602d72d6d3986f4909201b2b4e10821123fb04d59acd64594c8d3af35a17e",
+      "contentHash": "3d1b6215ffea6fdf0611b65648f5736388867441641108b6a9c78c03dab216d4",
       "declarations": [],
       "imports": [],
       "path": "src/lib/i18n/locales/es/projects.ts",
       "semanticBytes": 0,
-      "sourceBytes": 24107
+      "sourceBytes": 24303
     },
     {
       "blocks": [],
@@ -6349,12 +6349,12 @@
     },
     {
       "blocks": [],
-      "contentHash": "c09b8f8fccf069f56873949f4faf6fe7886df4e59afc6aa363c80fd6ae1a0617",
+      "contentHash": "de4c0e7fa0367db9508b716838332b2a7fda773e40c30c57ce65c3ddf937671b",
       "declarations": [],
       "imports": [],
       "path": "src/lib/i18n/locales/fr/projects.ts",
       "semanticBytes": 0,
-      "sourceBytes": 24117
+      "sourceBytes": 24303
     },
     {
       "blocks": [],
@@ -6500,12 +6500,12 @@
     },
     {
       "blocks": [],
-      "contentHash": "8ff46466b3cdc33f288e994f4b573f437766d58069e07cb7642dcf99b7b823d1",
+      "contentHash": "ce9db2ba1498c3e31a04198345afe0aa61b50e4d32a2171507c4ba1eee8f3c19",
       "declarations": [],
       "imports": [],
       "path": "src/lib/i18n/locales/hi/projects.ts",
       "semanticBytes": 0,
-      "sourceBytes": 36699
+      "sourceBytes": 37083
     },
     {
       "blocks": [],
@@ -6651,12 +6651,12 @@
     },
     {
       "blocks": [],
-      "contentHash": "f2fd39de8cbe5ef2e60415cede19e394bf62509e046a89242b81cf891d3a61a4",
+      "contentHash": "25d9eb2a91a13a2cac6a3f82a97dc1de95a72178638720c1b7b5074555483d97",
       "declarations": [],
       "imports": [],
       "path": "src/lib/i18n/locales/ko/projects.ts",
       "semanticBytes": 0,
-      "sourceBytes": 25140
+      "sourceBytes": 25373
     },
     {
       "blocks": [],
@@ -6802,12 +6802,12 @@
     },
     {
       "blocks": [],
-      "contentHash": "b835586d5496852697d6582d06e794f3f5974746563d226006c89448ce8fd122",
+      "contentHash": "aca3fb2f76201be4ba40658c9706ad6527b996b57711cf8e5031332c3626c2d6",
       "declarations": [],
       "imports": [],
       "path": "src/lib/i18n/locales/zh/projects.ts",
       "semanticBytes": 0,
-      "sourceBytes": 20507
+      "sourceBytes": 20680
     },
     {
       "blocks": [],
@@ -7212,7 +7212,7 @@
     },
     {
       "blocks": [],
-      "contentHash": "624966c435ce0dc9ee5e705962413932dbfa35917ba2e6db41358105140f8f65",
+      "contentHash": "40af726097b7ba841b5df91d72a6d415b88361627be8591fc24d95d718c4fa67",
       "declarations": [],
       "imports": [
         "#lib/environment/environment-vault.ts",
@@ -7262,7 +7262,7 @@
       ],
       "path": "src/lib/projects/ProjectBoardSurface.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 50669
+      "sourceBytes": 51269
     },
     {
       "blocks": [
@@ -7891,13 +7891,14 @@
             ],
             "id": "workduck.projects.registry-writer",
             "invariant": [
-              "Edits build on the latest draft, failed drafts remain available for retry, and only the live initiating view receives save feedback."
+              "Edits build on the latest draft, writes compare the last accepted snapshot, conflicts require reload, and only the live initiating view receives feedback."
             ],
             "owns": [
               "registry write admission",
               "pending and failed registry drafts",
               "save result ownership",
-              "workspace view lifetime"
+              "workspace view lifetime",
+              "conflict recovery"
             ],
             "rel": [],
             "risk": [],
@@ -7912,7 +7913,7 @@
             "stability": "architecture",
             "unknown": []
           },
-          "end": 635,
+          "end": 675,
           "endLine": 9,
           "entries": [
             {
@@ -7931,7 +7932,7 @@
               "key": "owns",
               "line": 4,
               "order": 2,
-              "value": "registry write admission|pending and failed registry drafts|save result ownership|workspace view lifetime"
+              "value": "registry write admission|pending and failed registry drafts|save result ownership|workspace view lifetime|conflict recovery"
             },
             {
               "key": "excludes",
@@ -7949,7 +7950,7 @@
               "key": "invariant",
               "line": 7,
               "order": 5,
-              "value": "Edits build on the latest draft, failed drafts remain available for retry, and only the live initiating view receives save feedback."
+              "value": "Edits build on the latest draft, writes compare the last accepted snapshot, conflicts require reload, and only the live initiating view receives feedback."
             },
             {
               "key": "stability",
@@ -7962,7 +7963,7 @@
           "indent": "",
           "newline": "\n",
           "prefix": null,
-          "raw": "/* llmnav/1 module\nid=workduck.projects.registry-writer\nrole=Own pending project registry edits and save feedback within the initiating workspace view lifetime.\nowns=registry write admission|pending and failed registry drafts|save result ownership|workspace view lifetime\nexcludes=registry storage implementation|dialog busy state|repository operations\nsearch=project registry save|late registry write response|workspace save ownership|concurrent project field edits\ninvariant=Edits build on the latest draft, failed drafts remain available for retry, and only the live initiating view receives save feedback.\nstability=architecture\n*/",
+          "raw": "/* llmnav/1 module\nid=workduck.projects.registry-writer\nrole=Own pending project registry edits and save feedback within the initiating workspace view lifetime.\nowns=registry write admission|pending and failed registry drafts|save result ownership|workspace view lifetime|conflict recovery\nexcludes=registry storage implementation|dialog busy state|repository operations\nsearch=project registry save|late registry write response|workspace save ownership|concurrent project field edits\ninvariant=Edits build on the latest draft, writes compare the last accepted snapshot, conflicts require reload, and only the live initiating view receives feedback.\nstability=architecture\n*/",
           "scope": "module",
           "specVersion": "1",
           "start": 0,
@@ -7971,7 +7972,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "fbc2abcb8582de74718a5eacaf1d55b87ee9ff41f0876d03808ab9d6a68989c6",
+      "contentHash": "961b8441a0e6fd8efd86e5f23919560dd3ec68ced81b23fdda8a586c2c2af4d0",
       "declarations": [
         null
       ],
@@ -7982,12 +7983,12 @@
         "./project-storage"
       ],
       "path": "src/lib/projects/project-board-registry-writer.svelte.ts",
-      "semanticBytes": 635,
-      "sourceBytes": 3235
+      "semanticBytes": 675,
+      "sourceBytes": 5108
     },
     {
       "blocks": [],
-      "contentHash": "a81b8b881939b2699842468498dfe7fbe61670b1f05b13a903f753eaef79131a",
+      "contentHash": "c95e041591acc3b617f2b7adbff63e88f827c590169612cdc4f5331a095e4138",
       "declarations": [],
       "imports": [
         "#lib/tauri/tauri-invoke.ts",
@@ -8001,7 +8002,7 @@
       ],
       "path": "src/lib/projects/project-board-registry-writer.test.ts",
       "semanticBytes": 0,
-      "sourceBytes": 9835
+      "sourceBytes": 13060
     },
     {
       "blocks": [],
@@ -8338,7 +8339,7 @@
     },
     {
       "blocks": [],
-      "contentHash": "8b95d3cf18f0371fa0aa0c3a96f2493dc17b387e210685a06a92603ae09d31e8",
+      "contentHash": "e1f1aeea63b16856a045e85c81ea75195365db0759a1b4d7dd1bcf45ac876f54",
       "declarations": [],
       "imports": [
         "./project-board-operations",
@@ -8348,7 +8349,7 @@
       ],
       "path": "src/lib/projects/project-board-storage-actions.ts",
       "semanticBytes": 0,
-      "sourceBytes": 2147
+      "sourceBytes": 2217
     },
     {
       "blocks": [],
@@ -9230,7 +9231,7 @@
     },
     {
       "blocks": [],
-      "contentHash": "f74ab46b5e198fca28d5d577d5e539901f37e4c0e6a94b620977e1f914d1d8b5",
+      "contentHash": "a6292e84254d25b3f0e31c11135d14208d850c198da6bc37412eec2d695b9461",
       "declarations": [],
       "imports": [
         "#lib/tauri/tauri-invoke.ts",
@@ -9240,7 +9241,7 @@
       ],
       "path": "src/lib/projects/project-storage.test.ts",
       "semanticBytes": 0,
-      "sourceBytes": 7236
+      "sourceBytes": 9528
     },
     {
       "blocks": [
@@ -9332,7 +9333,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "823f2988ab901f5219af061962a4e517ac99dcb63b3ca4742448e4ab3f75bae0",
+      "contentHash": "fa2fdb602a0a089956c2271fb99cdb52a7981ffa30efaa65f2e5d145faee09c5",
       "declarations": [
         null
       ],
@@ -9343,7 +9344,7 @@
       ],
       "path": "src/lib/projects/project-storage.ts",
       "semanticBytes": 616,
-      "sourceBytes": 21203
+      "sourceBytes": 23277
     },
     {
       "blocks": [],

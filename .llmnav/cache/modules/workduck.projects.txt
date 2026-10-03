@@ -117,9 +117,9 @@ invariant Windows path spellings share a comparison key while Unix names remain 
 
 @workduck.projects.registry-writer
 role Own pending project registry edits and save feedback within the initiating workspace view lifetime.
-owns registry write admission, pending and failed registry drafts, save result ownership, workspace view lifetime
+owns registry write admission, pending and failed registry drafts, save result ownership, workspace view lifetime, conflict recovery
 excludes registry storage implementation, dialog busy state, repository operations
-invariant Edits build on the latest draft, failed drafts remain available for retry, and only the live initiating view receives save feedback.
+invariant Edits build on the latest draft, writes compare the last accepted snapshot, conflicts require reload, and only the live initiating view receives feedback.
 
 @workduck.projects.storage-native
 role Read and atomically replace SQLite project registry snapshots with optional stale-write guards.

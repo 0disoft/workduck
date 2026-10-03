@@ -1,5 +1,6 @@
 export const hiProjectsMessages = {
 	newProject: 'नई परियोजना',
+	reloadProjects: 'मौजूदा प्रोजेक्ट फिर से लोड करें',
 	newGroup: 'नया समूह',
 	newRepository: 'नई रिपॉजिटरी',
 	registeredCount: '{count} मुख्य परियोजनाएं',
@@ -413,6 +414,7 @@ export const hiProjectsMessages = {
 		'project-registry-version-unsupported':
 			'परियोजना डेटा नए प्रारूप का उपयोग करता है। परियोजनाओं को फिर से खोलने से पहले वर्कडक को अपडेट करें।',
 		'project-registry-write-failed': 'परियोजनाएं सहेजी नहीं जा सकीं।',
+		'project-registry-revision-conflict': 'प्रोजेक्ट कहीं और बदल गए हैं। फिर से कोशिश करने से पहले मौजूदा प्रोजेक्ट फिर से लोड करें।',
 		'project-repository-operation-read-failed':
 			'रिपॉजिटरी ऑपरेशन रिकॉर्ड लोड नहीं किए जा सके।',
 		'project-repository-operation-write-failed':
