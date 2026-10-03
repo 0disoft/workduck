@@ -3436,18 +3436,19 @@
         "repository operations"
       ],
       "hashes": {
-        "body": "20c48ecaf708639de20a766658c058229b4678a9b40949facdd9394b8925a1f3",
-        "semantic": "fbd786db6dc8e8d49c83c5ca5b664a1ebc5a87d04a90e54d83b532e62bcd22fe",
-        "structure": "56699083df122d04b5b6eb2628291781de9f19a2d86fa2ac22822af1bd18f563"
+        "body": "fbc2abcb8582de74718a5eacaf1d55b87ee9ff41f0876d03808ab9d6a68989c6",
+        "semantic": "ec99a8c17d3bfa43ec9034651aff00ac0e69fee294ce36a1ce2de792c0f4be35",
+        "structure": "74113e8fed36d5b327ad167efdf5acc71e446d7c0dc18ef751dde4194107b8f4"
       },
       "id": "workduck.projects.registry-writer",
       "imports": [
         "#lib/workspaces/workspace-registry.ts",
         "./project-board-storage-actions",
-        "./project-registry"
+        "./project-registry",
+        "./project-storage"
       ],
       "invariant": [
-        "Writes return their storage outcome, but only the live initiating view receives feedback; foreign workspace drafts and disposed views cannot start writes."
+        "Edits build on the latest draft, failed drafts remain available for retry, and only the live initiating view receives save feedback."
       ],
       "location": {
         "declarationLine": null,
@@ -3464,15 +3465,17 @@
       },
       "owns": [
         "registry write admission",
+        "pending and failed registry drafts",
         "save result ownership",
         "workspace view lifetime"
       ],
-      "role": "Own project registry save feedback within the initiating workspace view lifetime.",
+      "role": "Own pending project registry edits and save feedback within the initiating workspace view lifetime.",
       "scope": "module",
       "search": [
         "project registry save",
         "late registry write response",
-        "workspace save ownership"
+        "workspace save ownership",
+        "concurrent project field edits"
       ],
       "stability": "architecture"
     }
@@ -3490,6 +3493,6 @@
   "generatedBy": "llmnav@0.9.7",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "bc01a7d851765e744ea8f895d11cec97a8d71fcc1161cc0e987790aa26fc90bb",
+  "sourceHash": "1746014e724cf38c1366b75844ee47dea0bf06d000767ef6be1ee754680e468a",
   "specVersion": "1"
 }

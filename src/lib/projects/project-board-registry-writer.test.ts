@@ -3,7 +3,11 @@ import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 import { compileModule } from 'svelte/compiler';
 import { setTauriInvokeForTest } from '#lib/tauri/tauri-invoke.ts';
 import type { WorkspaceRecord } from '#lib/workspaces/workspace-registry.ts';
-import { createEmptyProjectRegistry } from './project-registry';
+import { subscribeProjectRegistry } from './project-storage';
+import {
+	addProjectNode, createEmptyProjectRegistry, setProjectNodeDescription, setProjectNodeTags,
+	type ProjectRegistry
+} from './project-registry';
 
 await plugin({
 	name: 'project-registry-writer-runes',
@@ -45,6 +49,100 @@ afterEach(() => {
 });
 
 describe('project board registry write ownership', () => {
+	for (const staleRefresh of [false, true]) test(`keeps sequential field edits during a pending save${staleRefresh ? ' and stale refresh' : ''}`, async () => {
+		const added = addProjectNode(createEmptyProjectRegistry('old'), {
+			kind: 'project', name: 'Demo', path: 'projects/demo', description: 'Original'
+		});
+		if (!added.ok) throw new Error(added.error);
+		const original = added.registry;
+		const nodeId = original.nodes[0]!.id;
+		const entered = deferred();
+		const pending = deferred();
+		let persisted: ProjectRegistry | null = null;
+		let calls = 0;
+		setTauriInvokeForTest(async <T>(_command: string, args?: Record<string, unknown>) => {
+			calls += 1;
+			persisted = JSON.parse(args?.registryJson as string) as ProjectRegistry;
+			if (calls === 1) { entered.resolve(); await pending.promise; }
+			return { ok: true } as T;
+		});
+		const harness = createProjectBoardRegistryWriterHarness(workspace('old'));
+		const saves: Promise<boolean>[] = [];
+		try {
+			await settleEffects();
+			harness.state.registry = original;
+			expect(harness.visibleRegistry.nodes[0]?.description).toBe('Original');
+			const description = setProjectNodeDescription(harness.getRegistry(), { nodeId, description: 'Edited' });
+			if (!description.ok) throw new Error(description.error);
+			saves.push(harness.persistRegistry(description.registry));
+			expect(harness.visibleRegistry.nodes[0]?.description).toBe('Edited');
+			await entered.promise;
+			if (staleRefresh) harness.state.registry = original;
+			const tags = setProjectNodeTags(harness.getRegistry(), { nodeId, tags: ['edited'] });
+			if (!tags.ok) throw new Error(tags.error);
+			saves.push(harness.persistRegistry(tags.registry));
+			pending.resolve();
+			expect(await Promise.all(saves)).toEqual([true, true]);
+			expect((persisted as ProjectRegistry | null)?.nodes[0]?.description).toBe('Edited');
+			expect((persisted as ProjectRegistry | null)?.nodes[0]?.tags).toEqual(['edited']);
+			expect(harness.getRegistry().nodes[0]?.description).toBe('Edited');
+			expect(harness.getRegistry().nodes[0]?.tags).toEqual(['edited']);
+		} finally {
+			pending.resolve();
+			await Promise.all(saves);
+			harness.dispose();
+		}
+	});
+
+	for (const [firstOk, lastOk] of [[false, true], [true, false]] as const) test(`keeps the newest draft across older ${firstOk ? 'success' : 'failure'} feedback`, async () => {
+		const firstPending = deferred();
+		const lastEntered = deferred();
+		const lastPending = deferred();
+		let calls = 0;
+		setTauriInvokeForTest(async <T>() => {
+			calls += 1;
+			const ok = calls === 1 ? firstOk : calls === 2 ? lastOk : true;
+			if (calls === 1) await firstPending.promise;
+			else { lastEntered.resolve(); await lastPending.promise; }
+			return { ok, error: ok ? null : 'project-registry-write-failed' } as T;
+		});
+		const harness = createProjectBoardRegistryWriterHarness(workspace('old'));
+		const unsubscribe = subscribeProjectRegistry('old', (next) => { harness.state.registry = next; });
+		const saves: Promise<boolean>[] = [];
+		try {
+			await settleEffects();
+			const original = { ...createEmptyProjectRegistry('old'), updatedAt: '2026-10-04T00:00:01.000Z' };
+			const latest = { ...original, updatedAt: '2026-10-04T00:00:02.000Z' };
+			saves.push(harness.persistRegistry(original), harness.persistRegistry(latest));
+			firstPending.resolve();
+			expect(await saves[0]).toBe(firstOk);
+			await lastEntered.promise;
+			expect(harness.visibleRegistry).toEqual(latest);
+			expect(harness.state.storageError).toBeNull();
+			lastPending.resolve();
+			expect(await saves[1]).toBe(lastOk);
+			expect(harness.getRegistry()).toEqual(latest);
+			expect(harness.state.storageError).toBe(lastOk ? null : 'project-registry-write-failed');
+			if (!lastOk) {
+				harness.state.registry = original;
+				harness.state.storageError = null;
+				expect(harness.visibleRegistry).toEqual(latest);
+				expect(harness.visibleError).toBe('project-registry-write-failed');
+				const retry = { ...harness.getRegistry(), updatedAt: '2026-10-04T00:00:03.000Z' };
+				saves.push(harness.persistRegistry(retry));
+				expect(await saves[2]).toBe(true);
+				expect(harness.visibleError).toBeNull();
+				const refreshed = { ...retry, updatedAt: '2026-10-04T00:00:04.000Z' };
+				harness.state.registry = refreshed;
+				expect(harness.visibleRegistry).toEqual(refreshed);
+			}
+		} finally {
+			firstPending.resolve(); lastPending.resolve();
+			await Promise.all(saves);
+			unsubscribe(); harness.dispose();
+		}
+	});
+
 	for (const ok of [true, false]) test(`preserves ${ok ? 'success' : 'failure'} feedback when only workspace metadata changes`, async () => {
 		const pending = deferred();
 		let calls = 0;
@@ -106,6 +204,7 @@ describe('project board registry write ownership', () => {
 				}
 				harness.state.registry = { ...createEmptyProjectRegistry(change === 'switch' ? 'new' : 'old'), updatedAt: '2026-10-04T00:00:02.000Z' };
 				const current = harness.state.registry;
+				expect(harness.getRegistry()).toEqual(current);
 				pending.resolve();
 				expect(await saving).toBe(ok);
 				expect(harness.state.registry).toEqual(current);

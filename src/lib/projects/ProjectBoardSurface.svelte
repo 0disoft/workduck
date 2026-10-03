@@ -160,7 +160,16 @@
 	let { workspace, title, projectMessages, languageId }: Props = $props();
 	let messages = $derived(getWorkduckMessages(languageId));
 
-	let registry = $state<ProjectRegistry>(createEmptyProjectRegistry(''));
+	let storedRegistry = $state<ProjectRegistry>(createEmptyProjectRegistry(''));
+	const persistRegistry = createProjectBoardRegistryWriter({
+		workspace: () => workspace,
+		registry: () => storedRegistry,
+		update: (next) => {
+			storedRegistry = next.registry;
+			storedStorageError = next.storageError;
+		}
+	});
+	let registry = $derived(persistRegistry.getRegistry());
 	let contextMenu = $state<ProjectContextMenuState | null>(null);
 	let dialog = $state<ProjectDialogState | null>(null);
 	let deleteCandidate = $state<ProjectDeleteCandidate | null>(null);
@@ -197,7 +206,8 @@
 	);
 	let formError = $state<ProjectFormError | null>(null);
 	let status = $state<string | null>(null);
-	let storageError = $state<ProjectRegistryStorageError | null>(null);
+	let storedStorageError = $state<ProjectRegistryStorageError | null>(null);
+	let storageError = $derived(persistRegistry.getSaveError() ?? storedStorageError);
 	let operationStorageError = $state<ProjectRepositoryOperationStorageError | null>(null);
 	let queueFolderError = $state<QueueFolderError | null>(null);
 	let folderRepairError = $state<ProjectFolderError | null>(null);
@@ -350,14 +360,6 @@
 			ssealedTarget !== null ||
 			dialog !== null
 	);
-
-	const persistRegistry = createProjectBoardRegistryWriter({
-		workspace: () => workspace,
-		update: (next) => {
-			registry = next.registry;
-			storageError = next.storageError;
-		}
-	});
 
 	function loadProjectBoardOverlays() {
 		if (ProjectBoardOverlays !== null) {
@@ -1124,8 +1126,8 @@
 
 <ProjectBoardWorkspaceLifecycle
 	{workspace}
-	bind:registry
-	bind:storageError
+	bind:registry={storedRegistry}
+	bind:storageError={storedStorageError}
 	bind:operationStorageError
 	bind:folderRepairError
 	bind:folderRepairSignature

@@ -70,7 +70,7 @@
     "workduck.workspace.sync-file-native",
     "workduck.workspace.sync-git-native"
   ],
-  "cardSetHash": "603b3869f54a45fe11c6b03dc2d399fb3d2ee33ba93b9513651db48f1d26598e",
+  "cardSetHash": "ee15f78f0fe1329ad54234ebe1ceddd5336808cf99cf9c4539a49c91788d0245",
   "documentCount": 69,
   "documents": [
     [
@@ -447,14 +447,16 @@
       ]
     ],
     [
-      "f9eb76b1095922c8b5641e24f17d7bc4c7498bb2e990f6042785dfc5277b8bf0",
+      "1241c0ffd95f998c7739577a85ec2238b9cea0e30a822e4cd8fb3692c132f0c7",
       [
-        "own project registry save feedback within the initiating workspace view lifetime.",
+        "own pending project registry edits and save feedback within the initiating workspace view lifetime.",
         "project registry save",
         "late registry write response",
         "workspace save ownership",
-        "writes return their storage outcome, but only the live initiating view receives feedback; foreign workspace drafts and disposed views cannot start writes.",
+        "concurrent project field edits",
+        "edits build on the latest draft, failed drafts remain available for retry, and only the live initiating view receives save feedback.",
         "registry write admission",
+        "pending and failed registry drafts",
         "save result ownership",
         "workspace view lifetime"
       ]
@@ -1934,6 +1936,10 @@
       [
         29,
         [
+          1,
+          1,
+          3,
+          1,
           5,
           1
         ]
@@ -2958,6 +2964,13 @@
     ],
     [
       [
+        29,
+        [
+          5,
+          1
+        ]
+      ],
+      [
         55,
         [
           5,
@@ -3682,6 +3695,13 @@
         ]
       ],
       [
+        29,
+        [
+          5,
+          1
+        ]
+      ],
+      [
         32,
         [
           2,
@@ -3722,13 +3742,6 @@
       ]
     ],
     [
-      [
-        29,
-        [
-          5,
-          1
-        ]
-      ],
       [
         54,
         [
@@ -3903,13 +3916,6 @@
       ],
       [
         21,
-        [
-          5,
-          1
-        ]
-      ],
-      [
-        29,
         [
           5,
           1
@@ -5084,6 +5090,13 @@
         ]
       ],
       [
+        29,
+        [
+          2,
+          1
+        ]
+      ],
+      [
         36,
         [
           5,
@@ -6403,15 +6416,6 @@
     ],
     [
       [
-        29,
-        [
-          5,
-          1
-        ]
-      ]
-    ],
-    [
-      [
         68,
         [
           5,
@@ -6535,6 +6539,13 @@
     ],
     [
       [
+        29,
+        [
+          5,
+          1
+        ]
+      ],
+      [
         49,
         [
           4,
@@ -6557,6 +6568,8 @@
       [
         29,
         [
+          3,
+          1,
           5,
           1
         ]
@@ -6707,6 +6720,17 @@
       [
         4,
         [
+          5,
+          1
+        ]
+      ],
+      [
+        29,
+        [
+          1,
+          1,
+          2,
+          1,
           5,
           1
         ]
@@ -8000,6 +8024,15 @@
         ]
       ],
       [
+        29,
+        [
+          3,
+          1,
+          5,
+          1
+        ]
+      ],
+      [
         58,
         [
           5,
@@ -8138,6 +8171,13 @@
         27,
         [
           5,
+          1
+        ]
+      ],
+      [
+        29,
+        [
+          2,
           1
         ]
       ]
@@ -8624,6 +8664,13 @@
         ]
       ],
       [
+        29,
+        [
+          5,
+          1
+        ]
+      ],
+      [
         32,
         [
           1,
@@ -8678,13 +8725,6 @@
       ]
     ],
     [
-      [
-        29,
-        [
-          5,
-          1
-        ]
-      ],
       [
         39,
         [
@@ -10762,6 +10802,13 @@
           1,
           1,
           2,
+          1
+        ]
+      ],
+      [
+        29,
+        [
+          5,
           1
         ]
       ],
@@ -13182,6 +13229,15 @@
     ],
     [
       [
+        29,
+        [
+          5,
+          1
+        ]
+      ]
+    ],
+    [
+      [
         15,
         [
           1,
@@ -14001,15 +14057,6 @@
     ],
     [
       [
-        29,
-        [
-          5,
-          1
-        ]
-      ]
-    ],
-    [
-      [
         1,
         [
           1,
@@ -14701,6 +14748,15 @@
         3,
         [
           5,
+          1
+        ]
+      ],
+      [
+        29,
+        [
+          1,
+          1,
+          3,
           1
         ]
       ]
@@ -15632,7 +15688,7 @@
           1,
           1,
           2,
-          1,
+          2,
           9,
           1
         ]
@@ -17495,7 +17551,7 @@
           2,
           2,
           3,
-          1,
+          2,
           4,
           1,
           9,
@@ -17629,6 +17685,13 @@
     ],
     [
       [
+        29,
+        [
+          5,
+          1
+        ]
+      ],
+      [
         33,
         [
           5,
@@ -18888,6 +18951,15 @@
     ],
     [
       [
+        29,
+        [
+          5,
+          1
+        ]
+      ]
+    ],
+    [
+      [
         8,
         [
           5,
@@ -18898,13 +18970,6 @@
         18,
         [
           1,
-          1
-        ]
-      ],
-      [
-        29,
-        [
-          5,
           1
         ]
       ],
@@ -19689,6 +19754,8 @@
           2,
           2,
           3,
+          1,
+          5,
           1
         ]
       ],
@@ -21548,13 +21615,6 @@
     ],
     [
       [
-        29,
-        [
-          5,
-          1
-        ]
-      ],
-      [
         57,
         [
           2,
@@ -22000,8 +22060,6 @@
         29,
         [
           4,
-          1,
-          5,
           1
         ]
       ],
@@ -23449,7 +23507,7 @@
           1,
           1,
           5,
-          1
+          2
         ]
       ],
       [
@@ -23662,13 +23720,6 @@
         ]
       ],
       [
-        29,
-        [
-          5,
-          1
-        ]
-      ],
-      [
         32,
         [
           1,
@@ -25389,13 +25440,6 @@
     ],
     [
       [
-        29,
-        [
-          5,
-          1
-        ]
-      ],
-      [
         41,
         [
           1,
@@ -26551,8 +26595,6 @@
           2,
           1,
           3,
-          1,
-          5,
           1
         ]
       ],
@@ -26925,13 +26967,6 @@
         [
           5,
           1
-        ]
-      ],
-      [
-        29,
-        [
-          5,
-          2
         ]
       ],
       [
@@ -27251,7 +27286,6 @@
     "discovery",
     "display",
     "displayed",
-    "disposed",
     "divergent",
     "do",
     "documents",
@@ -27522,6 +27556,7 @@
     "omission",
     "omits",
     "omitting",
+    "on",
     "one",
     "only",
     "open",
@@ -27539,7 +27574,6 @@
     "original",
     "orphan",
     "other",
-    "outcome",
     "output",
     "outside",
     "over",
@@ -27700,6 +27734,7 @@
     "retain",
     "retaining",
     "retains",
+    "retry",
     "return",
     "returned",
     "returning",

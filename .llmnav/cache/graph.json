@@ -100,6 +100,20 @@
     },
     {
       "confidence": 0.85,
+      "from": "workduck/workduck.projects.registry-writer",
+      "id": "9ac4ef9b99012447c905a5a355f51e565fcdd9235bf0e28221d5c5ff42958bee",
+      "kind": "imports",
+      "provenance": {
+        "generator": "llmnav",
+        "line": null,
+        "path": "src/lib/projects/project-board-registry-writer.svelte.ts",
+        "source": "src/lib/projects/project-board-registry-writer.svelte.ts",
+        "type": "local-import"
+      },
+      "to": "workduck/workduck.projects.storage"
+    },
+    {
+      "confidence": 0.85,
       "from": "workduck/workduck.projects.scaffold-dialog",
       "id": "05443f783b5bf656ef712a294c8e910452bdf197c422982ab8a1af64ace044f8",
       "kind": "imports",
@@ -1046,7 +1060,7 @@
         "visibility": null
       },
       "repositoryId": "workduck",
-      "role": "Own project registry save feedback within the initiating workspace view lifetime.",
+      "role": "Own pending project registry edits and save feedback within the initiating workspace view lifetime.",
       "semanticId": "workduck.projects.registry-writer",
       "unresolved": false
     },
@@ -1911,9 +1925,9 @@
   ],
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "94d9ee0325b0cf5d26adcad037cc22dae6ef209e024fdff6a33582d659411955",
+  "sourceHash": "9c1856176a6a391c825f14221f5c831629fff32e6e162bc7e3ac3fda747e0c11",
   "stats": {
-    "edgeCount": 26,
+    "edgeCount": 27,
     "importedIndexCount": 0,
     "nodeCount": 69,
     "unresolvedNodeCount": 0

@@ -164,7 +164,7 @@ excludes native task execution, durable task history persistence, repository Git
 invariant Scope changes clear foreign run state while retaining matching repositories; metadata-only changes reuse polling, queued refreshes supersede snapshots, and teardown removes listeners and timers.
 
 @workduck.projects.registry-writer
-role Own project registry save feedback within the initiating workspace view lifetime.
-owns registry write admission, save result ownership, workspace view lifetime
+role Own pending project registry edits and save feedback within the initiating workspace view lifetime.
+owns registry write admission, pending and failed registry drafts, save result ownership, workspace view lifetime
 excludes registry storage implementation, dialog busy state, repository operations
-invariant Writes return their storage outcome, but only the live initiating view receives feedback; foreign workspace drafts and disposed views cannot start writes.
+invariant Edits build on the latest draft, failed drafts remain available for retry, and only the live initiating view receives save feedback.

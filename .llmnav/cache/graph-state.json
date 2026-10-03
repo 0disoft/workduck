@@ -1023,9 +1023,23 @@
             "type": "local-import"
           },
           "to": "workduck/workduck.projects.registry-domain"
+        },
+        {
+          "confidence": 0.85,
+          "from": "workduck/workduck.projects.registry-writer",
+          "id": "9ac4ef9b99012447c905a5a355f51e565fcdd9235bf0e28221d5c5ff42958bee",
+          "kind": "imports",
+          "provenance": {
+            "generator": "llmnav",
+            "line": null,
+            "path": "src/lib/projects/project-board-registry-writer.svelte.ts",
+            "source": "src/lib/projects/project-board-registry-writer.svelte.ts",
+            "type": "local-import"
+          },
+          "to": "workduck/workduck.projects.storage"
         }
       ],
-      "inputHash": "d1f31f3e110140594472de1ec925f8d047c4f4de2b4fe03db8f55ea5a3ef5b4f",
+      "inputHash": "92c334c86e6dc1d247bd5583db6f3bcd10758f74e0f97aa05b504d776a50d444",
       "key": "card:workduck/workduck.projects.registry-writer",
       "nodes": [
         {
@@ -1055,11 +1069,20 @@
             "visibility": null
           },
           "repositoryId": "workduck",
-          "role": "Own project registry save feedback within the initiating workspace view lifetime.",
+          "role": "Own pending project registry edits and save feedback within the initiating workspace view lifetime.",
           "semanticId": "workduck.projects.registry-writer"
+        },
+        {
+          "definitions": [],
+          "external": false,
+          "key": "workduck/workduck.projects.storage",
+          "location": null,
+          "repositoryId": "workduck",
+          "role": null,
+          "semanticId": "workduck.projects.storage"
         }
       ],
-      "outputHash": "57228bedc853add9c086cb495e97aab647df86d320fd83f959f019593eef8b51"
+      "outputHash": "95d92924b5dcaddd9cf8accc91533b7ef0318c8827b0d39fa7497e9f1654054e"
     },
     {
       "edges": [],

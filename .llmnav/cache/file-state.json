@@ -7121,7 +7121,7 @@
     },
     {
       "blocks": [],
-      "contentHash": "19124ebf927ba8f32589beabe54483eea112aef8e27a653d7d773bc99f40bf91",
+      "contentHash": "624966c435ce0dc9ee5e705962413932dbfa35917ba2e6db41358105140f8f65",
       "declarations": [],
       "imports": [
         "#lib/environment/environment-vault.ts",
@@ -7171,7 +7171,7 @@
       ],
       "path": "src/lib/projects/ProjectBoardSurface.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 50433
+      "sourceBytes": 50669
     },
     {
       "blocks": [
@@ -7776,7 +7776,7 @@
     },
     {
       "blocks": [],
-      "contentHash": "b8e7dee6ee751afff030ae21967fb6507b6cfb85ba493358ad48f3ee4cbc8775",
+      "contentHash": "c5c4792020a4e6fab05e6cfd39ffdb571935d8cb686a180305001b08c0a4c824",
       "declarations": [],
       "imports": [
         "#lib/workspaces/workspace-registry.ts",
@@ -7786,7 +7786,7 @@
       ],
       "path": "src/lib/projects/project-board-registry-writer-harness.svelte.ts",
       "semanticBytes": 0,
-      "sourceBytes": 998
+      "sourceBytes": 1432
     },
     {
       "blocks": [
@@ -7800,26 +7800,28 @@
             ],
             "id": "workduck.projects.registry-writer",
             "invariant": [
-              "Writes return their storage outcome, but only the live initiating view receives feedback; foreign workspace drafts and disposed views cannot start writes."
+              "Edits build on the latest draft, failed drafts remain available for retry, and only the live initiating view receives save feedback."
             ],
             "owns": [
               "registry write admission",
+              "pending and failed registry drafts",
               "save result ownership",
               "workspace view lifetime"
             ],
             "rel": [],
             "risk": [],
-            "role": "Own project registry save feedback within the initiating workspace view lifetime.",
+            "role": "Own pending project registry edits and save feedback within the initiating workspace view lifetime.",
             "scope": "module",
             "search": [
               "project registry save",
               "late registry write response",
-              "workspace save ownership"
+              "workspace save ownership",
+              "concurrent project field edits"
             ],
             "stability": "architecture",
             "unknown": []
           },
-          "end": 573,
+          "end": 635,
           "endLine": 9,
           "entries": [
             {
@@ -7832,13 +7834,13 @@
               "key": "role",
               "line": 3,
               "order": 1,
-              "value": "Own project registry save feedback within the initiating workspace view lifetime."
+              "value": "Own pending project registry edits and save feedback within the initiating workspace view lifetime."
             },
             {
               "key": "owns",
               "line": 4,
               "order": 2,
-              "value": "registry write admission|save result ownership|workspace view lifetime"
+              "value": "registry write admission|pending and failed registry drafts|save result ownership|workspace view lifetime"
             },
             {
               "key": "excludes",
@@ -7850,13 +7852,13 @@
               "key": "search",
               "line": 6,
               "order": 4,
-              "value": "project registry save|late registry write response|workspace save ownership"
+              "value": "project registry save|late registry write response|workspace save ownership|concurrent project field edits"
             },
             {
               "key": "invariant",
               "line": 7,
               "order": 5,
-              "value": "Writes return their storage outcome, but only the live initiating view receives feedback; foreign workspace drafts and disposed views cannot start writes."
+              "value": "Edits build on the latest draft, failed drafts remain available for retry, and only the live initiating view receives save feedback."
             },
             {
               "key": "stability",
@@ -7869,7 +7871,7 @@
           "indent": "",
           "newline": "\n",
           "prefix": null,
-          "raw": "/* llmnav/1 module\nid=workduck.projects.registry-writer\nrole=Own project registry save feedback within the initiating workspace view lifetime.\nowns=registry write admission|save result ownership|workspace view lifetime\nexcludes=registry storage implementation|dialog busy state|repository operations\nsearch=project registry save|late registry write response|workspace save ownership\ninvariant=Writes return their storage outcome, but only the live initiating view receives feedback; foreign workspace drafts and disposed views cannot start writes.\nstability=architecture\n*/",
+          "raw": "/* llmnav/1 module\nid=workduck.projects.registry-writer\nrole=Own pending project registry edits and save feedback within the initiating workspace view lifetime.\nowns=registry write admission|pending and failed registry drafts|save result ownership|workspace view lifetime\nexcludes=registry storage implementation|dialog busy state|repository operations\nsearch=project registry save|late registry write response|workspace save ownership|concurrent project field edits\ninvariant=Edits build on the latest draft, failed drafts remain available for retry, and only the live initiating view receives save feedback.\nstability=architecture\n*/",
           "scope": "module",
           "specVersion": "1",
           "start": 0,
@@ -7878,35 +7880,37 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "20c48ecaf708639de20a766658c058229b4678a9b40949facdd9394b8925a1f3",
+      "contentHash": "fbc2abcb8582de74718a5eacaf1d55b87ee9ff41f0876d03808ab9d6a68989c6",
       "declarations": [
         null
       ],
       "imports": [
         "#lib/workspaces/workspace-registry.ts",
         "./project-board-storage-actions",
-        "./project-registry"
+        "./project-registry",
+        "./project-storage"
       ],
       "path": "src/lib/projects/project-board-registry-writer.svelte.ts",
-      "semanticBytes": 573,
-      "sourceBytes": 1907
+      "semanticBytes": 635,
+      "sourceBytes": 3235
     },
     {
       "blocks": [],
-      "contentHash": "f78489a4eabf9656d0c4b2b1b9244d41fdc656d0c0d70f4f3f7dc72577da1222",
+      "contentHash": "a81b8b881939b2699842468498dfe7fbe61670b1f05b13a903f753eaef79131a",
       "declarations": [],
       "imports": [
         "#lib/tauri/tauri-invoke.ts",
         "#lib/workspaces/workspace-registry.ts",
         "./project-board-registry-writer-harness.svelte",
         "./project-registry",
+        "./project-storage",
         "bun",
         "bun:test",
         "svelte/compiler"
       ],
       "path": "src/lib/projects/project-board-registry-writer.test.ts",
       "semanticBytes": 0,
-      "sourceBytes": 5176
+      "sourceBytes": 9835
     },
     {
       "blocks": [],
