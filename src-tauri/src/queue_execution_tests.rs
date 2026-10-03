@@ -153,7 +153,7 @@ fn work_order_system_prompt_disallows_fake_tool_use() {
 }
 
 #[test]
-fn prompt_preview_uses_selected_context_without_resolving_secrets() {
+fn prompt_previews_share_selected_context_without_resolving_secrets() {
     let work_order = QueueWorkOrder {
         schema_version: "workduck.queue-work-order/v1".to_string(),
         r#ref: QueueEntityRef {
@@ -172,20 +172,26 @@ fn prompt_preview_uses_selected_context_without_resolving_secrets() {
             response_language: Some("ko".to_string()),
             response_format: Some("decision-memo".to_string()),
             project_ids: Vec::new(),
-            agent_ids: vec!["agent_1".to_string()],
+            agent_ids: vec!["agent_1".to_string(), "agent_2".to_string()],
             skill_ids: vec!["skill_1".to_string()],
             reference_ids: vec!["reference_1".to_string()],
             vote: None,
         }],
     };
-    let agents = vec![AgentRecord {
+    let first_agent = AgentRecord {
         id: "agent_1".to_string(),
         name: "검토 에이전트".to_string(),
         environment_secret_id: Some("missing-secret".to_string()),
         persona_id: Some("persona_1".to_string()),
         execution_provider: Some("openrouter".to_string()),
         model_id: Some("test/model".to_string()),
-    }];
+    };
+    let second_agent = AgentRecord {
+        id: "agent_2".to_owned(),
+        name: "추가 검토 에이전트".to_owned(),
+        ..first_agent.clone()
+    };
+    let agents = vec![first_agent, second_agent];
     let personas = vec![PersonaRecord {
         id: "persona_1".to_string(),
         description: "꼼꼼한 리뷰어".to_string(),
@@ -210,9 +216,9 @@ fn prompt_preview_uses_selected_context_without_resolving_secrets() {
         create_prompt_preview_plan(&work_order, &agents, &personas, &skills, &references)
             .expect("prompt previews");
 
-    assert_eq!(previews.len(), 1);
-    assert_eq!(estimate.request_count, 1);
-    assert_eq!(estimate.maximum_provider_attempt_count, 3);
+    assert_eq!(previews.len(), 2);
+    assert_eq!(estimate.request_count, 2);
+    assert_eq!(estimate.maximum_provider_attempt_count, 6);
     assert!(estimate.estimated_input_tokens > 0);
     assert_eq!(
         estimate.maximum_estimated_input_tokens,
@@ -231,6 +237,11 @@ fn prompt_preview_uses_selected_context_without_resolving_secrets() {
     assert!(previews[0].user_prompt.contains("변경 사항 요약"));
     assert!(!previews[0].system_prompt.contains("missing-secret"));
     assert!(!previews[0].user_prompt.contains("missing-secret"));
+    assert_eq!(previews[1].agent_name, "추가 검토 에이전트");
+    assert!(previews[1].system_prompt.contains("추가 검토 에이전트"));
+    assert!(previews[1].system_prompt.contains("근거를 먼저 확인한다."));
+    assert_eq!(previews[1].user_prompt, previews[0].user_prompt);
+    assert!(!previews[1].system_prompt.contains("missing-secret"));
 }
 
 #[test]

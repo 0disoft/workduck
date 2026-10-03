@@ -41,6 +41,9 @@ pub fn create_execution_runs(
             });
         }
 
+        let task_skills = select_records(&task.skill_ids, skills, |skill| &skill.id);
+        let task_references =
+            select_records(&task.reference_ids, references, |reference| &reference.id);
         for agent_id in &task.agent_ids {
             let agent = agents
                 .iter()
@@ -77,10 +80,8 @@ pub fn create_execution_runs(
                 persona,
                 provider,
                 model,
-                skills: select_records(&task.skill_ids, skills, |skill| &skill.id),
-                references: select_records(&task.reference_ids, references, |reference| {
-                    &reference.id
-                }),
+                skills: task_skills.iter().copied().cloned().collect(),
+                references: task_references.iter().copied().cloned().collect(),
             });
         }
     }
@@ -144,6 +145,10 @@ pub fn create_prompt_previews(
             });
         }
 
+        let task_skills = select_records(&task.skill_ids, skills, |skill| &skill.id);
+        let task_references =
+            select_records(&task.reference_ids, references, |reference| &reference.id);
+        let prompt_plan = create_agent_prompt_plan(task);
         for agent_id in &task.agent_ids {
             let agent = agents
                 .iter()
@@ -169,12 +174,9 @@ pub fn create_prompt_previews(
                 persona,
                 provider: agent.execution_provider.clone().unwrap_or_default(),
                 model: agent.model_id.clone().unwrap_or_default(),
-                skills: select_records(&task.skill_ids, skills, |skill| &skill.id),
-                references: select_records(&task.reference_ids, references, |reference| {
-                    &reference.id
-                }),
+                skills: task_skills.iter().copied().cloned().collect(),
+                references: task_references.iter().copied().cloned().collect(),
             };
-            let prompt_plan = create_agent_prompt_plan(&run.task);
 
             previews.push(QueuePromptPreview {
                 id: format!("{}:{}", task.id, agent.id),
@@ -395,11 +397,14 @@ fn resolve_provider_environment_secret(
     })
 }
 
-fn select_records<T: Clone>(ids: &[String], records: &[T], id_of: impl Fn(&T) -> &str) -> Vec<T> {
+fn select_records<'a, T>(
+    ids: &[String],
+    records: &'a [T],
+    id_of: impl Fn(&T) -> &str,
+) -> Vec<&'a T> {
     records
         .iter()
         .filter(|record| ids.iter().any(|id| id == id_of(record)))
-        .cloned()
         .collect()
 }
 

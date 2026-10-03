@@ -3566,7 +3566,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "904d74a38dd461ce99b17e137d334d1e053c5098b76af322f1291f00035ded6b",
+      "contentHash": "da37a177939621d3fad97d45f72621608525a615f37e886e52712641bd25e628",
       "declarations": [
         null
       ],
@@ -3580,7 +3580,7 @@
       ],
       "path": "src-tauri/src/queue_execution_planning.rs",
       "semanticBytes": 705,
-      "sourceBytes": 20189
+      "sourceBytes": 20437
     },
     {
       "blocks": [],
@@ -3599,7 +3599,7 @@
     },
     {
       "blocks": [],
-      "contentHash": "c0d393773ac8872180fb35a4d0934598b77994ad0b6469c2082c5a118ac1ca54",
+      "contentHash": "9e3b9da3499b1493b2f9b0c556cc71b15b884bb9b9f948fd7332442e570b29fc",
       "declarations": [],
       "imports": [
         "crate::queue_execution_identity::unique_token",
@@ -3611,7 +3611,7 @@
       ],
       "path": "src-tauri/src/queue_execution_tests.rs",
       "semanticBytes": 0,
-      "sourceBytes": 22754
+      "sourceBytes": 23357
     },
     {
       "blocks": [
