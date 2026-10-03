@@ -3267,11 +3267,69 @@
         "scaffold dialog lifecycle"
       ],
       "stability": "architecture"
+    },
+    {
+      "boundaries": [],
+      "excludes": [
+        "repository mutations",
+        "native vault operations",
+        "project selection rules"
+      ],
+      "hashes": {
+        "body": "4e835d09d8b7f434bfde4711a21116f5dd106cb5dc5d63c88157f13ed32b0072",
+        "semantic": "734a24c879ea87b61bf6e300670488a38e7c847cf2328bcc88ae3aed8df6a9a8",
+        "structure": "8fc948220e679d809cc4625e719da4300653fc4291f7b5d03a308c8c591aec36"
+      },
+      "id": "workduck.projects.workspace-lifecycle",
+      "imports": [
+        "#lib/environment/environment-vault-session-loader.ts",
+        "#lib/environment/environment-vault-session.ts",
+        "#lib/environment/environment-vault-storage.ts",
+        "#lib/environment/environment-vault.ts",
+        "#lib/environment/secret-vault-crypto.ts",
+        "#lib/workspaces/workspace-registry.ts",
+        "./project-board-operations",
+        "./project-board-storage-actions",
+        "./project-folder",
+        "./project-operation-storage",
+        "./project-registry",
+        "./project-storage"
+      ],
+      "invariant": [
+        "Initial reads yield to newer published and live state; only the active workspace lifetime updates the board, and metadata changes preserve selections."
+      ],
+      "location": {
+        "declarationLine": null,
+        "endLine": 10,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src/lib/projects/ProjectBoardWorkspaceLifecycle.svelte",
+        "receiver": null,
+        "signature": null,
+        "startLine": 2,
+        "symbol": null,
+        "visibility": null
+      },
+      "owns": [
+        "workspace view reset",
+        "initial read ownership",
+        "workspace subscriptions",
+        "board resource teardown"
+      ],
+      "role": "Load project board registries, operation history, and vault views within the active workspace lifetime.",
+      "scope": "module",
+      "search": [
+        "project board workspace switch",
+        "late project registry read",
+        "workspace board subscriptions"
+      ],
+      "stability": "architecture"
     }
   ],
   "contractFingerprints": {
     "configuration": {
-      "sha256": "027c0484393ce0cc1883a078e383f07291f15002ddba274c3b715a4414227dfc"
+      "sha256": "25ff693fe2d71a324d9b099ba8228034298928e8363c74302fb80b08169439da"
     },
     "exportedApi": {
       "count": 0,
@@ -3282,6 +3340,6 @@
   "generatedBy": "llmnav@0.9.7",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "e939d0f68cc52261cfbc4720f62138d22f75fe341deb4dc124bab13d7eb1ffd9",
+  "sourceHash": "a3318c73f7cc64bdac8510be09be97c6a21ecb452191bbfb1f2d5daec185df8c",
   "specVersion": "1"
 }

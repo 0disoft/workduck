@@ -128,6 +128,62 @@
     },
     {
       "confidence": 0.85,
+      "from": "workduck/workduck.projects.workspace-lifecycle",
+      "id": "04ca1a4aab5e6b2e1539d2bf2a79636038775bd0caf4f0d426f1d8ec8576abc6",
+      "kind": "imports",
+      "provenance": {
+        "generator": "llmnav",
+        "line": null,
+        "path": "src/lib/projects/ProjectBoardWorkspaceLifecycle.svelte",
+        "source": "src/lib/projects/ProjectBoardWorkspaceLifecycle.svelte",
+        "type": "local-import"
+      },
+      "to": "workduck/workduck.projects.folder"
+    },
+    {
+      "confidence": 0.85,
+      "from": "workduck/workduck.projects.workspace-lifecycle",
+      "id": "e460a4523af101f9947dbba048e7e628382d68ffd90ef9c7cc9157a1a1915d0f",
+      "kind": "imports",
+      "provenance": {
+        "generator": "llmnav",
+        "line": null,
+        "path": "src/lib/projects/ProjectBoardWorkspaceLifecycle.svelte",
+        "source": "src/lib/projects/ProjectBoardWorkspaceLifecycle.svelte",
+        "type": "local-import"
+      },
+      "to": "workduck/workduck.projects.operation-storage"
+    },
+    {
+      "confidence": 0.85,
+      "from": "workduck/workduck.projects.workspace-lifecycle",
+      "id": "514d53efe62c6e5e90a1b48f6fc6ee2e88689f67e262f3f1df673114d72d24a5",
+      "kind": "imports",
+      "provenance": {
+        "generator": "llmnav",
+        "line": null,
+        "path": "src/lib/projects/ProjectBoardWorkspaceLifecycle.svelte",
+        "source": "src/lib/projects/ProjectBoardWorkspaceLifecycle.svelte",
+        "type": "local-import"
+      },
+      "to": "workduck/workduck.projects.registry-domain"
+    },
+    {
+      "confidence": 0.85,
+      "from": "workduck/workduck.projects.workspace-lifecycle",
+      "id": "1c79a464e89e8c037041db6890c3a9fa6ede3548deee849a54bb0a72d318f24d",
+      "kind": "imports",
+      "provenance": {
+        "generator": "llmnav",
+        "line": null,
+        "path": "src/lib/projects/ProjectBoardWorkspaceLifecycle.svelte",
+        "source": "src/lib/projects/ProjectBoardWorkspaceLifecycle.svelte",
+        "type": "local-import"
+      },
+      "to": "workduck/workduck.projects.storage"
+    },
+    {
+      "confidence": 0.85,
       "from": "workduck/workduck.queue.execution",
       "id": "268d6ad14bde561af494351ff6a78b888341e38014c1223d0c878c6a6ff5e6a7",
       "kind": "imports",
@@ -1089,6 +1145,28 @@
     {
       "definitions": [],
       "external": false,
+      "key": "workduck/workduck.projects.workspace-lifecycle",
+      "location": {
+        "declarationLine": null,
+        "endLine": 10,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src/lib/projects/ProjectBoardWorkspaceLifecycle.svelte",
+        "receiver": null,
+        "signature": null,
+        "startLine": 2,
+        "symbol": null,
+        "visibility": null
+      },
+      "repositoryId": "workduck",
+      "role": "Load project board registries, operation history, and vault views within the active workspace lifetime.",
+      "semanticId": "workduck.projects.workspace-lifecycle",
+      "unresolved": false
+    },
+    {
+      "definitions": [],
+      "external": false,
       "key": "workduck/workduck.prompt.compiler",
       "location": {
         "declarationLine": null,
@@ -1683,11 +1761,11 @@
   ],
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "987f9dd97358599e81b070e6e5cc01d3440aeedb2b88cf271a739f6dcf2b8e9b",
+  "sourceHash": "bacd65c784570802d7d94a23b40b0b7ed8402510b2732e6bd2c91202a9fdc544",
   "stats": {
-    "edgeCount": 16,
+    "edgeCount": 20,
     "importedIndexCount": 0,
-    "nodeCount": 65,
+    "nodeCount": 66,
     "unresolvedNodeCount": 0
   }
 }

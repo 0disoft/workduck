@@ -1,4 +1,13 @@
 <script lang="ts">
+	/* llmnav/1 module
+	id=workduck.projects.workspace-lifecycle
+	role=Load project board registries, operation history, and vault views within the active workspace lifetime.
+	owns=workspace view reset|initial read ownership|workspace subscriptions|board resource teardown
+	excludes=repository mutations|native vault operations|project selection rules
+	search=project board workspace switch|late project registry read|workspace board subscriptions
+	invariant=Initial reads yield to newer published and live state; only the active workspace lifetime updates the board, and metadata changes preserve selections.
+	stability=architecture
+	*/
 	import type { EnvironmentVault } from '#lib/environment/environment-vault.ts';
 	import {
 		readEnvironmentVaultSession,
@@ -57,14 +66,21 @@
 	}: Props = $props();
 
 	let environmentVaultOpenSequence = 0;
+	let workspaceIdentityId = $derived(workspace.id);
+	let workspaceIdentityPath = $derived(workspace.path);
 
 	$effect(() => {
-		const workspaceId = workspace.id;
-		const workspacePath = workspace.path;
+		const workspaceId = workspaceIdentityId;
+		const workspacePath = workspaceIdentityPath;
 		let isCurrentWorkspace = true;
+		let hasPublishedRegistry = false;
+		let hasPublishedVaultEnvelope = false;
+		let hasPublishedVaultSession = false;
 		const openSequence = ++environmentVaultOpenSequence;
 
 		folderRepairError = null;
+		registry = createEmptyProjectRegistry(workspaceId);
+		repositoryOperationById = {};
 		storageError = null;
 		operationStorageError = null;
 		folderRepairSignature = '';
@@ -76,24 +92,31 @@
 		environmentVaultError = null;
 
 		void readEnvironmentVaultEnvelopeForWorkspace(workspaceId, workspacePath).then((result) => {
-			if (!isCurrentWorkspace || !result.ok) {
+			if (!isCurrentWorkspace || hasPublishedVaultEnvelope || !result.ok) {
 				return;
 			}
 
 			environmentVaultEnvelope = result.envelope;
 		});
 		void readProjectRegistryForBoard(workspaceId, createEmptyProjectRegistry(workspaceId), (next) => {
+			if (!isCurrentWorkspace || hasPublishedRegistry) return;
 			registry = next.registry;
 			storageError = next.storageError;
 		});
 		void readProjectRepositoryOperationRecordsForBoard(workspaceId, (next) => {
+			if (!isCurrentWorkspace) return;
 			operationStorageError = next.operationStorageError;
 			if (next.repositoryOperationById !== undefined) {
-				repositoryOperationById = next.repositoryOperationById;
+				repositoryOperationById = { ...next.repositoryOperationById, ...repositoryOperationById };
 			}
 		});
 		void openEnvironmentVaultSessionFromWorkspaceUnlock(workspaceId, workspacePath).then((result) => {
-			if (!isCurrentWorkspace || openSequence !== environmentVaultOpenSequence || !result.ok) {
+			if (
+				!isCurrentWorkspace ||
+				hasPublishedVaultSession ||
+				openSequence !== environmentVaultOpenSequence ||
+				!result.ok
+			) {
 				return;
 			}
 
@@ -101,12 +124,16 @@
 		});
 
 		const unsubscribeProjectRegistry = subscribeProjectRegistry(workspaceId, (nextRegistry) => {
+			if (!isCurrentWorkspace) return;
+			hasPublishedRegistry = true;
 			registry = nextRegistry;
 			storageError = null;
 		});
 		const unsubscribeEnvironmentVaultSession = subscribeEnvironmentVaultSession(
 			workspaceId,
 			(nextVault) => {
+				if (!isCurrentWorkspace) return;
+				hasPublishedVaultSession = true;
 				environmentVault = nextVault;
 			}
 		);
@@ -114,6 +141,8 @@
 			workspaceId,
 			workspacePath,
 			(nextEnvelope) => {
+				if (!isCurrentWorkspace) return;
+				hasPublishedVaultEnvelope = true;
 				environmentVaultEnvelope = nextEnvelope;
 				environmentVaultPassword = '';
 				environmentVaultError = null;

@@ -96,3 +96,9 @@ role Own reactive repository scaffold dialog state, profile selection, preview, 
 owns scaffold dialog lifecycle, preview selection ownership, scaffold busy state, apply feedback
 excludes board selection, native scaffold persistence, new repository scaffolding
 invariant Only the latest preview request in the open dialog updates preview and busy state; apply results stay bound to the selected repository, scope, and profile.
+
+@workduck.projects.workspace-lifecycle
+role Load project board registries, operation history, and vault views within the active workspace lifetime.
+owns workspace view reset, initial read ownership, workspace subscriptions, board resource teardown
+excludes repository mutations, native vault operations, project selection rules
+invariant Initial reads yield to newer published and live state; only the active workspace lifetime updates the board, and metadata changes preserve selections.
