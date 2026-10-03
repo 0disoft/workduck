@@ -71,3 +71,4 @@
 {"id":"workduck.skills.defaults","state":"active"}
 {"id":"workduck.skills.registry","state":"active"}
 {"id":"workduck.skills.schema","state":"active"}
+{"id":"workduck.cli.agent-evaluation","state":"active"}

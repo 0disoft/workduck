@@ -569,6 +569,28 @@
     {
       "definitions": [],
       "external": false,
+      "key": "workduck/workduck.cli.agent-evaluation",
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src-tauri/src/bin/cli/agent_evaluation.rs",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "repositoryId": "workduck",
+      "role": "Parse agent evaluation commands, update agent score history, and synchronize persona summaries under a workspace lock.",
+      "semanticId": "workduck.cli.agent-evaluation",
+      "unresolved": false
+    },
+    {
+      "definitions": [],
+      "external": false,
       "key": "workduck/workduck.cli.execution",
       "location": {
         "declarationLine": null,
@@ -2055,11 +2077,11 @@
   ],
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "d62ba965b99875ac4d9608f87f5d5d62cea4a3f26820c324480a6da4e40ce9dd",
+  "sourceHash": "fa6c827371fbb1de4311fcaee11b5904589be6112905af2f3b3600667a19e285",
   "stats": {
     "edgeCount": 30,
     "importedIndexCount": 0,
-    "nodeCount": 73,
+    "nodeCount": 74,
     "unresolvedNodeCount": 0
   }
 }

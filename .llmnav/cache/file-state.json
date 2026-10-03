@@ -1278,8 +1278,121 @@
           "card": {
             "effect": [],
             "excludes": [
+              "queue execution",
+              "work-order discovery",
+              "vault decryption"
+            ],
+            "id": "workduck.cli.agent-evaluation",
+            "invariant": [
+              "Single and batch evaluations validate scores, serialize workspace writes, and preserve evaluation-key deduplication."
+            ],
+            "owns": [
+              "agent evaluation options",
+              "evaluation deduplication",
+              "score accumulation",
+              "persona summary synchronization",
+              "evaluation registry writes"
+            ],
+            "rel": [],
+            "risk": [],
+            "role": "Parse agent evaluation commands, update agent score history, and synchronize persona summaries under a workspace lock.",
+            "scope": "module",
+            "search": [
+              "agent evaluation cli",
+              "evaluation score history",
+              "persona evaluation summaries",
+              "evaluate batch command"
+            ],
+            "stability": "architecture",
+            "unknown": []
+          },
+          "end": 629,
+          "endLine": 9,
+          "entries": [
+            {
+              "key": "id",
+              "line": 2,
+              "order": 0,
+              "value": "workduck.cli.agent-evaluation"
+            },
+            {
+              "key": "role",
+              "line": 3,
+              "order": 1,
+              "value": "Parse agent evaluation commands, update agent score history, and synchronize persona summaries under a workspace lock."
+            },
+            {
+              "key": "owns",
+              "line": 4,
+              "order": 2,
+              "value": "agent evaluation options|evaluation deduplication|score accumulation|persona summary synchronization|evaluation registry writes"
+            },
+            {
+              "key": "excludes",
+              "line": 5,
+              "order": 3,
+              "value": "queue execution|work-order discovery|vault decryption"
+            },
+            {
+              "key": "search",
+              "line": 6,
+              "order": 4,
+              "value": "agent evaluation cli|evaluation score history|persona evaluation summaries|evaluate batch command"
+            },
+            {
+              "key": "invariant",
+              "line": 7,
+              "order": 5,
+              "value": "Single and batch evaluations validate scores, serialize workspace writes, and preserve evaluation-key deduplication."
+            },
+            {
+              "key": "stability",
+              "line": 8,
+              "order": 6,
+              "value": "architecture"
+            }
+          ],
+          "filePath": "src-tauri/src/bin/cli/agent_evaluation.rs",
+          "indent": "",
+          "newline": "\n",
+          "prefix": null,
+          "raw": "/* llmnav/1 module\nid=workduck.cli.agent-evaluation\nrole=Parse agent evaluation commands, update agent score history, and synchronize persona summaries under a workspace lock.\nowns=agent evaluation options|evaluation deduplication|score accumulation|persona summary synchronization|evaluation registry writes\nexcludes=queue execution|work-order discovery|vault decryption\nsearch=agent evaluation cli|evaluation score history|persona evaluation summaries|evaluate batch command\ninvariant=Single and batch evaluations validate scores, serialize workspace writes, and preserve evaluation-key deduplication.\nstability=architecture\n*/",
+          "scope": "module",
+          "specVersion": "1",
+          "start": 0,
+          "startLine": 1,
+          "style": "block",
+          "syntaxErrors": []
+        }
+      ],
+      "contentHash": "3601f1e5423941d7bf90442fbc4cebce77006fc7e3756e99d60543fb3c8090f7",
+      "declarations": [
+        null
+      ],
+      "imports": [
+        "crate::WORKDUCK_DIRECTORY_NAME",
+        "serde::{Deserialize, Serialize}",
+        "serde_json::Value",
+        "std::fs",
+        "std::{\n    collections::{HashMap, HashSet},\n    io::{self, Read},\n    path::{Path, PathBuf},\n}",
+        "super::{\n    AGENTS_FILE_NAME, CliError, PERSONAS_FILE_NAME, canonicalize_directory, current_timestamp,\n    increment_registry_revision, io_error, read_json_file, read_workspace_id, to_json_error,\n    usage_text, workspace_data_path, write_json_file,\n}",
+        "tests {\n    use super::*",
+        "workduck_lib::workspace_data_file::{\n    commit_workspace_registry_pair_under_lock, recover_workspace_registry_transaction_under_lock,\n}",
+        "workduck_lib::workspace_registry_lock::acquire_workspace_registry_lock"
+      ],
+      "path": "src-tauri/src/bin/cli/agent_evaluation.rs",
+      "semanticBytes": 629,
+      "sourceBytes": 35817
+    },
+    {
+      "blocks": [
+        {
+          "card": {
+            "effect": [],
+            "excludes": [
               "Node launcher",
-              "Tauri desktop command registry"
+              "Tauri desktop command registry",
+              "agent evaluation implementation"
             ],
             "id": "workduck.cli.execution",
             "invariant": [
@@ -1289,7 +1402,7 @@
               "CLI option parsing",
               "work-order discovery",
               "queue execution",
-              "agent evaluation"
+              "command dispatch"
             ],
             "rel": [],
             "risk": [],
@@ -1303,7 +1416,7 @@
             "stability": "architecture",
             "unknown": []
           },
-          "end": 510,
+          "end": 542,
           "endLine": 9,
           "entries": [
             {
@@ -1322,13 +1435,13 @@
               "key": "owns",
               "line": 4,
               "order": 2,
-              "value": "CLI option parsing|work-order discovery|queue execution|agent evaluation"
+              "value": "CLI option parsing|work-order discovery|queue execution|command dispatch"
             },
             {
               "key": "excludes",
               "line": 5,
               "order": 3,
-              "value": "Node launcher|Tauri desktop command registry"
+              "value": "Node launcher|Tauri desktop command registry|agent evaluation implementation"
             },
             {
               "key": "search",
@@ -1353,7 +1466,7 @@
           "indent": "",
           "newline": "\n",
           "prefix": null,
-          "raw": "/* llmnav/1 module\nid=workduck.cli.execution\nrole=Execute queue work orders and agent evaluations from the command line under explicit workspace and vault contracts.\nowns=CLI option parsing|work-order discovery|queue execution|agent evaluation\nexcludes=Node launcher|Tauri desktop command registry\nsearch=workduck cli execution|queue work order command|agent evaluation cli\ninvariant=Failures retain stable error codes and JSON mode never reports an unsuccessful operation as success.\nstability=architecture\n*/",
+          "raw": "/* llmnav/1 module\nid=workduck.cli.execution\nrole=Execute queue work orders and agent evaluations from the command line under explicit workspace and vault contracts.\nowns=CLI option parsing|work-order discovery|queue execution|command dispatch\nexcludes=Node launcher|Tauri desktop command registry|agent evaluation implementation\nsearch=workduck cli execution|queue work order command|agent evaluation cli\ninvariant=Failures retain stable error codes and JSON mode never reports an unsuccessful operation as success.\nstability=architecture\n*/",
           "scope": "module",
           "specVersion": "1",
           "start": 0,
@@ -1362,28 +1475,28 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "563424d8014b2c09a93a3c27e5a9fe1544afd98ea35784ba32280b3fce899ebe",
+      "contentHash": "9f9722813ad928de3013ed54ed7241a792d93a1703df212866166d242d1c2a6a",
       "declarations": [
         null
       ],
       "imports": [
+        "agent_evaluation",
+        "agent_evaluation::run_agent_command",
         "base64::{Engine as _, engine::general_purpose::STANDARD as BASE64}",
         "chacha20poly1305::{\n    XChaCha20Poly1305, XNonce,\n    aead::{Aead, KeyInit, Payload},\n}",
         "serde::{Deserialize, Serialize}",
         "serde_json::Value",
-        "std::{\n    collections::{HashMap, HashSet},\n    env, fs,\n    io::{self, Read, Write},\n    path::{Path, PathBuf},\n}",
+        "std::{\n    env, fs,\n    io::{self, Write},\n    path::{Path, PathBuf},\n}",
         "tests {\n    use super::*",
         "time::{OffsetDateTime, format_description::well_known::Rfc3339}",
         "workduck_lib::argon2_kdf::{ARGON2ID_VERSION, derive_argon2id_key, parameters_are_supported}",
         "workduck_lib::queue_execution::*",
         "workduck_lib::queue_work_order_execution::{\n    QueueWorkOrderCompletion, begin_queue_work_order_execution_at,\n}",
-        "workduck_lib::workspace_data_file::{\n    commit_workspace_registry_pair_under_lock,\n    recover_workspace_registry_transaction_under_lock,\n}",
-        "workduck_lib::workspace_registry_lock::acquire_workspace_registry_lock",
         "zeroize::{Zeroize, Zeroizing}"
       ],
       "path": "src-tauri/src/bin/workduck-cli.rs",
-      "semanticBytes": 510,
-      "sourceBytes": 70376
+      "semanticBytes": 542,
+      "sourceBytes": 35840
     },
     {
       "blocks": [

@@ -3,8 +3,8 @@ Read semantic cards before opening source. Resolve current paths and signatures 
 
 @workduck.cli.execution
 role Execute queue work orders and agent evaluations from the command line under explicit workspace and vault contracts.
-owns CLI option parsing, work-order discovery, queue execution, agent evaluation
-excludes Node launcher, Tauri desktop command registry
+owns CLI option parsing, work-order discovery, queue execution, command dispatch
+excludes Node launcher, Tauri desktop command registry, agent evaluation implementation
 invariant Failures retain stable error codes and JSON mode never reports an unsuccessful operation as success.
 
 @workduck.desktop.commands
@@ -174,3 +174,9 @@ role Normalize and migrate workspace skill registries while preserving custom sk
 owns skill registry normalization, legacy skill migration, skill mutations, built-in override detection
 excludes default prompt authoring, skill persistence, queue execution
 invariant Legacy registries receive version-appropriate defaults, current removals persist, and invalid mutations preserve the registry.
+
+@workduck.cli.agent-evaluation
+role Parse agent evaluation commands, update agent score history, and synchronize persona summaries under a workspace lock.
+owns agent evaluation options, evaluation deduplication, score accumulation, persona summary synchronization, evaluation registry writes
+excludes queue execution, work-order discovery, vault decryption
+invariant Single and batch evaluations validate scores, serialize workspace writes, and preserve evaluation-key deduplication.

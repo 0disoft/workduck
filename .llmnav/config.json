@@ -247,6 +247,17 @@
         "invariant"
       ],
       "scope": "module"
+    },
+    {
+      "match": [
+        "src-tauri/src/bin/cli/agent_evaluation.rs"
+      ],
+      "name": "CLI agent evaluation boundary",
+      "requiredFields": [
+        "owns",
+        "invariant"
+      ],
+      "scope": "module"
     }
   ],
   "audit": {

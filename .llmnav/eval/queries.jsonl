@@ -68,3 +68,4 @@
 {"query":"skill registry migration custom skill validation and editing","expected":["workduck.skills.registry"]}
 {"query":"built-in skills default skill prompts and option presets","expected":["workduck.skills.defaults"]}
 {"query":"skill record schema validation limits and output types","expected":["workduck.skills.schema"]}
+{"query":"agent evaluation CLI score history persona summaries and evaluate batch command","expected":["workduck.cli.agent-evaluation"]}

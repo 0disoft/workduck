@@ -71,3 +71,4 @@ workduck.projects.storage-native
 workduck.skills.defaults
 workduck.skills.registry
 workduck.skills.schema
+workduck.cli.agent-evaluation
