@@ -60,3 +60,4 @@
 {"id":"workduck.projects.scaffold-transaction","state":"active"}
 {"id":"workduck.projects.git-inspection","state":"active"}
 {"id":"workduck.queue.execution-planning","state":"active"}
+{"id":"workduck.queue.work-order-editor","state":"active"}

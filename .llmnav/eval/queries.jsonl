@@ -55,3 +55,4 @@
 {"query":"apply repository scaffolds recover interrupted journals and preserve existing conflicts","expected":["workduck.projects.scaffold-transaction"]}
 {"query":"inspect worktree repository status remote cache diagnostics and coalesce duplicate Git reads","expected":["workduck.projects.git-inspection"]}
 {"query":"plan queue execution estimate prompt tokens validate confirmation and resolve agent context","expected":["workduck.queue.execution-planning"]}
+{"query":"manual work order draft edit Queue task form and work order skill options","expected":["workduck.queue.work-order-editor"]}

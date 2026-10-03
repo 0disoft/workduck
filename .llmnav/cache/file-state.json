@@ -8658,7 +8658,7 @@
     },
     {
       "blocks": [],
-      "contentHash": "9bd2886bfdb1dadb22f01f773747cf233822142c41f46523bba07abf0411bb7f",
+      "contentHash": "7abb2e84c84a2bbc5e812bcf46828adbf40ab52b80c53b7d4109b2520b32b650",
       "declarations": [],
       "imports": [
         "#lib/ui/PageTitleRow.svelte",
@@ -8676,7 +8676,7 @@
       ],
       "path": "src/lib/queue/QueuePanelView.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 19739
+      "sourceBytes": 20817
     },
     {
       "blocks": [],
@@ -9153,7 +9153,7 @@
     },
     {
       "blocks": [],
-      "contentHash": "1ce21a81876740cb41bfd1cc7856e116e0483d6cb6a724df3121a8578adedb74",
+      "contentHash": "3a991e74b98c207df6312a2aec77b3de280ac419d94901d5bb4c1700eb4521b9",
       "declarations": [],
       "imports": [
         "#lib/agents/agent-evaluation.ts",
@@ -9181,9 +9181,7 @@
         "./queue-panel-execution-context-workflow",
         "./queue-panel-file-delete-workflow",
         "./queue-panel-file-list",
-        "./queue-panel-helpers",
         "./queue-panel-labels",
-        "./queue-panel-manual-work-order-draft",
         "./queue-panel-manual-work-order-save-workflow",
         "./queue-panel-prompt-preview-workflow",
         "./queue-panel-read-state-workflow",
@@ -9193,6 +9191,7 @@
         "./queue-panel-types",
         "./queue-panel-work-order-cancel-workflow",
         "./queue-panel-work-order-completion-workflow",
+        "./queue-panel-work-order-editor.svelte",
         "./queue-panel-work-order-execution-workflow",
         "./queue-panel-workspace-lifecycle",
         "./queue-read-state",
@@ -9201,7 +9200,7 @@
       ],
       "path": "src/lib/queue/queue-panel-controller.svelte.ts",
       "semanticBytes": 0,
-      "sourceBytes": 60512
+      "sourceBytes": 49472
     },
     {
       "blocks": [],
@@ -9459,6 +9458,132 @@
       "path": "src/lib/queue/queue-panel-work-order-completion-workflow.ts",
       "semanticBytes": 0,
       "sourceBytes": 1155
+    },
+    {
+      "blocks": [
+        {
+          "card": {
+            "effect": [],
+            "excludes": [
+              "Queue file persistence",
+              "provider execution",
+              "workspace registry loading"
+            ],
+            "id": "workduck.queue.work-order-editor",
+            "invariant": [
+              "Each editor owns its draft and keeps form bindings reactive; save values use the existing Queue draft rules."
+            ],
+            "owns": [
+              "manual draft state",
+              "skill and vote option selection",
+              "form validation",
+              "dialog lifecycle"
+            ],
+            "rel": [],
+            "risk": [],
+            "role": "Own reactive manual work order drafts, dialog transitions, context selections, and save-ready form values.",
+            "scope": "module",
+            "search": [
+              "manual work order draft",
+              "edit Queue task form",
+              "work order skill options"
+            ],
+            "stability": "architecture",
+            "unknown": []
+          },
+          "end": 555,
+          "endLine": 9,
+          "entries": [
+            {
+              "key": "id",
+              "line": 2,
+              "order": 0,
+              "value": "workduck.queue.work-order-editor"
+            },
+            {
+              "key": "role",
+              "line": 3,
+              "order": 1,
+              "value": "Own reactive manual work order drafts, dialog transitions, context selections, and save-ready form values."
+            },
+            {
+              "key": "owns",
+              "line": 4,
+              "order": 2,
+              "value": "manual draft state|skill and vote option selection|form validation|dialog lifecycle"
+            },
+            {
+              "key": "excludes",
+              "line": 5,
+              "order": 3,
+              "value": "Queue file persistence|provider execution|workspace registry loading"
+            },
+            {
+              "key": "search",
+              "line": 6,
+              "order": 4,
+              "value": "manual work order draft|edit Queue task form|work order skill options"
+            },
+            {
+              "key": "invariant",
+              "line": 7,
+              "order": 5,
+              "value": "Each editor owns its draft and keeps form bindings reactive; save values use the existing Queue draft rules."
+            },
+            {
+              "key": "stability",
+              "line": 8,
+              "order": 6,
+              "value": "architecture"
+            }
+          ],
+          "filePath": "src/lib/queue/queue-panel-work-order-editor.svelte.ts",
+          "indent": "",
+          "newline": "\n",
+          "prefix": null,
+          "raw": "/* llmnav/1 module\nid=workduck.queue.work-order-editor\nrole=Own reactive manual work order drafts, dialog transitions, context selections, and save-ready form values.\nowns=manual draft state|skill and vote option selection|form validation|dialog lifecycle\nexcludes=Queue file persistence|provider execution|workspace registry loading\nsearch=manual work order draft|edit Queue task form|work order skill options\ninvariant=Each editor owns its draft and keeps form bindings reactive; save values use the existing Queue draft rules.\nstability=architecture\n*/",
+          "scope": "module",
+          "specVersion": "1",
+          "start": 0,
+          "startLine": 1,
+          "style": "block",
+          "syntaxErrors": []
+        }
+      ],
+      "contentHash": "d0ed4d839d4cf3d44ea5e9988c79bc2ba3296aa18be0a55f4305b94697a085ba",
+      "declarations": [
+        null
+      ],
+      "imports": [
+        "#lib/i18n/workduck-message-contract.ts",
+        "#lib/references/reference-registry.ts",
+        "#lib/skills/skill-registry.ts",
+        "./queue-artifacts",
+        "./queue-panel-helpers",
+        "./queue-panel-manual-work-order-draft",
+        "./queue-panel-manual-work-order-save-workflow",
+        "./queue-panel-types",
+        "./queue-voting"
+      ],
+      "path": "src/lib/queue/queue-panel-work-order-editor.svelte.ts",
+      "semanticBytes": 555,
+      "sourceBytes": 15512
+    },
+    {
+      "blocks": [],
+      "contentHash": "90c7b2cc3876a66ab8ae60b9a50f82144b75966cfb4f2baa66f7cfc9ba6d7166",
+      "declarations": [],
+      "imports": [
+        "#lib/i18n/workduck-language.ts",
+        "#lib/skills/skill-registry.ts",
+        "./queue-panel-work-order-editor.svelte",
+        "bun",
+        "bun:test",
+        "svelte/compiler"
+      ],
+      "path": "src/lib/queue/queue-panel-work-order-editor.test.ts",
+      "semanticBytes": 0,
+      "sourceBytes": 4770
     },
     {
       "blocks": [],

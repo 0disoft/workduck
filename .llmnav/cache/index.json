@@ -3074,11 +3074,66 @@
         "confirm queue execution token"
       ],
       "stability": "architecture"
+    },
+    {
+      "boundaries": [],
+      "excludes": [
+        "Queue file persistence",
+        "provider execution",
+        "workspace registry loading"
+      ],
+      "hashes": {
+        "body": "d0ed4d839d4cf3d44ea5e9988c79bc2ba3296aa18be0a55f4305b94697a085ba",
+        "semantic": "607a223e1fb5dce8ef528fcb8402d6c874f4125dde00afc588b1a3953a52617f",
+        "structure": "0d7976dde1b5f9fbb49040a91a569bd38fb3f5a359f1cc8170e94403da576497"
+      },
+      "id": "workduck.queue.work-order-editor",
+      "imports": [
+        "#lib/i18n/workduck-message-contract.ts",
+        "#lib/references/reference-registry.ts",
+        "#lib/skills/skill-registry.ts",
+        "./queue-artifacts",
+        "./queue-panel-helpers",
+        "./queue-panel-manual-work-order-draft",
+        "./queue-panel-manual-work-order-save-workflow",
+        "./queue-panel-types",
+        "./queue-voting"
+      ],
+      "invariant": [
+        "Each editor owns its draft and keeps form bindings reactive; save values use the existing Queue draft rules."
+      ],
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src/lib/queue/queue-panel-work-order-editor.svelte.ts",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "owns": [
+        "manual draft state",
+        "skill and vote option selection",
+        "form validation",
+        "dialog lifecycle"
+      ],
+      "role": "Own reactive manual work order drafts, dialog transitions, context selections, and save-ready form values.",
+      "scope": "module",
+      "search": [
+        "manual work order draft",
+        "edit Queue task form",
+        "work order skill options"
+      ],
+      "stability": "architecture"
     }
   ],
   "contractFingerprints": {
     "configuration": {
-      "sha256": "8ad86f60f7c0db3c4e65754fd03ff723cf0ce092d90edfba55581e728fcb09bf"
+      "sha256": "513da3f7652b63996058167f4783ee8f095c6057f2eb8659eb50da80b54ec983"
     },
     "exportedApi": {
       "count": 0,
@@ -3089,6 +3144,6 @@
   "generatedBy": "llmnav@0.9.7",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "1e23309d2828877640c9999641677961dcbf9cf38f73185c96d5b59bd17ba009",
+  "sourceHash": "df565aff3e8611c104f200b9354c6e8b388ff41c334f305e9c3e00f600e369c9",
   "specVersion": "1"
 }

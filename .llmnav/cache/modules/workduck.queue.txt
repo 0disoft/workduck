@@ -48,3 +48,9 @@ role Build secret-free prompt previews and bounded execution plans, resolve run 
 owns agent and context selection, provider model and secret resolution, execution estimates and confirmation tokens, work order limits
 excludes provider HTTP requests, execution cancellation, report persistence
 invariant Previews never resolve API secrets, run and task caps are checked before resolution, and execution validates the current prompt estimate token.
+
+@workduck.queue.work-order-editor
+role Own reactive manual work order drafts, dialog transitions, context selections, and save-ready form values.
+owns manual draft state, skill and vote option selection, form validation, dialog lifecycle
+excludes Queue file persistence, provider execution, workspace registry loading
+invariant Each editor owns its draft and keeps form bindings reactive; save values use the existing Queue draft rules.

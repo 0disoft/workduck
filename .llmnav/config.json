@@ -156,6 +156,17 @@
         "invariant"
       ],
       "scope": "module"
+    },
+    {
+      "match": [
+        "src/lib/queue/queue-panel-work-order-editor.svelte.ts"
+      ],
+      "name": "Queue reactive work order editing",
+      "requiredFields": [
+        "owns",
+        "invariant"
+      ],
+      "scope": "module"
     }
   ],
   "audit": {

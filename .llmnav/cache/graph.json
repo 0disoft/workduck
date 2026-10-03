@@ -125,6 +125,20 @@
         "type": "local-import"
       },
       "to": "workduck/workduck.queue.folder"
+    },
+    {
+      "confidence": 0.85,
+      "from": "workduck/workduck.queue.work-order-editor",
+      "id": "21f5bd7616a7ff3a0eedbae57aaa22877b7100bc4c9c307c67086a52124ed5a4",
+      "kind": "imports",
+      "provenance": {
+        "generator": "llmnav",
+        "line": null,
+        "path": "src/lib/queue/queue-panel-work-order-editor.svelte.ts",
+        "source": "src/lib/queue/queue-panel-work-order-editor.svelte.ts",
+        "type": "local-import"
+      },
+      "to": "workduck/workduck.queue.artifacts"
     }
   ],
   "nodes": [
@@ -1167,6 +1181,28 @@
     {
       "definitions": [],
       "external": false,
+      "key": "workduck/workduck.queue.work-order-editor",
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src/lib/queue/queue-panel-work-order-editor.svelte.ts",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "repositoryId": "workduck",
+      "role": "Own reactive manual work order drafts, dialog transitions, context selections, and save-ready form values.",
+      "semanticId": "workduck.queue.work-order-editor",
+      "unresolved": false
+    },
+    {
+      "definitions": [],
+      "external": false,
       "key": "workduck/workduck.repository.inspection",
       "location": {
         "declarationLine": null,
@@ -1519,11 +1555,11 @@
   ],
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "1acba5f5a2e342b34af03d3ae68c568fcbbdf83d425bef2e82c101b41f1f619f",
+  "sourceHash": "fafc3ebcf3513dccb47403bf9b9e751e8f925da270c3854fef777ff1e70a5c67",
   "stats": {
-    "edgeCount": 9,
+    "edgeCount": 10,
     "importedIndexCount": 0,
-    "nodeCount": 62,
+    "nodeCount": 63,
     "unresolvedNodeCount": 0
   }
 }

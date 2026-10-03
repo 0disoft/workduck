@@ -189,7 +189,7 @@
 			void loadQueuePromptPreviewDialog();
 		}
 
-		if (controller.isNewWorkOrderDialogOpen) {
+		if (controller.workOrderEditor.isNewWorkOrderDialogOpen) {
 			void loadQueueWorkOrderDialog();
 		}
 	});
@@ -463,49 +463,49 @@
 	/>
 {/if}
 
-{#if controller.isNewWorkOrderDialogOpen && QueueWorkOrderDialog !== null}
+{#if controller.workOrderEditor.isNewWorkOrderDialogOpen && QueueWorkOrderDialog !== null}
 	<QueueWorkOrderDialog
 		messages={controller.messages}
 		isWriting={controller.isWriting}
-		canSubmit={controller.canCreateManualWorkOrder}
-		title={controller.workOrderDialogTitle}
-		submitLabel={controller.workOrderDialogSubmitLabel}
-		bind:manualWorkOrderTitle={controller.manualWorkOrderTitle}
-		bind:manualWorkOrderBody={controller.manualWorkOrderBody}
-		bind:manualWorkOrderPriority={controller.manualWorkOrderPriority}
-		bind:manualWorkOrderResponseLanguage={controller.manualWorkOrderResponseLanguage}
-		bind:manualWorkOrderResponseFormat={controller.manualWorkOrderResponseFormat}
-		bind:manualWorkOrderKind={controller.manualWorkOrderKind}
-		bind:manualVoteCriteriaInput={controller.manualVoteCriteriaInput}
-		manualVoteOptions={controller.manualVoteOptions}
+		canSubmit={controller.workOrderEditor.canCreateManualWorkOrder}
+		title={controller.workOrderEditor.workOrderDialogTitle}
+		submitLabel={controller.workOrderEditor.workOrderDialogSubmitLabel}
+		bind:manualWorkOrderTitle={controller.workOrderEditor.manualWorkOrderTitle}
+		bind:manualWorkOrderBody={controller.workOrderEditor.manualWorkOrderBody}
+		bind:manualWorkOrderPriority={controller.workOrderEditor.manualWorkOrderPriority}
+		bind:manualWorkOrderResponseLanguage={controller.workOrderEditor.manualWorkOrderResponseLanguage}
+		bind:manualWorkOrderResponseFormat={controller.workOrderEditor.manualWorkOrderResponseFormat}
+		bind:manualWorkOrderKind={controller.workOrderEditor.manualWorkOrderKind}
+		bind:manualVoteCriteriaInput={controller.workOrderEditor.manualVoteCriteriaInput}
+		manualVoteOptions={controller.workOrderEditor.manualVoteOptions}
 		allSkills={controller.allSkills}
 		allAgents={controller.allAgents}
 		allProjects={controller.allProjects}
 		allRepositories={controller.allRepositories}
-		allReferences={controller.prioritizedReferences}
-		selectedManualSkillIds={controller.selectedManualSkillIds}
-		selectedManualAgentIds={controller.selectedManualAgentIds}
-		selectedManualProjectIds={controller.selectedManualProjectIds}
-		selectedManualRepositoryIds={controller.selectedManualRepositoryIds}
-		selectedManualReferenceIds={controller.selectedManualReferenceIds}
-		selectedManualSkillOptionIds={controller.selectedManualSkillOptionIds}
-		showSkillOptions={controller.manualSkillOptionsAreVisible}
-		manualWorkOrderSkillSummary={controller.manualWorkOrderSkillSummary}
-		manualWorkOrderAgentSummary={controller.manualWorkOrderAgentSummary}
-		manualWorkOrderProjectSummary={controller.manualWorkOrderProjectSummary}
-		manualWorkOrderRepositorySummary={controller.manualWorkOrderRepositorySummary}
-		manualWorkOrderReferenceSummary={controller.manualWorkOrderReferenceSummary}
+		allReferences={controller.workOrderEditor.prioritizedReferences}
+		selectedManualSkillIds={controller.workOrderEditor.selectedManualSkillIds}
+		selectedManualAgentIds={controller.workOrderEditor.selectedManualAgentIds}
+		selectedManualProjectIds={controller.workOrderEditor.selectedManualProjectIds}
+		selectedManualRepositoryIds={controller.workOrderEditor.selectedManualRepositoryIds}
+		selectedManualReferenceIds={controller.workOrderEditor.selectedManualReferenceIds}
+		selectedManualSkillOptionIds={controller.workOrderEditor.selectedManualSkillOptionIds}
+		showSkillOptions={controller.workOrderEditor.manualSkillOptionsAreVisible}
+		manualWorkOrderSkillSummary={controller.workOrderEditor.manualWorkOrderSkillSummary}
+		manualWorkOrderAgentSummary={controller.workOrderEditor.manualWorkOrderAgentSummary}
+		manualWorkOrderProjectSummary={controller.workOrderEditor.manualWorkOrderProjectSummary}
+		manualWorkOrderRepositorySummary={controller.workOrderEditor.manualWorkOrderRepositorySummary}
+		manualWorkOrderReferenceSummary={controller.workOrderEditor.manualWorkOrderReferenceSummary}
 		onClose={controller.closeNewWorkOrderDialog}
 		onSubmit={controller.handleCreateManualWorkOrder}
-		onSkillToggle={controller.toggleManualWorkOrderSkill}
-		onAgentToggle={controller.toggleManualWorkOrderAgent}
-		onProjectToggle={controller.toggleManualWorkOrderProject}
-		onRepositoryToggle={controller.toggleManualWorkOrderRepository}
-		onReferenceToggle={controller.toggleManualWorkOrderReference}
-		onSkillOptionToggle={controller.toggleManualSkillOption}
-		onVoteOptionAdd={controller.addManualVoteOption}
-		onVoteOptionRemove={controller.removeManualVoteOption}
-		onVoteOptionChange={controller.updateManualVoteOption}
+		onSkillToggle={controller.workOrderEditor.toggleManualWorkOrderSkill}
+		onAgentToggle={controller.workOrderEditor.toggleManualWorkOrderAgent}
+		onProjectToggle={controller.workOrderEditor.toggleManualWorkOrderProject}
+		onRepositoryToggle={controller.workOrderEditor.toggleManualWorkOrderRepository}
+		onReferenceToggle={controller.workOrderEditor.toggleManualWorkOrderReference}
+		onSkillOptionToggle={controller.workOrderEditor.toggleManualSkillOption}
+		onVoteOptionAdd={controller.workOrderEditor.addManualVoteOption}
+		onVoteOptionRemove={controller.workOrderEditor.removeManualVoteOption}
+		onVoteOptionChange={controller.workOrderEditor.updateManualVoteOption}
 		getQueuePriorityLabel={controller.getQueuePriorityLabel}
 		getQueueResponseLanguageLabel={controller.getQueueResponseLanguageLabel}
 		getQueueResponseFormatLabel={controller.getQueueResponseFormatLabel}
