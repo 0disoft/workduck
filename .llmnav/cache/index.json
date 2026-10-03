@@ -2928,8 +2928,8 @@
         "Git operations"
       ],
       "hashes": {
-        "body": "79cff09af73fc0c179c7465ae8d66062e2613320857393a225be57025ba6ba96",
-        "semantic": "81315e44964b9d2e87f9bbe64ea33202cf807dd6432210279bce965c3ac2d3f2",
+        "body": "c5daa8b309ab195bbdf7cdf4ceba902fd4b0828fcd1f370b78739cbfa8a0b053",
+        "semantic": "df1aead2db35da0917c89e9e60975fc708de6a2744da2dc68209bd655e3cece9",
         "structure": "a202add9bebddb32cb3f06fcc0397d3eb9f8627d4ce7831479adc71d4498d13a"
       },
       "id": "workduck.projects.scaffold-transaction",
@@ -2947,7 +2947,7 @@
         "time::{OffsetDateTime, format_description::well_known::Rfc3339}"
       ],
       "invariant": [
-        "Apply writes missing files only, and journal recovery removes only files whose recorded checksums still match."
+        "Apply writes missing files only, and cleanup verifies repository parents and recorded checksums before removing generated files."
       ],
       "location": {
         "declarationLine": null,
@@ -2990,6 +2990,6 @@
   "generatedBy": "llmnav@0.9.7",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "f70df0349764ad98cc3df0a62b7d964bab40badb69ffcce3bfe2fe23ea309f25",
+  "sourceHash": "b8328744118e0f88cadbe061211c9f6214cb4879bb5f713ea4dc23edc289348d",
   "specVersion": "1"
 }

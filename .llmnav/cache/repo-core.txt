@@ -119,4 +119,4 @@ invariant Only closed repository task variants select commands, discovery skips 
 role Plan and apply repository scaffolds with exclusive ownership, durable journals, conflict preservation, and recovery.
 owns scaffold selection and planning, scaffold file and manifest writes, scaffold locking and recovery
 excludes folder command DTOs, workspace and repository root validation, Git operations
-invariant Apply writes missing files only, and journal recovery removes only files whose recorded checksums still match.
+invariant Apply writes missing files only, and cleanup verifies repository parents and recorded checksums before removing generated files.

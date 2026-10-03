@@ -4,7 +4,7 @@
 // owns=scaffold selection and planning|scaffold file and manifest writes|scaffold locking and recovery
 // excludes=folder command DTOs|workspace and repository root validation|Git operations
 // search=scaffold apply transaction|recover scaffold journal|preserve scaffold conflicts
-// invariant=Apply writes missing files only, and journal recovery removes only files whose recorded checksums still match.
+// invariant=Apply writes missing files only, and cleanup verifies repository parents and recorded checksums before removing generated files.
 // stability=architecture
 // /llmnav
 use super::{
@@ -252,7 +252,7 @@ fn apply_ssealed_repository_scaffold_plan(
             .collect(),
     };
     let journal_path = write_ssealed_repository_apply_journal(target_path, &journal)?;
-    let mut created_files = Vec::with_capacity(missing_files.len());
+    let mut created_file_count = 0;
     let mut created_directories = Vec::new();
 
     let apply_result = (|| {
@@ -275,9 +275,9 @@ fn apply_ssealed_repository_scaffold_plan(
                     _ => ProjectFolderError::SsealedScaffoldFailed,
                 },
             )?;
-            created_files.push(target_file_path);
+            created_file_count += 1;
 
-            if failure_after_created_files.is_some_and(|limit| created_files.len() >= limit) {
+            if failure_after_created_files.is_some_and(|limit| created_file_count >= limit) {
                 return Err(ProjectFolderError::SsealedScaffoldFailed);
             }
         }
@@ -286,8 +286,15 @@ fn apply_ssealed_repository_scaffold_plan(
     })();
 
     if let Err(error) = apply_result {
-        rollback_ssealed_repository_apply(&created_files, &created_directories);
-        let _ = fs::remove_file(&journal_path);
+        if rollback_ssealed_repository_apply(
+            target_path,
+            &journal.files[..created_file_count],
+            &created_directories,
+        )
+        .is_ok()
+        {
+            let _ = fs::remove_file(&journal_path);
+        }
         return Err(error);
     }
 
@@ -632,34 +639,75 @@ fn recover_ssealed_repository_apply_journal(target_path: &Path) -> Result<(), Pr
             .unwrap_or(false);
     if !manifest_committed {
         for file in journal.files.iter().rev() {
-            let file_path = resolve_ssealed_scaffold_file_path(target_path, &file.path)?;
-            let should_remove = match fs::symlink_metadata(&file_path) {
-                Ok(metadata) if !metadata_is_link_or_reparse(&metadata) && metadata.is_file() => {
-                    fs::read_to_string(&file_path)
-                        .map(|content| sha256_checksum(&content) == file.checksum)
-                        .unwrap_or(false)
-                }
-                Ok(_) => false,
-                Err(error) if error.kind() == io::ErrorKind::NotFound => false,
-                Err(_) => return Err(ProjectFolderError::SsealedScaffoldFailed),
-            };
-            if should_remove {
-                fs::remove_file(file_path)
-                    .map_err(|_| ProjectFolderError::SsealedScaffoldFailed)?;
-            }
+            remove_unmodified_ssealed_file(target_path, file)?;
         }
     }
 
     fs::remove_file(journal_path).map_err(|_| ProjectFolderError::SsealedScaffoldFailed)
 }
 
-fn rollback_ssealed_repository_apply(created_files: &[PathBuf], created_directories: &[PathBuf]) {
-    for file_path in created_files.iter().rev() {
-        let _ = fs::remove_file(file_path);
+fn remove_unmodified_ssealed_file(
+    target_path: &Path,
+    file: &SsealedScaffoldApplyJournalFile,
+) -> Result<(), ProjectFolderError> {
+    let file_path = resolve_ssealed_scaffold_file_path(target_path, &file.path)?;
+    if has_ssealed_repository_scaffold_parent_conflict(target_path, &file.path)? {
+        return Err(ProjectFolderError::Conflict);
+    }
+    let should_remove = match fs::symlink_metadata(&file_path) {
+        Ok(metadata) if !metadata_is_link_or_reparse(&metadata) && metadata.is_file() => {
+            fs::read_to_string(&file_path)
+                .map(|content| sha256_checksum(&content) == file.checksum)
+                .unwrap_or(false)
+        }
+        Ok(_) => false,
+        Err(error) if error.kind() == io::ErrorKind::NotFound => false,
+        Err(_) => return Err(ProjectFolderError::SsealedScaffoldFailed),
+    };
+    if should_remove {
+        fs::remove_file(file_path).map_err(|_| ProjectFolderError::SsealedScaffoldFailed)?;
+    }
+    Ok(())
+}
+
+fn rollback_ssealed_repository_apply(
+    target_path: &Path,
+    created_files: &[SsealedScaffoldApplyJournalFile],
+    created_directories: &[PathBuf],
+) -> Result<(), ProjectFolderError> {
+    let mut result = Ok(());
+    for file in created_files.iter().rev() {
+        if let Err(error) = remove_unmodified_ssealed_file(target_path, file) {
+            result = Err(error);
+        }
     }
     for directory_path in created_directories.iter().rev() {
-        let _ = fs::remove_dir(directory_path);
+        let relative_path = directory_path
+            .strip_prefix(target_path)
+            .map_err(|_| ProjectFolderError::SsealedScaffoldFailed)?
+            .to_string_lossy()
+            .replace('\\', "/");
+        if has_ssealed_repository_scaffold_parent_conflict(target_path, &relative_path)? {
+            return Err(ProjectFolderError::Conflict);
+        }
+        let metadata = match fs::symlink_metadata(directory_path) {
+            Ok(metadata) => metadata,
+            Err(error) if error.kind() == io::ErrorKind::NotFound => continue,
+            Err(_) => return Err(ProjectFolderError::SsealedScaffoldFailed),
+        };
+        if metadata_is_link_or_reparse(&metadata) || !metadata.is_dir() {
+            return Err(ProjectFolderError::Conflict);
+        }
+        if let Err(error) = fs::remove_dir(directory_path) {
+            if !matches!(
+                error.kind(),
+                io::ErrorKind::NotFound | io::ErrorKind::DirectoryNotEmpty
+            ) {
+                result = Err(ProjectFolderError::SsealedScaffoldFailed);
+            }
+        }
     }
+    result
 }
 
 pub(super) struct SsealedScaffoldLock {

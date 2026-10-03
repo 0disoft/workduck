@@ -5,6 +5,87 @@ use super::super::{
 use super::*;
 
 #[test]
+fn rollback_preserves_a_created_file_edited_after_creation() {
+    let repository = tempfile::tempdir().expect("repository");
+    let directory = repository.path().join("generated");
+    fs::create_dir(&directory).unwrap();
+    let modified_path = directory.join("modified.txt");
+    let untouched_path = directory.join("untouched.txt");
+    fs::write(&modified_path, "generated content").unwrap();
+    fs::write(&untouched_path, "generated content").unwrap();
+    fs::write(&modified_path, "user edit during scaffold apply").unwrap();
+
+    rollback_ssealed_repository_apply(
+        repository.path(),
+        &[
+            SsealedScaffoldApplyJournalFile {
+                path: "generated/modified.txt".to_owned(),
+                checksum: sha256_checksum("generated content"),
+            },
+            SsealedScaffoldApplyJournalFile {
+                path: "generated/untouched.txt".to_owned(),
+                checksum: sha256_checksum("generated content"),
+            },
+        ],
+        &[directory.clone()],
+    )
+    .unwrap_or_else(|_| panic!("rollback"));
+
+    assert_eq!(
+        fs::read_to_string(&modified_path).expect("preserved user file"),
+        "user edit during scaffold apply"
+    );
+    assert!(!untouched_path.exists());
+    assert!(directory.is_dir());
+}
+
+#[test]
+fn journal_recovery_refuses_a_linked_parent_outside_the_repository() {
+    let repository = tempfile::tempdir().expect("repository");
+    let external = tempfile::tempdir().expect("external directory");
+    let target_path = fs::canonicalize(repository.path()).unwrap();
+    let external_path = fs::canonicalize(external.path()).unwrap();
+    let external_file = external_path.join("partial.txt");
+    let content = "external content matching the generated checksum";
+    fs::write(&external_file, content).unwrap();
+    let link_path = target_path.join("generated");
+    create_directory_link_for_test(&external_path, &link_path);
+    let journal = SsealedScaffoldApplyJournal {
+        version: SSEALED_SCAFFOLD_APPLY_JOURNAL_VERSION,
+        manifest_checksum: "sha256:not-committed".to_owned(),
+        files: vec![SsealedScaffoldApplyJournalFile {
+            path: "generated/partial.txt".to_owned(),
+            checksum: sha256_checksum(content),
+        }],
+    };
+    let journal_path = write_ssealed_repository_apply_journal(&target_path, &journal)
+        .unwrap_or_else(|_| panic!("journal write"));
+
+    let result = recover_ssealed_repository_apply_journal(&target_path);
+
+    assert!(matches!(result, Err(ProjectFolderError::Conflict)));
+    assert_eq!(fs::read_to_string(&external_file).unwrap(), content);
+    assert!(journal_path.is_file());
+}
+
+#[cfg(windows)]
+fn create_directory_link_for_test(target: &Path, link: &Path) {
+    let status = std::process::Command::new("cmd.exe")
+        .args(["/D", "/C", "mklink", "/J"])
+        .arg(link)
+        .arg(target)
+        .stdout(std::process::Stdio::null())
+        .stderr(std::process::Stdio::null())
+        .status()
+        .expect("create test junction");
+    assert!(status.success(), "create test junction");
+}
+
+#[cfg(unix)]
+fn create_directory_link_for_test(target: &Path, link: &Path) {
+    std::os::unix::fs::symlink(target, link).expect("create test directory link");
+}
+#[test]
 fn repository_folder_can_include_ssealed_frontend_scaffold_without_backend_files() {
     let tempdir = tempfile::tempdir().expect("temporary workspace");
     let workspace_path = tempdir.path().to_string_lossy().into_owned();

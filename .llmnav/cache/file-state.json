@@ -2536,7 +2536,7 @@
             ],
             "id": "workduck.projects.scaffold-transaction",
             "invariant": [
-              "Apply writes missing files only, and journal recovery removes only files whose recorded checksums still match."
+              "Apply writes missing files only, and cleanup verifies repository parents and recorded checksums before removing generated files."
             ],
             "owns": [
               "scaffold selection and planning",
@@ -2555,7 +2555,7 @@
             "stability": "architecture",
             "unknown": []
           },
-          "end": 632,
+          "end": 650,
           "endLine": 9,
           "entries": [
             {
@@ -2592,7 +2592,7 @@
               "key": "invariant",
               "line": 7,
               "order": 5,
-              "value": "Apply writes missing files only, and journal recovery removes only files whose recorded checksums still match."
+              "value": "Apply writes missing files only, and cleanup verifies repository parents and recorded checksums before removing generated files."
             },
             {
               "key": "stability",
@@ -2605,7 +2605,7 @@
           "indent": "",
           "newline": "\n",
           "prefix": "//",
-          "raw": "// llmnav/1 module\n// id=workduck.projects.scaffold-transaction\n// role=Plan and apply repository scaffolds with exclusive ownership, durable journals, conflict preservation, and recovery.\n// owns=scaffold selection and planning|scaffold file and manifest writes|scaffold locking and recovery\n// excludes=folder command DTOs|workspace and repository root validation|Git operations\n// search=scaffold apply transaction|recover scaffold journal|preserve scaffold conflicts\n// invariant=Apply writes missing files only, and journal recovery removes only files whose recorded checksums still match.\n// stability=architecture\n// /llmnav\n",
+          "raw": "// llmnav/1 module\n// id=workduck.projects.scaffold-transaction\n// role=Plan and apply repository scaffolds with exclusive ownership, durable journals, conflict preservation, and recovery.\n// owns=scaffold selection and planning|scaffold file and manifest writes|scaffold locking and recovery\n// excludes=folder command DTOs|workspace and repository root validation|Git operations\n// search=scaffold apply transaction|recover scaffold journal|preserve scaffold conflicts\n// invariant=Apply writes missing files only, and cleanup verifies repository parents and recorded checksums before removing generated files.\n// stability=architecture\n// /llmnav\n",
           "scope": "module",
           "specVersion": "1",
           "start": 0,
@@ -2614,7 +2614,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "79cff09af73fc0c179c7465ae8d66062e2613320857393a225be57025ba6ba96",
+      "contentHash": "c5daa8b309ab195bbdf7cdf4ceba902fd4b0828fcd1f370b78739cbfa8a0b053",
       "declarations": [
         null
       ],
@@ -2632,12 +2632,12 @@
         "time::{OffsetDateTime, format_description::well_known::Rfc3339}"
       ],
       "path": "src-tauri/src/project_folder_scaffold.rs",
-      "semanticBytes": 632,
-      "sourceBytes": 29669
+      "semanticBytes": 650,
+      "sourceBytes": 31235
     },
     {
       "blocks": [],
-      "contentHash": "0d807c4ea4f3f21cf5ec01a5d0729d267fe5632669c98253eec63f66300c86ba",
+      "contentHash": "21f62280dcf99da619b77c001216d02daeb79d2c4d6616ffd26c40d0cd8e182b",
       "declarations": [],
       "imports": [
         "super::*",
@@ -2645,7 +2645,7 @@
       ],
       "path": "src-tauri/src/project_folder_scaffold_tests.rs",
       "semanticBytes": 0,
-      "sourceBytes": 20575
+      "sourceBytes": 23834
     },
     {
       "blocks": [],
