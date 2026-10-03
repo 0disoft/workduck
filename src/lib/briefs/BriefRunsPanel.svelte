@@ -36,10 +36,14 @@
 		const controller = new AbortController();
 		readController = controller;
 		loading = true; ready = false; error = '';
-		const [stored, loaded] = await Promise.all([readBriefRunRegistry(workspace.id, workspace.path), readBriefRunEvidence(workspace.path, controller.signal)]);
+		const stored = await readBriefRunRegistry(workspace.id, workspace.path);
+		if (disposed || controller.signal.aborted) return;
+		if (!stored.ok) { loading = false; error = messages.loadFailed; return; }
+		const linkedTaskIds = stored.registry.links.filter((link) =>
+			link.brief.id === brief.id && link.sourceKind === 'repository-task').map((link) => link.sourceId);
+		const loaded = await readBriefRunEvidence(workspace.path, controller.signal, linkedTaskIds);
 		if (disposed || controller.signal.aborted) return;
 		loading = false;
-		if (!stored.ok) { error = messages.loadFailed; return; }
 		registry = stored.registry; evidence = loaded; ready = true; candidateKey = '';
 	}
 

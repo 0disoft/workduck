@@ -1,13 +1,13 @@
 {
-  "cardCount": 58,
+  "cardCount": 59,
   "fileStateSchemaVersion": 1,
   "files": {
-    ".llmnav/cache/agent-context.md": "ada1aca36169e9ec3d3a3c60e0bfa5567412fcb484abdbc3c45f5250e4114277",
-    ".llmnav/cache/cards.jsonl": "5bf19f72f94eaecb476263864347e087f09240c8e4d90f456a42c649bd9ae0cc",
-    ".llmnav/cache/file-state.json": "a0fc6b7af6553ab2327bedb2106967a696dac227718173ace7a83172a88e6b4f",
-    ".llmnav/cache/graph-state.json": "658e7bd340cc3ce19d6790088ea63dfad701a15ba62bc7dd886c0a60e3594fd4",
-    ".llmnav/cache/graph.json": "5a1bdd0e94b29307eda310b8572fa08bf1b2c995b5ca885156d4fde9c57c1730",
-    ".llmnav/cache/index.json": "f6db63f1fe02452149f0936d545f69d3c97f336842fb33230481c91f7c3616f6",
+    ".llmnav/cache/agent-context.md": "b079ce4aae7c61312cfc980bf4842dbb111012ae3710821b2168b6f5d5630f55",
+    ".llmnav/cache/cards.jsonl": "61cb7e8fe1e98214159702aedf3ce0ff6bc8120aa99720d78c6ffe63946bfb1e",
+    ".llmnav/cache/file-state.json": "229a879411a317641eb7ef031b8db0d444f135ea9cd0c880b07aece6e2a5f173",
+    ".llmnav/cache/graph-state.json": "805744e12a9c59af2bbe07041d1c011025e256f503e9f5c27cf55320f4b973f1",
+    ".llmnav/cache/graph.json": "a8e5418944c7e523406381ce99dce087c16dc7d590acfad6c547cf95413ae727",
+    ".llmnav/cache/index.json": "526901778f54f2c94440b95ab366bddf5205c09645ac4b1824cf7f01f2475ef7",
     ".llmnav/cache/modules/workduck.agent.txt": "573d2b91a5dfb5e50a16328d7cfb25c917debe654ee139b948c04f4acfa20877",
     ".llmnav/cache/modules/workduck.briefs.txt": "a20ca785daff81d2c464c701f83cd93be9ae631a41b7451bd51367e19a539fa0",
     ".llmnav/cache/modules/workduck.cli.txt": "7d12975745e8aa322e67bbc51cfe0e064c9424d4fccc9334e7295734e28690e5",
@@ -21,7 +21,7 @@
     ".llmnav/cache/modules/workduck.mcp.txt": "19de20909999bb633695671dffe5b676e98122d1a7453aee7980516e4357eb75",
     ".llmnav/cache/modules/workduck.migration.txt": "962beee86f14471e3fd98b1c026892f3626b3090043120fefb9a2369de50a743",
     ".llmnav/cache/modules/workduck.process.txt": "622740f245b1e61dd0f44632dcdaa7fce6870962e1c6f2b2c55e38b2bd73ffde",
-    ".llmnav/cache/modules/workduck.projects.txt": "da9a28d12960f995bf39488d02a488fe7d5abf2ab6ed5d91f8aa71807e6c7da3",
+    ".llmnav/cache/modules/workduck.projects.txt": "847dc4407075114cd650f3caf51f313a3f0cbb83f8c9e31f2b800303b0c5dc90",
     ".llmnav/cache/modules/workduck.prompt.txt": "95da38b9959905451278ae4f6cfeb2d78faa0f30e07cde9ae0dfd1f113dba0ee",
     ".llmnav/cache/modules/workduck.queue.txt": "adee3271a349233080fc7edbc860f371be909d9daf0c9f640a89e4e5f6b4f9b7",
     ".llmnav/cache/modules/workduck.repository.txt": "03b0675fa16563ae308b74077e5b1caf372333d5d3bae0e651b3ee3e381b3192",
@@ -30,9 +30,9 @@
     ".llmnav/cache/modules/workduck.terminal.txt": "e66163329a41e97ece65f3b7fd83cab5ecb4ff3625903c5ddfd84ad6f1c49efc",
     ".llmnav/cache/modules/workduck.workbench.txt": "1a3a87d3fde5a711e2b6f995e025ada344440cf572b0fb51e8a3ed58d8b32b47",
     ".llmnav/cache/modules/workduck.workspace.txt": "3f0499ca70edbc0e611d138e16fb78daa3c01638abba003ba649b5668b2fcf36",
-    ".llmnav/cache/prompt-prefix.json": "92f02a5bdd569cbbc26b175e341feefc069944fe62a26342fdb115e4b7987fce",
+    ".llmnav/cache/prompt-prefix.json": "4ea509070df2ddf1853f18731ca57c6c22daa8ffdcb14aea90a18084391f0331",
     ".llmnav/cache/repo-core.txt": "a6b28b3f531d7d095fce137bba13d09522deedc6a29cee15d76c0522986af2b1",
-    ".llmnav/cache/search-index.json": "a190f35681dd2b725c8fca9acc10069e4b13ea5b71007d25c6c8e67c700243d3"
+    ".llmnav/cache/search-index.json": "2d99d591a4233971272da82b4fd72e2bcbb04629c1cbc529ec8e5f47f950d640"
   },
   "graphSchemaVersion": 1,
   "graphStateSchemaVersion": 1,
@@ -40,9 +40,9 @@
   "promptBundleSchemaVersion": 1,
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "searchCardSetHash": "f77f774e7a6c0bd1e51e214c920c03b8284d924bcb9e5b2a8c22c764b5e4b75d",
+  "searchCardSetHash": "d402911800844fd56aeca216127ac8321fd1cc98b368196452d5c53875026589",
   "searchIndexSchemaVersion": 2,
   "searchShardSchemaVersion": null,
-  "sourceHash": "ed9bdc74d35877ffdd8a7e7329861cfeaa0e35469d7de395509d88c520475b3d",
+  "sourceHash": "d0ebe23bd6b4aef2fa26deee705deee41943f4567a55b118e55cc5c448f6a0dc",
   "specVersion": "1"
 }

@@ -113,7 +113,7 @@ interface ProjectRepositoryTaskRunRecordsResponse {
 }
 
 
-const projectRepositoryTaskRunRecordsReadByWorkspace = new Map<
+const projectRepositoryTaskRunRecordsReadByQuery = new Map<
 	string,
 	Promise<ProjectRepositoryTaskRunRecordsResult>
 >();
@@ -169,34 +169,36 @@ export async function runProjectRepositoryTask(
 }
 
 export function readProjectRepositoryTaskRunRecords(
-	workspacePath: string
+	workspacePath: string,
+	runIds?: readonly string[]
 ): Promise<ProjectRepositoryTaskRunRecordsResult> {
 	const normalizedWorkspacePath = normalizeWorkspacePathForStorage(workspacePath);
-	const activeRead = projectRepositoryTaskRunRecordsReadByWorkspace.get(
-		normalizedWorkspacePath
-	);
+	const normalizedRunIds = runIds === undefined ? undefined : [...new Set(runIds)].sort();
+	const queryKey = JSON.stringify([normalizedWorkspacePath, normalizedRunIds ?? null]);
+	const activeRead = projectRepositoryTaskRunRecordsReadByQuery.get(queryKey);
 
 	if (activeRead !== undefined) {
 		return activeRead;
 	}
 
 	const nextRead = readProjectRepositoryTaskRunRecordsFromNative(
-		normalizedWorkspacePath
+		normalizedWorkspacePath, normalizedRunIds
 	).finally(() => {
 		if (
-			projectRepositoryTaskRunRecordsReadByWorkspace.get(normalizedWorkspacePath) ===
+			projectRepositoryTaskRunRecordsReadByQuery.get(queryKey) ===
 			nextRead
 		) {
-			projectRepositoryTaskRunRecordsReadByWorkspace.delete(normalizedWorkspacePath);
+			projectRepositoryTaskRunRecordsReadByQuery.delete(queryKey);
 		}
 	});
 
-	projectRepositoryTaskRunRecordsReadByWorkspace.set(normalizedWorkspacePath, nextRead);
+	projectRepositoryTaskRunRecordsReadByQuery.set(queryKey, nextRead);
 	return nextRead;
 }
 
 async function readProjectRepositoryTaskRunRecordsFromNative(
-	workspacePath: string
+	workspacePath: string,
+	runIds?: readonly string[]
 ): Promise<ProjectRepositoryTaskRunRecordsResult> {
 	const invoke = getTauriInvoke();
 
@@ -207,7 +209,7 @@ async function readProjectRepositoryTaskRunRecordsFromNative(
 	try {
 		const response = await invoke<ProjectRepositoryTaskRunRecordsResponse>(
 			'read_project_repository_task_run_records',
-			{ workspacePath }
+			{ workspacePath, ...(runIds === undefined ? {} : { runIds }) }
 		);
 		const records = Array.isArray(response.records)
 			? response.records

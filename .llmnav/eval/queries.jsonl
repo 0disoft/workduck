@@ -51,3 +51,4 @@
 {"query":"link existing execution to saved brief and preserve link time instructions","expected":["workduck.briefs.runs"]}
 {"query":"derive brief gate from completed build evidence without trusting report prose","expected":["workduck.briefs.gate"]}
 {"query":"resolve supported toolchain commands nested manifests root scripts and package manager","expected":["workduck.projects.task-commands"]}
+{"query":"read historical repository task records by saved brief source ID","expected":["workduck.projects.task-history"]}

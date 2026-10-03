@@ -29,6 +29,9 @@ use crate::workspace_path::{
 mod commands;
 use commands::resolve_repository_task_commands;
 
+#[path = "project_repository_task_history.rs"]
+mod history;
+
 #[derive(serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ProjectRepositoryTaskRequest {
@@ -227,6 +230,7 @@ pub fn run_project_repository_task(
 #[tauri::command]
 pub fn read_project_repository_task_run_records(
     workspace_path: String,
+    run_ids: Option<Vec<String>>,
 ) -> ProjectRepositoryTaskRunRecordsResult {
     let workspace_path = match validate_workspace_path(&workspace_path) {
         Ok(path) => path,
@@ -240,7 +244,11 @@ pub fn read_project_repository_task_run_records(
     };
     let record_dir = task_run_record_dir(&workspace_path);
     let visible_workspace_path = crate::git_path::git_process_path(&workspace_path);
-    let records = match read_latest_cached_task_run_records(&record_dir, &visible_workspace_path) {
+    let read_result = match run_ids {
+        Some(ids) => history::read_selected_task_run_records(&workspace_path, &ids),
+        None => read_latest_cached_task_run_records(&record_dir, &visible_workspace_path),
+    };
+    let records = match read_result {
         Ok(records) => records,
         Err(error) => {
             return ProjectRepositoryTaskRunRecordsResult {

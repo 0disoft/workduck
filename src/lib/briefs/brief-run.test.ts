@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { afterEach, describe, test } from 'node:test';
 import { setTauriInvokeForTest, type TauriInvoke } from '$lib/tauri/tauri-invoke';
+import { readProjectRepositoryTaskRunRecords } from '$lib/projects/project-repository-task';
 import { createEmptyBriefRegistry, saveBriefDraft, type BriefRecord } from './brief-registry';
 import { addBriefRunLink, createEmptyBriefRunRegistry, parseBriefRunRegistry, removeBriefRunLink, type BriefRunLink } from './brief-run-registry';
 import { findLinkedReports, findLinkedTask, listBriefRunCandidates, readBriefRunEvidence, type BriefRunEvidence } from './brief-run-evidence';
@@ -82,6 +83,48 @@ describe('Brief run links', () => {
 	});
 	test('keeps run messages complete across all six languages', () => {
 		for (const messages of Object.values(briefRunMessages)) assert.deepEqual(Object.keys(messages).sort(), Object.keys(briefRunMessages.en).sort());
+	});
+	test('reloads an older linked build by its ID after a newer repository task appears', async () => {
+		const newest = { ...evidence.taskRuns[0]!, id: 'task-new', state: 'running', exitCode: null, finishedAt: null };
+		setTauriInvokeForTest((async (command, args) => {
+			if (command === 'list_queue_files') return { ok: true, files: [] };
+			assert.equal(command, 'read_project_repository_task_run_records');
+			if (args?.runIds) {
+				assert.deepEqual(args.runIds, ['task-1']);
+				return { ok: true, records: evidence.taskRuns };
+			}
+			return { ok: true, records: [newest] };
+		}) as TauriInvoke);
+		const loaded = await readBriefRunEvidence('C:/workspace', undefined, [link.sourceId]);
+		assert.deepEqual(loaded.taskRuns.map((task) => task.id), ['task-new', 'task-1']);
+		assert.equal(deriveBriefGate(link, 'C:/workspace', loaded).reason, 'buildPassed');
+	});
+	test('failed historical reads cannot reuse stale passing evidence from the latest response', async () => {
+		setTauriInvokeForTest((async (command, args) => {
+			if (command === 'list_queue_files') return { ok: true, files: [] };
+			return args?.runIds ? { ok: false, records: [], error: 'project-repository-task-record-read-failed' }
+				: { ok: true, records: evidence.taskRuns };
+		}) as TauriInvoke);
+		const loaded = await readBriefRunEvidence('C:/workspace', undefined, [link.sourceId]);
+		assert.equal(loaded.incomplete, true);
+		assert.equal(findLinkedTask(link, 'C:/workspace', loaded), null);
+		assert.equal(deriveBriefGate(link, 'C:/workspace', loaded).reason, 'missing');
+	});
+	test('coalesces identical history queries without confusing latest and historical reads', async () => {
+		let release!: () => void;
+		const barrier = new Promise<void>((resolve) => { release = resolve; });
+		const queries: unknown[] = [];
+		setTauriInvokeForTest((async (_command, args) => {
+			queries.push(args?.runIds); await barrier;
+			return { ok: true, records: [] };
+		}) as TauriInvoke);
+		const latest = readProjectRepositoryTaskRunRecords('C:/workspace');
+		const historical = readProjectRepositoryTaskRunRecords('C:/workspace', ['b', 'a']);
+		const repeated = readProjectRepositoryTaskRunRecords('C:/workspace', ['a', 'b', 'a']);
+		assert.equal(historical, repeated);
+		assert.notEqual(latest, historical);
+		assert.deepEqual(queries, [undefined, ['a', 'b']]);
+		release(); await Promise.all([latest, historical, repeated]);
 	});
 	test('keeps report tasks from another repository out of the linked result', () => {
 		const mixed: BriefRunEvidence = {

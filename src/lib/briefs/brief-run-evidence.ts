@@ -17,13 +17,17 @@ export interface BriefRunCandidate {
 	readonly label: string;
 }
 
-export async function readBriefRunEvidence(workspacePath: string, signal?: AbortSignal): Promise<BriefRunEvidence> {
-	const [tasks, queue] = await Promise.all([readProjectRepositoryTaskRunRecords(workspacePath), listQueueFiles(workspacePath)]);
+export async function readBriefRunEvidence(workspacePath: string, signal?: AbortSignal, linkedTaskIds: readonly string[] = []): Promise<BriefRunEvidence> {
+	const selectedIds = new Set(linkedTaskIds);
+	const [tasks, queue, selectedTasks] = await Promise.all([
+		readProjectRepositoryTaskRunRecords(workspacePath), listQueueFiles(workspacePath),
+		selectedIds.size === 0 ? null : readProjectRepositoryTaskRunRecords(workspacePath, [...selectedIds])
+	]);
 	const allFiles = queue.ok ? queue.files.filter((file) => file.kind === 'work-order' || file.kind === 'result-report') : [];
 	const files = allFiles.slice(0, 200);
 	const workOrders: WorkduckQueueWorkOrder[] = [];
 	const reports: WorkduckQueueResultReport[] = [];
-	let incomplete = !tasks.ok || !queue.ok || allFiles.length > files.length;
+	let incomplete = !tasks.ok || !queue.ok || selectedTasks?.ok === false || allFiles.length > files.length;
 	for (let index = 0; index < files.length; index += 4) {
 		if (signal?.aborted) { incomplete = true; break; }
 		await Promise.all(files.slice(index, index + 4).map(async (file) => {
@@ -38,7 +42,11 @@ export async function readBriefRunEvidence(workspacePath: string, signal?: Abort
 			}
 		}));
 	}
-	return { taskRuns: tasks.ok ? tasks.records : [], workOrders, reports, incomplete };
+	const taskRuns = [
+		...(tasks.ok ? tasks.records.filter((record) => !selectedIds.has(record.id)) : []),
+		...(selectedTasks?.ok ? selectedTasks.records : [])
+	];
+	return { taskRuns, workOrders, reports, incomplete };
 }
 
 export function listBriefRunCandidates(brief: BriefRecord, workspacePath: string, evidence: BriefRunEvidence): readonly BriefRunCandidate[] {

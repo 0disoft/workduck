@@ -321,7 +321,7 @@
         "terminal rendering"
       ],
       "hashes": {
-        "body": "4f7783668db80ba693d1d0b2476eea23dd228113b7036f2d973f6b305321d244",
+        "body": "71af939d6589c1895d6d74ece7bb8d66c73573aa1060ba478af1fc42f81e4949",
         "semantic": "adc3fe9dac58b5b264623986e2c1e8d71788bb6d94c500a008ab7614e9864f27",
         "structure": "8b0d94d739c0eaa037c2ff2caecaae224962e2fcc2c1c35de05b5784015126c6"
       },
@@ -1563,9 +1563,9 @@
         "arbitrary shell command input"
       ],
       "hashes": {
-        "body": "884c3f629e1b5905cee24c9c9171a69c6c0a0ad2e9a5681cd688ae09e9ba61eb",
+        "body": "6c4731a3ebc6fc45627230d5fc3852bfa7b8e570573db70050330ec128d756b7",
         "semantic": "b5fb2ee97a32b44f5965f20f0c95cf6b3f03e0d1d51c91258c280ba55101f857",
-        "structure": "e4b4883ba3be5772c1d6566eebf5b5ad8fa9510779562e41444d54f55cb6e470"
+        "structure": "b5122d9939628fb569605ebee461119c8532e018d75a3a27998fab08d397a2bb"
       },
       "id": "workduck.projects.repository-task-native",
       "imports": [
@@ -1574,6 +1574,7 @@
         "commands::resolve_repository_task_commands",
         "crate::atomic_file_write::write_file_atomically",
         "crate::workspace_path::{\n    WorkspacePathValidationError, validate_absolute_directory_path,\n    validate_workspace_directory_path,\n}",
+        "history",
         "std::os::windows::process::CommandExt",
         "std::{\n    collections::{HashMap, HashSet},\n    fs,\n    path::{Path, PathBuf},\n    process::{Command, Stdio},\n    sync::{Arc, Mutex, OnceLock},\n    time::SystemTime,\n}",
         "tests",
@@ -2876,11 +2877,59 @@
         "desktop dev command"
       ],
       "stability": "architecture"
+    },
+    {
+      "boundaries": [],
+      "excludes": [
+        "command selection",
+        "execution launch",
+        "latest repository card projection"
+      ],
+      "hashes": {
+        "body": "4c6ac4de4eb45675e45b0b47d150253f54fe1787359b414966516c1f872e845a",
+        "semantic": "a6283d6e9a1e63c31545ecc22c79a588f9679582df2f62f815e20773d557e199",
+        "structure": "f45449ab2a0fa8a5812ac1a5620d4d905a89fa637d57d35c52ecd77ba1375c6b"
+      },
+      "id": "workduck.projects.task-history",
+      "imports": [
+        "std::{collections::HashSet, fs, io::Read, path::Path}",
+        "super::{\n    ProjectRepositoryTaskError, ProjectRepositoryTaskRunRecord, collect_live_task_processes,\n    compare_task_run_records_descending, persist_reconciled_task_run_records,\n    reconcile_running_task_run_records, task_run_record_dir,\n}",
+        "tests {\n    use super::*"
+      ],
+      "invariant": [
+        "Requested IDs resolve only to bounded workspace-owned files, completed runs retain identity, and missing records never become passing evidence."
+      ],
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src-tauri/src/project_repository_task_history.rs",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "owns": [
+        "bounded task history lookup",
+        "run identity and file binding",
+        "historical running state refresh"
+      ],
+      "role": "Read selected durable repository task runs by identity without reducing historical evidence to the latest run.",
+      "scope": "module",
+      "search": [
+        "read historical repository run",
+        "saved brief execution evidence",
+        "task record ID lookup"
+      ],
+      "stability": "contract"
     }
   ],
   "contractFingerprints": {
     "configuration": {
-      "sha256": "252751c079bc5fff314e3ba19c937268d1c9d241ddb11ea2acf7a8a6c0508014"
+      "sha256": "4f0b4f650db9d343013b9ede66be234a835feca09ef787a4bfdc86466a3de895"
     },
     "exportedApi": {
       "count": 0,
@@ -2891,6 +2940,6 @@
   "generatedBy": "llmnav@0.9.7",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "ed9bdc74d35877ffdd8a7e7329861cfeaa0e35469d7de395509d88c520475b3d",
+  "sourceHash": "d0ebe23bd6b4aef2fa26deee705deee41943f4567a55b118e55cc5c448f6a0dc",
   "specVersion": "1"
 }

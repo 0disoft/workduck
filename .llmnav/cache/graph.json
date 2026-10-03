@@ -903,6 +903,28 @@
     {
       "definitions": [],
       "external": false,
+      "key": "workduck/workduck.projects.task-history",
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src-tauri/src/project_repository_task_history.rs",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "repositoryId": "workduck",
+      "role": "Read selected durable repository task runs by identity without reducing historical evidence to the latest run.",
+      "semanticId": "workduck.projects.task-history",
+      "unresolved": false
+    },
+    {
+      "definitions": [],
+      "external": false,
       "key": "workduck/workduck.prompt.compiler",
       "location": {
         "declarationLine": null,
@@ -1431,11 +1453,11 @@
   ],
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "587a10fb2ec2d0bb67937dd502a978dbc1936ff17406643cab733965c223f165",
+  "sourceHash": "6cc5ea4c8e03cb40c96d995b965eacb12cdfdb2fe2f557f7f02b072bcc004771",
   "stats": {
     "edgeCount": 9,
     "importedIndexCount": 0,
-    "nodeCount": 58,
+    "nodeCount": 59,
     "unresolvedNodeCount": 0
   }
 }

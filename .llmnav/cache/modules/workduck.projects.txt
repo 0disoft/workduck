@@ -72,3 +72,9 @@ role Resolve repository tasks into commands using package scripts, local depende
 owns toolchain command selection, bounded manifest discovery, package manager and dev script policy
 excludes process launch, task run persistence, frontend invocation
 invariant Only closed repository task variants select commands, discovery skips generated dependencies, and root scripts retain priority over nested projects.
+
+@workduck.projects.task-history
+role Read selected durable repository task runs by identity without reducing historical evidence to the latest run.
+owns bounded task history lookup, run identity and file binding, historical running state refresh
+excludes command selection, execution launch, latest repository card projection
+invariant Requested IDs resolve only to bounded workspace-owned files, completed runs retain identity, and missing records never become passing evidence.
