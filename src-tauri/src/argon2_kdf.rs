@@ -31,8 +31,8 @@ pub fn derive_argon2id_key<const KEY_LENGTH: usize>(
     iterations: u32,
     parallelism: u32,
 ) -> Result<[u8; KEY_LENGTH], ()> {
-    let params = Params::new(memory_kib, iterations, parallelism, Some(KEY_LENGTH))
-        .map_err(|_| ())?;
+    let params =
+        Params::new(memory_kib, iterations, parallelism, Some(KEY_LENGTH)).map_err(|_| ())?;
     let argon2 = Argon2::new(Algorithm::Argon2id, Version::V0x13, params);
     let mut key = [0_u8; KEY_LENGTH];
 
@@ -41,4 +41,28 @@ pub fn derive_argon2id_key<const KEY_LENGTH: usize>(
         .map_err(|_| ())?;
 
     Ok(key)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn preserves_keys_derived_by_argon2_0_5_3() {
+        let key = derive_argon2id_key::<32>(
+            b"fixture-password",
+            b"workduck-fixture!",
+            DEFAULT_MEMORY_KIB,
+            DEFAULT_ITERATIONS,
+            DEFAULT_PARALLELISM,
+        )
+        .unwrap();
+        assert_eq!(
+            key,
+            [
+                67, 239, 54, 124, 0, 237, 51, 122, 164, 139, 135, 228, 22, 187, 59, 227, 4, 98,
+                115, 122, 92, 74, 154, 27, 167, 132, 163, 103, 124, 226, 119, 93,
+            ]
+        );
+    }
 }
