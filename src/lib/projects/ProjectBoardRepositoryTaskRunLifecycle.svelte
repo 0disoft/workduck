@@ -5,7 +5,7 @@
 	owns=task run polling|refresh coalescing|visibility scheduling|task run result ownership
 	excludes=native task execution|durable task history persistence|repository Git status scans
 	search=task run polling|repository task refresh|task history visibility interval
-	invariant=Metadata-only changes reuse polling; queued refreshes supersede older snapshots, and teardown removes listeners and timers.
+	invariant=Scope changes clear foreign run state while retaining matching repositories; metadata-only changes reuse polling, queued refreshes supersede snapshots, and teardown removes listeners and timers.
 	stability=architecture
 	*/
 	import { untrack } from 'svelte';
@@ -39,6 +39,7 @@
 
 	let refreshNow: (() => void) | null = null;
 	let lastKnownTaskRunStateSignature = '';
+	let currentWorkspaceScope: string | null = null;
 
 	const repositorySignature = $derived(
 		JSON.stringify([
@@ -60,6 +61,17 @@
 		const currentRepositorySignature = repositorySignature;
 		const workspacePath = untrack(() => workspace.path);
 		const repositorySnapshot = untrack(() => repositories);
+		const nextWorkspaceScope = untrack(() => JSON.stringify([
+			workspace.id, createRepositoryTaskRunPathKey(workspacePath)
+		]));
+		const scopedTaskRuns = untrack(() =>
+			currentWorkspaceScope !== null && currentWorkspaceScope !== nextWorkspaceScope
+				? {}
+				: mapLatestTaskRunsByRepositoryId(repositorySnapshot, Object.values(repositoryTaskRunById))
+		);
+		currentWorkspaceScope = nextWorkspaceScope;
+		lastKnownTaskRunStateSignature = createRepositoryTaskRunStateSignature(scopedTaskRuns);
+		repositoryTaskRunById = scopedTaskRuns;
 		let isCurrent = true;
 		let refreshTimeoutId: number | undefined;
 		let isRefreshingTaskRuns = false;

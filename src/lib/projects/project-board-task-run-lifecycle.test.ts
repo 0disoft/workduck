@@ -71,6 +71,60 @@ afterEach(() => {
 });
 
 describe('repository task run polling', () => {
+	for (const change of ['workspace', 'repository-path']) {
+		test(`clears stale run state while the new ${change} history is loading`, async () => {
+			const pending = deferred();
+			let calls = 0;
+			setTauriInvokeForTest(async <T>() => {
+				if (++calls > 1) await pending.promise;
+				return { ok: true, records: calls === 1 ? [run('old')] : [] } as T;
+			});
+			const harness = createProjectBoardTaskRunLifecycleHarness(workspace, [repository]);
+			try {
+				await settleEffects();
+				expect(harness.records.repository?.id).toBe('old');
+				if (change === 'workspace') {
+					harness.setWorkspace({ ...workspace, id: 'other', path: 'C:/workspaces/other' });
+				}
+				harness.setRepositories([{ ...repository, path: 'C:/workspaces/other/projects/demo' }]);
+				await settleEffects();
+				expect(calls).toBe(2);
+				expect(harness.records).toEqual({});
+				pending.resolve();
+				await settleEffects();
+				expect(calls).toBe(2);
+			} finally {
+				pending.resolve();
+				await settleEffects();
+				harness.dispose();
+			}
+		});
+	}
+
+	test('preserves known runs for retained repositories while a new repository is loading', async () => {
+		const pending = deferred();
+		let calls = 0;
+		setTauriInvokeForTest(async <T>() => {
+			if (++calls > 1) await pending.promise;
+			return { ok: true, records: [run('retained')] } as T;
+		});
+		const harness = createProjectBoardTaskRunLifecycleHarness(workspace, [repository]);
+		try {
+			await settleEffects();
+			harness.setRepositories([repository, { ...repository, id: 'second', path: `${workspace.path}/projects/second` }]);
+			await settleEffects();
+			expect(calls).toBe(2);
+			expect(harness.records.repository?.id).toBe('retained');
+			pending.resolve();
+			await settleEffects();
+			expect(calls).toBe(2);
+		} finally {
+			pending.resolve();
+			await settleEffects();
+			harness.dispose();
+		}
+	});
+
 	test('coalesces repeated focus refreshes into one follow-up and removes polling on teardown', async () => {
 		const oldRead = deferred();
 		const freshRead = deferred();

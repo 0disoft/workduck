@@ -7025,7 +7025,7 @@
             ],
             "id": "workduck.projects.task-run-lifecycle",
             "invariant": [
-              "Metadata-only changes reuse polling; queued refreshes supersede older snapshots, and teardown removes listeners and timers."
+              "Scope changes clear foreign run state while retaining matching repositories; metadata-only changes reuse polling, queued refreshes supersede snapshots, and teardown removes listeners and timers."
             ],
             "owns": [
               "task run polling",
@@ -7045,7 +7045,7 @@
             "stability": "architecture",
             "unknown": []
           },
-          "end": 598,
+          "end": 669,
           "endLine": 10,
           "entries": [
             {
@@ -7082,7 +7082,7 @@
               "key": "invariant",
               "line": 8,
               "order": 5,
-              "value": "Metadata-only changes reuse polling; queued refreshes supersede older snapshots, and teardown removes listeners and timers."
+              "value": "Scope changes clear foreign run state while retaining matching repositories; metadata-only changes reuse polling, queued refreshes supersede snapshots, and teardown removes listeners and timers."
             },
             {
               "key": "stability",
@@ -7095,7 +7095,7 @@
           "indent": "\t",
           "newline": "\n",
           "prefix": null,
-          "raw": "\t/* llmnav/1 module\n\tid=workduck.projects.task-run-lifecycle\n\trole=Poll repository task run history within a workspace and repository mapping lifetime.\n\towns=task run polling|refresh coalescing|visibility scheduling|task run result ownership\n\texcludes=native task execution|durable task history persistence|repository Git status scans\n\tsearch=task run polling|repository task refresh|task history visibility interval\n\tinvariant=Metadata-only changes reuse polling; queued refreshes supersede older snapshots, and teardown removes listeners and timers.\n\tstability=architecture\n\t*/",
+          "raw": "\t/* llmnav/1 module\n\tid=workduck.projects.task-run-lifecycle\n\trole=Poll repository task run history within a workspace and repository mapping lifetime.\n\towns=task run polling|refresh coalescing|visibility scheduling|task run result ownership\n\texcludes=native task execution|durable task history persistence|repository Git status scans\n\tsearch=task run polling|repository task refresh|task history visibility interval\n\tinvariant=Scope changes clear foreign run state while retaining matching repositories; metadata-only changes reuse polling, queued refreshes supersede snapshots, and teardown removes listeners and timers.\n\tstability=architecture\n\t*/",
           "scope": "module",
           "specVersion": "1",
           "start": 19,
@@ -7104,7 +7104,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "bfffbb0834bd8960e7a6cd1c2d0e0e511339b60b1da26ff60d94b8441adf0bc2",
+      "contentHash": "49a4d373be71db79fa7bcfdf5706ee54eb64ee80c8ee9ebdd51759a931b91227",
       "declarations": [
         null
       ],
@@ -7116,8 +7116,8 @@
         "svelte"
       ],
       "path": "src/lib/projects/ProjectBoardRepositoryTaskRunLifecycle.svelte",
-      "semanticBytes": 579,
-      "sourceBytes": 6109
+      "semanticBytes": 650,
+      "sourceBytes": 6769
     },
     {
       "blocks": [],
@@ -8181,7 +8181,7 @@
     },
     {
       "blocks": [],
-      "contentHash": "400845b8044e2cad199257208be84b220c9bf3e0ce9e045f30c77759ed3d1426",
+      "contentHash": "63b8536c7a0d56f83134c8127dd87cd438bc0afa40e410840e578724caff71d0",
       "declarations": [],
       "imports": [
         "#lib/tauri/tauri-invoke.ts",
@@ -8194,7 +8194,7 @@
       ],
       "path": "src/lib/projects/project-board-task-run-lifecycle.test.ts",
       "semanticBytes": 0,
-      "sourceBytes": 8723
+      "sourceBytes": 10575
     },
     {
       "blocks": [],

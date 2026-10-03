@@ -161,4 +161,4 @@ invariant Initial reads yield to newer published and live state; only the active
 role Poll repository task run history within a workspace and repository mapping lifetime.
 owns task run polling, refresh coalescing, visibility scheduling, task run result ownership
 excludes native task execution, durable task history persistence, repository Git status scans
-invariant Metadata-only changes reuse polling; queued refreshes supersede older snapshots, and teardown removes listeners and timers.
+invariant Scope changes clear foreign run state while retaining matching repositories; metadata-only changes reuse polling, queued refreshes supersede snapshots, and teardown removes listeners and timers.

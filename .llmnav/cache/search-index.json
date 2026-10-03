@@ -69,7 +69,7 @@
     "workduck.workspace.sync-file-native",
     "workduck.workspace.sync-git-native"
   ],
-  "cardSetHash": "d6e15de0a5be9310593117c16de8015283073e4c76b02f6be6d864df4da895a7",
+  "cardSetHash": "5ad3c75b935e0d89dbc8deefdf09fb1bbb0fa96636edb2ea1570e83146c6c095",
   "documentCount": 68,
   "documents": [
     [
@@ -564,13 +564,13 @@
       ]
     ],
     [
-      "089ff0dc19cf2609a31fbd6d58ee7e67d9ab56403d50ce7e9fdf601ecaee61ae",
+      "9b652d3be5d1f4d2662fe90673175c31fbbdf87262a2995b65d1195986d10ac2",
       [
         "poll repository task run history within a workspace and repository mapping lifetime.",
         "task run polling",
         "repository task refresh",
         "task history visibility interval",
-        "metadata-only changes reuse polling; queued refreshes supersede older snapshots, and teardown removes listeners and timers.",
+        "scope changes clear foreign run state while retaining matching repositories; metadata-only changes reuse polling, queued refreshes supersede snapshots, and teardown removes listeners and timers.",
         "task run polling",
         "refresh coalescing",
         "visibility scheduling",
@@ -4046,7 +4046,7 @@
         38,
         [
           5,
-          1
+          2
         ]
       ],
       [
@@ -4206,6 +4206,15 @@
     [
       [
         34,
+        [
+          5,
+          1
+        ]
+      ]
+    ],
+    [
+      [
+        38,
         [
           5,
           1
@@ -8599,6 +8608,15 @@
         20,
         [
           1,
+          1
+        ]
+      ]
+    ],
+    [
+      [
+        38,
+        [
+          5,
           1
         ]
       ]
@@ -11672,6 +11690,13 @@
         ]
       ],
       [
+        38,
+        [
+          5,
+          1
+        ]
+      ],
+      [
         39,
         [
           2,
@@ -12986,15 +13011,6 @@
         66,
         [
           1,
-          1
-        ]
-      ]
-    ],
-    [
-      [
-        38,
-        [
-          5,
           1
         ]
       ]
@@ -17636,6 +17652,13 @@
         ]
       ],
       [
+        38,
+        [
+          5,
+          1
+        ]
+      ],
+      [
         39,
         [
           1,
@@ -18552,6 +18575,15 @@
     ],
     [
       [
+        38,
+        [
+          5,
+          1
+        ]
+      ]
+    ],
+    [
+      [
         13,
         [
           5,
@@ -19099,7 +19131,9 @@
           2,
           1,
           3,
-          2
+          2,
+          5,
+          1
         ]
       ],
       [
@@ -19579,6 +19613,13 @@
     [
       [
         33,
+        [
+          5,
+          1
+        ]
+      ],
+      [
+        38,
         [
           5,
           1
@@ -21285,6 +21326,13 @@
         37,
         [
           3,
+          1
+        ]
+      ],
+      [
+        38,
+        [
+          5,
           1
         ]
       ],
@@ -25132,6 +25180,13 @@
         35,
         [
           1,
+          1
+        ]
+      ],
+      [
+        38,
+        [
+          5,
           1
         ]
       ],
@@ -26665,6 +26720,7 @@
     "claims",
     "classification",
     "cleanup",
+    "clear",
     "cli",
     "client",
     "clone",
@@ -26855,6 +26911,7 @@
     "folders",
     "for",
     "force",
+    "foreign",
     "fork",
     "form",
     "format",
@@ -27030,7 +27087,6 @@
     "o",
     "object",
     "of",
-    "older",
     "omission",
     "omits",
     "omitting",
@@ -27206,6 +27262,7 @@
     "result",
     "results",
     "retain",
+    "retaining",
     "retains",
     "return",
     "returned",

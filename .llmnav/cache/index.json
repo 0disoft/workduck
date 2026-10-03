@@ -3334,8 +3334,8 @@
         "repository Git status scans"
       ],
       "hashes": {
-        "body": "bfffbb0834bd8960e7a6cd1c2d0e0e511339b60b1da26ff60d94b8441adf0bc2",
-        "semantic": "9548a9988f1133b306efbfdc9d5e83e13725480d0546e12b3a193499d9655fcb",
+        "body": "49a4d373be71db79fa7bcfdf5706ee54eb64ee80c8ee9ebdd51759a931b91227",
+        "semantic": "3baf69f615b44093ed08a0b27dce26fa1e07fef50ca6ed531b869e13dd7d6323",
         "structure": "fd8ee49c9a6a3296f5fca68bf8497df95de51f442ad3620a29ec06c8ad87afd0"
       },
       "id": "workduck.projects.task-run-lifecycle",
@@ -3347,7 +3347,7 @@
         "svelte"
       ],
       "invariant": [
-        "Metadata-only changes reuse polling; queued refreshes supersede older snapshots, and teardown removes listeners and timers."
+        "Scope changes clear foreign run state while retaining matching repositories; metadata-only changes reuse polling, queued refreshes supersede snapshots, and teardown removes listeners and timers."
       ],
       "location": {
         "declarationLine": null,
@@ -3441,6 +3441,6 @@
   "generatedBy": "llmnav@0.9.7",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "16120e15e53dbf4de0c6e8774bc4718369bd9087a5b9767b3b6c3e848c098b91",
+  "sourceHash": "037e31d36ad8cfde775935125cf5059220012e75e938b3503eaa0ba0ad41acfe",
   "specVersion": "1"
 }
