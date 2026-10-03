@@ -1,9 +1,12 @@
 {
   "name": "workduck",
-  "version": "1.9.2",
+  "version": "1.9.3",
   "private": true,
   "license": "0BSD",
   "type": "module",
+  "imports": {
+    "#lib/*": "./src/lib/*"
+  },
   "packageManager": "bun@1.4.2",
   "engines": {
     "bun": ">=1.4.2",
@@ -44,8 +47,8 @@
     "test:environment": "bun test src/lib/environment/cli-environment-variables.test.ts"
   },
   "devDependencies": {
-    "@sveltejs/adapter-static": "^3.0.10",
-    "@sveltejs/kit": "^2.70.3",
+    "@sveltejs/adapter-static": "^4.0.0",
+    "@sveltejs/kit": "^3.0.0",
     "@sveltejs/vite-plugin-svelte": "^7.3.1",
     "@tailwindcss/vite": "^4.3.3",
     "@tauri-apps/api": "^2.12.1",
@@ -66,9 +69,11 @@
     "vite": "^8.3.2"
   },
   "dependencies": {
-    "@tauri-apps/plugin-notification": "^2.5.1"
-  },
-  "overrides": {
-    "cookie": "^0.7.2"
+    "@tauri-apps/plugin-notification": "^2.5.1",
+    "@workduck/agents": "workspace:*",
+    "@workduck/core": "workspace:*",
+    "@workduck/prompts": "workspace:*",
+    "@workduck/schemas": "workspace:*",
+    "@workduck/workbench-engine": "workspace:*"
   }
 }

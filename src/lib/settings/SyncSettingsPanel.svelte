@@ -1,30 +1,30 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 
-	import { getWorkduckMessages } from '$lib/i18n/workduck-language';
-	import StatusToast from '$lib/ui/StatusToast.svelte';
+	import { getWorkduckMessages } from '#lib/i18n/workduck-language.ts';
+	import StatusToast from '#lib/ui/StatusToast.svelte';
 	import {
 		enqueueRepositoryCommitWorkOrder
-	} from '$lib/queue/repository-commit-work-order';
+	} from '#lib/queue/repository-commit-work-order.ts';
 	import {
 		getQueueFolderLocalizedError
-	} from '$lib/queue/queue-panel-errors';
+	} from '#lib/queue/queue-panel-errors.ts';
 	import {
 		readWorkspaceRegistryFromBrowser,
 		writeWorkspaceRegistryToBrowser
-	} from '$lib/workspaces/workspace-storage';
+	} from '#lib/workspaces/workspace-storage.ts';
 	import {
 		readProjectRegistries,
 		writeProjectRegistries,
 		type ProjectRegistryStorageError
-	} from '$lib/projects/project-storage';
+	} from '#lib/projects/project-storage.ts';
 	import {
 		readWorkspaceSyncFile,
 		writeWorkspaceSyncFile,
 		isWorkspaceSyncFileNameUsable,
 		WORKSPACE_SYNC_FILE_NAME_MAX_LENGTH,
 		type WorkspaceSyncFileError
-	} from '$lib/workspaces/workspace-sync-file';
+	} from '#lib/workspaces/workspace-sync-file.ts';
 	import {
 		formatWorkspaceSyncRemoteForDisplay,
 		inspectWorkspaceSyncGit,
@@ -33,19 +33,19 @@
 		type WorkspaceSyncGitRunAction,
 		type WorkspaceSyncGitRunError,
 		type WorkspaceSyncGitRunOutcome
-	} from '$lib/workspaces/workspace-sync-git';
+	} from '#lib/workspaces/workspace-sync-git.ts';
 	import {
 		decryptWorkspaceDataFromSync,
 		encryptWorkspaceDataForSync,
 		parseWorkspaceSyncEnvelope,
 		type WorkspaceSyncRegistryError
-	} from '$lib/workspaces/workspace-sync';
-	import { formatWorkspacePathForDisplay } from '$lib/workspaces/workspace-path-format';
-	import { selectWorkspacePath } from '$lib/workspaces/workspace-path';
-	import { startAppOperation } from '$lib/shell/app-operation';
-	import { resolveDefaultGithubTokenCredential } from '$lib/environment/github-credential';
-	import { openEnvironmentVaultSessionFromWorkspaceUnlock } from '$lib/environment/environment-vault-session-loader';
-	import type { ProjectRepositoryGitCredentialInput } from '$lib/projects/project-repository';
+	} from '#lib/workspaces/workspace-sync.ts';
+	import { formatWorkspacePathForDisplay } from '#lib/workspaces/workspace-path-format.ts';
+	import { selectWorkspacePath } from '#lib/workspaces/workspace-path.ts';
+	import { startAppOperation } from '#lib/shell/app-operation.ts';
+	import { resolveDefaultGithubTokenCredential } from '#lib/environment/github-credential.ts';
+	import { openEnvironmentVaultSessionFromWorkspaceUnlock } from '#lib/environment/environment-vault-session-loader.ts';
+	import type { ProjectRepositoryGitCredentialInput } from '#lib/projects/project-repository.ts';
 
 	import {
 		createDefaultSyncSettings,

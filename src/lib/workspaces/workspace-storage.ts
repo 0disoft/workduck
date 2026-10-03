@@ -11,7 +11,7 @@ import {
 	subscribeWorkduckAppStateValue,
 	WORKDUCK_WORKSPACE_REGISTRY_APP_STATE_KEY,
 	writeWorkduckAppStateValue
-} from '$lib/app-state/app-state-storage';
+} from '#lib/app-state/app-state-storage.ts';
 
 export const WORKDUCK_WORKSPACE_REGISTRY_CHANGED_EVENT = 'workduck:workspace-registry-changed';
 

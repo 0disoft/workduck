@@ -1,4 +1,4 @@
-import type { EnvironmentVault } from '$lib/environment/environment-vault';
+import type { EnvironmentVault } from '#lib/environment/environment-vault.ts';
 import type { ProjectRepositoryGitCredentialInput } from './project-repository';
 import type {
 	ProjectNodeRecord,

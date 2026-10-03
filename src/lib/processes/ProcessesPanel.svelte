@@ -1,16 +1,16 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 
-	import { getWorkduckMessages } from '$lib/i18n/workduck-language';
+	import { getWorkduckMessages } from '#lib/i18n/workduck-language.ts';
 	import {
 		createDefaultAppearanceSettings,
 		type AppearanceSettings
-	} from '$lib/settings/appearance-settings';
+	} from '#lib/settings/appearance-settings.ts';
 	import {
 		readAppearanceSettingsFromBrowser,
 		subscribeAppearanceSettings
-	} from '$lib/settings/appearance-storage';
-	import { DetailCard, EntityCard, EntityWorkbench, StatusToast } from '$lib/ui';
+	} from '#lib/settings/appearance-storage.ts';
+	import { DetailCard, EntityCard, EntityWorkbench, StatusToast } from '#lib/ui/index.ts';
 
 	import {
 		killDeveloperProcess,

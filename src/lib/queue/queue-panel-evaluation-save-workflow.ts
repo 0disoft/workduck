@@ -1,19 +1,19 @@
 import {
 	recordAgentEvaluationOnce,
 	type AgentRegistry
-} from '$lib/agents/agent-registry';
-import type { AgentEvaluationScores } from '$lib/agents/agent-evaluation';
+} from '#lib/agents/agent-registry.ts';
+import type { AgentEvaluationScores } from '#lib/agents/agent-evaluation.ts';
 import {
 	readAgentRegistry
-} from '$lib/agents/agent-registry-storage';
+} from '#lib/agents/agent-registry-storage.ts';
 import {
 	syncPersonaEvaluationSummariesFromAgents,
 	type PersonaRegistry
-} from '$lib/personas/persona-registry';
+} from '#lib/personas/persona-registry.ts';
 import {
 	readPersonaRegistry
-} from '$lib/personas/persona-registry-storage';
-import { writeWorkspaceRegistryPairStorage } from '$lib/workspaces/workspace-registry-pair-storage';
+} from '#lib/personas/persona-registry-storage.ts';
+import { writeWorkspaceRegistryPairStorage } from '#lib/workspaces/workspace-registry-pair-storage.ts';
 import {
 	createQueueReportTaskEvaluationKey,
 	recordQueueReportTaskEvaluation,

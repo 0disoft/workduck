@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { WorkspaceRecord } from '$lib/workspaces/workspace-registry';
+	import type { WorkspaceRecord } from '#lib/workspaces/workspace-registry.ts';
 	import {
 		readProjectRepositoryTaskRunRecords,
 		subscribeProjectRepositoryTaskRunChanges

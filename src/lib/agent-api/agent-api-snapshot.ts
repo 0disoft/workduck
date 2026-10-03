@@ -1,5 +1,5 @@
-import { getTauriInvoke } from '$lib/tauri/tauri-invoke';
-import { normalizeWorkspacePathForStorage } from '$lib/workspaces/workspace-path-format';
+import { getTauriInvoke } from '#lib/tauri/tauri-invoke.ts';
+import { normalizeWorkspacePathForStorage } from '#lib/workspaces/workspace-path-format.ts';
 
 export type AgentApiSnapshotError =
 	| 'agent-api-workspace-id-required'

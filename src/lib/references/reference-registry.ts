@@ -1,4 +1,4 @@
-import { isObjectRecord } from '$lib/shared/object-record';
+import { isObjectRecord } from '#lib/shared/object-record.ts';
 export const REFERENCE_REGISTRY_VERSION = 1;
 export const REFERENCE_TITLE_MAX_LENGTH = 180;
 export const REFERENCE_SOURCE_URL_MAX_LENGTH = 2_048;

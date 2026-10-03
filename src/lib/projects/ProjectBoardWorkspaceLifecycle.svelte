@@ -1,16 +1,16 @@
 <script lang="ts">
-	import type { EnvironmentVault } from '$lib/environment/environment-vault';
+	import type { EnvironmentVault } from '#lib/environment/environment-vault.ts';
 	import {
 		readEnvironmentVaultSession,
 		subscribeEnvironmentVaultSession
-	} from '$lib/environment/environment-vault-session';
-	import { openEnvironmentVaultSessionFromWorkspaceUnlock } from '$lib/environment/environment-vault-session-loader';
+	} from '#lib/environment/environment-vault-session.ts';
+	import { openEnvironmentVaultSessionFromWorkspaceUnlock } from '#lib/environment/environment-vault-session-loader.ts';
 	import {
 		readEnvironmentVaultEnvelopeForWorkspace,
 		subscribeEnvironmentVaultEnvelopeForWorkspace
-	} from '$lib/environment/environment-vault-storage';
-	import type { SecretVaultEnvelope } from '$lib/environment/secret-vault-crypto';
-	import type { WorkspaceRecord } from '$lib/workspaces/workspace-registry';
+	} from '#lib/environment/environment-vault-storage.ts';
+	import type { SecretVaultEnvelope } from '#lib/environment/secret-vault-crypto.ts';
+	import type { WorkspaceRecord } from '#lib/workspaces/workspace-registry.ts';
 	import type { ProjectFolderError } from './project-folder';
 	import type { ProjectRepositoryOperation } from './project-board-operations';
 	import {

@@ -1,4 +1,4 @@
-import { getTauriInvoke } from '$lib/tauri/tauri-invoke';
+import { getTauriInvoke } from '#lib/tauri/tauri-invoke.ts';
 export type DeveloperProcessError =
 	| 'developer-processes-unavailable'
 	| 'developer-processes-read-failed'

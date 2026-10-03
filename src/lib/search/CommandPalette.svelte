@@ -2,26 +2,26 @@
 	import { goto } from '$app/navigation';
 	import { onMount } from 'svelte';
 
-	import { getWorkduckMessages } from '$lib/i18n/workduck-language';
+	import { getWorkduckMessages } from '#lib/i18n/workduck-language.ts';
 	import {
 		createDefaultAppearanceSettings,
 		type AppearanceSettings
-	} from '$lib/settings/appearance-settings';
+	} from '#lib/settings/appearance-settings.ts';
 	import {
 		readAppearanceSettingsFromBrowser,
 		subscribeAppearanceSettings
-	} from '$lib/settings/appearance-storage';
-	import { modalDialog } from '$lib/ui/modal-dialog-action';
+	} from '#lib/settings/appearance-storage.ts';
+	import { modalDialog } from '#lib/ui/modal-dialog-action.ts';
 	import {
 		createEmptyWorkspaceRegistry,
 		getActiveWorkspace,
 		type WorkspaceRegistry
-	} from '$lib/workspaces/workspace-registry';
+	} from '#lib/workspaces/workspace-registry.ts';
 	import {
 		readWorkspaceRegistryFromBrowser,
 		subscribeWorkspaceRegistry
-	} from '$lib/workspaces/workspace-storage';
-	import { isWorkspaceUnlocked, subscribeWorkspaceUnlocks } from '$lib/workspaces/workspace-unlock';
+	} from '#lib/workspaces/workspace-storage.ts';
+	import { isWorkspaceUnlocked, subscribeWorkspaceUnlocks } from '#lib/workspaces/workspace-unlock.ts';
 
 	import { searchCommandPaletteArtifacts } from './artifact-search';
 	import { loadWorkspaceCommandPaletteItems } from './command-palette-data';

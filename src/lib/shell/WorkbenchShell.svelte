@@ -3,55 +3,55 @@
 	import { onMount, type Snippet } from 'svelte';
 	import './workbench-shell.css';
 
-	import { getWorkduckMessages } from '$lib/i18n/workduck-language';
+	import { getWorkduckMessages } from '#lib/i18n/workduck-language.ts';
 	import {
 		createAppearanceSettingsCssVariables,
 		createDefaultAppearanceSettings,
 		type AppearanceSettings
-	} from '$lib/settings/appearance-settings';
+	} from '#lib/settings/appearance-settings.ts';
 	import {
 		createDefaultSystemSettings,
 		getWorkspaceIdleLockTimeoutMs,
 		shouldShowWorkduckTrayIcon
-	} from '$lib/settings/system-settings';
+	} from '#lib/settings/system-settings.ts';
 	import {
 		applyAppearanceSettingsToBrowserDocument,
 		readAppearanceSettingsFromBrowser,
 		subscribeAppearanceSettings
-	} from '$lib/settings/appearance-storage';
+	} from '#lib/settings/appearance-storage.ts';
 	import {
 		readSystemSettingsFromBrowser,
 		subscribeSystemSettings
-	} from '$lib/settings/system-storage';
-	import { lockIdleWorkspaceEnvironmentVaultSessions } from '$lib/environment/environment-vault-session';
-	import { summarizeQueueFiles } from '$lib/queue/queue-folder';
-	import { subscribeQueueFilesChanged } from '$lib/queue/queue-read-state';
-	import { syncWorkduckTrayIconEnabled } from '$lib/system/tray';
+	} from '#lib/settings/system-storage.ts';
+	import { lockIdleWorkspaceEnvironmentVaultSessions } from '#lib/environment/environment-vault-session.ts';
+	import { summarizeQueueFiles } from '#lib/queue/queue-folder.ts';
+	import { subscribeQueueFilesChanged } from '#lib/queue/queue-read-state.ts';
+	import { syncWorkduckTrayIconEnabled } from '#lib/system/tray.ts';
 	import {
 		checkForWorkduckUpdate,
 		installPendingWorkduckUpdate,
 		type WorkduckAvailableUpdate
-	} from '$lib/system/app-updater';
+	} from '#lib/system/app-updater.ts';
 	import {
 		createEmptyWorkspaceRegistry,
 		getActiveWorkspace,
 		switchWorkspace,
 		type WorkspaceRegistry
-	} from '$lib/workspaces/workspace-registry';
+	} from '#lib/workspaces/workspace-registry.ts';
 	import {
 		readWorkspaceRegistryFromBrowser,
 		subscribeWorkspaceRegistry,
 		writeWorkspaceRegistryToBrowser
-	} from '$lib/workspaces/workspace-storage';
+	} from '#lib/workspaces/workspace-storage.ts';
 	import {
 		isWorkspaceUnlocked,
 		subscribeWorkspaceUnlocks,
 		touchWorkspaceUnlockSessions,
 		workspaceRequiresUnlock
-	} from '$lib/workspaces/workspace-unlock';
-	import WorkspaceUnlockForm from '$lib/workspaces/WorkspaceUnlockForm.svelte';
+	} from '#lib/workspaces/workspace-unlock.ts';
+	import WorkspaceUnlockForm from '#lib/workspaces/WorkspaceUnlockForm.svelte';
 
-	import WorkduckMark from '$lib/brand/WorkduckMark.svelte';
+	import WorkduckMark from '#lib/brand/WorkduckMark.svelte';
 
 	import {
 		startAppOperation,
@@ -78,7 +78,7 @@
 	} from './tauri-window';
 	import { suppressBrowserContextMenu } from './browser-context-menu';
 	import { hasExceededTitlebarDragThreshold } from './titlebar-interaction';
-	import { styleProperties } from '$lib/ui/style-properties-action';
+	import { styleProperties } from '#lib/ui/style-properties-action.ts';
 
 	interface Props {
 		readonly children: Snippet;

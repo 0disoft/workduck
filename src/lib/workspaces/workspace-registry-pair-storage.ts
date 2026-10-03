@@ -2,22 +2,22 @@ import {
 	parseAgentRegistry,
 	serializeAgentRegistry,
 	type AgentRegistry
-} from '$lib/agents/agent-registry';
+} from '#lib/agents/agent-registry.ts';
 import {
 	notifyAgentRegistryChanged,
 	writeAgentRegistry,
 	type AgentRegistryStorageError
-} from '$lib/agents/agent-registry-storage';
+} from '#lib/agents/agent-registry-storage.ts';
 import {
 	parsePersonaRegistry,
 	serializePersonaRegistry,
 	type PersonaRegistry
-} from '$lib/personas/persona-registry';
+} from '#lib/personas/persona-registry.ts';
 import {
 	notifyPersonaRegistryChanged,
 	writePersonaRegistry,
 	type PersonaRegistryStorageError
-} from '$lib/personas/persona-registry-storage';
+} from '#lib/personas/persona-registry-storage.ts';
 import {
 	workspaceDataFilesAreAvailable,
 	writeWorkspaceRegistryPair,

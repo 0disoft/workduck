@@ -1,4 +1,4 @@
-import { isObjectRecord } from '$lib/shared/object-record';
+import { isObjectRecord } from '#lib/shared/object-record.ts';
 import { normalizeWorkspacePathForStorage } from './workspace-path-format';
 
 export const WORKDUCK_WORKSPACE_REGISTRY_STORAGE_KEY = 'workduck.workspaceRegistry.v1';

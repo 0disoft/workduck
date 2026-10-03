@@ -1,4 +1,4 @@
-import { normalizeWorkspacePathForStorage } from '$lib/workspaces/workspace-path-format';
+import { normalizeWorkspacePathForStorage } from '#lib/workspaces/workspace-path-format.ts';
 import { PROJECT_REPOSITORY_NAME_MAX_LENGTH } from './project-registry';
 export { createProjectFolderNameFromDisplayName } from './project-folder-name';
 

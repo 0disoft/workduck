@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { modalDialog } from '$lib/ui/modal-dialog-action';
+	import { modalDialog } from '#lib/ui/modal-dialog-action.ts';
 	import {
 		PROJECT_DESCRIPTION_MAX_LENGTH,
 		type ProjectNodeRecord

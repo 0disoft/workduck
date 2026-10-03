@@ -7,7 +7,7 @@ search=workspace data file client|write registry pair|workspace revision conflic
 invariant=Success requires the expected string payloads; unavailable or malformed native results fail closed.
 stability=contract
 */
-import { getTauriInvoke } from '$lib/tauri/tauri-invoke';
+import { getTauriInvoke } from '#lib/tauri/tauri-invoke.ts';
 export type WorkspaceDataFileName =
 	| 'agents.json'
 	| 'briefs.json'

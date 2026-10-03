@@ -2,11 +2,11 @@
 	import { page } from '$app/state';
 	import { onMount } from 'svelte';
 
-	import { initializePersistentAppState } from '$lib/app-state/persistent-app-state';
+	import { initializePersistentAppState } from '#lib/app-state/persistent-app-state.ts';
 	import '../app.css';
 
-	type WorkbenchShellComponent = typeof import('$lib/shell/WorkbenchShell.svelte').default;
-	type CommandPaletteComponent = typeof import('$lib/search/CommandPalette.svelte').default;
+	type WorkbenchShellComponent = typeof import('#lib/shell/WorkbenchShell.svelte').default;
+	type CommandPaletteComponent = typeof import('#lib/search/CommandPalette.svelte').default;
 
 	let { children } = $props();
 
@@ -26,8 +26,8 @@
 			}
 
 			const [shellModule, paletteModule] = await Promise.all([
-				import('$lib/shell/WorkbenchShell.svelte'),
-				import('$lib/search/CommandPalette.svelte')
+				import('#lib/shell/WorkbenchShell.svelte'),
+				import('#lib/search/CommandPalette.svelte')
 			]);
 			WorkbenchShell = shellModule.default;
 			CommandPalette = paletteModule.default;

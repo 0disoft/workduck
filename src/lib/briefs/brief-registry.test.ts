@@ -1,13 +1,13 @@
 import assert from 'node:assert/strict';
 import { describe, test } from 'node:test';
-import { workduckLanguageOptions } from '$lib/i18n/workduck-language-options';
+import { workduckLanguageOptions } from '#lib/i18n/workduck-language-options.ts';
 import { briefMessages } from './brief-messages';
 import {
 	BRIEF_INSTRUCTIONS_MAX_LENGTH, createEmptyBriefRegistry, exportBriefForCodex,
 	listBriefRepositoryChoices, parseBriefRegistry, saveBriefDraft, setBriefArchived,
 	type BriefDraft
 } from './brief-registry';
-import type { ProjectRegistry } from '$lib/projects/project-registry';
+import type { ProjectRegistry } from '#lib/projects/project-registry.ts';
 
 const now = '2026-09-08T00:00:00.000Z';
 const draft: BriefDraft = {

@@ -1,5 +1,5 @@
-import type { WorkduckLanguageId } from '$lib/i18n/workduck-language';
-import type { WorkduckMessages } from '$lib/i18n/workduck-message-contract';
+import type { WorkduckLanguageId } from '#lib/i18n/workduck-language.ts';
+import type { WorkduckMessages } from '#lib/i18n/workduck-message-contract.ts';
 import type {
 	ProjectRepositoryOperationName,
 	ProjectRepositoryOperationState

@@ -1,4 +1,4 @@
-import type { WorkduckLanguageId } from '$lib/i18n/workduck-language-options';
+import type { WorkduckLanguageId } from '#lib/i18n/workduck-language-options.ts';
 import type { BriefGateReason } from './brief-gate';
 type GateMessages = Record<BriefGateReason | 'title' | 'passed' | 'blocked' | 'pending' | 'scope', string>;
 export const briefGateMessages: Record<WorkduckLanguageId, GateMessages> = {

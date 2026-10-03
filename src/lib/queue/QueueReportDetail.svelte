@@ -1,6 +1,6 @@
 <script lang="ts">
-	import type { AgentRecord } from '$lib/agents/agent-registry';
-	import type { WorkduckMessages } from '$lib/i18n/workduck-message-contract';
+	import type { AgentRecord } from '#lib/agents/agent-registry.ts';
+	import type { WorkduckMessages } from '#lib/i18n/workduck-message-contract.ts';
 	import type {
 		QueueReportTaskReview,
 		WorkduckQueueResultReport,

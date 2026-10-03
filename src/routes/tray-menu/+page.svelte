@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 
-	import { getTauriInvoke } from '$lib/tauri/tauri-invoke';
+	import { getTauriInvoke } from '#lib/tauri/tauri-invoke.ts';
 
 	type TrayMenuCommand =
 		| 'show_workduck_main_window'

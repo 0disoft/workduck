@@ -1,5 +1,5 @@
-import type { AgentExecutionError } from '$lib/agents/agent-execution';
-import type { WorkduckMessages } from '$lib/i18n/workduck-language';
+import type { AgentExecutionError } from '#lib/agents/agent-execution.ts';
+import type { WorkduckMessages } from '#lib/i18n/workduck-language.ts';
 import type { QueueExecutionError } from './queue-execution';
 import type { QueueFolderError } from './queue-folder';
 

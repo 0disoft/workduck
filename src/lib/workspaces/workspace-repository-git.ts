@@ -9,7 +9,7 @@ import {
 	type ProjectRepositoryGitError,
 	type ProjectRepositoryGitInspectionResult,
 	type ProjectRepositoryGitMutationResult
-} from '$lib/projects/project-repository';
+} from '#lib/projects/project-repository.ts';
 
 export type WorkspaceRepositoryGitError = ProjectRepositoryGitError;
 export type WorkspaceRepositoryGitCredentialInput = ProjectRepositoryGitCredentialInput;

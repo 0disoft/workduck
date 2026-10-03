@@ -1,19 +1,19 @@
 <script lang="ts">
 	import { onMount, untrack } from 'svelte';
 
-	import { getWorkduckMessages } from '$lib/i18n/workduck-language';
-	import { styleProperties } from '$lib/ui/style-properties-action';
+	import { getWorkduckMessages } from '#lib/i18n/workduck-language.ts';
+	import { styleProperties } from '#lib/ui/style-properties-action.ts';
 	import {
 		createDefaultAppearanceSettings,
 		type AppearanceSettings
-	} from '$lib/settings/appearance-settings';
+	} from '#lib/settings/appearance-settings.ts';
 	import {
 		readAppearanceSettingsFromBrowser,
 		subscribeAppearanceSettings
-	} from '$lib/settings/appearance-storage';
-	import { DetailCard, EntityCard, EntityWorkbench, StatusToast } from '$lib/ui';
-	import type { WorkspaceRecord } from '$lib/workspaces/workspace-registry';
-	import { writeWorkspaceRegistryPairStorage } from '$lib/workspaces/workspace-registry-pair-storage';
+	} from '#lib/settings/appearance-storage.ts';
+	import { DetailCard, EntityCard, EntityWorkbench, StatusToast } from '#lib/ui/index.ts';
+	import type { WorkspaceRecord } from '#lib/workspaces/workspace-registry.ts';
+	import { writeWorkspaceRegistryPairStorage } from '#lib/workspaces/workspace-registry-pair-storage.ts';
 	import {
 		AGENT_EVALUATION_SCORE_MAX,
 		agentEvaluationCriteriaDefinitions,
@@ -21,19 +21,19 @@
 		getAgentEvaluationOverallAverage,
 		hasAgentEvaluations,
 		type AgentEvaluationCriterionId
-	} from '$lib/agents/agent-evaluation';
+	} from '#lib/agents/agent-evaluation.ts';
 	import {
 		assignPersonaToAgents,
 		clearPersonaFromAgents,
 		createEmptyAgentRegistry,
 		type AgentRecord,
 		type AgentRegistry
-	} from '$lib/agents/agent-registry';
+	} from '#lib/agents/agent-registry.ts';
 	import {
 		readAgentRegistry,
 		subscribeAgentRegistry,
 		type AgentRegistryStorageError
-	} from '$lib/agents/agent-registry-storage';
+	} from '#lib/agents/agent-registry-storage.ts';
 
 	import {
 		createDefaultPersonaStyleValues,

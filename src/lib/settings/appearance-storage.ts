@@ -9,14 +9,14 @@ import {
 import {
 	getWorkduckLanguageOption,
 	WORKDUCK_MESSAGES_LOADED_EVENT
-} from '$lib/i18n/workduck-language';
+} from '#lib/i18n/workduck-language.ts';
 import {
 	isWorkduckAppStateBrowserStorageActive,
 	readWorkduckAppStateValue,
 	subscribeWorkduckAppStateValue,
 	WORKDUCK_APPEARANCE_APP_STATE_KEY,
 	writeWorkduckAppStateValue
-} from '$lib/app-state/app-state-storage';
+} from '#lib/app-state/app-state-storage.ts';
 
 export const WORKDUCK_APPEARANCE_SETTINGS_CHANGED_EVENT = 'workduck:appearance-settings-changed';
 const WORKDUCK_APPEARANCE_SETTINGS_SCOPE_SELECTOR = '.workduck-window-frame';

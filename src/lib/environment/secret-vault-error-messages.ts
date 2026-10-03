@@ -1,4 +1,4 @@
-import type { WorkduckMessages } from '$lib/i18n/workduck-message-contract';
+import type { WorkduckMessages } from '#lib/i18n/workduck-message-contract.ts';
 
 import type { SecretVaultCryptoError } from './secret-vault-crypto';
 

@@ -1,19 +1,19 @@
 <script lang="ts">
 	import { onMount, untrack } from 'svelte';
 
-	import { getWorkduckMessages } from '$lib/i18n/workduck-language';
+	import { getWorkduckMessages } from '#lib/i18n/workduck-language.ts';
 	import {
 		createDefaultAppearanceSettings,
 		type AppearanceSettings
-	} from '$lib/settings/appearance-settings';
+	} from '#lib/settings/appearance-settings.ts';
 	import {
 		readAppearanceSettingsFromBrowser,
 		subscribeAppearanceSettings
-	} from '$lib/settings/appearance-storage';
-	import PageTitleRow from '$lib/ui/PageTitleRow.svelte';
-	import StatusToast from '$lib/ui/StatusToast.svelte';
-	import type { WorkspaceRecord } from '$lib/workspaces/workspace-registry';
-	import { readWorkspaceUnlockPasswordSession } from '$lib/workspaces/workspace-unlock';
+	} from '#lib/settings/appearance-storage.ts';
+	import PageTitleRow from '#lib/ui/PageTitleRow.svelte';
+	import StatusToast from '#lib/ui/StatusToast.svelte';
+	import type { WorkspaceRecord } from '#lib/workspaces/workspace-registry.ts';
+	import { readWorkspaceUnlockPasswordSession } from '#lib/workspaces/workspace-unlock.ts';
 
 	import {
 		applyCliEnvironmentVariables,

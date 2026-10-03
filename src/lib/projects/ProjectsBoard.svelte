@@ -1,7 +1,7 @@
 <script lang="ts">
-	import type { WorkduckMessages } from '$lib/i18n/workduck-message-contract';
-	import type { WorkduckLanguageId } from '$lib/i18n/workduck-language';
-	import type { WorkspaceRecord } from '$lib/workspaces/workspace-registry';
+	import type { WorkduckMessages } from '#lib/i18n/workduck-message-contract.ts';
+	import type { WorkduckLanguageId } from '#lib/i18n/workduck-language.ts';
+	import type { WorkspaceRecord } from '#lib/workspaces/workspace-registry.ts';
 	import ProjectBoardSurface from './ProjectBoardSurface.svelte';
 	import './project-board.css';
 

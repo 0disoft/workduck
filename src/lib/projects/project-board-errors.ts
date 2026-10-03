@@ -1,5 +1,5 @@
-import { enMessages } from '$lib/i18n/locales/en';
-import type { WorkduckMessages } from '$lib/i18n/workduck-message-contract';
+import { enMessages } from '#lib/i18n/locales/en.ts';
+import type { WorkduckMessages } from '#lib/i18n/workduck-message-contract.ts';
 import type { ProjectFolderError } from './project-folder';
 import type { ProjectRepositoryCloneError, ProjectRepositoryGitError } from './project-repository';
 import type { ProjectRepositoryOperationStorageError } from './project-operation-storage';

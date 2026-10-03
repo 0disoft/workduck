@@ -4,9 +4,9 @@ import {
 	type Window as TauriWindow
 } from '@tauri-apps/api/window';
 
-import { readSystemSettingsFromBrowser } from '$lib/settings/system-storage';
-import { hideWorkduckWindowToTray } from '$lib/system/tray';
-import { isTauriRuntimeAvailable } from '$lib/tauri/tauri-invoke';
+import { readSystemSettingsFromBrowser } from '#lib/settings/system-storage.ts';
+import { hideWorkduckWindowToTray } from '#lib/system/tray.ts';
+import { isTauriRuntimeAvailable } from '#lib/tauri/tauri-invoke.ts';
 
 interface WorkduckWindowSize {
 	readonly width: number;

@@ -1,6 +1,6 @@
-import type { EnvironmentVault } from '$lib/environment/environment-vault';
-import type { SecretVaultEnvelope } from '$lib/environment/secret-vault-crypto';
-import type { WorkduckMessages } from '$lib/i18n/workduck-message-contract';
+import type { EnvironmentVault } from '#lib/environment/environment-vault.ts';
+import type { SecretVaultEnvelope } from '#lib/environment/secret-vault-crypto.ts';
+import type { WorkduckMessages } from '#lib/i18n/workduck-message-contract.ts';
 import type { ProjectFormError } from './project-board-errors';
 import {
 	saveProjectGithubCredential,

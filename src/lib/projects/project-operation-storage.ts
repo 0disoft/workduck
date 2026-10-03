@@ -7,7 +7,7 @@ search=repository operation history|latest Git operation|persist operation recor
 invariant=Only complete succeeded or failed records with every required identity and timestamp field enter the repository-indexed result.
 stability=contract
 */
-import { getTauriInvoke } from '$lib/tauri/tauri-invoke';
+import { getTauriInvoke } from '#lib/tauri/tauri-invoke.ts';
 export type ProjectRepositoryOperationName = 'clone' | 'init' | 'fetch' | 'pull' | 'push' | 'publish';
 export type ProjectRepositoryOperationFinalState = 'succeeded' | 'failed';
 export type ProjectRepositoryOperationState = 'running' | ProjectRepositoryOperationFinalState;

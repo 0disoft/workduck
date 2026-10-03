@@ -7,9 +7,9 @@ search=create project folder|apply ssealed scaffold|open repository folder
 invariant=Repository folder operations are normalized against the selected workspace and surface closed error codes.
 stability=architecture
 */
-import { getTauriInvoke } from '$lib/tauri/tauri-invoke';
-import { normalizeWorkspacePathForStorage } from '$lib/workspaces/workspace-path-format';
-import type { WorkduckMessages } from '$lib/i18n/workduck-message-contract';
+import { getTauriInvoke } from '#lib/tauri/tauri-invoke.ts';
+import { normalizeWorkspacePathForStorage } from '#lib/workspaces/workspace-path-format.ts';
+import type { WorkduckMessages } from '#lib/i18n/workduck-message-contract.ts';
 import {
 	SSEALED_SCAFFOLD_PROFILES,
 	SSEALED_SCAFFOLD_SCOPES

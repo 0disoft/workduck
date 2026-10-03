@@ -1,9 +1,9 @@
-import { isObjectRecord } from '$lib/shared/object-record';
+import { isObjectRecord } from '#lib/shared/object-record.ts';
 import {
 	DEFAULT_WORKDUCK_LANGUAGE_ID,
 	normalizeWorkduckLanguageId,
 	type WorkduckLanguageId
-} from '$lib/i18n/workduck-language';
+} from '#lib/i18n/workduck-language.ts';
 
 export const WORKDUCK_APPEARANCE_SETTINGS_STORAGE_KEY = 'workduck.appearanceSettings.v1';
 

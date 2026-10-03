@@ -1,15 +1,15 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 
-	import { getWorkduckMessages } from '$lib/i18n/workduck-language';
+	import { getWorkduckMessages } from '#lib/i18n/workduck-language.ts';
 	import {
 		createDefaultAppearanceSettings,
 		type AppearanceSettings
-	} from '$lib/settings/appearance-settings';
+	} from '#lib/settings/appearance-settings.ts';
 	import {
 		readAppearanceSettingsFromBrowser,
 		subscribeAppearanceSettings
-	} from '$lib/settings/appearance-storage';
+	} from '#lib/settings/appearance-storage.ts';
 
 	import {
 		updateWorkspacePath,

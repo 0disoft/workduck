@@ -1,4 +1,4 @@
-import type { WorkduckLanguageId } from '$lib/i18n/workduck-language-options';
+import type { WorkduckLanguageId } from '#lib/i18n/workduck-language-options.ts';
 const en = {
 	title: 'Linked runs', link: 'Link existing run', choose: 'Choose a repository task or work order', empty: 'No linked runs yet.',
 	noCandidates: 'Only runs from this repository and work orders with its repository ID are eligible.',

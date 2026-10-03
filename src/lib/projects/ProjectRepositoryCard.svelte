@@ -1,6 +1,6 @@
 <script lang="ts">
-	import type { WorkduckMessages } from '$lib/i18n/workduck-message-contract';
-	import type { WorkduckLanguageId } from '$lib/i18n/workduck-language';
+	import type { WorkduckMessages } from '#lib/i18n/workduck-message-contract.ts';
+	import type { WorkduckLanguageId } from '#lib/i18n/workduck-language.ts';
 	import { getProjectFormErrorMessage } from './project-board-errors';
 	import {
 		getRepositoryActionButtonLabel,

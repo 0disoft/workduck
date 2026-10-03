@@ -1,11 +1,11 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { beforeNavigate } from '$app/navigation';
-	import { getWorkduckMessages, type WorkduckLanguageId } from '$lib/i18n/workduck-language';
-	import type { WorkspaceRecord } from '$lib/workspaces/workspace-registry';
-	import { readProjectRegistry } from '$lib/projects/project-storage';
-	import { EntityWorkbench, DetailCard } from '$lib/ui';
-	import { modalDialog } from '$lib/ui/modal-dialog-action';
+	import { getWorkduckMessages, type WorkduckLanguageId } from '#lib/i18n/workduck-language.ts';
+	import type { WorkspaceRecord } from '#lib/workspaces/workspace-registry.ts';
+	import { readProjectRegistry } from '#lib/projects/project-storage.ts';
+	import { EntityWorkbench, DetailCard } from '#lib/ui/index.ts';
+	import { modalDialog } from '#lib/ui/modal-dialog-action.ts';
 	import { briefMessages } from './brief-messages';
 	import BriefRunsPanel from './BriefRunsPanel.svelte';
 	import {

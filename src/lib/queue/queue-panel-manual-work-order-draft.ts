@@ -1,4 +1,4 @@
-import type { WorkduckSkillRecord } from '$lib/skills/skill-registry';
+import type { WorkduckSkillRecord } from '#lib/skills/skill-registry.ts';
 
 import {
 	defaultQueueResponseFormat,

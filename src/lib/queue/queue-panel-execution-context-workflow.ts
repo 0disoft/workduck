@@ -1,11 +1,11 @@
-import type { AgentRegistry } from '$lib/agents/agent-registry';
-import { readAgentRegistry } from '$lib/agents/agent-registry-storage';
-import type { PersonaRegistry } from '$lib/personas/persona-registry';
-import { readPersonaRegistry } from '$lib/personas/persona-registry-storage';
-import type { ReferenceRegistry } from '$lib/references/reference-registry';
-import { readReferenceRegistry } from '$lib/references/reference-registry-storage';
-import { getAllSkills, type SkillRegistry } from '$lib/skills/skill-registry';
-import { readSkillRegistry } from '$lib/skills/skill-registry-storage';
+import type { AgentRegistry } from '#lib/agents/agent-registry.ts';
+import { readAgentRegistry } from '#lib/agents/agent-registry-storage.ts';
+import type { PersonaRegistry } from '#lib/personas/persona-registry.ts';
+import { readPersonaRegistry } from '#lib/personas/persona-registry-storage.ts';
+import type { ReferenceRegistry } from '#lib/references/reference-registry.ts';
+import { readReferenceRegistry } from '#lib/references/reference-registry-storage.ts';
+import { getAllSkills, type SkillRegistry } from '#lib/skills/skill-registry.ts';
+import { readSkillRegistry } from '#lib/skills/skill-registry-storage.ts';
 
 import type { QueueExecutionContext } from './queue-panel-types';
 

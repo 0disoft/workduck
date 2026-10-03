@@ -1,4 +1,4 @@
-import { isObjectRecord } from '$lib/shared/object-record';
+import { isObjectRecord } from '#lib/shared/object-record.ts';
 export const WORKDUCK_SYSTEM_SETTINGS_STORAGE_KEY = 'workduck.systemSettings.v1';
 export const WORKSPACE_IDLE_LOCK_MINUTE_OPTIONS = [0, 5, 15, 30, 60] as const;
 export const WORKSPACE_IDLE_LOCK_DEFAULT_MINUTES = 15;

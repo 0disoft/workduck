@@ -1,4 +1,4 @@
-import { readWorkspaceDataFile, writeWorkspaceRegistryFile } from '$lib/workspaces/workspace-data-file';
+import { readWorkspaceDataFile, writeWorkspaceRegistryFile } from '#lib/workspaces/workspace-data-file.ts';
 import { createEmptyBriefRunRegistry, parseBriefRunRegistry, type BriefRunRegistry } from './brief-run-registry';
 
 export type BriefRunStorageResult =

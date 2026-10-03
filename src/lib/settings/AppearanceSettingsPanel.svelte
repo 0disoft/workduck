@@ -5,7 +5,7 @@
 		getWorkduckMessages,
 		workduckLanguageOptions,
 		type WorkduckLanguageId
-	} from '$lib/i18n/workduck-language';
+	} from '#lib/i18n/workduck-language.ts';
 	import {
 		FONT_SIZE_STEP_VALUES,
 		createDefaultAppearanceSettings,

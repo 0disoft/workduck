@@ -1,5 +1,5 @@
 import type { ProjectFormError } from './project-board-errors';
-import type { WorkduckMessages } from '$lib/i18n/workduck-message-contract';
+import type { WorkduckMessages } from '#lib/i18n/workduck-message-contract.ts';
 import type {
 	ProjectDeleteCandidate,
 	ProjectDialogMode,

@@ -9,9 +9,9 @@ stability=architecture
 */
 import { Channel } from '@tauri-apps/api/core';
 
-import { isObjectRecord } from '$lib/shared/object-record';
-import { getTauriInvoke } from '$lib/tauri/tauri-invoke';
-import { normalizeWorkspacePathForStorage } from '$lib/workspaces/workspace-path-format';
+import { isObjectRecord } from '#lib/shared/object-record.ts';
+import { getTauriInvoke } from '#lib/tauri/tauri-invoke.ts';
+import { normalizeWorkspacePathForStorage } from '#lib/workspaces/workspace-path-format.ts';
 
 const GITHUB_API_REQUEST_TIMEOUT_MS = 30_000;
 

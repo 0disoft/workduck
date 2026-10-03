@@ -1,46 +1,46 @@
 import { onMount, tick } from 'svelte';
 
-import { getWorkduckMessages } from '$lib/i18n/workduck-language';
+import { getWorkduckMessages } from '#lib/i18n/workduck-language.ts';
 import {
 	createDefaultAppearanceSettings,
 	type AppearanceSettings
-} from '$lib/settings/appearance-settings';
+} from '#lib/settings/appearance-settings.ts';
 import {
 	readAppearanceSettingsFromBrowser,
 	subscribeAppearanceSettings
-} from '$lib/settings/appearance-storage';
-import type { WorkspaceRecord } from '$lib/workspaces/workspace-registry';
+} from '#lib/settings/appearance-storage.ts';
+import type { WorkspaceRecord } from '#lib/workspaces/workspace-registry.ts';
 import {
 	type AgentRecord,
 	type AgentRegistry
-} from '$lib/agents/agent-registry';
+} from '#lib/agents/agent-registry.ts';
 import {
 	type AgentEvaluationCriterionId,
 	type AgentEvaluationScores
-} from '$lib/agents/agent-evaluation';
+} from '#lib/agents/agent-evaluation.ts';
 import {
 	type PersonaRecord,
 	type PersonaRegistry
-} from '$lib/personas/persona-registry';
-import { type ReferenceRecord, type ReferenceRegistry } from '$lib/references/reference-registry';
+} from '#lib/personas/persona-registry.ts';
+import { type ReferenceRecord, type ReferenceRegistry } from '#lib/references/reference-registry.ts';
 import {
 	type ProjectNodeRecord,
 	type ProjectRegistry
-} from '$lib/projects/project-registry';
+} from '#lib/projects/project-registry.ts';
 import {
 	createProjectRepositorySelectionOptions,
 	type ProjectRepositorySelectionOption
-} from '$lib/projects/project-repository-selection';
+} from '#lib/projects/project-repository-selection.ts';
 import {
 	getAllSkills,
 	WORKDUCK_AGENT_RESPONSE_EVALUATOR_SKILL_ID,
 	type SkillRegistry,
 	type WorkduckSkillRecord
-} from '$lib/skills/skill-registry';
+} from '#lib/skills/skill-registry.ts';
 import {
 	prepareDesktopNotificationPermission,
 	showDesktopNotificationWhenUnfocused
-} from '$lib/ui/desktop-notification';
+} from '#lib/ui/desktop-notification.ts';
 
 import {
 	createQueueReportTaskEvaluationKey,
@@ -59,7 +59,7 @@ import {
 	type WorkduckQueueWorkOrderTask,
 	type WorkduckQueueReviewDecision
 } from './queue-artifacts';
-import { readEnvironmentVaultSession } from '$lib/environment/environment-vault-session';
+import { readEnvironmentVaultSession } from '#lib/environment/environment-vault-session.ts';
 import type {
 	WorkduckQueueExecutionEstimate,
 	WorkduckQueuePromptPreview

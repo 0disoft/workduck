@@ -7,7 +7,7 @@ search=select workspace directory|validate workspace client|workspace picker
 invariant=Validation succeeds only when the native boundary returns a non-empty normalized path; unavailable or malformed responses fail closed.
 stability=contract
 */
-import { getTauriInvoke } from '$lib/tauri/tauri-invoke';
+import { getTauriInvoke } from '#lib/tauri/tauri-invoke.ts';
 import { open } from '@tauri-apps/plugin-dialog';
 
 import { normalizeWorkspacePathForStorage } from './workspace-path-format';

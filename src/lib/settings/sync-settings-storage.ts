@@ -11,7 +11,7 @@ import {
 	subscribeWorkduckAppStateValue,
 	WORKDUCK_SYNC_APP_STATE_KEY,
 	writeWorkduckAppStateValue
-} from '$lib/app-state/app-state-storage';
+} from '#lib/app-state/app-state-storage.ts';
 
 export const WORKDUCK_SYNC_SETTINGS_CHANGED_EVENT = 'workduck:sync-settings-changed';
 

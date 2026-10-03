@@ -1,13 +1,13 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 
-	import { getWorkduckMessages } from '$lib/i18n/workduck-language';
+	import { getWorkduckMessages } from '#lib/i18n/workduck-language.ts';
 	import {
 		readWorkduckAutostartEnabled,
 		setWorkduckAutostartEnabled,
 		type WorkduckAutostartError
-	} from '$lib/system/autostart';
-	import { syncWorkduckTrayIconEnabled } from '$lib/system/tray';
+	} from '#lib/system/autostart.ts';
+	import { syncWorkduckTrayIconEnabled } from '#lib/system/tray.ts';
 
 	import {
 		createDefaultSystemSettings,

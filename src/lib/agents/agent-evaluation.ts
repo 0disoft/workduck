@@ -1,4 +1,4 @@
-import { isObjectRecord } from '$lib/shared/object-record';
+import { isObjectRecord } from '#lib/shared/object-record.ts';
 export const AGENT_EVALUATION_SCORE_MIN = 1;
 export const AGENT_EVALUATION_SCORE_MAX = 9;
 

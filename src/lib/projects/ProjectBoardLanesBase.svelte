@@ -1,7 +1,7 @@
 <script lang="ts">
-	import type { WorkduckMessages } from '$lib/i18n/workduck-message-contract';
-	import type { WorkduckLanguageId } from '$lib/i18n/workduck-language';
-	import PageTitleRow from '$lib/ui/PageTitleRow.svelte';
+	import type { WorkduckMessages } from '#lib/i18n/workduck-message-contract.ts';
+	import type { WorkduckLanguageId } from '#lib/i18n/workduck-language.ts';
+	import PageTitleRow from '#lib/ui/PageTitleRow.svelte';
 	import {
 		formatCountLabel,
 		getProjectGroupCount,

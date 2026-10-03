@@ -1,4 +1,4 @@
-import { formatWorkspacePathForDisplay } from '$lib/workspaces/workspace-path-format';
+import { formatWorkspacePathForDisplay } from '#lib/workspaces/workspace-path-format.ts';
 import {
 	createManualQueueWorkOrder,
 	createQueueWorkOrderFileName,

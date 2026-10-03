@@ -1,4 +1,4 @@
-import { isObjectRecord } from '$lib/shared/object-record';
+import { isObjectRecord } from '#lib/shared/object-record.ts';
 import {
 	addAgentEvaluationScores,
 	createEmptyAgentEvaluationSummary,

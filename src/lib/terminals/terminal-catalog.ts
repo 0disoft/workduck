@@ -1,4 +1,4 @@
-import { getTauriInvoke } from '$lib/tauri/tauri-invoke';
+import { getTauriInvoke } from '#lib/tauri/tauri-invoke.ts';
 export type TerminalCatalogError =
 	| 'terminal-catalog-unavailable'
 	| 'terminal-catalog-read-failed';

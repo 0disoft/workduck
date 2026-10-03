@@ -2,22 +2,22 @@ import {
 	parseAppearanceSettings,
 	serializeAppearanceSettings,
 	WORKDUCK_APPEARANCE_SETTINGS_STORAGE_KEY
-} from '$lib/settings/appearance-settings';
+} from '#lib/settings/appearance-settings.ts';
 import {
 	parseSyncSettings,
 	serializeSyncSettings,
 	WORKDUCK_SYNC_SETTINGS_STORAGE_KEY
-} from '$lib/settings/sync-settings';
+} from '#lib/settings/sync-settings.ts';
 import {
 	parseSystemSettings,
 	serializeSystemSettings,
 	WORKDUCK_SYSTEM_SETTINGS_STORAGE_KEY
-} from '$lib/settings/system-settings';
+} from '#lib/settings/system-settings.ts';
 import {
 	parseWorkspaceRegistry,
 	serializeWorkspaceRegistry,
 	WORKDUCK_WORKSPACE_REGISTRY_STORAGE_KEY
-} from '$lib/workspaces/workspace-registry';
+} from '#lib/workspaces/workspace-registry.ts';
 import {
 	initializeWorkduckAppState,
 	WORKDUCK_APPEARANCE_APP_STATE_KEY,

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, test } from 'node:test';
 
-import { createEmptyAgentEvaluationSummary } from '$lib/agents/agent-evaluation';
+import { createEmptyAgentEvaluationSummary } from '#lib/agents/agent-evaluation.ts';
 import {
 	buildWorkspaceCommandPaletteItems,
 	deduplicateCommandPaletteItems,

@@ -7,7 +7,7 @@ search=terminal session client|read terminal output|write terminal input
 invariant=Unknown or failed native responses never report connected success and return a disconnected snapshot.
 stability=contract
 */
-import { getTauriInvoke } from '$lib/tauri/tauri-invoke';
+import { getTauriInvoke } from '#lib/tauri/tauri-invoke.ts';
 export type TerminalSessionError =
 	| 'terminal-session-unavailable'
 	| 'terminal-session-start-failed'

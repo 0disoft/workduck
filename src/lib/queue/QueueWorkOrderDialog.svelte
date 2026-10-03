@@ -1,14 +1,14 @@
 <script lang="ts">
-	import type { AgentRecord } from '$lib/agents/agent-registry';
-	import type { WorkduckMessages } from '$lib/i18n/workduck-message-contract';
-	import type { ProjectNodeRecord } from '$lib/projects/project-registry';
+	import type { AgentRecord } from '#lib/agents/agent-registry.ts';
+	import type { WorkduckMessages } from '#lib/i18n/workduck-message-contract.ts';
+	import type { ProjectNodeRecord } from '#lib/projects/project-registry.ts';
 	import {
 		filterProjectRepositorySelectionOptions,
 		type ProjectRepositorySelectionOption
-	} from '$lib/projects/project-repository-selection';
-	import type { ReferenceRecord } from '$lib/references/reference-registry';
-	import type { WorkduckSkillRecord } from '$lib/skills/skill-registry';
-	import { modalDialog } from '$lib/ui/modal-dialog-action';
+	} from '#lib/projects/project-repository-selection.ts';
+	import type { ReferenceRecord } from '#lib/references/reference-registry.ts';
+	import type { WorkduckSkillRecord } from '#lib/skills/skill-registry.ts';
+	import { modalDialog } from '#lib/ui/modal-dialog-action.ts';
 	import {
 		QUEUE_WORK_ORDER_BODY_MAX_LENGTH,
 		QUEUE_WORK_ORDER_TITLE_MAX_LENGTH,

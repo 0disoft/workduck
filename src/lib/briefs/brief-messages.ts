@@ -1,4 +1,4 @@
-import type { WorkduckLanguageId } from '$lib/i18n/workduck-language-options';
+import type { WorkduckLanguageId } from '#lib/i18n/workduck-language-options.ts';
 
 const en = {
 	title: 'Agent briefs', newBrief: 'New brief', empty: 'Save the instructions for your next repository task.',

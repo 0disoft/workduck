@@ -1,4 +1,4 @@
-import { WORKSPACE_UNLOCK_COOLDOWN_MS, WORKSPACE_UNLOCK_MAX_ATTEMPTS } from '$lib/workspaces/workspace-unlock';
+import { WORKSPACE_UNLOCK_COOLDOWN_MS, WORKSPACE_UNLOCK_MAX_ATTEMPTS } from '#lib/workspaces/workspace-unlock.ts';
 
 export const WORKDUCK_ENVIRONMENT_VAULT_UNLOCK_ATTEMPTS_STORAGE_KEY =
 	'workduck.environmentVaultUnlockAttempts.v1';

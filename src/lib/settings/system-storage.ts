@@ -11,7 +11,7 @@ import {
 	subscribeWorkduckAppStateValue,
 	WORKDUCK_SYSTEM_APP_STATE_KEY,
 	writeWorkduckAppStateValue
-} from '$lib/app-state/app-state-storage';
+} from '#lib/app-state/app-state-storage.ts';
 
 export const WORKDUCK_SYSTEM_SETTINGS_CHANGED_EVENT = 'workduck:system-settings-changed';
 

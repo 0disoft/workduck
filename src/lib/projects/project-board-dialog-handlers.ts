@@ -1,6 +1,6 @@
 import type { ProjectFormError } from './project-board-errors';
 import { deleteProjectCandidate } from './project-board-delete-actions';
-import type { WorkduckMessages } from '$lib/i18n/workduck-message-contract';
+import type { WorkduckMessages } from '#lib/i18n/workduck-message-contract.ts';
 import { createRepositoryNameFromRemoteUrl } from './project-board-paths';
 import {
 	getDefaultSsealedScaffoldProfile,

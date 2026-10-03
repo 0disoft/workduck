@@ -1,8 +1,8 @@
 <script lang="ts">
-	import type { WorkduckMessages } from '$lib/i18n/workduck-message-contract';
-	import type { WorkduckLanguageId } from '$lib/i18n/workduck-language';
-	import { getActiveWorkspace } from '$lib/workspaces/workspace-registry';
-	import { readWorkspaceRegistryFromBrowser } from '$lib/workspaces/workspace-storage';
+	import type { WorkduckMessages } from '#lib/i18n/workduck-message-contract.ts';
+	import type { WorkduckLanguageId } from '#lib/i18n/workduck-language.ts';
+	import { getActiveWorkspace } from '#lib/workspaces/workspace-registry.ts';
+	import { readWorkspaceRegistryFromBrowser } from '#lib/workspaces/workspace-storage.ts';
 	import './project-repository-batch.css';
 	import {
 		createProjectRepositoryBatchFailure,

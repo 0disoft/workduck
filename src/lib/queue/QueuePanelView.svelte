@@ -1,6 +1,6 @@
 <script lang="ts">
-	import PageTitleRow from '$lib/ui/PageTitleRow.svelte';
-	import StatusToast from '$lib/ui/StatusToast.svelte';
+	import PageTitleRow from '#lib/ui/PageTitleRow.svelte';
+	import StatusToast from '#lib/ui/StatusToast.svelte';
 	import QueueFileList from './QueueFileList.svelte';
 	import type { QueuePanelController } from './queue-panel-controller.svelte';
 	import {

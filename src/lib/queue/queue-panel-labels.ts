@@ -1,7 +1,7 @@
-import type { AgentRecord } from '$lib/agents/agent-registry';
-import type { WorkduckMessages } from '$lib/i18n/workduck-language';
-import type { ProjectNodeRecord } from '$lib/projects/project-registry';
-import type { ReferenceRecord } from '$lib/references/reference-registry';
+import type { AgentRecord } from '#lib/agents/agent-registry.ts';
+import type { WorkduckMessages } from '#lib/i18n/workduck-language.ts';
+import type { ProjectNodeRecord } from '#lib/projects/project-registry.ts';
+import type { ReferenceRecord } from '#lib/references/reference-registry.ts';
 import {
 	WORKDUCK_AGENT_RESPONSE_EVALUATOR_SKILL_ID,
 	WORKDUCK_API_SCHEMA_ARCHITECT_SKILL_ID,
@@ -14,7 +14,7 @@ import {
 	WORKDUCK_WRITING_ASSISTANT_SKILL_ID,
 	isDefaultSkillRecord,
 	type WorkduckSkillRecord
-} from '$lib/skills/skill-registry';
+} from '#lib/skills/skill-registry.ts';
 import type {
 	WorkduckQueueExecutionState,
 	WorkduckQueueResponseFormat,

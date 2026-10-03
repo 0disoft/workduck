@@ -1,17 +1,17 @@
 <script lang="ts">
 	import { onMount, untrack } from 'svelte';
 
-	import { getWorkduckMessages } from '$lib/i18n/workduck-language';
+	import { getWorkduckMessages } from '#lib/i18n/workduck-language.ts';
 	import {
 		createDefaultAppearanceSettings,
 		type AppearanceSettings
-	} from '$lib/settings/appearance-settings';
+	} from '#lib/settings/appearance-settings.ts';
 	import {
 		readAppearanceSettingsFromBrowser,
 		subscribeAppearanceSettings
-	} from '$lib/settings/appearance-storage';
-	import type { WorkspaceRecord } from '$lib/workspaces/workspace-registry';
-	import { DetailCard, EntityCard, EntityWorkbench, StatusToast } from '$lib/ui';
+	} from '#lib/settings/appearance-storage.ts';
+	import type { WorkspaceRecord } from '#lib/workspaces/workspace-registry.ts';
+	import { DetailCard, EntityCard, EntityWorkbench, StatusToast } from '#lib/ui/index.ts';
 
 	import {
 		createEmptySkillRegistry,
@@ -49,8 +49,8 @@
 		writeSkillRegistry,
 		type SkillRegistryStorageError
 	} from './skill-registry-storage';
-	import { readQueueArtifactSkillIds } from '$lib/queue/domain/queue-artifact-readers';
-	import { listQueueFiles, readQueueFile } from '$lib/queue/queue-folder';
+	import { readQueueArtifactSkillIds } from '#lib/queue/domain/queue-artifact-readers.ts';
+	import { listQueueFiles, readQueueFile } from '#lib/queue/queue-folder.ts';
 
 	interface Props {
 		readonly workspace: WorkspaceRecord;

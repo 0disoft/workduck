@@ -1,4 +1,4 @@
-import { isObjectRecord } from '$lib/shared/object-record';
+import { isObjectRecord } from '#lib/shared/object-record.ts';
 export const ENVIRONMENT_VAULT_VERSION = 1;
 export const ENVIRONMENT_SECRET_NAME_MAX_LENGTH = 120;
 export const ENVIRONMENT_SECRET_VALUE_MAX_LENGTH = 16_384;

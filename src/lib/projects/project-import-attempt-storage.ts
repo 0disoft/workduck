@@ -1,4 +1,4 @@
-import { getTauriInvoke } from '$lib/tauri/tauri-invoke';
+import { getTauriInvoke } from '#lib/tauri/tauri-invoke.ts';
 
 export type ProjectRepositoryImportAttemptSourceKind = 'fork';
 export type ProjectRepositoryImportAttemptState = 'running' | 'succeeded' | 'failed';

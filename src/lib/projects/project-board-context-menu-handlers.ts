@@ -1,4 +1,4 @@
-import type { WorkduckMessages } from '$lib/i18n/workduck-message-contract';
+import type { WorkduckMessages } from '#lib/i18n/workduck-message-contract.ts';
 import type { ProjectFormError } from './project-board-errors';
 import { CONTEXT_MENU_MARGIN_PX } from './project-board-context-menu-position';
 import {

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { WorkduckMessages } from '$lib/i18n/workduck-message-contract';
+	import type { WorkduckMessages } from '#lib/i18n/workduck-message-contract.ts';
 	import type { WorkduckQueueProposal } from './queue-artifacts';
 
 	interface Props {

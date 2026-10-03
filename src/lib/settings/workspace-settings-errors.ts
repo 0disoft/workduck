@@ -1,7 +1,7 @@
-import type { WorkduckMessages } from '$lib/i18n/workduck-message-contract';
-import { WORKSPACE_PASSWORD_MIN_LENGTH } from '$lib/workspaces/workspace-password';
-import type { WorkspacePathError } from '$lib/workspaces/workspace-path';
-import type { WorkspaceRepositorySetupError } from '$lib/workspaces/workspace-repository-setup';
+import type { WorkduckMessages } from '#lib/i18n/workduck-message-contract.ts';
+import { WORKSPACE_PASSWORD_MIN_LENGTH } from '#lib/workspaces/workspace-password.ts';
+import type { WorkspacePathError } from '#lib/workspaces/workspace-path.ts';
+import type { WorkspaceRepositorySetupError } from '#lib/workspaces/workspace-repository-setup.ts';
 import type { WorkspaceFormError } from './workspace-settings-types';
 
 export function getWorkspaceFormErrorMessage(

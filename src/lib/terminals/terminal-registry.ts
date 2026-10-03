@@ -1,4 +1,4 @@
-import { isObjectRecord } from '$lib/shared/object-record';
+import { isObjectRecord } from '#lib/shared/object-record.ts';
 export const TERMINAL_REGISTRY_VERSION = 1;
 export const TERMINAL_SESSION_NAME_MAX_LENGTH = 120;
 

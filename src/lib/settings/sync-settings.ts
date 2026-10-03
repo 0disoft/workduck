@@ -1,10 +1,10 @@
-import { normalizeWorkspacePathForStorage } from '$lib/workspaces/workspace-path-format';
-import { WORKSPACE_PATH_MAX_LENGTH } from '$lib/workspaces/workspace-registry';
+import { normalizeWorkspacePathForStorage } from '#lib/workspaces/workspace-path-format.ts';
+import { WORKSPACE_PATH_MAX_LENGTH } from '#lib/workspaces/workspace-registry.ts';
 import {
 	DEFAULT_WORKSPACE_SYNC_FILE_NAME,
 	normalizeWorkspaceSyncFileName,
 	WORKSPACE_SYNC_FILE_NAME_MAX_LENGTH
-} from '$lib/workspaces/workspace-sync-file';
+} from '#lib/workspaces/workspace-sync-file.ts';
 
 export const WORKDUCK_SYNC_SETTINGS_STORAGE_KEY = 'workduck.syncSettings.v1';
 export const DEFAULT_SYNC_PROFILE_NAME = 'Personal sync';

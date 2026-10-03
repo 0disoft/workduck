@@ -9,8 +9,8 @@ stability=contract
 */
 import type { ProjectRef, RepoRef } from '@workduck/core';
 import { compileAgentBriefPromptExport } from '@workduck/agents';
-import { isObjectRecord } from '$lib/shared/object-record';
-import type { ProjectRegistry } from '$lib/projects/project-registry';
+import { isObjectRecord } from '#lib/shared/object-record.ts';
+import type { ProjectRegistry } from '#lib/projects/project-registry.ts';
 
 export const BRIEF_TITLE_MAX_LENGTH = 120;
 export const BRIEF_INSTRUCTIONS_MAX_LENGTH = 16_000;

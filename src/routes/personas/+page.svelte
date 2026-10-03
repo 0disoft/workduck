@@ -1,28 +1,28 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 
-	import { getWorkduckMessages } from '$lib/i18n/workduck-language';
+	import { getWorkduckMessages } from '#lib/i18n/workduck-language.ts';
 	import {
 		createDefaultAppearanceSettings,
 		type AppearanceSettings
-	} from '$lib/settings/appearance-settings';
+	} from '#lib/settings/appearance-settings.ts';
 	import {
 		readAppearanceSettingsFromBrowser,
 		subscribeAppearanceSettings
-	} from '$lib/settings/appearance-storage';
-	import PageTitleRow from '$lib/ui/PageTitleRow.svelte';
-	import WorkspaceGate from '$lib/workspaces/WorkspaceGate.svelte';
+	} from '#lib/settings/appearance-storage.ts';
+	import PageTitleRow from '#lib/ui/PageTitleRow.svelte';
+	import WorkspaceGate from '#lib/workspaces/WorkspaceGate.svelte';
 	import {
 		createEmptyWorkspaceRegistry,
 		getActiveWorkspace,
 		type WorkspaceRegistry
-	} from '$lib/workspaces/workspace-registry';
+	} from '#lib/workspaces/workspace-registry.ts';
 	import {
 		readWorkspaceRegistryFromBrowser,
 		subscribeWorkspaceRegistry
-	} from '$lib/workspaces/workspace-storage';
+	} from '#lib/workspaces/workspace-storage.ts';
 
-	type PersonasPanelComponent = typeof import('$lib/personas/PersonasPanel.svelte').default;
+	type PersonasPanelComponent = typeof import('#lib/personas/PersonasPanel.svelte').default;
 
 	let appearanceSettings = $state<AppearanceSettings>(createDefaultAppearanceSettings());
 	let registry = $state<WorkspaceRegistry>(createEmptyWorkspaceRegistry());
@@ -35,7 +35,7 @@
 	);
 
 	onMount(() => {
-		void import('$lib/personas/PersonasPanel.svelte').then((module) => {
+		void import('#lib/personas/PersonasPanel.svelte').then((module) => {
 			PersonasPanel = module.default;
 		});
 		appearanceSettings = readAppearanceSettingsFromBrowser().settings;

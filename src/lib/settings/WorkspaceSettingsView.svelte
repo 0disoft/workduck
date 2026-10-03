@@ -2,12 +2,12 @@
 	import {
 		WORKSPACE_NAME_MAX_LENGTH,
 		WORKSPACE_PATH_MAX_LENGTH
-	} from '$lib/workspaces/workspace-registry';
-	import { formatWorkspacePathForDisplay } from '$lib/workspaces/workspace-path-format';
-	import { workspaceRequiresUnlock } from '$lib/workspaces/workspace-unlock';
-	import StatusToast from '$lib/ui/StatusToast.svelte';
-	import WorkspacePathRepairForm from '$lib/workspaces/WorkspacePathRepairForm.svelte';
-	import WorkspaceUnlockForm from '$lib/workspaces/WorkspaceUnlockForm.svelte';
+	} from '#lib/workspaces/workspace-registry.ts';
+	import { formatWorkspacePathForDisplay } from '#lib/workspaces/workspace-path-format.ts';
+	import { workspaceRequiresUnlock } from '#lib/workspaces/workspace-unlock.ts';
+	import StatusToast from '#lib/ui/StatusToast.svelte';
+	import WorkspacePathRepairForm from '#lib/workspaces/WorkspacePathRepairForm.svelte';
+	import WorkspaceUnlockForm from '#lib/workspaces/WorkspaceUnlockForm.svelte';
 	import {
 		GITHUB_REPOSITORY_COMMIT_MESSAGE_MAX_LENGTH,
 		GITHUB_REPOSITORY_NAME_MAX_LENGTH,

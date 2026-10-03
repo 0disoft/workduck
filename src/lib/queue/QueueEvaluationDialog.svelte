@@ -1,11 +1,11 @@
 <script lang="ts">
-	import type { WorkduckMessages } from '$lib/i18n/workduck-message-contract';
-	import { modalDialog } from '$lib/ui/modal-dialog-action';
+	import type { WorkduckMessages } from '#lib/i18n/workduck-message-contract.ts';
+	import { modalDialog } from '#lib/ui/modal-dialog-action.ts';
 	import {
 		agentEvaluationCriteriaDefinitions,
 		type AgentEvaluationCriterionId,
 		type AgentEvaluationScores
-	} from '$lib/agents/agent-evaluation';
+	} from '#lib/agents/agent-evaluation.ts';
 	import type { AgentEvaluationDialogState } from './queue-panel-types';
 
 	interface Props {

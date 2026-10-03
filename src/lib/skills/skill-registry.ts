@@ -1,5 +1,5 @@
-import { isObjectRecord } from '$lib/shared/object-record';
-import { AGENT_EVALUATION_DELEGATION_INSTRUCTIONS } from '$lib/agents/agent-evaluation';
+import { isObjectRecord } from '#lib/shared/object-record.ts';
+import { AGENT_EVALUATION_DELEGATION_INSTRUCTIONS } from '#lib/agents/agent-evaluation.ts';
 
 export const SKILL_REGISTRY_VERSION = 3;
 export const SKILL_NAME_MAX_LENGTH = 120;

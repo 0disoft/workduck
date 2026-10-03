@@ -1,39 +1,39 @@
 <script lang="ts">
-	import { styleProperties } from '$lib/ui/style-properties-action';
+	import { styleProperties } from '#lib/ui/style-properties-action.ts';
 
 	import { onMount, untrack } from 'svelte';
 
-	import { getWorkduckMessages } from '$lib/i18n/workduck-language';
+	import { getWorkduckMessages } from '#lib/i18n/workduck-language.ts';
 	import {
 		type EnvironmentSecretRecord,
 		type EnvironmentVault
-	} from '$lib/environment/environment-vault';
+	} from '#lib/environment/environment-vault.ts';
 	import {
 		readEnvironmentVaultSession,
 		subscribeEnvironmentVaultSession
-	} from '$lib/environment/environment-vault-session';
-	import { openEnvironmentVaultSessionFromWorkspaceUnlock } from '$lib/environment/environment-vault-session-loader';
+	} from '#lib/environment/environment-vault-session.ts';
+	import { openEnvironmentVaultSessionFromWorkspaceUnlock } from '#lib/environment/environment-vault-session-loader.ts';
 	import {
 		createDefaultAppearanceSettings,
 		type AppearanceSettings
-	} from '$lib/settings/appearance-settings';
+	} from '#lib/settings/appearance-settings.ts';
 	import {
 		readAppearanceSettingsFromBrowser,
 		subscribeAppearanceSettings
-	} from '$lib/settings/appearance-storage';
+	} from '#lib/settings/appearance-storage.ts';
 	import {
 		createEmptyPersonaRegistry,
 		syncPersonaEvaluationSummariesFromAgents,
 		type PersonaRegistry
-	} from '$lib/personas/persona-registry';
+	} from '#lib/personas/persona-registry.ts';
 	import {
 		readPersonaRegistry,
 		subscribePersonaRegistry,
 		type PersonaRegistryStorageError
-	} from '$lib/personas/persona-registry-storage';
-	import { DetailCard, EntityCard, EntityWorkbench, StatusToast } from '$lib/ui';
-	import type { WorkspaceRecord } from '$lib/workspaces/workspace-registry';
-	import { writeWorkspaceRegistryPairStorage } from '$lib/workspaces/workspace-registry-pair-storage';
+	} from '#lib/personas/persona-registry-storage.ts';
+	import { DetailCard, EntityCard, EntityWorkbench, StatusToast } from '#lib/ui/index.ts';
+	import type { WorkspaceRecord } from '#lib/workspaces/workspace-registry.ts';
+	import { writeWorkspaceRegistryPairStorage } from '#lib/workspaces/workspace-registry-pair-storage.ts';
 
 	import {
 		AGENT_EVALUATION_SCORE_MAX,

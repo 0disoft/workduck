@@ -1,5 +1,5 @@
-import { isObjectRecord } from '$lib/shared/object-record';
-import { normalizeWorkspacePathForStorage } from '$lib/workspaces/workspace-path-format';
+import { isObjectRecord } from '#lib/shared/object-record.ts';
+import { normalizeWorkspacePathForStorage } from '#lib/workspaces/workspace-path-format.ts';
 import { createProjectFolderNameFromDisplayName } from './project-folder-name';
 
 /* llmnav/1 module

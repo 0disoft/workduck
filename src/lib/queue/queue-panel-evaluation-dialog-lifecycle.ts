@@ -1,10 +1,10 @@
-import type { AgentRecord } from '$lib/agents/agent-registry';
+import type { AgentRecord } from '#lib/agents/agent-registry.ts';
 import {
 	createDefaultAgentEvaluationScores,
 	normalizeAgentEvaluationScore,
 	type AgentEvaluationCriterionId,
 	type AgentEvaluationScores
-} from '$lib/agents/agent-evaluation';
+} from '#lib/agents/agent-evaluation.ts';
 import type { WorkduckQueueResultReportTask } from './queue-artifacts';
 import type { AgentEvaluationDialogState } from './queue-panel-types';
 

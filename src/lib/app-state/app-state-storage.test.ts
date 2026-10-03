@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { afterEach, describe, test } from 'node:test';
 
-import { setTauriInvokeForTest } from '$lib/tauri/tauri-invoke';
+import { setTauriInvokeForTest } from '#lib/tauri/tauri-invoke.ts';
 import {
 	flushWorkduckAppStateWrites,
 	initializeWorkduckAppState,

@@ -1,8 +1,8 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import type { WorkduckLanguageId } from '$lib/i18n/workduck-language-options';
-	import { getWorkduckMessages } from '$lib/i18n/workduck-language';
-	import type { WorkspaceRecord } from '$lib/workspaces/workspace-registry';
+	import type { WorkduckLanguageId } from '#lib/i18n/workduck-language-options.ts';
+	import { getWorkduckMessages } from '#lib/i18n/workduck-language.ts';
+	import type { WorkspaceRecord } from '#lib/workspaces/workspace-registry.ts';
 	import type { BriefRecord } from './brief-registry';
 	import { addBriefRunLink, createEmptyBriefRunRegistry, removeBriefRunLink, type BriefRunLink, type BriefRunRegistry } from './brief-run-registry';
 	import { findLinkedReports, findLinkedTask, findLinkedWorkOrder, listBriefRunCandidates, readBriefRunEvidence, type BriefRunEvidence } from './brief-run-evidence';

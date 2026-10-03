@@ -1,4 +1,4 @@
-import { readWorkspaceDataFile, writeWorkspaceRegistryFile, type WorkspaceDataFileError } from '$lib/workspaces/workspace-data-file';
+import { readWorkspaceDataFile, writeWorkspaceRegistryFile, type WorkspaceDataFileError } from '#lib/workspaces/workspace-data-file.ts';
 import { createEmptyBriefRegistry, parseBriefRegistry, type BriefRegistry } from './brief-registry';
 
 export type BriefStorageResult =

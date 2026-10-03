@@ -1,28 +1,28 @@
 <script lang="ts">
 	import { onMount, untrack } from 'svelte';
 
-	import { getWorkduckMessages } from '$lib/i18n/workduck-language';
+	import { getWorkduckMessages } from '#lib/i18n/workduck-language.ts';
 	import {
 		createDefaultAppearanceSettings,
 		type AppearanceSettings
-	} from '$lib/settings/appearance-settings';
+	} from '#lib/settings/appearance-settings.ts';
 	import {
 		readAppearanceSettingsFromBrowser,
 		subscribeAppearanceSettings
-	} from '$lib/settings/appearance-storage';
-	import type { WorkspaceRecord } from '$lib/workspaces/workspace-registry';
-	import { createWorkspaceScopedResourceStore } from '$lib/workspaces/workspace-scoped-resource';
-	import { DetailCard, EntityCard, EntityWorkbench, StatusToast } from '$lib/ui';
+	} from '#lib/settings/appearance-storage.ts';
+	import type { WorkspaceRecord } from '#lib/workspaces/workspace-registry.ts';
+	import { createWorkspaceScopedResourceStore } from '#lib/workspaces/workspace-scoped-resource.ts';
+	import { DetailCard, EntityCard, EntityWorkbench, StatusToast } from '#lib/ui/index.ts';
 	import {
 		createEmptyProjectRegistry,
 		type ProjectNodeRecord,
 		type ProjectRegistry
-	} from '$lib/projects/project-registry';
+	} from '#lib/projects/project-registry.ts';
 	import {
 		createProjectRepositorySelectionOptions,
 		filterProjectRepositorySelectionOptions
-	} from '$lib/projects/project-repository-selection';
-	import { readProjectRegistry, subscribeProjectRegistry } from '$lib/projects/project-storage';
+	} from '#lib/projects/project-repository-selection.ts';
+	import { readProjectRegistry, subscribeProjectRegistry } from '#lib/projects/project-storage.ts';
 
 	import {
 		createEmptyReferenceRegistry,

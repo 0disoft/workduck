@@ -7,13 +7,13 @@ search=encrypt workspace sync|decrypt registry envelope|workspace sync payload
 invariant=Decrypted data is accepted only when envelope algorithms, versions, and normalized registry payloads match the closed sync contract.
 stability=contract
 */
-import { isObjectRecord } from '$lib/shared/object-record';
-import { getTauriInvoke } from '$lib/tauri/tauri-invoke';
+import { isObjectRecord } from '#lib/shared/object-record.ts';
+import { getTauriInvoke } from '#lib/tauri/tauri-invoke.ts';
 import {
 	normalizeProjectRegistry,
 	WORKDUCK_PROJECT_REGISTRY_VERSION,
 	type ProjectRegistry
-} from '$lib/projects/project-registry';
+} from '#lib/projects/project-registry.ts';
 import {
 	normalizeWorkspaceRegistry,
 	parseWorkspaceRegistry,

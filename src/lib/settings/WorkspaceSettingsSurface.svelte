@@ -1,14 +1,14 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 
-	import { getWorkduckMessages } from '$lib/i18n/workduck-language';
-	import { getProjectFormErrorMessage } from '$lib/projects/project-board-errors';
+	import { getWorkduckMessages } from '#lib/i18n/workduck-language.ts';
+	import { getProjectFormErrorMessage } from '#lib/projects/project-board-errors.ts';
 	import {
 		enqueueRepositoryCommitWorkOrder
-	} from '$lib/queue/repository-commit-work-order';
+	} from '#lib/queue/repository-commit-work-order.ts';
 	import {
 		getQueueFolderLocalizedError
-	} from '$lib/queue/queue-panel-errors';
+	} from '#lib/queue/queue-panel-errors.ts';
 	import {
 		addWorkspace,
 		createEmptyWorkspaceRegistry,
@@ -16,26 +16,26 @@
 		switchWorkspace,
 		type WorkspaceRecord,
 		type WorkspaceRegistry,
-	} from '$lib/workspaces/workspace-registry';
+	} from '#lib/workspaces/workspace-registry.ts';
 	import {
 		createWorkspacePasswordHash,
-	} from '$lib/workspaces/workspace-password';
-	import { resolveDefaultGithubTokenCredential } from '$lib/environment/github-credential';
-	import { lockWorkspaceEnvironmentVaultSession } from '$lib/environment/environment-vault-session';
+	} from '#lib/workspaces/workspace-password.ts';
+	import { resolveDefaultGithubTokenCredential } from '#lib/environment/github-credential.ts';
+	import { lockWorkspaceEnvironmentVaultSession } from '#lib/environment/environment-vault-session.ts';
 	import {
 		runProjectRepositoryTask,
 		type ProjectRepositoryTaskError
-	} from '$lib/projects/project-repository-task';
-	import { openEnvironmentVaultSessionFromWorkspaceUnlock } from '$lib/environment/environment-vault-session-loader';
+	} from '#lib/projects/project-repository-task.ts';
+	import { openEnvironmentVaultSessionFromWorkspaceUnlock } from '#lib/environment/environment-vault-session-loader.ts';
 	import {
 		selectWorkspacePath,
 		validateWorkspacePath
-	} from '$lib/workspaces/workspace-path';
-	import { formatWorkspacePathForDisplay } from '$lib/workspaces/workspace-path-format';
+	} from '#lib/workspaces/workspace-path.ts';
+	import { formatWorkspacePathForDisplay } from '#lib/workspaces/workspace-path-format.ts';
 	import {
 		setupWorkspaceRepository,
 		type WorkspaceRepositorySetupError
-	} from '$lib/workspaces/workspace-repository-setup';
+	} from '#lib/workspaces/workspace-repository-setup.ts';
 	import {
 		fetchWorkspaceRepositoryGit,
 		inspectWorkspaceRepositoryGit,
@@ -44,18 +44,18 @@
 		pushWorkspaceRepositoryGit,
 		type WorkspaceRepositoryGithubVisibility,
 		type WorkspaceRepositoryGitCredentialInput,
-	} from '$lib/workspaces/workspace-repository-git';
+	} from '#lib/workspaces/workspace-repository-git.ts';
 	import {
 		readWorkspaceRegistryFromBrowser,
 		subscribeWorkspaceRegistry,
 		writeWorkspaceRegistryToBrowser
-	} from '$lib/workspaces/workspace-storage';
+	} from '#lib/workspaces/workspace-storage.ts';
 	import {
 		isWorkspaceUnlocked,
 		markWorkspaceUnlocked,
 		subscribeWorkspaceUnlocks,
 		workspaceRequiresUnlock
-	} from '$lib/workspaces/workspace-unlock';
+	} from '#lib/workspaces/workspace-unlock.ts';
 	import {
 		createDefaultAppearanceSettings,
 		type AppearanceSettings

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { afterEach, describe, test } from 'node:test';
-import { setTauriInvokeForTest, type TauriInvoke } from '$lib/tauri/tauri-invoke';
-import { readProjectRepositoryTaskRunRecords } from '$lib/projects/project-repository-task';
+import { setTauriInvokeForTest, type TauriInvoke } from '#lib/tauri/tauri-invoke.ts';
+import { readProjectRepositoryTaskRunRecords } from '#lib/projects/project-repository-task.ts';
 import { createEmptyBriefRegistry, saveBriefDraft, type BriefRecord } from './brief-registry';
 import { addBriefRunLink, createEmptyBriefRunRegistry, parseBriefRunRegistry, removeBriefRunLink, type BriefRunLink } from './brief-run-registry';
 import { findLinkedReports, findLinkedTask, listBriefRunCandidates, readBriefRunEvidence, type BriefRunEvidence } from './brief-run-evidence';

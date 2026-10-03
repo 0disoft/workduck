@@ -1,11 +1,11 @@
-import { isObjectRecord } from '$lib/shared/object-record';
+import { isObjectRecord } from '#lib/shared/object-record.ts';
 import {
 	agentEvaluationCriteriaDefinitions,
 	createEmptyAgentEvaluationSummary,
 	normalizeAgentEvaluationSummary,
 	type AgentEvaluationSummary
-} from '$lib/agents/agent-evaluation';
-import type { AgentRecord } from '$lib/agents/agent-registry';
+} from '#lib/agents/agent-evaluation.ts';
+import type { AgentRecord } from '#lib/agents/agent-registry.ts';
 
 export const PERSONA_REGISTRY_VERSION = 2;
 export const PERSONA_NAME_MAX_LENGTH = 120;

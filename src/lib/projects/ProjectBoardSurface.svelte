@@ -1,19 +1,19 @@
 	<script lang="ts">
-	import type { WorkduckMessages } from '$lib/i18n/workduck-message-contract';
+	import type { WorkduckMessages } from '#lib/i18n/workduck-message-contract.ts';
 	import {
 		getWorkduckMessages,
 		type WorkduckLanguageId
-	} from '$lib/i18n/workduck-language';
-	import type { EnvironmentVault } from '$lib/environment/environment-vault';
-	import StatusToast from '$lib/ui/StatusToast.svelte';
+	} from '#lib/i18n/workduck-language.ts';
+	import type { EnvironmentVault } from '#lib/environment/environment-vault.ts';
+	import StatusToast from '#lib/ui/StatusToast.svelte';
 	import {
 		type SecretVaultEnvelope
-	} from '$lib/environment/secret-vault-crypto';
-	import type { WorkspaceRecord } from '$lib/workspaces/workspace-registry';
+	} from '#lib/environment/secret-vault-crypto.ts';
+	import type { WorkspaceRecord } from '#lib/workspaces/workspace-registry.ts';
 	import {
 		getQueueFolderLocalizedError
-	} from '$lib/queue/queue-panel-errors';
-	import type { QueueFolderError } from '$lib/queue/queue-folder';
+	} from '#lib/queue/queue-panel-errors.ts';
+	import type { QueueFolderError } from '#lib/queue/queue-folder.ts';
 	import {
 		applySsealedScaffoldToRepository,
 		getDefaultSsealedScaffoldApplyScope,

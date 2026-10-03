@@ -8,8 +8,8 @@ invariant=Malformed native responses never become successful typed task results.
 stability=contract
 */
 
-import { getTauriInvoke } from '$lib/tauri/tauri-invoke';
-import { normalizeWorkspacePathForStorage } from '$lib/workspaces/workspace-path-format';
+import { getTauriInvoke } from '#lib/tauri/tauri-invoke.ts';
+import { normalizeWorkspacePathForStorage } from '#lib/workspaces/workspace-path-format.ts';
 
 export const WORKDUCK_PROJECT_REPOSITORY_TASK_RUN_CHANGED_EVENT =
 	'workduck:project-repository-task-run-changed';

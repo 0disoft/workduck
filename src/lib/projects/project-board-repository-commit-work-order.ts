@@ -1,6 +1,6 @@
-import type { WorkduckLanguageId } from '$lib/i18n/workduck-language';
-import { enqueueRepositoryCommitWorkOrder } from '$lib/queue/repository-commit-work-order';
-import type { QueueFolderError } from '$lib/queue/queue-folder';
+import type { WorkduckLanguageId } from '#lib/i18n/workduck-language.ts';
+import { enqueueRepositoryCommitWorkOrder } from '#lib/queue/repository-commit-work-order.ts';
+import type { QueueFolderError } from '#lib/queue/queue-folder.ts';
 import type { ProjectRepositoryGitStatus } from './project-board-selectors';
 import type { ProjectNodeRecord, ProjectRepositoryLinkRecord } from './project-registry';
 

@@ -8,8 +8,8 @@ invariant=A failed SQLite read or write returns an explicit error together with 
 stability=architecture
 */
 
-import { isObjectRecord } from '$lib/shared/object-record';
-import { getTauriInvoke } from '$lib/tauri/tauri-invoke';
+import { isObjectRecord } from '#lib/shared/object-record.ts';
+import { getTauriInvoke } from '#lib/tauri/tauri-invoke.ts';
 import {
 	createEmptyProjectRegistry,
 	normalizeProjectRegistry,

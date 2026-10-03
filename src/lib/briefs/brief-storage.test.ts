@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { afterEach, describe, test } from 'node:test';
-import { setTauriInvokeForTest, type TauriInvoke } from '$lib/tauri/tauri-invoke';
+import { setTauriInvokeForTest, type TauriInvoke } from '#lib/tauri/tauri-invoke.ts';
 import { createEmptyBriefRegistry, saveBriefDraft } from './brief-registry';
 import { readBriefRegistry, writeBriefRegistry } from './brief-storage';
 

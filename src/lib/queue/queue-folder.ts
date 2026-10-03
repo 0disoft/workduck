@@ -7,8 +7,8 @@ search=list queue files|write work order file|open queue folder
 invariant=All Queue paths are workspace-relative native results and malformed responses fail with explicit Queue folder errors.
 stability=architecture
 */
-import { getTauriInvoke } from '$lib/tauri/tauri-invoke';
-import { normalizeWorkspacePathForStorage } from '$lib/workspaces/workspace-path-format';
+import { getTauriInvoke } from '#lib/tauri/tauri-invoke.ts';
+import { normalizeWorkspacePathForStorage } from '#lib/workspaces/workspace-path-format.ts';
 
 export type QueueFolderError =
 	| 'queue-folder-workspace-required'

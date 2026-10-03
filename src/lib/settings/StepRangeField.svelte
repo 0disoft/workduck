@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { styleProperties } from '$lib/ui/style-properties-action';
+	import { styleProperties } from '#lib/ui/style-properties-action.ts';
 
 	interface StepRangeOption {
 		readonly value: number;

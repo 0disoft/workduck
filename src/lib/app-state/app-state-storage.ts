@@ -1,5 +1,5 @@
-import { isObjectRecord } from '$lib/shared/object-record';
-import { getTauriInvoke } from '$lib/tauri/tauri-invoke';
+import { isObjectRecord } from '#lib/shared/object-record.ts';
+import { getTauriInvoke } from '#lib/tauri/tauri-invoke.ts';
 
 export const WORKDUCK_APP_STATE_PENDING_STORAGE_KEY_PREFIX = 'workduck.appState.pending.v1';
 export const WORKDUCK_APP_STATE_KEYS = [

@@ -7,7 +7,7 @@ search=brief run links|saved execution association|link time instructions
 invariant=Each brief and source pair is unique and unlinking never mutates the original execution.
 stability=contract
 */
-import { isObjectRecord } from '$lib/shared/object-record';
+import { isObjectRecord } from '#lib/shared/object-record.ts';
 import { isBriefRecord, type BriefRecord } from './brief-registry';
 
 export type BriefRunSourceKind = 'repository-task' | 'queue-work-order';

@@ -1,7 +1,7 @@
 import { check, type DownloadEvent, type Update } from '@tauri-apps/plugin-updater';
 import { relaunch } from '@tauri-apps/plugin-process';
 
-import { isTauriRuntimeAvailable } from '$lib/tauri/tauri-invoke';
+import { isTauriRuntimeAvailable } from '#lib/tauri/tauri-invoke.ts';
 
 const UPDATE_CHECK_TIMEOUT_MS = 15_000;
 const UPDATE_INSTALL_TIMEOUT_MS = 120_000;

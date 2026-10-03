@@ -1,4 +1,4 @@
-import { isObjectRecord } from '$lib/shared/object-record';
+import { isObjectRecord } from '#lib/shared/object-record.ts';
 import {
 	createEmptySkillRegistry,
 	parseSkillRegistry,
@@ -10,7 +10,7 @@ import {
 	workspaceDataFilesAreAvailable,
 	writeWorkspaceDataFile,
 	type WorkspaceDataFileError
-} from '$lib/workspaces/workspace-data-file';
+} from '#lib/workspaces/workspace-data-file.ts';
 
 export const WORKDUCK_SKILL_REGISTRIES_STORAGE_KEY = 'workduck.skillRegistries.v1';
 export const WORKDUCK_SKILL_REGISTRY_CHANGED_EVENT = 'workduck:skill-registry-changed';

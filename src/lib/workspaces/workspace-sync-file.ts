@@ -7,7 +7,7 @@ search=workspace sync file client|normalize sync filename|read sync file
 invariant=A successful client result requires an explicit normalized native path and, for reads, string content; malformed responses fail closed.
 stability=contract
 */
-import { getTauriInvoke } from '$lib/tauri/tauri-invoke';
+import { getTauriInvoke } from '#lib/tauri/tauri-invoke.ts';
 import { normalizeWorkspacePathForStorage } from './workspace-path-format';
 
 export const DEFAULT_WORKSPACE_SYNC_FILE_NAME = 'workduck-workspaces.sync.json';

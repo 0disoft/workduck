@@ -7,7 +7,7 @@ search=secret vault envelope|validate encrypted vault|native vault boundary
 invariant=Renderer code may validate and persist encrypted envelopes but cannot encrypt or decrypt vault plaintext.
 stability=contract
 */
-import { isObjectRecord } from '$lib/shared/object-record';
+import { isObjectRecord } from '#lib/shared/object-record.ts';
 export const SECRET_VAULT_FORMAT = 'workduck.secret-vault';
 export const SECRET_VAULT_VERSION = 1;
 

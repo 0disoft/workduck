@@ -3,7 +3,7 @@ import {
 	deleteProjectRepositoryFolder,
 	type ProjectFolderError
 } from './project-folder';
-import type { WorkduckMessages } from '$lib/i18n/workduck-message-contract';
+import type { WorkduckMessages } from '#lib/i18n/workduck-message-contract.ts';
 import type { ProjectFormError } from './project-board-errors';
 import { getProjectDeleteSuccessStatus } from './project-board-dialog-rules';
 import type { ProjectDeleteCandidate } from './project-board-types';

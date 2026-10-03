@@ -1,4 +1,4 @@
-import { isObjectRecord } from '$lib/shared/object-record';
+import { isObjectRecord } from '#lib/shared/object-record.ts';
 import {
 	createEmptyReferenceRegistry,
 	parseReferenceRegistry,
@@ -10,7 +10,7 @@ import {
 	workspaceDataFilesAreAvailable,
 	writeWorkspaceDataFile,
 	type WorkspaceDataFileError
-} from '$lib/workspaces/workspace-data-file';
+} from '#lib/workspaces/workspace-data-file.ts';
 
 export const WORKDUCK_REFERENCE_REGISTRIES_STORAGE_KEY = 'workduck.referenceRegistries.v1';
 export const WORKDUCK_REFERENCE_REGISTRY_CHANGED_EVENT = 'workduck:reference-registry-changed';

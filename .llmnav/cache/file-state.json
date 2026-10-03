@@ -4547,33 +4547,33 @@
     },
     {
       "blocks": [],
-      "contentHash": "874b9c6c0260df80350c732ed07593e278beb68f0fdb7dc9d3ca53412c3c0f04",
+      "contentHash": "77ac97d710d1211ec8a3e50b70aaac959d86e2dfbcf0381bb8be5501691c4817",
       "declarations": [],
       "imports": [
-        "$lib/tauri/tauri-invoke",
-        "$lib/workspaces/workspace-path-format"
+        "#lib/tauri/tauri-invoke.ts",
+        "#lib/workspaces/workspace-path-format.ts"
       ],
       "path": "src/lib/agent-api/agent-api-snapshot.ts",
       "semanticBytes": 0,
-      "sourceBytes": 5519
+      "sourceBytes": 5525
     },
     {
       "blocks": [],
-      "contentHash": "5b4926db5725b8e8b6dbdaab62ddf748aa9e0d6386bbb67b3f8b6b321162e871",
+      "contentHash": "e9452de4ea9f60fa2b16ee776b24a0bd7ee10371a353ba2ca6d8bc09135993c3",
       "declarations": [],
       "imports": [
-        "$lib/environment/environment-vault",
-        "$lib/environment/environment-vault-session",
-        "$lib/environment/environment-vault-session-loader",
-        "$lib/i18n/workduck-language",
-        "$lib/personas/persona-registry",
-        "$lib/personas/persona-registry-storage",
-        "$lib/settings/appearance-settings",
-        "$lib/settings/appearance-storage",
-        "$lib/ui",
-        "$lib/ui/style-properties-action",
-        "$lib/workspaces/workspace-registry",
-        "$lib/workspaces/workspace-registry-pair-storage",
+        "#lib/environment/environment-vault-session-loader.ts",
+        "#lib/environment/environment-vault-session.ts",
+        "#lib/environment/environment-vault.ts",
+        "#lib/i18n/workduck-language.ts",
+        "#lib/personas/persona-registry-storage.ts",
+        "#lib/personas/persona-registry.ts",
+        "#lib/settings/appearance-settings.ts",
+        "#lib/settings/appearance-storage.ts",
+        "#lib/ui/index.ts",
+        "#lib/ui/style-properties-action.ts",
+        "#lib/workspaces/workspace-registry-pair-storage.ts",
+        "#lib/workspaces/workspace-registry.ts",
         "./agent-evaluation",
         "./agent-model-options",
         "./agent-registry",
@@ -4582,18 +4582,18 @@
       ],
       "path": "src/lib/agents/AgentsPanel.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 30322
+      "sourceBytes": 30364
     },
     {
       "blocks": [],
-      "contentHash": "68bcba3da7db97b7c666f76a46043aaca2cde79e3c23b975514f553fa1e1c9a5",
+      "contentHash": "80284502ca6fd0ad339a5b3ac9734cbf57dcee5869daf3239efd8308f1b6fdaa",
       "declarations": [],
       "imports": [
-        "$lib/shared/object-record"
+        "#lib/shared/object-record.ts"
       ],
       "path": "src/lib/agents/agent-evaluation.ts",
       "semanticBytes": 0,
-      "sourceBytes": 9820
+      "sourceBytes": 9823
     },
     {
       "blocks": [],
@@ -4617,69 +4617,69 @@
     },
     {
       "blocks": [],
-      "contentHash": "0d6623e305191b1f5db2ab41c2d1337c510c0ab8c1510970237c284e2564d5df",
+      "contentHash": "b27337d0ff2cf7e916c2db174b722adc6ea5fb514f25e28eeb0b022943109e66",
       "declarations": [],
       "imports": [
-        "$lib/shared/object-record",
-        "$lib/workspaces/workspace-data-file",
+        "#lib/shared/object-record.ts",
+        "#lib/workspaces/workspace-data-file.ts",
         "./agent-registry"
       ],
       "path": "src/lib/agents/agent-registry-storage.ts",
       "semanticBytes": 0,
-      "sourceBytes": 6596
+      "sourceBytes": 6602
     },
     {
       "blocks": [],
-      "contentHash": "03f792dcf067b5f11a918d2974dce4b8e2467f338447265d7b277026f96640c4",
+      "contentHash": "7817f39f3694a6069540813dd71ea0a98d763598a207657bce43baff4fd3e61b",
       "declarations": [],
       "imports": [
-        "$lib/shared/object-record",
+        "#lib/shared/object-record.ts",
         "./agent-evaluation"
       ],
       "path": "src/lib/agents/agent-registry.ts",
       "semanticBytes": 0,
-      "sourceBytes": 15104
+      "sourceBytes": 15107
     },
     {
       "blocks": [],
-      "contentHash": "b70751f02878772cc984d4f35ac044d8400dfdd487648e88c27389bea6fbdf8c",
+      "contentHash": "f94545c45fbd9e6762d659dce7469b1e8e21a916c77b54e6348d51e77f2ffa5b",
       "declarations": [],
       "imports": [
-        "$lib/tauri/tauri-invoke",
+        "#lib/tauri/tauri-invoke.ts",
         "./app-state-storage",
         "node:assert/strict",
         "node:test"
       ],
       "path": "src/lib/app-state/app-state-storage.test.ts",
       "semanticBytes": 0,
-      "sourceBytes": 9649
+      "sourceBytes": 9652
     },
     {
       "blocks": [],
-      "contentHash": "e90c5ee813050129096a203092e510fc8aa6b06ce9b2448eb16aa220f3e485a4",
+      "contentHash": "e7c351e19bb2480853a49491088e800b2358eaff0d62cf702cee488cbaff7b9e",
       "declarations": [],
       "imports": [
-        "$lib/shared/object-record",
-        "$lib/tauri/tauri-invoke"
+        "#lib/shared/object-record.ts",
+        "#lib/tauri/tauri-invoke.ts"
       ],
       "path": "src/lib/app-state/app-state-storage.ts",
       "semanticBytes": 0,
-      "sourceBytes": 14120
+      "sourceBytes": 14126
     },
     {
       "blocks": [],
-      "contentHash": "d6d83616e884e97af4e511262ed2289d3b7f4963b79f99029021d4420f1346a5",
+      "contentHash": "74b2c451c4fef02fb2c9816c4c5390133c9c8406a2e316b01223f363d84727d0",
       "declarations": [],
       "imports": [
-        "$lib/settings/appearance-settings",
-        "$lib/settings/sync-settings",
-        "$lib/settings/system-settings",
-        "$lib/workspaces/workspace-registry",
+        "#lib/settings/appearance-settings.ts",
+        "#lib/settings/sync-settings.ts",
+        "#lib/settings/system-settings.ts",
+        "#lib/workspaces/workspace-registry.ts",
         "./app-state-storage"
       ],
       "path": "src/lib/app-state/persistent-app-state.ts",
       "semanticBytes": 0,
-      "sourceBytes": 2263
+      "sourceBytes": 2275
     },
     {
       "blocks": [],
@@ -4692,12 +4692,12 @@
     },
     {
       "blocks": [],
-      "contentHash": "1717741dc248929bcaeac7295dfe0ecbcb701e82ad6d67b56f8d78d704bd9100",
+      "contentHash": "c943642a905673091897326301316fb2db2cb940ad4d0981d3370703ac79def4",
       "declarations": [],
       "imports": [
-        "$lib/i18n/workduck-language",
-        "$lib/i18n/workduck-language-options",
-        "$lib/workspaces/workspace-registry",
+        "#lib/i18n/workduck-language-options.ts",
+        "#lib/i18n/workduck-language.ts",
+        "#lib/workspaces/workspace-registry.ts",
         "./brief-gate",
         "./brief-gate-messages",
         "./brief-registry",
@@ -4709,19 +4709,19 @@
       ],
       "path": "src/lib/briefs/BriefRunsPanel.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 7212
+      "sourceBytes": 7221
     },
     {
       "blocks": [],
-      "contentHash": "fac47856a4e1a12263261ab816591569cf491d51384575c164d5ac3be3ead9dc",
+      "contentHash": "e0f7d5055220bb1a3fc80c514644b9cd2f3ac327ff551948f3a31a217a492e8d",
       "declarations": [],
       "imports": [
+        "#lib/i18n/workduck-language.ts",
+        "#lib/projects/project-storage.ts",
+        "#lib/ui/index.ts",
+        "#lib/ui/modal-dialog-action.ts",
+        "#lib/workspaces/workspace-registry.ts",
         "$app/navigation",
-        "$lib/i18n/workduck-language",
-        "$lib/projects/project-storage",
-        "$lib/ui",
-        "$lib/ui/modal-dialog-action",
-        "$lib/workspaces/workspace-registry",
         "./BriefRunsPanel.svelte",
         "./brief-messages",
         "./brief-registry",
@@ -4731,19 +4731,19 @@
       ],
       "path": "src/lib/briefs/BriefsPanel.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 9395
+      "sourceBytes": 9416
     },
     {
       "blocks": [],
-      "contentHash": "ce4a6aee30aedde58e48e2204f3996e4f3962b1d3238ceb8a53579889b26fef4",
+      "contentHash": "3d287c870624e14a5d2c7d27a4f09543aa4a8c3b16de20e85c1f899d4ea5e50d",
       "declarations": [],
       "imports": [
-        "$lib/i18n/workduck-language-options",
+        "#lib/i18n/workduck-language-options.ts",
         "./brief-gate"
       ],
       "path": "src/lib/briefs/brief-gate-messages.ts",
       "semanticBytes": 0,
-      "sourceBytes": 5413
+      "sourceBytes": 5416
     },
     {
       "blocks": [
@@ -4851,22 +4851,22 @@
     },
     {
       "blocks": [],
-      "contentHash": "0b084a744c29e4d3f12253d15f9306ae6d9f71ed0c62ef01dc215597b461c7d7",
+      "contentHash": "1cd1092c32c49b532375280328b501eb076f108738fad7e5fdaa4360d800b183",
       "declarations": [],
       "imports": [
-        "$lib/i18n/workduck-language-options"
+        "#lib/i18n/workduck-language-options.ts"
       ],
       "path": "src/lib/briefs/brief-messages.ts",
       "semanticBytes": 0,
-      "sourceBytes": 9078
+      "sourceBytes": 9081
     },
     {
       "blocks": [],
-      "contentHash": "91ea59c7c01e312ac17249e18e1799130acc699e6f94d242cbbd85d2ce89af54",
+      "contentHash": "126e355d6a40826ba6ba00062bdb0541880e4d39bf4da94156386a86e26edac9",
       "declarations": [],
       "imports": [
-        "$lib/i18n/workduck-language-options",
-        "$lib/projects/project-registry",
+        "#lib/i18n/workduck-language-options.ts",
+        "#lib/projects/project-registry.ts",
         "./brief-messages",
         "./brief-registry",
         "node:assert/strict",
@@ -4874,7 +4874,7 @@
       ],
       "path": "src/lib/briefs/brief-registry.test.ts",
       "semanticBytes": 0,
-      "sourceBytes": 4684
+      "sourceBytes": 4690
     },
     {
       "blocks": [
@@ -4966,46 +4966,46 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "aa3accf8eaebc2c025cf823ffa6ed862cd2466565e569983893bae9df5fa73c7",
+      "contentHash": "c79caa02f00816fdc61d085dcc49a99f185327b899cb186525af7865f674406f",
       "declarations": [
         null
       ],
       "imports": [
-        "$lib/projects/project-registry",
-        "$lib/shared/object-record",
+        "#lib/projects/project-registry.ts",
+        "#lib/shared/object-record.ts",
         "@workduck/agents",
         "@workduck/core"
       ],
       "path": "src/lib/briefs/brief-registry.ts",
       "semanticBytes": 482,
-      "sourceBytes": 6273
+      "sourceBytes": 6279
     },
     {
       "blocks": [],
-      "contentHash": "20edc6048a6cb01f2a16921ac23597a626b6b660db7874555e472e524c4ad82a",
+      "contentHash": "3d6690641fcbe5124ea77da1543088e6477fb8ae6a943d1b2f3179d4dbc2138b",
       "declarations": [],
       "imports": [
-        "$lib/projects/project-repository-task",
-        "$lib/queue/queue-artifacts",
-        "$lib/queue/queue-folder",
-        "$lib/workspaces/workspace-path-format",
+        "#lib/projects/project-repository-task.ts",
+        "#lib/queue/queue-artifacts.ts",
+        "#lib/queue/queue-folder.ts",
+        "#lib/workspaces/workspace-path-format.ts",
         "./brief-registry",
         "./brief-run-registry"
       ],
       "path": "src/lib/briefs/brief-run-evidence.ts",
       "semanticBytes": 0,
-      "sourceBytes": 6104
+      "sourceBytes": 6116
     },
     {
       "blocks": [],
-      "contentHash": "346bfd982db6c5f95b5e5b8a20093aeabe30409d520e7f2b93301ec26c765713",
+      "contentHash": "17e0dc3ce124ec50e80d6942e0986f6c3b22427698aacb75c366bb36a6d3d560",
       "declarations": [],
       "imports": [
-        "$lib/i18n/workduck-language-options"
+        "#lib/i18n/workduck-language-options.ts"
       ],
       "path": "src/lib/briefs/brief-run-messages.ts",
       "semanticBytes": 0,
-      "sourceBytes": 8332
+      "sourceBytes": 8335
     },
     {
       "blocks": [
@@ -5097,37 +5097,37 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "b0b339e27a9203e84e7dd9edea8e7b0a9b3548591b20104b69b3c36462c1e536",
+      "contentHash": "18984bf084222de8b1e9b0945beeadf1db03529ebafdc206dcaed9d18f68fd7f",
       "declarations": [
         null
       ],
       "imports": [
-        "$lib/shared/object-record",
+        "#lib/shared/object-record.ts",
         "./brief-registry"
       ],
       "path": "src/lib/briefs/brief-run-registry.ts",
       "semanticBytes": 476,
-      "sourceBytes": 3316
+      "sourceBytes": 3319
     },
     {
       "blocks": [],
-      "contentHash": "dbf5920cada7e319cafb493ad9bad056efdb7218301fe5157fe84337427540d6",
+      "contentHash": "74b08053938765b381487bca9ac2f7cb37013c73978728ed913fe685b0e73fed",
       "declarations": [],
       "imports": [
-        "$lib/workspaces/workspace-data-file",
+        "#lib/workspaces/workspace-data-file.ts",
         "./brief-run-registry"
       ],
       "path": "src/lib/briefs/brief-run-storage.ts",
       "semanticBytes": 0,
-      "sourceBytes": 1525
+      "sourceBytes": 1528
     },
     {
       "blocks": [],
-      "contentHash": "0b1c383a5799d983944a0d78befe1352a56a24d1fc9be9744d80a0d36aba76d3",
+      "contentHash": "4becf09e517d5bbdcbc73ea4234b7e77b9ecfca7daf70f092d58217135e9403f",
       "declarations": [],
       "imports": [
-        "$lib/projects/project-repository-task",
-        "$lib/tauri/tauri-invoke",
+        "#lib/projects/project-repository-task.ts",
+        "#lib/tauri/tauri-invoke.ts",
         "./brief-gate",
         "./brief-gate-messages",
         "./brief-registry",
@@ -5140,14 +5140,14 @@
       ],
       "path": "src/lib/briefs/brief-run.test.ts",
       "semanticBytes": 0,
-      "sourceBytes": 12305
+      "sourceBytes": 12311
     },
     {
       "blocks": [],
-      "contentHash": "2b1a77245a28108afccb782f95ae1bffba2834e33dfe17c509ccf45ad134e763",
+      "contentHash": "218374de1c5124a45cf56f862d16c0b637a3c2e9b1bd9b9ea3fcaa724500233d",
       "declarations": [],
       "imports": [
-        "$lib/tauri/tauri-invoke",
+        "#lib/tauri/tauri-invoke.ts",
         "./brief-registry",
         "./brief-storage",
         "node:assert/strict",
@@ -5155,32 +5155,32 @@
       ],
       "path": "src/lib/briefs/brief-storage.test.ts",
       "semanticBytes": 0,
-      "sourceBytes": 2898
+      "sourceBytes": 2901
     },
     {
       "blocks": [],
-      "contentHash": "01dd15b5b4372455263c526c94922a98e6494aa46ccdb6f69b3aa627adaac2ec",
+      "contentHash": "c0033c3216eccd481d87023176fdad0453aae7565a074feabbf06ce857c81d8e",
       "declarations": [],
       "imports": [
-        "$lib/workspaces/workspace-data-file",
+        "#lib/workspaces/workspace-data-file.ts",
         "./brief-registry"
       ],
       "path": "src/lib/briefs/brief-storage.ts",
       "semanticBytes": 0,
-      "sourceBytes": 1580
+      "sourceBytes": 1583
     },
     {
       "blocks": [],
-      "contentHash": "81f063eecdff0e023e2b6d8d316ac79619718a505a9aea845d19affa8e95a76a",
+      "contentHash": "309c9db10ac4c481b025224bc838a8119e16694b6e408b9088804c357a8fdde1",
       "declarations": [],
       "imports": [
-        "$lib/i18n/workduck-language",
-        "$lib/settings/appearance-settings",
-        "$lib/settings/appearance-storage",
-        "$lib/ui/PageTitleRow.svelte",
-        "$lib/ui/StatusToast.svelte",
-        "$lib/workspaces/workspace-registry",
-        "$lib/workspaces/workspace-unlock",
+        "#lib/i18n/workduck-language.ts",
+        "#lib/settings/appearance-settings.ts",
+        "#lib/settings/appearance-storage.ts",
+        "#lib/ui/PageTitleRow.svelte",
+        "#lib/ui/StatusToast.svelte",
+        "#lib/workspaces/workspace-registry.ts",
+        "#lib/workspaces/workspace-unlock.ts",
         "./cli-environment",
         "./cli-environment-variables",
         "./environment-vault",
@@ -5192,7 +5192,7 @@
       ],
       "path": "src/lib/environment/EnvironmentVaultPanel.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 24442
+      "sourceBytes": 24457
     },
     {
       "blocks": [],
@@ -5309,94 +5309,94 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "d34f6c4420e89f16f347f5146e3c2cdff202527f8d82e6baeff67adea562300f",
+      "contentHash": "e576ec3e70bffb69d7fb286c7166cb12819c54cae08398f03057878ba63d2d8c",
       "declarations": [
         null
       ],
       "imports": [
-        "$lib/tauri/tauri-invoke"
+        "#lib/tauri/tauri-invoke.ts"
       ],
       "path": "src/lib/environment/cli-environment.ts",
       "semanticBytes": 494,
-      "sourceBytes": 2655
+      "sourceBytes": 2658
     },
     {
       "blocks": [],
-      "contentHash": "6520a90c24530b0dfa218a7ffa2cdc9413245d6f7cb69603754d8c134fa728cc",
+      "contentHash": "50763e78824df7f557bb93e78cb7e367fb53c49c691e50f603020fc81fdf730b",
       "declarations": [],
       "imports": [
-        "$lib/workspaces/workspace-unlock",
+        "#lib/workspaces/workspace-unlock.ts",
         "./environment-vault",
         "./environment-vault-session",
         "./environment-vault-storage"
       ],
       "path": "src/lib/environment/environment-vault-session-loader.ts",
       "semanticBytes": 0,
-      "sourceBytes": 2117
+      "sourceBytes": 2120
     },
     {
       "blocks": [],
-      "contentHash": "5ab330cea8119eccbabbfd75cfbe4350a6137d96440c59c5136213e4c8f639fe",
+      "contentHash": "b00d884728e24ccbef79ce08d1515bae811e9269c5afdb94acb815abaf940600",
       "declarations": [],
       "imports": [
-        "$lib/tauri/tauri-invoke",
-        "$lib/workspaces/workspace-unlock",
+        "#lib/tauri/tauri-invoke.ts",
+        "#lib/workspaces/workspace-unlock.ts",
         "./environment-vault-session",
         "node:assert/strict",
         "node:test"
       ],
       "path": "src/lib/environment/environment-vault-session.test.ts",
       "semanticBytes": 0,
-      "sourceBytes": 3299
+      "sourceBytes": 3305
     },
     {
       "blocks": [],
-      "contentHash": "71cbd04f3ffebea4fef0f80eba9b2481d2248bd19472cf78cf742de06adede31",
+      "contentHash": "a0bc5191b6fd67d47b958e782115818cd8326fe039ff8203cfe1cd393f49525a",
       "declarations": [],
       "imports": [
-        "$lib/tauri/tauri-invoke",
-        "$lib/workspaces/workspace-unlock",
+        "#lib/tauri/tauri-invoke.ts",
+        "#lib/workspaces/workspace-unlock.ts",
         "./environment-vault",
         "./secret-vault-crypto"
       ],
       "path": "src/lib/environment/environment-vault-session.ts",
       "semanticBytes": 0,
-      "sourceBytes": 9853
+      "sourceBytes": 9859
     },
     {
       "blocks": [],
-      "contentHash": "97ffddd59fc3c79ca4df7470f15c7f6bdc3428f9ca89bbf641fa2bde68832248",
+      "contentHash": "02cec3868ee1a968da817c6b7d558b8b55b9c507491e64fdbfb3c8cff1017353",
       "declarations": [],
       "imports": [
-        "$lib/shared/object-record",
-        "$lib/workspaces/workspace-data-file",
+        "#lib/shared/object-record.ts",
+        "#lib/workspaces/workspace-data-file.ts",
         "./secret-vault-crypto"
       ],
       "path": "src/lib/environment/environment-vault-storage.ts",
       "semanticBytes": 0,
-      "sourceBytes": 8700
+      "sourceBytes": 8706
     },
     {
       "blocks": [],
-      "contentHash": "0aae79eaad956ce81f8732da6b0dd04cfae0b951d385c1e949e344314067f3d6",
+      "contentHash": "eaca4184f170b442379da2c63dca54478b19cc2ef018d9f5d5a0700c3c798764",
       "declarations": [],
       "imports": [
-        "$lib/workspaces/workspace-unlock"
+        "#lib/workspaces/workspace-unlock.ts"
       ],
       "path": "src/lib/environment/environment-vault-unlock.ts",
       "semanticBytes": 0,
-      "sourceBytes": 4341
+      "sourceBytes": 4344
     },
     {
       "blocks": [],
-      "contentHash": "6632372b4bd8330904b783df00bf9c84e4a1d015d93a91ead9ec9a0ead0d2f97",
+      "contentHash": "f40a1152698c74752f2d68e3fa5f45eb1c8bb80532d78eb0fb92ea11b8ceef36",
       "declarations": [],
       "imports": [
-        "$lib/shared/object-record"
+        "#lib/shared/object-record.ts"
       ],
       "path": "src/lib/environment/environment-vault.ts",
       "semanticBytes": 0,
-      "sourceBytes": 11270
+      "sourceBytes": 11273
     },
     {
       "blocks": [],
@@ -5498,28 +5498,28 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "db664f88b84376be87a0558816a574b46bad1d7023835c2f386eee2359f2c269",
+      "contentHash": "cb29553ed91e509c1ecb69e8cfaa95a7b20b1d8b5f4c69040f8703f36203bd27",
       "declarations": [
         null
       ],
       "imports": [
-        "$lib/shared/object-record"
+        "#lib/shared/object-record.ts"
       ],
       "path": "src/lib/environment/secret-vault-crypto.ts",
       "semanticBytes": 498,
-      "sourceBytes": 2441
+      "sourceBytes": 2444
     },
     {
       "blocks": [],
-      "contentHash": "383f24a05956a00d9f286a738e65b039279a6ab4baaa7488eedfb2338e03a072",
+      "contentHash": "f1175589efe009002e19035b12a0d449e0919ae17531244a2b2752944bf4a98a",
       "declarations": [],
       "imports": [
-        "$lib/i18n/workduck-message-contract",
+        "#lib/i18n/workduck-message-contract.ts",
         "./secret-vault-crypto"
       ],
       "path": "src/lib/environment/secret-vault-error-messages.ts",
       "semanticBytes": 0,
-      "sourceBytes": 744
+      "sourceBytes": 747
     },
     {
       "blocks": [],
@@ -6492,26 +6492,26 @@
     },
     {
       "blocks": [],
-      "contentHash": "a8209e7f08bcf8349389a4160a0c36bd68ac06afade3487e88b60e6404a3ec05",
+      "contentHash": "67112d76e433b361df0f95b00f88c01b5809270939a077755cdd310a77090ebe",
       "declarations": [],
       "imports": [
-        "$lib/agents/agent-evaluation",
-        "$lib/agents/agent-registry",
-        "$lib/agents/agent-registry-storage",
-        "$lib/i18n/workduck-language",
-        "$lib/settings/appearance-settings",
-        "$lib/settings/appearance-storage",
-        "$lib/ui",
-        "$lib/ui/style-properties-action",
-        "$lib/workspaces/workspace-registry",
-        "$lib/workspaces/workspace-registry-pair-storage",
+        "#lib/agents/agent-evaluation.ts",
+        "#lib/agents/agent-registry-storage.ts",
+        "#lib/agents/agent-registry.ts",
+        "#lib/i18n/workduck-language.ts",
+        "#lib/settings/appearance-settings.ts",
+        "#lib/settings/appearance-storage.ts",
+        "#lib/ui/index.ts",
+        "#lib/ui/style-properties-action.ts",
+        "#lib/workspaces/workspace-registry-pair-storage.ts",
+        "#lib/workspaces/workspace-registry.ts",
         "./persona-registry",
         "./persona-registry-storage",
         "svelte"
       ],
       "path": "src/lib/personas/PersonasPanel.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 32404
+      "sourceBytes": 32440
     },
     {
       "blocks": [],
@@ -6526,56 +6526,56 @@
     },
     {
       "blocks": [],
-      "contentHash": "ae53289b1aef82762ee91b46aeeddfd9ece341c4220a1ac338d74cdf724c7fca",
+      "contentHash": "ea98b534d9d2a24b0e654784eba8dbc0bd614e84e89de6565197ad82832e0c6b",
       "declarations": [],
       "imports": [
-        "$lib/shared/object-record",
-        "$lib/workspaces/workspace-data-file",
+        "#lib/shared/object-record.ts",
+        "#lib/workspaces/workspace-data-file.ts",
         "./persona-registry"
       ],
       "path": "src/lib/personas/persona-registry-storage.ts",
       "semanticBytes": 0,
-      "sourceBytes": 6728
+      "sourceBytes": 6734
     },
     {
       "blocks": [],
-      "contentHash": "db233fb76e9c7e617689c7e200a3c82e7c33897953dcc7032805a600acdf9e72",
+      "contentHash": "06bda89a18b664143f1d4aa1e587f5bc76f0c62faa74e489cb4e641c942c23cf",
       "declarations": [],
       "imports": [
-        "$lib/agents/agent-evaluation",
-        "$lib/agents/agent-registry",
-        "$lib/shared/object-record"
+        "#lib/agents/agent-evaluation.ts",
+        "#lib/agents/agent-registry.ts",
+        "#lib/shared/object-record.ts"
       ],
       "path": "src/lib/personas/persona-registry.ts",
       "semanticBytes": 0,
-      "sourceBytes": 17599
+      "sourceBytes": 17608
     },
     {
       "blocks": [],
-      "contentHash": "aa32559132e0f378f1e244db9287197d847d50274641bdeb9b9b82811bf83720",
+      "contentHash": "132d2c84a1e4cae1f35e95ba1884c245de5b0706e210e22e0716d10687853900",
       "declarations": [],
       "imports": [
-        "$lib/i18n/workduck-language",
-        "$lib/settings/appearance-settings",
-        "$lib/settings/appearance-storage",
-        "$lib/ui",
+        "#lib/i18n/workduck-language.ts",
+        "#lib/settings/appearance-settings.ts",
+        "#lib/settings/appearance-storage.ts",
+        "#lib/ui/index.ts",
         "./developer-processes",
         "svelte"
       ],
       "path": "src/lib/processes/ProcessesPanel.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 7744
+      "sourceBytes": 7762
     },
     {
       "blocks": [],
-      "contentHash": "b165a24f37cab4ba916152f93bcd0cfa779e9a76403f2cc93c90d8b50f57c318",
+      "contentHash": "bb1a20dc741a1eab8a20fecb7b3d049470a1639ff3bf08a039051a3f4041e086",
       "declarations": [],
       "imports": [
-        "$lib/tauri/tauri-invoke"
+        "#lib/tauri/tauri-invoke.ts"
       ],
       "path": "src/lib/processes/developer-processes.ts",
       "semanticBytes": 0,
-      "sourceBytes": 3027
+      "sourceBytes": 3030
     },
     {
       "blocks": [],
@@ -6593,12 +6593,12 @@
     },
     {
       "blocks": [],
-      "contentHash": "2f3a08a46c770ff8c0a346540c7d3b1cab43de263ba120096966120abd3af5fe",
+      "contentHash": "88244643476dfe7c6afa97feeb62370c4189de941a05d0865798a67262a75a1b",
       "declarations": [],
       "imports": [
-        "$lib/i18n/workduck-language",
-        "$lib/i18n/workduck-message-contract",
-        "$lib/ui/PageTitleRow.svelte",
+        "#lib/i18n/workduck-language.ts",
+        "#lib/i18n/workduck-message-contract.ts",
+        "#lib/ui/PageTitleRow.svelte",
         "./ProjectNodeCard.svelte",
         "./ProjectRepositoryCard.svelte",
         "./project-board-operations",
@@ -6608,16 +6608,16 @@
       ],
       "path": "src/lib/projects/ProjectBoardLanesBase.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 13727
+      "sourceBytes": 13733
     },
     {
       "blocks": [],
-      "contentHash": "d139bb418d336c56b4830689fa4cbde6273a5c22388b965fd4f6d5d49b3e1c83",
+      "contentHash": "99283131ffbbca19ee5257cacf508d322beca253af6b88812920f5d3433896ac",
       "declarations": [],
       "imports": [
-        "$lib/environment/environment-vault",
-        "$lib/environment/secret-vault-crypto",
-        "$lib/i18n/workduck-message-contract",
+        "#lib/environment/environment-vault.ts",
+        "#lib/environment/secret-vault-crypto.ts",
+        "#lib/i18n/workduck-message-contract.ts",
         "./ProjectContextMenu.svelte",
         "./ProjectDeleteDialog.svelte",
         "./ProjectDescriptionDialog.svelte",
@@ -6639,14 +6639,14 @@
       ],
       "path": "src/lib/projects/ProjectBoardOverlays.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 17336
+      "sourceBytes": 17345
     },
     {
       "blocks": [],
-      "contentHash": "f74fd77a5a6358bf91069b876d2ae34d7dc666204d7af257e7ceb9cca5d6191a",
+      "contentHash": "8512c560916584073f3a02ebb5510d7e1a5eecd9c504e26029fb94c91cef4538",
       "declarations": [],
       "imports": [
-        "$lib/workspaces/workspace-registry",
+        "#lib/workspaces/workspace-registry.ts",
         "./project-board-operations",
         "./project-board-runtime-state",
         "./project-board-selectors",
@@ -6656,35 +6656,35 @@
       ],
       "path": "src/lib/projects/ProjectBoardRepositoryLifecycle.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 5676
+      "sourceBytes": 5679
     },
     {
       "blocks": [],
-      "contentHash": "bdb59c66e6ac0b7ba625233831793c24e0b21ae561ee22e0e7d49fa627122548",
+      "contentHash": "4f98b143cf55c5da4769e5eadd4ff67090c59941658e096d305b62eef4fcf2cc",
       "declarations": [],
       "imports": [
-        "$lib/workspaces/workspace-registry",
+        "#lib/workspaces/workspace-registry.ts",
         "./project-registry",
         "./project-repository-task",
         "./project-repository-task-runs"
       ],
       "path": "src/lib/projects/ProjectBoardRepositoryTaskRunLifecycle.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 5085
+      "sourceBytes": 5088
     },
     {
       "blocks": [],
-      "contentHash": "39e4095adacb8ebea0f34d5cc19d72e91356669c92a6c65ea992ccf38f49ec2d",
+      "contentHash": "27408dbac3563db87e5323488aef778f97bf8d6755e8476c77cd155bddaaa2d5",
       "declarations": [],
       "imports": [
-        "$lib/environment/environment-vault",
-        "$lib/environment/secret-vault-crypto",
-        "$lib/i18n/workduck-language",
-        "$lib/i18n/workduck-message-contract",
-        "$lib/queue/queue-folder",
-        "$lib/queue/queue-panel-errors",
-        "$lib/ui/StatusToast.svelte",
-        "$lib/workspaces/workspace-registry",
+        "#lib/environment/environment-vault.ts",
+        "#lib/environment/secret-vault-crypto.ts",
+        "#lib/i18n/workduck-language.ts",
+        "#lib/i18n/workduck-message-contract.ts",
+        "#lib/queue/queue-folder.ts",
+        "#lib/queue/queue-panel-errors.ts",
+        "#lib/ui/StatusToast.svelte",
+        "#lib/workspaces/workspace-registry.ts",
         "./ProjectBoardLanes.svelte",
         "./ProjectBoardOverlays.svelte",
         "./ProjectBoardRepositoryLifecycle.svelte",
@@ -6723,19 +6723,19 @@
       ],
       "path": "src/lib/projects/ProjectBoardSurface.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 54013
+      "sourceBytes": 54034
     },
     {
       "blocks": [],
-      "contentHash": "205fb464522a0d0e50eac3fddab3812b05751e36f90fd2a2f5ec2e02b33e65e5",
+      "contentHash": "70480f5295487a0ba7f6555939c4d89a019ea9bc20c30ed866cc96d7a630ab4f",
       "declarations": [],
       "imports": [
-        "$lib/environment/environment-vault",
-        "$lib/environment/environment-vault-session",
-        "$lib/environment/environment-vault-session-loader",
-        "$lib/environment/environment-vault-storage",
-        "$lib/environment/secret-vault-crypto",
-        "$lib/workspaces/workspace-registry",
+        "#lib/environment/environment-vault-session-loader.ts",
+        "#lib/environment/environment-vault-session.ts",
+        "#lib/environment/environment-vault-storage.ts",
+        "#lib/environment/environment-vault.ts",
+        "#lib/environment/secret-vault-crypto.ts",
+        "#lib/workspaces/workspace-registry.ts",
         "./project-board-operations",
         "./project-board-storage-actions",
         "./project-folder",
@@ -6745,21 +6745,21 @@
       ],
       "path": "src/lib/projects/ProjectBoardWorkspaceLifecycle.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 4536
+      "sourceBytes": 4554
     },
     {
       "blocks": [],
-      "contentHash": "496ac27ea2697f1e7067b6df4b852433e173f1431709aaf39e946ef075529473",
+      "contentHash": "9c59a3e50d0b7a5eb4bc73dfca5c2e4c4f8c4664930b3dbbe091401a4455ed7f",
       "declarations": [],
       "imports": [
-        "$lib/i18n/workduck-message-contract",
-        "$lib/ui/style-properties-action",
+        "#lib/i18n/workduck-message-contract.ts",
+        "#lib/ui/style-properties-action.ts",
         "./project-board-types",
         "./project-repository-task"
       ],
       "path": "src/lib/projects/ProjectContextMenu.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 7112
+      "sourceBytes": 7118
     },
     {
       "blocks": [],
@@ -6776,38 +6776,38 @@
     },
     {
       "blocks": [],
-      "contentHash": "e53af03d7d9be76e1d544e6182698088bb0227f6c71a8c3351b4469dea459d55",
+      "contentHash": "8d21653bab50b73370b2ce9fbc068b131b8888e973ef6d43be1460f7acf01690",
       "declarations": [],
       "imports": [
-        "$lib/i18n/workduck-message-contract",
-        "$lib/ui/modal-dialog-action",
+        "#lib/i18n/workduck-message-contract.ts",
+        "#lib/ui/modal-dialog-action.ts",
         "./project-board-errors"
       ],
       "path": "src/lib/projects/ProjectDeleteDialog.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 2957
+      "sourceBytes": 2963
     },
     {
       "blocks": [],
-      "contentHash": "70ee05295d42567e01320d7f8dc8a4af0b82d1d96e3891f229b126b94ecbf195",
+      "contentHash": "40d5326547d271ef6f0d0eeba20f1283c2729577a72a1a4012f4fd9731650393",
       "declarations": [],
       "imports": [
-        "$lib/ui/modal-dialog-action",
+        "#lib/ui/modal-dialog-action.ts",
         "./project-board-errors",
         "./project-registry",
         "./project-storage"
       ],
       "path": "src/lib/projects/ProjectDescriptionDialog.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 2779
+      "sourceBytes": 2782
     },
     {
       "blocks": [],
-      "contentHash": "41d47adb050072f9fb3c50517c7af9b2d71849f6a399fefb1c0d7b5491eb1c25",
+      "contentHash": "10216832c3f386cfe3ce2bd5a388e5658d689223abae59e5c96bafd058f713ba",
       "declarations": [],
       "imports": [
-        "$lib/environment/environment-vault",
-        "$lib/environment/secret-vault-crypto",
+        "#lib/environment/environment-vault.ts",
+        "#lib/environment/secret-vault-crypto.ts",
         "./project-board-errors",
         "./project-board-github-credentials",
         "./project-board-types",
@@ -6815,7 +6815,7 @@
       ],
       "path": "src/lib/projects/ProjectGithubCredentialDialog.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 5075
+      "sourceBytes": 5081
     },
     {
       "blocks": [],
@@ -6830,26 +6830,26 @@
     },
     {
       "blocks": [],
-      "contentHash": "8c7ff776285b67745bcb99b9abbf1626fdda9e1ef197ced4603ba2e5b4b37ac8",
+      "contentHash": "7a4a0b5beae8088c86180c4ed5b52deadbe83e70c310f4ad0ff8249903747b6d",
       "declarations": [],
       "imports": [
-        "$lib/i18n/workduck-message-contract",
-        "$lib/ui/modal-dialog-action",
+        "#lib/i18n/workduck-message-contract.ts",
+        "#lib/ui/modal-dialog-action.ts",
         "./project-board-errors",
         "./project-registry",
         "./project-storage"
       ],
       "path": "src/lib/projects/ProjectNodeDetailsDialog.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 3648
+      "sourceBytes": 3654
     },
     {
       "blocks": [],
-      "contentHash": "68044888a73b1446ce59a6933300abe87e96319bce8fb45a72e87163eec0a948",
+      "contentHash": "e1a43317bd198a8766755c094d0db218d865e344dbbc947b6b6430484ff3d4ce",
       "declarations": [],
       "imports": [
-        "$lib/i18n/workduck-message-contract",
-        "$lib/ui/modal-dialog-action",
+        "#lib/i18n/workduck-message-contract.ts",
+        "#lib/ui/modal-dialog-action.ts",
         "./project-board-errors",
         "./project-board-github-credentials",
         "./project-board-types",
@@ -6860,7 +6860,7 @@
       ],
       "path": "src/lib/projects/ProjectNodeDialog.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 12634
+      "sourceBytes": 12640
     },
     {
       "blocks": [],
@@ -6891,13 +6891,13 @@
     },
     {
       "blocks": [],
-      "contentHash": "7b99d5fd995fa2cc97ad29d2ff6c911ceef11f43244d8825ed809ddb4f769846",
+      "contentHash": "247d21522f38ecd29a4ac21cd2e7a5b820286c12259e492ceb55602a4edf2531",
       "declarations": [],
       "imports": [
-        "$lib/i18n/workduck-language",
-        "$lib/i18n/workduck-message-contract",
-        "$lib/workspaces/workspace-registry",
-        "$lib/workspaces/workspace-storage",
+        "#lib/i18n/workduck-language.ts",
+        "#lib/i18n/workduck-message-contract.ts",
+        "#lib/workspaces/workspace-registry.ts",
+        "#lib/workspaces/workspace-storage.ts",
         "./project-board-operations",
         "./project-registry",
         "./project-repository-batch",
@@ -6907,15 +6907,15 @@
       ],
       "path": "src/lib/projects/ProjectRepositoryBatchActionCenter.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 13531
+      "sourceBytes": 13543
     },
     {
       "blocks": [],
-      "contentHash": "33072ace55d1f33e363708d031c05129cb8b58d2139cbd8b04386865748e21fc",
+      "contentHash": "dad5a6a3e9c421c1ad68313d2fec5eea0200a887d7a2564d9142d118eada620f",
       "declarations": [],
       "imports": [
-        "$lib/i18n/workduck-language",
-        "$lib/i18n/workduck-message-contract",
+        "#lib/i18n/workduck-language.ts",
+        "#lib/i18n/workduck-message-contract.ts",
         "./project-board-errors",
         "./project-board-operations",
         "./project-board-selectors",
@@ -6925,15 +6925,15 @@
       ],
       "path": "src/lib/projects/ProjectRepositoryCard.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 10630
+      "sourceBytes": 10636
     },
     {
       "blocks": [],
-      "contentHash": "60cc9c10909aa0d69d24a0444f113203d1e5585a03030753a0119647d2e98d97",
+      "contentHash": "e7516fb68fc311043c066e688a399a2b517f49a4ddcb0032260b79377ac5b09e",
       "declarations": [],
       "imports": [
-        "$lib/i18n/workduck-message-contract",
-        "$lib/ui/modal-dialog-action",
+        "#lib/i18n/workduck-message-contract.ts",
+        "#lib/ui/modal-dialog-action.ts",
         "./project-board-errors",
         "./project-board-types",
         "./project-folder",
@@ -6942,7 +6942,7 @@
       ],
       "path": "src/lib/projects/ProjectSsealedScaffoldDialog.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 8416
+      "sourceBytes": 8422
     },
     {
       "blocks": [],
@@ -6959,18 +6959,18 @@
     },
     {
       "blocks": [],
-      "contentHash": "992a4c692e63b65b2f7ee0f1d4f2f29b886e415265a3c3fd54dbe22c0d3c474b",
+      "contentHash": "8d570b48530e87978cf022a7d61bdd5927017435d0916e54342b2ef9858fc678",
       "declarations": [],
       "imports": [
-        "$lib/i18n/workduck-language",
-        "$lib/i18n/workduck-message-contract",
-        "$lib/workspaces/workspace-registry",
+        "#lib/i18n/workduck-language.ts",
+        "#lib/i18n/workduck-message-contract.ts",
+        "#lib/workspaces/workspace-registry.ts",
         "./ProjectBoardSurface.svelte",
         "./project-board.css"
       ],
       "path": "src/lib/projects/ProjectsBoard.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 691
+      "sourceBytes": 700
     },
     {
       "blocks": [],
@@ -6998,10 +6998,10 @@
     },
     {
       "blocks": [],
-      "contentHash": "399ee3667daddedbf0fa5be54bbed713917dc161f8221680e793a647d0fe3acc",
+      "contentHash": "296cbe5169cbdf2330ff81f37a087dd58a5da530355fd96196e4bf3cdc78e2ee",
       "declarations": [],
       "imports": [
-        "$lib/i18n/workduck-message-contract",
+        "#lib/i18n/workduck-message-contract.ts",
         "./project-board-context-actions",
         "./project-board-context-menu-position",
         "./project-board-errors",
@@ -7013,7 +7013,7 @@
       ],
       "path": "src/lib/projects/project-board-context-menu-handlers.ts",
       "semanticBytes": 0,
-      "sourceBytes": 8477
+      "sourceBytes": 8480
     },
     {
       "blocks": [],
@@ -7028,10 +7028,10 @@
     },
     {
       "blocks": [],
-      "contentHash": "2e50e3a052c0979e75bfedaf369af5ea436d1de163643ce857c5b388f7e532ec",
+      "contentHash": "aa0efdb7e82164b72bffc9a69c1b00d005332a9d710c12c0dd0c91004d8bca82",
       "declarations": [],
       "imports": [
-        "$lib/i18n/workduck-message-contract",
+        "#lib/i18n/workduck-message-contract.ts",
         "./project-board-dialog-rules",
         "./project-board-errors",
         "./project-board-types",
@@ -7040,14 +7040,14 @@
       ],
       "path": "src/lib/projects/project-board-delete-actions.ts",
       "semanticBytes": 0,
-      "sourceBytes": 3034
+      "sourceBytes": 3037
     },
     {
       "blocks": [],
-      "contentHash": "617ec1c0dba4327b7f87552f1a72cc2b993449ce23b60a7c99dbbc5099e9cfa1",
+      "contentHash": "efe4f223b1a85db7ab11b9a9e66391cf5d885a1f905bd722af5b7afe1c56e360",
       "declarations": [],
       "imports": [
-        "$lib/i18n/workduck-message-contract",
+        "#lib/i18n/workduck-message-contract.ts",
         "./project-board-delete-actions",
         "./project-board-errors",
         "./project-board-paths",
@@ -7058,20 +7058,20 @@
       ],
       "path": "src/lib/projects/project-board-dialog-handlers.ts",
       "semanticBytes": 0,
-      "sourceBytes": 8938
+      "sourceBytes": 8941
     },
     {
       "blocks": [],
-      "contentHash": "ff2467adb2f8bfc6cd59aece57cc495acdb313f67aa2d68520525f265c218f3f",
+      "contentHash": "107b69bd77fd3bc1d4959d0ae7c78d5f831ddc130e7ffb3e65d644f359b3ccff",
       "declarations": [],
       "imports": [
-        "$lib/i18n/workduck-message-contract",
+        "#lib/i18n/workduck-message-contract.ts",
         "./project-board-errors",
         "./project-board-types"
       ],
       "path": "src/lib/projects/project-board-dialog-rules.ts",
       "semanticBytes": 0,
-      "sourceBytes": 4446
+      "sourceBytes": 4449
     },
     {
       "blocks": [],
@@ -7089,12 +7089,12 @@
     },
     {
       "blocks": [],
-      "contentHash": "02b520218bb2dc3d1f611f3d1175967ee23cd8d84097bc3ac55d438508e66035",
+      "contentHash": "55356ef8cbd6c11940445453b616076ee039ac3035e6db4a7d772fa0a1c1a18c",
       "declarations": [],
       "imports": [
-        "$lib/environment/environment-vault",
-        "$lib/environment/secret-vault-crypto",
-        "$lib/i18n/workduck-message-contract",
+        "#lib/environment/environment-vault.ts",
+        "#lib/environment/secret-vault-crypto.ts",
+        "#lib/i18n/workduck-message-contract.ts",
         "./project-board-editor-actions",
         "./project-board-errors",
         "./project-board-github-credential-actions",
@@ -7104,15 +7104,15 @@
       ],
       "path": "src/lib/projects/project-board-editor-handlers.ts",
       "semanticBytes": 0,
-      "sourceBytes": 12032
+      "sourceBytes": 12041
     },
     {
       "blocks": [],
-      "contentHash": "850e91beed5883f23fb560fa5584f9a30f8fa796ae6f703dc70846ae261ce469",
+      "contentHash": "c65e43d772c6249de0349a1e3341adcb71016c66bd470125ade80c9f14a379bc",
       "declarations": [],
       "imports": [
-        "$lib/i18n/locales/en",
-        "$lib/i18n/workduck-message-contract",
+        "#lib/i18n/locales/en.ts",
+        "#lib/i18n/workduck-message-contract.ts",
         "./project-folder",
         "./project-operation-storage",
         "./project-registry",
@@ -7122,38 +7122,38 @@
       ],
       "path": "src/lib/projects/project-board-errors.ts",
       "semanticBytes": 0,
-      "sourceBytes": 1343
+      "sourceBytes": 1349
     },
     {
       "blocks": [],
-      "contentHash": "c55c6c6e5b3a2a073b312228a4cd1c59be082214e403090ebdbc62799f59830c",
+      "contentHash": "27ebc3be26bd054aa4a5c41ca8ec1f5aad62f753d6aaf84ea52b32e93432e606",
       "declarations": [],
       "imports": [
-        "$lib/environment/environment-vault",
-        "$lib/environment/environment-vault-session",
-        "$lib/environment/secret-vault-crypto",
-        "$lib/i18n/workduck-message-contract",
+        "#lib/environment/environment-vault-session.ts",
+        "#lib/environment/environment-vault.ts",
+        "#lib/environment/secret-vault-crypto.ts",
+        "#lib/i18n/workduck-message-contract.ts",
         "./project-board-errors",
         "./project-board-types",
         "./project-registry"
       ],
       "path": "src/lib/projects/project-board-github-credential-actions.ts",
       "semanticBytes": 0,
-      "sourceBytes": 4280
+      "sourceBytes": 4292
     },
     {
       "blocks": [],
-      "contentHash": "cd81f7b6986c9702dda669f69ffd406799db4ac14b574acf9669c5fbcf31ed6b",
+      "contentHash": "37b6918627f13a6bfeb0b987b30765f2a700e7872d3aa033a038ad1e9be1f48e",
       "declarations": [],
       "imports": [
-        "$lib/environment/environment-vault",
+        "#lib/environment/environment-vault.ts",
         "./project-board-errors",
         "./project-registry",
         "./project-repository"
       ],
       "path": "src/lib/projects/project-board-github-credentials.ts",
       "semanticBytes": 0,
-      "sourceBytes": 5112
+      "sourceBytes": 5115
     },
     {
       "blocks": [],
@@ -7170,31 +7170,31 @@
     },
     {
       "blocks": [],
-      "contentHash": "80c9030d63e855d8faf0d352c7f2645db6754fb67c860e661f16b106789333d8",
+      "contentHash": "caddf9a9e3aab2bf6cf88c0b32486e6da3b90838b31843a0e4d84b5c0af07136",
       "declarations": [],
       "imports": [
-        "$lib/i18n/workduck-language",
-        "$lib/i18n/workduck-message-contract",
+        "#lib/i18n/workduck-language.ts",
+        "#lib/i18n/workduck-message-contract.ts",
         "./project-board-errors",
         "./project-operation-storage",
         "./project-repository"
       ],
       "path": "src/lib/projects/project-board-operations.ts",
       "semanticBytes": 0,
-      "sourceBytes": 5964
+      "sourceBytes": 5970
     },
     {
       "blocks": [],
-      "contentHash": "2b54ed0b01fc800404a01ba41eebf6721207c22b60a3a4db15851a6685a1fee3",
+      "contentHash": "300dc3a04182a45e8154d9a5a3c463f5493a2d02e88a0a2bc4554114f1db7985",
       "declarations": [],
       "imports": [
-        "$lib/workspaces/workspace-path-format",
+        "#lib/workspaces/workspace-path-format.ts",
         "./project-folder-name",
         "./project-registry"
       ],
       "path": "src/lib/projects/project-board-paths.ts",
       "semanticBytes": 0,
-      "sourceBytes": 2793
+      "sourceBytes": 2796
     },
     {
       "blocks": [],
@@ -7240,10 +7240,10 @@
     },
     {
       "blocks": [],
-      "contentHash": "b9c50ed4bece09d9216c63c5d32395ee6bd3ce4d382deaec9d8cfb5bd958675e",
+      "contentHash": "0c5afb5bada5ee08aee62245666272e87f441e252dd8899f8dfc2862a02e5459",
       "declarations": [],
       "imports": [
-        "$lib/workspaces/workspace-path-format",
+        "#lib/workspaces/workspace-path-format.ts",
         "./project-board-errors",
         "./project-board-operations",
         "./project-board-types",
@@ -7253,22 +7253,22 @@
       ],
       "path": "src/lib/projects/project-board-repository-actions.ts",
       "semanticBytes": 0,
-      "sourceBytes": 11242
+      "sourceBytes": 11245
     },
     {
       "blocks": [],
-      "contentHash": "094453abda1bb6e91dac7a9b4d5d11b98e528aa9f6c15dd6c6c82951518977f3",
+      "contentHash": "fbb5e539a0e01fb0f5e93ea99e31779e71a5a6f722634108283e85ab7a05bb9a",
       "declarations": [],
       "imports": [
-        "$lib/i18n/workduck-language",
-        "$lib/queue/queue-folder",
-        "$lib/queue/repository-commit-work-order",
+        "#lib/i18n/workduck-language.ts",
+        "#lib/queue/queue-folder.ts",
+        "#lib/queue/repository-commit-work-order.ts",
         "./project-board-selectors",
         "./project-registry"
       ],
       "path": "src/lib/projects/project-board-repository-commit-work-order.ts",
       "semanticBytes": 0,
-      "sourceBytes": 2942
+      "sourceBytes": 2951
     },
     {
       "blocks": [],
@@ -7285,17 +7285,17 @@
     },
     {
       "blocks": [],
-      "contentHash": "97259cd46a71f5e69527d3e013df6848f08e9e070d2e2e4f5e280bc3405d2b50",
+      "contentHash": "0be6bea4c45f05bc5fe647de2b1296c58cc2189821673d313d838a2c7493c883",
       "declarations": [],
       "imports": [
-        "$lib/i18n/workduck-message-contract",
+        "#lib/i18n/workduck-message-contract.ts",
         "./project-board-errors",
         "./project-board-types",
         "./project-repository-task"
       ],
       "path": "src/lib/projects/project-board-repository-task-actions.ts",
       "semanticBytes": 0,
-      "sourceBytes": 2268
+      "sourceBytes": 2271
     },
     {
       "blocks": [],
@@ -7463,10 +7463,10 @@
     },
     {
       "blocks": [],
-      "contentHash": "d80defc1e8c8ee26929e6486117290ed6ad8f169e7dca64af278902dfaa5ccbb",
+      "contentHash": "26b02a2fd4c5826cb98a4c6296852c202c5ac5f0bf2559cb3e7f8903907c1d44",
       "declarations": [],
       "imports": [
-        "$lib/environment/environment-vault",
+        "#lib/environment/environment-vault.ts",
         "./project-board-errors",
         "./project-board-github-credentials",
         "./project-board-selectors",
@@ -7477,7 +7477,7 @@
       ],
       "path": "src/lib/projects/project-board-surface-helpers.ts",
       "semanticBytes": 0,
-      "sourceBytes": 5275
+      "sourceBytes": 5278
     },
     {
       "blocks": [],
@@ -7611,30 +7611,30 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "981d53da11e452ef9e27511d4dc3bffa568b9c2f840fc6eb2598bf2d6b139d63",
+      "contentHash": "95cfa57471a0109a2e6a2a958ee1cf26c40616cf03bd1cd000a5837a05ddafed",
       "declarations": [
         null
       ],
       "imports": [
-        "$lib/i18n/workduck-message-contract",
-        "$lib/tauri/tauri-invoke",
-        "$lib/workspaces/workspace-path-format",
+        "#lib/i18n/workduck-message-contract.ts",
+        "#lib/tauri/tauri-invoke.ts",
+        "#lib/workspaces/workspace-path-format.ts",
         "./ssealed-scaffold-generated"
       ],
       "path": "src/lib/projects/project-folder.ts",
       "semanticBytes": 528,
-      "sourceBytes": 21024
+      "sourceBytes": 21033
     },
     {
       "blocks": [],
-      "contentHash": "f9cd84783b9a897ccba244b879f6ff09680a440bc7b1b24f7221763e33419c72",
+      "contentHash": "e5532b6e0f220a0e8971183e03a81281df451c8e90ab9dd63e3003a7a9a13330",
       "declarations": [],
       "imports": [
-        "$lib/tauri/tauri-invoke"
+        "#lib/tauri/tauri-invoke.ts"
       ],
       "path": "src/lib/projects/project-import-attempt-storage.ts",
       "semanticBytes": 0,
-      "sourceBytes": 6714
+      "sourceBytes": 6717
     },
     {
       "blocks": [
@@ -7725,16 +7725,16 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "436ed63307bcb151a990ba1f0aea0170e869b94f74333ed6911f6916d31d42b8",
+      "contentHash": "a339275058b326a7d87ebeb7dc05dacdfa95966a87362cc4619dd6ba7940aea1",
       "declarations": [
         null
       ],
       "imports": [
-        "$lib/tauri/tauri-invoke"
+        "#lib/tauri/tauri-invoke.ts"
       ],
       "path": "src/lib/projects/project-operation-storage.ts",
       "semanticBytes": 578,
-      "sourceBytes": 6796
+      "sourceBytes": 6799
     },
     {
       "blocks": [],
@@ -7779,7 +7779,7 @@
             "stability": "contract",
             "unknown": []
           },
-          "end": 788,
+          "end": 794,
           "endLine": 13,
           "entries": [
             {
@@ -7832,38 +7832,38 @@
           "raw": "/* llmnav/1 module\nid=workduck.projects.registry-domain\nrole=Define and enforce versioned project, group, and repository registry normalization, hierarchy, and immutable mutations.\nowns=project registry domain|project hierarchy validation|repository link mutations\nexcludes=registry storage transport|Git repository operations\nsearch=project registry model|validate project hierarchy|mutate repository links\ninvariant=Every successful parse or mutation passes through the same normalization rules before returning a versioned registry.\nstability=contract\n*/",
           "scope": "module",
           "specVersion": "1",
-          "start": 231,
+          "start": 237,
           "startLine": 5,
           "style": "block",
           "syntaxErrors": []
         }
       ],
-      "contentHash": "2209cec26e612c58242f6e62875cf5a83a5f2465ba19970053076dcffe2d38a5",
+      "contentHash": "5512d68924e5a96ede43179cc3847d1f6d8a821d84489132937d003cb322f08d",
       "declarations": [
         null
       ],
       "imports": [
-        "$lib/shared/object-record",
-        "$lib/workspaces/workspace-path-format",
+        "#lib/shared/object-record.ts",
+        "#lib/workspaces/workspace-path-format.ts",
         "./project-folder-name"
       ],
       "path": "src/lib/projects/project-registry.ts",
       "semanticBytes": 557,
-      "sourceBytes": 45186
+      "sourceBytes": 45192
     },
     {
       "blocks": [],
-      "contentHash": "6c7e97959cd192d509017eeb1e3ff688079dfa34532dee8dbd8cc4cefca57f2b",
+      "contentHash": "3fcf37f5204ef91e405a7e561adf821b8867fa93770e9ac8cba416af8c185285",
       "declarations": [],
       "imports": [
-        "$lib/i18n/workduck-language",
-        "$lib/i18n/workduck-message-contract",
+        "#lib/i18n/workduck-language.ts",
+        "#lib/i18n/workduck-message-contract.ts",
         "./project-board-errors",
         "./project-repository-batch"
       ],
       "path": "src/lib/projects/project-repository-batch-messages.ts",
       "semanticBytes": 0,
-      "sourceBytes": 9781
+      "sourceBytes": 9787
     },
     {
       "blocks": [],
@@ -7928,18 +7928,18 @@
     },
     {
       "blocks": [],
-      "contentHash": "25dd0a7f52bb966895edec5a51393c478f416713d2b5d0ef65aba203823db9b2",
+      "contentHash": "c815b5bf6a9243b10c636113444360a5ab00b2e77c7ba45ecc8186058740c6d6",
       "declarations": [],
       "imports": [
-        "$lib/i18n/workduck-language",
-        "$lib/i18n/workduck-message-contract",
-        "$lib/workspaces/workspace-path-format",
+        "#lib/i18n/workduck-language.ts",
+        "#lib/i18n/workduck-message-contract.ts",
+        "#lib/workspaces/workspace-path-format.ts",
         "./project-registry",
         "./project-repository-task"
       ],
       "path": "src/lib/projects/project-repository-task-runs.ts",
       "semanticBytes": 0,
-      "sourceBytes": 3164
+      "sourceBytes": 3173
     },
     {
       "blocks": [
@@ -8030,17 +8030,17 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "71af939d6589c1895d6d74ece7bb8d66c73573aa1060ba478af1fc42f81e4949",
+      "contentHash": "591bb1b82e32a5c241ba50a8000d12ef90dd28f18573c8f24f2c6a1cc13e112f",
       "declarations": [
         null
       ],
       "imports": [
-        "$lib/tauri/tauri-invoke",
-        "$lib/workspaces/workspace-path-format"
+        "#lib/tauri/tauri-invoke.ts",
+        "#lib/workspaces/workspace-path-format.ts"
       ],
       "path": "src/lib/projects/project-repository-task.ts",
       "semanticBytes": 487,
-      "sourceBytes": 11340
+      "sourceBytes": 11346
     },
     {
       "blocks": [
@@ -8131,19 +8131,19 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "31cf1ed39576adc9b6039d7e47f81a892b358dd82795274a8c7349a16d1463c9",
+      "contentHash": "eebf18484afe3a92fee1adbe0c4f151a25c130a57a5407cea61c0940d803ee1f",
       "declarations": [
         null
       ],
       "imports": [
-        "$lib/shared/object-record",
-        "$lib/tauri/tauri-invoke",
-        "$lib/workspaces/workspace-path-format",
+        "#lib/shared/object-record.ts",
+        "#lib/tauri/tauri-invoke.ts",
+        "#lib/workspaces/workspace-path-format.ts",
         "@tauri-apps/api/core"
       ],
       "path": "src/lib/projects/project-repository.ts",
       "semanticBytes": 535,
-      "sourceBytes": 35829
+      "sourceBytes": 35838
     },
     {
       "blocks": [
@@ -8234,80 +8234,80 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "989104fff04409d0f323d6bc088eea23df893b3dc7fccaf2e13a568ac0eba6ad",
+      "contentHash": "0786108d362ae07b1a3d1e6a33289a56e56f41ffa44aa00388d08a27495a3f1e",
       "declarations": [
         null
       ],
       "imports": [
-        "$lib/shared/object-record",
-        "$lib/tauri/tauri-invoke",
+        "#lib/shared/object-record.ts",
+        "#lib/tauri/tauri-invoke.ts",
         "./project-registry"
       ],
       "path": "src/lib/projects/project-storage.ts",
       "semanticBytes": 549,
-      "sourceBytes": 19126
+      "sourceBytes": 19132
     },
     {
       "blocks": [],
-      "contentHash": "84b6ced4d0ab712c841293328573e9dbc6653241c512eb16353860bf28e0c708",
+      "contentHash": "a215ed016f67a9097e12b1bff64e9cea6bc8dfbc645f9915f6a08dc43f841ea5",
       "declarations": [],
       "imports": [
-        "$lib/i18n/workduck-message-contract",
-        "$lib/ui/style-properties-action",
+        "#lib/i18n/workduck-message-contract.ts",
+        "#lib/ui/style-properties-action.ts",
         "./queue-panel-types"
       ],
       "path": "src/lib/queue/QueueContextMenu.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 1013
+      "sourceBytes": 1019
     },
     {
       "blocks": [],
-      "contentHash": "39bf7ef27b623ab8e7ef114b0894a5d0cf592057f48cb67b93793945b0ac6284",
+      "contentHash": "6a3c56fd0e2130e1ff3f882fed4a36237df6af99a3e7770b30cc0a2e4b7a4972",
       "declarations": [],
       "imports": [
-        "$lib/agents/agent-evaluation",
-        "$lib/i18n/workduck-message-contract",
-        "$lib/ui/modal-dialog-action",
+        "#lib/agents/agent-evaluation.ts",
+        "#lib/i18n/workduck-message-contract.ts",
+        "#lib/ui/modal-dialog-action.ts",
         "./queue-panel-types"
       ],
       "path": "src/lib/queue/QueueEvaluationDialog.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 3427
+      "sourceBytes": 3436
     },
     {
       "blocks": [],
-      "contentHash": "d0c001e07f97be126db1ec92828355df1101ffab91609f3183cc6c2ba949d0d6",
+      "contentHash": "6438408da2a92d6589ae9419461a0ecb9ca5f764a4fa5681d6e9dee8d40b1e70",
       "declarations": [],
       "imports": [
-        "$lib/i18n/workduck-message-contract",
+        "#lib/i18n/workduck-message-contract.ts",
         "./queue-artifacts",
         "./queue-panel-types"
       ],
       "path": "src/lib/queue/QueueFileList.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 2616
+      "sourceBytes": 2619
     },
     {
       "blocks": [],
-      "contentHash": "31c2dbfd61322c1d28d0c30645e8f646f62597bb510c1b6fb7baf8d2d88521e1",
+      "contentHash": "f5bf266943953291f26b08c7f3a2fcf13224e634526471c84b7004e8a337d458",
       "declarations": [],
       "imports": [
-        "$lib/workspaces/workspace-registry",
+        "#lib/workspaces/workspace-registry.ts",
         "./QueuePanelView.svelte",
         "./queue-panel-controller.svelte",
         "./queue-panel.css"
       ],
       "path": "src/lib/queue/QueuePanel.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 672
+      "sourceBytes": 675
     },
     {
       "blocks": [],
-      "contentHash": "b57365fae392833b47f51604ca95ab0d42df212944025c92fe862c4eae17df98",
+      "contentHash": "9bd2886bfdb1dadb22f01f773747cf233822142c41f46523bba07abf0411bb7f",
       "declarations": [],
       "imports": [
-        "$lib/ui/PageTitleRow.svelte",
-        "$lib/ui/StatusToast.svelte",
+        "#lib/ui/PageTitleRow.svelte",
+        "#lib/ui/StatusToast.svelte",
         "./QueueContextMenu.svelte",
         "./QueueEvaluationDialog.svelte",
         "./QueueFileList.svelte",
@@ -8325,77 +8325,77 @@
     },
     {
       "blocks": [],
-      "contentHash": "5bf2bd18aad384dc2b48b63571ba13d87d409c12c4b03864b2e002507d86c32e",
+      "contentHash": "65c75c262f58fe8c66c4527a251f9ff22daf9de0f17650dbe33a8db040f87ea9",
       "declarations": [],
       "imports": [
-        "$lib/i18n/workduck-message-contract",
-        "$lib/ui/modal-dialog-action",
+        "#lib/i18n/workduck-message-contract.ts",
+        "#lib/ui/modal-dialog-action.ts",
         "./queue-execution"
       ],
       "path": "src/lib/queue/QueuePromptPreviewDialog.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 4137
+      "sourceBytes": 4143
     },
     {
       "blocks": [],
-      "contentHash": "985f7e03873ae1a56d13f0c3843f61d3b9971767e74ff46948b078dbeafdd5ef",
+      "contentHash": "704e5dd07e5b505577d21cc7b28c82bffb5c28c48df1d37b7159e1b3e9bf6d00",
       "declarations": [],
       "imports": [
-        "$lib/i18n/workduck-message-contract",
+        "#lib/i18n/workduck-message-contract.ts",
         "./queue-artifacts"
       ],
       "path": "src/lib/queue/QueueProposalDetail.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 2705
+      "sourceBytes": 2708
     },
     {
       "blocks": [],
-      "contentHash": "faa6141d0b5d196a94709f99498865606a6c98ad366ede6988c729fd494b0631",
+      "contentHash": "bf1a2cbadfbcf01aa33365cf19fbb4cdf1ba82f526c4e52ae84de680c7c9106d",
       "declarations": [],
       "imports": [
-        "$lib/agents/agent-registry",
-        "$lib/i18n/workduck-message-contract",
+        "#lib/agents/agent-registry.ts",
+        "#lib/i18n/workduck-message-contract.ts",
         "./queue-artifacts",
         "./queue-panel-labels",
         "./queue-voting"
       ],
       "path": "src/lib/queue/QueueReportDetail.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 7815
+      "sourceBytes": 7821
     },
     {
       "blocks": [],
-      "contentHash": "6e5b3f202262bf517015304ea838dd3d1e88277d46bca8276e39504d1aff9765",
+      "contentHash": "7bcccde4cdd33b8aa1930abacf0f69aa0712c8a1a340f10f55cf4cc603f80048",
       "declarations": [],
       "imports": [
-        "$lib/i18n/workduck-message-contract",
+        "#lib/i18n/workduck-message-contract.ts",
         "./queue-artifacts",
         "./queue-voting",
         "./queue-work-order-display"
       ],
       "path": "src/lib/queue/QueueWorkOrderDetail.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 12033
+      "sourceBytes": 12036
     },
     {
       "blocks": [],
-      "contentHash": "6010ee40eba8e10ae376546736b4ae92c67e86c753b0d7b995ac42b1196de940",
+      "contentHash": "519082a116aa5cbea041e2832cd7e5705f8d6a8f5cc5892c06680cc58852d211",
       "declarations": [],
       "imports": [
-        "$lib/agents/agent-registry",
-        "$lib/i18n/workduck-message-contract",
-        "$lib/projects/project-registry",
-        "$lib/projects/project-repository-selection",
-        "$lib/references/reference-registry",
-        "$lib/skills/skill-registry",
-        "$lib/ui/modal-dialog-action",
+        "#lib/agents/agent-registry.ts",
+        "#lib/i18n/workduck-message-contract.ts",
+        "#lib/projects/project-registry.ts",
+        "#lib/projects/project-repository-selection.ts",
+        "#lib/references/reference-registry.ts",
+        "#lib/skills/skill-registry.ts",
+        "#lib/ui/modal-dialog-action.ts",
         "./queue-artifacts",
         "./queue-panel-types",
         "./queue-voting"
       ],
       "path": "src/lib/queue/QueueWorkOrderDialog.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 21905
+      "sourceBytes": 21926
     },
     {
       "blocks": [],
@@ -8666,23 +8666,23 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "4f23543cbebd891abb4f250e668c4f4a8e5c8c045379c998eb76e7cb89b1240c",
+      "contentHash": "8ae64da925a09d53d1bf28417867a9ced76de5035f206c5c2446ae8c3578abaf",
       "declarations": [
         null
       ],
       "imports": [
-        "$lib/agents/agent-execution",
-        "$lib/agents/agent-registry",
-        "$lib/environment/environment-vault",
-        "$lib/personas/persona-registry",
-        "$lib/references/reference-registry",
-        "$lib/skills/skill-registry",
-        "$lib/tauri/tauri-invoke",
+        "#lib/agents/agent-execution.ts",
+        "#lib/agents/agent-registry.ts",
+        "#lib/environment/environment-vault.ts",
+        "#lib/personas/persona-registry.ts",
+        "#lib/references/reference-registry.ts",
+        "#lib/skills/skill-registry.ts",
+        "#lib/tauri/tauri-invoke.ts",
         "./queue-artifacts"
       ],
       "path": "src/lib/queue/queue-execution.ts",
       "semanticBytes": 528,
-      "sourceBytes": 10610
+      "sourceBytes": 10631
     },
     {
       "blocks": [
@@ -8773,17 +8773,17 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "2b09be91f95baa8962f1a128713dc20e7e907a27e052ac8c3d64a03623f345a5",
+      "contentHash": "d3b7d67ef1924f454d238d5018a3dbe5013c3641eeaf1a7fe93d15bc560f93f1",
       "declarations": [
         null
       ],
       "imports": [
-        "$lib/tauri/tauri-invoke",
-        "$lib/workspaces/workspace-path-format"
+        "#lib/tauri/tauri-invoke.ts",
+        "#lib/workspaces/workspace-path-format.ts"
       ],
       "path": "src/lib/queue/queue-folder.ts",
       "semanticBytes": 505,
-      "sourceBytes": 14814
+      "sourceBytes": 14820
     },
     {
       "blocks": [],
@@ -8798,22 +8798,22 @@
     },
     {
       "blocks": [],
-      "contentHash": "6d1a022ede4945e81d52d9ffbccd67e4d7453565bf015546a4f4b4338e8c1bd8",
+      "contentHash": "1ce21a81876740cb41bfd1cc7856e116e0483d6cb6a724df3121a8578adedb74",
       "declarations": [],
       "imports": [
-        "$lib/agents/agent-evaluation",
-        "$lib/agents/agent-registry",
-        "$lib/environment/environment-vault-session",
-        "$lib/i18n/workduck-language",
-        "$lib/personas/persona-registry",
-        "$lib/projects/project-registry",
-        "$lib/projects/project-repository-selection",
-        "$lib/references/reference-registry",
-        "$lib/settings/appearance-settings",
-        "$lib/settings/appearance-storage",
-        "$lib/skills/skill-registry",
-        "$lib/ui/desktop-notification",
-        "$lib/workspaces/workspace-registry",
+        "#lib/agents/agent-evaluation.ts",
+        "#lib/agents/agent-registry.ts",
+        "#lib/environment/environment-vault-session.ts",
+        "#lib/i18n/workduck-language.ts",
+        "#lib/personas/persona-registry.ts",
+        "#lib/projects/project-registry.ts",
+        "#lib/projects/project-repository-selection.ts",
+        "#lib/references/reference-registry.ts",
+        "#lib/settings/appearance-settings.ts",
+        "#lib/settings/appearance-storage.ts",
+        "#lib/skills/skill-registry.ts",
+        "#lib/ui/desktop-notification.ts",
+        "#lib/workspaces/workspace-registry.ts",
         "./queue-artifacts",
         "./queue-auto-refresh-scheduler",
         "./queue-completed-report-notifications",
@@ -8846,72 +8846,72 @@
       ],
       "path": "src/lib/queue/queue-panel-controller.svelte.ts",
       "semanticBytes": 0,
-      "sourceBytes": 60473
+      "sourceBytes": 60512
     },
     {
       "blocks": [],
-      "contentHash": "3452723e1bb73afc5ae05789bdbbfc637278ba72103c1c42f8b362c2f4b4d884",
+      "contentHash": "d8808228720a244535600f833b2d5f3b1e2511b8f364863c11f5d40ba496f612",
       "declarations": [],
       "imports": [
-        "$lib/agents/agent-execution",
-        "$lib/i18n/workduck-language",
+        "#lib/agents/agent-execution.ts",
+        "#lib/i18n/workduck-language.ts",
         "./queue-execution",
         "./queue-folder"
       ],
       "path": "src/lib/queue/queue-panel-errors.ts",
       "semanticBytes": 0,
-      "sourceBytes": 4886
+      "sourceBytes": 4892
     },
     {
       "blocks": [],
-      "contentHash": "8d6cd58b6c396fa61f2902adf43ecbb13e3177e232d7b10fcfac2b606af914cf",
+      "contentHash": "acfd19338929d56d21c48e40ccb6eddcbfdb5737e417334961352d2d76929170",
       "declarations": [],
       "imports": [
-        "$lib/agents/agent-evaluation",
-        "$lib/agents/agent-registry",
+        "#lib/agents/agent-evaluation.ts",
+        "#lib/agents/agent-registry.ts",
         "./queue-artifacts",
         "./queue-panel-types"
       ],
       "path": "src/lib/queue/queue-panel-evaluation-dialog-lifecycle.ts",
       "semanticBytes": 0,
-      "sourceBytes": 1779
+      "sourceBytes": 1785
     },
     {
       "blocks": [],
-      "contentHash": "39269833b6909f2eab2cc9e344f5fd8d2482472c93aa5d2f894411895c782e01",
+      "contentHash": "c70eea356b0f987410401c3e06c82cfbee2e7122f9f6fedaf05c4392966fe500",
       "declarations": [],
       "imports": [
-        "$lib/agents/agent-evaluation",
-        "$lib/agents/agent-registry",
-        "$lib/agents/agent-registry-storage",
-        "$lib/personas/persona-registry",
-        "$lib/personas/persona-registry-storage",
-        "$lib/workspaces/workspace-registry-pair-storage",
+        "#lib/agents/agent-evaluation.ts",
+        "#lib/agents/agent-registry-storage.ts",
+        "#lib/agents/agent-registry.ts",
+        "#lib/personas/persona-registry-storage.ts",
+        "#lib/personas/persona-registry.ts",
+        "#lib/workspaces/workspace-registry-pair-storage.ts",
         "./queue-artifacts",
         "./queue-folder"
       ],
       "path": "src/lib/queue/queue-panel-evaluation-save-workflow.ts",
       "semanticBytes": 0,
-      "sourceBytes": 4573
+      "sourceBytes": 4591
     },
     {
       "blocks": [],
-      "contentHash": "2bec62170a897a9dcb3cf23eaf01ddb603b4bd06b7218bcd8e698fc39689aea6",
+      "contentHash": "c3cc907bff48d3c31885852aa7e1ab526c5fdb17a0f0193d1d72f800c934b97c",
       "declarations": [],
       "imports": [
-        "$lib/agents/agent-registry",
-        "$lib/agents/agent-registry-storage",
-        "$lib/personas/persona-registry",
-        "$lib/personas/persona-registry-storage",
-        "$lib/references/reference-registry",
-        "$lib/references/reference-registry-storage",
-        "$lib/skills/skill-registry",
-        "$lib/skills/skill-registry-storage",
+        "#lib/agents/agent-registry-storage.ts",
+        "#lib/agents/agent-registry.ts",
+        "#lib/personas/persona-registry-storage.ts",
+        "#lib/personas/persona-registry.ts",
+        "#lib/references/reference-registry-storage.ts",
+        "#lib/references/reference-registry.ts",
+        "#lib/skills/skill-registry-storage.ts",
+        "#lib/skills/skill-registry.ts",
         "./queue-panel-types"
       ],
       "path": "src/lib/queue/queue-panel-execution-context-workflow.ts",
       "semanticBytes": 0,
-      "sourceBytes": 3041
+      "sourceBytes": 3065
     },
     {
       "blocks": [],
@@ -8938,28 +8938,28 @@
     },
     {
       "blocks": [],
-      "contentHash": "15494b6fdef6996f71ca2a3f982a41eaa95fd4e0836002dfe4cde95a345ad0f5",
+      "contentHash": "fe525872d873e27f268e5461d97a1212a7c4c9a01876fdf20e6480b78282e0c0",
       "declarations": [],
       "imports": [
-        "$lib/references/reference-registry",
+        "#lib/references/reference-registry.ts",
         "./queue-artifacts",
         "./queue-panel-types",
         "./queue-voting"
       ],
       "path": "src/lib/queue/queue-panel-helpers.ts",
       "semanticBytes": 0,
-      "sourceBytes": 5142
+      "sourceBytes": 5145
     },
     {
       "blocks": [],
-      "contentHash": "75586effa15813e7aca9b840fcf1fbd0ad4bbc7ee13c03ae00bf23757baea7a2",
+      "contentHash": "ec698a1fe551bee48e311b6a9281e94b906534898ab94f8a684fcde6d6852765",
       "declarations": [],
       "imports": [
-        "$lib/agents/agent-registry",
-        "$lib/i18n/workduck-language",
-        "$lib/projects/project-registry",
-        "$lib/references/reference-registry",
-        "$lib/skills/skill-registry",
+        "#lib/agents/agent-registry.ts",
+        "#lib/i18n/workduck-language.ts",
+        "#lib/projects/project-registry.ts",
+        "#lib/references/reference-registry.ts",
+        "#lib/skills/skill-registry.ts",
         "./queue-artifacts",
         "./queue-folder",
         "./queue-panel-types",
@@ -8967,14 +8967,14 @@
       ],
       "path": "src/lib/queue/queue-panel-labels.ts",
       "semanticBytes": 0,
-      "sourceBytes": 7681
+      "sourceBytes": 7696
     },
     {
       "blocks": [],
-      "contentHash": "0001cbd4cc441748af034c815e3d4d7b13b729d2bcecdcd3d9600661edc0448d",
+      "contentHash": "583beadb1fa9760c44d6c60bd4fc762d810d8696d87bb8a5304ac819d778d9dd",
       "declarations": [],
       "imports": [
-        "$lib/skills/skill-registry",
+        "#lib/skills/skill-registry.ts",
         "./queue-artifacts",
         "./queue-panel-helpers",
         "./queue-panel-types",
@@ -8982,7 +8982,7 @@
       ],
       "path": "src/lib/queue/queue-panel-manual-work-order-draft.ts",
       "semanticBytes": 0,
-      "sourceBytes": 8784
+      "sourceBytes": 8787
     },
     {
       "blocks": [],
@@ -9066,19 +9066,19 @@
     },
     {
       "blocks": [],
-      "contentHash": "b08fb56334512b627673908544c4dd89b88fa9a32a1ae0776aebf1813e97ef08",
+      "contentHash": "90fe9b2abd7fa0706bb941329c185fca8793a7530c90e5e271aec0d9ca52adb1",
       "declarations": [],
       "imports": [
-        "$lib/agents/agent-registry",
-        "$lib/personas/persona-registry",
-        "$lib/references/reference-registry",
-        "$lib/skills/skill-registry",
+        "#lib/agents/agent-registry.ts",
+        "#lib/personas/persona-registry.ts",
+        "#lib/references/reference-registry.ts",
+        "#lib/skills/skill-registry.ts",
         "./queue-artifacts",
         "./queue-folder"
       ],
       "path": "src/lib/queue/queue-panel-types.ts",
       "semanticBytes": 0,
-      "sourceBytes": 2610
+      "sourceBytes": 2622
     },
     {
       "blocks": [],
@@ -9107,10 +9107,10 @@
     },
     {
       "blocks": [],
-      "contentHash": "a34bf4b6d0228938df070ad6a1b9346661e5b677d1e03239c864afe65beff7be",
+      "contentHash": "8a29432e17429776703d88d719e912a94e580666fa5378e5a40e26b9bc24e07b",
       "declarations": [],
       "imports": [
-        "$lib/tauri/tauri-invoke",
+        "#lib/tauri/tauri-invoke.ts",
         "./queue-artifacts",
         "./queue-panel-work-order-execution-workflow",
         "node:assert/strict",
@@ -9118,42 +9118,42 @@
       ],
       "path": "src/lib/queue/queue-panel-work-order-execution-workflow.test.ts",
       "semanticBytes": 0,
-      "sourceBytes": 3844
+      "sourceBytes": 3847
     },
     {
       "blocks": [],
-      "contentHash": "62be8e17a9595d8c72ced1a6de3da12d5007c4d0bf7f8b2712cb526f9b433449",
+      "contentHash": "2a575ad58dda2e25a7bf3bb569ac3285ce28632536d89c31509913b7f0cfe9a9",
       "declarations": [],
       "imports": [
-        "$lib/environment/environment-vault",
+        "#lib/environment/environment-vault.ts",
         "./queue-artifacts",
         "./queue-execution",
         "./queue-panel-types"
       ],
       "path": "src/lib/queue/queue-panel-work-order-execution-workflow.ts",
       "semanticBytes": 0,
-      "sourceBytes": 3188
+      "sourceBytes": 3191
     },
     {
       "blocks": [],
-      "contentHash": "bcb9c25b7de49c9a163ce658c75696305b76fa4396d989f57a4daf7467103703",
+      "contentHash": "9298262b524a8b608cd7622f22a1d569d04238f69f4ce98a1e034eae93521297",
       "declarations": [],
       "imports": [
-        "$lib/agents/agent-registry",
-        "$lib/agents/agent-registry-storage",
-        "$lib/personas/persona-registry",
-        "$lib/personas/persona-registry-storage",
-        "$lib/projects/project-registry",
-        "$lib/projects/project-storage",
-        "$lib/references/reference-registry",
-        "$lib/references/reference-registry-storage",
-        "$lib/skills/skill-registry",
-        "$lib/skills/skill-registry-storage",
+        "#lib/agents/agent-registry-storage.ts",
+        "#lib/agents/agent-registry.ts",
+        "#lib/personas/persona-registry-storage.ts",
+        "#lib/personas/persona-registry.ts",
+        "#lib/projects/project-registry.ts",
+        "#lib/projects/project-storage.ts",
+        "#lib/references/reference-registry-storage.ts",
+        "#lib/references/reference-registry.ts",
+        "#lib/skills/skill-registry-storage.ts",
+        "#lib/skills/skill-registry.ts",
         "./queue-folder"
       ],
       "path": "src/lib/queue/queue-panel-workspace-lifecycle.ts",
       "semanticBytes": 0,
-      "sourceBytes": 4771
+      "sourceBytes": 4801
     },
     {
       "blocks": [
@@ -9277,17 +9277,17 @@
     },
     {
       "blocks": [],
-      "contentHash": "908c1a927eed04afe7ed41c0931b31e61a416807d13a848d227045cd2a80d051",
+      "contentHash": "b70beab8ddbcf62abc8a53c85b4c873a506eb1be42d89f0feb47d74beb7e0586",
       "declarations": [],
       "imports": [
-        "$lib/workspaces/workspace-path-format",
+        "#lib/workspaces/workspace-path-format.ts",
         "./queue-artifacts",
         "./queue-folder",
         "./queue-read-state"
       ],
       "path": "src/lib/queue/repository-commit-work-order.ts",
       "semanticBytes": 0,
-      "sourceBytes": 12512
+      "sourceBytes": 12515
     },
     {
       "blocks": [],
@@ -9333,63 +9333,63 @@
     },
     {
       "blocks": [],
-      "contentHash": "e289f8c6fb5223375fa7b9acaec749ad2cb5c207b009ea98ae70b85041117b57",
+      "contentHash": "0ac46908c79790cc48b0ef208680a79bab4175df02c16eecb0746ad5457f0e85",
       "declarations": [],
       "imports": [
-        "$lib/i18n/workduck-language",
-        "$lib/projects/project-registry",
-        "$lib/projects/project-repository-selection",
-        "$lib/projects/project-storage",
-        "$lib/settings/appearance-settings",
-        "$lib/settings/appearance-storage",
-        "$lib/ui",
-        "$lib/workspaces/workspace-registry",
-        "$lib/workspaces/workspace-scoped-resource",
+        "#lib/i18n/workduck-language.ts",
+        "#lib/projects/project-registry.ts",
+        "#lib/projects/project-repository-selection.ts",
+        "#lib/projects/project-storage.ts",
+        "#lib/settings/appearance-settings.ts",
+        "#lib/settings/appearance-storage.ts",
+        "#lib/ui/index.ts",
+        "#lib/workspaces/workspace-registry.ts",
+        "#lib/workspaces/workspace-scoped-resource.ts",
         "./reference-registry",
         "./reference-registry-storage",
         "svelte"
       ],
       "path": "src/lib/references/ReferencesPanel.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 27228
+      "sourceBytes": 27261
     },
     {
       "blocks": [],
-      "contentHash": "5513e7339cc32a922b6e9d9645c6fce8c4d8d3b591c67bc57f34992b6b2819e4",
+      "contentHash": "96e05729607e29202aaaad35c79492c57249351d6fb1743783cc75215b96b668",
       "declarations": [],
       "imports": [
-        "$lib/shared/object-record",
-        "$lib/workspaces/workspace-data-file",
+        "#lib/shared/object-record.ts",
+        "#lib/workspaces/workspace-data-file.ts",
         "./reference-registry"
       ],
       "path": "src/lib/references/reference-registry-storage.ts",
       "semanticBytes": 0,
-      "sourceBytes": 6645
+      "sourceBytes": 6651
     },
     {
       "blocks": [],
-      "contentHash": "1793fbbe1a1ee2fcbf178b6247b2ae99730a2865773f590dc97863ab36609808",
+      "contentHash": "92a276233393f50ccab753f44d471208ee8cbd434a6551bdcf1f9add826cc179",
       "declarations": [],
       "imports": [
-        "$lib/shared/object-record"
+        "#lib/shared/object-record.ts"
       ],
       "path": "src/lib/references/reference-registry.ts",
       "semanticBytes": 0,
-      "sourceBytes": 11996
+      "sourceBytes": 11999
     },
     {
       "blocks": [],
-      "contentHash": "7f290b43a961808a770557441f99b771c0511ec6134c65f157693f6009df78ac",
+      "contentHash": "b548c9cd4b75dc8dd3fca8a8ae61f5aa60195b913e1161209509041bbca36baf",
       "declarations": [],
       "imports": [
+        "#lib/i18n/workduck-language.ts",
+        "#lib/settings/appearance-settings.ts",
+        "#lib/settings/appearance-storage.ts",
+        "#lib/ui/modal-dialog-action.ts",
+        "#lib/workspaces/workspace-registry.ts",
+        "#lib/workspaces/workspace-storage.ts",
+        "#lib/workspaces/workspace-unlock.ts",
         "$app/navigation",
-        "$lib/i18n/workduck-language",
-        "$lib/settings/appearance-settings",
-        "$lib/settings/appearance-storage",
-        "$lib/ui/modal-dialog-action",
-        "$lib/workspaces/workspace-registry",
-        "$lib/workspaces/workspace-storage",
-        "$lib/workspaces/workspace-unlock",
         "./artifact-search",
         "./command-palette-data",
         "./command-palette-index",
@@ -9398,72 +9398,72 @@
       ],
       "path": "src/lib/search/CommandPalette.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 12313
+      "sourceBytes": 12334
     },
     {
       "blocks": [],
-      "contentHash": "1b391f48e0568b974d74fa3f29cdac2f4b3a0c89d932a8d26f5c00339cc7375c",
+      "contentHash": "10ef6bebe7fa2795b34727a5c7c16a89f882eb545dcdb62324e4eae89b27203d",
       "declarations": [],
       "imports": [
-        "$lib/tauri/tauri-invoke",
+        "#lib/tauri/tauri-invoke.ts",
         "./command-palette-index"
       ],
       "path": "src/lib/search/artifact-search.ts",
       "semanticBytes": 0,
-      "sourceBytes": 4173
+      "sourceBytes": 4176
     },
     {
       "blocks": [],
-      "contentHash": "62d5c5d93a4dfd0d98b00a15861b26063472800a23e72b80ffbf9e016fdc4f34",
+      "contentHash": "eeabba34685b7c8524d46c7ccebecba739f5256d4d8d8781a05caf1478a13d7e",
       "declarations": [],
       "imports": [
-        "$lib/agents/agent-registry-storage",
-        "$lib/projects/project-repository-task",
-        "$lib/projects/project-storage",
-        "$lib/queue/queue-folder",
-        "$lib/references/reference-registry-storage",
-        "$lib/workspaces/workspace-registry",
+        "#lib/agents/agent-registry-storage.ts",
+        "#lib/projects/project-repository-task.ts",
+        "#lib/projects/project-storage.ts",
+        "#lib/queue/queue-folder.ts",
+        "#lib/references/reference-registry-storage.ts",
+        "#lib/workspaces/workspace-registry.ts",
         "./command-palette-index"
       ],
       "path": "src/lib/search/command-palette-data.ts",
       "semanticBytes": 0,
-      "sourceBytes": 1587
+      "sourceBytes": 1605
     },
     {
       "blocks": [],
-      "contentHash": "4d2f25067e73646c177f9defbe0b7e775a19fcea19612364f0488a60d0d1921b",
+      "contentHash": "dd96c305019a0cd0efaec51c882ebec064597bb59bd20ab5eba1fa68a8dd7539",
       "declarations": [],
       "imports": [
-        "$lib/agents/agent-evaluation",
+        "#lib/agents/agent-evaluation.ts",
         "./command-palette-index",
         "node:assert/strict",
         "node:test"
       ],
       "path": "src/lib/search/command-palette-index.test.ts",
       "semanticBytes": 0,
-      "sourceBytes": 5096
+      "sourceBytes": 5099
     },
     {
       "blocks": [],
-      "contentHash": "82fcc32a122e4ef9138bc3c188c2eaf38b149cb3edfae09d4ae886ce4f14efbf",
+      "contentHash": "3e4e305213334d85dc5797d195fe186db5ce5161fbc6929a2a925579fef9ff2f",
       "declarations": [],
       "imports": [
-        "$lib/agents/agent-registry",
-        "$lib/projects/project-registry",
-        "$lib/projects/project-repository-task",
-        "$lib/queue/queue-folder",
-        "$lib/references/reference-registry"
+        "#lib/agents/agent-registry.ts",
+        "#lib/projects/project-registry.ts",
+        "#lib/projects/project-repository-task.ts",
+        "#lib/queue/queue-folder.ts",
+        "#lib/references/reference-registry.ts"
       ],
       "path": "src/lib/search/command-palette-index.ts",
       "semanticBytes": 0,
-      "sourceBytes": 8262
+      "sourceBytes": 8277
     },
     {
       "blocks": [],
-      "contentHash": "5c0dc77279c5c7c9d0c47acaf4b8f07a569f322ab6683ff62878c5261a267bfa",
+      "contentHash": "7eac96a4e8b06b0faf21c1b449ff9c72b0a8e945a76d259b4e0d907c2c88f795",
       "declarations": [],
       "imports": [
-        "$lib/i18n/workduck-language",
+        "#lib/i18n/workduck-language.ts",
         "./StepRangeField.svelte",
         "./appearance-settings",
         "./appearance-storage",
@@ -9471,39 +9471,39 @@
       ],
       "path": "src/lib/settings/AppearanceSettingsPanel.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 3423
+      "sourceBytes": 3426
     },
     {
       "blocks": [],
-      "contentHash": "93339377af41466ed221203d695a6f6ee5507753be2bcbb8cd4d410d40f5cc8d",
+      "contentHash": "a864d91047096aa60f6675ef913c85e5acc7308166d7764bd4ee9939bc79d595",
       "declarations": [],
       "imports": [
-        "$lib/ui/style-properties-action"
+        "#lib/ui/style-properties-action.ts"
       ],
       "path": "src/lib/settings/StepRangeField.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 2474
+      "sourceBytes": 2477
     },
     {
       "blocks": [],
-      "contentHash": "1e358e9a13b9222723d8e704bc95f7256e682f7d5b499a621d11a0e3cae8a9b5",
+      "contentHash": "b3d729744d4cf93ab626b80d6104cd914fda1d9b6f5420e83ec646f8702593ac",
       "declarations": [],
       "imports": [
-        "$lib/environment/environment-vault-session-loader",
-        "$lib/environment/github-credential",
-        "$lib/i18n/workduck-language",
-        "$lib/projects/project-repository",
-        "$lib/projects/project-storage",
-        "$lib/queue/queue-panel-errors",
-        "$lib/queue/repository-commit-work-order",
-        "$lib/shell/app-operation",
-        "$lib/ui/StatusToast.svelte",
-        "$lib/workspaces/workspace-path",
-        "$lib/workspaces/workspace-path-format",
-        "$lib/workspaces/workspace-storage",
-        "$lib/workspaces/workspace-sync",
-        "$lib/workspaces/workspace-sync-file",
-        "$lib/workspaces/workspace-sync-git",
+        "#lib/environment/environment-vault-session-loader.ts",
+        "#lib/environment/github-credential.ts",
+        "#lib/i18n/workduck-language.ts",
+        "#lib/projects/project-repository.ts",
+        "#lib/projects/project-storage.ts",
+        "#lib/queue/queue-panel-errors.ts",
+        "#lib/queue/repository-commit-work-order.ts",
+        "#lib/shell/app-operation.ts",
+        "#lib/ui/StatusToast.svelte",
+        "#lib/workspaces/workspace-path-format.ts",
+        "#lib/workspaces/workspace-path.ts",
+        "#lib/workspaces/workspace-storage.ts",
+        "#lib/workspaces/workspace-sync-file.ts",
+        "#lib/workspaces/workspace-sync-git.ts",
+        "#lib/workspaces/workspace-sync.ts",
         "./appearance-settings",
         "./appearance-storage",
         "./sync-settings",
@@ -9512,16 +9512,16 @@
       ],
       "path": "src/lib/settings/SyncSettingsPanel.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 37946
+      "sourceBytes": 37988
     },
     {
       "blocks": [],
-      "contentHash": "e32c4a4a8bd32c8c8c5ec48c26f8794f3837a4748c7fcb4fdfe431c3ffad02c3",
+      "contentHash": "edf3e796b311d94d80635572d1d573bb30778fe241b11869580163ee200e5455",
       "declarations": [],
       "imports": [
-        "$lib/i18n/workduck-language",
-        "$lib/system/autostart",
-        "$lib/system/tray",
+        "#lib/i18n/workduck-language.ts",
+        "#lib/system/autostart.ts",
+        "#lib/system/tray.ts",
         "./appearance-settings",
         "./appearance-storage",
         "./system-settings",
@@ -9530,7 +9530,7 @@
       ],
       "path": "src/lib/settings/SystemSettingsPanel.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 6629
+      "sourceBytes": 6638
     },
     {
       "blocks": [],
@@ -9545,25 +9545,25 @@
     },
     {
       "blocks": [],
-      "contentHash": "916f07d950362ca96cafeeb47539f30dd4ed7549d8ba0f4f599305f8f0db5b1b",
+      "contentHash": "6f0b58a1a48ba0f1b63767f5689fb408ed1fbf616e6e26c7fb5d98e83e352984",
       "declarations": [],
       "imports": [
-        "$lib/environment/environment-vault-session",
-        "$lib/environment/environment-vault-session-loader",
-        "$lib/environment/github-credential",
-        "$lib/i18n/workduck-language",
-        "$lib/projects/project-board-errors",
-        "$lib/projects/project-repository-task",
-        "$lib/queue/queue-panel-errors",
-        "$lib/queue/repository-commit-work-order",
-        "$lib/workspaces/workspace-password",
-        "$lib/workspaces/workspace-path",
-        "$lib/workspaces/workspace-path-format",
-        "$lib/workspaces/workspace-registry",
-        "$lib/workspaces/workspace-repository-git",
-        "$lib/workspaces/workspace-repository-setup",
-        "$lib/workspaces/workspace-storage",
-        "$lib/workspaces/workspace-unlock",
+        "#lib/environment/environment-vault-session-loader.ts",
+        "#lib/environment/environment-vault-session.ts",
+        "#lib/environment/github-credential.ts",
+        "#lib/i18n/workduck-language.ts",
+        "#lib/projects/project-board-errors.ts",
+        "#lib/projects/project-repository-task.ts",
+        "#lib/queue/queue-panel-errors.ts",
+        "#lib/queue/repository-commit-work-order.ts",
+        "#lib/workspaces/workspace-password.ts",
+        "#lib/workspaces/workspace-path-format.ts",
+        "#lib/workspaces/workspace-path.ts",
+        "#lib/workspaces/workspace-registry.ts",
+        "#lib/workspaces/workspace-repository-git.ts",
+        "#lib/workspaces/workspace-repository-setup.ts",
+        "#lib/workspaces/workspace-storage.ts",
+        "#lib/workspaces/workspace-unlock.ts",
         "./WorkspaceSettingsView.svelte",
         "./appearance-settings",
         "./appearance-storage",
@@ -9573,49 +9573,49 @@
       ],
       "path": "src/lib/settings/WorkspaceSettingsSurface.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 35129
+      "sourceBytes": 35177
     },
     {
       "blocks": [],
-      "contentHash": "4c3a3c6e846aea7e47a63b966d8853a1ffe9cb0a5e5d643fa535298652422225",
+      "contentHash": "d950d46cf17ec636cf4c9ced33085d22ed6f987c71418753eaf033fbb744c66a",
       "declarations": [],
       "imports": [
-        "$lib/ui/StatusToast.svelte",
-        "$lib/workspaces/WorkspacePathRepairForm.svelte",
-        "$lib/workspaces/WorkspaceUnlockForm.svelte",
-        "$lib/workspaces/workspace-path-format",
-        "$lib/workspaces/workspace-registry",
-        "$lib/workspaces/workspace-unlock",
+        "#lib/ui/StatusToast.svelte",
+        "#lib/workspaces/WorkspacePathRepairForm.svelte",
+        "#lib/workspaces/WorkspaceUnlockForm.svelte",
+        "#lib/workspaces/workspace-path-format.ts",
+        "#lib/workspaces/workspace-registry.ts",
+        "#lib/workspaces/workspace-unlock.ts",
         "./workspace-settings-types"
       ],
       "path": "src/lib/settings/WorkspaceSettingsView.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 29272
+      "sourceBytes": 29281
     },
     {
       "blocks": [],
-      "contentHash": "07cc0ba7b1a0463bb9de96e1a72fecb4c93de70d44b80ac5b1cfddef2a3e79fe",
+      "contentHash": "b698e9605539247aea184daeab9bd5f92a9085c7cb6e7aa37bed4071c9a9651b",
       "declarations": [],
       "imports": [
-        "$lib/i18n/workduck-language",
-        "$lib/shared/object-record"
+        "#lib/i18n/workduck-language.ts",
+        "#lib/shared/object-record.ts"
       ],
       "path": "src/lib/settings/appearance-settings.ts",
       "semanticBytes": 0,
-      "sourceBytes": 2810
+      "sourceBytes": 2816
     },
     {
       "blocks": [],
-      "contentHash": "96cbebf1c8d15ea2f2d248458eeb445750253bca17d84f1805bd7e4efda93b2b",
+      "contentHash": "c27f742cfaf5ca3f49cefac7b28d5e9ee07d06c4f42abddfdc9ac4f9c7d4d9d7",
       "declarations": [],
       "imports": [
-        "$lib/app-state/app-state-storage",
-        "$lib/i18n/workduck-language",
+        "#lib/app-state/app-state-storage.ts",
+        "#lib/i18n/workduck-language.ts",
         "./appearance-settings"
       ],
       "path": "src/lib/settings/appearance-storage.ts",
       "semanticBytes": 0,
-      "sourceBytes": 4775
+      "sourceBytes": 4781
     },
     {
       "blocks": [],
@@ -9628,83 +9628,83 @@
     },
     {
       "blocks": [],
-      "contentHash": "a3b24326d1d0078e730f19f8265939ccb81d5aed696f297d3d1a1c2008348ca0",
+      "contentHash": "890d731c1199f5b52efed1a221a3f2dfb0355dd80d355dd0e0759f1c377e047d",
       "declarations": [],
       "imports": [
-        "$lib/app-state/app-state-storage",
+        "#lib/app-state/app-state-storage.ts",
         "./sync-settings"
       ],
       "path": "src/lib/settings/sync-settings-storage.ts",
       "semanticBytes": 0,
-      "sourceBytes": 3129
+      "sourceBytes": 3132
     },
     {
       "blocks": [],
-      "contentHash": "2a13c26efb0fc3ceed2e6424fcf58900b6292853a37fcbb73753b00dca3aa6e9",
+      "contentHash": "af0be55d9cd47896db42bf2bc1aa4fba0b293070d07cac90e988545f48b9fef2",
       "declarations": [],
       "imports": [
-        "$lib/workspaces/workspace-path-format",
-        "$lib/workspaces/workspace-registry",
-        "$lib/workspaces/workspace-sync-file"
+        "#lib/workspaces/workspace-path-format.ts",
+        "#lib/workspaces/workspace-registry.ts",
+        "#lib/workspaces/workspace-sync-file.ts"
       ],
       "path": "src/lib/settings/sync-settings.ts",
       "semanticBytes": 0,
-      "sourceBytes": 2425
+      "sourceBytes": 2434
     },
     {
       "blocks": [],
-      "contentHash": "17de4941e4e2d1aba47e2b188fc44dd35ff8a7abf264a2bb5b473869b4ff9da2",
+      "contentHash": "e2ba7adf3fc27bdebb3170ec0d37daa6a8e8ec0ece3d5f7a2bf61b3b5219cd5c",
       "declarations": [],
       "imports": [
-        "$lib/shared/object-record"
+        "#lib/shared/object-record.ts"
       ],
       "path": "src/lib/settings/system-settings.ts",
       "semanticBytes": 0,
-      "sourceBytes": 2277
+      "sourceBytes": 2280
     },
     {
       "blocks": [],
-      "contentHash": "e8849e0a7cd80c782c7c814940f4cb519808b73eebb839db5f7e4382714f1da8",
+      "contentHash": "755f5c4be97267611cc5e0f898f51ddc2d90bc33668a59cd3118db095660f21f",
       "declarations": [],
       "imports": [
-        "$lib/app-state/app-state-storage",
+        "#lib/app-state/app-state-storage.ts",
         "./system-settings"
       ],
       "path": "src/lib/settings/system-storage.ts",
       "semanticBytes": 0,
-      "sourceBytes": 3223
+      "sourceBytes": 3226
     },
     {
       "blocks": [],
-      "contentHash": "3ff810f410041265d909a71b27de084a3e0113716c0fb312bd07029badea0ec4",
+      "contentHash": "89ca034e0ffb28c4b9d57cb47a527f3ecedbccdade2ace054fd525175aaae5bb",
       "declarations": [],
       "imports": [
-        "$lib/i18n/workduck-message-contract",
-        "$lib/workspaces/workspace-password",
-        "$lib/workspaces/workspace-path",
-        "$lib/workspaces/workspace-repository-setup",
+        "#lib/i18n/workduck-message-contract.ts",
+        "#lib/workspaces/workspace-password.ts",
+        "#lib/workspaces/workspace-path.ts",
+        "#lib/workspaces/workspace-repository-setup.ts",
         "./workspace-settings-types"
       ],
       "path": "src/lib/settings/workspace-settings-errors.ts",
       "semanticBytes": 0,
-      "sourceBytes": 9804
+      "sourceBytes": 9816
     },
     {
       "blocks": [],
-      "contentHash": "a798183ed7558649031cbae0b6ca1aefdec4416849aee1061d2966954c113266",
+      "contentHash": "b65f343518a059c835083d8bf410ca7901ff2fb6c43521f26533e5bf6d03f015",
       "declarations": [],
       "imports": [
-        "$lib/i18n/workduck-message-contract",
-        "$lib/projects/project-repository-task",
-        "$lib/workspaces/workspace-password",
-        "$lib/workspaces/workspace-path",
-        "$lib/workspaces/workspace-registry",
-        "$lib/workspaces/workspace-repository-git",
-        "$lib/workspaces/workspace-repository-setup"
+        "#lib/i18n/workduck-message-contract.ts",
+        "#lib/projects/project-repository-task.ts",
+        "#lib/workspaces/workspace-password.ts",
+        "#lib/workspaces/workspace-path.ts",
+        "#lib/workspaces/workspace-registry.ts",
+        "#lib/workspaces/workspace-repository-git.ts",
+        "#lib/workspaces/workspace-repository-setup.ts"
       ],
       "path": "src/lib/settings/workspace-settings-types.ts",
       "semanticBytes": 0,
-      "sourceBytes": 7851
+      "sourceBytes": 7872
     },
     {
       "blocks": [],
@@ -9717,26 +9717,26 @@
     },
     {
       "blocks": [],
-      "contentHash": "c1ea7d49c0de00213b8be8a7facc449a84b9bb4b07c15957db2c281df7da432b",
+      "contentHash": "066e773a553f2a920b28530409b064efbfc91ccfc4c4cd4d8a1fbe9a0f2b9cc4",
       "declarations": [],
       "imports": [
+        "#lib/brand/WorkduckMark.svelte",
+        "#lib/environment/environment-vault-session.ts",
+        "#lib/i18n/workduck-language.ts",
+        "#lib/queue/queue-folder.ts",
+        "#lib/queue/queue-read-state.ts",
+        "#lib/settings/appearance-settings.ts",
+        "#lib/settings/appearance-storage.ts",
+        "#lib/settings/system-settings.ts",
+        "#lib/settings/system-storage.ts",
+        "#lib/system/app-updater.ts",
+        "#lib/system/tray.ts",
+        "#lib/ui/style-properties-action.ts",
+        "#lib/workspaces/WorkspaceUnlockForm.svelte",
+        "#lib/workspaces/workspace-registry.ts",
+        "#lib/workspaces/workspace-storage.ts",
+        "#lib/workspaces/workspace-unlock.ts",
         "$app/state",
-        "$lib/brand/WorkduckMark.svelte",
-        "$lib/environment/environment-vault-session",
-        "$lib/i18n/workduck-language",
-        "$lib/queue/queue-folder",
-        "$lib/queue/queue-read-state",
-        "$lib/settings/appearance-settings",
-        "$lib/settings/appearance-storage",
-        "$lib/settings/system-settings",
-        "$lib/settings/system-storage",
-        "$lib/system/app-updater",
-        "$lib/system/tray",
-        "$lib/ui/style-properties-action",
-        "$lib/workspaces/WorkspaceUnlockForm.svelte",
-        "$lib/workspaces/workspace-registry",
-        "$lib/workspaces/workspace-storage",
-        "$lib/workspaces/workspace-unlock",
         "./app-operation",
         "./browser-context-menu",
         "./sidebar-layout",
@@ -9747,7 +9747,7 @@
       ],
       "path": "src/lib/shell/WorkbenchShell.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 31980
+      "sourceBytes": 32022
     },
     {
       "blocks": [],
@@ -9778,17 +9778,17 @@
     },
     {
       "blocks": [],
-      "contentHash": "ad4ce8c978925f7871515e9c6dffd48bd83f76b2cc59a505278c05cf186e68ae",
+      "contentHash": "6c4da5f40d5f0a1b113c756f22d2b137dfd89dae552cbcefa6ce9bee6093851a",
       "declarations": [],
       "imports": [
-        "$lib/settings/system-storage",
-        "$lib/system/tray",
-        "$lib/tauri/tauri-invoke",
+        "#lib/settings/system-storage.ts",
+        "#lib/system/tray.ts",
+        "#lib/tauri/tauri-invoke.ts",
         "@tauri-apps/api/window"
       ],
       "path": "src/lib/shell/tauri-window.ts",
       "semanticBytes": 0,
-      "sourceBytes": 5901
+      "sourceBytes": 5910
     },
     {
       "blocks": [],
@@ -9801,86 +9801,86 @@
     },
     {
       "blocks": [],
-      "contentHash": "c90f30e215ca5fb1bfbff5325d84c2d5cd1b6531b1b32996b6bbc63f6d1ccbfa",
+      "contentHash": "0c96c3001f7c9358dbe64b468a4db6ae8bea080971afedf68a2d78d6f1998c1b",
       "declarations": [],
       "imports": [
-        "$lib/i18n/workduck-language",
-        "$lib/queue/domain/queue-artifact-readers",
-        "$lib/queue/queue-folder",
-        "$lib/settings/appearance-settings",
-        "$lib/settings/appearance-storage",
-        "$lib/ui",
-        "$lib/workspaces/workspace-registry",
+        "#lib/i18n/workduck-language.ts",
+        "#lib/queue/domain/queue-artifact-readers.ts",
+        "#lib/queue/queue-folder.ts",
+        "#lib/settings/appearance-settings.ts",
+        "#lib/settings/appearance-storage.ts",
+        "#lib/ui/index.ts",
+        "#lib/workspaces/workspace-registry.ts",
         "./skill-registry",
         "./skill-registry-storage",
         "svelte"
       ],
       "path": "src/lib/skills/SkillsPanel.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 31870
+      "sourceBytes": 31897
     },
     {
       "blocks": [],
-      "contentHash": "a7f9302c8a7a5f2f8698c8ec01f39e69236ee6bdafb2b829914e67a78cadab58",
+      "contentHash": "8eb1d87e2d93eeedd907de984a75590e9b5080a2e86069c35bee6ac057d9475d",
       "declarations": [],
       "imports": [
-        "$lib/shared/object-record",
-        "$lib/workspaces/workspace-data-file",
+        "#lib/shared/object-record.ts",
+        "#lib/workspaces/workspace-data-file.ts",
         "./skill-registry"
       ],
       "path": "src/lib/skills/skill-registry-storage.ts",
       "semanticBytes": 0,
-      "sourceBytes": 6382
+      "sourceBytes": 6388
     },
     {
       "blocks": [],
-      "contentHash": "779895f45b35b8ef626d8706bdd6e77e6874afbd06726434dc72fff93b0531ab",
+      "contentHash": "9551675d0d527bf19e6d880650d415fc3db1edfcf5d7efabb39035280db31488",
       "declarations": [],
       "imports": [
-        "$lib/agents/agent-evaluation",
-        "$lib/shared/object-record"
+        "#lib/agents/agent-evaluation.ts",
+        "#lib/shared/object-record.ts"
       ],
       "path": "src/lib/skills/skill-registry.ts",
       "semanticBytes": 0,
-      "sourceBytes": 53487
+      "sourceBytes": 53493
     },
     {
       "blocks": [],
-      "contentHash": "f1912da36b1cf2f4b733dcc090d1107fc5e5a79b0fe8a8bb586f08c771aa2dfe",
+      "contentHash": "0557de8a1252302a5c17e355505b82d445b9c5f9e531506e88afcbb10cce419d",
       "declarations": [],
       "imports": [
-        "$lib/tauri/tauri-invoke",
+        "#lib/tauri/tauri-invoke.ts",
         "@tauri-apps/plugin-process",
         "@tauri-apps/plugin-updater"
       ],
       "path": "src/lib/system/app-updater.ts",
       "semanticBytes": 0,
-      "sourceBytes": 1971
+      "sourceBytes": 1974
     },
     {
       "blocks": [],
-      "contentHash": "2e3de6dd871333081cead4984be4ec0394b9e05ca57b0a9b73820758ce7e4b32",
+      "contentHash": "a96e4833f50082e2f059743cde3885c7a01727eff6f8219fb00637c4b02d1806",
       "declarations": [],
       "imports": [
-        "$lib/tauri/tauri-invoke"
+        "#lib/tauri/tauri-invoke.ts"
       ],
       "path": "src/lib/system/autostart.ts",
       "semanticBytes": 0,
-      "sourceBytes": 3135
+      "sourceBytes": 3138
     },
     {
       "blocks": [],
-      "contentHash": "d5319f2f1aacff62b0099b378c3c0b99deb4b9e859a183c893bf7ce5fd3bfb40",
+      "contentHash": "743b70f9de5f4f315f1aa872ab2899f7d85d9bb3665aec7eb132c8b4cb2cb91a",
       "declarations": [],
       "imports": [
-        "$lib/tauri/tauri-invoke",
+        "#lib/tauri/tauri-invoke.ts",
         "@tauri-apps/api/app",
         "@tauri-apps/api/tray",
         "@tauri-apps/api/window"
       ],
       "path": "src/lib/system/tray.ts",
       "semanticBytes": 0,
-      "sourceBytes": 3514
+      "sourceBytes": 3517
     },
     {
       "blocks": [],
@@ -9895,14 +9895,14 @@
     },
     {
       "blocks": [],
-      "contentHash": "987d57db522cbfdb31832951ae34795b555dd257741759c6adee4d7340e42980",
+      "contentHash": "c94980b3afccad6b49d275f2c5a278d50bd23a25cff731200bfb12ce498cb498",
       "declarations": [],
       "imports": [
-        "$lib/i18n/workduck-language",
-        "$lib/settings/appearance-settings",
-        "$lib/settings/appearance-storage",
-        "$lib/ui",
-        "$lib/workspaces/workspace-registry",
+        "#lib/i18n/workduck-language.ts",
+        "#lib/settings/appearance-settings.ts",
+        "#lib/settings/appearance-storage.ts",
+        "#lib/ui/index.ts",
+        "#lib/workspaces/workspace-registry.ts",
         "./terminal-catalog",
         "./terminal-registry",
         "./terminal-registry-storage",
@@ -9911,41 +9911,41 @@
       ],
       "path": "src/lib/terminals/TerminalPanel.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 21173
+      "sourceBytes": 21194
     },
     {
       "blocks": [],
-      "contentHash": "a001d52247046dd7fe0a1089972c27fa287613567b0b0e869db025c369989ffa",
+      "contentHash": "43c4dbb623ae468ff1ea72cba3c0dd43593b11e87394206f6b6661ea80a70e3c",
       "declarations": [],
       "imports": [
-        "$lib/tauri/tauri-invoke"
+        "#lib/tauri/tauri-invoke.ts"
       ],
       "path": "src/lib/terminals/terminal-catalog.ts",
       "semanticBytes": 0,
-      "sourceBytes": 1662
+      "sourceBytes": 1665
     },
     {
       "blocks": [],
-      "contentHash": "0cb46af8d507a95deb884dcf7f8e64901d0bda613283f4c69f5b6afa38c55fd1",
+      "contentHash": "50b966e764e9d370c8373943c1a41fcf91a613c868633e731e9d688d4fee1feb",
       "declarations": [],
       "imports": [
-        "$lib/shared/object-record",
+        "#lib/shared/object-record.ts",
         "./terminal-registry"
       ],
       "path": "src/lib/terminals/terminal-registry-storage.ts",
       "semanticBytes": 0,
-      "sourceBytes": 4959
+      "sourceBytes": 4962
     },
     {
       "blocks": [],
-      "contentHash": "6900831ead8b74877530ed048fd4ae8aa6eb5ba234facf5e6b9fb5c1096f1412",
+      "contentHash": "710fac4ba22d2dcbde6a3df75ae3a004c864de8a24a68b466561c29f27c660e5",
       "declarations": [],
       "imports": [
-        "$lib/shared/object-record"
+        "#lib/shared/object-record.ts"
       ],
       "path": "src/lib/terminals/terminal-registry.ts",
       "semanticBytes": 0,
-      "sourceBytes": 6885
+      "sourceBytes": 6888
     },
     {
       "blocks": [
@@ -10036,16 +10036,16 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "888945fd7a7aca0f89103cfeba0779b385c257661b15ba0664db1a77bb465dbc",
+      "contentHash": "8529410152bcdecd54fc79a49895763a7c81bb2bc2f6385b6b06e3f765209245",
       "declarations": [
         null
       ],
       "imports": [
-        "$lib/tauri/tauri-invoke"
+        "#lib/tauri/tauri-invoke.ts"
       ],
       "path": "src/lib/terminals/terminal-session.ts",
       "semanticBytes": 507,
-      "sourceBytes": 3572
+      "sourceBytes": 3575
     },
     {
       "blocks": [],
@@ -10144,12 +10144,12 @@
     },
     {
       "blocks": [],
-      "contentHash": "a74a03830cd0bca0cc1a20111302bc08dce527c59d2d5f7f26989a5374d73246",
+      "contentHash": "3563857e49dc652df9312064c7fca7e84a85ebeb542294cf84cdfd5411486e00",
       "declarations": [],
       "imports": [
-        "$lib/i18n/workduck-language",
-        "$lib/settings/appearance-settings",
-        "$lib/settings/appearance-storage",
+        "#lib/i18n/workduck-language.ts",
+        "#lib/settings/appearance-settings.ts",
+        "#lib/settings/appearance-storage.ts",
         "./WorkspacePathRepairForm.svelte",
         "./WorkspaceUnlockForm.svelte",
         "./workspace-path",
@@ -10160,16 +10160,16 @@
       ],
       "path": "src/lib/workspaces/WorkspaceGate.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 6188
+      "sourceBytes": 6197
     },
     {
       "blocks": [],
-      "contentHash": "ac8da3a1a07dd78f9c30ccaa856ed9e0f26ca6a8f97019435384919efac59294",
+      "contentHash": "cb3a5ba0b1d2d5c91c87ec3bfcccd30edb2316d43b00db869e8a28a89ad5d562",
       "declarations": [],
       "imports": [
-        "$lib/i18n/workduck-language",
-        "$lib/settings/appearance-settings",
-        "$lib/settings/appearance-storage",
+        "#lib/i18n/workduck-language.ts",
+        "#lib/settings/appearance-settings.ts",
+        "#lib/settings/appearance-storage.ts",
         "./workspace-path",
         "./workspace-path-format",
         "./workspace-registry",
@@ -10178,23 +10178,23 @@
       ],
       "path": "src/lib/workspaces/WorkspacePathRepairForm.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 7876
+      "sourceBytes": 7885
     },
     {
       "blocks": [],
-      "contentHash": "4d1c95f4a9cd0772964a6641d2e7f3ad60fc1dcb8e083021dbb4391580ed08d2",
+      "contentHash": "8401778dbe49c22920ea73aa06bbf1d5d767bf8e464b3a6a105306f720908839",
       "declarations": [],
       "imports": [
-        "$lib/i18n/workduck-language",
-        "$lib/settings/appearance-settings",
-        "$lib/settings/appearance-storage",
+        "#lib/i18n/workduck-language.ts",
+        "#lib/settings/appearance-settings.ts",
+        "#lib/settings/appearance-storage.ts",
         "./workspace-registry",
         "./workspace-unlock",
         "svelte"
       ],
       "path": "src/lib/workspaces/WorkspaceUnlockForm.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 5685
+      "sourceBytes": 5694
     },
     {
       "blocks": [
@@ -10285,27 +10285,27 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "914b2012bd4c47ef2c490f57514eb2c15348499524cf75d3c6e6a571b8055129",
+      "contentHash": "187660d35bb8af3192244b57a02e9d0f061443072ab5e0e4c99fa4fb25f98206",
       "declarations": [
         null
       ],
       "imports": [
-        "$lib/tauri/tauri-invoke"
+        "#lib/tauri/tauri-invoke.ts"
       ],
       "path": "src/lib/workspaces/workspace-data-file.ts",
       "semanticBytes": 535,
-      "sourceBytes": 7024
+      "sourceBytes": 7027
     },
     {
       "blocks": [],
-      "contentHash": "6569e15188e29939d4fb445b924885e0b8556a1c97d0560a75601adf76f39931",
+      "contentHash": "fad25dd8f89bda73685f2e8cb817527d1e388be95ef17ef775a4c98bf555c448",
       "declarations": [],
       "imports": [
-        "$lib/tauri/tauri-invoke"
+        "#lib/tauri/tauri-invoke.ts"
       ],
       "path": "src/lib/workspaces/workspace-password.ts",
       "semanticBytes": 0,
-      "sourceBytes": 3161
+      "sourceBytes": 3164
     },
     {
       "blocks": [],
@@ -10416,68 +10416,68 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "07beeca3d05bfcc6bd201bfae21bf6a42f0aee46f3f64e5df056261e080168a8",
+      "contentHash": "6a9b12d0efb3f101c3381057a1e3ee80c7a44f283fae3180cda1400a76e562e2",
       "declarations": [
         null
       ],
       "imports": [
-        "$lib/tauri/tauri-invoke",
+        "#lib/tauri/tauri-invoke.ts",
         "./workspace-path-format",
         "@tauri-apps/plugin-dialog"
       ],
       "path": "src/lib/workspaces/workspace-path.ts",
       "semanticBytes": 553,
-      "sourceBytes": 3892
+      "sourceBytes": 3895
     },
     {
       "blocks": [],
-      "contentHash": "4ea4a2cbcb51b638c36999fe6b7760faceedee734756fbebd175291433f0cae5",
+      "contentHash": "5b2d22b6faa4a8047a041d087b6258ca87891c9cb54a4c64f7c2e0dad8fb783f",
       "declarations": [],
       "imports": [
-        "$lib/agents/agent-registry",
-        "$lib/agents/agent-registry-storage",
-        "$lib/personas/persona-registry",
-        "$lib/personas/persona-registry-storage",
+        "#lib/agents/agent-registry-storage.ts",
+        "#lib/agents/agent-registry.ts",
+        "#lib/personas/persona-registry-storage.ts",
+        "#lib/personas/persona-registry.ts",
         "./workspace-data-file"
       ],
       "path": "src/lib/workspaces/workspace-registry-pair-storage.ts",
       "semanticBytes": 0,
-      "sourceBytes": 2831
+      "sourceBytes": 2843
     },
     {
       "blocks": [],
-      "contentHash": "255baa60a32cdfaf5238d699f2931e99509544f9f81cdc75ca21192725a5b6f1",
+      "contentHash": "926f6bdfb3a9e767c4b56dd2b2f29792e6b4454d40588de630f76a18af6ecfbd",
       "declarations": [],
       "imports": [
-        "$lib/shared/object-record",
+        "#lib/shared/object-record.ts",
         "./workspace-path-format"
       ],
       "path": "src/lib/workspaces/workspace-registry.ts",
       "semanticBytes": 0,
-      "sourceBytes": 9696
+      "sourceBytes": 9699
     },
     {
       "blocks": [],
-      "contentHash": "5b5ec1734fabb609a5b7cc0e927eb61f4e9b0456df6105414a38dffd9c6052ad",
+      "contentHash": "ba367bf60bd379061c3039af2de8634d85ec8b9e2f57bbb9afcada68b6404566",
       "declarations": [],
       "imports": [
-        "$lib/projects/project-repository"
+        "#lib/projects/project-repository.ts"
       ],
       "path": "src/lib/workspaces/workspace-repository-git.ts",
       "semanticBytes": 0,
-      "sourceBytes": 2148
+      "sourceBytes": 2151
     },
     {
       "blocks": [],
-      "contentHash": "edecf9566b995e63bf48861a0b7f2b8430c09be7ff61b11d913ad42a3924a904",
+      "contentHash": "e0bafde3167f3e47b9bfe6d3e4f21ad5b8b5e1c68128c580f128023e811a4337",
       "declarations": [],
       "imports": [
-        "$lib/tauri/tauri-invoke",
+        "#lib/tauri/tauri-invoke.ts",
         "./workspace-path-format"
       ],
       "path": "src/lib/workspaces/workspace-repository-setup.ts",
       "semanticBytes": 0,
-      "sourceBytes": 3946
+      "sourceBytes": 3949
     },
     {
       "blocks": [],
@@ -10503,15 +10503,15 @@
     },
     {
       "blocks": [],
-      "contentHash": "e1ddd3b12a84d5e901936bfca4a56f93e3569e8e183b0d0175f1af8c66e84e1d",
+      "contentHash": "5c4317dc8df35e148712c0b73af48be08ffab0a736cf3446c6c6b9dc024612c8",
       "declarations": [],
       "imports": [
-        "$lib/app-state/app-state-storage",
+        "#lib/app-state/app-state-storage.ts",
         "./workspace-registry"
       ],
       "path": "src/lib/workspaces/workspace-storage.ts",
       "semanticBytes": 0,
-      "sourceBytes": 3438
+      "sourceBytes": 3441
     },
     {
       "blocks": [
@@ -10602,30 +10602,30 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "0b5ffc45fd34e755029f4d087a08416dec1dd8f6aed85502cac46fc7ac49e2cc",
+      "contentHash": "7f6efad307b68a0b08e0225a2db2e97d06212199dae02cc4c9c283fb87485de3",
       "declarations": [
         null
       ],
       "imports": [
-        "$lib/tauri/tauri-invoke",
+        "#lib/tauri/tauri-invoke.ts",
         "./workspace-path-format"
       ],
       "path": "src/lib/workspaces/workspace-sync-file.ts",
       "semanticBytes": 559,
-      "sourceBytes": 5280
+      "sourceBytes": 5283
     },
     {
       "blocks": [],
-      "contentHash": "12adafa1d3b90e1818a90ffb6641a13899a1bd16ad142850a3ecef5132d5299d",
+      "contentHash": "c23387b033e41a854045509e311d975fab66898f0e120e3c7c32bf1c47d7d931",
       "declarations": [],
       "imports": [
-        "$lib/projects/project-repository",
-        "$lib/tauri/tauri-invoke",
+        "#lib/projects/project-repository.ts",
+        "#lib/tauri/tauri-invoke.ts",
         "./workspace-path-format"
       ],
       "path": "src/lib/workspaces/workspace-sync-git.ts",
       "semanticBytes": 0,
-      "sourceBytes": 8432
+      "sourceBytes": 8438
     },
     {
       "blocks": [
@@ -10716,20 +10716,20 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "9eac5c4c3cf612c7b48c0cff12fdbee94a61d3452ca74c8f09f0e39483eea38e",
+      "contentHash": "97a80592f39794fdd2247500f99e25dd89933c6553ea8533da5a1b037f573f39",
       "declarations": [
         null
       ],
       "imports": [
-        "$lib/projects/project-registry",
-        "$lib/shared/object-record",
-        "$lib/tauri/tauri-invoke",
+        "#lib/projects/project-registry.ts",
+        "#lib/shared/object-record.ts",
+        "#lib/tauri/tauri-invoke.ts",
         "./workspace-path-format",
         "./workspace-registry"
       ],
       "path": "src/lib/workspaces/workspace-sync.ts",
       "semanticBytes": 543,
-      "sourceBytes": 14636
+      "sourceBytes": 14645
     },
     {
       "blocks": [],
@@ -10745,19 +10745,19 @@
     },
     {
       "blocks": [],
-      "contentHash": "31825244c68d1f69783df45cdd46924e47fb7e97c9f5ffac53b08c0b5e71e7bd",
+      "contentHash": "3fd0a0c8cd558dda8138411a21df7a7957429c6fa3cad7d9be551bc28095c073",
       "declarations": [],
       "imports": [
+        "#lib/app-state/persistent-app-state.ts",
+        "#lib/search/CommandPalette.svelte",
+        "#lib/shell/WorkbenchShell.svelte",
         "$app/state",
-        "$lib/app-state/persistent-app-state",
-        "$lib/search/CommandPalette.svelte",
-        "$lib/shell/WorkbenchShell.svelte",
         "../app.css",
         "svelte"
       ],
       "path": "src/routes/+layout.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 1482
+      "sourceBytes": 1485
     },
     {
       "blocks": [],
@@ -10770,100 +10770,100 @@
     },
     {
       "blocks": [],
-      "contentHash": "d43147ccef9550bbcdf5962eb1a6b7b67ca0656519869184ac4331f759ee0d4b",
+      "contentHash": "df3ad37ebc3c687f40d113d6320aa9138f64f1967f15bdc9a030e3505f289b09",
       "declarations": [],
       "imports": [
-        "$lib/i18n/workduck-language",
-        "$lib/projects/ProjectsBoard.svelte",
-        "$lib/settings/appearance-settings",
-        "$lib/settings/appearance-storage",
-        "$lib/workspaces/WorkspaceGate.svelte",
-        "$lib/workspaces/workspace-registry",
-        "$lib/workspaces/workspace-storage",
+        "#lib/i18n/workduck-language.ts",
+        "#lib/projects/ProjectsBoard.svelte",
+        "#lib/settings/appearance-settings.ts",
+        "#lib/settings/appearance-storage.ts",
+        "#lib/workspaces/WorkspaceGate.svelte",
+        "#lib/workspaces/workspace-registry.ts",
+        "#lib/workspaces/workspace-storage.ts",
         "svelte"
       ],
       "path": "src/routes/+page.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 2238
+      "sourceBytes": 2253
     },
     {
       "blocks": [],
-      "contentHash": "36182e2ec17a181ca8cd7bda1b295ba3f1f719984b26a4232cc0e2afb9b88ed0",
+      "contentHash": "57f739faa8eea81683e6801f1fa05444a338c7fba9e267e4a9532990d3a69403",
       "declarations": [],
       "imports": [
-        "$lib/agents/AgentsPanel.svelte",
-        "$lib/i18n/workduck-language",
-        "$lib/settings/appearance-settings",
-        "$lib/settings/appearance-storage",
-        "$lib/ui/PageTitleRow.svelte",
-        "$lib/workspaces/WorkspaceGate.svelte",
-        "$lib/workspaces/workspace-registry",
-        "$lib/workspaces/workspace-storage",
+        "#lib/agents/AgentsPanel.svelte",
+        "#lib/i18n/workduck-language.ts",
+        "#lib/settings/appearance-settings.ts",
+        "#lib/settings/appearance-storage.ts",
+        "#lib/ui/PageTitleRow.svelte",
+        "#lib/workspaces/WorkspaceGate.svelte",
+        "#lib/workspaces/workspace-registry.ts",
+        "#lib/workspaces/workspace-storage.ts",
         "svelte"
       ],
       "path": "src/routes/agents/+page.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 2422
+      "sourceBytes": 2437
     },
     {
       "blocks": [],
-      "contentHash": "c5da458de800262bd20e58cd4b2ce733ed431da96eb5481e27a55fb245433c3e",
+      "contentHash": "53397720c6b0b9a30e783fc9860726fa2ba4fc52d32c2982d1e194be464e0997",
       "declarations": [],
       "imports": [
-        "$lib/briefs/BriefsPanel.svelte",
-        "$lib/briefs/brief-messages",
-        "$lib/settings/appearance-settings",
-        "$lib/settings/appearance-storage",
-        "$lib/ui/PageTitleRow.svelte",
-        "$lib/workspaces/WorkspaceGate.svelte",
-        "$lib/workspaces/workspace-registry",
-        "$lib/workspaces/workspace-storage",
+        "#lib/briefs/BriefsPanel.svelte",
+        "#lib/briefs/brief-messages.ts",
+        "#lib/settings/appearance-settings.ts",
+        "#lib/settings/appearance-storage.ts",
+        "#lib/ui/PageTitleRow.svelte",
+        "#lib/workspaces/WorkspaceGate.svelte",
+        "#lib/workspaces/workspace-registry.ts",
+        "#lib/workspaces/workspace-storage.ts",
         "svelte"
       ],
       "path": "src/routes/briefs/+page.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 1700
+      "sourceBytes": 1715
     },
     {
       "blocks": [],
-      "contentHash": "d99a7b3a3abd7c329aac148718931793ad0ba0f9378004e6658dba3edc5e29c5",
+      "contentHash": "d6b75a7d3bb52913adec32b2c8d6251fa5a58a67fdc26a5c25f30f45dd81c7dd",
       "declarations": [],
       "imports": [
-        "$lib/environment/EnvironmentVaultPanel.svelte",
-        "$lib/i18n/workduck-language",
-        "$lib/settings/appearance-settings",
-        "$lib/settings/appearance-storage",
-        "$lib/workspaces/WorkspaceGate.svelte",
-        "$lib/workspaces/workspace-registry",
-        "$lib/workspaces/workspace-storage",
+        "#lib/environment/EnvironmentVaultPanel.svelte",
+        "#lib/i18n/workduck-language.ts",
+        "#lib/settings/appearance-settings.ts",
+        "#lib/settings/appearance-storage.ts",
+        "#lib/workspaces/WorkspaceGate.svelte",
+        "#lib/workspaces/workspace-registry.ts",
+        "#lib/workspaces/workspace-storage.ts",
         "svelte"
       ],
       "path": "src/routes/environment/+page.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 2197
+      "sourceBytes": 2212
     },
     {
       "blocks": [],
-      "contentHash": "c7e2eeb14d49c2d8aa2131f3b9b9415a2ce101965ceb4c779a16baa7698a5675",
+      "contentHash": "ad8595e8dbaab133fd70f0c68f5bf507cccd26dc412ee17a3c950d0e4387475b",
       "declarations": [],
       "imports": [
-        "$lib/i18n/workduck-language",
-        "$lib/personas/PersonasPanel.svelte",
-        "$lib/settings/appearance-settings",
-        "$lib/settings/appearance-storage",
-        "$lib/ui/PageTitleRow.svelte",
-        "$lib/workspaces/WorkspaceGate.svelte",
-        "$lib/workspaces/workspace-registry",
-        "$lib/workspaces/workspace-storage",
+        "#lib/i18n/workduck-language.ts",
+        "#lib/personas/PersonasPanel.svelte",
+        "#lib/settings/appearance-settings.ts",
+        "#lib/settings/appearance-storage.ts",
+        "#lib/ui/PageTitleRow.svelte",
+        "#lib/workspaces/WorkspaceGate.svelte",
+        "#lib/workspaces/workspace-registry.ts",
+        "#lib/workspaces/workspace-storage.ts",
         "svelte"
       ],
       "path": "src/routes/personas/+page.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 2471
+      "sourceBytes": 2486
     },
     {
       "blocks": [],
-      "contentHash": "c5a1a224f9055cc4b19e3777ae87912e8c1f7b08f4071fe16c5cb9a8f199b6e1",
+      "contentHash": "80060dbfebcd1bdbdf13240a58ce59468d9201f003e415ff441bc1e6fdea1884",
       "declarations": [],
       "imports": [
         "$app/navigation",
@@ -10871,7 +10871,7 @@
       ],
       "path": "src/routes/processes/+page.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 170
+      "sourceBytes": 165
     },
     {
       "blocks": [],
@@ -10886,85 +10886,85 @@
     },
     {
       "blocks": [],
-      "contentHash": "84c2c1e5f2d78f0780b0308881f9de05144d664298f10053d52aaa59ece2c7fb",
+      "contentHash": "4884946325f0be4a79ffc1cff1110cad47d0f68c640c89ab24f6d04aa73ae7eb",
       "declarations": [],
       "imports": [
-        "$lib/i18n/workduck-language",
-        "$lib/queue/QueuePanel.svelte",
-        "$lib/queue/queue-read-state",
-        "$lib/settings/appearance-settings",
-        "$lib/settings/appearance-storage",
-        "$lib/workspaces/WorkspaceGate.svelte",
-        "$lib/workspaces/workspace-registry",
-        "$lib/workspaces/workspace-storage",
+        "#lib/i18n/workduck-language.ts",
+        "#lib/queue/QueuePanel.svelte",
+        "#lib/queue/queue-read-state.ts",
+        "#lib/settings/appearance-settings.ts",
+        "#lib/settings/appearance-storage.ts",
+        "#lib/workspaces/WorkspaceGate.svelte",
+        "#lib/workspaces/workspace-registry.ts",
+        "#lib/workspaces/workspace-storage.ts",
         "svelte"
       ],
       "path": "src/routes/queue/+page.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 2452
+      "sourceBytes": 2470
     },
     {
       "blocks": [],
-      "contentHash": "a744c43a38283ca7c90d3b7e7987c93a9bd05a17e2ae28c41ba4ebefc61a8d1d",
+      "contentHash": "974a7391fabd45226213daf84467145f605a9bd425b6d13626b1ffc9dd57fb1d",
       "declarations": [],
       "imports": [
-        "$lib/i18n/workduck-language",
-        "$lib/references/ReferencesPanel.svelte",
-        "$lib/settings/appearance-settings",
-        "$lib/settings/appearance-storage",
-        "$lib/ui/PageTitleRow.svelte",
-        "$lib/workspaces/WorkspaceGate.svelte",
-        "$lib/workspaces/workspace-registry",
-        "$lib/workspaces/workspace-storage",
+        "#lib/i18n/workduck-language.ts",
+        "#lib/references/ReferencesPanel.svelte",
+        "#lib/settings/appearance-settings.ts",
+        "#lib/settings/appearance-storage.ts",
+        "#lib/ui/PageTitleRow.svelte",
+        "#lib/workspaces/WorkspaceGate.svelte",
+        "#lib/workspaces/workspace-registry.ts",
+        "#lib/workspaces/workspace-storage.ts",
         "svelte"
       ],
       "path": "src/routes/references/+page.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 2509
+      "sourceBytes": 2524
     },
     {
       "blocks": [],
-      "contentHash": "d279ef8b44f110493d7732bd2f063137335ca0d8ebd169ad780b1f4a7ca82524",
+      "contentHash": "1e8724bbc743dd7ed1b7d5372bc17a83e209dc9a2e49198cca257de1395a1b29",
       "declarations": [],
       "imports": [
+        "#lib/i18n/workduck-language.ts",
+        "#lib/settings/AppearanceSettingsPanel.svelte",
+        "#lib/settings/SyncSettingsPanel.svelte",
+        "#lib/settings/SystemSettingsPanel.svelte",
+        "#lib/settings/WorkspaceSettingsPanel.svelte",
+        "#lib/settings/appearance-settings.ts",
+        "#lib/settings/appearance-storage.ts",
+        "#lib/settings/settings-tabs.ts",
         "$app/navigation",
         "$app/state",
-        "$lib/i18n/workduck-language",
-        "$lib/settings/AppearanceSettingsPanel.svelte",
-        "$lib/settings/SyncSettingsPanel.svelte",
-        "$lib/settings/SystemSettingsPanel.svelte",
-        "$lib/settings/WorkspaceSettingsPanel.svelte",
-        "$lib/settings/appearance-settings",
-        "$lib/settings/appearance-storage",
-        "$lib/settings/settings-tabs",
         "svelte"
       ],
       "path": "src/routes/settings/+page.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 4329
+      "sourceBytes": 4319
     },
     {
       "blocks": [],
-      "contentHash": "c6674ad9171c360d88d448c9fd1cb3ba0df4d34d80447ca3db79622492ca782c",
+      "contentHash": "e82651d37ec8800ebfe6e61bf95f9141ec8b7c525342fd0330069f5284ebaf88",
       "declarations": [],
       "imports": [
-        "$lib/i18n/workduck-language",
-        "$lib/settings/appearance-settings",
-        "$lib/settings/appearance-storage",
-        "$lib/skills/SkillsPanel.svelte",
-        "$lib/ui/PageTitleRow.svelte",
-        "$lib/workspaces/WorkspaceGate.svelte",
-        "$lib/workspaces/workspace-registry",
-        "$lib/workspaces/workspace-storage",
+        "#lib/i18n/workduck-language.ts",
+        "#lib/settings/appearance-settings.ts",
+        "#lib/settings/appearance-storage.ts",
+        "#lib/skills/SkillsPanel.svelte",
+        "#lib/ui/PageTitleRow.svelte",
+        "#lib/workspaces/WorkspaceGate.svelte",
+        "#lib/workspaces/workspace-registry.ts",
+        "#lib/workspaces/workspace-storage.ts",
         "svelte"
       ],
       "path": "src/routes/skills/+page.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 2422
+      "sourceBytes": 2437
     },
     {
       "blocks": [],
-      "contentHash": "c5a1a224f9055cc4b19e3777ae87912e8c1f7b08f4071fe16c5cb9a8f199b6e1",
+      "contentHash": "80060dbfebcd1bdbdf13240a58ce59468d9201f003e415ff441bc1e6fdea1884",
       "declarations": [],
       "imports": [
         "$app/navigation",
@@ -10972,7 +10972,7 @@
       ],
       "path": "src/routes/terminals/+page.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 170
+      "sourceBytes": 165
     },
     {
       "blocks": [],
@@ -10987,15 +10987,15 @@
     },
     {
       "blocks": [],
-      "contentHash": "65b7e106c3b569a665d7620d3e8b4405869fe233e9dd6509d98814827c46460f",
+      "contentHash": "23d58e3153910de10d24589a9e4fd3b5fb6988dd2382ef32cb11d08a9474ac42",
       "declarations": [],
       "imports": [
-        "$lib/tauri/tauri-invoke",
+        "#lib/tauri/tauri-invoke.ts",
         "svelte"
       ],
       "path": "src/routes/tray-menu/+page.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 3575
+      "sourceBytes": 3578
     }
   ],
   "indexerVersion": 8,

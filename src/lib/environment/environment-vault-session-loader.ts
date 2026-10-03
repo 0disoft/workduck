@@ -8,7 +8,7 @@ import {
 	readEnvironmentVaultSession,
 	type EnvironmentVaultSessionError
 } from './environment-vault-session';
-import { readWorkspaceUnlockPasswordSession } from '$lib/workspaces/workspace-unlock';
+import { readWorkspaceUnlockPasswordSession } from '#lib/workspaces/workspace-unlock.ts';
 
 export type EnvironmentVaultSessionOpenStatus =
 	| 'already-open'

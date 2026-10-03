@@ -7,13 +7,13 @@ search=execute queue work order|preview agent prompts|cancel queue execution
 invariant=Execution requires an explicit confirmation token and never converts an unknown native response into success.
 stability=architecture
 */
-import { getTauriInvoke } from '$lib/tauri/tauri-invoke';
-import type { AgentExecutionError } from '$lib/agents/agent-execution';
-import type { AgentRecord } from '$lib/agents/agent-registry';
-import type { EnvironmentVault } from '$lib/environment/environment-vault';
-import type { PersonaRecord } from '$lib/personas/persona-registry';
-import type { ReferenceRecord } from '$lib/references/reference-registry';
-import type { WorkduckSkillRecord } from '$lib/skills/skill-registry';
+import { getTauriInvoke } from '#lib/tauri/tauri-invoke.ts';
+import type { AgentExecutionError } from '#lib/agents/agent-execution.ts';
+import type { AgentRecord } from '#lib/agents/agent-registry.ts';
+import type { EnvironmentVault } from '#lib/environment/environment-vault.ts';
+import type { PersonaRecord } from '#lib/personas/persona-registry.ts';
+import type { ReferenceRecord } from '#lib/references/reference-registry.ts';
+import type { WorkduckSkillRecord } from '#lib/skills/skill-registry.ts';
 import type { WorkduckQueueResultReport, WorkduckQueueWorkOrder } from './queue-artifacts';
 
 export type QueueExecutionError =

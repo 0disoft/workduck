@@ -3,20 +3,20 @@
 	import { page } from '$app/state';
 	import { onMount, type Component } from 'svelte';
 
-	import { getWorkduckMessages } from '$lib/i18n/workduck-language';
+	import { getWorkduckMessages } from '#lib/i18n/workduck-language.ts';
 	import {
 		createDefaultAppearanceSettings,
 		type AppearanceSettings
-	} from '$lib/settings/appearance-settings';
+	} from '#lib/settings/appearance-settings.ts';
 	import {
 		readAppearanceSettingsFromBrowser,
 		subscribeAppearanceSettings
-	} from '$lib/settings/appearance-storage';
+	} from '#lib/settings/appearance-storage.ts';
 	import {
 		normalizeSettingsTabId,
 		settingsTabs,
 		type SettingsTabId
-	} from '$lib/settings/settings-tabs';
+	} from '#lib/settings/settings-tabs.ts';
 
 	type SettingsPanelComponent = Component<Record<string, never>>;
 	type LoadedSettingsPanels = Partial<Record<SettingsTabId, SettingsPanelComponent>>;
@@ -40,29 +40,29 @@
 		}
 
 		if (tabId === 'appearance') {
-			const module = await import('$lib/settings/AppearanceSettingsPanel.svelte');
+			const module = await import('#lib/settings/AppearanceSettingsPanel.svelte');
 			loadedSettingsPanels = { ...loadedSettingsPanels, appearance: module.default };
 			return;
 		}
 
 		if (tabId === 'workspaces') {
-			const module = await import('$lib/settings/WorkspaceSettingsPanel.svelte');
+			const module = await import('#lib/settings/WorkspaceSettingsPanel.svelte');
 			loadedSettingsPanels = { ...loadedSettingsPanels, workspaces: module.default };
 			return;
 		}
 
 		if (tabId === 'sync') {
-			const module = await import('$lib/settings/SyncSettingsPanel.svelte');
+			const module = await import('#lib/settings/SyncSettingsPanel.svelte');
 			loadedSettingsPanels = { ...loadedSettingsPanels, sync: module.default };
 			return;
 		}
 
-		const module = await import('$lib/settings/SystemSettingsPanel.svelte');
+		const module = await import('#lib/settings/SystemSettingsPanel.svelte');
 		loadedSettingsPanels = { ...loadedSettingsPanels, system: module.default };
 	}
 
 	function createSettingsTabHref(tabId: SettingsTabId) {
-		const nextUrl = new URL(page.url);
+		const nextUrl = new URL(page.url.href);
 
 		nextUrl.searchParams.set('tab', tabId);
 		return `${nextUrl.pathname}${nextUrl.search}${nextUrl.hash}`;
@@ -71,9 +71,8 @@
 	function handleSettingsTabClick(event: MouseEvent, tabId: SettingsTabId) {
 		event.preventDefault();
 		void goto(createSettingsTabHref(tabId), {
-			keepFocus: true,
-			noScroll: true,
-			replaceState: true
+			reset: false,
+			replace: true
 		});
 		void loadSettingsPanel(tabId);
 	}

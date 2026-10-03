@@ -2,7 +2,7 @@ import { defaultWindowIcon } from '@tauri-apps/api/app';
 import { TrayIcon, type TrayIconEvent, type TrayIconOptions } from '@tauri-apps/api/tray';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 
-import { getTauriInvoke, isTauriRuntimeAvailable } from '$lib/tauri/tauri-invoke';
+import { getTauriInvoke, isTauriRuntimeAvailable } from '#lib/tauri/tauri-invoke.ts';
 
 const WORKDUCK_TRAY_ID = 'workduck-main-tray';
 

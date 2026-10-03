@@ -1,4 +1,4 @@
-import { getTauriInvoke } from '$lib/tauri/tauri-invoke';
+import { getTauriInvoke } from '#lib/tauri/tauri-invoke.ts';
 
 import type { CommandPaletteItem } from './command-palette-index';
 

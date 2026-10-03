@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { onDestroy } from 'svelte';
 
-	import type { WorkspaceRecord } from '$lib/workspaces/workspace-registry';
+	import type { WorkspaceRecord } from '#lib/workspaces/workspace-registry.ts';
 	import type { ProjectFolderError } from './project-folder';
 	import type { ProjectRepositoryOperation } from './project-board-operations';
 	import {

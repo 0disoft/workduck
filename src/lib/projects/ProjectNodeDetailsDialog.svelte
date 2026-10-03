@@ -1,6 +1,6 @@
 <script lang="ts">
-	import type { WorkduckMessages } from '$lib/i18n/workduck-message-contract';
-	import { modalDialog } from '$lib/ui/modal-dialog-action';
+	import type { WorkduckMessages } from '#lib/i18n/workduck-message-contract.ts';
+	import { modalDialog } from '#lib/ui/modal-dialog-action.ts';
 	import type { ProjectFormError } from './project-board-errors';
 	import {
 		PROJECT_NAME_MAX_LENGTH,

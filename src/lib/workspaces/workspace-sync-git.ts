@@ -1,6 +1,6 @@
-import { getTauriInvoke } from '$lib/tauri/tauri-invoke';
+import { getTauriInvoke } from '#lib/tauri/tauri-invoke.ts';
 import { normalizeWorkspacePathForStorage } from './workspace-path-format';
-import type { ProjectRepositoryGitCredentialInput } from '$lib/projects/project-repository';
+import type { ProjectRepositoryGitCredentialInput } from '#lib/projects/project-repository.ts';
 
 export type WorkspaceSyncGitError =
 	| 'workspace-sync-git-folder-required'

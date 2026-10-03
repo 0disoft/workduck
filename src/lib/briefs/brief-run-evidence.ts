@@ -1,7 +1,7 @@
-import { readProjectRepositoryTaskRunRecords, type ProjectRepositoryTaskRunRecord } from '$lib/projects/project-repository-task';
-import { listQueueFiles, readQueueFile } from '$lib/queue/queue-folder';
-import { parseQueueResultReport, parseQueueWorkOrder, type WorkduckQueueResultReport, type WorkduckQueueWorkOrder } from '$lib/queue/queue-artifacts';
-import { normalizeWorkspacePathForStorage } from '$lib/workspaces/workspace-path-format';
+import { readProjectRepositoryTaskRunRecords, type ProjectRepositoryTaskRunRecord } from '#lib/projects/project-repository-task.ts';
+import { listQueueFiles, readQueueFile } from '#lib/queue/queue-folder.ts';
+import { parseQueueResultReport, parseQueueWorkOrder, type WorkduckQueueResultReport, type WorkduckQueueWorkOrder } from '#lib/queue/queue-artifacts.ts';
+import { normalizeWorkspacePathForStorage } from '#lib/workspaces/workspace-path-format.ts';
 import type { BriefRecord } from './brief-registry';
 import type { BriefRunLink, BriefRunSourceKind } from './brief-run-registry';
 

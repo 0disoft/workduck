@@ -1,10 +1,10 @@
-import { isObjectRecord } from '$lib/shared/object-record';
+import { isObjectRecord } from '#lib/shared/object-record.ts';
 import { isSecretVaultEnvelope, type SecretVaultEnvelope } from './secret-vault-crypto';
 import {
 	readWorkspaceDataFile,
 	workspaceDataFilesAreAvailable,
 	writeWorkspaceDataFile
-} from '$lib/workspaces/workspace-data-file';
+} from '#lib/workspaces/workspace-data-file.ts';
 
 export const WORKDUCK_ENVIRONMENT_VAULT_STORAGE_KEY = 'workduck.environmentVaults.v1';
 export const WORKDUCK_ENVIRONMENT_VAULT_CHANGED_EVENT = 'workduck:environment-vault-changed';

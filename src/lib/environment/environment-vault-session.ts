@@ -1,8 +1,8 @@
-import { getTauriInvoke } from '$lib/tauri/tauri-invoke';
+import { getTauriInvoke } from '#lib/tauri/tauri-invoke.ts';
 import {
 	markWorkspaceLocked,
 	readIdleWorkspaceSessionIds
-} from '$lib/workspaces/workspace-unlock';
+} from '#lib/workspaces/workspace-unlock.ts';
 import {
 	isEnvironmentSecretNativeReference,
 	parseEnvironmentVault,

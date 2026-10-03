@@ -1,13 +1,13 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	import { createDefaultAppearanceSettings } from '$lib/settings/appearance-settings';
-	import { readAppearanceSettingsFromBrowser, subscribeAppearanceSettings } from '$lib/settings/appearance-storage';
-	import { createEmptyWorkspaceRegistry, getActiveWorkspace } from '$lib/workspaces/workspace-registry';
-	import { readWorkspaceRegistryFromBrowser, subscribeWorkspaceRegistry } from '$lib/workspaces/workspace-storage';
-	import WorkspaceGate from '$lib/workspaces/WorkspaceGate.svelte';
-	import PageTitleRow from '$lib/ui/PageTitleRow.svelte';
-	import BriefsPanel from '$lib/briefs/BriefsPanel.svelte';
-	import { briefMessages } from '$lib/briefs/brief-messages';
+	import { createDefaultAppearanceSettings } from '#lib/settings/appearance-settings.ts';
+	import { readAppearanceSettingsFromBrowser, subscribeAppearanceSettings } from '#lib/settings/appearance-storage.ts';
+	import { createEmptyWorkspaceRegistry, getActiveWorkspace } from '#lib/workspaces/workspace-registry.ts';
+	import { readWorkspaceRegistryFromBrowser, subscribeWorkspaceRegistry } from '#lib/workspaces/workspace-storage.ts';
+	import WorkspaceGate from '#lib/workspaces/WorkspaceGate.svelte';
+	import PageTitleRow from '#lib/ui/PageTitleRow.svelte';
+	import BriefsPanel from '#lib/briefs/BriefsPanel.svelte';
+	import { briefMessages } from '#lib/briefs/brief-messages.ts';
 
 	let appearance = $state(createDefaultAppearanceSettings());
 	let registry = $state(createEmptyWorkspaceRegistry());

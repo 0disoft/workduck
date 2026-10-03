@@ -1,9 +1,9 @@
-import { readAgentRegistry } from '$lib/agents/agent-registry-storage';
-import { readProjectRegistry } from '$lib/projects/project-storage';
-import { readProjectRepositoryTaskRunRecords } from '$lib/projects/project-repository-task';
-import { listQueueFiles } from '$lib/queue/queue-folder';
-import { readReferenceRegistry } from '$lib/references/reference-registry-storage';
-import type { WorkspaceRecord } from '$lib/workspaces/workspace-registry';
+import { readAgentRegistry } from '#lib/agents/agent-registry-storage.ts';
+import { readProjectRegistry } from '#lib/projects/project-storage.ts';
+import { readProjectRepositoryTaskRunRecords } from '#lib/projects/project-repository-task.ts';
+import { listQueueFiles } from '#lib/queue/queue-folder.ts';
+import { readReferenceRegistry } from '#lib/references/reference-registry-storage.ts';
+import type { WorkspaceRecord } from '#lib/workspaces/workspace-registry.ts';
 
 import {
 	buildWorkspaceCommandPaletteItems,

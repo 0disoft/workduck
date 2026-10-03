@@ -1,4 +1,4 @@
-import { normalizeWorkspacePathForStorage } from '$lib/workspaces/workspace-path-format';
+import { normalizeWorkspacePathForStorage } from '#lib/workspaces/workspace-path-format.ts';
 import {
 	cloneProjectRepository,
 	initializeProjectRepositoryGit,

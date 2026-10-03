@@ -1,8 +1,8 @@
-import type { AgentRegistry } from '$lib/agents/agent-registry';
-import type { ProjectRegistry } from '$lib/projects/project-registry';
-import type { ProjectRepositoryTaskRunRecord } from '$lib/projects/project-repository-task';
-import type { QueueFileEntry } from '$lib/queue/queue-folder';
-import type { ReferenceRegistry } from '$lib/references/reference-registry';
+import type { AgentRegistry } from '#lib/agents/agent-registry.ts';
+import type { ProjectRegistry } from '#lib/projects/project-registry.ts';
+import type { ProjectRepositoryTaskRunRecord } from '#lib/projects/project-repository-task.ts';
+import type { QueueFileEntry } from '#lib/queue/queue-folder.ts';
+import type { ReferenceRegistry } from '#lib/references/reference-registry.ts';
 
 export type CommandPaletteItemKind =
 	| 'command'

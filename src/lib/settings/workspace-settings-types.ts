@@ -1,16 +1,16 @@
-import type { WorkduckMessages } from '$lib/i18n/workduck-message-contract';
+import type { WorkduckMessages } from '#lib/i18n/workduck-message-contract.ts';
 import type {
 	WorkspaceRegistry,
 	WorkspaceRegistryError
-} from '$lib/workspaces/workspace-registry';
-import type { WorkspacePasswordError } from '$lib/workspaces/workspace-password';
-import type { WorkspacePathError } from '$lib/workspaces/workspace-path';
-import type { WorkspaceRepositorySetupError } from '$lib/workspaces/workspace-repository-setup';
+} from '#lib/workspaces/workspace-registry.ts';
+import type { WorkspacePasswordError } from '#lib/workspaces/workspace-password.ts';
+import type { WorkspacePathError } from '#lib/workspaces/workspace-path.ts';
+import type { WorkspaceRepositorySetupError } from '#lib/workspaces/workspace-repository-setup.ts';
 import type {
 	WorkspaceRepositoryGithubVisibility,
 	WorkspaceRepositoryGitError
-} from '$lib/workspaces/workspace-repository-git';
-import type { ProjectRepositoryTaskError } from '$lib/projects/project-repository-task';
+} from '#lib/workspaces/workspace-repository-git.ts';
+import type { ProjectRepositoryTaskError } from '#lib/projects/project-repository-task.ts';
 
 export const GITHUB_REPOSITORY_NAME_MAX_LENGTH = 100;
 export const GITHUB_REPOSITORY_COMMIT_MESSAGE_MAX_LENGTH = 200;

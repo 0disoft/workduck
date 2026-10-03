@@ -1,4 +1,4 @@
-import { isObjectRecord } from '$lib/shared/object-record';
+import { isObjectRecord } from '#lib/shared/object-record.ts';
 import {
 	createEmptyPersonaRegistry,
 	parsePersonaRegistry,
@@ -10,7 +10,7 @@ import {
 	workspaceDataFilesAreAvailable,
 	writeWorkspaceRegistryFile,
 	type WorkspaceDataFileError
-} from '$lib/workspaces/workspace-data-file';
+} from '#lib/workspaces/workspace-data-file.ts';
 
 export const WORKDUCK_PERSONA_REGISTRIES_STORAGE_KEY = 'workduck.personaRegistries.v1';
 export const WORKDUCK_PERSONA_REGISTRY_CHANGED_EVENT = 'workduck:persona-registry-changed';

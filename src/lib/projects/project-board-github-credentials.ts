@@ -2,7 +2,7 @@ import type {
 	EnvironmentSecretKind,
 	EnvironmentSecretRecord,
 	EnvironmentVault
-} from '$lib/environment/environment-vault';
+} from '#lib/environment/environment-vault.ts';
 import type { ProjectRepositoryGitCredentialInput } from './project-repository';
 import type { ProjectNodeRecord, ProjectRepositoryLinkRecord } from './project-registry';
 import type { ProjectCredentialError } from './project-board-errors';

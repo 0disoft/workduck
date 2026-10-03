@@ -1,4 +1,4 @@
-import { getTauriInvoke } from '$lib/tauri/tauri-invoke';
+import { getTauriInvoke } from '#lib/tauri/tauri-invoke.ts';
 export const WORKSPACE_PASSWORD_MIN_LENGTH = 8;
 
 export type WorkspacePasswordError =

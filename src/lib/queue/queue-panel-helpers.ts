@@ -1,5 +1,5 @@
 import type { ManualVoteOptionInput, QueueCardEntry } from './queue-panel-types';
-import type { ReferenceRecord } from '$lib/references/reference-registry';
+import type { ReferenceRecord } from '#lib/references/reference-registry.ts';
 import {
 	createVoteSpec,
 	formatVoteCriteriaInput,

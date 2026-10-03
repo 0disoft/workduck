@@ -7,7 +7,7 @@ search=apply cli environment|set command variables|environment write failure
 invariant=Unavailable or malformed native responses fail closed and never report variables as applied.
 stability=contract
 */
-import { getTauriInvoke } from '$lib/tauri/tauri-invoke';
+import { getTauriInvoke } from '#lib/tauri/tauri-invoke.ts';
 export type CliEnvironmentApplyError =
 	| 'cli-environment-empty'
 	| 'cli-environment-too-large'

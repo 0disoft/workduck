@@ -1,7 +1,7 @@
-import type { AgentRecord } from '$lib/agents/agent-registry';
-import type { PersonaRecord } from '$lib/personas/persona-registry';
-import type { ReferenceRecord } from '$lib/references/reference-registry';
-import type { WorkduckSkillRecord } from '$lib/skills/skill-registry';
+import type { AgentRecord } from '#lib/agents/agent-registry.ts';
+import type { PersonaRecord } from '#lib/personas/persona-registry.ts';
+import type { ReferenceRecord } from '#lib/references/reference-registry.ts';
+import type { WorkduckSkillRecord } from '#lib/skills/skill-registry.ts';
 import type { QueueFileEntry } from './queue-folder';
 import type {
 	WorkduckQueueExecutionState,

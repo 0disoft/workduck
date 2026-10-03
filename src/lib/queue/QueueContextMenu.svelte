@@ -1,6 +1,6 @@
 <script lang="ts">
-	import type { WorkduckMessages } from '$lib/i18n/workduck-message-contract';
-	import { styleProperties } from '$lib/ui/style-properties-action';
+	import type { WorkduckMessages } from '#lib/i18n/workduck-message-contract.ts';
+	import { styleProperties } from '#lib/ui/style-properties-action.ts';
 	import type { QueueContextMenuState } from './queue-panel-types';
 
 	interface Props {

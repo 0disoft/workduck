@@ -1,28 +1,28 @@
-import { createEmptyAgentRegistry, type AgentRegistry } from '$lib/agents/agent-registry';
-import { readAgentRegistry, subscribeAgentRegistry } from '$lib/agents/agent-registry-storage';
+import { createEmptyAgentRegistry, type AgentRegistry } from '#lib/agents/agent-registry.ts';
+import { readAgentRegistry, subscribeAgentRegistry } from '#lib/agents/agent-registry-storage.ts';
 import {
 	createEmptyPersonaRegistry,
 	type PersonaRegistry
-} from '$lib/personas/persona-registry';
+} from '#lib/personas/persona-registry.ts';
 import {
 	readPersonaRegistry,
 	subscribePersonaRegistry
-} from '$lib/personas/persona-registry-storage';
+} from '#lib/personas/persona-registry-storage.ts';
 import {
 	createEmptyProjectRegistry,
 	type ProjectRegistry
-} from '$lib/projects/project-registry';
-import { readProjectRegistry, subscribeProjectRegistry } from '$lib/projects/project-storage';
+} from '#lib/projects/project-registry.ts';
+import { readProjectRegistry, subscribeProjectRegistry } from '#lib/projects/project-storage.ts';
 import {
 	createEmptyReferenceRegistry,
 	type ReferenceRegistry
-} from '$lib/references/reference-registry';
+} from '#lib/references/reference-registry.ts';
 import {
 	readReferenceRegistry,
 	subscribeReferenceRegistry
-} from '$lib/references/reference-registry-storage';
-import { createEmptySkillRegistry, type SkillRegistry } from '$lib/skills/skill-registry';
-import { readSkillRegistry, subscribeSkillRegistry } from '$lib/skills/skill-registry-storage';
+} from '#lib/references/reference-registry-storage.ts';
+import { createEmptySkillRegistry, type SkillRegistry } from '#lib/skills/skill-registry.ts';
+import { readSkillRegistry, subscribeSkillRegistry } from '#lib/skills/skill-registry-storage.ts';
 import { ensureQueueFolder, type QueueFolderError } from './queue-folder';
 
 export interface QueuePanelWorkspaceRegistryState {

@@ -1,4 +1,4 @@
-import { isObjectRecord } from '$lib/shared/object-record';
+import { isObjectRecord } from '#lib/shared/object-record.ts';
 import {
 	createEmptyAgentRegistry,
 	parseAgentRegistry,
@@ -10,7 +10,7 @@ import {
 	workspaceDataFilesAreAvailable,
 	writeWorkspaceRegistryFile,
 	type WorkspaceDataFileError
-} from '$lib/workspaces/workspace-data-file';
+} from '#lib/workspaces/workspace-data-file.ts';
 
 export const WORKDUCK_AGENT_REGISTRIES_STORAGE_KEY = 'workduck.agentRegistries.v1';
 export const WORKDUCK_AGENT_REGISTRY_CHANGED_EVENT = 'workduck:agent-registry-changed';

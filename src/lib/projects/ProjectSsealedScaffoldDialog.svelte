@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { modalDialog } from '$lib/ui/modal-dialog-action';
+	import { modalDialog } from '#lib/ui/modal-dialog-action.ts';
 	import { getProjectFormErrorMessage, type ProjectFormError } from './project-board-errors';
 	import {
 		getSsealedScaffoldProfileDescription,
@@ -19,7 +19,7 @@
 	} from './ssealed-scaffold-generated';
 	import type { ProjectRepositoryTarget } from './project-board-types';
 	import type { ProjectRegistryStorageError } from './project-storage';
-	import type { WorkduckMessages } from '$lib/i18n/workduck-message-contract';
+	import type { WorkduckMessages } from '#lib/i18n/workduck-message-contract.ts';
 
 	interface Props {
 		readonly target: ProjectRepositoryTarget;
