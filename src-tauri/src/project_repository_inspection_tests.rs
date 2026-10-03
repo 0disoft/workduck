@@ -6,6 +6,137 @@ use std::{
 };
 
 #[test]
+fn worktree_remote_cache_refreshes_after_shared_config_changes() {
+    let (_sandbox, repository, worktree) = create_linked_worktree_for_test();
+    run_test_git(
+        &repository,
+        &[
+            "remote",
+            "add",
+            "origin",
+            "https://github.com/example/old.git",
+        ],
+    );
+    let first = inspect_git_repository(&worktree).unwrap_or_else(|_| panic!("first inspection"));
+    assert_eq!(
+        first.origin_url.as_deref(),
+        Some("https://github.com/example/old.git")
+    );
+
+    run_test_git(
+        &repository,
+        &[
+            "remote",
+            "set-url",
+            "origin",
+            "https://github.com/example/renamed.git",
+        ],
+    );
+    let refreshed =
+        inspect_git_repository(&worktree).unwrap_or_else(|_| panic!("refreshed inspection"));
+
+    assert_eq!(
+        refreshed.origin_url.as_deref(),
+        Some("https://github.com/example/renamed.git")
+    );
+    reset_git_inspection_diagnostics();
+    let cached = inspect_git_repository(&worktree).unwrap_or_else(|_| panic!("cached inspection"));
+    assert_eq!(cached.origin_url, refreshed.origin_url);
+    assert_eq!(read_git_inspection_diagnostics(), (1, 1));
+}
+
+#[test]
+fn worktree_remote_cache_refreshes_after_worktree_config_changes() {
+    let (_sandbox, repository, worktree) = create_linked_worktree_for_test();
+    run_test_git(
+        &repository,
+        &["config", "extensions.worktreeConfig", "true"],
+    );
+    run_test_git(
+        &worktree,
+        &[
+            "config",
+            "--worktree",
+            "remote.origin.url",
+            "https://github.com/example/local.git",
+        ],
+    );
+    let first = inspect_git_repository(&worktree).unwrap_or_else(|_| panic!("first inspection"));
+    assert_eq!(
+        first.origin_url.as_deref(),
+        Some("https://github.com/example/local.git")
+    );
+
+    run_test_git(
+        &worktree,
+        &[
+            "config",
+            "--worktree",
+            "remote.origin.url",
+            "https://github.com/example/local-renamed.git",
+        ],
+    );
+    let refreshed =
+        inspect_git_repository(&worktree).unwrap_or_else(|_| panic!("refreshed inspection"));
+
+    assert_eq!(
+        refreshed.origin_url.as_deref(),
+        Some("https://github.com/example/local-renamed.git")
+    );
+}
+
+fn create_linked_worktree_for_test() -> (tempfile::TempDir, PathBuf, PathBuf) {
+    let sandbox = tempfile::tempdir().expect("worktree sandbox");
+    let repository = sandbox.path().join("repo");
+    let worktree = sandbox.path().join("linked");
+    fs::create_dir(&repository).unwrap();
+    run_test_git(&repository, &["init", "--quiet"]);
+    run_test_git(
+        &repository,
+        &[
+            "-c",
+            "user.name=Workduck Test",
+            "-c",
+            "user.email=workduck@example.invalid",
+            "commit",
+            "--allow-empty",
+            "--no-gpg-sign",
+            "--quiet",
+            "-m",
+            "fixture",
+        ],
+    );
+    run_test_git(
+        &repository,
+        &[
+            "worktree",
+            "add",
+            "--quiet",
+            "--detach",
+            worktree.to_str().unwrap(),
+            "HEAD",
+        ],
+    );
+    let repository = fs::canonicalize(repository).unwrap();
+    let worktree = fs::canonicalize(worktree).unwrap();
+    (sandbox, repository, worktree)
+}
+
+fn run_test_git(repository: &Path, args: &[&str]) {
+    let output = Command::new("git")
+        .args(["-c", "core.hooksPath=", "-c", "commit.gpgSign=false"])
+        .args(args)
+        .current_dir(repository)
+        .output()
+        .expect("run fixture Git command");
+    assert!(
+        output.status.success(),
+        "fixture Git failed: {}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+}
+
+#[test]
 fn git_status_summary_reads_branch_counts_and_changes() {
     let summary = parse_git_status_summary(
         "# branch.oid 9fceb02\n# branch.head main\n# branch.upstream origin/main\n# branch.ab +2 -3\n1 .M N... 100644 100644 100644 abc def file.txt\n",

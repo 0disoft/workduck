@@ -2984,7 +2984,7 @@
         "clone credentials"
       ],
       "hashes": {
-        "body": "ef546c14d17e11f5f1efec6ec82b5ec18b01ce89e4ce012b9f9d0ec1ab2af05b",
+        "body": "9c602358efddbef4a4ec69f08601b6b50397f70c38875b927efe69e71b418c8c",
         "semantic": "c357e3a757f2090bca6e1a2428263a296cf1853f0f1ddf491f02d21c2f3d0fb7",
         "structure": "98f2357c05571094ae694e0f4e460c29c3ccb6a7fe51b2706ab64092f790940c"
       },
@@ -3040,6 +3040,6 @@
   "generatedBy": "llmnav@0.9.7",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "e087167b73d22f8400eac2d8613e579ca955bc3524cd20ee12297eb90b82ddd9",
+  "sourceHash": "59ee5370d713a179cd330d1236b90ba9389c102679861a7811f4d4aa9af34338",
   "specVersion": "1"
 }

@@ -43,13 +43,20 @@ struct GitInspectionInFlight {
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 struct GitConfigFingerprint {
+    common_config: GitConfigFileFingerprint,
+    worktree_config: Option<GitConfigFileFingerprint>,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+struct GitConfigFileFingerprint {
+    path: PathBuf,
     length: u64,
-    modified: Option<SystemTime>,
+    modified: SystemTime,
 }
 
 #[derive(Clone)]
 struct GitRemoteUrlsCacheEntry {
-    fingerprint: Option<GitConfigFingerprint>,
+    fingerprint: GitConfigFingerprint,
     remote_urls: HashMap<String, String>,
     cached_at: Instant,
 }
@@ -420,7 +427,9 @@ fn read_valid_git_remote_urls(
         .expect("git remote URL cache lock poisoned")
         .get(repository_path)
         .filter(|entry| {
-            entry.fingerprint == fingerprint
+            fingerprint
+                .as_ref()
+                .is_some_and(|fingerprint| entry.fingerprint == *fingerprint)
                 && entry.cached_at.elapsed() < PROJECT_REPOSITORY_REMOTE_CACHE_TTL
         })
         .cloned()
@@ -432,6 +441,9 @@ fn read_valid_git_remote_urls(
     }
 
     let remote_urls = read_valid_git_remote_urls_uncached(repository_path)?;
+    let Some(fingerprint) = fingerprint else {
+        return Ok(remote_urls);
+    };
     let mut cache = git_remote_urls_cache()
         .lock()
         .expect("git remote URL cache lock poisoned");
@@ -488,12 +500,37 @@ fn read_valid_git_remote_urls_uncached(
 }
 
 fn read_git_config_fingerprint(repository_path: &Path) -> Option<GitConfigFingerprint> {
-    let config_path = resolve_repository_git_dir(repository_path)?.join("config");
-    let metadata = fs::metadata(config_path).ok()?;
+    let git_dir = resolve_repository_git_dir(repository_path)?;
+    let common_dir = match fs::read_to_string(git_dir.join("commondir")) {
+        Ok(common_dir) => {
+            let common_dir = common_dir.trim();
+            if common_dir.is_empty() {
+                return None;
+            }
+            canonicalize_existing_path_or_keep(git_dir.join(common_dir))
+        }
+        Err(error) if error.kind() == io::ErrorKind::NotFound => git_dir.clone(),
+        Err(_) => return None,
+    };
+    let common_config = read_git_config_file_fingerprint(common_dir.join("config")).ok()?;
+    let worktree_config = match read_git_config_file_fingerprint(git_dir.join("config.worktree")) {
+        Ok(fingerprint) => Some(fingerprint),
+        Err(error) if error.kind() == io::ErrorKind::NotFound => None,
+        Err(_) => return None,
+    };
 
     Some(GitConfigFingerprint {
+        common_config,
+        worktree_config,
+    })
+}
+
+fn read_git_config_file_fingerprint(path: PathBuf) -> io::Result<GitConfigFileFingerprint> {
+    let metadata = fs::metadata(&path)?;
+    Ok(GitConfigFileFingerprint {
+        path,
         length: metadata.len(),
-        modified: metadata.modified().ok(),
+        modified: metadata.modified()?,
     })
 }
 

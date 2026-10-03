@@ -2973,7 +2973,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "ef546c14d17e11f5f1efec6ec82b5ec18b01ce89e4ce012b9f9d0ec1ab2af05b",
+      "contentHash": "9c602358efddbef4a4ec69f08601b6b50397f70c38875b927efe69e71b418c8c",
       "declarations": [
         null
       ],
@@ -2986,11 +2986,11 @@
       ],
       "path": "src-tauri/src/project_repository_inspection.rs",
       "semanticBytes": 621,
-      "sourceBytes": 17733
+      "sourceBytes": 19028
     },
     {
       "blocks": [],
-      "contentHash": "47a730cd0652683dbe38032a2272d3df7d2b75b8cc38f8ecb85074c05d1d9e80",
+      "contentHash": "e80ac8413a2d0685412d81369e403db3dfc4bf641f2a07f1e9e812f1a304b997",
       "declarations": [],
       "imports": [
         "std::{\n    process::{Command, Stdio},\n    thread,\n}",
@@ -2999,7 +2999,7 @@
       ],
       "path": "src-tauri/src/project_repository_inspection_tests.rs",
       "semanticBytes": 0,
-      "sourceBytes": 13474
+      "sourceBytes": 17285
     },
     {
       "blocks": [],
