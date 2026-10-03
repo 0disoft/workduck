@@ -84,3 +84,9 @@ role Plan and apply repository scaffolds with exclusive ownership, durable journ
 owns scaffold selection and planning, scaffold file and manifest writes, scaffold locking and recovery
 excludes folder command DTOs, workspace and repository root validation, Git operations
 invariant Apply writes missing files only, and cleanup verifies repository parents and recorded checksums before removing generated files.
+
+@workduck.projects.git-inspection
+role Inspect repository status and remotes with bounded read-only Git processes, shared in-flight requests, and cache diagnostics.
+owns repository Git status parsing, inspection request coalescing, remote URL cache and diagnostics
+excludes Git mutations, GitHub publication, clone credentials
+invariant Inspections avoid credential helpers and index writes, and concurrent callers for one repository share the same in-flight result.

@@ -1505,20 +1505,20 @@
         "repository task terminals"
       ],
       "hashes": {
-        "body": "db3203253dc7794ddd074e697637d37d4f4a940a113cc9761d97eb43d17cb6b2",
+        "body": "4969aca1b3cc66ece53bc196c0899bbda37d4697c2865851ade7f07e64958c4e",
         "semantic": "51a97b6c16ee601cb0282c3ac033f3c1d27d11a6e8e533c8ba3fa262269ef7d3",
-        "structure": "01010332c146de59341a5a5b81c091d48b5241c278355beb8a04995bb3eef76d"
+        "structure": "311313afefdd4b1f2890423aa035bb0835458cc948f4f3109527cb9602ecd375"
       },
       "id": "workduck.projects.repository-native",
       "imports": [
         "crate::git_credential::{\n    GitCredential, apply_github_cli_credential, clear_git_credential_environment,\n    github_token_credential, parse_git_credential,\n}",
         "crate::project_repository_failure::{\n    CloneFailure, classify_git_clone_failure, classify_git_fetch_failure,\n    classify_git_pull_failure, classify_git_push_failure, classify_github_initial_commit_failure,\n    classify_github_publish_failure,\n}",
         "crate::project_repository_validation::{\n    resolve_group_path, validate_commit_message, validate_github_repository_name,\n    validate_github_visibility, validate_group_relative_path, validate_remote_url,\n    validate_repository_folder_name, validate_repository_path, validate_workspace_root,\n}",
-        "crate::{\n    git_path::{\n        GitProcessError, git_process_path, run_git_inspection_process, run_git_process,\n        wait_for_child_output,\n    },\n    path_display::display_path,\n    process_tree::ProcessTreeChild,\n}",
+        "crate::{\n    git_path::{GitProcessError, git_process_path, run_git_process, wait_for_child_output},\n    path_display::display_path,\n    process_tree::ProcessTreeChild,\n}",
+        "inspection",
+        "inspection::{inspect_project_repository_git_blocking, is_git_repository}",
         "std::os::windows::process::CommandExt",
-        "std::thread",
-        "std::{\n    cell::Cell,\n    collections::HashMap,\n    ffi::OsString,\n    fs,\n    io,\n    path::{Path, PathBuf},\n    process::{Command, Output, Stdio},\n    sync::{Arc, Condvar, Mutex, OnceLock},\n    time::{Duration, Instant, SystemTime},\n}",
-        "tests {\n    use super::*"
+        "std::{\n    ffi::OsString,\n    fs, io,\n    path::{Path, PathBuf},\n    process::{Command, Output, Stdio},\n    time::Duration,\n}"
       ],
       "invariant": [
         "Inspections avoid credentials and optional locks, while mutations use bounded processes and return closed repository errors."
@@ -2975,11 +2975,61 @@
         "preserve scaffold conflicts"
       ],
       "stability": "architecture"
+    },
+    {
+      "boundaries": [],
+      "excludes": [
+        "Git mutations",
+        "GitHub publication",
+        "clone credentials"
+      ],
+      "hashes": {
+        "body": "ef546c14d17e11f5f1efec6ec82b5ec18b01ce89e4ce012b9f9d0ec1ab2af05b",
+        "semantic": "c357e3a757f2090bca6e1a2428263a296cf1853f0f1ddf491f02d21c2f3d0fb7",
+        "structure": "98f2357c05571094ae694e0f4e460c29c3ccb6a7fe51b2706ab64092f790940c"
+      },
+      "id": "workduck.projects.git-inspection",
+      "imports": [
+        "crate::git_path::{GitProcessError, run_git_inspection_process}",
+        "crate::project_repository_validation::{validate_remote_url, validate_repository_path}",
+        "std::{\n    cell::Cell,\n    collections::HashMap,\n    fs, io,\n    path::{Path, PathBuf},\n    process::Output,\n    sync::{Arc, Condvar, Mutex, OnceLock},\n    time::{Duration, Instant, SystemTime},\n}",
+        "super::{\n    GitCommandFailure, ProjectRepositoryGitError, ProjectRepositoryGitInspection,\n    ProjectRepositoryGitInspectionRecord, ProjectRepositoryGitInspectionRequest,\n    invalid_git_inspection,\n}",
+        "tests"
+      ],
+      "invariant": [
+        "Inspections avoid credential helpers and index writes, and concurrent callers for one repository share the same in-flight result."
+      ],
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src-tauri/src/project_repository_inspection.rs",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "owns": [
+        "repository Git status parsing",
+        "inspection request coalescing",
+        "remote URL cache and diagnostics"
+      ],
+      "role": "Inspect repository status and remotes with bounded read-only Git processes, shared in-flight requests, and cache diagnostics.",
+      "scope": "module",
+      "search": [
+        "repository inspection cache",
+        "worktree remote URLs",
+        "coalesce Git status reads"
+      ],
+      "stability": "architecture"
     }
   ],
   "contractFingerprints": {
     "configuration": {
-      "sha256": "a0515f8316fca773336a632bebbf57249ecfad2df1d2b12476440aeb295fe8f7"
+      "sha256": "b9373d986572cf03d0afc01cada2ebfb444bb9c646a5ce9f20a802d63c9dc1e3"
     },
     "exportedApi": {
       "count": 0,
@@ -2990,6 +3040,6 @@
   "generatedBy": "llmnav@0.9.7",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "b8328744118e0f88cadbe061211c9f6214cb4879bb5f713ea4dc23edc289348d",
+  "sourceHash": "e087167b73d22f8400eac2d8613e579ca955bc3524cd20ee12297eb90b82ddd9",
   "specVersion": "1"
 }

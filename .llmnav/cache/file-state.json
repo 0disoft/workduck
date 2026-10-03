@@ -2750,7 +2750,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "db3203253dc7794ddd074e697637d37d4f4a940a113cc9761d97eb43d17cb6b2",
+      "contentHash": "4969aca1b3cc66ece53bc196c0899bbda37d4697c2865851ade7f07e64958c4e",
       "declarations": [
         null
       ],
@@ -2758,15 +2758,15 @@
         "crate::git_credential::{\n    GitCredential, apply_github_cli_credential, clear_git_credential_environment,\n    github_token_credential, parse_git_credential,\n}",
         "crate::project_repository_failure::{\n    CloneFailure, classify_git_clone_failure, classify_git_fetch_failure,\n    classify_git_pull_failure, classify_git_push_failure, classify_github_initial_commit_failure,\n    classify_github_publish_failure,\n}",
         "crate::project_repository_validation::{\n    resolve_group_path, validate_commit_message, validate_github_repository_name,\n    validate_github_visibility, validate_group_relative_path, validate_remote_url,\n    validate_repository_folder_name, validate_repository_path, validate_workspace_root,\n}",
-        "crate::{\n    git_path::{\n        GitProcessError, git_process_path, run_git_inspection_process, run_git_process,\n        wait_for_child_output,\n    },\n    path_display::display_path,\n    process_tree::ProcessTreeChild,\n}",
+        "crate::{\n    git_path::{GitProcessError, git_process_path, run_git_process, wait_for_child_output},\n    path_display::display_path,\n    process_tree::ProcessTreeChild,\n}",
+        "inspection",
+        "inspection::{inspect_project_repository_git_blocking, is_git_repository}",
         "std::os::windows::process::CommandExt",
-        "std::thread",
-        "std::{\n    cell::Cell,\n    collections::HashMap,\n    ffi::OsString,\n    fs,\n    io,\n    path::{Path, PathBuf},\n    process::{Command, Output, Stdio},\n    sync::{Arc, Condvar, Mutex, OnceLock},\n    time::{Duration, Instant, SystemTime},\n}",
-        "tests {\n    use super::*"
+        "std::{\n    ffi::OsString,\n    fs, io,\n    path::{Path, PathBuf},\n    process::{Command, Output, Stdio},\n    time::Duration,\n}"
       ],
       "path": "src-tauri/src/project_repository.rs",
       "semanticBytes": 622,
-      "sourceBytes": 70490
+      "sourceBytes": 39514
     },
     {
       "blocks": [],
@@ -2882,6 +2882,124 @@
       "path": "src-tauri/src/project_repository_import_attempt_store.rs",
       "semanticBytes": 574,
       "sourceBytes": 13176
+    },
+    {
+      "blocks": [
+        {
+          "card": {
+            "effect": [],
+            "excludes": [
+              "Git mutations",
+              "GitHub publication",
+              "clone credentials"
+            ],
+            "id": "workduck.projects.git-inspection",
+            "invariant": [
+              "Inspections avoid credential helpers and index writes, and concurrent callers for one repository share the same in-flight result."
+            ],
+            "owns": [
+              "repository Git status parsing",
+              "inspection request coalescing",
+              "remote URL cache and diagnostics"
+            ],
+            "rel": [],
+            "risk": [],
+            "role": "Inspect repository status and remotes with bounded read-only Git processes, shared in-flight requests, and cache diagnostics.",
+            "scope": "module",
+            "search": [
+              "repository inspection cache",
+              "worktree remote URLs",
+              "coalesce Git status reads"
+            ],
+            "stability": "architecture",
+            "unknown": []
+          },
+          "end": 621,
+          "endLine": 9,
+          "entries": [
+            {
+              "key": "id",
+              "line": 2,
+              "order": 0,
+              "value": "workduck.projects.git-inspection"
+            },
+            {
+              "key": "role",
+              "line": 3,
+              "order": 1,
+              "value": "Inspect repository status and remotes with bounded read-only Git processes, shared in-flight requests, and cache diagnostics."
+            },
+            {
+              "key": "owns",
+              "line": 4,
+              "order": 2,
+              "value": "repository Git status parsing|inspection request coalescing|remote URL cache and diagnostics"
+            },
+            {
+              "key": "excludes",
+              "line": 5,
+              "order": 3,
+              "value": "Git mutations|GitHub publication|clone credentials"
+            },
+            {
+              "key": "search",
+              "line": 6,
+              "order": 4,
+              "value": "repository inspection cache|worktree remote URLs|coalesce Git status reads"
+            },
+            {
+              "key": "invariant",
+              "line": 7,
+              "order": 5,
+              "value": "Inspections avoid credential helpers and index writes, and concurrent callers for one repository share the same in-flight result."
+            },
+            {
+              "key": "stability",
+              "line": 8,
+              "order": 6,
+              "value": "architecture"
+            }
+          ],
+          "filePath": "src-tauri/src/project_repository_inspection.rs",
+          "indent": "",
+          "newline": "\n",
+          "prefix": "//",
+          "raw": "// llmnav/1 module\n// id=workduck.projects.git-inspection\n// role=Inspect repository status and remotes with bounded read-only Git processes, shared in-flight requests, and cache diagnostics.\n// owns=repository Git status parsing|inspection request coalescing|remote URL cache and diagnostics\n// excludes=Git mutations|GitHub publication|clone credentials\n// search=repository inspection cache|worktree remote URLs|coalesce Git status reads\n// invariant=Inspections avoid credential helpers and index writes, and concurrent callers for one repository share the same in-flight result.\n// stability=architecture\n// /llmnav\n",
+          "scope": "module",
+          "specVersion": "1",
+          "start": 0,
+          "startLine": 1,
+          "style": "line",
+          "syntaxErrors": []
+        }
+      ],
+      "contentHash": "ef546c14d17e11f5f1efec6ec82b5ec18b01ce89e4ce012b9f9d0ec1ab2af05b",
+      "declarations": [
+        null
+      ],
+      "imports": [
+        "crate::git_path::{GitProcessError, run_git_inspection_process}",
+        "crate::project_repository_validation::{validate_remote_url, validate_repository_path}",
+        "std::{\n    cell::Cell,\n    collections::HashMap,\n    fs, io,\n    path::{Path, PathBuf},\n    process::Output,\n    sync::{Arc, Condvar, Mutex, OnceLock},\n    time::{Duration, Instant, SystemTime},\n}",
+        "super::{\n    GitCommandFailure, ProjectRepositoryGitError, ProjectRepositoryGitInspection,\n    ProjectRepositoryGitInspectionRecord, ProjectRepositoryGitInspectionRequest,\n    invalid_git_inspection,\n}",
+        "tests"
+      ],
+      "path": "src-tauri/src/project_repository_inspection.rs",
+      "semanticBytes": 621,
+      "sourceBytes": 17733
+    },
+    {
+      "blocks": [],
+      "contentHash": "47a730cd0652683dbe38032a2272d3df7d2b75b8cc38f8ecb85074c05d1d9e80",
+      "declarations": [],
+      "imports": [
+        "std::{\n    process::{Command, Stdio},\n    thread,\n}",
+        "super::*",
+        "super::super::{ensure_upstream_remote, read_git_remote_url}"
+      ],
+      "path": "src-tauri/src/project_repository_inspection_tests.rs",
+      "semanticBytes": 0,
+      "sourceBytes": 13474
     },
     {
       "blocks": [],

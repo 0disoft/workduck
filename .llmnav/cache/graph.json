@@ -705,6 +705,28 @@
     {
       "definitions": [],
       "external": false,
+      "key": "workduck/workduck.projects.git-inspection",
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src-tauri/src/project_repository_inspection.rs",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "repositoryId": "workduck",
+      "role": "Inspect repository status and remotes with bounded read-only Git processes, shared in-flight requests, and cache diagnostics.",
+      "semanticId": "workduck.projects.git-inspection",
+      "unresolved": false
+    },
+    {
+      "definitions": [],
+      "external": false,
       "key": "workduck/workduck.projects.import-attempt-store",
       "location": {
         "declarationLine": null,
@@ -1475,11 +1497,11 @@
   ],
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "9c4c1ca7c492d31937a0a512e492f1f6ae8978c7971b6bbae768e3b1dc7a5a90",
+  "sourceHash": "c3aeeff96a8d59608bf5a66095011a05c6bc67f6630ce8bee1717a4a43ebdd0f",
   "stats": {
     "edgeCount": 9,
     "importedIndexCount": 0,
-    "nodeCount": 60,
+    "nodeCount": 61,
     "unresolvedNodeCount": 0
   }
 }
