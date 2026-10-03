@@ -5,6 +5,32 @@ use super::commands::{
 use super::*;
 
 #[test]
+fn reconciliation_cannot_write_to_a_path_supplied_inside_a_record() {
+    let temp = tempfile::tempdir().unwrap();
+    let workspace = fs::canonicalize(temp.path()).unwrap();
+    let visible = crate::git_path::git_process_path(&workspace);
+    let path = workspace.join("run.json");
+    let unrelated = workspace.join("unrelated.json");
+    fs::write(&unrelated, b"preserve unrelated file").unwrap();
+    let mut running = task_run_record(
+        "running",
+        &visible.join("repo").to_string_lossy(),
+        "2026-10-01T00:00:00Z",
+    );
+    running.state = "running".into();
+    running.finished_at = None;
+    running.exit_code = None;
+    running.record_path = unrelated.to_string_lossy().into_owned();
+    fs::write(&path, serde_json::to_vec(&running).unwrap()).unwrap();
+    let loaded = read_visible_task_run_record(&path, &visible).expect("visible run");
+    let records = refresh_running_task_run_records(vec![loaded], || Ok(Vec::new()));
+    assert_eq!(records[0].state, "stopped");
+    assert_eq!(fs::read(&unrelated).unwrap(), b"preserve unrelated file");
+    let stored: serde_json::Value = serde_json::from_slice(&fs::read(&path).unwrap()).unwrap();
+    assert_eq!(stored["state"], "stopped");
+}
+
+#[test]
 fn completed_records_do_not_enumerate_system_processes() {
     let completed = task_run_record("done", "C:/workspace/repo", "2026-10-01T00:00:00Z");
     let mut stopped = completed.clone();

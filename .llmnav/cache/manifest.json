@@ -3,11 +3,11 @@
   "fileStateSchemaVersion": 1,
   "files": {
     ".llmnav/cache/agent-context.md": "b079ce4aae7c61312cfc980bf4842dbb111012ae3710821b2168b6f5d5630f55",
-    ".llmnav/cache/cards.jsonl": "b06422594be1ef3bf9bece7d55672c67b56b635d23dd5f80c8f8bfcc14ea35c2",
-    ".llmnav/cache/file-state.json": "439c03bf4ffa7e3975a36e0b93c596d5a241edb33da6ed78459c032df9f0c117",
+    ".llmnav/cache/cards.jsonl": "863c997b712a1adcd60f5bd6bbe53fb7520f57b75c02a3e360d11133d0c6109d",
+    ".llmnav/cache/file-state.json": "cf4ac84246c0d43ee510b25c7d7dc3109a7a2f04cbde88ed45ab954600f6ab5d",
     ".llmnav/cache/graph-state.json": "8b052ac6870149992993243064de31918dffed76b9292526de43a28deb41cd8d",
     ".llmnav/cache/graph.json": "a8e5418944c7e523406381ce99dce087c16dc7d590acfad6c547cf95413ae727",
-    ".llmnav/cache/index.json": "c9cb973c39eb6e068b3795deba1184a40e4d25020dc638f1627054dba796b7d2",
+    ".llmnav/cache/index.json": "6f34a515a04e7236650b17123921186fe8fead921c099ecd53bd844ac6a3790f",
     ".llmnav/cache/modules/workduck.agent.txt": "573d2b91a5dfb5e50a16328d7cfb25c917debe654ee139b948c04f4acfa20877",
     ".llmnav/cache/modules/workduck.briefs.txt": "a20ca785daff81d2c464c701f83cd93be9ae631a41b7451bd51367e19a539fa0",
     ".llmnav/cache/modules/workduck.cli.txt": "7d12975745e8aa322e67bbc51cfe0e064c9424d4fccc9334e7295734e28690e5",
@@ -43,6 +43,6 @@
   "searchCardSetHash": "d402911800844fd56aeca216127ac8321fd1cc98b368196452d5c53875026589",
   "searchIndexSchemaVersion": 2,
   "searchShardSchemaVersion": null,
-  "sourceHash": "cf7dd26ead25b91fa8aac6f621f2936e7828ef9e8b953dbe4f13e4b9639cc041",
+  "sourceHash": "7d52b153dfbac0fe45f41ae0b74445d4f08bf9941d1609f4425f219fc11e404b",
   "specVersion": "1"
 }
