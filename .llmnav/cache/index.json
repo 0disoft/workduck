@@ -3478,11 +3478,61 @@
         "concurrent project field edits"
       ],
       "stability": "architecture"
+    },
+    {
+      "boundaries": [],
+      "excludes": [
+        "registry domain normalization",
+        "workspace sync payload assembly",
+        "editor draft ownership"
+      ],
+      "hashes": {
+        "body": "77463cec68e4f4afed19fd901ca524d525c819e71b12f5ea1bd1f2b5d87deef4",
+        "semantic": "c4cdc048475c75a2460a1131951f9d0100641f93843ebf08c3858e62cdbf2f39",
+        "structure": "4c7d376e51376e909ab9a77f29e86cd367a78bbb1bfd65029f355f53789d111c"
+      },
+      "id": "workduck.projects.storage-native",
+      "imports": [
+        "crate::storage",
+        "rusqlite::{OptionalExtension, params, params_from_iter}",
+        "std::collections::BTreeMap",
+        "tauri::AppHandle",
+        "tests {\n    use super::*"
+      ],
+      "invariant": [
+        "Guarded writes replace only the expected stored snapshot; a conflict or invalid row rolls back the entire batch."
+      ],
+      "location": {
+        "declarationLine": null,
+        "endLine": 16,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src-tauri/src/project_registry_store.rs",
+        "receiver": null,
+        "signature": null,
+        "startLine": 8,
+        "symbol": null,
+        "visibility": null
+      },
+      "owns": [
+        "project registry SQLite reads",
+        "snapshot write guards",
+        "atomic bulk registry replacement"
+      ],
+      "role": "Read and atomically replace SQLite project registry snapshots with optional stale-write guards.",
+      "scope": "module",
+      "search": [
+        "project registry SQLite write",
+        "stale registry snapshot",
+        "atomic project bulk write"
+      ],
+      "stability": "contract"
     }
   ],
   "contractFingerprints": {
     "configuration": {
-      "sha256": "8562f48dceca8563f94f60d45ccfc354926c6469a3f20440b6242584b14fdafe"
+      "sha256": "b360590b028bbf84306f09c9e2b08a9aedb0fbd1950156d01c8b7eaf4fe08b5b"
     },
     "exportedApi": {
       "count": 0,
@@ -3493,6 +3543,6 @@
   "generatedBy": "llmnav@0.9.7",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "1746014e724cf38c1366b75844ee47dea0bf06d000767ef6be1ee754680e468a",
+  "sourceHash": "26aaffd2874570e617bfed6767fb2ba5ef2b6a7272cf20f5921d0ee7ba417c78",
   "specVersion": "1"
 }

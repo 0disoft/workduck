@@ -5,6 +5,16 @@ use tauri::AppHandle;
 
 use crate::storage;
 
+/* llmnav/1 module
+id=workduck.projects.storage-native
+role=Read and atomically replace SQLite project registry snapshots with optional stale-write guards.
+owns=project registry SQLite reads|snapshot write guards|atomic bulk registry replacement
+excludes=registry domain normalization|workspace sync payload assembly|editor draft ownership
+search=project registry SQLite write|stale registry snapshot|atomic project bulk write
+invariant=Guarded writes replace only the expected stored snapshot; a conflict or invalid row rolls back the entire batch.
+stability=contract
+*/
+
 #[derive(serde::Serialize)]
 pub enum ProjectRegistryStoreError {
     #[serde(rename = "project-registry-workspace-id-required")]
@@ -15,6 +25,8 @@ pub enum ProjectRegistryStoreError {
     ReadFailed,
     #[serde(rename = "project-registry-write-failed")]
     WriteFailed,
+    #[serde(rename = "project-registry-revision-conflict")]
+    RevisionConflict,
 }
 
 #[derive(serde::Deserialize)]
@@ -22,6 +34,8 @@ pub enum ProjectRegistryStoreError {
 pub struct ProjectRegistryWriteInput {
     registry_json: String,
     updated_at: String,
+    #[serde(default)]
+    expected_registry_json: Option<String>,
 }
 
 #[derive(serde::Serialize)]
@@ -145,12 +159,14 @@ pub fn write_project_registry(
     workspace_id: String,
     registry_json: String,
     updated_at: String,
+    expected_registry_json: Option<String>,
 ) -> ProjectRegistryWrite {
     let registries = BTreeMap::from([(
         workspace_id,
         ProjectRegistryWriteInput {
             registry_json,
             updated_at,
+            expected_registry_json,
         },
     )]);
 
@@ -166,6 +182,13 @@ pub fn write_project_registries(
         Ok(connection) => connection,
         Err(_) => return invalid_write(ProjectRegistryStoreError::WriteFailed),
     };
+    write_project_registries_to_connection(&mut connection, registries)
+}
+
+fn write_project_registries_to_connection(
+    connection: &mut rusqlite::Connection,
+    registries: BTreeMap<String, ProjectRegistryWriteInput>,
+) -> ProjectRegistryWrite {
     let transaction = match connection.transaction() {
         Ok(transaction) => transaction,
         Err(_) => return invalid_write(ProjectRegistryStoreError::WriteFailed),
@@ -184,6 +207,32 @@ pub fn write_project_registries(
 
         if updated_at.is_empty() {
             return invalid_write(ProjectRegistryStoreError::RegistryJsonInvalid);
+        }
+
+        if let Some(expected) = registry.expected_registry_json.as_deref() {
+            let expected = expected.trim();
+            // JSON null denotes a missing row; stored registries must be objects.
+            if expected != "null" && validate_registry_json(expected).is_err() {
+                return invalid_write(ProjectRegistryStoreError::RegistryJsonInvalid);
+            }
+            let current = match transaction
+                .query_row(
+                    "SELECT registry_json FROM project_registries WHERE workspace_id = ?1",
+                    [&workspace_id],
+                    |row| row.get::<_, String>(0),
+                )
+                .optional()
+            {
+                Ok(current) => current,
+                Err(_) => return invalid_write(ProjectRegistryStoreError::WriteFailed),
+            };
+            let matches = match current.as_deref() {
+                Some(current) => current.trim() == expected,
+                None => expected == "null",
+            };
+            if !matches {
+                return invalid_write(ProjectRegistryStoreError::RevisionConflict);
+            }
         }
 
         if transaction
@@ -278,5 +327,129 @@ fn invalid_write(error: ProjectRegistryStoreError) -> ProjectRegistryWrite {
     ProjectRegistryWrite {
         ok: false,
         error: Some(error),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn connection() -> rusqlite::Connection {
+        let connection = rusqlite::Connection::open_in_memory().unwrap();
+        connection
+            .execute_batch(include_str!("../migrations/004_project_registries.sql"))
+            .unwrap();
+        connection
+    }
+
+    fn input(json: &str, expected: Option<&str>) -> ProjectRegistryWriteInput {
+        ProjectRegistryWriteInput {
+            registry_json: json.to_owned(),
+            updated_at: "2026-10-04T00:00:00.000Z".to_owned(),
+            expected_registry_json: expected.map(str::to_owned),
+        }
+    }
+
+    fn write(
+        connection: &mut rusqlite::Connection,
+        id: &str,
+        json: &str,
+        expected: Option<&str>,
+    ) -> ProjectRegistryWrite {
+        write_project_registries_to_connection(
+            connection,
+            BTreeMap::from([(id.to_owned(), input(json, expected))]),
+        )
+    }
+
+    fn stored(connection: &rusqlite::Connection, id: &str) -> Option<String> {
+        connection
+            .query_row(
+                "SELECT registry_json FROM project_registries WHERE workspace_id = ?1",
+                [id],
+                |row| row.get(0),
+            )
+            .optional()
+            .unwrap()
+    }
+
+    #[test]
+    fn guarded_write_replaces_only_the_expected_snapshot() {
+        let mut connection = connection();
+        assert!(write(&mut connection, "demo", r#"{"value":1}"#, None).ok);
+        assert!(
+            write(
+                &mut connection,
+                "demo",
+                r#"{"value":2}"#,
+                Some(r#"{"value":1}"#)
+            )
+            .ok
+        );
+        let rejected = write(
+            &mut connection,
+            "demo",
+            r#"{"value":3}"#,
+            Some(r#"{"value":1}"#),
+        );
+        assert!(!rejected.ok);
+        assert!(matches!(
+            rejected.error,
+            Some(ProjectRegistryStoreError::RevisionConflict)
+        ));
+        assert_eq!(
+            stored(&connection, "demo").as_deref(),
+            Some(r#"{"value":2}"#)
+        );
+    }
+
+    #[test]
+    fn null_snapshot_guards_creation_against_an_existing_row() {
+        let mut connection = connection();
+        assert!(write(&mut connection, "demo", r#"{"value":1}"#, Some("null")).ok);
+        assert!(!write(&mut connection, "demo", r#"{"value":2}"#, Some("null")).ok);
+        assert_eq!(
+            stored(&connection, "demo").as_deref(),
+            Some(r#"{"value":1}"#)
+        );
+    }
+
+    #[test]
+    fn a_later_conflict_rolls_back_earlier_rows_in_the_batch() {
+        let mut connection = connection();
+        assert!(write(&mut connection, "first", r#"{"value":1}"#, None).ok);
+        assert!(write(&mut connection, "last", r#"{"value":2}"#, None).ok);
+        let result = write_project_registries_to_connection(
+            &mut connection,
+            BTreeMap::from([
+                (
+                    "first".to_owned(),
+                    input(r#"{"value":3}"#, Some(r#"{"value":1}"#)),
+                ),
+                (
+                    "last".to_owned(),
+                    input(r#"{"value":4}"#, Some(r#"{"value":1}"#)),
+                ),
+            ]),
+        );
+        assert!(!result.ok);
+        assert_eq!(
+            stored(&connection, "first").as_deref(),
+            Some(r#"{"value":1}"#)
+        );
+        assert_eq!(
+            stored(&connection, "last").as_deref(),
+            Some(r#"{"value":2}"#)
+        );
+    }
+
+    #[test]
+    fn unconditional_write_inputs_remain_backward_compatible() {
+        let value: ProjectRegistryWriteInput =
+            serde_json::from_str(r#"{"registryJson":"{}","updatedAt":"now"}"#).unwrap();
+        assert!(value.expected_registry_json.is_none());
+        let mut connection = connection();
+        assert!(write(&mut connection, "demo", r#"{"value":1}"#, None).ok);
+        assert!(write(&mut connection, "demo", r#"{"value":2}"#, None).ok);
     }
 }

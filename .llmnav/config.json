@@ -21,6 +21,7 @@
         "src-tauri/src/bin/workduck-cli.rs",
         "src-tauri/src/lib.rs",
         "src-tauri/src/process_tree.rs",
+        "src-tauri/src/project_registry_store.rs",
         "src/lib/projects/project-storage.ts",
         "src/lib/projects/project-repository-task.ts",
         "src/lib/queue/queue-read-state.ts"

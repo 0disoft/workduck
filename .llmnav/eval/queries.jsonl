@@ -48,6 +48,7 @@
 {"query":"invoke workspace data-file and paired registry writes with revision conflict errors","expected":["workduck.workspace.data-files-client"]}
 {"query":"parse structured agent summaries and validate queue vote ballot choices","expected":["workduck.queue.response-parser"]}
 {"query":"create the strict SQLite project registry JSON table keyed by workspace","expected":["workduck.migration.project-registries"]}
+{"query":"atomically guard SQLite project registry replacement from stale snapshots","expected":["workduck.projects.storage-native"]}
 {"query":"save repository agent brief instructions archive restore and export for Codex","expected":["workduck.briefs.registry"]}
 {"query":"link existing execution to saved brief and preserve link time instructions","expected":["workduck.briefs.runs"]}
 {"query":"derive brief gate from completed build evidence without trusting report prose","expected":["workduck.briefs.gate"]}

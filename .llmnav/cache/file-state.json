@@ -2648,18 +2648,109 @@
       "sourceBytes": 23834
     },
     {
-      "blocks": [],
-      "contentHash": "2da51be5d75cdba03387d5a418fe941cc205177a6b75288c9ec9a88e1908a845",
-      "declarations": [],
+      "blocks": [
+        {
+          "card": {
+            "effect": [],
+            "excludes": [
+              "registry domain normalization",
+              "workspace sync payload assembly",
+              "editor draft ownership"
+            ],
+            "id": "workduck.projects.storage-native",
+            "invariant": [
+              "Guarded writes replace only the expected stored snapshot; a conflict or invalid row rolls back the entire batch."
+            ],
+            "owns": [
+              "project registry SQLite reads",
+              "snapshot write guards",
+              "atomic bulk registry replacement"
+            ],
+            "rel": [],
+            "risk": [],
+            "role": "Read and atomically replace SQLite project registry snapshots with optional stale-write guards.",
+            "scope": "module",
+            "search": [
+              "project registry SQLite write",
+              "stale registry snapshot",
+              "atomic project bulk write"
+            ],
+            "stability": "contract",
+            "unknown": []
+          },
+          "end": 709,
+          "endLine": 16,
+          "entries": [
+            {
+              "key": "id",
+              "line": 9,
+              "order": 0,
+              "value": "workduck.projects.storage-native"
+            },
+            {
+              "key": "role",
+              "line": 10,
+              "order": 1,
+              "value": "Read and atomically replace SQLite project registry snapshots with optional stale-write guards."
+            },
+            {
+              "key": "owns",
+              "line": 11,
+              "order": 2,
+              "value": "project registry SQLite reads|snapshot write guards|atomic bulk registry replacement"
+            },
+            {
+              "key": "excludes",
+              "line": 12,
+              "order": 3,
+              "value": "registry domain normalization|workspace sync payload assembly|editor draft ownership"
+            },
+            {
+              "key": "search",
+              "line": 13,
+              "order": 4,
+              "value": "project registry SQLite write|stale registry snapshot|atomic project bulk write"
+            },
+            {
+              "key": "invariant",
+              "line": 14,
+              "order": 5,
+              "value": "Guarded writes replace only the expected stored snapshot; a conflict or invalid row rolls back the entire batch."
+            },
+            {
+              "key": "stability",
+              "line": 15,
+              "order": 6,
+              "value": "contract"
+            }
+          ],
+          "filePath": "src-tauri/src/project_registry_store.rs",
+          "indent": "",
+          "newline": "\n",
+          "prefix": null,
+          "raw": "/* llmnav/1 module\nid=workduck.projects.storage-native\nrole=Read and atomically replace SQLite project registry snapshots with optional stale-write guards.\nowns=project registry SQLite reads|snapshot write guards|atomic bulk registry replacement\nexcludes=registry domain normalization|workspace sync payload assembly|editor draft ownership\nsearch=project registry SQLite write|stale registry snapshot|atomic project bulk write\ninvariant=Guarded writes replace only the expected stored snapshot; a conflict or invalid row rolls back the entire batch.\nstability=contract\n*/",
+          "scope": "module",
+          "specVersion": "1",
+          "start": 138,
+          "startLine": 8,
+          "style": "block",
+          "syntaxErrors": []
+        }
+      ],
+      "contentHash": "77463cec68e4f4afed19fd901ca524d525c819e71b12f5ea1bd1f2b5d87deef4",
+      "declarations": [
+        null
+      ],
       "imports": [
         "crate::storage",
         "rusqlite::{OptionalExtension, params, params_from_iter}",
         "std::collections::BTreeMap",
-        "tauri::AppHandle"
+        "tauri::AppHandle",
+        "tests {\n    use super::*"
       ],
       "path": "src-tauri/src/project_registry_store.rs",
-      "semanticBytes": 0,
-      "sourceBytes": 8446
+      "semanticBytes": 571,
+      "sourceBytes": 14631
     },
     {
       "blocks": [

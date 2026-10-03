@@ -1221,6 +1221,28 @@
     {
       "definitions": [],
       "external": false,
+      "key": "workduck/workduck.projects.storage-native",
+      "location": {
+        "declarationLine": null,
+        "endLine": 16,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src-tauri/src/project_registry_store.rs",
+        "receiver": null,
+        "signature": null,
+        "startLine": 8,
+        "symbol": null,
+        "visibility": null
+      },
+      "repositoryId": "workduck",
+      "role": "Read and atomically replace SQLite project registry snapshots with optional stale-write guards.",
+      "semanticId": "workduck.projects.storage-native",
+      "unresolved": false
+    },
+    {
+      "definitions": [],
+      "external": false,
       "key": "workduck/workduck.projects.task-commands",
       "location": {
         "declarationLine": null,
@@ -1925,11 +1947,11 @@
   ],
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "9c1856176a6a391c825f14221f5c831629fff32e6e162bc7e3ac3fda747e0c11",
+  "sourceHash": "f470c63778722f05456a8145abd8c376fc88072560562eab659add187d5cbc83",
   "stats": {
     "edgeCount": 27,
     "importedIndexCount": 0,
-    "nodeCount": 69,
+    "nodeCount": 70,
     "unresolvedNodeCount": 0
   }
 }
