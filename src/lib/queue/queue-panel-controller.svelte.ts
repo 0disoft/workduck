@@ -1,4 +1,13 @@
-import { onMount, tick } from 'svelte';
+/* llmnav/1 module
+id=workduck.queue.panel-controller
+role=Coordinate Queue panel state, workspace lifetimes, artifact selection, prompt previews, and user-initiated workflows.
+owns=workspace view lifetime|read result ownership|artifact selection|Queue workflow UI state
+excludes=manual draft editing|provider execution|native file persistence
+search=Queue workspace switch|late Queue read results|Queue panel controller
+invariant=Read results update only their captured workspace and selection generation; workspace metadata changes preserve the view lifetime.
+stability=architecture
+*/
+import { onMount, tick, untrack } from 'svelte';
 
 import { getWorkduckMessages } from '#lib/i18n/workduck-language.ts';
 import {
@@ -187,6 +196,7 @@ export interface QueuePanelControllerInput {
 
 export function createQueuePanelController(input: QueuePanelControllerInput) {
 	let workspace = $derived(input.workspace());
+	let workspaceSignature = $derived(`${workspace.id}:${workspace.path}`);
 	let refreshSignal = $derived(input.refreshSignal());
 	const QUEUE_AUTO_REFRESH_ACTIVE_MS = 30_000;
 	const QUEUE_AUTO_REFRESH_IDLE_MS = 60_000;
@@ -246,11 +256,13 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 	let evaluationScores = $state<AgentEvaluationScores>(initialEvaluationDialogState.scores);
 	let queueContextMenu = $state<QueueContextMenuState | null>(null);
 	let queueContextMenuElement = $state<HTMLElement | undefined>(undefined);
-	let ensureSignature = $state('');
-	let refreshSignature = $state(0);
+	let ensureSignature = '';
+	let refreshSignature = 0;
 	let workspaceDataReadGeneration = 0;
+	let artifactReadGeneration = 0;
+	let promptPreviewGeneration = 0;
 	let queueAutoRefreshScheduler: QueueAutoRefreshScheduler | null = null;
-	const completedReportNotifications = createQueueCompletedReportNotifications();
+	let completedReportNotifications = createQueueCompletedReportNotifications();
 	let messages = $derived(getWorkduckMessages(appearanceSettings.languageId));
 	let readFilePathSet = $derived(new Set(readFilePaths));
 	let queueItemCountLabel = $derived(
@@ -362,81 +374,88 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 });
 
 	$effect(() => {
-		const nextSignature = `${workspace.id}:${workspace.path}`;
+		const nextSignature = workspaceSignature;
 
 		if (ensureSignature === nextSignature) {
 			return;
 	}
 
-		ensureSignature = nextSignature;
-		files = [];
-		error = null;
-		parseError = null;
-		status = null;
-		selectedReport = null;
-		selectedReportPath = null;
-		selectedWorkOrder = null;
-		selectedWorkOrderPath = null;
-		selectedProposal = null;
-		selectedProposalPath = null;
-		promptPreviews = null;
-		promptEstimate = null;
-		queueContextMenu = null;
-		queueContextMenuElement = undefined;
-		reviews = [];
-		readFilePaths = readQueuePanelReadFilePaths(workspace.id);
-		queueExecutionFilter = 'all';
-		queueReadFilter = 'all';
-		queueKindFilter = 'all';
-		queuePriorityFilter = 'all';
-		queueSortOption = 'created-desc';
-		completedReportNotifications.reset();
-		const emptyWorkspaceRegistries = createEmptyQueuePanelWorkspaceRegistryState(workspace.id);
-		skillRegistry = emptyWorkspaceRegistries.skillRegistry;
-		agentRegistry = emptyWorkspaceRegistries.agentRegistry;
-		personaRegistry = emptyWorkspaceRegistries.personaRegistry;
-		projectRegistry = emptyWorkspaceRegistries.projectRegistry;
-		referenceRegistry = emptyWorkspaceRegistries.referenceRegistry;
-		workOrderEditor.clearRecordSelections();
-		const workspaceId = workspace.id;
-		const workspacePath = workspace.path;
-		const readGeneration = ++workspaceDataReadGeneration;
-		const workspaceDataReadIsStillCurrent = () =>
-			workspaceDataReadIsCurrent(workspaceId, workspacePath, readGeneration);
-		const workspaceRegistrySetters = {
-			setSkillRegistry: (nextRegistry: SkillRegistry) => {
-				skillRegistry = nextRegistry;
-			},
-			setAgentRegistry: (nextRegistry: AgentRegistry) => {
-				agentRegistry = nextRegistry;
-			},
-			setPersonaRegistry: (nextRegistry: PersonaRegistry) => {
-				personaRegistry = nextRegistry;
-			},
-			setProjectRegistry: (nextRegistry: ProjectRegistry) => {
-				projectRegistry = nextRegistry;
-			},
-			setReferenceRegistry: (nextRegistry: ReferenceRegistry) => {
-				referenceRegistry = nextRegistry;
-			}
+		return untrack(() => {
+			ensureSignature = nextSignature;
+			files = [];
+			error = null;
+			parseError = null;
+			status = null;
+			selectedReport = null;
+			selectedReportPath = null;
+			selectedWorkOrder = null;
+			selectedWorkOrderPath = null;
+			selectedProposal = null;
+			selectedProposalPath = null;
+			promptPreviews = null;
+			promptEstimate = null;
+			queueContextMenu = null;
+			queueContextMenuElement = undefined;
+			reviews = [];
+			readFilePaths = readQueuePanelReadFilePaths(workspace.id);
+			queueExecutionFilter = 'all';
+			queueReadFilter = 'all';
+			queueKindFilter = 'all';
+			queuePriorityFilter = 'all';
+			queueSortOption = 'created-desc';
+			completedReportNotifications = createQueueCompletedReportNotifications();
+			isRefreshing = false;
+			isReading = false;
+			isPreviewingPrompt = false;
+			artifactReadGeneration += 1;
+			promptPreviewGeneration += 1;
+			const emptyWorkspaceRegistries = createEmptyQueuePanelWorkspaceRegistryState(workspace.id);
+			skillRegistry = emptyWorkspaceRegistries.skillRegistry;
+			agentRegistry = emptyWorkspaceRegistries.agentRegistry;
+			personaRegistry = emptyWorkspaceRegistries.personaRegistry;
+			projectRegistry = emptyWorkspaceRegistries.projectRegistry;
+			referenceRegistry = emptyWorkspaceRegistries.referenceRegistry;
+			workOrderEditor.clearRecordSelections();
+			const workspaceId = workspace.id;
+			const workspacePath = workspace.path;
+			const readGeneration = ++workspaceDataReadGeneration;
+			const workspaceDataReadIsStillCurrent = () =>
+				workspaceDataReadIsCurrent(workspaceId, workspacePath, readGeneration);
+			const workspaceRegistrySetters = {
+				setSkillRegistry: (nextRegistry: SkillRegistry) => {
+					skillRegistry = nextRegistry;
+				},
+				setAgentRegistry: (nextRegistry: AgentRegistry) => {
+					agentRegistry = nextRegistry;
+				},
+				setPersonaRegistry: (nextRegistry: PersonaRegistry) => {
+					personaRegistry = nextRegistry;
+				},
+				setProjectRegistry: (nextRegistry: ProjectRegistry) => {
+					projectRegistry = nextRegistry;
+				},
+				setReferenceRegistry: (nextRegistry: ReferenceRegistry) => {
+					referenceRegistry = nextRegistry;
+				}
+			};
+			startQueuePanelWorkspaceRegistryReads({
+				workspaceId,
+				workspacePath,
+				isCurrent: workspaceDataReadIsStillCurrent,
+				...workspaceRegistrySetters
+			});
+			void refreshQueueFiles({ silent: true });
+
+			const unsubscribeWorkspaceRegistries = subscribeQueuePanelWorkspaceRegistries(
+				workspaceId,
+				workspaceRegistrySetters
+			);
+
+			return () => {
+				workspaceDataReadGeneration += 1;
+				unsubscribeWorkspaceRegistries();
 		};
-		startQueuePanelWorkspaceRegistryReads({
-			workspaceId,
-			workspacePath,
-			isCurrent: workspaceDataReadIsStillCurrent,
-			...workspaceRegistrySetters
 		});
-		void refreshQueueFiles({ silent: true });
-
-		const unsubscribeWorkspaceRegistries = subscribeQueuePanelWorkspaceRegistries(
-			workspaceId,
-			workspaceRegistrySetters
-		);
-
-		return () => {
-			workspaceDataReadGeneration += 1;
-			unsubscribeWorkspaceRegistries();
-	};
 });
 
 	$effect(() => {
@@ -445,7 +464,7 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 	}
 
 		refreshSignature = refreshSignal;
-		void refreshQueueFiles();
+		untrack(() => { void refreshQueueFiles(); });
 });
 
 	$effect(() => {
@@ -483,16 +502,31 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		);
 	}
 
-	async function readExecutionContextForWorkspace(): Promise<QueueExecutionContext> {
+	function captureWorkspaceOperationTarget() {
+		const workspaceId = workspace.id;
+		const workspacePath = workspace.path;
+		const generation = workspaceDataReadGeneration;
+		return {
+			workspaceId,
+			workspacePath,
+			isCurrent: () => workspaceDataReadIsCurrent(workspaceId, workspacePath, generation)
+		};
+	}
+
+	async function readExecutionContextForWorkspace(
+		target = captureWorkspaceOperationTarget()
+	): Promise<QueueExecutionContext> {
 		const result = await executionContextReader.read({
-			workspaceId: workspace.id,
-			workspacePath: workspace.path
+			workspaceId: target.workspaceId,
+			workspacePath: target.workspacePath
 		});
 
-		skillRegistry = result.skillRegistry;
-		agentRegistry = result.agentRegistry;
-		referenceRegistry = result.referenceRegistry;
-		personaRegistry = result.personaRegistry;
+		if (target.isCurrent()) {
+			skillRegistry = result.skillRegistry;
+			agentRegistry = result.agentRegistry;
+			referenceRegistry = result.referenceRegistry;
+			personaRegistry = result.personaRegistry;
+		}
 
 		return result.executionContext;
 	}
@@ -506,23 +540,31 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		isRefreshing = true;
 		error = null;
 		status = null;
+		const target = captureWorkspaceOperationTarget();
+		const refreshingWorkOrder = selectedWorkOrder;
 
 		try {
 			const result = await refreshQueuePanelFiles({
-				workspaceId: workspace.id,
-				workspacePath: workspace.path,
+				workspaceId: target.workspaceId,
+				workspacePath: target.workspacePath,
 				currentFiles: files,
 				currentReadFilePaths: readFilePaths,
-				selectedWorkOrder,
+				selectedWorkOrder: refreshingWorkOrder,
 				recoverStaleRunning: !isWriting && !isCancellingExecution,
 				completedReportNotifications,
-				showCompletedReportNotification
+				showCompletedReportNotification: (title, relativePath) => {
+					if (target.isCurrent()) showCompletedReportNotification(title, relativePath);
+				}
 			});
+
+			if (!target.isCurrent()) return;
 
 			if (result.ok) {
 				files = result.files;
 				readFilePaths = result.readFilePaths;
-				selectedWorkOrder = result.selectedWorkOrder;
+				if (selectedWorkOrder === refreshingWorkOrder) {
+					selectedWorkOrder = result.selectedWorkOrder;
+				}
 				if (!options.silent) {
 					status = null;
 				}
@@ -531,8 +573,10 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 
 			error = result.error;
 		} finally {
-			isRefreshing = false;
-			queueAutoRefreshScheduler?.reschedule();
+			if (target.isCurrent()) {
+				isRefreshing = false;
+				queueAutoRefreshScheduler?.reschedule();
+			}
 		}
 	}
 
@@ -557,14 +601,18 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 			return;
 	}
 
-		isReading = true;
 		error = null;
 		parseError = null;
 		status = null;
 		resetQueueArtifactSelectionState();
+		isReading = true;
+		const target = captureWorkspaceOperationTarget();
+		const readGeneration = ++artifactReadGeneration;
+		const isCurrent = () => target.isCurrent() && artifactReadGeneration === readGeneration;
 
 		try {
-			const result = await readQueuePanelArtifactSelection(workspace.path, file);
+			const result = await readQueuePanelArtifactSelection(target.workspacePath, file);
+			if (!isCurrent()) return;
 
 			if (!result.ok) {
 				applyQueueArtifactSelectionFailure(result);
@@ -574,19 +622,20 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 			applyQueueArtifactSelection(result.selection);
 			markQueueFileRead(result.selection.relativePath);
 	} finally {
-			isReading = false;
+			if (isCurrent()) isReading = false;
 	}
 }
 
 	function resetQueueArtifactSelectionState() {
+		artifactReadGeneration += 1;
+		isReading = false;
 		selectedReport = null;
 		selectedReportPath = null;
 		selectedWorkOrder = null;
 		selectedWorkOrderPath = null;
 		selectedProposal = null;
 		selectedProposalPath = null;
-		promptPreviews = null;
-		promptEstimate = null;
+		closePromptPreviewDialog();
 		reviews = [];
 	}
 
@@ -620,15 +669,7 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 	}
 
 	function clearQueueSelection() {
-		selectedReport = null;
-		selectedReportPath = null;
-		selectedWorkOrder = null;
-		selectedWorkOrderPath = null;
-		selectedProposal = null;
-		selectedProposalPath = null;
-		promptPreviews = null;
-		promptEstimate = null;
-		reviews = [];
+		resetQueueArtifactSelectionState();
 		parseError = null;
 		status = null;
 }
@@ -643,8 +684,7 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		if (selectedWorkOrderPath === relativePath) {
 			selectedWorkOrder = null;
 			selectedWorkOrderPath = null;
-			promptPreviews = null;
-			promptEstimate = null;
+			closePromptPreviewDialog();
 	}
 
 		if (selectedProposalPath === relativePath) {
@@ -1014,12 +1054,20 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		error = null;
 		parseError = null;
 		status = null;
+		const target = captureWorkspaceOperationTarget();
+		const previewWorkOrder = selectedWorkOrder;
+		const previewGeneration = ++promptPreviewGeneration;
+		const isCurrent = () =>
+			target.isCurrent() &&
+			promptPreviewGeneration === previewGeneration &&
+			selectedWorkOrder === previewWorkOrder;
 
 		try {
 			const previewResult = await previewQueuePanelWorkOrderPrompt({
-				workOrder: selectedWorkOrder,
-				readExecutionContext: readExecutionContextForWorkspace
+				workOrder: previewWorkOrder,
+				readExecutionContext: () => readExecutionContextForWorkspace(target)
 			});
+			if (!isCurrent()) return;
 
 			if (!previewResult.ok) {
 				parseError = getQueueExecutionErrorMessage(previewResult.error);
@@ -1031,11 +1079,15 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 			promptPreviews = previewResult.previews;
 			promptEstimate = previewResult.estimate;
 	} finally {
-			isPreviewingPrompt = false;
+			if (target.isCurrent() && promptPreviewGeneration === previewGeneration) {
+				isPreviewingPrompt = false;
+			}
 	}
 }
 
 	function closePromptPreviewDialog() {
+		promptPreviewGeneration += 1;
+		isPreviewingPrompt = false;
 		promptPreviews = null;
 		promptEstimate = null;
 	}

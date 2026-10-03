@@ -167,6 +167,17 @@
         "invariant"
       ],
       "scope": "module"
+    },
+    {
+      "match": [
+        "src/lib/queue/queue-panel-controller.svelte.ts"
+      ],
+      "name": "Queue panel workspace and asynchronous view ownership",
+      "requiredFields": [
+        "owns",
+        "invariant"
+      ],
+      "scope": "module"
     }
   ],
   "audit": {

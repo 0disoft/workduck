@@ -61,3 +61,4 @@ workduck.projects.scaffold-transaction
 workduck.projects.git-inspection
 workduck.queue.execution-planning
 workduck.queue.work-order-editor
+workduck.queue.panel-controller

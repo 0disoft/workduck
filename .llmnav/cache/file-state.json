@@ -9153,8 +9153,111 @@
     },
     {
       "blocks": [],
-      "contentHash": "3a991e74b98c207df6312a2aec77b3de280ac419d94901d5bb4c1700eb4521b9",
+      "contentHash": "2c90c50d4aad50a1f4599b5d522dffbf5ca9569c054650b28e6c9f676021acb9",
       "declarations": [],
+      "imports": [
+        "#lib/workspaces/workspace-registry.ts",
+        "./queue-panel-controller.svelte"
+      ],
+      "path": "src/lib/queue/queue-panel-controller-harness.svelte.ts",
+      "semanticBytes": 0,
+      "sourceBytes": 686
+    },
+    {
+      "blocks": [
+        {
+          "card": {
+            "effect": [],
+            "excludes": [
+              "manual draft editing",
+              "provider execution",
+              "native file persistence"
+            ],
+            "id": "workduck.queue.panel-controller",
+            "invariant": [
+              "Read results update only their captured workspace and selection generation; workspace metadata changes preserve the view lifetime."
+            ],
+            "owns": [
+              "workspace view lifetime",
+              "read result ownership",
+              "artifact selection",
+              "Queue workflow UI state"
+            ],
+            "rel": [],
+            "risk": [],
+            "role": "Coordinate Queue panel state, workspace lifetimes, artifact selection, prompt previews, and user-initiated workflows.",
+            "scope": "module",
+            "search": [
+              "Queue workspace switch",
+              "late Queue read results",
+              "Queue panel controller"
+            ],
+            "stability": "architecture",
+            "unknown": []
+          },
+          "end": 587,
+          "endLine": 9,
+          "entries": [
+            {
+              "key": "id",
+              "line": 2,
+              "order": 0,
+              "value": "workduck.queue.panel-controller"
+            },
+            {
+              "key": "role",
+              "line": 3,
+              "order": 1,
+              "value": "Coordinate Queue panel state, workspace lifetimes, artifact selection, prompt previews, and user-initiated workflows."
+            },
+            {
+              "key": "owns",
+              "line": 4,
+              "order": 2,
+              "value": "workspace view lifetime|read result ownership|artifact selection|Queue workflow UI state"
+            },
+            {
+              "key": "excludes",
+              "line": 5,
+              "order": 3,
+              "value": "manual draft editing|provider execution|native file persistence"
+            },
+            {
+              "key": "search",
+              "line": 6,
+              "order": 4,
+              "value": "Queue workspace switch|late Queue read results|Queue panel controller"
+            },
+            {
+              "key": "invariant",
+              "line": 7,
+              "order": 5,
+              "value": "Read results update only their captured workspace and selection generation; workspace metadata changes preserve the view lifetime."
+            },
+            {
+              "key": "stability",
+              "line": 8,
+              "order": 6,
+              "value": "architecture"
+            }
+          ],
+          "filePath": "src/lib/queue/queue-panel-controller.svelte.ts",
+          "indent": "",
+          "newline": "\n",
+          "prefix": null,
+          "raw": "/* llmnav/1 module\nid=workduck.queue.panel-controller\nrole=Coordinate Queue panel state, workspace lifetimes, artifact selection, prompt previews, and user-initiated workflows.\nowns=workspace view lifetime|read result ownership|artifact selection|Queue workflow UI state\nexcludes=manual draft editing|provider execution|native file persistence\nsearch=Queue workspace switch|late Queue read results|Queue panel controller\ninvariant=Read results update only their captured workspace and selection generation; workspace metadata changes preserve the view lifetime.\nstability=architecture\n*/",
+          "scope": "module",
+          "specVersion": "1",
+          "start": 0,
+          "startLine": 1,
+          "style": "block",
+          "syntaxErrors": []
+        }
+      ],
+      "contentHash": "de4b94d2e39c76563e25aa9ee91c1a437584b73a20ede0f453604db77c0459c3",
+      "declarations": [
+        null
+      ],
       "imports": [
         "#lib/agents/agent-evaluation.ts",
         "#lib/agents/agent-registry.ts",
@@ -9199,8 +9302,25 @@
         "svelte"
       ],
       "path": "src/lib/queue/queue-panel-controller.svelte.ts",
+      "semanticBytes": 587,
+      "sourceBytes": 50222
+    },
+    {
+      "blocks": [],
+      "contentHash": "8ac58e8049f3d072465263d86b98c11d7bd3c007c23b488a9a0a246d28c2f0a0",
+      "declarations": [],
+      "imports": [
+        "#lib/tauri/tauri-invoke.ts",
+        "#lib/workspaces/workspace-registry.ts",
+        "./queue-panel-types",
+        "bun",
+        "node:assert/strict",
+        "node:test",
+        "svelte/compiler"
+      ],
+      "path": "src/lib/queue/queue-panel-controller.test.ts",
       "semanticBytes": 0,
-      "sourceBytes": 49472
+      "sourceBytes": 7620
     },
     {
       "blocks": [],

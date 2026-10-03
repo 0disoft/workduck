@@ -138,3 +138,9 @@ role Own reactive manual work order drafts, dialog transitions, context selectio
 owns manual draft state, skill and vote option selection, form validation, dialog lifecycle
 excludes Queue file persistence, provider execution, workspace registry loading
 invariant Each editor owns its draft and keeps form bindings reactive; save values use the existing Queue draft rules.
+
+@workduck.queue.panel-controller
+role Coordinate Queue panel state, workspace lifetimes, artifact selection, prompt previews, and user-initiated workflows.
+owns workspace view lifetime, read result ownership, artifact selection, Queue workflow UI state
+excludes manual draft editing, provider execution, native file persistence
+invariant Read results update only their captured workspace and selection generation; workspace metadata changes preserve the view lifetime.
