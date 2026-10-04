@@ -282,6 +282,20 @@
     },
     {
       "confidence": 0.85,
+      "from": "workduck/workduck.queue.evaluation-controller",
+      "id": "389e6981d1158e419eade8b3f0a28e1974b1123b5c23cac6f9b2599d233aac30",
+      "kind": "imports",
+      "provenance": {
+        "generator": "llmnav",
+        "line": null,
+        "path": "src/lib/queue/queue-panel-evaluation-controller.svelte.ts",
+        "source": "src/lib/queue/queue-panel-evaluation-controller.svelte.ts",
+        "type": "local-import"
+      },
+      "to": "workduck/workduck.queue.artifacts"
+    },
+    {
+      "confidence": 0.85,
       "from": "workduck/workduck.queue.execution",
       "id": "268d6ad14bde561af494351ff6a78b888341e38014c1223d0c878c6a6ff5e6a7",
       "kind": "imports",
@@ -1461,6 +1475,28 @@
     {
       "definitions": [],
       "external": false,
+      "key": "workduck/workduck.queue.evaluation-controller",
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src/lib/queue/queue-panel-evaluation-controller.svelte.ts",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "repositoryId": "workduck",
+      "role": "Own the Queue evaluation dialog, scoring state, and selection-scoped save lifecycle.",
+      "semanticId": "workduck.queue.evaluation-controller",
+      "unresolved": false
+    },
+    {
+      "definitions": [],
+      "external": false,
       "key": "workduck/workduck.queue.execution",
       "location": {
         "declarationLine": null,
@@ -2099,11 +2135,11 @@
   ],
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "b42a45079d85e1db42677e7618da0cf3ef93b0d6f2b95a5d20cf2443d391d076",
+  "sourceHash": "db2bb0b5193401a05390ca663cf06d9f0d32789422e73cabd4594f88bff7aa96",
   "stats": {
-    "edgeCount": 30,
+    "edgeCount": 31,
     "importedIndexCount": 0,
-    "nodeCount": 75,
+    "nodeCount": 76,
     "unresolvedNodeCount": 0
   }
 }

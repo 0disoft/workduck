@@ -264,7 +264,7 @@ describe('Queue controller workspace ownership', () => {
 		} finally { previewResponse.resolve(); harness.dispose(); }
 	});
 
-	for (const selection of ['another-report', 'clear'] as const) {
+	for (const selection of ['same-report', 'another-report', 'clear'] as const) {
 		test(`keeps ${selection} selection when a pending evaluation save finishes`, async () => {
 			const reportWrite = deferred<void>();
 			let writeStarted = false;
@@ -325,14 +325,16 @@ describe('Queue controller workspace ownership', () => {
 				await settleEffects();
 				assert.equal(writeStarted, true);
 				if (selection === 'clear') controller.handleQueueCardClick(first);
-				else controller.handleQueueCardClick(second);
+				else if (selection === 'another-report') controller.handleQueueCardClick(second);
 				await settleEffects();
-				assert.equal(controller.selectedReport?.ref.id ?? null, selection === 'clear' ? null : second.artifactId);
+				const expectedReport = selection === 'clear' ? null : selection === 'same-report' ? first : second;
+				assert.equal(controller.selectedReport?.ref.id ?? null, expectedReport?.artifactId ?? null);
 				reportWrite.resolve();
 				await saving;
-				assert.equal(controller.selectedReport?.ref.id ?? null, selection === 'clear' ? null : second.artifactId);
-				assert.equal(controller.selectedReportPath, selection === 'clear' ? null : second.relativePath);
-				assert.equal(controller.status, null);
+				assert.equal(controller.selectedReport?.ref.id ?? null, expectedReport?.artifactId ?? null);
+				assert.equal(controller.selectedReportPath, expectedReport?.relativePath ?? null);
+				if (selection === 'same-report') assert.ok(controller.status);
+				else assert.equal(controller.status, null);
 				assert.equal(controller.evaluationDialog, null);
 				assert.equal(controller.isSavingEvaluation, false);
 				assert.equal(controller.allAgents[0]?.evaluationSummary.totalCount, 1);

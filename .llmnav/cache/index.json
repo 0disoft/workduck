@@ -3137,17 +3137,17 @@
       "boundaries": [],
       "excludes": [
         "manual draft editing",
+        "evaluation dialog state",
         "provider execution",
         "native file persistence"
       ],
       "hashes": {
-        "body": "e887e23cf39086db0c568b45ce3a6ee79062c7c92504032cd346a728d8754ad0",
-        "semantic": "560088d388d1a4884c7ed275507680bde68b82f1ce1c82930376757341869b65",
-        "structure": "449d2a3e024377be70250c20564dcf357fcafa539f7499ad1f3cfad28a1d4879"
+        "body": "c63ca41b7d821f998fa7848df93594a1a9a992453dcb39ebdc548dff904f1908",
+        "semantic": "9cbd47679bfe44a2f915c7b13c62e8afcc2ea8de2933c67098aeefbd984a6ac2",
+        "structure": "133e21ec3468f08d56c4242291faee271bd1589ee8fe5ab24a20439d9e2e8f30"
       },
       "id": "workduck.queue.panel-controller",
       "imports": [
-        "#lib/agents/agent-evaluation.ts",
         "#lib/agents/agent-registry.ts",
         "#lib/environment/environment-vault-session.ts",
         "#lib/i18n/workduck-language.ts",
@@ -3167,7 +3167,7 @@
         "./queue-folder",
         "./queue-panel-context-menu-lifecycle",
         "./queue-panel-errors",
-        "./queue-panel-evaluation-dialog-lifecycle",
+        "./queue-panel-evaluation-controller.svelte",
         "./queue-panel-evaluation-save-workflow",
         "./queue-panel-execution-context-workflow",
         "./queue-panel-file-delete-workflow",
@@ -3785,11 +3785,64 @@
         "file durability"
       ],
       "stability": "implementation"
+    },
+    {
+      "boundaries": [],
+      "excludes": [
+        "registry persistence",
+        "artifact selection",
+        "workspace registry state"
+      ],
+      "hashes": {
+        "body": "cd980e1b2d78406a3f9ce7a406381324c4dee02063e3d6ec7efd3312e168f5be",
+        "semantic": "d793a226f9800a920ac65a8090d1416e67e9b2d6e164abf3e136598c47a8cba1",
+        "structure": "f261b7a1ba1dda46658ac3e44bc066a942e538bf9975407ec555c67e09318b75"
+      },
+      "id": "workduck.queue.evaluation-controller",
+      "imports": [
+        "#lib/agents/agent-evaluation.ts",
+        "#lib/agents/agent-registry.ts",
+        "#lib/i18n/workduck-language.ts",
+        "./queue-artifacts",
+        "./queue-panel-evaluation-save-workflow",
+        "./queue-panel-labels",
+        "./queue-panel-types"
+      ],
+      "invariant": [
+        "Saving captures its workspace and report selection, and late feedback never changes a newer selection."
+      ],
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src/lib/queue/queue-panel-evaluation-controller.svelte.ts",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "owns": [
+        "evaluation dialog state",
+        "evaluation score editing",
+        "evaluation save ownership",
+        "evaluation feedback"
+      ],
+      "role": "Own the Queue evaluation dialog, scoring state, and selection-scoped save lifecycle.",
+      "scope": "module",
+      "search": [
+        "Queue evaluation dialog",
+        "evaluation save selection",
+        "agent evaluation feedback"
+      ],
+      "stability": "architecture"
     }
   ],
   "contractFingerprints": {
     "configuration": {
-      "sha256": "7e2a1a14f93b8cf951d70c6322f86be032da9e4f5f8e44a4eed4ef9a19478cc4"
+      "sha256": "298b3656882a2da04216ad715379ad67a32d13e3d9e76f79961cb0216b625738"
     },
     "exportedApi": {
       "count": 0,
@@ -3800,6 +3853,6 @@
   "generatedBy": "llmnav@0.9.7",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "212f49b2eb5f6c91c5d9a741c46e0b9b1b1f3314148829561f8e9990e2b2e072",
+  "sourceHash": "3f70242087f568006f1b8a73ebaf079465ce1f1df24881a861e623353bbaecbe",
   "specVersion": "1"
 }

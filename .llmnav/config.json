@@ -269,6 +269,17 @@
         "invariant"
       ],
       "scope": "module"
+    },
+    {
+      "match": [
+        "src/lib/queue/queue-panel-evaluation-controller.svelte.ts"
+      ],
+      "name": "Queue evaluation dialog and save ownership",
+      "requiredFields": [
+        "owns",
+        "invariant"
+      ],
+      "scope": "module"
     }
   ],
   "audit": {

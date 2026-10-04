@@ -142,7 +142,7 @@ invariant Each editor owns its draft and keeps form bindings reactive; save valu
 @workduck.queue.panel-controller
 role Coordinate Queue panel state, workspace lifetimes, artifact selection, prompt previews, and user-initiated workflows.
 owns workspace view lifetime, operation result ownership, artifact selection, Queue workflow UI state
-excludes manual draft editing, provider execution, native file persistence
+excludes manual draft editing, evaluation dialog state, provider execution, native file persistence
 invariant Operation results update only their captured workspace lifetime; execution context and vault stay bound to the initiating workspace.
 
 @workduck.projects.scaffold-dialog
@@ -180,3 +180,9 @@ role Parse agent evaluation commands, update agent score history, and synchroniz
 owns agent evaluation options, evaluation deduplication, score accumulation, persona summary synchronization, evaluation registry writes
 excludes queue execution, work-order discovery, vault decryption
 invariant Single and batch evaluations share one locked commit owner, unchanged retries do not rewrite registries, and failed batches commit no evaluations.
+
+@workduck.queue.evaluation-controller
+role Own the Queue evaluation dialog, scoring state, and selection-scoped save lifecycle.
+owns evaluation dialog state, evaluation score editing, evaluation save ownership, evaluation feedback
+excludes registry persistence, artifact selection, workspace registry state
+invariant Saving captures its workspace and report selection, and late feedback never changes a newer selection.

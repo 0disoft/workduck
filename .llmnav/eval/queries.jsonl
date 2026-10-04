@@ -70,3 +70,4 @@
 {"query":"skill record schema validation limits and output types","expected":["workduck.skills.schema"]}
 {"query":"agent evaluation CLI score history persona summaries and evaluate batch command","expected":["workduck.cli.agent-evaluation"]}
 {"query":"shared atomic writer file replacement temporary cleanup and durability","expected":["workduck.storage.atomic-file-write"]}
+{"query":"where does the Queue evaluation dialog own scoring state and selection-scoped saves","expected":["workduck.queue.evaluation-controller"]}

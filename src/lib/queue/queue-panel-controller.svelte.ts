@@ -2,7 +2,7 @@
 id=workduck.queue.panel-controller
 role=Coordinate Queue panel state, workspace lifetimes, artifact selection, prompt previews, and user-initiated workflows.
 owns=workspace view lifetime|operation result ownership|artifact selection|Queue workflow UI state
-excludes=manual draft editing|provider execution|native file persistence
+excludes=manual draft editing|evaluation dialog state|provider execution|native file persistence
 search=Queue workspace switch|late Queue read results|Queue panel controller
 invariant=Operation results update only their captured workspace lifetime; execution context and vault stay bound to the initiating workspace.
 stability=architecture
@@ -23,10 +23,6 @@ import {
 	type AgentRecord,
 	type AgentRegistry
 } from '#lib/agents/agent-registry.ts';
-import {
-	type AgentEvaluationCriterionId,
-	type AgentEvaluationScores
-} from '#lib/agents/agent-evaluation.ts';
 import {
 	type PersonaRecord,
 	type PersonaRegistry
@@ -52,8 +48,6 @@ import {
 } from '#lib/ui/desktop-notification.ts';
 
 import {
-	createQueueReportTaskEvaluationKey,
-	hasQueueReportTaskEvaluation,
 	type QueueReportTaskReview,
 	type WorkduckQueueProposal,
 	type WorkduckQueueExecutionState,
@@ -97,7 +91,6 @@ import {
 	getReadFilterLabel as getLocalizedReadFilterLabel,
 	getRecordLabelById,
 	getReferenceDisplayName as getReferenceDisplayNameFromRecord,
-	getReportTaskAgent as findReportTaskAgent,
 	getReviewDecisionLabel as getLocalizedReviewDecisionLabel,
 	getSkillDisplayName as getLocalizedSkillDisplayName,
 	getVoteChoiceLabel as getLocalizedVoteChoiceLabel
@@ -119,19 +112,8 @@ import {
 	isQueueFileSelected,
 	shouldBulkDeleteQueueFile
 } from './queue-panel-file-list';
-import {
-	canCloseQueueEvaluationDialog,
-	canOpenQueueEvaluationDialog,
-	createClosedQueueEvaluationDialogState,
-	createInitialQueueEvaluationDialogState,
-	createOpenQueueEvaluationDialogState,
-	createUpdatedQueueEvaluationScores
-} from './queue-panel-evaluation-dialog-lifecycle';
-import {
-	saveQueuePanelEvaluation,
-	type QueuePanelEvaluationSaveFailureCode,
-	type QueuePanelEvaluationSaveResult
-} from './queue-panel-evaluation-save-workflow';
+import { createQueuePanelEvaluationController } from './queue-panel-evaluation-controller.svelte';
+import type { QueuePanelEvaluationSaveResult } from './queue-panel-evaluation-save-workflow';
 import {
 	executeQueuePanelWorkOrder,
 	type QueuePanelWorkOrderExecutionResult
@@ -168,7 +150,6 @@ import {
 	getQueueFolderLocalizedError as getLocalizedQueueFolderError
 } from './queue-panel-errors';
 import {
-	type AgentEvaluationDialogState,
 	type QueueCardEntry,
 	type QueueContextMenuState,
 	type QueueExecutionContext,
@@ -244,12 +225,6 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 	let isPreviewingPrompt = $state(false);
 	let isCancellingExecution = $state(false);
 	const activeExecutions = new Map<string, string>();
-	let isSavingEvaluation = $state(false);
-	const initialEvaluationDialogState = createInitialQueueEvaluationDialogState();
-	let evaluationDialog = $state<AgentEvaluationDialogState | null>(
-		initialEvaluationDialogState.dialog
-	);
-	let evaluationScores = $state<AgentEvaluationScores>(initialEvaluationDialogState.scores);
 	let queueContextMenu = $state<QueueContextMenuState | null>(null);
 	let queueContextMenuElement = $state<HTMLElement | undefined>(undefined);
 	let ensureSignature = '';
@@ -272,6 +247,19 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 	);
 	let allRepositories = $derived(createProjectRepositorySelectionOptions(projectRegistry.nodes));
 	let allReferences = $derived(referenceRegistry.references);
+	const evaluationController = createQueuePanelEvaluationController({
+		selection: () => selectedReport === null || selectedReportPath === null ? null : {
+			report: selectedReport, reportPath: selectedReportPath, generation: artifactReadGeneration
+		},
+		agents: () => allAgents,
+		isWriting: () => isWriting,
+		messages: () => messages,
+		captureWorkspaceTarget: captureWorkspaceOperationTarget,
+		clearFeedback: () => { error = null; parseError = null; status = null; },
+		setParseError: message => { parseError = message; },
+		setStatus: message => { status = message; },
+		applySavedState: applyQueuePanelEvaluationSaveState
+	});
 	const workOrderEditor = createQueuePanelWorkOrderEditor({
 		messages: () => messages,
 		skills: () => allSkills,
@@ -294,7 +282,7 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 			: findReportEvaluationDelegationPath(selectedReport)
 	);
 	let selectedReportCanDelegateEvaluation = $derived(
-		selectedReport !== null && selectedReport.tasks.some((task) => getReportTaskAgent(task) !== null)
+		selectedReport !== null && selectedReport.tasks.some((task) => evaluationController.getReportTaskAgent(task) !== null)
 	);
 	let filteredFiles = $derived(
 		createFilteredQueueFiles(files, {
@@ -405,11 +393,8 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 			isPreviewingPrompt = false;
 			isWriting = false;
 			isCancellingExecution = false;
-			isSavingEvaluation = false;
+			evaluationController.resetWorkspace();
 			workOrderEditor.finishManualWorkOrderDialog();
-			const closedEvaluation = createClosedQueueEvaluationDialogState();
-			evaluationDialog = closedEvaluation.dialog;
-			evaluationScores = closedEvaluation.scores;
 			artifactReadGeneration += 1;
 			promptPreviewGeneration += 1;
 			const emptyWorkspaceRegistries = createEmptyQueuePanelWorkspaceRegistryState(workspace.id);
@@ -636,9 +621,7 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 	function resetQueueArtifactSelectionState() {
 		artifactReadGeneration += 1;
 		isReading = false;
-		const closedEvaluation = createClosedQueueEvaluationDialogState();
-		evaluationDialog = closedEvaluation.dialog;
-		evaluationScores = closedEvaluation.scores;
+		evaluationController.resetSelection();
 		selectedReport = null;
 		selectedReportPath = null;
 		selectedWorkOrder = null;
@@ -1402,122 +1385,6 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		return getLocalizedReviewDecisionLabel(messages, decision);
 }
 
-	function getReportTaskAgent(task: WorkduckQueueResultReportTask) {
-		return findReportTaskAgent(task, allAgents);
-}
-
-	function isReportTaskEvaluationRecorded(task: WorkduckQueueResultReportTask) {
-		const agent = getReportTaskAgent(task);
-
-		if (agent === null || selectedReport === null) {
-			return false;
-		}
-
-		const evaluationKey = createQueueReportTaskEvaluationKey(selectedReport, task);
-
-		return (
-			hasQueueReportTaskEvaluation(task, agent.id) ||
-			agent.evaluationKeys.includes(evaluationKey)
-		);
-}
-
-	function openEvaluationDialog(task: WorkduckQueueResultReportTask) {
-		const agent = getReportTaskAgent(task);
-
-		if (
-			agent === null ||
-			!canOpenQueueEvaluationDialog({
-				agent,
-				isWriting,
-				isSavingEvaluation,
-				isEvaluationRecorded: isReportTaskEvaluationRecorded(task)
-			})
-		) {
-			return;
-	}
-
-		const nextState = createOpenQueueEvaluationDialogState(task, agent);
-
-		evaluationDialog = nextState.dialog;
-		evaluationScores = nextState.scores;
-		error = null;
-		parseError = null;
-		status = null;
-}
-
-	function closeEvaluationDialog() {
-		if (!canCloseQueueEvaluationDialog(isSavingEvaluation)) {
-			return;
-	}
-
-		const nextState = createClosedQueueEvaluationDialogState();
-
-		evaluationDialog = nextState.dialog;
-		evaluationScores = nextState.scores;
-}
-
-	function updateEvaluationScore(criterionId: AgentEvaluationCriterionId, value: string) {
-		evaluationScores = createUpdatedQueueEvaluationScores(evaluationScores, criterionId, value);
-}
-
-	async function handleSaveEvaluation(event: SubmitEvent) {
-		event.preventDefault();
-
-		if (evaluationDialog === null || isSavingEvaluation) {
-			return;
-	}
-
-		if (selectedReport === null || selectedReportPath === null) {
-			parseError = messages.queue.errors.fileInvalid;
-			return;
-		}
-
-		const target = captureWorkspaceOperationTarget();
-		const report = selectedReport;
-		const reportPath = selectedReportPath;
-		const readGeneration = artifactReadGeneration;
-		const selectionIsCurrent = () =>
-			target.isCurrent() &&
-			artifactReadGeneration === readGeneration &&
-			selectedReportPath === reportPath &&
-			selectedReport?.ref.id === report.ref.id;
-		isSavingEvaluation = true;
-		error = null;
-		parseError = null;
-		status = null;
-
-		try {
-			const saveResult = await saveQueuePanelEvaluation({
-				workspaceId: target.workspaceId,
-				workspacePath: target.workspacePath,
-				report,
-				reportPath,
-				task: evaluationDialog.task,
-				agentId: evaluationDialog.agent.id,
-				scores: evaluationScores
-			});
-			if (!target.isCurrent()) return;
-
-			await applyQueuePanelEvaluationSaveState(saveResult, target, selectionIsCurrent);
-			if (!selectionIsCurrent()) return;
-
-			if (!saveResult.ok) {
-				parseError = getQueuePanelEvaluationSaveFailureMessage(saveResult.code);
-				return;
-			}
-
-			status = saveResult.applied
-				? messages.queue.evaluation.saved
-				: messages.queue.evaluation.alreadySaved;
-			const nextState = createClosedQueueEvaluationDialogState();
-
-			evaluationDialog = nextState.dialog;
-			evaluationScores = nextState.scores;
-	} finally {
-			if (target.isCurrent()) isSavingEvaluation = false;
-	}
-}
-
 	async function applyQueuePanelEvaluationSaveState(
 		result: QueuePanelEvaluationSaveResult,
 		target: ReturnType<typeof captureWorkspaceOperationTarget>,
@@ -1535,27 +1402,6 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 			if (selectionIsCurrent()) selectedReport = result.report;
 			completedReportNotifications.rememberPath(result.reportRelativePath);
 			await refreshQueueFiles({ silent: true });
-		}
-}
-
-	function getQueuePanelEvaluationSaveFailureMessage(
-		code: QueuePanelEvaluationSaveFailureCode
-	) {
-		switch (code) {
-			case 'agent-read-failed':
-				return messages.agents.errors.readFailed;
-			case 'agent-not-found':
-				return messages.agents.errors.notFound;
-			case 'agent-save-failed':
-				return messages.agents.errors.saveFailed;
-			case 'report-write-failed':
-				return messages.queue.errors.fileWriteFailed;
-			case 'report-read-failed':
-				return messages.queue.errors.fileReadFailed;
-			case 'persona-read-failed':
-				return messages.personas.errors.readFailed;
-			case 'persona-save-failed':
-				return messages.personas.errors.saveFailed;
 		}
 }
 
@@ -1620,9 +1466,9 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		get isWriting() { return isWriting; },
 		get isPreviewingPrompt() { return isPreviewingPrompt; },
 		get isCancellingExecution() { return isCancellingExecution; },
-		get isSavingEvaluation() { return isSavingEvaluation; },
-		get evaluationDialog() { return evaluationDialog; },
-		get evaluationScores() { return evaluationScores; },
+		get isSavingEvaluation() { return evaluationController.isSavingEvaluation; },
+		get evaluationDialog() { return evaluationController.evaluationDialog; },
+		get evaluationScores() { return evaluationController.evaluationScores; },
 		get queueContextMenu() { return queueContextMenu; },
 		get queueContextMenuElement() { return queueContextMenuElement; },
 		set queueContextMenuElement(value: HTMLElement | undefined) { queueContextMenuElement = value; },
@@ -1649,11 +1495,11 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		handleDelegateReportEvaluation,
 		updateReviewDecision,
 		updateReviewComment,
-		openEvaluationDialog,
+		openEvaluationDialog: evaluationController.openEvaluationDialog,
 		getVoteChoiceLabel,
-		getReportTaskAgent,
+		getReportTaskAgent: evaluationController.getReportTaskAgent,
 		getReviewDecisionLabel,
-		isReportTaskEvaluationRecorded,
+		isReportTaskEvaluationRecorded: evaluationController.isReportTaskEvaluationRecorded,
 		handlePreviewWorkOrderPrompt,
 		closePromptPreviewDialog,
 		handleExecuteWorkOrder,
@@ -1670,9 +1516,9 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		getQueueTaskAgentLabels,
 		getQueueTaskReferenceLabels,
 		handleDeleteContextQueueFile,
-		closeEvaluationDialog,
-		updateEvaluationScore,
-		handleSaveEvaluation,
+		closeEvaluationDialog: evaluationController.closeEvaluationDialog,
+		updateEvaluationScore: evaluationController.updateEvaluationScore,
+		handleSaveEvaluation: evaluationController.handleSaveEvaluation,
 		closeNewWorkOrderDialog,
 		handleCreateManualWorkOrder,
 		getSkillDisplayName,
