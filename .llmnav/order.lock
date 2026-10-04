@@ -80,3 +80,4 @@ workduck.queue.evaluation-delegation-native
 workduck.queue.folder-contracts
 workduck.queue.presentation
 workduck.queue.file-actions
+workduck.queue.prompt-preview-controller

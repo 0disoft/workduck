@@ -3146,9 +3146,9 @@
         "native file persistence"
       ],
       "hashes": {
-        "body": "d4a31d11b0fa7fd314c9e31ce35e1c3955a20ee865da76d1109f15e7cb9cded7",
+        "body": "aaa63c915f258d24fc2c58667a2b5009e3fd36bc4144350874cdc01ac0d58b30",
         "semantic": "9cbd47679bfe44a2f915c7b13c62e8afcc2ea8de2933c67098aeefbd984a6ac2",
-        "structure": "69ddf897105839b533858ec441f7e346339b3e6c16af246d7e6b1f9aa488cd99"
+        "structure": "21afbc69d8480f3c06eac79a6c26bbb70859967f8479d8be49b9913e69eba3ee"
       },
       "id": "workduck.queue.panel-controller",
       "imports": [
@@ -3167,7 +3167,6 @@
         "./queue-artifacts",
         "./queue-auto-refresh-scheduler",
         "./queue-completed-report-notifications",
-        "./queue-execution",
         "./queue-folder",
         "./queue-panel-errors",
         "./queue-panel-evaluation-controller.svelte",
@@ -3177,7 +3176,7 @@
         "./queue-panel-file-list",
         "./queue-panel-manual-work-order-save-workflow",
         "./queue-panel-presentation.svelte",
-        "./queue-panel-prompt-preview-workflow",
+        "./queue-panel-prompt-preview-controller.svelte",
         "./queue-panel-read-state-workflow",
         "./queue-panel-refresh-workflow",
         "./queue-panel-report-evaluation-delegation-workflow",
@@ -4140,11 +4139,61 @@
         "partial Queue deletion"
       ],
       "stability": "architecture"
+    },
+    {
+      "boundaries": [],
+      "excludes": [
+        "provider execution",
+        "execution context loading",
+        "execution confirmation consumption"
+      ],
+      "hashes": {
+        "body": "0d388b449d7bf5516e69ebd85eacd3b01234aaa95b69769edb01a87fe85c99a4",
+        "semantic": "662e1a33dddb4fd685cd125315a2fce46a8b6e7658d7d65d99784e1a4f5f8fdd",
+        "structure": "05761738684392cf98100f2c653f9e6aab043e51311f10165df51d4b284bfbbd"
+      },
+      "id": "workduck.queue.prompt-preview-controller",
+      "imports": [
+        "./queue-artifacts",
+        "./queue-execution",
+        "./queue-panel-prompt-preview-workflow",
+        "./queue-panel-types"
+      ],
+      "invariant": [
+        "Only the latest open preview for the captured workspace and selected work order receives an estimate; closing invalidates pending responses."
+      ],
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src/lib/queue/queue-panel-prompt-preview-controller.svelte.ts",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "owns": [
+        "preview eligibility",
+        "prompt dialog state",
+        "request generation",
+        "estimate lifetime"
+      ],
+      "role": "Own Queue prompt preview admission, estimates, and selection-scoped async dialog state.",
+      "scope": "module",
+      "search": [
+        "Queue prompt preview lifetime",
+        "closed prompt estimate",
+        "late prompt preview result"
+      ],
+      "stability": "architecture"
     }
   ],
   "contractFingerprints": {
     "configuration": {
-      "sha256": "5abc819224d8591832fd3b367c5db24ed8403397a73cff6af2fd8549ed0a68be"
+      "sha256": "d0a2156910c08ad07159262e814d0b34ad5aaff4b80506a10319759c890fec16"
     },
     "exportedApi": {
       "count": 0,
@@ -4155,6 +4204,6 @@
   "generatedBy": "llmnav@0.9.7",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "27fbf79f5d951f602379de61ac5ccfb46618a9232566e13f577a213c00bcabf0",
+  "sourceHash": "62cf131a2eacf0e7abe53203c246712d91652809b58033bcca8a4433b7cec7e4",
   "specVersion": "1"
 }

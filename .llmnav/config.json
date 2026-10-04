@@ -336,6 +336,17 @@
         "invariant"
       ],
       "scope": "module"
+    },
+    {
+      "match": [
+        "src/lib/queue/queue-panel-prompt-preview-controller.svelte.ts"
+      ],
+      "name": "Queue prompt preview admission and estimate lifetime",
+      "requiredFields": [
+        "owns",
+        "invariant"
+      ],
+      "scope": "module"
     }
   ],
   "audit": {

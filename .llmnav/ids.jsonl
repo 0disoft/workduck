@@ -80,3 +80,4 @@
 {"id":"workduck.queue.evaluation-delegation-native","state":"active"}
 {"id":"workduck.queue.presentation","state":"active"}
 {"id":"workduck.queue.file-actions","state":"active"}
+{"id":"workduck.queue.prompt-preview-controller","state":"active"}

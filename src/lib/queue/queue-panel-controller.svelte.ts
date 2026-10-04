@@ -54,10 +54,6 @@ import {
 	type WorkduckQueueReviewDecision
 } from './queue-artifacts';
 import { readEnvironmentVaultSession } from '#lib/environment/environment-vault-session.ts';
-import type {
-	WorkduckQueueExecutionEstimate,
-	WorkduckQueuePromptPreview
-} from './queue-execution';
 import {
 	type QueueFileEntry,
 	type QueueFolderError
@@ -99,7 +95,7 @@ import {
 	removeQueuePanelReadFilePaths
 } from './queue-panel-read-state-workflow';
 import { createQueuePanelExecutionContextReader } from './queue-panel-execution-context-workflow';
-import { previewQueuePanelWorkOrderPrompt } from './queue-panel-prompt-preview-workflow';
+import { createQueuePanelPromptPreview } from './queue-panel-prompt-preview-controller.svelte';
 import { refreshQueuePanelFiles } from './queue-panel-refresh-workflow';
 import {
 	readQueuePanelArtifactSelection,
@@ -175,8 +171,6 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 	let selectedWorkOrderPath = $state<string | null>(null);
 	let selectedProposal = $state<WorkduckQueueProposal | null>(null);
 	let selectedProposalPath = $state<string | null>(null);
-	let promptPreviews = $state<readonly WorkduckQueuePromptPreview[] | null>(null);
-	let promptEstimate = $state<WorkduckQueueExecutionEstimate | null>(null);
 	let reviews = $state<readonly QueueReportTaskReview[]>([]);
 	const initialWorkspaceRegistries = createEmptyQueuePanelWorkspaceRegistryState('');
 	let skillRegistry = $state<SkillRegistry>(initialWorkspaceRegistries.skillRegistry);
@@ -187,14 +181,12 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 	let isRefreshing = $state(false);
 	let isReading = $state(false);
 	let isWriting = $state(false);
-	let isPreviewingPrompt = $state(false);
 	let isCancellingExecution = $state(false);
 	const activeExecutions = new Map<string, string>();
 	let ensureSignature = '';
 	let refreshSignature = 0;
 	let workspaceDataReadGeneration = 0;
 	let artifactReadGeneration = 0;
-	let promptPreviewGeneration = 0;
 	let queueAutoRefreshScheduler: QueueAutoRefreshScheduler | null = null;
 	let completedReportNotifications = createQueueCompletedReportNotifications();
 	let messages = $derived(getWorkduckMessages(appearanceSettings.languageId));
@@ -270,14 +262,15 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 			selectedWorkOrder.tasks.every((task) => (task.agentIds ?? []).length > 0) &&
 			!isWriting
 	);
-	let canPreviewSelectedWorkOrderPrompt = $derived(
-		selectedWorkOrder !== null &&
-			(selectedWorkOrder.status === 'active' || selectedWorkOrder.status === 'failed') &&
-			selectedWorkOrder.tasks.length > 0 &&
-			selectedWorkOrder.tasks.every((task) => (task.agentIds ?? []).length > 0) &&
-			!isWriting &&
-			!isPreviewingPrompt
-	);
+	const promptPreview = createQueuePanelPromptPreview({
+		workOrder: () => selectedWorkOrder,
+		isWriting: () => isWriting,
+		captureWorkspaceTarget: captureWorkspaceOperationTarget,
+		readExecutionContext: readExecutionContextForWorkspace,
+		clearFeedback: () => { error = null; parseError = null; status = null; },
+		setError: (value) => { parseError = getQueueExecutionErrorMessage(value); }
+	});
+	const closePromptPreviewDialog = promptPreview.closePromptPreviewDialog;
 	let canCompleteSelectedWorkOrder = $derived(
 		selectedWorkOrder !== null &&
 			selectedWorkOrder.status !== 'archived' &&
@@ -350,8 +343,7 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 			selectedWorkOrderPath = null;
 			selectedProposal = null;
 			selectedProposalPath = null;
-			promptPreviews = null;
-			promptEstimate = null;
+			closePromptPreviewDialog();
 			fileActions.closeQueueContextMenu();
 			reviews = [];
 			readFilePaths = readQueuePanelReadFilePaths(workspace.id);
@@ -363,13 +355,11 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 			completedReportNotifications = createQueueCompletedReportNotifications();
 			isRefreshing = false;
 			isReading = false;
-			isPreviewingPrompt = false;
 			isWriting = false;
 			isCancellingExecution = false;
 			evaluationController.resetWorkspace();
 			workOrderEditor.finishManualWorkOrderDialog();
 			artifactReadGeneration += 1;
-			promptPreviewGeneration += 1;
 			const emptyWorkspaceRegistries = createEmptyQueuePanelWorkspaceRegistryState(workspace.id);
 			skillRegistry = emptyWorkspaceRegistries.skillRegistry;
 			agentRegistry = emptyWorkspaceRegistries.agentRegistry;
@@ -873,65 +863,11 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		error = result.error;
 	}
 
-	async function handlePreviewWorkOrderPrompt() {
-		if (
-			selectedWorkOrder === null ||
-			!canPreviewSelectedWorkOrderPrompt ||
-			isPreviewingPrompt
-		) {
-			return;
-	}
-
-		isPreviewingPrompt = true;
-		error = null;
-		parseError = null;
-		status = null;
-		const target = captureWorkspaceOperationTarget();
-		const previewWorkOrder = selectedWorkOrder;
-		const previewGeneration = ++promptPreviewGeneration;
-		const isCurrent = () =>
-			target.isCurrent() &&
-			promptPreviewGeneration === previewGeneration &&
-			selectedWorkOrder === previewWorkOrder;
-
-		try {
-			const previewResult = await previewQueuePanelWorkOrderPrompt({
-				workOrder: previewWorkOrder,
-				readExecutionContext: () => readExecutionContextForWorkspace(target)
-			});
-			if (!isCurrent()) return;
-
-			if (!previewResult.ok) {
-				parseError = getQueueExecutionErrorMessage(previewResult.error);
-				promptPreviews = null;
-				promptEstimate = null;
-				return;
-			}
-
-			promptPreviews = previewResult.previews;
-			promptEstimate = previewResult.estimate;
-	} finally {
-			if (target.isCurrent() && promptPreviewGeneration === previewGeneration) {
-				isPreviewingPrompt = false;
-			}
-	}
-}
-
-	function closePromptPreviewDialog() {
-		promptPreviewGeneration += 1;
-		isPreviewingPrompt = false;
-		promptPreviews = null;
-		promptEstimate = null;
-	}
-
-	async function handleExecuteWorkOrder() {
-		await handlePreviewWorkOrderPrompt();
-	}
-
 	async function handleConfirmExecuteWorkOrder() {
 		if (selectedWorkOrder === null || selectedWorkOrderPath === null || !canExecuteSelectedWorkOrder) {
 			return;
 		}
+		const promptEstimate = promptPreview.promptEstimate;
 		if (promptEstimate === null) {
 			parseError = getQueueExecutionErrorMessage('queue-execution-confirmation-required');
 			return;
@@ -1164,8 +1100,8 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		get selectedWorkOrder() { return selectedWorkOrder; },
 		get selectedProposal() { return selectedProposal; },
 		get selectedProposalPath() { return selectedProposalPath; },
-		get promptPreviews() { return promptPreviews; },
-		get promptEstimate() { return promptEstimate; },
+		get promptPreviews() { return promptPreview.promptPreviews; },
+		get promptEstimate() { return promptPreview.promptEstimate; },
 		get reviews() { return reviews; },
 		get reviewDecisionOptions() { return reviewDecisionOptions; },
 		get allSkills() { return allSkills; },
@@ -1175,7 +1111,7 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		get isRefreshing() { return isRefreshing; },
 		get isReading() { return isReading; },
 		get isWriting() { return isWriting; },
-		get isPreviewingPrompt() { return isPreviewingPrompt; },
+		get isPreviewingPrompt() { return promptPreview.isPreviewingPrompt; },
 		get isCancellingExecution() { return isCancellingExecution; },
 		get isSavingEvaluation() { return evaluationController.isSavingEvaluation; },
 		get evaluationDialog() { return evaluationController.evaluationDialog; },
@@ -1185,7 +1121,7 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		set queueContextMenuElement(value: HTMLElement | undefined) { fileActions.queueContextMenuElement = value; },
 		get hasSelectedQueueArtifact() { return hasSelectedQueueArtifact; },
 		get canExecuteSelectedWorkOrder() { return canExecuteSelectedWorkOrder; },
-		get canPreviewSelectedWorkOrderPrompt() { return canPreviewSelectedWorkOrderPrompt; },
+		get canPreviewSelectedWorkOrderPrompt() { return promptPreview.canPreviewSelectedWorkOrderPrompt; },
 		get canCompleteSelectedWorkOrder() { return canCompleteSelectedWorkOrder; },
 		get canCancelSelectedWorkOrderExecution() { return canCancelSelectedWorkOrderExecution; },
 		refreshQueueFiles,
@@ -1211,9 +1147,9 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		getReportTaskAgent: evaluationController.getReportTaskAgent,
 		getReviewDecisionLabel: presentation.getReviewDecisionLabel,
 		isReportTaskEvaluationRecorded: evaluationController.isReportTaskEvaluationRecorded,
-		handlePreviewWorkOrderPrompt,
+		handlePreviewWorkOrderPrompt: promptPreview.handlePreviewWorkOrderPrompt,
 		closePromptPreviewDialog,
-		handleExecuteWorkOrder,
+		handleExecuteWorkOrder: promptPreview.handlePreviewWorkOrderPrompt,
 		handleConfirmExecuteWorkOrder,
 		handleCancelWorkOrderExecution,
 		handleCompleteWorkOrder,

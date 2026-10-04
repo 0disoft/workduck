@@ -10662,7 +10662,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "d4a31d11b0fa7fd314c9e31ce35e1c3955a20ee865da76d1109f15e7cb9cded7",
+      "contentHash": "aaa63c915f258d24fc2c58667a2b5009e3fd36bc4144350874cdc01ac0d58b30",
       "declarations": [
         null
       ],
@@ -10682,7 +10682,6 @@
         "./queue-artifacts",
         "./queue-auto-refresh-scheduler",
         "./queue-completed-report-notifications",
-        "./queue-execution",
         "./queue-folder",
         "./queue-panel-errors",
         "./queue-panel-evaluation-controller.svelte",
@@ -10692,7 +10691,7 @@
         "./queue-panel-file-list",
         "./queue-panel-manual-work-order-save-workflow",
         "./queue-panel-presentation.svelte",
-        "./queue-panel-prompt-preview-workflow",
+        "./queue-panel-prompt-preview-controller.svelte",
         "./queue-panel-read-state-workflow",
         "./queue-panel-refresh-workflow",
         "./queue-panel-report-evaluation-delegation-workflow",
@@ -10709,7 +10708,7 @@
       ],
       "path": "src/lib/queue/queue-panel-controller.svelte.ts",
       "semanticBytes": 618,
-      "sourceBytes": 41915
+      "sourceBytes": 40432
     },
     {
       "blocks": [],
@@ -11245,6 +11244,111 @@
       "path": "src/lib/queue/queue-panel-presentation.test.ts",
       "semanticBytes": 0,
       "sourceBytes": 5941
+    },
+    {
+      "blocks": [
+        {
+          "card": {
+            "effect": [],
+            "excludes": [
+              "provider execution",
+              "execution context loading",
+              "execution confirmation consumption"
+            ],
+            "id": "workduck.queue.prompt-preview-controller",
+            "invariant": [
+              "Only the latest open preview for the captured workspace and selected work order receives an estimate; closing invalidates pending responses."
+            ],
+            "owns": [
+              "preview eligibility",
+              "prompt dialog state",
+              "request generation",
+              "estimate lifetime"
+            ],
+            "rel": [],
+            "risk": [],
+            "role": "Own Queue prompt preview admission, estimates, and selection-scoped async dialog state.",
+            "scope": "module",
+            "search": [
+              "Queue prompt preview lifetime",
+              "closed prompt estimate",
+              "late prompt preview result"
+            ],
+            "stability": "architecture",
+            "unknown": []
+          },
+          "end": 590,
+          "endLine": 9,
+          "entries": [
+            {
+              "key": "id",
+              "line": 2,
+              "order": 0,
+              "value": "workduck.queue.prompt-preview-controller"
+            },
+            {
+              "key": "role",
+              "line": 3,
+              "order": 1,
+              "value": "Own Queue prompt preview admission, estimates, and selection-scoped async dialog state."
+            },
+            {
+              "key": "owns",
+              "line": 4,
+              "order": 2,
+              "value": "preview eligibility|prompt dialog state|request generation|estimate lifetime"
+            },
+            {
+              "key": "excludes",
+              "line": 5,
+              "order": 3,
+              "value": "provider execution|execution context loading|execution confirmation consumption"
+            },
+            {
+              "key": "search",
+              "line": 6,
+              "order": 4,
+              "value": "Queue prompt preview lifetime|closed prompt estimate|late prompt preview result"
+            },
+            {
+              "key": "invariant",
+              "line": 7,
+              "order": 5,
+              "value": "Only the latest open preview for the captured workspace and selected work order receives an estimate; closing invalidates pending responses."
+            },
+            {
+              "key": "stability",
+              "line": 8,
+              "order": 6,
+              "value": "architecture"
+            }
+          ],
+          "filePath": "src/lib/queue/queue-panel-prompt-preview-controller.svelte.ts",
+          "indent": "",
+          "newline": "\n",
+          "prefix": null,
+          "raw": "/* llmnav/1 module\nid=workduck.queue.prompt-preview-controller\nrole=Own Queue prompt preview admission, estimates, and selection-scoped async dialog state.\nowns=preview eligibility|prompt dialog state|request generation|estimate lifetime\nexcludes=provider execution|execution context loading|execution confirmation consumption\nsearch=Queue prompt preview lifetime|closed prompt estimate|late prompt preview result\ninvariant=Only the latest open preview for the captured workspace and selected work order receives an estimate; closing invalidates pending responses.\nstability=architecture\n*/",
+          "scope": "module",
+          "specVersion": "1",
+          "start": 0,
+          "startLine": 1,
+          "style": "block",
+          "syntaxErrors": []
+        }
+      ],
+      "contentHash": "0d388b449d7bf5516e69ebd85eacd3b01234aaa95b69769edb01a87fe85c99a4",
+      "declarations": [
+        null
+      ],
+      "imports": [
+        "./queue-artifacts",
+        "./queue-execution",
+        "./queue-panel-prompt-preview-workflow",
+        "./queue-panel-types"
+      ],
+      "path": "src/lib/queue/queue-panel-prompt-preview-controller.svelte.ts",
+      "semanticBytes": 590,
+      "sourceBytes": 3794
     },
     {
       "blocks": [],

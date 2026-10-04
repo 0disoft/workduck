@@ -395,20 +395,6 @@
     {
       "confidence": 0.85,
       "from": "workduck/workduck.queue.panel-controller",
-      "id": "02d6663170b1d06d433f4d20f206b724956350cb20d1182098b8580b8e1e952d",
-      "kind": "imports",
-      "provenance": {
-        "generator": "llmnav",
-        "line": null,
-        "path": "src/lib/queue/queue-panel-controller.svelte.ts",
-        "source": "src/lib/queue/queue-panel-controller.svelte.ts",
-        "type": "local-import"
-      },
-      "to": "workduck/workduck.queue.execution"
-    },
-    {
-      "confidence": 0.85,
-      "from": "workduck/workduck.queue.panel-controller",
       "id": "a464f4cf58da61a1bd3dbd85f42492b2e9335128dffd711f0d9758d5bc5645b9",
       "kind": "imports",
       "provenance": {
@@ -447,6 +433,34 @@
         "type": "local-import"
       },
       "to": "workduck/workduck.queue.artifacts"
+    },
+    {
+      "confidence": 0.85,
+      "from": "workduck/workduck.queue.prompt-preview-controller",
+      "id": "dace92933428555d453b393d2f5b48984f649fcf03874519b9b1ec746c12a026",
+      "kind": "imports",
+      "provenance": {
+        "generator": "llmnav",
+        "line": null,
+        "path": "src/lib/queue/queue-panel-prompt-preview-controller.svelte.ts",
+        "source": "src/lib/queue/queue-panel-prompt-preview-controller.svelte.ts",
+        "type": "local-import"
+      },
+      "to": "workduck/workduck.queue.artifacts"
+    },
+    {
+      "confidence": 0.85,
+      "from": "workduck/workduck.queue.prompt-preview-controller",
+      "id": "24cbe697d92e0193481667ebf1d0a88c1c80bac55853436040ea21971d91f0cd",
+      "kind": "imports",
+      "provenance": {
+        "generator": "llmnav",
+        "line": null,
+        "path": "src/lib/queue/queue-panel-prompt-preview-controller.svelte.ts",
+        "source": "src/lib/queue/queue-panel-prompt-preview-controller.svelte.ts",
+        "type": "local-import"
+      },
+      "to": "workduck/workduck.queue.execution"
     },
     {
       "confidence": 0.85,
@@ -1845,6 +1859,28 @@
     {
       "definitions": [],
       "external": false,
+      "key": "workduck/workduck.queue.prompt-preview-controller",
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src/lib/queue/queue-panel-prompt-preview-controller.svelte.ts",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "repositoryId": "workduck",
+      "role": "Own Queue prompt preview admission, estimates, and selection-scoped async dialog state.",
+      "semanticId": "workduck.queue.prompt-preview-controller",
+      "unresolved": false
+    },
+    {
+      "definitions": [],
+      "external": false,
       "key": "workduck/workduck.queue.read-state",
       "location": {
         "declarationLine": null,
@@ -2351,11 +2387,11 @@
   ],
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "56dfc38f91cb07e4cdc11ccc3235c1d1b74a91b9bb97dc3b0436cf11d1731f7c",
+  "sourceHash": "9400d6e245b50a27c4a044399e7700fdb6d44de4285f9a58e14991a20cb3120f",
   "stats": {
-    "edgeCount": 37,
+    "edgeCount": 38,
     "importedIndexCount": 0,
-    "nodeCount": 82,
+    "nodeCount": 83,
     "unresolvedNodeCount": 0
   }
 }

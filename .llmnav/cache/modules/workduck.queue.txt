@@ -90,3 +90,9 @@ role Own Queue context menu placement, dismissal, and workspace-scoped single or
 owns menu lifecycle, bulk delete selection, delete admission, partial deletion feedback
 excludes artifact persistence, artifact read selection, other Queue writes
 invariant Deletion captures the initiating workspace and applies partial results and feedback only while that view is current; menu subscriptions are disposed when closed.
+
+@workduck.queue.prompt-preview-controller
+role Own Queue prompt preview admission, estimates, and selection-scoped async dialog state.
+owns preview eligibility, prompt dialog state, request generation, estimate lifetime
+excludes provider execution, execution context loading, execution confirmation consumption
+invariant Only the latest open preview for the captured workspace and selected work order receives an estimate; closing invalidates pending responses.
