@@ -1,5 +1,17 @@
 # Repository instructions
 
+## Local workflow
+
+- This checkout uses Bun package scripts and Cargo directly. Mustflow contracts,
+  skill routing, receipts, and parent-workspace procedures do not apply here.
+- Read relevant source and the nearest instructions; do not load parent `.mustflow/`
+  documents or skills for this repository.
+- Keep changes focused, preserve unrelated work, and run the smallest useful check.
+- Commit each completed change. Push, tag, publish, and deploy only when requested.
+- Keep application versions synchronized in `package.json`, `src-tauri/Cargo.toml`,
+  and `src-tauri/Cargo.lock` for runtime changes. Documentation and development
+  workflow changes alone do not require an application version bump.
+
 ## LLMNav code navigation
 
 <!-- llmnav:start -->
