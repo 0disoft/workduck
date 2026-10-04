@@ -30,6 +30,7 @@ export async function queueProjectRepositoryCommitWorkOrder(
 		readonly queuedMessageTemplate: string;
 	},
 	context: {
+		readonly isCurrent: () => boolean;
 		readonly canQueueRepositoryCommitWorkOrder: (
 			repository: ProjectRepositoryLinkRecord
 		) => boolean;
@@ -41,7 +42,7 @@ export async function queueProjectRepositoryCommitWorkOrder(
 ) {
 	const { node, repository } = input;
 
-	if (!context.canQueueRepositoryCommitWorkOrder(repository) || repository.path === null) {
+	if (!context.isCurrent() || !context.canQueueRepositoryCommitWorkOrder(repository) || repository.path === null) {
 		return;
 	}
 
@@ -62,6 +63,8 @@ export async function queueProjectRepositoryCommitWorkOrder(
 			projectIds: rootProjectId === null ? [] : [rootProjectId]
 		});
 
+		if (!context.isCurrent()) return;
+
 		if (!result.ok) {
 			context.setQueueFolderError(result.error);
 			return;
@@ -71,7 +74,7 @@ export async function queueProjectRepositoryCommitWorkOrder(
 			input.queuedMessageTemplate.replace('{relativePath}', result.relativePath)
 		);
 	} finally {
-		context.setCommitWorkOrderTargetRepositoryId(null);
+		if (context.isCurrent()) context.setCommitWorkOrderTargetRepositoryId(null);
 	}
 }
 

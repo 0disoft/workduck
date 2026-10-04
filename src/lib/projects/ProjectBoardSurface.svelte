@@ -667,17 +667,19 @@
 		node: ProjectNodeRecord,
 		repository: ProjectRepositoryLinkRecord
 	) {
+		const target = persistRegistry.capture();
 		await queueProjectRepositoryCommitWorkOrder(
 			{
-				workspaceId: workspace.id,
-				workspacePath: workspace.path,
-				nodes: registry.nodes,
+				workspaceId: target.workspaceId,
+				workspacePath: target.workspacePath,
+				nodes: target.registry.nodes,
 				node,
 				repository,
 				languageId,
 				queuedMessageTemplate: projectMessages.repository.commitWorkOrderQueued
 			},
 			{
+				isCurrent: target.isCurrent,
 				canQueueRepositoryCommitWorkOrder,
 				setCommitWorkOrderTargetRepositoryId: (repositoryId) => {
 					commitWorkOrderTargetRepositoryId = repositoryId;

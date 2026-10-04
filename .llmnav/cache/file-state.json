@@ -7429,7 +7429,7 @@
     },
     {
       "blocks": [],
-      "contentHash": "6f21a707b1739c3db47556cb9ded4434f2ccde8499647d96b6dca340a3188f11",
+      "contentHash": "dacf4730a466e26c6a8d7048019ab0714daabb0acae1c61698389e53912f7de7",
       "declarations": [],
       "imports": [
         "#lib/environment/environment-vault.ts",
@@ -7479,7 +7479,7 @@
       ],
       "path": "src/lib/projects/ProjectBoardSurface.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 50718
+      "sourceBytes": 50814
     },
     {
       "blocks": [
@@ -8276,7 +8276,22 @@
     },
     {
       "blocks": [],
-      "contentHash": "fbb5e539a0e01fb0f5e93ea99e31779e71a5a6f722634108283e85ab7a05bb9a",
+      "contentHash": "5fe1a78c6109f36848900566ca78655621f5a2f72a4628951095ab91074ed4e4",
+      "declarations": [],
+      "imports": [
+        "#lib/queue/queue-folder.ts",
+        "#lib/tauri/tauri-invoke.ts",
+        "./project-board-repository-commit-work-order",
+        "./project-registry",
+        "bun:test"
+      ],
+      "path": "src/lib/projects/project-board-repository-commit-work-order.test.ts",
+      "semanticBytes": 0,
+      "sourceBytes": 3537
+    },
+    {
+      "blocks": [],
+      "contentHash": "8625ba31fe35f1fd6a45c68e8c3ceb61b7b303b60e22e92a42e104e9e78c8511",
       "declarations": [],
       "imports": [
         "#lib/i18n/workduck-language.ts",
@@ -8287,7 +8302,7 @@
       ],
       "path": "src/lib/projects/project-board-repository-commit-work-order.ts",
       "semanticBytes": 0,
-      "sourceBytes": 2951
+      "sourceBytes": 3074
     },
     {
       "blocks": [],
