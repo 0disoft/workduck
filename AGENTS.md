@@ -15,6 +15,9 @@
   Keep the generated cache flat: nested catalog directories cause persistent
   Windows `EPERM` errors during cache replacement in this checkout. Semantic cards,
   the search index, repository catalog, and query/show/context remain available.
+- Keep `src-tauri/src/bin/` limited to executable entrypoint files. Put CLI helper
+  modules under `src-tauri/src/cli/`; Tauri also infers installer binaries from
+  directory entries in `src/bin/`.
 
 ## LLMNav code navigation
 

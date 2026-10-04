@@ -16,7 +16,7 @@
         "agent evaluation implementation"
       ],
       "hashes": {
-        "body": "7cce0dba12d6ef8c61869a7016cc573cd8eafe4986a79550e09b275ef60c4922",
+        "body": "423f95429291d4ff9bf8432c796cb4f09aa303fa327841d1d7a5f451c9324da8",
         "semantic": "2b2ca23baafe3dca3abb96be0a3108be435e53b22938c806aabd7d0ec602a811",
         "structure": "306a30e917d7e704b601f1acaedc2a9e0c00903e410c248fb3670eebd7c8d4e3"
       },
@@ -4030,7 +4030,7 @@
       "hashes": {
         "body": "97a3bf4b6e60b1b50ba742697cd13bd102880cf731f04ec9ac88fbda3f0dec70",
         "semantic": "02b8b31119c0c254d5373b7fd5071f1cdd6fe01f1f5a27bd4eacd7302ae6846d",
-        "structure": "06cf72a81b10857fd68910a15030b62dd3932817e471f707ae86de6703300265"
+        "structure": "177760fd661149da66c7a8e11a82f01461b6954c1d328b68323b8e5e91829904"
       },
       "id": "workduck.cli.agent-evaluation",
       "imports": [
@@ -4051,7 +4051,7 @@
         "exported": null,
         "kind": null,
         "language": null,
-        "path": "src-tauri/src/bin/cli/agent_evaluation.rs",
+        "path": "src-tauri/src/cli/agent_evaluation.rs",
         "receiver": null,
         "signature": null,
         "startLine": 1,
@@ -4777,7 +4777,7 @@
   ],
   "contractFingerprints": {
     "configuration": {
-      "sha256": "6b1548c2f22da6442e6ce9e02d09f1cd2fb8a732942db72e199b50e7685f1570"
+      "sha256": "363c77283797537e6a4c8478572455c8c7b6ab30552168fc7fe5a1c5b046c74c"
     },
     "exportedApi": {
       "count": 0,
@@ -4788,6 +4788,6 @@
   "generatedBy": "llmnav@0.9.7",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "135a7dbd91ffbe07da99ccf0b68824b252a9c805eaec6ff9a49308690d82f1dd",
+  "sourceHash": "7ebb94cc45c94f46d3e3c17c903762b9a7e9ce2fbfc335feed5c06cfa71e0e5b",
   "specVersion": "1"
 }

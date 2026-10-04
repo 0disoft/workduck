@@ -139,7 +139,8 @@ jobs:
       - name: Cache Rust dependencies
         uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
         with:
-          shared-key: windows-release
+          # Reuse the same Windows crate and source-archive dependency cache as CI.
+          shared-key: windows-ci
           workspaces: |
             src-tauri -> target
 

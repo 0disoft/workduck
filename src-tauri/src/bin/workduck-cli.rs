@@ -28,7 +28,7 @@ use workduck_lib::queue_work_order_execution::{
 };
 use zeroize::{Zeroize, Zeroizing};
 
-#[path = "cli/agent_evaluation.rs"]
+#[path = "../cli/agent_evaluation.rs"]
 mod agent_evaluation;
 use agent_evaluation::run_agent_command;
 

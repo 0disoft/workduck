@@ -250,7 +250,7 @@
     },
     {
       "match": [
-        "src-tauri/src/bin/cli/agent_evaluation.rs"
+        "src-tauri/src/cli/agent_evaluation.rs"
       ],
       "name": "CLI agent evaluation boundary",
       "requiredFields": [
@@ -404,7 +404,7 @@
         "reason": "Legacy route redirects immediately to the root page and owns no process workflow."
       },
       {
-        "path": "src-tauri/src/bin/cli/agent_evaluation/tests.rs",
+        "path": "src-tauri/src/cli/agent_evaluation/tests.rs",
         "reason": "Contains CLI evaluation regression tests and fixtures only; runtime evaluation admission, aggregation and persistence are owned by the parent evaluation module."
       }
     ]

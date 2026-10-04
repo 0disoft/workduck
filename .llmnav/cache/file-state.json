@@ -1370,129 +1370,6 @@
           "card": {
             "effect": [],
             "excludes": [
-              "queue execution",
-              "work-order discovery",
-              "vault decryption"
-            ],
-            "id": "workduck.cli.agent-evaluation",
-            "invariant": [
-              "Single and batch evaluations share one locked commit owner, unchanged retries do not rewrite registries, and failed batches commit no evaluations."
-            ],
-            "owns": [
-              "agent evaluation options",
-              "evaluation deduplication",
-              "score accumulation",
-              "persona summary synchronization",
-              "evaluation registry writes"
-            ],
-            "rel": [],
-            "risk": [],
-            "role": "Parse agent evaluation commands, update agent score history, and synchronize persona summaries under a workspace lock.",
-            "scope": "module",
-            "search": [
-              "agent evaluation cli",
-              "evaluation score history",
-              "persona evaluation summaries",
-              "evaluate batch command"
-            ],
-            "stability": "architecture",
-            "unknown": []
-          },
-          "end": 659,
-          "endLine": 9,
-          "entries": [
-            {
-              "key": "id",
-              "line": 2,
-              "order": 0,
-              "value": "workduck.cli.agent-evaluation"
-            },
-            {
-              "key": "role",
-              "line": 3,
-              "order": 1,
-              "value": "Parse agent evaluation commands, update agent score history, and synchronize persona summaries under a workspace lock."
-            },
-            {
-              "key": "owns",
-              "line": 4,
-              "order": 2,
-              "value": "agent evaluation options|evaluation deduplication|score accumulation|persona summary synchronization|evaluation registry writes"
-            },
-            {
-              "key": "excludes",
-              "line": 5,
-              "order": 3,
-              "value": "queue execution|work-order discovery|vault decryption"
-            },
-            {
-              "key": "search",
-              "line": 6,
-              "order": 4,
-              "value": "agent evaluation cli|evaluation score history|persona evaluation summaries|evaluate batch command"
-            },
-            {
-              "key": "invariant",
-              "line": 7,
-              "order": 5,
-              "value": "Single and batch evaluations share one locked commit owner, unchanged retries do not rewrite registries, and failed batches commit no evaluations."
-            },
-            {
-              "key": "stability",
-              "line": 8,
-              "order": 6,
-              "value": "architecture"
-            }
-          ],
-          "filePath": "src-tauri/src/bin/cli/agent_evaluation.rs",
-          "indent": "",
-          "newline": "\n",
-          "prefix": null,
-          "raw": "/* llmnav/1 module\nid=workduck.cli.agent-evaluation\nrole=Parse agent evaluation commands, update agent score history, and synchronize persona summaries under a workspace lock.\nowns=agent evaluation options|evaluation deduplication|score accumulation|persona summary synchronization|evaluation registry writes\nexcludes=queue execution|work-order discovery|vault decryption\nsearch=agent evaluation cli|evaluation score history|persona evaluation summaries|evaluate batch command\ninvariant=Single and batch evaluations share one locked commit owner, unchanged retries do not rewrite registries, and failed batches commit no evaluations.\nstability=architecture\n*/",
-          "scope": "module",
-          "specVersion": "1",
-          "start": 0,
-          "startLine": 1,
-          "style": "block",
-          "syntaxErrors": []
-        }
-      ],
-      "contentHash": "97a3bf4b6e60b1b50ba742697cd13bd102880cf731f04ec9ac88fbda3f0dec70",
-      "declarations": [
-        null
-      ],
-      "imports": [
-        "serde::{Deserialize, Serialize}",
-        "serde_json::Value",
-        "std::{\n    collections::{HashMap, HashSet},\n    io::{self, Read},\n    path::{Path, PathBuf},\n}",
-        "super::{\n    AGENTS_FILE_NAME, CliError, PERSONAS_FILE_NAME, canonicalize_directory, current_timestamp,\n    increment_registry_revision, io_error, read_json_file, read_workspace_id, to_json_error,\n    usage_text, workspace_data_path, write_json_file,\n}",
-        "tests",
-        "workduck_lib::workspace_data_file::{\n    commit_workspace_registry_pair_under_lock, recover_workspace_registry_transaction_under_lock,\n}",
-        "workduck_lib::workspace_registry_lock::acquire_workspace_registry_lock"
-      ],
-      "path": "src-tauri/src/bin/cli/agent_evaluation.rs",
-      "semanticBytes": 659,
-      "sourceBytes": 33333
-    },
-    {
-      "blocks": [],
-      "contentHash": "76d4160015d5701e157de2cc23299a38a627888e018d25a4509d5df8e06afa72",
-      "declarations": [],
-      "imports": [
-        "crate::WORKDUCK_DIRECTORY_NAME",
-        "std::fs",
-        "super::*"
-      ],
-      "path": "src-tauri/src/bin/cli/agent_evaluation/tests.rs",
-      "semanticBytes": 0,
-      "sourceBytes": 10385
-    },
-    {
-      "blocks": [
-        {
-          "card": {
-            "effect": [],
-            "excludes": [
               "Node launcher",
               "Tauri desktop command registry",
               "agent evaluation implementation"
@@ -1578,7 +1455,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "7cce0dba12d6ef8c61869a7016cc573cd8eafe4986a79550e09b275ef60c4922",
+      "contentHash": "423f95429291d4ff9bf8432c796cb4f09aa303fa327841d1d7a5f451c9324da8",
       "declarations": [
         null
       ],
@@ -1599,7 +1476,7 @@
       ],
       "path": "src-tauri/src/bin/workduck-cli.rs",
       "semanticBytes": 542,
-      "sourceBytes": 33835
+      "sourceBytes": 33838
     },
     {
       "blocks": [
@@ -1718,6 +1595,129 @@
       "path": "src-tauri/src/chat_completion.rs",
       "semanticBytes": 0,
       "sourceBytes": 6207
+    },
+    {
+      "blocks": [
+        {
+          "card": {
+            "effect": [],
+            "excludes": [
+              "queue execution",
+              "work-order discovery",
+              "vault decryption"
+            ],
+            "id": "workduck.cli.agent-evaluation",
+            "invariant": [
+              "Single and batch evaluations share one locked commit owner, unchanged retries do not rewrite registries, and failed batches commit no evaluations."
+            ],
+            "owns": [
+              "agent evaluation options",
+              "evaluation deduplication",
+              "score accumulation",
+              "persona summary synchronization",
+              "evaluation registry writes"
+            ],
+            "rel": [],
+            "risk": [],
+            "role": "Parse agent evaluation commands, update agent score history, and synchronize persona summaries under a workspace lock.",
+            "scope": "module",
+            "search": [
+              "agent evaluation cli",
+              "evaluation score history",
+              "persona evaluation summaries",
+              "evaluate batch command"
+            ],
+            "stability": "architecture",
+            "unknown": []
+          },
+          "end": 659,
+          "endLine": 9,
+          "entries": [
+            {
+              "key": "id",
+              "line": 2,
+              "order": 0,
+              "value": "workduck.cli.agent-evaluation"
+            },
+            {
+              "key": "role",
+              "line": 3,
+              "order": 1,
+              "value": "Parse agent evaluation commands, update agent score history, and synchronize persona summaries under a workspace lock."
+            },
+            {
+              "key": "owns",
+              "line": 4,
+              "order": 2,
+              "value": "agent evaluation options|evaluation deduplication|score accumulation|persona summary synchronization|evaluation registry writes"
+            },
+            {
+              "key": "excludes",
+              "line": 5,
+              "order": 3,
+              "value": "queue execution|work-order discovery|vault decryption"
+            },
+            {
+              "key": "search",
+              "line": 6,
+              "order": 4,
+              "value": "agent evaluation cli|evaluation score history|persona evaluation summaries|evaluate batch command"
+            },
+            {
+              "key": "invariant",
+              "line": 7,
+              "order": 5,
+              "value": "Single and batch evaluations share one locked commit owner, unchanged retries do not rewrite registries, and failed batches commit no evaluations."
+            },
+            {
+              "key": "stability",
+              "line": 8,
+              "order": 6,
+              "value": "architecture"
+            }
+          ],
+          "filePath": "src-tauri/src/cli/agent_evaluation.rs",
+          "indent": "",
+          "newline": "\n",
+          "prefix": null,
+          "raw": "/* llmnav/1 module\nid=workduck.cli.agent-evaluation\nrole=Parse agent evaluation commands, update agent score history, and synchronize persona summaries under a workspace lock.\nowns=agent evaluation options|evaluation deduplication|score accumulation|persona summary synchronization|evaluation registry writes\nexcludes=queue execution|work-order discovery|vault decryption\nsearch=agent evaluation cli|evaluation score history|persona evaluation summaries|evaluate batch command\ninvariant=Single and batch evaluations share one locked commit owner, unchanged retries do not rewrite registries, and failed batches commit no evaluations.\nstability=architecture\n*/",
+          "scope": "module",
+          "specVersion": "1",
+          "start": 0,
+          "startLine": 1,
+          "style": "block",
+          "syntaxErrors": []
+        }
+      ],
+      "contentHash": "97a3bf4b6e60b1b50ba742697cd13bd102880cf731f04ec9ac88fbda3f0dec70",
+      "declarations": [
+        null
+      ],
+      "imports": [
+        "serde::{Deserialize, Serialize}",
+        "serde_json::Value",
+        "std::{\n    collections::{HashMap, HashSet},\n    io::{self, Read},\n    path::{Path, PathBuf},\n}",
+        "super::{\n    AGENTS_FILE_NAME, CliError, PERSONAS_FILE_NAME, canonicalize_directory, current_timestamp,\n    increment_registry_revision, io_error, read_json_file, read_workspace_id, to_json_error,\n    usage_text, workspace_data_path, write_json_file,\n}",
+        "tests",
+        "workduck_lib::workspace_data_file::{\n    commit_workspace_registry_pair_under_lock, recover_workspace_registry_transaction_under_lock,\n}",
+        "workduck_lib::workspace_registry_lock::acquire_workspace_registry_lock"
+      ],
+      "path": "src-tauri/src/cli/agent_evaluation.rs",
+      "semanticBytes": 659,
+      "sourceBytes": 33333
+    },
+    {
+      "blocks": [],
+      "contentHash": "76d4160015d5701e157de2cc23299a38a627888e018d25a4509d5df8e06afa72",
+      "declarations": [],
+      "imports": [
+        "crate::WORKDUCK_DIRECTORY_NAME",
+        "std::fs",
+        "super::*"
+      ],
+      "path": "src-tauri/src/cli/agent_evaluation/tests.rs",
+      "semanticBytes": 0,
+      "sourceBytes": 10385
     },
     {
       "blocks": [

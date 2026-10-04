@@ -88,7 +88,7 @@
     "workduck.workspace.sync-file-native",
     "workduck.workspace.sync-git-native"
   ],
-  "cardSetHash": "3b63383a9aee9878a05b72b45a391848ea62a5911177271e988139941aebb32c",
+  "cardSetHash": "a9989196e201e81501f8f20efbd680bd82bb013742675579bb5232bf523c1cc1",
   "documentCount": 87,
   "documents": [
     [
@@ -182,7 +182,7 @@
       ]
     ],
     [
-      "b704c7d05e110a2462aac3191a9bba98765246c5aa95b43d75f316fb7f7db94f",
+      "696e93a4f09f4543e341809e62b20ed643c05160d86d296960624c5a7b02ede3",
       [
         "parse agent evaluation commands, update agent score history, and synchronize persona summaries under a workspace lock.",
         "agent evaluation cli",
@@ -3924,13 +3924,6 @@
       ]
     ],
     [
-      [
-        7,
-        [
-          9,
-          1
-        ]
-      ],
       [
         8,
         [

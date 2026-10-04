@@ -808,7 +808,7 @@
         "exported": null,
         "kind": null,
         "language": null,
-        "path": "src-tauri/src/bin/cli/agent_evaluation.rs",
+        "path": "src-tauri/src/cli/agent_evaluation.rs",
         "receiver": null,
         "signature": null,
         "startLine": 1,
@@ -2573,7 +2573,7 @@
   ],
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "e2d40f7f586cf94c040a9694f55b651479720cbe612bd5ec061f2db8a52e6e3e",
+  "sourceHash": "2dc0fe2ff3efe56c54e6e68f2e8528d832d4006c1b2e3d50d32863cb1c0952fd",
   "stats": {
     "edgeCount": 45,
     "importedIndexCount": 0,

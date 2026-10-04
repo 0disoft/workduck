@@ -160,3 +160,23 @@ and its 34 files were verified by SHA-256 before clearing disposable catalogs.
 Validation: repeated incremental generation, full generation, full-generation
 freshness check, semantic lint, retrieval evaluation and context lookup passed.
 No runtime implementation changed, so the application version is unchanged.
+
+## Windows installer packaging repair (1.9.44)
+
+The first v1.9.43 release passed frontend and Rust tests and source-archive
+verification, then failed during NSIS packaging: Tauri treated the helper
+directory `src-tauri/src/bin/cli/` as a binary and required a nonexistent `cli.exe`.
+Move its evaluation module and tests to `src-tauri/src/cli/`, adjust the CLI module
+path and LLMNav coverage paths, and retain the existing semantic IDs.
+
+Local validation passed: CLI tests (15), frontend build, Tauri debug application
+build and NSIS installer generation (11.69 MiB). The local packaging check disabled
+signing and updater artifacts through a command-only config override; the release
+configuration still creates signed updater artifacts. LLMNav format/check/generate
+passed; audit has zero high candidates and no stale dispositions.
+
+The release now reuses the Windows CI Rust dependency cache. The packaging repair
+commit skips duplicate push CI; its version tag is deployed through the existing
+manual release workflow, which still runs frontend/Rust tests, source-archive
+verification and the full release build. v1.9.43 is not retagged or published;
+the corrected application version is v1.9.44.
