@@ -10215,7 +10215,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "a33379f0b878d9d5a3563ab5b7865daa9c75d6d82f8d1a02584924992dd80ae5",
+      "contentHash": "e887e23cf39086db0c568b45ce3a6ee79062c7c92504032cd346a728d8754ad0",
       "declarations": [
         null
       ],
@@ -10264,17 +10264,21 @@
       ],
       "path": "src/lib/queue/queue-panel-controller.svelte.ts",
       "semanticBytes": 594,
-      "sourceBytes": 52499
+      "sourceBytes": 53002
     },
     {
       "blocks": [],
-      "contentHash": "f4d1daba972640bf2d4485a973ef0c186bf82b2ebcd6bddae68683e2f088d22f",
+      "contentHash": "18cf40e28fcae3f91cd2dc74b034fbc9f178109b0a51407fae4b6c287181e623",
       "declarations": [],
       "imports": [
+        "#lib/agents/agent-evaluation.ts",
+        "#lib/agents/agent-registry.ts",
         "#lib/environment/environment-vault-session.ts",
         "#lib/environment/environment-vault.ts",
+        "#lib/personas/persona-registry.ts",
         "#lib/tauri/tauri-invoke.ts",
         "#lib/workspaces/workspace-registry.ts",
+        "./queue-artifacts",
         "./queue-panel-types",
         "bun",
         "node:assert/strict",
@@ -10283,7 +10287,7 @@
       ],
       "path": "src/lib/queue/queue-panel-controller.test.ts",
       "semanticBytes": 0,
-      "sourceBytes": 12746
+      "sourceBytes": 17353
     },
     {
       "blocks": [],

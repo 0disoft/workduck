@@ -7,6 +7,10 @@ import type { WorkspaceRecord } from '#lib/workspaces/workspace-registry.ts';
 import type { QueueCardEntry } from './queue-panel-types';
 import { createEmptyEnvironmentVault } from '#lib/environment/environment-vault.ts';
 import { closeEnvironmentVaultSession, setEnvironmentVaultSession } from '#lib/environment/environment-vault-session.ts';
+import { createEmptyAgentRegistry, type AgentRegistry } from '#lib/agents/agent-registry.ts';
+import { createEmptyAgentEvaluationSummary } from '#lib/agents/agent-evaluation.ts';
+import { createEmptyPersonaRegistry } from '#lib/personas/persona-registry.ts';
+import type { WorkduckQueueResultReport } from './queue-artifacts';
 
 await plugin({
 	name: 'queue-controller-runes',
@@ -259,4 +263,80 @@ describe('Queue controller workspace ownership', () => {
 			assert.equal(harness.controller.isPreviewingPrompt, false);
 		} finally { previewResponse.resolve(); harness.dispose(); }
 	});
+
+	for (const selection of ['another-report', 'clear'] as const) {
+		test(`keeps ${selection} selection when a pending evaluation save finishes`, async () => {
+			const reportWrite = deferred<void>();
+			let writeStarted = false;
+			let agents: AgentRegistry = {
+				...createEmptyAgentRegistry('old'),
+				agents: [{
+					id: 'agent_1', name: 'Agent 1', environmentSecretId: null, personaId: null,
+					executionProvider: 'openai', modelId: '', evaluationKeys: [], evaluationResetAt: null,
+					evaluationSummary: createEmptyAgentEvaluationSummary(),
+					createdAt: oldCard.createdAt, updatedAt: oldCard.createdAt
+				}]
+			};
+			let personas = createEmptyPersonaRegistry('old');
+			const reports = new Map<string, string>();
+			function reportCard(id: string): QueueCardEntry {
+				const card = { ...oldCard, kind: 'result-report' as const, artifactId: id,
+					relativePath: `reports/${id}.workduck-report.json`, fileName: `${id}.workduck-report.json` };
+				const report: WorkduckQueueResultReport = {
+					schemaVersion: 'workduck.queue-result-report/v1', ref: { id, kind: 'queue-result-report', label: id },
+					status: 'active', createdAt: oldCard.createdAt,
+					tasks: [{ id: 'task_agent_1_result', title: 'Agent 1: result', summary: 'Done', filesChanged: [], verification: [], risks: [] }]
+				};
+				reports.set(card.relativePath, JSON.stringify(report));
+				return card;
+			}
+			const first = reportCard('report-first');
+			const second = reportCard('report-second');
+			setTauriInvokeForTest(async <T>(command: string, args?: Record<string, unknown>) => {
+				if (command === 'read_workspace_data_file') {
+					if (args?.fileName === 'agents.json') return response<T>({ ok: true, content: JSON.stringify(agents) });
+					if (args?.fileName === 'personas.json') return response<T>({ ok: true, content: JSON.stringify(personas) });
+				}
+				if (command === 'read_queue_file') return response<T>({ ok: true, relativePath: args?.relativePath, content: reports.get(args?.relativePath as string) });
+				if (command === 'write_workspace_registry_pair') {
+					agents = { ...JSON.parse(args?.agentsContent as string), revision: agents.revision + 1 };
+					personas = { ...JSON.parse(args?.personasContent as string), revision: personas.revision + 1 };
+					return response<T>({ ok: true, agentsContent: JSON.stringify(agents), personasContent: JSON.stringify(personas) });
+				}
+				if (command === 'update_queue_result_report_file') {
+					writeStarted = true;
+					await reportWrite.promise;
+					reports.set(args?.relativePath as string, args?.content as string);
+					return response<T>({ ok: true, relativePath: args?.relativePath, content: args?.content });
+				}
+				if (command === 'list_queue_files') return response<T>({ ok: true, rootPath: 'C:/workspaces/old/queue', files: [] });
+				return response<T>(command === 'read_project_registry' ? { ok: true, registryJson: null } : { ok: false });
+			});
+			const harness = createQueuePanelControllerHarness(workspace('old'));
+			let saving: Promise<void> | undefined;
+			try {
+				await settleEffects();
+				const controller = harness.controller;
+				controller.handleQueueCardClick(first);
+				await settleEffects();
+				controller.openEvaluationDialog(controller.selectedReport!.tasks[0]!);
+				assert.ok(controller.evaluationDialog);
+				saving = controller.handleSaveEvaluation({ preventDefault() {} } as SubmitEvent);
+				await settleEffects();
+				assert.equal(writeStarted, true);
+				if (selection === 'clear') controller.handleQueueCardClick(first);
+				else controller.handleQueueCardClick(second);
+				await settleEffects();
+				assert.equal(controller.selectedReport?.ref.id ?? null, selection === 'clear' ? null : second.artifactId);
+				reportWrite.resolve();
+				await saving;
+				assert.equal(controller.selectedReport?.ref.id ?? null, selection === 'clear' ? null : second.artifactId);
+				assert.equal(controller.selectedReportPath, selection === 'clear' ? null : second.relativePath);
+				assert.equal(controller.status, null);
+				assert.equal(controller.evaluationDialog, null);
+				assert.equal(controller.isSavingEvaluation, false);
+				assert.equal(controller.allAgents[0]?.evaluationSummary.totalCount, 1);
+			} finally { reportWrite.resolve(); await saving; harness.dispose(); }
+		});
+	}
 });

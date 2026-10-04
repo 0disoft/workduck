@@ -636,6 +636,9 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 	function resetQueueArtifactSelectionState() {
 		artifactReadGeneration += 1;
 		isReading = false;
+		const closedEvaluation = createClosedQueueEvaluationDialogState();
+		evaluationDialog = closedEvaluation.dialog;
+		evaluationScores = closedEvaluation.scores;
 		selectedReport = null;
 		selectedReportPath = null;
 		selectedWorkOrder = null;
@@ -1470,6 +1473,14 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		}
 
 		const target = captureWorkspaceOperationTarget();
+		const report = selectedReport;
+		const reportPath = selectedReportPath;
+		const readGeneration = artifactReadGeneration;
+		const selectionIsCurrent = () =>
+			target.isCurrent() &&
+			artifactReadGeneration === readGeneration &&
+			selectedReportPath === reportPath &&
+			selectedReport?.ref.id === report.ref.id;
 		isSavingEvaluation = true;
 		error = null;
 		parseError = null;
@@ -1479,16 +1490,16 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 			const saveResult = await saveQueuePanelEvaluation({
 				workspaceId: target.workspaceId,
 				workspacePath: target.workspacePath,
-				report: selectedReport,
-				reportPath: selectedReportPath,
+				report,
+				reportPath,
 				task: evaluationDialog.task,
 				agentId: evaluationDialog.agent.id,
 				scores: evaluationScores
 			});
 			if (!target.isCurrent()) return;
 
-			await applyQueuePanelEvaluationSaveState(saveResult, target);
-			if (!target.isCurrent()) return;
+			await applyQueuePanelEvaluationSaveState(saveResult, target, selectionIsCurrent);
+			if (!selectionIsCurrent()) return;
 
 			if (!saveResult.ok) {
 				parseError = getQueuePanelEvaluationSaveFailureMessage(saveResult.code);
@@ -1509,21 +1520,21 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 
 	async function applyQueuePanelEvaluationSaveState(
 		result: QueuePanelEvaluationSaveResult,
-		target: ReturnType<typeof captureWorkspaceOperationTarget>
+		target: ReturnType<typeof captureWorkspaceOperationTarget>,
+		selectionIsCurrent: () => boolean
 	) {
 		if (!target.isCurrent()) return;
 		if (result.agentRegistry !== null) {
 			agentRegistry = result.agentRegistry;
 		}
-
-		if (result.report !== null && result.reportRelativePath !== null) {
-			selectedReport = result.report;
-			completedReportNotifications.rememberPath(result.reportRelativePath);
-			await refreshQueueFiles({ silent: true });
+		if (result.personaRegistry !== null) {
+			personaRegistry = result.personaRegistry;
 		}
 
-		if (target.isCurrent() && result.personaRegistry !== null) {
-			personaRegistry = result.personaRegistry;
+		if (result.report !== null && result.reportRelativePath !== null) {
+			if (selectionIsCurrent()) selectedReport = result.report;
+			completedReportNotifications.rememberPath(result.reportRelativePath);
+			await refreshQueueFiles({ silent: true });
 		}
 }
 
