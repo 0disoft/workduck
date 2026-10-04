@@ -150,53 +150,97 @@ function normalizeProjectNodes(nodes: readonly ProjectNodeRecord[]): readonly Pr
 
 	const pathByNodeId = new Map(rootNodes.map((node) => [node.id, node.path]));
 	const seenChildNames = new Map<string, Set<string>>();
-	let changed = true;
+	const groupIndexesByParentId = new Map<string, number[]>();
+	for (let index = 0; index < nodes.length; index += 1) {
+		const node = nodes[index]!;
+		if (node.kind !== 'group' || node.parentId === null) continue;
+		const indexes = groupIndexesByParentId.get(node.parentId) ?? [];
+		indexes.push(index);
+		groupIndexesByParentId.set(node.parentId, indexes);
+	}
 
-	while (changed) {
-		changed = false;
+	let pendingIndexes: number[] = [];
+	let nextPassIndexes: number[] = [];
+	for (const root of rootNodes) {
+		for (const index of groupIndexesByParentId.get(root.id) ?? []) {
+			pushScheduledNode(pendingIndexes, index);
+		}
+	}
 
-		for (const node of nodes) {
-			if (seenNodeIds.has(node.id) || node.kind !== 'group' || node.parentId === null) {
-				continue;
-			}
+	while (pendingIndexes.length > 0 || nextPassIndexes.length > 0) {
+		if (pendingIndexes.length === 0) {
+			pendingIndexes = nextPassIndexes;
+			nextPassIndexes = [];
+		}
+		const index = popScheduledNode(pendingIndexes);
+		const node = nodes[index]!;
+		if (seenNodeIds.has(node.id) || node.parentId === null) continue;
 
-			const parentPath = pathByNodeId.get(node.parentId);
+		const parentPath = pathByNodeId.get(node.parentId);
 
-			if (parentPath === undefined) {
-				continue;
-			}
+		if (parentPath === undefined) continue;
 
-			const nameKey = createNameKey(node.name);
-			const path = normalizeProjectPath(node.path) || createDefaultProjectPath(parentPath, node.name);
-			const pathKey = createProjectPathKey(path);
-			const siblingNames = seenChildNames.get(node.parentId) ?? new Set<string>();
+		const nameKey = createNameKey(node.name);
+		const path = normalizeProjectPath(node.path) || createDefaultProjectPath(parentPath, node.name);
+		const pathKey = createProjectPathKey(path);
+		const siblingNames = seenChildNames.get(node.parentId) ?? new Set<string>();
 
-			if (siblingNames.has(nameKey) || seenNodePaths.has(pathKey)) {
-				continue;
-			}
+		if (siblingNames.has(nameKey) || seenNodePaths.has(pathKey)) continue;
 
-			seenNodeIds.add(node.id);
-			seenNodePaths.add(pathKey);
-			siblingNames.add(nameKey);
-			seenChildNames.set(node.parentId, siblingNames);
-			normalizedNodes.push({
-				...node,
-				description: normalizeProjectDescription(node.description),
-				path,
-				githubCredentialSecretId: normalizeRecordId(node.githubCredentialSecretId),
-				tags: normalizeProjectTags(node.tags),
-				repositories: filterUniqueRepositories(
-					node.repositories,
-					seenRepositoryPaths,
-					seenRepositoryRemoteUrls
-				)
-			});
-			pathByNodeId.set(node.id, path);
-			changed = true;
+		seenNodeIds.add(node.id);
+		seenNodePaths.add(pathKey);
+		siblingNames.add(nameKey);
+		seenChildNames.set(node.parentId, siblingNames);
+		normalizedNodes.push({
+			...node,
+			description: normalizeProjectDescription(node.description),
+			path,
+			githubCredentialSecretId: normalizeRecordId(node.githubCredentialSecretId),
+			tags: normalizeProjectTags(node.tags),
+			repositories: filterUniqueRepositories(
+				node.repositories,
+				seenRepositoryPaths,
+				seenRepositoryRemoteUrls
+			)
+		});
+		pathByNodeId.set(node.id, path);
+		for (const childIndex of groupIndexesByParentId.get(node.id) ?? []) {
+			// Preserve the original scan's eligibility order and collision winners.
+			pushScheduledNode(childIndex > index ? pendingIndexes : nextPassIndexes, childIndex);
 		}
 	}
 
 	return normalizedNodes;
+}
+
+function pushScheduledNode(indexes: number[], value: number) {
+	let position = indexes.length;
+	indexes.push(value);
+	while (position > 0) {
+		const parent = Math.floor((position - 1) / 2);
+		if (indexes[parent]! <= value) break;
+		indexes[position] = indexes[parent]!;
+		position = parent;
+	}
+	indexes[position] = value;
+}
+
+function popScheduledNode(indexes: number[]) {
+	const first = indexes[0]!;
+	const last = indexes.pop()!;
+	if (indexes.length > 0) {
+		let position = 0;
+		while (position * 2 + 1 < indexes.length) {
+			const left = position * 2 + 1;
+			const right = left + 1;
+			const child = right < indexes.length && indexes[right]! < indexes[left]! ? right : left;
+			if (last <= indexes[child]!) break;
+			indexes[position] = indexes[child]!;
+			position = child;
+		}
+		indexes[position] = last;
+	}
+	return first;
 }
 
 function filterUniqueRepositories(

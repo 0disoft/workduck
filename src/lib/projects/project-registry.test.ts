@@ -29,6 +29,19 @@ function parseFixture(nodes: readonly ProjectNodeRecord[]) {
 }
 
 describe('project registry canonicalization', () => {
+	test('normalizes a deep reversed hierarchy without truncation or recursion', () => {
+		const nodes = [fixtureNode('root', null)];
+		for (let index = 0; index < 6000; index += 1) {
+			nodes.push({
+				...fixtureNode(`group-${index}`, index === 0 ? 'root' : `group-${index - 1}`),
+				path: `projects/group-${index}`
+			});
+		}
+		const parsed = parseFixture(nodes.toReversed());
+		assert.equal(parsed.nodes.length, nodes.length);
+		assert.deepEqual(parsed.nodes.map(node => node.id), nodes.map(node => node.id));
+	});
+
 	test('resolves reversed ancestors and drops orphaned or cyclic groups', () => {
 		const parsed = parseFixture([
 			fixtureNode('leaf', 'middle'), fixtureNode('middle', 'group'),

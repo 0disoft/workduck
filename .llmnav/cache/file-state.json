@@ -9025,7 +9025,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "d14914d7a1bf39ef4e76d8cb61e77169b5884e7efbfece151466a74fb0176369",
+      "contentHash": "797d5e62e50b4f72e17f645a5b5971cdaf2ae3f945bc548d969a18a046d95226",
       "declarations": [
         null
       ],
@@ -9037,11 +9037,11 @@
       ],
       "path": "src/lib/projects/project-registry-normalization.ts",
       "semanticBytes": 631,
-      "sourceBytes": 15244
+      "sourceBytes": 16954
     },
     {
       "blocks": [],
-      "contentHash": "4dde2d79adbfda9dad71e9d4fedefc6e1ffa4aaf573b4d56fa2a4630341dc623",
+      "contentHash": "e0f6616ae53ae6b307385fe80f2000cce411e0c114cb7070a7fc4d6ac27edd24",
       "declarations": [],
       "imports": [
         "./project-registry",
@@ -9050,7 +9050,7 @@
       ],
       "path": "src/lib/projects/project-registry.test.ts",
       "semanticBytes": 0,
-      "sourceBytes": 9587
+      "sourceBytes": 10105
     },
     {
       "blocks": [
