@@ -1666,8 +1666,8 @@
         "agent execution"
       ],
       "hashes": {
-        "body": "34f09a7555b3a414bc4e0633c1c3276bc7fa89e6d76c06a8e2fa5ad8eb2d551e",
-        "semantic": "2e2a20d820ca41052d65b69835bdd3011f4eb52afb7d87196f9354b5c5ce516e",
+        "body": "e28f93d675f4b73b81061366f5451c1206663bfd05d4f2e3db0af907e64b5137",
+        "semantic": "e49a2de326699ca4bf8576a372d49f501dd4ca1c7fd13cb3fab5423ab32cd338",
         "structure": "2b532056ef8f2e8c04ad27eb7f472a4cccf12fb702e24121dceeeb8c0a6471d7"
       },
       "id": "workduck.queue.folder-native",
@@ -1686,7 +1686,7 @@
         "tests {\n    use super::*"
       ],
       "invariant": [
-        "Only known Queue child directories and file suffixes are addressable, and create operations never overwrite an existing artifact."
+        "Only known Queue child directories and file suffixes are addressable; artifact writes and deletes share the workspace lock, and create operations never overwrite an existing artifact."
       ],
       "location": {
         "declarationLine": null,
@@ -3946,7 +3946,7 @@
         "agent execution"
       ],
       "hashes": {
-        "body": "e3fecf1c676f9f18656e62325936a78a355526faddb03c0ba86eb51686707ec8",
+        "body": "59663ab615d7af3a23e026e3f178408efbc73f9afeebc921990e33fcd74aac6a",
         "semantic": "d372c33567f00c15c5197a1049fb12c72c787a05e74c4170631664e082bc1834",
         "structure": "f9ac96d7a2a5c33243091a6d6b41dd17c593462e4ca05a0f4d36e6dba8e0239a"
       },
@@ -4046,6 +4046,6 @@
   "generatedBy": "llmnav@0.9.7",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "5d2d646d35b8020fd0cb049284779e638e5edfe3b0cda7f5a54f36549d34216e",
+  "sourceHash": "b8c64134ec968e6575c4e092adfce8044151274aee79937ef09783a5245cbd6f",
   "specVersion": "1"
 }

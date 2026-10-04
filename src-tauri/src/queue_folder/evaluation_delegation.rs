@@ -265,6 +265,109 @@ mod tests {
         assert_eq!(result, Err(QueueFolderError::FileReadFailed));
     }
 
+    #[test]
+    fn concurrent_delegation_creates_accept_only_one_source_report() {
+        let workspace = tempfile::tempdir().expect("concurrent workspace");
+        let workspace_path = workspace.path().to_string_lossy().into_owned();
+        assert!(crate::queue_folder::ensure_queue_folder(workspace_path.clone()).ok);
+        let barrier = std::sync::Barrier::new(8);
+        let results = std::thread::scope(|scope| {
+            let handles = (0..8)
+                .map(|index| {
+                    let workspace_path = &workspace_path;
+                    let barrier = &barrier;
+                    scope.spawn(move || {
+                        barrier.wait();
+                        crate::queue_folder::write_queue_work_order_file(
+                            workspace_path.clone(),
+                            format!("{index}{WORK_ORDER_FILE_SUFFIX}"),
+                            evaluation_delegation_content("concurrent-source"),
+                        )
+                    })
+                })
+                .collect::<Vec<_>>();
+            handles
+                .into_iter()
+                .map(|handle| handle.join().expect("writer thread"))
+                .collect::<Vec<_>>()
+        });
+        assert_eq!(results.iter().filter(|result| result.ok).count(), 1);
+        assert!(results.iter().filter(|result| !result.ok).all(
+            |result| result.error == Some(QueueFolderError::EvaluationDelegationAlreadyExists)
+        ));
+        assert_eq!(
+            fs::read_dir(
+                workspace
+                    .path()
+                    .join("queue")
+                    .join(WORK_ORDERS_DIRECTORY_NAME)
+            )
+            .expect("saved work orders")
+            .count(),
+            1
+        );
+    }
+
+    #[test]
+    fn concurrent_delegation_update_and_create_accept_only_one_source_report() {
+        let workspace = tempfile::tempdir().expect("concurrent workspace");
+        let workspace_path = workspace.path().to_string_lossy().into_owned();
+        assert!(
+            crate::queue_folder::write_queue_work_order_file(
+                workspace_path.clone(),
+                "target.workduck-work-order.json".into(),
+                "{}".into(),
+            )
+            .ok
+        );
+        let barrier = std::sync::Barrier::new(8);
+        let results = std::thread::scope(|scope| {
+            let handles = (0..8)
+                .map(|index| {
+                    let workspace_path = &workspace_path;
+                    let barrier = &barrier;
+                    scope.spawn(move || {
+                        barrier.wait();
+                        let content = evaluation_delegation_content("concurrent-source");
+                        if index == 0 {
+                            crate::queue_folder::update_queue_work_order_file(
+                                workspace_path.clone(),
+                                "work-orders/target.workduck-work-order.json".into(),
+                                content,
+                            )
+                        } else {
+                            crate::queue_folder::write_queue_work_order_file(
+                                workspace_path.clone(),
+                                format!("{index}{WORK_ORDER_FILE_SUFFIX}"),
+                                content,
+                            )
+                        }
+                    })
+                })
+                .collect::<Vec<_>>();
+            handles
+                .into_iter()
+                .map(|handle| handle.join().expect("writer thread"))
+                .collect::<Vec<_>>()
+        });
+        assert_eq!(results.iter().filter(|result| result.ok).count(), 1);
+        let work_orders = workspace
+            .path()
+            .join("queue")
+            .join(WORK_ORDERS_DIRECTORY_NAME);
+        let delegated = fs::read_dir(work_orders)
+            .expect("saved work orders")
+            .map(|entry| {
+                fs::read_to_string(entry.expect("work order").path()).expect("work order content")
+            })
+            .filter(|content| {
+                read_evaluation_delegation_source_report_id(content).as_deref()
+                    == Some("concurrent-source")
+            })
+            .count();
+        assert_eq!(delegated, 1);
+    }
+
     fn create_test_queue_root() -> PathBuf {
         let unique = SystemTime::now()
             .duration_since(UNIX_EPOCH)

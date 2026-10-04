@@ -4,7 +4,7 @@
 // owns=native Queue file I/O|Queue path containment|Queue file capacity
 // excludes=Queue response contracts|evaluation delegation policy|agent execution
 // search=native Queue files|Queue path validation|exclusive work order write
-// invariant=Only known Queue child directories and file suffixes are addressable, and create operations never overwrite an existing artifact.
+// invariant=Only known Queue child directories and file suffixes are addressable; artifact writes and deletes share the workspace lock, and create operations never overwrite an existing artifact.
 // stability=architecture
 // /llmnav
 use std::{
@@ -172,6 +172,10 @@ pub fn write_queue_work_order_file(
         Ok(workspace_root) => workspace_root,
         Err(error) => return invalid_file_read(error),
     };
+    let _write_lock = match acquire_workspace_registry_lock(&workspace_root) {
+        Ok(lock) => lock,
+        Err(_) => return invalid_file_read(QueueFolderError::FileWriteFailed),
+    };
     let queue_root = match ensure_queue_root(&workspace_root) {
         Ok(queue_root) => queue_root,
         Err(error) => return invalid_file_read(error),
@@ -216,6 +220,10 @@ pub fn write_queue_result_report_file(
         Ok(workspace_root) => workspace_root,
         Err(error) => return invalid_file_read(error),
     };
+    let _write_lock = match acquire_workspace_registry_lock(&workspace_root) {
+        Ok(lock) => lock,
+        Err(_) => return invalid_file_read(QueueFolderError::FileWriteFailed),
+    };
     let queue_root = match ensure_queue_root(&workspace_root) {
         Ok(queue_root) => queue_root,
         Err(error) => return invalid_file_read(error),
@@ -255,6 +263,10 @@ pub fn update_queue_work_order_file(
     let workspace_root = match validate_workspace_root(&workspace_path) {
         Ok(workspace_root) => workspace_root,
         Err(error) => return invalid_file_read(error),
+    };
+    let _write_lock = match acquire_workspace_registry_lock(&workspace_root) {
+        Ok(lock) => lock,
+        Err(_) => return invalid_file_read(QueueFolderError::FileWriteFailed),
     };
     let queue_root = match ensure_queue_root(&workspace_root) {
         Ok(queue_root) => queue_root,

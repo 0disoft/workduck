@@ -3932,7 +3932,7 @@
             ],
             "id": "workduck.queue.folder-native",
             "invariant": [
-              "Only known Queue child directories and file suffixes are addressable, and create operations never overwrite an existing artifact."
+              "Only known Queue child directories and file suffixes are addressable; artifact writes and deletes share the workspace lock, and create operations never overwrite an existing artifact."
             ],
             "owns": [
               "native Queue file I/O",
@@ -3951,7 +3951,7 @@
             "stability": "architecture",
             "unknown": []
           },
-          "end": 598,
+          "end": 652,
           "endLine": 9,
           "entries": [
             {
@@ -3988,7 +3988,7 @@
               "key": "invariant",
               "line": 7,
               "order": 5,
-              "value": "Only known Queue child directories and file suffixes are addressable, and create operations never overwrite an existing artifact."
+              "value": "Only known Queue child directories and file suffixes are addressable; artifact writes and deletes share the workspace lock, and create operations never overwrite an existing artifact."
             },
             {
               "key": "stability",
@@ -4001,7 +4001,7 @@
           "indent": "",
           "newline": "\n",
           "prefix": "//",
-          "raw": "// llmnav/1 module\n// id=workduck.queue.folder-native\n// role=Enforce native Queue directory, path, size, count, exclusive-write, update, delete, and evaluation-delegation constraints.\n// owns=native Queue file I/O|Queue path containment|Queue file capacity\n// excludes=Queue response contracts|evaluation delegation policy|agent execution\n// search=native Queue files|Queue path validation|exclusive work order write\n// invariant=Only known Queue child directories and file suffixes are addressable, and create operations never overwrite an existing artifact.\n// stability=architecture\n// /llmnav\n",
+          "raw": "// llmnav/1 module\n// id=workduck.queue.folder-native\n// role=Enforce native Queue directory, path, size, count, exclusive-write, update, delete, and evaluation-delegation constraints.\n// owns=native Queue file I/O|Queue path containment|Queue file capacity\n// excludes=Queue response contracts|evaluation delegation policy|agent execution\n// search=native Queue files|Queue path validation|exclusive work order write\n// invariant=Only known Queue child directories and file suffixes are addressable; artifact writes and deletes share the workspace lock, and create operations never overwrite an existing artifact.\n// stability=architecture\n// /llmnav\n",
           "scope": "module",
           "specVersion": "1",
           "start": 0,
@@ -4010,7 +4010,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "34f09a7555b3a414bc4e0633c1c3276bc7fa89e6d76c06a8e2fa5ad8eb2d551e",
+      "contentHash": "e28f93d675f4b73b81061366f5451c1206663bfd05d4f2e3db0af907e64b5137",
       "declarations": [
         null
       ],
@@ -4029,8 +4029,8 @@
         "tests {\n    use super::*"
       ],
       "path": "src-tauri/src/queue_folder.rs",
-      "semanticBytes": 598,
-      "sourceBytes": 35312
+      "semanticBytes": 652,
+      "sourceBytes": 35939
     },
     {
       "blocks": [
@@ -4221,7 +4221,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "e3fecf1c676f9f18656e62325936a78a355526faddb03c0ba86eb51686707ec8",
+      "contentHash": "59663ab615d7af3a23e026e3f178408efbc73f9afeebc921990e33fcd74aac6a",
       "declarations": [
         null
       ],
@@ -4234,7 +4234,7 @@
       ],
       "path": "src-tauri/src/queue_folder/evaluation_delegation.rs",
       "semanticBytes": 659,
-      "sourceBytes": 10404
+      "sourceBytes": 14697
     },
     {
       "blocks": [],

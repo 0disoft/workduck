@@ -81,7 +81,7 @@
     "workduck.workspace.sync-file-native",
     "workduck.workspace.sync-git-native"
   ],
-  "cardSetHash": "afbc8c5873257d78291d8101759bf239da31d3528be3b797436e59ca6cfc9844",
+  "cardSetHash": "0caf374dc5579faa9978b75b6660ce896b99440fa7d76ecb53ce425d92ec56e9",
   "documentCount": 80,
   "documents": [
     [
@@ -811,13 +811,13 @@
       ]
     ],
     [
-      "c52ee894d48108ac2bcc4a937bcc38adaf1f9d610cb519d6e47851e46a6d7b9a",
+      "63eddd8d912844d6e088874d9f47c3cde44a206d2fd6d58036bc894677e2d441",
       [
         "enforce native queue directory, path, size, count, exclusive-write, update, delete, and evaluation-delegation constraints.",
         "native queue files",
         "queue path validation",
         "exclusive work order write",
-        "only known queue child directories and file suffixes are addressable, and create operations never overwrite an existing artifact.",
+        "only known queue child directories and file suffixes are addressable; artifact writes and deletes share the workspace lock, and create operations never overwrite an existing artifact.",
         "native queue file i/o",
         "queue path containment",
         "queue file capacity"
@@ -2445,7 +2445,7 @@
           1,
           1,
           5,
-          2
+          3
         ]
       ],
       [
@@ -3072,7 +3072,7 @@
         55,
         [
           5,
-          1
+          2
         ]
       ],
       [
@@ -6937,6 +6937,13 @@
           1,
           1
         ]
+      ],
+      [
+        55,
+        [
+          5,
+          1
+        ]
       ]
     ],
     [
@@ -13174,6 +13181,13 @@
         6,
         [
           1,
+          1
+        ]
+      ],
+      [
+        55,
+        [
+          5,
           1
         ]
       ],
@@ -23782,6 +23796,13 @@
         ]
       ],
       [
+        55,
+        [
+          5,
+          1
+        ]
+      ],
+      [
         65,
         [
           5,
@@ -27209,6 +27230,13 @@
         ]
       ],
       [
+        55,
+        [
+          5,
+          1
+        ]
+      ],
+      [
         56,
         [
           5,
@@ -30672,6 +30700,13 @@
         ]
       ],
       [
+        55,
+        [
+          5,
+          1
+        ]
+      ],
+      [
         56,
         [
           1,
@@ -31072,6 +31107,13 @@
         53,
         [
           1,
+          1
+        ]
+      ],
+      [
+        55,
+        [
+          5,
           1
         ]
       ],
