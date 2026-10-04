@@ -36,6 +36,8 @@
 		readonly getReviewDecisionLabel: (
 			decision: Exclude<WorkduckQueueReviewDecision, 'pending'>
 		) => string;
+		readonly sourceWorkOrder: { readonly label: string } | null;
+		readonly onOpenSourceWorkOrder: (() => void) | null;
 	}
 
 	let {
@@ -56,7 +58,9 @@
 		isEvaluationRecorded,
 		getVoteChoiceLabel,
 		getReportTaskAgent,
-		getReviewDecisionLabel
+		getReviewDecisionLabel,
+		sourceWorkOrder,
+		onOpenSourceWorkOrder
 	}: Props = $props();
 </script>
 
@@ -66,6 +70,15 @@
 			<strong>{report.ref.label}</strong>
 			{#if reportPath !== null}
 				<span>{reportPath}</span>
+			{/if}
+			{#if sourceWorkOrder !== null}
+				<button
+					class="workduck-queue-source-link"
+					type="button"
+					onclick={() => onOpenSourceWorkOrder?.()}
+				>
+					{messages.common.source}: {sourceWorkOrder.label}
+				</button>
 			{/if}
 		</div>
 		{#if canDelegateEvaluation}

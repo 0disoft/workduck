@@ -1,0 +1,111 @@
+# Workduck UI implementation review
+
+final result: passed
+
+## Scope and visual targets
+
+This implementation applies the three approved directions to the existing application:
+repository rows with an inspector, a split Queue with linked work orders and reports,
+and a visible search entry with a collapsible configuration section. Existing APIs,
+project/group hierarchy, localized copy, design tokens and operation permissions remain
+part of the product. The concept images guide this layout; they are not API specifications.
+
+Source directory: `C:/Users/cherr/.codex/generated_images/01a102ea-eb98-7c80-b9e8-2f484e635a27/`
+
+- Repository: `exec-65149039-e708-4fb8-8ad8-a45ebed01b92.png`
+- Queue: `exec-0f34b124-073f-4d4e-b2cd-222cdc0de9e4.png`
+- Search: `exec-206b6ac9-66b6-4206-9a09-dd938d703d31.png`
+
+Evidence directory: `C:/Users/cherr/.codex/visualizations/2026/10/04/workduck-design/`
+
+- Full comparisons: `projects-comparison.jpg`, `queue-comparison.jpg`, `search-comparison.jpg`
+- Desktop implementations: `projects-after.png`, `queue-after.png`, `search-after.png`
+- Responsive implementations: `projects-narrow-final.png`, `queue-narrow-final.png`
+
+References are 1487 x 1058 pixels. Desktop captures are 1422 x 800 pixels with an
+observed CSS viewport of 1422 x 800 and devicePixelRatio 1.125. Comparison boards
+contain each image proportionally inside a 990 x 740 slot without stretching. They
+compare hierarchy and layout, not literal pixel positions: the references use different
+content and a taller frame. Narrow overrides requested 900 x 800 and 600 x 800;
+browser zoom produced CSS viewports of 1000 x 889 and 667 x 889 respectively.
+
+## Findings and correction history
+
+- Fixed P2: the inspector inherited a two-column repository card layout that squeezed
+  the title behind Git actions. A single-column override now shows the title, state and
+  wrapped actions separately. Evidence: `projects-after.png`.
+- Fixed P2: at the narrow desktop width, the header filters squeezed the page title
+  into multiple lines. The header now stacks and filters wrap. Evidence:
+  `projects-narrow-final.png` (following the earlier `projects-900.png`).
+- Fixed P2: a narrow Queue kept its list and detail side by side, cramping task metadata.
+  A container query now stacks them when the panel is below 780px. Evidence:
+  `queue-narrow-final.png`; the observed grid has one 619px track at a 667px CSS viewport.
+- No actionable P0/P1/P2 findings remain in the approved implementation scope.
+
+## Required fidelity surfaces
+
+- Typography: existing local Pretendard and application font tokens retained. Titles,
+  row names and muted paths remain readable; paths intentionally truncate with title
+  tooltips. Existing UI density is retained instead of the larger conceptual typography.
+- Spacing/layout: compact rows replace repeated action cards; the 220px hierarchy keeps
+  project/group selection; the inspector uses a divider. Narrow Queue detail stacks.
+- Color: existing dark/lemon tokens retained; Queue status uses semantic colors and text.
+  Most Queue labels use muted text rather than accent. Selected states remain explicit.
+- Assets: existing Workduck brand component and existing favorite control are reused.
+  No new generated decorative assets, icon dependency, CSS icon or hand-drawn SVG added.
+- Copy: existing six-language strings retained, with search/configuration labels added
+  consistently to all six navigation locales. No speculative status or success claims
+  are inserted into product screens.
+
+## Interaction evidence and limits
+
+A temporary development route supplied representative mock repositories and Queue files
+through the existing components and Tauri invoke seam. It is removed before the build
+and is not shipped. Screenshots show demonstration data, not native operation evidence.
+
+Verified in the in-app browser:
+
+- Selecting velox changes the inspector and dispatches its Pull callback with velox.
+- Filtering to velox and switching to another group updates the inspector target.
+- Completed-state filter shows completed items.
+- Work order -> result report -> original work order links open the correct detail.
+- Search button opens the existing palette; query filtering and Escape close work.
+- Configuration section expands/collapses and exposes all six secondary destinations.
+- Narrow layouts have no document-level horizontal overflow.
+- Console error log inspection returned no errors after the development server restart.
+
+The source assets and implementation captures were opened together in the comparison
+boards. Original desktop and narrow screenshots were also inspected at readable size
+for row names, Git buttons, filters and detail metadata; no additional focused crop was
+needed. Native Git actions and actual agent execution were not run as part of visual QA.
+The mock search loader lacks some native registries and displays the existing degraded
+read notice; native search was not revalidated in this browser fixture.
+
+## Accepted differences and follow-up polish
+
+The concepts include changed-file lists, a workflow timeline, contextual command groups
+and follow-up task creation. This batch keeps the existing data/API boundaries and does
+not invent unavailable file counts or execution evidence. It implements the approved
+navigation and presentation changes plus real artifact links. A native-backed inspector
+file list and richer report actions are possible later feature work.
+
+P3: project/group cards still carry more accent color than the flat repository rows.
+
+## Implementation checklist
+
+- [x] Preserve repository actions and selection ownership.
+- [x] Preserve Queue filters, creation, reviews and execution callbacks.
+- [x] Connect work orders and result reports by unique artifact identity.
+- [x] Add visible search entry and configuration hierarchy.
+- [x] Fix the observed narrow-layout issues and capture the corrected screens.
+- [x] Remove the temporary fixture before the production build.
+
+## Local verification
+
+- `bun run check`: passed, Svelte diagnostics 0 errors / 0 warnings; package and scaffold checks passed.
+- `bun run test`: 181 passed / 0 failed.
+- `bun run build`: passed; static output and CSP generation completed without the fixture route.
+- LLMNav format/check: passed; audit after fixture removal: high 0, medium 59.
+- LLMNav generate and full regeneration: blocked by Windows EPERM while renaming `.llmnav/cache`.
+  Retrying with the dev server stopped produced the same error. Existing cache retained.
+- Rust suite skipped: no Rust implementation changed in this UI batch.

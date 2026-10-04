@@ -46,6 +46,7 @@ export async function createQueueCardEntries(
 						: null,
 				executionState: artifactSummary?.executionState ?? null,
 				sourceReportId: artifactSummary?.sourceReportId ?? '',
+				sourceWorkOrderId: artifactSummary?.sourceWorkOrderId ?? '',
 				skillIds: artifactSummary?.skillIds ?? []
 			};
 		})

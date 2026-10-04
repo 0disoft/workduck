@@ -60,6 +60,87 @@
 		)
 	);
 
+	let executionFilterTabs = $derived(
+		queueExecutionFilterOptions.map((option) => ({
+			id: option.id,
+			label: controller.getExecutionFilterLabel(option.id),
+			count:
+				option.id === 'all'
+					? controller.files.length
+					: controller.files.filter((file) => file.executionState === option.id).length
+		}))
+	);
+
+	let linkedSourceReport = $derived.by(() => {
+		const sourceReport = controller.selectedWorkOrder?.sourceReport;
+
+		if (sourceReport === undefined) {
+			return null;
+		}
+
+		const matches = controller.files.filter(
+			(candidate) => candidate.kind === 'result-report' && candidate.artifactId === sourceReport.id
+		);
+
+		if (matches.length !== 1) {
+			return null;
+		}
+
+		const [file] = matches;
+
+		return file === undefined ? null : { file, label: file.title };
+	});
+
+	let linkedResultReports = $derived.by(() => {
+		const workOrder = controller.selectedWorkOrder;
+
+		if (workOrder === null || workOrder.ref.id.length === 0) {
+			return [];
+		}
+
+		if (controller.files.filter((file) =>
+			file.kind === 'work-order' && file.artifactId === workOrder.ref.id
+		).length !== 1) {
+			return [];
+		}
+
+		const matches = controller.files.filter(
+			(candidate) =>
+				candidate.kind === 'result-report' &&
+				(candidate.sourceWorkOrderId ?? '') === workOrder.ref.id
+		);
+		const reportIdCounts = new Map<string, number>();
+		for (const file of controller.files) {
+			if (file.kind === 'result-report') {
+				reportIdCounts.set(file.artifactId, (reportIdCounts.get(file.artifactId) ?? 0) + 1);
+			}
+		}
+
+		return matches.filter((file) =>
+			file.artifactId.length > 0 && reportIdCounts.get(file.artifactId) === 1
+		);
+	});
+
+	let linkedSourceWorkOrder = $derived.by(() => {
+		const sourceWorkOrder = controller.selectedReport?.sourceWorkOrder;
+
+		if (sourceWorkOrder === undefined) {
+			return null;
+		}
+
+		const matches = controller.files.filter(
+			(candidate) => candidate.kind === 'work-order' && candidate.artifactId === sourceWorkOrder.id
+		);
+
+		if (matches.length !== 1) {
+			return null;
+		}
+
+		const [file] = matches;
+
+		return file === undefined ? null : { file, label: file.title };
+	});
+
 	function loadQueueContextMenu() {
 		if (QueueContextMenu !== null) {
 			return Promise.resolve();
@@ -199,19 +280,42 @@
 	<header class="workduck-page-header">
 		<PageTitleRow {title} meta={controller.queueItemCountLabel} />
 		<div class="workduck-page-actions workduck-queue-header-actions">
-			<div class="workduck-queue-filters" aria-label={controller.messages.queue.executionFilters}>
-				{#each queueExecutionFilterOptions as option}
-					<button
-						class="workduck-project-sync-filter-button"
-						class:workduck-project-sync-filter-button-active={controller.queueExecutionFilter === option.id}
-						type="button"
-						aria-pressed={controller.queueExecutionFilter === option.id}
-						onclick={() => (controller.queueExecutionFilter = option.id)}
-					>
-						{controller.getExecutionFilterLabel(option.id)}
-					</button>
-				{/each}
-			</div>
+			<button
+				class="workduck-button workduck-button-primary"
+				type="button"
+				aria-haspopup="dialog"
+				onpointerenter={() => void loadQueueWorkOrderDialog()}
+				onfocus={() => void loadQueueWorkOrderDialog()}
+				onclick={() => {
+					void loadQueueWorkOrderDialog();
+					controller.openNewWorkOrderDialog();
+				}}
+			>
+				{controller.messages.queue.addWork}
+			</button>
+		</div>
+	</header>
+
+	<div class="workduck-queue-toolbar">
+		<div
+			class="workduck-queue-status-tabs"
+			role="group"
+			aria-label={controller.messages.queue.executionFilters}
+		>
+			{#each executionFilterTabs as tab (tab.id)}
+				<button
+					class="workduck-queue-status-tab"
+					class:workduck-queue-status-tab-active={controller.queueExecutionFilter === tab.id}
+					type="button"
+					aria-pressed={controller.queueExecutionFilter === tab.id}
+					onclick={() => (controller.queueExecutionFilter = tab.id)}
+				>
+					<span>{tab.label}</span>
+					<span class="workduck-queue-status-tab-count" aria-hidden="true">{tab.count}</span>
+				</button>
+			{/each}
+		</div>
+		<div class="workduck-queue-toolbar-actions">
 			<details class="workduck-queue-advanced-filters" bind:open={isAdvancedFiltersOpen}>
 				<summary
 					class="workduck-queue-filter-summary"
@@ -333,7 +437,7 @@
 				{controller.messages.common.refresh}
 			</button>
 		</div>
-	</header>
+	</div>
 
 	{#if controller.error !== null}
 		<p class="workduck-inline-error" aria-live="polite">
@@ -349,12 +453,6 @@
 			filteredFiles={controller.filteredFiles}
 			messages={controller.messages}
 			isReading={controller.isReading}
-			onAddWorkIntent={() => void loadQueueWorkOrderDialog()}
-			onAddWork={(event) => {
-				event.stopPropagation();
-				void loadQueueWorkOrderDialog();
-				controller.openNewWorkOrderDialog();
-			}}
 			onCardIntent={preloadQueueCardSurface}
 			onCardClick={controller.handleQueueCardClick}
 			onCardContextMenu={(event, file) => {
@@ -391,6 +489,12 @@
 					getVoteChoiceLabel={controller.getVoteChoiceLabel}
 					getReportTaskAgent={controller.getReportTaskAgent}
 					getReviewDecisionLabel={controller.getReviewDecisionLabel}
+					sourceWorkOrder={linkedSourceWorkOrder}
+					onOpenSourceWorkOrder={() => {
+						if (linkedSourceWorkOrder !== null) {
+							controller.handleQueueCardClick(linkedSourceWorkOrder.file);
+						}
+					}}
 				/>
 			{:else if controller.selectedWorkOrder !== null && QueueWorkOrderDetail !== null}
 				<QueueWorkOrderDetail
@@ -417,6 +521,25 @@
 					getQueueTaskSkillLabels={controller.getQueueTaskSkillLabels}
 					getQueueTaskAgentLabels={controller.getQueueTaskAgentLabels}
 					getQueueTaskReferenceLabels={controller.getQueueTaskReferenceLabels}
+					sourceReport={linkedSourceReport}
+					onOpenSourceReport={() => {
+						if (linkedSourceReport !== null) {
+							controller.handleQueueCardClick(linkedSourceReport.file);
+						}
+					}}
+					resultReports={linkedResultReports.map((file) => ({
+						relativePath: file.relativePath,
+						label: file.title
+					}))}
+					onOpenResultReport={(relativePath) => {
+						const file = controller.files.find(
+							(candidate) => candidate.relativePath === relativePath
+						);
+
+						if (file !== undefined) {
+							controller.handleQueueCardClick(file);
+						}
+					}}
 				/>
 			{:else if controller.selectedProposal !== null && QueueProposalDetail !== null}
 				<QueueProposalDetail

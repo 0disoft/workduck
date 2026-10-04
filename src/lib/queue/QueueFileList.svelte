@@ -2,14 +2,13 @@
 	import type { WorkduckMessages } from '#lib/i18n/workduck-message-contract.ts';
 	import type { QueueCardEntry } from './queue-panel-types';
 	import type { WorkduckQueueExecutionState } from './queue-artifacts';
+	import { getFileKindLabel } from './queue-panel-labels';
 
 	interface Props {
 		readonly files: readonly QueueCardEntry[];
 		readonly filteredFiles: readonly QueueCardEntry[];
 		readonly messages: WorkduckMessages;
 		readonly isReading: boolean;
-		readonly onAddWorkIntent: () => void;
-		readonly onAddWork: (event: MouseEvent) => void;
 		readonly onCardIntent: (file: QueueCardEntry) => void;
 		readonly onCardClick: (file: QueueCardEntry) => void;
 		readonly onCardContextMenu: (event: MouseEvent, file: QueueCardEntry) => void;
@@ -25,8 +24,6 @@
 		filteredFiles,
 		messages,
 		isReading,
-		onAddWorkIntent,
-		onAddWork,
 		onCardIntent,
 		onCardClick,
 		onCardContextMenu,
@@ -37,20 +34,11 @@
 </script>
 
 <section class="workduck-queue-list" aria-label={messages.queue.list}>
-	<button
-		class="workduck-list-add-card"
-		type="button"
-		aria-haspopup="dialog"
-		onpointerenter={onAddWorkIntent}
-		onfocus={onAddWorkIntent}
-		onclick={onAddWork}
-	>
-		{messages.queue.addWork}
-	</button>
-
-	{#if files.length > 0 && filteredFiles.length === 0}
+	{#if files.length === 0}
+		<p class="workduck-empty-state">{messages.queue.empty}</p>
+	{:else if filteredFiles.length === 0}
 		<p class="workduck-empty-state">{messages.queue.noMatches}</p>
-	{:else if files.length > 0}
+	{:else}
 		{#each filteredFiles as file (file.relativePath)}
 			<button
 				class={getQueueCardClass(file)}
@@ -62,22 +50,23 @@
 				onclick={() => onCardClick(file)}
 				oncontextmenu={(event) => onCardContextMenu(event, file)}
 			>
-				<div class="workduck-queue-file-details">
-					<strong>{file.title}</strong>
-				</div>
-				<div class="workduck-queue-card-badges">
-					<span
-						class="workduck-queue-read-state"
-						class:workduck-queue-read-state-unread={!file.isRead}
-					>
+				<span class="workduck-queue-row-main">
+					<span class="workduck-queue-row-title">
+						{#if !file.isRead}
+							<span class="workduck-queue-row-unread" aria-hidden="true"></span>
+						{/if}
+						<strong>{file.title}</strong>
+					</span>
+					<span class="workduck-queue-row-kind">{getFileKindLabel(messages, file.kind)}</span>
+					<span class="workduck-sr-only">
 						{file.isRead ? messages.queue.readStates.read : messages.queue.readStates.unread}
 					</span>
-					{#if file.executionState !== null}
-						<span class="workduck-queue-execution-state">
-							{getQueueExecutionStateLabel(file.executionState)}
-						</span>
-					{/if}
-				</div>
+				</span>
+				{#if file.executionState !== null}
+					<span class="workduck-queue-execution-state">
+						{getQueueExecutionStateLabel(file.executionState)}
+					</span>
+				{/if}
 			</button>
 		{/each}
 	{/if}

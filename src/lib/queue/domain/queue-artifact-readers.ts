@@ -27,6 +27,7 @@ export interface QueueArtifactSummary {
 	readonly priority: WorkduckQueueWorkPriority | null;
 	readonly executionState: WorkduckQueueExecutionState | null;
 	readonly sourceReportId: string;
+	readonly sourceWorkOrderId?: string;
 	readonly skillIds: readonly string[];
 }
 
@@ -46,6 +47,11 @@ export function readQueueArtifactSummary(content: string): QueueArtifactSummary 
 			priority: readHighestQueueWorkPriorityFromTasks(parsed.tasks),
 			executionState: readQueueArtifactExecutionStateFromRecord(parsed),
 			sourceReportId: readQueueArtifactSourceReportIdFromRecord(parsed),
+			sourceWorkOrderId:
+				parsed.schemaVersion === 'workduck.queue-result-report/v1' &&
+				isRecord(parsed.sourceWorkOrder) && parsed.sourceWorkOrder.kind === 'queue-work-order'
+					? readOptionalText(parsed.sourceWorkOrder.id)
+					: '',
 			skillIds: readQueueArtifactSkillIdsFromRecord(parsed)
 		};
 	} catch {

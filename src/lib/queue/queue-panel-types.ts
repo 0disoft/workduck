@@ -59,6 +59,7 @@ export type QueueCardEntry = QueueFileEntry & {
 	readonly priority: WorkduckQueueWorkPriority | null;
 	readonly executionState: WorkduckQueueExecutionState | null;
 	readonly sourceReportId: string;
+	readonly sourceWorkOrderId?: string;
 	readonly skillIds: readonly string[];
 };
 

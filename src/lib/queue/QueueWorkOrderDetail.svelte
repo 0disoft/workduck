@@ -40,6 +40,13 @@
 		readonly getQueueTaskSkillLabels: (task: WorkduckQueueWorkOrderTask) => readonly string[];
 		readonly getQueueTaskAgentLabels: (task: WorkduckQueueWorkOrderTask) => readonly string[];
 		readonly getQueueTaskReferenceLabels: (task: WorkduckQueueWorkOrderTask) => readonly string[];
+		readonly sourceReport: { readonly label: string } | null;
+		readonly onOpenSourceReport: (() => void) | null;
+		readonly resultReports?: readonly {
+			readonly relativePath: string;
+			readonly label: string;
+		}[];
+		readonly onOpenResultReport?: (relativePath: string) => void;
 	}
 
 	let {
@@ -65,7 +72,11 @@
 		getQueueTaskRepositoryLabels,
 		getQueueTaskSkillLabels,
 		getQueueTaskAgentLabels,
-		getQueueTaskReferenceLabels
+		getQueueTaskReferenceLabels,
+		sourceReport,
+		onOpenSourceReport,
+		resultReports = [],
+		onOpenResultReport
 	}: Props = $props();
 </script>
 
@@ -74,6 +85,24 @@
 		<div class="workduck-queue-file-details">
 			<strong>{workOrder.ref.label}</strong>
 			<span>{messages.queue.workOrderId}: {workOrder.ref.id}</span>
+			{#if sourceReport !== null}
+				<button
+					class="workduck-queue-source-link"
+					type="button"
+					onclick={() => onOpenSourceReport?.()}
+				>
+					{messages.common.source}: {sourceReport.label}
+				</button>
+			{/if}
+			{#each resultReports as resultReport (resultReport.relativePath)}
+				<button
+					class="workduck-queue-source-link"
+					type="button"
+					onclick={() => onOpenResultReport?.(resultReport.relativePath)}
+				>
+					{messages.queue.fileKinds.resultReport}: {resultReport.label}
+				</button>
+			{/each}
 		</div>
 		<div class="workduck-queue-file-actions">
 			<button
