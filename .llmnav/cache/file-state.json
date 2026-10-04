@@ -10996,6 +10996,18 @@
       "sourceBytes": 3673
     },
     {
+      "blocks": [],
+      "contentHash": "65c50f15511485f9b7c8fe1e3681bbe0adc69a10039f9f0c93aea4d3d72d29aa",
+      "declarations": [],
+      "imports": [
+        "#lib/i18n/workduck-language.ts",
+        "./queue-panel-presentation.svelte"
+      ],
+      "path": "src/lib/queue/queue-panel-presentation-harness.svelte.ts",
+      "semanticBytes": 0,
+      "sourceBytes": 1086
+    },
+    {
       "blocks": [
         {
           "card": {
@@ -11007,9 +11019,10 @@
             ],
             "id": "workduck.queue.presentation",
             "invariant": [
-              "Display labels use the current catalogs and language; missing IDs remain visible, and display ordering leaves source records unchanged."
+              "Display labels use current catalogs and language; indexes preserve first matches, missing IDs remain visible, and display ordering leaves source records unchanged."
             ],
             "owns": [
+              "Queue context record indexes",
               "Queue context record labels",
               "localized Queue display labels",
               "skill display ordering"
@@ -11026,7 +11039,7 @@
             "stability": "architecture",
             "unknown": []
           },
-          "end": 567,
+          "end": 624,
           "endLine": 9,
           "entries": [
             {
@@ -11045,7 +11058,7 @@
               "key": "owns",
               "line": 4,
               "order": 2,
-              "value": "Queue context record labels|localized Queue display labels|skill display ordering"
+              "value": "Queue context record indexes|Queue context record labels|localized Queue display labels|skill display ordering"
             },
             {
               "key": "excludes",
@@ -11063,7 +11076,7 @@
               "key": "invariant",
               "line": 7,
               "order": 5,
-              "value": "Display labels use the current catalogs and language; missing IDs remain visible, and display ordering leaves source records unchanged."
+              "value": "Display labels use current catalogs and language; indexes preserve first matches, missing IDs remain visible, and display ordering leaves source records unchanged."
             },
             {
               "key": "stability",
@@ -11076,7 +11089,7 @@
           "indent": "",
           "newline": "\n",
           "prefix": null,
-          "raw": "/* llmnav/1 module\nid=workduck.queue.presentation\nrole=Project live Queue catalog records and language messages into sorted skill options and display labels.\nowns=Queue context record labels|localized Queue display labels|skill display ordering\nexcludes=artifact selection|execution workflows|registry persistence\nsearch=Queue task context names|Queue localized labels|Queue skill option sorting\ninvariant=Display labels use the current catalogs and language; missing IDs remain visible, and display ordering leaves source records unchanged.\nstability=architecture\n*/",
+          "raw": "/* llmnav/1 module\nid=workduck.queue.presentation\nrole=Project live Queue catalog records and language messages into sorted skill options and display labels.\nowns=Queue context record indexes|Queue context record labels|localized Queue display labels|skill display ordering\nexcludes=artifact selection|execution workflows|registry persistence\nsearch=Queue task context names|Queue localized labels|Queue skill option sorting\ninvariant=Display labels use current catalogs and language; indexes preserve first matches, missing IDs remain visible, and display ordering leaves source records unchanged.\nstability=architecture\n*/",
           "scope": "module",
           "specVersion": "1",
           "start": 0,
@@ -11085,7 +11098,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "8dac5fa8c8808672655ec57f7a900ae966464ebcfbad0817e2e10f76fc8ab934",
+      "contentHash": "478b64b9a9763d03f9c9fb44297b335c3523df5f6c5aacc658fbd4e5f1358ab3",
       "declarations": [
         null
       ],
@@ -11102,8 +11115,28 @@
         "./queue-voting"
       ],
       "path": "src/lib/queue/queue-panel-presentation.svelte.ts",
-      "semanticBytes": 567,
-      "sourceBytes": 7830
+      "semanticBytes": 624,
+      "sourceBytes": 8712
+    },
+    {
+      "blocks": [],
+      "contentHash": "d1646f02785683f5baf2171363fb934984805567f396247fe4ae2a62cac6bb95",
+      "declarations": [],
+      "imports": [
+        "#lib/agents/agent-registry.ts",
+        "#lib/i18n/workduck-language.ts",
+        "#lib/projects/project-registry.ts",
+        "#lib/references/reference-registry.ts",
+        "#lib/skills/skill-registry.ts",
+        "./queue-panel-labels",
+        "./queue-panel-presentation-harness.svelte",
+        "bun",
+        "bun:test",
+        "svelte/compiler"
+      ],
+      "path": "src/lib/queue/queue-panel-presentation.test.ts",
+      "semanticBytes": 0,
+      "sourceBytes": 5941
     },
     {
       "blocks": [],

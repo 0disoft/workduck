@@ -4040,8 +4040,8 @@
         "registry persistence"
       ],
       "hashes": {
-        "body": "8dac5fa8c8808672655ec57f7a900ae966464ebcfbad0817e2e10f76fc8ab934",
-        "semantic": "a8b9c9d9939a61d3df247dc170f11ac73578224bc9b914df36cb3c0e492a3672",
+        "body": "478b64b9a9763d03f9c9fb44297b335c3523df5f6c5aacc658fbd4e5f1358ab3",
+        "semantic": "5dbf4afe84afe194e1fd60adefb7912d2bfe8c877fba62a2990ff3a2ed5e77b0",
         "structure": "bf3357050949bc05edfc51cfe614bc374037a47987cc3021b7631c339bff12e6"
       },
       "id": "workduck.queue.presentation",
@@ -4058,7 +4058,7 @@
         "./queue-voting"
       ],
       "invariant": [
-        "Display labels use the current catalogs and language; missing IDs remain visible, and display ordering leaves source records unchanged."
+        "Display labels use current catalogs and language; indexes preserve first matches, missing IDs remain visible, and display ordering leaves source records unchanged."
       ],
       "location": {
         "declarationLine": null,
@@ -4074,6 +4074,7 @@
         "visibility": null
       },
       "owns": [
+        "Queue context record indexes",
         "Queue context record labels",
         "localized Queue display labels",
         "skill display ordering"
@@ -4101,6 +4102,6 @@
   "generatedBy": "llmnav@0.9.7",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "00e11e13f015de955588aaf31cf3684c9debb8e4634f9e393d57bc71020dbf1d",
+  "sourceHash": "f24587d20f91247cc348ac2d77c9b40230e3ebb0b491fe10520fdc4645bd1d83",
   "specVersion": "1"
 }
