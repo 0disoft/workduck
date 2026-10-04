@@ -7429,7 +7429,7 @@
     },
     {
       "blocks": [],
-      "contentHash": "40af726097b7ba841b5df91d72a6d415b88361627be8591fc24d95d718c4fa67",
+      "contentHash": "6f21a707b1739c3db47556cb9ded4434f2ccde8499647d96b6dca340a3188f11",
       "declarations": [],
       "imports": [
         "#lib/environment/environment-vault.ts",
@@ -7479,7 +7479,7 @@
       ],
       "path": "src/lib/projects/ProjectBoardSurface.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 51269
+      "sourceBytes": 50718
     },
     {
       "blocks": [
@@ -8189,7 +8189,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "961b8441a0e6fd8efd86e5f23919560dd3ec68ced81b23fdda8a586c2c2af4d0",
+      "contentHash": "8e113a973967f10898261ae13bccff917c72ed312d2918c95bfd7da06f13f74c",
       "declarations": [
         null
       ],
@@ -8201,11 +8201,11 @@
       ],
       "path": "src/lib/projects/project-board-registry-writer.svelte.ts",
       "semanticBytes": 675,
-      "sourceBytes": 5108
+      "sourceBytes": 7099
     },
     {
       "blocks": [],
-      "contentHash": "c95e041591acc3b617f2b7adbff63e88f827c590169612cdc4f5331a095e4138",
+      "contentHash": "a2f75416f0e4a7424cd833bb553b7737750879a1c5624f68c8c9a3008329619f",
       "declarations": [],
       "imports": [
         "#lib/tauri/tauri-invoke.ts",
@@ -8219,11 +8219,29 @@
       ],
       "path": "src/lib/projects/project-board-registry-writer.test.ts",
       "semanticBytes": 0,
-      "sourceBytes": 13060
+      "sourceBytes": 15437
     },
     {
       "blocks": [],
-      "contentHash": "64354f02ec0a792e097cd38903285ef6d82ecf98739d48f3f02fbaa937cbcbd4",
+      "contentHash": "742efd56dffb569c390c79c0a5b663d7f66fb86324059876b1d5ee38eee090d9",
+      "declarations": [],
+      "imports": [
+        "#lib/i18n/workduck-language.ts",
+        "#lib/tauri/tauri-invoke.ts",
+        "./project-board-operations",
+        "./project-board-repository-action-context",
+        "./project-board-repository-actions",
+        "./project-board-types",
+        "./project-registry",
+        "bun:test"
+      ],
+      "path": "src/lib/projects/project-board-repository-action-context.test.ts",
+      "semanticBytes": 0,
+      "sourceBytes": 4697
+    },
+    {
+      "blocks": [],
+      "contentHash": "70ae4a81939c039fd23ca56019cf590c961379cc19f5607efc7d2a8cf0452b95",
       "declarations": [],
       "imports": [
         "./project-board-errors",
@@ -8237,11 +8255,11 @@
       ],
       "path": "src/lib/projects/project-board-repository-action-context.ts",
       "semanticBytes": 0,
-      "sourceBytes": 5090
+      "sourceBytes": 6624
     },
     {
       "blocks": [],
-      "contentHash": "0c5afb5bada5ee08aee62245666272e87f441e252dd8899f8dfc2862a02e5459",
+      "contentHash": "7e0d610061fcb73ce5574168aa94a175183ab8bf2bf2f26a7d2aff2644153707",
       "declarations": [],
       "imports": [
         "#lib/workspaces/workspace-path-format.ts",
@@ -8254,7 +8272,7 @@
       ],
       "path": "src/lib/projects/project-board-repository-actions.ts",
       "semanticBytes": 0,
-      "sourceBytes": 11245
+      "sourceBytes": 11421
     },
     {
       "blocks": [],

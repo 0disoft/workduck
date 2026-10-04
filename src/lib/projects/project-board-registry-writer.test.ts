@@ -59,6 +59,54 @@ afterEach(() => {
 });
 
 describe('project board registry write ownership', () => {
+	test('a captured repository edit preserves its workspace after switching views', async () => {
+		const writtenWorkspaceIds: unknown[] = [];
+		installWriterInvoke(async (_command, args) => {
+			writtenWorkspaceIds.push(args?.workspaceId);
+			return { ok: true };
+		});
+		const harness = createProjectBoardRegistryWriterHarness(workspace('old'));
+		try {
+			await settleEffects();
+			const captured = harness.persistRegistry.capture();
+			const edited = addProjectNode(captured.registry, { kind: 'project', name: 'Cloned', path: 'projects/cloned' });
+			if (!edited.ok) throw new Error(edited.error);
+			harness.setWorkspace(workspace('new'));
+			const current = createEmptyProjectRegistry('new');
+			harness.state.registry = current;
+			await settleEffects();
+			expect(captured.isCurrent()).toBe(false);
+			expect(await captured.persistRegistry(edited.registry)).toBe(true);
+			expect(writtenWorkspaceIds).toEqual(['old']);
+			expect(nativeRegistry).toEqual(edited.registry);
+			expect(harness.visibleRegistry).toEqual(current);
+			expect(harness.visibleError).toBeNull();
+		} finally { harness.dispose(); }
+	});
+
+	test('a captured repository edit cannot overwrite newer unsaved field edits', async () => {
+		const entered = deferred();
+		const pending = deferred();
+		installWriterInvoke(async () => { entered.resolve(); await pending.promise; return { ok: true }; });
+		const harness = createProjectBoardRegistryWriterHarness(workspace('old'));
+		let saving: Promise<boolean> | undefined;
+		try {
+			await settleEffects();
+			const captured = harness.persistRegistry.capture();
+			const repositoryEdit = addProjectNode(captured.registry, { kind: 'project', name: 'Cloned', path: 'projects/cloned' });
+			const fieldEdit = addProjectNode(captured.registry, { kind: 'project', name: 'Manual', path: 'projects/manual' });
+			if (!repositoryEdit.ok || !fieldEdit.ok) throw new Error('invalid fixture');
+			saving = harness.persistRegistry(fieldEdit.registry);
+			await entered.promise;
+			expect(await captured.persistRegistry(repositoryEdit.registry)).toBe(false);
+			expect(harness.persistRegistry.hasConflict()).toBe(true);
+			expect(harness.visibleRegistry).toEqual(fieldEdit.registry);
+			pending.resolve();
+			expect(await saving).toBe(true);
+			expect(nativeRegistry).toEqual(fieldEdit.registry);
+		} finally { pending.resolve(); await saving; harness.dispose(); }
+	});
+
 	test('keeps a conflicted draft until reload adopts the external snapshot', async () => {
 		let writes = 0;
 		installWriterInvoke(async () => { writes += 1; return { ok: true }; });

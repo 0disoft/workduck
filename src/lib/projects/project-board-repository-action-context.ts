@@ -26,23 +26,18 @@ import type {
 } from './project-operation-storage';
 
 export function createProjectBoardRepositoryActionContext(input: {
+	readonly workspaceId: string;
 	readonly workspacePath: string;
 	readonly registry: ProjectRegistry;
+	readonly isCurrent: () => boolean;
+	readonly operations: () => Record<string, ProjectRepositoryOperation>;
+	readonly setOperations: (operations: Record<string, ProjectRepositoryOperation>) => void;
+	readonly setOperationStorageError: (error: ProjectRepositoryOperationStorageError | null) => void;
 	readonly isRepositoryBusy: (repositoryId: string) => boolean;
 	readonly isRepositoryPathInsideWorkspace: (repositoryPath: string) => boolean;
 	readonly resolveCredential: (
 		target: ProjectRepositoryTarget
 	) => ProjectRepositoryGitCredentialInput | null | undefined;
-	readonly startOperation: (repositoryId: string, name: ProjectRepositoryOperationName) => void;
-	readonly succeedOperation: (
-		target: ProjectRepositoryTarget,
-		name: ProjectRepositoryOperationName
-	) => Promise<void>;
-	readonly failOperation: (
-		target: ProjectRepositoryTarget,
-		name: ProjectRepositoryOperationName,
-		error: ProjectFormError
-	) => Promise<void>;
 	readonly persistRegistry: (nextRegistry: ProjectRegistry) => Promise<boolean>;
 	readonly refreshRepositoryGitStatus: (repositoryId: string, path: string | null) => Promise<void>;
 	readonly setFormError: (error: ProjectFormError | null) => void;
@@ -54,24 +49,53 @@ export function createProjectBoardRepositoryActionContext(input: {
 	readonly closePublishRepositoryDialog: () => void;
 	readonly operationMessages: ProjectRepositoryActionContext['operationMessages'];
 }): ProjectRepositoryActionContext {
+	let ownedOperations: Record<string, ProjectRepositoryOperation> = {};
+	const whileCurrent = <Args extends unknown[]>(callback: (...args: Args) => void) =>
+		(...args: Args) => { if (input.isCurrent()) callback(...args); };
+	const finishOperation = async (
+		target: ProjectRepositoryTarget,
+		name: ProjectRepositoryOperationName,
+		state: 'succeeded' | 'failed',
+		error: ProjectFormError | null
+	) => {
+		await finishProjectBoardRepositoryOperation({
+			workspaceId: input.workspaceId, node: target.node, repository: target.repository,
+			name, state, error, operations: ownedOperations,
+			setOperations: next => {
+				ownedOperations = next;
+				if (input.isCurrent()) input.setOperations({
+					...input.operations(), [target.repository.id]: next[target.repository.id]!
+				});
+			},
+			setOperationStorageError: whileCurrent(input.setOperationStorageError)
+		});
+	};
 	return {
+		isCurrent: input.isCurrent,
 		workspacePath: input.workspacePath,
 		registry: input.registry,
-		isRepositoryBusy: input.isRepositoryBusy,
-		isRepositoryPathInsideWorkspace: input.isRepositoryPathInsideWorkspace,
-		resolveCredential: input.resolveCredential,
-		startOperation: input.startOperation,
-		succeedOperation: input.succeedOperation,
-		failOperation: input.failOperation,
+		isRepositoryBusy: repositoryId => !input.isCurrent() || input.isRepositoryBusy(repositoryId),
+		isRepositoryPathInsideWorkspace: path => input.isCurrent() && input.isRepositoryPathInsideWorkspace(path),
+		resolveCredential: target => input.isCurrent() ? input.resolveCredential(target) : undefined,
+		startOperation: (repositoryId, name) => {
+			if (!input.isCurrent()) return;
+			const next = startProjectBoardRepositoryOperation(input.operations(), repositoryId, name);
+			ownedOperations = { ...ownedOperations, [repositoryId]: next[repositoryId]! };
+			input.setOperations(next);
+		},
+		succeedOperation: (target, name) => finishOperation(target, name, 'succeeded', null),
+		failOperation: (target, name, error) => finishOperation(target, name, 'failed', error),
 		persistRegistry: input.persistRegistry,
-		refreshRepositoryGitStatus: input.refreshRepositoryGitStatus,
-		setFormError: input.setFormError,
-		setStatus: input.setStatus,
-		setSelectedGroupId: input.setSelectedGroupId,
-		setCloneTarget: input.setCloneTarget,
-		setGitActionTarget: input.setGitActionTarget,
-		setIsPublishingRepository: input.setIsPublishingRepository,
-		closePublishRepositoryDialog: input.closePublishRepositoryDialog,
+		refreshRepositoryGitStatus: async (repositoryId, path) => {
+			if (input.isCurrent()) await input.refreshRepositoryGitStatus(repositoryId, path);
+		},
+		setFormError: whileCurrent(input.setFormError),
+		setStatus: whileCurrent(input.setStatus),
+		setSelectedGroupId: whileCurrent(input.setSelectedGroupId),
+		setCloneTarget: whileCurrent(input.setCloneTarget),
+		setGitActionTarget: whileCurrent(input.setGitActionTarget),
+		setIsPublishingRepository: whileCurrent(input.setIsPublishingRepository),
+		closePublishRepositoryDialog: whileCurrent(input.closePublishRepositoryDialog),
 		operationMessages: input.operationMessages
 	};
 }

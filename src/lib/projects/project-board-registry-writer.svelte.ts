@@ -8,7 +8,7 @@ invariant=Edits build on the latest draft, writes compare the last accepted snap
 stability=architecture
 */
 import type { WorkspaceRecord } from '#lib/workspaces/workspace-registry.ts';
-import type { ProjectRegistry } from './project-registry';
+import { normalizeProjectRegistry, serializeProjectRegistry, type ProjectRegistry } from './project-registry';
 import { readProjectRegistry, type ProjectRegistryStorageError } from './project-storage';
 import { writeProjectRegistryForBoard } from './project-board-storage-actions';
 
@@ -58,9 +58,17 @@ export function createProjectBoardRegistryWriter(input: ProjectBoardRegistryWrit
 		) return false;
 		if (reloadingScope === scope || conflictedScope === scope) return false;
 		if (draftProjection === null) scope.acceptedRegistry = input.registry();
+		return persistRegistryInScope(scope, nextRegistry, async () => scope.acceptedRegistry!);
+	}
 
+	async function persistRegistryInScope(
+		scope: ProjectBoardRegistryWriteScope,
+		nextRegistry: ProjectRegistry,
+		expectedRegistry: () => Promise<ProjectRegistry>
+	) {
+		if (nextRegistry.workspaceId !== scope.workspaceId || reloadingScope === scope || conflictedScope === scope) return false;
 		const projection = { scope, registry: nextRegistry, error: null };
-		draftProjection = projection;
+		if (isCurrentScope(scope)) draftProjection = projection;
 		try {
 			const saving = writeProjectRegistryForBoard(nextRegistry, (next) => {
 				if (next.storageError === null) scope.acceptedRegistry = next.registry;
@@ -70,7 +78,7 @@ export function createProjectBoardRegistryWriter(input: ProjectBoardRegistryWrit
 				if (next.storageError !== null) {
 					draftProjection = { scope, registry: next.registry, error: next.storageError };
 				}
-			}, async () => scope.acceptedRegistry!);
+			}, expectedRegistry);
 			scope.lastWrite = saving;
 			return await saving;
 		} finally {
@@ -79,6 +87,34 @@ export function createProjectBoardRegistryWriter(input: ProjectBoardRegistryWrit
 	}
 
 	return Object.assign(persistRegistry, {
+		capture() {
+			const scope = isCurrentScope(activeScope) ? activeScope : null;
+			const operationWorkspaceId = scope?.workspaceId ?? workspaceId;
+			const operationWorkspacePath = scope?.workspacePath ?? workspacePath;
+			const visibleRegistry = draftProjection !== null && isCurrentScope(draftProjection.scope)
+				? draftProjection.registry : input.registry();
+			let expectedRegistry = normalizeProjectRegistry(visibleRegistry, operationWorkspaceId);
+			return {
+				workspaceId: operationWorkspaceId,
+				workspacePath: operationWorkspacePath,
+				registry: expectedRegistry,
+				isCurrent: () => isCurrentScope(scope),
+				async persistRegistry(nextRegistry: ProjectRegistry) {
+					if (scope === null || nextRegistry.workspaceId !== scope.workspaceId) return false;
+					if (workspaceId === operationWorkspaceId && workspacePath !== operationWorkspacePath) return false;
+					const liveRegistry = draftProjection !== null && isCurrentScope(draftProjection.scope)
+						? draftProjection.registry : input.registry();
+					if (isCurrentScope(scope) && serializeProjectRegistry(liveRegistry) !== serializeProjectRegistry(expectedRegistry)) {
+						conflictedScope = scope;
+						input.update({ registry: input.registry(), storageError: 'project-registry-revision-conflict' });
+						return false;
+					}
+					const saved = await persistRegistryInScope(scope, nextRegistry, async () => expectedRegistry);
+					if (saved) expectedRegistry = normalizeProjectRegistry(nextRegistry, operationWorkspaceId);
+					return saved;
+				}
+			};
+		},
 		async reload() {
 			const scope = activeScope;
 			if (!isCurrentScope(scope) || scope === null || reloadingScope === scope) return false;

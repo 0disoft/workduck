@@ -80,11 +80,9 @@
 	} from './project-board-repository-actions';
 	import {
 		createProjectBoardRepositoryActionContext,
-		finishProjectBoardRepositoryOperation,
 		getProjectBoardRepositoryOperation,
 		isProjectBoardRepositoryBusy,
-		isProjectBoardRepositoryOperationRunning,
-		startProjectBoardRepositoryOperation
+		isProjectBoardRepositoryOperationRunning
 	} from './project-board-repository-action-context';
 	import {
 		closeProjectRepositoryPublishDialog,
@@ -255,6 +253,20 @@
 	let githubRepositoryCommitMessage = $state(DEFAULT_GITHUB_REPOSITORY_COMMIT_MESSAGE);
 	let githubRepositoryVisibility = $state<ProjectRepositoryGithubVisibility>('private');
 	let isPublishingRepository = $state(false);
+	let repositoryActionWorkspaceId = $derived(workspace.id);
+	let repositoryActionWorkspacePath = $derived(workspace.path);
+	$effect(() => {
+		void repositoryActionWorkspaceId;
+		void repositoryActionWorkspacePath;
+		cloneTarget = null;
+		gitActionTarget = null;
+		commitWorkOrderTargetRepositoryId = null;
+		publishTarget = null;
+		isPublishingRepository = false;
+		formError = null;
+		queueFolderError = null;
+		status = null;
+	});
 	let isSavingTags = $state(false);
 	let isSavingDescription = $state(false);
 	let isSavingDetails = $state(false);
@@ -557,7 +569,8 @@
 			{
 				isRepositoryPathInsideWorkspace,
 				isRepositoryBusy,
-				failRepositoryOperation,
+				failRepositoryOperation: (node, repository, name, error) =>
+					createRepositoryActionContext().failOperation({ node, repository }, name, error),
 				setPublishTarget: (target) => { publishTarget = target; },
 				setRepositoryName: (name) => { githubRepositoryName = name; },
 				setCommitMessage: (message) => { githubRepositoryCommitMessage = message; },
@@ -683,20 +696,22 @@
 	}
 
 	function createRepositoryActionContext(): ProjectRepositoryActionContext {
+		const target = persistRegistry.capture();
 		return createProjectBoardRepositoryActionContext({
-			workspacePath: workspace.path,
-			registry,
+			workspaceId: target.workspaceId,
+			workspacePath: target.workspacePath,
+			registry: target.registry,
+			isCurrent: target.isCurrent,
+			operations: () => repositoryOperationById,
+			setOperations: (operations) => { repositoryOperationById = operations; },
+			setOperationStorageError: (error) => { operationStorageError = error; },
 			isRepositoryBusy,
 			isRepositoryPathInsideWorkspace,
 			resolveCredential: ({ node, repository }) =>
 				resolveRepositoryGithubCredentialOrSetError(node, repository),
-			startOperation: startRepositoryOperation,
-			succeedOperation: ({ node, repository }, name) =>
-				succeedRepositoryOperation(node, repository, name),
-			failOperation: ({ node, repository }, name, error) =>
-				failRepositoryOperation(node, repository, name, error),
-			persistRegistry,
-			refreshRepositoryGitStatus,
+			persistRegistry: target.persistRegistry,
+			refreshRepositoryGitStatus: (id, path) =>
+				refreshRepositoryGitStatus(id, path, repositoryGitInspectionSignature, target.isCurrent),
 			setFormError: (error) => { formError = error; },
 			setStatus: (nextStatus) => { status = nextStatus; },
 			setSelectedGroupId: (groupId) => { selectedGroupId = groupId; },
@@ -706,53 +721,6 @@
 			closePublishRepositoryDialog,
 			operationMessages: projectMessages.operations
 		});
-	}
-
-	function startRepositoryOperation(repositoryId: string, name: ProjectRepositoryOperationName) {
-		repositoryOperationById = startProjectBoardRepositoryOperation(
-			repositoryOperationById,
-			repositoryId,
-			name
-		);
-	}
-
-	async function succeedRepositoryOperation(
-		node: ProjectNodeRecord,
-		repository: ProjectRepositoryLinkRecord,
-		name: ProjectRepositoryOperationName
-	) {
-		await finishRepositoryOperation(node, repository, name, 'succeeded', null);
-	}
-
-	async function failRepositoryOperation(
-		node: ProjectNodeRecord,
-		repository: ProjectRepositoryLinkRecord,
-		name: ProjectRepositoryOperationName,
-		error: ProjectFormError
-	) {
-		await finishRepositoryOperation(node, repository, name, 'failed', error);
-	}
-
-	async function finishRepositoryOperation(
-		node: ProjectNodeRecord,
-		repository: ProjectRepositoryLinkRecord,
-		name: ProjectRepositoryOperationName,
-		state: 'succeeded' | 'failed',
-		error: string | null
-	) {
-		await finishProjectBoardRepositoryOperation(
-			{
-				workspaceId: workspace.id,
-				node,
-				repository,
-				name,
-				state,
-				error,
-				operations: repositoryOperationById,
-				setOperations: (operations) => { repositoryOperationById = operations; },
-				setOperationStorageError: (error) => { operationStorageError = error; }
-			}
-		);
 	}
 
 	function getRepositoryOperation(repositoryId: string) {
@@ -1071,13 +1039,15 @@
 	async function refreshRepositoryGitStatus(
 		repositoryId: string,
 		path: string | null,
-		expectedSignature = repositoryGitInspectionSignature
+		expectedSignature = repositoryGitInspectionSignature,
+		isCurrent: () => boolean = () => true
 	) {
 		await refreshProjectRepositoryGitStatusForBoard(
 			{ workspaceId: workspace.id, repositoryId, path, expectedSignature },
 			{
 				getRepositoryGitInspectionSignature: () => repositoryGitInspectionSignature,
 				updateRepositoryGitStatus: (nextRepositoryId, gitStatus) => {
+					if (!isCurrent()) return;
 					repositoryGitStatusById = {
 						...repositoryGitStatusById,
 						[nextRepositoryId]: gitStatus

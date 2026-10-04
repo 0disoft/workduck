@@ -19,6 +19,7 @@ import type {
 import type { ProjectRepositoryOperationName } from './project-operation-storage';
 
 export interface ProjectRepositoryActionContext {
+	readonly isCurrent: () => boolean;
 	readonly workspacePath: string;
 	readonly registry: ProjectRegistry;
 	readonly isRepositoryBusy: (repositoryId: string) => boolean;
@@ -55,6 +56,7 @@ export async function cloneProjectRepositoryForTarget(
 	target: ProjectRepositoryTarget | null,
 	context: ProjectRepositoryActionContext
 ) {
+	if (!context.isCurrent()) return;
 	if (target === null) {
 		context.setFormError('project-repository-not-found');
 		return;
@@ -134,6 +136,7 @@ export async function initializeProjectRepositoryForTarget(
 	target: ProjectRepositoryTarget | null,
 	context: ProjectRepositoryActionContext
 ) {
+	if (!context.isCurrent()) return;
 	if (target === null || target.repository.path === null) {
 		context.setFormError('project-repository-not-found');
 		return;
@@ -181,6 +184,7 @@ export async function publishProjectRepositoryTarget(
 	},
 	context: ProjectRepositoryActionContext
 ) {
+	if (!context.isCurrent()) return;
 	if (target === null || target.repository.path === null) {
 		context.setFormError('project-repository-not-found');
 		return;
@@ -235,6 +239,7 @@ export async function runProjectRepositoryRemoteGitAction(
 	action: ProjectRepositoryGitAction,
 	context: ProjectRepositoryActionContext
 ) {
+	if (!context.isCurrent()) return;
 	if (target === null || target.repository.path === null) {
 		context.setFormError('project-repository-not-found');
 		return;
