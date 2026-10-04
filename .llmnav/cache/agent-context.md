@@ -24,7 +24,7 @@ Keep semantic IDs stable across moves and renames.
 * workduck.process: .llmnav/cache/modules/workduck.process.txt (2 cards)
 * workduck.projects: .llmnav/cache/modules/workduck.projects.txt (23 cards)
 * workduck.prompt: .llmnav/cache/modules/workduck.prompt.txt (1 cards)
-* workduck.queue: .llmnav/cache/modules/workduck.queue.txt (13 cards)
+* workduck.queue: .llmnav/cache/modules/workduck.queue.txt (14 cards)
 * workduck.repository: .llmnav/cache/modules/workduck.repository.txt (1 cards)
 * workduck.secret-vault: .llmnav/cache/modules/workduck.secret-vault.txt (2 cards)
 * workduck.skills: .llmnav/cache/modules/workduck.skills.txt (2 cards)

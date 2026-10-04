@@ -3146,9 +3146,9 @@
         "native file persistence"
       ],
       "hashes": {
-        "body": "c63ca41b7d821f998fa7848df93594a1a9a992453dcb39ebdc548dff904f1908",
+        "body": "1a68afceb332a3cc84af8319d716189dcbbc6a77dd8a8adbc6fb238c037f74af",
         "semantic": "9cbd47679bfe44a2f915c7b13c62e8afcc2ea8de2933c67098aeefbd984a6ac2",
-        "structure": "133e21ec3468f08d56c4242291faee271bd1589ee8fe5ab24a20439d9e2e8f30"
+        "structure": "9cca726899065cba3dcb7d145d87a8bd19a22c399a929bdb35937832ab05cc63"
       },
       "id": "workduck.queue.panel-controller",
       "imports": [
@@ -3176,8 +3176,8 @@
         "./queue-panel-execution-context-workflow",
         "./queue-panel-file-delete-workflow",
         "./queue-panel-file-list",
-        "./queue-panel-labels",
         "./queue-panel-manual-work-order-save-workflow",
+        "./queue-panel-presentation.svelte",
         "./queue-panel-prompt-preview-workflow",
         "./queue-panel-read-state-workflow",
         "./queue-panel-refresh-workflow",
@@ -4031,11 +4031,66 @@
         "Queue artifact suffixes"
       ],
       "stability": "architecture"
+    },
+    {
+      "boundaries": [],
+      "excludes": [
+        "artifact selection",
+        "execution workflows",
+        "registry persistence"
+      ],
+      "hashes": {
+        "body": "8dac5fa8c8808672655ec57f7a900ae966464ebcfbad0817e2e10f76fc8ab934",
+        "semantic": "a8b9c9d9939a61d3df247dc170f11ac73578224bc9b914df36cb3c0e492a3672",
+        "structure": "bf3357050949bc05edfc51cfe614bc374037a47987cc3021b7631c339bff12e6"
+      },
+      "id": "workduck.queue.presentation",
+      "imports": [
+        "#lib/agents/agent-registry.ts",
+        "#lib/i18n/workduck-language.ts",
+        "#lib/projects/project-registry.ts",
+        "#lib/projects/project-repository-selection.ts",
+        "#lib/references/reference-registry.ts",
+        "#lib/skills/skill-registry.ts",
+        "./queue-artifacts",
+        "./queue-panel-labels",
+        "./queue-panel-types",
+        "./queue-voting"
+      ],
+      "invariant": [
+        "Display labels use the current catalogs and language; missing IDs remain visible, and display ordering leaves source records unchanged."
+      ],
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src/lib/queue/queue-panel-presentation.svelte.ts",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "owns": [
+        "Queue context record labels",
+        "localized Queue display labels",
+        "skill display ordering"
+      ],
+      "role": "Project live Queue catalog records and language messages into sorted skill options and display labels.",
+      "scope": "module",
+      "search": [
+        "Queue task context names",
+        "Queue localized labels",
+        "Queue skill option sorting"
+      ],
+      "stability": "architecture"
     }
   ],
   "contractFingerprints": {
     "configuration": {
-      "sha256": "60512084fbc7d18f9a3a75c2a0052a5ac916a959e6fdba0e4cc3470f0150f23c"
+      "sha256": "df0c3fc3d6a7ebe01454498043bd14ec73f2fa0b0424056641dd8a73e036dd09"
     },
     "exportedApi": {
       "count": 0,
@@ -4046,6 +4101,6 @@
   "generatedBy": "llmnav@0.9.7",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "b8c64134ec968e6575c4e092adfce8044151274aee79937ef09783a5245cbd6f",
+  "sourceHash": "00e11e13f015de955588aaf31cf3684c9debb8e4634f9e393d57bc71020dbf1d",
   "specVersion": "1"
 }

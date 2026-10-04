@@ -78,3 +78,4 @@ workduck.projects.registry-normalization
 workduck.projects.schema
 workduck.queue.evaluation-delegation-native
 workduck.queue.folder-contracts
+workduck.queue.presentation

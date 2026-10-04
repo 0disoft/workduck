@@ -314,6 +314,17 @@
         "invariant"
       ],
       "scope": "module"
+    },
+    {
+      "match": [
+        "src/lib/queue/queue-panel-presentation.svelte.ts"
+      ],
+      "name": "reactive Queue presentation boundary",
+      "requiredFields": [
+        "owns",
+        "invariant"
+      ],
+      "scope": "module"
     }
   ],
   "audit": {

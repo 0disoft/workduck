@@ -75,3 +75,4 @@
 {"query":"where is canonical project registry parsing hierarchy eligibility and repository deduplication owned","expected":["workduck.projects.registry-normalization"]}
 {"query":"where are native Queue command response shapes stable error codes and artifact suffix contracts defined","expected":["workduck.queue.folder-contracts"]}
 {"query":"where does native Queue evaluation delegation reject duplicate source report evaluator work orders and allow self updates","expected":["workduck.queue.evaluation-delegation-native"]}
+{"query":"where does Queue project live catalog context names and localized display labels into sorted skill options","expected":["workduck.queue.presentation"]}

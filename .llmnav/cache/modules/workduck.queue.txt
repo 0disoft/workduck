@@ -78,3 +78,9 @@ role Define native Queue command responses, stable error codes, and known artifa
 owns Queue command response shapes, Queue error serialization, Queue artifact path vocabulary
 excludes file persistence, evaluation delegation rules
 invariant Existing native command response names, field omission, and error strings remain stable.
+
+@workduck.queue.presentation
+role Project live Queue catalog records and language messages into sorted skill options and display labels.
+owns Queue context record labels, localized Queue display labels, skill display ordering
+excludes artifact selection, execution workflows, registry persistence
+invariant Display labels use the current catalogs and language; missing IDs remain visible, and display ordering leaves source records unchanged.

@@ -20,27 +20,25 @@ import {
 } from '#lib/settings/appearance-storage.ts';
 import type { WorkspaceRecord } from '#lib/workspaces/workspace-registry.ts';
 import {
-	type AgentRecord,
 	type AgentRegistry
 } from '#lib/agents/agent-registry.ts';
 import {
-	type PersonaRecord,
 	type PersonaRegistry
 } from '#lib/personas/persona-registry.ts';
-import { type ReferenceRecord, type ReferenceRegistry } from '#lib/references/reference-registry.ts';
+import {
+	type ReferenceRegistry
+} from '#lib/references/reference-registry.ts';
 import {
 	type ProjectNodeRecord,
 	type ProjectRegistry
 } from '#lib/projects/project-registry.ts';
 import {
-	createProjectRepositorySelectionOptions,
-	type ProjectRepositorySelectionOption
+	createProjectRepositorySelectionOptions
 } from '#lib/projects/project-repository-selection.ts';
 import {
 	getAllSkills,
 	WORKDUCK_AGENT_RESPONSE_EVALUATOR_SKILL_ID,
-	type SkillRegistry,
-	type WorkduckSkillRecord
+	type SkillRegistry
 } from '#lib/skills/skill-registry.ts';
 import {
 	prepareDesktopNotificationPermission,
@@ -50,12 +48,7 @@ import {
 import {
 	type QueueReportTaskReview,
 	type WorkduckQueueProposal,
-	type WorkduckQueueExecutionState,
 	type WorkduckQueueResultReport,
-	type WorkduckQueueResultReportTask,
-	type WorkduckQueueResponseFormat,
-	type WorkduckQueueResponseLanguage,
-	type WorkduckQueueWorkPriority,
 	type WorkduckQueueWorkOrder,
 	type WorkduckQueueWorkOrderTask,
 	type WorkduckQueueReviewDecision
@@ -70,31 +63,12 @@ import {
 	type QueueFolderError
 } from './queue-folder';
 import {
-	createVoteAggregate,
-	type WorkduckQueueTaskKind
+	createVoteAggregate
 } from './queue-voting';
 import {
 	dispatchQueueFilesChanged
 } from './queue-read-state';
-import {
-	getAgentDisplayName as getAgentDisplayNameFromRecord,
-	getExecutionFilterLabel as getLocalizedExecutionFilterLabel,
-	getKindFilterLabel as getLocalizedKindFilterLabel,
-	getQueueExecutionStateLabel as getLocalizedQueueExecutionStateLabel,
-	getQueuePriorityFilterLabel as getLocalizedQueuePriorityFilterLabel,
-	getQueuePriorityLabel as getLocalizedQueuePriorityLabel,
-	getQueueResponseFormatLabel as getLocalizedQueueResponseFormatLabel,
-	getQueueResponseLanguageLabel as getLocalizedQueueResponseLanguageLabel,
-	getQueueSortLabel as getLocalizedQueueSortLabel,
-	getQueueTaskKindLabel as getLocalizedQueueTaskKindLabel,
-	getProjectDisplayName as getProjectDisplayNameFromRecord,
-	getReadFilterLabel as getLocalizedReadFilterLabel,
-	getRecordLabelById,
-	getReferenceDisplayName as getReferenceDisplayNameFromRecord,
-	getReviewDecisionLabel as getLocalizedReviewDecisionLabel,
-	getSkillDisplayName as getLocalizedSkillDisplayName,
-	getVoteChoiceLabel as getLocalizedVoteChoiceLabel
-} from './queue-panel-labels';
+import { createQueuePanelPresentation } from './queue-panel-presentation.svelte';
 import {
 	startQueueAutoRefreshScheduler,
 	type QueueAutoRefreshScheduler
@@ -240,7 +214,11 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		messages.queue.registeredCount.replace('{count}', files.length.toString())
 	);
 	let allStoredSkills = $derived(getAllSkills(skillRegistry));
-	let allSkills = $derived(sortSkillsForDisplay(allStoredSkills));
+	const presentation = createQueuePanelPresentation({
+		messages: () => messages, skills: () => allStoredSkills, agents: () => allAgents,
+		projects: () => allProjects, repositories: () => allRepositories, references: () => allReferences
+	});
+	let allSkills = $derived(presentation.allSkills);
 	let allAgents = $derived(agentRegistry.agents);
 	let allProjects = $derived(
 		projectRegistry.nodes.filter((node): node is ProjectNodeRecord => node.kind === 'project')
@@ -266,12 +244,12 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		references: () => allReferences,
 		isWriting: () => isWriting,
 		responseLanguage: () => appearanceSettings.languageId,
-		getSkillLabelById,
-		getAgentLabelById,
-		getProjectLabelById,
-		getRepositoryLabelById,
-		getReferenceLabelById,
-		getSkillDisplayName
+		getSkillLabelById: presentation.getSkillLabelById,
+		getAgentLabelById: presentation.getAgentLabelById,
+		getProjectLabelById: presentation.getProjectLabelById,
+		getRepositoryLabelById: presentation.getRepositoryLabelById,
+		getReferenceLabelById: presentation.getReferenceLabelById,
+		getSkillDisplayName: presentation.getSkillDisplayName
 	});
 	let selectedReportVoteAggregate = $derived(
 		selectedReport === null ? null : createVoteAggregate(selectedReport.tasks)
@@ -1268,123 +1246,6 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		}
 	}
 
-	function getExecutionFilterLabel(filter: QueueExecutionFilter) {
-		return getLocalizedExecutionFilterLabel(messages, filter);
-}
-
-	function getReadFilterLabel(filter: QueueReadFilter) {
-		return getLocalizedReadFilterLabel(messages, filter);
-}
-
-	function getKindFilterLabel(filter: QueueKindFilter) {
-		return getLocalizedKindFilterLabel(messages, filter);
-}
-
-	function getQueueExecutionStateLabel(executionState: WorkduckQueueExecutionState | null) {
-		return getLocalizedQueueExecutionStateLabel(messages, executionState);
-}
-
-	function getQueuePriorityLabel(priority: WorkduckQueueWorkPriority) {
-		return getLocalizedQueuePriorityLabel(messages, priority);
-}
-
-	function getQueuePriorityFilterLabel(filter: QueuePriorityFilter) {
-		return getLocalizedQueuePriorityFilterLabel(messages, filter);
-}
-
-	function getQueueSortLabel(sortOption: QueueSortOption) {
-		return getLocalizedQueueSortLabel(messages, sortOption);
-}
-
-	function getQueueResponseLanguageLabel(language: WorkduckQueueResponseLanguage) {
-		return getLocalizedQueueResponseLanguageLabel(messages, language);
-}
-
-	function getQueueResponseFormatLabel(format: WorkduckQueueResponseFormat) {
-		return getLocalizedQueueResponseFormatLabel(messages, format);
-}
-
-	function getSkillDisplayName(skill: WorkduckSkillRecord) {
-		return getLocalizedSkillDisplayName(messages, skill);
-	}
-
-	function sortSkillsForDisplay(skills: readonly WorkduckSkillRecord[]) {
-		return [...skills].sort((left, right) =>
-			getSkillDisplayName(left).localeCompare(getSkillDisplayName(right), undefined, {
-				numeric: true,
-				sensitivity: 'base'
-			})
-		);
-	}
-
-	function getAgentDisplayName(agent: AgentRecord) {
-		return getAgentDisplayNameFromRecord(agent);
-}
-
-	function getProjectDisplayName(project: ProjectNodeRecord) {
-		return getProjectDisplayNameFromRecord(project);
-}
-
-	function getRepositoryDisplayName(repository: ProjectRepositorySelectionOption) {
-		return repository.label;
-}
-
-	function getReferenceDisplayName(reference: ReferenceRecord) {
-		return getReferenceDisplayNameFromRecord(reference);
-}
-
-	function getSkillLabelById(skillId: string) {
-		return getRecordLabelById(allSkills, skillId, getSkillDisplayName);
-}
-
-	function getAgentLabelById(agentId: string) {
-		return getRecordLabelById(allAgents, agentId, getAgentDisplayName);
-}
-
-	function getProjectLabelById(projectId: string) {
-		return getRecordLabelById(allProjects, projectId, getProjectDisplayName);
-	}
-
-	function getRepositoryLabelById(repositoryId: string) {
-		return getRecordLabelById(allRepositories, repositoryId, getRepositoryDisplayName);
-	}
-
-	function getReferenceLabelById(referenceId: string) {
-		return getRecordLabelById(allReferences, referenceId, getReferenceDisplayName);
-	}
-
-	function getQueueTaskSkillLabels(task: WorkduckQueueWorkOrderTask) {
-		return (task.skillIds ?? []).map(getSkillLabelById);
-}
-
-	function getQueueTaskAgentLabels(task: WorkduckQueueWorkOrderTask) {
-		return (task.agentIds ?? []).map(getAgentLabelById);
-}
-
-	function getQueueTaskProjectLabels(task: WorkduckQueueWorkOrderTask) {
-		return (task.projectIds ?? []).map(getProjectLabelById);
-}
-
-	function getQueueTaskRepositoryLabels(task: WorkduckQueueWorkOrderTask) {
-		return (task.repositoryIds ?? []).map(getRepositoryLabelById);
-}
-
-	function getQueueTaskReferenceLabels(task: WorkduckQueueWorkOrderTask) {
-		return (task.referenceIds ?? []).map(getReferenceLabelById);
-}
-
-	function getQueueTaskKindLabel(kind: WorkduckQueueTaskKind | undefined) {
-		return getLocalizedQueueTaskKindLabel(messages, kind);
-}
-
-	function getVoteChoiceLabel(task: WorkduckQueueResultReportTask) {
-		return getLocalizedVoteChoiceLabel(messages, task);
-}
-
-	function getReviewDecisionLabel(decision: Exclude<WorkduckQueueReviewDecision, 'pending'>) {
-		return getLocalizedReviewDecisionLabel(messages, decision);
-}
-
 	async function applyQueuePanelEvaluationSaveState(
 		result: QueuePanelEvaluationSaveResult,
 		target: ReturnType<typeof captureWorkspaceOperationTarget>,
@@ -1478,27 +1339,27 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		get canCompleteSelectedWorkOrder() { return canCompleteSelectedWorkOrder; },
 		get canCancelSelectedWorkOrderExecution() { return canCancelSelectedWorkOrderExecution; },
 		refreshQueueFiles,
-		getExecutionFilterLabel,
-		getReadFilterLabel,
+		getExecutionFilterLabel: presentation.getExecutionFilterLabel,
+		getReadFilterLabel: presentation.getReadFilterLabel,
 		openNewWorkOrderDialog,
 		handleQueueCardClick,
 		openQueueContextMenu,
 		getQueueCardClass,
 		isSelectedQueueFile,
-		getQueuePriorityLabel,
-		getKindFilterLabel,
-		getQueuePriorityFilterLabel,
-		getQueueSortLabel,
-		getQueueResponseFormatLabel,
-		getQueueExecutionStateLabel,
+		getQueuePriorityLabel: presentation.getQueuePriorityLabel,
+		getKindFilterLabel: presentation.getKindFilterLabel,
+		getQueuePriorityFilterLabel: presentation.getQueuePriorityFilterLabel,
+		getQueueSortLabel: presentation.getQueueSortLabel,
+		getQueueResponseFormatLabel: presentation.getQueueResponseFormatLabel,
+		getQueueExecutionStateLabel: presentation.getQueueExecutionStateLabel,
 		getQueueFolderLocalizedError,
 		handleDelegateReportEvaluation,
 		updateReviewDecision,
 		updateReviewComment,
 		openEvaluationDialog: evaluationController.openEvaluationDialog,
-		getVoteChoiceLabel,
+		getVoteChoiceLabel: presentation.getVoteChoiceLabel,
 		getReportTaskAgent: evaluationController.getReportTaskAgent,
-		getReviewDecisionLabel,
+		getReviewDecisionLabel: presentation.getReviewDecisionLabel,
 		isReportTaskEvaluationRecorded: evaluationController.isReportTaskEvaluationRecorded,
 		handlePreviewWorkOrderPrompt,
 		closePromptPreviewDialog,
@@ -1508,24 +1369,24 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		handleCompleteWorkOrder,
 		openEditWorkOrderTaskDialog,
 		handleBulkDeleteQueueFiles,
-		getQueueResponseLanguageLabel,
-		getQueueTaskKindLabel,
-		getQueueTaskProjectLabels,
-		getQueueTaskRepositoryLabels,
-		getQueueTaskSkillLabels,
-		getQueueTaskAgentLabels,
-		getQueueTaskReferenceLabels,
+		getQueueResponseLanguageLabel: presentation.getQueueResponseLanguageLabel,
+		getQueueTaskKindLabel: presentation.getQueueTaskKindLabel,
+		getQueueTaskProjectLabels: presentation.getQueueTaskProjectLabels,
+		getQueueTaskRepositoryLabels: presentation.getQueueTaskRepositoryLabels,
+		getQueueTaskSkillLabels: presentation.getQueueTaskSkillLabels,
+		getQueueTaskAgentLabels: presentation.getQueueTaskAgentLabels,
+		getQueueTaskReferenceLabels: presentation.getQueueTaskReferenceLabels,
 		handleDeleteContextQueueFile,
 		closeEvaluationDialog: evaluationController.closeEvaluationDialog,
 		updateEvaluationScore: evaluationController.updateEvaluationScore,
 		handleSaveEvaluation: evaluationController.handleSaveEvaluation,
 		closeNewWorkOrderDialog,
 		handleCreateManualWorkOrder,
-		getSkillDisplayName,
-		getAgentDisplayName,
-		getProjectDisplayName,
-		getRepositoryDisplayName,
-		getReferenceDisplayName
+		getSkillDisplayName: presentation.getSkillDisplayName,
+		getAgentDisplayName: presentation.getAgentDisplayName,
+		getProjectDisplayName: presentation.getProjectDisplayName,
+		getRepositoryDisplayName: presentation.getRepositoryDisplayName,
+		getReferenceDisplayName: presentation.getReferenceDisplayName
 };
 }
 
