@@ -351,7 +351,8 @@ export async function updateQueueWorkOrderFile(
 export async function updateQueueResultReportFile(
 	workspacePath: string,
 	relativePath: string,
-	content: string
+	content: string,
+	expectedContent?: string
 ): Promise<QueueFileReadResult> {
 	const invoke = getTauriInvoke();
 
@@ -363,7 +364,8 @@ export async function updateQueueResultReportFile(
 		const response = await invoke<QueueFileReadResponse>('update_queue_result_report_file', {
 			workspacePath: normalizeWorkspacePathForStorage(workspacePath),
 			relativePath,
-			content
+			content,
+			...(expectedContent === undefined ? {} : { expectedContent })
 		});
 
 		if (

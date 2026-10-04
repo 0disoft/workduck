@@ -838,7 +838,7 @@
         "agent execution"
       ],
       "hashes": {
-        "body": "d3b7d67ef1924f454d238d5018a3dbe5013c3641eeaf1a7fe93d15bc560f93f1",
+        "body": "6a0f01994df4bcdbfe29266650a4ad28d8d21b25fce7f72d1a6c999842cc4fb8",
         "semantic": "7b2278fd3969464a5b620176491febc7a114547f926baa9f84ad8623d769efaf",
         "structure": "2d026c492b3ca60b43ea766d2c5df345cc91e3a18b0f2b48714652f45135d19e"
       },
@@ -1665,18 +1665,19 @@
         "agent execution"
       ],
       "hashes": {
-        "body": "05111a8293df805ded9d669cda862b0d80a2dbda42a4c5724347dead6f849720",
+        "body": "27fc23f38b1fea227abd18b56db2cc70351f5f82812a8c11a6f5e7fea71804ab",
         "semantic": "edc3e1ebe9e3fff7836d11f3c740b79f05e01846484aa6c0547473c93ab3b0c0",
-        "structure": "4aa1c9f82a2b8d8e94b8e6a3afa4c4498f917c338d03d2ef7d5e61e15074e9dd"
+        "structure": "c7bb5b4efeb156d5d820d61ee5e701ca781cfb28cde54e94b3acbedcdaed8ed2"
       },
       "id": "workduck.queue.folder-native",
       "imports": [
-        "crate::atomic_file_write::{\n    write_file_atomically, write_file_exclusively, AtomicFileWriteError,\n}",
+        "crate::atomic_file_write::{\n    AtomicFileWriteError, write_file_atomically, write_file_exclusively,\n}",
         "crate::path_display::display_path",
         "crate::queue_limits::{QUEUE_FILE_MAX_BYTES, QUEUE_FOLDER_MAX_FILES}",
-        "crate::workspace_path::{validate_absolute_directory_path, WorkspacePathValidationError}",
+        "crate::workspace_path::{WorkspacePathValidationError, validate_absolute_directory_path}",
+        "crate::workspace_registry_lock::acquire_workspace_registry_lock",
         "std::time::{SystemTime, UNIX_EPOCH}",
-        "std::{\n    fs,\n    io,\n    path::{Path, PathBuf},\n    process::{Command, Stdio},\n}",
+        "std::{\n    fs, io,\n    path::{Path, PathBuf},\n    process::{Command, Stdio},\n}",
         "tests {\n    use super::*"
       ],
       "invariant": [
@@ -3140,7 +3141,7 @@
         "native file persistence"
       ],
       "hashes": {
-        "body": "2ff71b6fba6a7127ec56fadce0f88b07173f2f8213e1cf7ab35f4f566c61fcaf",
+        "body": "a33379f0b878d9d5a3563ab5b7865daa9c75d6d82f8d1a02584924992dd80ae5",
         "semantic": "560088d388d1a4884c7ed275507680bde68b82f1ce1c82930376757341869b65",
         "structure": "449d2a3e024377be70250c20564dcf357fcafa539f7499ad1f3cfad28a1d4879"
       },
@@ -3799,6 +3800,6 @@
   "generatedBy": "llmnav@0.9.7",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "8fb3d33d452d77647b262d2971e53d004fb237269253e6e06938c4c224d3ae11",
+  "sourceHash": "4ce89e66440f7d07fea60e658ca2c34824c789faf175b23e7e83a44804c070d6",
   "specVersion": "1"
 }

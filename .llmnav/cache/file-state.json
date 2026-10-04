@@ -4009,22 +4009,23 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "05111a8293df805ded9d669cda862b0d80a2dbda42a4c5724347dead6f849720",
+      "contentHash": "27fc23f38b1fea227abd18b56db2cc70351f5f82812a8c11a6f5e7fea71804ab",
       "declarations": [
         null
       ],
       "imports": [
-        "crate::atomic_file_write::{\n    write_file_atomically, write_file_exclusively, AtomicFileWriteError,\n}",
+        "crate::atomic_file_write::{\n    AtomicFileWriteError, write_file_atomically, write_file_exclusively,\n}",
         "crate::path_display::display_path",
         "crate::queue_limits::{QUEUE_FILE_MAX_BYTES, QUEUE_FOLDER_MAX_FILES}",
-        "crate::workspace_path::{validate_absolute_directory_path, WorkspacePathValidationError}",
+        "crate::workspace_path::{WorkspacePathValidationError, validate_absolute_directory_path}",
+        "crate::workspace_registry_lock::acquire_workspace_registry_lock",
         "std::time::{SystemTime, UNIX_EPOCH}",
-        "std::{\n    fs,\n    io,\n    path::{Path, PathBuf},\n    process::{Command, Stdio},\n}",
+        "std::{\n    fs, io,\n    path::{Path, PathBuf},\n    process::{Command, Stdio},\n}",
         "tests {\n    use super::*"
       ],
       "path": "src-tauri/src/queue_folder.rs",
       "semanticBytes": 569,
-      "sourceBytes": 40063
+      "sourceBytes": 44492
     },
     {
       "blocks": [],
@@ -10088,7 +10089,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "d3b7d67ef1924f454d238d5018a3dbe5013c3641eeaf1a7fe93d15bc560f93f1",
+      "contentHash": "6a0f01994df4bcdbfe29266650a4ad28d8d21b25fce7f72d1a6c999842cc4fb8",
       "declarations": [
         null
       ],
@@ -10098,7 +10099,7 @@
       ],
       "path": "src/lib/queue/queue-folder.ts",
       "semanticBytes": 505,
-      "sourceBytes": 14820
+      "sourceBytes": 14913
     },
     {
       "blocks": [],
@@ -10214,7 +10215,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "2ff71b6fba6a7127ec56fadce0f88b07173f2f8213e1cf7ab35f4f566c61fcaf",
+      "contentHash": "a33379f0b878d9d5a3563ab5b7865daa9c75d6d82f8d1a02584924992dd80ae5",
       "declarations": [
         null
       ],
@@ -10263,7 +10264,7 @@
       ],
       "path": "src/lib/queue/queue-panel-controller.svelte.ts",
       "semanticBytes": 594,
-      "sourceBytes": 52420
+      "sourceBytes": 52499
     },
     {
       "blocks": [],
@@ -10314,7 +10315,24 @@
     },
     {
       "blocks": [],
-      "contentHash": "c70eea356b0f987410401c3e06c82cfbee2e7122f9f6fedaf05c4392966fe500",
+      "contentHash": "3e64a5a2f5fa98b00b14bbe813e4a121e3925f6d6f64142933e0aa40f1f75ffc",
+      "declarations": [],
+      "imports": [
+        "#lib/agents/agent-evaluation.ts",
+        "#lib/agents/agent-registry.ts",
+        "#lib/personas/persona-registry.ts",
+        "#lib/tauri/tauri-invoke.ts",
+        "./queue-artifacts",
+        "./queue-panel-evaluation-save-workflow",
+        "bun:test"
+      ],
+      "path": "src/lib/queue/queue-panel-evaluation-save-workflow.test.ts",
+      "semanticBytes": 0,
+      "sourceBytes": 6829
+    },
+    {
+      "blocks": [],
+      "contentHash": "c605f82a456e686ab86d64240cc3306a886ecdd1f124fa8308c493714047586b",
       "declarations": [],
       "imports": [
         "#lib/agents/agent-evaluation.ts",
@@ -10328,7 +10346,7 @@
       ],
       "path": "src/lib/queue/queue-panel-evaluation-save-workflow.ts",
       "semanticBytes": 0,
-      "sourceBytes": 4591
+      "sourceBytes": 5497
     },
     {
       "blocks": [],

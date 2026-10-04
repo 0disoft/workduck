@@ -1539,6 +1539,8 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 				return messages.agents.errors.saveFailed;
 			case 'report-write-failed':
 				return messages.queue.errors.fileWriteFailed;
+			case 'report-read-failed':
+				return messages.queue.errors.fileReadFailed;
 			case 'persona-read-failed':
 				return messages.personas.errors.readFailed;
 			case 'persona-save-failed':

@@ -8,18 +8,18 @@
 // stability=architecture
 // /llmnav
 use std::{
-    fs,
-    io,
+    fs, io,
     path::{Path, PathBuf},
     process::{Command, Stdio},
 };
 
 use crate::atomic_file_write::{
-    write_file_atomically, write_file_exclusively, AtomicFileWriteError,
+    AtomicFileWriteError, write_file_atomically, write_file_exclusively,
 };
 use crate::path_display::display_path;
 use crate::queue_limits::{QUEUE_FILE_MAX_BYTES, QUEUE_FOLDER_MAX_FILES};
-use crate::workspace_path::{validate_absolute_directory_path, WorkspacePathValidationError};
+use crate::workspace_path::{WorkspacePathValidationError, validate_absolute_directory_path};
+use crate::workspace_registry_lock::acquire_workspace_registry_lock;
 
 const QUEUE_DIRECTORY_NAME: &str = "queue";
 const REPORTS_DIRECTORY_NAME: &str = "reports";
@@ -332,7 +332,9 @@ pub fn write_queue_result_report_file(
         Err(error) => return invalid_file_read(error),
     };
     let relative_path = format!("{REPORTS_DIRECTORY_NAME}/{safe_file_name}");
-    let file_path = queue_root.join(REPORTS_DIRECTORY_NAME).join(&safe_file_name);
+    let file_path = queue_root
+        .join(REPORTS_DIRECTORY_NAME)
+        .join(&safe_file_name);
 
     if content.len() as u64 > QUEUE_FILE_MAX_BYTES {
         return invalid_file_read(QueueFolderError::FileWriteFailed);
@@ -401,10 +403,15 @@ pub fn update_queue_result_report_file(
     workspace_path: String,
     relative_path: String,
     content: String,
+    expected_content: Option<String>,
 ) -> QueueFileReadResult {
     let workspace_root = match validate_workspace_root(&workspace_path) {
         Ok(workspace_root) => workspace_root,
         Err(error) => return invalid_file_read(error),
+    };
+    let _write_lock = match acquire_workspace_registry_lock(&workspace_root) {
+        Ok(lock) => lock,
+        Err(_) => return invalid_file_read(QueueFolderError::FileWriteFailed),
     };
     let queue_root = match ensure_queue_root(&workspace_root) {
         Ok(queue_root) => queue_root,
@@ -424,6 +431,16 @@ pub fn update_queue_result_report_file(
     if content.len() as u64 > QUEUE_FILE_MAX_BYTES {
         return invalid_file_read(QueueFolderError::FileWriteFailed);
     }
+    if let Some(expected) = expected_content {
+        if expected.len() as u64 > QUEUE_FILE_MAX_BYTES {
+            return invalid_file_read(QueueFolderError::FileWriteFailed);
+        }
+        match fs::read_to_string(&file_path) {
+            Ok(current) if current == expected => {}
+            Ok(_) => return invalid_file_read(QueueFolderError::FileWriteFailed),
+            Err(_) => return invalid_file_read(QueueFolderError::FileReadFailed),
+        }
+    }
     match write_file_atomically(&file_path, &content).map_err(map_atomic_file_write_error) {
         Ok(_) => QueueFileReadResult {
             ok: true,
@@ -440,6 +457,10 @@ pub fn delete_queue_file(workspace_path: String, relative_path: String) -> Queue
     let workspace_root = match validate_workspace_root(&workspace_path) {
         Ok(workspace_root) => workspace_root,
         Err(error) => return invalid_file_read(error),
+    };
+    let _delete_lock = match acquire_workspace_registry_lock(&workspace_root) {
+        Ok(lock) => lock,
+        Err(_) => return invalid_file_read(QueueFolderError::FileDeleteFailed),
     };
     let queue_root = match ensure_queue_root(&workspace_root) {
         Ok(queue_root) => queue_root,
@@ -726,9 +747,9 @@ fn work_order_has_evaluator_skill(value: &serde_json::Value) -> bool {
                 task.get("skillIds")
                     .and_then(serde_json::Value::as_array)
                     .map(|skill_ids| {
-                        skill_ids
-                            .iter()
-                            .any(|skill_id| skill_id.as_str() == Some(AGENT_RESPONSE_EVALUATOR_SKILL_ID))
+                        skill_ids.iter().any(|skill_id| {
+                            skill_id.as_str() == Some(AGENT_RESPONSE_EVALUATOR_SKILL_ID)
+                        })
                     })
                     .unwrap_or(false)
             })
@@ -887,7 +908,9 @@ fn map_workspace_path_validation_error(error: WorkspacePathValidationError) -> Q
         WorkspacePathValidationError::NotAbsolute => QueueFolderError::WorkspaceNotAbsolute,
         WorkspacePathValidationError::NotFound => QueueFolderError::WorkspaceNotFound,
         WorkspacePathValidationError::NotDirectory => QueueFolderError::WorkspaceNotDirectory,
-        WorkspacePathValidationError::PermissionDenied => QueueFolderError::WorkspacePermissionDenied,
+        WorkspacePathValidationError::PermissionDenied => {
+            QueueFolderError::WorkspacePermissionDenied
+        }
         WorkspacePathValidationError::Unreadable => QueueFolderError::WorkspaceUnreadable,
     }
 }
@@ -902,6 +925,89 @@ fn map_create_error(error: io::Error) -> QueueFolderError {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn guarded_report_update_preserves_a_newer_snapshot() {
+        let workspace = tempfile::tempdir().expect("workspace");
+        let workspace_path = workspace.path().to_string_lossy().into_owned();
+        let queue_root =
+            ensure_queue_root(&fs::canonicalize(workspace.path()).unwrap()).expect("queue");
+        let relative_path = format!("{REPORTS_DIRECTORY_NAME}/test{REPORT_FILE_SUFFIX}");
+        let path = queue_root.join(&relative_path);
+        fs::write(&path, "original").expect("report");
+        let saved = update_queue_result_report_file(
+            workspace_path.clone(),
+            relative_path.clone(),
+            "newer".into(),
+            Some("original".into()),
+        );
+        assert!(saved.ok);
+        let stale = update_queue_result_report_file(
+            workspace_path,
+            relative_path,
+            "stale overwrite".into(),
+            Some("original".into()),
+        );
+        assert!(!stale.ok);
+        assert_eq!(stale.error, Some(QueueFolderError::FileWriteFailed));
+        assert_eq!(fs::read_to_string(path).unwrap(), "newer");
+    }
+
+    #[test]
+    fn concurrent_guarded_report_updates_accept_only_one_snapshot() {
+        let workspace = tempfile::tempdir().expect("workspace");
+        let queue_root =
+            ensure_queue_root(&fs::canonicalize(workspace.path()).unwrap()).expect("queue");
+        let relative_path = format!("{REPORTS_DIRECTORY_NAME}/test{REPORT_FILE_SUFFIX}");
+        fs::write(queue_root.join(&relative_path), "original").expect("report");
+        let barrier = std::sync::Arc::new(std::sync::Barrier::new(3));
+        let handles = ["first", "second"].map(|content| {
+            let barrier = std::sync::Arc::clone(&barrier);
+            let root = workspace.path().to_string_lossy().into_owned();
+            let relative_path = relative_path.clone();
+            std::thread::spawn(move || {
+                barrier.wait();
+                update_queue_result_report_file(
+                    root,
+                    relative_path,
+                    content.into(),
+                    Some("original".into()),
+                )
+                .ok
+            })
+        });
+        barrier.wait();
+        assert_eq!(
+            handles
+                .into_iter()
+                .map(|handle| handle.join().expect("guarded update thread"))
+                .filter(|ok| *ok)
+                .count(),
+            1
+        );
+    }
+
+    #[test]
+    fn guarded_report_update_does_not_recreate_a_deleted_report() {
+        let workspace = tempfile::tempdir().expect("workspace");
+        let workspace_path = workspace.path().to_string_lossy().into_owned();
+        let queue_root =
+            ensure_queue_root(&fs::canonicalize(workspace.path()).unwrap()).expect("queue");
+        let relative_path = format!("{REPORTS_DIRECTORY_NAME}/test{REPORT_FILE_SUFFIX}");
+        let path = queue_root.join(&relative_path);
+        fs::write(&path, "original").expect("report");
+        assert!(delete_queue_file(workspace_path.clone(), relative_path.clone()).ok);
+        assert!(
+            !update_queue_result_report_file(
+                workspace_path,
+                relative_path,
+                "recreated".into(),
+                Some("original".into())
+            )
+            .ok
+        );
+        assert!(!path.exists());
+    }
     use std::time::{SystemTime, UNIX_EPOCH};
 
     #[test]
@@ -985,8 +1091,8 @@ mod tests {
             .join("existing.workduck-work-order.json");
         fs::write(&file_path, "old content").expect("existing queue file");
 
-        let result = write_file_exclusively(&file_path, "new content")
-            .map_err(map_atomic_file_write_error);
+        let result =
+            write_file_exclusively(&file_path, "new content").map_err(map_atomic_file_write_error);
 
         let content = fs::read_to_string(&file_path).expect("existing content preserved");
         fs::remove_dir_all(&queue_root).ok();
@@ -1012,7 +1118,10 @@ mod tests {
 
         assert_eq!(result, Ok(()));
         assert_eq!(content, "new content");
-        assert!(temp_files.is_empty(), "temporary files left behind: {temp_files:?}");
+        assert!(
+            temp_files.is_empty(),
+            "temporary files left behind: {temp_files:?}"
+        );
     }
 
     #[test]
@@ -1028,12 +1137,14 @@ mod tests {
 
         assert!(!result.ok);
         assert_eq!(result.error, Some(QueueFolderError::FileWriteFailed));
-        assert!(!workspace
-            .path()
-            .join(QUEUE_DIRECTORY_NAME)
-            .join(WORK_ORDERS_DIRECTORY_NAME)
-            .join(file_name)
-            .exists());
+        assert!(
+            !workspace
+                .path()
+                .join(QUEUE_DIRECTORY_NAME)
+                .join(WORK_ORDERS_DIRECTORY_NAME)
+                .join(file_name)
+                .exists()
+        );
     }
 
     #[test]
@@ -1051,11 +1162,7 @@ mod tests {
             })
             .collect::<Vec<_>>();
 
-        let result = collect_known_queue_files(
-            &queue_root,
-            WORK_ORDERS_DIRECTORY_NAME,
-            &mut files,
-        );
+        let result = collect_known_queue_files(&queue_root, WORK_ORDERS_DIRECTORY_NAME, &mut files);
         fs::remove_dir_all(&queue_root).ok();
 
         assert_eq!(result, Err(QueueFolderError::ListFailed));
@@ -1096,7 +1203,9 @@ mod tests {
         )
         .expect("result report");
         fs::write(
-            queue_root.join(PROPOSALS_DIRECTORY_NAME).join("bad.workduck-proposal.json"),
+            queue_root
+                .join(PROPOSALS_DIRECTORY_NAME)
+                .join("bad.workduck-proposal.json"),
             "not json",
         )
         .expect("unknown proposal");

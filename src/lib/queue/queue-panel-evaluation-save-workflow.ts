@@ -8,6 +8,7 @@ import {
 } from '#lib/agents/agent-registry-storage.ts';
 import {
 	syncPersonaEvaluationSummariesFromAgents,
+	serializePersonaRegistry,
 	type PersonaRegistry
 } from '#lib/personas/persona-registry.ts';
 import {
@@ -16,18 +17,21 @@ import {
 import { writeWorkspaceRegistryPairStorage } from '#lib/workspaces/workspace-registry-pair-storage.ts';
 import {
 	createQueueReportTaskEvaluationKey,
+	hasQueueReportTaskEvaluation,
+	parseQueueResultReport,
 	recordQueueReportTaskEvaluation,
 	serializeQueueArtifact,
 	type WorkduckQueueResultReport,
 	type WorkduckQueueResultReportTask
 } from './queue-artifacts';
-import { updateQueueResultReportFile } from './queue-folder';
+import { readQueueFile, updateQueueResultReportFile } from './queue-folder';
 
 export type QueuePanelEvaluationSaveFailureCode =
 	| 'agent-read-failed'
 	| 'agent-not-found'
 	| 'agent-save-failed'
 	| 'report-write-failed'
+	| 'report-read-failed'
 	| 'persona-read-failed'
 	| 'persona-save-failed';
 
@@ -61,6 +65,13 @@ export interface QueuePanelEvaluationSaveInput {
 export async function saveQueuePanelEvaluation(
 	input: QueuePanelEvaluationSaveInput
 ): Promise<QueuePanelEvaluationSaveResult> {
+	const reportRead = await readQueueFile(input.workspacePath, input.reportPath);
+	if (!reportRead.ok) return createFailedQueuePanelEvaluationSaveResult('report-read-failed');
+	const parsed = parseQueueResultReport(reportRead.content);
+	if (!parsed.ok || parsed.report.ref.id !== input.report.ref.id || !parsed.report.tasks.some(task => task.id === input.task.id)) {
+		return createFailedQueuePanelEvaluationSaveResult('report-read-failed');
+	}
+	const latestReport = parsed.report;
 	const latestAgentRegistryResult = await readAgentRegistry(
 		input.workspaceId,
 		input.workspacePath
@@ -95,38 +106,39 @@ export async function saveQueuePanelEvaluation(
 		latestPersonaRegistryResult.registry,
 		mutation.registry.agents
 	);
-	const registryWriteResult = await writeWorkspaceRegistryPairStorage(
-		mutation.registry,
-		nextPersonaRegistry,
-		input.workspacePath
-	);
-
-	if (!registryWriteResult.ok) {
-		return createFailedQueuePanelEvaluationSaveResult(
-			registryWriteResult.error === 'workspace-data-revision-conflict'
-				? 'agent-save-failed'
-				: 'persona-save-failed'
-		);
+	let agentRegistry = mutation.registry;
+	let personaRegistry = nextPersonaRegistry;
+	if (mutation.applied || serializePersonaRegistry(nextPersonaRegistry) !== serializePersonaRegistry(latestPersonaRegistryResult.registry)) {
+		const registryWriteResult = await writeWorkspaceRegistryPairStorage(mutation.registry, nextPersonaRegistry, input.workspacePath);
+		if (!registryWriteResult.ok) {
+			return createFailedQueuePanelEvaluationSaveResult(
+				registryWriteResult.error === 'workspace-data-revision-conflict' ? 'agent-save-failed' : 'persona-save-failed'
+			);
+		}
+		agentRegistry = registryWriteResult.agentRegistry;
+		personaRegistry = registryWriteResult.personaRegistry;
 	}
 
-	let savedReport: WorkduckQueueResultReport | null = null;
-	let savedReportRelativePath: string | null = null;
-	if (mutation.applied) {
+	let savedReport = latestReport;
+	let savedReportRelativePath = reportRead.relativePath;
+	const latestTask = latestReport.tasks.find(task => task.id === input.task.id)!;
+	if (!hasQueueReportTaskEvaluation(latestTask, input.agentId)) {
 		const nextReport = recordQueueReportTaskEvaluation(
-			input.report,
+			latestReport,
 			input.task.id,
 			input.agentId
 		);
 		const reportWriteResult = await updateQueueResultReportFile(
 			input.workspacePath,
 			input.reportPath,
-			serializeQueueArtifact(nextReport)
+			serializeQueueArtifact(nextReport),
+			reportRead.content
 		);
 
 		if (!reportWriteResult.ok) {
 			return createFailedQueuePanelEvaluationSaveResult('report-write-failed', {
-				agentRegistry: registryWriteResult.agentRegistry,
-				personaRegistry: registryWriteResult.personaRegistry
+				agentRegistry,
+				personaRegistry
 			});
 		}
 
@@ -137,8 +149,8 @@ export async function saveQueuePanelEvaluation(
 	return {
 		ok: true,
 		applied: mutation.applied,
-		agentRegistry: registryWriteResult.agentRegistry,
-		personaRegistry: registryWriteResult.personaRegistry,
+		agentRegistry,
+		personaRegistry,
 		report: savedReport,
 		reportRelativePath: savedReportRelativePath
 	};
