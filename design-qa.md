@@ -109,3 +109,34 @@ P3: project/group cards still carry more accent color than the flat repository r
 - LLMNav generate and full regeneration: blocked by Windows EPERM while renaming `.llmnav/cache`.
   Retrying with the dev server stopped produced the same error. Existing cache retained.
 - Rust suite skipped: no Rust implementation changed in this UI batch.
+
+## Sidebar resize regression correction (1.9.43)
+
+A subsequent review found that viewport breakpoints ignored the resizable sidebar.
+At a 1200px app frame with the maximum 480px sidebar, the original stylesheet
+left a 42px repository list beside the 360px inspector. This was reproduced in a
+temporary HTML fixture using the application styles and matching layout classes.
+
+The project board, repository pane and repository list now have named inline-size
+containers. Header wrapping, hierarchy stacking, inspector stacking and row
+stacking depend on their own available widths. Change badges are constrained to
+their parent width.
+
+Browser measurements from the same fixture:
+
+| Frame / sidebar | List width | Inspector layout | Row layout |
+| --- | --- | --- | --- |
+| 1200 / 480 (original) | 42px | beside list | clipped |
+| 1200 / 480 (fixed) | 416px | below list | stacked |
+| 1200 / 280 | 616px | below list | two columns |
+| 900 / 480 | 352px | below list | stacked |
+| 1600 / 220 | 702px | beside list | two columns |
+
+The fixture frame dimensions are CSS px, independent of the browser viewport.
+Names, Git status and action controls remain inside their content regions in the
+fixed cases. Browser console errors: none. The fixture does not invoke native Git
+operations or touch application workspace state. It is removed after verification.
+Evidence: `sidebar-layout-before.png` and `sidebar-layout-after.png` in the evidence
+directory above. The temporary verification server is stopped after the check.
+
+final result: passed

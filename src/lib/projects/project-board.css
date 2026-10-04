@@ -1,4 +1,5 @@
 .workduck-project-board {
+	container: workduck-project-board / inline-size;
 	position: relative;
 	display: grid;
 	min-height: 320px;
@@ -61,6 +62,7 @@
 }
 
 .workduck-project-detail-lanes {
+	container: workduck-repository-pane / inline-size;
 	display: grid;
 	min-width: 0;
 	min-height: 0;
@@ -496,21 +498,6 @@
 }
 
 @media (max-width: 759px) {
-	.workduck-project-workspace-layout {
-		grid-template-columns: minmax(0, 1fr);
-	}
-
-	.workduck-project-sidebar-lane,
-	.workduck-project-group-lane {
-		position: static;
-	}
-
-	.workduck-project-sidebar-lane .workduck-project-lane-track {
-		max-height: none;
-		overflow-y: visible;
-		padding-inline-end: 0;
-	}
-
 	.workduck-project-card {
 		flex-basis: min(var(--workduck-list-card-width), 82vw);
 	}
@@ -585,6 +572,7 @@
 }
 
 .workduck-repository-list {
+	container: workduck-repository-list / inline-size;
 	display: grid;
 	min-width: 0;
 	border: 1px solid oklch(var(--workduck-oklch-border) / 0.5);
@@ -713,6 +701,9 @@
 	font-size: var(--workduck-font-size-2xs);
 	font-weight: 800;
 	white-space: nowrap;
+	max-width: 100%;
+	overflow: hidden;
+	text-overflow: ellipsis;
 }
 
 .workduck-repository-row-change-count {
@@ -782,7 +773,7 @@
 	white-space: nowrap;
 }
 
-@media (max-width: 1119px) {
+@container workduck-project-board (max-width: 900px) {
 	.workduck-project-board > .workduck-page-header {
 		flex-direction: column;
 		align-items: stretch;
@@ -800,7 +791,9 @@
 	.workduck-project-filter-field {
 		flex: 1 1 160px;
 	}
+}
 
+@container workduck-repository-pane (max-width: 760px) {
 	.workduck-project-repository-lane-split {
 		grid-template-columns: minmax(0, 1fr);
 	}
@@ -813,7 +806,7 @@
 	}
 }
 
-@media (max-width: 759px) {
+@container workduck-repository-list (max-width: 420px) {
 	.workduck-repository-row-select {
 		grid-template-columns: minmax(0, 1fr);
 		grid-template-areas:
@@ -833,6 +826,23 @@
 
 	.workduck-repository-row-state {
 		grid-area: state;
+	}
+}
+
+@container workduck-project-board (max-width: 600px) {
+	.workduck-project-workspace-layout {
+		grid-template-columns: minmax(0, 1fr);
+	}
+
+	.workduck-project-sidebar-lane,
+	.workduck-project-group-lane {
+		position: static;
+	}
+
+	.workduck-project-sidebar-lane .workduck-project-lane-track {
+		max-height: none;
+		overflow-y: visible;
+		padding-inline-end: 0;
 	}
 
 	.workduck-project-hierarchy-lane {
