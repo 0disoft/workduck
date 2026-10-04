@@ -2,7 +2,7 @@
 // id=workduck.queue.folder-native
 // role=Enforce native Queue directory, path, size, count, exclusive-write, update, delete, and evaluation-delegation constraints.
 // owns=native Queue file I/O|Queue path containment|Queue file capacity
-// excludes=Queue artifact semantics|agent execution
+// excludes=Queue response contracts|evaluation delegation policy|agent execution
 // search=native Queue files|Queue path validation|exclusive work order write
 // invariant=Only known Queue child directories and file suffixes are addressable, and create operations never overwrite an existing artifact.
 // stability=architecture
@@ -21,125 +21,18 @@ use crate::queue_limits::{QUEUE_FILE_MAX_BYTES, QUEUE_FOLDER_MAX_FILES};
 use crate::workspace_path::{WorkspacePathValidationError, validate_absolute_directory_path};
 use crate::workspace_registry_lock::acquire_workspace_registry_lock;
 
-const QUEUE_DIRECTORY_NAME: &str = "queue";
-const REPORTS_DIRECTORY_NAME: &str = "reports";
-const WORK_ORDERS_DIRECTORY_NAME: &str = "work-orders";
-const PROPOSALS_DIRECTORY_NAME: &str = "proposals";
-const REPORT_FILE_SUFFIX: &str = ".workduck-report.json";
-const WORK_ORDER_FILE_SUFFIX: &str = ".workduck-work-order.json";
-const PROPOSAL_FILE_SUFFIX: &str = ".workduck-proposal.json";
-const AGENT_RESPONSE_EVALUATOR_SKILL_ID: &str = "workduck.skill.agent-response-evaluator";
+mod contracts;
+mod evaluation_delegation;
 
-#[derive(Debug, PartialEq, Eq, serde::Serialize)]
-pub enum QueueFolderError {
-    #[serde(rename = "queue-folder-workspace-required")]
-    WorkspaceRequired,
-    #[serde(rename = "queue-folder-workspace-not-absolute")]
-    WorkspaceNotAbsolute,
-    #[serde(rename = "queue-folder-workspace-not-found")]
-    WorkspaceNotFound,
-    #[serde(rename = "queue-folder-workspace-not-directory")]
-    WorkspaceNotDirectory,
-    #[serde(rename = "queue-folder-workspace-permission-denied")]
-    WorkspacePermissionDenied,
-    #[serde(rename = "queue-folder-workspace-unreadable")]
-    WorkspaceUnreadable,
-    #[serde(rename = "queue-folder-root-invalid")]
-    RootInvalid,
-    #[serde(rename = "queue-folder-create-failed")]
-    CreateFailed,
-    #[serde(rename = "queue-folder-open-failed")]
-    OpenFailed,
-    #[serde(rename = "queue-folder-list-failed")]
-    ListFailed,
-    #[serde(rename = "queue-folder-file-invalid")]
-    FileInvalid,
-    #[serde(rename = "queue-folder-file-not-found")]
-    FileNotFound,
-    #[serde(rename = "queue-folder-file-read-failed")]
-    FileReadFailed,
-    #[serde(rename = "queue-folder-file-write-failed")]
-    FileWriteFailed,
-    #[serde(rename = "queue-folder-file-delete-failed")]
-    FileDeleteFailed,
-    #[serde(rename = "queue-folder-file-already-exists")]
-    FileAlreadyExists,
-    #[serde(rename = "queue-folder-evaluation-delegation-already-exists")]
-    EvaluationDelegationAlreadyExists,
-}
-
-#[derive(serde::Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct QueueFolderResult {
-    ok: bool,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    path: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    relative_path: Option<&'static str>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    error: Option<QueueFolderError>,
-}
-
-#[derive(Clone, Copy, serde::Serialize)]
-#[serde(rename_all = "kebab-case")]
-pub enum QueueFileKind {
-    ResultReport,
-    WorkOrder,
-    Proposal,
-    Unsupported,
-}
-
-#[derive(serde::Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct QueueFileEntry {
-    relative_path: String,
-    file_name: String,
-    kind: QueueFileKind,
-}
-
-#[derive(serde::Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct QueueFileListResult {
-    ok: bool,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    path: Option<String>,
-    files: Vec<QueueFileEntry>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    error: Option<QueueFolderError>,
-}
-
-#[derive(serde::Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct QueueFileReadResult {
-    ok: bool,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    relative_path: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    content: Option<String>,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    error: Option<QueueFolderError>,
-}
-
-#[derive(Default, serde::Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct QueueFileStatusCounts {
-    pending: usize,
-    running: usize,
-    completed: usize,
-    failed: usize,
-    unknown: usize,
-}
-
-#[derive(serde::Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct QueueFileSummaryResult {
-    ok: bool,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    path: Option<String>,
-    counts: QueueFileStatusCounts,
-    #[serde(skip_serializing_if = "Option::is_none")]
-    error: Option<QueueFolderError>,
-}
+use contracts::{
+    PROPOSAL_FILE_SUFFIX, PROPOSALS_DIRECTORY_NAME, QUEUE_DIRECTORY_NAME, REPORT_FILE_SUFFIX,
+    REPORTS_DIRECTORY_NAME, WORK_ORDER_FILE_SUFFIX, WORK_ORDERS_DIRECTORY_NAME,
+};
+pub use contracts::{
+    QueueFileEntry, QueueFileKind, QueueFileListResult, QueueFileReadResult, QueueFileStatusCounts,
+    QueueFileSummaryResult, QueueFolderError, QueueFolderResult,
+};
+use evaluation_delegation::ensure_unique_evaluation_delegation;
 
 #[tauri::command]
 pub fn ensure_queue_folder(workspace_path: String) -> QueueFolderResult {
@@ -670,93 +563,6 @@ fn read_queue_content_execution_state(content: &str) -> Option<&'static str> {
     }
 }
 
-fn ensure_unique_evaluation_delegation(
-    queue_root: &Path,
-    current_relative_path: Option<&str>,
-    content: &str,
-) -> Result<(), QueueFolderError> {
-    let Some(source_report_id) = read_evaluation_delegation_source_report_id(content) else {
-        return Ok(());
-    };
-
-    let work_orders_dir = queue_root.join(WORK_ORDERS_DIRECTORY_NAME);
-    let entries = fs::read_dir(&work_orders_dir).map_err(|_| QueueFolderError::FileReadFailed)?;
-
-    for entry in entries {
-        let entry = entry.map_err(|_| QueueFolderError::FileReadFailed)?;
-        let metadata = entry
-            .metadata()
-            .map_err(|_| QueueFolderError::FileReadFailed)?;
-
-        if !metadata.is_file() {
-            continue;
-        }
-
-        let file_name = entry.file_name().to_string_lossy().into_owned();
-
-        if !file_name.ends_with(WORK_ORDER_FILE_SUFFIX) {
-            continue;
-        }
-
-        let relative_path = format!("{WORK_ORDERS_DIRECTORY_NAME}/{file_name}");
-
-        if current_relative_path == Some(relative_path.as_str()) {
-            continue;
-        }
-
-        let existing_content =
-            fs::read_to_string(entry.path()).map_err(|_| QueueFolderError::FileReadFailed)?;
-
-        if read_evaluation_delegation_source_report_id(&existing_content).as_deref()
-            == Some(source_report_id.as_str())
-        {
-            return Err(QueueFolderError::EvaluationDelegationAlreadyExists);
-        }
-    }
-
-    Ok(())
-}
-
-fn read_evaluation_delegation_source_report_id(content: &str) -> Option<String> {
-    let value: serde_json::Value = serde_json::from_str(content).ok()?;
-    let source_report = value.get("sourceReport")?.as_object()?;
-
-    if source_report.get("kind")?.as_str()? != "queue-result-report" {
-        return None;
-    }
-
-    if !work_order_has_evaluator_skill(&value) {
-        return None;
-    }
-
-    let id = source_report.get("id")?.as_str()?.trim();
-
-    if id.is_empty() {
-        return None;
-    }
-
-    Some(id.to_string())
-}
-
-fn work_order_has_evaluator_skill(value: &serde_json::Value) -> bool {
-    value
-        .get("tasks")
-        .and_then(serde_json::Value::as_array)
-        .map(|tasks| {
-            tasks.iter().any(|task| {
-                task.get("skillIds")
-                    .and_then(serde_json::Value::as_array)
-                    .map(|skill_ids| {
-                        skill_ids.iter().any(|skill_id| {
-                            skill_id.as_str() == Some(AGENT_RESPONSE_EVALUATOR_SKILL_ID)
-                        })
-                    })
-                    .unwrap_or(false)
-            })
-        })
-        .unwrap_or(false)
-}
-
 fn resolve_queue_file_path(
     queue_root: &Path,
     relative_path: &str,
@@ -1011,79 +817,6 @@ mod tests {
     use std::time::{SystemTime, UNIX_EPOCH};
 
     #[test]
-    fn detects_evaluation_delegation_source_report() {
-        let content = evaluation_delegation_content("queue-result-report_source");
-
-        assert_eq!(
-            read_evaluation_delegation_source_report_id(&content).as_deref(),
-            Some("queue-result-report_source")
-        );
-    }
-
-    #[test]
-    fn ignores_non_evaluator_work_order_with_source_report() {
-        let content = r#"{
-            "schemaVersion": "workduck.queue-work-order/v1",
-            "sourceReport": {
-                "id": "queue-result-report_source",
-                "kind": "queue-result-report",
-                "label": "Source"
-            },
-            "tasks": [
-                {
-                    "id": "task_1",
-                    "title": "Follow-up",
-                    "body": "Do the work.",
-                    "skillIds": ["workduck.skill.proposal-writer"]
-                }
-            ]
-        }"#;
-
-        assert_eq!(read_evaluation_delegation_source_report_id(content), None);
-    }
-
-    #[test]
-    fn blocks_duplicate_evaluation_delegation_for_same_source_report() {
-        let queue_root = create_test_queue_root();
-        let existing_file = queue_root
-            .join(WORK_ORDERS_DIRECTORY_NAME)
-            .join("existing.workduck-work-order.json");
-        let content = evaluation_delegation_content("queue-result-report_source");
-
-        fs::write(&existing_file, &content).expect("existing evaluation delegation fixture");
-
-        let result = ensure_unique_evaluation_delegation(&queue_root, None, &content);
-
-        fs::remove_dir_all(&queue_root).ok();
-
-        assert_eq!(
-            result,
-            Err(QueueFolderError::EvaluationDelegationAlreadyExists)
-        );
-    }
-
-    #[test]
-    fn allows_updating_the_existing_evaluation_delegation_file() {
-        let queue_root = create_test_queue_root();
-        let existing_file = queue_root
-            .join(WORK_ORDERS_DIRECTORY_NAME)
-            .join("existing.workduck-work-order.json");
-        let content = evaluation_delegation_content("queue-result-report_source");
-
-        fs::write(&existing_file, &content).expect("existing evaluation delegation fixture");
-
-        let result = ensure_unique_evaluation_delegation(
-            &queue_root,
-            Some("work-orders/existing.workduck-work-order.json"),
-            &content,
-        );
-
-        fs::remove_dir_all(&queue_root).ok();
-
-        assert_eq!(result, Ok(()));
-    }
-
-    #[test]
     fn create_new_queue_write_does_not_clobber_existing_file() {
         let queue_root = create_test_queue_root();
         let file_path = queue_root
@@ -1249,26 +982,5 @@ mod tests {
             .map(|entry| entry.file_name().to_string_lossy().into_owned())
             .filter(|name| name.starts_with(".workduck-write."))
             .collect()
-    }
-
-    fn evaluation_delegation_content(source_report_id: &str) -> String {
-        format!(
-            r#"{{
-                "schemaVersion": "workduck.queue-work-order/v1",
-                "sourceReport": {{
-                    "id": "{source_report_id}",
-                    "kind": "queue-result-report",
-                    "label": "Source"
-                }},
-                "tasks": [
-                    {{
-                        "id": "task_1",
-                        "title": "Evaluation delegation",
-                        "body": "workduck agent evaluate-batch --workspace . --input result.json",
-                        "skillIds": ["{AGENT_RESPONSE_EVALUATOR_SKILL_ID}"]
-                    }}
-                ]
-            }}"#
-        )
     }
 }

@@ -302,6 +302,18 @@
         "invariant"
       ],
       "scope": "module"
+    },
+    {
+      "match": [
+        "src-tauri/src/queue_folder/contracts.rs",
+        "src-tauri/src/queue_folder/evaluation_delegation.rs"
+      ],
+      "name": "native Queue transport and evaluation delegation boundaries",
+      "requiredFields": [
+        "owns",
+        "invariant"
+      ],
+      "scope": "module"
     }
   ],
   "audit": {

@@ -73,3 +73,5 @@
 {"query":"where does the Queue evaluation dialog own scoring state and selection-scoped saves","expected":["workduck.queue.evaluation-controller"]}
 {"query":"where are versioned project registry record shapes mutation inputs and field limits defined","expected":["workduck.projects.schema"]}
 {"query":"where is canonical project registry parsing hierarchy eligibility and repository deduplication owned","expected":["workduck.projects.registry-normalization"]}
+{"query":"where are native Queue command response shapes stable error codes and artifact suffix contracts defined","expected":["workduck.queue.folder-contracts"]}
+{"query":"where does native Queue evaluation delegation reject duplicate source report evaluator work orders and allow self updates","expected":["workduck.queue.evaluation-delegation-native"]}

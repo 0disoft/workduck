@@ -94,7 +94,7 @@ invariant Execution requires the current estimate token, respects global and pro
 @workduck.queue.folder-native
 role Enforce native Queue directory, path, size, count, exclusive-write, update, delete, and evaluation-delegation constraints.
 owns native Queue file I/O, Queue path containment, Queue file capacity
-excludes Queue artifact semantics, agent execution
+excludes Queue response contracts, evaluation delegation policy, agent execution
 invariant Only known Queue child directories and file suffixes are addressable, and create operations never overwrite an existing artifact.
 
 @workduck.workspace.repository-setup
@@ -192,3 +192,15 @@ role Parse and canonicalize project registries while preserving hierarchy eligib
 owns project registry parsing, hierarchy canonicalization, repository deduplication, shared field normalization
 excludes registry mutation intents, registry persistence, Git operations
 invariant Strict storage parsing rejects unsupported versions; canonicalization accepts only reachable unique nodes and repository sources.
+
+@workduck.queue.evaluation-delegation-native
+role Recognize evaluator work orders and reject a second delegation for the same source report.
+owns evaluation delegation identity, source report uniqueness, self-update exclusion
+excludes Queue command responses, general artifact I/O, agent execution
+invariant A matching evaluator source report may have only one delegation; updating that same file stays allowed.
+
+@workduck.queue.folder-contracts
+role Define native Queue command responses, stable error codes, and known artifact directory and suffix contracts.
+owns Queue command response shapes, Queue error serialization, Queue artifact path vocabulary
+excludes file persistence, evaluation delegation rules
+invariant Existing native command response names, field omission, and error strings remain stable.

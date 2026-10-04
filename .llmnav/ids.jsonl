@@ -76,3 +76,5 @@
 {"id":"workduck.queue.evaluation-controller","state":"active"}
 {"id":"workduck.projects.registry-normalization","state":"active"}
 {"id":"workduck.projects.schema","state":"active"}
+{"id":"workduck.queue.folder-contracts","state":"active"}
+{"id":"workduck.queue.evaluation-delegation-native","state":"active"}

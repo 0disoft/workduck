@@ -1661,21 +1661,26 @@
     {
       "boundaries": [],
       "excludes": [
-        "Queue artifact semantics",
+        "Queue response contracts",
+        "evaluation delegation policy",
         "agent execution"
       ],
       "hashes": {
-        "body": "27fc23f38b1fea227abd18b56db2cc70351f5f82812a8c11a6f5e7fea71804ab",
-        "semantic": "edc3e1ebe9e3fff7836d11f3c740b79f05e01846484aa6c0547473c93ab3b0c0",
-        "structure": "c7bb5b4efeb156d5d820d61ee5e701ca781cfb28cde54e94b3acbedcdaed8ed2"
+        "body": "34f09a7555b3a414bc4e0633c1c3276bc7fa89e6d76c06a8e2fa5ad8eb2d551e",
+        "semantic": "2e2a20d820ca41052d65b69835bdd3011f4eb52afb7d87196f9354b5c5ce516e",
+        "structure": "2b532056ef8f2e8c04ad27eb7f472a4cccf12fb702e24121dceeeb8c0a6471d7"
       },
       "id": "workduck.queue.folder-native",
       "imports": [
+        "contracts",
+        "contracts::{\n    PROPOSAL_FILE_SUFFIX, PROPOSALS_DIRECTORY_NAME, QUEUE_DIRECTORY_NAME, REPORT_FILE_SUFFIX,\n    REPORTS_DIRECTORY_NAME, WORK_ORDER_FILE_SUFFIX, WORK_ORDERS_DIRECTORY_NAME,\n}",
         "crate::atomic_file_write::{\n    AtomicFileWriteError, write_file_atomically, write_file_exclusively,\n}",
         "crate::path_display::display_path",
         "crate::queue_limits::{QUEUE_FILE_MAX_BYTES, QUEUE_FOLDER_MAX_FILES}",
         "crate::workspace_path::{WorkspacePathValidationError, validate_absolute_directory_path}",
         "crate::workspace_registry_lock::acquire_workspace_registry_lock",
+        "evaluation_delegation",
+        "evaluation_delegation::ensure_unique_evaluation_delegation",
         "std::time::{SystemTime, UNIX_EPOCH}",
         "std::{\n    fs, io,\n    path::{Path, PathBuf},\n    process::{Command, Stdio},\n}",
         "tests {\n    use super::*"
@@ -3932,11 +3937,103 @@
         "project field limits"
       ],
       "stability": "contract"
+    },
+    {
+      "boundaries": [],
+      "excludes": [
+        "Queue command responses",
+        "general artifact I/O",
+        "agent execution"
+      ],
+      "hashes": {
+        "body": "e83985e1a08c71f3159a0c7428260c1b0c1634dca71d9c2f502ce670d66b9676",
+        "semantic": "c01a6b7f966555d539f14e67b3476b0c6853eb86d32aa7025e8daf632f878ba7",
+        "structure": "31856c29b0410aff50773faf51ab5f509ab11b9028a45c73c6034554d68ac130"
+      },
+      "id": "workduck.queue.evaluation-delegation-native",
+      "imports": [
+        "std::{\n        path::PathBuf,\n        time::{SystemTime, UNIX_EPOCH},\n    }",
+        "std::{fs, path::Path}",
+        "super::contracts::{QueueFolderError, WORK_ORDER_FILE_SUFFIX, WORK_ORDERS_DIRECTORY_NAME}",
+        "tests {\n    use super::*"
+      ],
+      "invariant": [
+        "A matching evaluator source report may have only one delegation; updating that same file stays allowed."
+      ],
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src-tauri/src/queue_folder/evaluation_delegation.rs",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "owns": [
+        "evaluation delegation identity",
+        "source report uniqueness",
+        "self-update exclusion"
+      ],
+      "role": "Recognize evaluator work orders and reject a second delegation for the same source report.",
+      "scope": "module",
+      "search": [
+        "duplicate evaluation delegation",
+        "source report evaluator skill",
+        "delegation self update"
+      ],
+      "stability": "architecture"
+    },
+    {
+      "boundaries": [],
+      "excludes": [
+        "file persistence",
+        "evaluation delegation rules"
+      ],
+      "hashes": {
+        "body": "57980b2e2d6388c0c8a62e5331cb3c8ef374503748c77f94e026b0308499efa3",
+        "semantic": "194e82450c6389f6049aac1183220094b9d4e9608e190887fc5edfb7fb2c9ae1",
+        "structure": "ba98f19ae439a4fcbfd6b25b915d7c8ca3fd415e732ded090a0e6b8865d21ef2"
+      },
+      "id": "workduck.queue.folder-contracts",
+      "imports": [],
+      "invariant": [
+        "Existing native command response names, field omission, and error strings remain stable."
+      ],
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src-tauri/src/queue_folder/contracts.rs",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "owns": [
+        "Queue command response shapes",
+        "Queue error serialization",
+        "Queue artifact path vocabulary"
+      ],
+      "role": "Define native Queue command responses, stable error codes, and known artifact directory and suffix contracts.",
+      "scope": "module",
+      "search": [
+        "native Queue error codes",
+        "Queue response serialization",
+        "Queue artifact suffixes"
+      ],
+      "stability": "architecture"
     }
   ],
   "contractFingerprints": {
     "configuration": {
-      "sha256": "24a97801ec2210f3dd21fb8583b5322683461783a162b20a8b4974079742ef72"
+      "sha256": "60512084fbc7d18f9a3a75c2a0052a5ac916a959e6fdba0e4cc3470f0150f23c"
     },
     "exportedApi": {
       "count": 0,
@@ -3947,6 +4044,6 @@
   "generatedBy": "llmnav@0.9.7",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "74d3e0ae3cd2c50dd499c4d74b088967598b42616c7b62d0a10691c71769d132",
+  "sourceHash": "0662fd94e771e37fbb9ba5852ac50453ef6f21a03b0cfd6678c6c27fe9b44245",
   "specVersion": "1"
 }

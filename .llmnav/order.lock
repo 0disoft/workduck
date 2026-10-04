@@ -76,3 +76,5 @@ workduck.storage.atomic-file-write
 workduck.queue.evaluation-controller
 workduck.projects.registry-normalization
 workduck.projects.schema
+workduck.queue.evaluation-delegation-native
+workduck.queue.folder-contracts

@@ -3926,7 +3926,8 @@
           "card": {
             "effect": [],
             "excludes": [
-              "Queue artifact semantics",
+              "Queue response contracts",
+              "evaluation delegation policy",
               "agent execution"
             ],
             "id": "workduck.queue.folder-native",
@@ -3950,7 +3951,7 @@
             "stability": "architecture",
             "unknown": []
           },
-          "end": 569,
+          "end": 598,
           "endLine": 9,
           "entries": [
             {
@@ -3975,7 +3976,7 @@
               "key": "excludes",
               "line": 5,
               "order": 3,
-              "value": "Queue artifact semantics|agent execution"
+              "value": "Queue response contracts|evaluation delegation policy|agent execution"
             },
             {
               "key": "search",
@@ -4000,7 +4001,7 @@
           "indent": "",
           "newline": "\n",
           "prefix": "//",
-          "raw": "// llmnav/1 module\n// id=workduck.queue.folder-native\n// role=Enforce native Queue directory, path, size, count, exclusive-write, update, delete, and evaluation-delegation constraints.\n// owns=native Queue file I/O|Queue path containment|Queue file capacity\n// excludes=Queue artifact semantics|agent execution\n// search=native Queue files|Queue path validation|exclusive work order write\n// invariant=Only known Queue child directories and file suffixes are addressable, and create operations never overwrite an existing artifact.\n// stability=architecture\n// /llmnav\n",
+          "raw": "// llmnav/1 module\n// id=workduck.queue.folder-native\n// role=Enforce native Queue directory, path, size, count, exclusive-write, update, delete, and evaluation-delegation constraints.\n// owns=native Queue file I/O|Queue path containment|Queue file capacity\n// excludes=Queue response contracts|evaluation delegation policy|agent execution\n// search=native Queue files|Queue path validation|exclusive work order write\n// invariant=Only known Queue child directories and file suffixes are addressable, and create operations never overwrite an existing artifact.\n// stability=architecture\n// /llmnav\n",
           "scope": "module",
           "specVersion": "1",
           "start": 0,
@@ -4009,23 +4010,229 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "27fc23f38b1fea227abd18b56db2cc70351f5f82812a8c11a6f5e7fea71804ab",
+      "contentHash": "34f09a7555b3a414bc4e0633c1c3276bc7fa89e6d76c06a8e2fa5ad8eb2d551e",
       "declarations": [
         null
       ],
       "imports": [
+        "contracts",
+        "contracts::{\n    PROPOSAL_FILE_SUFFIX, PROPOSALS_DIRECTORY_NAME, QUEUE_DIRECTORY_NAME, REPORT_FILE_SUFFIX,\n    REPORTS_DIRECTORY_NAME, WORK_ORDER_FILE_SUFFIX, WORK_ORDERS_DIRECTORY_NAME,\n}",
         "crate::atomic_file_write::{\n    AtomicFileWriteError, write_file_atomically, write_file_exclusively,\n}",
         "crate::path_display::display_path",
         "crate::queue_limits::{QUEUE_FILE_MAX_BYTES, QUEUE_FOLDER_MAX_FILES}",
         "crate::workspace_path::{WorkspacePathValidationError, validate_absolute_directory_path}",
         "crate::workspace_registry_lock::acquire_workspace_registry_lock",
+        "evaluation_delegation",
+        "evaluation_delegation::ensure_unique_evaluation_delegation",
         "std::time::{SystemTime, UNIX_EPOCH}",
         "std::{\n    fs, io,\n    path::{Path, PathBuf},\n    process::{Command, Stdio},\n}",
         "tests {\n    use super::*"
       ],
       "path": "src-tauri/src/queue_folder.rs",
-      "semanticBytes": 569,
-      "sourceBytes": 44492
+      "semanticBytes": 598,
+      "sourceBytes": 35312
+    },
+    {
+      "blocks": [
+        {
+          "card": {
+            "effect": [],
+            "excludes": [
+              "file persistence",
+              "evaluation delegation rules"
+            ],
+            "id": "workduck.queue.folder-contracts",
+            "invariant": [
+              "Existing native command response names, field omission, and error strings remain stable."
+            ],
+            "owns": [
+              "Queue command response shapes",
+              "Queue error serialization",
+              "Queue artifact path vocabulary"
+            ],
+            "rel": [],
+            "risk": [],
+            "role": "Define native Queue command responses, stable error codes, and known artifact directory and suffix contracts.",
+            "scope": "module",
+            "search": [
+              "native Queue error codes",
+              "Queue response serialization",
+              "Queue artifact suffixes"
+            ],
+            "stability": "architecture",
+            "unknown": []
+          },
+          "end": 554,
+          "endLine": 9,
+          "entries": [
+            {
+              "key": "id",
+              "line": 2,
+              "order": 0,
+              "value": "workduck.queue.folder-contracts"
+            },
+            {
+              "key": "role",
+              "line": 3,
+              "order": 1,
+              "value": "Define native Queue command responses, stable error codes, and known artifact directory and suffix contracts."
+            },
+            {
+              "key": "owns",
+              "line": 4,
+              "order": 2,
+              "value": "Queue command response shapes|Queue error serialization|Queue artifact path vocabulary"
+            },
+            {
+              "key": "excludes",
+              "line": 5,
+              "order": 3,
+              "value": "file persistence|evaluation delegation rules"
+            },
+            {
+              "key": "search",
+              "line": 6,
+              "order": 4,
+              "value": "native Queue error codes|Queue response serialization|Queue artifact suffixes"
+            },
+            {
+              "key": "invariant",
+              "line": 7,
+              "order": 5,
+              "value": "Existing native command response names, field omission, and error strings remain stable."
+            },
+            {
+              "key": "stability",
+              "line": 8,
+              "order": 6,
+              "value": "architecture"
+            }
+          ],
+          "filePath": "src-tauri/src/queue_folder/contracts.rs",
+          "indent": "",
+          "newline": "\n",
+          "prefix": "//",
+          "raw": "// llmnav/1 module\n// id=workduck.queue.folder-contracts\n// role=Define native Queue command responses, stable error codes, and known artifact directory and suffix contracts.\n// owns=Queue command response shapes|Queue error serialization|Queue artifact path vocabulary\n// excludes=file persistence|evaluation delegation rules\n// search=native Queue error codes|Queue response serialization|Queue artifact suffixes\n// invariant=Existing native command response names, field omission, and error strings remain stable.\n// stability=architecture\n// /llmnav\n",
+          "scope": "module",
+          "specVersion": "1",
+          "start": 0,
+          "startLine": 1,
+          "style": "line",
+          "syntaxErrors": []
+        }
+      ],
+      "contentHash": "57980b2e2d6388c0c8a62e5331cb3c8ef374503748c77f94e026b0308499efa3",
+      "declarations": [
+        null
+      ],
+      "imports": [],
+      "path": "src-tauri/src/queue_folder/contracts.rs",
+      "semanticBytes": 554,
+      "sourceBytes": 4654
+    },
+    {
+      "blocks": [
+        {
+          "card": {
+            "effect": [],
+            "excludes": [
+              "Queue command responses",
+              "general artifact I/O",
+              "agent execution"
+            ],
+            "id": "workduck.queue.evaluation-delegation-native",
+            "invariant": [
+              "A matching evaluator source report may have only one delegation; updating that same file stays allowed."
+            ],
+            "owns": [
+              "evaluation delegation identity",
+              "source report uniqueness",
+              "self-update exclusion"
+            ],
+            "rel": [],
+            "risk": [],
+            "role": "Recognize evaluator work orders and reject a second delegation for the same source report.",
+            "scope": "module",
+            "search": [
+              "duplicate evaluation delegation",
+              "source report evaluator skill",
+              "delegation self update"
+            ],
+            "stability": "architecture",
+            "unknown": []
+          },
+          "end": 576,
+          "endLine": 9,
+          "entries": [
+            {
+              "key": "id",
+              "line": 2,
+              "order": 0,
+              "value": "workduck.queue.evaluation-delegation-native"
+            },
+            {
+              "key": "role",
+              "line": 3,
+              "order": 1,
+              "value": "Recognize evaluator work orders and reject a second delegation for the same source report."
+            },
+            {
+              "key": "owns",
+              "line": 4,
+              "order": 2,
+              "value": "evaluation delegation identity|source report uniqueness|self-update exclusion"
+            },
+            {
+              "key": "excludes",
+              "line": 5,
+              "order": 3,
+              "value": "Queue command responses|general artifact I/O|agent execution"
+            },
+            {
+              "key": "search",
+              "line": 6,
+              "order": 4,
+              "value": "duplicate evaluation delegation|source report evaluator skill|delegation self update"
+            },
+            {
+              "key": "invariant",
+              "line": 7,
+              "order": 5,
+              "value": "A matching evaluator source report may have only one delegation; updating that same file stays allowed."
+            },
+            {
+              "key": "stability",
+              "line": 8,
+              "order": 6,
+              "value": "architecture"
+            }
+          ],
+          "filePath": "src-tauri/src/queue_folder/evaluation_delegation.rs",
+          "indent": "",
+          "newline": "\n",
+          "prefix": "//",
+          "raw": "// llmnav/1 module\n// id=workduck.queue.evaluation-delegation-native\n// role=Recognize evaluator work orders and reject a second delegation for the same source report.\n// owns=evaluation delegation identity|source report uniqueness|self-update exclusion\n// excludes=Queue command responses|general artifact I/O|agent execution\n// search=duplicate evaluation delegation|source report evaluator skill|delegation self update\n// invariant=A matching evaluator source report may have only one delegation; updating that same file stays allowed.\n// stability=architecture\n// /llmnav\n",
+          "scope": "module",
+          "specVersion": "1",
+          "start": 0,
+          "startLine": 1,
+          "style": "line",
+          "syntaxErrors": []
+        }
+      ],
+      "contentHash": "e83985e1a08c71f3159a0c7428260c1b0c1634dca71d9c2f502ce670d66b9676",
+      "declarations": [
+        null
+      ],
+      "imports": [
+        "std::{\n        path::PathBuf,\n        time::{SystemTime, UNIX_EPOCH},\n    }",
+        "std::{fs, path::Path}",
+        "super::contracts::{QueueFolderError, WORK_ORDER_FILE_SUFFIX, WORK_ORDERS_DIRECTORY_NAME}",
+        "tests {\n    use super::*"
+      ],
+      "path": "src-tauri/src/queue_folder/evaluation_delegation.rs",
+      "semanticBytes": 576,
+      "sourceBytes": 7240
     },
     {
       "blocks": [],
