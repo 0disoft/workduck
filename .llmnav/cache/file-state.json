@@ -7638,7 +7638,7 @@
     },
     {
       "blocks": [],
-      "contentHash": "87dcb9012f3b4b54ae3f3ef4355480c46888bb7c1faab95c42fc62473e127b5a",
+      "contentHash": "839d0284c3300457898171eb4115d8d7c0b24dea93ef90f6013d668899b0e7e0",
       "declarations": [],
       "imports": [
         "#lib/environment/environment-vault.ts",
@@ -7664,12 +7664,8 @@
         "./project-board-github-credentials",
         "./project-board-operations",
         "./project-board-paths",
-        "./project-board-publish-actions",
-        "./project-board-publish-constants",
         "./project-board-registry-writer.svelte",
-        "./project-board-repository-action-context",
-        "./project-board-repository-actions",
-        "./project-board-repository-commit-work-order",
+        "./project-board-repository-controller.svelte",
         "./project-board-repository-rules",
         "./project-board-runtime-state",
         "./project-board-scaffold-dialog.svelte",
@@ -7681,14 +7677,12 @@
         "./project-folder",
         "./project-operation-storage",
         "./project-registry",
-        "./project-repository",
-        "./project-repository-task",
         "./project-repository-task-runs",
         "./project-storage"
       ],
       "path": "src/lib/projects/ProjectBoardSurface.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 50828
+      "sourceBytes": 40709
     },
     {
       "blocks": [
@@ -8512,6 +8506,153 @@
       "path": "src/lib/projects/project-board-repository-commit-work-order.ts",
       "semanticBytes": 0,
       "sourceBytes": 3074
+    },
+    {
+      "blocks": [
+        {
+          "card": {
+            "effect": [],
+            "excludes": [
+              "Git execution",
+              "registry persistence",
+              "project or group dialogs",
+              "scaffold dialog lifetime"
+            ],
+            "id": "workduck.projects.repository-controller",
+            "invariant": [
+              "Repository operations capture the registry writer workspace; capability decisions use current repository state, and workspace reset clears action targets and publish busy state."
+            ],
+            "owns": [
+              "repository action admission",
+              "repository busy state",
+              "publish dialog state",
+              "operation feedback ownership"
+            ],
+            "rel": [],
+            "risk": [],
+            "role": "Own reactive project repository action state, capability decisions, publish dialogs, and scoped operation context assembly.",
+            "scope": "module",
+            "search": [
+              "project board repository actions",
+              "repository publish dialog state",
+              "repository capability decisions"
+            ],
+            "stability": "architecture",
+            "unknown": []
+          },
+          "end": 707,
+          "endLine": 9,
+          "entries": [
+            {
+              "key": "id",
+              "line": 2,
+              "order": 0,
+              "value": "workduck.projects.repository-controller"
+            },
+            {
+              "key": "role",
+              "line": 3,
+              "order": 1,
+              "value": "Own reactive project repository action state, capability decisions, publish dialogs, and scoped operation context assembly."
+            },
+            {
+              "key": "owns",
+              "line": 4,
+              "order": 2,
+              "value": "repository action admission|repository busy state|publish dialog state|operation feedback ownership"
+            },
+            {
+              "key": "excludes",
+              "line": 5,
+              "order": 3,
+              "value": "Git execution|registry persistence|project or group dialogs|scaffold dialog lifetime"
+            },
+            {
+              "key": "search",
+              "line": 6,
+              "order": 4,
+              "value": "project board repository actions|repository publish dialog state|repository capability decisions"
+            },
+            {
+              "key": "invariant",
+              "line": 7,
+              "order": 5,
+              "value": "Repository operations capture the registry writer workspace; capability decisions use current repository state, and workspace reset clears action targets and publish busy state."
+            },
+            {
+              "key": "stability",
+              "line": 8,
+              "order": 6,
+              "value": "architecture"
+            }
+          ],
+          "filePath": "src/lib/projects/project-board-repository-controller.svelte.ts",
+          "indent": "",
+          "newline": "\n",
+          "prefix": null,
+          "raw": "/* llmnav/1 module\nid=workduck.projects.repository-controller\nrole=Own reactive project repository action state, capability decisions, publish dialogs, and scoped operation context assembly.\nowns=repository action admission|repository busy state|publish dialog state|operation feedback ownership\nexcludes=Git execution|registry persistence|project or group dialogs|scaffold dialog lifetime\nsearch=project board repository actions|repository publish dialog state|repository capability decisions\ninvariant=Repository operations capture the registry writer workspace; capability decisions use current repository state, and workspace reset clears action targets and publish busy state.\nstability=architecture\n*/",
+          "scope": "module",
+          "specVersion": "1",
+          "start": 0,
+          "startLine": 1,
+          "style": "block",
+          "syntaxErrors": []
+        }
+      ],
+      "contentHash": "11822926ce1804220dcb88ea2ea7c6ec18f59baaeee6694a96d77ac1a2b27cd1",
+      "declarations": [
+        null
+      ],
+      "imports": [
+        "#lib/environment/environment-vault.ts",
+        "#lib/i18n/workduck-language.ts",
+        "#lib/i18n/workduck-message-contract.ts",
+        "#lib/queue/queue-folder.ts",
+        "./project-board-errors",
+        "./project-board-github-credentials",
+        "./project-board-operations",
+        "./project-board-paths",
+        "./project-board-publish-actions",
+        "./project-board-publish-constants",
+        "./project-board-registry-writer.svelte",
+        "./project-board-repository-action-context",
+        "./project-board-repository-actions",
+        "./project-board-repository-commit-work-order",
+        "./project-board-repository-rules",
+        "./project-board-selectors",
+        "./project-board-surface-helpers",
+        "./project-board-types",
+        "./project-operation-storage",
+        "./project-registry",
+        "./project-repository",
+        "./project-repository-task",
+        "./project-repository-task-runs"
+      ],
+      "path": "src/lib/projects/project-board-repository-controller.svelte.ts",
+      "semanticBytes": 707,
+      "sourceBytes": 18534
+    },
+    {
+      "blocks": [],
+      "contentHash": "5fb5102fd1a8b639e94b7bc8683a7881ce4efe4c3b1513e54028157048a58960",
+      "declarations": [],
+      "imports": [
+        "#lib/i18n/workduck-language.ts",
+        "#lib/tauri/tauri-invoke.ts",
+        "#lib/workspaces/workspace-registry.ts",
+        "./project-board-errors",
+        "./project-board-operations",
+        "./project-board-registry-writer-harness.svelte",
+        "./project-board-repository-controller.svelte",
+        "./project-board-types",
+        "./project-repository-task-runs",
+        "bun",
+        "bun:test",
+        "svelte/compiler"
+      ],
+      "path": "src/lib/projects/project-board-repository-controller.test.ts",
+      "semanticBytes": 0,
+      "sourceBytes": 5649
     },
     {
       "blocks": [],

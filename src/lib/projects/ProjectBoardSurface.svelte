@@ -1,144 +1,43 @@
 	<script lang="ts">
+	import { createProjectBoardRepositoryController } from './project-board-repository-controller.svelte';
+	import { getQueueFolderLocalizedError } from '#lib/queue/queue-panel-errors.ts';
+	import { getTagsInputMaxLength } from './project-board-selectors';
 	import type { WorkduckMessages } from '#lib/i18n/workduck-message-contract.ts';
-	import {
-		getWorkduckMessages,
-		type WorkduckLanguageId
-	} from '#lib/i18n/workduck-language.ts';
+	import { getWorkduckMessages, type WorkduckLanguageId } from '#lib/i18n/workduck-language.ts';
 	import type { EnvironmentVault } from '#lib/environment/environment-vault.ts';
 	import StatusToast from '#lib/ui/StatusToast.svelte';
-	import {
-		type SecretVaultEnvelope
-	} from '#lib/environment/secret-vault-crypto.ts';
+	import { type SecretVaultEnvelope } from '#lib/environment/secret-vault-crypto.ts';
 	import type { WorkspaceRecord } from '#lib/workspaces/workspace-registry.ts';
-	import {
-		getQueueFolderLocalizedError
-	} from '#lib/queue/queue-panel-errors.ts';
-	import type { QueueFolderError } from '#lib/queue/queue-folder.ts';
-	import {
-		getDefaultSsealedScaffoldProfile,
-		type ProjectFolderError,
-		type SsealedScaffoldProfile,
-		type SsealedScaffoldScope
-	} from './project-folder';
-	import { createProjectBoardScaffoldDialog } from './project-board-scaffold-dialog.svelte';
-	import { type ProjectRepositoryGithubVisibility } from './project-repository';
 
-	import {
-		createEmptyProjectRegistry,
-		setProjectRepositoryFavorite,
-		type ProjectNodeRecord,
-		type ProjectRegistry,
-		type ProjectRepositoryLinkRecord
-	} from './project-registry';
+	import type { QueueFolderError } from '#lib/queue/queue-folder.ts';
+	import { getDefaultSsealedScaffoldProfile, type ProjectFolderError, type SsealedScaffoldProfile, type SsealedScaffoldScope } from './project-folder';
+	import { createProjectBoardScaffoldDialog } from './project-board-scaffold-dialog.svelte';
+
+	import { createEmptyProjectRegistry, type ProjectNodeRecord, type ProjectRegistry, type ProjectRepositoryLinkRecord } from './project-registry';
 	import { type ProjectRegistryStorageError } from './project-storage';
-	import {
-		type ProjectRepositoryOperationName,
-		type ProjectRepositoryOperationStorageError
-	} from './project-operation-storage';
-	import {
-		createProjectBoardSelectionIndex,
-		getTagsInputMaxLength,
-		type ProjectRepositoryGitStatus,
-		type ProjectRepositorySyncFilter
-	} from './project-board-selectors';
-	import {
-		getProjectFormErrorMessage,
-		type ProjectFormError
-	} from './project-board-errors';
-	import {
-		canSubmitProjectDialog,
-		getProjectDeleteDialogText,
-		getProjectDeleteDialogTitle,
-		getProjectDeleteLocalFolderLabel,
-		getProjectDeleteLocalFolderUnavailableText,
-		getProjectDialogSubmitLabel,
-		getProjectDialogTitle,
-		isProjectRepositoryRemoteUrlError
-	} from './project-board-dialog-rules';
+	import { type ProjectRepositoryOperationStorageError } from './project-operation-storage';
+	import { createProjectBoardSelectionIndex, type ProjectRepositoryGitStatus, type ProjectRepositorySyncFilter } from './project-board-selectors';
+	import { getProjectFormErrorMessage, type ProjectFormError } from './project-board-errors';
+	import { canSubmitProjectDialog, getProjectDeleteDialogText, getProjectDeleteDialogTitle, getProjectDeleteLocalFolderLabel, getProjectDeleteLocalFolderUnavailableText, getProjectDialogSubmitLabel, getProjectDialogTitle, isProjectRepositoryRemoteUrlError } from './project-board-dialog-rules';
 	import { createProjectBoardContextMenuHandlers } from './project-board-context-menu-handlers';
 	import { createProjectBoardEditorHandlers } from './project-board-editor-handlers';
 	import { closeProjectBoardOverlayFromEscape } from './project-board-close-actions';
 	import { createProjectBoardDialogHandlers } from './project-board-dialog-handlers';
-	import {
-		type ProjectRepositoryGitAction,
-		type ProjectRepositoryOperation
-	} from './project-board-operations';
-	import {
-		canEditProjectBoardContextGithubCredential,
-		canOpenProjectBoardContextFolder,
-		getProjectBoardContextRepositoryGitStatus,
-		getProjectBoardNodeGithubCredentialName,
-		getProjectBoardRepositoryGithubCredentialName,
-		isProjectBoardDeleteLocalFolderAvailable,
-		isProjectBoardRepositoryTarget,
-		resolveProjectBoardRepositoryGithubCredential
-	} from './project-board-surface-helpers';
+	import { type ProjectRepositoryOperation } from './project-board-operations';
+	import { canEditProjectBoardContextGithubCredential, canOpenProjectBoardContextFolder, getProjectBoardContextRepositoryGitStatus, isProjectBoardDeleteLocalFolderAvailable } from './project-board-surface-helpers';
 	import { createProjectBoardSurfaceSelection } from './project-board-surface-selection';
-	import {
-		runProjectRepositoryRemoteGitAction,
-		type ProjectRepositoryActionContext
-	} from './project-board-repository-actions';
-	import {
-		createProjectBoardRepositoryActionContext,
-		getProjectBoardRepositoryOperation,
-		isProjectBoardRepositoryBusy,
-		isProjectBoardRepositoryOperationRunning
-	} from './project-board-repository-action-context';
-	import {
-		closeProjectRepositoryPublishDialog,
-		closeProjectRepositoryPublishDialogFromBackdrop,
-		openProjectRepositoryPublishDialog,
-		submitProjectRepositoryPublishDialog,
-		type ProjectRepositoryPublishTarget
-	} from './project-board-publish-actions';
-	import {
-		type ProjectRepositoryTaskRunRecordByRepositoryId
-	} from './project-repository-task-runs';
-	import {
-		type ProjectRepositoryTaskRunRecord
-	} from './project-repository-task';
-	import {
-		createWorkspacePathBoundaryKey,
-		isRepositoryPathInsideProjectsFolderBoundary,
-		isRepositoryPathInsideWorkspaceBoundary
-	} from './project-board-paths';
-	import { DEFAULT_GITHUB_REPOSITORY_COMMIT_MESSAGE } from './project-board-publish-constants';
-	import {
-		canCloneProjectRepository,
-		canInitializeProjectRepository,
-		canPublishProjectRepositoryToGithub,
-		canRunRemoteProjectRepositoryGitAction,
-		getProjectRepositoryCardKind
-	} from './project-board-repository-rules';
-	import {
-		canQueueProjectRepositoryCommitWorkOrder,
-		queueProjectRepositoryCommitWorkOrder
-	} from './project-board-repository-commit-work-order';
+
+	import { type ProjectRepositoryTaskRunRecordByRepositoryId } from './project-repository-task-runs';
+
+	import { createWorkspacePathBoundaryKey } from './project-board-paths';
+
+	import { canCloneProjectRepository } from './project-board-repository-rules';
+
 	import { refreshProjectRepositoryGitStatusForBoard } from './project-board-runtime-state';
-	import {
-		getProjectContextMenuNode,
-		getProjectContextMenuRepository,
-		getProjectDialogTargetNode,
-		getProjectRepositoryTarget
-	} from './project-board-targets';
+	import { getProjectContextMenuNode, getProjectContextMenuRepository, getProjectDialogTargetNode, getProjectRepositoryTarget } from './project-board-targets';
 	import { createProjectBoardRegistryWriter } from './project-board-registry-writer.svelte';
-	import type {
-		ProjectContextMenuState,
-		ProjectContextMenuTarget,
-		ProjectDeleteCandidate,
-		ProjectDialogState,
-		ProjectGithubCredentialEditorTarget,
-		ProjectRepositoryRemoteUrlEditorTarget,
-		ProjectRepositoryTarget,
-		ProjectRepositorySourceMode,
-		ProjectTagEditorTarget
-	} from './project-board-types';
-	import {
-		createGithubCredentialNameById,
-		getDefaultRepositoryGithubCredentialSecretId as getDefaultRepositoryGithubCredentialSecretIdFromRegistry,
-		getGithubCredentialOptions,
-		resolveRepositoryDialogForkCredential as resolveRepositoryDialogForkCredentialFromVault,
-	} from './project-board-github-credentials';
+	import type { ProjectContextMenuState, ProjectDeleteCandidate, ProjectDialogState, ProjectGithubCredentialEditorTarget, ProjectRepositoryRemoteUrlEditorTarget, ProjectRepositorySourceMode, ProjectTagEditorTarget } from './project-board-types';
+	import { createGithubCredentialNameById, getDefaultRepositoryGithubCredentialSecretId as getDefaultRepositoryGithubCredentialSecretIdFromRegistry, getGithubCredentialOptions, resolveRepositoryDialogForkCredential as resolveRepositoryDialogForkCredentialFromVault } from './project-board-github-credentials';
 	import ProjectBoardLanes from './ProjectBoardLanes.svelte';
 	import ProjectContextMenuLifecycle from './ProjectContextMenuLifecycle.svelte';
 	import ProjectBoardWorkspaceLifecycle from './ProjectBoardWorkspaceLifecycle.svelte';
@@ -218,10 +117,57 @@
 	let selectedGroupId = $state<string | null>(null);
 	let isSubmitting = $state(false);
 	let isDeleting = $state(false);
-	let cloneTarget = $state<ProjectContextMenuTarget | null>(null);
-	let gitActionTarget = $state<ProjectContextMenuTarget | null>(null);
-	let commitWorkOrderTargetRepositoryId = $state<string | null>(null);
-	let publishTarget = $state<ProjectRepositoryPublishTarget | null>(null);
+
+	const repositoryController = createProjectBoardRepositoryController({
+		registryWriter: persistRegistry, registry: () => registry,
+		operations: () => repositoryOperationById, setOperations: (value) => { repositoryOperationById = value; },
+		taskRuns: () => repositoryTaskRunById, setTaskRuns: (value) => { repositoryTaskRunById = value; },
+		gitStatusById: () => repositoryGitStatusById, pathBoundaryKey: () => workspacePathBoundaryKey,
+		environmentVault: () => environmentVault, githubCredentialNameById: () => githubCredentialNameById,
+		githubCredentialOptions: () => githubCredentialOptions, selectedProject: () => selectedProject,
+		messages: () => projectMessages, languageId: () => languageId,
+		scaffoldState: () => ({ isApplying: scaffoldDialog.isApplyingSsealed, target: scaffoldDialog.ssealedTarget }),
+		preloadOverlays: preloadProjectBoardOverlays, closeContextMenu,
+		clearDeleteCandidate: () => { deleteCandidate = null; }, clearDialog: () => { dialog = null; },
+		setFormError: (value) => { formError = value; }, setStatus: (value) => { status = value; },
+		setQueueFolderError: (value) => { queueFolderError = value; },
+		setOperationStorageError: (value) => { operationStorageError = value; },
+		setSelectedGroupId: (value) => { selectedGroupId = value; },
+		refreshRepositoryGitStatus: (id, path, isCurrent) => refreshRepositoryGitStatus(id, path, repositoryGitInspectionSignature, isCurrent)
+	});
+	const {
+		openPublishRepositoryDialog,
+		closePublishRepositoryDialog,
+		handleGithubRepositoryNameInput,
+		handleGithubRepositoryCommitMessageInput,
+		selectGithubRepositoryVisibility,
+		handlePublishRepositoryBackdropClick,
+		handlePublishRepositorySubmit,
+		runRepositoryGitAction,
+		queueRepositoryCommitWorkOrder,
+		createRepositoryActionContext,
+		getRepositoryOperation,
+		getRepositoryTaskRun,
+		setRepositoryTaskRun,
+		isRepositoryBusy,
+		isRepositoryOperationRunning,
+		setRepositoryFavorite,
+		toggleRepositoryFavorite,
+		getRepositoryCardKind,
+		getNodeGithubCredentialName,
+		getRepositoryGithubCredentialName,
+		isRepositoryCloneTarget,
+		isRepositoryGitActionTarget,
+		canCloneRepository,
+		canInitializeRepository,
+		canPublishRepositoryToGithub,
+		canApplySsealedToRepository,
+		canRunRemoteRepositoryGitAction,
+		canQueueRepositoryCommitWorkOrder,
+		isRepositoryPathInsideWorkspace,
+		isRepositoryPathInsideProjectsFolder
+	} = repositoryController;
+
 	const scaffoldDialog = createProjectBoardScaffoldDialog({
 		captureWorkspace: () => persistRegistry.capture(),
 		messages: () => projectMessages,
@@ -229,7 +175,7 @@
 		preloadOverlays: preloadProjectBoardOverlays,
 		onOpen: () => {
 			deleteCandidate = null;
-			publishTarget = null;
+			repositoryController.publishTarget = null;
 			dialog = null;
 			closeContextMenu();
 		},
@@ -249,20 +195,13 @@
 	const selectSsealedScaffoldApplyProfile = scaffoldDialog.selectSsealedScaffoldApplyProfile;
 	const refreshSsealedScaffoldPreview = scaffoldDialog.refreshSsealedScaffoldPreview;
 	const applySsealedScaffoldToTarget = scaffoldDialog.applySsealedScaffoldToTarget;
-	let githubRepositoryName = $state('');
-	let githubRepositoryCommitMessage = $state(DEFAULT_GITHUB_REPOSITORY_COMMIT_MESSAGE);
-	let githubRepositoryVisibility = $state<ProjectRepositoryGithubVisibility>('private');
-	let isPublishingRepository = $state(false);
+
 	let repositoryActionWorkspaceId = $derived(workspace.id);
 	let repositoryActionWorkspacePath = $derived(workspace.path);
 	$effect(() => {
 		void repositoryActionWorkspaceId;
 		void repositoryActionWorkspacePath;
-		cloneTarget = null;
-		gitActionTarget = null;
-		commitWorkOrderTargetRepositoryId = null;
-		publishTarget = null;
-		isPublishingRepository = false;
+		repositoryController.resetWorkspace();
 		formError = null;
 		queueFolderError = null;
 		status = null;
@@ -352,13 +291,7 @@
 		contextMenuRepository !== null &&
 			canApplySsealedToRepository(contextMenuRepository.repository)
 	);
-	let canSubmitPublishRepository = $derived(
-		publishTarget !== null &&
-			githubRepositoryName.trim().length > 0 &&
-			githubRepositoryCommitMessage.trim().length > 0 &&
-			!isPublishingRepository &&
-			!isRepositoryBusy(publishTarget.repository.id)
-	);
+
 	let canApplySsealedScaffold = $derived(scaffoldDialog.canApplySsealedScaffold);
 	let hasActiveOverlay = $derived(
 		contextMenu !== null ||
@@ -368,7 +301,7 @@
 			tagEditor !== null ||
 			githubCredentialEditor !== null ||
 			remoteUrlEditor !== null ||
-			publishTarget !== null ||
+			repositoryController.publishTarget !== null ||
 			ssealedTarget !== null ||
 			dialog !== null
 	);
@@ -441,7 +374,7 @@
 		setFormError: (error) => { formError = error; },
 		setStatus: (nextStatus) => { status = nextStatus; },
 		clearDeleteCandidate: () => { deleteCandidate = null; },
-		clearPublishTarget: () => { publishTarget = null; },
+		clearPublishTarget: () => { repositoryController.publishTarget = null; },
 		clearTagEditor: () => { tagEditor = null; },
 		clearDescriptionEditor: () => { descriptionEditor = null; },
 		clearDetailsEditor: () => { detailsEditor = null; },
@@ -518,7 +451,7 @@
 		setSelectedProjectId: (projectId) => { selectedProjectId = projectId; },
 		setSelectedGroupId: (groupId) => { selectedGroupId = groupId; },
 		clearDescriptionEditor: () => { descriptionEditor = null; },
-		clearPublishTarget: () => { publishTarget = null; }
+		clearPublishTarget: () => { repositoryController.publishTarget = null; }
 	});
 
 	function closeContextMenu() {
@@ -559,51 +492,6 @@
 		contextMenuActions.openRepositoryContextMenu(event, node, repository);
 	}
 
-	function openPublishRepositoryDialog(
-		node: ProjectNodeRecord,
-		repository: ProjectRepositoryLinkRecord
-	) {
-		preloadProjectBoardOverlays();
-		openProjectRepositoryPublishDialog(
-			{ node, repository },
-			{
-				isRepositoryPathInsideWorkspace,
-				isRepositoryBusy,
-				failRepositoryOperation: (node, repository, name, error) =>
-					createRepositoryActionContext().failOperation({ node, repository }, name, error),
-				setPublishTarget: (target) => { publishTarget = target; },
-				setRepositoryName: (name) => { githubRepositoryName = name; },
-				setCommitMessage: (message) => { githubRepositoryCommitMessage = message; },
-				setVisibility: (visibility) => { githubRepositoryVisibility = visibility; },
-				setFormError: (error) => { formError = error; },
-				setStatus: (nextStatus) => { status = nextStatus; },
-				clearDeleteCandidate: () => { deleteCandidate = null; },
-				clearDialog: () => { dialog = null; },
-				closeContextMenu
-			}
-		);
-	}
-
-	function closePublishRepositoryDialog() {
-		closeProjectRepositoryPublishDialog({
-			setPublishTarget: (target) => { publishTarget = target; },
-			setRepositoryName: (name) => { githubRepositoryName = name; },
-			setCommitMessage: (message) => { githubRepositoryCommitMessage = message; },
-			setVisibility: (visibility) => { githubRepositoryVisibility = visibility; },
-			setIsPublishing: (isPublishing) => { isPublishingRepository = isPublishing; }
-		});
-	}
-
-	function handleGithubRepositoryNameInput() {
-		formError = null;
-		status = null;
-	}
-
-	function handleGithubRepositoryCommitMessageInput() {
-		formError = null;
-		status = null;
-	}
-
 	function clearTagFilterDebounce() {
 		if (tagFilterDebounceTimeoutId === null) {
 			return;
@@ -627,140 +515,6 @@
 			tagFilter = tagFilterInput;
 			tagFilterDebounceTimeoutId = null;
 		}, PROJECT_TAG_FILTER_DEBOUNCE_MS);
-	}
-
-	function selectGithubRepositoryVisibility(visibility: ProjectRepositoryGithubVisibility) {
-		githubRepositoryVisibility = visibility;
-		formError = null;
-		status = null;
-	}
-
-	function handlePublishRepositoryBackdropClick(event: MouseEvent) {
-		closeProjectRepositoryPublishDialogFromBackdrop(event, {
-			isPublishing: isPublishingRepository,
-			closeDialog: closePublishRepositoryDialog
-		});
-	}
-
-	async function handlePublishRepositorySubmit(event: SubmitEvent) {
-		await submitProjectRepositoryPublishDialog(
-			event,
-			{
-				target: publishTarget,
-				isPublishing: isPublishingRepository,
-				repositoryName: githubRepositoryName,
-				commitMessage: githubRepositoryCommitMessage,
-				visibility: githubRepositoryVisibility
-			},
-			{ createRepositoryActionContext }
-		);
-	}
-
-	async function runRepositoryGitAction(
-		target: ProjectRepositoryTarget | null,
-		action: ProjectRepositoryGitAction
-	) {
-		await runProjectRepositoryRemoteGitAction(target, action, createRepositoryActionContext());
-	}
-
-	async function queueRepositoryCommitWorkOrder(
-		node: ProjectNodeRecord,
-		repository: ProjectRepositoryLinkRecord
-	) {
-		const target = persistRegistry.capture();
-		await queueProjectRepositoryCommitWorkOrder(
-			{
-				workspaceId: target.workspaceId,
-				workspacePath: target.workspacePath,
-				nodes: target.registry.nodes,
-				node,
-				repository,
-				languageId,
-				queuedMessageTemplate: projectMessages.repository.commitWorkOrderQueued
-			},
-			{
-				isCurrent: target.isCurrent,
-				canQueueRepositoryCommitWorkOrder,
-				setCommitWorkOrderTargetRepositoryId: (repositoryId) => {
-					commitWorkOrderTargetRepositoryId = repositoryId;
-				},
-				setFormError: (error) => {
-					formError = error;
-				},
-				setQueueFolderError: (error) => {
-					queueFolderError = error;
-				},
-				setStatus: (nextStatus) => {
-					status = nextStatus;
-				}
-			}
-		);
-	}
-
-	function createRepositoryActionContext(): ProjectRepositoryActionContext {
-		const target = persistRegistry.capture();
-		return createProjectBoardRepositoryActionContext({
-			workspaceId: target.workspaceId,
-			workspacePath: target.workspacePath,
-			registry: target.registry,
-			isCurrent: target.isCurrent,
-			operations: () => repositoryOperationById,
-			setOperations: (operations) => { repositoryOperationById = operations; },
-			setOperationStorageError: (error) => { operationStorageError = error; },
-			isRepositoryBusy,
-			isRepositoryPathInsideWorkspace,
-			resolveCredential: ({ node, repository }) =>
-				resolveRepositoryGithubCredentialOrSetError(node, repository),
-			persistRegistry: target.persistRegistry,
-			refreshRepositoryGitStatus: (id, path) =>
-				refreshRepositoryGitStatus(id, path, repositoryGitInspectionSignature, target.isCurrent),
-			setFormError: (error) => { formError = error; },
-			setStatus: (nextStatus) => { status = nextStatus; },
-			setSelectedGroupId: (groupId) => { selectedGroupId = groupId; },
-			setCloneTarget: (target) => { cloneTarget = target; },
-			setGitActionTarget: (target) => { gitActionTarget = target; },
-			setIsPublishingRepository: (isPublishing) => { isPublishingRepository = isPublishing; },
-			closePublishRepositoryDialog,
-			operationMessages: projectMessages.operations
-		});
-	}
-
-	function getRepositoryOperation(repositoryId: string) {
-		return getProjectBoardRepositoryOperation(repositoryOperationById, repositoryId);
-	}
-
-	function getRepositoryTaskRun(repositoryId: string) {
-		return repositoryTaskRunById[repositoryId] ?? null;
-	}
-
-	function setRepositoryTaskRun(
-		repositoryId: string,
-		record: ProjectRepositoryTaskRunRecord
-	) {
-		repositoryTaskRunById = {
-			...repositoryTaskRunById,
-			[repositoryId]: record
-		};
-	}
-
-	function isRepositoryBusy(repositoryId: string) {
-		return (
-			isProjectBoardRepositoryBusy(repositoryOperationById, repositoryId) ||
-			repositoryTaskRunById[repositoryId]?.state === 'running' ||
-			commitWorkOrderTargetRepositoryId === repositoryId ||
-			(isApplyingSsealed && ssealedTarget?.repository.id === repositoryId)
-		);
-	}
-
-	function isRepositoryOperationRunning(
-		repositoryId: string,
-		name: ProjectRepositoryOperationName
-	) {
-		return isProjectBoardRepositoryOperationRunning(
-			repositoryOperationById,
-			repositoryId,
-			name
-		);
 	}
 
 	function getDialogTitle() { return getProjectDialogTitle(dialog?.mode, projectMessages); }
@@ -814,42 +568,6 @@
 		closeContextMenu();
 	}
 
-	async function setRepositoryFavorite(
-		node: ProjectNodeRecord,
-		repository: ProjectRepositoryLinkRecord,
-		favorite: boolean
-	) {
-		const result = setProjectRepositoryFavorite(
-			registry,
-			{
-				nodeId: node.id,
-				repositoryId: repository.id,
-				favorite
-			}
-		);
-
-		if (!result.ok) {
-			formError = result.error;
-			return;
-		}
-
-		formError = null;
-		if (!(await persistRegistry(result.registry))) {
-			return;
-		}
-
-		status = favorite
-			? projectMessages.repository.favoriteAdded
-			: projectMessages.repository.favoriteRemoved;
-	}
-
-	async function toggleRepositoryFavorite(
-		node: ProjectNodeRecord,
-		repository: ProjectRepositoryLinkRecord
-	) {
-		await setRepositoryFavorite(node, repository, !repository.favorite);
-	}
-
 	async function toggleContextRepositoryFavorite() {
 		const target = contextMenuRepository;
 
@@ -889,58 +607,11 @@
 		return isProjectRepositoryRemoteUrlError(error);
 	}
 
-	function getRepositoryCardKind(nodeId: string, repository: ProjectRepositoryLinkRecord) {
-		return getProjectRepositoryCardKind(
-			repository,
-			getRepositoryOperation(repository.id),
-			repositoryGitStatusById[repository.id],
-			isRepositoryCloneTarget(nodeId, repository.id),
-			isRepositoryGitActionTarget(nodeId, repository.id)
-		);
-	}
-
-	function getNodeGithubCredentialName(node: ProjectNodeRecord) {
-		return getProjectBoardNodeGithubCredentialName({
-			environmentVault,
-			githubCredentialNameById,
-			node
-		});
-	}
-
-	function getRepositoryGithubCredentialName(
-		node: ProjectNodeRecord,
-		repository: ProjectRepositoryLinkRecord
-	) {
-		return getProjectBoardRepositoryGithubCredentialName({
-			nodes: registry.nodes,
-			environmentVault,
-			githubCredentialNameById,
-			selectedProject,
-			node,
-			repository
-		});
-	}
-
 	function canEditContextGithubCredential() {
 		return canEditProjectBoardContextGithubCredential({
 			target: contextMenu?.target ?? null,
 			nodes: registry.nodes,
 			selectedProject
-		});
-	}
-
-	function resolveRepositoryGithubCredentialOrSetError(
-		node: ProjectNodeRecord,
-		repository: ProjectRepositoryLinkRecord
-	) {
-		return resolveProjectBoardRepositoryGithubCredential({
-			nodes: registry.nodes,
-			environmentVault,
-			githubCredentialOptions,
-			node,
-			repository,
-			setFormError: (error) => { formError = error; },
-			setStatus: (nextStatus) => { status = nextStatus; }
 		});
 	}
 
@@ -957,85 +628,6 @@
 			githubCredentialOptions,
 			secretId
 		);
-	}
-
-	function isRepositoryCloneTarget(nodeId: string, repositoryId: string) {
-		return isProjectBoardRepositoryTarget(cloneTarget, nodeId, repositoryId);
-	}
-
-	function isRepositoryGitActionTarget(nodeId: string, repositoryId: string) {
-		return isProjectBoardRepositoryTarget(gitActionTarget, nodeId, repositoryId);
-	}
-
-	function canCloneRepository(repository: ProjectRepositoryLinkRecord) {
-		return canCloneProjectRepository(
-			repository,
-			repositoryGitStatusById[repository.id],
-			repository.path !== null && isRepositoryPathInsideWorkspace(repository.path),
-			isRepositoryBusy(repository.id)
-		);
-	}
-
-	function canInitializeRepository(repository: ProjectRepositoryLinkRecord) {
-		return canInitializeProjectRepository(
-			repository,
-			repositoryGitStatusById[repository.id],
-			repository.path !== null && isRepositoryPathInsideWorkspace(repository.path),
-			isRepositoryBusy(repository.id)
-		);
-	}
-
-	function canPublishRepositoryToGithub(repository: ProjectRepositoryLinkRecord) {
-		return canPublishProjectRepositoryToGithub(
-			repository,
-			repositoryGitStatusById[repository.id],
-			repository.path !== null && isRepositoryPathInsideWorkspace(repository.path),
-			publishTarget !== null,
-			isRepositoryBusy(repository.id)
-		);
-	}
-
-	function canApplySsealedToRepository(repository: ProjectRepositoryLinkRecord) {
-		const gitStatus = repositoryGitStatusById[repository.id];
-
-		return (
-			repository.path !== null &&
-			isRepositoryPathInsideWorkspace(repository.path) &&
-			gitStatus !== undefined &&
-			gitStatus.error === null &&
-			!isRepositoryBusy(repository.id)
-		);
-	}
-
-	function canRunRemoteRepositoryGitAction(
-		repository: ProjectRepositoryLinkRecord,
-		action: ProjectRepositoryGitAction
-	) {
-		return canRunRemoteProjectRepositoryGitAction(
-			repository,
-			repositoryGitStatusById[repository.id],
-			repository.path !== null && isRepositoryPathInsideWorkspace(repository.path),
-			isRepositoryBusy(repository.id),
-			action
-		);
-	}
-
-	function canQueueRepositoryCommitWorkOrder(repository: ProjectRepositoryLinkRecord) {
-		return canQueueProjectRepositoryCommitWorkOrder({
-			repository,
-			gitStatus: repositoryGitStatusById[repository.id],
-			isRepositoryPathInsideWorkspace:
-				repository.path !== null && isRepositoryPathInsideWorkspace(repository.path),
-			isRepositoryBusy: isRepositoryBusy(repository.id)
-		});
-	}
-
-	function isRepositoryPathInsideWorkspace(repositoryPath: string) {
-		return isRepositoryPathInsideWorkspaceBoundary(workspacePathBoundaryKey, repositoryPath);
-	}
-
-	function isRepositoryPathInsideProjectsFolder(repositoryPath: string) {
-		return isRepositoryPathInsideProjectsFolderBoundary(workspacePathBoundaryKey, repositoryPath);
 	}
 
 	async function refreshRepositoryGitStatus(
@@ -1079,13 +671,13 @@
 				hasTagEditor: tagEditor !== null,
 				hasDescriptionEditor: descriptionEditor !== null,
 				hasDetailsEditor: detailsEditor !== null,
-				hasPublishTarget: publishTarget !== null,
+				hasPublishTarget: repositoryController.publishTarget !== null,
 				hasSsealedTarget: ssealedTarget !== null,
 				hasGithubCredentialEditor: githubCredentialEditor !== null,
 				isSavingTags,
 				isSavingDescription,
 				isSavingDetails,
-				isPublishingRepository,
+				isPublishingRepository: repositoryController.isPublishingRepository,
 				isApplyingSsealed,
 				isSubmitting,
 				isEnvironmentVaultBusy
@@ -1200,10 +792,10 @@
 	</button>
 {/if}
 
-{#if standaloneError !== null && dialog === null && deleteCandidate === null && tagEditor === null && descriptionEditor === null && detailsEditor === null && githubCredentialEditor === null && publishTarget === null && ssealedTarget === null}
+{#if standaloneError !== null && dialog === null && deleteCandidate === null && tagEditor === null && descriptionEditor === null && detailsEditor === null && githubCredentialEditor === null && repositoryController.publishTarget === null && ssealedTarget === null}
 	<p class="workduck-inline-error" aria-live="polite">{getProjectFormErrorMessage(standaloneError, projectMessages.errors)}</p>
 {/if}
-{#if queueFolderError !== null && dialog === null && deleteCandidate === null && tagEditor === null && descriptionEditor === null && detailsEditor === null && githubCredentialEditor === null && publishTarget === null && ssealedTarget === null}
+{#if queueFolderError !== null && dialog === null && deleteCandidate === null && tagEditor === null && descriptionEditor === null && detailsEditor === null && githubCredentialEditor === null && repositoryController.publishTarget === null && ssealedTarget === null}
 	<p class="workduck-inline-error" aria-live="polite">
 		{getQueueFolderLocalizedError(messages, queueFolderError)}
 	</p>
@@ -1221,8 +813,8 @@
 	bind:tagInput
 	bind:environmentVaultPassword
 	bind:selectedGithubCredentialSecretId
-	bind:githubRepositoryName
-	bind:githubRepositoryCommitMessage
+	bind:githubRepositoryName={repositoryController.githubRepositoryName}
+	bind:githubRepositoryCommitMessage={repositoryController.githubRepositoryCommitMessage}
 	bind:formName
 	bind:formDescription
 	bind:formTags
@@ -1235,7 +827,7 @@
 	{detailsEditor}
 	{tagEditor}
 	{githubCredentialEditor}
-	{publishTarget}
+	publishTarget={repositoryController.publishTarget}
 	{ssealedTarget}
 	{dialog}
 	dialogTargetNodeName={dialogTargetNode?.name ?? null}
@@ -1262,11 +854,11 @@
 	{isEnvironmentVaultBusy}
 	{isSubmitting}
 	{canSaveGithubCredential}
-	{githubRepositoryVisibility}
-	{isPublishingRepository}
+	githubRepositoryVisibility={repositoryController.githubRepositoryVisibility}
+	isPublishingRepository={repositoryController.isPublishingRepository}
 	{isPreviewingSsealed}
 	{isApplyingSsealed}
-	{canSubmitPublishRepository}
+	canSubmitPublishRepository={repositoryController.canSubmitPublishRepository}
 	{canApplySsealedScaffold}
 	{canSubmitDialog}
 	{canOpenContextFolder}

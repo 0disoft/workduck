@@ -347,6 +347,17 @@
         "invariant"
       ],
       "scope": "module"
+    },
+    {
+      "match": [
+        "src/lib/projects/project-board-repository-controller.svelte.ts"
+      ],
+      "name": "project repository action UI and capability owner",
+      "requiredFields": [
+        "owns",
+        "invariant"
+      ],
+      "scope": "module"
     }
   ],
   "audit": {

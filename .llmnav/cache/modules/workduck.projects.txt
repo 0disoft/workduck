@@ -138,3 +138,9 @@ role Define versioned project registry records, mutation inputs, result shapes, 
 owns project registry record shapes, project mutation input contracts, project field limits
 excludes normalization algorithms, registry persistence, Git operations
 invariant Project registry consumers share one versioned set of record shapes, mutation results, and field limits.
+
+@workduck.projects.repository-controller
+role Own reactive project repository action state, capability decisions, publish dialogs, and scoped operation context assembly.
+owns repository action admission, repository busy state, publish dialog state, operation feedback ownership
+excludes Git execution, registry persistence, project or group dialogs, scaffold dialog lifetime
+invariant Repository operations capture the registry writer workspace; capability decisions use current repository state, and workspace reset clears action targets and publish busy state.

@@ -78,3 +78,4 @@
 {"query":"where does Queue project live catalog context names and localized display labels into sorted skill options","expected":["workduck.queue.presentation"]}
 {"query":"Queue context menu dismissal and bulk file deletion owner","expected":["workduck.queue.file-actions"]}
 {"query":"Queue prompt preview eligibility and ignore closed or stale estimates","expected":["workduck.queue.prompt-preview-controller"]}
+{"query":"project board repository capability busy state and publish dialog controller","expected":["workduck.projects.repository-controller"]}

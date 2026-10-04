@@ -156,6 +156,90 @@
     },
     {
       "confidence": 0.85,
+      "from": "workduck/workduck.projects.repository-controller",
+      "id": "46d6a331acb38eeb83e476347a73e0a4aedf422343c6a19c96605bae5ab40acd",
+      "kind": "imports",
+      "provenance": {
+        "generator": "llmnav",
+        "line": null,
+        "path": "src/lib/projects/project-board-repository-controller.svelte.ts",
+        "source": "src/lib/projects/project-board-repository-controller.svelte.ts",
+        "type": "local-import"
+      },
+      "to": "workduck/workduck.projects.board-selection"
+    },
+    {
+      "confidence": 0.85,
+      "from": "workduck/workduck.projects.repository-controller",
+      "id": "a76603a7d8aff7d8c698ed0c2851f1a37ddb059bad7ad04435b81bd4b523ded8",
+      "kind": "imports",
+      "provenance": {
+        "generator": "llmnav",
+        "line": null,
+        "path": "src/lib/projects/project-board-repository-controller.svelte.ts",
+        "source": "src/lib/projects/project-board-repository-controller.svelte.ts",
+        "type": "local-import"
+      },
+      "to": "workduck/workduck.projects.operation-storage"
+    },
+    {
+      "confidence": 0.85,
+      "from": "workduck/workduck.projects.repository-controller",
+      "id": "25a41121c4b9b07071e1527891ada717a03420a1b92d16731118671d240018a7",
+      "kind": "imports",
+      "provenance": {
+        "generator": "llmnav",
+        "line": null,
+        "path": "src/lib/projects/project-board-repository-controller.svelte.ts",
+        "source": "src/lib/projects/project-board-repository-controller.svelte.ts",
+        "type": "local-import"
+      },
+      "to": "workduck/workduck.projects.registry-domain"
+    },
+    {
+      "confidence": 0.85,
+      "from": "workduck/workduck.projects.repository-controller",
+      "id": "41cba12a12ac8d39a912d097e41630e692b0cf4626eeeae5a0baec55a26dc3ee",
+      "kind": "imports",
+      "provenance": {
+        "generator": "llmnav",
+        "line": null,
+        "path": "src/lib/projects/project-board-repository-controller.svelte.ts",
+        "source": "src/lib/projects/project-board-repository-controller.svelte.ts",
+        "type": "local-import"
+      },
+      "to": "workduck/workduck.projects.repository"
+    },
+    {
+      "confidence": 0.85,
+      "from": "workduck/workduck.projects.repository-controller",
+      "id": "cb51ec31f2499c92bbdaf594de542fe0b6fe7bda3ee5c4f296fe79269dc87396",
+      "kind": "imports",
+      "provenance": {
+        "generator": "llmnav",
+        "line": null,
+        "path": "src/lib/projects/project-board-repository-controller.svelte.ts",
+        "source": "src/lib/projects/project-board-repository-controller.svelte.ts",
+        "type": "local-import"
+      },
+      "to": "workduck/workduck.projects.repository-task"
+    },
+    {
+      "confidence": 0.85,
+      "from": "workduck/workduck.projects.repository-controller",
+      "id": "13c2c4669d830bdf27039d8ad6dbe060ff645bc94b4c08e7b6985f7ab3fcbf5e",
+      "kind": "imports",
+      "provenance": {
+        "generator": "llmnav",
+        "line": null,
+        "path": "src/lib/projects/project-board-repository-controller.svelte.ts",
+        "source": "src/lib/projects/project-board-repository-controller.svelte.ts",
+        "type": "local-import"
+      },
+      "to": "workduck/workduck.projects.task-run-mapping"
+    },
+    {
+      "confidence": 0.85,
       "from": "workduck/workduck.projects.scaffold-dialog",
       "id": "05443f783b5bf656ef712a294c8e910452bdf197c422982ab8a1af64ace044f8",
       "kind": "imports",
@@ -1287,6 +1371,28 @@
     {
       "definitions": [],
       "external": false,
+      "key": "workduck/workduck.projects.repository-controller",
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src/lib/projects/project-board-repository-controller.svelte.ts",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "repositoryId": "workduck",
+      "role": "Own reactive project repository action state, capability decisions, publish dialogs, and scoped operation context assembly.",
+      "semanticId": "workduck.projects.repository-controller",
+      "unresolved": false
+    },
+    {
+      "definitions": [],
+      "external": false,
       "key": "workduck/workduck.projects.repository-native",
       "location": {
         "declarationLine": null,
@@ -2387,11 +2493,11 @@
   ],
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "9400d6e245b50a27c4a044399e7700fdb6d44de4285f9a58e14991a20cb3120f",
+  "sourceHash": "674f78339d722490c92025fc67088a5178ca78eb142f1f24eca08b99ad692f6a",
   "stats": {
-    "edgeCount": 38,
+    "edgeCount": 44,
     "importedIndexCount": 0,
-    "nodeCount": 83,
+    "nodeCount": 84,
     "unresolvedNodeCount": 0
   }
 }

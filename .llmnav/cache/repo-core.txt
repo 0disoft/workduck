@@ -222,3 +222,9 @@ role Own Queue prompt preview admission, estimates, and selection-scoped async d
 owns preview eligibility, prompt dialog state, request generation, estimate lifetime
 excludes provider execution, execution context loading, execution confirmation consumption
 invariant Only the latest open preview for the captured workspace and selected work order receives an estimate; closing invalidates pending responses.
+
+@workduck.projects.repository-controller
+role Own reactive project repository action state, capability decisions, publish dialogs, and scoped operation context assembly.
+owns repository action admission, repository busy state, publish dialog state, operation feedback ownership
+excludes Git execution, registry persistence, project or group dialogs, scaffold dialog lifetime
+invariant Repository operations capture the registry writer workspace; capability decisions use current repository state, and workspace reset clears action targets and publish busy state.

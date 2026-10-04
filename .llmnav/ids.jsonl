@@ -81,3 +81,4 @@
 {"id":"workduck.queue.presentation","state":"active"}
 {"id":"workduck.queue.file-actions","state":"active"}
 {"id":"workduck.queue.prompt-preview-controller","state":"active"}
+{"id":"workduck.projects.repository-controller","state":"active"}

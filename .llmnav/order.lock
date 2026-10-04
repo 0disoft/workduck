@@ -81,3 +81,4 @@ workduck.queue.folder-contracts
 workduck.queue.presentation
 workduck.queue.file-actions
 workduck.queue.prompt-preview-controller
+workduck.projects.repository-controller
