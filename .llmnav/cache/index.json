@@ -3946,19 +3946,20 @@
         "agent execution"
       ],
       "hashes": {
-        "body": "e83985e1a08c71f3159a0c7428260c1b0c1634dca71d9c2f502ce670d66b9676",
-        "semantic": "c01a6b7f966555d539f14e67b3476b0c6853eb86d32aa7025e8daf632f878ba7",
-        "structure": "31856c29b0410aff50773faf51ab5f509ab11b9028a45c73c6034554d68ac130"
+        "body": "e3fecf1c676f9f18656e62325936a78a355526faddb03c0ba86eb51686707ec8",
+        "semantic": "d372c33567f00c15c5197a1049fb12c72c787a05e74c4170631664e082bc1834",
+        "structure": "f9ac96d7a2a5c33243091a6d6b41dd17c593462e4ca05a0f4d36e6dba8e0239a"
       },
       "id": "workduck.queue.evaluation-delegation-native",
       "imports": [
+        "crate::queue_limits::{QUEUE_FILE_MAX_BYTES, QUEUE_FOLDER_MAX_FILES}",
         "std::{\n        path::PathBuf,\n        time::{SystemTime, UNIX_EPOCH},\n    }",
-        "std::{fs, path::Path}",
+        "std::{fs, io::Read, path::Path}",
         "super::contracts::{QueueFolderError, WORK_ORDER_FILE_SUFFIX, WORK_ORDERS_DIRECTORY_NAME}",
         "tests {\n    use super::*"
       ],
       "invariant": [
-        "A matching evaluator source report may have only one delegation; updating that same file stays allowed."
+        "A matching evaluator source report may have only one delegation; updating that same file stays allowed, and duplicate scans honor Queue file size and count limits."
       ],
       "location": {
         "declarationLine": null,
@@ -3975,6 +3976,7 @@
       },
       "owns": [
         "evaluation delegation identity",
+        "bounded duplicate scan",
         "source report uniqueness",
         "self-update exclusion"
       ],
@@ -4044,6 +4046,6 @@
   "generatedBy": "llmnav@0.9.7",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "0662fd94e771e37fbb9ba5852ac50453ef6f21a03b0cfd6678c6c27fe9b44245",
+  "sourceHash": "5d2d646d35b8020fd0cb049284779e638e5edfe3b0cda7f5a54f36549d34216e",
   "specVersion": "1"
 }

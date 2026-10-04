@@ -69,9 +69,9 @@ invariant Saving captures its workspace and report selection, and late feedback 
 
 @workduck.queue.evaluation-delegation-native
 role Recognize evaluator work orders and reject a second delegation for the same source report.
-owns evaluation delegation identity, source report uniqueness, self-update exclusion
+owns evaluation delegation identity, bounded duplicate scan, source report uniqueness, self-update exclusion
 excludes Queue command responses, general artifact I/O, agent execution
-invariant A matching evaluator source report may have only one delegation; updating that same file stays allowed.
+invariant A matching evaluator source report may have only one delegation; updating that same file stays allowed, and duplicate scans honor Queue file size and count limits.
 
 @workduck.queue.folder-contracts
 role Define native Queue command responses, stable error codes, and known artifact directory and suffix contracts.

@@ -81,7 +81,7 @@
     "workduck.workspace.sync-file-native",
     "workduck.workspace.sync-git-native"
   ],
-  "cardSetHash": "ab8b4d6e3657580e005a9a66b0017adfe2fcb994e51b0d07413ab53101f702d3",
+  "cardSetHash": "afbc8c5873257d78291d8101759bf239da31d3528be3b797436e59ca6cfc9844",
   "documentCount": 80,
   "documents": [
     [
@@ -731,14 +731,15 @@
       ]
     ],
     [
-      "b97e09edca874f8dc7801c0b654933547f7c8dd62ec1a92ef094395f3b034b36",
+      "20b4855824f8570972c3a5f27c1a82f5ed54651f4698154dd9ad71d41f4903d7",
       [
         "recognize evaluator work orders and reject a second delegation for the same source report.",
         "duplicate evaluation delegation",
         "source report evaluator skill",
         "delegation self update",
-        "a matching evaluator source report may have only one delegation; updating that same file stays allowed.",
+        "a matching evaluator source report may have only one delegation; updating that same file stays allowed, and duplicate scans honor queue file size and count limits.",
         "evaluation delegation identity",
+        "bounded duplicate scan",
         "source report uniqueness",
         "self-update exclusion"
       ]
@@ -2386,7 +2387,9 @@
         49,
         [
           1,
-          1
+          1,
+          5,
+          2
         ]
       ],
       [
@@ -3957,6 +3960,13 @@
         ]
       ],
       [
+        49,
+        [
+          3,
+          1
+        ]
+      ],
+      [
         52,
         [
           1,
@@ -6319,6 +6329,13 @@
     ],
     [
       [
+        49,
+        [
+          5,
+          1
+        ]
+      ],
+      [
         55,
         [
           1,
@@ -7624,6 +7641,10 @@
         49,
         [
           2,
+          1,
+          3,
+          1,
+          5,
           1
         ]
       ],
@@ -9486,7 +9507,7 @@
         49,
         [
           5,
-          1
+          2
         ]
       ],
       [
@@ -10980,6 +11001,15 @@
         45,
         [
           1,
+          1
+        ]
+      ]
+    ],
+    [
+      [
+        49,
+        [
+          5,
           1
         ]
       ]
@@ -12925,6 +12955,13 @@
           1,
           3,
           1,
+          5,
+          1
+        ]
+      ],
+      [
+        49,
+        [
           5,
           1
         ]
@@ -18884,6 +18921,8 @@
           1,
           4,
           1,
+          5,
+          1,
           9,
           1
         ]
@@ -22744,6 +22783,13 @@
     ],
     [
       [
+        49,
+        [
+          3,
+          1
+        ]
+      ],
+      [
         60,
         [
           2,
@@ -22756,6 +22802,13 @@
         43,
         [
           4,
+          1
+        ]
+      ],
+      [
+        49,
+        [
+          5,
           1
         ]
       ]
@@ -23857,6 +23910,13 @@
       ]
     ],
     [
+      [
+        49,
+        [
+          5,
+          1
+        ]
+      ],
       [
         55,
         [
@@ -31471,6 +31531,7 @@
     "hierarchy",
     "historical",
     "history",
+    "honor",
     "hosts",
     "http",
     "i",

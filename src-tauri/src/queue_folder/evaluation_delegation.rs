@@ -1,13 +1,15 @@
 // llmnav/1 module
 // id=workduck.queue.evaluation-delegation-native
 // role=Recognize evaluator work orders and reject a second delegation for the same source report.
-// owns=evaluation delegation identity|source report uniqueness|self-update exclusion
+// owns=evaluation delegation identity|bounded duplicate scan|source report uniqueness|self-update exclusion
 // excludes=Queue command responses|general artifact I/O|agent execution
 // search=duplicate evaluation delegation|source report evaluator skill|delegation self update
-// invariant=A matching evaluator source report may have only one delegation; updating that same file stays allowed.
+// invariant=A matching evaluator source report may have only one delegation; updating that same file stays allowed, and duplicate scans honor Queue file size and count limits.
 // stability=architecture
 // /llmnav
-use std::{fs, path::Path};
+use std::{fs, io::Read, path::Path};
+
+use crate::queue_limits::{QUEUE_FILE_MAX_BYTES, QUEUE_FOLDER_MAX_FILES};
 
 use super::contracts::{QueueFolderError, WORK_ORDER_FILE_SUFFIX, WORK_ORDERS_DIRECTORY_NAME};
 
@@ -24,6 +26,7 @@ pub(super) fn ensure_unique_evaluation_delegation(
 
     let work_orders_dir = queue_root.join(WORK_ORDERS_DIRECTORY_NAME);
     let entries = fs::read_dir(&work_orders_dir).map_err(|_| QueueFolderError::FileReadFailed)?;
+    let mut inspected_work_orders = 0;
 
     for entry in entries {
         let entry = entry.map_err(|_| QueueFolderError::FileReadFailed)?;
@@ -41,14 +44,18 @@ pub(super) fn ensure_unique_evaluation_delegation(
             continue;
         }
 
+        inspected_work_orders += 1;
+        if inspected_work_orders > QUEUE_FOLDER_MAX_FILES {
+            return Err(QueueFolderError::FileReadFailed);
+        }
+
         let relative_path = format!("{WORK_ORDERS_DIRECTORY_NAME}/{file_name}");
 
         if current_relative_path == Some(relative_path.as_str()) {
             continue;
         }
 
-        let existing_content =
-            fs::read_to_string(entry.path()).map_err(|_| QueueFolderError::FileReadFailed)?;
+        let existing_content = read_bounded_work_order(&entry.path())?;
 
         if read_evaluation_delegation_source_report_id(&existing_content).as_deref()
             == Some(source_report_id.as_str())
@@ -58,6 +65,26 @@ pub(super) fn ensure_unique_evaluation_delegation(
     }
 
     Ok(())
+}
+
+fn read_bounded_work_order(path: &Path) -> Result<String, QueueFolderError> {
+    let file = fs::File::open(path).map_err(|_| QueueFolderError::FileReadFailed)?;
+    if file
+        .metadata()
+        .map_err(|_| QueueFolderError::FileReadFailed)?
+        .len()
+        > QUEUE_FILE_MAX_BYTES
+    {
+        return Err(QueueFolderError::FileReadFailed);
+    }
+    let mut content = String::new();
+    file.take(QUEUE_FILE_MAX_BYTES + 1)
+        .read_to_string(&mut content)
+        .map_err(|_| QueueFolderError::FileReadFailed)?;
+    if content.len() as u64 > QUEUE_FILE_MAX_BYTES {
+        return Err(QueueFolderError::FileReadFailed);
+    }
+    Ok(content)
 }
 
 fn read_evaluation_delegation_source_report_id(content: &str) -> Option<String> {
@@ -179,6 +206,63 @@ mod tests {
         fs::remove_dir_all(&queue_root).ok();
 
         assert_eq!(result, Ok(()));
+    }
+
+    #[test]
+    fn oversized_existing_work_order_blocks_delegation_update_without_changing_target() {
+        let workspace = tempfile::tempdir().expect("test workspace");
+        let workspace_path = workspace.path().to_string_lossy().into_owned();
+        let initial = "{}";
+        let target_name = "target.workduck-work-order.json";
+        let created = crate::queue_folder::write_queue_work_order_file(
+            workspace_path.clone(),
+            target_name.into(),
+            initial.into(),
+        );
+        assert!(created.ok);
+        let work_orders = workspace
+            .path()
+            .join("queue")
+            .join(WORK_ORDERS_DIRECTORY_NAME);
+        let oversized = fs::File::create(work_orders.join("oversized.workduck-work-order.json"))
+            .expect("oversized work-order fixture");
+        oversized
+            .set_len(QUEUE_FILE_MAX_BYTES + 1)
+            .expect("oversized fixture length");
+        drop(oversized);
+
+        let result = crate::queue_folder::update_queue_work_order_file(
+            workspace_path,
+            format!("{WORK_ORDERS_DIRECTORY_NAME}/{target_name}"),
+            evaluation_delegation_content("source"),
+        );
+
+        assert_eq!(result.error, Some(QueueFolderError::FileReadFailed));
+        assert_eq!(
+            fs::read_to_string(work_orders.join(target_name)).expect("unchanged target"),
+            initial
+        );
+    }
+
+    #[test]
+    fn delegation_scan_stops_at_the_work_order_count_limit() {
+        let queue_root = create_test_queue_root();
+        for index in 0..=QUEUE_FOLDER_MAX_FILES {
+            fs::write(
+                queue_root
+                    .join(WORK_ORDERS_DIRECTORY_NAME)
+                    .join(format!("{index}{WORK_ORDER_FILE_SUFFIX}")),
+                "{}",
+            )
+            .expect("work-order count fixture");
+        }
+        let result = ensure_unique_evaluation_delegation(
+            &queue_root,
+            None,
+            &evaluation_delegation_content("source"),
+        );
+        fs::remove_dir_all(queue_root).expect("count fixture cleanup");
+        assert_eq!(result, Err(QueueFolderError::FileReadFailed));
     }
 
     fn create_test_queue_root() -> PathBuf {

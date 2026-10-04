@@ -4142,10 +4142,11 @@
             ],
             "id": "workduck.queue.evaluation-delegation-native",
             "invariant": [
-              "A matching evaluator source report may have only one delegation; updating that same file stays allowed."
+              "A matching evaluator source report may have only one delegation; updating that same file stays allowed, and duplicate scans honor Queue file size and count limits."
             ],
             "owns": [
               "evaluation delegation identity",
+              "bounded duplicate scan",
               "source report uniqueness",
               "self-update exclusion"
             ],
@@ -4161,7 +4162,7 @@
             "stability": "architecture",
             "unknown": []
           },
-          "end": 576,
+          "end": 659,
           "endLine": 9,
           "entries": [
             {
@@ -4180,7 +4181,7 @@
               "key": "owns",
               "line": 4,
               "order": 2,
-              "value": "evaluation delegation identity|source report uniqueness|self-update exclusion"
+              "value": "evaluation delegation identity|bounded duplicate scan|source report uniqueness|self-update exclusion"
             },
             {
               "key": "excludes",
@@ -4198,7 +4199,7 @@
               "key": "invariant",
               "line": 7,
               "order": 5,
-              "value": "A matching evaluator source report may have only one delegation; updating that same file stays allowed."
+              "value": "A matching evaluator source report may have only one delegation; updating that same file stays allowed, and duplicate scans honor Queue file size and count limits."
             },
             {
               "key": "stability",
@@ -4211,7 +4212,7 @@
           "indent": "",
           "newline": "\n",
           "prefix": "//",
-          "raw": "// llmnav/1 module\n// id=workduck.queue.evaluation-delegation-native\n// role=Recognize evaluator work orders and reject a second delegation for the same source report.\n// owns=evaluation delegation identity|source report uniqueness|self-update exclusion\n// excludes=Queue command responses|general artifact I/O|agent execution\n// search=duplicate evaluation delegation|source report evaluator skill|delegation self update\n// invariant=A matching evaluator source report may have only one delegation; updating that same file stays allowed.\n// stability=architecture\n// /llmnav\n",
+          "raw": "// llmnav/1 module\n// id=workduck.queue.evaluation-delegation-native\n// role=Recognize evaluator work orders and reject a second delegation for the same source report.\n// owns=evaluation delegation identity|bounded duplicate scan|source report uniqueness|self-update exclusion\n// excludes=Queue command responses|general artifact I/O|agent execution\n// search=duplicate evaluation delegation|source report evaluator skill|delegation self update\n// invariant=A matching evaluator source report may have only one delegation; updating that same file stays allowed, and duplicate scans honor Queue file size and count limits.\n// stability=architecture\n// /llmnav\n",
           "scope": "module",
           "specVersion": "1",
           "start": 0,
@@ -4220,19 +4221,20 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "e83985e1a08c71f3159a0c7428260c1b0c1634dca71d9c2f502ce670d66b9676",
+      "contentHash": "e3fecf1c676f9f18656e62325936a78a355526faddb03c0ba86eb51686707ec8",
       "declarations": [
         null
       ],
       "imports": [
+        "crate::queue_limits::{QUEUE_FILE_MAX_BYTES, QUEUE_FOLDER_MAX_FILES}",
         "std::{\n        path::PathBuf,\n        time::{SystemTime, UNIX_EPOCH},\n    }",
-        "std::{fs, path::Path}",
+        "std::{fs, io::Read, path::Path}",
         "super::contracts::{QueueFolderError, WORK_ORDER_FILE_SUFFIX, WORK_ORDERS_DIRECTORY_NAME}",
         "tests {\n    use super::*"
       ],
       "path": "src-tauri/src/queue_folder/evaluation_delegation.rs",
-      "semanticBytes": 576,
-      "sourceBytes": 7240
+      "semanticBytes": 659,
+      "sourceBytes": 10404
     },
     {
       "blocks": [],
