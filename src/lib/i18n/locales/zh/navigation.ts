@@ -17,6 +17,8 @@ export const zhNavigationMessages = {
 	primary: '主工作区',
 	settingsArea: '设置',
 	resizeSidebar: '调整侧边栏大小',
+	search: '快速搜索',
+	configuration: '配置',
 	commandPalette: {
 		title: '搜索 Workduck',
 		placeholder: '搜索项目、仓库、队列、智能体、参考资料、运行记录和制品',

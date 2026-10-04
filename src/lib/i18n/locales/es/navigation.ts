@@ -17,6 +17,8 @@ export const esNavigationMessages = {
 		primary: 'Principal',
 		settingsArea: 'Configuración',
 		resizeSidebar: 'Redimensionar barra lateral',
+		search: 'Búsqueda rápida',
+		configuration: 'Configuración',
 		commandPalette: {
 			title: 'Buscar en Workduck',
 			placeholder: 'Buscar proyectos, repositorios, cola, agentes, referencias, ejecuciones y artefactos',

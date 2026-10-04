@@ -17,6 +17,8 @@ export const hiNavigationMessages = {
 	primary: 'प्राथमिक',
 	settingsArea: 'सेटिंग्स',
 	resizeSidebar: 'साइडबार का आकार बदलें',
+	search: 'त्वरित खोज',
+	configuration: 'कॉन्फ़िगरेशन',
 	commandPalette: {
 		title: 'Workduck में खोजें',
 		placeholder: 'परियोजनाएं, रिपॉजिटरी, कतार, एजेंट, संदर्भ, रन और आर्टिफैक्ट खोजें',

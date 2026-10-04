@@ -30,6 +30,7 @@
 		type CommandPaletteItem,
 		type CommandPaletteItemKind
 	} from './command-palette-index';
+	import { subscribeWorkduckCommandPaletteOpen } from './command-palette-trigger';
 	import './command-palette.css';
 
 	const navigationCommands = [
@@ -99,10 +100,16 @@
 			unlockRevision += 1;
 		});
 
+		const unsubscribeCommandPaletteOpen = subscribeWorkduckCommandPaletteOpen(() => {
+			if (!isOpen) {
+				openPalette();
+			}
+		});
 		return () => {
 			unsubscribeAppearanceSettings();
 			unsubscribeWorkspaceRegistry();
 			unsubscribeWorkspaceUnlocks();
+			unsubscribeCommandPaletteOpen();
 		};
 	});
 

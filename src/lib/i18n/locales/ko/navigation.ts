@@ -17,6 +17,8 @@ export const koNavigationMessages = {
 		primary: '기본 메뉴',
 		settingsArea: '설정',
 		resizeSidebar: '사이드바 너비 조절',
+		search: '빠른 검색',
+		configuration: '구성',
 		commandPalette: {
 			title: 'Workduck 검색',
 			placeholder: '프로젝트, 저장소, 대기열, 에이전트, 참고자료, 실행 기록, 아티팩트 검색',

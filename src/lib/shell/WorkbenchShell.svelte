@@ -50,6 +50,7 @@
 		workspaceRequiresUnlock
 	} from '#lib/workspaces/workspace-unlock.ts';
 	import WorkspaceUnlockForm from '#lib/workspaces/WorkspaceUnlockForm.svelte';
+	import { requestWorkduckCommandPaletteOpen } from '#lib/search/command-palette-trigger.ts';
 
 	import WorkduckMark from '#lib/brand/WorkduckMark.svelte';
 
@@ -89,6 +90,8 @@
 	const primaryNavigationItems = [
 		{ href: '/', labelKey: 'projects', requiresWorkspace: true },
 		{ href: '/queue', labelKey: 'queue', requiresWorkspace: true },
+	] as const;
+	const configurationNavigationItems = [
 		{ href: '/briefs', labelKey: 'briefs', requiresWorkspace: true },
 		{ href: '/references', labelKey: 'references', requiresWorkspace: true },
 		{ href: '/agents', labelKey: 'agents', requiresWorkspace: true },
@@ -96,12 +99,15 @@
 		{ href: '/skills', labelKey: 'skills', requiresWorkspace: true },
 		{ href: '/environment', labelKey: 'environment', requiresWorkspace: true }
 	] as const;
-	type PrimaryNavigationItem = (typeof primaryNavigationItems)[number];
+	type WorkbenchNavigationItem =
+		| (typeof primaryNavigationItems)[number]
+		| (typeof configurationNavigationItems)[number];
 	const settingsNavigationItem = { href: '/settings', labelKey: 'settings' } as const;
 	const QUEUE_PENDING_REFRESH_INTERVAL_MS = 5_000;
 	const QUEUE_PENDING_REFRESH_DEFER_MS = 250;
 	const WORKDUCK_UPDATE_REFRESH_INTERVAL_MS = 6 * 60 * 60 * 1000;
 	const workspaceMenuId = 'workduck-workspace-menu';
+	const configurationSectionId = 'workduck-configuration-section';
 	const primaryNavigationUnavailableDescriptionId =
 		'workduck-primary-navigation-unavailable-description';
 	const workduckVersionLabel = `v${__WORKDUCK_VERSION__}`;
@@ -109,6 +115,7 @@
 	let sidebarWidthPx = $state(SIDEBAR_DEFAULT_WIDTH_PX);
 	let isDesktop = $state(true);
 	let isSidebarOpen = $state(false);
+	let configurationSectionOverride = $state<boolean | null>(null);
 	let isDragging = $state(false);
 	let workspaceRegistry = $state<WorkspaceRegistry>(createEmptyWorkspaceRegistry());
 	let appearanceSettings = $state<AppearanceSettings>(createDefaultAppearanceSettings());
@@ -145,6 +152,18 @@
 	);
 	let activeWorkspaceName = $derived(activeWorkspace?.name ?? messages.navigation.noWorkspace);
 	let appIsLocked = $derived(activeAppOperation !== null);
+	let configurationIsActive = $derived(
+		configurationNavigationItems.some((item) => item.href === page.url.pathname)
+	);
+	let isConfigurationOpen = $derived(configurationSectionOverride ?? configurationIsActive);
+	let lastConfigurationPathname = '';
+	$effect(() => {
+		const pathname = page.url.pathname;
+		if (lastConfigurationPathname !== pathname) {
+			lastConfigurationPathname = pathname;
+			configurationSectionOverride = null;
+		}
+	});
 	let workspaceUnavailableMessage = $derived(
 		hasWorkspaceChoices
 			? messages.navigation.unlockActiveWorkspace
@@ -357,11 +376,11 @@
 		}
 	}
 
-	function canUsePrimaryNavigationItem(item: PrimaryNavigationItem) {
+	function canUsePrimaryNavigationItem(item: WorkbenchNavigationItem) {
 		return !appIsLocked && (!item.requiresWorkspace || activeWorkspaceIsUsable);
 	}
 
-	function getPrimaryNavigationClass(item: PrimaryNavigationItem) {
+	function getPrimaryNavigationClass(item: WorkbenchNavigationItem) {
 		const canUseNavigationItem = canUsePrimaryNavigationItem(item);
 
 		return [
@@ -375,12 +394,25 @@
 			.join(' ');
 	}
 
-	function handlePrimaryNavigationClick(event: MouseEvent, item: PrimaryNavigationItem) {
+	function handlePrimaryNavigationClick(event: MouseEvent, item: WorkbenchNavigationItem) {
 		if (!canUsePrimaryNavigationItem(item)) {
 			event.preventDefault();
 			return;
 		}
 
+		closeSidebarOnMobile();
+	}
+
+	function toggleConfigurationSection() {
+		configurationSectionOverride = !isConfigurationOpen;
+	}
+
+	function handleSearchRequest() {
+		if (appIsLocked) {
+			return;
+		}
+
+		requestWorkduckCommandPaletteOpen('shell');
 		closeSidebarOnMobile();
 	}
 
@@ -423,7 +455,7 @@
 		}, QUEUE_PENDING_REFRESH_DEFER_MS);
 	}
 
-	function getPrimaryNavigationAriaLabel(item: PrimaryNavigationItem) {
+	function getPrimaryNavigationAriaLabel(item: WorkbenchNavigationItem) {
 		const label = messages.navigation[item.labelKey];
 
 		if (item.labelKey !== 'queue' || queuePendingCount === 0) {
@@ -931,35 +963,88 @@
 						{/if}
 					</a>
 				{/each}
+				<div class="workduck-nav-section">
+					<button
+						class="workduck-nav-section-toggle"
+						type="button"
+						aria-expanded={isConfigurationOpen}
+						aria-controls={configurationSectionId}
+						onclick={toggleConfigurationSection}
+					>
+						<span class="workduck-nav-section-label">{messages.navigation.configuration}</span>
+						<span class="workduck-nav-section-hint">{isConfigurationOpen ? messages.common.hide : messages.common.show}</span>
+					</button>
+
+					{#if isConfigurationOpen}
+						<div id={configurationSectionId} class="workduck-nav-section-items">
+							{#each configurationNavigationItems as item}
+								<a
+									class={getPrimaryNavigationClass(item)}
+									href={item.href}
+									aria-current={canUsePrimaryNavigationItem(item) && page.url.pathname === item.href
+										? 'page'
+										: undefined}
+									aria-disabled={!canUsePrimaryNavigationItem(item)}
+									aria-describedby={canUsePrimaryNavigationItem(item)
+										? undefined
+										: primaryNavigationUnavailableDescriptionId}
+									aria-label={getPrimaryNavigationAriaLabel(item)}
+									data-tooltip={canUsePrimaryNavigationItem(item)
+										? messages.navigation[item.labelKey]
+										: navigationUnavailableMessage}
+									onclick={(event) => handlePrimaryNavigationClick(event, item)}
+								>
+									<span class="workduck-nav-dot"></span>
+									<span class="workduck-nav-label">{messages.navigation[item.labelKey]}</span>
+								</a>
+							{/each}
+						</div>
+					{/if}
+				</div>
 			</nav>
 
-			<nav class="workduck-sidebar-footer" aria-label={messages.navigation.settingsArea}>
-				<a
-					class={page.url.pathname === settingsNavigationItem.href && !appIsLocked
-						? 'workduck-nav-link workduck-nav-link-active'
-						: appIsLocked
-							? 'workduck-nav-link workduck-nav-link-disabled'
-							: 'workduck-nav-link'}
-					href={settingsNavigationItem.href}
-					aria-current={page.url.pathname === settingsNavigationItem.href && !appIsLocked
-						? 'page'
-						: undefined}
-					aria-disabled={appIsLocked}
-					aria-label={messages.navigation[settingsNavigationItem.labelKey]}
-					data-tooltip={messages.navigation[settingsNavigationItem.labelKey]}
-					onclick={(event) => {
-						if (appIsLocked) {
-							event.preventDefault();
-							return;
-						}
-
-						closeSidebarOnMobile();
-					}}
+			<div class="workduck-sidebar-footer">
+				<button
+					class="workduck-sidebar-search"
+					type="button"
+					aria-label={messages.navigation.commandPalette.title}
+					aria-keyshortcuts="Control+K Meta+K"
+					disabled={appIsLocked}
+					onclick={handleSearchRequest}
 				>
-					<span class="workduck-nav-dot"></span>
-					<span class="workduck-nav-label">{messages.navigation[settingsNavigationItem.labelKey]}</span>
-				</a>
-			</nav>
+
+					<span class="workduck-sidebar-search-label">{messages.navigation.search}</span>
+					<kbd class="workduck-sidebar-search-kbd">Ctrl+K</kbd>
+				</button>
+
+				<nav aria-label={messages.navigation.settingsArea}>
+					<a
+						class={page.url.pathname === settingsNavigationItem.href && !appIsLocked
+							? 'workduck-nav-link workduck-nav-link-active'
+							: appIsLocked
+								? 'workduck-nav-link workduck-nav-link-disabled'
+								: 'workduck-nav-link'}
+						href={settingsNavigationItem.href}
+						aria-current={page.url.pathname === settingsNavigationItem.href && !appIsLocked
+							? 'page'
+							: undefined}
+						aria-disabled={appIsLocked}
+						aria-label={messages.navigation[settingsNavigationItem.labelKey]}
+						data-tooltip={messages.navigation[settingsNavigationItem.labelKey]}
+						onclick={(event) => {
+							if (appIsLocked) {
+								event.preventDefault();
+								return;
+							}
+
+							closeSidebarOnMobile();
+						}}
+					>
+						<span class="workduck-nav-dot"></span>
+						<span class="workduck-nav-label">{messages.navigation[settingsNavigationItem.labelKey]}</span>
+					</a>
+				</nav>
+			</div>
 		</aside>
 
 		<!-- svelte-ignore a11y_no_noninteractive_tabindex, a11y_no_noninteractive_element_interactions -->
@@ -991,6 +1076,17 @@
 					Menu
 				</button>
 				<span class="workduck-mobile-title">Workduck</span>
+				<button
+					class="workduck-mobile-search"
+					type="button"
+					aria-label={messages.navigation.commandPalette.title}
+					aria-keyshortcuts="Control+K Meta+K"
+					disabled={appIsLocked}
+					onclick={handleSearchRequest}
+				>
+
+					<span class="workduck-mobile-search-label">{messages.navigation.search}</span>
+				</button>
 			</div>
 
 			{@render children()}

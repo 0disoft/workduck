@@ -17,6 +17,8 @@ export const frNavigationMessages = {
 	primary: 'Principal',
 	settingsArea: 'Paramètres',
 	resizeSidebar: 'Redimensionner la barre latérale',
+	search: 'Recherche rapide',
+	configuration: 'Configuration',
 	commandPalette: {
 		title: 'Rechercher dans Workduck',
 		placeholder: 'Rechercher projets, dépôts, file, agents, références, exécutions et artefacts',

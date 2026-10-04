@@ -17,6 +17,8 @@ export const enNavigationMessages = {
 		primary: 'Primary',
 		settingsArea: 'Settings',
 		resizeSidebar: 'Resize sidebar',
+		search: 'Quick search',
+		configuration: 'Configuration',
 		commandPalette: {
 			title: 'Search Workduck',
 			placeholder: 'Search projects, repositories, queue items, agents, references, runs, and artifacts',
