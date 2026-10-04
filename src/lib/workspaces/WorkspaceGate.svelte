@@ -1,5 +1,7 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
 	import { onMount, type Snippet } from 'svelte';
+	import { getTauriInvoke } from '#lib/tauri/tauri-invoke.ts';
 
 	import { getWorkduckMessages } from '#lib/i18n/workduck-language.ts';
 	import {
@@ -21,12 +23,14 @@
 		subscribeWorkspaceRegistry
 	} from './workspace-storage';
 	import {
+		selectWorkspacePath,
 		validateWorkspacePath,
 		type WorkspacePathValidationError
 	} from './workspace-path';
 	import { isWorkspaceUnlocked, subscribeWorkspaceUnlocks } from './workspace-unlock';
 	import WorkspacePathRepairForm from './WorkspacePathRepairForm.svelte';
 	import WorkspaceUnlockForm from './WorkspaceUnlockForm.svelte';
+	import { setWorkspaceRegistrationPath } from './workspace-registration-draft';
 
 	interface Props {
 		readonly children: Snippet;
@@ -42,6 +46,8 @@
 	let workspacePathState = $state<'idle' | 'checking' | 'valid' | 'invalid'>('idle');
 	let workspacePathError = $state<WorkspacePathValidationError | null>(null);
 	let workspacePathCheckRevision = 0;
+	let isChoosingFolder = $state(false);
+	let folderSelectionFailed = $state(false);
 
 	let activeWorkspace = $derived(getActiveWorkspace(registry));
 	let canUseActiveWorkspace = $derived(
@@ -124,6 +130,28 @@
 				return messages.workspace.pathErrors.pathValidationUnavailable;
 		}
 	}
+
+	async function startWorkspaceRegistration() {
+		if (isChoosingFolder) return;
+		folderSelectionFailed = false;
+		if (getTauriInvoke() === undefined) {
+			await goto('/settings?tab=workspaces#workspace-path');
+			return;
+		}
+		isChoosingFolder = true;
+		try {
+			const result = await selectWorkspacePath('');
+			if (!result.ok) {
+				folderSelectionFailed = true;
+				return;
+			}
+			if (result.path === null) return;
+			setWorkspaceRegistrationPath(result.path);
+			await goto('/settings?tab=workspaces#workspace-name');
+		} finally {
+			isChoosingFolder = false;
+		}
+	}
 </script>
 
 {#if !hasLoaded}
@@ -142,7 +170,19 @@
 				<h1 class="workduck-page-title">{title}</h1>
 			</header>
 		{/if}
-		<p class="workduck-empty-state">{messages.workspace.addWorkspaceInSettings}</p>
+		<section class="workduck-onboarding-panel">
+			<h2 class="workduck-section-title">{messages.workspace.firstWorkspaceTitle}</h2>
+			<p>{messages.workspace.firstWorkspaceDescription}</p>
+			<button class="workduck-button workduck-button-primary" type="button"
+				disabled={isChoosingFolder} aria-busy={isChoosingFolder}
+				onclick={() => void startWorkspaceRegistration()}>
+				{messages.workspace.chooseFolder}
+			</button>
+			{#if folderSelectionFailed}
+				<p class="workduck-inline-error" role="alert">{messages.workspace.pathErrors.pathSelectionFailed}</p>
+				<a href="/settings?tab=workspaces#workspace-path">{messages.workspace.addWorkspace}</a>
+			{/if}
+		</section>
 	</div>
 {:else if activeWorkspace !== null && !canUseActiveWorkspace}
 	<div class="workduck-gated-state">

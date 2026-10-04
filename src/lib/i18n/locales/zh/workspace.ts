@@ -6,6 +6,9 @@ export const zhWorkspaceMessages = {
 	path: '路径',
 	reconnect: '重新连接',
 	chooseFolder: '选择工作区文件夹',
+	firstWorkspaceTitle: '先从选择一个文件夹开始。',
+	firstWorkspaceDescription: '先选择文件夹，再设置名称和密码。Git 仓库可以以后再准备。',
+	addWorkspace: '添加工作区',
 	unlock: {
 		submit: '解锁',
 		tryAgainIn: '请在 {seconds} 秒后重试。',

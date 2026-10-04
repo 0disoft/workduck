@@ -6,6 +6,9 @@ export const hiWorkspaceMessages = {
 	path: 'पथ',
 	reconnect: 'पुनः कनेक्ट करें',
 	chooseFolder: 'कार्यक्षेत्र फ़ोल्डर चुनें',
+	firstWorkspaceTitle: 'शुरू करने के लिए पहले एक फ़ोल्डर चुनें।',
+	firstWorkspaceDescription: 'एक फ़ोल्डर चुनें, फिर उसका नाम और पासवर्ड सेट करें। Git रिपॉज़िटरी आप बाद में भी तैयार कर सकते हैं।',
+	addWorkspace: 'कार्यक्षेत्र जोड़ें',
 	unlock: {
 		submit: 'अनलॉक करें',
 		tryAgainIn: '{seconds} सेकंड में पुनः प्रयास करें।',

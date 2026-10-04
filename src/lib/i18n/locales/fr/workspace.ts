@@ -6,6 +6,9 @@ export const frWorkspaceMessages = {
 	path: 'Chemin',
 	reconnect: 'Reconnecter',
 	chooseFolder: 'Choisir le dossier de l\'espace de travail',
+	firstWorkspaceTitle: 'Choisissez d\'abord un dossier pour commencer.',
+	firstWorkspaceDescription: 'Choisissez un dossier, puis définissez son nom et son mot de passe. Vous pourrez préparer le dépôt Git plus tard.',
+	addWorkspace: 'Ajouter un espace de travail',
 	unlock: {
 		submit: 'Déverrouiller',
 		tryAgainIn: 'Réessayez dans {seconds} s.',

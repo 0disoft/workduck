@@ -6,6 +6,9 @@ export const koWorkspaceMessages = {
 		path: '경로',
 		reconnect: '다시 연결',
 		chooseFolder: '워크스페이스 폴더 선택',
+		firstWorkspaceTitle: '작업할 폴더부터 골라보세요.',
+		firstWorkspaceDescription: '폴더를 고른 뒤 이름과 암호를 설정하세요. Git 저장소 준비는 나중에도 할 수 있어요.',
+		addWorkspace: '워크스페이스 추가',
 		unlock: {
 			submit: '잠금 해제',
 			tryAgainIn: '{seconds}초 뒤에 다시 시도하세요.',

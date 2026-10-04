@@ -169,7 +169,7 @@ a {
 
 .workduck-page-title {
 	margin: 0;
-	color: var(--workduck-color-accent);
+	color: var(--workduck-color-text);
 	font-size: var(--workduck-font-size-title);
 	font-weight: 800;
 	line-height: 1.2;
@@ -351,9 +351,44 @@ a {
 
 .workduck-workspace-form {
 	display: grid;
-	grid-template-columns: minmax(140px, 0.55fr) minmax(240px, 1.2fr) minmax(170px, 0.7fr);
-	gap: 10px;
+	grid-template-columns: repeat(2, minmax(0, 1fr));
+	max-width: 760px;
+	gap: 18px;
 	align-items: end;
+}
+
+.workduck-workspace-form > label:has(#workspace-path) {
+	grid-column: 1 / -1;
+}
+
+.workduck-workspace-registration-options {
+	grid-column: 1 / -1;
+	border-top: 1px solid var(--workduck-color-border);
+	padding-top: 14px;
+}
+
+.workduck-workspace-registration-options > summary {
+	color: var(--workduck-color-muted);
+	cursor: pointer;
+	padding: 4px 0;
+}
+
+.workduck-workspace-registration-options[open] > summary {
+	margin-bottom: 12px;
+}
+
+.workduck-onboarding-panel {
+	display: grid;
+	justify-items: start;
+	gap: 18px;
+	max-width: 560px;
+	padding: 56px 0;
+}
+
+.workduck-onboarding-panel > p {
+	margin: 0;
+	color: var(--workduck-color-muted);
+	line-height: 1.7;
 }
 
 .workduck-workspace-repository-options {

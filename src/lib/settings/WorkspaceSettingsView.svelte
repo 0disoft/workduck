@@ -122,20 +122,6 @@
 	aria-label={messages.settings.tabs.workspaces}
 >
 	<form class="workduck-workspace-form" onsubmit={handleWorkspaceSubmit}>
-		<label class="workduck-form-field" for="workspace-name">
-			<span>{messages.common.name}</span>
-			<input
-				id="workspace-name"
-				class="workduck-input"
-				type="text"
-				value={workspaceName}
-				maxlength={WORKSPACE_NAME_MAX_LENGTH}
-				autocomplete="off"
-				oninput={handleWorkspaceNameInput}
-				aria-invalid={formError === 'workspace-name-required'}
-			/>
-		</label>
-
 		<label class="workduck-form-field" for="workspace-path">
 			<span>{messages.workspace.path}</span>
 			<span class="workduck-path-control">
@@ -163,6 +149,20 @@
 			</span>
 		</label>
 
+		<label class="workduck-form-field" for="workspace-name">
+			<span>{messages.common.name}</span>
+			<input
+				id="workspace-name"
+				class="workduck-input"
+				type="text"
+				value={workspaceName}
+				maxlength={WORKSPACE_NAME_MAX_LENGTH}
+				autocomplete="off"
+				oninput={handleWorkspaceNameInput}
+				aria-invalid={formError === 'workspace-name-required'}
+			/>
+		</label>
+
 		<label class="workduck-form-field" for="workspace-password">
 			<span>{messages.common.password}</span>
 			<input
@@ -171,13 +171,14 @@
 				type="password"
 				value={workspacePassword}
 				autocomplete="new-password"
-				oninput={handleWorkspaceNameInput}
+				oninput={handleWorkspacePasswordInput}
 				aria-invalid={formError?.startsWith('workspace-password-') ?? false}
 			/>
 		</label>
 
-		<fieldset class="workduck-workspace-repository-options">
-			<legend>{messages.settings.workspaces.repository.section}</legend>
+		<details class="workduck-workspace-registration-options">
+			<summary>{messages.settings.workspaces.repository.section}</summary>
+		<fieldset class="workduck-workspace-repository-options" aria-label={messages.settings.workspaces.repository.section}>
 			<div
 				class="workduck-workspace-repository-choice"
 				role="group"
@@ -235,6 +236,7 @@
 				</div>
 			{/if}
 		</fieldset>
+		</details>
 
 		<div class="workduck-workspace-add-action">
 			<button

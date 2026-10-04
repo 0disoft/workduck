@@ -6,6 +6,9 @@ export const esWorkspaceMessages = {
 		path: 'Ruta',
 		reconnect: 'Reconectar',
 		chooseFolder: 'Elegir carpeta del espacio de trabajo',
+		firstWorkspaceTitle: 'Elige una carpeta para empezar.',
+		firstWorkspaceDescription: 'Elige una carpeta y luego define su nombre y contraseña. Puedes preparar el repositorio de Git más adelante.',
+		addWorkspace: 'Añadir espacio de trabajo',
 		unlock: {
 			submit: 'Desbloquear',
 			tryAgainIn: 'Inténtelo de nuevo en {seconds} s.',

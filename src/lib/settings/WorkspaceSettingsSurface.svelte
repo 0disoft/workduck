@@ -10,6 +10,7 @@
 		getQueueFolderLocalizedError
 	} from '#lib/queue/queue-panel-errors.ts';
 	import {
+		WORKSPACE_NAME_MAX_LENGTH,
 		addWorkspace,
 		createEmptyWorkspaceRegistry,
 		removeWorkspace,
@@ -32,6 +33,7 @@
 		validateWorkspacePath
 	} from '#lib/workspaces/workspace-path.ts';
 	import { formatWorkspacePathForDisplay } from '#lib/workspaces/workspace-path-format.ts';
+	import { suggestWorkspaceName, takeWorkspaceRegistrationPath } from '#lib/workspaces/workspace-registration-draft.ts';
 	import {
 		setupWorkspaceRepository,
 		type WorkspaceRepositorySetupError
@@ -86,7 +88,7 @@
 	let workspacePath = $state('');
 	let workspacePathDisplay = $state('');
 	let workspacePassword = $state('');
-	let workspaceRepositoryChoice = $state<WorkspaceRepositoryChoice | null>(null);
+	let workspaceRepositoryChoice = $state<WorkspaceRepositoryChoice | null>('no');
 	let initializeWorkspaceGit = $state(true);
 	let installWorkspaceGitignore = $state(true);
 	let workspaceUnlockId = $state<string | null>(null);
@@ -525,6 +527,9 @@
 			if (result.path !== null) {
 				workspacePath = result.path;
 				workspacePathDisplay = formatWorkspacePathForDisplay(result.path);
+				if (workspaceName.trim().length === 0) {
+					workspaceName = suggestWorkspaceName(result.path).slice(0, WORKSPACE_NAME_MAX_LENGTH);
+				}
 			}
 		} finally {
 			isSelectingWorkspacePath = false;
@@ -603,7 +608,7 @@
 				workspacePath = '';
 				workspacePathDisplay = '';
 				workspacePassword = '';
-				workspaceRepositoryChoice = null;
+				workspaceRepositoryChoice = 'no';
 			}
 		} finally {
 			isAddingWorkspace = false;
@@ -1072,6 +1077,12 @@
 	onMount(() => {
 		appearanceSettings = readAppearanceSettingsFromBrowser().settings;
 		readRegistryFromStorage();
+		const registrationPath = takeWorkspaceRegistrationPath();
+		if (registrationPath !== null) {
+			workspacePath = registrationPath;
+			workspacePathDisplay = formatWorkspacePathForDisplay(registrationPath);
+			workspaceName = suggestWorkspaceName(registrationPath).slice(0, WORKSPACE_NAME_MAX_LENGTH);
+		}
 		const unsubscribeAppearanceSettings = subscribeAppearanceSettings((nextSettings) => {
 			appearanceSettings = nextSettings;
 		});

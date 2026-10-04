@@ -6,6 +6,9 @@ export const enWorkspaceMessages = {
 		path: 'Path',
 		reconnect: 'Reconnect',
 		chooseFolder: 'Choose workspace folder',
+		firstWorkspaceTitle: 'Choose a folder to start.',
+		firstWorkspaceDescription: 'Choose a folder, then set its name and password. You can prepare the Git repository later.',
+		addWorkspace: 'Add workspace',
 		unlock: {
 			submit: 'Unlock',
 			tryAgainIn: 'Try again in {seconds}s.',
