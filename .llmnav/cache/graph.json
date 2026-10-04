@@ -43,6 +43,20 @@
       "to": "workduck/workduck.briefs.registry"
     },
     {
+      "confidence": 0.85,
+      "from": "workduck/workduck.environment.vault-session",
+      "id": "6216cf11bb42d19cc755f5793701125fb87204e747552be2c1972d060d01a080",
+      "kind": "imports",
+      "provenance": {
+        "generator": "llmnav",
+        "line": null,
+        "path": "src/lib/environment/environment-vault-session.ts",
+        "source": "src/lib/environment/environment-vault-session.ts",
+        "type": "local-import"
+      },
+      "to": "workduck/workduck.secret-vault.crypto"
+    },
+    {
       "confidence": 1,
       "from": "workduck/workduck.mcp.server",
       "id": "e2dae8edc1b0dc16dc24093380afff2fd51ff1deaa039b00387ff4a4879b9b7e",
@@ -699,6 +713,28 @@
     {
       "definitions": [],
       "external": false,
+      "key": "workduck/workduck.app-state.storage",
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src/lib/app-state/app-state-storage.ts",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "repositoryId": "workduck",
+      "role": "Persist application settings through a renderer crash journal, native SQLite promotion, and browser fallback.",
+      "semanticId": "workduck.app-state.storage",
+      "unresolved": false
+    },
+    {
+      "definitions": [],
+      "external": false,
       "key": "workduck/workduck.briefs.gate",
       "location": {
         "declarationLine": null,
@@ -936,6 +972,28 @@
       "repositoryId": "workduck",
       "role": "Apply an explicit set of CLI environment variables through Tauri and normalize native validation or write failures.",
       "semanticId": "workduck.environment.cli",
+      "unresolved": false
+    },
+    {
+      "definitions": [],
+      "external": false,
+      "key": "workduck/workduck.environment.vault-session",
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src/lib/environment/environment-vault-session.ts",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "repositoryId": "workduck",
+      "role": "Project native environment vault sessions into workspace metadata subscriptions and coordinate explicit secret access and locking.",
+      "semanticId": "workduck.environment.vault-session",
       "unresolved": false
     },
     {
@@ -2119,6 +2177,28 @@
     {
       "definitions": [],
       "external": false,
+      "key": "workduck/workduck.secret-vault.session-native",
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src-tauri/src/secret_vault_session.rs",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "repositoryId": "workduck",
+      "role": "Own native workspace vault sessions, secret mutation, and generation-bound opaque reference resolution.",
+      "semanticId": "workduck.secret-vault.session-native",
+      "unresolved": false
+    },
+    {
+      "definitions": [],
+      "external": false,
       "key": "workduck/workduck.skills.defaults",
       "location": {
         "declarationLine": null,
@@ -2493,11 +2573,11 @@
   ],
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "674f78339d722490c92025fc67088a5178ca78eb142f1f24eca08b99ad692f6a",
+  "sourceHash": "420c8f32d2a598fc381d2bdfbac903ae4473d05c9b23ec602aac01330fba55b5",
   "stats": {
-    "edgeCount": 44,
+    "edgeCount": 45,
     "importedIndexCount": 0,
-    "nodeCount": 84,
+    "nodeCount": 87,
     "unresolvedNodeCount": 0
   }
 }

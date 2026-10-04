@@ -4259,11 +4259,164 @@
         "repository capability decisions"
       ],
       "stability": "architecture"
+    },
+    {
+      "boundaries": [],
+      "excludes": [
+        "setting domain validation",
+        "native SQLite implementation",
+        "workspace project registries"
+      ],
+      "hashes": {
+        "body": "3b1d257c82bb3f62c827af9e1e418e1656e5c7be4e1cc2f11112b80b5a69873d",
+        "semantic": "31522362403923a8f733ab5d41ccf8595b5b1bb724b58b75c708bca80a32a7f9",
+        "structure": "1e222539a41b7ca433d629c18afe33696257ba4d1b463345be92338d6504c960"
+      },
+      "id": "workduck.app-state.storage",
+      "imports": [
+        "#lib/shared/object-record.ts",
+        "#lib/tauri/tauri-invoke.ts"
+      ],
+      "invariant": [
+        "Renderer writes acknowledge journaling before native persistence; a successful flush removes only journal entries that still match the committed snapshot."
+      ],
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src/lib/app-state/app-state-storage.ts",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "owns": [
+        "app state backend selection",
+        "legacy setting promotion",
+        "pending write journal",
+        "serialized flush",
+        "cached setting values"
+      ],
+      "role": "Persist application settings through a renderer crash journal, native SQLite promotion, and browser fallback.",
+      "scope": "module",
+      "search": [
+        "app state crash journal",
+        "settings SQLite promotion",
+        "pending setting flush"
+      ],
+      "stability": "architecture"
+    },
+    {
+      "boundaries": [],
+      "excludes": [
+        "secret encryption",
+        "native session storage",
+        "environment vault disk persistence"
+      ],
+      "hashes": {
+        "body": "c28bb27cb1da72eb70ed66780db02063635a639332db6ed7e939a4efd28da1de",
+        "semantic": "06086711c33702893e743049ed63d54636b3d38cb0c0791e05a402b08d072b3d",
+        "structure": "e403a933f2548191e344a04506d5e63c73d7decc09d16910d03c4b09e669d909"
+      },
+      "id": "workduck.environment.vault-session",
+      "imports": [
+        "#lib/tauri/tauri-invoke.ts",
+        "#lib/workspaces/workspace-unlock.ts",
+        "./environment-vault",
+        "./secret-vault-crypto"
+      ],
+      "invariant": [
+        "Cached vault views accept only native managed opaque secret references; workspace lock publication waits for native session revocation to succeed."
+      ],
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src/lib/environment/environment-vault-session.ts",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "owns": [
+        "native vault metadata cache",
+        "workspace session subscriptions",
+        "vault command normalization",
+        "idle session locking"
+      ],
+      "role": "Project native environment vault sessions into workspace metadata subscriptions and coordinate explicit secret access and locking.",
+      "scope": "module",
+      "search": [
+        "environment vault session metadata",
+        "idle workspace vault lock",
+        "explicit secret value read"
+      ],
+      "stability": "architecture"
+    },
+    {
+      "boundaries": [],
+      "excludes": [
+        "encrypted envelope format",
+        "vault disk persistence",
+        "renderer workspace lock policy"
+      ],
+      "hashes": {
+        "body": "f0de557cd1a8cbe421faa95413837c7016aed4ce17ca8878b76624d5c3fef1be",
+        "semantic": "1283b8bd9abfff5e56d7d700942d316925d210bd304f2fc3f1ce3191eea09a3c",
+        "structure": "b7a279a7500ceeeb4923bf670fa2229f3809840def7e649206fa94b96b6a6bd0"
+      },
+      "id": "workduck.secret-vault.session-native",
+      "imports": [
+        "base64::{Engine as _, engine::general_purpose::URL_SAFE_NO_PAD}",
+        "crate::secret_vault_crypto::{\n    SecretVaultEnvelope, decrypt_secret_vault_payload, encrypt_secret_vault_payload,\n}",
+        "serde::Serializer",
+        "std::{\n    collections::{HashMap, HashSet},\n    sync::{OnceLock, RwLock},\n}",
+        "tests {\n    use super::*",
+        "time::{OffsetDateTime, format_description::well_known::Rfc3339}",
+        "zeroize::{Zeroize, Zeroizing}"
+      ],
+      "invariant": [
+        "Metadata views serialize opaque references; reserved references resolve only in the matching live session generation, and closing drops the zeroized session payload."
+      ],
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src-tauri/src/secret_vault_session.rs",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "owns": [
+        "native vault session lifetime",
+        "zeroized secret payloads",
+        "secret metadata views",
+        "opaque reference generations",
+        "explicit secret reads"
+      ],
+      "role": "Own native workspace vault sessions, secret mutation, and generation-bound opaque reference resolution.",
+      "scope": "module",
+      "search": [
+        "native vault session close",
+        "opaque secret reference generation",
+        "native secret mutation"
+      ],
+      "stability": "architecture"
     }
   ],
   "contractFingerprints": {
     "configuration": {
-      "sha256": "31e0c37a51afc38ce3895f77ca9dfbd9f533e7fa16df991b593220a800512666"
+      "sha256": "0c85b0a3bc138207ef24fb830ed9b43090aac4e0bf981264b11b76c6fea548f0"
     },
     "exportedApi": {
       "count": 0,
@@ -4274,6 +4427,6 @@
   "generatedBy": "llmnav@0.9.7",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "015382b55ac5dc513c5e59fbdbe2b0abe70e85a6778635568026c6b2276c32dc",
+  "sourceHash": "528362e10d985fb96db762339fe72d9f2aba462ee5c119b254334dce73ad0b71",
   "specVersion": "1"
 }

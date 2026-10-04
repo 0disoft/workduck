@@ -358,6 +358,19 @@
         "invariant"
       ],
       "scope": "module"
+    },
+    {
+      "match": [
+        "src/lib/app-state/app-state-storage.ts",
+        "src/lib/environment/environment-vault-session.ts",
+        "src-tauri/src/secret_vault_session.rs"
+      ],
+      "name": "app state persistence and environment vault session lifetimes",
+      "requiredFields": [
+        "owns",
+        "invariant"
+      ],
+      "scope": "module"
     }
   ],
   "audit": {

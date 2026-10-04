@@ -82,3 +82,6 @@
 {"id":"workduck.queue.file-actions","state":"active"}
 {"id":"workduck.queue.prompt-preview-controller","state":"active"}
 {"id":"workduck.projects.repository-controller","state":"active"}
+{"id":"workduck.secret-vault.session-native","state":"active"}
+{"id":"workduck.app-state.storage","state":"active"}
+{"id":"workduck.environment.vault-session","state":"active"}

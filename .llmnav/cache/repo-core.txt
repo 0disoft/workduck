@@ -228,3 +228,21 @@ role Own reactive project repository action state, capability decisions, publish
 owns repository action admission, repository busy state, publish dialog state, operation feedback ownership
 excludes Git execution, registry persistence, project or group dialogs, scaffold dialog lifetime
 invariant Repository operations and favorite-save feedback stay in the captured registry writer workspace; capability decisions use current state, and workspace reset clears action targets and publish busy state.
+
+@workduck.app-state.storage
+role Persist application settings through a renderer crash journal, native SQLite promotion, and browser fallback.
+owns app state backend selection, legacy setting promotion, pending write journal, serialized flush, cached setting values
+excludes setting domain validation, native SQLite implementation, workspace project registries
+invariant Renderer writes acknowledge journaling before native persistence; a successful flush removes only journal entries that still match the committed snapshot.
+
+@workduck.environment.vault-session
+role Project native environment vault sessions into workspace metadata subscriptions and coordinate explicit secret access and locking.
+owns native vault metadata cache, workspace session subscriptions, vault command normalization, idle session locking
+excludes secret encryption, native session storage, environment vault disk persistence
+invariant Cached vault views accept only native managed opaque secret references; workspace lock publication waits for native session revocation to succeed.
+
+@workduck.secret-vault.session-native
+role Own native workspace vault sessions, secret mutation, and generation-bound opaque reference resolution.
+owns native vault session lifetime, zeroized secret payloads, secret metadata views, opaque reference generations, explicit secret reads
+excludes encrypted envelope format, vault disk persistence, renderer workspace lock policy
+invariant Metadata views serialize opaque references; reserved references resolve only in the matching live session generation, and closing drops the zeroized session payload.

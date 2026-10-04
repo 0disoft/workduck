@@ -1,3 +1,12 @@
+/* llmnav/1 module
+id=workduck.environment.vault-session
+role=Project native environment vault sessions into workspace metadata subscriptions and coordinate explicit secret access and locking.
+owns=native vault metadata cache|workspace session subscriptions|vault command normalization|idle session locking
+excludes=secret encryption|native session storage|environment vault disk persistence
+search=environment vault session metadata|idle workspace vault lock|explicit secret value read
+invariant=Cached vault views accept only native managed opaque secret references; workspace lock publication waits for native session revocation to succeed.
+stability=architecture
+*/
 import { getTauriInvoke } from '#lib/tauri/tauri-invoke.ts';
 import {
 	markWorkspaceLocked,

@@ -1,3 +1,12 @@
+/* llmnav/1 module
+id=workduck.app-state.storage
+role=Persist application settings through a renderer crash journal, native SQLite promotion, and browser fallback.
+owns=app state backend selection|legacy setting promotion|pending write journal|serialized flush|cached setting values
+excludes=setting domain validation|native SQLite implementation|workspace project registries
+search=app state crash journal|settings SQLite promotion|pending setting flush
+invariant=Renderer writes acknowledge journaling before native persistence; a successful flush removes only journal entries that still match the committed snapshot.
+stability=architecture
+*/
 import { isObjectRecord } from '#lib/shared/object-record.ts';
 import { getTauriInvoke } from '#lib/tauri/tauri-invoke.ts';
 

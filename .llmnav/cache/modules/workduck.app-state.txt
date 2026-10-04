@@ -1,0 +1,8 @@
+llmnav-catalog/1 repository=workduck catalog=workduck.app-state
+Read semantic cards before opening source. Resolve current paths and signatures with llmnav query or show.
+
+@workduck.app-state.storage
+role Persist application settings through a renderer crash journal, native SQLite promotion, and browser fallback.
+owns app state backend selection, legacy setting promotion, pending write journal, serialized flush, cached setting values
+excludes setting domain validation, native SQLite implementation, workspace project registries
+invariant Renderer writes acknowledge journaling before native persistence; a successful flush removes only journal entries that still match the committed snapshot.

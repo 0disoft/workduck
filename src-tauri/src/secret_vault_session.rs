@@ -1,3 +1,12 @@
+/* llmnav/1 module
+id=workduck.secret-vault.session-native
+role=Own native workspace vault sessions, secret mutation, and generation-bound opaque reference resolution.
+owns=native vault session lifetime|zeroized secret payloads|secret metadata views|opaque reference generations|explicit secret reads
+excludes=encrypted envelope format|vault disk persistence|renderer workspace lock policy
+search=native vault session close|opaque secret reference generation|native secret mutation
+invariant=Metadata views serialize opaque references; reserved references resolve only in the matching live session generation, and closing drops the zeroized session payload.
+stability=architecture
+*/
 use std::{
     collections::{HashMap, HashSet},
     sync::{OnceLock, RwLock},
