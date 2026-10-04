@@ -26,10 +26,10 @@ excludes native filesystem validation, workspace registry persistence
 invariant Validation succeeds only when the native boundary returns a non-empty normalized path; unavailable or malformed responses fail closed.
 
 @workduck.workspace.repository-setup
-role Initialize a workspace repository layout, Git, Mustflow, managed work-order instructions, and Workduck ignore policy through bounded native steps.
-owns workspace repository bootstrap, managed AGENTS block, Mustflow package setup
+role Initialize a workspace repository layout, Git, managed work-order instructions, and Workduck ignore policy through bounded native steps.
+owns workspace repository bootstrap, managed AGENTS block
 excludes project repository creation, workspace registry data
-invariant Managed instructions remain single-copy and any protected AGENTS change refreshes its existing manifest-lock entry.
+invariant Managed instructions remain single-copy and preserve surrounding repository instructions.
 
 @workduck.workspace.sync-file-client
 role Normalize workspace sync-file names and expose closed Tauri read and write results to the frontend.

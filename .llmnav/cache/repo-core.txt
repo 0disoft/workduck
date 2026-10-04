@@ -98,10 +98,10 @@ excludes Queue response contracts, evaluation delegation policy, agent execution
 invariant Only known Queue child directories and file suffixes are addressable; artifact writes and deletes share the workspace lock, and create operations never overwrite an existing artifact.
 
 @workduck.workspace.repository-setup
-role Initialize a workspace repository layout, Git, Mustflow, managed work-order instructions, and Workduck ignore policy through bounded native steps.
-owns workspace repository bootstrap, managed AGENTS block, Mustflow package setup
+role Initialize a workspace repository layout, Git, managed work-order instructions, and Workduck ignore policy through bounded native steps.
+owns workspace repository bootstrap, managed AGENTS block
 excludes project repository creation, workspace registry data
-invariant Managed instructions remain single-copy and any protected AGENTS change refreshes its existing manifest-lock entry.
+invariant Managed instructions remain single-copy and preserve surrounding repository instructions.
 
 @workduck.projects.board-selection
 role Precompute project-board search and filter indexes and derive visible project, group, and repository selections.

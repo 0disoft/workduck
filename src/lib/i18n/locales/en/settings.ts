@@ -36,7 +36,6 @@ export const enSettingsMessages = {
 				private: 'Private',
 				public: 'Public',
 				initializeGit: 'Initialize Git repository',
-				installMustflow: 'Install mustflow',
 				installGitignore: 'Install Workduck .gitignore',
 				gitReady: 'Git ready',
 				remoteReady: 'Remote ready',
@@ -78,10 +77,6 @@ export const enSettingsMessages = {
 				repositoryGitUnavailable: 'Git is not available.',
 				repositoryGitTimedOut: 'Git initialization timed out.',
 				repositoryGitInitFailed: 'Git repository could not be initialized.',
-				repositoryMustflowUnavailable: 'mustflow command is not available.',
-				repositoryMustflowTimedOut: 'mustflow installation timed out.',
-				repositoryMustflowFailed: 'mustflow installation failed.',
-				repositoryMustflowPackageFailed: 'mustflow package metadata could not be prepared.',
 				repositoryAgentInstructionsFailed: 'Agent work-order instructions could not be prepared.',
 				repositoryGitignoreFailed: '.gitignore could not be prepared.',
 				repositoryUnavailable: 'Workspace repository setup is available in the desktop app.',
@@ -126,7 +121,7 @@ export const enSettingsMessages = {
 			tooltips: {
 				unlock: 'Enter this workspace password to make it available on this device.',
 				prepareRepository:
-					'Prepare Git, mustflow, and the Workduck .gitignore in this workspace.',
+					'Prepare Git and the Workduck .gitignore in this workspace.',
 				publishRepository: 'Publish this workspace repository to GitHub for the first time.',
 				fetchRepository: 'Check remote changes for this workspace repository.',
 				pullRepository: 'Pull remote workspace changes into this folder.',

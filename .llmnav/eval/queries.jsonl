@@ -34,7 +34,7 @@
 {"query":"discover toolchain commands launch native repository tasks and reconcile running records","expected":["workduck.projects.repository-task-native"]}
 {"query":"coordinate native multi-agent Queue execution with confirmation permits and result reports","expected":["workduck.queue.execution-native"]}
 {"query":"enforce native Queue file path size count and exclusive write boundaries","expected":["workduck.queue.folder-native"]}
-{"query":"initialize workspace layout Git Mustflow managed work-order instructions and ignore policy","expected":["workduck.workspace.repository-setup"]}
+{"query":"initialize workspace layout Git managed work-order instructions and ignore policy","expected":["workduck.workspace.repository-setup"]}
 {"query":"serialize workspace sync Git operations per folder and reject unsafe credential-bearing remotes","expected":["workduck.workspace.sync-git-native"]}
 {"query":"open the workspace directory picker and validate its path through Tauri","expected":["workduck.workspace.path-client"]}
 {"query":"atomically update workspace registry files with revision checks paired commits and crash recovery","expected":["workduck.workspace.data-files"]}

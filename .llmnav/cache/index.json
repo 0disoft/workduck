@@ -1819,25 +1819,24 @@
         "workspace registry data"
       ],
       "hashes": {
-        "body": "3071f4abf32373e98ece979e817eb7dea750f530be63d389b542d0a504064494",
-        "semantic": "819a085db05d2905924ce9bd476bee92cbf40bd09504cd921362f81632c37b92",
-        "structure": "5adae309e1ed0ddec16c162b2e8363fa009e9067414df1c2d00a8b190c02641f"
+        "body": "0912831af046f297fa953f14ba35f7a0ab4879f3fd872f15105bbebdf315ab39",
+        "semantic": "b1aa61ebc7a2ead11f1305b7227d5a1bf77ce1bb1d87b612b598b33d94802fb6",
+        "structure": "79bbe1b094c1f63de0b80d1f831be312f554c561061209d45321bf982927e769"
       },
       "id": "workduck.workspace.repository-setup",
       "imports": [
         "crate::git_path::{GitProcessError, wait_for_child_output}",
         "crate::path_display::display_path",
         "crate::process_tree::ProcessTreeChild",
-        "crate::workspace_path::{validate_absolute_directory_path, WorkspacePathValidationError}",
+        "crate::workspace_path::{WorkspacePathValidationError, validate_absolute_directory_path}",
         "crate::workspace_repository_gitignore::ensure_workduck_gitignore as ensure_workduck_gitignore_policy",
-        "sha2::{Digest, Sha256}",
         "std::os::windows::process::CommandExt",
         "std::time::{SystemTime, UNIX_EPOCH}",
         "std::{\n    fs, io,\n    path::{Path, PathBuf},\n    process::{Command, Output, Stdio},\n    time::Duration,\n}",
         "tests {\n    use super::*"
       ],
       "invariant": [
-        "Managed instructions remain single-copy and any protected AGENTS change refreshes its existing manifest-lock entry."
+        "Managed instructions remain single-copy and preserve surrounding repository instructions."
       ],
       "location": {
         "declarationLine": null,
@@ -1854,14 +1853,12 @@
       },
       "owns": [
         "workspace repository bootstrap",
-        "managed AGENTS block",
-        "Mustflow package setup"
+        "managed AGENTS block"
       ],
-      "role": "Initialize a workspace repository layout, Git, Mustflow, managed work-order instructions, and Workduck ignore policy through bounded native steps.",
+      "role": "Initialize a workspace repository layout, Git, managed work-order instructions, and Workduck ignore policy through bounded native steps.",
       "scope": "module",
       "search": [
         "setup workspace repository",
-        "install Mustflow workspace",
         "managed work order instructions"
       ],
       "stability": "architecture"
@@ -4427,6 +4424,6 @@
   "generatedBy": "llmnav@0.9.7",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "528362e10d985fb96db762339fe72d9f2aba462ee5c119b254334dce73ad0b71",
+  "sourceHash": "9484eae19c69b5eb051f87febad0f36285b24d1432cfe836f9b8d3c86220e0bc",
   "specVersion": "1"
 }

@@ -29,7 +29,6 @@
 	let workspacePassword = $derived(model.workspacePassword);
 	let workspaceRepositoryChoice = $derived(model.workspaceRepositoryChoice);
 	let initializeWorkspaceGit = $derived(model.initializeWorkspaceGit);
-	let installWorkspaceMustflow = $derived(model.installWorkspaceMustflow);
 	let installWorkspaceGitignore = $derived(model.installWorkspaceGitignore);
 	let useWorkspaceAsRepository = $derived(model.useWorkspaceAsRepository);
 	let canSelectWorkspacePath = $derived(model.canSelectWorkspacePath);
@@ -49,7 +48,6 @@
 	let workspacePathRepairId = $derived(model.workspacePathRepairId);
 	let workspaceRepositorySetupCandidate = $derived(model.workspaceRepositorySetupCandidate);
 	let prepareWorkspaceGit = $derived(model.prepareWorkspaceGit);
-	let prepareWorkspaceMustflow = $derived(model.prepareWorkspaceMustflow);
 	let prepareWorkspaceGitignore = $derived(model.prepareWorkspaceGitignore);
 	let isPreparingWorkspaceRepository = $derived(model.isPreparingWorkspaceRepository);
 	let workspaceRepositoryPublishCandidate = $derived(model.workspaceRepositoryPublishCandidate);
@@ -73,7 +71,6 @@
 		handleWorkspaceSubmit,
 		selectWorkspaceRepositoryChoice,
 		setInitializeWorkspaceGit,
-		setInstallWorkspaceMustflow,
 		setInstallWorkspaceGitignore,
 		getWorkspaceRepositoryGitStatus,
 		workspaceIsActive,
@@ -101,7 +98,6 @@
 		handleWorkspaceRemove,
 		clearWorkspaceRepositorySetup,
 		setPrepareWorkspaceGit,
-		setPrepareWorkspaceMustflow,
 		setPrepareWorkspaceGitignore,
 		confirmWorkspaceRepositorySetup,
 		handleWorkspaceRepositorySetupBackdropClick,
@@ -222,18 +218,6 @@
 							type="checkbox"
 							checked={initializeWorkspaceGit}
 							onchange={(event) => setInitializeWorkspaceGit(event.currentTarget.checked)}
-						/>
-					</label>
-					<label class="workduck-toggle-field" for="workspace-install-mustflow">
-						<span class="workduck-toggle-label">
-							{messages.settings.workspaces.repository.installMustflow}
-						</span>
-						<input
-							id="workspace-install-mustflow"
-							class="workduck-checkbox"
-							type="checkbox"
-							checked={installWorkspaceMustflow}
-							onchange={(event) => setInstallWorkspaceMustflow(event.currentTarget.checked)}
 						/>
 					</label>
 					<label class="workduck-toggle-field" for="workspace-install-gitignore">
@@ -590,19 +574,6 @@
 							type="checkbox"
 							checked={prepareWorkspaceGit}
 							onchange={(event) => setPrepareWorkspaceGit(event.currentTarget.checked)}
-							disabled={isPreparingWorkspaceRepository}
-						/>
-					</label>
-					<label class="workduck-toggle-field" for="prepare-workspace-mustflow">
-						<span class="workduck-toggle-label">
-							{messages.settings.workspaces.repository.installMustflow}
-						</span>
-						<input
-							id="prepare-workspace-mustflow"
-							class="workduck-checkbox"
-							type="checkbox"
-							checked={prepareWorkspaceMustflow}
-							onchange={(event) => setPrepareWorkspaceMustflow(event.currentTarget.checked)}
 							disabled={isPreparingWorkspaceRepository}
 						/>
 					</label>

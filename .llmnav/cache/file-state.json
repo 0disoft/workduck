@@ -5173,26 +5173,24 @@
             ],
             "id": "workduck.workspace.repository-setup",
             "invariant": [
-              "Managed instructions remain single-copy and any protected AGENTS change refreshes its existing manifest-lock entry."
+              "Managed instructions remain single-copy and preserve surrounding repository instructions."
             ],
             "owns": [
               "workspace repository bootstrap",
-              "managed AGENTS block",
-              "Mustflow package setup"
+              "managed AGENTS block"
             ],
             "rel": [],
             "risk": [],
-            "role": "Initialize a workspace repository layout, Git, Mustflow, managed work-order instructions, and Workduck ignore policy through bounded native steps.",
+            "role": "Initialize a workspace repository layout, Git, managed work-order instructions, and Workduck ignore policy through bounded native steps.",
             "scope": "module",
             "search": [
               "setup workspace repository",
-              "install Mustflow workspace",
               "managed work order instructions"
             ],
             "stability": "architecture",
             "unknown": []
           },
-          "end": 625,
+          "end": 539,
           "endLine": 9,
           "entries": [
             {
@@ -5205,13 +5203,13 @@
               "key": "role",
               "line": 3,
               "order": 1,
-              "value": "Initialize a workspace repository layout, Git, Mustflow, managed work-order instructions, and Workduck ignore policy through bounded native steps."
+              "value": "Initialize a workspace repository layout, Git, managed work-order instructions, and Workduck ignore policy through bounded native steps."
             },
             {
               "key": "owns",
               "line": 4,
               "order": 2,
-              "value": "workspace repository bootstrap|managed AGENTS block|Mustflow package setup"
+              "value": "workspace repository bootstrap|managed AGENTS block"
             },
             {
               "key": "excludes",
@@ -5223,13 +5221,13 @@
               "key": "search",
               "line": 6,
               "order": 4,
-              "value": "setup workspace repository|install Mustflow workspace|managed work order instructions"
+              "value": "setup workspace repository|managed work order instructions"
             },
             {
               "key": "invariant",
               "line": 7,
               "order": 5,
-              "value": "Managed instructions remain single-copy and any protected AGENTS change refreshes its existing manifest-lock entry."
+              "value": "Managed instructions remain single-copy and preserve surrounding repository instructions."
             },
             {
               "key": "stability",
@@ -5242,7 +5240,7 @@
           "indent": "",
           "newline": "\n",
           "prefix": "//",
-          "raw": "// llmnav/1 module\n// id=workduck.workspace.repository-setup\n// role=Initialize a workspace repository layout, Git, Mustflow, managed work-order instructions, and Workduck ignore policy through bounded native steps.\n// owns=workspace repository bootstrap|managed AGENTS block|Mustflow package setup\n// excludes=project repository creation|workspace registry data\n// search=setup workspace repository|install Mustflow workspace|managed work order instructions\n// invariant=Managed instructions remain single-copy and any protected AGENTS change refreshes its existing manifest-lock entry.\n// stability=architecture\n// /llmnav\n",
+          "raw": "// llmnav/1 module\n// id=workduck.workspace.repository-setup\n// role=Initialize a workspace repository layout, Git, managed work-order instructions, and Workduck ignore policy through bounded native steps.\n// owns=workspace repository bootstrap|managed AGENTS block\n// excludes=project repository creation|workspace registry data\n// search=setup workspace repository|managed work order instructions\n// invariant=Managed instructions remain single-copy and preserve surrounding repository instructions.\n// stability=architecture\n// /llmnav\n",
           "scope": "module",
           "specVersion": "1",
           "start": 0,
@@ -5251,7 +5249,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "3071f4abf32373e98ece979e817eb7dea750f530be63d389b542d0a504064494",
+      "contentHash": "0912831af046f297fa953f14ba35f7a0ab4879f3fd872f15105bbebdf315ab39",
       "declarations": [
         null
       ],
@@ -5259,17 +5257,16 @@
         "crate::git_path::{GitProcessError, wait_for_child_output}",
         "crate::path_display::display_path",
         "crate::process_tree::ProcessTreeChild",
-        "crate::workspace_path::{validate_absolute_directory_path, WorkspacePathValidationError}",
+        "crate::workspace_path::{WorkspacePathValidationError, validate_absolute_directory_path}",
         "crate::workspace_repository_gitignore::ensure_workduck_gitignore as ensure_workduck_gitignore_policy",
-        "sha2::{Digest, Sha256}",
         "std::os::windows::process::CommandExt",
         "std::time::{SystemTime, UNIX_EPOCH}",
         "std::{\n    fs, io,\n    path::{Path, PathBuf},\n    process::{Command, Output, Stdio},\n    time::Duration,\n}",
         "tests {\n    use super::*"
       ],
       "path": "src-tauri/src/workspace_repository_setup.rs",
-      "semanticBytes": 625,
-      "sourceBytes": 27960
+      "semanticBytes": 539,
+      "sourceBytes": 21381
     },
     {
       "blocks": [],
@@ -6775,12 +6772,12 @@
     },
     {
       "blocks": [],
-      "contentHash": "f11d6566400684c6978e2864dd3503f4a9f228f8639b6effe0e19ffe41ef5fa2",
+      "contentHash": "42678daef94795c4186548093104cea225ca1b9227de271a47a733c39aece5e2",
       "declarations": [],
       "imports": [],
       "path": "src/lib/i18n/locales/en/settings.ts",
       "semanticBytes": 0,
-      "sourceBytes": 15769
+      "sourceBytes": 15424
     },
     {
       "blocks": [],
@@ -6926,12 +6923,12 @@
     },
     {
       "blocks": [],
-      "contentHash": "bc9b35e54eb86e6188eb6036346a047c58996fc2fb5ea68810361339872694ec",
+      "contentHash": "97cf6d8fb07d89bd85a8362f388b21424c6b1f35cd3dd2d8dfc995430b70be6a",
       "declarations": [],
       "imports": [],
       "path": "src/lib/i18n/locales/es/settings.ts",
       "semanticBytes": 0,
-      "sourceBytes": 18789
+      "sourceBytes": 18401
     },
     {
       "blocks": [],
@@ -7077,12 +7074,12 @@
     },
     {
       "blocks": [],
-      "contentHash": "09fa44990e858a297c4470a314a4b9eaf2888c64641d96af463b5e732674ba5c",
+      "contentHash": "2b0105926e34a68be7bce68ae789d62b95647081b2a8b2e53a2f75715cf9fff0",
       "declarations": [],
       "imports": [],
       "path": "src/lib/i18n/locales/fr/settings.ts",
       "semanticBytes": 0,
-      "sourceBytes": 19469
+      "sourceBytes": 19083
     },
     {
       "blocks": [],
@@ -7228,12 +7225,12 @@
     },
     {
       "blocks": [],
-      "contentHash": "ccba7a36ce9fcb1989c897307968ac07055c78f228ffe50ce30f254984294a53",
+      "contentHash": "1a714e17c485c45e15bebacb34bf7ed1d8c8e35124828644ae1407d2c6a659bd",
       "declarations": [],
       "imports": [],
       "path": "src/lib/i18n/locales/hi/settings.ts",
       "semanticBytes": 0,
-      "sourceBytes": 31851
+      "sourceBytes": 31310
     },
     {
       "blocks": [],
@@ -7379,12 +7376,12 @@
     },
     {
       "blocks": [],
-      "contentHash": "dfd8dfae0bfaa5ce5f78f5b2d0d07fb600e7a00eea1d9a828bc18cf32a3ee8d7",
+      "contentHash": "cdb2f4da8cc55c4fd03b034e03d8b105709a47d4e03fbafaf27c0d0864964d90",
       "declarations": [],
       "imports": [],
       "path": "src/lib/i18n/locales/ko/settings.ts",
       "semanticBytes": 0,
-      "sourceBytes": 19638
+      "sourceBytes": 19244
     },
     {
       "blocks": [],
@@ -7530,12 +7527,12 @@
     },
     {
       "blocks": [],
-      "contentHash": "962c01abb00ca9f4e4cb939c949d332f442bb669cc3132816c4e14e1f913e5cb",
+      "contentHash": "6e4add8722fbb0e7feaf1d32dfc5e98ff517f6d2e50920bcbc65cc77e77bd0ed",
       "declarations": [],
       "imports": [],
       "path": "src/lib/i18n/locales/zh/settings.ts",
       "semanticBytes": 0,
-      "sourceBytes": 15412
+      "sourceBytes": 15104
     },
     {
       "blocks": [],
@@ -12441,7 +12438,7 @@
     },
     {
       "blocks": [],
-      "contentHash": "6f0b58a1a48ba0f1b63767f5689fb408ed1fbf616e6e26c7fb5d98e83e352984",
+      "contentHash": "a3d04ab4d79a71eb1c3c959f2f73ba44084591e3af62cf51e7e035f059c898ce",
       "declarations": [],
       "imports": [
         "#lib/environment/environment-vault-session-loader.ts",
@@ -12469,11 +12466,11 @@
       ],
       "path": "src/lib/settings/WorkspaceSettingsSurface.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 35177
+      "sourceBytes": 34547
     },
     {
       "blocks": [],
-      "contentHash": "d950d46cf17ec636cf4c9ced33085d22ed6f987c71418753eaf033fbb744c66a",
+      "contentHash": "30a56c1d79ba142798b39f4e49bd859678dfbbd6a6c1abfc7fcaa22f5cb512aa",
       "declarations": [],
       "imports": [
         "#lib/ui/StatusToast.svelte",
@@ -12486,7 +12483,7 @@
       ],
       "path": "src/lib/settings/WorkspaceSettingsView.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 29281
+      "sourceBytes": 28108
     },
     {
       "blocks": [],
@@ -12572,7 +12569,7 @@
     },
     {
       "blocks": [],
-      "contentHash": "89ca034e0ffb28c4b9d57cb47a527f3ecedbccdade2ace054fd525175aaae5bb",
+      "contentHash": "d70b4e1f1b0b768eecf2d4275b3869d914f4b70ea88b6a93c5a563115fd6f357",
       "declarations": [],
       "imports": [
         "#lib/i18n/workduck-message-contract.ts",
@@ -12583,11 +12580,11 @@
       ],
       "path": "src/lib/settings/workspace-settings-errors.ts",
       "semanticBytes": 0,
-      "sourceBytes": 9816
+      "sourceBytes": 9310
     },
     {
       "blocks": [],
-      "contentHash": "b65f343518a059c835083d8bf410ca7901ff2fb6c43521f26533e5bf6d03f015",
+      "contentHash": "544238a203f58ef250dc44a7294c66e076b0605175962f0ffcb0a135148a1b2a",
       "declarations": [],
       "imports": [
         "#lib/i18n/workduck-message-contract.ts",
@@ -12600,7 +12597,7 @@
       ],
       "path": "src/lib/settings/workspace-settings-types.ts",
       "semanticBytes": 0,
-      "sourceBytes": 7872
+      "sourceBytes": 7648
     },
     {
       "blocks": [],
@@ -13659,7 +13656,7 @@
     },
     {
       "blocks": [],
-      "contentHash": "e0bafde3167f3e47b9bfe6d3e4f21ad5b8b5e1c68128c580f128023e811a4337",
+      "contentHash": "0e10322e0f79761b291be2420b50d887fcf41d8b219df4dd448c0c2aeb39e94f",
       "declarations": [],
       "imports": [
         "#lib/tauri/tauri-invoke.ts",
@@ -13667,7 +13664,7 @@
       ],
       "path": "src/lib/workspaces/workspace-repository-setup.ts",
       "semanticBytes": 0,
-      "sourceBytes": 3949
+      "sourceBytes": 3358
     },
     {
       "blocks": [],

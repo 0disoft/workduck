@@ -13,17 +13,12 @@ export type WorkspaceRepositorySetupError =
 	| 'workspace-repository-git-unavailable'
 	| 'workspace-repository-git-timed-out'
 	| 'workspace-repository-git-init-failed'
-	| 'workspace-repository-mustflow-unavailable'
-	| 'workspace-repository-mustflow-timed-out'
-	| 'workspace-repository-mustflow-failed'
-	| 'workspace-repository-mustflow-package-failed'
 	| 'workspace-repository-agent-instructions-failed'
 	| 'workspace-repository-gitignore-failed'
 	| 'workspace-repository-unavailable';
 
 export interface WorkspaceRepositorySetupOptions {
 	readonly initializeGit: boolean;
-	readonly installMustflow: boolean;
 	readonly installGitignore: boolean;
 }
 
@@ -31,7 +26,6 @@ export type WorkspaceRepositorySetupResult =
 	| {
 			readonly ok: true;
 			readonly initializedGit: boolean;
-			readonly installedMustflow: boolean;
 			readonly installedGitignore: boolean;
 			readonly createdPaths: readonly string[];
 	  }
@@ -43,7 +37,6 @@ export type WorkspaceRepositorySetupResult =
 interface WorkspaceRepositorySetupResponse {
 	readonly ok: boolean;
 	readonly initializedGit?: boolean;
-	readonly installedMustflow?: boolean;
 	readonly installedGitignore?: boolean;
 	readonly createdPaths?: readonly string[];
 	readonly error?: WorkspaceRepositorySetupError | null;
@@ -69,7 +62,6 @@ export async function setupWorkspaceRepository(
 			return {
 				ok: true,
 				initializedGit: response.initializedGit ?? false,
-				installedMustflow: response.installedMustflow ?? false,
 				installedGitignore: response.installedGitignore ?? false,
 				createdPaths: response.createdPaths ?? []
 			};
@@ -101,10 +93,6 @@ function isWorkspaceRepositorySetupError(
 		value === 'workspace-repository-git-unavailable' ||
 		value === 'workspace-repository-git-timed-out' ||
 		value === 'workspace-repository-git-init-failed' ||
-		value === 'workspace-repository-mustflow-unavailable' ||
-		value === 'workspace-repository-mustflow-timed-out' ||
-		value === 'workspace-repository-mustflow-failed' ||
-		value === 'workspace-repository-mustflow-package-failed' ||
 		value === 'workspace-repository-agent-instructions-failed' ||
 		value === 'workspace-repository-gitignore-failed' ||
 		value === 'workspace-repository-unavailable'

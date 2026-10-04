@@ -36,7 +36,6 @@ export const esSettingsMessages = {
 			private: 'Privado',
 			public: 'Público',
 			initializeGit: 'Inicializar repositorio Git',
-			installMustflow: 'Instalar mustflow',
 			installGitignore: 'Instalar .gitignore de Workduck',
 			gitReady: 'Git listo',
 			remoteReady: 'Remoto listo',
@@ -78,10 +77,6 @@ export const esSettingsMessages = {
 			repositoryGitUnavailable: 'Git no está disponible.',
 			repositoryGitTimedOut: 'La inicialización de Git agotó el tiempo de espera.',
 			repositoryGitInitFailed: 'No se pudo inicializar el repositorio Git.',
-			repositoryMustflowUnavailable: 'El comando mustflow no está disponible.',
-			repositoryMustflowTimedOut: 'La instalación de mustflow agotó el tiempo de espera.',
-			repositoryMustflowFailed: 'Fallo en la instalación de mustflow.',
-			repositoryMustflowPackageFailed: 'No se pudieron preparar los metadatos del paquete mustflow.',
 			repositoryAgentInstructionsFailed: 'No se pudieron preparar las instrucciones de trabajo para agentes.',
 			repositoryGitignoreFailed: 'No se pudo preparar el archivo .gitignore.',
 			repositoryUnavailable: 'La configuración del repositorio del espacio de trabajo está disponible en la aplicación de escritorio.',
@@ -126,7 +121,7 @@ export const esSettingsMessages = {
 		tooltips: {
 			unlock: 'Introduce la contraseña de este espacio de trabajo para habilitarlo en este dispositivo.',
 			prepareRepository:
-				'Prepara Git, mustflow y el .gitignore de Workduck en este espacio de trabajo.',
+				'Prepara Git y el .gitignore de Workduck en este espacio de trabajo.',
 			publishRepository: 'Publica este repositorio de espacio de trabajo en GitHub por primera vez.',
 			fetchRepository: 'Comprueba los cambios remotos para este repositorio de espacio de trabajo.',
 			pullRepository: 'Trae los cambios remotos del espacio de trabajo a esta carpeta.',

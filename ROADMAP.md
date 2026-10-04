@@ -22,8 +22,7 @@ work.
 - Workspace path repair for synced workspace metadata that points to a missing
   local folder on the current device.
 - Optional workspace repository bootstrap creates the workspace folder layout,
-  initializes Git, installs mustflow files, writes minimal mustflow package
-  metadata when no `package.json` exists, and appends a Workduck `.gitignore`
+  initializes Git, and appends a Workduck `.gitignore`
   block that ignores `projects/` while keeping `queue/` and `.workduck/`
   trackable. Existing unlocked workspaces can run the same preparation from the
   workspace list.

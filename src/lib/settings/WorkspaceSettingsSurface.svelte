@@ -88,7 +88,6 @@
 	let workspacePassword = $state('');
 	let workspaceRepositoryChoice = $state<WorkspaceRepositoryChoice | null>(null);
 	let initializeWorkspaceGit = $state(true);
-	let installWorkspaceMustflow = $state(true);
 	let installWorkspaceGitignore = $state(true);
 	let workspaceUnlockId = $state<string | null>(null);
 	let workspaceUnlockIntent = $state<WorkspaceUnlockIntent | null>(null);
@@ -116,7 +115,6 @@
 	let isPublishingWorkspaceRepository = $state(false);
 	let isSelectingWorkspacePath = $state(false);
 	let prepareWorkspaceGit = $state(true);
-	let prepareWorkspaceMustflow = $state(true);
 	let prepareWorkspaceGitignore = $state(true);
 	let workspaceRepositoryName = $state('');
 	let workspaceRepositoryCommitMessage = $state(DEFAULT_WORKSPACE_REPOSITORY_COMMIT_MESSAGE);
@@ -225,7 +223,6 @@
 
 		if (choice === 'yes') {
 			initializeWorkspaceGit = true;
-			installWorkspaceMustflow = true;
 			installWorkspaceGitignore = true;
 		}
 
@@ -234,11 +231,6 @@
 
 	function setInitializeWorkspaceGit(checked: boolean) {
 		initializeWorkspaceGit = checked;
-		clearFormError();
-	}
-
-	function setInstallWorkspaceMustflow(checked: boolean) {
-		installWorkspaceMustflow = checked;
 		clearFormError();
 	}
 
@@ -265,10 +257,6 @@
 		prepareWorkspaceGit = checked;
 	}
 
-	function setPrepareWorkspaceMustflow(checked: boolean) {
-		prepareWorkspaceMustflow = checked;
-	}
-
 	function setPrepareWorkspaceGitignore(checked: boolean) {
 		prepareWorkspaceGitignore = checked;
 	}
@@ -276,7 +264,6 @@
 	function clearWorkspaceRepositorySetup() {
 		workspaceRepositorySetupId = null;
 		prepareWorkspaceGit = true;
-		prepareWorkspaceMustflow = true;
 		prepareWorkspaceGitignore = true;
 		isPreparingWorkspaceRepository = false;
 	}
@@ -601,7 +588,6 @@
 				if (useWorkspaceAsRepository) {
 					const setupResult = await setupWorkspaceRepository(pathValidation.path, {
 						initializeGit: initializeWorkspaceGit,
-						installMustflow: installWorkspaceMustflow,
 						installGitignore: installWorkspaceGitignore
 					});
 
@@ -707,7 +693,6 @@
 		}
 
 		prepareWorkspaceGit = true;
-		prepareWorkspaceMustflow = true;
 		prepareWorkspaceGitignore = true;
 		workspaceRepositorySetupId = workspace.id;
 	}
@@ -961,7 +946,6 @@
 		try {
 			const result = await setupWorkspaceRepository(workspaceRepositorySetupCandidate.path, {
 				initializeGit: prepareWorkspaceGit,
-				installMustflow: prepareWorkspaceMustflow,
 				installGitignore: prepareWorkspaceGitignore
 			});
 
@@ -1122,7 +1106,6 @@
 		workspacePassword,
 		workspaceRepositoryChoice,
 		initializeWorkspaceGit,
-		installWorkspaceMustflow,
 		installWorkspaceGitignore,
 		useWorkspaceAsRepository,
 		canSelectWorkspacePath,
@@ -1142,7 +1125,6 @@
 		workspacePathRepairId,
 		workspaceRepositorySetupCandidate,
 		prepareWorkspaceGit,
-		prepareWorkspaceMustflow,
 		prepareWorkspaceGitignore,
 		isPreparingWorkspaceRepository,
 		workspaceRepositoryPublishCandidate,
@@ -1159,7 +1141,7 @@
 		getWorkspaceRepositoryTaskErrorMessage, isWorkspacePathError,
 		handleWorkspaceNameInput, handleWorkspacePathInput, handleWorkspacePathSelect,
 		handleWorkspacePasswordInput, handleWorkspaceSubmit, selectWorkspaceRepositoryChoice,
-		setInitializeWorkspaceGit, setInstallWorkspaceMustflow, setInstallWorkspaceGitignore,
+		setInitializeWorkspaceGit, setInstallWorkspaceGitignore,
 		getWorkspaceRepositoryGitStatus,
 		workspaceIsActive,
 		workspaceIsUnlocked,
@@ -1186,7 +1168,6 @@
 		handleWorkspaceRemove,
 		clearWorkspaceRepositorySetup,
 		setPrepareWorkspaceGit,
-		setPrepareWorkspaceMustflow,
 		setPrepareWorkspaceGitignore,
 		confirmWorkspaceRepositorySetup,
 		handleWorkspaceRepositorySetupBackdropClick,

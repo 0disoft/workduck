@@ -52,7 +52,6 @@ export interface WorkspaceSettingsViewModel {
 	readonly workspacePassword: string;
 	readonly workspaceRepositoryChoice: WorkspaceRepositoryChoice | null;
 	readonly initializeWorkspaceGit: boolean;
-	readonly installWorkspaceMustflow: boolean;
 	readonly installWorkspaceGitignore: boolean;
 	readonly useWorkspaceAsRepository: boolean;
 	readonly canSelectWorkspacePath: boolean;
@@ -72,7 +71,6 @@ export interface WorkspaceSettingsViewModel {
 	readonly workspacePathRepairId: string | null;
 	readonly workspaceRepositorySetupCandidate: WorkspaceRecord | null;
 	readonly prepareWorkspaceGit: boolean;
-	readonly prepareWorkspaceMustflow: boolean;
 	readonly prepareWorkspaceGitignore: boolean;
 	readonly isPreparingWorkspaceRepository: boolean;
 	readonly workspaceRepositoryPublishCandidate: WorkspaceRecord | null;
@@ -100,7 +98,6 @@ export interface WorkspaceSettingsActions {
 	readonly handleWorkspaceSubmit: (event: SubmitEvent) => Promise<void>;
 	readonly selectWorkspaceRepositoryChoice: (choice: WorkspaceRepositoryChoice) => void;
 	readonly setInitializeWorkspaceGit: (checked: boolean) => void;
-	readonly setInstallWorkspaceMustflow: (checked: boolean) => void;
 	readonly setInstallWorkspaceGitignore: (checked: boolean) => void;
 	readonly getWorkspaceRepositoryGitStatus: (
 		workspaceId: string
@@ -143,7 +140,6 @@ export interface WorkspaceSettingsActions {
 	readonly handleWorkspaceRemove: (workspaceId: string) => void;
 	readonly clearWorkspaceRepositorySetup: () => void;
 	readonly setPrepareWorkspaceGit: (checked: boolean) => void;
-	readonly setPrepareWorkspaceMustflow: (checked: boolean) => void;
 	readonly setPrepareWorkspaceGitignore: (checked: boolean) => void;
 	readonly confirmWorkspaceRepositorySetup: () => Promise<void>;
 	readonly handleWorkspaceRepositorySetupBackdropClick: (event: MouseEvent) => void;

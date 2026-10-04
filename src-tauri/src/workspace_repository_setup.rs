@@ -1,10 +1,10 @@
 // llmnav/1 module
 // id=workduck.workspace.repository-setup
-// role=Initialize a workspace repository layout, Git, Mustflow, managed work-order instructions, and Workduck ignore policy through bounded native steps.
-// owns=workspace repository bootstrap|managed AGENTS block|Mustflow package setup
+// role=Initialize a workspace repository layout, Git, managed work-order instructions, and Workduck ignore policy through bounded native steps.
+// owns=workspace repository bootstrap|managed AGENTS block
 // excludes=project repository creation|workspace registry data
-// search=setup workspace repository|install Mustflow workspace|managed work order instructions
-// invariant=Managed instructions remain single-copy and any protected AGENTS change refreshes its existing manifest-lock entry.
+// search=setup workspace repository|managed work order instructions
+// invariant=Managed instructions remain single-copy and preserve surrounding repository instructions.
 // stability=architecture
 // /llmnav
 use std::{
@@ -14,25 +14,19 @@ use std::{
     time::Duration,
 };
 
-use sha2::{Digest, Sha256};
-
 #[cfg(target_os = "windows")]
 use std::os::windows::process::CommandExt;
 
 use crate::git_path::{GitProcessError, wait_for_child_output};
 use crate::path_display::display_path;
 use crate::process_tree::ProcessTreeChild;
-use crate::workspace_path::{validate_absolute_directory_path, WorkspacePathValidationError};
+use crate::workspace_path::{WorkspacePathValidationError, validate_absolute_directory_path};
 use crate::workspace_repository_gitignore::ensure_workduck_gitignore as ensure_workduck_gitignore_policy;
 
 const PROJECTS_DIRECTORY_NAME: &str = "projects";
 const QUEUE_DIRECTORY_NAME: &str = "queue";
 const WORKDUCK_DIRECTORY_NAME: &str = ".workduck";
 const AGENTS_FILE_NAME: &str = "AGENTS.md";
-const MUSTFLOW_DIRECTORY_NAME: &str = ".mustflow";
-const MUSTFLOW_CONFIG_DIRECTORY_NAME: &str = "config";
-const MUSTFLOW_MANIFEST_LOCK_FILE_NAME: &str = "manifest.lock.toml";
-const PACKAGE_JSON_FILE_NAME: &str = "package.json";
 const QUEUE_REPORTS_DIRECTORY_NAME: &str = "reports";
 const QUEUE_WORK_ORDERS_DIRECTORY_NAME: &str = "work-orders";
 const QUEUE_PROPOSALS_DIRECTORY_NAME: &str = "proposals";
@@ -40,22 +34,7 @@ const WORKSPACE_COMMAND_TIMEOUT: Duration = Duration::from_secs(120);
 #[cfg(target_os = "windows")]
 const CREATE_NO_WINDOW: u32 = 0x08000000;
 
-const WORKSPACE_PACKAGE_JSON: &str = r#"{
-  "private": true,
-  "scripts": {
-    "mf": "mf",
-    "mustflow:check": "mf version --check",
-    "mustflow:update:dry-run": "bun update mustflow && mf update --dry-run",
-    "mustflow:update:apply": "bun update mustflow && mf update --apply"
-  },
-  "devDependencies": {
-    "mustflow": "latest"
-  }
-}
-"#;
-
-const WORKDUCK_AGENT_INSTRUCTIONS_BLOCK_MARKER: &str =
-    "<!-- BEGIN WORKDUCK WORK ORDER HANDOFF -->";
+const WORKDUCK_AGENT_INSTRUCTIONS_BLOCK_MARKER: &str = "<!-- BEGIN WORKDUCK WORK ORDER HANDOFF -->";
 const WORKDUCK_AGENT_INSTRUCTIONS_BLOCK_END_MARKER: &str =
     "<!-- END WORKDUCK WORK ORDER HANDOFF -->";
 const WORKDUCK_AGENT_INSTRUCTIONS_BLOCK: &str = "\
@@ -76,8 +55,7 @@ task before making edits.
    report that state instead of guessing.
 3. Treat the work order body as the user task. Follow the nearest repository
    instructions for the target repository named by the work order, and reread
-   that repository's `AGENTS.md` and command contract before edits or command
-   execution.
+   that repository's `AGENTS.md` before edits or command execution.
 4. Do not infer push, release, deletion, migration, dependency installation, or
    other high-risk actions beyond the work order body and current user message.
 5. When the work order is complete, or when there is no commit-worthy/actionable
@@ -90,7 +68,6 @@ task before making edits.
 #[serde(rename_all = "camelCase")]
 pub struct WorkspaceRepositorySetupOptions {
     initialize_git: bool,
-    install_mustflow: bool,
     install_gitignore: bool,
 }
 
@@ -118,14 +95,6 @@ pub enum WorkspaceRepositorySetupError {
     GitTimedOut,
     #[serde(rename = "workspace-repository-git-init-failed")]
     GitInitFailed,
-    #[serde(rename = "workspace-repository-mustflow-unavailable")]
-    MustflowUnavailable,
-    #[serde(rename = "workspace-repository-mustflow-timed-out")]
-    MustflowTimedOut,
-    #[serde(rename = "workspace-repository-mustflow-failed")]
-    MustflowFailed,
-    #[serde(rename = "workspace-repository-mustflow-package-failed")]
-    MustflowPackageFailed,
     #[serde(rename = "workspace-repository-agent-instructions-failed")]
     AgentInstructionsFailed,
     #[serde(rename = "workspace-repository-gitignore-failed")]
@@ -137,7 +106,6 @@ pub enum WorkspaceRepositorySetupError {
 pub struct WorkspaceRepositorySetupResponse {
     ok: bool,
     initialized_git: bool,
-    installed_mustflow: bool,
     installed_gitignore: bool,
     created_paths: Vec<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -168,15 +136,6 @@ pub fn setup_workspace_repository(
         false
     };
 
-    let installed_mustflow = if options.install_mustflow {
-        match ensure_mustflow(&workspace_root) {
-            Ok(changed) => changed,
-            Err(error) => return failure(error),
-        }
-    } else {
-        false
-    };
-
     if let Err(error) = ensure_workduck_agent_instructions(&workspace_root, &mut created_paths) {
         return failure(error);
     }
@@ -193,7 +152,6 @@ pub fn setup_workspace_repository(
     WorkspaceRepositorySetupResponse {
         ok: true,
         initialized_git,
-        installed_mustflow,
         installed_gitignore,
         created_paths,
         error: None,
@@ -204,7 +162,6 @@ fn failure(error: WorkspaceRepositorySetupError) -> WorkspaceRepositorySetupResp
     WorkspaceRepositorySetupResponse {
         ok: false,
         initialized_git: false,
-        installed_mustflow: false,
         installed_gitignore: false,
         created_paths: Vec::new(),
         error: Some(error),
@@ -312,74 +269,6 @@ fn ensure_git_repository(workspace_root: &Path) -> Result<bool, WorkspaceReposit
     }
 }
 
-fn ensure_mustflow(workspace_root: &Path) -> Result<bool, WorkspaceRepositorySetupError> {
-    let mut changed = false;
-
-    match fs::symlink_metadata(workspace_root.join(".mustflow")) {
-        Ok(metadata) => {
-            if metadata.file_type().is_symlink() || !metadata.is_dir() {
-                return Err(WorkspaceRepositorySetupError::LayoutInvalid);
-            }
-        }
-        Err(error) if error.kind() == io::ErrorKind::NotFound => {}
-        Err(error) => return Err(map_workspace_error(error)),
-    }
-
-    if !workspace_root.join(".mustflow").exists() {
-        let output = run_command(
-            workspace_root,
-            "mf",
-            &[
-                "init",
-                "--yes",
-                "--merge",
-                "--profile",
-                "product",
-                "--locale",
-                "en",
-            ],
-            WORKSPACE_COMMAND_TIMEOUT,
-            WorkspaceRepositorySetupError::MustflowUnavailable,
-            WorkspaceRepositorySetupError::MustflowTimedOut,
-            WorkspaceRepositorySetupError::MustflowFailed,
-        )?;
-
-        if !output.status.success() {
-            return Err(WorkspaceRepositorySetupError::MustflowFailed);
-        }
-
-        changed = true;
-    }
-
-    if ensure_mustflow_package_metadata(workspace_root)? {
-        changed = true;
-    }
-
-    Ok(changed)
-}
-
-fn ensure_mustflow_package_metadata(
-    workspace_root: &Path,
-) -> Result<bool, WorkspaceRepositorySetupError> {
-    let package_json_path = workspace_root.join(PACKAGE_JSON_FILE_NAME);
-
-    match fs::symlink_metadata(&package_json_path) {
-        Ok(metadata) => {
-            if metadata.file_type().is_symlink() || metadata.is_dir() {
-                return Err(WorkspaceRepositorySetupError::LayoutInvalid);
-            }
-
-            Ok(false)
-        }
-        Err(error) if error.kind() == io::ErrorKind::NotFound => {
-            fs::write(&package_json_path, WORKSPACE_PACKAGE_JSON)
-                .map_err(|_| WorkspaceRepositorySetupError::MustflowPackageFailed)?;
-            Ok(true)
-        }
-        Err(error) => Err(map_workspace_error(error)),
-    }
-}
-
 fn ensure_workduck_agent_instructions(
     workspace_root: &Path,
     created_paths: &mut Vec<String>,
@@ -396,7 +285,6 @@ fn ensure_workduck_agent_instructions(
             let content = format!("# AGENTS.md\n\n{WORKDUCK_AGENT_INSTRUCTIONS_BLOCK}");
             fs::write(&agents_path, content)
                 .map_err(|_| WorkspaceRepositorySetupError::AgentInstructionsFailed)?;
-            refresh_agents_manifest_lock_if_present(workspace_root)?;
             created_paths.push(AGENTS_FILE_NAME.to_string());
             return Ok(true);
         }
@@ -405,16 +293,13 @@ fn ensure_workduck_agent_instructions(
 
     let content = fs::read_to_string(&agents_path)
         .map_err(|_| WorkspaceRepositorySetupError::AgentInstructionsFailed)?;
-
     if let Some(next_content) = replace_workduck_agent_instructions_block(&content)? {
         if next_content == content {
-            refresh_agents_manifest_lock_if_present(workspace_root)?;
             return Ok(false);
         }
 
         fs::write(&agents_path, next_content)
             .map_err(|_| WorkspaceRepositorySetupError::AgentInstructionsFailed)?;
-        refresh_agents_manifest_lock_if_present(workspace_root)?;
         created_paths.push(AGENTS_FILE_NAME.to_string());
         return Ok(true);
     }
@@ -430,7 +315,6 @@ fn ensure_workduck_agent_instructions(
 
     fs::write(&agents_path, next_content)
         .map_err(|_| WorkspaceRepositorySetupError::AgentInstructionsFailed)?;
-    refresh_agents_manifest_lock_if_present(workspace_root)?;
     created_paths.push(AGENTS_FILE_NAME.to_string());
 
     Ok(true)
@@ -443,103 +327,20 @@ fn replace_workduck_agent_instructions_block(
         return Ok(None);
     };
 
-    let Some(relative_end_index) = content[start_index..]
-        .find(WORKDUCK_AGENT_INSTRUCTIONS_BLOCK_END_MARKER)
+    let Some(relative_end_index) =
+        content[start_index..].find(WORKDUCK_AGENT_INSTRUCTIONS_BLOCK_END_MARKER)
     else {
         return Err(WorkspaceRepositorySetupError::LayoutInvalid);
     };
 
-    let end_index = start_index
-        + relative_end_index
-        + WORKDUCK_AGENT_INSTRUCTIONS_BLOCK_END_MARKER.len();
+    let end_index =
+        start_index + relative_end_index + WORKDUCK_AGENT_INSTRUCTIONS_BLOCK_END_MARKER.len();
     let mut next_content = String::new();
 
     next_content.push_str(&content[..start_index]);
     next_content.push_str(WORKDUCK_AGENT_INSTRUCTIONS_BLOCK);
-    next_content.push_str(
-        content[end_index..].trim_start_matches(|value| value == '\r' || value == '\n'),
-    );
-
-    Ok(Some(next_content))
-}
-
-fn refresh_agents_manifest_lock_if_present(
-    workspace_root: &Path,
-) -> Result<(), WorkspaceRepositorySetupError> {
-    let manifest_lock_path = workspace_root
-        .join(MUSTFLOW_DIRECTORY_NAME)
-        .join(MUSTFLOW_CONFIG_DIRECTORY_NAME)
-        .join(MUSTFLOW_MANIFEST_LOCK_FILE_NAME);
-
-    match fs::symlink_metadata(&manifest_lock_path) {
-        Ok(metadata) => {
-            if metadata.file_type().is_symlink() || metadata.is_dir() {
-                return Err(WorkspaceRepositorySetupError::LayoutInvalid);
-            }
-        }
-        Err(error) if error.kind() == io::ErrorKind::NotFound => return Ok(()),
-        Err(error) => return Err(map_workspace_error(error)),
-    }
-
-    let manifest_lock = fs::read_to_string(&manifest_lock_path)
-        .map_err(|_| WorkspaceRepositorySetupError::AgentInstructionsFailed)?;
-    let agents_hash = sha256_file_hash(&workspace_root.join(AGENTS_FILE_NAME))?;
-    let Some(next_manifest_lock) =
-        replace_manifest_lock_agents_entry(&manifest_lock, &agents_hash)?
-    else {
-        return Ok(());
-    };
-
-    if next_manifest_lock != manifest_lock {
-        fs::write(&manifest_lock_path, next_manifest_lock)
-            .map_err(|_| WorkspaceRepositorySetupError::AgentInstructionsFailed)?;
-    }
-
-    Ok(())
-}
-
-fn sha256_file_hash(path: &Path) -> Result<String, WorkspaceRepositorySetupError> {
-    let bytes = fs::read(path).map_err(|_| WorkspaceRepositorySetupError::AgentInstructionsFailed)?;
-    let digest = Sha256::digest(bytes);
-    let mut content_hash = String::from("sha256:");
-
-    for byte in digest {
-        content_hash.push_str(&format!("{byte:02x}"));
-    }
-
-    Ok(content_hash)
-}
-
-fn replace_manifest_lock_agents_entry(
-    content: &str,
-    content_hash: &str,
-) -> Result<Option<String>, WorkspaceRepositorySetupError> {
-    let header = format!("[files.\"{AGENTS_FILE_NAME}\"]");
-    let Some(start_index) = content.find(&header) else {
-        return Ok(None);
-    };
-    let relative_end_index = content[start_index + header.len()..]
-        .find("\n[")
-        .map(|index| start_index + header.len() + index)
-        .unwrap_or(content.len());
-    let block = &content[start_index..relative_end_index];
-    let Some(source_line) = block.lines().find(|line| line.starts_with("source = ")) else {
-        return Err(WorkspaceRepositorySetupError::AgentInstructionsFailed);
-    };
-    let mut next_content = String::new();
-
-    next_content.push_str(&content[..start_index]);
-    next_content.push_str(&header);
-    next_content.push('\n');
-    next_content.push_str(source_line);
-    next_content.push('\n');
-    next_content.push_str("last_action = \"customized\"\n");
-    next_content.push_str("content_hash = \"");
-    next_content.push_str(content_hash);
-    next_content.push_str("\"\n\n");
-    next_content.push_str(
-        content[relative_end_index..].trim_start_matches(|value| value == '\r' || value == '\n'),
-    );
+    next_content
+        .push_str(content[end_index..].trim_start_matches(|value| value == '\r' || value == '\n'));
 
     Ok(Some(next_content))
 }
@@ -663,7 +464,9 @@ mod tests {
         assert!(changed);
         assert!(!changed_again);
         assert_eq!(
-            content.matches(WORKDUCK_AGENT_INSTRUCTIONS_BLOCK_MARKER).count(),
+            content
+                .matches(WORKDUCK_AGENT_INSTRUCTIONS_BLOCK_MARKER)
+                .count(),
             1
         );
         assert!(!content.contains("old text"));
@@ -674,30 +477,45 @@ mod tests {
     }
 
     #[test]
-    fn workduck_agent_instructions_refresh_manifest_lock_as_customized() {
-        let workspace_root = create_test_workspace("refresh-agent-lock");
-        let mustflow_config_path = workspace_root
-            .join(MUSTFLOW_DIRECTORY_NAME)
-            .join(MUSTFLOW_CONFIG_DIRECTORY_NAME);
-        fs::create_dir_all(&mustflow_config_path).unwrap();
-        fs::write(
-            mustflow_config_path.join(MUSTFLOW_MANIFEST_LOCK_FILE_NAME),
-            "schema_version = \"1\"\n\n[files.\"AGENTS.md\"]\nsource = \"template_locale\"\nlast_action = \"created\"\ncontent_hash = \"sha256:old\"\n\n[files.\"README.md\"]\nsource = \"template_locale\"\nlast_action = \"created\"\ncontent_hash = \"sha256:readme\"\n",
-        )
-        .unwrap();
-        let mut created_paths = Vec::new();
+    fn setup_creates_only_workduck_layout_and_preserves_existing_package_metadata() {
+        let workspace_root = create_test_workspace("workduck-only-layout");
+        let prepare = || {
+            setup_workspace_repository(
+                display_path(&workspace_root),
+                WorkspaceRepositorySetupOptions {
+                    initialize_git: false,
+                    install_gitignore: true,
+                },
+            )
+        };
 
-        ensure_workduck_agent_instructions(&workspace_root, &mut created_paths).unwrap();
+        let response = prepare();
+        assert!(response.ok);
+        assert!(!response.initialized_git);
+        assert!(response.installed_gitignore);
+        let mut entries: Vec<_> = fs::read_dir(&workspace_root)
+            .unwrap()
+            .map(|entry| entry.unwrap().file_name().to_string_lossy().into_owned())
+            .collect();
+        entries.sort();
+        assert_eq!(
+            entries,
+            vec![".gitignore", ".workduck", "AGENTS.md", "projects", "queue"]
+        );
 
-        let manifest_lock =
-            fs::read_to_string(mustflow_config_path.join(MUSTFLOW_MANIFEST_LOCK_FILE_NAME))
-                .unwrap();
-        let agents_hash = sha256_file_hash(&workspace_root.join(AGENTS_FILE_NAME)).unwrap();
-        assert!(manifest_lock.contains("last_action = \"customized\""));
-        assert!(manifest_lock.contains(&format!("content_hash = \"{agents_hash}\"")));
-        assert!(manifest_lock.contains("[files.\"README.md\"]"));
-        assert!(manifest_lock.contains("content_hash = \"sha256:readme\""));
-
+        let package_path = workspace_root.join("package.json");
+        let package = "{\"private\":true,\"scripts\":{\"build\":\"custom-build\"}}\n";
+        fs::write(&package_path, package).unwrap();
+        let agents = fs::read_to_string(workspace_root.join(AGENTS_FILE_NAME)).unwrap();
+        let repeated = prepare();
+        assert!(repeated.ok);
+        assert!(!repeated.installed_gitignore);
+        assert!(repeated.created_paths.is_empty());
+        assert_eq!(fs::read_to_string(&package_path).unwrap(), package);
+        assert_eq!(
+            fs::read_to_string(workspace_root.join(AGENTS_FILE_NAME)).unwrap(),
+            agents
+        );
         fs::remove_dir_all(workspace_root).unwrap();
     }
 

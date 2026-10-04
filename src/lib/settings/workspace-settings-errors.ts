@@ -166,14 +166,6 @@ export function getWorkspaceRepositorySetupErrorMessage(
 			return messages.settings.workspaces.errors.repositoryGitTimedOut;
 		case 'workspace-repository-git-init-failed':
 			return messages.settings.workspaces.errors.repositoryGitInitFailed;
-		case 'workspace-repository-mustflow-unavailable':
-			return messages.settings.workspaces.errors.repositoryMustflowUnavailable;
-		case 'workspace-repository-mustflow-timed-out':
-			return messages.settings.workspaces.errors.repositoryMustflowTimedOut;
-		case 'workspace-repository-mustflow-failed':
-			return messages.settings.workspaces.errors.repositoryMustflowFailed;
-		case 'workspace-repository-mustflow-package-failed':
-			return messages.settings.workspaces.errors.repositoryMustflowPackageFailed;
 		case 'workspace-repository-agent-instructions-failed':
 			return messages.settings.workspaces.errors.repositoryAgentInstructionsFailed;
 		case 'workspace-repository-gitignore-failed':

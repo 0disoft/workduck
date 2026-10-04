@@ -3464,7 +3464,7 @@
     },
     {
       "edges": [],
-      "inputHash": "d7065793b25d167e2d480ef34cb640e3801984d4ac9c8ed0a37b2e3d6c99b2e7",
+      "inputHash": "b22532390b7b20e438b8706a60ef2b4487284fb565fff1e98a25e98d451e0f07",
       "key": "card:workduck/workduck.workspace.repository-setup",
       "nodes": [
         {
@@ -3485,11 +3485,11 @@
             "visibility": null
           },
           "repositoryId": "workduck",
-          "role": "Initialize a workspace repository layout, Git, Mustflow, managed work-order instructions, and Workduck ignore policy through bounded native steps.",
+          "role": "Initialize a workspace repository layout, Git, managed work-order instructions, and Workduck ignore policy through bounded native steps.",
           "semanticId": "workduck.workspace.repository-setup"
         }
       ],
-      "outputHash": "4f2bcc1515ba6aaf0d77c7cce99e04a8e88a5af00da0808526b1b7a99122ec7c"
+      "outputHash": "e852029d40152f3ee05684f38243aaf8782b5ffe35cdc502999dc4f4dee75ebf"
     },
     {
       "edges": [],

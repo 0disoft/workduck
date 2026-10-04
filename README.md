@@ -17,9 +17,7 @@ includes:
 - Workspace path repair when synced workspace metadata points to a folder that
   does not exist on the current device.
 - Optional workspace repository bootstrap that creates the workspace folder
-  layout, initializes Git, installs mustflow files, writes a minimal
-  `package.json` with `mustflow: "latest"` when none exists, and appends a
-  Workduck `.gitignore` block for new or already registered workspaces.
+  layout, initializes Git, and appends a Workduck `.gitignore` block for new or already registered workspaces.
 - Workspace repository bootstrap also installs a Workduck work-order handoff
   block in `AGENTS.md`, so an IDE coding agent that receives only a Workduck
   work-order ID knows to resolve `queue/work-orders/*.workduck-work-order.json`
@@ -110,13 +108,6 @@ independently. The `<workspace>/queue/` folder remains trackable so reports,
 work orders, and proposals can move between devices through the workspace
 repository.
 
-For mustflow-managed workspace repositories, Workduck creates package metadata
-only when the workspace root does not already have `package.json`. That file
-declares `mustflow` as a `latest` development dependency and includes
-`mustflow:check`, `mustflow:update:dry-run`, and `mustflow:update:apply`
-scripts, so the workspace can update its local mustflow package and review the
-template update plan before applying it.
-
 ### Queue CLI
 
 The local CLI can execute one queued work order by its stable work-order ID,
@@ -181,8 +172,8 @@ Workduck uses two different Git-backed storage paths:
   one workspace's day-to-day project board.
 - The workspace repository is the selected workspace folder when it is prepared
   as a Git repository. It owns the files a developer expects to keep with that
-  workspace: `.workduck/` metadata, `queue/` reports and work orders, mustflow
-  files, and workspace package metadata.
+  workspace: `.workduck/` metadata, `queue/` reports and work orders, and the
+  Workduck work-order instructions in `AGENTS.md`.
 - A private sync repository and a private workspace repository may point to the
   same remote only if the user intentionally wants one combined repository.
   The recommended default is to keep them separate: one small sync repository
