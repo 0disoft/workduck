@@ -17,7 +17,8 @@
 		ProjectRepositoryLinkRecord
 	} from './project-registry';
 	import ProjectNodeCard from './ProjectNodeCard.svelte';
-	import ProjectRepositoryCard from './ProjectRepositoryCard.svelte';
+	import ProjectRepositoryRow from './ProjectRepositoryRow.svelte';
+	import ProjectRepositoryInspector from './ProjectRepositoryInspector.svelte';
 
 	interface RepositoryFilterStats {
 		readonly favorites: number;
@@ -121,12 +122,37 @@
 		onQueueRepositoryCommitWorkOrder, onRepositoryFavoriteToggle, onGitAction
 	}: Props = $props();
 
+	let selectedRepositoryId = $state<string | null>(null);
+	let repositorySelectionScopeId = $state<string | null>(null);
+
 	let projectCountLabel = $derived(
 		projectMessages.registeredCount.replace(
 			'{count}',
 			selectionIndex.projectNodes.length.toString()
 		)
 	);
+
+	let inspectedRepository = $derived.by(() => {
+		const explicit =
+			selectedRepositoryId === null
+				? null
+				: selectedRepositories.find((repository) => repository.id === selectedRepositoryId) ?? null;
+
+		return explicit ?? selectedRepositories[0] ?? null;
+	});
+
+	$effect(() => {
+		const scopeId = `${selectedProject?.id ?? ''}|${selectedGroup?.id ?? ''}`;
+
+		if (repositorySelectionScopeId !== scopeId) {
+			repositorySelectionScopeId = scopeId;
+			selectedRepositoryId = null;
+		}
+	});
+
+	function selectRepository(repository: ProjectRepositoryLinkRecord) {
+		selectedRepositoryId = repository.id;
+	}
 
 	function handleTagFilterInput(event: Event) {
 		onTagFilterInput((event.currentTarget as HTMLInputElement).value);
@@ -179,40 +205,40 @@
 	</header>
 
 	<div class="workduck-project-lanes workduck-project-workspace-layout">
-		<section class="workduck-project-lane workduck-project-sidebar-lane" aria-label="Projects">
-			<div class="workduck-project-lane-track">
-				<button class="workduck-project-card workduck-project-card-button workduck-project-add-card"
-					type="button" onpointerenter={onOverlayIntent} onfocus={onOverlayIntent}
-					onclick={() => onOpenDialog('project')}>
-					{projectMessages.newProject}
-				</button>
+		<div class="workduck-project-hierarchy-lane">
+			<section class="workduck-project-lane workduck-project-sidebar-lane" aria-label="Projects">
+				<div class="workduck-project-lane-track">
+					<button class="workduck-project-card workduck-project-card-button workduck-project-add-card"
+						type="button" onpointerenter={onOverlayIntent} onfocus={onOverlayIntent}
+						onclick={() => onOpenDialog('project')}>
+						{projectMessages.newProject}
+					</button>
 
-				{#each projectNodes as node (node.id)}
-					{@const projectStats = [
-						formatCountLabel(
-							getProjectGroupCount(selectionIndex, node.id),
-							projectMessages.counts.group,
-							projectMessages.counts.groups
-						),
-						formatCountLabel(
-							getProjectRepositoryCount(selectionIndex, node.id),
-							projectMessages.counts.repo,
-							projectMessages.counts.repos
-						),
-						...(node.githubCredentialSecretId === null
-							? []
-							: [`GitHub: ${getNodeGithubCredentialName(node)}`])
-					]}
-					<ProjectNodeCard {node} selected={selectedProject?.id === node.id}
-						kindLabel={projectMessages.kinds[node.kind]} stats={projectStats}
-						{onOverlayIntent}
-						onSelect={() => onSelectProject(node)}
-						onContextMenu={(event) => onProjectContextMenu(event, node)} />
-				{/each}
-			</div>
-		</section>
+					{#each projectNodes as node (node.id)}
+						{@const projectStats = [
+							formatCountLabel(
+								getProjectGroupCount(selectionIndex, node.id),
+								projectMessages.counts.group,
+								projectMessages.counts.groups
+							),
+							formatCountLabel(
+								getProjectRepositoryCount(selectionIndex, node.id),
+								projectMessages.counts.repo,
+								projectMessages.counts.repos
+							),
+							...(node.githubCredentialSecretId === null
+								? []
+								: [`GitHub: ${getNodeGithubCredentialName(node)}`])
+						]}
+						<ProjectNodeCard {node} selected={selectedProject?.id === node.id}
+							kindLabel={projectMessages.kinds[node.kind]} stats={projectStats}
+							{onOverlayIntent}
+							onSelect={() => onSelectProject(node)}
+							onContextMenu={(event) => onProjectContextMenu(event, node)} />
+					{/each}
+				</div>
+			</section>
 
-		<div class="workduck-project-detail-lanes">
 			{#if selectedProject !== null}
 				<section class="workduck-project-lane workduck-project-group-lane" aria-label="Groups">
 					<div class="workduck-project-lane-track">
@@ -234,58 +260,92 @@
 									? []
 									: [`GitHub: ${getNodeGithubCredentialName(node)}`])
 							]}
-							<div class="workduck-project-group-stack">
-								<ProjectNodeCard {node} selected={selectedGroup?.id === node.id}
-									kindLabel={projectMessages.kinds[node.kind]} stats={groupStats}
-									{onOverlayIntent}
-									onSelect={() => onSelectGroup(node)}
-									onContextMenu={(event) => onProjectContextMenu(event, node)} />
-
-								{#if selectedGroup?.id === node.id}
-									<div class="workduck-project-lane-track workduck-project-repository-track">
-										<button class="workduck-project-card workduck-project-card-button workduck-project-add-card workduck-repository-card"
-											type="button" onpointerenter={onOverlayIntent} onfocus={onOverlayIntent}
-											onclick={() => onOpenDialog('repository', node.id)}>
-											{projectMessages.newRepository}
-										</button>
-
-										{#each selectedRepositories as repository (repository.id)}
-											{@const repositoryOperation = getRepositoryOperation(repository.id)}
-											{@const repositoryTaskRun = getRepositoryTaskRun(repository.id)}
-											{@const repositoryGitStatus = repositoryGitStatusById[repository.id]}
-											{@const repositoryBusy =
-												isRepositoryBusy(repository.id) || repositoryTaskRun?.state === 'running'}
-											{@const repositoryPathOutsideWorkspace =
-												repository.path !== null && !isRepositoryPathInsideWorkspace(repository.path)}
-											{@const repositoryGithubCredentialName = getRepositoryGithubCredentialName(node, repository)}
-											<ProjectRepositoryCard node={node} {repository} {repositoryOperation}
-												{repositoryTaskRun}
-												{projectMessages} {languageId}
-												{repositoryGitStatus} {repositoryBusy} {repositoryPathOutsideWorkspace}
-												{repositoryGithubCredentialName}
-												repositoryCardKind={getRepositoryCardKind(node.id, repository)}
-												canCloneRepository={canCloneRepository(repository)}
-												canInitializeRepository={canInitializeRepository(repository)}
-												canPublishRepositoryToGithub={canPublishRepositoryToGithub(repository)}
-												canQueueCommitWorkOrder={canQueueRepositoryCommitWorkOrder(repository)}
-												canFetchRepository={canRunRemoteRepositoryGitAction(repository, 'fetch')}
-												canPullRepository={canRunRemoteRepositoryGitAction(repository, 'pull')}
-												canPushRepository={canRunRemoteRepositoryGitAction(repository, 'push')}
-												isRepositoryOperationRunning={(name) => isRepositoryOperationRunning(repository.id, name)}
-												{onOverlayIntent}
-												onContextMenu={(event) => onRepositoryContextMenu(event, node, repository)}
-												onClone={() => onCloneRepository(node, repository)}
-												onInitialize={() => onInitializeRepository(node, repository)}
-												onPublish={() => onPublishRepository(node, repository)}
-												onQueueCommitWorkOrder={() => onQueueRepositoryCommitWorkOrder(node, repository)}
-												onFavoriteToggle={() => onRepositoryFavoriteToggle(node, repository)}
-												onGitAction={(action) => onGitAction(node, repository, action)} />
-										{/each}
-									</div>
-								{/if}
-							</div>
+							<ProjectNodeCard {node} selected={selectedGroup?.id === node.id}
+								kindLabel={projectMessages.kinds[node.kind]} stats={groupStats}
+								{onOverlayIntent}
+								onSelect={() => onSelectGroup(node)}
+								onContextMenu={(event) => onProjectContextMenu(event, node)} />
 						{/each}
 					</div>
+				</section>
+			{/if}
+		</div>
+
+		<div class="workduck-project-detail-lanes">
+			{#if selectedGroup !== null}
+				{@const group = selectedGroup}
+				<section class="workduck-project-lane workduck-project-repository-lane"
+					class:workduck-project-repository-lane-split={inspectedRepository !== null}
+					aria-label="Repositories">
+					<div class="workduck-repository-list-column">
+						<button class="workduck-project-card workduck-project-card-button workduck-project-add-card workduck-repository-add-button"
+							type="button" onpointerenter={onOverlayIntent} onfocus={onOverlayIntent}
+							onclick={() => onOpenDialog('repository', group.id)}>
+							{projectMessages.newRepository}
+						</button>
+
+						{#if selectedRepositories.length > 0}
+							<div class="workduck-repository-list" aria-label="Repositories">
+								{#each selectedRepositories as repository (repository.id)}
+									{@const repositoryOperation = getRepositoryOperation(repository.id)}
+									{@const repositoryTaskRun = getRepositoryTaskRun(repository.id)}
+									{@const repositoryGitStatus = repositoryGitStatusById[repository.id]}
+									{@const repositoryBusy =
+										isRepositoryBusy(repository.id) || repositoryTaskRun?.state === 'running'}
+									{@const repositoryPathOutsideWorkspace =
+										repository.path !== null && !isRepositoryPathInsideWorkspace(repository.path)}
+									<ProjectRepositoryRow {repository} {projectMessages}
+										{repositoryOperation} {repositoryTaskRun} {repositoryGitStatus}
+										{repositoryBusy} {repositoryPathOutsideWorkspace}
+										canCloneRepository={canCloneRepository(repository)}
+										selected={inspectedRepository?.id === repository.id}
+										{onOverlayIntent}
+										onSelect={() => selectRepository(repository)}
+										onContextMenu={(event) => onRepositoryContextMenu(event, group, repository)}
+										onFavoriteToggle={() => onRepositoryFavoriteToggle(group, repository)} />
+								{/each}
+							</div>
+						{/if}
+					</div>
+
+					{#if inspectedRepository !== null}
+						{@const activeRepository = inspectedRepository}
+						{@const activeOperation = getRepositoryOperation(activeRepository.id)}
+						{@const activeTaskRun = getRepositoryTaskRun(activeRepository.id)}
+						{@const activeGitStatus = repositoryGitStatusById[activeRepository.id]}
+						{@const activeBusy =
+							isRepositoryBusy(activeRepository.id) || activeTaskRun?.state === 'running'}
+						{@const activePathOutsideWorkspace =
+							activeRepository.path !== null &&
+							!isRepositoryPathInsideWorkspace(activeRepository.path)}
+						<ProjectRepositoryInspector
+							node={group}
+							repository={activeRepository}
+							{projectMessages} {languageId}
+							repositoryOperation={activeOperation}
+							repositoryTaskRun={activeTaskRun}
+							repositoryGitStatus={activeGitStatus}
+							repositoryBusy={activeBusy}
+							repositoryPathOutsideWorkspace={activePathOutsideWorkspace}
+							repositoryGithubCredentialName={getRepositoryGithubCredentialName(group, activeRepository)}
+							repositoryCardKind={getRepositoryCardKind(group.id, activeRepository)}
+							canCloneRepository={canCloneRepository(activeRepository)}
+							canInitializeRepository={canInitializeRepository(activeRepository)}
+							canPublishRepositoryToGithub={canPublishRepositoryToGithub(activeRepository)}
+							canQueueCommitWorkOrder={canQueueRepositoryCommitWorkOrder(activeRepository)}
+							canFetchRepository={canRunRemoteRepositoryGitAction(activeRepository, 'fetch')}
+							canPullRepository={canRunRemoteRepositoryGitAction(activeRepository, 'pull')}
+							canPushRepository={canRunRemoteRepositoryGitAction(activeRepository, 'push')}
+							isRepositoryOperationRunning={(name) => isRepositoryOperationRunning(activeRepository.id, name)}
+							{onOverlayIntent}
+							onContextMenu={(event) => onRepositoryContextMenu(event, group, activeRepository)}
+							onClone={() => onCloneRepository(group, activeRepository)}
+							onInitialize={() => onInitializeRepository(group, activeRepository)}
+							onPublish={() => onPublishRepository(group, activeRepository)}
+							onQueueCommitWorkOrder={() => onQueueRepositoryCommitWorkOrder(group, activeRepository)}
+							onFavoriteToggle={() => onRepositoryFavoriteToggle(group, activeRepository)}
+							onGitAction={(action) => onGitAction(group, activeRepository, action)} />
+					{/if}
 				</section>
 			{/if}
 		</div>
