@@ -1,8 +1,0 @@
-llmnav-catalog/1 repository=workduck catalog=workduck.command-palette
-Read semantic cards before opening source. Resolve current paths and signatures with llmnav query or show.
-
-@workduck.command-palette.search
-role Search workspace-scoped SQLite artifact content for the desktop command palette through a bounded read-only query.
-owns command palette artifact search, FTS query normalization, workspace artifact scoping
-excludes workspace registry loading, command palette rendering, navigation actions
-invariant Searches are read-only, length-bounded, result-bounded, and never return artifacts outside the requested workspace project registry.

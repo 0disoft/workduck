@@ -107,7 +107,8 @@ P3: project/group cards still carry more accent color than the flat repository r
 - `bun run build`: passed; static output and CSP generation completed without the fixture route.
 - LLMNav format/check: passed; audit after fixture removal: high 0, medium 59.
 - LLMNav generate and full regeneration: blocked by Windows EPERM while renaming `.llmnav/cache`.
-  Retrying with the dev server stopped produced the same error. Existing cache retained.
+  Retrying with the dev server stopped produced the same error. Subsequently resolved
+  with the flat-cache configuration described below.
 - Rust suite skipped: no Rust implementation changed in this UI batch.
 
 ## Sidebar resize regression correction (1.9.43)
@@ -140,3 +141,22 @@ Evidence: `sidebar-layout-before.png` and `sidebar-layout-after.png` in the evid
 directory above. The temporary verification server is stopped after the check.
 
 final result: passed
+
+## LLMNav cache regeneration repair
+
+The directory replacement failure reproduced with both Node and Bun, including a
+copy of the original cache. A minimal nested directory with 24 small files also
+failed to rename in this checkout, while the same fixture succeeded in the system
+temporary directory. No lock owner was identified; the underlying Windows or
+filesystem cause remains undetermined.
+
+The supported `generation.moduleCatalogStabilities: []` setting disables optional
+per-module text catalogs and keeps the generated cache flat. Merely changing the
+cache path or combining the module catalogs did not fix repeated generation.
+The repository catalog, source cards, search index and query/show/context remain
+available. All 87 semantic cards are retained. The previous cache was backed up
+and its 34 files were verified by SHA-256 before clearing disposable catalogs.
+
+Validation: repeated incremental generation, full generation, full-generation
+freshness check, semantic lint, retrieval evaluation and context lookup passed.
+No runtime implementation changed, so the application version is unchanged.

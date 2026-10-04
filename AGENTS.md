@@ -11,6 +11,10 @@
 - Keep application versions synchronized in `package.json`, `src-tauri/Cargo.toml`,
   and `src-tauri/Cargo.lock` for runtime changes. Documentation and development
   workflow changes alone do not require an application version bump.
+- LLMNav's optional per-module text catalogs are disabled in `.llmnav/config.json`.
+  Keep the generated cache flat: nested catalog directories cause persistent
+  Windows `EPERM` errors during cache replacement in this checkout. Semantic cards,
+  the search index, repository catalog, and query/show/context remain available.
 
 ## LLMNav code navigation
 

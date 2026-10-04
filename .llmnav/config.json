@@ -445,10 +445,7 @@
   ],
   "generation": {
     "cacheDirectory": ".llmnav/cache",
-    "moduleCatalogStabilities": [
-      "architecture",
-      "contract"
-    ],
+    "moduleCatalogStabilities": [],
     "moduleDepth": 2,
     "repositoryCatalogStabilities": [
       "architecture"

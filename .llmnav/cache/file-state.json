@@ -6718,12 +6718,12 @@
     },
     {
       "blocks": [],
-      "contentHash": "e801a2b75d6fa6bd225d05472af549a022b20c3594baea571c8fc23e6e35eb8e",
+      "contentHash": "8205808d653f882c31eb8025eceea3a613cb06f5306375199828e05bae514048",
       "declarations": [],
       "imports": [],
       "path": "src/lib/i18n/locales/en/navigation.ts",
       "semanticBytes": 0,
-      "sourceBytes": 1486
+      "sourceBytes": 1546
     },
     {
       "blocks": [],
@@ -6808,12 +6808,12 @@
     },
     {
       "blocks": [],
-      "contentHash": "1aece166881549320f12b680102b481c9eff504895bbf9d3342c84d4ffceab7e",
+      "contentHash": "f37bb87232aa04d4ab32c480c2136f5c5220f3be5cc36f81d743a68730c5dd9c",
       "declarations": [],
       "imports": [],
       "path": "src/lib/i18n/locales/en/workspace.ts",
       "semanticBytes": 0,
-      "sourceBytes": 1549
+      "sourceBytes": 1757
     },
     {
       "blocks": [],
@@ -6869,12 +6869,12 @@
     },
     {
       "blocks": [],
-      "contentHash": "0ac41e870ac5fa630ef42edbe8f3a2d3aaa150cbf79f2f323a3cf16156578fba",
+      "contentHash": "e79da9e4db5e5c826f8f1192246e0fab1f0f70c8aa99fb6889d8f8c6f8b17e89",
       "declarations": [],
       "imports": [],
       "path": "src/lib/i18n/locales/es/navigation.ts",
       "semanticBytes": 0,
-      "sourceBytes": 1670
+      "sourceBytes": 1736
     },
     {
       "blocks": [],
@@ -6959,12 +6959,12 @@
     },
     {
       "blocks": [],
-      "contentHash": "2eba7fd0cb8fc61fe875656e3cdd65453055e2c284a26051026ea93c662a063d",
+      "contentHash": "f6aabc0333835728e3aa8a4480aa28ff1abe4136cf3b1f1da2f8324b1657575f",
       "declarations": [],
       "imports": [],
       "path": "src/lib/i18n/locales/es/workspace.ts",
       "semanticBytes": 0,
-      "sourceBytes": 1960
+      "sourceBytes": 2207
     },
     {
       "blocks": [],
@@ -7020,12 +7020,12 @@
     },
     {
       "blocks": [],
-      "contentHash": "b0cabcf67d155b984f9ea9a636dfe5ba87cea576c50ef1e27b0a1a86ae0d6622",
+      "contentHash": "c8b6d5cbfcee6647c8823be317ed05c901eed203ac34e452ce6b586739acbd1c",
       "declarations": [],
       "imports": [],
       "path": "src/lib/i18n/locales/fr/navigation.ts",
       "semanticBytes": 0,
-      "sourceBytes": 1681
+      "sourceBytes": 1743
     },
     {
       "blocks": [],
@@ -7110,12 +7110,12 @@
     },
     {
       "blocks": [],
-      "contentHash": "4e6d4896478eacb88cbc352613ef47445f22d87255dd68697a1ee30b03b88352",
+      "contentHash": "5cbe4a048ee92dfacc7ff1c6272d5dddb3a54bef1f46e0edaefd5b83f86b4e6a",
       "declarations": [],
       "imports": [],
       "path": "src/lib/i18n/locales/fr/workspace.ts",
       "semanticBytes": 0,
-      "sourceBytes": 2074
+      "sourceBytes": 2342
     },
     {
       "blocks": [],
@@ -7171,12 +7171,12 @@
     },
     {
       "blocks": [],
-      "contentHash": "f9ec9640bb88005414a4b02b09d3759c61c193a05f1507aff35739ccd23fb548",
+      "contentHash": "d2b73fb4d020d898fa3a606d1df3c0133f83ee769696aaa654293cd6516699cf",
       "declarations": [],
       "imports": [],
       "path": "src/lib/i18n/locales/hi/navigation.ts",
       "semanticBytes": 0,
-      "sourceBytes": 2721
+      "sourceBytes": 2818
     },
     {
       "blocks": [],
@@ -7261,12 +7261,12 @@
     },
     {
       "blocks": [],
-      "contentHash": "a530abc86164153cae243b488fb1c01d79c1d0a26236fd7353d5a2c9720f900d",
+      "contentHash": "b25137f53be2f373684f5642f85c08cdaa0658b7e70887f778156fc3e62aed93",
       "declarations": [],
       "imports": [],
       "path": "src/lib/i18n/locales/hi/workspace.ts",
       "semanticBytes": 0,
-      "sourceBytes": 3081
+      "sourceBytes": 3567
     },
     {
       "blocks": [],
@@ -7322,12 +7322,12 @@
     },
     {
       "blocks": [],
-      "contentHash": "ef24283ce07c944cb94efd4c48a6ab3456d69de8a48f4a12dfda97b9790a30f9",
+      "contentHash": "391dc0451b94fd7f45aea3a73ea9dee10beec8ae766c48aec944554def7ddfd7",
       "declarations": [],
       "imports": [],
       "path": "src/lib/i18n/locales/ko/navigation.ts",
       "semanticBytes": 0,
-      "sourceBytes": 1756
+      "sourceBytes": 1810
     },
     {
       "blocks": [],
@@ -7412,12 +7412,12 @@
     },
     {
       "blocks": [],
-      "contentHash": "2275355d7f4a491b850a4c80012629e413fed33dc1a1d9de2a49b590b2742924",
+      "contentHash": "cd1a9a40dcf39dbfa01c767321b13aae5cc99e52272d48acc42caa599771731c",
       "declarations": [],
       "imports": [],
       "path": "src/lib/i18n/locales/ko/workspace.ts",
       "semanticBytes": 0,
-      "sourceBytes": 2033
+      "sourceBytes": 2290
     },
     {
       "blocks": [],
@@ -7473,12 +7473,12 @@
     },
     {
       "blocks": [],
-      "contentHash": "4083269001de9f6c756ea80d397b7b160dfe284742c3229dac05f53c6e4bc162",
+      "contentHash": "86480ece2d009c8637927eb3ee02cdea71863e88a94225b1f68b682793a9120d",
       "declarations": [],
       "imports": [],
       "path": "src/lib/i18n/locales/zh/navigation.ts",
       "semanticBytes": 0,
-      "sourceBytes": 1425
+      "sourceBytes": 1476
     },
     {
       "blocks": [],
@@ -7563,12 +7563,12 @@
     },
     {
       "blocks": [],
-      "contentHash": "2e6b6867566b974de97ea369482adbf9c3c1dd431f65843d50986ac4fdebf8ea",
+      "contentHash": "7ff053fbe416ddaf5ac6e4d8abfe3d396a807e99c891fbfc44c8c02a4a6a440e",
       "declarations": [],
       "imports": [],
       "path": "src/lib/i18n/locales/zh/workspace.ts",
       "semanticBytes": 0,
-      "sourceBytes": 1519
+      "sourceBytes": 1729
     },
     {
       "blocks": [],
@@ -7737,14 +7737,15 @@
     },
     {
       "blocks": [],
-      "contentHash": "88244643476dfe7c6afa97feeb62370c4189de941a05d0865798a67262a75a1b",
+      "contentHash": "4d1de42947a22b82a4907f28d82b68fcc407e34dfb8e565a27d68d8b7ef14026",
       "declarations": [],
       "imports": [
         "#lib/i18n/workduck-language.ts",
         "#lib/i18n/workduck-message-contract.ts",
         "#lib/ui/PageTitleRow.svelte",
         "./ProjectNodeCard.svelte",
-        "./ProjectRepositoryCard.svelte",
+        "./ProjectRepositoryInspector.svelte",
+        "./ProjectRepositoryRow.svelte",
         "./project-board-operations",
         "./project-board-selectors",
         "./project-registry",
@@ -7752,7 +7753,7 @@
       ],
       "path": "src/lib/projects/ProjectBoardLanesBase.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 13733
+      "sourceBytes": 16112
     },
     {
       "blocks": [],
@@ -8248,6 +8249,35 @@
       "path": "src/lib/projects/ProjectRepositoryCard.svelte",
       "semanticBytes": 0,
       "sourceBytes": 10636
+    },
+    {
+      "blocks": [],
+      "contentHash": "7a1a75d5b38d1440b941c1931404a3e4cc3dc992ec349165835a2186a086fcd6",
+      "declarations": [],
+      "imports": [
+        "./ProjectRepositoryCard.svelte",
+        "svelte"
+      ],
+      "path": "src/lib/projects/ProjectRepositoryInspector.svelte",
+      "semanticBytes": 0,
+      "sourceBytes": 893
+    },
+    {
+      "blocks": [],
+      "contentHash": "76b09ef294ae3468e98309a6faae8108a7f326cf1f3d649349b312402bc24c85",
+      "declarations": [],
+      "imports": [
+        "#lib/i18n/workduck-message-contract.ts",
+        "./project-board-errors",
+        "./project-board-operations",
+        "./project-board-selectors",
+        "./project-registry",
+        "./project-repository-task",
+        "./project-repository-task-runs"
+      ],
+      "path": "src/lib/projects/ProjectRepositoryRow.svelte",
+      "semanticBytes": 0,
+      "sourceBytes": 6284
     },
     {
       "blocks": [],
@@ -10452,16 +10482,17 @@
     },
     {
       "blocks": [],
-      "contentHash": "6438408da2a92d6589ae9419461a0ecb9ca5f764a4fa5681d6e9dee8d40b1e70",
+      "contentHash": "6b81246692a64c587591fee608445bee53d8f072305a32a2f927acd096819310",
       "declarations": [],
       "imports": [
         "#lib/i18n/workduck-message-contract.ts",
         "./queue-artifacts",
+        "./queue-panel-labels",
         "./queue-panel-types"
       ],
       "path": "src/lib/queue/QueueFileList.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 2619
+      "sourceBytes": 2512
     },
     {
       "blocks": [],
@@ -10479,7 +10510,7 @@
     },
     {
       "blocks": [],
-      "contentHash": "7abb2e84c84a2bbc5e812bcf46828adbf40ab52b80c53b7d4109b2520b32b650",
+      "contentHash": "305f48f05c956c61c08d63774e9e2ec799d9fdf125df6aa66125e483145d477a",
       "declarations": [],
       "imports": [
         "#lib/ui/PageTitleRow.svelte",
@@ -10497,7 +10528,7 @@
       ],
       "path": "src/lib/queue/QueuePanelView.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 20817
+      "sourceBytes": 24011
     },
     {
       "blocks": [],
@@ -10526,7 +10557,7 @@
     },
     {
       "blocks": [],
-      "contentHash": "bf1a2cbadfbcf01aa33365cf19fbb4cdf1ba82f526c4e52ae84de680c7c9106d",
+      "contentHash": "21da07a91586b3998ae033c5fc48043a2351323efa56cd3bf1ea9b819f2486f5",
       "declarations": [],
       "imports": [
         "#lib/agents/agent-registry.ts",
@@ -10537,11 +10568,11 @@
       ],
       "path": "src/lib/queue/QueueReportDetail.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 7821
+      "sourceBytes": 8219
     },
     {
       "blocks": [],
-      "contentHash": "7bcccde4cdd33b8aa1930abacf0f69aa0712c8a1a340f10f55cf4cc603f80048",
+      "contentHash": "325fed93fdc9aa459c78e603c20e94b14625e613f7f5722187b7ee540bb531ee",
       "declarations": [],
       "imports": [
         "#lib/i18n/workduck-message-contract.ts",
@@ -10551,7 +10582,7 @@
       ],
       "path": "src/lib/queue/QueueWorkOrderDetail.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 12036
+      "sourceBytes": 12934
     },
     {
       "blocks": [],
@@ -10607,14 +10638,14 @@
     },
     {
       "blocks": [],
-      "contentHash": "e117f50e84f5e3ce545290476f310be2af5e0aefef0ee1d05b8f87c67984bdee",
+      "contentHash": "27b4b4a19bf3712b4acdeb91e21601d161ff7c3570d26673f908349c945216b9",
       "declarations": [],
       "imports": [
         "../queue-artifacts"
       ],
       "path": "src/lib/queue/domain/queue-artifact-readers.ts",
       "semanticBytes": 0,
-      "sourceBytes": 6112
+      "sourceBytes": 6391
     },
     {
       "blocks": [
@@ -10731,7 +10762,7 @@
     },
     {
       "blocks": [],
-      "contentHash": "182453f126bec4dc5c20f20fd6aa3165edc25388ebd557d4198182713ce725a1",
+      "contentHash": "a03805a22e536f9ad309f9308b76098447a44011584c74eca9f2f00673bf58a3",
       "declarations": [],
       "imports": [
         "./domain/queue-artifact-readers",
@@ -10740,7 +10771,7 @@
       ],
       "path": "src/lib/queue/queue-card-entry.ts",
       "semanticBytes": 0,
-      "sourceBytes": 1663
+      "sourceBytes": 1728
     },
     {
       "blocks": [],
@@ -11833,7 +11864,7 @@
     },
     {
       "blocks": [],
-      "contentHash": "90fe9b2abd7fa0706bb941329c185fca8793a7530c90e5e271aec0d9ca52adb1",
+      "contentHash": "ef65785b9da7b42f590b48165d919819e6e6fb12ecb8ebaee585fdb5b9bf300e",
       "declarations": [],
       "imports": [
         "#lib/agents/agent-registry.ts",
@@ -11845,7 +11876,7 @@
       ],
       "path": "src/lib/queue/queue-panel-types.ts",
       "semanticBytes": 0,
-      "sourceBytes": 2622
+      "sourceBytes": 2660
     },
     {
       "blocks": [],
@@ -12150,6 +12181,18 @@
     },
     {
       "blocks": [],
+      "contentHash": "793a4219a84832f5713bb6e75657771a23d4047ccd63084c7392cb2abdd643f6",
+      "declarations": [],
+      "imports": [
+        "./domain/queue-artifact-readers",
+        "bun:test"
+      ],
+      "path": "src/lib/queue/queue-report-link-metadata.test.ts",
+      "semanticBytes": 0,
+      "sourceBytes": 949
+    },
+    {
+      "blocks": [],
       "contentHash": "aa56b9c2e74efbc0dac9eac258f752247af590032e52818d6c97d60e3c8b233c",
       "declarations": [],
       "imports": [],
@@ -12272,7 +12315,7 @@
     },
     {
       "blocks": [],
-      "contentHash": "b548c9cd4b75dc8dd3fca8a8ae61f5aa60195b913e1161209509041bbca36baf",
+      "contentHash": "a24d7b957aeee1e8403e2cb88544e14bed957f069dc11d1f0181f5f1d180bfb4",
       "declarations": [],
       "imports": [
         "#lib/i18n/workduck-language.ts",
@@ -12286,12 +12329,13 @@
         "./artifact-search",
         "./command-palette-data",
         "./command-palette-index",
+        "./command-palette-trigger",
         "./command-palette.css",
         "svelte"
       ],
       "path": "src/lib/search/CommandPalette.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 12334
+      "sourceBytes": 13036
     },
     {
       "blocks": [],
@@ -12350,6 +12394,15 @@
       "path": "src/lib/search/command-palette-index.ts",
       "semanticBytes": 0,
       "sourceBytes": 8277
+    },
+    {
+      "blocks": [],
+      "contentHash": "d6418da3a08e5224549acd6c30e2e6a5b63b9dd23a38ed165e0bd50b159528e1",
+      "declarations": [],
+      "imports": [],
+      "path": "src/lib/search/command-palette-trigger.ts",
+      "semanticBytes": 0,
+      "sourceBytes": 1120
     },
     {
       "blocks": [],
@@ -12438,7 +12491,7 @@
     },
     {
       "blocks": [],
-      "contentHash": "a3d04ab4d79a71eb1c3c959f2f73ba44084591e3af62cf51e7e035f059c898ce",
+      "contentHash": "9ab955d78cbaab0ea829c7448e3b9cf46c9b0807c501bc4b2fb4e9e47e621735",
       "declarations": [],
       "imports": [
         "#lib/environment/environment-vault-session-loader.ts",
@@ -12452,6 +12505,7 @@
         "#lib/workspaces/workspace-password.ts",
         "#lib/workspaces/workspace-path-format.ts",
         "#lib/workspaces/workspace-path.ts",
+        "#lib/workspaces/workspace-registration-draft.ts",
         "#lib/workspaces/workspace-registry.ts",
         "#lib/workspaces/workspace-repository-git.ts",
         "#lib/workspaces/workspace-repository-setup.ts",
@@ -12466,11 +12520,11 @@
       ],
       "path": "src/lib/settings/WorkspaceSettingsSurface.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 34547
+      "sourceBytes": 35145
     },
     {
       "blocks": [],
-      "contentHash": "30a56c1d79ba142798b39f4e49bd859678dfbbd6a6c1abfc7fcaa22f5cb512aa",
+      "contentHash": "1fc44d41db59844f66feb06ffc26ee283a9921369c104baeee4376c186f429aa",
       "declarations": [],
       "imports": [
         "#lib/ui/StatusToast.svelte",
@@ -12483,7 +12537,7 @@
       ],
       "path": "src/lib/settings/WorkspaceSettingsView.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 28108
+      "sourceBytes": 28248
     },
     {
       "blocks": [],
@@ -12610,7 +12664,7 @@
     },
     {
       "blocks": [],
-      "contentHash": "066e773a553f2a920b28530409b064efbfc91ccfc4c4cd4d8a1fbe9a0f2b9cc4",
+      "contentHash": "8852026cc31151cdc8bae39541eee3f475b3c47a731b641646dcf507cb7d9c77",
       "declarations": [],
       "imports": [
         "#lib/brand/WorkduckMark.svelte",
@@ -12618,6 +12672,7 @@
         "#lib/i18n/workduck-language.ts",
         "#lib/queue/queue-folder.ts",
         "#lib/queue/queue-read-state.ts",
+        "#lib/search/command-palette-trigger.ts",
         "#lib/settings/appearance-settings.ts",
         "#lib/settings/appearance-storage.ts",
         "#lib/settings/system-settings.ts",
@@ -12640,7 +12695,7 @@
       ],
       "path": "src/lib/shell/WorkbenchShell.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 32022
+      "sourceBytes": 36522
     },
     {
       "blocks": [],
@@ -13331,15 +13386,18 @@
     },
     {
       "blocks": [],
-      "contentHash": "3563857e49dc652df9312064c7fca7e84a85ebeb542294cf84cdfd5411486e00",
+      "contentHash": "d79c3b560a91fbbd335b5aaaf752f741d38a6928af611c08ac2350a0e4b0009b",
       "declarations": [],
       "imports": [
         "#lib/i18n/workduck-language.ts",
         "#lib/settings/appearance-settings.ts",
         "#lib/settings/appearance-storage.ts",
+        "#lib/tauri/tauri-invoke.ts",
+        "$app/navigation",
         "./WorkspacePathRepairForm.svelte",
         "./WorkspaceUnlockForm.svelte",
         "./workspace-path",
+        "./workspace-registration-draft",
         "./workspace-registry",
         "./workspace-storage",
         "./workspace-unlock",
@@ -13347,7 +13405,7 @@
       ],
       "path": "src/lib/workspaces/WorkspaceGate.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 6197
+      "sourceBytes": 7655
     },
     {
       "blocks": [],
@@ -13615,6 +13673,29 @@
       "path": "src/lib/workspaces/workspace-path.ts",
       "semanticBytes": 553,
       "sourceBytes": 3895
+    },
+    {
+      "blocks": [],
+      "contentHash": "c4fd2e50fed762a61b2252278f7d00c218bff2f6f8995ec944e86dd6fcc300ff",
+      "declarations": [],
+      "imports": [
+        "./workspace-registration-draft",
+        "bun:test"
+      ],
+      "path": "src/lib/workspaces/workspace-registration-draft.test.ts",
+      "semanticBytes": 0,
+      "sourceBytes": 883
+    },
+    {
+      "blocks": [],
+      "contentHash": "b33a56edc4564419d4e36bec16b0f8afa17e9c959bc271c526236e7cd5a69288",
+      "declarations": [],
+      "imports": [
+        "./workspace-path-format"
+      ],
+      "path": "src/lib/workspaces/workspace-registration-draft.ts",
+      "semanticBytes": 0,
+      "sourceBytes": 756
     },
     {
       "blocks": [],
