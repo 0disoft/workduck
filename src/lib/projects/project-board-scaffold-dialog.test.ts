@@ -45,15 +45,20 @@ function scaffoldResponse(args: Record<string, unknown> | undefined, applied = f
 }
 
 function createDialog(canApply = true) {
+	const workspace = { id: 'workspace_1', path: 'C:/workspace' };
 	let error: ProjectFormError | null = null;
 	let status: string | null = null;
 	let opened = 0;
 	const dialog = createProjectBoardScaffoldDialog({
-		workspacePath: () => 'C:/workspace', messages: () => getWorkduckMessages('en').projects,
+		captureWorkspace: () => {
+			const { id, path } = workspace;
+			return { workspacePath: path, isCurrent: () => workspace.id === id && workspace.path === path };
+		},
+		messages: () => getWorkduckMessages('en').projects,
 		canApplyToRepository: () => canApply, preloadOverlays() {}, onOpen: () => { opened += 1; },
 		setFormError: (value) => { error = value; }, setStatus: (value) => { status = value; }
 	});
-	return { dialog, get error() { return error; }, get status() { return status; }, get opened() { return opened; } };
+	return { dialog, workspace, get error() { return error; }, get status() { return status; }, get opened() { return opened; } };
 }
 
 async function settlePreview() {
@@ -63,6 +68,78 @@ async function settlePreview() {
 afterEach(() => setTauriInvokeForTest(undefined));
 
 describe('repository scaffold dialog', () => {
+	for (const outcome of ['success', 'error'] as const) {
+		for (const change of ['id', 'path'] as const) {
+			test(`ignores scaffold apply ${outcome} after workspace ${change} changes`, async () => {
+				let finish!: () => void;
+				const pending = new Promise<void>((resolve) => { finish = resolve; });
+				setTauriInvokeForTest(async <T>(command: string, args?: Record<string, unknown>) => {
+					if (command === 'apply_ssealed_scaffold_to_repository') {
+						await pending;
+						if (outcome === 'error') return { ok: false, error: 'project-folder-ssealed-scaffold-failed' } as T;
+					}
+					return scaffoldResponse(args, command === 'apply_ssealed_scaffold_to_repository') as T;
+				});
+				const harness = createDialog();
+				harness.dialog.openApplySsealedRepositoryDialog(target);
+				await settlePreview();
+				const applying = harness.dialog.applySsealedScaffoldToTarget();
+				harness.workspace[change] += '_changed';
+				finish();
+				await applying;
+				expect(harness.error).toBeNull();
+				expect(harness.status).toBeNull();
+				expect(harness.dialog.ssealedPreview?.addedCount).toBe(0);
+			});
+		}
+	}
+
+	test('ignores a preview after workspace changes and refuses a stale apply', async () => {
+		let finish!: () => void;
+		let applyCalls = 0;
+		const pending = new Promise<void>((resolve) => { finish = resolve; });
+		setTauriInvokeForTest(async <T>(command: string, args?: Record<string, unknown>) => {
+			if (command === 'apply_ssealed_scaffold_to_repository') applyCalls += 1;
+			await pending;
+			return scaffoldResponse(args) as T;
+		});
+		const harness = createDialog();
+		harness.dialog.openApplySsealedRepositoryDialog(target);
+		harness.workspace.path = 'C:/other-workspace';
+		finish();
+		await settlePreview();
+		expect(harness.dialog.ssealedPreview).toBeNull();
+		await harness.dialog.applySsealedScaffoldToTarget();
+		expect(applyCalls).toBe(0);
+	});
+
+	test('a previous apply cannot overwrite a reopened dialog or clear its busy state', async () => {
+		const replies: (() => void)[] = [];
+		setTauriInvokeForTest(async <T>(command: string, args?: Record<string, unknown>) => {
+			if (command === 'apply_ssealed_scaffold_to_repository') {
+				await new Promise<void>((resolve) => { replies.push(resolve); });
+			}
+			return scaffoldResponse(args, command === 'apply_ssealed_scaffold_to_repository') as T;
+		});
+		const harness = createDialog();
+		harness.dialog.openApplySsealedRepositoryDialog(target);
+		await settlePreview();
+		const oldApply = harness.dialog.applySsealedScaffoldToTarget();
+		harness.dialog.closeSsealedScaffoldDialog();
+		harness.dialog.openApplySsealedRepositoryDialog(target);
+		await settlePreview();
+		const newApply = harness.dialog.applySsealedScaffoldToTarget();
+		replies[0]!();
+		await oldApply;
+		expect(harness.dialog.isApplyingSsealed).toBe(true);
+		expect(harness.dialog.ssealedPreview?.addedCount).toBe(0);
+		expect(harness.status).toBeNull();
+		replies[1]!();
+		await newApply;
+		expect(harness.dialog.isApplyingSsealed).toBe(false);
+		expect(harness.dialog.ssealedPreview?.addedCount).toBe(2);
+	});
+
 	for (const order of ['old-first', 'new-first', 'old-error']) {
 		test(`ignores the previous dialog preview after reopening the same repository (${order})`, async () => {
 			const replies: (() => void)[] = [];

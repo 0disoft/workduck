@@ -7638,7 +7638,7 @@
     },
     {
       "blocks": [],
-      "contentHash": "dacf4730a466e26c6a8d7048019ab0714daabb0acae1c61698389e53912f7de7",
+      "contentHash": "87dcb9012f3b4b54ae3f3ef4355480c46888bb7c1faab95c42fc62473e127b5a",
       "declarations": [],
       "imports": [
         "#lib/environment/environment-vault.ts",
@@ -7688,7 +7688,7 @@
       ],
       "path": "src/lib/projects/ProjectBoardSurface.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 50814
+      "sourceBytes": 50828
     },
     {
       "blocks": [
@@ -8583,7 +8583,7 @@
             ],
             "id": "workduck.projects.scaffold-dialog",
             "invariant": [
-              "Only the latest preview request in the open dialog updates preview and busy state; apply results stay bound to the selected repository, scope, and profile."
+              "Preview and apply commands use the opening workspace; only the live dialog and its selected repository, scope, and profile receive results or busy-state cleanup."
             ],
             "owns": [
               "scaffold dialog lifecycle",
@@ -8603,7 +8603,7 @@
             "stability": "architecture",
             "unknown": []
           },
-          "end": 605,
+          "end": 611,
           "endLine": 9,
           "entries": [
             {
@@ -8640,7 +8640,7 @@
               "key": "invariant",
               "line": 7,
               "order": 5,
-              "value": "Only the latest preview request in the open dialog updates preview and busy state; apply results stay bound to the selected repository, scope, and profile."
+              "value": "Preview and apply commands use the opening workspace; only the live dialog and its selected repository, scope, and profile receive results or busy-state cleanup."
             },
             {
               "key": "stability",
@@ -8653,7 +8653,7 @@
           "indent": "",
           "newline": "\n",
           "prefix": null,
-          "raw": "/* llmnav/1 module\nid=workduck.projects.scaffold-dialog\nrole=Own reactive repository scaffold dialog state, profile selection, preview, and apply workflows.\nowns=scaffold dialog lifecycle|preview selection ownership|scaffold busy state|apply feedback\nexcludes=board selection|native scaffold persistence|new repository scaffolding\nsearch=repository scaffold preview|apply ssealed profile|scaffold dialog lifecycle\ninvariant=Only the latest preview request in the open dialog updates preview and busy state; apply results stay bound to the selected repository, scope, and profile.\nstability=architecture\n*/",
+          "raw": "/* llmnav/1 module\nid=workduck.projects.scaffold-dialog\nrole=Own reactive repository scaffold dialog state, profile selection, preview, and apply workflows.\nowns=scaffold dialog lifecycle|preview selection ownership|scaffold busy state|apply feedback\nexcludes=board selection|native scaffold persistence|new repository scaffolding\nsearch=repository scaffold preview|apply ssealed profile|scaffold dialog lifecycle\ninvariant=Preview and apply commands use the opening workspace; only the live dialog and its selected repository, scope, and profile receive results or busy-state cleanup.\nstability=architecture\n*/",
           "scope": "module",
           "specVersion": "1",
           "start": 0,
@@ -8662,7 +8662,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "1eb0eb2158e417582aab85602d99d99a58dc92a14a8ec23701df53e380d34316",
+      "contentHash": "d317f2515c06b49bcbe01f1c107e35b4f4aaee316dc97bcc95376ec1989d2a3a",
       "declarations": [
         null
       ],
@@ -8674,12 +8674,12 @@
         "./project-registry"
       ],
       "path": "src/lib/projects/project-board-scaffold-dialog.svelte.ts",
-      "semanticBytes": 605,
-      "sourceBytes": 7731
+      "semanticBytes": 611,
+      "sourceBytes": 8251
     },
     {
       "blocks": [],
-      "contentHash": "e35c97f0bec88e60ce04a9c4c2753855572ac1ab451108bad1931608d5ca0261",
+      "contentHash": "a5218964e85d666324a28fd3978459776149c3eddc294d1f4cb4517ffefeaa8a",
       "declarations": [],
       "imports": [
         "#lib/i18n/workduck-language.ts",
@@ -8693,7 +8693,7 @@
       ],
       "path": "src/lib/projects/project-board-scaffold-dialog.test.ts",
       "semanticBytes": 0,
-      "sourceBytes": 7348
+      "sourceBytes": 10619
     },
     {
       "blocks": [

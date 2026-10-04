@@ -95,7 +95,7 @@ invariant Inspections avoid credential helpers and index writes, and concurrent 
 role Own reactive repository scaffold dialog state, profile selection, preview, and apply workflows.
 owns scaffold dialog lifecycle, preview selection ownership, scaffold busy state, apply feedback
 excludes board selection, native scaffold persistence, new repository scaffolding
-invariant Only the latest preview request in the open dialog updates preview and busy state; apply results stay bound to the selected repository, scope, and profile.
+invariant Preview and apply commands use the opening workspace; only the live dialog and its selected repository, scope, and profile receive results or busy-state cleanup.
 
 @workduck.projects.workspace-lifecycle
 role Load project board registries, operation history, and vault views within the active workspace lifetime.

@@ -82,7 +82,7 @@
     "workduck.workspace.sync-file-native",
     "workduck.workspace.sync-git-native"
   ],
-  "cardSetHash": "b06c315e97482ebeac5bdceb4ba966e3190da951afcae57015efcae888f4abf6",
+  "cardSetHash": "fb758224f25e8e0115865d7174fcf7409648d45244331248b23ab11e33bc36d8",
   "documentCount": 81,
   "documents": [
     [
@@ -558,13 +558,13 @@
       ]
     ],
     [
-      "444c1c6826d68fd35efdbc42869a49c29602e5f3188775fae8b7401cbef3fd0f",
+      "9085fab4fac0e3bfd63ffb0ed5e6fda217967826a3d8606acf9d8207a1844c8f",
       [
         "own reactive repository scaffold dialog state, profile selection, preview, and apply workflows.",
         "repository scaffold preview",
         "apply ssealed profile",
         "scaffold dialog lifecycle",
-        "only the latest preview request in the open dialog updates preview and busy state; apply results stay bound to the selected repository, scope, and profile.",
+        "preview and apply commands use the opening workspace; only the live dialog and its selected repository, scope, and profile receive results or busy-state cleanup.",
         "scaffold dialog lifecycle",
         "preview selection ownership",
         "scaffold busy state",
@@ -2285,7 +2285,7 @@
           1,
           1,
           5,
-          2
+          3
         ]
       ],
       [
@@ -3801,13 +3801,6 @@
         ]
       ],
       [
-        36,
-        [
-          5,
-          1
-        ]
-      ],
-      [
         56,
         [
           5,
@@ -4908,6 +4901,13 @@
       ]
     ],
     [
+      [
+        36,
+        [
+          5,
+          1
+        ]
+      ],
       [
         37,
         [
@@ -5614,6 +5614,13 @@
         ]
       ],
       [
+        36,
+        [
+          5,
+          1
+        ]
+      ],
+      [
         41,
         [
           0,
@@ -11441,13 +11448,6 @@
         ]
       ],
       [
-        36,
-        [
-          5,
-          1
-        ]
-      ],
-      [
         39,
         [
           5,
@@ -12196,6 +12196,13 @@
         ]
       ],
       [
+        36,
+        [
+          5,
+          1
+        ]
+      ],
+      [
         48,
         [
           5,
@@ -12532,13 +12539,6 @@
       ],
       [
         31,
-        [
-          5,
-          1
-        ]
-      ],
-      [
-        36,
         [
           5,
           1
@@ -13245,6 +13245,13 @@
         ]
       ],
       [
+        36,
+        [
+          5,
+          1
+        ]
+      ],
+      [
         45,
         [
           5,
@@ -15683,16 +15690,18 @@
         ]
       ],
       [
-        36,
-        [
-          5,
-          1
-        ]
-      ],
-      [
         53,
         [
           2,
+          1
+        ]
+      ]
+    ],
+    [
+      [
+        36,
+        [
+          5,
           1
         ]
       ]
@@ -16069,6 +16078,13 @@
         35,
         [
           1,
+          1
+        ]
+      ],
+      [
+        36,
+        [
+          5,
           1
         ]
       ],
@@ -17826,7 +17842,7 @@
           3,
           1,
           5,
-          2
+          1
         ]
       ],
       [
@@ -19718,6 +19734,13 @@
     ],
     [
       [
+        36,
+        [
+          5,
+          1
+        ]
+      ],
+      [
         65,
         [
           5,
@@ -21421,13 +21444,6 @@
         ]
       ],
       [
-        36,
-        [
-          5,
-          1
-        ]
-      ],
-      [
         39,
         [
           5,
@@ -25632,13 +25648,6 @@
       ]
     ],
     [
-      [
-        36,
-        [
-          5,
-          1
-        ]
-      ],
       [
         56,
         [
@@ -27508,7 +27517,7 @@
         36,
         [
           5,
-          3
+          2
         ]
       ],
       [
@@ -27975,13 +27984,6 @@
         11,
         [
           1,
-          1
-        ]
-      ],
-      [
-        36,
-        [
-          5,
           1
         ]
       ],
@@ -29000,13 +29002,6 @@
     ],
     [
       [
-        36,
-        [
-          5,
-          1
-        ]
-      ],
-      [
         45,
         [
           5,
@@ -29058,6 +29053,13 @@
     [
       [
         33,
+        [
+          5,
+          1
+        ]
+      ],
+      [
+        36,
         [
           5,
           1
@@ -31036,6 +31038,13 @@
       ],
       [
         35,
+        [
+          5,
+          1
+        ]
+      ],
+      [
+        36,
         [
           5,
           1
@@ -32147,6 +32156,7 @@
     "one",
     "only",
     "open",
+    "opening",
     "operating",
     "operation",
     "operations",

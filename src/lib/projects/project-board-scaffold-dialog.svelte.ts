@@ -4,7 +4,7 @@ role=Own reactive repository scaffold dialog state, profile selection, preview, 
 owns=scaffold dialog lifecycle|preview selection ownership|scaffold busy state|apply feedback
 excludes=board selection|native scaffold persistence|new repository scaffolding
 search=repository scaffold preview|apply ssealed profile|scaffold dialog lifecycle
-invariant=Only the latest preview request in the open dialog updates preview and busy state; apply results stay bound to the selected repository, scope, and profile.
+invariant=Preview and apply commands use the opening workspace; only the live dialog and its selected repository, scope, and profile receive results or busy-state cleanup.
 stability=architecture
 */
 import type { WorkduckMessages } from '#lib/i18n/workduck-message-contract.ts';
@@ -21,8 +21,13 @@ import type { ProjectFormError } from './project-board-errors';
 import type { ProjectRepositoryLinkRecord } from './project-registry';
 import type { ProjectRepositoryTarget } from './project-board-types';
 
+interface ScaffoldDialogWorkspace {
+	readonly workspacePath: string;
+	readonly isCurrent: () => boolean;
+}
+
 interface ProjectBoardScaffoldDialogInput {
-	readonly workspacePath: () => string;
+	readonly captureWorkspace: () => ScaffoldDialogWorkspace;
 	readonly messages: () => WorkduckMessages['projects'];
 	readonly canApplyToRepository: (repository: ProjectRepositoryLinkRecord) => boolean;
 	readonly preloadOverlays: () => void;
@@ -32,6 +37,7 @@ interface ProjectBoardScaffoldDialogInput {
 }
 
 export function createProjectBoardScaffoldDialog(input: ProjectBoardScaffoldDialogInput) {
+	let dialogWorkspace: ScaffoldDialogWorkspace | null = null;
 	let ssealedTarget = $state<ProjectRepositoryTarget | null>(null);
 	let ssealedScaffoldApplyScope = $state<SsealedScaffoldApplyScope>(
 		getDefaultSsealedScaffoldApplyScope()
@@ -63,6 +69,7 @@ export function createProjectBoardScaffoldDialog(input: ProjectBoardScaffoldDial
 			return;
 		}
 
+		dialogWorkspace = { ...input.captureWorkspace() };
 		ssealedTarget = target;
 		const defaultScope = getDefaultSsealedScaffoldApplyScope();
 		const defaultProfile = getDefaultSsealedScaffoldProfile();
@@ -78,6 +85,7 @@ export function createProjectBoardScaffoldDialog(input: ProjectBoardScaffoldDial
 	}
 
 	function closeSsealedScaffoldDialog() {
+		dialogWorkspace = null;
 		previewGeneration += 1;
 		ssealedTarget = null;
 		ssealedScaffoldApplyScope = getDefaultSsealedScaffoldApplyScope();
@@ -115,6 +123,8 @@ export function createProjectBoardScaffoldDialog(input: ProjectBoardScaffoldDial
 		scope = ssealedScaffoldApplyScope,
 		profile = ssealedScaffoldApplyProfile
 	) {
+		const workspace = dialogWorkspace;
+		if (workspace === null || !workspace.isCurrent()) return;
 		if (target === null || target.repository.path === null) {
 			input.setFormError('project-repository-not-found');
 			return;
@@ -129,13 +139,14 @@ export function createProjectBoardScaffoldDialog(input: ProjectBoardScaffoldDial
 
 		try {
 			const result = await previewSsealedScaffoldForRepository(
-				input.workspacePath(),
+				workspace.workspacePath,
 				target.repository.path,
 				scope,
 				profile
 			);
 
 			if (
+				dialogWorkspace !== workspace || !workspace.isCurrent() ||
 				previewGeneration !== generation ||
 				ssealedTarget?.repository.id !== repositoryId ||
 				ssealedScaffoldApplyScope !== scope ||
@@ -153,6 +164,7 @@ export function createProjectBoardScaffoldDialog(input: ProjectBoardScaffoldDial
 			input.setFormError(result.error);
 		} finally {
 			if (
+				dialogWorkspace === workspace &&
 				previewGeneration === generation &&
 				ssealedTarget?.repository.id === repositoryId &&
 				ssealedScaffoldApplyScope === scope &&
@@ -165,6 +177,8 @@ export function createProjectBoardScaffoldDialog(input: ProjectBoardScaffoldDial
 
 	async function applySsealedScaffoldToTarget() {
 		const target = ssealedTarget;
+		const workspace = dialogWorkspace;
+		if (workspace === null || !workspace.isCurrent()) return;
 
 		if (target === null || target.repository.path === null || isApplyingSsealed) {
 			return;
@@ -185,13 +199,14 @@ export function createProjectBoardScaffoldDialog(input: ProjectBoardScaffoldDial
 
 		try {
 			const result = await applySsealedScaffoldToRepository(
-				input.workspacePath(),
+				workspace.workspacePath,
 				target.repository.path,
 				scope,
 				profile
 			);
 
 			if (
+				dialogWorkspace !== workspace || !workspace.isCurrent() ||
 				ssealedTarget?.repository.id !== repositoryId ||
 				ssealedScaffoldApplyScope !== scope ||
 				ssealedScaffoldApplyProfile !== profile
@@ -216,11 +231,7 @@ export function createProjectBoardScaffoldDialog(input: ProjectBoardScaffoldDial
 						)
 			);
 		} finally {
-			if (
-				ssealedTarget?.repository.id === repositoryId &&
-				ssealedScaffoldApplyScope === scope &&
-				ssealedScaffoldApplyProfile === profile
-			) {
+			if (dialogWorkspace === workspace) {
 				isApplyingSsealed = false;
 			}
 		}

@@ -3232,8 +3232,8 @@
         "new repository scaffolding"
       ],
       "hashes": {
-        "body": "1eb0eb2158e417582aab85602d99d99a58dc92a14a8ec23701df53e380d34316",
-        "semantic": "ef8fd9bf2a8b5dd3c58ec721614624b1f1821800c12b45dd65708ec60049e924",
+        "body": "d317f2515c06b49bcbe01f1c107e35b4f4aaee316dc97bcc95376ec1989d2a3a",
+        "semantic": "f67bc96b9cca1b6d633eba45192d70deee575a424c7f5a9235e7811ea98fc3ab",
         "structure": "86dddb747ec8bf78b9fc4109aa5ce1449096b611630a3f7a1fa48fb3478e6f4b"
       },
       "id": "workduck.projects.scaffold-dialog",
@@ -3245,7 +3245,7 @@
         "./project-registry"
       ],
       "invariant": [
-        "Only the latest preview request in the open dialog updates preview and busy state; apply results stay bound to the selected repository, scope, and profile."
+        "Preview and apply commands use the opening workspace; only the live dialog and its selected repository, scope, and profile receive results or busy-state cleanup."
       ],
       "location": {
         "declarationLine": null,
@@ -4102,6 +4102,6 @@
   "generatedBy": "llmnav@0.9.7",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "f24587d20f91247cc348ac2d77c9b40230e3ebb0b491fe10520fdc4645bd1d83",
+  "sourceHash": "683d518a3a19018f75b79973c5415d27ea3969d380a8f4bb2658b669e05739fa",
   "specVersion": "1"
 }

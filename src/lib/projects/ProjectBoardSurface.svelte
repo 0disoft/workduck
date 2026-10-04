@@ -223,7 +223,7 @@
 	let commitWorkOrderTargetRepositoryId = $state<string | null>(null);
 	let publishTarget = $state<ProjectRepositoryPublishTarget | null>(null);
 	const scaffoldDialog = createProjectBoardScaffoldDialog({
-		workspacePath: () => workspace.path,
+		captureWorkspace: () => persistRegistry.capture(),
 		messages: () => projectMessages,
 		canApplyToRepository: canApplySsealedToRepository,
 		preloadOverlays: preloadProjectBoardOverlays,
