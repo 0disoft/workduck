@@ -10662,7 +10662,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "1a68afceb332a3cc84af8319d716189dcbbc6a77dd8a8adbc6fb238c037f74af",
+      "contentHash": "d4a31d11b0fa7fd314c9e31ce35e1c3955a20ee865da76d1109f15e7cb9cded7",
       "declarations": [
         null
       ],
@@ -10684,12 +10684,11 @@
         "./queue-completed-report-notifications",
         "./queue-execution",
         "./queue-folder",
-        "./queue-panel-context-menu-lifecycle",
         "./queue-panel-errors",
         "./queue-panel-evaluation-controller.svelte",
         "./queue-panel-evaluation-save-workflow",
         "./queue-panel-execution-context-workflow",
-        "./queue-panel-file-delete-workflow",
+        "./queue-panel-file-actions.svelte",
         "./queue-panel-file-list",
         "./queue-panel-manual-work-order-save-workflow",
         "./queue-panel-presentation.svelte",
@@ -10710,11 +10709,11 @@
       ],
       "path": "src/lib/queue/queue-panel-controller.svelte.ts",
       "semanticBytes": 618,
-      "sourceBytes": 45311
+      "sourceBytes": 41915
     },
     {
       "blocks": [],
-      "contentHash": "9933af8ee06605eb4efe4a35f03b8e0017a275e81a31f0722ec3cfd3d25ae14b",
+      "contentHash": "60529cddcd3e03495ecd4ae44f46fb88e38df9743002dcba2906b76b8389a36d",
       "declarations": [],
       "imports": [
         "#lib/agents/agent-evaluation.ts",
@@ -10733,7 +10732,7 @@
       ],
       "path": "src/lib/queue/queue-panel-controller.test.ts",
       "semanticBytes": 0,
-      "sourceBytes": 17538
+      "sourceBytes": 19510
     },
     {
       "blocks": [],
@@ -10910,6 +10909,115 @@
       "path": "src/lib/queue/queue-panel-execution-context-workflow.ts",
       "semanticBytes": 0,
       "sourceBytes": 3065
+    },
+    {
+      "blocks": [
+        {
+          "card": {
+            "effect": [],
+            "excludes": [
+              "artifact persistence",
+              "artifact read selection",
+              "other Queue writes"
+            ],
+            "id": "workduck.queue.file-actions",
+            "invariant": [
+              "Deletion captures the initiating workspace and applies partial results and feedback only while that view is current; menu subscriptions are disposed when closed."
+            ],
+            "owns": [
+              "menu lifecycle",
+              "bulk delete selection",
+              "delete admission",
+              "partial deletion feedback"
+            ],
+            "rel": [],
+            "risk": [],
+            "role": "Own Queue context menu placement, dismissal, and workspace-scoped single or bulk file deletion.",
+            "scope": "module",
+            "search": [
+              "Queue context menu deletion",
+              "bulk delete Queue files",
+              "partial Queue deletion"
+            ],
+            "stability": "architecture",
+            "unknown": []
+          },
+          "end": 588,
+          "endLine": 9,
+          "entries": [
+            {
+              "key": "id",
+              "line": 2,
+              "order": 0,
+              "value": "workduck.queue.file-actions"
+            },
+            {
+              "key": "role",
+              "line": 3,
+              "order": 1,
+              "value": "Own Queue context menu placement, dismissal, and workspace-scoped single or bulk file deletion."
+            },
+            {
+              "key": "owns",
+              "line": 4,
+              "order": 2,
+              "value": "menu lifecycle|bulk delete selection|delete admission|partial deletion feedback"
+            },
+            {
+              "key": "excludes",
+              "line": 5,
+              "order": 3,
+              "value": "artifact persistence|artifact read selection|other Queue writes"
+            },
+            {
+              "key": "search",
+              "line": 6,
+              "order": 4,
+              "value": "Queue context menu deletion|bulk delete Queue files|partial Queue deletion"
+            },
+            {
+              "key": "invariant",
+              "line": 7,
+              "order": 5,
+              "value": "Deletion captures the initiating workspace and applies partial results and feedback only while that view is current; menu subscriptions are disposed when closed."
+            },
+            {
+              "key": "stability",
+              "line": 8,
+              "order": 6,
+              "value": "architecture"
+            }
+          ],
+          "filePath": "src/lib/queue/queue-panel-file-actions.svelte.ts",
+          "indent": "",
+          "newline": "\n",
+          "prefix": null,
+          "raw": "/* llmnav/1 module\nid=workduck.queue.file-actions\nrole=Own Queue context menu placement, dismissal, and workspace-scoped single or bulk file deletion.\nowns=menu lifecycle|bulk delete selection|delete admission|partial deletion feedback\nexcludes=artifact persistence|artifact read selection|other Queue writes\nsearch=Queue context menu deletion|bulk delete Queue files|partial Queue deletion\ninvariant=Deletion captures the initiating workspace and applies partial results and feedback only while that view is current; menu subscriptions are disposed when closed.\nstability=architecture\n*/",
+          "scope": "module",
+          "specVersion": "1",
+          "start": 0,
+          "startLine": 1,
+          "style": "block",
+          "syntaxErrors": []
+        }
+      ],
+      "contentHash": "142189898ffd9af461d5086c46926070d13c58c80173adbaa92f3b31f3319962",
+      "declarations": [
+        null
+      ],
+      "imports": [
+        "#lib/i18n/workduck-message-contract.ts",
+        "./queue-folder",
+        "./queue-panel-context-menu-lifecycle",
+        "./queue-panel-file-delete-workflow",
+        "./queue-panel-file-list",
+        "./queue-panel-types",
+        "./queue-read-state",
+        "svelte"
+      ],
+      "path": "src/lib/queue/queue-panel-file-actions.svelte.ts",
+      "semanticBytes": 588,
+      "sourceBytes": 6581
     },
     {
       "blocks": [],

@@ -3146,9 +3146,9 @@
         "native file persistence"
       ],
       "hashes": {
-        "body": "1a68afceb332a3cc84af8319d716189dcbbc6a77dd8a8adbc6fb238c037f74af",
+        "body": "d4a31d11b0fa7fd314c9e31ce35e1c3955a20ee865da76d1109f15e7cb9cded7",
         "semantic": "9cbd47679bfe44a2f915c7b13c62e8afcc2ea8de2933c67098aeefbd984a6ac2",
-        "structure": "9cca726899065cba3dcb7d145d87a8bd19a22c399a929bdb35937832ab05cc63"
+        "structure": "69ddf897105839b533858ec441f7e346339b3e6c16af246d7e6b1f9aa488cd99"
       },
       "id": "workduck.queue.panel-controller",
       "imports": [
@@ -3169,12 +3169,11 @@
         "./queue-completed-report-notifications",
         "./queue-execution",
         "./queue-folder",
-        "./queue-panel-context-menu-lifecycle",
         "./queue-panel-errors",
         "./queue-panel-evaluation-controller.svelte",
         "./queue-panel-evaluation-save-workflow",
         "./queue-panel-execution-context-workflow",
-        "./queue-panel-file-delete-workflow",
+        "./queue-panel-file-actions.svelte",
         "./queue-panel-file-list",
         "./queue-panel-manual-work-order-save-workflow",
         "./queue-panel-presentation.svelte",
@@ -4087,11 +4086,65 @@
         "Queue skill option sorting"
       ],
       "stability": "architecture"
+    },
+    {
+      "boundaries": [],
+      "excludes": [
+        "artifact persistence",
+        "artifact read selection",
+        "other Queue writes"
+      ],
+      "hashes": {
+        "body": "142189898ffd9af461d5086c46926070d13c58c80173adbaa92f3b31f3319962",
+        "semantic": "0f5fdf83b8386e94db2dcc709cb8cb8ab78dc793f09b1921d4bc4dfc7706b55b",
+        "structure": "8c5c949c02a428663b5fc56e9c58de79ddc63c58f00628a43cca85ba18579eb8"
+      },
+      "id": "workduck.queue.file-actions",
+      "imports": [
+        "#lib/i18n/workduck-message-contract.ts",
+        "./queue-folder",
+        "./queue-panel-context-menu-lifecycle",
+        "./queue-panel-file-delete-workflow",
+        "./queue-panel-file-list",
+        "./queue-panel-types",
+        "./queue-read-state",
+        "svelte"
+      ],
+      "invariant": [
+        "Deletion captures the initiating workspace and applies partial results and feedback only while that view is current; menu subscriptions are disposed when closed."
+      ],
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src/lib/queue/queue-panel-file-actions.svelte.ts",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "owns": [
+        "menu lifecycle",
+        "bulk delete selection",
+        "delete admission",
+        "partial deletion feedback"
+      ],
+      "role": "Own Queue context menu placement, dismissal, and workspace-scoped single or bulk file deletion.",
+      "scope": "module",
+      "search": [
+        "Queue context menu deletion",
+        "bulk delete Queue files",
+        "partial Queue deletion"
+      ],
+      "stability": "architecture"
     }
   ],
   "contractFingerprints": {
     "configuration": {
-      "sha256": "df0c3fc3d6a7ebe01454498043bd14ec73f2fa0b0424056641dd8a73e036dd09"
+      "sha256": "5abc819224d8591832fd3b367c5db24ed8403397a73cff6af2fd8549ed0a68be"
     },
     "exportedApi": {
       "count": 0,
@@ -4102,6 +4155,6 @@
   "generatedBy": "llmnav@0.9.7",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "683d518a3a19018f75b79973c5415d27ea3969d380a8f4bb2658b669e05739fa",
+  "sourceHash": "27fbf79f5d951f602379de61ac5ccfb46618a9232566e13f577a213c00bcabf0",
   "specVersion": "1"
 }

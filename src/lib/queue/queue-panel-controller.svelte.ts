@@ -7,7 +7,7 @@ search=Queue workspace switch|late Queue read results|Queue panel controller
 invariant=Operation results update only their captured workspace lifetime; execution context and vault stay bound to the initiating workspace.
 stability=architecture
 */
-import { onMount, tick, untrack } from 'svelte';
+import { onMount, untrack } from 'svelte';
 
 import { getWorkduckMessages } from '#lib/i18n/workduck-language.ts';
 import {
@@ -74,17 +74,11 @@ import {
 	type QueueAutoRefreshScheduler
 } from './queue-auto-refresh-scheduler';
 import { createQueueCompletedReportNotifications } from './queue-completed-report-notifications';
-import {
-	canOpenQueueContextMenu,
-	createQueueContextMenuState,
-	createViewportAlignedQueueContextMenu,
-	subscribeQueueContextMenuDismissal
-} from './queue-panel-context-menu-lifecycle';
+import { createQueuePanelFileActions } from './queue-panel-file-actions.svelte';
 import {
 	createFilteredQueueFiles,
 	createQueueCardClass as createQueueCardClassFromSelection,
-	isQueueFileSelected,
-	shouldBulkDeleteQueueFile
+	isQueueFileSelected
 } from './queue-panel-file-list';
 import { createQueuePanelEvaluationController } from './queue-panel-evaluation-controller.svelte';
 import type { QueuePanelEvaluationSaveResult } from './queue-panel-evaluation-save-workflow';
@@ -99,7 +93,6 @@ import {
 	updateQueuePanelManualWorkOrder
 } from './queue-panel-manual-work-order-save-workflow';
 import { delegateQueuePanelReportEvaluation } from './queue-panel-report-evaluation-delegation-workflow';
-import { deleteQueuePanelFiles } from './queue-panel-file-delete-workflow';
 import {
 	markQueuePanelFileRead,
 	readQueuePanelReadFilePaths,
@@ -125,7 +118,6 @@ import {
 } from './queue-panel-errors';
 import {
 	type QueueCardEntry,
-	type QueueContextMenuState,
 	type QueueExecutionContext,
 	type QueueExecutionFilter,
 	type QueueKindFilter,
@@ -174,7 +166,6 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 	let queueKindFilter = $state<QueueKindFilter>('all');
 	let queuePriorityFilter = $state<QueuePriorityFilter>('all');
 	let queueSortOption = $state<QueueSortOption>('created-desc');
-	let bulkDeleteIncludesPending = $state(false);
 	let error = $state<QueueFolderError | null>(null);
 	let parseError = $state<string | null>(null);
 	let status = $state<string | null>(null);
@@ -199,8 +190,6 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 	let isPreviewingPrompt = $state(false);
 	let isCancellingExecution = $state(false);
 	const activeExecutions = new Map<string, string>();
-	let queueContextMenu = $state<QueueContextMenuState | null>(null);
-	let queueContextMenuElement = $state<HTMLElement | undefined>(undefined);
 	let ensureSignature = '';
 	let refreshSignature = 0;
 	let workspaceDataReadGeneration = 0;
@@ -298,11 +287,18 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 	let canCancelSelectedWorkOrderExecution = $derived(
 		selectedWorkOrder !== null && selectedWorkOrder.status === 'running' && !isCancellingExecution
 	);
-	let bulkDeleteTargetFiles = $derived(
-		files.filter((file) => shouldBulkDeleteQueueFile(file, bulkDeleteIncludesPending))
-	);
-	let bulkDeleteTargetCount = $derived(bulkDeleteTargetFiles.length);
-	let canBulkDeleteQueueFiles = $derived(bulkDeleteTargetCount > 0 && !isWriting);
+	const fileActions = createQueuePanelFileActions({
+		files: () => files,
+		messages: () => messages,
+		isWriting: () => isWriting,
+		captureWorkspaceTarget: captureWorkspaceOperationTarget,
+		setWriting: (value) => { isWriting = value; },
+		clearFeedback: () => { error = null; parseError = null; status = null; },
+		setError: (value) => { error = value; }, setStatus: (value) => { status = value; },
+		removeFiles: removeQueueFilesFromState
+	});
+	const closeQueueContextMenu = fileActions.closeQueueContextMenu;
+
 	onMount(() => {
 		appearanceSettings = readAppearanceSettingsFromBrowser().settings;
 		const unsubscribeAppearanceSettings = subscribeAppearanceSettings((nextSettings) => {
@@ -356,8 +352,7 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 			selectedProposalPath = null;
 			promptPreviews = null;
 			promptEstimate = null;
-			queueContextMenu = null;
-			queueContextMenuElement = undefined;
+			fileActions.closeQueueContextMenu();
 			reviews = [];
 			readFilePaths = readQueuePanelReadFilePaths(workspace.id);
 			queueExecutionFilter = 'all';
@@ -431,29 +426,6 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 
 		refreshSignature = refreshSignal;
 		untrack(() => { void refreshQueueFiles(); });
-});
-
-	$effect(() => {
-		if (queueContextMenu === null || queueContextMenuElement === undefined) {
-			return;
-	}
-
-		void alignQueueContextMenuToViewport({
-			menuSnapshot: queueContextMenu,
-			menuElement: queueContextMenuElement
-		});
-});
-
-	$effect(() => {
-		if (queueContextMenu === null || typeof window === 'undefined') {
-			return;
-	}
-
-		return subscribeQueueContextMenuDismissal({
-			window,
-			getMenuElement: () => queueContextMenuElement,
-			close: closeQueueContextMenu
-		});
 });
 
 	function workspaceDataReadIsCurrent(
@@ -681,128 +653,6 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 
 		for (const relativePath of relativePathSet) {
 			clearQueueSelectionForPath(relativePath);
-		}
-	}
-
-	function openQueueContextMenu(event: MouseEvent, file: QueueCardEntry) {
-		if (!canOpenQueueContextMenu(file, isWriting)) {
-			return;
-	}
-
-		queueContextMenu = createQueueContextMenuState(event, file);
-}
-
-	function closeQueueContextMenu() {
-		queueContextMenu = null;
-		queueContextMenuElement = undefined;
-}
-
-	async function alignQueueContextMenuToViewport(input: {
-		readonly menuSnapshot: QueueContextMenuState;
-		readonly menuElement: HTMLElement;
-	}) {
-		if (typeof window === 'undefined') {
-			return;
-	}
-
-		const alignedMenu = await createViewportAlignedQueueContextMenu({
-			...input,
-			window,
-			waitForDomUpdate: tick,
-			isCurrent: () =>
-				queueContextMenu === input.menuSnapshot &&
-				queueContextMenuElement === input.menuElement
-		});
-
-		if (alignedMenu === null) {
-			return;
-	}
-
-		queueContextMenu = alignedMenu;
-}
-
-	async function handleDeleteContextQueueFile() {
-		const targetFile = queueContextMenu?.file ?? null;
-
-		if (targetFile === null || targetFile.kind === 'unsupported' || isWriting) {
-			return;
-	}
-
-		closeQueueContextMenu();
-		const target = captureWorkspaceOperationTarget();
-		isWriting = true;
-		error = null;
-		parseError = null;
-		status = null;
-
-		try {
-			const result = await deleteQueuePanelFiles({
-				workspacePath: target.workspacePath,
-				relativePaths: [targetFile.relativePath]
-			});
-			if (!target.isCurrent()) return;
-
-			if (!result.ok) {
-				applyDeletedQueueFiles(result.deletedRelativePaths);
-				error = result.error;
-				return;
-			}
-
-			applyDeletedQueueFiles(result.deletedRelativePaths);
-			status = messages.queue.deletedFile.replace(
-				'{relativePath}',
-				result.deletedRelativePaths[0] ?? targetFile.relativePath
-			);
-	} finally {
-			if (target.isCurrent()) isWriting = false;
-	}
-}
-
-	async function handleBulkDeleteQueueFiles() {
-		if (!canBulkDeleteQueueFiles) {
-			return;
-		}
-
-		const targetFiles = bulkDeleteTargetFiles;
-
-		if (targetFiles.length === 0) {
-			return;
-		}
-
-		const target = captureWorkspaceOperationTarget();
-		isWriting = true;
-		error = null;
-		parseError = null;
-		status = null;
-
-		try {
-			const result = await deleteQueuePanelFiles({
-				workspacePath: target.workspacePath,
-				relativePaths: targetFiles.map((targetFile) => targetFile.relativePath)
-			});
-			if (!target.isCurrent()) return;
-
-			if (!result.ok) {
-				applyDeletedQueueFiles(result.deletedRelativePaths);
-				error = result.error;
-				return;
-			}
-
-			applyDeletedQueueFiles(result.deletedRelativePaths);
-			status = messages.queue.bulkDeletedFiles.replace(
-				'{count}',
-				result.deletedRelativePaths.length.toString()
-			);
-	} finally {
-			if (target.isCurrent()) isWriting = false;
-	}
-}
-
-	function applyDeletedQueueFiles(deletedRelativePaths: readonly string[]) {
-		removeQueueFilesFromState(deletedRelativePaths);
-
-		if (deletedRelativePaths.length > 0) {
-			dispatchQueueFilesChanged(workspace.id);
 		}
 	}
 
@@ -1299,10 +1149,10 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		set queuePriorityFilter(value: QueuePriorityFilter) { queuePriorityFilter = value; },
 		get queueSortOption() { return queueSortOption; },
 		set queueSortOption(value: QueueSortOption) { queueSortOption = value; },
-		get bulkDeleteIncludesPending() { return bulkDeleteIncludesPending; },
-		set bulkDeleteIncludesPending(value: boolean) { bulkDeleteIncludesPending = value; },
-		get bulkDeleteTargetCount() { return bulkDeleteTargetCount; },
-		get canBulkDeleteQueueFiles() { return canBulkDeleteQueueFiles; },
+		get bulkDeleteIncludesPending() { return fileActions.bulkDeleteIncludesPending; },
+		set bulkDeleteIncludesPending(value: boolean) { fileActions.bulkDeleteIncludesPending = value; },
+		get bulkDeleteTargetCount() { return fileActions.bulkDeleteTargetCount; },
+		get canBulkDeleteQueueFiles() { return fileActions.canBulkDeleteQueueFiles; },
 		get error() { return error; },
 		get parseError() { return parseError; },
 		get status() { return status; },
@@ -1330,9 +1180,9 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		get isSavingEvaluation() { return evaluationController.isSavingEvaluation; },
 		get evaluationDialog() { return evaluationController.evaluationDialog; },
 		get evaluationScores() { return evaluationController.evaluationScores; },
-		get queueContextMenu() { return queueContextMenu; },
-		get queueContextMenuElement() { return queueContextMenuElement; },
-		set queueContextMenuElement(value: HTMLElement | undefined) { queueContextMenuElement = value; },
+		get queueContextMenu() { return fileActions.queueContextMenu; },
+		get queueContextMenuElement() { return fileActions.queueContextMenuElement; },
+		set queueContextMenuElement(value: HTMLElement | undefined) { fileActions.queueContextMenuElement = value; },
 		get hasSelectedQueueArtifact() { return hasSelectedQueueArtifact; },
 		get canExecuteSelectedWorkOrder() { return canExecuteSelectedWorkOrder; },
 		get canPreviewSelectedWorkOrderPrompt() { return canPreviewSelectedWorkOrderPrompt; },
@@ -1343,7 +1193,7 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		getReadFilterLabel: presentation.getReadFilterLabel,
 		openNewWorkOrderDialog,
 		handleQueueCardClick,
-		openQueueContextMenu,
+		openQueueContextMenu: fileActions.openQueueContextMenu,
 		getQueueCardClass,
 		isSelectedQueueFile,
 		getQueuePriorityLabel: presentation.getQueuePriorityLabel,
@@ -1368,7 +1218,7 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		handleCancelWorkOrderExecution,
 		handleCompleteWorkOrder,
 		openEditWorkOrderTaskDialog,
-		handleBulkDeleteQueueFiles,
+		handleBulkDeleteQueueFiles: fileActions.handleBulkDeleteQueueFiles,
 		getQueueResponseLanguageLabel: presentation.getQueueResponseLanguageLabel,
 		getQueueTaskKindLabel: presentation.getQueueTaskKindLabel,
 		getQueueTaskProjectLabels: presentation.getQueueTaskProjectLabels,
@@ -1376,7 +1226,7 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		getQueueTaskSkillLabels: presentation.getQueueTaskSkillLabels,
 		getQueueTaskAgentLabels: presentation.getQueueTaskAgentLabels,
 		getQueueTaskReferenceLabels: presentation.getQueueTaskReferenceLabels,
-		handleDeleteContextQueueFile,
+		handleDeleteContextQueueFile: fileActions.handleDeleteContextQueueFile,
 		closeEvaluationDialog: evaluationController.closeEvaluationDialog,
 		updateEvaluationScore: evaluationController.updateEvaluationScore,
 		handleSaveEvaluation: evaluationController.handleSaveEvaluation,

@@ -352,6 +352,34 @@
     },
     {
       "confidence": 0.85,
+      "from": "workduck/workduck.queue.file-actions",
+      "id": "cc0dbb2dd139c1c14eaefb8d349ba5c9ab8e00ed960471ea8ba0825f43a61007",
+      "kind": "imports",
+      "provenance": {
+        "generator": "llmnav",
+        "line": null,
+        "path": "src/lib/queue/queue-panel-file-actions.svelte.ts",
+        "source": "src/lib/queue/queue-panel-file-actions.svelte.ts",
+        "type": "local-import"
+      },
+      "to": "workduck/workduck.queue.folder"
+    },
+    {
+      "confidence": 0.85,
+      "from": "workduck/workduck.queue.file-actions",
+      "id": "a345ba70b44715fe4b83a3c0346910441d0e55a2331e55b8bb0bc2319b4c7269",
+      "kind": "imports",
+      "provenance": {
+        "generator": "llmnav",
+        "line": null,
+        "path": "src/lib/queue/queue-panel-file-actions.svelte.ts",
+        "source": "src/lib/queue/queue-panel-file-actions.svelte.ts",
+        "type": "local-import"
+      },
+      "to": "workduck/workduck.queue.read-state"
+    },
+    {
+      "confidence": 0.85,
       "from": "workduck/workduck.queue.panel-controller",
       "id": "a672ebf6d3ebe7dc6d2e8cde6e0ec67266a169bb1b6ec0aff94a3287a3672047",
       "kind": "imports",
@@ -1685,6 +1713,28 @@
     {
       "definitions": [],
       "external": false,
+      "key": "workduck/workduck.queue.file-actions",
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src/lib/queue/queue-panel-file-actions.svelte.ts",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "repositoryId": "workduck",
+      "role": "Own Queue context menu placement, dismissal, and workspace-scoped single or bulk file deletion.",
+      "semanticId": "workduck.queue.file-actions",
+      "unresolved": false
+    },
+    {
+      "definitions": [],
+      "external": false,
       "key": "workduck/workduck.queue.folder",
       "location": {
         "declarationLine": null,
@@ -2301,11 +2351,11 @@
   ],
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "7ae0a4bc8edaa27db845b0a50fa4f7918ab5ef74bfa02170643129e517de6e06",
+  "sourceHash": "56dfc38f91cb07e4cdc11ccc3235c1d1b74a91b9bb97dc3b0436cf11d1731f7c",
   "stats": {
-    "edgeCount": 35,
+    "edgeCount": 37,
     "importedIndexCount": 0,
-    "nodeCount": 81,
+    "nodeCount": 82,
     "unresolvedNodeCount": 0
   }
 }

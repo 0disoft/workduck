@@ -325,6 +325,17 @@
         "invariant"
       ],
       "scope": "module"
+    },
+    {
+      "match": [
+        "src/lib/queue/queue-panel-file-actions.svelte.ts"
+      ],
+      "name": "Queue file action lifetime and deletion",
+      "requiredFields": [
+        "owns",
+        "invariant"
+      ],
+      "scope": "module"
     }
   ],
   "audit": {

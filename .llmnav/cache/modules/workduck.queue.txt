@@ -84,3 +84,9 @@ role Project live Queue catalog records and language messages into sorted skill 
 owns Queue context record indexes, Queue context record labels, localized Queue display labels, skill display ordering
 excludes artifact selection, execution workflows, registry persistence
 invariant Display labels use current catalogs and language; indexes preserve first matches, missing IDs remain visible, and display ordering leaves source records unchanged.
+
+@workduck.queue.file-actions
+role Own Queue context menu placement, dismissal, and workspace-scoped single or bulk file deletion.
+owns menu lifecycle, bulk delete selection, delete admission, partial deletion feedback
+excludes artifact persistence, artifact read selection, other Queue writes
+invariant Deletion captures the initiating workspace and applies partial results and feedback only while that view is current; menu subscriptions are disposed when closed.

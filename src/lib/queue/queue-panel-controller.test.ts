@@ -19,7 +19,7 @@ await plugin({
 			let source = new Transpiler({ loader: 'ts' }).transformSync(await Bun.file(path).text());
 			if (path.endsWith('queue-panel-controller.svelte.ts')) {
 				// Browser mount scheduling is excluded; effects use the same client runtime as compiled runes.
-				source = source.replace(/import\s*\{\s*onMount,\s*tick,\s*untrack\s*\}\s*from\s*['"]svelte['"];?/,
+				source = source.replace(/import\s*\{\s*onMount,\s*(?:tick,\s*)?untrack\s*\}\s*from\s*['"]svelte['"];?/,
 					'import { tick, untrack } from ' + JSON.stringify(import.meta.resolve('svelte/internal/client')) + '; const onMount = () => {};');
 			}
 			return { contents: compileModule(source, { filename: path, generate: 'client' }).js.code, loader: 'js' };
@@ -231,6 +231,43 @@ describe('Queue controller workspace ownership', () => {
 			assert.equal(harness.controller.isRefreshing, false);
 			assert.deepEqual(harness.controller.files.map((file) => file.fileName), ['new.txt']);
 		} finally { oldList.resolve(); newList.resolve(); harness.dispose(); }
+	});
+
+	for (const outcome of ['success', 'error'] as const) test(`keeps a new delete busy when an old delete ${outcome} arrives`, async () => {
+		const oldDelete = deferred<void>();
+		const newDelete = deferred<void>();
+		const paths: unknown[] = [];
+		setTauriInvokeForTest(async <T>(command: string, args?: Record<string, unknown>) => {
+			if (command === 'delete_queue_file') {
+				const old = args?.workspacePath === workspace('old').path;
+				paths.push(args?.workspacePath);
+				await (old ? oldDelete : newDelete).promise;
+				if (old && outcome === 'error') return response<T>({ ok: false, error: 'queue-folder-write-failed' });
+				return response<T>({ ok: true, relativePath: args?.relativePath });
+			}
+			return response<T>(command === 'read_project_registry' ? { ok: true, registryJson: null } : { ok: false });
+		});
+		const harness = createQueuePanelControllerHarness(workspace('old'));
+		try {
+			await settleEffects();
+			const event = { preventDefault() {}, stopPropagation() {}, clientX: 20, clientY: 20 } as MouseEvent;
+			harness.controller.openQueueContextMenu(event, oldCard);
+			const oldDeleting = harness.controller.handleDeleteContextQueueFile();
+			harness.setWorkspace(workspace('new'));
+			await settleEffects();
+			harness.controller.openQueueContextMenu(event, oldCard);
+			const newDeleting = harness.controller.handleDeleteContextQueueFile();
+			assert.deepEqual(paths, [workspace('old').path, workspace('new').path]);
+			oldDelete.resolve();
+			await oldDeleting;
+			assert.equal(harness.controller.isWriting, true);
+			assert.equal(harness.controller.status, null);
+			assert.equal(harness.controller.error, null);
+			newDelete.resolve();
+			await newDeleting;
+			assert.equal(harness.controller.isWriting, false);
+			assert.equal(harness.controller.status, harness.controller.messages.queue.deletedFile.replace('{relativePath}', oldCard.relativePath));
+		} finally { oldDelete.resolve(); newDelete.resolve(); harness.dispose(); }
 	});
 
 	test('does not reopen a closed prompt preview after its response arrives', async () => {
