@@ -85,7 +85,7 @@
     "workduck.workspace.sync-file-native",
     "workduck.workspace.sync-git-native"
   ],
-  "cardSetHash": "9f3ce7f03b469d2d5657633a4b649988a3b061d72d2f798cb10453c7c241a707",
+  "cardSetHash": "e51444a78ba098fabc11f3471825afe8e56aadffe2765208babb58d1b25468de",
   "documentCount": 84,
   "documents": [
     [
@@ -522,13 +522,13 @@
       ]
     ],
     [
-      "a90ba67a97d483a8b5bafe950ed16efe76cb270127a7942a4727a07c3c4cccf2",
+      "212ed6e6f648753cff33e956bf0866ed7fb91cf8121efbef0720ff8c2e4e2a0a",
       [
         "own reactive project repository action state, capability decisions, publish dialogs, and scoped operation context assembly.",
         "project board repository actions",
         "repository publish dialog state",
         "repository capability decisions",
-        "repository operations capture the registry writer workspace; capability decisions use current repository state, and workspace reset clears action targets and publish busy state.",
+        "repository operations and favorite-save feedback stay in the captured registry writer workspace; capability decisions use current state, and workspace reset clears action targets and publish busy state.",
         "repository action admission",
         "repository busy state",
         "publish dialog state",
@@ -2362,7 +2362,7 @@
           1,
           1,
           5,
-          2
+          3
         ]
       ],
       [
@@ -4794,16 +4794,14 @@
     ],
     [
       [
-        33,
+        14,
         [
           5,
           1
         ]
-      ]
-    ],
-    [
+      ],
       [
-        14,
+        33,
         [
           5,
           1
@@ -9947,6 +9945,15 @@
     ],
     [
       [
+        33,
+        [
+          5,
+          1
+        ]
+      ]
+    ],
+    [
+      [
         31,
         [
           1,
@@ -9959,6 +9966,8 @@
         33,
         [
           3,
+          1,
+          5,
           1
         ]
       ],
@@ -11957,6 +11966,13 @@
         [
           1,
           1,
+          5,
+          1
+        ]
+      ],
+      [
+        33,
+        [
           5,
           1
         ]
@@ -22180,7 +22196,7 @@
           3,
           2,
           5,
-          2,
+          1,
           9,
           1
         ]
@@ -23933,6 +23949,13 @@
           2,
           2,
           3,
+          1
+        ]
+      ],
+      [
+        33,
+        [
+          5,
           1
         ]
       ],
@@ -26707,6 +26730,13 @@
       ]
     ],
     [
+      [
+        33,
+        [
+          5,
+          1
+        ]
+      ],
       [
         58,
         [
@@ -32971,7 +33001,6 @@
     "capacity",
     "capped",
     "caps",
-    "capture",
     "captured",
     "captures",
     "card",
@@ -33186,6 +33215,7 @@
     "failure",
     "failures",
     "fallback",
+    "favorite",
     "feedback",
     "fetch",
     "field",

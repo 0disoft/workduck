@@ -4199,8 +4199,8 @@
         "scaffold dialog lifetime"
       ],
       "hashes": {
-        "body": "11822926ce1804220dcb88ea2ea7c6ec18f59baaeee6694a96d77ac1a2b27cd1",
-        "semantic": "b6f1e09f3e6c43a02f24c312fc8d3ba8be64180e7740367b7fab25ceebfc5e9a",
+        "body": "1aae9b3e5989101cdc568687532a467d6304425f9772a51ec82b2212ba152ee4",
+        "semantic": "a9e92d54d4bb2e55ab4242c1d3d6d2878ccaf902d73102888e71a3499554a7c1",
         "structure": "7c58b39cde72e1660962fe263e620a7fe170221c88e47e05c6875136454f81c5"
       },
       "id": "workduck.projects.repository-controller",
@@ -4230,7 +4230,7 @@
         "./project-repository-task-runs"
       ],
       "invariant": [
-        "Repository operations capture the registry writer workspace; capability decisions use current repository state, and workspace reset clears action targets and publish busy state."
+        "Repository operations and favorite-save feedback stay in the captured registry writer workspace; capability decisions use current state, and workspace reset clears action targets and publish busy state."
       ],
       "location": {
         "declarationLine": null,
@@ -4274,6 +4274,6 @@
   "generatedBy": "llmnav@0.9.7",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "285b1875a923d3048ba51c269fb3baa8ae0f17e4cc3f151f366130640299bf4b",
+  "sourceHash": "015382b55ac5dc513c5e59fbdbe2b0abe70e85a6778635568026c6b2276c32dc",
   "specVersion": "1"
 }

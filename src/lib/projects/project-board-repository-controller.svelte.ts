@@ -4,7 +4,7 @@ role=Own reactive project repository action state, capability decisions, publish
 owns=repository action admission|repository busy state|publish dialog state|operation feedback ownership
 excludes=Git execution|registry persistence|project or group dialogs|scaffold dialog lifetime
 search=project board repository actions|repository publish dialog state|repository capability decisions
-invariant=Repository operations capture the registry writer workspace; capability decisions use current repository state, and workspace reset clears action targets and publish busy state.
+invariant=Repository operations and favorite-save feedback stay in the captured registry writer workspace; capability decisions use current state, and workspace reset clears action targets and publish busy state.
 stability=architecture
 */
 import type { WorkduckMessages } from '#lib/i18n/workduck-message-contract.ts';
@@ -205,6 +205,7 @@ export function createProjectBoardRepositoryController(input: ProjectBoardReposi
 		return isProjectBoardRepositoryOperationRunning(input.operations(), repositoryId, name);
 	}
 	async function setRepositoryFavorite(node: ProjectNodeRecord, repository: ProjectRepositoryLinkRecord, favorite: boolean) {
+		const workspaceTarget = input.registryWriter.capture();
 		const result = setProjectRepositoryFavorite(input.registry(), {
 			nodeId: node.id,
 			repositoryId: repository.id,
@@ -215,7 +216,7 @@ export function createProjectBoardRepositoryController(input: ProjectBoardReposi
 			return;
 		}
 		input.setFormError(null);
-		if (!(await input.registryWriter(result.registry))) {
+		if (!(await input.registryWriter(result.registry)) || !workspaceTarget.isCurrent()) {
 			return;
 		}
 		input.setStatus(favorite
