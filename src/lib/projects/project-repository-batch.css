@@ -1,16 +1,22 @@
 .workduck-project-board-batch-layout {
-	display: grid;
+	display: flex;
+	flex-direction: column;
 	min-width: 0;
 	min-height: 0;
 	height: 100%;
-	grid-template-rows: auto minmax(0, 1fr);
 	gap: 12px;
+}
+
+.workduck-project-board-batch-layout > .workduck-repository-batch-panel {
+	max-height: 40%;
+	flex: 0 0 auto;
+	overflow-y: auto;
 }
 
 .workduck-project-board-batch-surface {
 	min-width: 0;
 	min-height: 0;
-	height: 100%;
+	flex: 1 1 0;
 }
 
 .workduck-project-board-batch-surface[aria-busy='true'] {

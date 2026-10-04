@@ -2,7 +2,7 @@
 	container: workduck-project-board / inline-size;
 	position: relative;
 	display: grid;
-	min-height: 320px;
+	min-height: 0;
 	height: 100%;
 	grid-template-rows: auto minmax(0, 1fr);
 	align-content: stretch;
@@ -518,6 +518,7 @@
 	display: grid;
 	min-width: 0;
 	min-height: 0;
+	grid-auto-rows: max-content;
 	gap: 12px;
 	align-content: start;
 	overflow-y: auto;
@@ -832,6 +833,9 @@
 @container workduck-project-board (max-width: 600px) {
 	.workduck-project-workspace-layout {
 		grid-template-columns: minmax(0, 1fr);
+		grid-auto-rows: max-content;
+		align-content: start;
+		overflow-y: auto;
 	}
 
 	.workduck-project-sidebar-lane,
@@ -848,5 +852,9 @@
 	.workduck-project-hierarchy-lane {
 		overflow-y: visible;
 		padding-inline-end: 0;
+	}
+
+	.workduck-project-detail-lanes {
+		overflow-y: visible;
 	}
 }

@@ -180,3 +180,30 @@ commit skips duplicate push CI; its version tag is deployed through the existing
 manual release workflow, which still runs frontend/Rust tests, source-archive
 verification and the full release build. v1.9.43 is not retagged or published;
 the corrected application version is v1.9.44.
+
+## Project hierarchy overlap correction (1.9.45)
+
+The reported overlap reproduced with server-rendered `ProjectBoardLanes` and the
+application styles in headless Edge. Implicit auto grid rows shrank the project
+and group sections below their content height, while their cards remained visible
+outside those rows. The group creation button consequently overlapped project
+cards. The batch wrapper also reserved an unused grid row without a batch panel.
+
+Hierarchy rows now retain their content height. Narrow boards scroll the stacked
+hierarchy and repository pane together; wider boards retain separate pane scrolling.
+The batch wrapper uses a flexible remaining-height surface and caps its optional
+panel at 40% of the available height, leaving the board usable on short windows.
+
+Browser verification used the real rendered component with four projects, eight
+groups and either zero or eighteen repositories. All sixteen combinations passed:
+board dimensions 420x750, 600x500, 900x700 and 1200x800 CSS px; font sizes 14px and
+20px; batch panel absent or present. Cards did not overlap, the page did not
+overflow vertically, and the last group and repository were reachable by scrolling.
+This checks browser layout; the installed desktop application was not replaced.
+
+Evidence in the directory above: `hierarchy-layout-before.png` and
+`hierarchy-layout-after.png`. Temporary rendering fixtures are removed after QA.
+
+Local validation: `bun run check` passed with zero Svelte errors or warnings and
+successful package/scaffold checks; `bun run build` passed including CSP generation.
+Rust tests are omitted because only CSS and the synchronized version changed.
