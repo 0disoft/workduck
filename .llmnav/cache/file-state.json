@@ -8934,8 +8934,114 @@
       "sourceBytes": 6799
     },
     {
+      "blocks": [
+        {
+          "card": {
+            "effect": [],
+            "excludes": [
+              "registry mutation intents",
+              "registry persistence",
+              "Git operations"
+            ],
+            "id": "workduck.projects.registry-normalization",
+            "invariant": [
+              "Strict storage parsing rejects unsupported versions; canonicalization accepts only reachable unique nodes and repository sources."
+            ],
+            "owns": [
+              "project registry parsing",
+              "hierarchy canonicalization",
+              "repository deduplication",
+              "shared field normalization"
+            ],
+            "rel": [],
+            "risk": [],
+            "role": "Parse and canonicalize project registries while preserving hierarchy eligibility and collision precedence.",
+            "scope": "module",
+            "search": [
+              "project registry parsing",
+              "hierarchy canonicalization",
+              "repository deduplication",
+              "shared field normalization"
+            ],
+            "stability": "architecture",
+            "unknown": []
+          },
+          "end": 631,
+          "endLine": 9,
+          "entries": [
+            {
+              "key": "id",
+              "line": 2,
+              "order": 0,
+              "value": "workduck.projects.registry-normalization"
+            },
+            {
+              "key": "role",
+              "line": 3,
+              "order": 1,
+              "value": "Parse and canonicalize project registries while preserving hierarchy eligibility and collision precedence."
+            },
+            {
+              "key": "owns",
+              "line": 4,
+              "order": 2,
+              "value": "project registry parsing|hierarchy canonicalization|repository deduplication|shared field normalization"
+            },
+            {
+              "key": "excludes",
+              "line": 5,
+              "order": 3,
+              "value": "registry mutation intents|registry persistence|Git operations"
+            },
+            {
+              "key": "search",
+              "line": 6,
+              "order": 4,
+              "value": "project registry parsing|hierarchy canonicalization|repository deduplication|shared field normalization"
+            },
+            {
+              "key": "invariant",
+              "line": 7,
+              "order": 5,
+              "value": "Strict storage parsing rejects unsupported versions; canonicalization accepts only reachable unique nodes and repository sources."
+            },
+            {
+              "key": "stability",
+              "line": 8,
+              "order": 6,
+              "value": "architecture"
+            }
+          ],
+          "filePath": "src/lib/projects/project-registry-normalization.ts",
+          "indent": "",
+          "newline": "\n",
+          "prefix": null,
+          "raw": "/* llmnav/1 module\nid=workduck.projects.registry-normalization\nrole=Parse and canonicalize project registries while preserving hierarchy eligibility and collision precedence.\nowns=project registry parsing|hierarchy canonicalization|repository deduplication|shared field normalization\nexcludes=registry mutation intents|registry persistence|Git operations\nsearch=project registry parsing|hierarchy canonicalization|repository deduplication|shared field normalization\ninvariant=Strict storage parsing rejects unsupported versions; canonicalization accepts only reachable unique nodes and repository sources.\nstability=architecture\n*/",
+          "scope": "module",
+          "specVersion": "1",
+          "start": 0,
+          "startLine": 1,
+          "style": "block",
+          "syntaxErrors": []
+        }
+      ],
+      "contentHash": "d14914d7a1bf39ef4e76d8cb61e77169b5884e7efbfece151466a74fb0176369",
+      "declarations": [
+        null
+      ],
+      "imports": [
+        "#lib/shared/object-record.ts",
+        "#lib/workspaces/workspace-path-format.ts",
+        "./project-folder-name",
+        "./project-schema"
+      ],
+      "path": "src/lib/projects/project-registry-normalization.ts",
+      "semanticBytes": 631,
+      "sourceBytes": 15244
+    },
+    {
       "blocks": [],
-      "contentHash": "e7edddb08071ff215fa9ac84be3406bf74f0e34556e7b6d59e148b4ad468fe1a",
+      "contentHash": "4dde2d79adbfda9dad71e9d4fedefc6e1ffa4aaf573b4d56fa2a4630341dc623",
       "declarations": [],
       "imports": [
         "./project-registry",
@@ -8944,7 +9050,7 @@
       ],
       "path": "src/lib/projects/project-registry.test.ts",
       "semanticBytes": 0,
-      "sourceBytes": 6125
+      "sourceBytes": 9587
     },
     {
       "blocks": [
@@ -8976,48 +9082,48 @@
             "stability": "contract",
             "unknown": []
           },
-          "end": 794,
-          "endLine": 13,
+          "end": 557,
+          "endLine": 9,
           "entries": [
             {
               "key": "id",
-              "line": 6,
+              "line": 2,
               "order": 0,
               "value": "workduck.projects.registry-domain"
             },
             {
               "key": "role",
-              "line": 7,
+              "line": 3,
               "order": 1,
               "value": "Define and enforce versioned project, group, and repository registry normalization, hierarchy, and immutable mutations."
             },
             {
               "key": "owns",
-              "line": 8,
+              "line": 4,
               "order": 2,
               "value": "project registry domain|project hierarchy validation|repository link mutations"
             },
             {
               "key": "excludes",
-              "line": 9,
+              "line": 5,
               "order": 3,
               "value": "registry storage transport|Git repository operations"
             },
             {
               "key": "search",
-              "line": 10,
+              "line": 6,
               "order": 4,
               "value": "project registry model|validate project hierarchy|mutate repository links"
             },
             {
               "key": "invariant",
-              "line": 11,
+              "line": 7,
               "order": 5,
               "value": "Every successful parse or mutation passes through the same normalization rules before returning a versioned registry."
             },
             {
               "key": "stability",
-              "line": 12,
+              "line": 8,
               "order": 6,
               "value": "contract"
             }
@@ -9029,24 +9135,23 @@
           "raw": "/* llmnav/1 module\nid=workduck.projects.registry-domain\nrole=Define and enforce versioned project, group, and repository registry normalization, hierarchy, and immutable mutations.\nowns=project registry domain|project hierarchy validation|repository link mutations\nexcludes=registry storage transport|Git repository operations\nsearch=project registry model|validate project hierarchy|mutate repository links\ninvariant=Every successful parse or mutation passes through the same normalization rules before returning a versioned registry.\nstability=contract\n*/",
           "scope": "module",
           "specVersion": "1",
-          "start": 237,
-          "startLine": 5,
+          "start": 0,
+          "startLine": 1,
           "style": "block",
           "syntaxErrors": []
         }
       ],
-      "contentHash": "5512d68924e5a96ede43179cc3847d1f6d8a821d84489132937d003cb322f08d",
+      "contentHash": "78d4ad5bed110a1ba0e2ba71330ae9ddf992993624a82cf83c1531411d38f5e6",
       "declarations": [
         null
       ],
       "imports": [
-        "#lib/shared/object-record.ts",
-        "#lib/workspaces/workspace-path-format.ts",
-        "./project-folder-name"
+        "./project-registry-normalization",
+        "./project-schema"
       ],
       "path": "src/lib/projects/project-registry.ts",
       "semanticBytes": 557,
-      "sourceBytes": 45192
+      "sourceBytes": 27432
     },
     {
       "blocks": [],
@@ -9445,6 +9550,105 @@
       "path": "src/lib/projects/project-repository.ts",
       "semanticBytes": 535,
       "sourceBytes": 35838
+    },
+    {
+      "blocks": [
+        {
+          "card": {
+            "effect": [],
+            "excludes": [
+              "normalization algorithms",
+              "registry persistence",
+              "Git operations"
+            ],
+            "id": "workduck.projects.schema",
+            "invariant": [
+              "Project registry consumers share one versioned set of record shapes, mutation results, and field limits."
+            ],
+            "owns": [
+              "project registry record shapes",
+              "project mutation input contracts",
+              "project field limits"
+            ],
+            "rel": [],
+            "risk": [],
+            "role": "Define versioned project registry records, mutation inputs, result shapes, and field limits.",
+            "scope": "module",
+            "search": [
+              "project registry record shapes",
+              "project mutation input contracts",
+              "project field limits"
+            ],
+            "stability": "contract",
+            "unknown": []
+          },
+          "end": 533,
+          "endLine": 9,
+          "entries": [
+            {
+              "key": "id",
+              "line": 2,
+              "order": 0,
+              "value": "workduck.projects.schema"
+            },
+            {
+              "key": "role",
+              "line": 3,
+              "order": 1,
+              "value": "Define versioned project registry records, mutation inputs, result shapes, and field limits."
+            },
+            {
+              "key": "owns",
+              "line": 4,
+              "order": 2,
+              "value": "project registry record shapes|project mutation input contracts|project field limits"
+            },
+            {
+              "key": "excludes",
+              "line": 5,
+              "order": 3,
+              "value": "normalization algorithms|registry persistence|Git operations"
+            },
+            {
+              "key": "search",
+              "line": 6,
+              "order": 4,
+              "value": "project registry record shapes|project mutation input contracts|project field limits"
+            },
+            {
+              "key": "invariant",
+              "line": 7,
+              "order": 5,
+              "value": "Project registry consumers share one versioned set of record shapes, mutation results, and field limits."
+            },
+            {
+              "key": "stability",
+              "line": 8,
+              "order": 6,
+              "value": "contract"
+            }
+          ],
+          "filePath": "src/lib/projects/project-schema.ts",
+          "indent": "",
+          "newline": "\n",
+          "prefix": null,
+          "raw": "/* llmnav/1 module\nid=workduck.projects.schema\nrole=Define versioned project registry records, mutation inputs, result shapes, and field limits.\nowns=project registry record shapes|project mutation input contracts|project field limits\nexcludes=normalization algorithms|registry persistence|Git operations\nsearch=project registry record shapes|project mutation input contracts|project field limits\ninvariant=Project registry consumers share one versioned set of record shapes, mutation results, and field limits.\nstability=contract\n*/",
+          "scope": "module",
+          "specVersion": "1",
+          "start": 0,
+          "startLine": 1,
+          "style": "block",
+          "syntaxErrors": []
+        }
+      ],
+      "contentHash": "83103611a15be7ef9edce4a0b40c2616da95ef31c13e54904251fbf5bf92ab3d",
+      "declarations": [
+        null
+      ],
+      "imports": [],
+      "path": "src/lib/projects/project-schema.ts",
+      "semanticBytes": 533,
+      "sourceBytes": 5629
     },
     {
       "blocks": [],

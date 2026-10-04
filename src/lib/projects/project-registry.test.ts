@@ -5,9 +5,81 @@ import {
 	addProjectRepositoryLink,
 	createEmptyProjectRegistry,
 	parseProjectRegistry,
+	parseStoredProjectRegistry,
+	serializeProjectRegistry,
 	setProjectRepositoryFavorite,
-	setProjectRepositoryRemoteUrl
+	setProjectRepositoryRemoteUrl,
+	type ProjectNodeRecord
 } from './project-registry';
+
+const fixtureTimestamp = '2026-10-04T00:00:00.000Z';
+
+function fixtureNode(id: string, parentId: string | null): ProjectNodeRecord {
+	return {
+		id, kind: parentId === null ? 'project' : 'group', parentId,
+		name: id, description: '', path: '', githubCredentialSecretId: null,
+		tags: [], repositories: [], createdAt: fixtureTimestamp, updatedAt: fixtureTimestamp
+	};
+}
+
+function parseFixture(nodes: readonly ProjectNodeRecord[]) {
+	return parseProjectRegistry(JSON.stringify({
+		version: 1, workspaceId: 'old-workspace', nodes, updatedAt: fixtureTimestamp
+	}), 'workspace-test');
+}
+
+describe('project registry canonicalization', () => {
+	test('resolves reversed ancestors and drops orphaned or cyclic groups', () => {
+		const parsed = parseFixture([
+			fixtureNode('leaf', 'middle'), fixtureNode('middle', 'group'),
+			fixtureNode('group', 'root'), fixtureNode('root', null),
+			fixtureNode('orphan', 'missing'), fixtureNode('cycle-a', 'cycle-b'),
+			fixtureNode('cycle-b', 'cycle-a')
+		]);
+		assert.deepEqual(parsed.nodes.map(node => [node.id, node.path]), [
+			['root', 'projects/root'], ['group', 'projects/root/group'],
+			['middle', 'projects/root/group/middle'], ['leaf', 'projects/root/group/middle/leaf']
+		]);
+		assert.equal(parsed.workspaceId, 'workspace-test');
+		assert.deepEqual(parseProjectRegistry(serializeProjectRegistry(parsed), parsed.workspaceId), parsed);
+	});
+
+	test('keeps eligibility order when competing branches share a repository path', () => {
+		const repository = {
+			id: 'repository', name: 'Repository', path: 'C:/workspace/repository',
+			remoteUrl: null, upstreamRemoteUrl: null, githubCredentialSecretId: null,
+			favorite: true, tags: ['#TS', 'ts', '  local tools  '],
+			createdAt: fixtureTimestamp, updatedAt: fixtureTimestamp
+		};
+		const parsed = parseFixture([
+			{ ...fixtureNode('leaf-a', 'group-a'), repositories: [repository] },
+			fixtureNode('group-a', 'root'), fixtureNode('group-b', 'root'),
+			{ ...fixtureNode('leaf-b', 'group-b'), repositories: [repository] },
+			fixtureNode('root', null)
+		]);
+		assert.deepEqual(parsed.nodes.map(node => node.id), ['root', 'group-a', 'group-b', 'leaf-b', 'leaf-a']);
+		assert.deepEqual(parsed.nodes.find(node => node.id === 'leaf-a')?.repositories, []);
+		assert.deepEqual(parsed.nodes.find(node => node.id === 'leaf-b')?.repositories[0]?.tags, ['TS', 'local-tools']);
+	});
+
+	test('keeps the first eligible node ID while rejecting sibling-name and path collisions', () => {
+		const parsed = parseFixture([
+			fixtureNode('duplicate', 'unavailable'), fixtureNode('root', null),
+			fixtureNode('duplicate', 'root'),
+			{ ...fixtureNode('same-name', 'root'), name: 'DUPLICATE' },
+			{ ...fixtureNode('same-path', 'root'), path: 'projects/root/duplicate' },
+			fixtureNode('independent', 'root')
+		]);
+		assert.deepEqual(parsed.nodes.map(node => node.id), ['root', 'duplicate', 'independent']);
+		assert.equal(parsed.nodes[1]?.parentId, 'root');
+	});
+
+	test('keeps strict storage errors distinct from the forgiving browser parser', () => {
+		assert.deepEqual(parseStoredProjectRegistry('{', 'workspace-test'), { ok: false, error: 'project-registry-json-invalid' });
+		assert.deepEqual(parseStoredProjectRegistry('{"version":2}', 'workspace-test'), { ok: false, error: 'project-registry-version-unsupported' });
+		assert.deepEqual(parseProjectRegistry('{', 'workspace-test').nodes, []);
+	});
+});
 
 function createRegistryWithGroup() {
 	const registry = createEmptyProjectRegistry('workspace-test');

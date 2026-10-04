@@ -86,6 +86,48 @@
     },
     {
       "confidence": 0.85,
+      "from": "workduck/workduck.projects.registry-domain",
+      "id": "f17ef17ff5910a1e535a6eee747d592a1261ebf91b7ac7e2a0422120bbe3f158",
+      "kind": "imports",
+      "provenance": {
+        "generator": "llmnav",
+        "line": null,
+        "path": "src/lib/projects/project-registry.ts",
+        "source": "src/lib/projects/project-registry.ts",
+        "type": "local-import"
+      },
+      "to": "workduck/workduck.projects.registry-normalization"
+    },
+    {
+      "confidence": 0.85,
+      "from": "workduck/workduck.projects.registry-domain",
+      "id": "cc3b0568edc0554c23207a95310e8c9ae4eecdc7a282138f1927cce8b69bd8bd",
+      "kind": "imports",
+      "provenance": {
+        "generator": "llmnav",
+        "line": null,
+        "path": "src/lib/projects/project-registry.ts",
+        "source": "src/lib/projects/project-registry.ts",
+        "type": "local-import"
+      },
+      "to": "workduck/workduck.projects.schema"
+    },
+    {
+      "confidence": 0.85,
+      "from": "workduck/workduck.projects.registry-normalization",
+      "id": "332b06e383c464917710b75137a6b7861e03026f9f92b3141aa5dcfd84c94d30",
+      "kind": "imports",
+      "provenance": {
+        "generator": "llmnav",
+        "line": null,
+        "path": "src/lib/projects/project-registry-normalization.ts",
+        "source": "src/lib/projects/project-registry-normalization.ts",
+        "type": "local-import"
+      },
+      "to": "workduck/workduck.projects.schema"
+    },
+    {
+      "confidence": 0.85,
       "from": "workduck/workduck.projects.registry-writer",
       "id": "d0db31fad88b85acdace7875a59ddbdca149a1733ba999437d7e7577ded3c4e2",
       "kind": "imports",
@@ -1104,20 +1146,42 @@
       "key": "workduck/workduck.projects.registry-domain",
       "location": {
         "declarationLine": null,
-        "endLine": 13,
+        "endLine": 9,
         "exported": null,
         "kind": null,
         "language": null,
         "path": "src/lib/projects/project-registry.ts",
         "receiver": null,
         "signature": null,
-        "startLine": 5,
+        "startLine": 1,
         "symbol": null,
         "visibility": null
       },
       "repositoryId": "workduck",
       "role": "Define and enforce versioned project, group, and repository registry normalization, hierarchy, and immutable mutations.",
       "semanticId": "workduck.projects.registry-domain",
+      "unresolved": false
+    },
+    {
+      "definitions": [],
+      "external": false,
+      "key": "workduck/workduck.projects.registry-normalization",
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src/lib/projects/project-registry-normalization.ts",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "repositoryId": "workduck",
+      "role": "Parse and canonicalize project registries while preserving hierarchy eligibility and collision precedence.",
+      "semanticId": "workduck.projects.registry-normalization",
       "unresolved": false
     },
     {
@@ -1272,6 +1336,28 @@
       "repositoryId": "workduck",
       "role": "Plan and apply repository scaffolds with exclusive ownership, durable journals, conflict preservation, and recovery.",
       "semanticId": "workduck.projects.scaffold-transaction",
+      "unresolved": false
+    },
+    {
+      "definitions": [],
+      "external": false,
+      "key": "workduck/workduck.projects.schema",
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src/lib/projects/project-schema.ts",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "repositoryId": "workduck",
+      "role": "Define versioned project registry records, mutation inputs, result shapes, and field limits.",
+      "semanticId": "workduck.projects.schema",
       "unresolved": false
     },
     {
@@ -2135,11 +2221,11 @@
   ],
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "db2bb0b5193401a05390ca663cf06d9f0d32789422e73cabd4594f88bff7aa96",
+  "sourceHash": "47ce028d0b4037ca7806c7b4152043d0c67dd40f99e1a9c7549b164e701d6ee4",
   "stats": {
-    "edgeCount": 31,
+    "edgeCount": 34,
     "importedIndexCount": 0,
-    "nodeCount": 76,
+    "nodeCount": 78,
     "unresolvedNodeCount": 0
   }
 }

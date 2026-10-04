@@ -280,6 +280,28 @@
         "invariant"
       ],
       "scope": "module"
+    },
+    {
+      "match": [
+        "src/lib/projects/project-schema.ts"
+      ],
+      "name": "project registry record and mutation contracts",
+      "requiredFields": [
+        "owns",
+        "invariant"
+      ],
+      "scope": "module"
+    },
+    {
+      "match": [
+        "src/lib/projects/project-registry-normalization.ts"
+      ],
+      "name": "canonical project registry parsing and normalization",
+      "requiredFields": [
+        "owns",
+        "invariant"
+      ],
+      "scope": "module"
     }
   ],
   "audit": {

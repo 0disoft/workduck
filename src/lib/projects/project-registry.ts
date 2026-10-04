@@ -1,7 +1,3 @@
-import { isObjectRecord } from '#lib/shared/object-record.ts';
-import { normalizeWorkspacePathForStorage } from '#lib/workspaces/workspace-path-format.ts';
-import { createProjectFolderNameFromDisplayName } from './project-folder-name';
-
 /* llmnav/1 module
 id=workduck.projects.registry-domain
 role=Define and enforce versioned project, group, and repository registry normalization, hierarchy, and immutable mutations.
@@ -11,271 +7,53 @@ search=project registry model|validate project hierarchy|mutate repository links
 invariant=Every successful parse or mutation passes through the same normalization rules before returning a versioned registry.
 stability=contract
 */
-export const WORKDUCK_PROJECT_REGISTRY_VERSION = 1;
-export const PROJECT_NAME_MAX_LENGTH = 80;
-export const PROJECT_DESCRIPTION_MAX_LENGTH = 160;
-export const PROJECT_NODE_PATH_MAX_LENGTH = 1024;
-export const PROJECT_TAG_MAX_LENGTH = 32;
-export const PROJECT_TAGS_MAX_COUNT = 12;
-export const PROJECT_REPOSITORY_NAME_MAX_LENGTH = 120;
-export const PROJECT_REPOSITORY_PATH_MAX_LENGTH = 1024;
-export const PROJECT_REPOSITORY_REMOTE_URL_MAX_LENGTH = 2048;
+import {
+	type ProjectRepositoryLinkRecord,
+	type ProjectNodeRecord,
+	type ProjectRegistry,
+	type ProjectNodeInput,
+	type ProjectRepositoryLinkInput,
+	type ProjectRepositoryRemoveInput,
+	type ProjectRepositoryPathUpdateInput,
+	type ProjectRepositoryRemoteUrlUpdateInput,
+	type ProjectRepositoryRemoteUrlBackfillInput,
+	type ProjectRepositoryFavoriteUpdateInput,
+	type ProjectNodeTagsUpdateInput,
+	type ProjectNodeDescriptionUpdateInput,
+	type ProjectNodeNameUpdateInput,
+	type ProjectNodePathUpdateInput,
+	type ProjectRepositoryTagsUpdateInput,
+	type ProjectNodeGithubCredentialUpdateInput,
+	type ProjectRepositoryGithubCredentialUpdateInput,
+	type ProjectRegistryMutationResult,
+	type ProjectRegistryBackfillResult,
+	type ProjectTreeRow
+} from './project-schema';
+import {
+	normalizeProjectRegistry,
+	normalizeProjectName,
+	normalizeProjectDescription,
+	normalizeProjectPath,
+	normalizeProjectTags,
+	normalizeRepositoryName,
+	normalizeRepositoryPath,
+	normalizeRepositoryRemoteUrl,
+	normalizeRecordId,
+	createNameKey,
+	createProjectPathKey,
+	createRepositoryPathKey,
+	createRepositoryRemoteUrlKey
+} from './project-registry-normalization';
 
-export type ProjectNodeKind = 'project' | 'group';
-
-export type ProjectRegistryError =
-	| 'project-name-required'
-	| 'project-name-duplicate'
-	| 'project-parent-not-found'
-	| 'project-parent-invalid'
-	| 'project-node-not-found'
-	| 'project-path-required'
-	| 'project-path-duplicate'
-	| 'project-tags-too-many'
-	| 'project-tag-too-long'
-	| 'project-repository-target-invalid'
-	| 'project-repository-not-found'
-	| 'project-repository-name-required'
-	| 'project-repository-source-required'
-	| 'project-repository-path-required'
-	| 'project-repository-path-outside-workspace'
-	| 'project-repository-path-duplicate'
-	| 'project-repository-remote-url-invalid'
-	| 'project-repository-remote-url-duplicate';
-
-export interface ProjectRepositoryLinkRecord {
-	readonly id: string;
-	readonly name: string;
-	readonly path: string | null;
-	readonly remoteUrl: string | null;
-	readonly upstreamRemoteUrl: string | null;
-	readonly githubCredentialSecretId: string | null;
-	readonly favorite: boolean;
-	readonly tags: readonly string[];
-	readonly createdAt: string;
-	readonly updatedAt: string;
-}
-
-export interface ProjectNodeRecord {
-	readonly id: string;
-	readonly kind: ProjectNodeKind;
-	readonly parentId: string | null;
-	readonly name: string;
-	readonly description: string;
-	readonly path: string;
-	readonly githubCredentialSecretId: string | null;
-	readonly tags: readonly string[];
-	readonly repositories: readonly ProjectRepositoryLinkRecord[];
-	readonly createdAt: string;
-	readonly updatedAt: string;
-}
-
-export interface ProjectRegistry {
-	readonly version: typeof WORKDUCK_PROJECT_REGISTRY_VERSION;
-	readonly workspaceId: string;
-	readonly nodes: readonly ProjectNodeRecord[];
-	readonly updatedAt: string;
-}
-
-export type ProjectRegistryParseError =
-	| 'project-registry-json-invalid'
-	| 'project-registry-version-unsupported';
-
-export type ProjectRegistryParseResult =
-	| {
-			readonly ok: true;
-			readonly registry: ProjectRegistry;
-	  }
-	| {
-			readonly ok: false;
-			readonly error: ProjectRegistryParseError;
-	  };
-
-export interface ProjectNodeInput {
-	readonly kind: ProjectNodeKind;
-	readonly parentId?: string | null;
-	readonly name: string;
-	readonly description?: string;
-	readonly path: string;
-	readonly githubCredentialSecretId?: string | null;
-	readonly tags?: readonly string[];
-}
-
-export interface ProjectRepositoryLinkInput {
-	readonly nodeId: string;
-	readonly name: string;
-	readonly path?: string | null;
-	readonly remoteUrl?: string | null;
-	readonly upstreamRemoteUrl?: string | null;
-	readonly githubCredentialSecretId?: string | null;
-	readonly tags?: readonly string[];
-}
-
-export interface ProjectRepositoryRemoveInput {
-	readonly nodeId: string;
-	readonly repositoryId: string;
-}
-
-export interface ProjectRepositoryPathUpdateInput {
-	readonly nodeId: string;
-	readonly repositoryId: string;
-	readonly path: string;
-}
-
-export interface ProjectRepositoryRemoteUrlUpdateInput {
-	readonly nodeId: string;
-	readonly repositoryId: string;
-	readonly remoteUrl: string | null;
-}
-
-export interface ProjectRepositoryRemoteUrlBackfillInput {
-	readonly repositoryId: string;
-	readonly remoteUrl: string | null;
-	readonly upstreamRemoteUrl?: string | null;
-}
-
-export interface ProjectRepositoryFavoriteUpdateInput {
-	readonly nodeId: string;
-	readonly repositoryId: string;
-	readonly favorite: boolean;
-}
-
-export interface ProjectNodeTagsUpdateInput {
-	readonly nodeId: string;
-	readonly tags: readonly string[];
-}
-
-export interface ProjectNodeDescriptionUpdateInput {
-	readonly nodeId: string;
-	readonly description: string;
-}
-
-export interface ProjectNodeNameUpdateInput {
-	readonly nodeId: string;
-	readonly name: string;
-}
-
-export interface ProjectNodePathUpdateInput {
-	readonly nodeId: string;
-	readonly path: string;
-}
-
-export interface ProjectRepositoryTagsUpdateInput {
-	readonly nodeId: string;
-	readonly repositoryId: string;
-	readonly tags: readonly string[];
-}
-
-export interface ProjectNodeGithubCredentialUpdateInput {
-	readonly nodeId: string;
-	readonly githubCredentialSecretId: string | null;
-}
-
-export interface ProjectRepositoryGithubCredentialUpdateInput {
-	readonly nodeId: string;
-	readonly repositoryId: string;
-	readonly githubCredentialSecretId: string | null;
-}
-
-export type ProjectRegistryMutationResult =
-	| {
-			readonly ok: true;
-			readonly registry: ProjectRegistry;
-	  }
-	| {
-			readonly ok: false;
-			readonly registry: ProjectRegistry;
-			readonly error: ProjectRegistryError;
-	  };
-
-export interface ProjectRegistryBackfillResult {
-	readonly registry: ProjectRegistry;
-	readonly changed: boolean;
-}
-
-export interface ProjectTreeRow {
-	readonly node: ProjectNodeRecord;
-	readonly depth: number;
-}
-
-export function createEmptyProjectRegistry(workspaceId: string, now = new Date()): ProjectRegistry {
-	return {
-		version: WORKDUCK_PROJECT_REGISTRY_VERSION,
-		workspaceId,
-		nodes: [],
-		updatedAt: now.toISOString()
-	};
-}
-
-export function parseProjectRegistry(
-	serializedRegistry: string | null,
-	workspaceId: string
-): ProjectRegistry {
-	if (serializedRegistry === null) {
-		return createEmptyProjectRegistry(workspaceId);
-	}
-
-	try {
-		return normalizeProjectRegistry(JSON.parse(serializedRegistry), workspaceId);
-	} catch {
-		return createEmptyProjectRegistry(workspaceId);
-	}
-}
-
-export function parseStoredProjectRegistry(
-	serializedRegistry: string,
-	workspaceId: string
-): ProjectRegistryParseResult {
-	try {
-		return normalizeStoredProjectRegistry(JSON.parse(serializedRegistry), workspaceId);
-	} catch {
-		return { ok: false, error: 'project-registry-json-invalid' };
-	}
-}
-
-export function normalizeStoredProjectRegistry(
-	value: unknown,
-	workspaceId: string
-): ProjectRegistryParseResult {
-	if (!isObjectRecord(value)) {
-		return { ok: false, error: 'project-registry-json-invalid' };
-	}
-
-	const version = readProjectRegistryVersion(value.version);
-
-	switch (version) {
-		case WORKDUCK_PROJECT_REGISTRY_VERSION:
-			return { ok: true, registry: normalizeProjectRegistry(value, workspaceId) };
-		default:
-			return { ok: false, error: 'project-registry-version-unsupported' };
-	}
-}
-
-export function normalizeProjectRegistry(value: unknown, workspaceId: string): ProjectRegistry {
-	if (!isObjectRecord(value) || value.version !== WORKDUCK_PROJECT_REGISTRY_VERSION) {
-		return createEmptyProjectRegistry(workspaceId);
-	}
-
-	const rawNodes = Array.isArray(value.nodes) ? value.nodes : [];
-	const candidateNodes = rawNodes.flatMap((rawNode) => {
-		const node = parseProjectNodeRecord(rawNode);
-
-		return node === null ? [] : [node];
-	});
-	const nodes = normalizeProjectNodes(candidateNodes);
-	const updatedAt = readTrimmedString(value.updatedAt);
-
-	return {
-		version: WORKDUCK_PROJECT_REGISTRY_VERSION,
-		workspaceId,
-		nodes,
-		updatedAt: updatedAt.length === 0 ? new Date(0).toISOString() : updatedAt
-	};
-}
-
-export function serializeProjectRegistry(registry: ProjectRegistry): string {
-	return JSON.stringify(normalizeProjectRegistry(registry, registry.workspaceId));
-}
+export * from './project-schema';
+export {
+	createEmptyProjectRegistry,
+	parseProjectRegistry,
+	parseStoredProjectRegistry,
+	normalizeStoredProjectRegistry,
+	normalizeProjectRegistry,
+	serializeProjectRegistry
+} from './project-registry-normalization';
 
 export function addProjectNode(
 	registry: ProjectRegistry,
@@ -1164,217 +942,6 @@ function collectProjectNodeSubtreeIds(nodes: readonly ProjectNodeRecord[], rootN
 	return nodeIds;
 }
 
-function normalizeProjectNodes(nodes: readonly ProjectNodeRecord[]): readonly ProjectNodeRecord[] {
-	const rootNodes: ProjectNodeRecord[] = [];
-	const normalizedNodes: ProjectNodeRecord[] = [];
-	const seenNodeIds = new Set<string>();
-	const seenRepositoryPaths = new Set<string>();
-	const seenRepositoryRemoteUrls = new Set<string>();
-	const seenNodePaths = new Set<string>();
-	const seenRootNames = new Set<string>();
-
-	for (const node of nodes) {
-		if (seenNodeIds.has(node.id) || node.kind !== 'project' || node.parentId !== null) {
-			continue;
-		}
-
-		const nameKey = createNameKey(node.name);
-		const path = normalizeProjectPath(node.path) || createDefaultProjectPath(null, node.name);
-		const pathKey = createProjectPathKey(path);
-
-		if (seenRootNames.has(nameKey) || seenNodePaths.has(pathKey)) {
-			continue;
-		}
-
-		seenNodeIds.add(node.id);
-		seenRootNames.add(nameKey);
-		seenNodePaths.add(pathKey);
-		const normalizedNode = {
-			...node,
-			description: normalizeProjectDescription(node.description),
-			path,
-			githubCredentialSecretId: normalizeRecordId(node.githubCredentialSecretId),
-			tags: normalizeProjectTags(node.tags),
-			repositories: filterUniqueRepositories(
-				node.repositories,
-				seenRepositoryPaths,
-				seenRepositoryRemoteUrls
-			)
-		};
-
-		rootNodes.push(normalizedNode);
-		normalizedNodes.push(normalizedNode);
-	}
-
-	const pathByNodeId = new Map(rootNodes.map((node) => [node.id, node.path]));
-	const seenChildNames = new Map<string, Set<string>>();
-	let changed = true;
-
-	while (changed) {
-		changed = false;
-
-		for (const node of nodes) {
-			if (seenNodeIds.has(node.id) || node.kind !== 'group' || node.parentId === null) {
-				continue;
-			}
-
-			const parentPath = pathByNodeId.get(node.parentId);
-
-			if (parentPath === undefined) {
-				continue;
-			}
-
-			const nameKey = createNameKey(node.name);
-			const path = normalizeProjectPath(node.path) || createDefaultProjectPath(parentPath, node.name);
-			const pathKey = createProjectPathKey(path);
-			const siblingNames = seenChildNames.get(node.parentId) ?? new Set<string>();
-
-			if (siblingNames.has(nameKey) || seenNodePaths.has(pathKey)) {
-				continue;
-			}
-
-			seenNodeIds.add(node.id);
-			seenNodePaths.add(pathKey);
-			siblingNames.add(nameKey);
-			seenChildNames.set(node.parentId, siblingNames);
-			normalizedNodes.push({
-				...node,
-				description: normalizeProjectDescription(node.description),
-				path,
-				githubCredentialSecretId: normalizeRecordId(node.githubCredentialSecretId),
-				tags: normalizeProjectTags(node.tags),
-				repositories: filterUniqueRepositories(
-					node.repositories,
-					seenRepositoryPaths,
-					seenRepositoryRemoteUrls
-				)
-			});
-			pathByNodeId.set(node.id, path);
-			changed = true;
-		}
-	}
-
-	return normalizedNodes;
-}
-
-function filterUniqueRepositories(
-	repositories: readonly ProjectRepositoryLinkRecord[],
-	seenRepositoryPaths: Set<string>,
-	seenRepositoryRemoteUrls: Set<string>
-) {
-	const uniqueRepositories: ProjectRepositoryLinkRecord[] = [];
-
-	for (const repository of repositories) {
-		const pathKey =
-			repository.path === null ? null : createRepositoryPathKey(repository.path);
-		const remoteUrlKey =
-			repository.remoteUrl === null ? null : createRepositoryRemoteUrlKey(repository.remoteUrl);
-
-		if (
-			(pathKey !== null && seenRepositoryPaths.has(pathKey)) ||
-			(remoteUrlKey !== null && seenRepositoryRemoteUrls.has(remoteUrlKey))
-		) {
-			continue;
-		}
-
-		if (pathKey !== null) {
-			seenRepositoryPaths.add(pathKey);
-		}
-
-		if (remoteUrlKey !== null) {
-			seenRepositoryRemoteUrls.add(remoteUrlKey);
-		}
-
-		uniqueRepositories.push({
-			...repository,
-			upstreamRemoteUrl:
-				repository.upstreamRemoteUrl === null
-					? null
-					: normalizeRepositoryRemoteUrl(repository.upstreamRemoteUrl) || null,
-			githubCredentialSecretId: normalizeRecordId(repository.githubCredentialSecretId),
-			favorite: repository.favorite === true,
-			tags: normalizeProjectTags(repository.tags)
-		});
-	}
-
-	return uniqueRepositories;
-}
-
-function parseProjectNodeRecord(value: unknown): ProjectNodeRecord | null {
-	if (!isObjectRecord(value)) {
-		return null;
-	}
-
-	const id = normalizeRecordId(value.id);
-	const kind = normalizeProjectNodeKind(value.kind);
-	const parentId = normalizeRecordId(value.parentId);
-	const name = normalizeProjectName(readTrimmedString(value.name));
-	const description = normalizeProjectDescription(readTrimmedString(value.description));
-	const path = normalizeProjectPath(readTrimmedString(value.path));
-	const githubCredentialSecretId = normalizeRecordId(value.githubCredentialSecretId);
-	const tags = normalizeProjectTags(readStringArray(value.tags));
-	const rawRepositories = Array.isArray(value.repositories) ? value.repositories : [];
-	const repositories = rawRepositories.flatMap((rawRepository) => {
-		const repository = parseRepositoryLinkRecord(rawRepository);
-
-		return repository === null ? [] : [repository];
-	});
-	const createdAt = readTrimmedString(value.createdAt);
-	const updatedAt = readTrimmedString(value.updatedAt);
-
-	if (id === null || kind === null || name.length === 0) {
-		return null;
-	}
-
-	return {
-		id,
-		kind,
-		parentId: kind === 'project' ? null : parentId,
-		name,
-		description,
-		path,
-		githubCredentialSecretId,
-		tags,
-		repositories,
-		createdAt: createdAt.length === 0 ? updatedAt : createdAt,
-		updatedAt: updatedAt.length === 0 ? createdAt : updatedAt
-	};
-}
-
-function parseRepositoryLinkRecord(value: unknown): ProjectRepositoryLinkRecord | null {
-	if (!isObjectRecord(value)) {
-		return null;
-	}
-
-	const id = normalizeRecordId(value.id);
-	const name = normalizeRepositoryName(readTrimmedString(value.name));
-	const path = normalizeRepositoryPath(readTrimmedString(value.path));
-	const remoteUrl = normalizeRepositoryRemoteUrl(readTrimmedString(value.remoteUrl));
-	const upstreamRemoteUrl = normalizeRepositoryRemoteUrl(readTrimmedString(value.upstreamRemoteUrl));
-	const githubCredentialSecretId = normalizeRecordId(value.githubCredentialSecretId);
-	const favorite = value.favorite === true;
-	const tags = normalizeProjectTags(readStringArray(value.tags));
-	const createdAt = readTrimmedString(value.createdAt);
-	const updatedAt = readTrimmedString(value.updatedAt);
-
-	if (id === null || name.length === 0 || (path.length === 0 && remoteUrl.length === 0)) {
-		return null;
-	}
-
-	return {
-		id,
-		name,
-		path: path.length === 0 ? null : path,
-		remoteUrl: remoteUrl.length === 0 ? null : remoteUrl,
-		upstreamRemoteUrl: upstreamRemoteUrl.length === 0 ? null : upstreamRemoteUrl,
-		githubCredentialSecretId,
-		favorite,
-		tags,
-		createdAt: createdAt.length === 0 ? updatedAt : createdAt,
-		updatedAt: updatedAt.length === 0 ? createdAt : updatedAt
-	};
-}
-
 function hasSiblingWithName(
 	nodes: readonly ProjectNodeRecord[],
 	parentId: string | null,
@@ -1403,195 +970,10 @@ function hasNodeWithPath(
 	);
 }
 
-function normalizeProjectNodeKind(value: unknown): ProjectNodeKind | null {
-	return value === 'project' || value === 'group' ? value : null;
-}
-
-function normalizeProjectName(value: string) {
-	return value.trim().replace(/\s+/g, ' ').slice(0, PROJECT_NAME_MAX_LENGTH);
-}
-
-function normalizeProjectDescription(value: string) {
-	return value.trim().replace(/\s+/g, ' ').slice(0, PROJECT_DESCRIPTION_MAX_LENGTH);
-}
-
-function normalizeProjectPath(value: string) {
-	const trimmedPath = value.trim().replaceAll('\\', '/').replace(/^\/+|\/+$/gu, '');
-
-	if (trimmedPath.length === 0) {
-		return '';
-	}
-
-	const segments = trimmedPath.split('/').filter(Boolean);
-
-	if (
-		segments.length < 2 ||
-		segments[0] !== 'projects' ||
-		segments.some((segment) => segment === '.' || segment === '..')
-	) {
-		return '';
-	}
-
-	return segments.join('/').slice(0, PROJECT_NODE_PATH_MAX_LENGTH);
-}
-
-function normalizeProjectTags(values: readonly string[]) {
-	const tags: string[] = [];
-	const tagKeys = new Set<string>();
-
-	for (const value of values) {
-		const tag = value
-			.trim()
-			.replace(/^#+/u, '')
-			.replace(/\s+/gu, '-')
-			.slice(0, PROJECT_TAG_MAX_LENGTH);
-		const tagKey = createNameKey(tag);
-
-		if (tag.length === 0 || tagKeys.has(tagKey)) {
-			continue;
-		}
-
-		tags.push(tag);
-		tagKeys.add(tagKey);
-
-		if (tags.length >= PROJECT_TAGS_MAX_COUNT) {
-			break;
-		}
-	}
-
-	return tags;
-}
-
-function normalizeRepositoryName(value: string) {
-	return value.trim().replace(/\s+/g, ' ').slice(0, PROJECT_REPOSITORY_NAME_MAX_LENGTH);
-}
-
-function normalizeRepositoryPath(value: string) {
-	return normalizeWorkspacePathForStorage(value).slice(0, PROJECT_REPOSITORY_PATH_MAX_LENGTH);
-}
-
-function normalizeRepositoryRemoteUrl(value: string) {
-	const trimmedUrl = value.trim().slice(0, PROJECT_REPOSITORY_REMOTE_URL_MAX_LENGTH);
-
-	return isValidRepositoryRemoteUrl(trimmedUrl) ? trimmedUrl : '';
-}
-
-function normalizeRecordId(value: unknown) {
-	const id = readTrimmedString(value);
-
-	return id.length === 0 ? null : id;
-}
-
-function readProjectRegistryVersion(value: unknown) {
-	return typeof value === 'number' && Number.isInteger(value) ? value : null;
-}
-
 function createProjectRecordId(prefix: string) {
 	if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
 		return crypto.randomUUID();
 	}
 
 	return `${prefix}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
-}
-
-function createNameKey(name: string) {
-	return name.toLocaleLowerCase('en-US');
-}
-
-function createProjectPathKey(path: string) {
-	return normalizeProjectPath(path).toLocaleLowerCase('en-US');
-}
-
-function createDefaultProjectPath(parentPath: string | null, name: string) {
-	const segment = normalizeProjectPathSegment(name);
-
-	return parentPath === null ? `projects/${segment}` : `${parentPath}/${segment}`;
-}
-
-function normalizeProjectPathSegment(value: string) {
-	return createProjectFolderNameFromDisplayName(value, PROJECT_NAME_MAX_LENGTH);
-}
-
-function createRepositoryPathKey(path: string) {
-	return normalizeRepositoryPath(path).replaceAll('\\', '/').toLocaleLowerCase('en-US');
-}
-
-function createRepositoryRemoteUrlKey(remoteUrl: string) {
-	return normalizeRepositoryRemoteUrl(remoteUrl).replace(/\.git$/iu, '').toLocaleLowerCase('en-US');
-}
-
-function isValidRepositoryRemoteUrl(remoteUrl: string) {
-	if (remoteUrl.length === 0 || remoteUrl.length > PROJECT_REPOSITORY_REMOTE_URL_MAX_LENGTH) {
-		return false;
-	}
-
-	if (/\s/u.test(remoteUrl) || hasControlCharacter(remoteUrl)) {
-		return false;
-	}
-
-	if (remoteUrl.includes('://')) {
-		return isValidRepositoryUrlWithScheme(remoteUrl);
-	}
-
-	return isValidScpLikeRepositoryUrl(remoteUrl);
-}
-
-function isValidRepositoryUrlWithScheme(remoteUrl: string) {
-	try {
-		const url = new URL(remoteUrl);
-		const allowedProtocol =
-			url.protocol === 'https:' ||
-			url.protocol === 'http:' ||
-			url.protocol === 'ssh:' ||
-			url.protocol === 'git:';
-
-		if (!allowedProtocol || url.hostname.length === 0 || url.pathname.length <= 1) {
-			return false;
-		}
-
-		if (
-			(url.protocol === 'https:' || url.protocol === 'http:') &&
-			(url.username.length > 0 || url.password.length > 0)
-		) {
-			return false;
-		}
-
-		return true;
-	} catch {
-		return false;
-	}
-}
-
-function isValidScpLikeRepositoryUrl(remoteUrl: string) {
-	const separatorIndex = remoteUrl.indexOf(':');
-
-	if (separatorIndex <= 0 || separatorIndex === remoteUrl.length - 1) {
-		return false;
-	}
-
-	const authority = remoteUrl.slice(0, separatorIndex);
-	const path = remoteUrl.slice(separatorIndex + 1);
-	const atIndex = authority.indexOf('@');
-
-	if (atIndex <= 0 || atIndex === authority.length - 1) {
-		return false;
-	}
-
-	return !path.startsWith('/') && path.length > 0 && !authority.includes('/');
-}
-
-function hasControlCharacter(value: string) {
-	return [...value].some((character) => {
-		const codePoint = character.codePointAt(0) ?? 0;
-
-		return codePoint < 0x20 || codePoint === 0x7f;
-	});
-}
-
-function readTrimmedString(value: unknown) {
-	return typeof value === 'string' ? value.trim() : '';
-}
-
-function readStringArray(value: unknown) {
-	return Array.isArray(value) ? value.filter((item): item is string => typeof item === 'string') : [];
 }

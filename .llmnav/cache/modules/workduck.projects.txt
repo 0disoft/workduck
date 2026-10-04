@@ -126,3 +126,15 @@ role Read and atomically replace SQLite project registry snapshots with optional
 owns project registry SQLite reads, snapshot write guards, atomic bulk registry replacement
 excludes registry domain normalization, workspace sync payload assembly, editor draft ownership
 invariant Guarded writes replace only the expected stored snapshot; a conflict or invalid row rolls back the entire batch.
+
+@workduck.projects.registry-normalization
+role Parse and canonicalize project registries while preserving hierarchy eligibility and collision precedence.
+owns project registry parsing, hierarchy canonicalization, repository deduplication, shared field normalization
+excludes registry mutation intents, registry persistence, Git operations
+invariant Strict storage parsing rejects unsupported versions; canonicalization accepts only reachable unique nodes and repository sources.
+
+@workduck.projects.schema
+role Define versioned project registry records, mutation inputs, result shapes, and field limits.
+owns project registry record shapes, project mutation input contracts, project field limits
+excludes normalization algorithms, registry persistence, Git operations
+invariant Project registry consumers share one versioned set of record shapes, mutation results, and field limits.

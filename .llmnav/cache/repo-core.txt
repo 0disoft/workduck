@@ -186,3 +186,9 @@ role Own the Queue evaluation dialog, scoring state, and selection-scoped save l
 owns evaluation dialog state, evaluation score editing, evaluation save ownership, evaluation feedback
 excludes registry persistence, artifact selection, workspace registry state
 invariant Saving captures its workspace and report selection, and late feedback never changes a newer selection.
+
+@workduck.projects.registry-normalization
+role Parse and canonicalize project registries while preserving hierarchy eligibility and collision precedence.
+owns project registry parsing, hierarchy canonicalization, repository deduplication, shared field normalization
+excludes registry mutation intents, registry persistence, Git operations
+invariant Strict storage parsing rejects unsupported versions; canonicalization accepts only reachable unique nodes and repository sources.

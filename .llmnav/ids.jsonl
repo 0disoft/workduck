@@ -74,3 +74,5 @@
 {"id":"workduck.cli.agent-evaluation","state":"active"}
 {"id":"workduck.storage.atomic-file-write","state":"active"}
 {"id":"workduck.queue.evaluation-controller","state":"active"}
+{"id":"workduck.projects.registry-normalization","state":"active"}
+{"id":"workduck.projects.schema","state":"active"}

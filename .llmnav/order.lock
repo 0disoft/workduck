@@ -74,3 +74,5 @@ workduck.skills.schema
 workduck.cli.agent-evaluation
 workduck.storage.atomic-file-write
 workduck.queue.evaluation-controller
+workduck.projects.registry-normalization
+workduck.projects.schema
