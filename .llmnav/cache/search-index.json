@@ -88,7 +88,7 @@
     "workduck.workspace.sync-file-native",
     "workduck.workspace.sync-git-native"
   ],
-  "cardSetHash": "a9989196e201e81501f8f20efbd680bd82bb013742675579bb5232bf523c1cc1",
+  "cardSetHash": "3ab08f0ef63a4f038516af0654971c7ca2f8a98269589f5a817b29e7066f13af",
   "documentCount": 87,
   "documents": [
     [
@@ -647,13 +647,13 @@
       ]
     ],
     [
-      "9d52eb78c959c96e5e888681c42ba10c4f9901094b11c7b65d942f27d03b9b72",
+      "0dbf74ef722cce089e5ef4e959dac05b2d03479da7b7bff5e38a6085854e957e",
       [
         "persist workspace project registries through tauri sqlite while migrating and preserving the browser legacy fallback.",
         "project registry storage",
         "sqlite registry migration",
         "legacy project registry",
-        "overlapping writes run in request order, legacy promotion rechecks sqlite before writing, and independent reads or workspaces remain concurrent.",
+        "overlapping writes run in request order, legacy promotion rechecks sqlite before writing, and subscriptions publish only the latest successful result while still active.",
         "project registry persistence",
         "legacy registry promotion",
         "registry change notifications",
@@ -1660,6 +1660,13 @@
         ]
       ],
       [
+        42,
+        [
+          5,
+          1
+        ]
+      ],
+      [
         48,
         [
           1,
@@ -6286,13 +6293,6 @@
         ]
       ],
       [
-        42,
-        [
-          5,
-          1
-        ]
-      ],
-      [
         66,
         [
           1,
@@ -12381,13 +12381,6 @@
     ],
     [
       [
-        42,
-        [
-          5,
-          1
-        ]
-      ],
-      [
         72,
         [
           5,
@@ -13475,6 +13468,13 @@
       ],
       [
         33,
+        [
+          5,
+          1
+        ]
+      ],
+      [
+        42,
         [
           5,
           1
@@ -16738,6 +16738,13 @@
         ]
       ],
       [
+        42,
+        [
+          5,
+          1
+        ]
+      ],
+      [
         43,
         [
           5,
@@ -17306,13 +17313,6 @@
       ],
       [
         39,
-        [
-          5,
-          1
-        ]
-      ],
-      [
-        42,
         [
           5,
           1
@@ -20541,6 +20541,13 @@
         ]
       ],
       [
+        42,
+        [
+          5,
+          1
+        ]
+      ],
+      [
         73,
         [
           1,
@@ -21201,13 +21208,6 @@
         28,
         [
           2,
-          1
-        ]
-      ],
-      [
-        42,
-        [
-          5,
           1
         ]
       ],
@@ -22299,13 +22299,6 @@
         ]
       ],
       [
-        42,
-        [
-          5,
-          1
-        ]
-      ],
-      [
         47,
         [
           5,
@@ -23572,6 +23565,13 @@
         41,
         [
           1,
+          1
+        ]
+      ],
+      [
+        42,
+        [
+          5,
           1
         ]
       ],
@@ -27748,6 +27748,13 @@
           5,
           1
         ]
+      ],
+      [
+        42,
+        [
+          5,
+          1
+        ]
       ]
     ],
     [
@@ -28049,6 +28056,13 @@
         ]
       ],
       [
+        42,
+        [
+          5,
+          1
+        ]
+      ],
+      [
         48,
         [
           2,
@@ -28153,6 +28167,13 @@
       ],
       [
         37,
+        [
+          5,
+          1
+        ]
+      ],
+      [
+        42,
         [
           5,
           1
@@ -29639,6 +29660,8 @@
         42,
         [
           1,
+          1,
+          5,
           1
         ]
       ],
@@ -32176,6 +32199,8 @@
         42,
         [
           1,
+          1,
+          5,
           1
         ]
       ],
@@ -33703,13 +33728,6 @@
       ]
     ],
     [
-      [
-        42,
-        [
-          5,
-          1
-        ]
-      ],
       [
         79,
         [

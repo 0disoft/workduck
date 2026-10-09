@@ -10338,7 +10338,7 @@
     },
     {
       "blocks": [],
-      "contentHash": "a6292e84254d25b3f0e31c11135d14208d850c198da6bc37412eec2d695b9461",
+      "contentHash": "a462e70496b3d376313c691837c7394784387e977400785e095ec76b801dea67",
       "declarations": [],
       "imports": [
         "#lib/tauri/tauri-invoke.ts",
@@ -10348,7 +10348,7 @@
       ],
       "path": "src/lib/projects/project-storage.test.ts",
       "semanticBytes": 0,
-      "sourceBytes": 9528
+      "sourceBytes": 11377
     },
     {
       "blocks": [
@@ -10361,7 +10361,7 @@
             ],
             "id": "workduck.projects.storage",
             "invariant": [
-              "Overlapping writes run in request order, legacy promotion rechecks SQLite before writing, and independent reads or workspaces remain concurrent."
+              "Overlapping writes run in request order, legacy promotion rechecks SQLite before writing, and subscriptions publish only the latest successful result while still active."
             ],
             "owns": [
               "project registry persistence",
@@ -10381,7 +10381,7 @@
             "stability": "architecture",
             "unknown": []
           },
-          "end": 616,
+          "end": 641,
           "endLine": 9,
           "entries": [
             {
@@ -10418,7 +10418,7 @@
               "key": "invariant",
               "line": 7,
               "order": 5,
-              "value": "Overlapping writes run in request order, legacy promotion rechecks SQLite before writing, and independent reads or workspaces remain concurrent."
+              "value": "Overlapping writes run in request order, legacy promotion rechecks SQLite before writing, and subscriptions publish only the latest successful result while still active."
             },
             {
               "key": "stability",
@@ -10431,7 +10431,7 @@
           "indent": "",
           "newline": "\n",
           "prefix": null,
-          "raw": "/* llmnav/1 module\nid=workduck.projects.storage\nrole=Persist workspace project registries through Tauri SQLite while migrating and preserving the browser legacy fallback.\nowns=project registry persistence|legacy registry promotion|registry change notifications|workspace operation ordering\nexcludes=project domain normalization|repository Git operations\nsearch=project registry storage|sqlite registry migration|legacy project registry\ninvariant=Overlapping writes run in request order, legacy promotion rechecks SQLite before writing, and independent reads or workspaces remain concurrent.\nstability=architecture\n*/",
+          "raw": "/* llmnav/1 module\nid=workduck.projects.storage\nrole=Persist workspace project registries through Tauri SQLite while migrating and preserving the browser legacy fallback.\nowns=project registry persistence|legacy registry promotion|registry change notifications|workspace operation ordering\nexcludes=project domain normalization|repository Git operations\nsearch=project registry storage|sqlite registry migration|legacy project registry\ninvariant=Overlapping writes run in request order, legacy promotion rechecks SQLite before writing, and subscriptions publish only the latest successful result while still active.\nstability=architecture\n*/",
           "scope": "module",
           "specVersion": "1",
           "start": 0,
@@ -10440,7 +10440,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "fa2fdb602a0a089956c2271fb99cdb52a7981ffa30efaa65f2e5d145faee09c5",
+      "contentHash": "4a4c7be3cf7e5f0d8616cfac82e136c8c20c6dbd4ee794cc2c7787df8427a63a",
       "declarations": [
         null
       ],
@@ -10450,8 +10450,8 @@
         "./project-registry"
       ],
       "path": "src/lib/projects/project-storage.ts",
-      "semanticBytes": 616,
-      "sourceBytes": 23277
+      "semanticBytes": 641,
+      "sourceBytes": 23491
     },
     {
       "blocks": [],

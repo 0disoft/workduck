@@ -15,6 +15,13 @@ function deferred() {
 
 async function settle() { await new Promise((resolve) => setTimeout(resolve, 0)); }
 
+function dispatchLegacyStorageChange() {
+	window.dispatchEvent(Object.assign(new Event('storage'), {
+		storageArea: window.localStorage,
+		key: 'workduck.projectRegistries.v1'
+	}));
+}
+
 function writtenRegistries(command: string, args?: Record<string, unknown>) {
 	expect(['write_project_registry', 'write_project_registries']).toContain(command);
 	const values = command === 'write_project_registry'
@@ -43,6 +50,44 @@ afterEach(() => {
 });
 
 describe('project registry storage write ordering', () => {
+	for (const supersededBy of ['write', 'storage', 'unsubscribe'] as const) {
+		test(`ignores a pending subscription read superseded by ${supersededBy}`, async () => {
+			const pending = deferred();
+			let reads = 0;
+			const notifications: ProjectRegistry[] = [];
+			setTauriInvokeForTest(async <T>(command: string) => {
+				if (command !== 'read_project_registry') return { ok: true } as T;
+				const index = ++reads;
+				if (index === 1) await pending.promise;
+				return { ok: true, registryJson: JSON.stringify(registry('demo', index)) } as T;
+			});
+			const unsubscribe = subscribeProjectRegistry('demo', (value) => notifications.push(value));
+			try {
+				dispatchLegacyStorageChange();
+				expect(reads).toBe(1);
+				if (supersededBy === 'write') expect((await writeProjectRegistry(registry('demo', 2))).ok).toBe(true);
+				else if (supersededBy === 'storage') { dispatchLegacyStorageChange(); await settle(); }
+				else unsubscribe();
+				pending.resolve();
+				await settle();
+				expect(notifications.map((value) => value.updatedAt)).toEqual(
+					supersededBy === 'unsubscribe' ? [] : [registry('demo', 2).updatedAt]
+				);
+			} finally { pending.resolve(); await settle(); unsubscribe(); }
+		});
+	}
+
+	test('does not publish a failed subscription read as an empty registry', async () => {
+		const notifications: ProjectRegistry[] = [];
+		setTauriInvokeForTest(async <T>() => ({ ok: true, registryJson: '{invalid' }) as T);
+		const unsubscribe = subscribeProjectRegistry('demo', (value) => notifications.push(value));
+		try {
+			dispatchLegacyStorageChange();
+			await settle();
+			expect(notifications).toEqual([]);
+		} finally { unsubscribe(); }
+	});
+
 	test('compares SQLite snapshots and passes the raw revision into the atomic native write', async () => {
 		const original = registry('demo', 1);
 		const raw = JSON.stringify(original, null, 2);

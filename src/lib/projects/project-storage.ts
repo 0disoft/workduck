@@ -4,7 +4,7 @@ role=Persist workspace project registries through Tauri SQLite while migrating a
 owns=project registry persistence|legacy registry promotion|registry change notifications|workspace operation ordering
 excludes=project domain normalization|repository Git operations
 search=project registry storage|sqlite registry migration|legacy project registry
-invariant=Overlapping writes run in request order, legacy promotion rechecks SQLite before writing, and independent reads or workspaces remain concurrent.
+invariant=Overlapping writes run in request order, legacy promotion rechecks SQLite before writing, and subscriptions publish only the latest successful result while still active.
 stability=architecture
 */
 
@@ -407,6 +407,8 @@ export function subscribeProjectRegistry(
 	if (typeof window === 'undefined') {
 		return () => {};
 	}
+	let isActive = true;
+	let readGeneration = 0;
 
 	function handleRegistryChanged(event: Event) {
 		const detail = (event as CustomEvent<ProjectRegistryChangedDetail>).detail;
@@ -415,6 +417,7 @@ export function subscribeProjectRegistry(
 			return;
 		}
 
+		readGeneration += 1;
 		callback(normalizeProjectRegistry(detail.registry, workspaceId));
 	}
 
@@ -426,8 +429,9 @@ export function subscribeProjectRegistry(
 			return;
 		}
 
+		const generation = ++readGeneration;
 		void readProjectRegistry(workspaceId).then((result) => {
-			callback(result.registry);
+			if (isActive && generation === readGeneration && result.ok) callback(result.registry);
 		});
 	}
 
@@ -435,6 +439,7 @@ export function subscribeProjectRegistry(
 	window.addEventListener('storage', handleStorageChanged);
 
 	return () => {
+		isActive = false;
 		window.removeEventListener(WORKDUCK_PROJECT_REGISTRY_CHANGED_EVENT, handleRegistryChanged);
 		window.removeEventListener('storage', handleStorageChanged);
 	};

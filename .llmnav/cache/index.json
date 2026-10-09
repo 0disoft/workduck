@@ -368,8 +368,8 @@
         "repository Git operations"
       ],
       "hashes": {
-        "body": "fa2fdb602a0a089956c2271fb99cdb52a7981ffa30efaa65f2e5d145faee09c5",
-        "semantic": "7c1ae604e5cb809bbd383568019038396430b27b557aa1c78ce73b3ccc2fdc08",
+        "body": "4a4c7be3cf7e5f0d8616cfac82e136c8c20c6dbd4ee794cc2c7787df8427a63a",
+        "semantic": "d0551193e6b9ebda803177c523a575ed4bc3134bbf476c7f431eacde59cc4bf4",
         "structure": "6f6256f66daa5025ebca5d499e7e432b3a7c7493036fdb4605216d014e1f4b64"
       },
       "id": "workduck.projects.storage",
@@ -379,7 +379,7 @@
         "./project-registry"
       ],
       "invariant": [
-        "Overlapping writes run in request order, legacy promotion rechecks SQLite before writing, and independent reads or workspaces remain concurrent."
+        "Overlapping writes run in request order, legacy promotion rechecks SQLite before writing, and subscriptions publish only the latest successful result while still active."
       ],
       "location": {
         "declarationLine": null,
@@ -4424,6 +4424,6 @@
   "generatedBy": "llmnav@0.9.7",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "535409de624b62780904fd6d6ed0ed2ff280c85754cc5d197958c69fcf48d720",
+  "sourceHash": "39d7d3f9a61893879d400079bac0e26f32c5dbbec97afa1a58436120721bc840",
   "specVersion": "1"
 }
