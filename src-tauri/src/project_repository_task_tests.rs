@@ -524,7 +524,8 @@ fn powershell_task_failures_stop_following_commands_and_keep_native_exit_codes()
     ] {
         let repository = tempfile::tempdir().unwrap();
         fs::create_dir(repository.path().join("nested")).unwrap();
-        let record_path = repository.path().join("run.json");
+        let record_path = task_run_record_dir(repository.path()).join(format!("{label}.json"));
+        fs::create_dir_all(record_path.parent().unwrap()).unwrap();
         let marker_path = repository.path().join("following-command.txt");
         let command =
             format!("{command}\nSet-Content -LiteralPath 'following-command.txt' -Value 'ran'");
@@ -553,14 +554,18 @@ fn powershell_task_failures_stop_following_commands_and_keep_native_exit_codes()
             "{label}: {}",
             String::from_utf8_lossy(&output.stderr)
         );
-        let stored: serde_json::Value = serde_json::from_str(
-            fs::read_to_string(&record_path)
-                .unwrap()
-                .trim_start_matches('\u{feff}'),
-        )
-        .unwrap();
-        assert_eq!(stored["state"], expected_state, "{label}");
-        assert_eq!(stored["exitCode"], expected_exit, "{label}");
+        let stored =
+            read_visible_task_run_record(&record_path, repository.path()).unwrap_or_else(|| {
+                panic!("PowerShell record is missing from the latest view: {label}")
+            });
+        assert_eq!(stored.state, expected_state, "{label}");
+        assert_eq!(stored.exit_code, Some(expected_exit), "{label}");
+        let workspace = fs::canonicalize(repository.path()).unwrap();
+        let historical = history::read_selected_task_run_records(&workspace, &[label.into()])
+            .unwrap_or_else(|_| panic!("PowerShell record is unreadable in history: {label}"));
+        assert_eq!(historical.len(), 1, "{label}");
+        assert_eq!(historical[0].state, expected_state, "{label}");
+        assert_eq!(historical[0].exit_code, Some(expected_exit), "{label}");
         assert_eq!(marker_path.exists(), follows, "{label}");
     }
 }

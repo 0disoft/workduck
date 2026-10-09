@@ -61,7 +61,8 @@ pub(super) fn read_selected_task_run_records(
         if bytes.len() > MAX_RECORD_BYTES || total_bytes > MAX_HISTORY_BYTES {
             return Err(ProjectRepositoryTaskError::RecordReadFailed);
         }
-        let mut record: ProjectRepositoryTaskRunRecord = serde_json::from_slice(&bytes)
+        let json_bytes = bytes.strip_prefix(&[0xef, 0xbb, 0xbf]).unwrap_or(&bytes);
+        let mut record: ProjectRepositoryTaskRunRecord = serde_json::from_slice(json_bytes)
             .map_err(|_| ProjectRepositoryTaskError::RecordReadFailed)?;
         let repository_path = Path::new(&record.repository_path);
         if record.id != *id
@@ -125,6 +126,42 @@ mod tests {
             serde_json::to_vec(record).unwrap(),
         )
         .unwrap();
+    }
+
+    #[test]
+    fn reads_utf8_bom_records_without_changing_the_file_or_unicode_output() {
+        let temp = tempfile::tempdir().unwrap();
+        let workspace = fs::canonicalize(temp.path()).unwrap();
+        let mut completed = record(&workspace, "build-1", "2026-10-01T00:00:00Z");
+        completed.output_tail = Some("빌드 완료 ✓".into());
+        save(&workspace, &completed);
+        let path = task_run_record_dir(&workspace).join("build-1.json");
+        let mut bytes = vec![0xef, 0xbb, 0xbf];
+        bytes.extend(serde_json::to_vec(&completed).unwrap());
+        fs::write(&path, &bytes).unwrap();
+        let records = read_selected_task_run_records(&workspace, &["build-1".into()])
+            .unwrap_or_else(|_| panic!("read BOM-prefixed history"));
+        assert_eq!(records.len(), 1);
+        assert_eq!(records[0].id, completed.id);
+        assert_eq!(records[0].output_tail, completed.output_tail);
+        assert_eq!(fs::read(&path).unwrap(), bytes);
+    }
+
+    #[test]
+    fn bom_does_not_make_invalid_json_or_mismatched_identity_valid() {
+        let temp = tempfile::tempdir().unwrap();
+        let workspace = fs::canonicalize(temp.path()).unwrap();
+        let completed = record(&workspace, "build-1", "2026-10-01T00:00:00Z");
+        save(&workspace, &completed);
+        let path = task_run_record_dir(&workspace).join("build-1.json");
+        let mismatched =
+            serde_json::to_vec(&record(&workspace, "other", &completed.started_at)).unwrap();
+        for payload in [b"{".to_vec(), mismatched] {
+            let mut bytes = vec![0xef, 0xbb, 0xbf];
+            bytes.extend(payload);
+            fs::write(&path, bytes).unwrap();
+            assert!(read_selected_task_run_records(&workspace, &["build-1".into()]).is_err());
+        }
     }
 
     #[test]

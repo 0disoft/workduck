@@ -3410,7 +3410,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "762329751b3c34d962d8b5fd1d6d3e808b1bdad8ea1e19422bcb68cfd8bcb973",
+      "contentHash": "2744fd204a5e4f4099e5dcc971415ce5fb42dd46eee09685d75415713585d234",
       "declarations": [
         null
       ],
@@ -3428,7 +3428,7 @@
       ],
       "path": "src-tauri/src/project_repository_task.rs",
       "semanticBytes": 644,
-      "sourceBytes": 39642
+      "sourceBytes": 39725
     },
     {
       "blocks": [
@@ -3624,7 +3624,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "8f0fcd61028817cb159dca97ce1a58dab0fc44d71d1875d1d4eb731f4e6a8a7d",
+      "contentHash": "894a6bafd00a1744b8f41a53cf6fd0db5428e201f4926452097fb40d4d97ede6",
       "declarations": [
         null
       ],
@@ -3635,11 +3635,11 @@
       ],
       "path": "src-tauri/src/project_repository_task_history.rs",
       "semanticBytes": 639,
-      "sourceBytes": 8394
+      "sourceBytes": 10272
     },
     {
       "blocks": [],
-      "contentHash": "d3bac8ff37edc92246338d5b93628d813bdf2e3cc1b074902651ae5267acca5a",
+      "contentHash": "92a48d194a24ade94cd4d6cde2a4ae83e61b97f5f6ed27bf59ba159318e96619",
       "declarations": [],
       "imports": [
         "super::*",
@@ -3647,7 +3647,7 @@
       ],
       "path": "src-tauri/src/project_repository_task_tests.rs",
       "semanticBytes": 0,
-      "sourceBytes": 31035
+      "sourceBytes": 31600
     },
     {
       "blocks": [],

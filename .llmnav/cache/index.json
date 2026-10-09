@@ -1559,7 +1559,7 @@
         "arbitrary shell command input"
       ],
       "hashes": {
-        "body": "762329751b3c34d962d8b5fd1d6d3e808b1bdad8ea1e19422bcb68cfd8bcb973",
+        "body": "2744fd204a5e4f4099e5dcc971415ce5fb42dd46eee09685d75415713585d234",
         "semantic": "b5fb2ee97a32b44f5965f20f0c95cf6b3f03e0d1d51c91258c280ba55101f857",
         "structure": "b5122d9939628fb569605ebee461119c8532e018d75a3a27998fab08d397a2bb"
       },
@@ -2883,7 +2883,7 @@
         "latest repository card projection"
       ],
       "hashes": {
-        "body": "8f0fcd61028817cb159dca97ce1a58dab0fc44d71d1875d1d4eb731f4e6a8a7d",
+        "body": "894a6bafd00a1744b8f41a53cf6fd0db5428e201f4926452097fb40d4d97ede6",
         "semantic": "a6283d6e9a1e63c31545ecc22c79a588f9679582df2f62f815e20773d557e199",
         "structure": "8c6dc031a73aed758f1fdea5f60d61084b53554c3d331953f39baff3ef9047c8"
       },
@@ -4482,6 +4482,6 @@
   "generatedBy": "llmnav@0.9.7",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "337ea4c791c246e486bffa82836ae5db28fa3e1be66b4751d7470f7079d8d802",
+  "sourceHash": "a8ca5329b9d469575c778810cf4e494afb1e848a4a7988817352cef0ebaf8186",
   "specVersion": "1"
 }

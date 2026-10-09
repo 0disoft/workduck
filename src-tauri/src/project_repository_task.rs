@@ -397,7 +397,8 @@ fn read_visible_task_run_record(
     visible_workspace_path: &Path,
 ) -> Option<ProjectRepositoryTaskRunRecord> {
     let record_json = fs::read_to_string(path).ok()?;
-    let mut record = serde_json::from_str::<ProjectRepositoryTaskRunRecord>(&record_json).ok()?;
+    let record_json = record_json.strip_prefix('\u{feff}').unwrap_or(&record_json);
+    let mut record = serde_json::from_str::<ProjectRepositoryTaskRunRecord>(record_json).ok()?;
     let repository_path = PathBuf::from(&record.repository_path);
 
     if repository_path.components().any(|component| {
