@@ -88,7 +88,7 @@
     "workduck.workspace.sync-file-native",
     "workduck.workspace.sync-git-native"
   ],
-  "cardSetHash": "3ab08f0ef63a4f038516af0654971c7ca2f8a98269589f5a817b29e7066f13af",
+  "cardSetHash": "ce55f0d319503fd504ab8ad708c7b4192c3ff021eb29f6468bc944cd649009d1",
   "documentCount": 87,
   "documents": [
     [
@@ -290,13 +290,13 @@
       ]
     ],
     [
-      "071c1b99e98952fb727ab9103a886a4f34b7479b85540fdd9c2949f52b64b63a",
+      "05a52270c2801befdec9f719c0ce81f536e8e1c2308f89809c8e14838acd39eb",
       [
         "project native environment vault sessions into workspace metadata subscriptions and coordinate explicit secret access and locking.",
         "environment vault session metadata",
         "idle workspace vault lock",
         "explicit secret value read",
-        "cached vault views accept only native managed opaque secret references; workspace lock publication waits for native session revocation to succeed.",
+        "cached vault views accept only native managed opaque secret references; closing invalidates pending responses and blocks new requests until native revocation finishes; workspace lock publication requires successful native revocation.",
         "native vault metadata cache",
         "workspace session subscriptions",
         "vault command normalization",
@@ -2284,7 +2284,9 @@
         15,
         [
           1,
-          2
+          2,
+          5,
+          1
         ]
       ],
       [
@@ -4011,6 +4013,13 @@
     ],
     [
       [
+        15,
+        [
+          5,
+          1
+        ]
+      ],
+      [
         77,
         [
           5,
@@ -5640,6 +5649,13 @@
       ]
     ],
     [
+      [
+        15,
+        [
+          5,
+          1
+        ]
+      ],
       [
         62,
         [
@@ -10664,6 +10680,15 @@
     ],
     [
       [
+        15,
+        [
+          5,
+          1
+        ]
+      ]
+    ],
+    [
+      [
         61,
         [
           5,
@@ -10891,13 +10916,6 @@
         11,
         [
           1,
-          1
-        ]
-      ],
-      [
-        15,
-        [
-          5,
           1
         ]
       ],
@@ -12909,6 +12927,13 @@
       ]
     ],
     [
+      [
+        15,
+        [
+          5,
+          1
+        ]
+      ],
       [
         62,
         [
@@ -15482,7 +15507,7 @@
           4,
           1,
           5,
-          2
+          3
         ]
       ],
       [
@@ -15964,6 +15989,13 @@
       ]
     ],
     [
+      [
+        15,
+        [
+          5,
+          1
+        ]
+      ],
       [
         39,
         [
@@ -18485,6 +18517,13 @@
       ],
       [
         4,
+        [
+          5,
+          1
+        ]
+      ],
+      [
+        15,
         [
           5,
           1
@@ -23113,6 +23152,13 @@
     ],
     [
       [
+        15,
+        [
+          5,
+          1
+        ]
+      ],
+      [
         17,
         [
           1,
@@ -23169,6 +23215,13 @@
       ]
     ],
     [
+      [
+        15,
+        [
+          5,
+          1
+        ]
+      ],
       [
         53,
         [
@@ -23415,6 +23468,13 @@
     [
       [
         14,
+        [
+          5,
+          1
+        ]
+      ],
+      [
+        15,
         [
           5,
           1
@@ -23925,7 +23985,7 @@
         15,
         [
           5,
-          1
+          2
         ]
       ]
     ],
@@ -25788,8 +25848,6 @@
           3,
           2,
           4,
-          1,
-          5,
           1,
           9,
           1
@@ -28081,15 +28139,6 @@
     ],
     [
       [
-        15,
-        [
-          5,
-          1
-        ]
-      ]
-    ],
-    [
-      [
         30,
         [
           5,
@@ -28146,6 +28195,13 @@
     [
       [
         3,
+        [
+          5,
+          1
+        ]
+      ],
+      [
+        15,
         [
           5,
           1
@@ -30154,13 +30210,6 @@
         ]
       ],
       [
-        15,
-        [
-          5,
-          1
-        ]
-      ],
-      [
         45,
         [
           1,
@@ -31146,6 +31195,15 @@
     ],
     [
       [
+        15,
+        [
+          5,
+          1
+        ]
+      ]
+    ],
+    [
+      [
         4,
         [
           2,
@@ -32098,15 +32156,6 @@
         65,
         [
           3,
-          1
-        ]
-      ]
-    ],
-    [
-      [
-        15,
-        [
-          5,
           1
         ]
       ]
@@ -34420,6 +34469,7 @@
     "filesystem",
     "filter",
     "filters",
+    "finishes",
     "first",
     "five",
     "fixed",
@@ -34965,7 +35015,6 @@
     "structured",
     "subscribers",
     "subscriptions",
-    "succeed",
     "succeeded",
     "succeeds",
     "success",
@@ -35059,6 +35108,7 @@
     "unsanitized",
     "unsuccessful",
     "unsupported",
+    "until",
     "unverified",
     "up",
     "update",
@@ -35095,7 +35145,6 @@
     "visible",
     "vocabulary",
     "vote",
-    "waits",
     "was",
     "when",
     "while",

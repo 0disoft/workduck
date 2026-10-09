@@ -239,7 +239,7 @@ invariant Renderer writes acknowledge journaling before native persistence; a su
 role Project native environment vault sessions into workspace metadata subscriptions and coordinate explicit secret access and locking.
 owns native vault metadata cache, workspace session subscriptions, vault command normalization, idle session locking
 excludes secret encryption, native session storage, environment vault disk persistence
-invariant Cached vault views accept only native managed opaque secret references; workspace lock publication waits for native session revocation to succeed.
+invariant Cached vault views accept only native managed opaque secret references; closing invalidates pending responses and blocks new requests until native revocation finishes; workspace lock publication requires successful native revocation.
 
 @workduck.secret-vault.session-native
 role Own native workspace vault sessions, secret mutation, and generation-bound opaque reference resolution.

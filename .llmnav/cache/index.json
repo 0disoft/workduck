@@ -4314,8 +4314,8 @@
         "environment vault disk persistence"
       ],
       "hashes": {
-        "body": "c28bb27cb1da72eb70ed66780db02063635a639332db6ed7e939a4efd28da1de",
-        "semantic": "06086711c33702893e743049ed63d54636b3d38cb0c0791e05a402b08d072b3d",
+        "body": "f5c5df03c235d7b49fc11667abf619085076391e95bc0d24d757f266cb944bad",
+        "semantic": "9255af7a70b238e55695b76c52dd89272b6c84b32bae2032ae9789feb5237131",
         "structure": "e403a933f2548191e344a04506d5e63c73d7decc09d16910d03c4b09e669d909"
       },
       "id": "workduck.environment.vault-session",
@@ -4326,7 +4326,7 @@
         "./secret-vault-crypto"
       ],
       "invariant": [
-        "Cached vault views accept only native managed opaque secret references; workspace lock publication waits for native session revocation to succeed."
+        "Cached vault views accept only native managed opaque secret references; closing invalidates pending responses and blocks new requests until native revocation finishes; workspace lock publication requires successful native revocation."
       ],
       "location": {
         "declarationLine": null,
@@ -4424,6 +4424,6 @@
   "generatedBy": "llmnav@0.9.7",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "39d7d3f9a61893879d400079bac0e26f32c5dbbec97afa1a58436120721bc840",
+  "sourceHash": "82d87bd61131e9f36db02b645a8c5ffe1b3f93f3a1ea4b8082b9441dc5cf9a21",
   "specVersion": "1"
 }

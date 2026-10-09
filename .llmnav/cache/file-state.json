@@ -6389,18 +6389,20 @@
     },
     {
       "blocks": [],
-      "contentHash": "b00d884728e24ccbef79ce08d1515bae811e9269c5afdb94acb815abaf940600",
+      "contentHash": "7d609afc1ac26eea08391a873226f65ead809c0ef2b2f6dd1521f7bad3f50f88",
       "declarations": [],
       "imports": [
         "#lib/tauri/tauri-invoke.ts",
         "#lib/workspaces/workspace-unlock.ts",
+        "./environment-vault",
         "./environment-vault-session",
+        "./secret-vault-crypto",
         "node:assert/strict",
         "node:test"
       ],
       "path": "src/lib/environment/environment-vault-session.test.ts",
       "semanticBytes": 0,
-      "sourceBytes": 3305
+      "sourceBytes": 8670
     },
     {
       "blocks": [
@@ -6414,7 +6416,7 @@
             ],
             "id": "workduck.environment.vault-session",
             "invariant": [
-              "Cached vault views accept only native managed opaque secret references; workspace lock publication waits for native session revocation to succeed."
+              "Cached vault views accept only native managed opaque secret references; closing invalidates pending responses and blocks new requests until native revocation finishes; workspace lock publication requires successful native revocation."
             ],
             "owns": [
               "native vault metadata cache",
@@ -6434,7 +6436,7 @@
             "stability": "architecture",
             "unknown": []
           },
-          "end": 669,
+          "end": 756,
           "endLine": 9,
           "entries": [
             {
@@ -6471,7 +6473,7 @@
               "key": "invariant",
               "line": 7,
               "order": 5,
-              "value": "Cached vault views accept only native managed opaque secret references; workspace lock publication waits for native session revocation to succeed."
+              "value": "Cached vault views accept only native managed opaque secret references; closing invalidates pending responses and blocks new requests until native revocation finishes; workspace lock publication requires successful native revocation."
             },
             {
               "key": "stability",
@@ -6484,7 +6486,7 @@
           "indent": "",
           "newline": "\n",
           "prefix": null,
-          "raw": "/* llmnav/1 module\nid=workduck.environment.vault-session\nrole=Project native environment vault sessions into workspace metadata subscriptions and coordinate explicit secret access and locking.\nowns=native vault metadata cache|workspace session subscriptions|vault command normalization|idle session locking\nexcludes=secret encryption|native session storage|environment vault disk persistence\nsearch=environment vault session metadata|idle workspace vault lock|explicit secret value read\ninvariant=Cached vault views accept only native managed opaque secret references; workspace lock publication waits for native session revocation to succeed.\nstability=architecture\n*/",
+          "raw": "/* llmnav/1 module\nid=workduck.environment.vault-session\nrole=Project native environment vault sessions into workspace metadata subscriptions and coordinate explicit secret access and locking.\nowns=native vault metadata cache|workspace session subscriptions|vault command normalization|idle session locking\nexcludes=secret encryption|native session storage|environment vault disk persistence\nsearch=environment vault session metadata|idle workspace vault lock|explicit secret value read\ninvariant=Cached vault views accept only native managed opaque secret references; closing invalidates pending responses and blocks new requests until native revocation finishes; workspace lock publication requires successful native revocation.\nstability=architecture\n*/",
           "scope": "module",
           "specVersion": "1",
           "start": 0,
@@ -6493,7 +6495,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "c28bb27cb1da72eb70ed66780db02063635a639332db6ed7e939a4efd28da1de",
+      "contentHash": "f5c5df03c235d7b49fc11667abf619085076391e95bc0d24d757f266cb944bad",
       "declarations": [
         null
       ],
@@ -6504,8 +6506,8 @@
         "./secret-vault-crypto"
       ],
       "path": "src/lib/environment/environment-vault-session.ts",
-      "semanticBytes": 669,
-      "sourceBytes": 10529
+      "semanticBytes": 756,
+      "sourceBytes": 11943
     },
     {
       "blocks": [],
