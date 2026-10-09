@@ -312,7 +312,7 @@ fn discover_package_project_paths(
         }
     }
 
-    filter_local_dependency_package_project_paths(project_paths)
+    filter_local_dependency_package_project_paths(repository_path, project_paths)
 }
 
 fn root_project_has_task_script(
@@ -333,7 +333,10 @@ fn root_project_has_task_script(
         .is_some()
 }
 
-fn filter_local_dependency_package_project_paths(project_paths: Vec<PathBuf>) -> Vec<PathBuf> {
+fn filter_local_dependency_package_project_paths(
+    repository_path: &Path,
+    project_paths: Vec<PathBuf>,
+) -> Vec<PathBuf> {
     let local_dependency_paths = project_paths
         .iter()
         .filter_map(|project_path| read_package_project_at(project_path))
@@ -346,15 +349,9 @@ fn filter_local_dependency_package_project_paths(project_paths: Vec<PathBuf>) ->
 
     project_paths
         .into_iter()
-        .enumerate()
-        .filter_map(|(index, project_path)| {
-            if index == 0
-                || !is_local_dependency_package_project_path(&project_path, &local_dependency_paths)
-            {
-                Some(project_path)
-            } else {
-                None
-            }
+        .filter(|project_path| {
+            project_path == repository_path
+                || !is_local_dependency_package_project_path(project_path, &local_dependency_paths)
         })
         .collect()
 }
@@ -894,6 +891,68 @@ fn is_flutter_project(project_path: &Path) -> bool {
 fn push_unique_command(commands: &mut Vec<String>, command: String) {
     if !commands.iter().any(|candidate| candidate == &command) {
         commands.push(command);
+    }
+}
+
+#[cfg(test)]
+mod package_discovery_tests {
+    use super::*;
+
+    #[test]
+    fn rootless_repository_skips_owned_packages_even_when_they_sort_first() {
+        let repository = tempfile::tempdir().unwrap();
+        for (directory, manifest) in [
+            ("packages/a-library", r#"{"name":"library"}"#),
+            ("packages/m-independent", "{}"),
+            (
+                "packages/z-app",
+                r#"{"devDependencies":{"library":"file:../a-library"}}"#,
+            ),
+        ] {
+            let project = repository.path().join(directory);
+            fs::create_dir_all(&project).unwrap();
+            fs::write(project.join("package.json"), manifest).unwrap();
+        }
+        for (task, command) in [
+            (ProjectRepositoryTask::InstallDependencies, "npm install"),
+            (ProjectRepositoryTask::UpdateDependencies, "npm update"),
+        ] {
+            let commands = resolve_repository_task_commands(task, repository.path())
+                .unwrap_or_else(|_| panic!("missing {command}"));
+            assert_eq!(
+                commands,
+                ["packages/m-independent", "packages/z-app"]
+                    .map(|path| format!(
+                        "Push-Location -LiteralPath '{path}'; {command}; Pop-Location"
+                    ))
+                    .to_vec()
+            );
+        }
+    }
+
+    #[test]
+    fn actual_repository_root_remains_an_installation_owner() {
+        let repository = tempfile::tempdir().unwrap();
+        let project = repository.path().join("packages/library");
+        fs::create_dir_all(&project).unwrap();
+        fs::write(repository.path().join("package.json"), "{}").unwrap();
+        fs::write(
+            project.join("package.json"),
+            r#"{"dependencies":{"root":"file:../.."}}"#,
+        )
+        .unwrap();
+        let commands = resolve_repository_task_commands(
+            ProjectRepositoryTask::InstallDependencies,
+            repository.path(),
+        )
+        .unwrap_or_else(|_| panic!("missing root install"));
+        assert_eq!(
+            commands,
+            vec![
+                "npm install",
+                "Push-Location -LiteralPath 'packages/library'; npm install; Pop-Location"
+            ]
+        );
     }
 }
 

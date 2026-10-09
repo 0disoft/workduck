@@ -2834,13 +2834,14 @@
         "frontend invocation"
       ],
       "hashes": {
-        "body": "33bcde96f75e4f3669324417e35642e54f6c6d3426e832cc94a3ac1b0393b17f",
+        "body": "b475306475ad6683e36d5b5578b111d96b1abacae24efa46d2e2fcccd866132e",
         "semantic": "bbf6079866ab704cde8c0f65ac267c92c0fe2c8314b9347bcb521304767b1c6c",
-        "structure": "311e9a542d7e210ade5e6b092263df21680db3b17b11f8c455625b64ac55d8c2"
+        "structure": "6e961d3c1408326a41f83f33c89efe0e77b929fa054c6a055a08d4e73667c42a"
       },
       "id": "workduck.projects.task-commands",
       "imports": [
         "deno_tests {\n    use super::*",
+        "package_discovery_tests {\n    use super::*",
         "std::{\n    collections::{HashMap, HashSet},\n    fs,\n    net::TcpListener,\n    path::{Path, PathBuf},\n}",
         "super::{ProjectRepositoryTask, ProjectRepositoryTaskError, escape_powershell_single_quoted}"
       ],
@@ -4481,6 +4482,6 @@
   "generatedBy": "llmnav@0.9.7",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "6cbbd828e103da64cf90ba3307bc72a9a535d7e49730c2ccd73929c167f1fcbd",
+  "sourceHash": "ca875f8ba889cc755cd6fa254453e6bc653cd7e225fe1bd21de2fe861f543d15",
   "specVersion": "1"
 }
