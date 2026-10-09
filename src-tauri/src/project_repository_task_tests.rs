@@ -477,6 +477,81 @@ fn install_dependency_commands_skip_local_file_package_targets() {
 
 #[cfg(target_os = "windows")]
 #[test]
+fn powershell_task_failures_stop_following_commands_and_keep_native_exit_codes() {
+    for (label, command, expected_state, expected_exit, follows) in [
+        (
+            "cmdlet-error",
+            "Write-Error 'task failed'",
+            "failed",
+            1,
+            false,
+        ),
+        (
+            "stale-native-exit",
+            "& $env:ComSpec /d /c 'exit 0'\nWrite-Error 'task failed'",
+            "failed",
+            1,
+            false,
+        ),
+        (
+            "native-error",
+            "& $env:ComSpec /d /c 'exit 7'",
+            "failed",
+            7,
+            false,
+        ),
+        (
+            "native-stderr-success",
+            "& $env:ComSpec /d /c 'echo diagnostic 1>&2 & exit 0'",
+            "succeeded",
+            0,
+            true,
+        ),
+    ] {
+        let repository = tempfile::tempdir().unwrap();
+        let record_path = repository.path().join("run.json");
+        let marker_path = repository.path().join("following-command.txt");
+        let command =
+            format!("{command}\nSet-Content -LiteralPath 'following-command.txt' -Value 'ran'");
+        let record = ProjectRepositoryTaskRunRecord {
+            command: command.clone(),
+            record_path: record_path.to_string_lossy().into_owned(),
+            ..task_run_record(
+                label,
+                &repository.path().to_string_lossy(),
+                "2026-10-10T00:00:00Z",
+            )
+        };
+        let script = create_powershell_script(repository.path(), Some(&command), Some(&record));
+        let output = Command::new("powershell.exe")
+            .args([
+                "-NoLogo",
+                "-NoProfile",
+                "-NonInteractive",
+                "-Command",
+                &script,
+            ])
+            .output()
+            .unwrap();
+        assert!(
+            output.status.success(),
+            "{label}: {}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+        let stored: serde_json::Value = serde_json::from_str(
+            fs::read_to_string(&record_path)
+                .unwrap()
+                .trim_start_matches('\u{feff}'),
+        )
+        .unwrap();
+        assert_eq!(stored["state"], expected_state, "{label}");
+        assert_eq!(stored["exitCode"], expected_exit, "{label}");
+        assert_eq!(marker_path.exists(), follows, "{label}");
+    }
+}
+
+#[cfg(target_os = "windows")]
+#[test]
 fn powershell_script_executes_each_tracked_command_line_once() {
     let run_record = ProjectRepositoryTaskRunRecord {
         command:

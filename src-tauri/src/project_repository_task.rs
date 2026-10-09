@@ -1154,11 +1154,13 @@ function Write-WorkduckTaskRunRecord {{
 }}
 Write-Host 'Workduck: {escaped_command}';
 $workduckExitCode = 0;
+$LASTEXITCODE = $null;
+$workduckCommandSucceeded = $false;
 try {{
-    Invoke-Expression $workduckCommand 2>&1 | Tee-Object -FilePath $workduckLogPath -Append;
+    Invoke-Expression ($workduckCommand + '; $workduckCommandSucceeded = $?') 2>&1 | Tee-Object -FilePath $workduckLogPath -Append;
     if ($LASTEXITCODE -ne $null) {{
         $workduckExitCode = [int]$LASTEXITCODE;
-    }} elseif (-not $?) {{
+    }} elseif (-not $workduckCommandSucceeded) {{
         $workduckExitCode = 1;
     }}
 }} catch {{

@@ -1559,7 +1559,7 @@
         "arbitrary shell command input"
       ],
       "hashes": {
-        "body": "89ae06f8aae64f88ff00548382cd3e9be02f2afce457c17ca4fa3dcc301e6d46",
+        "body": "e7bb508283e01e3bfb5953a188d083848ed0a9b69e80ffbf4ba1c2b5b62db734",
         "semantic": "b5fb2ee97a32b44f5965f20f0c95cf6b3f03e0d1d51c91258c280ba55101f857",
         "structure": "b5122d9939628fb569605ebee461119c8532e018d75a3a27998fab08d397a2bb"
       },
@@ -4482,6 +4482,6 @@
   "generatedBy": "llmnav@0.9.7",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "7c74de5906a24dc04bfefa204a5a942c369cefc451a826cf64fc4b6fd14328c6",
+  "sourceHash": "679035f206aaae804e0b86793390268fa5d36415ae845c81a192030666d7208a",
   "specVersion": "1"
 }
