@@ -3143,7 +3143,7 @@
         "native file persistence"
       ],
       "hashes": {
-        "body": "1b8c2182b71d8270e2bbf02430b3efd2a82468140c62f373d427d246fbc1a738",
+        "body": "7b8b721042702629102784526e5762c9ad58bd8d5b2f74d596722e925b775c0e",
         "semantic": "9cbd47679bfe44a2f915c7b13c62e8afcc2ea8de2933c67098aeefbd984a6ac2",
         "structure": "21afbc69d8480f3c06eac79a6c26bbb70859967f8479d8be49b9913e69eba3ee"
       },
@@ -4424,6 +4424,6 @@
   "generatedBy": "llmnav@0.9.7",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "558731aada66566eac5f8019ddeb27e4cb4eef9a8519bd8bac50c472e55eb585",
+  "sourceHash": "535409de624b62780904fd6d6ed0ed2ff280c85754cc5d197958c69fcf48d720",
   "specVersion": "1"
 }

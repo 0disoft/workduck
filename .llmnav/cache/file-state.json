@@ -11107,7 +11107,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "1b8c2182b71d8270e2bbf02430b3efd2a82468140c62f373d427d246fbc1a738",
+      "contentHash": "7b8b721042702629102784526e5762c9ad58bd8d5b2f74d596722e925b775c0e",
       "declarations": [
         null
       ],
@@ -11153,11 +11153,11 @@
       ],
       "path": "src/lib/queue/queue-panel-controller.svelte.ts",
       "semanticBytes": 618,
-      "sourceBytes": 41102
+      "sourceBytes": 41123
     },
     {
       "blocks": [],
-      "contentHash": "949830c6a32e6e0e47489a6fdfe669843e725a04cd961219e5f0edce9311b0fe",
+      "contentHash": "5d3852f43014a80a9c37c2dfdfee01029c96ddc88b8fea7e5eba08bca4c1aee6",
       "declarations": [],
       "imports": [
         "#lib/agents/agent-evaluation.ts",
@@ -11177,7 +11177,7 @@
       ],
       "path": "src/lib/queue/queue-panel-controller.test.ts",
       "semanticBytes": 0,
-      "sourceBytes": 26369
+      "sourceBytes": 26650
     },
     {
       "blocks": [],

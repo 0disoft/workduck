@@ -421,7 +421,14 @@ describe('Queue controller workspace ownership', () => {
 					assert.equal(controller.selectedWorkOrder?.ref.id ?? null, expected?.artifactId ?? null);
 					assert.equal(controller.isSelectedQueueFile(oldCard), selection === 'same');
 					assert.equal(controller.isSelectedQueueFile(second), selection === 'another');
-					if (selection === 'same') assert.equal(controller.selectedWorkOrder?.status, operation === 'complete' ? 'archived' : 'failed');
+					if (selection === 'same') {
+						assert.equal(controller.selectedWorkOrder?.status, operation === 'complete' ? 'archived' : 'failed');
+						if (operation === 'complete') {
+							assert.equal(controller.status, controller.messages.queue.completedFile.replace('{relativePath}', oldCard.relativePath));
+							await controller.refreshQueueFiles();
+							assert.equal(controller.status, null);
+						}
+					}
 					else assert.equal(controller.status, null);
 					assert.equal(controller.isWriting, false);
 					assert.equal(controller.isCancellingExecution, false);

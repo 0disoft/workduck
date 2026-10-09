@@ -471,7 +471,7 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 
 		isRefreshing = true;
 		error = null;
-		status = null;
+		if (!options.silent) status = null;
 		const target = captureWorkspaceOperationTarget();
 		const refreshingWorkOrder = selectedWorkOrder;
 
