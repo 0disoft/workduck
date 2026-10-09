@@ -85,3 +85,4 @@
 {"id":"workduck.secret-vault.session-native","state":"active"}
 {"id":"workduck.app-state.storage","state":"active"}
 {"id":"workduck.environment.vault-session","state":"active"}
+{"id":"workduck.terminal.panel","state":"active"}

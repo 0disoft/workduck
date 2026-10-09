@@ -629,6 +629,20 @@
         "type": "local-import"
       },
       "to": "workduck/workduck.skills.schema"
+    },
+    {
+      "confidence": 0.85,
+      "from": "workduck/workduck.terminal.panel",
+      "id": "9aa8afe12610363393702a969c807c8f2c66dbe18739d8be4e23268d8cb55ed9",
+      "kind": "imports",
+      "provenance": {
+        "generator": "llmnav",
+        "line": null,
+        "path": "src/lib/terminals/TerminalPanel.svelte",
+        "source": "src/lib/terminals/TerminalPanel.svelte",
+        "type": "local-import"
+      },
+      "to": "workduck/workduck.terminal.session-client"
     }
   ],
   "nodes": [
@@ -2309,6 +2323,28 @@
     {
       "definitions": [],
       "external": false,
+      "key": "workduck/workduck.terminal.panel",
+      "location": {
+        "declarationLine": null,
+        "endLine": 10,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src/lib/terminals/TerminalPanel.svelte",
+        "receiver": null,
+        "signature": null,
+        "startLine": 2,
+        "symbol": null,
+        "visibility": null
+      },
+      "repositoryId": "workduck",
+      "role": "Coordinate terminal selection, native session actions, output display, and workspace-scoped registry edits.",
+      "semanticId": "workduck.terminal.panel",
+      "unresolved": false
+    },
+    {
+      "definitions": [],
+      "external": false,
       "key": "workduck/workduck.terminal.process",
       "location": {
         "declarationLine": null,
@@ -2573,11 +2609,11 @@
   ],
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "2dc0fe2ff3efe56c54e6e68f2e8528d832d4006c1b2e3d50d32863cb1c0952fd",
+  "sourceHash": "1769e15d6aa9f2ca4e27b1695060082d012813fdf4f8a6ff4302609765426548",
   "stats": {
-    "edgeCount": 45,
+    "edgeCount": 46,
     "importedIndexCount": 0,
-    "nodeCount": 87,
+    "nodeCount": 88,
     "unresolvedNodeCount": 0
   }
 }

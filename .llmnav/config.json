@@ -2,6 +2,12 @@
   "$schema": "./schema/config.schema.json",
   "coverageRules": [
     {
+      "match": ["src/lib/terminals/TerminalPanel.svelte"],
+      "name": "terminal panel operation lifetime",
+      "requiredFields": ["owns", "invariant"],
+      "scope": "module"
+    },
+    {
       "match": [
         "src/lib/briefs/brief-registry.ts",
         "src/lib/briefs/brief-run-registry.ts",

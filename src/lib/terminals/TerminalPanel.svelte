@@ -1,4 +1,13 @@
 <script lang="ts">
+	/* llmnav/1 module
+	id=workduck.terminal.panel
+	role=Coordinate terminal selection, native session actions, output display, and workspace-scoped registry edits.
+	owns=terminal view lifetime|operation result ownership|session removal target|output polling
+	excludes=native process execution|terminal command normalization|registry serialization
+	search=terminal selection switch|late terminal response|terminal removal ownership
+	invariant=Async results update only their initiating view; removal keeps its original workspace and session identity and requires successful process stop.
+	stability=architecture
+	*/
 	import { onMount, tick, untrack } from 'svelte';
 
 	import { getWorkduckMessages } from '#lib/i18n/workduck-language.ts';
@@ -72,6 +81,8 @@
 	let outputScreenElement = $state<HTMLPreElement | null>(null);
 	let shouldFollowTerminalOutput = $state(true);
 	let terminalPollingId: number | null = null;
+	let workspaceGeneration = 0;
+	let terminalRuntimeGeneration = 0;
 	let messages = $derived(getWorkduckMessages(appearanceSettings.languageId));
 
 	let availableTerminals = $derived(terminalCatalog.filter((terminal) => terminal.available));
@@ -112,13 +123,17 @@
 
 	$effect(() => {
 		const workspaceId = workspace.id;
+		const workspacePath = workspace.path;
+		void workspacePath;
 
 		return untrack(() => {
+			workspaceGeneration += 1;
 			registry = createEmptyTerminalRegistry(workspaceId);
 			selectedSessionId = null;
 			editingSessionId = null;
 			terminalName = '';
 			selectedTerminalId = '';
+			isTerminalFormOpen = false;
 			terminalError = null;
 			sessionError = null;
 			statusMessage = null;
@@ -127,11 +142,17 @@
 			readRegistryFromStorage(workspaceId);
 
 			const unsubscribeRegistry = subscribeTerminalRegistry(workspaceId, (nextRegistry) => {
+				const previousSessionId = selectedSessionId;
 				registry = nextRegistry;
 				selectedSessionId = resolveSelectedSessionId(selectedSessionId, nextRegistry.sessions);
+				if (selectedSessionId !== previousSessionId) resetTerminalRuntimeView();
 			});
 
-			return unsubscribeRegistry;
+			return () => {
+				workspaceGeneration += 1;
+				resetTerminalRuntimeView();
+				unsubscribeRegistry();
+			};
 		});
 	});
 
@@ -259,35 +280,50 @@
 			return;
 		}
 
+		const target = captureTerminalOperationTarget();
+		const removingSessionId = selectedSession.id;
 		isRemovingTerminal = true;
 		terminalError = null;
 		sessionError = null;
 		statusMessage = null;
 
 		try {
-			await stopTerminalSession(selectedSession.id);
-			const mutation = removeTerminalSession(registry, selectedSession.id);
+			const stopResult = await stopTerminalSession(removingSessionId);
+			if (!stopResult.ok) {
+				if (target.isCurrent()) sessionError = stopResult.error;
+				return;
+			}
+			const latestRegistry = readTerminalRegistry(target.workspaceId);
+			if (!latestRegistry.ok) {
+				if (target.isCurrent()) terminalError = latestRegistry.error;
+				return;
+			}
+			const mutation = removeTerminalSession(latestRegistry.registry, removingSessionId);
 
 			if (!mutation.ok) {
-				terminalError = mutation.error;
+				if (target.isCurrent()) terminalError = mutation.error;
 				return;
 			}
 
+			const selectionWasCurrent = target.isCurrent();
 			const writeResult = writeTerminalRegistry(mutation.registry);
 
-			registry = writeResult.registry;
-			terminalError = writeResult.ok ? null : writeResult.error;
+			if (!target.isWorkspaceCurrent()) return;
+			if (writeResult.ok) registry = writeResult.registry;
+			if (selectionWasCurrent) terminalError = writeResult.ok ? null : writeResult.error;
 
 			if (!writeResult.ok) {
 				return;
 			}
 
-			selectedSessionId = null;
-			resetTerminalRuntimeView();
-			clearTerminalForm();
-			statusMessage = messages.terminals.removed;
+			if (selectionWasCurrent) {
+				selectedSessionId = null;
+				resetTerminalRuntimeView();
+				clearTerminalForm();
+				statusMessage = messages.terminals.removed;
+			}
 		} finally {
-			isRemovingTerminal = false;
+			if (target.isCurrent()) isRemovingTerminal = false;
 		}
 	}
 
@@ -296,16 +332,19 @@
 			return;
 		}
 
+		const target = captureTerminalOperationTarget();
+		const terminalId = selectedSession.terminalId;
 		isSessionStarting = true;
 		sessionError = null;
 		statusMessage = null;
 
 		try {
 			const result = await startTerminalSession({
-				sessionId: selectedSession.id,
-				terminalId: selectedSession.terminalId,
-				workspacePath: workspace.path
+				sessionId: target.sessionId!,
+				terminalId,
+				workspacePath: target.workspacePath
 			});
+			if (!target.isCurrent()) return;
 
 			applyTerminalSessionResult(result.snapshot, { forceScroll: true });
 
@@ -314,9 +353,9 @@
 				return;
 			}
 
-			startTerminalPolling(selectedSession.id);
+			startTerminalPolling(target.sessionId!);
 		} finally {
-			isSessionStarting = false;
+			if (target.isCurrent()) isSessionStarting = false;
 		}
 	}
 
@@ -325,12 +364,14 @@
 			return;
 		}
 
+		const target = captureTerminalOperationTarget();
 		isSessionStopping = true;
 		sessionError = null;
 		statusMessage = null;
 
 		try {
-			const result = await stopTerminalSession(selectedSession.id);
+			const result = await stopTerminalSession(target.sessionId!);
+			if (!target.isCurrent()) return;
 
 			applyTerminalSessionResult(result.snapshot, { forceScroll: true });
 			stopTerminalPolling();
@@ -339,7 +380,7 @@
 				sessionError = result.error;
 			}
 		} finally {
-			isSessionStopping = false;
+			if (target.isCurrent()) isSessionStopping = false;
 		}
 	}
 
@@ -351,6 +392,7 @@
 		}
 
 		const input = terminalInput;
+		const target = captureTerminalOperationTarget();
 
 		terminalInput = '';
 		isSessionSending = true;
@@ -359,9 +401,10 @@
 
 		try {
 			const result = await writeTerminalSessionInput({
-				sessionId: selectedSession.id,
+				sessionId: target.sessionId!,
 				input
 			});
+			if (!target.isCurrent()) return;
 
 			applyTerminalSessionResult(result.snapshot, { forceScroll: true });
 
@@ -369,15 +412,16 @@
 				sessionError = result.error;
 			}
 		} finally {
-			isSessionSending = false;
+			if (target.isCurrent()) isSessionSending = false;
 		}
 	}
 
 	async function refreshSelectedTerminalSession(sessionId: string) {
+		const target = captureTerminalOperationTarget(sessionId);
 		const expectedOutputCursor = terminalOutputCursor;
 		const result = await readTerminalSession(sessionId, expectedOutputCursor);
 
-		if (selectedSessionId !== sessionId) {
+		if (!target.isCurrent()) {
 			return;
 		}
 
@@ -403,12 +447,30 @@
 	}
 
 	function resetTerminalRuntimeView() {
+		terminalRuntimeGeneration += 1;
 		stopTerminalPolling();
 		terminalOutput = '';
 		terminalOutputCursor = 0;
 		terminalInput = '';
 		isSessionConnected = false;
+		isSessionStarting = false;
+		isSessionStopping = false;
+		isSessionSending = false;
+		isRemovingTerminal = false;
 		shouldFollowTerminalOutput = true;
+	}
+
+	function captureTerminalOperationTarget(sessionId = selectedSessionId) {
+		const workspaceId = workspace.id;
+		const workspacePath = workspace.path;
+		const scope = workspaceGeneration;
+		const generation = terminalRuntimeGeneration;
+		const isWorkspaceCurrent = () =>
+			workspaceGeneration === scope && workspace.id === workspaceId && workspace.path === workspacePath;
+		return {
+			workspaceId, workspacePath, sessionId, isWorkspaceCurrent,
+			isCurrent: () => isWorkspaceCurrent() && terminalRuntimeGeneration === generation && selectedSessionId === sessionId
+		};
 	}
 
 	function applyTerminalSessionResult(

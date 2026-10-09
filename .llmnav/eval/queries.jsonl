@@ -82,3 +82,4 @@
 {"query":"settings crash journal SQLite promotion and pending native write flush","expected":["workduck.app-state.storage"]}
 {"query":"environment vault session metadata cache subscribers and idle workspace locking","expected":["workduck.environment.vault-session"]}
 {"query":"native secret vault opaque reference generations and session close","expected":["workduck.secret-vault.session-native"]}
+{"query":"terminal selection switch late terminal response and terminal removal ownership","expected":["workduck.terminal.panel"]}

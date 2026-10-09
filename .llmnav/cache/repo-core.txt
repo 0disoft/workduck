@@ -246,3 +246,9 @@ role Own native workspace vault sessions, secret mutation, and generation-bound 
 owns native vault session lifetime, zeroized secret payloads, secret metadata views, opaque reference generations, explicit secret reads
 excludes encrypted envelope format, vault disk persistence, renderer workspace lock policy
 invariant Metadata views serialize opaque references; reserved references resolve only in the matching live session generation, and closing drops the zeroized session payload.
+
+@workduck.terminal.panel
+role Coordinate terminal selection, native session actions, output display, and workspace-scoped registry edits.
+owns terminal view lifetime, operation result ownership, session removal target, output polling
+excludes native process execution, terminal command normalization, registry serialization
+invariant Async results update only their initiating view; removal keeps its original workspace and session identity and requires successful process stop.

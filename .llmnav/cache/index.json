@@ -4409,11 +4409,67 @@
         "native secret mutation"
       ],
       "stability": "architecture"
+    },
+    {
+      "boundaries": [],
+      "excludes": [
+        "native process execution",
+        "terminal command normalization",
+        "registry serialization"
+      ],
+      "hashes": {
+        "body": "ef9f4e165675b4501b8ea977dce1eebb2f4f5c547f4541b3448200bb1a01345b",
+        "semantic": "ef56180075b39b1f5416313cef14d41baf83ace65d41accfd81bd96f06b428a5",
+        "structure": "373d3867704e761faab9a081b350f79dbf3600c694f57ba74dfd8708d4eb02f4"
+      },
+      "id": "workduck.terminal.panel",
+      "imports": [
+        "#lib/i18n/workduck-language.ts",
+        "#lib/settings/appearance-settings.ts",
+        "#lib/settings/appearance-storage.ts",
+        "#lib/ui/index.ts",
+        "#lib/workspaces/workspace-registry.ts",
+        "./terminal-catalog",
+        "./terminal-registry",
+        "./terminal-registry-storage",
+        "./terminal-session",
+        "svelte"
+      ],
+      "invariant": [
+        "Async results update only their initiating view; removal keeps its original workspace and session identity and requires successful process stop."
+      ],
+      "location": {
+        "declarationLine": null,
+        "endLine": 10,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src/lib/terminals/TerminalPanel.svelte",
+        "receiver": null,
+        "signature": null,
+        "startLine": 2,
+        "symbol": null,
+        "visibility": null
+      },
+      "owns": [
+        "terminal view lifetime",
+        "operation result ownership",
+        "session removal target",
+        "output polling"
+      ],
+      "role": "Coordinate terminal selection, native session actions, output display, and workspace-scoped registry edits.",
+      "scope": "module",
+      "search": [
+        "terminal selection switch",
+        "late terminal response",
+        "terminal removal ownership"
+      ],
+      "stability": "architecture"
     }
   ],
   "contractFingerprints": {
     "configuration": {
-      "sha256": "363c77283797537e6a4c8478572455c8c7b6ab30552168fc7fe5a1c5b046c74c"
+      "sha256": "b077a09a6c065e04f1ab400f2c0523a735a5b834ac93bf4ade1b8ec2fbce1b1e"
     },
     "exportedApi": {
       "count": 0,
@@ -4424,6 +4480,6 @@
   "generatedBy": "llmnav@0.9.7",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "82d87bd61131e9f36db02b645a8c5ffe1b3f93f3a1ea4b8082b9441dc5cf9a21",
+  "sourceHash": "d8526074259e25cda77ae58e1cb895441746f5e33a1697d980c6fc1a5d9e00b7",
   "specVersion": "1"
 }
