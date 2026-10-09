@@ -107,7 +107,7 @@ invariant Managed instructions remain single-copy and preserve surrounding repos
 role Precompute project-board search and filter indexes and derive visible project, group, and repository selections.
 owns project board index, search matching, repository sync filters
 excludes registry mutation, Git inspection execution
-invariant Derived sets and counts come only from supplied registry nodes and status snapshots without mutating them.
+invariant Derived sets and counts never mutate supplied snapshots; combined search and status filters require the same matching repository or a matching node containing the requested status.
 
 @workduck.projects.task-commands
 role Resolve repository tasks into commands using package scripts, local dependency ownership, and supported toolchain manifests.

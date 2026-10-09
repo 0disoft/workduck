@@ -4,7 +4,7 @@ role=Precompute project-board search and filter indexes and derive visible proje
 owns=project board index|search matching|repository sync filters
 excludes=registry mutation|Git inspection execution
 search=project board filters|repository selection index|project sync statistics
-invariant=Derived sets and counts come only from supplied registry nodes and status snapshots without mutating them.
+invariant=Derived sets and counts never mutate supplied snapshots; combined search and status filters require the same matching repository or a matching node containing the requested status.
 stability=architecture
 */
 import type { ProjectRepositoryGitError } from './project-repository';
@@ -60,6 +60,7 @@ export interface ProjectBoardSelectionIndex {
 }
 
 export interface ProjectBoardFilterMatchIndex {
+	readonly combinedFilterMatchesByNodeId: ReadonlySet<string>;
 	readonly descendantGroupSearchMatchesByNodeId: ReadonlySet<string>;
 	readonly descendantGroupSyncMatchesByNodeId: ReadonlySet<string>;
 	readonly groupSearchMatchesByNodeId: ReadonlySet<string>;
@@ -67,6 +68,7 @@ export interface ProjectBoardFilterMatchIndex {
 }
 
 const EMPTY_PROJECT_BOARD_FILTER_MATCH_INDEX: ProjectBoardFilterMatchIndex = {
+	combinedFilterMatchesByNodeId: new Set<string>(),
 	descendantGroupSearchMatchesByNodeId: new Set<string>(),
 	descendantGroupSyncMatchesByNodeId: new Set<string>(),
 	groupSearchMatchesByNodeId: new Set<string>(),
@@ -170,6 +172,7 @@ export function createProjectBoardFilterMatchIndex(
 	searchQuery: string,
 	syncFilter: ProjectRepositorySyncFilter
 ): ProjectBoardFilterMatchIndex {
+	const combinedFilterMatchesByNodeId = new Set<string>();
 	const descendantGroupSearchMatchesByNodeId = new Set<string>();
 	const descendantGroupSyncMatchesByNodeId = new Set<string>();
 	const groupSearchMatchesByNodeId = new Set<string>();
@@ -197,6 +200,21 @@ export function createProjectBoardFilterMatchIndex(
 		if (descendantSyncMatches) {
 			descendantGroupSyncMatchesByNodeId.add(row.node.id);
 		}
+		const nodeMatchesSearch = searchQuery.length === 0 || matchesSearchFields(
+			index.nodeSearchFieldsById.get(row.node.id) ?? createProjectNodeSearchFields(row.node),
+			searchQuery
+		);
+		const nodeContainsSyncMatch = groupNodeMatchesRepositorySyncFilter(gitStatusById, row.node, syncFilter) || descendantSyncMatches;
+		if (
+			childGroups.some((child) => combinedFilterMatchesByNodeId.has(child.id)) ||
+			row.node.repositories.some((repository) =>
+				repositoryMatchesSearchFilter(index, repository, searchQuery) &&
+				repositoryMatchesSyncFilter(gitStatusById, repository, syncFilter)
+			) ||
+			(nodeMatchesSearch && (syncFilter === 'all' || nodeContainsSyncMatch))
+		) {
+			combinedFilterMatchesByNodeId.add(row.node.id);
+		}
 
 		if (row.node.kind !== 'group') {
 			continue;
@@ -218,6 +236,7 @@ export function createProjectBoardFilterMatchIndex(
 	}
 
 	return {
+		combinedFilterMatchesByNodeId,
 		descendantGroupSearchMatchesByNodeId,
 		descendantGroupSyncMatchesByNodeId,
 		groupSearchMatchesByNodeId,
@@ -249,6 +268,9 @@ export function selectProjectNodes(
 	if (searchQuery.length === 0 && syncFilter === 'all') {
 		return projects;
 	}
+	if (searchQuery.length > 0 && syncFilter !== 'all') {
+		return projects.filter((node) => filterMatchIndex.combinedFilterMatchesByNodeId.has(node.id));
+	}
 
 	return projects.filter(
 		(node) =>
@@ -269,6 +291,9 @@ export function selectProjectGroups(
 
 	if (searchQuery.length === 0 && syncFilter === 'all') {
 		return groups;
+	}
+	if (searchQuery.length > 0 && syncFilter !== 'all') {
+		return groups.filter((node) => filterMatchIndex.combinedFilterMatchesByNodeId.has(node.id));
 	}
 
 	return groups.filter(

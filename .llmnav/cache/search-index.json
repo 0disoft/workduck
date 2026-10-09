@@ -89,7 +89,7 @@
     "workduck.workspace.sync-file-native",
     "workduck.workspace.sync-git-native"
   ],
-  "cardSetHash": "4819cc84bbf87e32db69cbc6b98045fb8a75b50797987a9ca5ef3978f4ab85d9",
+  "cardSetHash": "fe4e3a510e019365b5622aa8b6d57d851b66bee58f443d2f207fde35e27427e8",
   "documentCount": 88,
   "documents": [
     [
@@ -420,13 +420,13 @@
       ]
     ],
     [
-      "7b5821e7c721842d99175dd1a669eef25ed741aef1ed111d89faa3553bf8255b",
+      "b250978ef8aa15f090dddaf0b1ca50d8ab197453b7c1d042f697f05855471d9d",
       [
         "precompute project-board search and filter indexes and derive visible project, group, and repository selections.",
         "project board filters",
         "repository selection index",
         "project sync statistics",
-        "derived sets and counts come only from supplied registry nodes and status snapshots without mutating them.",
+        "derived sets and counts never mutate supplied snapshots; combined search and status filters require the same matching repository or a matching node containing the requested status.",
         "project board index",
         "search matching",
         "repository sync filters"
@@ -1367,6 +1367,13 @@
         ]
       ],
       [
+        25,
+        [
+          5,
+          1
+        ]
+      ],
+      [
         31,
         [
           5,
@@ -6593,6 +6600,15 @@
     ],
     [
       [
+        25,
+        [
+          5,
+          1
+        ]
+      ]
+    ],
+    [
+      [
         27,
         [
           1,
@@ -10784,6 +10800,8 @@
           2,
           1,
           3,
+          1,
+          5,
           1
         ]
       ]
@@ -11321,13 +11339,6 @@
       ],
       [
         23,
-        [
-          5,
-          1
-        ]
-      ],
-      [
-        25,
         [
           5,
           1
@@ -14994,7 +15005,9 @@
         25,
         [
           3,
-          1
+          1,
+          5,
+          2
         ]
       ],
       [
@@ -15393,6 +15406,13 @@
     ],
     [
       [
+        25,
+        [
+          5,
+          1
+        ]
+      ],
+      [
         31,
         [
           2,
@@ -15403,15 +15423,6 @@
     [
       [
         6,
-        [
-          5,
-          1
-        ]
-      ]
-    ],
-    [
-      [
-        25,
         [
           5,
           1
@@ -16074,6 +16085,13 @@
         ]
       ],
       [
+        25,
+        [
+          5,
+          1
+        ]
+      ],
+      [
         27,
         [
           5,
@@ -16222,16 +16240,16 @@
           3,
           1
         ]
-      ]
-    ],
-    [
+      ],
       [
         25,
         [
           5,
           1
         ]
-      ],
+      ]
+    ],
+    [
       [
         32,
         [
@@ -16884,13 +16902,6 @@
         ]
       ],
       [
-        25,
-        [
-          5,
-          1
-        ]
-      ],
-      [
         27,
         [
           5,
@@ -17487,6 +17498,13 @@
       ],
       [
         24,
+        [
+          5,
+          1
+        ]
+      ],
+      [
+        25,
         [
           5,
           1
@@ -22252,8 +22270,6 @@
         25,
         [
           4,
-          1,
-          5,
           1
         ]
       ],
@@ -23063,6 +23079,8 @@
           2,
           1,
           3,
+          1,
+          5,
           1
         ]
       ],
@@ -23406,6 +23424,13 @@
         ]
       ],
       [
+        25,
+        [
+          5,
+          1
+        ]
+      ],
+      [
         45,
         [
           5,
@@ -23460,6 +23485,13 @@
       ]
     ],
     [
+      [
+        25,
+        [
+          5,
+          1
+        ]
+      ],
       [
         33,
         [
@@ -24991,6 +25023,13 @@
         ]
       ],
       [
+        25,
+        [
+          5,
+          1
+        ]
+      ],
+      [
         28,
         [
           5,
@@ -25502,6 +25541,8 @@
           1,
           1,
           3,
+          1,
+          5,
           1
         ]
       ]
@@ -27971,7 +28012,7 @@
         25,
         [
           5,
-          1
+          2
         ]
       ],
       [
@@ -30039,6 +30080,13 @@
         [
           5,
           1
+        ]
+      ],
+      [
+        25,
+        [
+          5,
+          2
         ]
       ],
       [
@@ -30413,13 +30461,6 @@
           5,
           1
         ]
-      ],
-      [
-        25,
-        [
-          5,
-          1
-        ]
       ]
     ],
     [
@@ -32939,13 +32980,6 @@
           8,
           1,
           10,
-          1
-        ]
-      ],
-      [
-        25,
-        [
-          5,
           1
         ]
       ],
@@ -34726,7 +34760,7 @@
     "codex",
     "coding",
     "collision",
-    "come",
+    "combined",
     "command",
     "commands",
     "commit",
@@ -34756,6 +34790,7 @@
     "construction",
     "consumers",
     "consumption",
+    "containing",
     "containment",
     "contains",
     "content",
@@ -35099,7 +35134,6 @@
     "multi",
     "mutate",
     "mutates",
-    "mutating",
     "mutation",
     "mutations",
     "name",

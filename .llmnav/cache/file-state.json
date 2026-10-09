@@ -9142,6 +9142,20 @@
       "sourceBytes": 10619
     },
     {
+      "blocks": [],
+      "contentHash": "34d2341936976240ff84b5a86b04a45381295eefe35032089e7da936a88686d5",
+      "declarations": [],
+      "imports": [
+        "./project-board-selectors",
+        "./project-board-surface-selection",
+        "./project-registry",
+        "bun:test"
+      ],
+      "path": "src/lib/projects/project-board-selectors.test.ts",
+      "semanticBytes": 0,
+      "sourceBytes": 4073
+    },
+    {
       "blocks": [
         {
           "card": {
@@ -9152,7 +9166,7 @@
             ],
             "id": "workduck.projects.board-selection",
             "invariant": [
-              "Derived sets and counts come only from supplied registry nodes and status snapshots without mutating them."
+              "Derived sets and counts never mutate supplied snapshots; combined search and status filters require the same matching repository or a matching node containing the requested status."
             ],
             "owns": [
               "project board index",
@@ -9171,7 +9185,7 @@
             "stability": "architecture",
             "unknown": []
           },
-          "end": 513,
+          "end": 587,
           "endLine": 9,
           "entries": [
             {
@@ -9208,7 +9222,7 @@
               "key": "invariant",
               "line": 7,
               "order": 5,
-              "value": "Derived sets and counts come only from supplied registry nodes and status snapshots without mutating them."
+              "value": "Derived sets and counts never mutate supplied snapshots; combined search and status filters require the same matching repository or a matching node containing the requested status."
             },
             {
               "key": "stability",
@@ -9221,7 +9235,7 @@
           "indent": "",
           "newline": "\n",
           "prefix": null,
-          "raw": "/* llmnav/1 module\nid=workduck.projects.board-selection\nrole=Precompute project-board search and filter indexes and derive visible project, group, and repository selections.\nowns=project board index|search matching|repository sync filters\nexcludes=registry mutation|Git inspection execution\nsearch=project board filters|repository selection index|project sync statistics\ninvariant=Derived sets and counts come only from supplied registry nodes and status snapshots without mutating them.\nstability=architecture\n*/",
+          "raw": "/* llmnav/1 module\nid=workduck.projects.board-selection\nrole=Precompute project-board search and filter indexes and derive visible project, group, and repository selections.\nowns=project board index|search matching|repository sync filters\nexcludes=registry mutation|Git inspection execution\nsearch=project board filters|repository selection index|project sync statistics\ninvariant=Derived sets and counts never mutate supplied snapshots; combined search and status filters require the same matching repository or a matching node containing the requested status.\nstability=architecture\n*/",
           "scope": "module",
           "specVersion": "1",
           "start": 0,
@@ -9230,7 +9244,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "7140ca28f6d2edaa0c4a8f68861158b3f505b588fe466d36e0f3e16e342554bf",
+      "contentHash": "0c05b0ff6f1cc391a158b30c9be6a2ad65d91fdc61b69745e05269a535aafb10",
       "declarations": [
         null
       ],
@@ -9239,8 +9253,8 @@
         "./project-repository"
       ],
       "path": "src/lib/projects/project-board-selectors.ts",
-      "semanticBytes": 513,
-      "sourceBytes": 17363
+      "semanticBytes": 587,
+      "sourceBytes": 18684
     },
     {
       "blocks": [],

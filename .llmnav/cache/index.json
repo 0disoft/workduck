@@ -2117,8 +2117,8 @@
         "Git inspection execution"
       ],
       "hashes": {
-        "body": "7140ca28f6d2edaa0c4a8f68861158b3f505b588fe466d36e0f3e16e342554bf",
-        "semantic": "d454096b970243a23b1f23d600a0ea3e0bd8dc66add7137777cf3ce7325ba36c",
+        "body": "0c05b0ff6f1cc391a158b30c9be6a2ad65d91fdc61b69745e05269a535aafb10",
+        "semantic": "eb93454c5366ba2257171ed3992f0c7464a6a81bf4eb3abe5f91fb99452f57bb",
         "structure": "68c11815d910e7ccfd9160ec33b59e875cda0c4d5f224927331b53275ffa5027"
       },
       "id": "workduck.projects.board-selection",
@@ -2127,7 +2127,7 @@
         "./project-repository"
       ],
       "invariant": [
-        "Derived sets and counts come only from supplied registry nodes and status snapshots without mutating them."
+        "Derived sets and counts never mutate supplied snapshots; combined search and status filters require the same matching repository or a matching node containing the requested status."
       ],
       "location": {
         "declarationLine": null,
@@ -4480,6 +4480,6 @@
   "generatedBy": "llmnav@0.9.7",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "b10d9a87fb060922d9d55f484d2c0237958c4f819065f003fa66d758417f7608",
+  "sourceHash": "776ef26e8a7be550e8ec6ce063f872bdaeab54a6b53ea43794444bd023690b9f",
   "specVersion": "1"
 }
