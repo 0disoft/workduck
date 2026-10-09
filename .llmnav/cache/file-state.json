@@ -10778,7 +10778,21 @@
     },
     {
       "blocks": [],
-      "contentHash": "a03805a22e536f9ad309f9308b76098447a44011584c74eca9f2f00673bf58a3",
+      "contentHash": "59c60f48ff7f733f65ff1a7c46f25db5606a9c9e509b2830395fb6ca05888a5a",
+      "declarations": [],
+      "imports": [
+        "#lib/tauri/tauri-invoke.ts",
+        "./queue-card-entry",
+        "./queue-folder",
+        "bun:test"
+      ],
+      "path": "src/lib/queue/queue-card-entry.test.ts",
+      "semanticBytes": 0,
+      "sourceBytes": 2768
+    },
+    {
+      "blocks": [],
+      "contentHash": "a311381052af0ac5543827376396a3f0fd61fd9ee62e55e1b5edae995ff96e86",
       "declarations": [],
       "imports": [
         "./domain/queue-artifact-readers",
@@ -10787,7 +10801,7 @@
       ],
       "path": "src/lib/queue/queue-card-entry.ts",
       "semanticBytes": 0,
-      "sourceBytes": 1728
+      "sourceBytes": 2114
     },
     {
       "blocks": [],
