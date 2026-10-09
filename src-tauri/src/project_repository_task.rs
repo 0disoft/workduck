@@ -4,7 +4,7 @@
 // owns=native repository task launch|toolchain command discovery|task run reconciliation
 // excludes=frontend task normalization|arbitrary shell command input
 // search=native repository task|discover build command|reconcile dev server
-// invariant=Tasks are selected from a closed vocabulary, repository paths remain inside the workspace, and running records are revalidated against live process identity.
+// invariant=Tasks are selected from a closed vocabulary, repository paths remain inside the workspace, and running records are revalidated against live process identity; launch identity updates preserve terminal-owned completion, and success requires the final command to finish.
 // stability=architecture
 // /llmnav
 use std::{
@@ -1088,18 +1088,20 @@ fn create_powershell_script(
         path
     );
 
-    for command in command
+    let mut commands = command
         .into_iter()
         .flat_map(|command| command.lines())
         .map(str::trim)
         .filter(|command| !command.is_empty())
-    {
+        .peekable();
+    while let Some(command) = commands.next() {
         let escaped_command = escape_powershell_single_quoted(command);
 
         if let Some(run_record) = run_record {
             script.push_str(&create_tracked_powershell_command(
                 &escaped_command,
                 run_record,
+                commands.peek().is_none(),
             ));
         } else {
             script.push_str(&format!(
@@ -1116,7 +1118,18 @@ fn create_powershell_script(
 fn create_tracked_powershell_command(
     escaped_command: &str,
     run_record: &ProjectRepositoryTaskRunRecord,
+    is_final_command: bool,
 ) -> String {
+    let success_state = if is_final_command {
+        "succeeded"
+    } else {
+        "running"
+    };
+    let success_exit_code = if is_final_command {
+        "$workduckExitCode"
+    } else {
+        "$null"
+    };
     let record_path = escape_powershell_single_quoted(&run_record.record_path);
     let log_path = escape_powershell_single_quoted(&format!("{}.log", run_record.record_path));
     let id = escape_powershell_single_quoted(&run_record.id);
@@ -1166,7 +1179,7 @@ try {{
 }}
 $workduckTail = if (Test-Path -LiteralPath $workduckLogPath) {{ (Get-Content -LiteralPath $workduckLogPath -Tail 40) -join [Environment]::NewLine }} else {{ '' }};
 if ($workduckExitCode -eq 0) {{
-    Write-WorkduckTaskRunRecord -State 'succeeded' -ExitCode $workduckExitCode -OutputTail $workduckTail;
+    Write-WorkduckTaskRunRecord -State '{success_state}' -ExitCode {success_exit_code} -OutputTail $workduckTail;
 }} else {{
     Write-WorkduckTaskRunRecord -State 'failed' -ExitCode $workduckExitCode -OutputTail $workduckTail;
     Write-Host ('Workduck exit code: ' + $workduckExitCode);

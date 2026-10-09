@@ -3332,7 +3332,7 @@
             ],
             "id": "workduck.projects.repository-task-native",
             "invariant": [
-              "Tasks are selected from a closed vocabulary, repository paths remain inside the workspace, and running records are revalidated against live process identity."
+              "Tasks are selected from a closed vocabulary, repository paths remain inside the workspace, and running records are revalidated against live process identity; launch identity updates preserve terminal-owned completion, and success requires the final command to finish."
             ],
             "owns": [
               "native repository task launch",
@@ -3351,7 +3351,7 @@
             "stability": "architecture",
             "unknown": []
           },
-          "end": 644,
+          "end": 754,
           "endLine": 9,
           "entries": [
             {
@@ -3388,7 +3388,7 @@
               "key": "invariant",
               "line": 7,
               "order": 5,
-              "value": "Tasks are selected from a closed vocabulary, repository paths remain inside the workspace, and running records are revalidated against live process identity."
+              "value": "Tasks are selected from a closed vocabulary, repository paths remain inside the workspace, and running records are revalidated against live process identity; launch identity updates preserve terminal-owned completion, and success requires the final command to finish."
             },
             {
               "key": "stability",
@@ -3401,7 +3401,7 @@
           "indent": "",
           "newline": "\n",
           "prefix": "//",
-          "raw": "// llmnav/1 module\n// id=workduck.projects.repository-task-native\n// role=Discover toolchain commands, launch bounded repository tasks in terminals, and persist or reconcile native task-run records.\n// owns=native repository task launch|toolchain command discovery|task run reconciliation\n// excludes=frontend task normalization|arbitrary shell command input\n// search=native repository task|discover build command|reconcile dev server\n// invariant=Tasks are selected from a closed vocabulary, repository paths remain inside the workspace, and running records are revalidated against live process identity.\n// stability=architecture\n// /llmnav\n",
+          "raw": "// llmnav/1 module\n// id=workduck.projects.repository-task-native\n// role=Discover toolchain commands, launch bounded repository tasks in terminals, and persist or reconcile native task-run records.\n// owns=native repository task launch|toolchain command discovery|task run reconciliation\n// excludes=frontend task normalization|arbitrary shell command input\n// search=native repository task|discover build command|reconcile dev server\n// invariant=Tasks are selected from a closed vocabulary, repository paths remain inside the workspace, and running records are revalidated against live process identity; launch identity updates preserve terminal-owned completion, and success requires the final command to finish.\n// stability=architecture\n// /llmnav\n",
           "scope": "module",
           "specVersion": "1",
           "start": 0,
@@ -3410,7 +3410,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "d751ff0ce4a007106ce7749b6871aa5c07925956b9e87ed989eec4dcf0dc67da",
+      "contentHash": "b4666f86e46980b22eacfe2ca4903848470343cbe891758d0d17baf94acfdac8",
       "declarations": [
         null
       ],
@@ -3427,8 +3427,8 @@
         "time::{OffsetDateTime, format_description::well_known::Rfc3339}"
       ],
       "path": "src-tauri/src/project_repository_task.rs",
-      "semanticBytes": 644,
-      "sourceBytes": 39675
+      "semanticBytes": 754,
+      "sourceBytes": 40149
     },
     {
       "blocks": [
@@ -3639,7 +3639,7 @@
     },
     {
       "blocks": [],
-      "contentHash": "1e145b416d134355d0b8fc403316d2f9687bc44ad9db10906c4695bfe3492852",
+      "contentHash": "4993c089b1a4104b67ee52b866b25b22406ce600758e8a036c5f37584887cecc",
       "declarations": [],
       "imports": [
         "super::*",
@@ -3647,7 +3647,7 @@
       ],
       "path": "src-tauri/src/project_repository_task_tests.rs",
       "semanticBytes": 0,
-      "sourceBytes": 32737
+      "sourceBytes": 35570
     },
     {
       "blocks": [],

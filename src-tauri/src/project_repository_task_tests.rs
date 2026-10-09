@@ -650,6 +650,78 @@ fn powershell_script_executes_each_tracked_command_line_once() {
     assert!(!script.contains("Invoke-Expression $workduckRecordCommand"));
 }
 
+#[cfg(target_os = "windows")]
+#[test]
+fn multi_command_task_records_stay_running_until_the_last_command_finishes() {
+    for (command, final_state, exit_code) in [
+        ("Write-Output 'first'\nWrite-Output 'last'", "succeeded", 0),
+        (
+            "Write-Output 'first'\n& $env:ComSpec /d /c 'exit 7'\nWrite-Output 'never'",
+            "failed",
+            7,
+        ),
+    ] {
+        let repository = tempfile::tempdir().unwrap();
+        let record_path = repository.path().join("run.json");
+        let trace_path = repository.path().join("trace.jsonl");
+        let record = ProjectRepositoryTaskRunRecord {
+            command: command.into(),
+            record_path: record_path.to_string_lossy().into_owned(),
+            ..task_run_record(
+                "run",
+                &repository.path().to_string_lossy(),
+                "2026-10-10T00:00:00Z",
+            )
+        };
+        // Observe every durable state transition through the real PowerShell writer.
+        let observer = format!(
+            r#"
+function Set-Content {{
+    param([Parameter(ValueFromPipeline=$true)]$Value, [string]$LiteralPath, [string]$Encoding)
+    process {{
+        Microsoft.PowerShell.Management\Set-Content -LiteralPath $LiteralPath -Value $Value -Encoding $Encoding;
+        $compact = $Value | ConvertFrom-Json | ConvertTo-Json -Compress;
+        [System.IO.File]::AppendAllText('{trace_path}', $compact + [Environment]::NewLine);
+    }}
+}}
+"#,
+            trace_path = escape_powershell_single_quoted(&trace_path.to_string_lossy())
+        );
+        let script =
+            observer + &create_powershell_script(repository.path(), Some(command), Some(&record));
+        let output = Command::new("powershell.exe")
+            .args([
+                "-NoLogo",
+                "-NoProfile",
+                "-NonInteractive",
+                "-Command",
+                &script,
+            ])
+            .output()
+            .unwrap();
+        assert!(
+            output.status.success(),
+            "{}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+        let transitions: Vec<ProjectRepositoryTaskRunRecord> = fs::read_to_string(trace_path)
+            .unwrap()
+            .lines()
+            .map(|line| serde_json::from_str(line).unwrap())
+            .collect();
+        assert!(transitions.len() >= 4);
+        for intermediate in &transitions[..transitions.len() - 1] {
+            assert_eq!(intermediate.state, "running");
+            assert_eq!(intermediate.exit_code, None);
+            assert_eq!(intermediate.finished_at, None);
+        }
+        let final_record = transitions.last().unwrap();
+        assert_eq!(final_record.state, final_state);
+        assert_eq!(final_record.exit_code, Some(exit_code));
+        assert!(final_record.finished_at.is_some());
+    }
+}
+
 #[test]
 fn stale_running_dev_server_records_are_reported_as_stopped() {
     let records = reconcile_running_task_run_records(
