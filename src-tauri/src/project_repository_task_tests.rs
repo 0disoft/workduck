@@ -477,6 +477,30 @@ fn install_dependency_commands_skip_local_file_package_targets() {
 
 #[cfg(target_os = "windows")]
 #[test]
+fn attaching_task_process_identity_never_overwrites_a_completed_record() {
+    for state in ["succeeded", "failed"] {
+        let workspace = tempfile::tempdir().unwrap();
+        let path = workspace.path().join("run.json");
+        let mut completed = task_run_record("run", "C:/workspace/repo", "2026-10-10T00:00:00Z");
+        completed.state = state.into();
+        completed.exit_code = Some(if state == "failed" { 7 } else { 0 });
+        completed.record_path = path.to_string_lossy().into_owned();
+        write_task_run_record(&path, &completed).unwrap_or_else(|_| panic!("save completed run"));
+        let bytes = fs::read(&path).unwrap();
+        let mut launched = ProjectRepositoryTaskRunRecord {
+            state: "running".into(),
+            finished_at: None,
+            exit_code: None,
+            ..completed
+        };
+        attach_task_process_id(&mut launched, Some(42));
+        assert_eq!(launched.process_id, Some(42));
+        assert_eq!(fs::read(&path).unwrap(), bytes, "{state}");
+    }
+}
+
+#[cfg(target_os = "windows")]
+#[test]
 fn powershell_task_failures_stop_following_commands_and_keep_native_exit_codes() {
     for (label, command, expected_state, expected_exit, follows) in [
         (
@@ -560,6 +584,7 @@ fn powershell_task_failures_stop_following_commands_and_keep_native_exit_codes()
             });
         assert_eq!(stored.state, expected_state, "{label}");
         assert_eq!(stored.exit_code, Some(expected_exit), "{label}");
+        assert!(stored.process_id.is_some_and(|pid| pid > 0), "{label}");
         let workspace = fs::canonicalize(repository.path()).unwrap();
         let historical = history::read_selected_task_run_records(&workspace, &[label.into()])
             .unwrap_or_else(|_| panic!("PowerShell record is unreadable in history: {label}"));

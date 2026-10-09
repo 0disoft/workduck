@@ -202,7 +202,7 @@ pub fn run_project_repository_task(
         };
         let launch_result =
             launch_repository_terminal(&repository_path, command.as_deref(), Some(&run_record))
-                .and_then(|process_id| attach_task_process_id(&mut run_record, process_id));
+                .map(|process_id| attach_task_process_id(&mut run_record, process_id));
 
         (launch_result, Some(run_record))
     };
@@ -540,7 +540,7 @@ fn launch_repository_task_terminals(
             create_task_run_record(workspace_path, repository_path, task, command)?;
         let process_id =
             launch_repository_terminal(repository_path, Some(command), Some(&run_record))?;
-        attach_task_process_id(&mut run_record, process_id)?;
+        attach_task_process_id(&mut run_record, process_id);
         run_records.push(run_record);
     }
 
@@ -586,16 +586,10 @@ fn create_task_run_record(
     Ok(record)
 }
 
-fn attach_task_process_id(
-    record: &mut ProjectRepositoryTaskRunRecord,
-    process_id: Option<u32>,
-) -> Result<(), ProjectRepositoryTaskError> {
-    let Some(process_id) = process_id else {
-        return Ok(());
-    };
-
-    record.process_id = Some(process_id);
-    write_task_run_record(&PathBuf::from(&record.record_path), record)
+fn attach_task_process_id(record: &mut ProjectRepositoryTaskRunRecord, process_id: Option<u32>) {
+    if let Some(process_id) = process_id {
+        record.process_id = Some(process_id);
+    }
 }
 
 fn write_task_run_record(
@@ -1145,6 +1139,7 @@ function Write-WorkduckTaskRunRecord {{
         repositoryPath = '{repository_path}';
         command = $workduckRecordCommand;
         state = $State;
+        processId = $PID;
         exitCode = $ExitCode;
         startedAt = '{started_at}';
         finishedAt = if ($State -eq 'running') {{ $null }} else {{ (Get-Date).ToUniversalTime().ToString('o') }};
@@ -1153,6 +1148,7 @@ function Write-WorkduckTaskRunRecord {{
     }};
     $record | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath $workduckRecordPath -Encoding UTF8
 }}
+Write-WorkduckTaskRunRecord -State 'running' -ExitCode $null -OutputTail '';
 Write-Host 'Workduck: {escaped_command}';
 $workduckExitCode = 0;
 $LASTEXITCODE = $null;
