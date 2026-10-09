@@ -42,6 +42,7 @@ pub(super) fn resolve_repository_task_commands(
     match task {
         ProjectRepositoryTask::InstallDependencies => {
             add_package_task_commands(repository_path, task, &mut commands)?;
+            add_deno_dependency_commands(repository_path, task, &mut commands);
             add_cargo_task_commands(repository_path, task, &mut commands);
             add_pub_task_commands(repository_path, task, &mut commands);
             add_go_task_commands(repository_path, task, &mut commands);
@@ -73,7 +74,7 @@ pub(super) fn resolve_repository_task_commands(
         }
         ProjectRepositoryTask::UpdateDependencies => {
             add_package_task_commands(repository_path, task, &mut commands)?;
-            add_deno_dependency_update_commands(repository_path, &mut commands);
+            add_deno_dependency_commands(repository_path, task, &mut commands);
             add_cargo_task_commands(repository_path, task, &mut commands);
             add_pub_task_commands(repository_path, task, &mut commands);
             add_go_task_commands(repository_path, task, &mut commands);
@@ -493,14 +494,23 @@ impl PackageManager {
     }
 }
 
-fn add_deno_dependency_update_commands(repository_path: &Path, commands: &mut Vec<String>) {
+fn add_deno_dependency_commands(
+    repository_path: &Path,
+    task: ProjectRepositoryTask,
+    commands: &mut Vec<String>,
+) {
+    let command = match task {
+        ProjectRepositoryTask::InstallDependencies => "deno install",
+        ProjectRepositoryTask::UpdateDependencies => "deno update",
+        _ => return,
+    };
     for project_path in unique_manifest_directories(discover_manifest_paths(
         repository_path,
         &["deno.json", "deno.jsonc", "deno.lock"],
     )) {
         push_unique_command(
             commands,
-            command_in_directory(repository_path, &project_path, "deno update"),
+            command_in_directory(repository_path, &project_path, command),
         );
     }
 }
@@ -890,6 +900,61 @@ fn push_unique_command(commands: &mut Vec<String>, command: String) {
 #[cfg(test)]
 mod deno_tests {
     use super::*;
+
+    #[test]
+    fn discovers_dependency_installation_from_deno_configs() {
+        for filename in ["deno.json", "deno.jsonc"] {
+            let repository = tempfile::tempdir().unwrap();
+            fs::write(repository.path().join(filename), "{}").unwrap();
+            let commands = resolve_repository_task_commands(
+                ProjectRepositoryTask::InstallDependencies,
+                repository.path(),
+            )
+            .unwrap_or_else(|_| panic!("missing install command for {filename}"));
+            assert_eq!(commands, vec!["deno install"]);
+        }
+    }
+
+    #[test]
+    fn deno_dependency_commands_are_unique_per_project() {
+        let repository = tempfile::tempdir().unwrap();
+        for filename in ["deno.json", "deno.jsonc", "deno.lock"] {
+            fs::write(repository.path().join(filename), "{}").unwrap();
+        }
+        for (task, command) in [
+            (ProjectRepositoryTask::InstallDependencies, "deno install"),
+            (ProjectRepositoryTask::UpdateDependencies, "deno update"),
+        ] {
+            let commands = resolve_repository_task_commands(task, repository.path())
+                .unwrap_or_else(|_| panic!("missing {command}"));
+            assert_eq!(commands, vec![command]);
+        }
+    }
+
+    #[test]
+    fn installs_nested_deno_projects_alongside_node_projects() {
+        let repository = tempfile::tempdir().unwrap();
+        fs::write(repository.path().join("package.json"), "{}").unwrap();
+        let project = repository.path().join("services/worker");
+        fs::create_dir_all(&project).unwrap();
+        fs::write(project.join("deno.jsonc"), "{}").unwrap();
+        fs::write(project.join("deno.lock"), "{}").unwrap();
+        let ignored_project = repository.path().join("node_modules/dependency");
+        fs::create_dir_all(&ignored_project).unwrap();
+        fs::write(ignored_project.join("deno.json"), "{}").unwrap();
+        let commands = resolve_repository_task_commands(
+            ProjectRepositoryTask::InstallDependencies,
+            repository.path(),
+        )
+        .unwrap_or_else(|_| panic!("missing mixed project installs"));
+        assert_eq!(
+            commands,
+            vec![
+                "npm install",
+                "Push-Location -LiteralPath 'services/worker'; deno install; Pop-Location"
+            ]
+        );
+    }
 
     #[test]
     fn discovers_deno_tasks_from_both_config_filenames() {

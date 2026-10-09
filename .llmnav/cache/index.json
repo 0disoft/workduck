@@ -2834,7 +2834,7 @@
         "frontend invocation"
       ],
       "hashes": {
-        "body": "878aa75837fdeafcdb6cefff6029dc0a481321a07f3757795045269a89289d1c",
+        "body": "33bcde96f75e4f3669324417e35642e54f6c6d3426e832cc94a3ac1b0393b17f",
         "semantic": "bbf6079866ab704cde8c0f65ac267c92c0fe2c8314b9347bcb521304767b1c6c",
         "structure": "311e9a542d7e210ade5e6b092263df21680db3b17b11f8c455625b64ac55d8c2"
       },
@@ -4481,6 +4481,6 @@
   "generatedBy": "llmnav@0.9.7",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "2dae9b49ccbdaa987208246677df67e7b53e60084d88055750bb296a8d4c57e1",
+  "sourceHash": "6cbbd828e103da64cf90ba3307bc72a9a535d7e49730c2ccd73929c167f1fcbd",
   "specVersion": "1"
 }

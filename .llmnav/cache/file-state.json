@@ -3520,7 +3520,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "878aa75837fdeafcdb6cefff6029dc0a481321a07f3757795045269a89289d1c",
+      "contentHash": "33bcde96f75e4f3669324417e35642e54f6c6d3426e832cc94a3ac1b0393b17f",
       "declarations": [
         null
       ],
@@ -3531,7 +3531,7 @@
       ],
       "path": "src-tauri/src/project_repository_task_commands.rs",
       "semanticBytes": 645,
-      "sourceBytes": 32027
+      "sourceBytes": 34688
     },
     {
       "blocks": [
