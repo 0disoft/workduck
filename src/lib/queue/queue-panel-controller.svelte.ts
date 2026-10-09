@@ -481,6 +481,8 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 				workspacePath: target.workspacePath,
 				currentFiles: files,
 				currentReadFilePaths: readFilePaths,
+				readCurrentReadFilePaths: () => readFilePaths,
+				isCurrent: target.isCurrent,
 				selectedWorkOrder: refreshingWorkOrder,
 				recoverStaleRunning: !isWriting && !isCancellingExecution,
 				completedReportNotifications,
@@ -489,7 +491,7 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 				}
 			});
 
-			if (!target.isCurrent()) return;
+			if (!target.isCurrent() || result === null) return;
 
 			if (result.ok) {
 				files = result.files;

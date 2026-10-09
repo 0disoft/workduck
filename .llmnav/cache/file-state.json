@@ -10510,7 +10510,7 @@
     },
     {
       "blocks": [],
-      "contentHash": "305f48f05c956c61c08d63774e9e2ec799d9fdf125df6aa66125e483145d477a",
+      "contentHash": "26e781ff7484ffda0684cf5d45785260721335070e94a1515bfc904c95eab2b5",
       "declarations": [],
       "imports": [
         "#lib/ui/PageTitleRow.svelte",
@@ -10528,7 +10528,7 @@
       ],
       "path": "src/lib/queue/QueuePanelView.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 24011
+      "sourceBytes": 23536
     },
     {
       "blocks": [],
@@ -11107,7 +11107,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "aaa63c915f258d24fc2c58667a2b5009e3fd36bc4144350874cdc01ac0d58b30",
+      "contentHash": "c3ae436397bc62cc1bfb56924b89b34f6712936c67e73b73878140f88c0b7e2c",
       "declarations": [
         null
       ],
@@ -11153,11 +11153,11 @@
       ],
       "path": "src/lib/queue/queue-panel-controller.svelte.ts",
       "semanticBytes": 618,
-      "sourceBytes": 40432
+      "sourceBytes": 40535
     },
     {
       "blocks": [],
-      "contentHash": "60529cddcd3e03495ecd4ae44f46fb88e38df9743002dcba2906b76b8389a36d",
+      "contentHash": "959eaf41661e0817b297a49199484339248127e1a5bfbff0e62c92fc3351fbcd",
       "declarations": [],
       "imports": [
         "#lib/agents/agent-evaluation.ts",
@@ -11169,6 +11169,7 @@
         "#lib/workspaces/workspace-registry.ts",
         "./queue-artifacts",
         "./queue-panel-types",
+        "./queue-read-state",
         "bun",
         "node:assert/strict",
         "node:test",
@@ -11176,7 +11177,7 @@
       ],
       "path": "src/lib/queue/queue-panel-controller.test.ts",
       "semanticBytes": 0,
-      "sourceBytes": 19510
+      "sourceBytes": 22059
     },
     {
       "blocks": [],
@@ -11822,7 +11823,7 @@
     },
     {
       "blocks": [],
-      "contentHash": "2d13159f55a81a73436fb77a2a72e09b974b2472c3bc9e0a7e0817236b57465c",
+      "contentHash": "6fc84ecc5fae16e5d9191c407413826e00db099cd904a7ecfbda9e213653168f",
       "declarations": [],
       "imports": [
         "./queue-artifacts",
@@ -11835,7 +11836,7 @@
       ],
       "path": "src/lib/queue/queue-panel-refresh-workflow.ts",
       "semanticBytes": 0,
-      "sourceBytes": 2637
+      "sourceBytes": 3121
     },
     {
       "blocks": [],
@@ -12315,7 +12316,7 @@
     },
     {
       "blocks": [],
-      "contentHash": "a24d7b957aeee1e8403e2cb88544e14bed957f069dc11d1f0181f5f1d180bfb4",
+      "contentHash": "607785fbf8f0d5a6060bd1859cb4af9caad32f0b9f0bd966df00ab9179b887e7",
       "declarations": [],
       "imports": [
         "#lib/i18n/workduck-language.ts",
@@ -12335,7 +12336,7 @@
       ],
       "path": "src/lib/search/CommandPalette.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 13036
+      "sourceBytes": 12584
     },
     {
       "blocks": [],
@@ -12664,7 +12665,7 @@
     },
     {
       "blocks": [],
-      "contentHash": "8852026cc31151cdc8bae39541eee3f475b3c47a731b641646dcf507cb7d9c77",
+      "contentHash": "5bf3dfe5e25cf20269f95b985cc6466c9e962fe896e3ae993c81dd61fda0ff8a",
       "declarations": [],
       "imports": [
         "#lib/brand/WorkduckMark.svelte",
@@ -12695,7 +12696,7 @@
       ],
       "path": "src/lib/shell/WorkbenchShell.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 36522
+      "sourceBytes": 35371
     },
     {
       "blocks": [],

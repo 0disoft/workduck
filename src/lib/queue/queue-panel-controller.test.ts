@@ -11,6 +11,7 @@ import { createEmptyAgentRegistry, type AgentRegistry } from '#lib/agents/agent-
 import { createEmptyAgentEvaluationSummary } from '#lib/agents/agent-evaluation.ts';
 import { createEmptyPersonaRegistry } from '#lib/personas/persona-registry.ts';
 import type { WorkduckQueueResultReport } from './queue-artifacts';
+import { readQueueReadFilePaths, writeQueueReadFilePaths } from './queue-read-state';
 
 await plugin({
 	name: 'queue-controller-runes',
@@ -199,6 +200,57 @@ describe('Queue controller workspace ownership', () => {
 			if (change === 'rename') assert.equal(controller.selectedWorkOrder?.ref.id, 'work-order_old');
 			else assert.equal(controller.selectedWorkOrder, null);
 		} finally { oldRead.resolve(); harness.dispose(); }
+	});
+
+	test('preserves files marked read while a refresh is pending and prunes removed files', async () => {
+		const pendingList = deferred<void>();
+		let delayList = false;
+		setTauriInvokeForTest(async <T>(command: string) => {
+			if (command === 'list_queue_files') {
+				if (delayList) await pendingList.promise;
+				return response<T>({ ok: true, path: workspace('old').path + '/queue', files: [oldCard] });
+			}
+			if (command === 'read_queue_file') return response<T>({ ok: true, relativePath: oldCard.relativePath, content: oldContent });
+			return response<T>(command === 'read_project_registry' ? { ok: true, registryJson: null } : { ok: false });
+		});
+		writeQueueReadFilePaths('old', ['work-orders/removed.workduck-work-order.json']);
+		const harness = createQueuePanelControllerHarness(workspace('old'));
+		let refreshing: Promise<void> | undefined;
+		try {
+			await settleEffects();
+			delayList = true;
+			refreshing = harness.controller.refreshQueueFiles();
+			harness.controller.handleQueueCardClick(oldCard);
+			await settleEffects();
+			assert.deepEqual(readQueueReadFilePaths('old'), [oldCard.relativePath]);
+			pendingList.resolve();
+			await refreshing;
+			assert.deepEqual(readQueueReadFilePaths('old'), [oldCard.relativePath]);
+			assert.equal(harness.controller.files[0]?.isRead, true);
+			harness.controller.queueReadFilter = 'unread';
+			assert.equal(harness.controller.filteredFiles.length, 0);
+		} finally { pendingList.resolve(); await refreshing; harness.dispose(); }
+	});
+
+	test('does not prune read markers from an abandoned workspace refresh', async () => {
+		const oldList = deferred<void>();
+		writeQueueReadFilePaths('old', [oldCard.relativePath]);
+		setTauriInvokeForTest(async <T>(command: string, args?: Record<string, unknown>) => {
+			if (command === 'list_queue_files') {
+				if (args?.workspacePath === workspace('old').path) await oldList.promise;
+				return response<T>({ ok: true, path: String(args?.workspacePath) + '/queue', files: [] });
+			}
+			return response<T>(command === 'read_project_registry' ? { ok: true, registryJson: null } : { ok: false });
+		});
+		const harness = createQueuePanelControllerHarness(workspace('old'));
+		try {
+			await settleEffects();
+			harness.setWorkspace(workspace('new'));
+			await settleEffects();
+			oldList.resolve();
+			await settleEffects();
+			assert.deepEqual(readQueueReadFilePaths('old'), [oldCard.relativePath]);
+		} finally { oldList.resolve(); harness.dispose(); }
 	});
 
 	test('lets the new refresh proceed and keeps its busy state when the old refresh finishes', async () => {
