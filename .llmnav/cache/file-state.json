@@ -3520,17 +3520,18 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "407b460e7c2409d3c255d4313e954531dfdea3e59c0c7f197e51e99304c99cfa",
+      "contentHash": "878aa75837fdeafcdb6cefff6029dc0a481321a07f3757795045269a89289d1c",
       "declarations": [
         null
       ],
       "imports": [
+        "deno_tests {\n    use super::*",
         "std::{\n    collections::{HashMap, HashSet},\n    fs,\n    net::TcpListener,\n    path::{Path, PathBuf},\n}",
         "super::{ProjectRepositoryTask, ProjectRepositoryTaskError, escape_powershell_single_quoted}"
       ],
       "path": "src-tauri/src/project_repository_task_commands.rs",
       "semanticBytes": 645,
-      "sourceBytes": 27617
+      "sourceBytes": 32027
     },
     {
       "blocks": [

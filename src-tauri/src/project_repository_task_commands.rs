@@ -535,10 +535,30 @@ fn add_deno_task_commands(
 }
 
 fn deno_task_exists(project_path: &Path, task_name: &str) -> bool {
-    let Ok(deno_json) = fs::read_to_string(project_path.join("deno.json")) else {
+    let primary_config = project_path.join("deno.json");
+    let config_path = if primary_config.exists() {
+        primary_config
+    } else {
+        project_path.join("deno.jsonc")
+    };
+    let Ok(deno_json) = fs::read_to_string(config_path) else {
         return false;
     };
-    let Ok(deno_json) = serde_json::from_str::<serde_json::Value>(&deno_json) else {
+    let options = jsonc_parser::ParseOptions {
+        allow_comments: true,
+        allow_trailing_commas: true,
+        allow_loose_object_property_names: false,
+        allow_missing_commas: false,
+        allow_single_quoted_strings: false,
+        allow_hexadecimal_numbers: false,
+        allow_unary_plus_numbers: false,
+        allow_bare_decimal_point_numbers: false,
+        allow_non_finite_numbers: false,
+        allow_extended_string_escapes: false,
+    };
+    let Ok(deno_json) =
+        jsonc_parser::parse_to_serde_value::<serde_json::Value>(&deno_json, &options)
+    else {
         return false;
     };
 
@@ -864,5 +884,104 @@ fn is_flutter_project(project_path: &Path) -> bool {
 fn push_unique_command(commands: &mut Vec<String>, command: String) {
     if !commands.iter().any(|candidate| candidate == &command) {
         commands.push(command);
+    }
+}
+
+#[cfg(test)]
+mod deno_tests {
+    use super::*;
+
+    #[test]
+    fn discovers_deno_tasks_from_both_config_filenames() {
+        for filename in ["deno.json", "deno.jsonc"] {
+            let repository = tempfile::tempdir().unwrap();
+            fs::write(
+                repository.path().join(filename),
+                r#"{"tasks":{"dev":"deno run dev.ts","build":"deno run build.ts","preview":"deno run preview.ts"}}"#,
+            )
+            .unwrap();
+            for (task, name) in [
+                (ProjectRepositoryTask::StartDevServer, "dev"),
+                (ProjectRepositoryTask::Build, "build"),
+                (ProjectRepositoryTask::Preview, "preview"),
+            ] {
+                let commands = resolve_repository_task_commands(task, repository.path())
+                    .unwrap_or_else(|_| panic!("missing {name} in {filename}"));
+                assert_eq!(commands, vec![format!("deno task {name}")]);
+            }
+        }
+    }
+
+    #[test]
+    fn discovers_nested_jsonc_tasks_with_comments_and_trailing_commas() {
+        let repository = tempfile::tempdir().unwrap();
+        let project = repository.path().join("apps/web");
+        fs::create_dir_all(&project).unwrap();
+        fs::write(
+            project.join("deno.jsonc"),
+            r#"{
+                // Development commands
+                "tasks": {
+                    /* Preserve comment markers inside command strings. */
+                    "dev": "deno run https://example.com/dev.ts --label=\"한글/*text*/\"",
+                },
+            }"#,
+        )
+        .unwrap();
+        let commands = resolve_repository_task_commands(
+            ProjectRepositoryTask::StartDevServer,
+            repository.path(),
+        )
+        .unwrap_or_else(|_| panic!("missing nested JSONC dev task"));
+        assert_eq!(
+            commands,
+            vec!["Push-Location -LiteralPath 'apps/web'; deno task dev; Pop-Location"]
+        );
+    }
+
+    #[test]
+    fn accepts_comments_and_trailing_commas_in_deno_json() {
+        let repository = tempfile::tempdir().unwrap();
+        fs::write(
+            repository.path().join("deno.json"),
+            "{ /* build */ \"tasks\": {\"build\": \"deno run build.ts\",},}",
+        )
+        .unwrap();
+        assert!(deno_task_exists(repository.path(), "build"));
+    }
+
+    #[test]
+    fn primary_deno_config_does_not_fall_back_to_conflicting_jsonc() {
+        let repository = tempfile::tempdir().unwrap();
+        fs::write(
+            repository.path().join("deno.jsonc"),
+            r#"{"tasks":{"preview":"deno run preview.ts"}}"#,
+        )
+        .unwrap();
+        for primary in [r#"{"tasks":{"build":"deno run build.ts"}}"#, "{"] {
+            fs::write(repository.path().join("deno.json"), primary).unwrap();
+            assert!(!deno_task_exists(repository.path(), "preview"));
+        }
+    }
+
+    #[test]
+    fn rejects_invalid_configs_and_does_not_invent_missing_tasks() {
+        let repository = tempfile::tempdir().unwrap();
+        for config in [
+            r#"{tasks:{"dev":"deno run dev.ts"}}"#,
+            r#"{"tasks":{'dev':'deno run dev.ts'}}"#,
+            r#"{"tasks":{"dev":"deno run dev.ts" "build":"deno run build.ts"}}"#,
+            r#"{"tasks":{"dev":"deno run dev.ts"}} /* unfinished"#,
+            r#"{"tasks":{"build":"deno run build.ts"}}"#,
+        ] {
+            fs::write(repository.path().join("deno.jsonc"), config).unwrap();
+            assert!(matches!(
+                resolve_repository_task_commands(
+                    ProjectRepositoryTask::StartDevServer,
+                    repository.path()
+                ),
+                Err(ProjectRepositoryTaskError::CommandUnavailable)
+            ));
+        }
     }
 }
