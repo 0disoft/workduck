@@ -3,11 +3,11 @@
   "fileStateSchemaVersion": 1,
   "files": {
     ".llmnav/cache/agent-context.md": "b22f4c1d47123f75b91c9f81e077994d420cb2cff1a3626d5ff59c1df1e00326",
-    ".llmnav/cache/cards.jsonl": "22b13f184c3c6c356937a5e49d0496bbf16f458dd6cd1e8739754b46e03b7edc",
-    ".llmnav/cache/file-state.json": "e4d52e6d6e7b53886b6ae9e7d130b73971b0813669e46b25c05bb44520458afb",
+    ".llmnav/cache/cards.jsonl": "cd7c5e7984af7c1d6521ad1522b227cb3b2285cd75c48bdaa981d2512a63cb08",
+    ".llmnav/cache/file-state.json": "186ee765a6273a9987feebb86742e3dfbddcb6c483f796c346b3c68fe23e8f41",
     ".llmnav/cache/graph-state.json": "0d33abbbd034789264ebb590e970f1c278940b8d7c524fde0fe8720fa888b9dd",
     ".llmnav/cache/graph.json": "e5b7f74b80a550cbd4f8eee5ff9a05ac110d0b14652ddf13040cc91bf1569e36",
-    ".llmnav/cache/index.json": "747524004c6638419437f5c48a7dc18857d9d072a9c7e5f93f59aff99a68972b",
+    ".llmnav/cache/index.json": "59713a8bc6e0f06ec26e56c3436ed144915ba1156ddf8cf53c6e5f3ec9f26bbb",
     ".llmnav/cache/prompt-prefix.json": "1b991ac49fe49493dc62d40274d624a76f76b97e7941897ebebf8f1595346d4d",
     ".llmnav/cache/repo-core.txt": "b001b34f3e76e15756e9ae080e4689989d25ee86b7508fdb79b7ec9fc7978cf7",
     ".llmnav/cache/search-index.json": "7b4256d2d70c818e53decd01c5aea5c870037686bcbc7ea3abbf2a21d0ffe385"
@@ -21,6 +21,6 @@
   "searchCardSetHash": "a9989196e201e81501f8f20efbd680bd82bb013742675579bb5232bf523c1cc1",
   "searchIndexSchemaVersion": 2,
   "searchShardSchemaVersion": null,
-  "sourceHash": "560e3fde87a35b61e5ccbe994031ba6c98ff08130e1cb8e73d9c463d8640d01a",
+  "sourceHash": "558731aada66566eac5f8019ddeb27e4cb4eef9a8519bd8bac50c472e55eb585",
   "specVersion": "1"
 }

@@ -531,10 +531,6 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 	}
 
 	async function handleSelectQueueArtifact(file: QueueFileEntry) {
-		if (isReading) {
-			return;
-	}
-
 		error = null;
 		parseError = null;
 		status = null;
@@ -965,29 +961,35 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 	}
 
 		const target = captureWorkspaceOperationTarget();
+		const cancellingWorkOrder = selectedWorkOrder;
+		const workOrderPath = selectedWorkOrderPath;
+		const selectionGeneration = artifactReadGeneration;
+		const selectionIsCurrent = () => target.isCurrent() && artifactReadGeneration === selectionGeneration;
 		isCancellingExecution = true;
 		parseError = null;
 		status = messages.queue.cancellingExecution;
 
 		try {
 			const executionId =
-				activeExecutions.get(createExecutionKey(target.workspacePath, selectedWorkOrder.ref.id)) ?? null;
+				activeExecutions.get(createExecutionKey(target.workspacePath, cancellingWorkOrder.ref.id)) ?? null;
 			const cancelResult = await cancelQueuePanelWorkOrder({
 				executionId,
 				workspacePath: target.workspacePath,
-				workOrderPath: selectedWorkOrderPath,
-				workOrderId: selectedWorkOrder.ref.id
+				workOrderPath,
+				workOrderId: cancellingWorkOrder.ref.id
 			});
 			if (!target.isCurrent()) return;
 
 			if (cancelResult.ok && cancelResult.recoveredWorkOrder !== null) {
-				selectedWorkOrder = cancelResult.recoveredWorkOrder;
-				status = null;
+				if (selectionIsCurrent()) {
+					selectedWorkOrder = cancelResult.recoveredWorkOrder;
+					status = null;
+				}
 				await refreshQueueFiles({ silent: true });
 				return;
 			}
 
-			if (!cancelResult.ok) {
+			if (!cancelResult.ok && selectionIsCurrent()) {
 				parseError = getQueueExecutionErrorMessage(cancelResult.error);
 				status = null;
 			}
@@ -1006,6 +1008,10 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		}
 
 		const target = captureWorkspaceOperationTarget();
+		const completingWorkOrder = selectedWorkOrder;
+		const workOrderPath = selectedWorkOrderPath;
+		const selectionGeneration = artifactReadGeneration;
+		const selectionIsCurrent = () => target.isCurrent() && artifactReadGeneration === selectionGeneration;
 		isWriting = true;
 		error = null;
 		parseError = null;
@@ -1013,21 +1019,23 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		try {
 			const completionResult = await completeQueuePanelWorkOrder({
 				workspacePath: target.workspacePath,
-				workOrderPath: selectedWorkOrderPath,
-				workOrder: selectedWorkOrder
+				workOrderPath,
+				workOrder: completingWorkOrder
 			});
 			if (!target.isCurrent()) return;
 
 			if (!completionResult.ok) {
-				error = completionResult.error;
+				if (selectionIsCurrent()) error = completionResult.error;
 				return;
 			}
 
-			selectedWorkOrder = completionResult.workOrder;
-			status = messages.queue.completedFile.replace(
-				'{relativePath}',
-				completionResult.relativePath
-			);
+			if (selectionIsCurrent()) {
+				selectedWorkOrder = completionResult.workOrder;
+				status = messages.queue.completedFile.replace(
+					'{relativePath}',
+					completionResult.relativePath
+				);
+			}
 			await refreshQueueFiles({ silent: true });
 		} finally {
 			if (target.isCurrent()) isWriting = false;
