@@ -1089,7 +1089,7 @@ fn create_powershell_script(
 ) -> String {
     let path = escape_powershell_single_quoted(&repository_path.to_string_lossy());
     let mut script = format!(
-        "[Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false); Set-Location -LiteralPath '{}'",
+        "[Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false); Set-Location -LiteralPath '{}' -ErrorAction Stop",
         path
     );
 

@@ -865,7 +865,7 @@ fn command_in_directory(repository_path: &Path, directory: &Path, command: &str)
     }
 
     format!(
-        "Push-Location -LiteralPath '{}'; {}; Pop-Location",
+        "Push-Location -LiteralPath '{}' -ErrorAction Stop; try {{ {} }} finally {{ Pop-Location }}",
         escape_powershell_single_quoted(&relative_shell_path(repository_path, directory)),
         command
     )
@@ -898,6 +898,64 @@ fn push_unique_command(commands: &mut Vec<String>, command: String) {
 mod package_discovery_tests {
     use super::*;
 
+    #[cfg(target_os = "windows")]
+    #[test]
+    fn directory_commands_stop_on_missing_paths_and_restore_location_after_failure() {
+        for (create_directory, command, caught) in [
+            (
+                false,
+                "Set-Content -LiteralPath 'marker.txt' -Value 'ran'",
+                true,
+            ),
+            (
+                true,
+                "Set-Content -LiteralPath 'marker.txt' -Value 'ran'; throw 'failure'",
+                true,
+            ),
+            (
+                true,
+                "Set-Content -LiteralPath 'marker.txt' -Value 'ran'",
+                false,
+            ),
+        ] {
+            let repository = tempfile::tempdir().unwrap();
+            let directory = repository.path().join("app's folder");
+            if create_directory {
+                fs::create_dir(&directory).unwrap();
+            }
+            let scoped_command = command_in_directory(repository.path(), &directory, command);
+            let script = format!(
+                "Set-Location -LiteralPath '{}' -ErrorAction Stop; $caught = $false; try {{ {scoped_command} }} catch {{ $caught = $true }}; @{{ caught = $caught; path = (Get-Location).Path }} | ConvertTo-Json",
+                escape_powershell_single_quoted(&repository.path().to_string_lossy())
+            );
+            let output = std::process::Command::new("powershell.exe")
+                .args([
+                    "-NoLogo",
+                    "-NoProfile",
+                    "-NonInteractive",
+                    "-Command",
+                    &script,
+                ])
+                .output()
+                .unwrap();
+            assert!(
+                output.status.success(),
+                "{}",
+                String::from_utf8_lossy(&output.stderr)
+            );
+            let result: serde_json::Value = serde_json::from_slice(&output.stdout).unwrap();
+            assert_eq!(result["caught"], caught);
+            assert!(
+                result["path"]
+                    .as_str()
+                    .unwrap()
+                    .eq_ignore_ascii_case(&repository.path().to_string_lossy())
+            );
+            assert!(!repository.path().join("marker.txt").exists());
+            assert_eq!(directory.join("marker.txt").exists(), create_directory);
+        }
+    }
+
     #[test]
     fn rootless_repository_skips_owned_packages_even_when_they_sort_first() {
         let repository = tempfile::tempdir().unwrap();
@@ -923,7 +981,7 @@ mod package_discovery_tests {
                 commands,
                 ["packages/m-independent", "packages/z-app"]
                     .map(|path| format!(
-                        "Push-Location -LiteralPath '{path}'; {command}; Pop-Location"
+                        "Push-Location -LiteralPath '{path}' -ErrorAction Stop; try {{ {command} }} finally {{ Pop-Location }}"
                     ))
                     .to_vec()
             );
@@ -950,7 +1008,7 @@ mod package_discovery_tests {
             commands,
             vec![
                 "npm install",
-                "Push-Location -LiteralPath 'packages/library'; npm install; Pop-Location"
+                "Push-Location -LiteralPath 'packages/library' -ErrorAction Stop; try { npm install } finally { Pop-Location }"
             ]
         );
     }
@@ -1010,7 +1068,7 @@ mod deno_tests {
             commands,
             vec![
                 "npm install",
-                "Push-Location -LiteralPath 'services/worker'; deno install; Pop-Location"
+                "Push-Location -LiteralPath 'services/worker' -ErrorAction Stop; try { deno install } finally { Pop-Location }"
             ]
         );
     }
@@ -1059,7 +1117,9 @@ mod deno_tests {
         .unwrap_or_else(|_| panic!("missing nested JSONC dev task"));
         assert_eq!(
             commands,
-            vec!["Push-Location -LiteralPath 'apps/web'; deno task dev; Pop-Location"]
+            vec![
+                "Push-Location -LiteralPath 'apps/web' -ErrorAction Stop; try { deno task dev } finally { Pop-Location }"
+            ]
         );
     }
 

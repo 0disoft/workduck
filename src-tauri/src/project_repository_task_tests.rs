@@ -468,7 +468,7 @@ fn install_dependency_commands_skip_local_file_package_targets() {
         commands,
         vec![
             "bun install",
-            "Push-Location -LiteralPath 'apps/workbench'; bun install; Pop-Location"
+            "Push-Location -LiteralPath 'apps/workbench' -ErrorAction Stop; try { bun install } finally { Pop-Location }"
         ]
     );
 
@@ -507,8 +507,23 @@ fn powershell_task_failures_stop_following_commands_and_keep_native_exit_codes()
             0,
             true,
         ),
+        (
+            "scoped-native-error",
+            "Push-Location -LiteralPath 'nested' -ErrorAction Stop; try { & $env:ComSpec /d /c 'exit 7' } finally { Pop-Location }",
+            "failed",
+            7,
+            false,
+        ),
+        (
+            "scoped-native-stderr-success",
+            "Push-Location -LiteralPath 'nested' -ErrorAction Stop; try { & $env:ComSpec /d /c 'echo diagnostic 1>&2 & exit 0' } finally { Pop-Location }",
+            "succeeded",
+            0,
+            true,
+        ),
     ] {
         let repository = tempfile::tempdir().unwrap();
+        fs::create_dir(repository.path().join("nested")).unwrap();
         let record_path = repository.path().join("run.json");
         let marker_path = repository.path().join("following-command.txt");
         let command =
@@ -552,10 +567,34 @@ fn powershell_task_failures_stop_following_commands_and_keep_native_exit_codes()
 
 #[cfg(target_os = "windows")]
 #[test]
+fn powershell_script_stops_before_tasks_when_the_repository_directory_is_missing() {
+    let repository = tempfile::tempdir().unwrap();
+    let script = create_powershell_script(
+        &repository.path().join("missing"),
+        Some("Set-Content -LiteralPath 'marker.txt' -Value 'ran'"),
+        None,
+    );
+    let output = Command::new("powershell.exe")
+        .args([
+            "-NoLogo",
+            "-NoProfile",
+            "-NonInteractive",
+            "-Command",
+            &script,
+        ])
+        .current_dir(repository.path())
+        .output()
+        .unwrap();
+    assert!(!output.status.success());
+    assert!(!repository.path().join("marker.txt").exists());
+}
+
+#[cfg(target_os = "windows")]
+#[test]
 fn powershell_script_executes_each_tracked_command_line_once() {
     let run_record = ProjectRepositoryTaskRunRecord {
         command:
-            "bun install\nPush-Location -LiteralPath 'apps/workbench'; bun install; Pop-Location"
+            "bun install\nPush-Location -LiteralPath 'apps/workbench' -ErrorAction Stop; try { bun install } finally { Pop-Location }"
                 .to_owned(),
         ..task_run_record(
             "repo-a-install",
@@ -571,11 +610,11 @@ fn powershell_script_executes_each_tracked_command_line_once() {
 
     assert!(script.contains("Write-Host 'Workduck: bun install'"));
     assert!(script.contains(
-        "Write-Host 'Workduck: Push-Location -LiteralPath ''apps/workbench''; bun install; Pop-Location'"
+        "Write-Host 'Workduck: Push-Location -LiteralPath ''apps/workbench'' -ErrorAction Stop; try { bun install } finally { Pop-Location }'"
     ));
     assert!(script.contains("$workduckCommand = 'bun install';"));
     assert!(script.contains(
-        "$workduckCommand = 'Push-Location -LiteralPath ''apps/workbench''; bun install; Pop-Location';"
+        "$workduckCommand = 'Push-Location -LiteralPath ''apps/workbench'' -ErrorAction Stop; try { bun install } finally { Pop-Location }';"
     ));
     assert!(script.contains("command = $workduckRecordCommand;"));
     assert!(!script.contains("Invoke-Expression $workduckRecordCommand"));
