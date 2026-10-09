@@ -554,34 +554,34 @@ function countDescendantGroupStats(
 	groupCountByNodeId: Map<string, number>,
 	repositoryCountByNodeId: Map<string, number>
 ) {
-	const cachedGroupCount = groupCountByNodeId.get(nodeId);
+	if (groupCountByNodeId.has(nodeId)) return;
+	const pending = [{ nodeId, expanded: false }];
+	const visiting = new Set<string>();
+	while (pending.length > 0) {
+		const entry = pending.pop()!;
+		if (groupCountByNodeId.has(entry.nodeId)) continue;
+		const children = childGroupsByParentId.get(entry.nodeId) ?? [];
+		if (!entry.expanded) {
+			if (visiting.has(entry.nodeId)) continue;
+			visiting.add(entry.nodeId);
+			pending.push({ nodeId: entry.nodeId, expanded: true });
+			for (let index = children.length - 1; index >= 0; index -= 1) {
+				pending.push({ nodeId: children[index]!.id, expanded: false });
+			}
+			continue;
+		}
 
-	if (cachedGroupCount !== undefined) {
-		return {
-			groupCount: cachedGroupCount,
-			repositoryCount: repositoryCountByNodeId.get(nodeId) ?? 0
-		};
+		let groupCount = 0;
+		let repositoryCount = 0;
+		for (const childGroup of children) {
+			groupCount += 1 + (groupCountByNodeId.get(childGroup.id) ?? 0);
+			repositoryCount += childGroup.repositories.length +
+				(repositoryCountByNodeId.get(childGroup.id) ?? 0);
+		}
+		groupCountByNodeId.set(entry.nodeId, groupCount);
+		repositoryCountByNodeId.set(entry.nodeId, repositoryCount);
+		visiting.delete(entry.nodeId);
 	}
-
-	let groupCount = 0;
-	let repositoryCount = 0;
-
-	for (const childGroup of childGroupsByParentId.get(nodeId) ?? []) {
-		const childStats = countDescendantGroupStats(
-			childGroup.id,
-			childGroupsByParentId,
-			groupCountByNodeId,
-			repositoryCountByNodeId
-		);
-
-		groupCount += 1 + childStats.groupCount;
-		repositoryCount += childGroup.repositories.length + childStats.repositoryCount;
-	}
-
-	groupCountByNodeId.set(nodeId, groupCount);
-	repositoryCountByNodeId.set(nodeId, repositoryCount);
-
-	return { groupCount, repositoryCount };
 }
 
 function appendProjectTreeRows(
@@ -591,15 +591,16 @@ function appendProjectTreeRows(
 	node: ProjectNodeRecord,
 	depth: number
 ) {
-	if (visitedNodeIds.has(node.id)) {
-		return;
-	}
-
-	visitedNodeIds.add(node.id);
-	rows.push({ node, depth });
-
-	for (const childGroup of childGroupsByParentId.get(node.id) ?? []) {
-		appendProjectTreeRows(rows, childGroupsByParentId, visitedNodeIds, childGroup, depth + 1);
+	const pendingRows: ProjectTreeRow[] = [{ node, depth }];
+	while (pendingRows.length > 0) {
+		const row = pendingRows.pop()!;
+		if (visitedNodeIds.has(row.node.id)) continue;
+		visitedNodeIds.add(row.node.id);
+		rows.push(row);
+		const children = childGroupsByParentId.get(row.node.id) ?? [];
+		for (let index = children.length - 1; index >= 0; index -= 1) {
+			pendingRows.push({ node: children[index]!, depth: row.depth + 1 });
+		}
 	}
 }
 

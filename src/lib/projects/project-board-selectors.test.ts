@@ -26,6 +26,38 @@ function select(nodes: readonly ProjectNodeRecord[], filter: ProjectRepositorySy
 		repositorySyncFilter: filter, selectedProjectId: null, selectedGroupId: null });
 }
 
+describe('project hierarchy indexing', () => {
+	test('indexes deep hierarchies without overflowing and keeps descendant counts', () => {
+		const nodes = [node('project', null)];
+		for (let index = 0; index < 12000; index += 1) {
+			nodes.push(node(`group-${index}`, index === 0 ? 'project' : `group-${index - 1}`,
+				index === 11999 ? [repository('deep-repository', 'needle')] : []));
+		}
+		const index = createProjectBoardSelectionIndex(nodes);
+		expect(index.projectRows.length).toBe(nodes.length);
+		expect(index.projectRows.at(-1)?.depth).toBe(12000);
+		expect(index.groupCountByNodeId.get('project')).toBe(12000);
+		expect(index.groupCountByNodeId.get('group-0')).toBe(11999);
+		expect(index.groupCountByNodeId.get('group-11999')).toBe(0);
+		expect(index.repositoryCountByNodeId.get('project')).toBe(1);
+		expect(index.repositoryCountByNodeId.get('group-11999')).toBe(0);
+	});
+
+	test('keeps branching counts and preorder when children precede their parents', () => {
+		const nodes = [node('leaf', 'first', [repository('leaf-repo', 'leaf')]),
+			node('second', 'project', [repository('second-repo', 'second')]),
+			node('first', 'project', [repository('first-repo', 'first')]), node('project', null)];
+		const index = createProjectBoardSelectionIndex(nodes);
+		expect(index.projectRows.map(row => [row.node.id, row.depth])).toEqual([
+			['project', 0], ['second', 1], ['first', 1], ['leaf', 2]
+		]);
+		expect(index.groupCountByNodeId.get('project')).toBe(3);
+		expect(index.repositoryCountByNodeId.get('project')).toBe(3);
+		expect(index.groupCountByNodeId.get('first')).toBe(1);
+		expect(index.repositoryCountByNodeId.get('first')).toBe(1);
+	});
+});
+
 describe('combined project search and repository status filters', () => {
 	for (const filter of ['favorite', 'pull', 'push', 'commit'] as const) {
 		test(`hides projects when search and ${filter} match different groups`, () => {

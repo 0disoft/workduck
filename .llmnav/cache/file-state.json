@@ -9145,7 +9145,7 @@
     },
     {
       "blocks": [],
-      "contentHash": "34d2341936976240ff84b5a86b04a45381295eefe35032089e7da936a88686d5",
+      "contentHash": "718d32c80349ce3bf8595b90606ff4806d542651f00b1145cb879307aad5ace1",
       "declarations": [],
       "imports": [
         "./project-board-selectors",
@@ -9155,7 +9155,7 @@
       ],
       "path": "src/lib/projects/project-board-selectors.test.ts",
       "semanticBytes": 0,
-      "sourceBytes": 4073
+      "sourceBytes": 5730
     },
     {
       "blocks": [
@@ -9246,7 +9246,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "0c05b0ff6f1cc391a158b30c9be6a2ad65d91fdc61b69745e05269a535aafb10",
+      "contentHash": "fa85a9432dda15d7e6031368949f33cf5f6b87d5496c5beeeb1225c114d0fd2f",
       "declarations": [
         null
       ],
@@ -9256,7 +9256,7 @@
       ],
       "path": "src/lib/projects/project-board-selectors.ts",
       "semanticBytes": 587,
-      "sourceBytes": 18684
+      "sourceBytes": 19146
     },
     {
       "blocks": [],
@@ -9745,7 +9745,7 @@
     },
     {
       "blocks": [],
-      "contentHash": "e0f6616ae53ae6b307385fe80f2000cce411e0c114cb7070a7fc4d6ac27edd24",
+      "contentHash": "e2e108ba61c89e77434bb8fc95bd63b7a1ed8685face2103892ae1dfdc0c3002",
       "declarations": [],
       "imports": [
         "./project-registry",
@@ -9754,7 +9754,7 @@
       ],
       "path": "src/lib/projects/project-registry.test.ts",
       "semanticBytes": 0,
-      "sourceBytes": 10105
+      "sourceBytes": 11156
     },
     {
       "blocks": [
@@ -9845,7 +9845,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "78d4ad5bed110a1ba0e2ba71330ae9ddf992993624a82cf83c1531411d38f5e6",
+      "contentHash": "7baa4f1c0417b79da0fbc52cb8eda997ade7219d75f32defbc1bfc4c3c45b7b2",
       "declarations": [
         null
       ],
@@ -9855,7 +9855,7 @@
       ],
       "path": "src/lib/projects/project-registry.ts",
       "semanticBytes": 557,
-      "sourceBytes": 27432
+      "sourceBytes": 27313
     },
     {
       "blocks": [],

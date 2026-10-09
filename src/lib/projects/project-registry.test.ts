@@ -4,6 +4,7 @@ import {
 	addProjectNode,
 	addProjectRepositoryLink,
 	createEmptyProjectRegistry,
+	createProjectTreeRows,
 	parseProjectRegistry,
 	parseStoredProjectRegistry,
 	serializeProjectRegistry,
@@ -29,6 +30,27 @@ function parseFixture(nodes: readonly ProjectNodeRecord[]) {
 }
 
 describe('project registry canonicalization', () => {
+	test('creates rows for deep groups without overflowing the call stack', () => {
+		const nodes = [fixtureNode('root', null)];
+		for (let index = 0; index < 12000; index += 1) {
+			nodes.push(fixtureNode(`group-${index}`, index === 0 ? 'root' : `group-${index - 1}`));
+		}
+		const rows = createProjectTreeRows(nodes.toReversed());
+		assert.equal(rows.length, nodes.length);
+		assert.deepEqual(rows.map(row => row.node.id), nodes.map(node => node.id));
+		assert.equal(rows.at(-1)?.depth, 12000);
+	});
+
+	test('preserves preorder and root order while ignoring repeated IDs and unreachable groups', () => {
+		const nodes = [fixtureNode('root-a', null), fixtureNode('root-b', null),
+			fixtureNode('first', 'root-a'), fixtureNode('second', 'root-a'),
+			fixtureNode('nested', 'first'), fixtureNode('nested', 'root-b'),
+			fixtureNode('orphan', 'missing')];
+		assert.deepEqual(createProjectTreeRows(nodes).map(row => [row.node.id, row.depth]), [
+			['root-a', 0], ['first', 1], ['nested', 2], ['second', 1], ['root-b', 0]
+		]);
+	});
+
 	test('normalizes a deep reversed hierarchy without truncation or recursion', () => {
 		const nodes = [fixtureNode('root', null)];
 		for (let index = 0; index < 6000; index += 1) {
