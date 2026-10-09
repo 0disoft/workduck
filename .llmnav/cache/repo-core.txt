@@ -251,4 +251,4 @@ invariant Metadata views serialize opaque references; reserved references resolv
 role Coordinate terminal selection, native session actions, output display, and workspace-scoped registry edits.
 owns terminal view lifetime, operation result ownership, session removal target, output polling
 excludes native process execution, terminal command normalization, registry serialization
-invariant Async results update only their initiating view; removal keeps its original workspace and session identity and requires successful process stop.
+invariant Async results update only their initiating view; removal requires successful process stop; each view admits one output read at a time and failures preserve its logs.

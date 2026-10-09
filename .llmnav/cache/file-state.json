@@ -13150,7 +13150,7 @@
             ],
             "id": "workduck.terminal.panel",
             "invariant": [
-              "Async results update only their initiating view; removal keeps its original workspace and session identity and requires successful process stop."
+              "Async results update only their initiating view; removal requires successful process stop; each view admits one output read at a time and failures preserve its logs."
             ],
             "owns": [
               "terminal view lifetime",
@@ -13170,7 +13170,7 @@
             "stability": "architecture",
             "unknown": []
           },
-          "end": 631,
+          "end": 652,
           "endLine": 10,
           "entries": [
             {
@@ -13207,7 +13207,7 @@
               "key": "invariant",
               "line": 8,
               "order": 5,
-              "value": "Async results update only their initiating view; removal keeps its original workspace and session identity and requires successful process stop."
+              "value": "Async results update only their initiating view; removal requires successful process stop; each view admits one output read at a time and failures preserve its logs."
             },
             {
               "key": "stability",
@@ -13220,7 +13220,7 @@
           "indent": "\t",
           "newline": "\n",
           "prefix": null,
-          "raw": "\t/* llmnav/1 module\n\tid=workduck.terminal.panel\n\trole=Coordinate terminal selection, native session actions, output display, and workspace-scoped registry edits.\n\towns=terminal view lifetime|operation result ownership|session removal target|output polling\n\texcludes=native process execution|terminal command normalization|registry serialization\n\tsearch=terminal selection switch|late terminal response|terminal removal ownership\n\tinvariant=Async results update only their initiating view; removal keeps its original workspace and session identity and requires successful process stop.\n\tstability=architecture\n\t*/",
+          "raw": "\t/* llmnav/1 module\n\tid=workduck.terminal.panel\n\trole=Coordinate terminal selection, native session actions, output display, and workspace-scoped registry edits.\n\towns=terminal view lifetime|operation result ownership|session removal target|output polling\n\texcludes=native process execution|terminal command normalization|registry serialization\n\tsearch=terminal selection switch|late terminal response|terminal removal ownership\n\tinvariant=Async results update only their initiating view; removal requires successful process stop; each view admits one output read at a time and failures preserve its logs.\n\tstability=architecture\n\t*/",
           "scope": "module",
           "specVersion": "1",
           "start": 19,
@@ -13229,7 +13229,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "ef9f4e165675b4501b8ea977dce1eebb2f4f5c547f4541b3448200bb1a01345b",
+      "contentHash": "0b4251e5e4bb4443b6c0f282fd0a8fd0fb92edf76364e3d98fc168a8e4050823",
       "declarations": [
         null
       ],
@@ -13246,8 +13246,8 @@
         "svelte"
       ],
       "path": "src/lib/terminals/TerminalPanel.svelte",
-      "semanticBytes": 612,
-      "sourceBytes": 23973
+      "semanticBytes": 633,
+      "sourceBytes": 25177
     },
     {
       "blocks": [],
@@ -13276,7 +13276,7 @@
     },
     {
       "blocks": [],
-      "contentHash": "f13740ea07d35c2b26b4eea7a49a4b3fa858dfb3c30eda640dbfeb1022861396",
+      "contentHash": "7a5a81356829c28305f20a202e2d973f2b334abf02197732bafad17df95189b9",
       "declarations": [],
       "imports": [
         "#lib/tauri/tauri-invoke.ts",
@@ -13290,7 +13290,7 @@
       ],
       "path": "src/lib/terminals/terminal-panel.test.ts",
       "semanticBytes": 0,
-      "sourceBytes": 8281
+      "sourceBytes": 13705
     },
     {
       "blocks": [],

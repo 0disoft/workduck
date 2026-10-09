@@ -4418,8 +4418,8 @@
         "registry serialization"
       ],
       "hashes": {
-        "body": "ef9f4e165675b4501b8ea977dce1eebb2f4f5c547f4541b3448200bb1a01345b",
-        "semantic": "ef56180075b39b1f5416313cef14d41baf83ace65d41accfd81bd96f06b428a5",
+        "body": "0b4251e5e4bb4443b6c0f282fd0a8fd0fb92edf76364e3d98fc168a8e4050823",
+        "semantic": "814bf935354d253e564033bd04011f7d1e4f698ba0d8254654fbaa4974afacc2",
         "structure": "373d3867704e761faab9a081b350f79dbf3600c694f57ba74dfd8708d4eb02f4"
       },
       "id": "workduck.terminal.panel",
@@ -4436,7 +4436,7 @@
         "svelte"
       ],
       "invariant": [
-        "Async results update only their initiating view; removal keeps its original workspace and session identity and requires successful process stop."
+        "Async results update only their initiating view; removal requires successful process stop; each view admits one output read at a time and failures preserve its logs."
       ],
       "location": {
         "declarationLine": null,
@@ -4480,6 +4480,6 @@
   "generatedBy": "llmnav@0.9.7",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "d8526074259e25cda77ae58e1cb895441746f5e33a1697d980c6fc1a5d9e00b7",
+  "sourceHash": "b10d9a87fb060922d9d55f484d2c0237958c4f819065f003fa66d758417f7608",
   "specVersion": "1"
 }
