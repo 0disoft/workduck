@@ -17,6 +17,20 @@
     {
       "confidence": 0.85,
       "from": "workduck/workduck.briefs.gate",
+      "id": "dec12a6fae00a3131c6db28757297a321b3e256e24978139713eadbb25ae209e",
+      "kind": "imports",
+      "provenance": {
+        "generator": "llmnav",
+        "line": null,
+        "path": "src/lib/briefs/brief-gate.ts",
+        "source": "src/lib/briefs/brief-gate.ts",
+        "type": "local-import"
+      },
+      "to": "workduck/workduck.briefs.run-evidence"
+    },
+    {
+      "confidence": 0.85,
+      "from": "workduck/workduck.briefs.gate",
       "id": "c8b4f703b5c411caea0e3d3f718fa7f8927af112ac674adb02799ae9ca213c89",
       "kind": "imports",
       "provenance": {
@@ -24,6 +38,34 @@
         "line": null,
         "path": "src/lib/briefs/brief-gate.ts",
         "source": "src/lib/briefs/brief-gate.ts",
+        "type": "local-import"
+      },
+      "to": "workduck/workduck.briefs.runs"
+    },
+    {
+      "confidence": 0.85,
+      "from": "workduck/workduck.briefs.run-evidence",
+      "id": "ba08788f334b14faf3f04e2c2bea97a3e01c7c980fc1ba1943e700ffad789d39",
+      "kind": "imports",
+      "provenance": {
+        "generator": "llmnav",
+        "line": null,
+        "path": "src/lib/briefs/brief-run-evidence.ts",
+        "source": "src/lib/briefs/brief-run-evidence.ts",
+        "type": "local-import"
+      },
+      "to": "workduck/workduck.briefs.registry"
+    },
+    {
+      "confidence": 0.85,
+      "from": "workduck/workduck.briefs.run-evidence",
+      "id": "cbbd9d4ce9e689aa3558634d79986fc44c1e831365de481a46a5fdc8d47d6f27",
+      "kind": "imports",
+      "provenance": {
+        "generator": "llmnav",
+        "line": null,
+        "path": "src/lib/briefs/brief-run-evidence.ts",
+        "source": "src/lib/briefs/brief-run-evidence.ts",
         "type": "local-import"
       },
       "to": "workduck/workduck.briefs.runs"
@@ -788,6 +830,28 @@
       "repositoryId": "workduck",
       "role": "Validate workspace-owned task briefs, preserve stable repository references, and compile Codex exports.",
       "semanticId": "workduck.briefs.registry",
+      "unresolved": false
+    },
+    {
+      "definitions": [],
+      "external": false,
+      "key": "workduck/workduck.briefs.run-evidence",
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src/lib/briefs/brief-run-evidence.ts",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "repositoryId": "workduck",
+      "role": "Read bounded execution evidence and resolve saved brief links to their exact repository tasks, work orders, and reports.",
+      "semanticId": "workduck.briefs.run-evidence",
       "unresolved": false
     },
     {
@@ -2609,11 +2673,11 @@
   ],
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "1769e15d6aa9f2ca4e27b1695060082d012813fdf4f8a6ff4302609765426548",
+  "sourceHash": "890cefa22cc77bb471d8fe7180dcf0c081edbc62e8251c198412fdd9d723d7ca",
   "stats": {
-    "edgeCount": 46,
+    "edgeCount": 49,
     "importedIndexCount": 0,
-    "nodeCount": 88,
+    "nodeCount": 89,
     "unresolvedNodeCount": 0
   }
 }

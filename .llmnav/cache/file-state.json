@@ -6036,10 +6036,101 @@
       "sourceBytes": 6279
     },
     {
-      "blocks": [],
-      "contentHash": "3d6690641fcbe5124ea77da1543088e6477fb8ae6a943d1b2f3179d4dbc2138b",
-      "declarations": [],
+      "blocks": [
+        {
+          "card": {
+            "effect": [],
+            "excludes": [
+              "execution launch",
+              "gate evaluation",
+              "brief link persistence"
+            ],
+            "id": "workduck.briefs.run-evidence",
+            "invariant": [
+              "Linked evidence requires unique source identity and the same workspace-owned repository; Windows spellings share a key while Unix case and literal backslashes remain distinct."
+            ],
+            "owns": [
+              "brief evidence loading",
+              "execution identity matching",
+              "workspace repository path containment"
+            ],
+            "rel": [],
+            "risk": [],
+            "role": "Read bounded execution evidence and resolve saved brief links to their exact repository tasks, work orders, and reports.",
+            "scope": "module",
+            "search": [
+              "brief execution evidence",
+              "linked task repository paths",
+              "Windows drive root and Unix backslash matching"
+            ],
+            "stability": "contract",
+            "unknown": []
+          },
+          "end": 651,
+          "endLine": 9,
+          "entries": [
+            {
+              "key": "id",
+              "line": 2,
+              "order": 0,
+              "value": "workduck.briefs.run-evidence"
+            },
+            {
+              "key": "role",
+              "line": 3,
+              "order": 1,
+              "value": "Read bounded execution evidence and resolve saved brief links to their exact repository tasks, work orders, and reports."
+            },
+            {
+              "key": "owns",
+              "line": 4,
+              "order": 2,
+              "value": "brief evidence loading|execution identity matching|workspace repository path containment"
+            },
+            {
+              "key": "excludes",
+              "line": 5,
+              "order": 3,
+              "value": "execution launch|gate evaluation|brief link persistence"
+            },
+            {
+              "key": "search",
+              "line": 6,
+              "order": 4,
+              "value": "brief execution evidence|linked task repository paths|Windows drive root and Unix backslash matching"
+            },
+            {
+              "key": "invariant",
+              "line": 7,
+              "order": 5,
+              "value": "Linked evidence requires unique source identity and the same workspace-owned repository; Windows spellings share a key while Unix case and literal backslashes remain distinct."
+            },
+            {
+              "key": "stability",
+              "line": 8,
+              "order": 6,
+              "value": "contract"
+            }
+          ],
+          "filePath": "src/lib/briefs/brief-run-evidence.ts",
+          "indent": "",
+          "newline": "\n",
+          "prefix": null,
+          "raw": "/* llmnav/1 module\nid=workduck.briefs.run-evidence\nrole=Read bounded execution evidence and resolve saved brief links to their exact repository tasks, work orders, and reports.\nowns=brief evidence loading|execution identity matching|workspace repository path containment\nexcludes=execution launch|gate evaluation|brief link persistence\nsearch=brief execution evidence|linked task repository paths|Windows drive root and Unix backslash matching\ninvariant=Linked evidence requires unique source identity and the same workspace-owned repository; Windows spellings share a key while Unix case and literal backslashes remain distinct.\nstability=contract\n*/",
+          "scope": "module",
+          "specVersion": "1",
+          "start": 0,
+          "startLine": 1,
+          "style": "block",
+          "syntaxErrors": []
+        }
+      ],
+      "contentHash": "e33403437837508cc476908f05e1c99cf76f04c1a1fa7088147ced9edc2e1752",
+      "declarations": [
+        null
+      ],
       "imports": [
+        "#lib/projects/project-repository-task-runs.ts",
         "#lib/projects/project-repository-task.ts",
         "#lib/queue/queue-artifacts.ts",
         "#lib/queue/queue-folder.ts",
@@ -6048,8 +6139,8 @@
         "./brief-run-registry"
       ],
       "path": "src/lib/briefs/brief-run-evidence.ts",
-      "semanticBytes": 0,
-      "sourceBytes": 6116
+      "semanticBytes": 651,
+      "sourceBytes": 6902
     },
     {
       "blocks": [],
@@ -6178,7 +6269,7 @@
     },
     {
       "blocks": [],
-      "contentHash": "4becf09e517d5bbdcbc73ea4234b7e77b9ecfca7daf70f092d58217135e9403f",
+      "contentHash": "983e9f81a977458c2a8da2f70c3feef551df3b4361f8b429158df46e5883ae7e",
       "declarations": [],
       "imports": [
         "#lib/projects/project-repository-task.ts",
@@ -6195,7 +6286,7 @@
       ],
       "path": "src/lib/briefs/brief-run.test.ts",
       "semanticBytes": 0,
-      "sourceBytes": 12311
+      "sourceBytes": 14161
     },
     {
       "blocks": [],

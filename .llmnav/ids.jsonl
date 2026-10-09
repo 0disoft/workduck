@@ -86,3 +86,4 @@
 {"id":"workduck.app-state.storage","state":"active"}
 {"id":"workduck.environment.vault-session","state":"active"}
 {"id":"workduck.terminal.panel","state":"active"}
+{"id":"workduck.briefs.run-evidence","state":"active"}

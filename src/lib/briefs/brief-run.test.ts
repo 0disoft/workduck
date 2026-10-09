@@ -41,6 +41,34 @@ describe('Brief run links', () => {
 	test('does not confuse case-sensitive Unix paths', () => {
 		assert.equal(findLinkedTask(link, '/workspace', { ...evidence, taskRuns: [{ ...evidence.taskRuns[0]!, repositoryPath: '/workspace/projects/Repo' }] }), null);
 	});
+	test('matches Windows drive-root workspaces using case-insensitive path identity', () => {
+		const task = { ...evidence.taskRuns[0]!, repositoryPath: 'c:\\PROJECTS\\REPO\\' };
+		const source = { ...evidence, taskRuns: [task], workOrders: [] };
+		for (const root of ['C:/', 'C:\\', '\\\\?\\C:\\']) {
+			assert.equal(findLinkedTask(link, root, source), task);
+			assert.equal(listBriefRunCandidates(brief, root, source)[0]?.id, task.id);
+			assert.equal(deriveBriefGate(link, root, source).state, 'passed');
+		}
+	});
+	test('keeps literal Unix backslashes distinct from nested directories in evidence and gates', () => {
+		const unixBrief = { ...brief, repositoryPath: 'projects/a\\b' };
+		const unixLink = { ...link, brief: unixBrief };
+		const task = { ...evidence.taskRuns[0]!, repositoryPath: '/workspace/projects/a/b' };
+		const source = { ...evidence, taskRuns: [task], workOrders: [] };
+		assert.equal(findLinkedTask(unixLink, '/workspace', source), null);
+		assert.deepEqual(listBriefRunCandidates(unixBrief, '/workspace', source), []);
+		assert.equal(deriveBriefGate(unixLink, '/workspace', source).state, 'pending');
+		const matchingTask = { ...task, repositoryPath: '/workspace/projects/a\\b' };
+		assert.equal(findLinkedTask(unixLink, '/workspace', { ...source, taskRuns: [matchingTask] }), matchingTask);
+	});
+	test('resolves Unix root paths and rejects sibling workspaces or traversal', () => {
+		const task = { ...evidence.taskRuns[0]!, repositoryPath: '/projects/repo' };
+		assert.equal(findLinkedTask(link, '/', { ...evidence, taskRuns: [task] }), task);
+		for (const path of ['/workspace-other/projects/repo', '/workspace/projects/../repo', '/workspace/./projects/repo']) {
+			const foreign = { ...task, repositoryPath: path };
+			assert.equal(findLinkedTask(link, '/workspace', { ...evidence, taskRuns: [foreign] }), null);
+		}
+	});
 	test('requires exact repository and work-order IDs, not matching report titles', () => {
 		const queueLink: BriefRunLink = { ...link, sourceKind: 'queue-work-order', sourceId: 'wo-1' };
 		assert.equal(findLinkedReports(queueLink, evidence).length, 1);

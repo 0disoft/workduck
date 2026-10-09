@@ -86,3 +86,4 @@ workduck.app-state.storage
 workduck.environment.vault-session
 workduck.secret-vault.session-native
 workduck.terminal.panel
+workduck.briefs.run-evidence

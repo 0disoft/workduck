@@ -1,4 +1,14 @@
+/* llmnav/1 module
+id=workduck.briefs.run-evidence
+role=Read bounded execution evidence and resolve saved brief links to their exact repository tasks, work orders, and reports.
+owns=brief evidence loading|execution identity matching|workspace repository path containment
+excludes=execution launch|gate evaluation|brief link persistence
+search=brief execution evidence|linked task repository paths|Windows drive root and Unix backslash matching
+invariant=Linked evidence requires unique source identity and the same workspace-owned repository; Windows spellings share a key while Unix case and literal backslashes remain distinct.
+stability=contract
+*/
 import { readProjectRepositoryTaskRunRecords, type ProjectRepositoryTaskRunRecord } from '#lib/projects/project-repository-task.ts';
+import { createRepositoryTaskRunPathKey } from '#lib/projects/project-repository-task-runs.ts';
 import { listQueueFiles, readQueueFile } from '#lib/queue/queue-folder.ts';
 import { parseQueueResultReport, parseQueueWorkOrder, type WorkduckQueueResultReport, type WorkduckQueueWorkOrder } from '#lib/queue/queue-artifacts.ts';
 import { normalizeWorkspacePathForStorage } from '#lib/workspaces/workspace-path-format.ts';
@@ -88,12 +98,15 @@ export function findLinkedReports(link: BriefRunLink, evidence: BriefRunEvidence
 }
 
 function repositoryPathKey(workspacePath: string, path: string): string | null {
-	const root = normalizeWorkspacePathForStorage(workspacePath).replaceAll('\\', '/').replace(/\/+$/u, '');
-	let normalized = normalizeWorkspacePathForStorage(path).replaceAll('\\', '/').replace(/\/+$/u, '');
-	if (!normalized.startsWith('/') && !/^[a-z]:\//iu.test(normalized)) normalized = `${root}/${normalized}`;
+	const workspace = normalizeWorkspacePathForStorage(workspacePath);
+	const windows = /^(?:[a-z]:[\\/]|\\\\|\/\/)/iu.test(workspace);
+	const root = createRepositoryTaskRunPathKey(workspace);
+	let normalized = normalizeWorkspacePathForStorage(path);
+	if (windows) normalized = normalized.replaceAll('\\', '/');
+	if (!normalized.startsWith('/') && !/^[a-z]:[\\/]/iu.test(normalized)) {
+		normalized = `${root}${root.endsWith('/') ? '' : '/'}${normalized}`;
+	}
 	if (normalized.split('/').some((part) => part === '..' || part === '.')) return null;
-	const windows = /^[a-z]:\//iu.test(root) || root.startsWith('//');
-	const key = windows ? normalized.toLowerCase() : normalized;
-	const rootKey = windows ? root.toLowerCase() : root;
-	return key === rootKey || key.startsWith(`${rootKey}/`) ? key : null;
+	const key = createRepositoryTaskRunPathKey(normalized);
+	return key === root || key.startsWith(root.endsWith('/') ? root : `${root}/`) ? key : null;
 }

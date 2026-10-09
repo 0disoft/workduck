@@ -83,3 +83,4 @@
 {"query":"environment vault session metadata cache subscribers and idle workspace locking","expected":["workduck.environment.vault-session"]}
 {"query":"native secret vault opaque reference generations and session close","expected":["workduck.secret-vault.session-native"]}
 {"query":"terminal selection switch late terminal response and terminal removal ownership","expected":["workduck.terminal.panel"]}
+{"query":"brief execution evidence linked task repository paths Windows drive root Unix backslash","expected":["workduck.briefs.run-evidence"]}

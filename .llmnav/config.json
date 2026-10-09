@@ -2,6 +2,12 @@
   "$schema": "./schema/config.schema.json",
   "coverageRules": [
     {
+      "match": ["src/lib/briefs/brief-run-evidence.ts"],
+      "name": "brief execution evidence identity",
+      "requiredFields": ["owns", "invariant"],
+      "scope": "module"
+    },
+    {
       "match": ["src/lib/terminals/TerminalPanel.svelte"],
       "name": "terminal panel operation lifetime",
       "requiredFields": ["owns", "invariant"],

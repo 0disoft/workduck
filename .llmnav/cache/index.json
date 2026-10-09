@@ -4467,11 +4467,63 @@
         "terminal removal ownership"
       ],
       "stability": "architecture"
+    },
+    {
+      "boundaries": [],
+      "excludes": [
+        "execution launch",
+        "gate evaluation",
+        "brief link persistence"
+      ],
+      "hashes": {
+        "body": "e33403437837508cc476908f05e1c99cf76f04c1a1fa7088147ced9edc2e1752",
+        "semantic": "a5c0b4dda588632ebe34ea7c335d3e36135785df71d44d91822a9629fce0106b",
+        "structure": "58a8214fbff0cad60dc95004acffa8fee5c9fb7f7314c87ba10afa89a31b466e"
+      },
+      "id": "workduck.briefs.run-evidence",
+      "imports": [
+        "#lib/projects/project-repository-task-runs.ts",
+        "#lib/projects/project-repository-task.ts",
+        "#lib/queue/queue-artifacts.ts",
+        "#lib/queue/queue-folder.ts",
+        "#lib/workspaces/workspace-path-format.ts",
+        "./brief-registry",
+        "./brief-run-registry"
+      ],
+      "invariant": [
+        "Linked evidence requires unique source identity and the same workspace-owned repository; Windows spellings share a key while Unix case and literal backslashes remain distinct."
+      ],
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src/lib/briefs/brief-run-evidence.ts",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "owns": [
+        "brief evidence loading",
+        "execution identity matching",
+        "workspace repository path containment"
+      ],
+      "role": "Read bounded execution evidence and resolve saved brief links to their exact repository tasks, work orders, and reports.",
+      "scope": "module",
+      "search": [
+        "brief execution evidence",
+        "linked task repository paths",
+        "Windows drive root and Unix backslash matching"
+      ],
+      "stability": "contract"
     }
   ],
   "contractFingerprints": {
     "configuration": {
-      "sha256": "b077a09a6c065e04f1ab400f2c0523a735a5b834ac93bf4ade1b8ec2fbce1b1e"
+      "sha256": "2ab458f8f64f8cafb89ba723ccc27194e8575c0c962023f379d3fcb5a8132c3b"
     },
     "exportedApi": {
       "count": 0,
@@ -4482,6 +4534,6 @@
   "generatedBy": "llmnav@0.9.7",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "78c4cf34080013c9a6662b3a438e77f9bf85fa7b7aba3196e1e95653058c30b6",
+  "sourceHash": "f4ef2fa60bbe2dce08e48e64a7bb85b0f92a8f81d9cd59a7676c96f43a3c751f",
   "specVersion": "1"
 }
