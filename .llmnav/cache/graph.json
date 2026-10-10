@@ -736,7 +736,7 @@
       "definitions": [
         {
           "kind": "function",
-          "line": 948,
+          "line": 1046,
           "path": "src-tauri/src/agent_api_snapshot.rs",
           "provenance": {
             "generator": null,
@@ -749,15 +749,15 @@
       "external": false,
       "key": "workduck/workduck.agent.snapshot.contract",
       "location": {
-        "declarationLine": 948,
-        "endLine": 946,
+        "declarationLine": 1046,
+        "endLine": 1044,
         "exported": false,
         "kind": "function",
         "language": "rust",
         "path": "src-tauri/src/agent_api_snapshot.rs",
         "receiver": null,
         "signature": "fn project_registry_summary_omits_secret_ids()",
-        "startLine": 941,
+        "startLine": 1039,
         "symbol": "project_registry_summary_omits_secret_ids",
         "visibility": "private"
       },
@@ -1210,7 +1210,7 @@
       "definitions": [
         {
           "kind": "function",
-          "line": 786,
+          "line": 836,
           "path": "src-tauri/src/mcp_server.rs",
           "provenance": {
             "generator": null,
@@ -1223,15 +1223,15 @@
       "external": false,
       "key": "workduck/workduck.mcp.server.contract",
       "location": {
-        "declarationLine": 786,
-        "endLine": 784,
+        "declarationLine": 836,
+        "endLine": 834,
         "exported": false,
         "kind": "function",
         "language": "rust",
         "path": "src-tauri/src/mcp_server.rs",
         "receiver": null,
         "signature": "fn run_tool_projects_redacted_snapshot_without_command_or_output_text()",
-        "startLine": 779,
+        "startLine": 829,
         "symbol": "run_tool_projects_redacted_snapshot_without_command_or_output_text",
         "visibility": "private"
       },
@@ -2717,7 +2717,7 @@
   ],
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "09a8326c998806d65a81650a1bacb25a1ef8fd0cb1ee599ac6a19841cd23c3a0",
+  "sourceHash": "65a808ec2898d1739b74bd1c885265412e996ce3ba6644bd5b01586e428768bd",
   "stats": {
     "edgeCount": 49,
     "importedIndexCount": 0,

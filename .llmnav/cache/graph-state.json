@@ -84,14 +84,14 @@
     },
     {
       "edges": [],
-      "inputHash": "5334f02ddbbfdf6ca129060403ae69c24635abe8f4d5da90fc9aab9f4222e0c2",
+      "inputHash": "6c8c840b9cfac993d0e3b4c556749fd065c16e340150383e360d3af1284f14cf",
       "key": "card:workduck/workduck.agent.snapshot.contract",
       "nodes": [
         {
           "definitions": [
             {
               "kind": "function",
-              "line": 948,
+              "line": 1046,
               "path": "src-tauri/src/agent_api_snapshot.rs",
               "provenance": {
                 "generator": null,
@@ -104,15 +104,15 @@
           "external": false,
           "key": "workduck/workduck.agent.snapshot.contract",
           "location": {
-            "declarationLine": 948,
-            "endLine": 946,
+            "declarationLine": 1046,
+            "endLine": 1044,
             "exported": false,
             "kind": "function",
             "language": "rust",
             "path": "src-tauri/src/agent_api_snapshot.rs",
             "receiver": null,
             "signature": "fn project_registry_summary_omits_secret_ids()",
-            "startLine": 941,
+            "startLine": 1039,
             "symbol": "project_registry_summary_omits_secret_ids",
             "visibility": "private"
           },
@@ -121,7 +121,7 @@
           "semanticId": "workduck.agent.snapshot.contract"
         }
       ],
-      "outputHash": "65ee383c8a4aac47df9479ebaa2864dbeb481bc243a6a500208fce768a29a04b"
+      "outputHash": "cacc7cbda0f2f0e1e89a312e21be71c525060d24ca3ced0432e9326c56c9427b"
     },
     {
       "edges": [],
@@ -833,7 +833,7 @@
           "to": "workduck/workduck.mcp.server.contract"
         }
       ],
-      "inputHash": "caa2ed71e535cb53f837086b9fffe4e5986fd81f0738b564255b2467a31c7100",
+      "inputHash": "00510dee13f54bbe7bd9725064fac70bc346790fff0cfcb035d929981e643b68",
       "key": "card:workduck/workduck.mcp.server",
       "nodes": [
         {
@@ -871,14 +871,14 @@
     },
     {
       "edges": [],
-      "inputHash": "49ff33960dbda272a50eab24cd0d293e04e9f2107f7743e7d14ca0fe3c03fc72",
+      "inputHash": "db3382b024b3b4edcc8ad66bf535189f71302a6ad2079ade1f6d13b880fa01dc",
       "key": "card:workduck/workduck.mcp.server.contract",
       "nodes": [
         {
           "definitions": [
             {
               "kind": "function",
-              "line": 786,
+              "line": 836,
               "path": "src-tauri/src/mcp_server.rs",
               "provenance": {
                 "generator": null,
@@ -891,15 +891,15 @@
           "external": false,
           "key": "workduck/workduck.mcp.server.contract",
           "location": {
-            "declarationLine": 786,
-            "endLine": 784,
+            "declarationLine": 836,
+            "endLine": 834,
             "exported": false,
             "kind": "function",
             "language": "rust",
             "path": "src-tauri/src/mcp_server.rs",
             "receiver": null,
             "signature": "fn run_tool_projects_redacted_snapshot_without_command_or_output_text()",
-            "startLine": 779,
+            "startLine": 829,
             "symbol": "run_tool_projects_redacted_snapshot_without_command_or_output_text",
             "visibility": "private"
           },
@@ -908,7 +908,7 @@
           "semanticId": "workduck.mcp.server.contract"
         }
       ],
-      "outputHash": "e957926cb69faa5b9c10003f6d1f790a775bd31c68fb33230b07b7b1e8316b82"
+      "outputHash": "b3d665a5ef5184715ccc64830bc55f6f5aba7a2cc5564a5889e965f604c835c9"
     },
     {
       "edges": [],

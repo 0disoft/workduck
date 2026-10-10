@@ -179,6 +179,12 @@ only. Tool calls cannot select paths, mutate work orders, start processes, or
 read secret values. If the local Workduck database cannot be discovered, project
 and import-attempt data are reported as unavailable; an explicit `--database`
 path can select the existing database at startup.
+Startup validates only the bound workspace identity. Each MCP call reads the
+sections it returns: projects from the registry, queue from the queue listing,
+runs from import attempts and task records, and workspace status from metadata.
+Project and queue requests do not scan execution records; unknown tool names
+are rejected before workspace reads. The desktop Agent API retains its full
+snapshot with the same redaction rules.
 
 ### Sync Repository And Workspace Repository
 

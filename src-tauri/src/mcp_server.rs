@@ -1,7 +1,7 @@
 /* llmnav/1 module
 id=workduck.mcp.server
 role=Serve one workspace's redacted Agent API snapshot through bounded read-only stdio MCP tools.
-owns=stdio MCP protocol|read-only tool catalog|workspace-bound snapshot projection
+owns=stdio MCP protocol|read-only tool catalog|workspace-bound snapshot projection|tool-scoped reads
 excludes=workspace mutation|secret values|network transport
 search=read-only MCP server|workspace MCP tools|stdio agent snapshot
 invariant=Tool input cannot select paths, every tool result is projected from the redacted snapshot, and stdout contains only MCP JSON messages.
@@ -19,19 +19,17 @@ use std::{
 use rusqlite::{Connection, OpenFlags};
 use serde_json::{Map, Value, json};
 
-use crate::agent_api_snapshot::{AgentApiSnapshotRequest, build_agent_api_snapshot};
+use crate::agent_api_snapshot::{
+    AgentApiSnapshotRequest, AgentApiSnapshotScope, build_scoped_agent_api_snapshot,
+};
 use crate::storage::CURRENT_SCHEMA_VERSION;
 
 const SERVER_NAME: &str = "workduck";
 const SERVER_DESCRIPTION: &str =
     "Read-only Workduck workspace metadata projected from the redacted Agent API snapshot.";
 const MODERN_PROTOCOL_VERSION: &str = "2026-07-28";
-const LEGACY_PROTOCOL_VERSIONS: [&str; 4] = [
-    "2025-11-25",
-    "2025-06-18",
-    "2025-03-26",
-    "2024-11-05",
-];
+const LEGACY_PROTOCOL_VERSIONS: [&str; 4] =
+    ["2025-11-25", "2025-06-18", "2025-03-26", "2024-11-05"];
 const MAX_STDIO_MESSAGE_BYTES: usize = 1_048_576;
 const SQLITE_BUSY_TIMEOUT_MILLIS: u64 = 5_000;
 const PROTOCOL_VERSION_META_KEY: &str = "io.modelcontextprotocol/protocolVersion";
@@ -139,12 +137,9 @@ fn run_stdio_with_io<R: BufRead, W: Write>(
         };
 
         if let Some(response) = response {
-            serde_json::to_writer(&mut *writer, &response).map_err(|source| {
-                McpServerError::Output(io::Error::other(source.to_string()))
-            })?;
-            writer
-                .write_all(b"\n")
-                .map_err(McpServerError::Output)?;
+            serde_json::to_writer(&mut *writer, &response)
+                .map_err(|source| McpServerError::Output(io::Error::other(source.to_string())))?;
+            writer.write_all(b"\n").map_err(McpServerError::Output)?;
             writer.flush().map_err(McpServerError::Output)?;
         }
     }
@@ -200,7 +195,7 @@ impl McpServer {
             database,
             negotiated_legacy_protocol: None,
         };
-        let probe = server.snapshot_value()?;
+        let probe = server.snapshot_value(AgentApiSnapshotScope::Identity)?;
 
         if probe.get("ok").and_then(Value::as_bool) != Some(true) {
             let error = probe
@@ -215,12 +210,9 @@ impl McpServer {
 
     fn handle_message(&mut self, message: Value) -> Option<Value> {
         match message {
-            Value::Array(messages) if messages.is_empty() => Some(json_rpc_error(
-                Value::Null,
-                -32600,
-                "Invalid Request",
-                None,
-            )),
+            Value::Array(messages) if messages.is_empty() => {
+                Some(json_rpc_error(Value::Null, -32600, "Invalid Request", None))
+            }
             Value::Array(messages) => {
                 let responses = messages
                     .into_iter()
@@ -239,12 +231,7 @@ impl McpServer {
 
     fn handle_single_message(&mut self, message: Value) -> Option<Value> {
         let Value::Object(object) = message else {
-            return Some(json_rpc_error(
-                Value::Null,
-                -32600,
-                "Invalid Request",
-                None,
-            ));
+            return Some(json_rpc_error(Value::Null, -32600, "Invalid Request", None));
         };
         let id = object.get("id").cloned();
         let Some(method) = object.get("method").and_then(Value::as_str) else {
@@ -257,8 +244,8 @@ impl McpServer {
 
         let params = object.get("params").cloned().unwrap_or_else(|| json!({}));
         let requested_version = request_protocol_version(&params);
-        let modern_request = requested_version == Some(MODERN_PROTOCOL_VERSION)
-            || method == "server/discover";
+        let modern_request =
+            requested_version == Some(MODERN_PROTOCOL_VERSION) || method == "server/discover";
 
         if let Some(version) = requested_version {
             if version != MODERN_PROTOCOL_VERSION {
@@ -366,7 +353,18 @@ impl McpServer {
             ));
         }
 
-        let snapshot = self.snapshot()?;
+        let scope = match name {
+            "workspace_status" => AgentApiSnapshotScope::WorkspaceStatus,
+            "list_projects" => AgentApiSnapshotScope::Projects,
+            "list_queue" => AgentApiSnapshotScope::Queue,
+            "list_runs" => AgentApiSnapshotScope::Runs,
+            _ => {
+                return Err(RpcFailure::invalid_params(format!(
+                    "unknown Workduck tool: {name}"
+                )));
+            }
+        };
+        let snapshot = self.snapshot(scope)?;
         let data = match name {
             "workspace_status" => project_workspace_status(&snapshot)?,
             "list_projects" => required_field(&snapshot, "projectRegistry")?,
@@ -382,7 +380,7 @@ impl McpServer {
             _ => {
                 return Err(RpcFailure::invalid_params(format!(
                     "unknown Workduck tool: {name}"
-                )))
+                )));
             }
         };
         let text = serde_json::to_string_pretty(&data)
@@ -397,9 +395,9 @@ impl McpServer {
         }))
     }
 
-    fn snapshot(&self) -> Result<Map<String, Value>, RpcFailure> {
+    fn snapshot(&self, scope: AgentApiSnapshotScope) -> Result<Map<String, Value>, RpcFailure> {
         let result = self
-            .snapshot_value()
+            .snapshot_value(scope)
             .map_err(|error| RpcFailure::internal(error.to_string()))?;
 
         if result.get("ok").and_then(Value::as_bool) != Some(true) {
@@ -417,13 +415,14 @@ impl McpServer {
             .ok_or_else(|| RpcFailure::internal("agent snapshot payload is missing"))
     }
 
-    fn snapshot_value(&self) -> Result<Value, McpServerError> {
-        serde_json::to_value(build_agent_api_snapshot(
+    fn snapshot_value(&self, scope: AgentApiSnapshotScope) -> Result<Value, McpServerError> {
+        serde_json::to_value(build_scoped_agent_api_snapshot(
             AgentApiSnapshotRequest::new(
                 self.config.workspace_id.clone(),
                 self.config.workspace_path.to_string_lossy().into_owned(),
             ),
             self.database.as_ref(),
+            scope,
         ))
         .map_err(|error| McpServerError::InvalidConfiguration(error.to_string()))
     }
@@ -633,7 +632,10 @@ fn json_rpc_success(id: Value, result: Value, modern_request: bool) -> Value {
         response
             .as_object_mut()
             .expect("JSON-RPC success response must be an object")
-            .insert("resultType".to_owned(), Value::String("complete".to_owned()));
+            .insert(
+                "resultType".to_owned(),
+                Value::String("complete".to_owned()),
+            );
     }
 
     response
@@ -651,12 +653,7 @@ fn unsupported_protocol_version(id: Value, requested: &str) -> Value {
     )
 }
 
-fn json_rpc_error(
-    id: Value,
-    code: i64,
-    message: impl Into<String>,
-    data: Option<Value>,
-) -> Value {
+fn json_rpc_error(id: Value, code: i64, message: impl Into<String>, data: Option<Value>) -> Value {
     let mut error = json!({
         "code": code,
         "message": message.into()
@@ -681,12 +678,8 @@ mod tests {
     use super::*;
 
     fn test_server(workspace: &Path) -> McpServer {
-        McpServer::new(McpServerConfig::new(
-            "workspace_test",
-            workspace,
-            None,
-        ))
-        .expect("test MCP server")
+        McpServer::new(McpServerConfig::new("workspace_test", workspace, None))
+            .expect("test MCP server")
     }
 
     fn request(id: i64, method: &str, params: Value) -> Value {
@@ -725,9 +718,7 @@ mod tests {
         let response = server
             .handle_message(request(1, "tools/list", json!({})))
             .expect("tools/list response");
-        let tools = response["result"]["tools"]
-            .as_array()
-            .expect("tool list");
+        let tools = response["result"]["tools"].as_array().expect("tool list");
         let names = tools
             .iter()
             .filter_map(|tool| tool["name"].as_str())
@@ -776,6 +767,65 @@ mod tests {
         assert_eq!(response["error"]["code"], -32602);
     }
 
+    #[test]
+    fn unknown_tools_are_rejected_before_reading_the_bound_workspace() {
+        let workspace = tempfile::tempdir().unwrap();
+        let server = test_server(workspace.path());
+        workspace.close().unwrap();
+        let error = server
+            .handle_tools_call(&json!({
+                "name": "unknown_tool", "arguments": {}
+            }))
+            .unwrap_err();
+        assert_eq!(error.code, -32602);
+        assert!(error.message.contains("unknown Workduck tool"));
+    }
+
+    #[test]
+    fn each_tool_projects_only_its_requested_snapshot_sections() {
+        let workspace = tempfile::tempdir().unwrap();
+        let server = test_server(workspace.path());
+        for (name, keys) in [
+            (
+                "workspace_status",
+                vec![
+                    "version",
+                    "generatedAt",
+                    "capabilities",
+                    "workspace",
+                    "workspaceMetadata",
+                ],
+            ),
+            (
+                "list_projects",
+                vec!["ok", "exists", "counts", "updatedAt", "nodes", "error"],
+            ),
+            (
+                "list_queue",
+                vec!["ok", "exists", "path", "counts", "files"],
+            ),
+            (
+                "list_runs",
+                vec![
+                    "generatedAt",
+                    "repositoryImportAttempts",
+                    "repositoryTaskRuns",
+                ],
+            ),
+        ] {
+            let result = server.handle_tools_call(&json!({ "name": name })).unwrap();
+            let data = result["structuredContent"].as_object().unwrap();
+            assert_eq!(data.len(), keys.len(), "{name}");
+            assert!(keys.iter().all(|key| data.contains_key(*key)), "{name}");
+            let text = result["content"][0]["text"].as_str().unwrap();
+            assert_eq!(
+                serde_json::from_str::<Value>(text).unwrap(),
+                result["structuredContent"]
+            );
+            assert_eq!(result["isError"], false);
+        }
+    }
+
     // llmnav/1 symbol
     // id=workduck.mcp.server.contract
     // role=Verify MCP projections retain Agent API redaction and never return command or output bodies.
@@ -791,16 +841,20 @@ mod tests {
             .join("repository-task-runs");
         fs::create_dir_all(&run_dir).expect("run directory");
         fs::write(
-            run_dir.join("run.json"),
-            r#"{
-                "id":"run_1",
-                "task":"build",
-                "repositoryPath":"projects/workduck",
-                "state":"failed",
-                "command":"echo secret-command",
-                "outputTail":"secret-output",
-                "startedAt":"2026-08-20T00:00:00Z"
-            }"#,
+            run_dir.join("run_1.json"),
+            serde_json::to_vec(&json!({
+                "id": "run_1",
+                "task": "build",
+                "repositoryPath": crate::git_path::git_process_path(
+                    &fs::canonicalize(workspace.path()).unwrap().join("projects/workduck")
+                ),
+                "state": "failed",
+                "command": "echo secret-command",
+                "outputTail": "secret-output",
+                "startedAt": "2026-08-20T00:00:00Z",
+                "recordPath": "untrusted.json"
+            }))
+            .unwrap(),
         )
         .expect("run record");
         let mut server = test_server(workspace.path());

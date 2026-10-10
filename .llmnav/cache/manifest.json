@@ -3,14 +3,14 @@
   "fileStateSchemaVersion": 1,
   "files": {
     ".llmnav/cache/agent-context.md": "b22f4c1d47123f75b91c9f81e077994d420cb2cff1a3626d5ff59c1df1e00326",
-    ".llmnav/cache/cards.jsonl": "3b057856dfc48a323c79424def383fff53759a96a5794ffc1ae71be4d3e4bcac",
-    ".llmnav/cache/file-state.json": "38a3acfaae7e9c82ad94bd80fab3587fd2a4fb6cb3696f4bc9d75e30a6e42cfb",
-    ".llmnav/cache/graph-state.json": "048bd6873a9f21c2d92f73e7059d1d138c279df7f2f899afece9486113179e00",
-    ".llmnav/cache/graph.json": "6c3bf427db16c8d1a6657ff1efc8820bb12ce0ebbd38dc7beddef78aee1f60b5",
-    ".llmnav/cache/index.json": "e3e8a28f67f18ba02e19886ac9403280ec6ba572a7f445fed243407fce6e72f2",
+    ".llmnav/cache/cards.jsonl": "693b6fdb03be96ee55810f835bde6e855cb3013ca138ab53853af8951c114300",
+    ".llmnav/cache/file-state.json": "e6f0034d01907817a8c6609f63059679e625e54e8562486caf956b7a305c356d",
+    ".llmnav/cache/graph-state.json": "96ba0ff66d33e627cfa3c0c7b744c4b5205a97379a294d138579146d0f6a8d1f",
+    ".llmnav/cache/graph.json": "0b5f1a637fba30fbfb84fc739931e541341a6370f6191ff6d1618ae26ff9079a",
+    ".llmnav/cache/index.json": "bdc71be98895b77e5bab4d3abba00d7e00848dfca588f229afa803326a5131b9",
     ".llmnav/cache/prompt-prefix.json": "38078b91908a49ef060b683330ecdc865a5875eee15975afacf08bd981daff1e",
     ".llmnav/cache/repo-core.txt": "13cf35944f81065bbc1cd25e2b7dfac7dbd87da362dc2d9597abef9766dbce11",
-    ".llmnav/cache/search-index.json": "1f26bf34988dfb3385a7ca13899b1b28fe554a087a03dbe21ffa2da067d71c4e"
+    ".llmnav/cache/search-index.json": "9563df12b32f763969db1b1333d6e62c55cff59dcaf87d589fd56c22f1bd288a"
   },
   "graphSchemaVersion": 1,
   "graphStateSchemaVersion": 1,
@@ -18,9 +18,9 @@
   "promptBundleSchemaVersion": 1,
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "searchCardSetHash": "4e056ff0ccceb6e770318fc2d00519ce5985686af5b4449e5731365c0f9527ab",
+  "searchCardSetHash": "11faf54007ed8b18b547ff659afff0b2ff6051fdb0cb38a0c98d81874f8b14a8",
   "searchIndexSchemaVersion": 2,
   "searchShardSchemaVersion": null,
-  "sourceHash": "f1707f6eb54d19df72a405567f9c1e736cfae9efe8969ba5aec4b289e8434bff",
+  "sourceHash": "ad53ca93c858ac7e8480aa45ce9e1a8a2e1e4c7c4d9b5513e95b3a2c449566ab",
   "specVersion": "1"
 }

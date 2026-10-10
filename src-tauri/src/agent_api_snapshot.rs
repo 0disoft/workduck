@@ -1,7 +1,7 @@
 // llmnav/1 module
 // id=workduck.agent.snapshot
 // role=Build a bounded read-only workspace snapshot for agents while omitting secrets, terminal input, command text, and output bodies.
-// owns=agent API snapshot|workspace summary redaction|snapshot capability declaration
+// owns=agent API snapshot|tool-scoped snapshot reads|workspace summary redaction|snapshot capability declaration
 // excludes=workspace mutation endpoints|secret decryption
 // search=agent workspace snapshot|read-only agent API|redacted workspace summary
 // invariant=Snapshot generation never creates missing Queue state or exposes secret identifiers, encrypted payloads, commands, or output tails; task summaries share bounded record reads and read-only liveness projection with the desktop.
@@ -40,6 +40,16 @@ const WORKDUCK_DIRECTORY_NAME: &str = ".workduck";
 const WORKSPACE_DATA_FILE_MAX_BYTES: u64 = 1_048_576;
 const REPOSITORY_TASK_RUN_LIMIT: usize = 20;
 const REPOSITORY_IMPORT_ATTEMPT_LIMIT: i64 = 20;
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub(crate) enum AgentApiSnapshotScope {
+    Full,
+    Identity,
+    WorkspaceStatus,
+    Projects,
+    Queue,
+    Runs,
+}
 
 #[derive(serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -90,11 +100,16 @@ pub struct AgentApiSnapshot {
     generated_at: String,
     capabilities: AgentApiCapabilities,
     workspace: AgentApiWorkspaceSnapshot,
-    queue: AgentApiQueueSnapshot,
-    project_registry: AgentApiProjectRegistrySnapshot,
-    repository_import_attempts: AgentApiRepositoryImportAttemptsSnapshot,
-    repository_task_runs: AgentApiRepositoryTaskRunsSnapshot,
-    workspace_metadata: AgentApiWorkspaceMetadataSnapshot,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    queue: Option<AgentApiQueueSnapshot>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    project_registry: Option<AgentApiProjectRegistrySnapshot>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    repository_import_attempts: Option<AgentApiRepositoryImportAttemptsSnapshot>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    repository_task_runs: Option<AgentApiRepositoryTaskRunsSnapshot>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    workspace_metadata: Option<AgentApiWorkspaceMetadataSnapshot>,
 }
 
 #[derive(serde::Serialize)]
@@ -271,6 +286,14 @@ pub(crate) fn build_agent_api_snapshot(
     request: AgentApiSnapshotRequest,
     connection: Option<&Connection>,
 ) -> AgentApiSnapshotResult {
+    build_scoped_agent_api_snapshot(request, connection, AgentApiSnapshotScope::Full)
+}
+
+pub(crate) fn build_scoped_agent_api_snapshot(
+    request: AgentApiSnapshotRequest,
+    connection: Option<&Connection>,
+    scope: AgentApiSnapshotScope,
+) -> AgentApiSnapshotResult {
     let workspace_id = match validate_workspace_id(&request.workspace_id) {
         Ok(workspace_id) => workspace_id,
         Err(error) => return invalid(error),
@@ -295,14 +318,31 @@ pub(crate) fn build_agent_api_snapshot(
                 id: workspace_id.clone(),
                 path: display_path(&workspace_path),
             },
-            queue: summarize_queue(&workspace_path),
-            project_registry: summarize_project_registry(connection, &workspace_id),
-            repository_import_attempts: summarize_repository_import_attempts(
-                connection,
-                &workspace_id,
-            ),
-            repository_task_runs: summarize_repository_task_runs(&workspace_path),
-            workspace_metadata: summarize_workspace_metadata(&workspace_path),
+            queue: matches!(
+                scope,
+                AgentApiSnapshotScope::Full | AgentApiSnapshotScope::Queue
+            )
+            .then(|| summarize_queue(&workspace_path)),
+            project_registry: matches!(
+                scope,
+                AgentApiSnapshotScope::Full | AgentApiSnapshotScope::Projects
+            )
+            .then(|| summarize_project_registry(connection, &workspace_id)),
+            repository_import_attempts: matches!(
+                scope,
+                AgentApiSnapshotScope::Full | AgentApiSnapshotScope::Runs
+            )
+            .then(|| summarize_repository_import_attempts(connection, &workspace_id)),
+            repository_task_runs: matches!(
+                scope,
+                AgentApiSnapshotScope::Full | AgentApiSnapshotScope::Runs
+            )
+            .then(|| summarize_repository_task_runs(&workspace_path)),
+            workspace_metadata: matches!(
+                scope,
+                AgentApiSnapshotScope::Full | AgentApiSnapshotScope::WorkspaceStatus
+            )
+            .then(|| summarize_workspace_metadata(&workspace_path)),
         }),
         error: None,
     }
@@ -936,6 +976,64 @@ mod tests {
         assert!(!workspace.join(QUEUE_DIRECTORY_NAME).exists());
 
         let _ = fs::remove_dir_all(workspace);
+    }
+
+    #[test]
+    fn scoped_snapshots_omit_unrequested_sections_and_full_snapshot_keeps_its_contract() {
+        let workspace = tempfile::tempdir().unwrap();
+        for (scope, expected) in [
+            (AgentApiSnapshotScope::Identity, vec![]),
+            (
+                AgentApiSnapshotScope::WorkspaceStatus,
+                vec!["workspaceMetadata"],
+            ),
+            (AgentApiSnapshotScope::Projects, vec!["projectRegistry"]),
+            (AgentApiSnapshotScope::Queue, vec!["queue"]),
+            (
+                AgentApiSnapshotScope::Runs,
+                vec!["repositoryImportAttempts", "repositoryTaskRuns"],
+            ),
+            (
+                AgentApiSnapshotScope::Full,
+                vec![
+                    "queue",
+                    "projectRegistry",
+                    "repositoryImportAttempts",
+                    "repositoryTaskRuns",
+                    "workspaceMetadata",
+                ],
+            ),
+        ] {
+            let value = serde_json::to_value(build_scoped_agent_api_snapshot(
+                AgentApiSnapshotRequest::new("workspace_test", workspace.path().to_string_lossy()),
+                None,
+                scope,
+            ))
+            .unwrap();
+            assert_eq!(value["ok"], true);
+            let snapshot = value["snapshot"].as_object().unwrap();
+            for field in [
+                "queue",
+                "projectRegistry",
+                "repositoryImportAttempts",
+                "repositoryTaskRuns",
+                "workspaceMetadata",
+            ] {
+                assert_eq!(
+                    snapshot.contains_key(field),
+                    expected.contains(&field),
+                    "{field}"
+                );
+            }
+            assert_eq!(snapshot["capabilities"]["readOnly"], true);
+            assert_eq!(snapshot["workspace"]["id"], "workspace_test");
+        }
+        let full = serde_json::to_value(build_agent_api_snapshot(
+            AgentApiSnapshotRequest::new("workspace_test", workspace.path().to_string_lossy()),
+            None,
+        ))
+        .unwrap();
+        assert_eq!(full["snapshot"].as_object().unwrap().len(), 9);
     }
 
     // llmnav/1 symbol
