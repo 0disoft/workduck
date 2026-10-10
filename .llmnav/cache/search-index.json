@@ -92,7 +92,7 @@
     "workduck.workspace.sync-file-native",
     "workduck.workspace.sync-git-native"
   ],
-  "cardSetHash": "1e226ddeaf06805d6d2ca6ac2dd506d356d4904f102462a041c1e88843ead879",
+  "cardSetHash": "65749d926d8fac290b032eedd2e85da80374539f07322478a489ae6895627975",
   "documentCount": 91,
   "documents": [
     [
@@ -438,7 +438,7 @@
       ]
     ],
     [
-      "cd1af3802cb9cb70d63e6423bc3ea54105e80f035b9bba2032b520ba522223ca",
+      "90e6db9f84eaa423846a07c7f118bb6acf542939421b11f5d74717926c82e660",
       [
         "own spawned process trees and terminate their descendants across windows jobs and unix process groups.",
         "process tree shutdown",
@@ -446,7 +446,7 @@
         "application shutdown",
         "windows job object",
         "unix process group",
-        "dropping an active process owner or shutting down the app cannot intentionally leave its registered descendants running.",
+        "parent exit never exempts owned descendants from termination; completed owners retire their registrations and cannot signal their process group again.",
         "process tree spawning",
         "cross-platform termination",
         "active process registry"
@@ -1774,8 +1774,6 @@
         26,
         [
           3,
-          1,
-          5,
           1
         ]
       ],
@@ -1922,6 +1920,15 @@
         77,
         [
           1,
+          1
+        ]
+      ]
+    ],
+    [
+      [
+        26,
+        [
+          5,
           1
         ]
       ]
@@ -2257,13 +2264,6 @@
         ]
       ],
       [
-        26,
-        [
-          5,
-          1
-        ]
-      ],
-      [
         55,
         [
           5,
@@ -2526,7 +2526,9 @@
         26,
         [
           1,
-          2
+          2,
+          5,
+          1
         ]
       ],
       [
@@ -3176,13 +3178,6 @@
           9,
           2
         ]
-      ],
-      [
-        26,
-        [
-          5,
-          1
-        ]
       ]
     ],
     [
@@ -6637,6 +6632,13 @@
         ]
       ],
       [
+        26,
+        [
+          5,
+          1
+        ]
+      ],
+      [
         40,
         [
           5,
@@ -8791,15 +8793,6 @@
     ],
     [
       [
-        26,
-        [
-          5,
-          1
-        ]
-      ]
-    ],
-    [
-      [
         4,
         [
           2,
@@ -8877,15 +8870,6 @@
         7,
         [
           2,
-          1
-        ]
-      ]
-    ],
-    [
-      [
-        26,
-        [
-          5,
           1
         ]
       ]
@@ -10439,6 +10423,15 @@
     ],
     [
       [
+        26,
+        [
+          5,
+          1
+        ]
+      ]
+    ],
+    [
+      [
         8,
         [
           1,
@@ -10507,6 +10500,13 @@
         21,
         [
           1,
+          1
+        ]
+      ],
+      [
+        26,
+        [
+          5,
           1
         ]
       ]
@@ -11907,6 +11907,13 @@
         ]
       ],
       [
+        26,
+        [
+          5,
+          1
+        ]
+      ],
+      [
         31,
         [
           1,
@@ -12450,6 +12457,8 @@
         26,
         [
           2,
+          1,
+          5,
           1
         ]
       ],
@@ -13591,13 +13600,6 @@
     ],
     [
       [
-        26,
-        [
-          5,
-          1
-        ]
-      ],
-      [
         79,
         [
           5,
@@ -13917,13 +13919,6 @@
         21,
         [
           1,
-          1
-        ]
-      ],
-      [
-        26,
-        [
-          5,
           1
         ]
       ],
@@ -14487,15 +14482,6 @@
         86,
         [
           1,
-          1
-        ]
-      ]
-    ],
-    [
-      [
-        26,
-        [
-          5,
           1
         ]
       ]
@@ -17035,6 +17021,13 @@
         ]
       ],
       [
+        26,
+        [
+          5,
+          1
+        ]
+      ],
+      [
         27,
         [
           5,
@@ -18493,13 +18486,6 @@
         ]
       ],
       [
-        26,
-        [
-          5,
-          1
-        ]
-      ],
-      [
         27,
         [
           5,
@@ -19138,6 +19124,13 @@
         ]
       ],
       [
+        26,
+        [
+          5,
+          1
+        ]
+      ],
+      [
         40,
         [
           1,
@@ -19161,7 +19154,9 @@
           5,
           1
         ]
-      ],
+      ]
+    ],
+    [
       [
         26,
         [
@@ -19445,6 +19440,15 @@
         78,
         [
           0,
+          1
+        ]
+      ]
+    ],
+    [
+      [
+        26,
+        [
+          5,
           1
         ]
       ]
@@ -23348,16 +23352,18 @@
         ]
       ],
       [
-        26,
-        [
-          5,
-          1
-        ]
-      ],
-      [
         49,
         [
           1,
+          1
+        ]
+      ]
+    ],
+    [
+      [
+        26,
+        [
+          5,
           1
         ]
       ]
@@ -25598,6 +25604,15 @@
     ],
     [
       [
+        26,
+        [
+          5,
+          1
+        ]
+      ]
+    ],
+    [
+      [
         9,
         [
           5,
@@ -26338,13 +26353,6 @@
       ]
     ],
     [
-      [
-        26,
-        [
-          5,
-          1
-        ]
-      ],
       [
         47,
         [
@@ -31638,6 +31646,8 @@
           2,
           1,
           3,
+          1,
+          5,
           1
         ]
       ]
@@ -31828,13 +31838,6 @@
         24,
         [
           1,
-          1
-        ]
-      ],
-      [
-        26,
-        [
-          5,
           1
         ]
       ],
@@ -32185,7 +32188,9 @@
         26,
         [
           1,
-          1
+          1,
+          5,
+          2
         ]
       ],
       [
@@ -36716,6 +36721,7 @@
     "admission",
     "admits",
     "after",
+    "again",
     "against",
     "agent",
     "agents",
@@ -36978,11 +36984,9 @@
     "documents",
     "does",
     "domain",
-    "down",
     "draft",
     "drafts",
     "drive",
-    "dropping",
     "drops",
     "dtos",
     "duplicate",
@@ -37035,6 +37039,7 @@
     "executes",
     "execution",
     "executions",
+    "exempts",
     "existing",
     "exit",
     "expected",
@@ -37189,7 +37194,6 @@
     "launch",
     "launcher",
     "layout",
-    "leave",
     "leaves",
     "legacy",
     "length",
@@ -37319,6 +37323,7 @@
     "own",
     "owned",
     "owner",
+    "owners",
     "ownership",
     "owns",
     "package",
@@ -37328,6 +37333,7 @@
     "paired",
     "palette",
     "panel",
+    "parent",
     "parents",
     "parse",
     "parsed",
@@ -37441,6 +37447,7 @@
     "refresh",
     "refreshes",
     "registered",
+    "registrations",
     "registries",
     "registry",
     "reject",
@@ -37489,6 +37496,7 @@
     "retain",
     "retaining",
     "retains",
+    "retire",
     "retries",
     "return",
     "returned",
@@ -37578,7 +37586,7 @@
     "shell",
     "shim",
     "shutdown",
-    "shutting",
+    "signal",
     "single",
     "size",
     "skill",

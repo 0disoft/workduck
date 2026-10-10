@@ -267,24 +267,28 @@
         "terminal output buffering"
       ],
       "hashes": {
-        "body": "e92092acc30b858d48144f1104bc0a636757a900417bbbe1232e6d67273c69e4",
-        "semantic": "5ab2b16387c2f5fd5e910bc21c12e7cc7c2db50ff68cb4190084e90fe3f5ef51",
-        "structure": "9a18ba2ea7ae7713a710ae832c01172632bc0ed617f36da6fab28973287fd448"
+        "body": "8e805796b7ff6833e767930fe1eeea1f6c18ae9be2dd3b4c65df83e77c8bf261",
+        "semantic": "191de7f89b783df4c88c829b11002f785fc73c54d00561ecb6c3d58b86ee9984",
+        "structure": "ae6bee9f9bd3dd14f399a1e7c667feb0938d9c3151c61f75c9c04a0e79e292d5"
       },
       "id": "workduck.process.tree",
       "imports": [
         "core::ffi::c_void",
         "std::os::unix::process::CommandExt",
         "std::os::windows::io::AsRawHandle",
+        "std::os::windows::process::CommandExt",
+        "std::{\n        io::{BufRead, BufReader, Read, Write},\n        process::Stdio,\n        sync::mpsc,\n    }",
         "std::{\n        io::{BufRead, BufReader},\n        process::Stdio,\n    }",
-        "std::{\n    collections::HashMap,\n    io,\n    process::{Child, Command, ExitStatus},\n    sync::{Mutex, MutexGuard, OnceLock, atomic::{AtomicU64, Ordering}},\n    thread,\n    time::Duration,\n}",
+        "std::{\n    collections::HashMap,\n    io,\n    process::{Child, Command, ExitStatus},\n    sync::{\n        Mutex, MutexGuard, OnceLock,\n        atomic::{AtomicU64, Ordering},\n    },\n    thread,\n    time::Duration,\n}",
+        "std::{io::Write, os::windows::process::CommandExt, sync::mpsc}",
         "std::{mem::size_of, ptr}",
         "tests {\n    use super::*",
+        "unix_tests {\n    use super::*",
         "wait_timeout::ChildExt",
         "windows_ffi {\n    use core::ffi::c_void"
       ],
       "invariant": [
-        "Dropping an active process owner or shutting down the app cannot intentionally leave its registered descendants running."
+        "Parent exit never exempts owned descendants from termination; completed owners retire their registrations and cannot signal their process group again."
       ],
       "location": {
         "declarationLine": null,
@@ -4633,6 +4637,6 @@
   "generatedBy": "llmnav@0.9.7",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "f063c47ef5b74ceceaeb128b859a01edd70b2170a4a007c8a9a5b89773944334",
+  "sourceHash": "e292ea394d0623e53818d29f7fca0b66eb376e7554e1496d5a9c31f3b3722aa2",
   "specVersion": "1"
 }

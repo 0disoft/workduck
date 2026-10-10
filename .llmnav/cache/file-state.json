@@ -2540,7 +2540,7 @@
             ],
             "id": "workduck.process.tree",
             "invariant": [
-              "Dropping an active process owner or shutting down the app cannot intentionally leave its registered descendants running."
+              "Parent exit never exempts owned descendants from termination; completed owners retire their registrations and cannot signal their process group again."
             ],
             "owns": [
               "process tree spawning",
@@ -2561,7 +2561,7 @@
             "stability": "architecture",
             "unknown": []
           },
-          "end": 563,
+          "end": 593,
           "endLine": 9,
           "entries": [
             {
@@ -2598,7 +2598,7 @@
               "key": "invariant",
               "line": 7,
               "order": 5,
-              "value": "Dropping an active process owner or shutting down the app cannot intentionally leave its registered descendants running."
+              "value": "Parent exit never exempts owned descendants from termination; completed owners retire their registrations and cannot signal their process group again."
             },
             {
               "key": "stability",
@@ -2611,7 +2611,7 @@
           "indent": "",
           "newline": "\n",
           "prefix": null,
-          "raw": "/* llmnav/1 module\nid=workduck.process.tree\nrole=Own spawned process trees and terminate their descendants across Windows jobs and Unix process groups.\nowns=process tree spawning|cross-platform termination|active process registry\nexcludes=task command selection|terminal output buffering\nsearch=process tree shutdown|descendant process termination|application shutdown|windows job object|unix process group\ninvariant=Dropping an active process owner or shutting down the app cannot intentionally leave its registered descendants running.\nstability=architecture\n*/",
+          "raw": "/* llmnav/1 module\nid=workduck.process.tree\nrole=Own spawned process trees and terminate their descendants across Windows jobs and Unix process groups.\nowns=process tree spawning|cross-platform termination|active process registry\nexcludes=task command selection|terminal output buffering\nsearch=process tree shutdown|descendant process termination|application shutdown|windows job object|unix process group\ninvariant=Parent exit never exempts owned descendants from termination; completed owners retire their registrations and cannot signal their process group again.\nstability=architecture\n*/",
           "scope": "module",
           "specVersion": "1",
           "start": 0,
@@ -2620,7 +2620,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "e92092acc30b858d48144f1104bc0a636757a900417bbbe1232e6d67273c69e4",
+      "contentHash": "8e805796b7ff6833e767930fe1eeea1f6c18ae9be2dd3b4c65df83e77c8bf261",
       "declarations": [
         null
       ],
@@ -2628,16 +2628,20 @@
         "core::ffi::c_void",
         "std::os::unix::process::CommandExt",
         "std::os::windows::io::AsRawHandle",
+        "std::os::windows::process::CommandExt",
+        "std::{\n        io::{BufRead, BufReader, Read, Write},\n        process::Stdio,\n        sync::mpsc,\n    }",
         "std::{\n        io::{BufRead, BufReader},\n        process::Stdio,\n    }",
-        "std::{\n    collections::HashMap,\n    io,\n    process::{Child, Command, ExitStatus},\n    sync::{Mutex, MutexGuard, OnceLock, atomic::{AtomicU64, Ordering}},\n    thread,\n    time::Duration,\n}",
+        "std::{\n    collections::HashMap,\n    io,\n    process::{Child, Command, ExitStatus},\n    sync::{\n        Mutex, MutexGuard, OnceLock,\n        atomic::{AtomicU64, Ordering},\n    },\n    thread,\n    time::Duration,\n}",
+        "std::{io::Write, os::windows::process::CommandExt, sync::mpsc}",
         "std::{mem::size_of, ptr}",
         "tests {\n    use super::*",
+        "unix_tests {\n    use super::*",
         "wait_timeout::ChildExt",
         "windows_ffi {\n    use core::ffi::c_void"
       ],
       "path": "src-tauri/src/process_tree.rs",
-      "semanticBytes": 563,
-      "sourceBytes": 15785
+      "semanticBytes": 593,
+      "sourceBytes": 22909
     },
     {
       "blocks": [

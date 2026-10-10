@@ -111,6 +111,13 @@ execution-owned records. An interrupted run can remain `running` in its original
 JSON while queries report `stopped`; terminal-produced completion and output
 remain intact.
 
+Owned command and terminal process trees are cleaned up when the parent exits,
+when termination is requested, or when their owner is dropped. Windows jobs and
+Unix process groups are terminated independently of the parent's exit status.
+Completed owners retire their registrations so later cleanup does not reuse a
+stale process-group identity. Finite command cleanup preserves the parent's
+original exit code.
+
 Brief editing, export, and run linking do not run agents or shell commands, and
 the new stores have no browser-only persistence fallback. Creating a new queue
 work order from a brief and manually approving report-based checks remain outside
