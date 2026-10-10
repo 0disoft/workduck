@@ -185,6 +185,12 @@ runs from import attempts and task records, and workspace status from metadata.
 Project and queue requests do not scan execution records; unknown tool names
 are rejected before workspace reads. The desktop Agent API retains its full
 snapshot with the same redaction rules.
+Task summaries retain the newest 20 records encountered, skip output log files
+before opening them, and share an 8MiB read budget across the scan and liveness
+rereads. If the budget is exhausted or a record cannot be read, available
+records remain in the response with `ok: false`, `incomplete: true`, and an
+explicit error. Such a response cannot establish the newest 20 across the
+entire history.
 
 ### Sync Repository And Workspace Repository
 

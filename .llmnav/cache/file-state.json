@@ -949,7 +949,7 @@
             ],
             "id": "workduck.agent.snapshot",
             "invariant": [
-              "Snapshot generation never creates missing Queue state or exposes secret identifiers, encrypted payloads, commands, or output tails; task summaries share bounded record reads and read-only liveness projection with the desktop."
+              "Snapshot generation never creates missing Queue state or exposes secret identifiers, encrypted payloads, commands, or output tails; task summaries retain only the newest twenty records, share a read budget with liveness rereads, and disclose incomplete scans."
             ],
             "owns": [
               "agent API snapshot",
@@ -973,7 +973,7 @@
             "stability": "contract",
             "unknown": []
           },
-          "end": 774,
+          "end": 808,
           "endLine": 11,
           "entries": [
             {
@@ -1010,7 +1010,7 @@
               "key": "invariant",
               "line": 7,
               "order": 5,
-              "value": "Snapshot generation never creates missing Queue state or exposes secret identifiers, encrypted payloads, commands, or output tails; task summaries share bounded record reads and read-only liveness projection with the desktop."
+              "value": "Snapshot generation never creates missing Queue state or exposes secret identifiers, encrypted payloads, commands, or output tails; task summaries retain only the newest twenty records, share a read budget with liveness rereads, and disclose incomplete scans."
             },
             {
               "key": "risk",
@@ -1035,7 +1035,7 @@
           "indent": "",
           "newline": "\n",
           "prefix": "//",
-          "raw": "// llmnav/1 module\n// id=workduck.agent.snapshot\n// role=Build a bounded read-only workspace snapshot for agents while omitting secrets, terminal input, command text, and output bodies.\n// owns=agent API snapshot|tool-scoped snapshot reads|workspace summary redaction|snapshot capability declaration\n// excludes=workspace mutation endpoints|secret decryption\n// search=agent workspace snapshot|read-only agent API|redacted workspace summary\n// invariant=Snapshot generation never creates missing Queue state or exposes secret identifiers, encrypted payloads, commands, or output tails; task summaries share bounded record reads and read-only liveness projection with the desktop.\n// risk=privacy\n// rel=test>workduck.agent.snapshot.contract\n// stability=contract\n// /llmnav\n",
+          "raw": "// llmnav/1 module\n// id=workduck.agent.snapshot\n// role=Build a bounded read-only workspace snapshot for agents while omitting secrets, terminal input, command text, and output bodies.\n// owns=agent API snapshot|tool-scoped snapshot reads|workspace summary redaction|snapshot capability declaration\n// excludes=workspace mutation endpoints|secret decryption\n// search=agent workspace snapshot|read-only agent API|redacted workspace summary\n// invariant=Snapshot generation never creates missing Queue state or exposes secret identifiers, encrypted payloads, commands, or output tails; task summaries retain only the newest twenty records, share a read budget with liveness rereads, and disclose incomplete scans.\n// risk=privacy\n// rel=test>workduck.agent.snapshot.contract\n// stability=contract\n// /llmnav\n",
           "scope": "module",
           "specVersion": "1",
           "start": 0,
@@ -1062,30 +1062,30 @@
             "stability": "contract",
             "unknown": []
           },
-          "end": 33332,
-          "endLine": 1044,
+          "end": 34972,
+          "endLine": 1087,
           "entries": [
             {
               "key": "id",
-              "line": 1040,
+              "line": 1083,
               "order": 0,
               "value": "workduck.agent.snapshot.contract"
             },
             {
               "key": "role",
-              "line": 1041,
+              "line": 1084,
               "order": 1,
               "value": "Verify the agent snapshot replaces credential references with presence flags and never serializes their secret identifiers."
             },
             {
               "key": "search",
-              "line": 1042,
+              "line": 1085,
               "order": 2,
               "value": "agent snapshot contract|credential reference redaction|snapshot privacy test"
             },
             {
               "key": "stability",
-              "line": 1043,
+              "line": 1086,
               "order": 3,
               "value": "contract"
             }
@@ -1097,23 +1097,23 @@
           "raw": "    // llmnav/1 symbol\n    // id=workduck.agent.snapshot.contract\n    // role=Verify the agent snapshot replaces credential references with presence flags and never serializes their secret identifiers.\n    // search=agent snapshot contract|credential reference redaction|snapshot privacy test\n    // stability=contract\n    // /llmnav\n",
           "scope": "symbol",
           "specVersion": "1",
-          "start": 32998,
-          "startLine": 1039,
+          "start": 34638,
+          "startLine": 1082,
           "style": "line",
           "syntaxErrors": []
         }
       ],
-      "contentHash": "40859ef6542cc9ee00329f860a353dd00f89a94b08289f3a43e7bda26c8d38ad",
+      "contentHash": "3def643946a4f679db5715a8ebcadcd39aa204d910b67cab298c53a6000c7fdd",
       "declarations": [
         null,
         {
           "bodyHash": "01bf2716df9736badddd55953f58939db2ff51968d8bf051f07f9f8c97947ea6",
-          "endOffset": 35004,
+          "endOffset": 36644,
           "exported": false,
           "kind": "function",
           "language": "rust",
-          "line": 1046,
-          "offset": 33348,
+          "line": 1089,
+          "offset": 34988,
           "receiver": null,
           "signature": "fn project_registry_summary_omits_secret_ids()",
           "symbol": "project_registry_summary_omits_secret_ids",
@@ -1121,7 +1121,8 @@
         }
       ],
       "imports": [
-        "crate::{\n    path_display::display_path,\n    project_repository_task::{\n        ProjectRepositoryTaskRunRecord, project_task_run_liveness, read_visible_task_run_record,\n    },\n    storage,\n    workspace_path::{WorkspacePathValidationError, validate_absolute_directory_path},\n}",
+        "crate::project_repository_task::{project_task_run_liveness, read_visible_task_run_record}",
+        "crate::{\n    path_display::display_path,\n    project_repository_task::{\n        ProjectRepositoryTaskRunRecord, project_task_run_liveness_with_budget,\n        read_visible_task_run_record_with_budget,\n    },\n    storage,\n    workspace_path::{WorkspacePathValidationError, validate_absolute_directory_path},\n}",
         "rusqlite::{Connection, OptionalExtension, params}",
         "std::time::{SystemTime, UNIX_EPOCH}",
         "std::{\n    collections::BTreeMap,\n    fs, io,\n    path::{Path, PathBuf},\n}",
@@ -1130,8 +1131,8 @@
         "time::{OffsetDateTime, format_description::well_known::Rfc3339}"
       ],
       "path": "src-tauri/src/agent_api_snapshot.rs",
-      "semanticBytes": 1108,
-      "sourceBytes": 42395
+      "semanticBytes": 1142,
+      "sourceBytes": 47809
     },
     {
       "blocks": [],
@@ -3412,7 +3413,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "3eebb1d6dfaf475311cb2e0a050a162b869dc12a7149752f329ce01874cdbba7",
+      "contentHash": "a217ebafd2876f3624d09553acdf4b2c2fbb024cd7794ded5ed200fa373ac557",
       "declarations": [
         null
       ],
@@ -3430,7 +3431,7 @@
       ],
       "path": "src-tauri/src/project_repository_task.rs",
       "semanticBytes": 1055,
-      "sourceBytes": 45507
+      "sourceBytes": 46105
     },
     {
       "blocks": [
@@ -5512,7 +5513,7 @@
     },
     {
       "blocks": [],
-      "contentHash": "77ac97d710d1211ec8a3e50b70aaac959d86e2dfbcf0381bb8be5501691c4817",
+      "contentHash": "b70a79c3eccfa18ac8e3a15a301068ba4e3325e561d2a282cec4db98466630e8",
       "declarations": [],
       "imports": [
         "#lib/tauri/tauri-invoke.ts",
@@ -5520,7 +5521,7 @@
       ],
       "path": "src/lib/agent-api/agent-api-snapshot.ts",
       "semanticBytes": 0,
-      "sourceBytes": 5525
+      "sourceBytes": 5556
     },
     {
       "blocks": [],

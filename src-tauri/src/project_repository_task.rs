@@ -427,7 +427,15 @@ pub(crate) fn read_visible_task_run_record(
     visible_workspace_path: &Path,
 ) -> Option<ProjectRepositoryTaskRunRecord> {
     let mut remaining_bytes = history::MAX_HISTORY_BYTES;
-    let mut record = history::read_bounded_task_run_record(path, &mut remaining_bytes).ok()??;
+    read_visible_task_run_record_with_budget(path, visible_workspace_path, &mut remaining_bytes)
+}
+
+pub(crate) fn read_visible_task_run_record_with_budget(
+    path: &Path,
+    visible_workspace_path: &Path,
+    remaining_bytes: &mut usize,
+) -> Option<ProjectRepositoryTaskRunRecord> {
+    let mut record = history::read_bounded_task_run_record(path, remaining_bytes).ok()??;
     if !history::valid_run_id(&record.id)
         || path.file_stem().and_then(|stem| stem.to_str()) != Some(record.id.as_str())
     {
@@ -877,7 +885,18 @@ fn stopped_task_run_record(
 pub(crate) fn project_task_run_liveness(
     records: Vec<ProjectRepositoryTaskRunRecord>,
 ) -> Vec<ProjectRepositoryTaskRunRecord> {
-    refresh_running_task_run_records(records, collect_live_task_processes)
+    project_task_run_liveness_with_budget(records, history::MAX_HISTORY_BYTES)
+}
+
+pub(crate) fn project_task_run_liveness_with_budget(
+    records: Vec<ProjectRepositoryTaskRunRecord>,
+    remaining_bytes: usize,
+) -> Vec<ProjectRepositoryTaskRunRecord> {
+    refresh_running_task_run_records_with_budget(
+        records,
+        collect_live_task_processes,
+        remaining_bytes,
+    )
 }
 
 fn refresh_running_task_run_records(

@@ -4,7 +4,7 @@
 // owns=agent API snapshot|tool-scoped snapshot reads|workspace summary redaction|snapshot capability declaration
 // excludes=workspace mutation endpoints|secret decryption
 // search=agent workspace snapshot|read-only agent API|redacted workspace summary
-// invariant=Snapshot generation never creates missing Queue state or exposes secret identifiers, encrypted payloads, commands, or output tails; task summaries share bounded record reads and read-only liveness projection with the desktop.
+// invariant=Snapshot generation never creates missing Queue state or exposes secret identifiers, encrypted payloads, commands, or output tails; task summaries retain only the newest twenty records, share a read budget with liveness rereads, and disclose incomplete scans.
 // risk=privacy
 // rel=test>workduck.agent.snapshot.contract
 // stability=contract
@@ -22,7 +22,8 @@ use time::{OffsetDateTime, format_description::well_known::Rfc3339};
 use crate::{
     path_display::display_path,
     project_repository_task::{
-        ProjectRepositoryTaskRunRecord, project_task_run_liveness, read_visible_task_run_record,
+        ProjectRepositoryTaskRunRecord, project_task_run_liveness_with_budget,
+        read_visible_task_run_record_with_budget,
     },
     storage,
     workspace_path::{WorkspacePathValidationError, validate_absolute_directory_path},
@@ -39,6 +40,7 @@ const PROPOSAL_FILE_SUFFIX: &str = ".workduck-proposal.json";
 const WORKDUCK_DIRECTORY_NAME: &str = ".workduck";
 const WORKSPACE_DATA_FILE_MAX_BYTES: u64 = 1_048_576;
 const REPOSITORY_TASK_RUN_LIMIT: usize = 20;
+const REPOSITORY_TASK_RUN_READ_BUDGET: usize = 8 * 1024 * 1024;
 const REPOSITORY_IMPORT_ATTEMPT_LIMIT: i64 = 20;
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -234,6 +236,7 @@ struct AgentApiRepositoryImportAttemptRecord {
 struct AgentApiRepositoryTaskRunsSnapshot {
     ok: bool,
     records: Vec<AgentApiRepositoryTaskRunRecord>,
+    incomplete: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
     error: Option<&'static str>,
 }
@@ -692,15 +695,38 @@ fn repository_import_attempts_read_failure() -> AgentApiRepositoryImportAttempts
 }
 
 fn summarize_repository_task_runs(workspace_path: &Path) -> AgentApiRepositoryTaskRunsSnapshot {
+    summarize_repository_task_runs_with_budget(workspace_path, REPOSITORY_TASK_RUN_READ_BUDGET)
+}
+
+fn summarize_repository_task_runs_with_budget(
+    workspace_path: &Path,
+    mut remaining_bytes: usize,
+) -> AgentApiRepositoryTaskRunsSnapshot {
     let record_dir = workspace_path
         .join(WORKDUCK_DIRECTORY_NAME)
         .join("repository-task-runs");
+    let visible_workspace = crate::git_path::git_process_path(workspace_path);
+    let invalid_record_dir = match fs::canonicalize(&record_dir) {
+        Ok(canonical_dir) => {
+            !crate::git_path::git_process_path(&canonical_dir).starts_with(&visible_workspace)
+        }
+        Err(error) => error.kind() != io::ErrorKind::NotFound,
+    };
+    if invalid_record_dir {
+        return AgentApiRepositoryTaskRunsSnapshot {
+            ok: false,
+            records: Vec::new(),
+            incomplete: true,
+            error: Some("agent-api-repository-task-runs-read-failed"),
+        };
+    }
     let entries = match fs::read_dir(&record_dir) {
         Ok(entries) => entries,
         Err(error) if error.kind() == io::ErrorKind::NotFound => {
             return AgentApiRepositoryTaskRunsSnapshot {
                 ok: true,
                 records: Vec::new(),
+                incomplete: false,
                 error: None,
             };
         }
@@ -708,24 +734,49 @@ fn summarize_repository_task_runs(workspace_path: &Path) -> AgentApiRepositoryTa
             return AgentApiRepositoryTaskRunsSnapshot {
                 ok: false,
                 records: Vec::new(),
+                incomplete: true,
                 error: Some("agent-api-repository-task-runs-read-failed"),
             };
         }
     };
-    let visible_workspace = crate::git_path::git_process_path(workspace_path);
-    let mut records = entries
-        .flatten()
-        .filter_map(|entry| read_repository_task_run_record(&entry.path(), &visible_workspace))
-        .collect::<Vec<_>>();
-
-    records.sort_by(|left, right| {
-        right
-            .started_at
-            .cmp(&left.started_at)
-            .then(right.id.cmp(&left.id))
-    });
-    records.truncate(REPOSITORY_TASK_RUN_LIMIT);
-    let records = project_task_run_liveness(records)
+    let mut records = Vec::new();
+    let mut incomplete = false;
+    for entry in entries {
+        let path = match entry {
+            Ok(entry) => entry.path(),
+            Err(_) => {
+                incomplete = true;
+                continue;
+            }
+        };
+        if path.extension().and_then(|extension| extension.to_str()) != Some("json") {
+            continue;
+        }
+        if remaining_bytes == 0 {
+            incomplete = true;
+            break;
+        }
+        let Some(record) = read_visible_task_run_record_with_budget(
+            &path,
+            &visible_workspace,
+            &mut remaining_bytes,
+        ) else {
+            incomplete = true;
+            continue;
+        };
+        records.push(record);
+        records.sort_by(|left, right| {
+            right
+                .started_at
+                .cmp(&left.started_at)
+                .then(right.id.cmp(&left.id))
+        });
+        records.truncate(REPOSITORY_TASK_RUN_LIMIT);
+    }
+    if remaining_bytes == 0 && records.iter().any(|record| record.state == "running") {
+        incomplete = true;
+    }
+    let records = project_task_run_liveness_with_budget(records, remaining_bytes)
         .into_iter()
         .map(|record| AgentApiRepositoryTaskRunRecord {
             id: record.id,
@@ -744,20 +795,11 @@ fn summarize_repository_task_runs(workspace_path: &Path) -> AgentApiRepositoryTa
         .collect();
 
     AgentApiRepositoryTaskRunsSnapshot {
-        ok: true,
+        ok: !incomplete,
         records,
-        error: None,
+        incomplete,
+        error: incomplete.then_some("agent-api-repository-task-runs-partial"),
     }
-}
-
-fn read_repository_task_run_record(
-    path: &Path,
-    visible_workspace: &Path,
-) -> Option<ProjectRepositoryTaskRunRecord> {
-    if path.extension().and_then(|extension| extension.to_str()) != Some("json") {
-        return None;
-    }
-    read_visible_task_run_record(path, visible_workspace)
 }
 
 fn summarize_workspace_metadata(workspace_path: &Path) -> AgentApiWorkspaceMetadataSnapshot {
@@ -930,6 +972,7 @@ fn map_workspace_path_validation_error(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::project_repository_task::{project_task_run_liveness, read_visible_task_run_record};
     use std::time::{SystemTime, UNIX_EPOCH};
 
     #[test]
@@ -1253,6 +1296,91 @@ mod tests {
         let serialized = serde_json::to_string(&summary).unwrap();
         assert!(!serialized.contains("private-command"));
         assert!(!serialized.contains("private-output"));
+    }
+
+    fn write_summary_test_record(workspace: &Path, id: &str, started_at: &str) -> Vec<u8> {
+        let dir = workspace
+            .join(WORKDUCK_DIRECTORY_NAME)
+            .join("repository-task-runs");
+        fs::create_dir_all(&dir).unwrap();
+        let bytes = serde_json::to_vec(&serde_json::json!({
+            "id": id, "task": "build", "state": "succeeded",
+            "repositoryPath": crate::git_path::git_process_path(&workspace.join("repo")),
+            "command": "private-command", "outputTail": "private-output",
+            "startedAt": started_at, "finishedAt": started_at,
+            "exitCode": 0, "recordPath": "untrusted.json"
+        }))
+        .unwrap();
+        fs::write(dir.join(format!("{id}.json")), &bytes).unwrap();
+        bytes
+    }
+
+    #[test]
+    fn task_summaries_keep_the_newest_twenty_including_id_tie_breaking() {
+        let temp = tempfile::tempdir().unwrap();
+        let workspace = fs::canonicalize(temp.path()).unwrap();
+        for index in (0..31).rev() {
+            write_summary_test_record(
+                &workspace,
+                &format!("run-{index:02}"),
+                "2026-01-01T00:00:00Z",
+            );
+        }
+        write_summary_test_record(&workspace, "zz-older", "2020-01-01T00:00:00Z");
+        write_summary_test_record(&workspace, "aa-newer", "2027-01-01T00:00:00Z");
+        let summary = summarize_repository_task_runs(&workspace);
+        assert!(summary.ok);
+        assert!(!summary.incomplete);
+        assert_eq!(summary.records.len(), 20);
+        assert_eq!(summary.records.first().unwrap().id, "aa-newer");
+        assert_eq!(summary.records[1].id, "run-30");
+        assert_eq!(summary.records.last().unwrap().id, "run-12");
+        assert!(
+            summary
+                .records
+                .iter()
+                .all(|record| record.exit_code == Some(0))
+        );
+    }
+
+    #[test]
+    fn task_summary_budget_and_read_failures_are_reported_without_losing_valid_records() {
+        let temp = tempfile::tempdir().unwrap();
+        let workspace = fs::canonicalize(temp.path()).unwrap();
+        let bytes = write_summary_test_record(&workspace, "build-1", "2026-01-01T00:00:00Z");
+        let dir = workspace
+            .join(WORKDUCK_DIRECTORY_NAME)
+            .join("repository-task-runs");
+        fs::write(
+            dir.join("output.json.log"),
+            vec![b'x'; REPOSITORY_TASK_RUN_READ_BUDGET + 1],
+        )
+        .unwrap();
+        let exact = summarize_repository_task_runs_with_budget(&workspace, bytes.len());
+        assert!(exact.ok);
+        assert_eq!(exact.records.len(), 1);
+        let exhausted = summarize_repository_task_runs_with_budget(&workspace, bytes.len() - 1);
+        assert!(!exhausted.ok);
+        assert!(exhausted.incomplete);
+        assert!(exhausted.records.is_empty());
+        assert_eq!(
+            exhausted.error,
+            Some("agent-api-repository-task-runs-partial")
+        );
+        let second = write_summary_test_record(&workspace, "build-2", "2026-01-01T00:00:00Z");
+        assert_eq!(second.len(), bytes.len());
+        let shared = summarize_repository_task_runs_with_budget(&workspace, bytes.len());
+        assert!(shared.incomplete);
+        assert_eq!(shared.records.len(), 1);
+        let complete = summarize_repository_task_runs_with_budget(&workspace, bytes.len() * 2);
+        assert!(complete.ok);
+        assert_eq!(complete.records.len(), 2);
+        fs::write(dir.join("invalid.json"), b"invalid JSON").unwrap();
+        let partial = summarize_repository_task_runs(&workspace);
+        assert!(!partial.ok);
+        assert!(partial.incomplete);
+        assert_eq!(partial.records.len(), 2);
+        assert!(partial.records.iter().any(|record| record.id == "build-1"));
     }
 
     fn create_test_workspace(name: &str) -> PathBuf {

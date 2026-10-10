@@ -736,7 +736,7 @@
       "definitions": [
         {
           "kind": "function",
-          "line": 1046,
+          "line": 1089,
           "path": "src-tauri/src/agent_api_snapshot.rs",
           "provenance": {
             "generator": null,
@@ -749,15 +749,15 @@
       "external": false,
       "key": "workduck/workduck.agent.snapshot.contract",
       "location": {
-        "declarationLine": 1046,
-        "endLine": 1044,
+        "declarationLine": 1089,
+        "endLine": 1087,
         "exported": false,
         "kind": "function",
         "language": "rust",
         "path": "src-tauri/src/agent_api_snapshot.rs",
         "receiver": null,
         "signature": "fn project_registry_summary_omits_secret_ids()",
-        "startLine": 1039,
+        "startLine": 1082,
         "symbol": "project_registry_summary_omits_secret_ids",
         "visibility": "private"
       },
@@ -2717,7 +2717,7 @@
   ],
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "65a808ec2898d1739b74bd1c885265412e996ce3ba6644bd5b01586e428768bd",
+  "sourceHash": "6662e88e7e965412998ec580265f9b584a47b983dca1546ecf0bb56ccba60616",
   "stats": {
     "edgeCount": 49,
     "importedIndexCount": 0,

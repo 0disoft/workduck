@@ -105,6 +105,7 @@ export interface AgentApiRepositoryImportAttemptsSnapshot {
 
 export interface AgentApiRepositoryTaskRunsSnapshot {
 	readonly ok: boolean;
+	readonly incomplete: boolean;
 	readonly records: readonly {
 		readonly id: string;
 		readonly task: string;
