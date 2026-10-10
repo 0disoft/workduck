@@ -13235,7 +13235,7 @@
     },
     {
       "blocks": [],
-      "contentHash": "25c810708ae879eb414aeecda7e99cedbbe95017998c45a5cfd83c86465f345f",
+      "contentHash": "dd36e253db6bdf02138eda85fb8f7202ef5b481cfb7bbd2d806116192849a7b6",
       "declarations": [],
       "imports": [
         "#lib/environment/environment-vault-session-loader.ts",
@@ -13246,10 +13246,10 @@
         "#lib/projects/project-repository-task.ts",
         "#lib/queue/queue-panel-errors.ts",
         "#lib/queue/repository-commit-work-order.ts",
-        "#lib/workspaces/workspace-password.ts",
         "#lib/workspaces/workspace-path-format.ts",
         "#lib/workspaces/workspace-path.ts",
         "#lib/workspaces/workspace-registration-draft.ts",
+        "#lib/workspaces/workspace-registration.ts",
         "#lib/workspaces/workspace-registry.ts",
         "#lib/workspaces/workspace-repository-git.ts",
         "#lib/workspaces/workspace-repository-setup.ts",
@@ -13264,7 +13264,7 @@
       ],
       "path": "src/lib/settings/WorkspaceSettingsSurface.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 35529
+      "sourceBytes": 34863
     },
     {
       "blocks": [],
@@ -14425,15 +14425,106 @@
       "sourceBytes": 3270
     },
     {
-      "blocks": [],
-      "contentHash": "fad25dd8f89bda73685f2e8cb817527d1e388be95ef17ef775a4c98bf555c448",
-      "declarations": [],
+      "blocks": [
+        {
+          "card": {
+            "effect": [],
+            "excludes": [
+              "native password hashing",
+              "unlock sessions",
+              "registry persistence"
+            ],
+            "id": "workduck.workspace.password-client",
+            "invariant": [
+              "Hashing requires a non-empty password of minimum length and native availability; verification requires a boolean match result; command failures return typed errors."
+            ],
+            "owns": [
+              "password minimum length",
+              "hash command client",
+              "verification command client",
+              "password error normalization"
+            ],
+            "rel": [],
+            "risk": [],
+            "role": "Validate password inputs and adapt native workspace password hashing and verification responses for renderer callers.",
+            "scope": "module",
+            "search": [
+              "workspace password hash client",
+              "verify workspace password",
+              "password minimum length"
+            ],
+            "stability": "contract",
+            "unknown": []
+          },
+          "end": 640,
+          "endLine": 9,
+          "entries": [
+            {
+              "key": "id",
+              "line": 2,
+              "order": 0,
+              "value": "workduck.workspace.password-client"
+            },
+            {
+              "key": "role",
+              "line": 3,
+              "order": 1,
+              "value": "Validate password inputs and adapt native workspace password hashing and verification responses for renderer callers."
+            },
+            {
+              "key": "owns",
+              "line": 4,
+              "order": 2,
+              "value": "password minimum length|hash command client|verification command client|password error normalization"
+            },
+            {
+              "key": "excludes",
+              "line": 5,
+              "order": 3,
+              "value": "native password hashing|unlock sessions|registry persistence"
+            },
+            {
+              "key": "search",
+              "line": 6,
+              "order": 4,
+              "value": "workspace password hash client|verify workspace password|password minimum length"
+            },
+            {
+              "key": "invariant",
+              "line": 7,
+              "order": 5,
+              "value": "Hashing requires a non-empty password of minimum length and native availability; verification requires a boolean match result; command failures return typed errors."
+            },
+            {
+              "key": "stability",
+              "line": 8,
+              "order": 6,
+              "value": "contract"
+            }
+          ],
+          "filePath": "src/lib/workspaces/workspace-password.ts",
+          "indent": "",
+          "newline": "\n",
+          "prefix": null,
+          "raw": "/* llmnav/1 module\nid=workduck.workspace.password-client\nrole=Validate password inputs and adapt native workspace password hashing and verification responses for renderer callers.\nowns=password minimum length|hash command client|verification command client|password error normalization\nexcludes=native password hashing|unlock sessions|registry persistence\nsearch=workspace password hash client|verify workspace password|password minimum length\ninvariant=Hashing requires a non-empty password of minimum length and native availability; verification requires a boolean match result; command failures return typed errors.\nstability=contract\n*/",
+          "scope": "module",
+          "specVersion": "1",
+          "start": 0,
+          "startLine": 1,
+          "style": "block",
+          "syntaxErrors": []
+        }
+      ],
+      "contentHash": "b88804572917b8b15a42ffa9d0a1b9285997a6a3c4f221dc0d5e1b1f63050c54",
+      "declarations": [
+        null
+      ],
       "imports": [
         "#lib/tauri/tauri-invoke.ts"
       ],
       "path": "src/lib/workspaces/workspace-password.ts",
-      "semanticBytes": 0,
-      "sourceBytes": 3164
+      "semanticBytes": 640,
+      "sourceBytes": 3805
     },
     {
       "blocks": [],
@@ -14583,6 +14674,127 @@
     },
     {
       "blocks": [],
+      "contentHash": "4e71a3c0b15553b915d2950fc5ee7e14d6c876305f696276c05794e2078bd9af",
+      "declarations": [],
+      "imports": [
+        "#lib/tauri/tauri-invoke.ts",
+        "./workspace-registration",
+        "./workspace-registry",
+        "./workspace-unlock",
+        "bun:test"
+      ],
+      "path": "src/lib/workspaces/workspace-registration.test.ts",
+      "semanticBytes": 0,
+      "sourceBytes": 6542
+    },
+    {
+      "blocks": [
+        {
+          "card": {
+            "effect": [],
+            "excludes": [
+              "registry storage transport",
+              "password hash implementation",
+              "registration form rendering"
+            ],
+            "id": "workduck.workspace.registration",
+            "invariant": [
+              "All registration stages use the same submitted password and options; failed persistence cannot unlock or prepare a repository; later form edits survive completion."
+            ],
+            "owns": [
+              "submitted registration snapshot",
+              "registration staging",
+              "post-commit unlock",
+              "repository option continuity"
+            ],
+            "rel": [],
+            "risk": [],
+            "role": "Register a workspace from one submitted form snapshot across directory validation, password hashing, conditional persistence, unlocking, and optional repository preparation.",
+            "scope": "module",
+            "search": [
+              "workspace registration password race",
+              "submitted workspace options",
+              "registration commit before unlock"
+            ],
+            "stability": "architecture",
+            "unknown": []
+          },
+          "end": 737,
+          "endLine": 9,
+          "entries": [
+            {
+              "key": "id",
+              "line": 2,
+              "order": 0,
+              "value": "workduck.workspace.registration"
+            },
+            {
+              "key": "role",
+              "line": 3,
+              "order": 1,
+              "value": "Register a workspace from one submitted form snapshot across directory validation, password hashing, conditional persistence, unlocking, and optional repository preparation."
+            },
+            {
+              "key": "owns",
+              "line": 4,
+              "order": 2,
+              "value": "submitted registration snapshot|registration staging|post-commit unlock|repository option continuity"
+            },
+            {
+              "key": "excludes",
+              "line": 5,
+              "order": 3,
+              "value": "registry storage transport|password hash implementation|registration form rendering"
+            },
+            {
+              "key": "search",
+              "line": 6,
+              "order": 4,
+              "value": "workspace registration password race|submitted workspace options|registration commit before unlock"
+            },
+            {
+              "key": "invariant",
+              "line": 7,
+              "order": 5,
+              "value": "All registration stages use the same submitted password and options; failed persistence cannot unlock or prepare a repository; later form edits survive completion."
+            },
+            {
+              "key": "stability",
+              "line": 8,
+              "order": 6,
+              "value": "architecture"
+            }
+          ],
+          "filePath": "src/lib/workspaces/workspace-registration.ts",
+          "indent": "",
+          "newline": "\n",
+          "prefix": null,
+          "raw": "/* llmnav/1 module\nid=workduck.workspace.registration\nrole=Register a workspace from one submitted form snapshot across directory validation, password hashing, conditional persistence, unlocking, and optional repository preparation.\nowns=submitted registration snapshot|registration staging|post-commit unlock|repository option continuity\nexcludes=registry storage transport|password hash implementation|registration form rendering\nsearch=workspace registration password race|submitted workspace options|registration commit before unlock\ninvariant=All registration stages use the same submitted password and options; failed persistence cannot unlock or prepare a repository; later form edits survive completion.\nstability=architecture\n*/",
+          "scope": "module",
+          "specVersion": "1",
+          "start": 0,
+          "startLine": 1,
+          "style": "block",
+          "syntaxErrors": []
+        }
+      ],
+      "contentHash": "0c1b75a6128865d19d8a15c0ebffd4484ea84e8bb1bcb12bb60fb6b3acc9cecc",
+      "declarations": [
+        null
+      ],
+      "imports": [
+        "./workspace-password",
+        "./workspace-path",
+        "./workspace-registry",
+        "./workspace-repository-setup",
+        "./workspace-unlock"
+      ],
+      "path": "src/lib/workspaces/workspace-registration.ts",
+      "semanticBytes": 737,
+      "sourceBytes": 3978
+    },
+    {
+      "blocks": [],
       "contentHash": "5b2d22b6faa4a8047a041d087b6258ca87891c9cb54a4c64f7c2e0dad8fb783f",
       "declarations": [],
       "imports": [
@@ -14729,16 +14941,106 @@
       "sourceBytes": 2151
     },
     {
-      "blocks": [],
-      "contentHash": "0e10322e0f79761b291be2420b50d887fcf41d8b219df4dd448c0c2aeb39e94f",
-      "declarations": [],
+      "blocks": [
+        {
+          "card": {
+            "effect": [],
+            "excludes": [
+              "native filesystem mutation",
+              "registration persistence",
+              "Git status inspection"
+            ],
+            "id": "workduck.workspace.repository-setup-client",
+            "invariant": [
+              "Setup uses the provided directory and option pair; native failures return setup errors; successful results expose prepared paths and Git configuration outcomes."
+            ],
+            "owns": [
+              "repository preparation command client",
+              "setup option transport",
+              "setup result normalization"
+            ],
+            "rel": [],
+            "risk": [],
+            "role": "Send normalized workspace directory and repository preparation options to the native setup boundary and adapt its result.",
+            "scope": "module",
+            "search": [
+              "workspace repository setup client",
+              "initialize workspace git",
+              "install workspace gitignore"
+            ],
+            "stability": "contract",
+            "unknown": []
+          },
+          "end": 654,
+          "endLine": 9,
+          "entries": [
+            {
+              "key": "id",
+              "line": 2,
+              "order": 0,
+              "value": "workduck.workspace.repository-setup-client"
+            },
+            {
+              "key": "role",
+              "line": 3,
+              "order": 1,
+              "value": "Send normalized workspace directory and repository preparation options to the native setup boundary and adapt its result."
+            },
+            {
+              "key": "owns",
+              "line": 4,
+              "order": 2,
+              "value": "repository preparation command client|setup option transport|setup result normalization"
+            },
+            {
+              "key": "excludes",
+              "line": 5,
+              "order": 3,
+              "value": "native filesystem mutation|registration persistence|Git status inspection"
+            },
+            {
+              "key": "search",
+              "line": 6,
+              "order": 4,
+              "value": "workspace repository setup client|initialize workspace git|install workspace gitignore"
+            },
+            {
+              "key": "invariant",
+              "line": 7,
+              "order": 5,
+              "value": "Setup uses the provided directory and option pair; native failures return setup errors; successful results expose prepared paths and Git configuration outcomes."
+            },
+            {
+              "key": "stability",
+              "line": 8,
+              "order": 6,
+              "value": "contract"
+            }
+          ],
+          "filePath": "src/lib/workspaces/workspace-repository-setup.ts",
+          "indent": "",
+          "newline": "\n",
+          "prefix": null,
+          "raw": "/* llmnav/1 module\nid=workduck.workspace.repository-setup-client\nrole=Send normalized workspace directory and repository preparation options to the native setup boundary and adapt its result.\nowns=repository preparation command client|setup option transport|setup result normalization\nexcludes=native filesystem mutation|registration persistence|Git status inspection\nsearch=workspace repository setup client|initialize workspace git|install workspace gitignore\ninvariant=Setup uses the provided directory and option pair; native failures return setup errors; successful results expose prepared paths and Git configuration outcomes.\nstability=contract\n*/",
+          "scope": "module",
+          "specVersion": "1",
+          "start": 0,
+          "startLine": 1,
+          "style": "block",
+          "syntaxErrors": []
+        }
+      ],
+      "contentHash": "cd1dce86b70bdb067906659e99a4860227180f372aa40f04ddc703cb03216cc2",
+      "declarations": [
+        null
+      ],
       "imports": [
         "#lib/tauri/tauri-invoke.ts",
         "./workspace-path-format"
       ],
       "path": "src/lib/workspaces/workspace-repository-setup.ts",
-      "semanticBytes": 0,
-      "sourceBytes": 3358
+      "semanticBytes": 654,
+      "sourceBytes": 4013
     },
     {
       "blocks": [],
@@ -15114,16 +15416,107 @@
       "sourceBytes": 15805
     },
     {
-      "blocks": [],
-      "contentHash": "8889117ee7263e8d2517aa0a5e30d7c16f06fc7f3f573843ae66ce0d9f7304d4",
-      "declarations": [],
+      "blocks": [
+        {
+          "card": {
+            "effect": [],
+            "excludes": [
+              "native vault revocation",
+              "password hashing",
+              "workspace registry storage"
+            ],
+            "id": "workduck.workspace.unlock",
+            "invariant": [
+              "Password-protected records need a renderer unlock session; session changes notify subscribers and idle checks use recent activity; native vault revocation remains the caller's responsibility."
+            ],
+            "owns": [
+              "renderer unlock sessions",
+              "unlock attempt cooldown",
+              "unlock change notifications",
+              "session idle timestamps"
+            ],
+            "rel": [],
+            "risk": [],
+            "role": "Track renderer workspace unlock sessions, password verification attempts, cooldowns, and idle activity.",
+            "scope": "module",
+            "search": [
+              "workspace unlock password session",
+              "workspace unlock cooldown",
+              "idle workspace locking"
+            ],
+            "stability": "architecture",
+            "unknown": []
+          },
+          "end": 657,
+          "endLine": 9,
+          "entries": [
+            {
+              "key": "id",
+              "line": 2,
+              "order": 0,
+              "value": "workduck.workspace.unlock"
+            },
+            {
+              "key": "role",
+              "line": 3,
+              "order": 1,
+              "value": "Track renderer workspace unlock sessions, password verification attempts, cooldowns, and idle activity."
+            },
+            {
+              "key": "owns",
+              "line": 4,
+              "order": 2,
+              "value": "renderer unlock sessions|unlock attempt cooldown|unlock change notifications|session idle timestamps"
+            },
+            {
+              "key": "excludes",
+              "line": 5,
+              "order": 3,
+              "value": "native vault revocation|password hashing|workspace registry storage"
+            },
+            {
+              "key": "search",
+              "line": 6,
+              "order": 4,
+              "value": "workspace unlock password session|workspace unlock cooldown|idle workspace locking"
+            },
+            {
+              "key": "invariant",
+              "line": 7,
+              "order": 5,
+              "value": "Password-protected records need a renderer unlock session; session changes notify subscribers and idle checks use recent activity; native vault revocation remains the caller's responsibility."
+            },
+            {
+              "key": "stability",
+              "line": 8,
+              "order": 6,
+              "value": "architecture"
+            }
+          ],
+          "filePath": "src/lib/workspaces/workspace-unlock.ts",
+          "indent": "",
+          "newline": "\n",
+          "prefix": null,
+          "raw": "/* llmnav/1 module\nid=workduck.workspace.unlock\nrole=Track renderer workspace unlock sessions, password verification attempts, cooldowns, and idle activity.\nowns=renderer unlock sessions|unlock attempt cooldown|unlock change notifications|session idle timestamps\nexcludes=native vault revocation|password hashing|workspace registry storage\nsearch=workspace unlock password session|workspace unlock cooldown|idle workspace locking\ninvariant=Password-protected records need a renderer unlock session; session changes notify subscribers and idle checks use recent activity; native vault revocation remains the caller's responsibility.\nstability=architecture\n*/",
+          "scope": "module",
+          "specVersion": "1",
+          "start": 0,
+          "startLine": 1,
+          "style": "block",
+          "syntaxErrors": []
+        }
+      ],
+      "contentHash": "bc4809a48b40b00f231ddb3e3a67e0de6d70213e9f552c2c1319070e880ab373",
+      "declarations": [
+        null
+      ],
       "imports": [
         "./workspace-password",
         "./workspace-registry"
       ],
       "path": "src/lib/workspaces/workspace-unlock.ts",
-      "semanticBytes": 0,
-      "sourceBytes": 8696
+      "semanticBytes": 657,
+      "sourceBytes": 9354
     },
     {
       "blocks": [

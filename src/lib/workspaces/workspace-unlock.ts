@@ -1,3 +1,12 @@
+/* llmnav/1 module
+id=workduck.workspace.unlock
+role=Track renderer workspace unlock sessions, password verification attempts, cooldowns, and idle activity.
+owns=renderer unlock sessions|unlock attempt cooldown|unlock change notifications|session idle timestamps
+excludes=native vault revocation|password hashing|workspace registry storage
+search=workspace unlock password session|workspace unlock cooldown|idle workspace locking
+invariant=Password-protected records need a renderer unlock session; session changes notify subscribers and idle checks use recent activity; native vault revocation remains the caller's responsibility.
+stability=architecture
+*/
 import type { WorkspaceRecord } from './workspace-registry';
 import { verifyWorkspacePassword, type WorkspacePasswordError } from './workspace-password';
 

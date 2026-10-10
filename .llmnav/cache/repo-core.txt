@@ -276,3 +276,15 @@ role Coalesce renderer initialization and provide validated lazy workspace migra
 owns initialization attempt reuse, failed attempt retry, workspace fallback seed, startup domain validation
 excludes SQLite transactions, journal flushes, boot screen rendering
 invariant Workspace fallback is read only when no pending or SQLite value exists; startup rejects damaged workspace values before migration and retries failed initialization attempts.
+
+@workduck.workspace.registration
+role Register a workspace from one submitted form snapshot across directory validation, password hashing, conditional persistence, unlocking, and optional repository preparation.
+owns submitted registration snapshot, registration staging, post-commit unlock, repository option continuity
+excludes registry storage transport, password hash implementation, registration form rendering
+invariant All registration stages use the same submitted password and options; failed persistence cannot unlock or prepare a repository; later form edits survive completion.
+
+@workduck.workspace.unlock
+role Track renderer workspace unlock sessions, password verification attempts, cooldowns, and idle activity.
+owns renderer unlock sessions, unlock attempt cooldown, unlock change notifications, session idle timestamps
+excludes native vault revocation, password hashing, workspace registry storage
+invariant Password-protected records need a renderer unlock session; session changes notify subscribers and idle checks use recent activity; native vault revocation remains the caller's responsibility.

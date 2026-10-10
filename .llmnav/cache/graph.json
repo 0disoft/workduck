@@ -716,6 +716,76 @@
     },
     {
       "confidence": 0.85,
+      "from": "workduck/workduck.workspace.registration",
+      "id": "75a0a71ef51144a94e33d7aedd2e66383da4863a82ea2eadb45781ab817dd1ce",
+      "kind": "imports",
+      "provenance": {
+        "generator": "llmnav",
+        "line": null,
+        "path": "src/lib/workspaces/workspace-registration.ts",
+        "source": "src/lib/workspaces/workspace-registration.ts",
+        "type": "local-import"
+      },
+      "to": "workduck/workduck.workspace.password-client"
+    },
+    {
+      "confidence": 0.85,
+      "from": "workduck/workduck.workspace.registration",
+      "id": "796ab4e7a95fcd40309248341e4dc851177a2215767309f318afb778d73b72b2",
+      "kind": "imports",
+      "provenance": {
+        "generator": "llmnav",
+        "line": null,
+        "path": "src/lib/workspaces/workspace-registration.ts",
+        "source": "src/lib/workspaces/workspace-registration.ts",
+        "type": "local-import"
+      },
+      "to": "workduck/workduck.workspace.path-client"
+    },
+    {
+      "confidence": 0.85,
+      "from": "workduck/workduck.workspace.registration",
+      "id": "5f1cc4b5ca6ca29383bc176a1da53babf6b33cd39ae11ad158c3d97dad1819e4",
+      "kind": "imports",
+      "provenance": {
+        "generator": "llmnav",
+        "line": null,
+        "path": "src/lib/workspaces/workspace-registration.ts",
+        "source": "src/lib/workspaces/workspace-registration.ts",
+        "type": "local-import"
+      },
+      "to": "workduck/workduck.workspace.registry"
+    },
+    {
+      "confidence": 0.85,
+      "from": "workduck/workduck.workspace.registration",
+      "id": "d4af75dff4f7a9e1e6ce86ca5cf8c84b31a9629e3f8d1c7eb1c1e90c67b9746e",
+      "kind": "imports",
+      "provenance": {
+        "generator": "llmnav",
+        "line": null,
+        "path": "src/lib/workspaces/workspace-registration.ts",
+        "source": "src/lib/workspaces/workspace-registration.ts",
+        "type": "local-import"
+      },
+      "to": "workduck/workduck.workspace.repository-setup-client"
+    },
+    {
+      "confidence": 0.85,
+      "from": "workduck/workduck.workspace.registration",
+      "id": "77beaff7576000c0e033daaf80c80c78c13ace9c1778780d96ed04ed56aa3e59",
+      "kind": "imports",
+      "provenance": {
+        "generator": "llmnav",
+        "line": null,
+        "path": "src/lib/workspaces/workspace-registration.ts",
+        "source": "src/lib/workspaces/workspace-registration.ts",
+        "type": "local-import"
+      },
+      "to": "workduck/workduck.workspace.unlock"
+    },
+    {
+      "confidence": 0.85,
       "from": "workduck/workduck.workspace.storage",
       "id": "9eca143af544cc19eb37a661de725d3a2729ac02cd7f19a9969886e2183f7765",
       "kind": "imports",
@@ -738,6 +808,34 @@
         "line": null,
         "path": "src/lib/workspaces/workspace-sync.ts",
         "source": "src/lib/workspaces/workspace-sync.ts",
+        "type": "local-import"
+      },
+      "to": "workduck/workduck.workspace.registry"
+    },
+    {
+      "confidence": 0.85,
+      "from": "workduck/workduck.workspace.unlock",
+      "id": "9acd1fc39fdecb4459f8c9c59929bdd4941ec637417954a10dc5030cb4e2c56b",
+      "kind": "imports",
+      "provenance": {
+        "generator": "llmnav",
+        "line": null,
+        "path": "src/lib/workspaces/workspace-unlock.ts",
+        "source": "src/lib/workspaces/workspace-unlock.ts",
+        "type": "local-import"
+      },
+      "to": "workduck/workduck.workspace.password-client"
+    },
+    {
+      "confidence": 0.85,
+      "from": "workduck/workduck.workspace.unlock",
+      "id": "5b437dead7059e49ae75372ae45efd206a7b0086885e380bf47bd468f290f59f",
+      "kind": "imports",
+      "provenance": {
+        "generator": "llmnav",
+        "line": null,
+        "path": "src/lib/workspaces/workspace-unlock.ts",
+        "source": "src/lib/workspaces/workspace-unlock.ts",
         "type": "local-import"
       },
       "to": "workduck/workduck.workspace.registry"
@@ -2707,6 +2805,28 @@
     {
       "definitions": [],
       "external": false,
+      "key": "workduck/workduck.workspace.password-client",
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src/lib/workspaces/workspace-password.ts",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "repositoryId": "workduck",
+      "role": "Validate password inputs and adapt native workspace password hashing and verification responses for renderer callers.",
+      "semanticId": "workduck.workspace.password-client",
+      "unresolved": false
+    },
+    {
+      "definitions": [],
+      "external": false,
       "key": "workduck/workduck.workspace.path",
       "location": {
         "declarationLine": null,
@@ -2751,6 +2871,28 @@
     {
       "definitions": [],
       "external": false,
+      "key": "workduck/workduck.workspace.registration",
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src/lib/workspaces/workspace-registration.ts",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "repositoryId": "workduck",
+      "role": "Register a workspace from one submitted form snapshot across directory validation, password hashing, conditional persistence, unlocking, and optional repository preparation.",
+      "semanticId": "workduck.workspace.registration",
+      "unresolved": false
+    },
+    {
+      "definitions": [],
+      "external": false,
       "key": "workduck/workduck.workspace.registry",
       "location": {
         "declarationLine": null,
@@ -2790,6 +2932,28 @@
       "repositoryId": "workduck",
       "role": "Initialize a workspace repository layout, Git, managed work-order instructions, and Workduck ignore policy through bounded native steps.",
       "semanticId": "workduck.workspace.repository-setup",
+      "unresolved": false
+    },
+    {
+      "definitions": [],
+      "external": false,
+      "key": "workduck/workduck.workspace.repository-setup-client",
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src/lib/workspaces/workspace-repository-setup.ts",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "repositoryId": "workduck",
+      "role": "Send normalized workspace directory and repository preparation options to the native setup boundary and adapt its result.",
+      "semanticId": "workduck.workspace.repository-setup-client",
       "unresolved": false
     },
     {
@@ -2901,15 +3065,37 @@
       "role": "Inspect and serialize native Git fetch, pull, commit, and push operations for a workspace sync file with safe remote reporting.",
       "semanticId": "workduck.workspace.sync-git-native",
       "unresolved": false
+    },
+    {
+      "definitions": [],
+      "external": false,
+      "key": "workduck/workduck.workspace.unlock",
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src/lib/workspaces/workspace-unlock.ts",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "repositoryId": "workduck",
+      "role": "Track renderer workspace unlock sessions, password verification attempts, cooldowns, and idle activity.",
+      "semanticId": "workduck.workspace.unlock",
+      "unresolved": false
     }
   ],
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "660d6ccce4160481041e5b37a32aeedfee9f107f7f62326b315c0612c2812677",
+  "sourceHash": "477d2308fac948d679823073ef5b45b1cb02dab311ca7c976ad2e273f90723dd",
   "stats": {
-    "edgeCount": 53,
+    "edgeCount": 60,
     "importedIndexCount": 0,
-    "nodeCount": 97,
+    "nodeCount": 101,
     "unresolvedNodeCount": 0
   }
 }

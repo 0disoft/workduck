@@ -95,3 +95,7 @@
 {"id":"workduck.workspace.registry","state":"active"}
 {"id":"workduck.workspace.storage","state":"active"}
 {"id":"workduck.app-state.bootstrap","state":"active"}
+{"id":"workduck.workspace.registration","state":"active"}
+{"id":"workduck.workspace.password-client","state":"active"}
+{"id":"workduck.workspace.repository-setup-client","state":"active"}
+{"id":"workduck.workspace.unlock","state":"active"}

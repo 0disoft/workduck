@@ -103,3 +103,7 @@
 {"query":"strict stored workspace registry reject record loss damaged lock unsupported version","expected":["workduck.workspace.registry"]}
 {"query":"workspace read failure block saves invalid workspace change notification","expected":["workduck.workspace.storage"]}
 {"query":"workspace startup migration lazy legacy workspace fallback persistent initialization retry","expected":["workduck.app-state.bootstrap"]}
+{"query":"workspace registration password race submitted workspace options registration commit before unlock","expected":["workduck.workspace.registration"]}
+{"query":"workspace password hash client verify workspace password password minimum length","expected":["workduck.workspace.password-client"]}
+{"query":"workspace repository setup client initialize workspace git install workspace gitignore","expected":["workduck.workspace.repository-setup-client"]}
+{"query":"workspace unlock password session workspace unlock cooldown idle workspace locking","expected":["workduck.workspace.unlock"]}

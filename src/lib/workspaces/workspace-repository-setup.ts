@@ -1,3 +1,12 @@
+/* llmnav/1 module
+id=workduck.workspace.repository-setup-client
+role=Send normalized workspace directory and repository preparation options to the native setup boundary and adapt its result.
+owns=repository preparation command client|setup option transport|setup result normalization
+excludes=native filesystem mutation|registration persistence|Git status inspection
+search=workspace repository setup client|initialize workspace git|install workspace gitignore
+invariant=Setup uses the provided directory and option pair; native failures return setup errors; successful results expose prepared paths and Git configuration outcomes.
+stability=contract
+*/
 import { getTauriInvoke } from '#lib/tauri/tauri-invoke.ts';
 import { normalizeWorkspacePathForStorage } from './workspace-path-format';
 

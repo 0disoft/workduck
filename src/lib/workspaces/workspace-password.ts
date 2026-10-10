@@ -1,3 +1,12 @@
+/* llmnav/1 module
+id=workduck.workspace.password-client
+role=Validate password inputs and adapt native workspace password hashing and verification responses for renderer callers.
+owns=password minimum length|hash command client|verification command client|password error normalization
+excludes=native password hashing|unlock sessions|registry persistence
+search=workspace password hash client|verify workspace password|password minimum length
+invariant=Hashing requires a non-empty password of minimum length and native availability; verification requires a boolean match result; command failures return typed errors.
+stability=contract
+*/
 import { getTauriInvoke } from '#lib/tauri/tauri-invoke.ts';
 export const WORKSPACE_PASSWORD_MIN_LENGTH = 8;
 

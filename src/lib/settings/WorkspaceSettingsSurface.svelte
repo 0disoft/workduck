@@ -11,16 +11,13 @@
 	} from '#lib/queue/queue-panel-errors.ts';
 	import {
 		WORKSPACE_NAME_MAX_LENGTH,
-		addWorkspace,
 		createEmptyWorkspaceRegistry,
 		removeWorkspace,
 		switchWorkspace,
 		type WorkspaceRecord,
 		type WorkspaceRegistry,
 	} from '#lib/workspaces/workspace-registry.ts';
-	import {
-		createWorkspacePasswordHash,
-	} from '#lib/workspaces/workspace-password.ts';
+	import { registerWorkspace, isWorkspaceRegistrationInputEqual, type WorkspaceRegistrationInput } from '#lib/workspaces/workspace-registration.ts';
 	import { resolveDefaultGithubTokenCredential } from '#lib/environment/github-credential.ts';
 	import { lockWorkspaceEnvironmentVaultSession } from '#lib/environment/environment-vault-session.ts';
 	import {
@@ -29,8 +26,7 @@
 	} from '#lib/projects/project-repository-task.ts';
 	import { openEnvironmentVaultSessionFromWorkspaceUnlock } from '#lib/environment/environment-vault-session-loader.ts';
 	import {
-		selectWorkspacePath,
-		validateWorkspacePath
+		selectWorkspacePath
 	} from '#lib/workspaces/workspace-path.ts';
 	import { formatWorkspacePathForDisplay } from '#lib/workspaces/workspace-path-format.ts';
 	import { suggestWorkspaceName, takeWorkspaceRegistrationPath } from '#lib/workspaces/workspace-registration-draft.ts';
@@ -54,7 +50,6 @@
 	} from '#lib/workspaces/workspace-storage.ts';
 	import {
 		isWorkspaceUnlocked,
-		markWorkspaceUnlocked,
 		subscribeWorkspaceUnlocks,
 		workspaceRequiresUnlock
 	} from '#lib/workspaces/workspace-unlock.ts';
@@ -537,6 +532,12 @@
 		}
 	}
 
+	function getWorkspaceRegistrationInput(): WorkspaceRegistrationInput {
+		return { name: workspaceName, path: workspacePath, password: workspacePassword,
+			repositoryChoice: workspaceRepositoryChoice, initializeGit: initializeWorkspaceGit,
+			installGitignore: installWorkspaceGitignore };
+	}
+
 	async function handleWorkspaceSubmit(event: SubmitEvent) {
 		event.preventDefault();
 
@@ -546,66 +547,22 @@
 
 		formError = null;
 		isAddingWorkspace = true;
+		const submitted = getWorkspaceRegistrationInput();
 
 		try {
-			if (workspaceRepositoryChoice === null) {
-				formError = 'workspace-repository-choice-required';
-				return;
-			}
-
-			if (workspacePassword.trim().length === 0) {
-				formError = 'workspace-password-required';
-				return;
-			}
-
-			const pathValidation = await validateWorkspacePath(workspacePath);
-
-			if (!pathValidation.ok) {
-				formError = pathValidation.error;
-				return;
-			}
-
-			const passwordHashResult =
-				workspacePassword.length === 0
-					? ({ ok: true, passwordHash: null } as const)
-					: await createWorkspacePasswordHash(workspacePassword);
-
-			if (!passwordHashResult.ok) {
-				formError = passwordHashResult.error;
-				return;
-			}
-
-			const expectedRegistry = registry;
-			const result = addWorkspace(expectedRegistry, {
-				name: workspaceName,
-				path: pathValidation.path,
-				passwordHash: passwordHashResult.passwordHash
-			});
-
+			const result = await registerWorkspace(submitted, { getRegistry: () => registry, persistRegistry });
 			if (!result.ok) {
-				formError = result.error;
+				if (result.phase === 'preparation') formError = result.error;
 				return;
 			}
 
-			if (await persistRegistry(result.registry, expectedRegistry)) {
-				if (workspaceRequiresUnlock(result.workspace)) {
-					markWorkspaceUnlocked(result.workspace.id, workspacePassword);
-				}
-
-				if (useWorkspaceAsRepository) {
-					const setupResult = await setupWorkspaceRepository(pathValidation.path, {
-						initializeGit: initializeWorkspaceGit,
-						installGitignore: installWorkspaceGitignore
-					});
-
-					if (setupResult.ok) {
-						repositorySetupStatus = messages.settings.workspaces.repository.setupComplete;
-						await refreshWorkspaceRepositoryGitStatus(result.workspace.id, pathValidation.path);
-					} else {
-						repositorySetupError = setupResult.error;
-					}
-				}
-
+			if (result.repositorySetup?.ok) {
+				repositorySetupStatus = messages.settings.workspaces.repository.setupComplete;
+				await refreshWorkspaceRepositoryGitStatus(result.workspace.id, result.workspace.path);
+			} else if (result.repositorySetup !== null) {
+				repositorySetupError = result.repositorySetup.error;
+			}
+			if (isWorkspaceRegistrationInputEqual(submitted, getWorkspaceRegistrationInput())) {
 				workspaceName = '';
 				workspacePath = '';
 				workspacePathDisplay = '';

@@ -95,3 +95,7 @@ workduck.app-state.storage-native
 workduck.workspace.registry
 workduck.workspace.storage
 workduck.app-state.bootstrap
+workduck.workspace.registration
+workduck.workspace.password-client
+workduck.workspace.repository-setup-client
+workduck.workspace.unlock
