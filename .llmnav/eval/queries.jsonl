@@ -90,3 +90,5 @@
 {"query":"Windows PowerShell task script atomic record publication Unicode log tail","expected":["workduck.projects.task-powershell"]}
 {"query":"PowerShell large command line task loader temporary script source cleanup","expected":["workduck.projects.task-powershell"]}
 {"query":"reject incomplete workspace sync import and project snapshots without dropping records","expected":["workduck.workspace.sync"]}
+{"query":"native app state SQLite transaction bounded JSON UTC revision ordering","expected":["workduck.app-state.storage-native"]}
+{"query":"atomic workspace and project registry sync import SQLite rollback","expected":["workduck.projects.storage-native"]}

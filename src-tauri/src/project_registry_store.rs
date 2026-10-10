@@ -7,11 +7,11 @@ use crate::storage;
 
 /* llmnav/1 module
 id=workduck.projects.storage-native
-role=Read and atomically replace SQLite project registry snapshots with optional stale-write guards.
-owns=project registry SQLite reads|snapshot write guards|atomic bulk registry replacement
+role=Read and atomically replace SQLite project registries with optional snapshot guards and a workspace sync checkpoint.
+owns=project registry SQLite reads|snapshot write guards|atomic registry and workspace replacement
 excludes=registry domain normalization|workspace sync payload assembly|editor draft ownership
 search=project registry SQLite write|stale registry snapshot|atomic project bulk write
-invariant=Guarded writes replace only the expected stored snapshot; a conflict or invalid row rolls back the entire batch.
+invariant=Guarded writes require the expected snapshot; sync checkpoints also preserve UTC ordering, and a conflict or failed row rolls back workspace and project changes together.
 stability=contract
 */
 
@@ -36,6 +36,14 @@ pub struct ProjectRegistryWriteInput {
     updated_at: String,
     #[serde(default)]
     expected_registry_json: Option<String>,
+}
+
+#[derive(serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct WorkspaceRegistryWriteInput {
+    value_json: String,
+    expected_value_json: String,
+    updated_at: String,
 }
 
 #[derive(serde::Serialize)]
@@ -170,29 +178,41 @@ pub fn write_project_registry(
         },
     )]);
 
-    write_project_registries(app, registries)
+    write_project_registries(app, registries, None)
 }
 
 #[tauri::command]
 pub fn write_project_registries(
     app: AppHandle,
     registries: BTreeMap<String, ProjectRegistryWriteInput>,
+    workspace_registry: Option<WorkspaceRegistryWriteInput>,
 ) -> ProjectRegistryWrite {
     let mut connection = match storage::app_connection(&app) {
         Ok(connection) => connection,
         Err(_) => return invalid_write(ProjectRegistryStoreError::WriteFailed),
     };
-    write_project_registries_to_connection(&mut connection, registries)
+    write_project_registries_to_connection(&mut connection, registries, workspace_registry)
 }
 
 fn write_project_registries_to_connection(
     connection: &mut rusqlite::Connection,
     registries: BTreeMap<String, ProjectRegistryWriteInput>,
+    workspace_registry: Option<WorkspaceRegistryWriteInput>,
 ) -> ProjectRegistryWrite {
-    let transaction = match connection.transaction() {
+    let behavior = if workspace_registry.is_some() {
+        rusqlite::TransactionBehavior::Immediate
+    } else {
+        rusqlite::TransactionBehavior::Deferred
+    };
+    let transaction = match connection.transaction_with_behavior(behavior) {
         Ok(transaction) => transaction,
         Err(_) => return invalid_write(ProjectRegistryStoreError::WriteFailed),
     };
+    if let Some(workspace_registry) = workspace_registry {
+        if let Err(error) = write_sync_workspace_registry(&transaction, workspace_registry) {
+            return invalid_write(error);
+        }
+    }
 
     for (workspace_id, registry) in registries {
         let workspace_id = match validate_workspace_id(&workspace_id) {
@@ -262,6 +282,53 @@ fn write_project_registries_to_connection(
         },
         Err(_) => invalid_write(ProjectRegistryStoreError::WriteFailed),
     }
+}
+
+fn write_sync_workspace_registry(
+    transaction: &rusqlite::Transaction<'_>,
+    input: WorkspaceRegistryWriteInput,
+) -> Result<(), ProjectRegistryStoreError> {
+    use crate::app_state_store::{is_sortable_utc_timestamp, validate_value_json};
+
+    let value_json = validate_value_json(&input.value_json)
+        .map_err(|_| ProjectRegistryStoreError::RegistryJsonInvalid)?;
+    let value: serde_json::Value = serde_json::from_str(&value_json)
+        .map_err(|_| ProjectRegistryStoreError::RegistryJsonInvalid)?;
+    if !value
+        .get("workspaces")
+        .is_some_and(serde_json::Value::is_array)
+    {
+        return Err(ProjectRegistryStoreError::RegistryJsonInvalid);
+    }
+    let expected = input.expected_value_json.trim();
+    if expected != "null" && validate_value_json(expected).is_err() {
+        return Err(ProjectRegistryStoreError::RegistryJsonInvalid);
+    }
+    let updated_at = input.updated_at.trim();
+    if !is_sortable_utc_timestamp(updated_at) {
+        return Err(ProjectRegistryStoreError::RegistryJsonInvalid);
+    }
+    let current: Option<(String, String)> = transaction.query_row(
+        "SELECT value_json, updated_at FROM app_state_records WHERE state_key = 'workspace-registry'",
+        [], |row| Ok((row.get(0)?, row.get(1)?)),
+    ).optional().map_err(|_| ProjectRegistryStoreError::WriteFailed)?;
+    let matches = match current.as_ref() {
+        Some((json, timestamp)) => json.trim() == expected && timestamp.as_str() <= updated_at,
+        None => expected == "null",
+    };
+    if !matches {
+        return Err(ProjectRegistryStoreError::RevisionConflict);
+    }
+    transaction
+        .execute(
+            "INSERT INTO app_state_records (state_key, value_json, updated_at)
+         VALUES ('workspace-registry', ?1, ?2)
+         ON CONFLICT(state_key) DO UPDATE SET value_json = excluded.value_json,
+           updated_at = excluded.updated_at, stored_at = CURRENT_TIMESTAMP",
+            params![value_json, updated_at],
+        )
+        .map_err(|_| ProjectRegistryStoreError::WriteFailed)?;
+    Ok(())
 }
 
 fn validate_workspace_ids(
@@ -334,6 +401,107 @@ fn invalid_write(error: ProjectRegistryStoreError) -> ProjectRegistryWrite {
 mod tests {
     use super::*;
 
+    fn sync_input(expected: &str) -> WorkspaceRegistryWriteInput {
+        WorkspaceRegistryWriteInput {
+            value_json: r#"{"workspaces":[{"id":"new"}]}"#.into(),
+            expected_value_json: expected.into(),
+            updated_at: "2026-10-10T00:00:00.000Z".into(),
+        }
+    }
+
+    fn workspace_value(connection: &rusqlite::Connection) -> String {
+        connection
+            .query_row(
+                "SELECT value_json FROM app_state_records WHERE state_key = 'workspace-registry'",
+                [],
+                |row| row.get(0),
+            )
+            .unwrap()
+    }
+
+    #[test]
+    fn sync_import_commits_workspace_and_projects_together() {
+        let mut connection = connection();
+        connection
+            .execute_batch(include_str!("../migrations/007_app_state_records.sql"))
+            .unwrap();
+        let result = write_project_registries_to_connection(
+            &mut connection,
+            BTreeMap::from([("new".into(), input(r#"{"value":2}"#, None))]),
+            Some(sync_input("null")),
+        );
+        assert!(result.ok);
+        assert_eq!(
+            workspace_value(&connection),
+            r#"{"workspaces":[{"id":"new"}]}"#
+        );
+        assert_eq!(
+            stored(&connection, "new").as_deref(),
+            Some(r#"{"value":2}"#)
+        );
+    }
+
+    #[test]
+    fn sync_import_rolls_back_workspace_and_prior_projects_when_a_later_write_fails() {
+        for database_error in [false, true] {
+            let mut connection = connection();
+            connection
+                .execute_batch(include_str!("../migrations/007_app_state_records.sql"))
+                .unwrap();
+            connection.execute(
+                "INSERT INTO app_state_records (state_key, value_json, updated_at) VALUES ('workspace-registry', ?1, ?2)",
+                params![r#"{"workspaces":[]}"#, "2026-10-09T00:00:00.000Z"],
+            ).unwrap();
+            assert!(write(&mut connection, "a", r#"{"value":1}"#, None).ok);
+            if database_error {
+                connection.execute_batch("CREATE TRIGGER reject_sync_project BEFORE INSERT ON project_registries WHEN NEW.workspace_id = 'z' BEGIN SELECT RAISE(ABORT, 'test failure'); END;").unwrap();
+            }
+            let result = write_project_registries_to_connection(
+                &mut connection,
+                BTreeMap::from([
+                    ("a".into(), input(r#"{"value":2}"#, None)),
+                    (
+                        "z".into(),
+                        input(if database_error { "{}" } else { "[" }, None),
+                    ),
+                ]),
+                Some(sync_input(r#"{"workspaces":[]}"#)),
+            );
+            assert!(!result.ok);
+            assert_eq!(workspace_value(&connection), r#"{"workspaces":[]}"#);
+            assert_eq!(stored(&connection, "a").as_deref(), Some(r#"{"value":1}"#));
+            assert!(stored(&connection, "z").is_none());
+        }
+    }
+
+    #[test]
+    fn sync_import_rejects_stale_workspace_snapshots_and_older_timestamps() {
+        for (expected, timestamp) in [
+            ("null", "2026-10-09T00:00:00.000Z"),
+            (r#"{"workspaces":[]}"#, "2026-10-11T00:00:00.000Z"),
+        ] {
+            let mut connection = connection();
+            connection
+                .execute_batch(include_str!("../migrations/007_app_state_records.sql"))
+                .unwrap();
+            connection.execute(
+                "INSERT INTO app_state_records (state_key, value_json, updated_at) VALUES ('workspace-registry', ?1, ?2)",
+                params![r#"{"workspaces":[]}"#, timestamp],
+            ).unwrap();
+            let result = write_project_registries_to_connection(
+                &mut connection,
+                BTreeMap::from([("new".into(), input("{}", None))]),
+                Some(sync_input(expected)),
+            );
+            assert!(matches!(
+                result.error,
+                Some(ProjectRegistryStoreError::RevisionConflict)
+            ));
+            assert_eq!(workspace_value(&connection), r#"{"workspaces":[]}"#);
+            assert!(stored(&connection, "new").is_none());
+        }
+    }
+
     fn connection() -> rusqlite::Connection {
         let connection = rusqlite::Connection::open_in_memory().unwrap();
         connection
@@ -359,6 +527,7 @@ mod tests {
         write_project_registries_to_connection(
             connection,
             BTreeMap::from([(id.to_owned(), input(json, expected))]),
+            None,
         )
     }
 
@@ -431,6 +600,7 @@ mod tests {
                     input(r#"{"value":4}"#, Some(r#"{"value":1}"#)),
                 ),
             ]),
+            None,
         );
         assert!(!result.ok);
         assert_eq!(

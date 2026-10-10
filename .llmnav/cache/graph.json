@@ -813,6 +813,28 @@
     {
       "definitions": [],
       "external": false,
+      "key": "workduck/workduck.app-state.storage-native",
+      "location": {
+        "declarationLine": null,
+        "endLine": 16,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src-tauri/src/app_state_store.rs",
+        "receiver": null,
+        "signature": null,
+        "startLine": 8,
+        "symbol": null,
+        "visibility": null
+      },
+      "repositoryId": "workduck",
+      "role": "Read and transactionally persist allowed application settings in SQLite with bounded JSON and ordered UTC revisions.",
+      "semanticId": "workduck.app-state.storage-native",
+      "unresolved": false
+    },
+    {
+      "definitions": [],
+      "external": false,
       "key": "workduck/workduck.briefs.editor-drafts",
       "location": {
         "declarationLine": null,
@@ -1742,7 +1764,7 @@
         "visibility": null
       },
       "repositoryId": "workduck",
-      "role": "Read and atomically replace SQLite project registry snapshots with optional stale-write guards.",
+      "role": "Read and atomically replace SQLite project registries with optional snapshot guards and a workspace sync checkpoint.",
       "semanticId": "workduck.projects.storage-native",
       "unresolved": false
     },
@@ -2761,11 +2783,11 @@
   ],
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "e98ad1985014efdeeae930f2a2f362c310d867fe1fe259811ec30879477fc729",
+  "sourceHash": "36e7b07536bd15e6f02ef9e7ec051d95489a0e6c67e88b0a6bd4016385be1a16",
   "stats": {
     "edgeCount": 49,
     "importedIndexCount": 0,
-    "nodeCount": 93,
+    "nodeCount": 94,
     "unresolvedNodeCount": 0
   }
 }

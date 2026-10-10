@@ -5,6 +5,16 @@ use tauri::AppHandle;
 
 use crate::storage;
 
+/* llmnav/1 module
+id=workduck.app-state.storage-native
+role=Read and transactionally persist allowed application settings in SQLite with bounded JSON and ordered UTC revisions.
+owns=app state SQLite transactions|setting key allowlist|JSON size validation|UTC revision ordering
+excludes=renderer crash journal|setting domain normalization|sync payload assembly
+search=app state SQLite transaction|setting JSON size limit|UTC setting revision
+invariant=Only allowed keys and bounded JSON objects are stored; invalid rows roll back the batch and older UTC revisions cannot replace newer values.
+stability=contract
+*/
+
 const APP_STATE_VALUE_MAX_BYTES: usize = 5 * 1024 * 1024;
 const APP_STATE_KEYS: &[&str] = &[
     "appearance-settings",
@@ -185,7 +195,7 @@ fn validate_records(
         .collect()
 }
 
-fn is_sortable_utc_timestamp(value: &str) -> bool {
+pub(crate) fn is_sortable_utc_timestamp(value: &str) -> bool {
     let bytes = value.as_bytes();
 
     bytes.len() == 24
@@ -220,7 +230,7 @@ fn validate_key(key: &str) -> Result<String, AppStateStoreError> {
     Ok(key.to_owned())
 }
 
-fn validate_value_json(value_json: &str) -> Result<String, AppStateStoreError> {
+pub(crate) fn validate_value_json(value_json: &str) -> Result<String, AppStateStoreError> {
     let value_json = value_json.trim();
 
     if value_json.len() > APP_STATE_VALUE_MAX_BYTES {

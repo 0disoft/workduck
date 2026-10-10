@@ -91,3 +91,4 @@ workduck.references.registry
 workduck.briefs.editor-drafts
 workduck.app-state.boot-gate
 workduck.projects.task-powershell
+workduck.app-state.storage-native

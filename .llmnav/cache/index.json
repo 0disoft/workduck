@@ -3510,12 +3510,13 @@
         "editor draft ownership"
       ],
       "hashes": {
-        "body": "77463cec68e4f4afed19fd901ca524d525c819e71b12f5ea1bd1f2b5d87deef4",
-        "semantic": "c4cdc048475c75a2460a1131951f9d0100641f93843ebf08c3858e62cdbf2f39",
-        "structure": "4c7d376e51376e909ab9a77f29e86cd367a78bbb1bfd65029f355f53789d111c"
+        "body": "9aef00464464a7d17075152d469254332fc4702b27acbaaa2c6d3be66d83c01f",
+        "semantic": "74c37f8a124cfd71a1987ab118dc7c40cd3abd65a66dc008d53c270d55c02f9d",
+        "structure": "d5090f8dc00bafaea5cc358ad029dfac98357943333995d2f2f134179abfe9b5"
       },
       "id": "workduck.projects.storage-native",
       "imports": [
+        "crate::app_state_store::{is_sortable_utc_timestamp, validate_value_json}",
         "crate::storage",
         "rusqlite::{OptionalExtension, params, params_from_iter}",
         "std::collections::BTreeMap",
@@ -3523,7 +3524,7 @@
         "tests {\n    use super::*"
       ],
       "invariant": [
-        "Guarded writes replace only the expected stored snapshot; a conflict or invalid row rolls back the entire batch."
+        "Guarded writes require the expected snapshot; sync checkpoints also preserve UTC ordering, and a conflict or failed row rolls back workspace and project changes together."
       ],
       "location": {
         "declarationLine": null,
@@ -3541,9 +3542,9 @@
       "owns": [
         "project registry SQLite reads",
         "snapshot write guards",
-        "atomic bulk registry replacement"
+        "atomic registry and workspace replacement"
       ],
-      "role": "Read and atomically replace SQLite project registry snapshots with optional stale-write guards.",
+      "role": "Read and atomically replace SQLite project registries with optional snapshot guards and a workspace sync checkpoint.",
       "scope": "module",
       "search": [
         "project registry SQLite write",
@@ -4749,11 +4750,62 @@
         "bounded Unicode log tail"
       ],
       "stability": "architecture"
+    },
+    {
+      "boundaries": [],
+      "excludes": [
+        "renderer crash journal",
+        "setting domain normalization",
+        "sync payload assembly"
+      ],
+      "hashes": {
+        "body": "5cca2bb177be723569db914f1193d0e3e30fe16429e385582e754f17411dff8d",
+        "semantic": "c8ce2d1adfb73e2752ddf6ae7c1b89e76e8f633851e698a75576a1ce66590cd3",
+        "structure": "cee1b3fdc02b7fad3215887b7aec970feab65f2d361d331ce679ec398e468c44"
+      },
+      "id": "workduck.app-state.storage-native",
+      "imports": [
+        "crate::storage",
+        "rusqlite::{Connection, params, params_from_iter}",
+        "std::collections::{BTreeMap, BTreeSet}",
+        "tauri::AppHandle",
+        "tests {\n    use super::*"
+      ],
+      "invariant": [
+        "Only allowed keys and bounded JSON objects are stored; invalid rows roll back the batch and older UTC revisions cannot replace newer values."
+      ],
+      "location": {
+        "declarationLine": null,
+        "endLine": 16,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src-tauri/src/app_state_store.rs",
+        "receiver": null,
+        "signature": null,
+        "startLine": 8,
+        "symbol": null,
+        "visibility": null
+      },
+      "owns": [
+        "app state SQLite transactions",
+        "setting key allowlist",
+        "JSON size validation",
+        "UTC revision ordering"
+      ],
+      "role": "Read and transactionally persist allowed application settings in SQLite with bounded JSON and ordered UTC revisions.",
+      "scope": "module",
+      "search": [
+        "app state SQLite transaction",
+        "setting JSON size limit",
+        "UTC setting revision"
+      ],
+      "stability": "contract"
     }
   ],
   "contractFingerprints": {
     "configuration": {
-      "sha256": "0539910322934176c0f7e5b9dbaaee3b2beeb3c02bd3b2b45f89493c1a7a42bc"
+      "sha256": "98e05697b6e41a1fe582b4d16e5a9da2fb104d05d40f7d69514154922b9ccbac"
     },
     "exportedApi": {
       "count": 0,
@@ -4764,6 +4816,6 @@
   "generatedBy": "llmnav@0.9.7",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "2edf5b91199c867aa247e92d34a1788904c5d1e21d4e4c16d124f28a7f3fc49d",
+  "sourceHash": "e631d94fa4999e8e0d2b6cfb2ec3f4b5ab9da328173936e655392bac92f61f65",
   "specVersion": "1"
 }
