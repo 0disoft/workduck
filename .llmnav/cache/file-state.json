@@ -543,6 +543,33 @@
     },
     {
       "blocks": [],
+      "contentHash": "3f9afb8112db4484069d9326c7fb6464da4fc08437c922a5cd301cbc99675c53",
+      "declarations": [],
+      "imports": [
+        "node:fs/promises",
+        "node:path"
+      ],
+      "path": "scripts/ssealed-artifact-publication.mjs",
+      "semanticBytes": 0,
+      "sourceBytes": 2892
+    },
+    {
+      "blocks": [],
+      "contentHash": "658926f471e1761b6ee593e32565f8c5ab90861398283d97b861a070854d33b2",
+      "declarations": [],
+      "imports": [
+        "./ssealed-artifact-publication.mjs",
+        "bun:test",
+        "node:fs/promises",
+        "node:os",
+        "node:path"
+      ],
+      "path": "scripts/ssealed-artifact-publication.test.mjs",
+      "semanticBytes": 0,
+      "sourceBytes": 4147
+    },
+    {
+      "blocks": [],
       "contentHash": "ed5d4872b82415be7e59d8d22ad0c35447e185d1d1b66d8ec56da62baea1c463",
       "declarations": [],
       "imports": [
@@ -630,9 +657,10 @@
     },
     {
       "blocks": [],
-      "contentHash": "cc09e93353c61263fc40ff449132e22003f93709f9b28d5fba0c048f3148d6b4",
+      "contentHash": "49052d94e784e118d4bea8357713d33ba34e74d57967c876c60a9422a8b03aea",
       "declarations": [],
       "imports": [
+        "./ssealed-artifact-publication.mjs",
         "./ssealed-generated-scaffold.mjs",
         "./ssealed-installation.mjs",
         "./ssealed-scaffold-artifacts.mjs",
@@ -645,7 +673,7 @@
       ],
       "path": "scripts/sync-ssealed-scaffold.mjs",
       "semanticBytes": 0,
-      "sourceBytes": 5684
+      "sourceBytes": 5709
     },
     {
       "blocks": [],

@@ -325,6 +325,13 @@ paths, and duplicates. Builds also check version, selection, and checksums and s
 if the embedded files are stale. The full check above regenerates all combinations to
 compare their contents. For reproducible installs, use `bun install --frozen-lockfile`.
 
+Scaffold synchronization checks the CLI's generated manifest against the installed
+version, requested settings, file inventory, and file checksums before embedding.
+Outputs are staged before replacement; ordinary publication failures restore prior
+outputs. Detected concurrent edits are preserved, and incomplete recovery reports retained
+backups. A process interruption can leave mismatched indexes, which the build check
+rejects until synchronization is rerun.
+
 Run the desktop app during development:
 
 ```sh

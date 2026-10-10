@@ -1,11 +1,12 @@
 import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
-import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { readSsealedInstallation } from './ssealed-installation.mjs';
 import { collectGeneratedSsealedScaffold } from './ssealed-generated-scaffold.mjs';
+import { publishSsealedArtifacts } from './ssealed-artifact-publication.mjs';
 import {
 	archiveSchemaVersion, scaffoldDensity, scaffoldRunner, assertCurrentArtifact,
 	renderGeneratedRust, renderGeneratedTypeScript, verifyEmbeddedSsealedArtifacts, validateSsealedArchive
@@ -138,10 +139,11 @@ async function main() {
 		return;
 	}
 
-	await mkdir(dirname(archivePath), { recursive: true });
-	await writeFile(archivePath, archive, 'utf8');
-	await writeFile(generatedRustPath, rustIndex, 'utf8');
-	await writeFile(generatedTypeScriptPath, typeScriptIndex, 'utf8');
+	await publishSsealedArtifacts([
+		{ path: archivePath, content: archive },
+		{ path: generatedRustPath, content: rustIndex },
+		{ path: generatedTypeScriptPath, content: typeScriptIndex }
+	]);
 	console.log(
 		`Synced ssealed ${version} ${scaffoldScopes.length}x${scaffoldProfiles.length} scaffolds into ${relative(repositoryRoot, archivePath)} (${archiveChecksum}).`
 	);
