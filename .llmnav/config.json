@@ -2,6 +2,12 @@
   "$schema": "./schema/config.schema.json",
   "coverageRules": [
     {
+      "match": ["src/lib/app-state/persistent-app-state.ts"],
+      "name": "initialization retry and validated workspace fallback",
+      "requiredFields": ["owns", "invariant"],
+      "scope": "module"
+    },
+    {
       "match": ["src/lib/workspaces/workspace-registry.ts", "src/lib/workspaces/workspace-storage.ts"],
       "name": "workspace identity and lossless persistence admission",
       "requiredFields": ["owns", "invariant"],

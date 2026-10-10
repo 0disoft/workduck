@@ -5900,7 +5900,7 @@
             ],
             "id": "workduck.app-state.storage",
             "invariant": [
-              "Background refreshes require initialization; one live native subscription refreshes committed keys; journals and transaction leases defer refreshes until completion; cache revisions reject older responses; journal notifications match current storage and I/O errors end the attempt."
+              "Initialization validates selected domain values and reads legacy fallbacks only for missing rows; invalid journals remain unacknowledged; background refreshes preserve leases and cache revisions; one live subscription refreshes committed keys."
             ],
             "owns": [
               "app state backend selection",
@@ -5926,7 +5926,7 @@
             "stability": "architecture",
             "unknown": []
           },
-          "end": 929,
+          "end": 891,
           "endLine": 9,
           "entries": [
             {
@@ -5963,7 +5963,7 @@
               "key": "invariant",
               "line": 7,
               "order": 5,
-              "value": "Background refreshes require initialization; one live native subscription refreshes committed keys; journals and transaction leases defer refreshes until completion; cache revisions reject older responses; journal notifications match current storage and I/O errors end the attempt."
+              "value": "Initialization validates selected domain values and reads legacy fallbacks only for missing rows; invalid journals remain unacknowledged; background refreshes preserve leases and cache revisions; one live subscription refreshes committed keys."
             },
             {
               "key": "stability",
@@ -5976,7 +5976,7 @@
           "indent": "",
           "newline": "\n",
           "prefix": null,
-          "raw": "/* llmnav/1 module\nid=workduck.app-state.storage\nrole=Persist application settings through a renderer crash journal, native SQLite promotion, and browser fallback.\nowns=app state backend selection|legacy setting promotion|pending write journal|serialized flush|transaction cache publication|shared native subscription|deferred cache refresh\nexcludes=setting domain validation|native SQLite implementation|workspace project registries\nsearch=app state crash journal|settings SQLite promotion|pending setting flush|stale foreign journal notification|focus settings cache refresh|native setting commit subscription\ninvariant=Background refreshes require initialization; one live native subscription refreshes committed keys; journals and transaction leases defer refreshes until completion; cache revisions reject older responses; journal notifications match current storage and I/O errors end the attempt.\nstability=architecture\n*/",
+          "raw": "/* llmnav/1 module\nid=workduck.app-state.storage\nrole=Persist application settings through a renderer crash journal, native SQLite promotion, and browser fallback.\nowns=app state backend selection|legacy setting promotion|pending write journal|serialized flush|transaction cache publication|shared native subscription|deferred cache refresh\nexcludes=setting domain validation|native SQLite implementation|workspace project registries\nsearch=app state crash journal|settings SQLite promotion|pending setting flush|stale foreign journal notification|focus settings cache refresh|native setting commit subscription\ninvariant=Initialization validates selected domain values and reads legacy fallbacks only for missing rows; invalid journals remain unacknowledged; background refreshes preserve leases and cache revisions; one live subscription refreshes committed keys.\nstability=architecture\n*/",
           "scope": "module",
           "specVersion": "1",
           "start": 0,
@@ -5985,7 +5985,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "44d4845e4023af23c6ba1901d47dd7f54b1603a35880794e5b0fb755892a9159",
+      "contentHash": "ecf1dac90c4b1177e848f79d1f85e63a4665c17b1206aff995f7b2459d37e984",
       "declarations": [
         null
       ],
@@ -5994,16 +5994,17 @@
         "#lib/tauri/tauri-invoke.ts"
       ],
       "path": "src/lib/app-state/app-state-storage.ts",
-      "semanticBytes": 929,
-      "sourceBytes": 25603
+      "semanticBytes": 891,
+      "sourceBytes": 27940
     },
     {
       "blocks": [],
-      "contentHash": "b874dd6dc64f073667280930dace111f61413abbe54751b4e2d458f5597b577c",
+      "contentHash": "6f9987fc1dc02c56fe23d4327214fd3b11fd095d001cdf44c93a615370a204b8",
       "declarations": [],
       "imports": [
         "#lib/settings/appearance-settings.ts",
         "#lib/tauri/tauri-invoke.ts",
+        "#lib/workspaces/workspace-registry.ts",
         "./app-state-storage",
         "./persistent-app-state",
         "node:assert/strict",
@@ -6011,12 +6012,103 @@
       ],
       "path": "src/lib/app-state/persistent-app-state.test.ts",
       "semanticBytes": 0,
-      "sourceBytes": 5097
+      "sourceBytes": 14630
     },
     {
-      "blocks": [],
-      "contentHash": "541189c0c71e09d1cde1c62f6881dffdd04fdd087a9915a387db151545faee0b",
-      "declarations": [],
+      "blocks": [
+        {
+          "card": {
+            "effect": [],
+            "excludes": [
+              "SQLite transactions",
+              "journal flushes",
+              "boot screen rendering"
+            ],
+            "id": "workduck.app-state.bootstrap",
+            "invariant": [
+              "Workspace fallback is read only when no pending or SQLite value exists; startup rejects damaged workspace values before migration and retries failed initialization attempts."
+            ],
+            "owns": [
+              "initialization attempt reuse",
+              "failed attempt retry",
+              "workspace fallback seed",
+              "startup domain validation"
+            ],
+            "rel": [],
+            "risk": [],
+            "role": "Coalesce renderer initialization and provide validated lazy workspace migration without reading stale browser mirrors when SQLite is authoritative.",
+            "scope": "module",
+            "search": [
+              "workspace startup migration",
+              "lazy legacy workspace fallback",
+              "persistent initialization retry"
+            ],
+            "stability": "architecture",
+            "unknown": []
+          },
+          "end": 683,
+          "endLine": 9,
+          "entries": [
+            {
+              "key": "id",
+              "line": 2,
+              "order": 0,
+              "value": "workduck.app-state.bootstrap"
+            },
+            {
+              "key": "role",
+              "line": 3,
+              "order": 1,
+              "value": "Coalesce renderer initialization and provide validated lazy workspace migration without reading stale browser mirrors when SQLite is authoritative."
+            },
+            {
+              "key": "owns",
+              "line": 4,
+              "order": 2,
+              "value": "initialization attempt reuse|failed attempt retry|workspace fallback seed|startup domain validation"
+            },
+            {
+              "key": "excludes",
+              "line": 5,
+              "order": 3,
+              "value": "SQLite transactions|journal flushes|boot screen rendering"
+            },
+            {
+              "key": "search",
+              "line": 6,
+              "order": 4,
+              "value": "workspace startup migration|lazy legacy workspace fallback|persistent initialization retry"
+            },
+            {
+              "key": "invariant",
+              "line": 7,
+              "order": 5,
+              "value": "Workspace fallback is read only when no pending or SQLite value exists; startup rejects damaged workspace values before migration and retries failed initialization attempts."
+            },
+            {
+              "key": "stability",
+              "line": 8,
+              "order": 6,
+              "value": "architecture"
+            }
+          ],
+          "filePath": "src/lib/app-state/persistent-app-state.ts",
+          "indent": "",
+          "newline": "\n",
+          "prefix": null,
+          "raw": "/* llmnav/1 module\nid=workduck.app-state.bootstrap\nrole=Coalesce renderer initialization and provide validated lazy workspace migration without reading stale browser mirrors when SQLite is authoritative.\nowns=initialization attempt reuse|failed attempt retry|workspace fallback seed|startup domain validation\nexcludes=SQLite transactions|journal flushes|boot screen rendering\nsearch=workspace startup migration|lazy legacy workspace fallback|persistent initialization retry\ninvariant=Workspace fallback is read only when no pending or SQLite value exists; startup rejects damaged workspace values before migration and retries failed initialization attempts.\nstability=architecture\n*/",
+          "scope": "module",
+          "specVersion": "1",
+          "start": 0,
+          "startLine": 1,
+          "style": "block",
+          "syntaxErrors": []
+        }
+      ],
+      "contentHash": "1e00a6b7baf889d089af25a1c632c4fb1f4941551a0abc26db446293a514a7d4",
+      "declarations": [
+        null
+      ],
       "imports": [
         "#lib/settings/appearance-settings.ts",
         "#lib/settings/sync-settings.ts",
@@ -6025,8 +6117,8 @@
         "./app-state-storage"
       ],
       "path": "src/lib/app-state/persistent-app-state.ts",
-      "semanticBytes": 0,
-      "sourceBytes": 2744
+      "semanticBytes": 683,
+      "sourceBytes": 3718
     },
     {
       "blocks": [],

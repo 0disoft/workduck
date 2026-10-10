@@ -4299,8 +4299,8 @@
         "workspace project registries"
       ],
       "hashes": {
-        "body": "44d4845e4023af23c6ba1901d47dd7f54b1603a35880794e5b0fb755892a9159",
-        "semantic": "25b0e501b6f3dca0e6f8b85bbf2b201f049d92f82f153eb5c4e773993fac04cb",
+        "body": "ecf1dac90c4b1177e848f79d1f85e63a4665c17b1206aff995f7b2459d37e984",
+        "semantic": "dafed5969d4a013f9eceb08174ee3705958176f3aad89f3f55d39c31ae6c04c9",
         "structure": "1e222539a41b7ca433d629c18afe33696257ba4d1b463345be92338d6504c960"
       },
       "id": "workduck.app-state.storage",
@@ -4309,7 +4309,7 @@
         "#lib/tauri/tauri-invoke.ts"
       ],
       "invariant": [
-        "Background refreshes require initialization; one live native subscription refreshes committed keys; journals and transaction leases defer refreshes until completion; cache revisions reject older responses; journal notifications match current storage and I/O errors end the attempt."
+        "Initialization validates selected domain values and reads legacy fallbacks only for missing rows; invalid journals remain unacknowledged; background refreshes preserve leases and cache revisions; one live subscription refreshes committed keys."
       ],
       "location": {
         "declarationLine": null,
@@ -4916,11 +4916,62 @@
         "invalid workspace change notification"
       ],
       "stability": "architecture"
+    },
+    {
+      "boundaries": [],
+      "excludes": [
+        "SQLite transactions",
+        "journal flushes",
+        "boot screen rendering"
+      ],
+      "hashes": {
+        "body": "1e00a6b7baf889d089af25a1c632c4fb1f4941551a0abc26db446293a514a7d4",
+        "semantic": "54da4a699afae045d04ca323c6159d134ef12935568c2faa8c6a86421abcf078",
+        "structure": "bb93ab6a9753140f9b09c0fbd7d92afa1abbbe17736127057cfc8a94f8b5ce6d"
+      },
+      "id": "workduck.app-state.bootstrap",
+      "imports": [
+        "#lib/settings/appearance-settings.ts",
+        "#lib/settings/sync-settings.ts",
+        "#lib/settings/system-settings.ts",
+        "#lib/workspaces/workspace-registry.ts",
+        "./app-state-storage"
+      ],
+      "invariant": [
+        "Workspace fallback is read only when no pending or SQLite value exists; startup rejects damaged workspace values before migration and retries failed initialization attempts."
+      ],
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src/lib/app-state/persistent-app-state.ts",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "owns": [
+        "initialization attempt reuse",
+        "failed attempt retry",
+        "workspace fallback seed",
+        "startup domain validation"
+      ],
+      "role": "Coalesce renderer initialization and provide validated lazy workspace migration without reading stale browser mirrors when SQLite is authoritative.",
+      "scope": "module",
+      "search": [
+        "workspace startup migration",
+        "lazy legacy workspace fallback",
+        "persistent initialization retry"
+      ],
+      "stability": "architecture"
     }
   ],
   "contractFingerprints": {
     "configuration": {
-      "sha256": "aab9bc866b6e58ccc31dd40de28a67aae402e16065ae9d4c6d7adedd5dee1f04"
+      "sha256": "039b26ea7ca5f6a6d76f9db27560917c317af1f3881332cbd70640326ecfde45"
     },
     "exportedApi": {
       "count": 0,
@@ -4931,6 +4982,6 @@
   "generatedBy": "llmnav@0.9.7",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "30df1de9703f5196ba7283ae38ce729b8f0615d42d4d3aa42a03a43dc3625f45",
+  "sourceHash": "ae4cda9e80a7bd71cfb10998ad1e807ed0dfd5a15b063232c23e7809f79e11ee",
   "specVersion": "1"
 }

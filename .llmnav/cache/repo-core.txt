@@ -233,7 +233,7 @@ invariant Repository operations and favorite-save feedback stay in the captured 
 role Persist application settings through a renderer crash journal, native SQLite promotion, and browser fallback.
 owns app state backend selection, legacy setting promotion, pending write journal, serialized flush, transaction cache publication, shared native subscription, deferred cache refresh
 excludes setting domain validation, native SQLite implementation, workspace project registries
-invariant Background refreshes require initialization; one live native subscription refreshes committed keys; journals and transaction leases defer refreshes until completion; cache revisions reject older responses; journal notifications match current storage and I/O errors end the attempt.
+invariant Initialization validates selected domain values and reads legacy fallbacks only for missing rows; invalid journals remain unacknowledged; background refreshes preserve leases and cache revisions; one live subscription refreshes committed keys.
 
 @workduck.environment.vault-session
 role Project native environment vault sessions into workspace metadata subscriptions and coordinate explicit secret access and locking.
@@ -270,3 +270,9 @@ role Read, write, and publish workspace registry snapshots through application s
 owns workspace storage admission, workspace change subscriptions, snapshot notification validation
 excludes workspace domain mutations, native SQLite transactions, browser journal implementation
 invariant Reads preserve stored record and lock validity; saves validate the current and incoming snapshots; failed reads and malformed notifications never publish an empty replacement.
+
+@workduck.app-state.bootstrap
+role Coalesce renderer initialization and provide validated lazy workspace migration without reading stale browser mirrors when SQLite is authoritative.
+owns initialization attempt reuse, failed attempt retry, workspace fallback seed, startup domain validation
+excludes SQLite transactions, journal flushes, boot screen rendering
+invariant Workspace fallback is read only when no pending or SQLite value exists; startup rejects damaged workspace values before migration and retries failed initialization attempts.

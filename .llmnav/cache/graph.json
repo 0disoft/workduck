@@ -16,6 +16,20 @@
     },
     {
       "confidence": 0.85,
+      "from": "workduck/workduck.app-state.bootstrap",
+      "id": "2f44cfd7c016bf4a412c3b53a0776d2e05ed79b2902768af2f12e1492b7a6974",
+      "kind": "imports",
+      "provenance": {
+        "generator": "llmnav",
+        "line": null,
+        "path": "src/lib/app-state/persistent-app-state.ts",
+        "source": "src/lib/app-state/persistent-app-state.ts",
+        "type": "local-import"
+      },
+      "to": "workduck/workduck.app-state.storage"
+    },
+    {
+      "confidence": 0.85,
       "from": "workduck/workduck.briefs.gate",
       "id": "dec12a6fae00a3131c6db28757297a321b3e256e24978139713eadbb25ae209e",
       "kind": "imports",
@@ -814,6 +828,28 @@
       "repositoryId": "workduck",
       "role": "Gate renderer startup on persistent settings recovery and load the desktop interface after successful initialization.",
       "semanticId": "workduck.app-state.boot-gate",
+      "unresolved": false
+    },
+    {
+      "definitions": [],
+      "external": false,
+      "key": "workduck/workduck.app-state.bootstrap",
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src/lib/app-state/persistent-app-state.ts",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "repositoryId": "workduck",
+      "role": "Coalesce renderer initialization and provide validated lazy workspace migration without reading stale browser mirrors when SQLite is authoritative.",
+      "semanticId": "workduck.app-state.bootstrap",
       "unresolved": false
     },
     {
@@ -2855,11 +2891,11 @@
   ],
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "ed7cabd4b93854e6d804d10397b936a19968307ef63a6919a035e217d9418269",
+  "sourceHash": "1bae1c4526edcad22b3c3cc75219d839a1e89656a033cbd68efe6888cde1a08b",
   "stats": {
-    "edgeCount": 51,
+    "edgeCount": 52,
     "importedIndexCount": 0,
-    "nodeCount": 96,
+    "nodeCount": 97,
     "unresolvedNodeCount": 0
   }
 }

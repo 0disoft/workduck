@@ -94,3 +94,4 @@ workduck.projects.task-powershell
 workduck.app-state.storage-native
 workduck.workspace.registry
 workduck.workspace.storage
+workduck.app-state.bootstrap

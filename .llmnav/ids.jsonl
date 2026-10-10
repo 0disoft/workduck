@@ -94,3 +94,4 @@
 {"id":"workduck.app-state.storage-native","state":"active"}
 {"id":"workduck.workspace.registry","state":"active"}
 {"id":"workduck.workspace.storage","state":"active"}
+{"id":"workduck.app-state.bootstrap","state":"active"}

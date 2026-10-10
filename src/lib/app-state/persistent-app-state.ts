@@ -1,3 +1,12 @@
+/* llmnav/1 module
+id=workduck.app-state.bootstrap
+role=Coalesce renderer initialization and provide validated lazy workspace migration without reading stale browser mirrors when SQLite is authoritative.
+owns=initialization attempt reuse|failed attempt retry|workspace fallback seed|startup domain validation
+excludes=SQLite transactions|journal flushes|boot screen rendering
+search=workspace startup migration|lazy legacy workspace fallback|persistent initialization retry
+invariant=Workspace fallback is read only when no pending or SQLite value exists; startup rejects damaged workspace values before migration and retries failed initialization attempts.
+stability=architecture
+*/
 import {
 	parseAppearanceSettings,
 	serializeAppearanceSettings,
@@ -14,7 +23,8 @@ import {
 	WORKDUCK_SYSTEM_SETTINGS_STORAGE_KEY
 } from '#lib/settings/system-settings.ts';
 import {
-	parseWorkspaceRegistry,
+	createEmptyWorkspaceRegistry,
+	parseStoredWorkspaceRegistry,
 	serializeWorkspaceRegistry,
 	WORKDUCK_WORKSPACE_REGISTRY_STORAGE_KEY
 } from '#lib/workspaces/workspace-registry.ts';
@@ -56,9 +66,13 @@ export function initializePersistentAppState(): Promise<WorkduckAppStateInitiali
 		{
 			key: WORKDUCK_WORKSPACE_REGISTRY_APP_STATE_KEY,
 			legacyStorageKey: WORKDUCK_WORKSPACE_REGISTRY_STORAGE_KEY,
-			valueJson: serializeWorkspaceRegistry(
-				parseWorkspaceRegistry(readLegacyStorageValue(WORKDUCK_WORKSPACE_REGISTRY_STORAGE_KEY))
-			)
+			valueJson: serializeWorkspaceRegistry(createEmptyWorkspaceRegistry()),
+			normalizeLegacyValue: (valueJson) => {
+				const parsed = parseStoredWorkspaceRegistry(valueJson);
+				if (!parsed.ok) throw new Error('stored workspace registry invalid');
+				return serializeWorkspaceRegistry(parsed.registry);
+			},
+			validateValueJson: (valueJson) => parseStoredWorkspaceRegistry(valueJson).ok
 		}
 	]).then((result) => {
 		if (!result.ok && initializationPromise === attempt) initializationPromise = null;

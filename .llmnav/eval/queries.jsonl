@@ -102,3 +102,4 @@
 {"query":"strict stored project registry reject node repository loss unsupported version","expected":["workduck.projects.registry-normalization"]}
 {"query":"strict stored workspace registry reject record loss damaged lock unsupported version","expected":["workduck.workspace.registry"]}
 {"query":"workspace read failure block saves invalid workspace change notification","expected":["workduck.workspace.storage"]}
+{"query":"workspace startup migration lazy legacy workspace fallback persistent initialization retry","expected":["workduck.app-state.bootstrap"]}
