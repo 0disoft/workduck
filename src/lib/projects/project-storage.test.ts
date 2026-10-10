@@ -61,6 +61,63 @@ afterEach(() => {
 });
 
 describe('project registry storage write ordering', () => {
+	for (const native of [false, true]) {
+		test(`reads one legacy snapshot per bulk request and batches migration markers, native=${native}`, async () => {
+			const ids = Array.from({ length: 10 }, (_, index) => `workspace-${index}`);
+			const legacy = Object.fromEntries(ids.map((id) => [id, registry(id, 1)]));
+			window.localStorage.setItem('workduck.projectRegistries.v1', JSON.stringify({ version: 1, registries: legacy }));
+			const storage = window.localStorage;
+			const getItem = storage.getItem.bind(storage);
+			const setItem = storage.setItem.bind(storage);
+			let legacyReads = 0;
+			let markerWrites = 0;
+			storage.getItem = (key) => {
+				if (key === 'workduck.projectRegistries.v1') legacyReads += 1;
+				return getItem(key);
+			};
+			storage.setItem = (key, value) => {
+				if (key === 'workduck.projectRegistries.sqliteMigrated.v1') markerWrites += 1;
+				setItem(key, value);
+			};
+			const current = Object.fromEntries(ids.map((id) => [id, registry(id, 2)]));
+			if (native) setTauriInvokeForTest(async <T>() => ({ ok: true,
+				registries: Object.fromEntries(Object.entries(current).map(([id, value]) => [id, JSON.stringify(value)]))
+			}) as T);
+			const result = await readProjectRegistries(ids);
+			expect(result.ok).toBe(true);
+			expect(result.registries).toEqual(native ? current : legacy);
+			expect(legacyReads).toBe(1);
+			expect(markerWrites).toBe(native ? 1 : 0);
+			// A second request must see newly stored data without repeating unchanged markers.
+			const newer = Object.fromEntries(ids.map((id) => [id, registry(id, 3)]));
+			storage.setItem('workduck.projectRegistries.v1', JSON.stringify({ version: 1, registries: newer }));
+			expect((await readProjectRegistries(ids)).registries).toEqual(native ? current : newer);
+			expect(legacyReads).toBe(2);
+			expect(markerWrites).toBe(native ? 1 : 0);
+		});
+	}
+
+	test('writes one merged migration marker after a successful bulk save', async () => {
+		window.localStorage.setItem('workduck.projectRegistries.sqliteMigrated.v1', JSON.stringify(['existing']));
+		const storage = window.localStorage;
+		const setItem = storage.setItem.bind(storage);
+		let markerWrites = 0;
+		storage.setItem = (key, value) => {
+			if (key === 'workduck.projectRegistries.sqliteMigrated.v1') markerWrites += 1;
+			setItem(key, value);
+		};
+		setTauriInvokeForTest(async <T>() => ({ ok: true }) as T);
+		const values = Object.fromEntries(['a', 'b', 'c'].map((id) => [id, registry(id, 1)]));
+		expect((await writeProjectRegistries(values)).ok).toBe(true);
+		expect(markerWrites).toBe(1);
+		expect(JSON.parse(storage.getItem('workduck.projectRegistries.sqliteMigrated.v1') ?? '[]')).toEqual(['existing', 'a', 'b', 'c']);
+		storage.setItem('workduck.projectRegistries.sqliteMigrated.v1', JSON.stringify(['existing', 'a', 'b', 'c', 'foreign']));
+		markerWrites = 0;
+		expect((await writeProjectRegistries({ d: registry('d', 1) })).ok).toBe(true);
+		expect(markerWrites).toBe(1);
+		expect(JSON.parse(storage.getItem('workduck.projectRegistries.sqliteMigrated.v1') ?? '[]')).toEqual(['existing', 'a', 'b', 'c', 'foreign', 'd']);
+	});
+
 	for (const bulk of [false, true]) {
 		test(`preserves an empty SQLite registry without a browser migration marker, bulk=${bulk}`, async () => {
 			seedLegacyRegistry();

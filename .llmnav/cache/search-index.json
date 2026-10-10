@@ -95,7 +95,7 @@
     "workduck.workspace.sync-file-native",
     "workduck.workspace.sync-git-native"
   ],
-  "cardSetHash": "2264d097c8e1e869b601994093c5d27dde972f2f95a22d4d3197b45813fa81cb",
+  "cardSetHash": "16639668ba38a7273c75e35f671ef67c23518475f95495444e464d94488d60ab",
   "documentCount": 94,
   "documents": [
     [
@@ -713,13 +713,13 @@
       ]
     ],
     [
-      "4f2514ce7e06efd7568c4db72cc3dd49b7a5a43ff0c8ca930f0a50f4915a1ffd",
+      "d5412c4f9628aa2ffe46ef5e10a4c475714455a7893250793d98bcdce4f9e5b9",
       [
         "persist ordered project registry writes, atomically import workspace sync data in sqlite, and migrate browser legacy registries.",
         "project registry storage",
         "sqlite registry migration",
         "atomic workspace sync import",
-        "overlapping writes run in request order; sync imports publish only after one native commit; legacy promotion requires a missing sqlite row and guards its creation; stored empty registries remain authoritative and subscriptions publish only current results.",
+        "bulk reads share one legacy snapshot per attempt; overlapping writes run in order; sync imports publish only after one native commit; legacy promotion guards missing rows, stored empty registries stay authoritative, and subscriptions publish only current results.",
         "project registry persistence",
         "legacy registry promotion",
         "registry change notifications",
@@ -1493,13 +1493,6 @@
       ],
       [
         42,
-        [
-          5,
-          1
-        ]
-      ],
-      [
-        46,
         [
           5,
           1
@@ -2824,7 +2817,7 @@
           1,
           1,
           5,
-          2
+          1
         ]
       ],
       [
@@ -4106,6 +4099,13 @@
           9,
           1
         ]
+      ],
+      [
+        46,
+        [
+          5,
+          1
+        ]
       ]
     ],
     [
@@ -5208,6 +5208,13 @@
       ]
     ],
     [
+      [
+        46,
+        [
+          5,
+          1
+        ]
+      ],
       [
         47,
         [
@@ -7855,13 +7862,6 @@
     ],
     [
       [
-        46,
-        [
-          5,
-          1
-        ]
-      ],
-      [
         59,
         [
           1,
@@ -14601,13 +14601,6 @@
         ]
       ],
       [
-        46,
-        [
-          5,
-          1
-        ]
-      ],
-      [
         52,
         [
           5,
@@ -15266,7 +15259,7 @@
           3,
           1,
           5,
-          1
+          2
         ]
       ],
       [
@@ -18703,7 +18696,7 @@
         46,
         [
           5,
-          1
+          2
         ]
       ],
       [
@@ -20921,6 +20914,13 @@
       ]
     ],
     [
+      [
+        46,
+        [
+          5,
+          1
+        ]
+      ],
       [
         90,
         [
@@ -23908,6 +23908,13 @@
         ]
       ],
       [
+        46,
+        [
+          5,
+          1
+        ]
+      ],
+      [
         47,
         [
           3,
@@ -25138,13 +25145,6 @@
         ]
       ],
       [
-        46,
-        [
-          5,
-          1
-        ]
-      ],
-      [
         52,
         [
           5,
@@ -25999,13 +25999,6 @@
         ]
       ],
       [
-        46,
-        [
-          5,
-          1
-        ]
-      ],
-      [
         67,
         [
           3,
@@ -26180,13 +26173,6 @@
       ],
       [
         42,
-        [
-          5,
-          1
-        ]
-      ],
-      [
-        46,
         [
           5,
           1
@@ -27246,13 +27232,6 @@
         ]
       ],
       [
-        46,
-        [
-          5,
-          1
-        ]
-      ],
-      [
         47,
         [
           5,
@@ -27263,6 +27242,13 @@
     [
       [
         5,
+        [
+          5,
+          1
+        ]
+      ],
+      [
+        46,
         [
           5,
           1
@@ -29486,6 +29472,13 @@
         ]
       ],
       [
+        46,
+        [
+          5,
+          1
+        ]
+      ],
+      [
         52,
         [
           5,
@@ -29881,6 +29874,13 @@
         ]
       ],
       [
+        46,
+        [
+          5,
+          1
+        ]
+      ],
+      [
         47,
         [
           1,
@@ -30160,8 +30160,6 @@
           1,
           1,
           2,
-          1,
-          5,
           1
         ]
       ],
@@ -31337,6 +31335,13 @@
       ],
       [
         39,
+        [
+          5,
+          1
+        ]
+      ],
+      [
+        46,
         [
           5,
           1

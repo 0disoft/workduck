@@ -5776,7 +5776,7 @@ checksum = "1ebf944e87a7c253233ad6766e082e3cd714b5d03812acc24c318f549614536e"
 
 [[package]]
 name = "workduck"
-version = "1.9.92"
+version = "1.9.93"
 dependencies = [
  "argon2",
  "base64 0.23.1",

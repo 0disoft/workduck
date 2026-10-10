@@ -4,7 +4,7 @@ role=Persist ordered project registry writes, atomically import workspace sync d
 owns=project registry persistence|legacy registry promotion|registry change notifications|workspace operation ordering|atomic sync import
 excludes=project domain normalization|repository Git operations
 search=project registry storage|sqlite registry migration|atomic workspace sync import
-invariant=Overlapping writes run in request order; sync imports publish only after one native commit; legacy promotion requires a missing SQLite row and guards its creation; stored empty registries remain authoritative and subscriptions publish only current results.
+invariant=Bulk reads share one legacy snapshot per attempt; overlapping writes run in order; sync imports publish only after one native commit; legacy promotion guards missing rows, stored empty registries stay authoritative, and subscriptions publish only current results.
 stability=architecture
 */
 
@@ -267,8 +267,9 @@ export async function readProjectRegistries(
 }
 
 async function readProjectRegistriesNow(workspaceIds: readonly string[], promotionQueued = false): Promise<ProjectRegistriesStorageResult> {
+	const legacyStorage = readLegacyStorageRecord();
 	const fallbackRegistries: Record<string, ProjectRegistry> = Object.fromEntries(
-		workspaceIds.map((workspaceId) => [workspaceId, readLegacyProjectRegistry(workspaceId)])
+		workspaceIds.map((workspaceId) => [workspaceId, readLegacyProjectRegistry(workspaceId, legacyStorage)])
 	);
 
 	if (typeof window === 'undefined') {
@@ -333,9 +334,9 @@ async function readProjectRegistriesNow(workspaceIds: readonly string[], promoti
 			};
 		}
 
-		for (const workspaceId of Object.keys(registriesToPromote)) {
-			markWorkspaceRegistryMigrated(workspaceId);
-		}
+		markWorkspaceRegistriesMigrated(workspaceIds.filter((id) =>
+			sqliteResult.registries[id] !== undefined || registriesToPromote[id] !== undefined
+		));
 
 		return {
 			ok: true,
@@ -346,11 +347,7 @@ async function readProjectRegistriesNow(workspaceIds: readonly string[], promoti
 		};
 	}
 
-	for (const workspaceId of workspaceIds) {
-		if (sqliteResult.registries[workspaceId] !== undefined) {
-			markWorkspaceRegistryMigrated(workspaceId);
-		}
-	}
+	markWorkspaceRegistriesMigrated(workspaceIds.filter((id) => sqliteResult.registries[id] !== undefined));
 
 	return { ok: true, registries };
 }
@@ -384,7 +381,7 @@ export async function writeWorkspaceSyncRegistries(
 		if (!result.ok) return { ok: false, registries: normalizedRegistries, error };
 
 		// SQLite and the workspace cache are committed before either notification.
-		for (const id of Object.keys(normalizedRegistries)) markWorkspaceRegistryMigrated(id);
+		markWorkspaceRegistriesMigrated(Object.keys(normalizedRegistries));
 		notifyWorkspaceRegistryChanged(normalizedWorkspaceRegistry);
 		for (const registry of Object.values(normalizedRegistries)) {
 			dispatchProjectRegistryChanged(registry.workspaceId, registry);
@@ -448,8 +445,8 @@ async function writeProjectRegistriesNow(normalizedRegistries: Record<string, Pr
 		};
 	}
 
+	markWorkspaceRegistriesMigrated(Object.keys(normalizedRegistries));
 	for (const registry of Object.values(normalizedRegistries)) {
-		markWorkspaceRegistryMigrated(registry.workspaceId);
 		dispatchProjectRegistryChanged(registry.workspaceId, registry);
 	}
 
@@ -710,9 +707,7 @@ function mapProjectRegistryParseError(error: ProjectRegistryParseError): Project
 		: 'project-registry-read-failed';
 }
 
-function readLegacyProjectRegistry(workspaceId: string) {
-	const storage = readLegacyStorageRecord();
-
+function readLegacyProjectRegistry(workspaceId: string, storage = readLegacyStorageRecord()) {
 	return normalizeProjectRegistry(storage.registries[workspaceId], workspaceId);
 }
 
@@ -803,27 +798,36 @@ function workspaceRegistryWasMigrated(workspaceId: string) {
 }
 
 function markWorkspaceRegistryMigrated(workspaceId: string) {
-	if (typeof window === 'undefined') {
+	markWorkspaceRegistriesMigrated([workspaceId]);
+}
+
+function markWorkspaceRegistriesMigrated(workspaceIds: readonly string[]) {
+	if (typeof window === 'undefined' || workspaceIds.length === 0) {
 		return;
 	}
 
 	try {
 		const storage = window.localStorage;
-		const workspaceIds = migratedWorkspaceIdsByStorage.get(storage) ?? readMigratedWorkspaceIds();
-		workspaceIds.add(workspaceId);
-		migratedWorkspaceIdsByStorage.set(storage, workspaceIds);
-		storage.setItem(PROJECT_REGISTRY_SQLITE_MIGRATION_STORAGE_KEY, JSON.stringify([...workspaceIds]));
+		const stored = storage.getItem(PROJECT_REGISTRY_SQLITE_MIGRATION_STORAGE_KEY);
+		const migratedIds = new Set([
+			...readMigratedWorkspaceIds(stored),
+			...(migratedWorkspaceIdsByStorage.get(storage) ?? []),
+			...workspaceIds
+		]);
+		migratedWorkspaceIdsByStorage.set(storage, migratedIds);
+		const serialized = JSON.stringify([...migratedIds]);
+		if (stored !== serialized) storage.setItem(PROJECT_REGISTRY_SQLITE_MIGRATION_STORAGE_KEY, serialized);
 	} catch { /* Marker failure cannot undo a successful native commit. */ }
 }
 
-function readMigratedWorkspaceIds() {
+function readMigratedWorkspaceIds(serialized?: string | null) {
 	if (typeof window === 'undefined') {
 		return new Set<string>();
 	}
 
 	try {
 		const value: unknown = JSON.parse(
-			window.localStorage.getItem(PROJECT_REGISTRY_SQLITE_MIGRATION_STORAGE_KEY) ?? '[]'
+			(serialized === undefined ? window.localStorage.getItem(PROJECT_REGISTRY_SQLITE_MIGRATION_STORAGE_KEY) : serialized) ?? '[]'
 		);
 
 		return new Set(

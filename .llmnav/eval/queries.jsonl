@@ -96,3 +96,4 @@
 {"query":"app state journal flush reconcile superseded values without replacing newer edits","expected":["workduck.app-state.storage"]}
 {"query":"app state pending journal read deletion failure stop flush retry","expected":["workduck.app-state.storage"]}
 {"query":"project registry legacy promotion missing SQLite row preserve stored empty registries","expected":["workduck.projects.storage"]}
+{"query":"project registry bulk reads one legacy snapshot batch browser migration markers","expected":["workduck.projects.storage"]}
