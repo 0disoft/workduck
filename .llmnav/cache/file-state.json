@@ -5605,7 +5605,7 @@
     },
     {
       "blocks": [],
-      "contentHash": "f94545c45fbd9e6762d659dce7469b1e8e21a916c77b54e6348d51e77f2ffa5b",
+      "contentHash": "a5eda38036ad49e605d55f8102f2bf37c9bb7673ba2d494cf2df238fb1a2cb39",
       "declarations": [],
       "imports": [
         "#lib/tauri/tauri-invoke.ts",
@@ -5615,7 +5615,7 @@
       ],
       "path": "src/lib/app-state/app-state-storage.test.ts",
       "semanticBytes": 0,
-      "sourceBytes": 9652
+      "sourceBytes": 11302
     },
     {
       "blocks": [
@@ -5629,7 +5629,7 @@
             ],
             "id": "workduck.app-state.storage",
             "invariant": [
-              "Renderer writes acknowledge journaling before native persistence; a successful flush removes only journal entries that still match the committed snapshot."
+              "Native writes require successful initialization; renderer writes acknowledge journaling before persistence, and a flush removes only journal entries matching its committed snapshot."
             ],
             "owns": [
               "app state backend selection",
@@ -5650,7 +5650,7 @@
             "stability": "architecture",
             "unknown": []
           },
-          "end": 645,
+          "end": 672,
           "endLine": 9,
           "entries": [
             {
@@ -5687,7 +5687,7 @@
               "key": "invariant",
               "line": 7,
               "order": 5,
-              "value": "Renderer writes acknowledge journaling before native persistence; a successful flush removes only journal entries that still match the committed snapshot."
+              "value": "Native writes require successful initialization; renderer writes acknowledge journaling before persistence, and a flush removes only journal entries matching its committed snapshot."
             },
             {
               "key": "stability",
@@ -5700,7 +5700,7 @@
           "indent": "",
           "newline": "\n",
           "prefix": null,
-          "raw": "/* llmnav/1 module\nid=workduck.app-state.storage\nrole=Persist application settings through a renderer crash journal, native SQLite promotion, and browser fallback.\nowns=app state backend selection|legacy setting promotion|pending write journal|serialized flush|cached setting values\nexcludes=setting domain validation|native SQLite implementation|workspace project registries\nsearch=app state crash journal|settings SQLite promotion|pending setting flush\ninvariant=Renderer writes acknowledge journaling before native persistence; a successful flush removes only journal entries that still match the committed snapshot.\nstability=architecture\n*/",
+          "raw": "/* llmnav/1 module\nid=workduck.app-state.storage\nrole=Persist application settings through a renderer crash journal, native SQLite promotion, and browser fallback.\nowns=app state backend selection|legacy setting promotion|pending write journal|serialized flush|cached setting values\nexcludes=setting domain validation|native SQLite implementation|workspace project registries\nsearch=app state crash journal|settings SQLite promotion|pending setting flush\ninvariant=Native writes require successful initialization; renderer writes acknowledge journaling before persistence, and a flush removes only journal entries matching its committed snapshot.\nstability=architecture\n*/",
           "scope": "module",
           "specVersion": "1",
           "start": 0,
@@ -5709,7 +5709,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "3b1d257c82bb3f62c827af9e1e418e1656e5c7be4e1cc2f11112b80b5a69873d",
+      "contentHash": "33a8ba932d9c04acfba6b613cd29549fc7692c8cf4c221b8013b65b2265ad43a",
       "declarations": [
         null
       ],
@@ -5718,8 +5718,8 @@
         "#lib/tauri/tauri-invoke.ts"
       ],
       "path": "src/lib/app-state/app-state-storage.ts",
-      "semanticBytes": 645,
-      "sourceBytes": 14772
+      "semanticBytes": 672,
+      "sourceBytes": 15396
     },
     {
       "blocks": [],

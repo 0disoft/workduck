@@ -90,7 +90,7 @@
     "workduck.workspace.sync-file-native",
     "workduck.workspace.sync-git-native"
   ],
-  "cardSetHash": "52b1b204d6b4ef7aff50fdf78fdfcd7244156f38d4428f3597de4a6b91d2afb7",
+  "cardSetHash": "c1ca37c00733531f5895aaa10b64519e8933b794941593e5ee8fc8af16ccdcc9",
   "documentCount": 89,
   "documents": [
     [
@@ -129,13 +129,13 @@
       ]
     ],
     [
-      "f563d5c8dfa3f6f68f3bdab856d06ca88f4195f6389efdc016818a849bb3e1ce",
+      "ac7b13e9da7f780b3a82463a2b8975e62252ce4e0463449f634ee36c665e4061",
       [
         "persist application settings through a renderer crash journal, native sqlite promotion, and browser fallback.",
         "app state crash journal",
         "settings sqlite promotion",
         "pending setting flush",
-        "renderer writes acknowledge journaling before native persistence; a successful flush removes only journal entries that still match the committed snapshot.",
+        "native writes require successful initialization; renderer writes acknowledge journaling before persistence, and a flush removes only journal entries matching its committed snapshot.",
         "app state backend selection",
         "legacy setting promotion",
         "pending write journal",
@@ -2257,6 +2257,8 @@
         3,
         [
           1,
+          1,
+          5,
           1
         ]
       ],
@@ -12921,6 +12923,13 @@
     ],
     [
       [
+        3,
+        [
+          5,
+          1
+        ]
+      ],
+      [
         75,
         [
           4,
@@ -13521,6 +13530,13 @@
     [
       [
         0,
+        [
+          5,
+          1
+        ]
+      ],
+      [
+        3,
         [
           5,
           1
@@ -15349,13 +15365,6 @@
     ],
     [
       [
-        3,
-        [
-          5,
-          1
-        ]
-      ],
-      [
         28,
         [
           5,
@@ -15387,6 +15396,13 @@
       ]
     ],
     [
+      [
+        3,
+        [
+          5,
+          1
+        ]
+      ],
       [
         6,
         [
@@ -24003,6 +24019,13 @@
     ],
     [
       [
+        3,
+        [
+          5,
+          1
+        ]
+      ],
+      [
         26,
         [
           5,
@@ -28795,13 +28818,6 @@
     ],
     [
       [
-        3,
-        [
-          5,
-          1
-        ]
-      ],
-      [
         28,
         [
           5,
@@ -30603,13 +30619,6 @@
     ],
     [
       [
-        3,
-        [
-          5,
-          1
-        ]
-      ],
-      [
         53,
         [
           5,
@@ -30629,13 +30638,6 @@
         2,
         [
           1,
-          1
-        ]
-      ],
-      [
-        3,
-        [
-          5,
           1
         ]
       ],
@@ -35233,7 +35235,7 @@
         3,
         [
           5,
-          1
+          2
         ]
       ],
       [

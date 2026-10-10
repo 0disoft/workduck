@@ -4,7 +4,7 @@ role=Persist application settings through a renderer crash journal, native SQLit
 owns=app state backend selection|legacy setting promotion|pending write journal|serialized flush|cached setting values
 excludes=setting domain validation|native SQLite implementation|workspace project registries
 search=app state crash journal|settings SQLite promotion|pending setting flush
-invariant=Renderer writes acknowledge journaling before native persistence; a successful flush removes only journal entries that still match the committed snapshot.
+invariant=Native writes require successful initialization; renderer writes acknowledge journaling before persistence, and a flush removes only journal entries matching its committed snapshot.
 stability=architecture
 */
 import { isObjectRecord } from '#lib/shared/object-record.ts';
@@ -179,9 +179,9 @@ export function readWorkduckAppStateValue(
 
 	const valueJson = cachedValues.get(key) ?? null;
 
-	return initializationError === null
+	return backend === 'sqlite' && initializationError === null
 		? { ok: true, valueJson }
-		: { ok: false, valueJson, error: initializationError };
+		: { ok: false, valueJson, error: initializationError ?? 'app-state-read-failed' };
 }
 
 export function writeWorkduckAppStateValue(
@@ -213,6 +213,17 @@ export function writeWorkduckAppStateValue(
 
 		cachedValues.set(key, valueJson);
 		return { ok: true, valueJson };
+	}
+
+	// A failed initial read exposes defaults for display, not an authoritative
+	// snapshot. Journaling edits to those defaults could replace existing data
+	// once SQLite becomes available again, including on the next app start.
+	if (backend !== 'sqlite') {
+		return {
+			ok: false,
+			valueJson,
+			error: initializationError ?? 'app-state-read-failed'
+		};
 	}
 
 	if (storage === undefined) {
@@ -296,6 +307,12 @@ export function isWorkduckAppStateBrowserStorageActive() {
 }
 
 async function flushPendingWrites(): Promise<boolean> {
+	// Only initialization may promote legacy values or replay an earlier journal
+	// before the native state has been read successfully.
+	if (backend !== 'sqlite') {
+		return false;
+	}
+
 	const storage = getBrowserStorage();
 	const invoke = getTauriInvoke();
 

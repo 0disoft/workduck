@@ -4267,8 +4267,8 @@
         "workspace project registries"
       ],
       "hashes": {
-        "body": "3b1d257c82bb3f62c827af9e1e418e1656e5c7be4e1cc2f11112b80b5a69873d",
-        "semantic": "31522362403923a8f733ab5d41ccf8595b5b1bb724b58b75c708bca80a32a7f9",
+        "body": "33a8ba932d9c04acfba6b613cd29549fc7692c8cf4c221b8013b65b2265ad43a",
+        "semantic": "13f63e37a971f238a534f00055f24f58aa53a7f75245a90303e319d90dd4f374",
         "structure": "1e222539a41b7ca433d629c18afe33696257ba4d1b463345be92338d6504c960"
       },
       "id": "workduck.app-state.storage",
@@ -4277,7 +4277,7 @@
         "#lib/tauri/tauri-invoke.ts"
       ],
       "invariant": [
-        "Renderer writes acknowledge journaling before native persistence; a successful flush removes only journal entries that still match the committed snapshot."
+        "Native writes require successful initialization; renderer writes acknowledge journaling before persistence, and a flush removes only journal entries matching its committed snapshot."
       ],
       "location": {
         "declarationLine": null,
@@ -4534,6 +4534,6 @@
   "generatedBy": "llmnav@0.9.7",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "d4a36a6dcead8055d3c98392a329c1e1e4bd7ad7382f096cdc363fe8aa6dc363",
+  "sourceHash": "a3f64d65673e1501e0399ff2e28dd0595e7c7d567fc1967d5fe9bba003521c72",
   "specVersion": "1"
 }

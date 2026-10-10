@@ -258,6 +258,53 @@ describe('persistent app state storage', () => {
 			SYSTEM_PENDING_VALUE
 		);
 	});
+
+	test('blocks fallback writes after a failed native read until initialization succeeds', async () => {
+		const storage = new MemoryStorage();
+		const commands: string[] = [];
+		let readFails = true;
+		setWorkduckAppStateBrowserStorageForTest(storage);
+		setTauriInvokeForTest(async <T>(command: string) => {
+			commands.push(command);
+			return response<T>(command === 'read_app_state_records'
+				? readFails
+					? { ok: false, error: 'app-state-read-failed' }
+					: {
+						ok: true,
+						records: {
+							[WORKDUCK_APPEARANCE_APP_STATE_KEY]: APPEARANCE_SQLITE_VALUE,
+							[WORKDUCK_SYSTEM_APP_STATE_KEY]: SYSTEM_DEFAULT_VALUE
+						}
+					}
+				: { ok: true });
+		});
+
+		assert.equal((await initializeWorkduckAppState(seeds)).ok, false);
+		assert.equal(writeWorkduckAppStateValue(
+			WORKDUCK_SYSTEM_APP_STATE_KEY,
+			SYSTEM_LEGACY_KEY,
+			SYSTEM_PENDING_VALUE
+		).ok, false);
+		assert.equal(storage.getItem(pendingStorageKey(WORKDUCK_SYSTEM_APP_STATE_KEY)), null);
+		assert.equal(await flushWorkduckAppStateWrites(), false);
+		assert.deepEqual(commands, ['read_app_state_records']);
+
+		readFails = false;
+		assert.equal((await initializeWorkduckAppState(seeds)).ok, true);
+		assert.equal(
+			readWorkduckAppStateValue(WORKDUCK_APPEARANCE_APP_STATE_KEY, APPEARANCE_LEGACY_KEY).valueJson,
+			APPEARANCE_SQLITE_VALUE
+		);
+		assert.equal(writeWorkduckAppStateValue(
+			WORKDUCK_SYSTEM_APP_STATE_KEY,
+			SYSTEM_LEGACY_KEY,
+			SYSTEM_PENDING_VALUE
+		).ok, true);
+		assert.equal(await flushWorkduckAppStateWrites(), true);
+		assert.deepEqual(commands, [
+			'read_app_state_records', 'read_app_state_records', 'write_app_state_records'
+		]);
+	});
 });
 
 function pendingStorageKey(key: string) {
