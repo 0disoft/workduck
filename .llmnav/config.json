@@ -2,6 +2,12 @@
   "$schema": "./schema/config.schema.json",
   "coverageRules": [
     {
+      "match": ["src/lib/workspaces/workspace-registry.ts", "src/lib/workspaces/workspace-storage.ts"],
+      "name": "workspace identity and lossless persistence admission",
+      "requiredFields": ["owns", "invariant"],
+      "scope": "module"
+    },
+    {
       "match": ["src-tauri/src/app_state_store.rs"],
       "name": "native application setting persistence",
       "requiredFields": ["owns", "invariant"],

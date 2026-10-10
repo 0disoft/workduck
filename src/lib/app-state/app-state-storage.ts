@@ -186,15 +186,13 @@ export function readWorkduckAppStateValue(
 
 	if (backend === 'browser' || (backend === 'uninitialized' && invoke === undefined)) {
 		const storage = getBrowserStorage();
-		const valueJson = readBrowserValue(storage, legacyStorageKey) ?? cachedValues.get(key) ?? null;
-
-		return storage === undefined
-			? {
-					ok: false,
-					valueJson,
-					error: 'app-state-storage-unavailable'
-				}
-			: { ok: true, valueJson };
+		if (storage === undefined) return { ok: false, valueJson: cachedValues.get(key) ?? null, error: 'app-state-storage-unavailable' };
+		try {
+			// A removed browser value is absent; failed access is not a default value.
+			return { ok: true, valueJson: storage.getItem(legacyStorageKey) };
+		} catch {
+			return { ok: false, valueJson: cachedValues.get(key) ?? null, error: 'app-state-read-failed' };
+		}
 	}
 
 	const valueJson = cachedValues.get(key) ?? null;

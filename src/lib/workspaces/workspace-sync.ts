@@ -17,6 +17,7 @@ import {
 } from '#lib/projects/project-registry.ts';
 import {
 	normalizeWorkspaceRegistry,
+	normalizeStoredWorkspaceRegistry,
 	serializeWorkspaceRegistry,
 	type WorkspaceRegistry
 } from './workspace-registry';
@@ -529,15 +530,8 @@ function isLegacyWorkspaceRegistryValue(value: unknown) {
 }
 
 function normalizeSyncWorkspaceRegistry(value: unknown): WorkspaceRegistry | null {
-	if (!isObjectRecord(value) || !Array.isArray(value.workspaces)) return null;
-	const registry = normalizeWorkspaceRegistry(value);
-	if (registry.workspaces.length !== value.workspaces.length) return null;
-	for (let index = 0; index < value.workspaces.length; index += 1) {
-		const rawWorkspace: unknown = value.workspaces[index];
-		if (!isObjectRecord(rawWorkspace)) return null;
-		if (rawWorkspace.lock != null && registry.workspaces[index]?.lock === null) return null;
-	}
-	return registry;
+	const parsed = normalizeStoredWorkspaceRegistry(value);
+	return parsed.ok ? parsed.registry : null;
 }
 
 function readOptionalString(value: unknown) {

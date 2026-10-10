@@ -5985,7 +5985,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "d50a76eea892350c60bba69b2abac03070ea1976ef3e9b4e494f1583ddb6ee9e",
+      "contentHash": "44d4845e4023af23c6ba1901d47dd7f54b1603a35880794e5b0fb755892a9159",
       "declarations": [
         null
       ],
@@ -5995,7 +5995,7 @@
       ],
       "path": "src/lib/app-state/app-state-storage.ts",
       "semanticBytes": 929,
-      "sourceBytes": 25447
+      "sourceBytes": 25603
     },
     {
       "blocks": [],
@@ -10858,7 +10858,7 @@
     },
     {
       "blocks": [],
-      "contentHash": "b5f63c59e14267854f17f89cbd513561359ec2f26ed1fa391fc6b1adffb5146d",
+      "contentHash": "607deead8e18b7acbcfaf6743df9874ab44b5e28eb332eee3d4956bf7854ae4e",
       "declarations": [],
       "imports": [
         "#lib/app-state/app-state-storage.ts",
@@ -10871,7 +10871,7 @@
       ],
       "path": "src/lib/projects/project-storage-sync.test.ts",
       "semanticBytes": 0,
-      "sourceBytes": 10404
+      "sourceBytes": 11377
     },
     {
       "blocks": [],
@@ -10983,7 +10983,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "89ca478e64bc23edd9928c3ff13a4aa4620f2e768be73521d18e4a045fe73195",
+      "contentHash": "33c5a415db093d7a750a356376d61f4561fcfd8478765b8df11595eb97bee10c",
       "declarations": [
         null
       ],
@@ -10997,7 +10997,7 @@
       ],
       "path": "src/lib/projects/project-storage.ts",
       "semanticBytes": 954,
-      "sourceBytes": 30126
+      "sourceBytes": 30581
     },
     {
       "blocks": [],
@@ -14507,16 +14507,108 @@
       "sourceBytes": 5315
     },
     {
-      "blocks": [],
-      "contentHash": "926f6bdfb3a9e767c4b56dd2b2f29792e6b4454d40588de630f76a18af6ecfbd",
-      "declarations": [],
+      "blocks": [
+        {
+          "card": {
+            "effect": [],
+            "excludes": [
+              "storage transport",
+              "workspace directory operations",
+              "unlock sessions"
+            ],
+            "id": "workduck.workspace.registry",
+            "invariant": [
+              "Stored reads reject unsupported versions, discarded records, and invalid locks; explicit in-memory mutations retain the existing normalization rules."
+            ],
+            "owns": [
+              "workspace records",
+              "active workspace selection",
+              "workspace mutations",
+              "stored workspace validation"
+            ],
+            "rel": [],
+            "risk": [],
+            "role": "Define workspace identity, immutable mutations, and lossless validation of stored workspace lists and locks.",
+            "scope": "module",
+            "search": [
+              "workspace registry model",
+              "strict stored workspace registry",
+              "damaged workspace lock",
+              "workspace record loss"
+            ],
+            "stability": "contract",
+            "unknown": []
+          },
+          "end": 627,
+          "endLine": 9,
+          "entries": [
+            {
+              "key": "id",
+              "line": 2,
+              "order": 0,
+              "value": "workduck.workspace.registry"
+            },
+            {
+              "key": "role",
+              "line": 3,
+              "order": 1,
+              "value": "Define workspace identity, immutable mutations, and lossless validation of stored workspace lists and locks."
+            },
+            {
+              "key": "owns",
+              "line": 4,
+              "order": 2,
+              "value": "workspace records|active workspace selection|workspace mutations|stored workspace validation"
+            },
+            {
+              "key": "excludes",
+              "line": 5,
+              "order": 3,
+              "value": "storage transport|workspace directory operations|unlock sessions"
+            },
+            {
+              "key": "search",
+              "line": 6,
+              "order": 4,
+              "value": "workspace registry model|strict stored workspace registry|damaged workspace lock|workspace record loss"
+            },
+            {
+              "key": "invariant",
+              "line": 7,
+              "order": 5,
+              "value": "Stored reads reject unsupported versions, discarded records, and invalid locks; explicit in-memory mutations retain the existing normalization rules."
+            },
+            {
+              "key": "stability",
+              "line": 8,
+              "order": 6,
+              "value": "contract"
+            }
+          ],
+          "filePath": "src/lib/workspaces/workspace-registry.ts",
+          "indent": "",
+          "newline": "\n",
+          "prefix": null,
+          "raw": "/* llmnav/1 module\nid=workduck.workspace.registry\nrole=Define workspace identity, immutable mutations, and lossless validation of stored workspace lists and locks.\nowns=workspace records|active workspace selection|workspace mutations|stored workspace validation\nexcludes=storage transport|workspace directory operations|unlock sessions\nsearch=workspace registry model|strict stored workspace registry|damaged workspace lock|workspace record loss\ninvariant=Stored reads reject unsupported versions, discarded records, and invalid locks; explicit in-memory mutations retain the existing normalization rules.\nstability=contract\n*/",
+          "scope": "module",
+          "specVersion": "1",
+          "start": 0,
+          "startLine": 1,
+          "style": "block",
+          "syntaxErrors": []
+        }
+      ],
+      "contentHash": "2500b2fa963bbd7a340bd256b464f272e345f3f872d08c85bc54ab7ef62fce98",
+      "declarations": [
+        null
+      ],
       "imports": [
         "#lib/shared/object-record.ts",
         "./workspace-path-format"
       ],
       "path": "src/lib/workspaces/workspace-registry.ts",
-      "semanticBytes": 0,
-      "sourceBytes": 9699
+      "semanticBytes": 627,
+      "sourceBytes": 12106
     },
     {
       "blocks": [],
@@ -14565,15 +14657,120 @@
     },
     {
       "blocks": [],
-      "contentHash": "16f9d7d980d53fde8384cdeca96db47918a8b4799bc34e85bcbe1d691f71e0cb",
+      "contentHash": "8ffef0fb7c7f5587967cb43b99c9b4fa973cbdd5a31cd41283043379ad760128",
       "declarations": [],
+      "imports": [
+        "#lib/app-state/app-state-storage.ts",
+        "#lib/tauri/tauri-invoke.ts",
+        "./workspace-registry",
+        "./workspace-storage",
+        "bun:test"
+      ],
+      "path": "src/lib/workspaces/workspace-storage.test.ts",
+      "semanticBytes": 0,
+      "sourceBytes": 5949
+    },
+    {
+      "blocks": [
+        {
+          "card": {
+            "effect": [],
+            "excludes": [
+              "workspace domain mutations",
+              "native SQLite transactions",
+              "browser journal implementation"
+            ],
+            "id": "workduck.workspace.storage",
+            "invariant": [
+              "Reads preserve stored record and lock validity; saves validate the current and incoming snapshots; failed reads and malformed notifications never publish an empty replacement."
+            ],
+            "owns": [
+              "workspace storage admission",
+              "workspace change subscriptions",
+              "snapshot notification validation"
+            ],
+            "rel": [],
+            "risk": [],
+            "role": "Read, write, and publish workspace registry snapshots through application state without discarding damaged records.",
+            "scope": "module",
+            "search": [
+              "workspace registry persistence",
+              "workspace read failure block saves",
+              "invalid workspace change notification"
+            ],
+            "stability": "architecture",
+            "unknown": []
+          },
+          "end": 683,
+          "endLine": 9,
+          "entries": [
+            {
+              "key": "id",
+              "line": 2,
+              "order": 0,
+              "value": "workduck.workspace.storage"
+            },
+            {
+              "key": "role",
+              "line": 3,
+              "order": 1,
+              "value": "Read, write, and publish workspace registry snapshots through application state without discarding damaged records."
+            },
+            {
+              "key": "owns",
+              "line": 4,
+              "order": 2,
+              "value": "workspace storage admission|workspace change subscriptions|snapshot notification validation"
+            },
+            {
+              "key": "excludes",
+              "line": 5,
+              "order": 3,
+              "value": "workspace domain mutations|native SQLite transactions|browser journal implementation"
+            },
+            {
+              "key": "search",
+              "line": 6,
+              "order": 4,
+              "value": "workspace registry persistence|workspace read failure block saves|invalid workspace change notification"
+            },
+            {
+              "key": "invariant",
+              "line": 7,
+              "order": 5,
+              "value": "Reads preserve stored record and lock validity; saves validate the current and incoming snapshots; failed reads and malformed notifications never publish an empty replacement."
+            },
+            {
+              "key": "stability",
+              "line": 8,
+              "order": 6,
+              "value": "architecture"
+            }
+          ],
+          "filePath": "src/lib/workspaces/workspace-storage.ts",
+          "indent": "",
+          "newline": "\n",
+          "prefix": null,
+          "raw": "/* llmnav/1 module\nid=workduck.workspace.storage\nrole=Read, write, and publish workspace registry snapshots through application state without discarding damaged records.\nowns=workspace storage admission|workspace change subscriptions|snapshot notification validation\nexcludes=workspace domain mutations|native SQLite transactions|browser journal implementation\nsearch=workspace registry persistence|workspace read failure block saves|invalid workspace change notification\ninvariant=Reads preserve stored record and lock validity; saves validate the current and incoming snapshots; failed reads and malformed notifications never publish an empty replacement.\nstability=architecture\n*/",
+          "scope": "module",
+          "specVersion": "1",
+          "start": 0,
+          "startLine": 1,
+          "style": "block",
+          "syntaxErrors": []
+        }
+      ],
+      "contentHash": "abe63a03e1b77af2da453793a9f29db63ad9cd43716a2928b749cae802857dc8",
+      "declarations": [
+        null
+      ],
       "imports": [
         "#lib/app-state/app-state-storage.ts",
         "./workspace-registry"
       ],
       "path": "src/lib/workspaces/workspace-storage.ts",
-      "semanticBytes": 0,
-      "sourceBytes": 3554
+      "semanticBytes": 683,
+      "sourceBytes": 4869
     },
     {
       "blocks": [
@@ -14793,7 +14990,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "cac859edddf8c3816e07b67404cad253a0fe2bcb74dc104ae0a5de6783c42966",
+      "contentHash": "cfe346317046da8a7e6bc4066536f8799aa663c6176e83a09ecdad84e2e85804",
       "declarations": [
         null
       ],
@@ -14806,7 +15003,7 @@
       ],
       "path": "src/lib/workspaces/workspace-sync.ts",
       "semanticBytes": 664,
-      "sourceBytes": 16161
+      "sourceBytes": 15805
     },
     {
       "blocks": [],

@@ -64,6 +64,25 @@ beforeEach(() => {
 		});
 	}
 });
+
+test('rejects workspace imports that would silently discard records or locks', async () => {
+	setTauriInvokeForTest(async <T>(command: string) => {
+		calls.push({ command, args: undefined });
+		return { ok: true, records: { [WORKDUCK_WORKSPACE_REGISTRY_APP_STATE_KEY]: originalJson } } as T;
+	});
+	await initializeWorkduckAppState([{ key: WORKDUCK_WORKSPACE_REGISTRY_APP_STATE_KEY,
+		legacyStorageKey: WORKDUCK_WORKSPACE_REGISTRY_STORAGE_KEY, valueJson: originalJson }]);
+	calls.length = 0;
+	for (const workspaceRegistry of [
+		{ ...original, workspaces: [original.workspaces[0]!, original.workspaces[0]!] },
+		{ ...original, workspaces: [{ ...original.workspaces[0]!, lock: { kind: 'future' } }] } as unknown as WorkspaceRegistry
+	]) {
+		expect((await writeWorkspaceSyncRegistries(workspaceRegistry, projects)).ok).toBe(false);
+	}
+	expect(calls).toEqual([]);
+	expect(notifications).toEqual([]);
+	expect(readWorkspaceRegistryFromBrowser().registry).toEqual(original);
+});
 afterEach(async () => {
 	await flushWorkduckAppStateWrites();
 	setTauriInvokeForTest(undefined);

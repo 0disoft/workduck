@@ -685,6 +685,34 @@
         "type": "local-import"
       },
       "to": "workduck/workduck.terminal.session-client"
+    },
+    {
+      "confidence": 0.85,
+      "from": "workduck/workduck.workspace.storage",
+      "id": "9eca143af544cc19eb37a661de725d3a2729ac02cd7f19a9969886e2183f7765",
+      "kind": "imports",
+      "provenance": {
+        "generator": "llmnav",
+        "line": null,
+        "path": "src/lib/workspaces/workspace-storage.ts",
+        "source": "src/lib/workspaces/workspace-storage.ts",
+        "type": "local-import"
+      },
+      "to": "workduck/workduck.workspace.registry"
+    },
+    {
+      "confidence": 0.85,
+      "from": "workduck/workduck.workspace.sync",
+      "id": "ab8afeb348d923213794f447f50d286020e038e469025568e5a4f26b29d9df42",
+      "kind": "imports",
+      "provenance": {
+        "generator": "llmnav",
+        "line": null,
+        "path": "src/lib/workspaces/workspace-sync.ts",
+        "source": "src/lib/workspaces/workspace-sync.ts",
+        "type": "local-import"
+      },
+      "to": "workduck/workduck.workspace.registry"
     }
   ],
   "nodes": [
@@ -2673,6 +2701,28 @@
     {
       "definitions": [],
       "external": false,
+      "key": "workduck/workduck.workspace.registry",
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src/lib/workspaces/workspace-registry.ts",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "repositoryId": "workduck",
+      "role": "Define workspace identity, immutable mutations, and lossless validation of stored workspace lists and locks.",
+      "semanticId": "workduck.workspace.registry",
+      "unresolved": false
+    },
+    {
+      "definitions": [],
+      "external": false,
       "key": "workduck/workduck.workspace.repository-setup",
       "location": {
         "declarationLine": null,
@@ -2690,6 +2740,28 @@
       "repositoryId": "workduck",
       "role": "Initialize a workspace repository layout, Git, managed work-order instructions, and Workduck ignore policy through bounded native steps.",
       "semanticId": "workduck.workspace.repository-setup",
+      "unresolved": false
+    },
+    {
+      "definitions": [],
+      "external": false,
+      "key": "workduck/workduck.workspace.storage",
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src/lib/workspaces/workspace-storage.ts",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "repositoryId": "workduck",
+      "role": "Read, write, and publish workspace registry snapshots through application state without discarding damaged records.",
+      "semanticId": "workduck.workspace.storage",
       "unresolved": false
     },
     {
@@ -2783,11 +2855,11 @@
   ],
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "df5a8b4659c099cf45a2b5ba37e58406353fc79343cd55da1280a5ef37b9f6ce",
+  "sourceHash": "ed7cabd4b93854e6d804d10397b936a19968307ef63a6919a035e217d9418269",
   "stats": {
-    "edgeCount": 49,
+    "edgeCount": 51,
     "importedIndexCount": 0,
-    "nodeCount": 94,
+    "nodeCount": 96,
     "unresolvedNodeCount": 0
   }
 }

@@ -1,6 +1,16 @@
+/* llmnav/1 module
+id=workduck.workspace.storage
+role=Read, write, and publish workspace registry snapshots through application state without discarding damaged records.
+owns=workspace storage admission|workspace change subscriptions|snapshot notification validation
+excludes=workspace domain mutations|native SQLite transactions|browser journal implementation
+search=workspace registry persistence|workspace read failure block saves|invalid workspace change notification
+invariant=Reads preserve stored record and lock validity; saves validate the current and incoming snapshots; failed reads and malformed notifications never publish an empty replacement.
+stability=architecture
+*/
 import {
-	normalizeWorkspaceRegistry,
-	parseWorkspaceRegistry,
+	createEmptyWorkspaceRegistry,
+	normalizeStoredWorkspaceRegistry,
+	parseStoredWorkspaceRegistry,
 	serializeWorkspaceRegistry,
 	WORKDUCK_WORKSPACE_REGISTRY_STORAGE_KEY,
 	type WorkspaceRegistry
@@ -39,9 +49,10 @@ export function readWorkspaceRegistryFromBrowser(): WorkspaceRegistryStorageResu
 		WORKDUCK_WORKSPACE_REGISTRY_APP_STATE_KEY,
 		WORKDUCK_WORKSPACE_REGISTRY_STORAGE_KEY
 	);
-	const registry = parseWorkspaceRegistry(result.valueJson);
+	const parsed = parseStoredWorkspaceRegistry(result.valueJson);
+	const registry = parsed.ok ? parsed.registry : createEmptyWorkspaceRegistry();
 
-	return result.ok
+	return result.ok && parsed.ok
 		? { ok: true, registry }
 		: {
 				ok: false,
@@ -53,7 +64,10 @@ export function readWorkspaceRegistryFromBrowser(): WorkspaceRegistryStorageResu
 export function writeWorkspaceRegistryToBrowser(
 	registry: WorkspaceRegistry
 ): WorkspaceRegistryStorageResult {
-	const normalizedRegistry = normalizeWorkspaceRegistry(registry);
+	const current = readWorkspaceRegistryFromBrowser();
+	const parsed = normalizeStoredWorkspaceRegistry(registry);
+	if (!current.ok || !parsed.ok) return { ok: false, registry: current.registry, error: 'workspace-registry-write-failed' };
+	const normalizedRegistry = parsed.registry;
 	const result = writeWorkduckAppStateValue(
 		WORKDUCK_WORKSPACE_REGISTRY_APP_STATE_KEY,
 		WORKDUCK_WORKSPACE_REGISTRY_STORAGE_KEY,
@@ -90,33 +104,34 @@ export function subscribeWorkspaceRegistry(
 	if (typeof window === 'undefined') {
 		return () => {};
 	}
+	let isActive = true;
 
 	function handleRegistryChanged(event: Event) {
+		if (!isActive) return;
 		const detail = (event as CustomEvent<WorkspaceRegistryChangedDetail>).detail;
-
-		callback(
-			detail?.registry === undefined
-				? readWorkspaceRegistryFromBrowser().registry
-				: normalizeWorkspaceRegistry(detail.registry)
-		);
+		const result = detail?.registry === undefined
+			? readWorkspaceRegistryFromBrowser() : normalizeStoredWorkspaceRegistry(detail.registry);
+		if (result.ok) callback(result.registry);
 	}
 
 	function handleStorageChanged(event: StorageEvent) {
 		if (
-			!isWorkduckAppStateBrowserStorageActive() ||
+			!isActive || !isWorkduckAppStateBrowserStorageActive() ||
 			event.storageArea !== window.localStorage ||
-			event.key !== WORKDUCK_WORKSPACE_REGISTRY_STORAGE_KEY
+			(event.key !== null && event.key !== WORKDUCK_WORKSPACE_REGISTRY_STORAGE_KEY)
 		) {
 			return;
 		}
 
-		callback(parseWorkspaceRegistry(event.newValue));
+		const result = readWorkspaceRegistryFromBrowser();
+		if (result.ok) callback(result.registry);
 	}
 
 	const unsubscribeAppState = subscribeWorkduckAppStateValue(
 		WORKDUCK_WORKSPACE_REGISTRY_APP_STATE_KEY,
 		(valueJson) => {
-			callback(parseWorkspaceRegistry(valueJson));
+			const parsed = parseStoredWorkspaceRegistry(valueJson);
+			if (isActive && parsed.ok) callback(parsed.registry);
 		}
 	);
 
@@ -124,6 +139,8 @@ export function subscribeWorkspaceRegistry(
 	window.addEventListener('storage', handleStorageChanged);
 
 	return () => {
+		if (!isActive) return;
+		isActive = false;
 		unsubscribeAppState();
 		window.removeEventListener(WORKDUCK_WORKSPACE_REGISTRY_CHANGED_EVENT, handleRegistryChanged);
 		window.removeEventListener('storage', handleStorageChanged);

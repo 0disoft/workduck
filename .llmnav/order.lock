@@ -92,3 +92,5 @@ workduck.briefs.editor-drafts
 workduck.app-state.boot-gate
 workduck.projects.task-powershell
 workduck.app-state.storage-native
+workduck.workspace.registry
+workduck.workspace.storage

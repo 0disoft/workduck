@@ -264,3 +264,9 @@ role Generate, stage, and launch PowerShell task scripts with execution-owned at
 owns tracked task script generation, staged script lifetime, terminal launch, task record publication, Unicode output tail
 excludes command selection, terminal discovery, process liveness
 invariant Large scripts use a short run-bound loader and clean up their staged source; only the final command can publish success; publication aborts on failure and never exceeds the history read limit; preview truncation preserves Unicode boundaries.
+
+@workduck.workspace.storage
+role Read, write, and publish workspace registry snapshots through application state without discarding damaged records.
+owns workspace storage admission, workspace change subscriptions, snapshot notification validation
+excludes workspace domain mutations, native SQLite transactions, browser journal implementation
+invariant Reads preserve stored record and lock validity; saves validate the current and incoming snapshots; failed reads and malformed notifications never publish an empty replacement.

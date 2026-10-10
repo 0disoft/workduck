@@ -372,7 +372,7 @@
         "repository Git operations"
       ],
       "hashes": {
-        "body": "89ca478e64bc23edd9928c3ff13a4aa4620f2e768be73521d18e4a045fe73195",
+        "body": "33c5a415db093d7a750a356376d61f4561fcfd8478765b8df11595eb97bee10c",
         "semantic": "c5250b284050385538a61d5dbdcb76e2d4e8c3257c6093f8dac23b9a51ae22f3",
         "structure": "7ab1eb51dec38106979f5838522610a962153dc8ade2e1592b6783b9757d18b7"
       },
@@ -1133,7 +1133,7 @@
         "sync file transport"
       ],
       "hashes": {
-        "body": "cac859edddf8c3816e07b67404cad253a0fe2bcb74dc104ae0a5de6783c42966",
+        "body": "cfe346317046da8a7e6bc4066536f8799aa663c6176e83a09ecdad84e2e85804",
         "semantic": "bf9c20fe5652fc9ed717f5d046c3186cfe59050e89a20933aa239f7ae41ad18b",
         "structure": "8b2fa2db99275d210e1a4ee36366c74ebbbe00f028c5d7cbaa4d1ba9b7e6e2e5"
       },
@@ -4299,7 +4299,7 @@
         "workspace project registries"
       ],
       "hashes": {
-        "body": "d50a76eea892350c60bba69b2abac03070ea1976ef3e9b4e494f1583ddb6ee9e",
+        "body": "44d4845e4023af23c6ba1901d47dd7f54b1603a35880794e5b0fb755892a9159",
         "semantic": "25b0e501b6f3dca0e6f8b85bbf2b201f049d92f82f153eb5c4e773993fac04cb",
         "structure": "1e222539a41b7ca433d629c18afe33696257ba4d1b463345be92338d6504c960"
       },
@@ -4820,11 +4820,107 @@
         "native setting commit notification"
       ],
       "stability": "contract"
+    },
+    {
+      "boundaries": [],
+      "excludes": [
+        "storage transport",
+        "workspace directory operations",
+        "unlock sessions"
+      ],
+      "hashes": {
+        "body": "2500b2fa963bbd7a340bd256b464f272e345f3f872d08c85bc54ab7ef62fce98",
+        "semantic": "9a2e862eb356bb660ea2d04b9f78d496326b0262f1d6cee592dc1d8b565d20b2",
+        "structure": "621946cb60957e2f274aaf7484564e0780f37f4eaeeec58f5f5dfbcc3de64398"
+      },
+      "id": "workduck.workspace.registry",
+      "imports": [
+        "#lib/shared/object-record.ts",
+        "./workspace-path-format"
+      ],
+      "invariant": [
+        "Stored reads reject unsupported versions, discarded records, and invalid locks; explicit in-memory mutations retain the existing normalization rules."
+      ],
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src/lib/workspaces/workspace-registry.ts",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "owns": [
+        "workspace records",
+        "active workspace selection",
+        "workspace mutations",
+        "stored workspace validation"
+      ],
+      "role": "Define workspace identity, immutable mutations, and lossless validation of stored workspace lists and locks.",
+      "scope": "module",
+      "search": [
+        "workspace registry model",
+        "strict stored workspace registry",
+        "damaged workspace lock",
+        "workspace record loss"
+      ],
+      "stability": "contract"
+    },
+    {
+      "boundaries": [],
+      "excludes": [
+        "workspace domain mutations",
+        "native SQLite transactions",
+        "browser journal implementation"
+      ],
+      "hashes": {
+        "body": "abe63a03e1b77af2da453793a9f29db63ad9cd43716a2928b749cae802857dc8",
+        "semantic": "183784dc2351894958b58fdd91b542f5623080864366d0de391f436ba1110615",
+        "structure": "ae76d25ca2349b90b4047ccf78ec477dea7995e88d31c022c63c53ecdcc6c16f"
+      },
+      "id": "workduck.workspace.storage",
+      "imports": [
+        "#lib/app-state/app-state-storage.ts",
+        "./workspace-registry"
+      ],
+      "invariant": [
+        "Reads preserve stored record and lock validity; saves validate the current and incoming snapshots; failed reads and malformed notifications never publish an empty replacement."
+      ],
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src/lib/workspaces/workspace-storage.ts",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "owns": [
+        "workspace storage admission",
+        "workspace change subscriptions",
+        "snapshot notification validation"
+      ],
+      "role": "Read, write, and publish workspace registry snapshots through application state without discarding damaged records.",
+      "scope": "module",
+      "search": [
+        "workspace registry persistence",
+        "workspace read failure block saves",
+        "invalid workspace change notification"
+      ],
+      "stability": "architecture"
     }
   ],
   "contractFingerprints": {
     "configuration": {
-      "sha256": "98e05697b6e41a1fe582b4d16e5a9da2fb104d05d40f7d69514154922b9ccbac"
+      "sha256": "aab9bc866b6e58ccc31dd40de28a67aae402e16065ae9d4c6d7adedd5dee1f04"
     },
     "exportedApi": {
       "count": 0,
@@ -4835,6 +4931,6 @@
   "generatedBy": "llmnav@0.9.7",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "38eb86cd7c1e0b5741556b706a768b08a044ab559490a59988214c0472b446e0",
+  "sourceHash": "30df1de9703f5196ba7283ae38ce729b8f0615d42d4d3aa42a03a43dc3625f45",
   "specVersion": "1"
 }

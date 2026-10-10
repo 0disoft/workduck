@@ -15,12 +15,13 @@ import {
 	WORKDUCK_WORKSPACE_REGISTRY_APP_STATE_KEY
 } from '#lib/app-state/app-state-storage.ts';
 import {
-	normalizeWorkspaceRegistry,
+	normalizeStoredWorkspaceRegistry,
+	parseStoredWorkspaceRegistry,
 	serializeWorkspaceRegistry,
 	WORKDUCK_WORKSPACE_REGISTRY_STORAGE_KEY,
 	type WorkspaceRegistry
 } from '#lib/workspaces/workspace-registry.ts';
-import { notifyWorkspaceRegistryChanged } from '#lib/workspaces/workspace-storage.ts';
+import { notifyWorkspaceRegistryChanged, readWorkspaceRegistryFromBrowser } from '#lib/workspaces/workspace-storage.ts';
 import {
 	createEmptyProjectRegistry,
 	normalizeProjectRegistry,
@@ -372,10 +373,14 @@ export async function writeWorkspaceSyncRegistries(
 	workspaceRegistry: WorkspaceRegistry,
 	registries: Record<string, ProjectRegistry>
 ): Promise<ProjectRegistriesStorageResult> {
-	const normalizedWorkspaceRegistry = normalizeWorkspaceRegistry(workspaceRegistry);
+	const parsedWorkspaceRegistry = normalizeStoredWorkspaceRegistry(workspaceRegistry);
 	const normalizedRegistries = Object.fromEntries(
 		Object.entries(registries).map(([id, registry]) => [id, normalizeProjectRegistry(registry, id)])
 	);
+	if (!parsedWorkspaceRegistry.ok || !readWorkspaceRegistryFromBrowser().ok) {
+		return { ok: false, registries: normalizedRegistries, error: 'project-registry-read-failed' };
+	}
+	const normalizedWorkspaceRegistry = parsedWorkspaceRegistry.registry;
 	return sequenceProjectRegistryOperation(Object.keys(normalizedRegistries), async () => {
 		let error: ProjectRegistryStorageError = 'project-registry-write-failed';
 		const valueJson = serializeWorkspaceRegistry(normalizedWorkspaceRegistry);
@@ -384,6 +389,10 @@ export async function writeWorkspaceSyncRegistries(
 			WORKDUCK_WORKSPACE_REGISTRY_STORAGE_KEY,
 			valueJson,
 			async (expectedValueJson) => {
+				if (!parseStoredWorkspaceRegistry(expectedValueJson).ok) {
+					error = 'project-registry-read-failed';
+					return false;
+				}
 				const write = await writeProjectRegistriesToSqlite(normalizedRegistries, {
 					workspaceRegistry: {
 						valueJson, expectedValueJson: expectedValueJson ?? 'null',

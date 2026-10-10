@@ -1,3 +1,12 @@
+/* llmnav/1 module
+id=workduck.workspace.registry
+role=Define workspace identity, immutable mutations, and lossless validation of stored workspace lists and locks.
+owns=workspace records|active workspace selection|workspace mutations|stored workspace validation
+excludes=storage transport|workspace directory operations|unlock sessions
+search=workspace registry model|strict stored workspace registry|damaged workspace lock|workspace record loss
+invariant=Stored reads reject unsupported versions, discarded records, and invalid locks; explicit in-memory mutations retain the existing normalization rules.
+stability=contract
+*/
 import { isObjectRecord } from '#lib/shared/object-record.ts';
 import { normalizeWorkspacePathForStorage } from './workspace-path-format';
 
@@ -80,6 +89,33 @@ export function parseWorkspaceRegistry(serializedRegistry: string | null): Works
 	} catch {
 		return createEmptyWorkspaceRegistry();
 	}
+}
+
+export type StoredWorkspaceRegistryResult =
+	| { readonly ok: true; readonly registry: WorkspaceRegistry }
+	| { readonly ok: false; readonly error: 'workspace-registry-json-invalid' | 'workspace-registry-version-unsupported' };
+
+export function parseStoredWorkspaceRegistry(serializedRegistry: string | null): StoredWorkspaceRegistryResult {
+	if (serializedRegistry === null) return { ok: true, registry: createEmptyWorkspaceRegistry() };
+	try { return normalizeStoredWorkspaceRegistry(JSON.parse(serializedRegistry)); }
+	catch { return { ok: false, error: 'workspace-registry-json-invalid' }; }
+}
+
+export function normalizeStoredWorkspaceRegistry(value: unknown): StoredWorkspaceRegistryResult {
+	const invalid = { ok: false, error: 'workspace-registry-json-invalid' } as const;
+	if (!isObjectRecord(value) || !Array.isArray(value.workspaces)) return invalid;
+	if (value.version !== undefined && value.version !== 1) return { ok: false, error: 'workspace-registry-version-unsupported' };
+	const registry = normalizeWorkspaceRegistry(value);
+	if (registry.workspaces.length !== value.workspaces.length) return invalid;
+	for (let index = 0; index < value.workspaces.length; index += 1) {
+		const rawWorkspace: unknown = value.workspaces[index];
+		if (!isObjectRecord(rawWorkspace) ||
+			(rawWorkspace.lock != null && registry.workspaces[index]?.lock === null) ||
+			readTrimmedString(rawWorkspace.name).replace(/\s+/g, ' ').length > WORKSPACE_NAME_MAX_LENGTH ||
+			normalizeWorkspacePathForStorage(readTrimmedString(rawWorkspace.path)).length > WORKSPACE_PATH_MAX_LENGTH) return invalid;
+		if (isObjectRecord(rawWorkspace.lock) && readTrimmedString(rawWorkspace.lock.passwordHash).length > WORKSPACE_PASSWORD_HASH_MAX_LENGTH) return invalid;
+	}
+	return { ok: true, registry };
 }
 
 export function serializeWorkspaceRegistry(registry: WorkspaceRegistry): string {
