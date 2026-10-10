@@ -252,3 +252,9 @@ role Coordinate terminal selection, native session actions, output display, and 
 owns terminal view lifetime, operation result ownership, session removal target, output polling
 excludes native process execution, terminal command normalization, registry serialization
 invariant Async results update only their initiating view; removal requires successful process stop; each view admits one output read at a time and failures preserve its logs.
+
+@workduck.app-state.boot-gate
+role Gate renderer startup on persistent settings recovery and load the desktop interface after successful initialization.
+owns startup visibility, initialization retry UI, interface load recovery, boot attempt lifetime
+excludes native settings storage, setting domain validation, workspace content rendering
+invariant Failed initialization keeps workspace content unmounted; one boot attempt runs at a time and disposed layouts cannot apply late results.

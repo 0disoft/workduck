@@ -31,6 +31,9 @@ includes:
 - Failed native settings initialization can be retried without restarting.
   Concurrent startup requests share one attempt; failed reads or journal replay
   preserve pending writes and block changes to fallback settings until recovery.
+  Until initialization succeeds, the main window shows recovery controls instead
+  of mounting workspace content. The tray remains available without initializing
+  settings. Interface loading failures offer a reload.
 - System settings for startup, tray behavior, and workspace inactivity locking.
 - Environment variable vault UI for API keys, tokens, accounts, passwords, and
   tags.

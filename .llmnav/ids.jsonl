@@ -89,3 +89,4 @@
 {"id":"workduck.terminal.panel","state":"active"}
 {"id":"workduck.briefs.run-evidence","state":"active"}
 {"id":"workduck.briefs.editor-drafts","state":"active"}
+{"id":"workduck.app-state.boot-gate","state":"active"}

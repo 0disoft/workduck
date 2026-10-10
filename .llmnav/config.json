@@ -2,6 +2,12 @@
   "$schema": "./schema/config.schema.json",
   "coverageRules": [
     {
+      "match": ["src/routes/+layout.svelte"],
+      "name": "renderer startup recovery gate",
+      "requiredFields": ["owns", "invariant"],
+      "scope": "module"
+    },
+    {
       "match": ["src/lib/briefs/brief-editor-drafts.ts"],
       "name": "brief editor draft and save lifetime",
       "requiredFields": ["owns", "invariant"],

@@ -4627,11 +4627,75 @@
         "save completes while locked"
       ],
       "stability": "contract"
+    },
+    {
+      "boundaries": [
+        {
+          "confidence": "high",
+          "evidence": [
+            "path"
+          ],
+          "kind": "route"
+        }
+      ],
+      "excludes": [
+        "native settings storage",
+        "setting domain validation",
+        "workspace content rendering"
+      ],
+      "hashes": {
+        "body": "2a8e991218dfa47f71f8885bcd887561c5167381ea245dbb3566b92b32352262",
+        "semantic": "3eda3b46e8272f013183d507b0fc625f2aff413fc57ff485c468a52d8049c94b",
+        "structure": "32affff475e9b55ac05ad3d625d1095234dff94a214bc7ca4e18435d0b75f9ff"
+      },
+      "id": "workduck.app-state.boot-gate",
+      "imports": [
+        "#lib/app-state/app-boot-messages.ts",
+        "#lib/app-state/app-state-storage.ts",
+        "#lib/app-state/persistent-app-state.ts",
+        "#lib/i18n/workduck-language-options.ts",
+        "#lib/search/CommandPalette.svelte",
+        "#lib/settings/appearance-settings.ts",
+        "#lib/shell/WorkbenchShell.svelte",
+        "$app/state",
+        "../app.css",
+        "svelte"
+      ],
+      "invariant": [
+        "Failed initialization keeps workspace content unmounted; one boot attempt runs at a time and disposed layouts cannot apply late results."
+      ],
+      "location": {
+        "declarationLine": null,
+        "endLine": 10,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src/routes/+layout.svelte",
+        "receiver": null,
+        "signature": null,
+        "startLine": 2,
+        "symbol": null,
+        "visibility": null
+      },
+      "owns": [
+        "startup visibility",
+        "initialization retry UI",
+        "interface load recovery",
+        "boot attempt lifetime"
+      ],
+      "role": "Gate renderer startup on persistent settings recovery and load the desktop interface after successful initialization.",
+      "scope": "module",
+      "search": [
+        "app boot settings failure",
+        "retry failed initialization",
+        "startup data protection"
+      ],
+      "stability": "architecture"
     }
   ],
   "contractFingerprints": {
     "configuration": {
-      "sha256": "d447e69ed03ec8ebd16f446e41c638e7073d1f0683ebcf3a6b7339f5b42543ad"
+      "sha256": "e94de394388c3e6e8aa50799a9f4cf8a23df6554878fc493ef993613522ae4b8"
     },
     "exportedApi": {
       "count": 0,
@@ -4642,6 +4706,6 @@
   "generatedBy": "llmnav@0.9.7",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "301b33bea1fc0e3f1b7f105f0ced63f8e292a37d2500d8d5c83a772a4e0ad159",
+  "sourceHash": "16c850c665a16c97e6150b4f02b56e62a2394930cd18ee208ea48f4e39121247",
   "specVersion": "1"
 }

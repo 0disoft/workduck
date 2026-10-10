@@ -769,6 +769,28 @@
     {
       "definitions": [],
       "external": false,
+      "key": "workduck/workduck.app-state.boot-gate",
+      "location": {
+        "declarationLine": null,
+        "endLine": 10,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src/routes/+layout.svelte",
+        "receiver": null,
+        "signature": null,
+        "startLine": 2,
+        "symbol": null,
+        "visibility": null
+      },
+      "repositoryId": "workduck",
+      "role": "Gate renderer startup on persistent settings recovery and load the desktop interface after successful initialization.",
+      "semanticId": "workduck.app-state.boot-gate",
+      "unresolved": false
+    },
+    {
+      "definitions": [],
+      "external": false,
       "key": "workduck/workduck.app-state.storage",
       "location": {
         "declarationLine": null,
@@ -2717,11 +2739,11 @@
   ],
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "6662e88e7e965412998ec580265f9b584a47b983dca1546ecf0bb56ccba60616",
+  "sourceHash": "addf4e60a7a10a6d716be3532319b2850e96de6cb398d2891c36862f3c6dc779",
   "stats": {
     "edgeCount": 49,
     "importedIndexCount": 0,
-    "nodeCount": 91,
+    "nodeCount": 92,
     "unresolvedNodeCount": 0
   }
 }

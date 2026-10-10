@@ -5617,6 +5617,17 @@
     },
     {
       "blocks": [],
+      "contentHash": "3095639a79384141c9494a448c9b3d09e540e67fda65cb0a3b9f911769dab788",
+      "declarations": [],
+      "imports": [
+        "#lib/i18n/workduck-language-options.ts"
+      ],
+      "path": "src/lib/app-state/app-boot-messages.ts",
+      "semanticBytes": 0,
+      "sourceBytes": 2888
+    },
+    {
+      "blocks": [],
       "contentHash": "a5eda38036ad49e605d55f8102f2bf37c9bb7673ba2d494cf2df238fb1a2cb39",
       "declarations": [],
       "imports": [
@@ -14513,20 +14524,115 @@
       "sourceBytes": 8696
     },
     {
-      "blocks": [],
-      "contentHash": "3fd0a0c8cd558dda8138411a21df7a7957429c6fa3cad7d9be551bc28095c073",
-      "declarations": [],
+      "blocks": [
+        {
+          "card": {
+            "effect": [],
+            "excludes": [
+              "native settings storage",
+              "setting domain validation",
+              "workspace content rendering"
+            ],
+            "id": "workduck.app-state.boot-gate",
+            "invariant": [
+              "Failed initialization keeps workspace content unmounted; one boot attempt runs at a time and disposed layouts cannot apply late results."
+            ],
+            "owns": [
+              "startup visibility",
+              "initialization retry UI",
+              "interface load recovery",
+              "boot attempt lifetime"
+            ],
+            "rel": [],
+            "risk": [],
+            "role": "Gate renderer startup on persistent settings recovery and load the desktop interface after successful initialization.",
+            "scope": "module",
+            "search": [
+              "app boot settings failure",
+              "retry failed initialization",
+              "startup data protection"
+            ],
+            "stability": "architecture",
+            "unknown": []
+          },
+          "end": 640,
+          "endLine": 10,
+          "entries": [
+            {
+              "key": "id",
+              "line": 3,
+              "order": 0,
+              "value": "workduck.app-state.boot-gate"
+            },
+            {
+              "key": "role",
+              "line": 4,
+              "order": 1,
+              "value": "Gate renderer startup on persistent settings recovery and load the desktop interface after successful initialization."
+            },
+            {
+              "key": "owns",
+              "line": 5,
+              "order": 2,
+              "value": "startup visibility|initialization retry UI|interface load recovery|boot attempt lifetime"
+            },
+            {
+              "key": "excludes",
+              "line": 6,
+              "order": 3,
+              "value": "native settings storage|setting domain validation|workspace content rendering"
+            },
+            {
+              "key": "search",
+              "line": 7,
+              "order": 4,
+              "value": "app boot settings failure|retry failed initialization|startup data protection"
+            },
+            {
+              "key": "invariant",
+              "line": 8,
+              "order": 5,
+              "value": "Failed initialization keeps workspace content unmounted; one boot attempt runs at a time and disposed layouts cannot apply late results."
+            },
+            {
+              "key": "stability",
+              "line": 9,
+              "order": 6,
+              "value": "architecture"
+            }
+          ],
+          "filePath": "src/routes/+layout.svelte",
+          "indent": "\t",
+          "newline": "\n",
+          "prefix": null,
+          "raw": "\t/* llmnav/1 module\n\tid=workduck.app-state.boot-gate\n\trole=Gate renderer startup on persistent settings recovery and load the desktop interface after successful initialization.\n\towns=startup visibility|initialization retry UI|interface load recovery|boot attempt lifetime\n\texcludes=native settings storage|setting domain validation|workspace content rendering\n\tsearch=app boot settings failure|retry failed initialization|startup data protection\n\tinvariant=Failed initialization keeps workspace content unmounted; one boot attempt runs at a time and disposed layouts cannot apply late results.\n\tstability=architecture\n\t*/",
+          "scope": "module",
+          "specVersion": "1",
+          "start": 19,
+          "startLine": 2,
+          "style": "block",
+          "syntaxErrors": []
+        }
+      ],
+      "contentHash": "2a8e991218dfa47f71f8885bcd887561c5167381ea245dbb3566b92b32352262",
+      "declarations": [
+        null
+      ],
       "imports": [
+        "#lib/app-state/app-boot-messages.ts",
+        "#lib/app-state/app-state-storage.ts",
         "#lib/app-state/persistent-app-state.ts",
+        "#lib/i18n/workduck-language-options.ts",
         "#lib/search/CommandPalette.svelte",
+        "#lib/settings/appearance-settings.ts",
         "#lib/shell/WorkbenchShell.svelte",
         "$app/state",
         "../app.css",
         "svelte"
       ],
       "path": "src/routes/+layout.svelte",
-      "semanticBytes": 0,
-      "sourceBytes": 1485
+      "semanticBytes": 621,
+      "sourceBytes": 4741
     },
     {
       "blocks": [],
