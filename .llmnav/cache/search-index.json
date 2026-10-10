@@ -90,7 +90,7 @@
     "workduck.workspace.sync-file-native",
     "workduck.workspace.sync-git-native"
   ],
-  "cardSetHash": "67a6e800f897a22010d3c448bd22959a0240fc2c81cf1e405f05a3339833e563",
+  "cardSetHash": "c192ebeffc8777e9f5276a53281cfd7b6b7fd917eeb7e940577913f148d34183",
   "documentCount": 89,
   "documents": [
     [
@@ -609,13 +609,13 @@
       ]
     ],
     [
-      "3a2e6a40694fc45a4ae006a5f51e24e23642e9a7b580de44ef3ec297cd4d27bc",
+      "d5503103c0d8a97b9ae8eef6a9aab6559eb627792fce713ded4291f227e09516",
       [
         "discover toolchain commands, launch bounded repository tasks in terminals, and persist or reconcile native task-run records.",
         "native repository task",
         "discover build command",
         "reconcile dev server",
-        "tasks are selected from a closed vocabulary, repository paths remain inside the workspace, and running records are revalidated after a bounded process registration grace; tracked servers require the same terminal execution and live descendants, cached latest and unreadable files require unchanged file metadata, launch identity updates preserve terminal-owned completion, and success requires the final command to finish.",
+        "tasks are selected from a closed vocabulary and repository paths remain inside the workspace; process identity is revalidated after bounded startup grace, tracked servers require their terminal execution and descendants, cached latest and unreadable files require unchanged metadata, terminal-owned completion survives launch updates and success requires the final command, and bounded unicode output previews keep completed history readable.",
         "native repository task launch",
         "toolchain command discovery",
         "task run reconciliation"
@@ -1405,7 +1405,7 @@
         39,
         [
           5,
-          2
+          1
         ]
       ],
       [
@@ -2571,7 +2571,7 @@
           1,
           1,
           5,
-          4
+          5
         ]
       ],
       [
@@ -3302,7 +3302,7 @@
         39,
         [
           5,
-          2
+          1
         ]
       ],
       [
@@ -4422,7 +4422,7 @@
           1,
           1,
           5,
-          1
+          2
         ]
       ],
       [
@@ -6442,6 +6442,13 @@
         ]
       ],
       [
+        39,
+        [
+          5,
+          1
+        ]
+      ],
+      [
         46,
         [
           5,
@@ -10695,13 +10702,6 @@
     ],
     [
       [
-        39,
-        [
-          5,
-          1
-        ]
-      ],
-      [
         41,
         [
           3,
@@ -11022,15 +11022,6 @@
           1,
           3,
           1,
-          5,
-          1
-        ]
-      ]
-    ],
-    [
-      [
-        39,
-        [
           5,
           1
         ]
@@ -12326,6 +12317,13 @@
         ]
       ],
       [
+        39,
+        [
+          5,
+          1
+        ]
+      ],
+      [
         46,
         [
           0,
@@ -13448,6 +13446,13 @@
         ]
       ],
       [
+        39,
+        [
+          5,
+          1
+        ]
+      ],
+      [
         57,
         [
           5,
@@ -13712,6 +13717,15 @@
         65,
         [
           1,
+          1
+        ]
+      ]
+    ],
+    [
+      [
+        39,
+        [
+          5,
           1
         ]
       ]
@@ -14774,13 +14788,6 @@
         ]
       ],
       [
-        39,
-        [
-          5,
-          1
-        ]
-      ],
-      [
         40,
         [
           5,
@@ -18268,6 +18275,13 @@
         ]
       ],
       [
+        39,
+        [
+          5,
+          1
+        ]
+      ],
+      [
         50,
         [
           5,
@@ -19829,13 +19843,6 @@
         ]
       ],
       [
-        39,
-        [
-          5,
-          1
-        ]
-      ],
-      [
         41,
         [
           2,
@@ -19998,6 +20005,13 @@
       ]
     ],
     [
+      [
+        39,
+        [
+          5,
+          1
+        ]
+      ],
       [
         55,
         [
@@ -21934,6 +21948,13 @@
     ],
     [
       [
+        39,
+        [
+          5,
+          1
+        ]
+      ],
+      [
         82,
         [
           1,
@@ -22244,8 +22265,6 @@
         39,
         [
           1,
-          1,
-          5,
           1
         ]
       ],
@@ -22560,15 +22579,6 @@
         48,
         [
           1,
-          1
-        ]
-      ]
-    ],
-    [
-      [
-        39,
-        [
-          5,
           1
         ]
       ]
@@ -25389,13 +25399,6 @@
         ]
       ],
       [
-        39,
-        [
-          5,
-          1
-        ]
-      ],
-      [
         46,
         [
           3,
@@ -25571,13 +25574,6 @@
       ],
       [
         32,
-        [
-          5,
-          1
-        ]
-      ],
-      [
-        39,
         [
           5,
           1
@@ -28348,6 +28344,13 @@
         ]
       ],
       [
+        39,
+        [
+          5,
+          1
+        ]
+      ],
+      [
         75,
         [
           2,
@@ -29406,6 +29409,13 @@
     [
       [
         5,
+        [
+          5,
+          1
+        ]
+      ],
+      [
+        39,
         [
           5,
           1
@@ -30772,7 +30782,7 @@
         39,
         [
           5,
-          3
+          2
         ]
       ],
       [
@@ -31052,6 +31062,13 @@
         ]
       ],
       [
+        39,
+        [
+          5,
+          1
+        ]
+      ],
+      [
         51,
         [
           5,
@@ -31297,13 +31314,6 @@
         13,
         [
           1,
-          1
-        ]
-      ],
-      [
-        39,
-        [
-          5,
           1
         ]
       ],
@@ -32150,6 +32160,15 @@
       ],
       [
         87,
+        [
+          5,
+          1
+        ]
+      ]
+    ],
+    [
+      [
+        39,
         [
           5,
           1
@@ -35692,7 +35711,6 @@
     "filter",
     "filters",
     "final",
-    "finish",
     "finishes",
     "first",
     "five",
@@ -35799,6 +35817,7 @@
     "journaling",
     "journals",
     "json",
+    "keep",
     "keeps",
     "key",
     "keys",
@@ -36057,7 +36076,6 @@
     "refresh",
     "refreshes",
     "registered",
-    "registration",
     "registries",
     "registry",
     "reject",
@@ -36327,6 +36345,7 @@
     "unchanged",
     "undeclared",
     "under",
+    "unicode",
     "unions",
     "unique",
     "uniqueness",

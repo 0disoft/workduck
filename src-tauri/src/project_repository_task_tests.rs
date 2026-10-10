@@ -663,6 +663,106 @@ fn powershell_task_failures_stop_following_commands_and_keep_native_exit_codes()
 
 #[cfg(target_os = "windows")]
 #[test]
+fn powershell_task_large_output_keeps_history_readable_and_preserves_the_full_log() {
+    for encoding in ["utf16", "utf8"] {
+        let repository = tempfile::tempdir().unwrap();
+        let workspace = fs::canonicalize(repository.path()).unwrap();
+        let visible = crate::git_path::git_process_path(&workspace);
+        let id = "large-output";
+        let record_path = task_run_record_dir(&visible).join(format!("{id}.json"));
+        fs::create_dir_all(record_path.parent().unwrap()).unwrap();
+        // The preview boundary falls inside the emoji's UTF-16 surrogate pair.
+        let content = "(('x' * 1048576) + [char]::ConvertFromUtf32(0x1F986) + ([string][char]0xD55C * 16380) + 'END')";
+        let command = if encoding == "utf16" {
+            format!("{content} | Out-File -LiteralPath $workduckLogPath -Encoding Unicode")
+        } else {
+            format!(
+                "[System.IO.File]::WriteAllText($workduckLogPath, {content}, [System.Text.UTF8Encoding]::new($false))"
+            )
+        };
+        let record = ProjectRepositoryTaskRunRecord {
+            command: command.clone(),
+            record_path: record_path.to_string_lossy().into_owned(),
+            ..task_run_record(id, &visible.to_string_lossy(), "2026-10-10T00:00:00Z")
+        };
+        let script = create_powershell_script(&visible, Some(&command), Some(&record));
+        let output = Command::new("powershell.exe")
+            .args([
+                "-NoLogo",
+                "-NoProfile",
+                "-NonInteractive",
+                "-Command",
+                &script,
+            ])
+            .output()
+            .unwrap();
+        assert!(
+            output.status.success(),
+            "{}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+        let restored = history::read_selected_task_run_records(&workspace, &[id.into()])
+            .unwrap_or_else(|_| panic!("completed build must remain readable after large output"));
+        assert_eq!(restored.len(), 1);
+        assert_eq!(restored[0].state, "succeeded");
+        assert_eq!(restored[0].exit_code, Some(0));
+        assert_eq!(
+            restored[0].output_tail.as_deref(),
+            Some(("한".repeat(16380) + "END").as_str())
+        );
+        let latest = read_visible_task_run_record(&record_path, &visible).expect("latest record");
+        assert_eq!(latest.output_tail, restored[0].output_tail);
+        assert!(fs::metadata(record_path).unwrap().len() < 1024 * 1024);
+        assert!(
+            fs::metadata(format!("{}.log", record.record_path))
+                .unwrap()
+                .len()
+                > 1024 * 1024
+        );
+    }
+}
+
+#[cfg(target_os = "windows")]
+#[test]
+fn powershell_task_completion_survives_an_unreadable_log_preview() {
+    let repository = tempfile::tempdir().unwrap();
+    let workspace = fs::canonicalize(repository.path()).unwrap();
+    let visible = crate::git_path::git_process_path(&workspace);
+    let id = "unreadable-log";
+    let record_path = task_run_record_dir(&visible).join(format!("{id}.json"));
+    fs::create_dir_all(record_path.parent().unwrap()).unwrap();
+    let command = "$logLock = [System.IO.File]::Open($workduckLogPath, [System.IO.FileMode]::OpenOrCreate, [System.IO.FileAccess]::ReadWrite, [System.IO.FileShare]::None)";
+    let record = ProjectRepositoryTaskRunRecord {
+        command: command.into(),
+        record_path: record_path.to_string_lossy().into_owned(),
+        ..task_run_record(id, &visible.to_string_lossy(), "2026-10-10T00:00:00Z")
+    };
+    let script =
+        create_powershell_script(&visible, Some(command), Some(&record)) + "; $logLock.Dispose()";
+    let output = Command::new("powershell.exe")
+        .args([
+            "-NoLogo",
+            "-NoProfile",
+            "-NonInteractive",
+            "-Command",
+            &script,
+        ])
+        .output()
+        .unwrap();
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let restored = history::read_selected_task_run_records(&workspace, &[id.into()])
+        .unwrap_or_else(|_| panic!("completion must survive unavailable preview"));
+    assert_eq!(restored[0].state, "succeeded");
+    assert_eq!(restored[0].exit_code, Some(0));
+    assert_eq!(restored[0].output_tail, None);
+}
+
+#[cfg(target_os = "windows")]
+#[test]
 fn powershell_script_stops_before_tasks_when_the_repository_directory_is_missing() {
     let repository = tempfile::tempdir().unwrap();
     let script = create_powershell_script(

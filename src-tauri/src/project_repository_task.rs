@@ -4,7 +4,7 @@
 // owns=native repository task launch|toolchain command discovery|task run reconciliation
 // excludes=frontend task normalization|arbitrary shell command input
 // search=native repository task|discover build command|reconcile dev server
-// invariant=Tasks are selected from a closed vocabulary, repository paths remain inside the workspace, and running records are revalidated after a bounded process registration grace; tracked servers require the same terminal execution and live descendants, cached latest and unreadable files require unchanged file metadata, launch identity updates preserve terminal-owned completion, and success requires the final command to finish.
+// invariant=Tasks are selected from a closed vocabulary and repository paths remain inside the workspace; process identity is revalidated after bounded startup grace, tracked servers require their terminal execution and descendants, cached latest and unreadable files require unchanged metadata, terminal-owned completion survives launch updates and success requires the final command, and bounded Unicode output previews keep completed history readable.
 // stability=architecture
 // /llmnav
 use std::{
@@ -1198,6 +1198,11 @@ $workduckRecordCommand = '{record_command}';
 $workduckCommand = '{escaped_command}';
 function Write-WorkduckTaskRunRecord {{
     param([string]$State, [Nullable[int]]$ExitCode, [string]$OutputTail)
+    if ($OutputTail.Length -gt 16384) {{
+        $tailStart = $OutputTail.Length - 16384;
+        if ([char]::IsLowSurrogate($OutputTail[$tailStart])) {{ $tailStart += 1 }};
+        $OutputTail = $OutputTail.Substring($tailStart);
+    }}
     $record = [ordered]@{{
         id = '{id}';
         task = '{task}';
@@ -1229,7 +1234,29 @@ try {{
     $workduckExitCode = 1;
     $_ | Out-String | Tee-Object -FilePath $workduckLogPath -Append;
 }}
-$workduckTail = if (Test-Path -LiteralPath $workduckLogPath) {{ (Get-Content -LiteralPath $workduckLogPath -Tail 40) -join [Environment]::NewLine }} else {{ '' }};
+$workduckTail = '';
+if (Test-Path -LiteralPath $workduckLogPath) {{
+    try {{
+        $logReader = [System.IO.StreamReader]::new($workduckLogPath, [System.Text.Encoding]::UTF8, $true);
+        try {{
+            [void]$logReader.Peek();
+            if ($logReader.BaseStream.Length -gt 65536) {{
+                $logReader.DiscardBufferedData();
+                [void]$logReader.BaseStream.Seek(-65536, [System.IO.SeekOrigin]::End);
+                if ($logReader.CurrentEncoding.CodePage -eq 65001) {{
+                    $firstByte = $logReader.BaseStream.ReadByte();
+                    while ($firstByte -ge 0 -and ($firstByte -band 192) -eq 128) {{ $firstByte = $logReader.BaseStream.ReadByte() }};
+                    if ($firstByte -ge 0) {{ [void]$logReader.BaseStream.Seek(-1, [System.IO.SeekOrigin]::Current) }};
+                }} elseif ($logReader.CurrentEncoding.CodePage -eq 1200) {{
+                    $firstChar = $logReader.BaseStream.ReadByte() -bor ($logReader.BaseStream.ReadByte() -shl 8);
+                    if ($firstChar -lt 56320 -or $firstChar -gt 57343) {{ [void]$logReader.BaseStream.Seek(-2, [System.IO.SeekOrigin]::Current) }};
+                }}
+            }}
+            $workduckTail = $logReader.ReadToEnd().TrimEnd([char[]]"`r`n");
+        }} finally {{ $logReader.Dispose() }}
+    }} catch {{ $workduckTail = '' }}
+    $workduckTail = ($workduckTail -split '\r\n|\n|\r' | Select-Object -Last 40) -join [Environment]::NewLine;
+}};
 if ($workduckExitCode -eq 0) {{
     Write-WorkduckTaskRunRecord -State '{success_state}' -ExitCode {success_exit_code} -OutputTail $workduckTail;
 }} else {{

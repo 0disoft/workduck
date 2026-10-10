@@ -1559,8 +1559,8 @@
         "arbitrary shell command input"
       ],
       "hashes": {
-        "body": "10fcbba5157de4aea46f916f91cd3f129e85824aec2d861f2ef07dbb6113b0a2",
-        "semantic": "79e7042cb4cf8ea0bc241cc149b4c66fb044ae47c9de25975367c7b629649b1c",
+        "body": "6f11ee8ebee15bec8a98a18166770f3dc69eb4d5e9948ef0f2f95afde1d1c7f4",
+        "semantic": "959df2ea994209df870e2c9ca9acfe50d81c35288a1588ad41da6102dbfff457",
         "structure": "b5122d9939628fb569605ebee461119c8532e018d75a3a27998fab08d397a2bb"
       },
       "id": "workduck.projects.repository-task-native",
@@ -1577,7 +1577,7 @@
         "time::{OffsetDateTime, format_description::well_known::Rfc3339}"
       ],
       "invariant": [
-        "Tasks are selected from a closed vocabulary, repository paths remain inside the workspace, and running records are revalidated after a bounded process registration grace; tracked servers require the same terminal execution and live descendants, cached latest and unreadable files require unchanged file metadata, launch identity updates preserve terminal-owned completion, and success requires the final command to finish."
+        "Tasks are selected from a closed vocabulary and repository paths remain inside the workspace; process identity is revalidated after bounded startup grace, tracked servers require their terminal execution and descendants, cached latest and unreadable files require unchanged metadata, terminal-owned completion survives launch updates and success requires the final command, and bounded Unicode output previews keep completed history readable."
       ],
       "location": {
         "declarationLine": null,
@@ -4534,6 +4534,6 @@
   "generatedBy": "llmnav@0.9.7",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "2ec487b1ea9c82fbb2cd2793b99232042485a2358c28ac90a2fc463eb6a7c78e",
+  "sourceHash": "dafa21dce62b579eee7d3b207939f9821bc1e1dff9db075a2ddd6304c6b828d5",
   "specVersion": "1"
 }
