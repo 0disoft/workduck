@@ -816,14 +816,14 @@
       "key": "workduck/workduck.app-state.storage-native",
       "location": {
         "declarationLine": null,
-        "endLine": 16,
+        "endLine": 18,
         "exported": null,
         "kind": null,
         "language": null,
         "path": "src-tauri/src/app_state_store.rs",
         "receiver": null,
         "signature": null,
-        "startLine": 8,
+        "startLine": 10,
         "symbol": null,
         "visibility": null
       },
@@ -2783,7 +2783,7 @@
   ],
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "a58d672c8762623d94c3419ada12d49fcb44cf6a1402f28ece3819d2880caf6c",
+  "sourceHash": "df5a8b4659c099cf45a2b5ba37e58406353fc79343cd55da1280a5ef37b9f6ce",
   "stats": {
     "edgeCount": 49,
     "importedIndexCount": 0,

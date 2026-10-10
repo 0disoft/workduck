@@ -1,17 +1,19 @@
 use std::collections::{BTreeMap, BTreeSet};
 
 use rusqlite::{Connection, params, params_from_iter};
-use tauri::AppHandle;
+use tauri::{AppHandle, Emitter};
 
 use crate::storage;
+
+pub(crate) const APP_STATE_COMMITTED_EVENT: &str = "workduck:app-state-committed";
 
 /* llmnav/1 module
 id=workduck.app-state.storage-native
 role=Read and transactionally persist allowed application settings in SQLite with bounded JSON and ordered UTC revisions.
-owns=app state SQLite transactions|setting key allowlist|JSON size validation|UTC revision ordering
+owns=app state SQLite transactions|setting key allowlist|JSON size validation|UTC revision ordering|committed setting key notifications
 excludes=renderer crash journal|setting domain normalization|sync payload assembly
-search=app state SQLite transaction|setting JSON size limit|UTC setting revision
-invariant=Only allowed keys and bounded JSON objects are stored; invalid rows roll back the batch; older UTC revisions retain the newer value and return it for renderer reconciliation.
+search=app state SQLite transaction|setting JSON size limit|UTC setting revision|native setting commit notification
+invariant=Only allowed keys and bounded JSON objects are stored; invalid rows roll back the batch; older revisions retain and return the newer value; only committed changed keys notify renderers.
 stability=contract
 */
 
@@ -95,7 +97,9 @@ pub fn write_app_state_records(
         Err(_) => return invalid_write(AppStateStoreError::WriteFailed),
     };
 
-    match write_records_to_connection(&mut connection, records) {
+    match write_records_with_notification(&mut connection, records, |keys| {
+        let _ = app.emit(APP_STATE_COMMITTED_EVENT, keys);
+    }) {
         Ok(superseded_records) => AppStateRecordsWrite {
             ok: true,
             superseded_records: (!superseded_records.is_empty()).then_some(superseded_records),
@@ -103,6 +107,23 @@ pub fn write_app_state_records(
         },
         Err(error) => invalid_write(error),
     }
+}
+
+fn write_records_with_notification(
+    connection: &mut Connection,
+    records: BTreeMap<String, AppStateWriteInput>,
+    notify: impl FnOnce(Vec<String>),
+) -> Result<BTreeMap<String, String>, AppStateStoreError> {
+    let keys: BTreeSet<String> = records.keys().map(|key| key.trim().to_owned()).collect();
+    let superseded = write_records_to_connection(connection, records)?;
+    let changed: Vec<String> = keys
+        .into_iter()
+        .filter(|key| !superseded.contains_key(key))
+        .collect();
+    if !changed.is_empty() {
+        notify(changed);
+    }
+    Ok(superseded)
 }
 
 fn read_records_from_connection(
@@ -283,6 +304,112 @@ fn invalid_write(error: AppStateStoreError) -> AppStateRecordsWrite {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn notification_record(timestamp: &str) -> AppStateWriteInput {
+        AppStateWriteInput {
+            value_json: r#"{"value":1}"#.into(),
+            updated_at: timestamp.into(),
+        }
+    }
+
+    #[test]
+    fn notifies_only_committed_keys_and_keeps_superseded_writes_silent() {
+        let uri = format!(
+            "file:workduck-state-notify-{}?mode=memory&cache=shared",
+            std::process::id()
+        );
+        let flags = rusqlite::OpenFlags::SQLITE_OPEN_READ_WRITE
+            | rusqlite::OpenFlags::SQLITE_OPEN_CREATE
+            | rusqlite::OpenFlags::SQLITE_OPEN_URI;
+        let mut connection = Connection::open_with_flags(&uri, flags).unwrap();
+        let observer = Connection::open_with_flags(&uri, flags).unwrap();
+        connection
+            .execute_batch(include_str!("../migrations/007_app_state_records.sql"))
+            .unwrap();
+        let old = "2026-10-10T00:00:00.000Z";
+        let new = "2026-10-10T00:00:01.000Z";
+        write_records_to_connection(
+            &mut connection,
+            BTreeMap::from([("appearance-settings".into(), notification_record(new))]),
+        )
+        .unwrap();
+        let mut notified = false;
+        let result = write_records_with_notification(
+            &mut connection,
+            BTreeMap::from([
+                ("appearance-settings".into(), notification_record(old)),
+                ("system-settings".into(), notification_record(new)),
+            ]),
+            |keys| {
+                assert_eq!(keys, ["system-settings"]);
+                assert_eq!(
+                    read_records_from_connection(&observer, &keys)
+                        .unwrap()
+                        .get("system-settings")
+                        .map(String::as_str),
+                    Some(r#"{"value":1}"#)
+                );
+                notified = true;
+            },
+        )
+        .unwrap();
+        assert!(notified);
+        assert!(result.contains_key("appearance-settings"));
+        for records in [
+            BTreeMap::new(),
+            BTreeMap::from([("system-settings".into(), notification_record(old))]),
+        ] {
+            assert!(
+                write_records_with_notification(&mut connection, records, |_| panic!(
+                    "no changed records"
+                ))
+                .is_ok()
+            );
+        }
+    }
+
+    #[test]
+    fn failed_state_transactions_never_publish_commit_notifications() {
+        for failure in ["validation", "statement", "commit"] {
+            let mut connection = test_connection();
+            if failure == "statement" {
+                connection.execute_batch("CREATE TRIGGER reject_state BEFORE INSERT ON app_state_records WHEN NEW.state_key = 'system-settings' BEGIN SELECT RAISE(ABORT, 'test failure'); END;").unwrap();
+            }
+            if failure == "commit" {
+                connection.execute_batch("PRAGMA foreign_keys = ON; CREATE TABLE parent (id INTEGER PRIMARY KEY);
+                    CREATE TABLE child (id INTEGER REFERENCES parent(id) DEFERRABLE INITIALLY DEFERRED);
+                    CREATE TRIGGER deferred_state_failure AFTER INSERT ON app_state_records WHEN NEW.state_key = 'system-settings' BEGIN INSERT INTO child VALUES (1); END;").unwrap();
+            }
+            let mut last = notification_record("2026-10-10T00:00:00.000Z");
+            if failure == "validation" {
+                last.value_json = "[".into();
+            }
+            let mut notified = false;
+            let result = write_records_with_notification(
+                &mut connection,
+                BTreeMap::from([
+                    (
+                        "appearance-settings".into(),
+                        notification_record("2026-10-10T00:00:00.000Z"),
+                    ),
+                    ("system-settings".into(), last),
+                ]),
+                |_| {
+                    notified = true;
+                },
+            );
+            assert!(result.is_err(), "{failure}");
+            assert!(!notified, "{failure}");
+            assert!(
+                read_records_from_connection(
+                    &connection,
+                    &["appearance-settings".into(), "system-settings".into()]
+                )
+                .unwrap()
+                .is_empty()
+            );
+        }
+    }
 
     fn test_connection() -> Connection {
         let connection = Connection::open_in_memory().expect("in-memory SQLite connection");

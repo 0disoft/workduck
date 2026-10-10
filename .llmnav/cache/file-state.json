@@ -1146,13 +1146,14 @@
             ],
             "id": "workduck.app-state.storage-native",
             "invariant": [
-              "Only allowed keys and bounded JSON objects are stored; invalid rows roll back the batch; older UTC revisions retain the newer value and return it for renderer reconciliation."
+              "Only allowed keys and bounded JSON objects are stored; invalid rows roll back the batch; older revisions retain and return the newer value; only committed changed keys notify renderers."
             ],
             "owns": [
               "app state SQLite transactions",
               "setting key allowlist",
               "JSON size validation",
-              "UTC revision ordering"
+              "UTC revision ordering",
+              "committed setting key notifications"
             ],
             "rel": [],
             "risk": [],
@@ -1161,53 +1162,54 @@
             "search": [
               "app state SQLite transaction",
               "setting JSON size limit",
-              "UTC setting revision"
+              "UTC setting revision",
+              "native setting commit notification"
             ],
             "stability": "contract",
             "unknown": []
           },
-          "end": 791,
-          "endLine": 16,
+          "end": 968,
+          "endLine": 18,
           "entries": [
             {
               "key": "id",
-              "line": 9,
+              "line": 11,
               "order": 0,
               "value": "workduck.app-state.storage-native"
             },
             {
               "key": "role",
-              "line": 10,
+              "line": 12,
               "order": 1,
               "value": "Read and transactionally persist allowed application settings in SQLite with bounded JSON and ordered UTC revisions."
             },
             {
               "key": "owns",
-              "line": 11,
+              "line": 13,
               "order": 2,
-              "value": "app state SQLite transactions|setting key allowlist|JSON size validation|UTC revision ordering"
+              "value": "app state SQLite transactions|setting key allowlist|JSON size validation|UTC revision ordering|committed setting key notifications"
             },
             {
               "key": "excludes",
-              "line": 12,
+              "line": 14,
               "order": 3,
               "value": "renderer crash journal|setting domain normalization|sync payload assembly"
             },
             {
               "key": "search",
-              "line": 13,
+              "line": 15,
               "order": 4,
-              "value": "app state SQLite transaction|setting JSON size limit|UTC setting revision"
+              "value": "app state SQLite transaction|setting JSON size limit|UTC setting revision|native setting commit notification"
             },
             {
               "key": "invariant",
-              "line": 14,
+              "line": 16,
               "order": 5,
-              "value": "Only allowed keys and bounded JSON objects are stored; invalid rows roll back the batch; older UTC revisions retain the newer value and return it for renderer reconciliation."
+              "value": "Only allowed keys and bounded JSON objects are stored; invalid rows roll back the batch; older revisions retain and return the newer value; only committed changed keys notify renderers."
             },
             {
               "key": "stability",
-              "line": 15,
+              "line": 17,
               "order": 6,
               "value": "contract"
             }
@@ -1216,16 +1218,16 @@
           "indent": "",
           "newline": "\n",
           "prefix": null,
-          "raw": "/* llmnav/1 module\nid=workduck.app-state.storage-native\nrole=Read and transactionally persist allowed application settings in SQLite with bounded JSON and ordered UTC revisions.\nowns=app state SQLite transactions|setting key allowlist|JSON size validation|UTC revision ordering\nexcludes=renderer crash journal|setting domain normalization|sync payload assembly\nsearch=app state SQLite transaction|setting JSON size limit|UTC setting revision\ninvariant=Only allowed keys and bounded JSON objects are stored; invalid rows roll back the batch; older UTC revisions retain the newer value and return it for renderer reconciliation.\nstability=contract\n*/",
+          "raw": "/* llmnav/1 module\nid=workduck.app-state.storage-native\nrole=Read and transactionally persist allowed application settings in SQLite with bounded JSON and ordered UTC revisions.\nowns=app state SQLite transactions|setting key allowlist|JSON size validation|UTC revision ordering|committed setting key notifications\nexcludes=renderer crash journal|setting domain normalization|sync payload assembly\nsearch=app state SQLite transaction|setting JSON size limit|UTC setting revision|native setting commit notification\ninvariant=Only allowed keys and bounded JSON objects are stored; invalid rows roll back the batch; older revisions retain and return the newer value; only committed changed keys notify renderers.\nstability=contract\n*/",
           "scope": "module",
           "specVersion": "1",
-          "start": 143,
-          "startLine": 8,
+          "start": 238,
+          "startLine": 10,
           "style": "block",
           "syntaxErrors": []
         }
       ],
-      "contentHash": "b6d725796646c7d2fa851251537533aa56125a9d5b576d4cf9e926d6aceaec3c",
+      "contentHash": "80462e042e3520db86310ca51756488e796be9796c7eeeda6e8d7112a5767bea",
       "declarations": [
         null
       ],
@@ -1233,12 +1235,12 @@
         "crate::storage",
         "rusqlite::{Connection, params, params_from_iter}",
         "std::collections::{BTreeMap, BTreeSet}",
-        "tauri::AppHandle",
+        "tauri::{AppHandle, Emitter}",
         "tests {\n    use super::*"
       ],
       "path": "src-tauri/src/app_state_store.rs",
-      "semanticBytes": 648,
-      "sourceBytes": 16490
+      "semanticBytes": 730,
+      "sourceBytes": 21669
     },
     {
       "blocks": [],
@@ -2978,7 +2980,7 @@
             ],
             "id": "workduck.projects.storage-native",
             "invariant": [
-              "Guarded writes require the expected snapshot; sync checkpoints preserve UTC ordering, failed rows roll back the batch, and only successful commits notify windows of changed workspace IDs."
+              "Guarded writes require the expected snapshot; sync checkpoints preserve UTC ordering; failed rows roll back the batch; successful commits notify changed project IDs and workspace state, including workspace-only syncs."
             ],
             "owns": [
               "project registry SQLite reads",
@@ -2999,7 +3001,7 @@
             "stability": "contract",
             "unknown": []
           },
-          "end": 981,
+          "end": 1011,
           "endLine": 18,
           "entries": [
             {
@@ -3036,7 +3038,7 @@
               "key": "invariant",
               "line": 16,
               "order": 5,
-              "value": "Guarded writes require the expected snapshot; sync checkpoints preserve UTC ordering, failed rows roll back the batch, and only successful commits notify windows of changed workspace IDs."
+              "value": "Guarded writes require the expected snapshot; sync checkpoints preserve UTC ordering; failed rows roll back the batch; successful commits notify changed project IDs and workspace state, including workspace-only syncs."
             },
             {
               "key": "stability",
@@ -3049,7 +3051,7 @@
           "indent": "",
           "newline": "\n",
           "prefix": null,
-          "raw": "/* llmnav/1 module\nid=workduck.projects.storage-native\nrole=Read and atomically replace SQLite project registries with optional snapshot guards and a workspace sync checkpoint.\nowns=project registry SQLite reads|snapshot write guards|atomic registry and workspace replacement|committed workspace ID notifications\nexcludes=registry domain normalization|workspace sync payload assembly|editor draft ownership\nsearch=project registry SQLite write|stale registry snapshot|atomic project bulk write|native project commit event\ninvariant=Guarded writes require the expected snapshot; sync checkpoints preserve UTC ordering, failed rows roll back the batch, and only successful commits notify windows of changed workspace IDs.\nstability=contract\n*/",
+          "raw": "/* llmnav/1 module\nid=workduck.projects.storage-native\nrole=Read and atomically replace SQLite project registries with optional snapshot guards and a workspace sync checkpoint.\nowns=project registry SQLite reads|snapshot write guards|atomic registry and workspace replacement|committed workspace ID notifications\nexcludes=registry domain normalization|workspace sync payload assembly|editor draft ownership\nsearch=project registry SQLite write|stale registry snapshot|atomic project bulk write|native project commit event\ninvariant=Guarded writes require the expected snapshot; sync checkpoints preserve UTC ordering; failed rows roll back the batch; successful commits notify changed project IDs and workspace state, including workspace-only syncs.\nstability=contract\n*/",
           "scope": "module",
           "specVersion": "1",
           "start": 240,
@@ -3058,7 +3060,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "09232f01afecf954c5ff9fda6a7bbfac9ef13568761d95024ada0a15d69083e4",
+      "contentHash": "8543fdd6bc140783ec2373bd9b91830de2bb48b58d0c005ea468ccd98d20a438",
       "declarations": [
         null
       ],
@@ -3071,8 +3073,8 @@
         "tests {\n    use super::*"
       ],
       "path": "src-tauri/src/project_registry_store.rs",
-      "semanticBytes": 741,
-      "sourceBytes": 26808
+      "semanticBytes": 771,
+      "sourceBytes": 28149
     },
     {
       "blocks": [

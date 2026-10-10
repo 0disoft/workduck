@@ -183,7 +183,7 @@
     },
     {
       "edges": [],
-      "inputHash": "8e7101197d3e641cc343161cd38787c1a1041f9e25eb9934f2f9b09b794c0039",
+      "inputHash": "97c9b4abb30737a489d291b7a7d771dbfa0f62a64427043d7f728b9a6bcf6b16",
       "key": "card:workduck/workduck.app-state.storage-native",
       "nodes": [
         {
@@ -192,14 +192,14 @@
           "key": "workduck/workduck.app-state.storage-native",
           "location": {
             "declarationLine": null,
-            "endLine": 16,
+            "endLine": 18,
             "exported": null,
             "kind": null,
             "language": null,
             "path": "src-tauri/src/app_state_store.rs",
             "receiver": null,
             "signature": null,
-            "startLine": 8,
+            "startLine": 10,
             "symbol": null,
             "visibility": null
           },
@@ -208,7 +208,7 @@
           "semanticId": "workduck.app-state.storage-native"
         }
       ],
-      "outputHash": "a40bfdc99fb5f762b3ba75a1fb45eafc02431243929bb0f32fdb3a890b99e78a"
+      "outputHash": "7916b45906882d18b5bc86ef55b2b97aac3007089aec95fd3a0125384e61e02b"
     },
     {
       "edges": [],

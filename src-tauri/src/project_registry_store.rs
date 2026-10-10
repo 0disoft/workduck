@@ -13,7 +13,7 @@ role=Read and atomically replace SQLite project registries with optional snapsho
 owns=project registry SQLite reads|snapshot write guards|atomic registry and workspace replacement|committed workspace ID notifications
 excludes=registry domain normalization|workspace sync payload assembly|editor draft ownership
 search=project registry SQLite write|stale registry snapshot|atomic project bulk write|native project commit event
-invariant=Guarded writes require the expected snapshot; sync checkpoints preserve UTC ordering, failed rows roll back the batch, and only successful commits notify windows of changed workspace IDs.
+invariant=Guarded writes require the expected snapshot; sync checkpoints preserve UTC ordering; failed rows roll back the batch; successful commits notify changed project IDs and workspace state, including workspace-only syncs.
 stability=contract
 */
 
@@ -197,9 +197,17 @@ pub fn write_project_registries(
         &mut connection,
         registries,
         workspace_registry,
-        |workspace_ids| {
+        |workspace_ids, workspace_changed| {
             // Notification failure cannot undo a committed transaction.
-            let _ = app.emit(PROJECT_REGISTRIES_COMMITTED_EVENT, workspace_ids);
+            if !workspace_ids.is_empty() {
+                let _ = app.emit(PROJECT_REGISTRIES_COMMITTED_EVENT, workspace_ids);
+            }
+            if workspace_changed {
+                let _ = app.emit(
+                    crate::app_state_store::APP_STATE_COMMITTED_EVENT,
+                    vec!["workspace-registry"],
+                );
+            }
         },
     )
 }
@@ -208,14 +216,15 @@ fn write_project_registries_with_notification(
     connection: &mut rusqlite::Connection,
     registries: BTreeMap<String, ProjectRegistryWriteInput>,
     workspace_registry: Option<WorkspaceRegistryWriteInput>,
-    notify: impl FnOnce(Vec<String>),
+    notify: impl FnOnce(Vec<String>, bool),
 ) -> ProjectRegistryWrite {
+    let workspace_changed = workspace_registry.is_some();
     let mut workspace_ids: Vec<String> = registries.keys().map(|id| id.trim().to_owned()).collect();
     workspace_ids.sort();
     workspace_ids.dedup();
     let result = write_project_registries_to_connection(connection, registries, workspace_registry);
-    if result.ok && !workspace_ids.is_empty() {
-        notify(workspace_ids);
+    if result.ok && (!workspace_ids.is_empty() || workspace_changed) {
+        notify(workspace_ids, workspace_changed);
     }
     result
 }
@@ -449,7 +458,8 @@ mod tests {
                 ("last".into(), input(r#"{"value":2}"#, None)),
             ]),
             None,
-            |workspace_ids| {
+            |workspace_ids, workspace_changed| {
+                assert!(!workspace_changed);
                 assert_eq!(workspace_ids, ["first", "last"]);
                 assert_eq!(
                     stored(&observer, "first").as_deref(),
@@ -495,7 +505,7 @@ mod tests {
                     ),
                 ]),
                 None,
-                |_| {
+                |_, _| {
                     notified = true;
                 },
             );
@@ -517,11 +527,36 @@ mod tests {
                 &mut connection,
                 BTreeMap::new(),
                 None,
-                |_| {
+                |_, _| {
                     panic!("empty batch has no changed project registries");
                 },
             )
             .ok
+        );
+    }
+
+    #[test]
+    fn workspace_only_sync_notifies_a_committed_workspace_checkpoint() {
+        let mut connection = connection();
+        connection
+            .execute_batch(include_str!("../migrations/007_app_state_records.sql"))
+            .unwrap();
+        let mut notified = false;
+        let result = write_project_registries_with_notification(
+            &mut connection,
+            BTreeMap::new(),
+            Some(sync_input("null")),
+            |workspace_ids, workspace_changed| {
+                assert!(workspace_ids.is_empty());
+                assert!(workspace_changed);
+                notified = true;
+            },
+        );
+        assert!(result.ok);
+        assert!(notified);
+        assert_eq!(
+            workspace_value(&connection),
+            r#"{"workspaces":[{"id":"new"}]}"#
         );
     }
 

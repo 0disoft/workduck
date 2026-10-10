@@ -95,7 +95,7 @@
     "workduck.workspace.sync-file-native",
     "workduck.workspace.sync-git-native"
   ],
-  "cardSetHash": "a2062e5139557cbfb50ca77bc8c82f0559478530235721bc423c20e2d183d904",
+  "cardSetHash": "004309ec9d993e2157821e6f6e0840501e3fc5dbc0b8089d6cfb48c42f72dae3",
   "documentCount": 94,
   "documents": [
     [
@@ -167,17 +167,19 @@
       ]
     ],
     [
-      "fc419e6a0621b594e0a20e4e20edad517ddf580574b3e40ff43460199b322fca",
+      "cb66528df6e13274dd1f4ab58d972643602189220b138a1d325689191d1d5ada",
       [
         "read and transactionally persist allowed application settings in sqlite with bounded json and ordered utc revisions.",
         "app state sqlite transaction",
         "setting json size limit",
         "utc setting revision",
-        "only allowed keys and bounded json objects are stored; invalid rows roll back the batch; older utc revisions retain the newer value and return it for renderer reconciliation.",
+        "native setting commit notification",
+        "only allowed keys and bounded json objects are stored; invalid rows roll back the batch; older revisions retain and return the newer value; only committed changed keys notify renderers.",
         "app state sqlite transactions",
         "setting key allowlist",
         "json size validation",
-        "utc revision ordering"
+        "utc revision ordering",
+        "committed setting key notifications"
       ]
     ],
     [
@@ -737,14 +739,14 @@
       ]
     ],
     [
-      "e650d4bba45f14f45cf5d330de6f89e7aa32eebdac6fb51311ae1a2d084c1615",
+      "e40b996ad13cabe2b247ad737c767a8a9f05eed78e1df897dfdd1127e3477e0e",
       [
         "read and atomically replace sqlite project registries with optional snapshot guards and a workspace sync checkpoint.",
         "project registry sqlite write",
         "stale registry snapshot",
         "atomic project bulk write",
         "native project commit event",
-        "guarded writes require the expected snapshot; sync checkpoints preserve utc ordering, failed rows roll back the batch, and only successful commits notify windows of changed workspace ids.",
+        "guarded writes require the expected snapshot; sync checkpoints preserve utc ordering; failed rows roll back the batch; successful commits notify changed project ids and workspace state, including workspace-only syncs.",
         "project registry sqlite reads",
         "snapshot write guards",
         "atomic registry and workspace replacement",
@@ -5806,6 +5808,13 @@
     ],
     [
       [
+        5,
+        [
+          5,
+          1
+        ]
+      ],
+      [
         47,
         [
           5,
@@ -6892,6 +6901,13 @@
     ],
     [
       [
+        5,
+        [
+          2,
+          1
+        ]
+      ],
+      [
         11,
         [
           5,
@@ -6958,6 +6974,15 @@
       [
         4,
         [
+          5,
+          1
+        ]
+      ],
+      [
+        5,
+        [
+          3,
+          1,
           5,
           1
         ]
@@ -12300,13 +12325,6 @@
         1,
         [
           1,
-          1
-        ]
-      ],
-      [
-        5,
-        [
-          5,
           1
         ]
       ],
@@ -14002,6 +14020,15 @@
     ],
     [
       [
+        47,
+        [
+          5,
+          1
+        ]
+      ]
+    ],
+    [
+      [
         1,
         [
           5,
@@ -14752,15 +14779,6 @@
     ],
     [
       [
-        5,
-        [
-          5,
-          1
-        ]
-      ]
-    ],
-    [
-      [
         0,
         [
           5,
@@ -15042,7 +15060,7 @@
         5,
         [
           3,
-          1
+          2
         ]
       ],
       [
@@ -15065,7 +15083,7 @@
         5,
         [
           5,
-          1
+          2
         ]
       ],
       [
@@ -17645,6 +17663,8 @@
         5,
         [
           0,
+          1,
+          2,
           1
         ]
       ],
@@ -18650,6 +18670,13 @@
         ]
       ],
       [
+        5,
+        [
+          2,
+          1
+        ]
+      ],
+      [
         46,
         [
           2,
@@ -18662,6 +18689,13 @@
         4,
         [
           5,
+          1
+        ]
+      ],
+      [
+        5,
+        [
+          3,
           1
         ]
       ],
@@ -18690,6 +18724,13 @@
       ]
     ],
     [
+      [
+        5,
+        [
+          5,
+          1
+        ]
+      ],
       [
         47,
         [
@@ -18786,13 +18827,6 @@
       ],
       [
         45,
-        [
-          5,
-          1
-        ]
-      ],
-      [
-        47,
         [
           5,
           1
@@ -19041,7 +19075,7 @@
         5,
         [
           5,
-          1
+          2
         ]
       ],
       [
@@ -22622,6 +22656,8 @@
           3,
           3,
           1,
+          5,
+          1,
           9,
           1
         ]
@@ -24331,13 +24367,6 @@
       ]
     ],
     [
-      [
-        5,
-        [
-          5,
-          1
-        ]
-      ],
       [
         27,
         [
@@ -25613,8 +25642,6 @@
         5,
         [
           4,
-          1,
-          5,
           1
         ]
       ],
@@ -25631,6 +25658,15 @@
         75,
         [
           4,
+          1
+        ]
+      ]
+    ],
+    [
+      [
+        5,
+        [
+          5,
           1
         ]
       ]
@@ -29648,9 +29684,9 @@
         5,
         [
           2,
-          2,
           3,
-          1,
+          3,
+          2,
           4,
           1
         ]
@@ -31438,6 +31474,13 @@
         ]
       ],
       [
+        47,
+        [
+          5,
+          1
+        ]
+      ],
+      [
         49,
         [
           3,
@@ -32870,6 +32913,15 @@
         38,
         [
           1,
+          1
+        ]
+      ]
+    ],
+    [
+      [
+        47,
+        [
+          5,
           1
         ]
       ]
@@ -36035,8 +36087,6 @@
           2,
           1,
           3,
-          1,
-          5,
           1
         ]
       ],
@@ -37058,13 +37108,6 @@
           1,
           1,
           2,
-          1
-        ]
-      ],
-      [
-        47,
-        [
-          5,
           1
         ]
       ],
@@ -38434,7 +38477,7 @@
           4,
           1,
           5,
-          1
+          2
         ]
       ],
       [
@@ -39507,6 +39550,7 @@
     "import",
     "imports",
     "in",
+    "including",
     "incomplete",
     "independent",
     "index",
@@ -39540,7 +39584,6 @@
     "invoke",
     "is",
     "isolated",
-    "it",
     "its",
     "job",
     "jobs",
@@ -39848,6 +39891,7 @@
     "removes",
     "removing",
     "renderer",
+    "renderers",
     "rendering",
     "replace",
     "replacement",
@@ -40056,6 +40100,7 @@
     "synced",
     "synchronization",
     "synchronize",
+    "syncs",
     "system",
     "table",
     "tail",

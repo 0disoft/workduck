@@ -3519,8 +3519,8 @@
         "editor draft ownership"
       ],
       "hashes": {
-        "body": "09232f01afecf954c5ff9fda6a7bbfac9ef13568761d95024ada0a15d69083e4",
-        "semantic": "e64e99d74c97bc3203e0707885022504def7e1555ce36419c4101f959329ff4f",
+        "body": "8543fdd6bc140783ec2373bd9b91830de2bb48b58d0c005ea468ccd98d20a438",
+        "semantic": "066b4293d3ad3c2edbe6b07f6c83bbc200e2086c0acb9e83fbfbe33956a26447",
         "structure": "6b93ea468e76ace8d446b7347639d69f4606c92429a55526a575e58e6f431955"
       },
       "id": "workduck.projects.storage-native",
@@ -3533,7 +3533,7 @@
         "tests {\n    use super::*"
       ],
       "invariant": [
-        "Guarded writes require the expected snapshot; sync checkpoints preserve UTC ordering, failed rows roll back the batch, and only successful commits notify windows of changed workspace IDs."
+        "Guarded writes require the expected snapshot; sync checkpoints preserve UTC ordering; failed rows roll back the batch; successful commits notify changed project IDs and workspace state, including workspace-only syncs."
       ],
       "location": {
         "declarationLine": null,
@@ -4774,31 +4774,31 @@
         "sync payload assembly"
       ],
       "hashes": {
-        "body": "b6d725796646c7d2fa851251537533aa56125a9d5b576d4cf9e926d6aceaec3c",
-        "semantic": "cd3552daf27eecb15f694f5aaf781965b4eb7b911f7bf4c81a24165c7cf71c6d",
-        "structure": "cee1b3fdc02b7fad3215887b7aec970feab65f2d361d331ce679ec398e468c44"
+        "body": "80462e042e3520db86310ca51756488e796be9796c7eeeda6e8d7112a5767bea",
+        "semantic": "465b15503e907ab20e4a382655a599c97682b65333354a0b56b195d7dc8a4d26",
+        "structure": "b4295d77e4ffc6fd604ac9f737684fa7f60201d1638a83f2c637e8e794a8c78c"
       },
       "id": "workduck.app-state.storage-native",
       "imports": [
         "crate::storage",
         "rusqlite::{Connection, params, params_from_iter}",
         "std::collections::{BTreeMap, BTreeSet}",
-        "tauri::AppHandle",
+        "tauri::{AppHandle, Emitter}",
         "tests {\n    use super::*"
       ],
       "invariant": [
-        "Only allowed keys and bounded JSON objects are stored; invalid rows roll back the batch; older UTC revisions retain the newer value and return it for renderer reconciliation."
+        "Only allowed keys and bounded JSON objects are stored; invalid rows roll back the batch; older revisions retain and return the newer value; only committed changed keys notify renderers."
       ],
       "location": {
         "declarationLine": null,
-        "endLine": 16,
+        "endLine": 18,
         "exported": null,
         "kind": null,
         "language": null,
         "path": "src-tauri/src/app_state_store.rs",
         "receiver": null,
         "signature": null,
-        "startLine": 8,
+        "startLine": 10,
         "symbol": null,
         "visibility": null
       },
@@ -4806,14 +4806,16 @@
         "app state SQLite transactions",
         "setting key allowlist",
         "JSON size validation",
-        "UTC revision ordering"
+        "UTC revision ordering",
+        "committed setting key notifications"
       ],
       "role": "Read and transactionally persist allowed application settings in SQLite with bounded JSON and ordered UTC revisions.",
       "scope": "module",
       "search": [
         "app state SQLite transaction",
         "setting JSON size limit",
-        "UTC setting revision"
+        "UTC setting revision",
+        "native setting commit notification"
       ],
       "stability": "contract"
     }
@@ -4831,6 +4833,6 @@
   "generatedBy": "llmnav@0.9.7",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "15c658a752b562dd2d438c05152ef9065b9310a2a96b99b16b9823237bdc6c11",
+  "sourceHash": "da8b593d37a1b6b67a0a8f292bc843988811f324e0dc457af0adc11187d9d182",
   "specVersion": "1"
 }
