@@ -1183,7 +1183,7 @@
         "secret decryption"
       ],
       "hashes": {
-        "body": "076127bc5dadd5b32d4b42755567d751b38fbdd8ea94904d5ce2b25a62b4aa25",
+        "body": "16a82b3632f61ea11b26d054149b126fd34551dee085b2de8013da7785c89409",
         "semantic": "93dd5ea4ac4030973e07ef8703289cfef40ee06b8901f1b2f5f92953dad33fbd",
         "structure": "2e5d36f8d8f55e9cc7c405c01449e50786fd171dbe05b7a73d20bc8d71b1694c"
       },
@@ -2862,7 +2862,7 @@
         "frontend invocation"
       ],
       "hashes": {
-        "body": "bdc918f29268cc3ee380a2d50d4fe73b1bd4ac4200a31ad495cbb4cf8b19cdba",
+        "body": "f722503f80c7d14f96108b7ac385b5833d33136467856fd66125910629af0950",
         "semantic": "bbf6079866ab704cde8c0f65ac267c92c0fe2c8314b9347bcb521304767b1c6c",
         "structure": "6e961d3c1408326a41f83f33c89efe0e77b929fa054c6a055a08d4e73667c42a"
       },
@@ -5226,6 +5226,6 @@
   "generatedBy": "llmnav@0.9.7",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "2b3b0811262aa058fb26613957a8deb5732c718ee45f35564af9125eeac22801",
+  "sourceHash": "390dd0ec2ff96fb442de13d42add5ffcee391566c1bafcdbea978a8c336187f1",
   "specVersion": "1"
 }

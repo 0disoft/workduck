@@ -264,6 +264,8 @@ fn powershell_task_failures_stop_following_commands_and_keep_native_exit_codes()
     ] {
         let repository = tempfile::tempdir().unwrap();
         fs::create_dir(repository.path().join("nested")).unwrap();
+        let workspace = fs::canonicalize(repository.path()).unwrap();
+        let visible_repository = crate::git_path::git_process_path(&workspace);
         let record_path = task_run_record_dir(repository.path()).join(format!("{label}.json"));
         fs::create_dir_all(record_path.parent().unwrap()).unwrap();
         let marker_path = repository.path().join("following-command.txt");
@@ -274,7 +276,7 @@ fn powershell_task_failures_stop_following_commands_and_keep_native_exit_codes()
             record_path: record_path.to_string_lossy().into_owned(),
             ..task_run_record(
                 label,
-                &repository.path().to_string_lossy(),
+                &visible_repository.to_string_lossy(),
                 "2026-10-10T00:00:00Z",
             )
         };
@@ -295,13 +297,12 @@ fn powershell_task_failures_stop_following_commands_and_keep_native_exit_codes()
             String::from_utf8_lossy(&output.stderr)
         );
         let stored =
-            read_visible_task_run_record(&record_path, repository.path()).unwrap_or_else(|| {
+            read_visible_task_run_record(&record_path, &visible_repository).unwrap_or_else(|| {
                 panic!("PowerShell record is missing from the latest view: {label}")
             });
         assert_eq!(stored.state, expected_state, "{label}");
         assert_eq!(stored.exit_code, Some(expected_exit), "{label}");
         assert!(stored.process_id.is_some_and(|pid| pid > 0), "{label}");
-        let workspace = fs::canonicalize(repository.path()).unwrap();
         let historical = history::read_selected_task_run_records(&workspace, &[label.into()])
             .unwrap_or_else(|_| panic!("PowerShell record is unreadable in history: {label}"));
         assert_eq!(historical.len(), 1, "{label}");

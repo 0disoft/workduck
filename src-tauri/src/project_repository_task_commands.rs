@@ -945,11 +945,10 @@ mod package_discovery_tests {
             );
             let result: serde_json::Value = serde_json::from_slice(&output.stdout).unwrap();
             assert_eq!(result["caught"], caught);
-            assert!(
-                result["path"]
-                    .as_str()
-                    .unwrap()
-                    .eq_ignore_ascii_case(&repository.path().to_string_lossy())
+            // PowerShell can expand TEMP's short name; compare the restored directory identity.
+            assert_eq!(
+                fs::canonicalize(result["path"].as_str().unwrap()).unwrap(),
+                fs::canonicalize(repository.path()).unwrap()
             );
             assert!(!repository.path().join("marker.txt").exists());
             assert_eq!(directory.join("marker.txt").exists(), create_directory);

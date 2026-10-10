@@ -1234,7 +1234,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "076127bc5dadd5b32d4b42755567d751b38fbdd8ea94904d5ce2b25a62b4aa25",
+      "contentHash": "16a82b3632f61ea11b26d054149b126fd34551dee085b2de8013da7785c89409",
       "declarations": [
         null,
         {
@@ -1263,7 +1263,7 @@
       ],
       "path": "src-tauri/src/agent_api_snapshot.rs",
       "semanticBytes": 1142,
-      "sourceBytes": 47769
+      "sourceBytes": 47911
     },
     {
       "blocks": [
@@ -3764,7 +3764,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "bdc918f29268cc3ee380a2d50d4fe73b1bd4ac4200a31ad495cbb4cf8b19cdba",
+      "contentHash": "f722503f80c7d14f96108b7ac385b5833d33136467856fd66125910629af0950",
       "declarations": [
         null
       ],
@@ -3776,7 +3776,7 @@
       ],
       "path": "src-tauri/src/project_repository_task_commands.rs",
       "semanticBytes": 645,
-      "sourceBytes": 39416
+      "sourceBytes": 39483
     },
     {
       "blocks": [
@@ -3990,7 +3990,7 @@
     },
     {
       "blocks": [],
-      "contentHash": "4899955ad2b82323874f863da5ab612e9fb624cf74353f32b5bea309c671219c",
+      "contentHash": "954a1310bbbc250cf97699752d5e5be72b49a68e7af0490cbfa8820adf2935ba",
       "declarations": [],
       "imports": [
         "std::os::windows::fs::OpenOptionsExt",
@@ -3999,7 +3999,7 @@
       ],
       "path": "src-tauri/src/project_repository_task_powershell_tests.rs",
       "semanticBytes": 0,
-      "sourceBytes": 29790
+      "sourceBytes": 29873
     },
     {
       "blocks": [],

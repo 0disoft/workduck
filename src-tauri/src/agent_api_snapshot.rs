@@ -1389,6 +1389,7 @@ mod tests {
             .as_nanos();
         let path = std::env::temp_dir().join(format!("workduck-agent-api-{name}-{unique}"));
         fs::create_dir_all(&path).expect("workspace dir");
-        path
+        // Match the validated application boundary even when TEMP uses a Windows short name.
+        fs::canonicalize(path).expect("canonical workspace")
     }
 }
