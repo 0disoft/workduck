@@ -5768,7 +5768,7 @@
     },
     {
       "blocks": [],
-      "contentHash": "e0f7d5055220bb1a3fc80c514644b9cd2f3ac327ff551948f3a31a217a492e8d",
+      "contentHash": "75feb4718d6b31ab1a20c65de1238590d9fd1c438879a001aafe0d66b5b59516",
       "declarations": [],
       "imports": [
         "#lib/i18n/workduck-language.ts",
@@ -5778,6 +5778,7 @@
         "#lib/workspaces/workspace-registry.ts",
         "$app/navigation",
         "./BriefRunsPanel.svelte",
+        "./brief-editor-drafts",
         "./brief-messages",
         "./brief-registry",
         "./brief-storage",
@@ -5786,7 +5787,122 @@
       ],
       "path": "src/lib/briefs/BriefsPanel.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 9416
+      "sourceBytes": 11191
+    },
+    {
+      "blocks": [],
+      "contentHash": "62263918c7ee88f2152d1faf384043d9ecd4cf9e511baee99b11c1fca559798b",
+      "declarations": [],
+      "imports": [
+        "./brief-editor-drafts",
+        "node:assert/strict",
+        "node:test"
+      ],
+      "path": "src/lib/briefs/brief-editor-drafts.test.ts",
+      "semanticBytes": 0,
+      "sourceBytes": 4365
+    },
+    {
+      "blocks": [
+        {
+          "card": {
+            "effect": [],
+            "excludes": [
+              "persistent storage",
+              "workspace unlocking",
+              "registry validation"
+            ],
+            "id": "workduck.briefs.editor-drafts",
+            "invariant": [
+              "Drafts stay isolated by workspace identity and path; only the matching save completion can dispose its draft."
+            ],
+            "owns": [
+              "workspace-scoped draft memory",
+              "original edit revision",
+              "pending save identity",
+              "draft disposal"
+            ],
+            "rel": [],
+            "risk": [],
+            "role": "Retain page-owned brief editor drafts and save operations across workspace locking.",
+            "scope": "module",
+            "search": [
+              "brief draft lost on lock",
+              "restore unsaved instructions",
+              "save completes while locked"
+            ],
+            "stability": "contract",
+            "unknown": []
+          },
+          "end": 534,
+          "endLine": 9,
+          "entries": [
+            {
+              "key": "id",
+              "line": 2,
+              "order": 0,
+              "value": "workduck.briefs.editor-drafts"
+            },
+            {
+              "key": "role",
+              "line": 3,
+              "order": 1,
+              "value": "Retain page-owned brief editor drafts and save operations across workspace locking."
+            },
+            {
+              "key": "owns",
+              "line": 4,
+              "order": 2,
+              "value": "workspace-scoped draft memory|original edit revision|pending save identity|draft disposal"
+            },
+            {
+              "key": "excludes",
+              "line": 5,
+              "order": 3,
+              "value": "persistent storage|workspace unlocking|registry validation"
+            },
+            {
+              "key": "search",
+              "line": 6,
+              "order": 4,
+              "value": "brief draft lost on lock|restore unsaved instructions|save completes while locked"
+            },
+            {
+              "key": "invariant",
+              "line": 7,
+              "order": 5,
+              "value": "Drafts stay isolated by workspace identity and path; only the matching save completion can dispose its draft."
+            },
+            {
+              "key": "stability",
+              "line": 8,
+              "order": 6,
+              "value": "contract"
+            }
+          ],
+          "filePath": "src/lib/briefs/brief-editor-drafts.ts",
+          "indent": "",
+          "newline": "\n",
+          "prefix": null,
+          "raw": "/* llmnav/1 module\nid=workduck.briefs.editor-drafts\nrole=Retain page-owned brief editor drafts and save operations across workspace locking.\nowns=workspace-scoped draft memory|original edit revision|pending save identity|draft disposal\nexcludes=persistent storage|workspace unlocking|registry validation\nsearch=brief draft lost on lock|restore unsaved instructions|save completes while locked\ninvariant=Drafts stay isolated by workspace identity and path; only the matching save completion can dispose its draft.\nstability=contract\n*/",
+          "scope": "module",
+          "specVersion": "1",
+          "start": 0,
+          "startLine": 1,
+          "style": "block",
+          "syntaxErrors": []
+        }
+      ],
+      "contentHash": "0fd3b3761ff5fa5c54da3cadf81528e7a140cc6bf769a41768d0a7d0b7fde3dc",
+      "declarations": [
+        null
+      ],
+      "imports": [
+        "#lib/workspaces/workspace-scoped-resource.ts"
+      ],
+      "path": "src/lib/briefs/brief-editor-drafts.ts",
+      "semanticBytes": 534,
+      "sourceBytes": 3806
     },
     {
       "blocks": [],
@@ -14431,10 +14547,11 @@
     },
     {
       "blocks": [],
-      "contentHash": "53397720c6b0b9a30e783fc9860726fa2ba4fc52d32c2982d1e194be464e0997",
+      "contentHash": "1d98af2e947923c083ab6f408596627d7fcfa87eb9b104af1c47315c313eab6e",
       "declarations": [],
       "imports": [
         "#lib/briefs/BriefsPanel.svelte",
+        "#lib/briefs/brief-editor-drafts.ts",
         "#lib/briefs/brief-messages.ts",
         "#lib/settings/appearance-settings.ts",
         "#lib/settings/appearance-storage.ts",
@@ -14446,7 +14563,7 @@
       ],
       "path": "src/routes/briefs/+page.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 1715
+      "sourceBytes": 1866
     },
     {
       "blocks": [],

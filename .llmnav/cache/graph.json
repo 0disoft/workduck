@@ -791,6 +791,28 @@
     {
       "definitions": [],
       "external": false,
+      "key": "workduck/workduck.briefs.editor-drafts",
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src/lib/briefs/brief-editor-drafts.ts",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "repositoryId": "workduck",
+      "role": "Retain page-owned brief editor drafts and save operations across workspace locking.",
+      "semanticId": "workduck.briefs.editor-drafts",
+      "unresolved": false
+    },
+    {
+      "definitions": [],
+      "external": false,
       "key": "workduck/workduck.briefs.gate",
       "location": {
         "declarationLine": null,
@@ -2695,11 +2717,11 @@
   ],
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "5d3a4a50d88daf3ed9f5d4c21e54fdf2e54412e3f96f24adc94732291ee0b2c8",
+  "sourceHash": "b8fcd72d2e08f67c7e1345b86c184e05fa8cb4aef0bcebe510a240eaaafd3fbc",
   "stats": {
     "edgeCount": 49,
     "importedIndexCount": 0,
-    "nodeCount": 90,
+    "nodeCount": 91,
     "unresolvedNodeCount": 0
   }
 }

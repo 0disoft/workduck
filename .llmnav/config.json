@@ -2,6 +2,12 @@
   "$schema": "./schema/config.schema.json",
   "coverageRules": [
     {
+      "match": ["src/lib/briefs/brief-editor-drafts.ts"],
+      "name": "brief editor draft and save lifetime",
+      "requiredFields": ["owns", "invariant"],
+      "scope": "module"
+    },
+    {
       "match": ["src/lib/references/reference-registry.ts"],
       "name": "reference registry identity and revision contract",
       "requiredFields": ["owns", "invariant"],

@@ -71,6 +71,11 @@ includes:
   Briefs use stable project/repository IDs and revision-checked atomic writes to
   `<workspace>/.workduck/briefs.json`. Conflicts and unreadable data are reported
   without overwriting the file; a failed save keeps the editor draft open.
+  Workspace locking hides the editor but retains its draft in page memory,
+  scoped to the workspace ID and path. Unlocking restores the original edit
+  revision; a save completed while locked clears the draft. Unsaved drafts are
+  not written to disk or browser storage and do not survive a page reload or
+  application restart.
 - Project board metadata stored in the local SQLite database, with legacy
   browser-stored project metadata promoted on first read.
 - Skills menu for workspace-local Workduck skills, including a built-in

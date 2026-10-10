@@ -4566,11 +4566,58 @@
         "reference title conflict"
       ],
       "stability": "contract"
+    },
+    {
+      "boundaries": [],
+      "excludes": [
+        "persistent storage",
+        "workspace unlocking",
+        "registry validation"
+      ],
+      "hashes": {
+        "body": "0fd3b3761ff5fa5c54da3cadf81528e7a140cc6bf769a41768d0a7d0b7fde3dc",
+        "semantic": "242853405976b5afc42cc47fae2ab1fcee7beb11a5256e53143e26eafbeb8ebf",
+        "structure": "9807d6ec91449e20a7d672637d18bcdf494089901a61d1cdb821f834db5d590f"
+      },
+      "id": "workduck.briefs.editor-drafts",
+      "imports": [
+        "#lib/workspaces/workspace-scoped-resource.ts"
+      ],
+      "invariant": [
+        "Drafts stay isolated by workspace identity and path; only the matching save completion can dispose its draft."
+      ],
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src/lib/briefs/brief-editor-drafts.ts",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "owns": [
+        "workspace-scoped draft memory",
+        "original edit revision",
+        "pending save identity",
+        "draft disposal"
+      ],
+      "role": "Retain page-owned brief editor drafts and save operations across workspace locking.",
+      "scope": "module",
+      "search": [
+        "brief draft lost on lock",
+        "restore unsaved instructions",
+        "save completes while locked"
+      ],
+      "stability": "contract"
     }
   ],
   "contractFingerprints": {
     "configuration": {
-      "sha256": "de7f0fd0cc3551628e3846229c3e4ea51d1b98e9dc2bcbef607fb96bc057f1fd"
+      "sha256": "d447e69ed03ec8ebd16f446e41c638e7073d1f0683ebcf3a6b7339f5b42543ad"
     },
     "exportedApi": {
       "count": 0,
@@ -4581,6 +4628,6 @@
   "generatedBy": "llmnav@0.9.7",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "58a9cf3a0fd53ebccdd678f31dd3c932ddefd220a86aadb0c877ab4135eb0486",
+  "sourceHash": "22a65700fa2cb2f72f144862322f62628089605b6dfb3a9a288ee5b7e22c861b",
   "specVersion": "1"
 }

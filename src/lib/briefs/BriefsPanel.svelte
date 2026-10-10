@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { onMount, untrack } from 'svelte';
 	import { beforeNavigate } from '$app/navigation';
 	import { getWorkduckMessages, type WorkduckLanguageId } from '#lib/i18n/workduck-language.ts';
 	import type { WorkspaceRecord } from '#lib/workspaces/workspace-registry.ts';
@@ -14,9 +14,13 @@
 		type BriefRecord, type BriefRepositoryChoice
 	} from './brief-registry';
 	import { readBriefRegistry, writeBriefRegistry } from './brief-storage';
+	import type { BriefEditorDraft, BriefEditorDraftStore } from './brief-editor-drafts';
 	import './briefs.css';
 
-	let { workspace, languageId }: { workspace: WorkspaceRecord; languageId: WorkduckLanguageId } = $props();
+	let { workspace, languageId, editorDrafts }: {
+		workspace: WorkspaceRecord; languageId: WorkduckLanguageId; editorDrafts: BriefEditorDraftStore
+	} = $props();
+	const draftScope = untrack(() => ({ workspaceId: workspace.id, workspacePath: workspace.path }));
 	let registry = $state(createEmptyBriefRegistry(''));
 	let repositories = $state<readonly BriefRepositoryChoice[]>([]);
 	let selectedId = $state<string | null>(null);
@@ -32,7 +36,9 @@
 	let repositoryId = $state('');
 	let instructions = $state('');
 	let baseline = $state('');
+	let editRevision = $state(0);
 	let disposed = false;
+	let loadGeneration = 0;
 	let messages = $derived(briefMessages[languageId]);
 	let common = $derived(getWorkduckMessages(languageId).common);
 	let selected = $derived(registry.briefs.find((brief) => brief.id === selectedId) ?? null);
@@ -41,24 +47,49 @@
 	let dirty = $derived(editing && JSON.stringify([title, repositoryId, instructions]) !== baseline);
 
 	beforeNavigate((navigation) => {
-		if (saving || (dirty && !window.confirm(messages.discard))) navigation.cancel();
+		if (saving || (dirty && !window.confirm(messages.discard))) {
+			navigation.cancel();
+			return;
+		}
+		editorDrafts.discard(draftScope);
+		editing = false;
 	});
 
 	onMount(() => {
-		void refresh();
-		return () => { disposed = true; };
+		const unsubscribe = editorDrafts.subscribe(draftScope, (state) => {
+			if (disposed) return;
+			saving = state.saving;
+			editing = state.draft !== null;
+			if (state.draft !== null) restoreEditor(state.draft);
+			if (state.error !== null) error = state.error === 'conflict' ? messages.conflict : messages.saveFailed;
+			if (state.savedBriefId !== undefined) {
+				selectedId = state.savedBriefId;
+				notice = messages.saved;
+				void refresh(false);
+			}
+		});
+		void refresh(false);
+		return () => {
+			disposed = true;
+			unsubscribe();
+			if (editing) editorDrafts.put(draftScope, captureEditor());
+		};
 	});
 
-	async function refresh() {
-		if (saving || (dirty && !window.confirm(messages.discard))) return;
-		editing = false;
+	async function refresh(discardEditor = true) {
+		if (discardEditor) {
+			if (saving || (dirty && !window.confirm(messages.discard))) return;
+			editorDrafts.discard(draftScope);
+			editing = false;
+		}
+		const generation = ++loadGeneration;
 		loading = true;
 		ready = false;
-		error = '';
+		if (discardEditor) error = '';
 		const [briefResult, projectResult] = await Promise.all([
 			readBriefRegistry(workspace.id, workspace.path), readProjectRegistry(workspace.id)
 		]);
-		if (disposed) return;
+		if (disposed || generation !== loadGeneration) return;
 		loading = false;
 		if (!briefResult.ok || !projectResult.ok) { error = messages.loadFailed; return; }
 		registry = briefResult.registry;
@@ -73,35 +104,50 @@
 		repositoryId = brief?.repository.id ?? '';
 		instructions = brief?.instructions ?? '';
 		baseline = JSON.stringify([title, repositoryId, instructions]);
+		editRevision = registry.revision;
 		error = '';
 		notice = '';
 		editing = true;
+		editorDrafts.put(draftScope, captureEditor());
+	}
+
+	function captureEditor(): BriefEditorDraft {
+		return { id: editId, title, repositoryId, instructions, baseline, baseRevision: editRevision };
+	}
+
+	function restoreEditor(draft: BriefEditorDraft) {
+		editId = draft.id;
+		title = draft.title;
+		repositoryId = draft.repositoryId;
+		instructions = draft.instructions;
+		baseline = draft.baseline;
+		editRevision = draft.baseRevision;
 	}
 
 	function closeEditor() {
 		if (saving || (dirty && !window.confirm(messages.discard))) return;
+		editorDrafts.discard(draftScope);
 		editing = false;
 	}
 
 	async function save(event: SubmitEvent) {
 		event.preventDefault();
 		if (saving || !ready) return;
+		if (registry.revision !== editRevision) { error = messages.conflict; return; }
 		const choice = repositories.find((item) => item.repository.id === repositoryId);
 		const next = choice ? saveBriefDraft(registry, { ...choice, id: editId, title, instructions }) : null;
 		if (!next) { error = messages.invalid; return; }
-		saving = true;
 		error = '';
-		const result = await writeBriefRegistry(next, workspace.path);
-		if (disposed) return;
-		saving = false;
-		if (!result.ok) {
-			error = result.error === 'workspace-data-revision-conflict' ? messages.conflict : messages.saveFailed;
-			return;
+		editorDrafts.put(draftScope, captureEditor());
+		const operation = editorDrafts.beginSave(draftScope);
+		if (operation === null) return;
+		try {
+			const result = await writeBriefRegistry(next, draftScope.workspacePath);
+			editorDrafts.finishSave(operation, result.ok ? null
+				: result.error === 'workspace-data-revision-conflict' ? 'conflict' : 'save-failed');
+		} catch {
+			editorDrafts.finishSave(operation, 'save-failed');
 		}
-		registry = result.registry;
-		selectedId = editId;
-		editing = false;
-		notice = messages.saved;
 	}
 
 	async function archive(brief: BriefRecord) {

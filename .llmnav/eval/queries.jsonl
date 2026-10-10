@@ -85,3 +85,4 @@
 {"query":"native secret vault opaque reference generations and session close","expected":["workduck.secret-vault.session-native"]}
 {"query":"terminal selection switch late terminal response and terminal removal ownership","expected":["workduck.terminal.panel"]}
 {"query":"brief execution evidence linked task repository paths Windows drive root Unix backslash","expected":["workduck.briefs.run-evidence"]}
+{"query":"restore unsaved brief draft after workspace locking without resurrecting a completed save","expected":["workduck.briefs.editor-drafts"]}
