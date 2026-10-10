@@ -174,7 +174,7 @@
         "frontend workflow state"
       ],
       "hashes": {
-        "body": "21656bc0d552dc8309813fb272e8377a0dfe969f2b2577dad4ef42f8b65320a8",
+        "body": "ebdd60642ed12041975048c349ae73160894a79192f02ba42c0cf6b6690a37fb",
         "semantic": "a8dc9ec3df04251e644264a0c040ef3a382459508eeaef5bce2497bec2fee50c",
         "structure": "33347f48d65a0cb759d69ff9535b0de832ab51c8a5abc9ed2419b2c54d27f3d0"
       },
@@ -4777,20 +4777,20 @@
         "sync payload assembly"
       ],
       "hashes": {
-        "body": "80462e042e3520db86310ca51756488e796be9796c7eeeda6e8d7112a5767bea",
-        "semantic": "465b15503e907ab20e4a382655a599c97682b65333354a0b56b195d7dc8a4d26",
-        "structure": "b4295d77e4ffc6fd604ac9f737684fa7f60201d1638a83f2c637e8e794a8c78c"
+        "body": "2321bcfa330c27bc885e6076837d84d7f469d7625c0e6bd64be9c71fce0aa081",
+        "semantic": "ddcffc4e6ac969b9f6f2592164364b40fbd938db555735f01862242a503882d8",
+        "structure": "04e5ca1467a24bccfd652951f94e6e895f4aaa833b640080b6dc9baa321cad42"
       },
       "id": "workduck.app-state.storage-native",
       "imports": [
         "crate::storage",
-        "rusqlite::{Connection, params, params_from_iter}",
+        "rusqlite::{Connection, OptionalExtension, TransactionBehavior, params, params_from_iter}",
         "std::collections::{BTreeMap, BTreeSet}",
         "tauri::{AppHandle, Emitter}",
         "tests {\n    use super::*"
       ],
       "invariant": [
-        "Only allowed keys and bounded JSON objects are stored; invalid rows roll back the batch; older revisions retain and return the newer value; only committed changed keys notify renderers."
+        "Only allowed keys and bounded JSON objects are stored; conditional edits compare the authoritative value inside a write transaction; older revisions retain and return the newer value; only committed changed keys notify renderers."
       ],
       "location": {
         "declarationLine": null,
@@ -4983,6 +4983,6 @@
   "generatedBy": "llmnav@0.9.7",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "ad9b59cdf5d197db2a1fead85f1a24a8e400271a68753d0b0e42ea1b2926af49",
+  "sourceHash": "65d3324f5035ecf1bec9f1bf24ed7612b6a6ea6b014558c18944436a6a164062",
   "specVersion": "1"
 }

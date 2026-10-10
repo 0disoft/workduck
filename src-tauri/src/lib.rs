@@ -135,6 +135,7 @@ pub fn run() {
             command_palette_search::search_command_palette_artifacts,
             app_state_store::read_app_state_records,
             app_state_store::write_app_state_records,
+            app_state_store::compare_and_write_app_state_record,
             autostart_control::read_workduck_autostart_enabled,
             autostart_control::set_workduck_autostart_enabled,
             tray_menu::exit_workduck,

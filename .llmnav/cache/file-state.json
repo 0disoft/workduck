@@ -1146,7 +1146,7 @@
             ],
             "id": "workduck.app-state.storage-native",
             "invariant": [
-              "Only allowed keys and bounded JSON objects are stored; invalid rows roll back the batch; older revisions retain and return the newer value; only committed changed keys notify renderers."
+              "Only allowed keys and bounded JSON objects are stored; conditional edits compare the authoritative value inside a write transaction; older revisions retain and return the newer value; only committed changed keys notify renderers."
             ],
             "owns": [
               "app state SQLite transactions",
@@ -1168,7 +1168,7 @@
             "stability": "contract",
             "unknown": []
           },
-          "end": 968,
+          "end": 1052,
           "endLine": 18,
           "entries": [
             {
@@ -1205,7 +1205,7 @@
               "key": "invariant",
               "line": 16,
               "order": 5,
-              "value": "Only allowed keys and bounded JSON objects are stored; invalid rows roll back the batch; older revisions retain and return the newer value; only committed changed keys notify renderers."
+              "value": "Only allowed keys and bounded JSON objects are stored; conditional edits compare the authoritative value inside a write transaction; older revisions retain and return the newer value; only committed changed keys notify renderers."
             },
             {
               "key": "stability",
@@ -1218,29 +1218,29 @@
           "indent": "",
           "newline": "\n",
           "prefix": null,
-          "raw": "/* llmnav/1 module\nid=workduck.app-state.storage-native\nrole=Read and transactionally persist allowed application settings in SQLite with bounded JSON and ordered UTC revisions.\nowns=app state SQLite transactions|setting key allowlist|JSON size validation|UTC revision ordering|committed setting key notifications\nexcludes=renderer crash journal|setting domain normalization|sync payload assembly\nsearch=app state SQLite transaction|setting JSON size limit|UTC setting revision|native setting commit notification\ninvariant=Only allowed keys and bounded JSON objects are stored; invalid rows roll back the batch; older revisions retain and return the newer value; only committed changed keys notify renderers.\nstability=contract\n*/",
+          "raw": "/* llmnav/1 module\nid=workduck.app-state.storage-native\nrole=Read and transactionally persist allowed application settings in SQLite with bounded JSON and ordered UTC revisions.\nowns=app state SQLite transactions|setting key allowlist|JSON size validation|UTC revision ordering|committed setting key notifications\nexcludes=renderer crash journal|setting domain normalization|sync payload assembly\nsearch=app state SQLite transaction|setting JSON size limit|UTC setting revision|native setting commit notification\ninvariant=Only allowed keys and bounded JSON objects are stored; conditional edits compare the authoritative value inside a write transaction; older revisions retain and return the newer value; only committed changed keys notify renderers.\nstability=contract\n*/",
           "scope": "module",
           "specVersion": "1",
-          "start": 238,
+          "start": 278,
           "startLine": 10,
           "style": "block",
           "syntaxErrors": []
         }
       ],
-      "contentHash": "80462e042e3520db86310ca51756488e796be9796c7eeeda6e8d7112a5767bea",
+      "contentHash": "2321bcfa330c27bc885e6076837d84d7f469d7625c0e6bd64be9c71fce0aa081",
       "declarations": [
         null
       ],
       "imports": [
         "crate::storage",
-        "rusqlite::{Connection, params, params_from_iter}",
+        "rusqlite::{Connection, OptionalExtension, TransactionBehavior, params, params_from_iter}",
         "std::collections::{BTreeMap, BTreeSet}",
         "tauri::{AppHandle, Emitter}",
         "tests {\n    use super::*"
       ],
       "path": "src-tauri/src/app_state_store.rs",
-      "semanticBytes": 730,
-      "sourceBytes": 21669
+      "semanticBytes": 774,
+      "sourceBytes": 29203
     },
     {
       "blocks": [],
@@ -2238,7 +2238,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "21656bc0d552dc8309813fb272e8377a0dfe969f2b2577dad4ef42f8b65320a8",
+      "contentHash": "ebdd60642ed12041975048c349ae73160894a79192f02ba42c0cf6b6690a37fb",
       "declarations": [
         null
       ],
@@ -2295,7 +2295,7 @@
       ],
       "path": "src-tauri/src/lib.rs",
       "semanticBytes": 519,
-      "sourceBytes": 10307
+      "sourceBytes": 10372
     },
     {
       "blocks": [

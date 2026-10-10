@@ -98,7 +98,7 @@
     "workduck.workspace.sync-file-native",
     "workduck.workspace.sync-git-native"
   ],
-  "cardSetHash": "2659e6dd238901521606a9733f5f497a2ad915025adc6450af315fe76e7fd41e",
+  "cardSetHash": "3b47eee6d98adc0fc30758094ecde5a270e8c2a6ace695e07903a251a7335a4e",
   "documentCount": 97,
   "documents": [
     [
@@ -186,14 +186,14 @@
       ]
     ],
     [
-      "cb66528df6e13274dd1f4ab58d972643602189220b138a1d325689191d1d5ada",
+      "acc390bd73f47bd2e96b578874c728a72e1eda175d582504cb2edeecacb586e0",
       [
         "read and transactionally persist allowed application settings in sqlite with bounded json and ordered utc revisions.",
         "app state sqlite transaction",
         "setting json size limit",
         "utc setting revision",
         "native setting commit notification",
-        "only allowed keys and bounded json objects are stored; invalid rows roll back the batch; older revisions retain and return the newer value; only committed changed keys notify renderers.",
+        "only allowed keys and bounded json objects are stored; conditional edits compare the authoritative value inside a write transaction; older revisions retain and return the newer value; only committed changed keys notify renderers.",
         "app state sqlite transactions",
         "setting key allowlist",
         "json size validation",
@@ -1481,6 +1481,13 @@
         5,
         [
           1,
+          1
+        ]
+      ],
+      [
+        6,
+        [
+          5,
           1
         ]
       ],
@@ -4287,6 +4294,13 @@
           1,
           1
         ]
+      ],
+      [
+        6,
+        [
+          5,
+          1
+        ]
       ]
     ],
     [
@@ -4360,13 +4374,6 @@
     ],
     [
       [
-        6,
-        [
-          5,
-          1
-        ]
-      ],
-      [
         48,
         [
           5,
@@ -4433,13 +4440,6 @@
       ]
     ],
     [
-      [
-        6,
-        [
-          5,
-          1
-        ]
-      ],
       [
         12,
         [
@@ -7191,6 +7191,13 @@
     ],
     [
       [
+        6,
+        [
+          5,
+          1
+        ]
+      ],
+      [
         38,
         [
           5,
@@ -7397,6 +7404,15 @@
         73,
         [
           1,
+          1
+        ]
+      ]
+    ],
+    [
+      [
+        6,
+        [
+          5,
           1
         ]
       ]
@@ -9972,6 +9988,13 @@
       ]
     ],
     [
+      [
+        6,
+        [
+          5,
+          1
+        ]
+      ],
       [
         9,
         [
@@ -14662,6 +14685,13 @@
     ],
     [
       [
+        6,
+        [
+          5,
+          1
+        ]
+      ],
+      [
         43,
         [
           5,
@@ -14946,13 +14976,6 @@
     [
       [
         5,
-        [
-          5,
-          1
-        ]
-      ],
-      [
-        6,
         [
           5,
           1
@@ -28349,13 +28372,6 @@
     ],
     [
       [
-        6,
-        [
-          5,
-          1
-        ]
-      ],
-      [
         48,
         [
           5,
@@ -28422,13 +28438,6 @@
     [
       [
         5,
-        [
-          5,
-          1
-        ]
-      ],
-      [
-        6,
         [
           5,
           1
@@ -35970,6 +35979,8 @@
         6,
         [
           2,
+          1,
+          5,
           1
         ]
       ],
@@ -37617,7 +37628,7 @@
         6,
         [
           5,
-          1
+          2
         ]
       ],
       [
@@ -40121,6 +40132,13 @@
         5,
         [
           3,
+          1
+        ]
+      ],
+      [
+        6,
+        [
+          5,
           1
         ]
       ],
@@ -40616,6 +40634,7 @@
     "composition",
     "concurrency",
     "concurrent",
+    "conditional",
     "configuration",
     "confirm",
     "confirmation",
