@@ -629,6 +629,68 @@ fn local_abort_handles_abort_all_handles_when_execution_scope_ends() {
 }
 
 #[test]
+fn execution_rejects_a_changed_work_order_before_mutation_and_releases_its_locks() {
+    let workspace = tempfile::tempdir().expect("temporary workspace");
+    let work_orders = workspace.path().join("queue").join("work-orders");
+    fs::create_dir_all(&work_orders).expect("work-orders directory");
+    let work_order_path = work_orders.join("reviewed.workduck-work-order.json");
+    let reviewed = work_order_with_shape(1, 1);
+    let agents = vec![AgentRecord {
+        id: "agent_0".to_string(),
+        name: "Test agent".to_string(),
+        environment_secret_id: None,
+        persona_id: None,
+        execution_provider: Some("openai".to_string()),
+        model_id: Some("test-model".to_string()),
+    }];
+    let (_, estimate) = create_prompt_preview_plan(&reviewed, &agents, &[], &[], &[])
+        .expect("reviewed prompt estimate");
+    let mut changed = reviewed.clone();
+    changed.tasks[0].body = "Different instructions saved after the preview".to_string();
+    let changed_bytes = serde_json::to_vec(&changed).expect("changed work order JSON");
+    fs::write(&work_order_path, &changed_bytes).expect("external work order edit");
+
+    let make_request = |work_order, confirmation_token| QueueExecutionRequest {
+        // Reuse a valid UUID to verify both execution and work-order locks are released.
+        execution_id: "bf1b4ce1-dc01-48df-8db4-883f1438fb1c".to_string(),
+        workspace_path: workspace.path().to_string_lossy().into_owned(),
+        work_order_relative_path: "work-orders/reviewed.workduck-work-order.json".to_string(),
+        work_order,
+        agents: agents.clone(),
+        // Even a broken confirmation boundary cannot issue provider requests in this test.
+        vault: None,
+        skills: Vec::new(),
+        references: Vec::new(),
+        personas: Vec::new(),
+        confirmation_token,
+    };
+    let rejected = tauri::async_runtime::block_on(execute_queue_work_order(make_request(
+        reviewed,
+        estimate.confirmation_token,
+    )));
+    assert!(!rejected.ok);
+    assert_eq!(
+        rejected.error,
+        Some("queue-execution-confirmation-required")
+    );
+    assert_eq!(fs::read(&work_order_path).unwrap(), changed_bytes);
+    assert!(!workspace.path().join("queue").join("reports").exists());
+
+    let (_, estimate) = create_prompt_preview_plan(&changed, &agents, &[], &[], &[])
+        .expect("updated prompt estimate");
+    let accepted = tauri::async_runtime::block_on(execute_queue_work_order(make_request(
+        changed.clone(),
+        estimate.confirmation_token,
+    )));
+    // A matching fresh preview passes both released locks and reaches the existing vault check.
+    assert_eq!(accepted.error, Some("queue-execution-vault-locked"));
+    let stored: QueueWorkOrder =
+        serde_json::from_slice(&fs::read(&work_order_path).unwrap()).unwrap();
+    assert_eq!(stored.status, "failed");
+    assert_eq!(stored.tasks[0].body, changed.tasks[0].body);
+}
+
+#[test]
 fn write_json_file_does_not_clobber_an_existing_report() {
     let temp_dir = tempfile::tempdir().expect("temporary report directory");
     let report_path = temp_dir.path().join("existing.workduck-report.json");

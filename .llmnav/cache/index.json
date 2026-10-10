@@ -1613,8 +1613,8 @@
         "Queue folder CRUD"
       ],
       "hashes": {
-        "body": "d5d5be7f5bdcd81dd322cb01d5443cf415545b17e6e482b548b3312a4db3380f",
-        "semantic": "76d96e39212faa79a8367d5cdbc043ea7df2c73c3de7483e1f2526280f8eb5a1",
+        "body": "549f839c69266dd849e5c1051bd9c34d4883039428934b051984b9c47959e212",
+        "semantic": "baa7493e7e1856cecece95cfa534429f69cfe6b4623a14c530f2e21c8540c208",
         "structure": "13df21975fec43803bb8adda9648982824fb3355a1b84eefe8eb7f1e072c0305"
       },
       "id": "workduck.queue.execution-native",
@@ -1629,7 +1629,7 @@
         "tests"
       ],
       "invariant": [
-        "Execution requires the current estimate token, respects global and provider permits, and never exposes resolved secrets through prompt previews."
+        "Execution verifies the estimate token against the locked work-order snapshot before state changes, respects global and provider permits, and never exposes resolved secrets through prompt previews."
       ],
       "location": {
         "declarationLine": null,
@@ -3037,8 +3037,8 @@
         "report persistence"
       ],
       "hashes": {
-        "body": "da37a177939621d3fad97d45f72621608525a615f37e886e52712641bd25e628",
-        "semantic": "8e02983829df85da4bb360678606dd54225e69504b1445214b264690bd15fb69",
+        "body": "73cd2404214a11a752f97818ff30f760d693c311a4044fe94ba89eca25d3bebd",
+        "semantic": "c64c774ccd163b002a2b3d75732639f237841fb84b07db2eabc824e6808d42a1",
         "structure": "823b8f27ce38867bc84da9a2ffbb3736963c823a37d631f0c1ff18e4822942cd"
       },
       "id": "workduck.queue.execution-planning",
@@ -3051,7 +3051,7 @@
         "super::{\n    AgentExecutionRun, AgentRecord, EnvironmentSecretRecord, EnvironmentVault, PersonaRecord,\n    QueueExecutionErrorDetail, QueueExecutionEstimate, QueueExecutionRequest, QueuePromptPreview,\n    QueueWorkOrder, ReferenceRecord, ResolvedSecret, SkillRecord,\n}"
       ],
       "invariant": [
-        "Previews never resolve API secrets, run and task caps are checked before resolution, and execution validates the current prompt estimate token."
+        "Previews never resolve API secrets, run and task caps are checked before resolution, and confirmation validates the supplied locked work-order snapshot against the reviewed prompt estimate token."
       ],
       "location": {
         "declarationLine": null,
@@ -4534,6 +4534,6 @@
   "generatedBy": "llmnav@0.9.7",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "4bfaab760f8d298db61ff77bfd05e3fa745e50ef209c8385a37b4a641d5d14e7",
+  "sourceHash": "11447e6e5448ae286b584a2e4adffeff7c65f3456b9026f46ae4ba9a117c0926",
   "specVersion": "1"
 }

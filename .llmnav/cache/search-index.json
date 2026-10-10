@@ -90,7 +90,7 @@
     "workduck.workspace.sync-file-native",
     "workduck.workspace.sync-git-native"
   ],
-  "cardSetHash": "27650fa6635a7749de218944e78458497b53e4b38d997a0985d93aac999ad344",
+  "cardSetHash": "65f9bb995583e5fbcfcc5111d970e788b79a15fdaf7e9f5757a87f6dbd4cbf27",
   "documentCount": 89,
   "documents": [
     [
@@ -823,26 +823,26 @@
       ]
     ],
     [
-      "dbe7b17bf1464d89196d1bdaf4acba1ca8807dea7f4215aa88ba32d1e12d12c8",
+      "50a2d667ca4de0c7148ac34e80fe6fe236d480b9b2d6c770b4e43162a5fa6642",
       [
         "validate and coordinate native multi-agent queue execution, secret resolution, cancellation, confirmation, and exclusive result-report creation.",
         "native queue execution",
         "confirm work order run",
         "cancel agent execution",
-        "execution requires the current estimate token, respects global and provider permits, and never exposes resolved secrets through prompt previews.",
+        "execution verifies the estimate token against the locked work-order snapshot before state changes, respects global and provider permits, and never exposes resolved secrets through prompt previews.",
         "native queue execution",
         "agent run coordination",
         "execution confirmation tokens"
       ]
     ],
     [
-      "19d3513f232fc03f9a12677832b56c65c095303d952a9b57b52a17f9d5624fbb",
+      "6595c1abeda56a8f9d8eec653f015d69865442a95f17514a1b26651aa3ecf3bf",
       [
         "build secret-free prompt previews and bounded execution plans, resolve run configuration, and bind execution confirmation to the reviewed prompts.",
         "queue execution plan",
         "prompt preview estimate",
         "confirm queue execution token",
-        "previews never resolve api secrets, run and task caps are checked before resolution, and execution validates the current prompt estimate token.",
+        "previews never resolve api secrets, run and task caps are checked before resolution, and confirmation validates the supplied locked work-order snapshot against the reviewed prompt estimate token.",
         "agent and context selection",
         "provider model and secret resolution",
         "execution estimates and confirmation tokens",
@@ -1873,6 +1873,20 @@
     [
       [
         27,
+        [
+          5,
+          1
+        ]
+      ],
+      [
+        55,
+        [
+          5,
+          1
+        ]
+      ],
+      [
+        56,
         [
           5,
           1
@@ -4031,6 +4045,13 @@
         ]
       ],
       [
+        55,
+        [
+          5,
+          1
+        ]
+      ],
+      [
         56,
         [
           5,
@@ -5323,6 +5344,13 @@
       ],
       [
         52,
+        [
+          5,
+          1
+        ]
+      ],
+      [
+        55,
         [
           5,
           1
@@ -6583,6 +6611,8 @@
           1,
           1,
           3,
+          1,
+          5,
           1
         ]
       ],
@@ -7400,20 +7430,6 @@
       ],
       [
         36,
-        [
-          5,
-          1
-        ]
-      ],
-      [
-        55,
-        [
-          5,
-          1
-        ]
-      ],
-      [
-        56,
         [
           5,
           1
@@ -10054,8 +10070,6 @@
           3,
           1,
           4,
-          1,
-          5,
           1,
           9,
           1
@@ -15057,6 +15071,20 @@
           5,
           1
         ]
+      ],
+      [
+        55,
+        [
+          5,
+          1
+        ]
+      ],
+      [
+        56,
+        [
+          5,
+          1
+        ]
       ]
     ],
     [
@@ -18155,6 +18183,8 @@
         55,
         [
           2,
+          1,
+          5,
           1
         ]
       ],
@@ -18162,6 +18192,8 @@
         56,
         [
           3,
+          1,
+          5,
           1
         ]
       ],
@@ -24190,13 +24222,6 @@
         ]
       ],
       [
-        55,
-        [
-          5,
-          1
-        ]
-      ],
-      [
         76,
         [
           5,
@@ -24949,6 +24974,8 @@
         56,
         [
           1,
+          1,
+          5,
           1
         ]
       ]
@@ -27532,6 +27559,20 @@
           1,
           3,
           1,
+          5,
+          1
+        ]
+      ],
+      [
+        55,
+        [
+          5,
+          1
+        ]
+      ],
+      [
+        56,
+        [
           5,
           1
         ]
@@ -28658,6 +28699,13 @@
         ]
       ],
       [
+        55,
+        [
+          5,
+          1
+        ]
+      ],
+      [
         61,
         [
           1,
@@ -29525,6 +29573,13 @@
       ],
       [
         26,
+        [
+          5,
+          1
+        ]
+      ],
+      [
+        56,
         [
           5,
           1
@@ -31029,7 +31084,7 @@
         55,
         [
           5,
-          1
+          2
         ]
       ],
       [
@@ -31038,7 +31093,7 @@
           1,
           1,
           5,
-          1
+          2
         ]
       ],
       [
@@ -33242,6 +33297,13 @@
           5,
           1
         ]
+      ],
+      [
+        55,
+        [
+          5,
+          1
+        ]
       ]
     ],
     [
@@ -33965,6 +34027,8 @@
         55,
         [
           2,
+          1,
+          5,
           1
         ]
       ],
@@ -33972,6 +34036,8 @@
         56,
         [
           3,
+          1,
+          5,
           1
         ]
       ],

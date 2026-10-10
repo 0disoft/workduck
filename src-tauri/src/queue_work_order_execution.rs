@@ -112,16 +112,36 @@ pub fn begin_queue_work_order_execution(
     workspace_path: &Path,
     work_order_relative_path: &str,
     requested_id: &str,
+    validate_execution: impl FnOnce(&QueueWorkOrder) -> Result<(), QueueExecutionErrorDetail>,
 ) -> Result<QueueWorkOrderExecution, QueueExecutionErrorDetail> {
     let workspace_path = canonicalize_queue_workspace(workspace_path)?;
     let work_order_path = resolve_work_order_path(&workspace_path, work_order_relative_path)?;
-    begin_queue_work_order_execution_at(&workspace_path, &work_order_path, requested_id)
+    begin_queue_work_order_execution_at_with_validation(
+        &workspace_path,
+        &work_order_path,
+        requested_id,
+        validate_execution,
+    )
 }
 
 pub fn begin_queue_work_order_execution_at(
     workspace_path: &Path,
     work_order_path: &Path,
     requested_id: &str,
+) -> Result<QueueWorkOrderExecution, QueueExecutionErrorDetail> {
+    begin_queue_work_order_execution_at_with_validation(
+        workspace_path,
+        work_order_path,
+        requested_id,
+        |_| Ok(()),
+    )
+}
+
+fn begin_queue_work_order_execution_at_with_validation(
+    workspace_path: &Path,
+    work_order_path: &Path,
+    requested_id: &str,
+    validate_execution: impl FnOnce(&QueueWorkOrder) -> Result<(), QueueExecutionErrorDetail>,
 ) -> Result<QueueWorkOrderExecution, QueueExecutionErrorDetail> {
     let workspace_path = canonicalize_queue_workspace(workspace_path)?;
     let work_order_path = canonicalize_work_order_path(&workspace_path, work_order_path)?;
@@ -134,6 +154,9 @@ pub fn begin_queue_work_order_execution_at(
         Err(error) => return Err(error),
     }
     validate_work_order_execution_limits(&work_order)?;
+    // Validate the exact locked snapshot before publishing any execution state.
+    // A rejected preview must not turn an externally edited work order into a failed run.
+    validate_execution(&work_order)?;
 
     write_lock_marker(&mut lock_file, EXECUTION_LOCK_MARKER)?;
     work_order.status = "running".to_string();
@@ -152,11 +175,13 @@ fn acquire_execution_lock(
     work_order_path: &Path,
 ) -> Result<(File, bool), QueueExecutionErrorDetail> {
     let lock_root = env::temp_dir().join(EXECUTION_LOCK_DIRECTORY_NAME);
-    fs::create_dir_all(&lock_root).map_err(|error| {
-        execution_io_error("work-order-lock-failed", &lock_root, error)
-    })?;
+    fs::create_dir_all(&lock_root)
+        .map_err(|error| execution_io_error("work-order-lock-failed", &lock_root, error))?;
 
-    let lock_name = format!("{}.lock", hex_digest(work_order_path.as_os_str().to_string_lossy().as_bytes()));
+    let lock_name = format!(
+        "{}.lock",
+        hex_digest(work_order_path.as_os_str().to_string_lossy().as_bytes())
+    );
     let lock_path = lock_root.join(lock_name);
     reject_symlink(&lock_path)?;
     let lock_file = OpenOptions::new()
@@ -171,9 +196,10 @@ fn acquire_execution_lock(
             let marker = read_lock_marker(&lock_file)?;
             Ok((lock_file, marker == EXECUTION_LOCK_MARKER))
         }
-        Err(std::fs::TryLockError::WouldBlock) => Err(
-            QueueExecutionErrorDetail::new("work-order-running", "이미 실행 중인 작업 지시서입니다."),
-        ),
+        Err(std::fs::TryLockError::WouldBlock) => Err(QueueExecutionErrorDetail::new(
+            "work-order-running",
+            "이미 실행 중인 작업 지시서입니다.",
+        )),
         Err(std::fs::TryLockError::Error(error)) => Err(execution_io_error(
             "work-order-lock-failed",
             &lock_path,
@@ -196,10 +222,7 @@ fn read_lock_marker(lock_file: &File) -> Result<String, QueueExecutionErrorDetai
     Ok(marker)
 }
 
-fn write_lock_marker(
-    lock_file: &mut File,
-    marker: &str,
-) -> Result<(), QueueExecutionErrorDetail> {
+fn write_lock_marker(lock_file: &mut File, marker: &str) -> Result<(), QueueExecutionErrorDetail> {
     lock_file.set_len(0).map_err(lock_marker_error)?;
     lock_file
         .seek(io::SeekFrom::Start(0))
@@ -220,9 +243,8 @@ fn lock_marker_error(error: io::Error) -> QueueExecutionErrorDetail {
 pub(crate) fn canonicalize_queue_workspace(
     workspace_path: &Path,
 ) -> Result<PathBuf, QueueExecutionErrorDetail> {
-    let workspace_path = fs::canonicalize(workspace_path).map_err(|error| {
-        execution_io_error("workspace-path-invalid", workspace_path, error)
-    })?;
+    let workspace_path = fs::canonicalize(workspace_path)
+        .map_err(|error| execution_io_error("workspace-path-invalid", workspace_path, error))?;
 
     if !workspace_path.is_dir() {
         return Err(QueueExecutionErrorDetail::new(
@@ -249,7 +271,12 @@ fn resolve_work_order_path(
         return Err(invalid_work_order_path());
     }
 
-    canonicalize_work_order_path(workspace_path, &workspace_path.join(QUEUE_DIRECTORY_NAME).join(relative_path))
+    canonicalize_work_order_path(
+        workspace_path,
+        &workspace_path
+            .join(QUEUE_DIRECTORY_NAME)
+            .join(relative_path),
+    )
 }
 
 fn canonicalize_work_order_path(
@@ -257,16 +284,14 @@ fn canonicalize_work_order_path(
     work_order_path: &Path,
 ) -> Result<PathBuf, QueueExecutionErrorDetail> {
     reject_symlink(work_order_path)?;
-    let work_order_path = fs::canonicalize(work_order_path).map_err(|error| {
-        execution_io_error("work-order-file-invalid", work_order_path, error)
-    })?;
+    let work_order_path = fs::canonicalize(work_order_path)
+        .map_err(|error| execution_io_error("work-order-file-invalid", work_order_path, error))?;
     let queue_path = workspace_path.join(QUEUE_DIRECTORY_NAME);
     reject_symlink(&queue_path)?;
     let expected_parent = queue_path.join(WORK_ORDERS_DIRECTORY_NAME);
     reject_symlink(&expected_parent)?;
-    let expected_parent = fs::canonicalize(&expected_parent).map_err(|error| {
-        execution_io_error("work-order-file-invalid", &expected_parent, error)
-    })?;
+    let expected_parent = fs::canonicalize(&expected_parent)
+        .map_err(|error| execution_io_error("work-order-file-invalid", &expected_parent, error))?;
 
     validate_canonical_work_order_path(workspace_path, &work_order_path, &expected_parent)?;
 
@@ -312,7 +337,10 @@ fn read_work_order(path: &Path) -> Result<QueueWorkOrder, QueueExecutionErrorDet
     serde_json::from_str(&content).map_err(|_| {
         QueueExecutionErrorDetail::new(
             "work-order-invalid",
-            format!("작업 지시서 JSON을 해석하지 못했습니다: {}", display_path(path)),
+            format!(
+                "작업 지시서 JSON을 해석하지 못했습니다: {}",
+                display_path(path)
+            ),
         )
     })
 }
@@ -374,7 +402,11 @@ fn invalid_work_order_path() -> QueueExecutionErrorDetail {
     )
 }
 
-fn execution_io_error(code: &'static str, path: &Path, error: io::Error) -> QueueExecutionErrorDetail {
+fn execution_io_error(
+    code: &'static str,
+    path: &Path,
+    error: io::Error,
+) -> QueueExecutionErrorDetail {
     QueueExecutionErrorDetail::new(code, format!("{}: {error}", display_path(path)))
 }
 
@@ -432,12 +464,9 @@ mod tests {
         let work_order_path = fs::canonicalize(work_order_path).expect("canonical work order");
         let expected_parent =
             fs::canonicalize(external_work_orders).expect("canonical external parent");
-        let error = validate_canonical_work_order_path(
-            &workspace_path,
-            &work_order_path,
-            &expected_parent,
-        )
-        .expect_err("external canonical parent must be rejected");
+        let error =
+            validate_canonical_work_order_path(&workspace_path, &work_order_path, &expected_parent)
+                .expect_err("external canonical parent must be rejected");
 
         assert_eq!(error.code, "work-order-file-invalid");
     }
@@ -475,10 +504,10 @@ mod tests {
     #[test]
     fn a_stale_running_state_is_recovered_when_no_process_holds_the_lock() {
         let fixture = WorkOrderFixture::new("running");
-        let canonical_work_order_path = fs::canonicalize(&fixture.work_order_path)
-            .expect("canonical work order path");
-        let (mut lock_file, _) = acquire_execution_lock(&canonical_work_order_path)
-            .expect("interrupted execution lock");
+        let canonical_work_order_path =
+            fs::canonicalize(&fixture.work_order_path).expect("canonical work order path");
+        let (mut lock_file, _) =
+            acquire_execution_lock(&canonical_work_order_path).expect("interrupted execution lock");
         write_lock_marker(&mut lock_file, EXECUTION_LOCK_MARKER)
             .expect("interrupted execution marker");
         drop(lock_file);

@@ -3675,7 +3675,7 @@
             ],
             "id": "workduck.queue.execution-native",
             "invariant": [
-              "Execution requires the current estimate token, respects global and provider permits, and never exposes resolved secrets through prompt previews."
+              "Execution verifies the estimate token against the locked work-order snapshot before state changes, respects global and provider permits, and never exposes resolved secrets through prompt previews."
             ],
             "owns": [
               "native Queue execution",
@@ -3694,7 +3694,7 @@
             "stability": "architecture",
             "unknown": []
           },
-          "end": 625,
+          "end": 677,
           "endLine": 9,
           "entries": [
             {
@@ -3731,7 +3731,7 @@
               "key": "invariant",
               "line": 7,
               "order": 5,
-              "value": "Execution requires the current estimate token, respects global and provider permits, and never exposes resolved secrets through prompt previews."
+              "value": "Execution verifies the estimate token against the locked work-order snapshot before state changes, respects global and provider permits, and never exposes resolved secrets through prompt previews."
             },
             {
               "key": "stability",
@@ -3744,7 +3744,7 @@
           "indent": "",
           "newline": "\n",
           "prefix": "//",
-          "raw": "// llmnav/1 module\n// id=workduck.queue.execution-native\n// role=Validate and coordinate native multi-agent Queue execution, secret resolution, cancellation, confirmation, and exclusive result-report creation.\n// owns=native Queue execution|agent run coordination|execution confirmation tokens\n// excludes=frontend execution adapter|Queue folder CRUD\n// search=native Queue execution|confirm work order run|cancel agent execution\n// invariant=Execution requires the current estimate token, respects global and provider permits, and never exposes resolved secrets through prompt previews.\n// stability=architecture\n// /llmnav\n",
+          "raw": "// llmnav/1 module\n// id=workduck.queue.execution-native\n// role=Validate and coordinate native multi-agent Queue execution, secret resolution, cancellation, confirmation, and exclusive result-report creation.\n// owns=native Queue execution|agent run coordination|execution confirmation tokens\n// excludes=frontend execution adapter|Queue folder CRUD\n// search=native Queue execution|confirm work order run|cancel agent execution\n// invariant=Execution verifies the estimate token against the locked work-order snapshot before state changes, respects global and provider permits, and never exposes resolved secrets through prompt previews.\n// stability=architecture\n// /llmnav\n",
           "scope": "module",
           "specVersion": "1",
           "start": 0,
@@ -3753,7 +3753,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "d5d5be7f5bdcd81dd322cb01d5443cf415545b17e6e482b548b3312a4db3380f",
+      "contentHash": "549f839c69266dd849e5c1051bd9c34d4883039428934b051984b9c47959e212",
       "declarations": [
         null
       ],
@@ -3768,8 +3768,8 @@
         "tests"
       ],
       "path": "src-tauri/src/queue_execution.rs",
-      "semanticBytes": 625,
-      "sourceBytes": 24631
+      "semanticBytes": 677,
+      "sourceBytes": 24639
     },
     {
       "blocks": [],
@@ -3796,7 +3796,7 @@
             ],
             "id": "workduck.queue.execution-planning",
             "invariant": [
-              "Previews never resolve API secrets, run and task caps are checked before resolution, and execution validates the current prompt estimate token."
+              "Previews never resolve API secrets, run and task caps are checked before resolution, and confirmation validates the supplied locked work-order snapshot against the reviewed prompt estimate token."
             ],
             "owns": [
               "agent and context selection",
@@ -3816,7 +3816,7 @@
             "stability": "architecture",
             "unknown": []
           },
-          "end": 705,
+          "end": 757,
           "endLine": 9,
           "entries": [
             {
@@ -3853,7 +3853,7 @@
               "key": "invariant",
               "line": 7,
               "order": 5,
-              "value": "Previews never resolve API secrets, run and task caps are checked before resolution, and execution validates the current prompt estimate token."
+              "value": "Previews never resolve API secrets, run and task caps are checked before resolution, and confirmation validates the supplied locked work-order snapshot against the reviewed prompt estimate token."
             },
             {
               "key": "stability",
@@ -3866,7 +3866,7 @@
           "indent": "",
           "newline": "\n",
           "prefix": "//",
-          "raw": "// llmnav/1 module\n// id=workduck.queue.execution-planning\n// role=Build secret-free prompt previews and bounded execution plans, resolve run configuration, and bind execution confirmation to the reviewed prompts.\n// owns=agent and context selection|provider model and secret resolution|execution estimates and confirmation tokens|work order limits\n// excludes=provider HTTP requests|execution cancellation|report persistence\n// search=queue execution plan|prompt preview estimate|confirm queue execution token\n// invariant=Previews never resolve API secrets, run and task caps are checked before resolution, and execution validates the current prompt estimate token.\n// stability=architecture\n// /llmnav\n",
+          "raw": "// llmnav/1 module\n// id=workduck.queue.execution-planning\n// role=Build secret-free prompt previews and bounded execution plans, resolve run configuration, and bind execution confirmation to the reviewed prompts.\n// owns=agent and context selection|provider model and secret resolution|execution estimates and confirmation tokens|work order limits\n// excludes=provider HTTP requests|execution cancellation|report persistence\n// search=queue execution plan|prompt preview estimate|confirm queue execution token\n// invariant=Previews never resolve API secrets, run and task caps are checked before resolution, and confirmation validates the supplied locked work-order snapshot against the reviewed prompt estimate token.\n// stability=architecture\n// /llmnav\n",
           "scope": "module",
           "specVersion": "1",
           "start": 0,
@@ -3875,7 +3875,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "da37a177939621d3fad97d45f72621608525a615f37e886e52712641bd25e628",
+      "contentHash": "73cd2404214a11a752f97818ff30f760d693c311a4044fe94ba89eca25d3bebd",
       "declarations": [
         null
       ],
@@ -3888,8 +3888,8 @@
         "super::{\n    AgentExecutionRun, AgentRecord, EnvironmentSecretRecord, EnvironmentVault, PersonaRecord,\n    QueueExecutionErrorDetail, QueueExecutionEstimate, QueueExecutionRequest, QueuePromptPreview,\n    QueueWorkOrder, ReferenceRecord, ResolvedSecret, SkillRecord,\n}"
       ],
       "path": "src-tauri/src/queue_execution_planning.rs",
-      "semanticBytes": 705,
-      "sourceBytes": 20437
+      "semanticBytes": 757,
+      "sourceBytes": 20513
     },
     {
       "blocks": [],
@@ -3908,7 +3908,7 @@
     },
     {
       "blocks": [],
-      "contentHash": "9e3b9da3499b1493b2f9b0c556cc71b15b884bb9b9f948fd7332442e570b29fc",
+      "contentHash": "e863c3b5049c1a561ec1e791aab29bb4e831e5795f5657b3c2617bf828467c14",
       "declarations": [],
       "imports": [
         "crate::queue_execution_identity::unique_token",
@@ -3920,7 +3920,7 @@
       ],
       "path": "src-tauri/src/queue_execution_tests.rs",
       "semanticBytes": 0,
-      "sourceBytes": 23357
+      "sourceBytes": 26312
     },
     {
       "blocks": [
@@ -4402,7 +4402,7 @@
     },
     {
       "blocks": [],
-      "contentHash": "75d2194632266155c08cdf02226adbfed498f7bb55fd7b0015bb3a1a87a34166",
+      "contentHash": "5458afcf666d49725960579436e7946470058e56f56f89eed82177aa655bbd57",
       "declarations": [],
       "imports": [
         "crate::queue_execution::QueueEntityRef",
@@ -4414,7 +4414,7 @@
       ],
       "path": "src-tauri/src/queue_work_order_execution.rs",
       "semanticBytes": 0,
-      "sourceBytes": 21583
+      "sourceBytes": 22492
     },
     {
       "blocks": [

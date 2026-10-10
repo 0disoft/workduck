@@ -4,7 +4,7 @@
 // owns=agent and context selection|provider model and secret resolution|execution estimates and confirmation tokens|work order limits
 // excludes=provider HTTP requests|execution cancellation|report persistence
 // search=queue execution plan|prompt preview estimate|confirm queue execution token
-// invariant=Previews never resolve API secrets, run and task caps are checked before resolution, and execution validates the current prompt estimate token.
+// invariant=Previews never resolve API secrets, run and task caps are checked before resolution, and confirmation validates the supplied locked work-order snapshot against the reviewed prompt estimate token.
 // stability=architecture
 // /llmnav
 use super::{
@@ -233,9 +233,10 @@ pub fn create_execution_estimate_from_runs(runs: &[AgentExecutionRun]) -> QueueE
 
 pub(super) fn validate_queue_execution_confirmation(
     request: &QueueExecutionRequest,
+    work_order: &QueueWorkOrder,
 ) -> Result<(), QueueExecutionErrorDetail> {
     let (_, estimate) = create_prompt_preview_plan(
-        &request.work_order,
+        work_order,
         &request.agents,
         &request.personas,
         &request.skills,

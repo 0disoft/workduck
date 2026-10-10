@@ -89,7 +89,7 @@ invariant Tasks are selected from a closed vocabulary and repository paths remai
 role Validate and coordinate native multi-agent Queue execution, secret resolution, cancellation, confirmation, and exclusive result-report creation.
 owns native Queue execution, agent run coordination, execution confirmation tokens
 excludes frontend execution adapter, Queue folder CRUD
-invariant Execution requires the current estimate token, respects global and provider permits, and never exposes resolved secrets through prompt previews.
+invariant Execution verifies the estimate token against the locked work-order snapshot before state changes, respects global and provider permits, and never exposes resolved secrets through prompt previews.
 
 @workduck.queue.folder-native
 role Enforce native Queue directory, path, size, count, exclusive-write, update, delete, and evaluation-delegation constraints.
@@ -131,7 +131,7 @@ invariant Inspections avoid credential helpers and index writes, and concurrent 
 role Build secret-free prompt previews and bounded execution plans, resolve run configuration, and bind execution confirmation to the reviewed prompts.
 owns agent and context selection, provider model and secret resolution, execution estimates and confirmation tokens, work order limits
 excludes provider HTTP requests, execution cancellation, report persistence
-invariant Previews never resolve API secrets, run and task caps are checked before resolution, and execution validates the current prompt estimate token.
+invariant Previews never resolve API secrets, run and task caps are checked before resolution, and confirmation validates the supplied locked work-order snapshot against the reviewed prompt estimate token.
 
 @workduck.queue.work-order-editor
 role Own reactive manual work order drafts, dialog transitions, context selections, and save-ready form values.
