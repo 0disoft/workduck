@@ -543,19 +543,33 @@
     },
     {
       "blocks": [],
-      "contentHash": "3f9afb8112db4484069d9326c7fb6464da4fc08437c922a5cd301cbc99675c53",
+      "contentHash": "3da177c4dfc4ec050deb61403a4420b99448099fe968d011e20739b392318905",
       "declarations": [],
       "imports": [
+        "node:fs/promises",
+        "node:os",
+        "node:path"
+      ],
+      "path": "scripts/ssealed-artifact-lock.mjs",
+      "semanticBytes": 0,
+      "sourceBytes": 1634
+    },
+    {
+      "blocks": [],
+      "contentHash": "8cd4e99da41f043780bbed63131ff9bb73f19037fd5aadc94ff8693629eb51a6",
+      "declarations": [],
+      "imports": [
+        "./ssealed-artifact-lock.mjs",
         "node:fs/promises",
         "node:path"
       ],
       "path": "scripts/ssealed-artifact-publication.mjs",
       "semanticBytes": 0,
-      "sourceBytes": 2892
+      "sourceBytes": 3379
     },
     {
       "blocks": [],
-      "contentHash": "658926f471e1761b6ee593e32565f8c5ab90861398283d97b861a070854d33b2",
+      "contentHash": "bb6c62c5729907be6fb511a2bf6ba511e29b4912e2573f75712c697805662a37",
       "declarations": [],
       "imports": [
         "./ssealed-artifact-publication.mjs",
@@ -566,7 +580,7 @@
       ],
       "path": "scripts/ssealed-artifact-publication.test.mjs",
       "semanticBytes": 0,
-      "sourceBytes": 4147
+      "sourceBytes": 6500
     },
     {
       "blocks": [],

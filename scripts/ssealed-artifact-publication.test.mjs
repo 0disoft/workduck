@@ -17,10 +17,69 @@ async function withArtifacts(run) {
 }
 
 async function assertClean(root) {
-	expect((await readdir(root)).filter((name) => name.startsWith('.workduck-ssealed-stage-'))).toEqual([]);
+	expect((await readdir(root)).filter((name) =>
+		name.startsWith('.workduck-ssealed-stage-') || name.endsWith('.workduck-ssealed-publish.lock'))).toEqual([]);
 }
 
 describe('ssealed artifact publication', () => {
+	test('preserves an existing lock and releases locks acquired before it', async () => {
+		await withArtifacts(async ({ root, paths, artifacts }) => {
+			const lockPath = `${paths[1]}.workduck-ssealed-publish.lock`;
+			await writeFile(lockPath, 'another publisher');
+			await expect(publishSsealedArtifacts(artifacts)).rejects.toThrow('publication lock');
+			for (const path of paths) expect(await readFile(path, 'utf8')).toBe('original');
+			expect(await readFile(lockPath, 'utf8')).toBe('another publisher');
+			await rm(lockPath);
+			await assertClean(root);
+		});
+	});
+
+	test('does not remove a lock replaced by another owner', async () => {
+		await withArtifacts(async ({ root, paths, artifacts }) => {
+			const lockPath = `${paths[0]}.workduck-ssealed-publish.lock`;
+			await expect(publishSsealedArtifacts(artifacts, {
+				renameFile: async (from, to) => {
+					await rename(from, to);
+					if (to === paths[0]) {
+						await rename(lockPath, join(root, 'original-owner.lock'));
+						await writeFile(lockPath, 'replacement owner');
+					}
+				}
+			})).rejects.toThrow('Preserved a replaced ssealed publication lock');
+			expect(await readFile(lockPath, 'utf8')).toBe('replacement owner');
+			for (const path of paths) expect(await readFile(path, 'utf8')).toBe('next content');
+		});
+	});
+
+	test('rejects a competing publisher before it can overwrite a paused publication', async () => {
+		await withArtifacts(async ({ root, paths, artifacts }) => {
+			let signalStarted;
+			let resume;
+			const started = new Promise((resolve) => { signalStarted = resolve; });
+			const paused = new Promise((resolve) => { resume = resolve; });
+			const first = publishSsealedArtifacts(artifacts, {
+				renameFile: async (from, to) => {
+					if (to === paths[0] && from.endsWith('next')) {
+						signalStarted();
+						await paused;
+					}
+					await rename(from, to);
+				}
+			});
+			first.catch(signalStarted);
+			try {
+				await started;
+				const competing = artifacts.map((artifact) => ({ ...artifact, content: 'competing content' }));
+				await expect(publishSsealedArtifacts(competing)).rejects.toThrow('publication lock');
+			} finally {
+				resume();
+				await first;
+			}
+			for (const path of paths) expect(await readFile(path, 'utf8')).toBe('next content');
+			await assertClean(root);
+		});
+	});
+
 	test('publishes staged outputs and avoids rewriting identical outputs', async () => {
 		await withArtifacts(async ({ root, paths, artifacts }) => {
 			await rm(paths[2]);

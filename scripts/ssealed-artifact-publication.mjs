@@ -1,5 +1,6 @@
-import { lstat, mkdir, mkdtemp, open, readFile, rename, rm } from 'node:fs/promises';
+import { lstat, mkdtemp, open, readFile, rename, rm } from 'node:fs/promises';
 import { basename, dirname, join } from 'node:path';
+import { acquireSsealedPublicationLocks, releaseSsealedPublicationLock } from './ssealed-artifact-lock.mjs';
 
 async function snapshot(path) {
 	try {
@@ -30,12 +31,13 @@ async function writeSynced(path, content) {
 
 export async function publishSsealedArtifacts(artifacts, { renameFile = rename } = {}) {
 	const staged = [];
+	const locks = [];
 	const published = [];
 	const errors = [];
 	let failure;
 	try {
+		await acquireSsealedPublicationLocks(artifacts.map((artifact) => artifact.path), locks);
 		for (const artifact of artifacts) {
-			await mkdir(dirname(artifact.path), { recursive: true });
 			const original = await snapshot(artifact.path);
 			const content = Buffer.from(artifact.content, 'utf8');
 			if (equal(original, content)) continue;
@@ -83,10 +85,17 @@ export async function publishSsealedArtifacts(artifacts, { renameFile = rename }
 			}
 		}
 	}
+	for (const lock of locks.reverse()) {
+		try {
+			await releaseSsealedPublicationLock(lock);
+		} catch (lockError) {
+			errors.push(new Error(`Unable to release ssealed publication lock ${lock.path}: ${lockError.message}`, { cause: lockError }));
+		}
+	}
 	if (errors.length) {
 		const backups = staged.filter((stage) => stage.retain).map((stage) => stage.directory);
 		throw new AggregateError([failure, ...errors].filter(Boolean),
-			`ssealed artifact publication or recovery failed. Retained backups: ${backups.join(', ') || 'none'}`);
+			`ssealed artifact publication or recovery failed: ${[failure, ...errors].filter(Boolean).map((error) => error.message).join('; ')}. Retained backups: ${backups.join(', ') || 'none'}`);
 	}
 	if (failure) throw failure;
 }

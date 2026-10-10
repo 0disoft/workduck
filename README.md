@@ -336,8 +336,12 @@ Scaffold synchronization checks the CLI's generated manifest against the install
 version, requested settings, file inventory, and file checksums before embedding.
 Outputs are staged before replacement; ordinary publication failures restore prior
 outputs. Detected concurrent edits are preserved, and incomplete recovery reports retained
-backups. A process interruption can leave mismatched indexes, which the build check
-rejects until synchronization is rerun.
+backups. Output locks prevent simultaneous synchronization processes from overwriting
+each other's results. A process interruption can leave mismatched indexes and
+`*.workduck-ssealed-publish.lock` files. Check the host and PID recorded in each lock,
+confirm its owner has stopped, then remove only those leftover locks and rerun
+synchronization. Locks are never reclaimed automatically. The build check rejects
+mismatched indexes until synchronization finishes.
 
 Run the desktop app during development:
 
