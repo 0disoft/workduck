@@ -3389,8 +3389,8 @@
         "native process execution"
       ],
       "hashes": {
-        "body": "8e5423c8c71a3bb20553cd6b15ea4dcd072d871ce3542f7b58c957d7339966d6",
-        "semantic": "bdf97afaf082791c43fedd8f6c38391e15c979a26c91bf1228a2ef5a54315cbd",
+        "body": "74def2b9d32cdd050534384d18ce94d5ef5820ddf02e982e50f1e543a15e86f6",
+        "semantic": "0e66eae230df9fe622e8d905edd987519df742b4e3ec67a2dca271783e3280ff",
         "structure": "088a7b20836a779cbdf081d40073b92679a4af22a0aabacd195bcbdfb0e96a1c"
       },
       "id": "workduck.projects.task-run-mapping",
@@ -3402,7 +3402,7 @@
         "./project-repository-task"
       ],
       "invariant": [
-        "Windows path spellings share a comparison key while Unix names remain case-sensitive; record order selects the latest run."
+        "Windows path spellings share a comparison key while Unix names remain case-sensitive; record order selects the latest run and every accepted repository ID maps only to its own records."
       ],
       "location": {
         "declarationLine": null,
@@ -4534,6 +4534,6 @@
   "generatedBy": "llmnav@0.9.7",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "86e16e8ad985e1d660bab346898009180e60414d6caa18d5424540244f48f775",
+  "sourceHash": "2ec487b1ea9c82fbb2cd2793b99232042485a2358c28ac90a2fc463eb6a7c78e",
   "specVersion": "1"
 }

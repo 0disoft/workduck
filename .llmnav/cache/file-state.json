@@ -10025,7 +10025,7 @@
     },
     {
       "blocks": [],
-      "contentHash": "7c7db7dd99b6a5b19662d3856c8892e9ea0f2ec6fdc87743fd3d07639113f57b",
+      "contentHash": "857a123c68e886f65ad0d1b1d06f0606fc80c46999edc7fbb982876028a52a60",
       "declarations": [],
       "imports": [
         "./project-registry",
@@ -10035,7 +10035,7 @@
       ],
       "path": "src/lib/projects/project-repository-task-runs.test.ts",
       "semanticBytes": 0,
-      "sourceBytes": 1960
+      "sourceBytes": 3216
     },
     {
       "blocks": [
@@ -10049,7 +10049,7 @@
             ],
             "id": "workduck.projects.task-run-mapping",
             "invariant": [
-              "Windows path spellings share a comparison key while Unix names remain case-sensitive; record order selects the latest run."
+              "Windows path spellings share a comparison key while Unix names remain case-sensitive; record order selects the latest run and every accepted repository ID maps only to its own records."
             ],
             "owns": [
               "task run path identity",
@@ -10068,7 +10068,7 @@
             "stability": "contract",
             "unknown": []
           },
-          "end": 525,
+          "end": 587,
           "endLine": 9,
           "entries": [
             {
@@ -10105,7 +10105,7 @@
               "key": "invariant",
               "line": 7,
               "order": 5,
-              "value": "Windows path spellings share a comparison key while Unix names remain case-sensitive; record order selects the latest run."
+              "value": "Windows path spellings share a comparison key while Unix names remain case-sensitive; record order selects the latest run and every accepted repository ID maps only to its own records."
             },
             {
               "key": "stability",
@@ -10118,7 +10118,7 @@
           "indent": "",
           "newline": "\n",
           "prefix": null,
-          "raw": "/* llmnav/1 module\nid=workduck.projects.task-run-mapping\nrole=Match native task records to registered repositories and format task state feedback.\nowns=task run path identity|latest record mapping|task state labels\nexcludes=task history reads|poll scheduling|native process execution\nsearch=Windows task path matching|latest repository task mapping|task run state labels\ninvariant=Windows path spellings share a comparison key while Unix names remain case-sensitive; record order selects the latest run.\nstability=contract\n*/",
+          "raw": "/* llmnav/1 module\nid=workduck.projects.task-run-mapping\nrole=Match native task records to registered repositories and format task state feedback.\nowns=task run path identity|latest record mapping|task state labels\nexcludes=task history reads|poll scheduling|native process execution\nsearch=Windows task path matching|latest repository task mapping|task run state labels\ninvariant=Windows path spellings share a comparison key while Unix names remain case-sensitive; record order selects the latest run and every accepted repository ID maps only to its own records.\nstability=contract\n*/",
           "scope": "module",
           "specVersion": "1",
           "start": 0,
@@ -10127,7 +10127,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "8e5423c8c71a3bb20553cd6b15ea4dcd072d871ce3542f7b58c957d7339966d6",
+      "contentHash": "74def2b9d32cdd050534384d18ce94d5ef5820ddf02e982e50f1e543a15e86f6",
       "declarations": [
         null
       ],
@@ -10139,8 +10139,8 @@
         "./project-repository-task"
       ],
       "path": "src/lib/projects/project-repository-task-runs.ts",
-      "semanticBytes": 525,
-      "sourceBytes": 4055
+      "semanticBytes": 587,
+      "sourceBytes": 4202
     },
     {
       "blocks": [

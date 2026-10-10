@@ -90,7 +90,7 @@
     "workduck.workspace.sync-file-native",
     "workduck.workspace.sync-git-native"
   ],
-  "cardSetHash": "648622fd59dae4047bbc73c8e8f20515a591f838f70cc66fbb39e0e7d1aea6bd",
+  "cardSetHash": "67a6e800f897a22010d3c448bd22959a0240fc2c81cf1e405f05a3339833e563",
   "documentCount": 89,
   "documents": [
     [
@@ -729,13 +729,13 @@
       ]
     ],
     [
-      "0ef8d1e04221c97fd1d06885d2610d24a5ada044d9887f2465f09235d84960fe",
+      "9029094cf9dc773a1ad5677318a18ffa7d0e5422d4ea0f89edbb88e5d3d5a750",
       [
         "match native task records to registered repositories and format task state feedback.",
         "windows task path matching",
         "latest repository task mapping",
         "task run state labels",
-        "windows path spellings share a comparison key while unix names remain case-sensitive; record order selects the latest run.",
+        "windows path spellings share a comparison key while unix names remain case-sensitive; record order selects the latest run and every accepted repository id maps only to its own records.",
         "task run path identity",
         "latest record mapping",
         "task state labels"
@@ -1580,6 +1580,13 @@
       ],
       [
         34,
+        [
+          5,
+          1
+        ]
+      ],
+      [
+        48,
         [
           5,
           1
@@ -2647,6 +2654,8 @@
         48,
         [
           1,
+          1,
+          5,
           1
         ]
       ],
@@ -9654,6 +9663,13 @@
           5,
           1
         ]
+      ],
+      [
+        48,
+        [
+          5,
+          1
+        ]
       ]
     ],
     [
@@ -12431,6 +12447,13 @@
           2,
           1
         ]
+      ],
+      [
+        48,
+        [
+          5,
+          1
+        ]
       ]
     ],
     [
@@ -13507,6 +13530,13 @@
       ],
       [
         40,
+        [
+          5,
+          1
+        ]
+      ],
+      [
+        48,
         [
           5,
           1
@@ -15247,6 +15277,15 @@
     ],
     [
       [
+        48,
+        [
+          5,
+          1
+        ]
+      ]
+    ],
+    [
+      [
         0,
         [
           2,
@@ -17326,6 +17365,13 @@
         ]
       ],
       [
+        48,
+        [
+          5,
+          1
+        ]
+      ],
+      [
         49,
         [
           5,
@@ -18358,6 +18404,13 @@
         40,
         [
           1,
+          1
+        ]
+      ],
+      [
+        48,
+        [
+          5,
           1
         ]
       ],
@@ -22214,6 +22267,8 @@
         48,
         [
           1,
+          1,
+          5,
           1
         ]
       ],
@@ -23757,6 +23812,8 @@
         [
           2,
           1,
+          5,
+          1,
           9,
           1
         ]
@@ -31263,6 +31320,8 @@
         48,
         [
           1,
+          1,
+          5,
           1
         ]
       ],
@@ -35793,6 +35852,7 @@
     "manifests",
     "manual",
     "mapping",
+    "maps",
     "markdown",
     "markers",
     "match",
