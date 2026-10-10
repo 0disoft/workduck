@@ -5847,7 +5847,7 @@
     },
     {
       "blocks": [],
-      "contentHash": "50f846a1694adea1604c16e9f101bcccda65a8da5886232f208be2fce1df7c5f",
+      "contentHash": "785f5c916c42fe40ed2bd7fc6c9dbc2f04b2a75300b409189fa8e973e4bf6ab8",
       "declarations": [],
       "imports": [
         "#lib/tauri/tauri-invoke.ts",
@@ -5857,7 +5857,7 @@
       ],
       "path": "src/lib/app-state/app-state-storage.test.ts",
       "semanticBytes": 0,
-      "sourceBytes": 21242
+      "sourceBytes": 25648
     },
     {
       "blocks": [
@@ -5871,7 +5871,7 @@
             ],
             "id": "workduck.app-state.storage",
             "invariant": [
-              "Native writes require successful initialization; journal I/O errors end the attempt; flushes reconcile superseded values without replacing newer edits and remove only matching journals; external transactions publish cache changes only after commit."
+              "Native writes require successful initialization; external journal notifications must match the current durable journal and respect transaction leases; flushes publish committed values without replacing newer edits and remove only matching journals; journal I/O errors end the attempt."
             ],
             "owns": [
               "app state backend selection",
@@ -5887,12 +5887,13 @@
             "search": [
               "app state crash journal",
               "settings SQLite promotion",
-              "pending setting flush"
+              "pending setting flush",
+              "stale foreign journal notification"
             ],
             "stability": "architecture",
             "unknown": []
           },
-          "end": 747,
+          "end": 818,
           "endLine": 9,
           "entries": [
             {
@@ -5923,13 +5924,13 @@
               "key": "search",
               "line": 6,
               "order": 4,
-              "value": "app state crash journal|settings SQLite promotion|pending setting flush"
+              "value": "app state crash journal|settings SQLite promotion|pending setting flush|stale foreign journal notification"
             },
             {
               "key": "invariant",
               "line": 7,
               "order": 5,
-              "value": "Native writes require successful initialization; journal I/O errors end the attempt; flushes reconcile superseded values without replacing newer edits and remove only matching journals; external transactions publish cache changes only after commit."
+              "value": "Native writes require successful initialization; external journal notifications must match the current durable journal and respect transaction leases; flushes publish committed values without replacing newer edits and remove only matching journals; journal I/O errors end the attempt."
             },
             {
               "key": "stability",
@@ -5942,7 +5943,7 @@
           "indent": "",
           "newline": "\n",
           "prefix": null,
-          "raw": "/* llmnav/1 module\nid=workduck.app-state.storage\nrole=Persist application settings through a renderer crash journal, native SQLite promotion, and browser fallback.\nowns=app state backend selection|legacy setting promotion|pending write journal|serialized flush|transaction cache publication\nexcludes=setting domain validation|native SQLite implementation|workspace project registries\nsearch=app state crash journal|settings SQLite promotion|pending setting flush\ninvariant=Native writes require successful initialization; journal I/O errors end the attempt; flushes reconcile superseded values without replacing newer edits and remove only matching journals; external transactions publish cache changes only after commit.\nstability=architecture\n*/",
+          "raw": "/* llmnav/1 module\nid=workduck.app-state.storage\nrole=Persist application settings through a renderer crash journal, native SQLite promotion, and browser fallback.\nowns=app state backend selection|legacy setting promotion|pending write journal|serialized flush|transaction cache publication\nexcludes=setting domain validation|native SQLite implementation|workspace project registries\nsearch=app state crash journal|settings SQLite promotion|pending setting flush|stale foreign journal notification\ninvariant=Native writes require successful initialization; external journal notifications must match the current durable journal and respect transaction leases; flushes publish committed values without replacing newer edits and remove only matching journals; journal I/O errors end the attempt.\nstability=architecture\n*/",
           "scope": "module",
           "specVersion": "1",
           "start": 0,
@@ -5951,7 +5952,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "e91237140b5c54651721cef4bce36108615a4806bc470e60a115264b0e53853a",
+      "contentHash": "461fcaf87b5352d6b4af10f9ac1fed297cf8d33f27cbbe21e374e66c9eb922e6",
       "declarations": [
         null
       ],
@@ -5960,8 +5961,8 @@
         "#lib/tauri/tauri-invoke.ts"
       ],
       "path": "src/lib/app-state/app-state-storage.ts",
-      "semanticBytes": 747,
-      "sourceBytes": 19498
+      "semanticBytes": 818,
+      "sourceBytes": 19955
     },
     {
       "blocks": [],

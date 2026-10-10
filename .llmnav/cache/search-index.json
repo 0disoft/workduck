@@ -95,7 +95,7 @@
     "workduck.workspace.sync-file-native",
     "workduck.workspace.sync-git-native"
   ],
-  "cardSetHash": "293f4dea880065a619264b2c6b9fd1bc27677babb6f80a677262e32fab3a6540",
+  "cardSetHash": "503f71f9c503c24facc3fbd0f7e01b924550fcf429fb7759a6883e8ad578dbb3",
   "documentCount": 94,
   "documents": [
     [
@@ -149,13 +149,14 @@
       ]
     ],
     [
-      "49686c193e203dfc93f1124cf838b7ea8c994d996c5d602a3a597a87cd0bccd0",
+      "5fa6985a8618f2b43414bbeffc6f4083f7b868e96a3483228f849652dd85a616",
       [
         "persist application settings through a renderer crash journal, native sqlite promotion, and browser fallback.",
         "app state crash journal",
         "settings sqlite promotion",
         "pending setting flush",
-        "native writes require successful initialization; journal i/o errors end the attempt; flushes reconcile superseded values without replacing newer edits and remove only matching journals; external transactions publish cache changes only after commit.",
+        "stale foreign journal notification",
+        "native writes require successful initialization; external journal notifications must match the current durable journal and respect transaction leases; flushes publish committed values without replacing newer edits and remove only matching journals; journal i/o errors end the attempt.",
         "app state backend selection",
         "legacy setting promotion",
         "pending write journal",
@@ -1996,13 +1997,6 @@
         ]
       ],
       [
-        4,
-        [
-          5,
-          1
-        ]
-      ],
-      [
         27,
         [
           1,
@@ -2463,7 +2457,7 @@
           1,
           1,
           5,
-          1
+          2
         ]
       ],
       [
@@ -5341,8 +5335,6 @@
         4,
         [
           3,
-          1,
-          5,
           1
         ]
       ],
@@ -5816,13 +5808,6 @@
       ]
     ],
     [
-      [
-        4,
-        [
-          5,
-          1
-        ]
-      ],
       [
         46,
         [
@@ -6894,13 +6879,6 @@
     ],
     [
       [
-        4,
-        [
-          5,
-          1
-        ]
-      ],
-      [
         11,
         [
           5,
@@ -6964,6 +6942,13 @@
       ]
     ],
     [
+      [
+        4,
+        [
+          5,
+          1
+        ]
+      ],
       [
         47,
         [
@@ -8076,6 +8061,13 @@
       ]
     ],
     [
+      [
+        4,
+        [
+          5,
+          1
+        ]
+      ],
       [
         20,
         [
@@ -9501,6 +9493,13 @@
       ]
     ],
     [
+      [
+        4,
+        [
+          5,
+          1
+        ]
+      ],
       [
         10,
         [
@@ -12413,6 +12412,13 @@
     ],
     [
       [
+        4,
+        [
+          2,
+          1
+        ]
+      ],
+      [
         51,
         [
           5,
@@ -14863,11 +14869,11 @@
           1,
           1,
           2,
-          1,
+          2,
           3,
           1,
           5,
-          1
+          3
         ]
       ],
       [
@@ -15409,6 +15415,15 @@
     [
       [
         3,
+        [
+          5,
+          1
+        ]
+      ]
+    ],
+    [
+      [
+        4,
         [
           5,
           1
@@ -16849,6 +16864,13 @@
     ],
     [
       [
+        4,
+        [
+          5,
+          1
+        ]
+      ],
+      [
         31,
         [
           5,
@@ -17355,6 +17377,15 @@
         59,
         [
           1,
+          1
+        ]
+      ]
+    ],
+    [
+      [
+        4,
+        [
+          5,
           1
         ]
       ]
@@ -18611,6 +18642,13 @@
     ],
     [
       [
+        4,
+        [
+          2,
+          1
+        ]
+      ],
+      [
         46,
         [
           2,
@@ -18619,6 +18657,13 @@
       ]
     ],
     [
+      [
+        4,
+        [
+          5,
+          1
+        ]
+      ],
       [
         46,
         [
@@ -18995,7 +19040,7 @@
         4,
         [
           5,
-          2
+          1
         ]
       ],
       [
@@ -24277,13 +24322,6 @@
     ],
     [
       [
-        4,
-        [
-          5,
-          1
-        ]
-      ],
-      [
         42,
         [
           2,
@@ -26638,6 +26676,15 @@
     ],
     [
       [
+        4,
+        [
+          5,
+          1
+        ]
+      ]
+    ],
+    [
+      [
         59,
         [
           5,
@@ -31184,6 +31231,13 @@
     ],
     [
       [
+        4,
+        [
+          2,
+          1
+        ]
+      ],
+      [
         47,
         [
           2,
@@ -32385,15 +32439,6 @@
     [
       [
         51,
-        [
-          5,
-          1
-        ]
-      ]
-    ],
-    [
-      [
-        4,
         [
           5,
           1
@@ -33778,7 +33823,7 @@
         4,
         [
           5,
-          1
+          2
         ]
       ],
       [
@@ -34792,6 +34837,8 @@
         4,
         [
           3,
+          1,
+          5,
           1
         ]
       ],
@@ -34838,13 +34885,6 @@
       ]
     ],
     [
-      [
-        4,
-        [
-          5,
-          1
-        ]
-      ],
       [
         5,
         [
@@ -39528,6 +39568,7 @@
     "launcher",
     "layout",
     "layouts",
+    "leases",
     "leaves",
     "legacy",
     "length",
@@ -39596,6 +39637,7 @@
     "modern",
     "most",
     "multi",
+    "must",
     "mutate",
     "mutates",
     "mutation",
@@ -39833,6 +39875,7 @@
     "resolve",
     "resolved",
     "resource",
+    "respect",
     "respects",
     "response",
     "responses",
@@ -40004,7 +40047,6 @@
     "summarize",
     "summary",
     "supersede",
-    "superseded",
     "supplied",
     "supported",
     "surface",

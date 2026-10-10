@@ -3,8 +3,8 @@ id=workduck.app-state.storage
 role=Persist application settings through a renderer crash journal, native SQLite promotion, and browser fallback.
 owns=app state backend selection|legacy setting promotion|pending write journal|serialized flush|transaction cache publication
 excludes=setting domain validation|native SQLite implementation|workspace project registries
-search=app state crash journal|settings SQLite promotion|pending setting flush
-invariant=Native writes require successful initialization; journal I/O errors end the attempt; flushes reconcile superseded values without replacing newer edits and remove only matching journals; external transactions publish cache changes only after commit.
+search=app state crash journal|settings SQLite promotion|pending setting flush|stale foreign journal notification
+invariant=Native writes require successful initialization; external journal notifications must match the current durable journal and respect transaction leases; flushes publish committed values without replacing newer edits and remove only matching journals; journal I/O errors end the attempt.
 stability=architecture
 */
 import { isObjectRecord } from '#lib/shared/object-record.ts';
@@ -152,7 +152,7 @@ export async function initializeWorkduckAppState(
 			});
 
 			const superseded = parseNativeWriteResponse(writeResponse, recordsToWrite);
-			reconcileSupersededRecords(storage, recordsToWrite, superseded, false);
+			reconcileCommittedRecords(storage, recordsToWrite, superseded, false);
 			removeFlushedPendingWrites(storage, recordsToWrite);
 		}
 
@@ -299,6 +299,7 @@ export function subscribeWorkduckAppStateValue(
 	}
 
 	function handleStorage(event: StorageEvent) {
+		if (transactionKeys.has(key)) return;
 		if (
 			event.storageArea !== window.localStorage ||
 			event.key !== createPendingStorageKey(key) ||
@@ -313,6 +314,13 @@ export function subscribeWorkduckAppStateValue(
 			return;
 		}
 
+		try {
+			const storage = getBrowserStorage();
+			const current = storage === undefined ? null : readPendingWrite(storage, key);
+			// Storage events can arrive after a newer edit or completed flush.
+			if (current === null || current.valueJson !== pendingWrite.valueJson ||
+				current.updatedAt !== pendingWrite.updatedAt) return;
+		} catch { return; }
 		publishAppStateValue(key, pendingWrite.valueJson);
 	}
 
@@ -373,7 +381,7 @@ async function flushPendingWrites(): Promise<boolean> {
 			});
 
 			const superseded = parseNativeWriteResponse(response, pendingWrites);
-			reconcileSupersededRecords(storage, pendingWrites, superseded, true);
+			reconcileCommittedRecords(storage, pendingWrites, superseded, true);
 			removeFlushedPendingWrites(storage, pendingWrites);
 			removeLegacyValuesForRecords(storage, pendingWrites);
 			backend = 'sqlite';
@@ -451,18 +459,19 @@ function parseNativeWriteResponse(
 	return response.supersededRecords;
 }
 
-function reconcileSupersededRecords(
+function reconcileCommittedRecords(
 	storage: BrowserStorage | undefined,
 	requested: Partial<Record<WorkduckAppStateKey, PendingAppStateWrite>>,
 	superseded: Partial<Record<WorkduckAppStateKey, string>>,
 	notify: boolean
 ) {
 	for (const key of WORKDUCK_APP_STATE_KEYS) {
-		const valueJson = superseded[key];
 		const request = requested[key];
-		if (valueJson === undefined || request === undefined || cachedValues.get(key) !== request.valueJson) continue;
+		if (request === undefined) continue;
 		const current = storage === undefined ? null : readPendingWrite(storage, key);
-		if (current !== null && (current.valueJson !== request.valueJson || current.updatedAt !== request.updatedAt)) continue;
+		if (current === null ? cachedValues.get(key) !== request.valueJson
+			: current.valueJson !== request.valueJson || current.updatedAt !== request.updatedAt) continue;
+		const valueJson = superseded[key] ?? request.valueJson;
 		if (cachedValues.get(key) === valueJson) continue;
 		if (notify) publishAppStateValue(key, valueJson);
 		else cachedValues.set(key, valueJson);
