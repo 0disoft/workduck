@@ -1559,8 +1559,8 @@
         "arbitrary shell command input"
       ],
       "hashes": {
-        "body": "6f11ee8ebee15bec8a98a18166770f3dc69eb4d5e9948ef0f2f95afde1d1c7f4",
-        "semantic": "959df2ea994209df870e2c9ca9acfe50d81c35288a1588ad41da6102dbfff457",
+        "body": "a7c36f0a6d7d80412857bdbcbdac7c04eb8f2106b5c0f82cbb5ada461064150f",
+        "semantic": "ba6db7e66ada7f58ac0dd65495cd1be8a98c2ec15bd0da9bf906b84336fd2235",
         "structure": "b5122d9939628fb569605ebee461119c8532e018d75a3a27998fab08d397a2bb"
       },
       "id": "workduck.projects.repository-task-native",
@@ -1577,7 +1577,7 @@
         "time::{OffsetDateTime, format_description::well_known::Rfc3339}"
       ],
       "invariant": [
-        "Tasks are selected from a closed vocabulary and repository paths remain inside the workspace; process identity is revalidated after bounded startup grace, tracked servers require their terminal execution and descendants, cached latest and unreadable files require unchanged metadata, terminal-owned completion survives launch updates and success requires the final command, and bounded Unicode output previews keep completed history readable."
+        "Tasks are selected from a closed vocabulary and repository paths remain inside the workspace; latest records bind selectable run IDs to their filenames, process identity is revalidated after bounded startup grace, tracked servers require their terminal execution and descendants, cached latest and unreadable files require unchanged metadata, terminal-owned completion survives launch updates and success requires the final command, and bounded Unicode output previews keep completed history readable."
       ],
       "location": {
         "declarationLine": null,
@@ -2883,7 +2883,7 @@
         "latest repository card projection"
       ],
       "hashes": {
-        "body": "894a6bafd00a1744b8f41a53cf6fd0db5428e201f4926452097fb40d4d97ede6",
+        "body": "8b56ca651c7b65b684d4de5956a7bbbb3297a0c39cf308d463d21c4250c59864",
         "semantic": "a6283d6e9a1e63c31545ecc22c79a588f9679582df2f62f815e20773d557e199",
         "structure": "8c6dc031a73aed758f1fdea5f60d61084b53554c3d331953f39baff3ef9047c8"
       },
@@ -4534,6 +4534,6 @@
   "generatedBy": "llmnav@0.9.7",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "dafa21dce62b579eee7d3b207939f9821bc1e1dff9db075a2ddd6304c6b828d5",
+  "sourceHash": "d4a36a6dcead8055d3c98392a329c1e1e4bd7ad7382f096cdc363fe8aa6dc363",
   "specVersion": "1"
 }

@@ -3332,7 +3332,7 @@
             ],
             "id": "workduck.projects.repository-task-native",
             "invariant": [
-              "Tasks are selected from a closed vocabulary and repository paths remain inside the workspace; process identity is revalidated after bounded startup grace, tracked servers require their terminal execution and descendants, cached latest and unreadable files require unchanged metadata, terminal-owned completion survives launch updates and success requires the final command, and bounded Unicode output previews keep completed history readable."
+              "Tasks are selected from a closed vocabulary and repository paths remain inside the workspace; latest records bind selectable run IDs to their filenames, process identity is revalidated after bounded startup grace, tracked servers require their terminal execution and descendants, cached latest and unreadable files require unchanged metadata, terminal-owned completion survives launch updates and success requires the final command, and bounded Unicode output previews keep completed history readable."
             ],
             "owns": [
               "native repository task launch",
@@ -3351,7 +3351,7 @@
             "stability": "architecture",
             "unknown": []
           },
-          "end": 929,
+          "end": 988,
           "endLine": 9,
           "entries": [
             {
@@ -3388,7 +3388,7 @@
               "key": "invariant",
               "line": 7,
               "order": 5,
-              "value": "Tasks are selected from a closed vocabulary and repository paths remain inside the workspace; process identity is revalidated after bounded startup grace, tracked servers require their terminal execution and descendants, cached latest and unreadable files require unchanged metadata, terminal-owned completion survives launch updates and success requires the final command, and bounded Unicode output previews keep completed history readable."
+              "value": "Tasks are selected from a closed vocabulary and repository paths remain inside the workspace; latest records bind selectable run IDs to their filenames, process identity is revalidated after bounded startup grace, tracked servers require their terminal execution and descendants, cached latest and unreadable files require unchanged metadata, terminal-owned completion survives launch updates and success requires the final command, and bounded Unicode output previews keep completed history readable."
             },
             {
               "key": "stability",
@@ -3401,7 +3401,7 @@
           "indent": "",
           "newline": "\n",
           "prefix": "//",
-          "raw": "// llmnav/1 module\n// id=workduck.projects.repository-task-native\n// role=Discover toolchain commands, launch bounded repository tasks in terminals, and persist or reconcile native task-run records.\n// owns=native repository task launch|toolchain command discovery|task run reconciliation\n// excludes=frontend task normalization|arbitrary shell command input\n// search=native repository task|discover build command|reconcile dev server\n// invariant=Tasks are selected from a closed vocabulary and repository paths remain inside the workspace; process identity is revalidated after bounded startup grace, tracked servers require their terminal execution and descendants, cached latest and unreadable files require unchanged metadata, terminal-owned completion survives launch updates and success requires the final command, and bounded Unicode output previews keep completed history readable.\n// stability=architecture\n// /llmnav\n",
+          "raw": "// llmnav/1 module\n// id=workduck.projects.repository-task-native\n// role=Discover toolchain commands, launch bounded repository tasks in terminals, and persist or reconcile native task-run records.\n// owns=native repository task launch|toolchain command discovery|task run reconciliation\n// excludes=frontend task normalization|arbitrary shell command input\n// search=native repository task|discover build command|reconcile dev server\n// invariant=Tasks are selected from a closed vocabulary and repository paths remain inside the workspace; latest records bind selectable run IDs to their filenames, process identity is revalidated after bounded startup grace, tracked servers require their terminal execution and descendants, cached latest and unreadable files require unchanged metadata, terminal-owned completion survives launch updates and success requires the final command, and bounded Unicode output previews keep completed history readable.\n// stability=architecture\n// /llmnav\n",
           "scope": "module",
           "specVersion": "1",
           "start": 0,
@@ -3410,7 +3410,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "6f11ee8ebee15bec8a98a18166770f3dc69eb4d5e9948ef0f2f95afde1d1c7f4",
+      "contentHash": "a7c36f0a6d7d80412857bdbcbdac7c04eb8f2106b5c0f82cbb5ada461064150f",
       "declarations": [
         null
       ],
@@ -3427,8 +3427,8 @@
         "time::{OffsetDateTime, format_description::well_known::Rfc3339}"
       ],
       "path": "src-tauri/src/project_repository_task.rs",
-      "semanticBytes": 929,
-      "sourceBytes": 44248
+      "semanticBytes": 988,
+      "sourceBytes": 44469
     },
     {
       "blocks": [
@@ -3624,7 +3624,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "894a6bafd00a1744b8f41a53cf6fd0db5428e201f4926452097fb40d4d97ede6",
+      "contentHash": "8b56ca651c7b65b684d4de5956a7bbbb3297a0c39cf308d463d21c4250c59864",
       "declarations": [
         null
       ],
@@ -3635,11 +3635,11 @@
       ],
       "path": "src-tauri/src/project_repository_task_history.rs",
       "semanticBytes": 639,
-      "sourceBytes": 10272
+      "sourceBytes": 10283
     },
     {
       "blocks": [],
-      "contentHash": "4a73a31e0e47af6f2d4b1791be3297729ef5afd7cea6dc7a27a2420baace1162",
+      "contentHash": "7e04707c50f59d3f7f3c1e75b71195d3b8811f8421170b0b14f62a6dab218c03",
       "declarations": [],
       "imports": [
         "super::*",
@@ -3647,7 +3647,7 @@
       ],
       "path": "src-tauri/src/project_repository_task_tests.rs",
       "semanticBytes": 0,
-      "sourceBytes": 49189
+      "sourceBytes": 51461
     },
     {
       "blocks": [],

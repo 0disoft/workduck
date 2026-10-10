@@ -9,7 +9,7 @@ fn reconciliation_cannot_write_to_a_path_supplied_inside_a_record() {
     let temp = tempfile::tempdir().unwrap();
     let workspace = fs::canonicalize(temp.path()).unwrap();
     let visible = crate::git_path::git_process_path(&workspace);
-    let path = workspace.join("run.json");
+    let path = workspace.join("running.json");
     let unrelated = workspace.join("unrelated.json");
     fs::write(&unrelated, b"preserve unrelated file").unwrap();
     let mut running = task_run_record(
@@ -42,6 +42,63 @@ fn completed_records_do_not_enumerate_system_processes() {
     assert_eq!(records.len(), 2);
     assert_eq!(records[0].state, "succeeded");
     assert_eq!(records[1].state, "stopped");
+}
+
+#[test]
+fn latest_task_records_ignore_copies_with_mismatched_identity() {
+    let temp = tempfile::tempdir().unwrap();
+    let workspace = fs::canonicalize(temp.path()).unwrap();
+    let visible = crate::git_path::git_process_path(&workspace);
+    let dir = task_run_record_dir(&workspace);
+    fs::create_dir_all(&dir).unwrap();
+    let completed = task_run_record(
+        "build-1",
+        &visible.join("repo").to_string_lossy(),
+        "2026-10-01T00:00:00Z",
+    );
+    fs::write(
+        dir.join("build-1.json"),
+        serde_json::to_vec(&completed).unwrap(),
+    )
+    .unwrap();
+    let mut copied = completed.clone();
+    copied.started_at = "2026-10-02T00:00:00Z".into();
+    copied.state = "failed".into();
+    copied.exit_code = Some(1);
+    let copy_path = dir.join("build-1-backup.json");
+    let copy_bytes = serde_json::to_vec(&copied).unwrap();
+    fs::write(&copy_path, &copy_bytes).unwrap();
+
+    let latest = read_latest_cached_task_run_records(&dir, &visible)
+        .unwrap_or_else(|_| panic!("read latest records"));
+    assert_eq!(latest.len(), 1);
+    assert_eq!(latest[0].started_at, completed.started_at);
+    assert_eq!(latest[0].exit_code, Some(0));
+    let selected = history::read_selected_task_run_records(&workspace, &[latest[0].id.clone()])
+        .unwrap_or_else(|_| panic!("read displayed run by identity"));
+    assert_eq!(selected[0].started_at, latest[0].started_at);
+    assert_eq!(selected[0].exit_code, latest[0].exit_code);
+    assert_eq!(fs::read(&copy_path).unwrap(), copy_bytes);
+}
+
+#[test]
+fn latest_task_records_reject_ids_that_history_cannot_select() {
+    let temp = tempfile::tempdir().unwrap();
+    let workspace = fs::canonicalize(temp.path()).unwrap();
+    let visible = crate::git_path::git_process_path(&workspace);
+    for id in ["", "실행-1", "run.with.dots"] {
+        let path = workspace.join(format!("{id}.json"));
+        let completed = task_run_record(
+            id,
+            &visible.join("repo").to_string_lossy(),
+            "2026-10-01T00:00:00Z",
+        );
+        fs::write(&path, serde_json::to_vec(&completed).unwrap()).unwrap();
+        assert!(
+            read_visible_task_run_record(&path, &visible).is_none(),
+            "unselectable run ID: {id:?}"
+        );
+    }
 }
 
 #[test]

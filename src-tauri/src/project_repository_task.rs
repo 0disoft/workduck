@@ -4,7 +4,7 @@
 // owns=native repository task launch|toolchain command discovery|task run reconciliation
 // excludes=frontend task normalization|arbitrary shell command input
 // search=native repository task|discover build command|reconcile dev server
-// invariant=Tasks are selected from a closed vocabulary and repository paths remain inside the workspace; process identity is revalidated after bounded startup grace, tracked servers require their terminal execution and descendants, cached latest and unreadable files require unchanged metadata, terminal-owned completion survives launch updates and success requires the final command, and bounded Unicode output previews keep completed history readable.
+// invariant=Tasks are selected from a closed vocabulary and repository paths remain inside the workspace; latest records bind selectable run IDs to their filenames, process identity is revalidated after bounded startup grace, tracked servers require their terminal execution and descendants, cached latest and unreadable files require unchanged metadata, terminal-owned completion survives launch updates and success requires the final command, and bounded Unicode output previews keep completed history readable.
 // stability=architecture
 // /llmnav
 use std::{
@@ -429,6 +429,11 @@ fn read_visible_task_run_record(
     let record_json = fs::read_to_string(path).ok()?;
     let record_json = record_json.strip_prefix('\u{feff}').unwrap_or(&record_json);
     let mut record = serde_json::from_str::<ProjectRepositoryTaskRunRecord>(record_json).ok()?;
+    if !history::valid_run_id(&record.id)
+        || path.file_stem().and_then(|stem| stem.to_str()) != Some(record.id.as_str())
+    {
+        return None;
+    }
     let repository_path = PathBuf::from(&record.repository_path);
 
     if repository_path.components().any(|component| {

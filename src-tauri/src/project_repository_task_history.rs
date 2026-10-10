@@ -87,7 +87,7 @@ pub(super) fn read_selected_task_run_records(
     Ok(records)
 }
 
-fn valid_run_id(id: &str) -> bool {
+pub(super) fn valid_run_id(id: &str) -> bool {
     !id.is_empty()
         && id.len() <= 200
         && !crate::windows_filename::is_windows_reserved_name(id)
