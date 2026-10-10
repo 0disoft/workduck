@@ -309,6 +309,10 @@ bun install
 
 Workduck embeds ssealed templates in the desktop binary; installed apps do not
 require a separate ssealed, Node.js, or Bun installation for scaffolding.
+Applying templates to a repository already managed by ssealed preserves its
+manifest metadata, ownership records, and managed file deletions. New files are
+registered without replacing existing records. Changing the existing scope,
+profile, density, or runner uses ssealed's update/upgrade workflow.
 After updating the development dependency, regenerate and verify the embedded files:
 
 ```sh

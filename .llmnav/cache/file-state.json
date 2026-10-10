@@ -2888,7 +2888,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "d35626f4e04a6b07a4c7c9e4f238922482429dde90a0495a6a987409b260e20b",
+      "contentHash": "be1f2542d30f51889e3e55943cb5c58f667aa434e3f0de84664b08fbb6d73854",
       "declarations": [
         null
       ],
@@ -2901,7 +2901,7 @@
       ],
       "path": "src-tauri/src/project_folder.rs",
       "semanticBytes": 616,
-      "sourceBytes": 32908
+      "sourceBytes": 33003
     },
     {
       "blocks": [
@@ -2915,7 +2915,7 @@
             ],
             "id": "workduck.projects.scaffold-transaction",
             "invariant": [
-              "Apply writes missing files only, and cleanup verifies repository parents and recorded checksums before removing generated files."
+              "Apply preserves managed deletions and manifest ownership; cleanup verifies parents and checksums before removing files."
             ],
             "owns": [
               "scaffold selection and planning",
@@ -2934,7 +2934,7 @@
             "stability": "architecture",
             "unknown": []
           },
-          "end": 650,
+          "end": 641,
           "endLine": 9,
           "entries": [
             {
@@ -2971,7 +2971,7 @@
               "key": "invariant",
               "line": 7,
               "order": 5,
-              "value": "Apply writes missing files only, and cleanup verifies repository parents and recorded checksums before removing generated files."
+              "value": "Apply preserves managed deletions and manifest ownership; cleanup verifies parents and checksums before removing files."
             },
             {
               "key": "stability",
@@ -2984,7 +2984,7 @@
           "indent": "",
           "newline": "\n",
           "prefix": "//",
-          "raw": "// llmnav/1 module\n// id=workduck.projects.scaffold-transaction\n// role=Plan and apply repository scaffolds with exclusive ownership, durable journals, conflict preservation, and recovery.\n// owns=scaffold selection and planning|scaffold file and manifest writes|scaffold locking and recovery\n// excludes=folder command DTOs|workspace and repository root validation|Git operations\n// search=scaffold apply transaction|recover scaffold journal|preserve scaffold conflicts\n// invariant=Apply writes missing files only, and cleanup verifies repository parents and recorded checksums before removing generated files.\n// stability=architecture\n// /llmnav\n",
+          "raw": "// llmnav/1 module\n// id=workduck.projects.scaffold-transaction\n// role=Plan and apply repository scaffolds with exclusive ownership, durable journals, conflict preservation, and recovery.\n// owns=scaffold selection and planning|scaffold file and manifest writes|scaffold locking and recovery\n// excludes=folder command DTOs|workspace and repository root validation|Git operations\n// search=scaffold apply transaction|recover scaffold journal|preserve scaffold conflicts\n// invariant=Apply preserves managed deletions and manifest ownership; cleanup verifies parents and checksums before removing files.\n// stability=architecture\n// /llmnav\n",
           "scope": "module",
           "specVersion": "1",
           "start": 0,
@@ -2993,7 +2993,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "d42852dc6d8901fb37421cc63ad4234af053a127d773043738339597df1efa91",
+      "contentHash": "76992f7b6e95bb3f714f9ddd89a627cbf98061b12ba208a23eb475bf89743ff5",
       "declarations": [
         null
       ],
@@ -3005,18 +3005,18 @@
         "crate::windows_filename::is_windows_reserved_name",
         "sha2::{Digest, Sha256}",
         "std::os::windows::fs::MetadataExt",
-        "std::{\n    fs,\n    io::{self, Read, Write},\n    path::{Component, Path, PathBuf},\n}",
+        "std::{\n    collections::HashSet,\n    fs,\n    io::{self, Read, Write},\n    path::{Component, Path, PathBuf},\n}",
         "super::{\n    ProjectFolderError, ProjectFolderSsealedScaffoldFilePlan, ProjectFolderSsealedScaffoldPlan,\n}",
         "tests",
         "time::{OffsetDateTime, format_description::well_known::Rfc3339}"
       ],
       "path": "src-tauri/src/project_folder_scaffold.rs",
-      "semanticBytes": 650,
-      "sourceBytes": 31419
+      "semanticBytes": 641,
+      "sourceBytes": 36603
     },
     {
       "blocks": [],
-      "contentHash": "21f62280dcf99da619b77c001216d02daeb79d2c4d6616ffd26c40d0cd8e182b",
+      "contentHash": "092acb29aa2b964172f387e8832eabaef791ee845cfddde00d7bdb8d3ec05ed0",
       "declarations": [],
       "imports": [
         "super::*",
@@ -3024,7 +3024,7 @@
       ],
       "path": "src-tauri/src/project_folder_scaffold_tests.rs",
       "semanticBytes": 0,
-      "sourceBytes": 23834
+      "sourceBytes": 29508
     },
     {
       "blocks": [
@@ -7399,12 +7399,12 @@
     },
     {
       "blocks": [],
-      "contentHash": "88162f55d154768688fa29e2ad5ed4a58facd21ae72f2b9fa79d2ed2551e1fc6",
+      "contentHash": "896a0125cb53e3c6d624db289d80b819a18f2ea93b4d29482ae664aa998d8403",
       "declarations": [],
       "imports": [],
       "path": "src/lib/i18n/locales/en/projects.ts",
       "semanticBytes": 0,
-      "sourceBytes": 21538
+      "sourceBytes": 22151
     },
     {
       "blocks": [],
@@ -7550,12 +7550,12 @@
     },
     {
       "blocks": [],
-      "contentHash": "3d1b6215ffea6fdf0611b65648f5736388867441641108b6a9c78c03dab216d4",
+      "contentHash": "8fa6e964d702d518cd518e207aa77c956f2ede5fcfae83bd6b19ccfbe9513749",
       "declarations": [],
       "imports": [],
       "path": "src/lib/i18n/locales/es/projects.ts",
       "semanticBytes": 0,
-      "sourceBytes": 24303
+      "sourceBytes": 24920
     },
     {
       "blocks": [],
@@ -7701,12 +7701,12 @@
     },
     {
       "blocks": [],
-      "contentHash": "de4c0e7fa0367db9508b716838332b2a7fda773e40c30c57ce65c3ddf937671b",
+      "contentHash": "97854f2e6ecd1f3431da9a8d06b62cb9f6075838aa7468b06eec90824cf80893",
       "declarations": [],
       "imports": [],
       "path": "src/lib/i18n/locales/fr/projects.ts",
       "semanticBytes": 0,
-      "sourceBytes": 24303
+      "sourceBytes": 24931
     },
     {
       "blocks": [],
@@ -7852,12 +7852,12 @@
     },
     {
       "blocks": [],
-      "contentHash": "ce9db2ba1498c3e31a04198345afe0aa61b50e4d32a2171507c4ba1eee8f3c19",
+      "contentHash": "86edb0964faf126d10af9ae9f58e5146152a44c1e423e760543ebb128e6d11d9",
       "declarations": [],
       "imports": [],
       "path": "src/lib/i18n/locales/hi/projects.ts",
       "semanticBytes": 0,
-      "sourceBytes": 37083
+      "sourceBytes": 37865
     },
     {
       "blocks": [],
@@ -8003,12 +8003,12 @@
     },
     {
       "blocks": [],
-      "contentHash": "25d9eb2a91a13a2cac6a3f82a97dc1de95a72178638720c1b7b5074555483d97",
+      "contentHash": "d8ff71771971c2630bc1c2dac42e49539a0b1d552fee0864fca53e831009aee3",
       "declarations": [],
       "imports": [],
       "path": "src/lib/i18n/locales/ko/projects.ts",
       "semanticBytes": 0,
-      "sourceBytes": 25373
+      "sourceBytes": 26018
     },
     {
       "blocks": [],
@@ -8154,12 +8154,12 @@
     },
     {
       "blocks": [],
-      "contentHash": "aca3fb2f76201be4ba40658c9706ad6527b996b57711cf8e5031332c3626c2d6",
+      "contentHash": "79409913fbfb83f3f7f882221a8898ecdb1fc9765590fc46efaa2aa87c1df254",
       "declarations": [],
       "imports": [],
       "path": "src/lib/i18n/locales/zh/projects.ts",
       "semanticBytes": 0,
-      "sourceBytes": 20680
+      "sourceBytes": 21273
     },
     {
       "blocks": [],
@@ -10163,7 +10163,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "95cfa57471a0109a2e6a2a958ee1cf26c40616cf03bd1cd000a5837a05ddafed",
+      "contentHash": "1a2bb0cb9dc42a012a2eeb3cf11a8795668607e726b11133d4eb2a6e4862e152",
       "declarations": [
         null
       ],
@@ -10175,7 +10175,7 @@
       ],
       "path": "src/lib/projects/project-folder.ts",
       "semanticBytes": 528,
-      "sourceBytes": 21033
+      "sourceBytes": 21137
     },
     {
       "blocks": [],

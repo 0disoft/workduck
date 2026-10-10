@@ -4,7 +4,7 @@
 // owns=scaffold selection and planning|scaffold file and manifest writes|scaffold locking and recovery
 // excludes=folder command DTOs|workspace and repository root validation|Git operations
 // search=scaffold apply transaction|recover scaffold journal|preserve scaffold conflicts
-// invariant=Apply writes missing files only, and cleanup verifies repository parents and recorded checksums before removing generated files.
+// invariant=Apply preserves managed deletions and manifest ownership; cleanup verifies parents and checksums before removing files.
 // stability=architecture
 // /llmnav
 use super::{
@@ -17,6 +17,7 @@ use crate::ssealed_scaffold_generated::SSEALED_SCAFFOLD_TOOL_VERSION;
 use crate::windows_filename::is_windows_reserved_name;
 use sha2::{Digest, Sha256};
 use std::{
+    collections::HashSet,
     fs,
     io::{self, Read, Write},
     path::{Component, Path, PathBuf},
@@ -152,6 +153,24 @@ pub(super) fn create_ssealed_repository_scaffold_plan(
 ) -> Result<ProjectFolderSsealedScaffoldPlan, ProjectFolderError> {
     let scaffold =
         find_ssealed_scaffold(scope, profile).ok_or(ProjectFolderError::SsealedScaffoldFailed)?;
+    let managed_paths: HashSet<String> =
+        if let Some(content) = read_ssealed_repository_manifest(target_path)? {
+            let manifest = parse_compatible_ssealed_manifest(
+                &content,
+                scope,
+                profile,
+                scaffold.density,
+                scaffold.runner,
+            )?;
+            manifest["files"]
+                .as_array()
+                .ok_or(ProjectFolderError::Conflict)?
+                .iter()
+                .filter_map(|file| file["path"].as_str().map(str::to_ascii_lowercase))
+                .collect()
+        } else {
+            HashSet::new()
+        };
     if should_apply {
         recover_ssealed_repository_apply_journal(target_path)?;
     }
@@ -162,8 +181,11 @@ pub(super) fn create_ssealed_repository_scaffold_plan(
 
     for file in scaffold.files {
         let checksum = sha256_checksum(file.content);
-        let status =
+        let mut status =
             inspect_ssealed_repository_scaffold_file(target_path, file.path, file.content)?;
+        if status == "missing" && managed_paths.contains(&file.path.to_ascii_lowercase()) {
+            status = "conflict";
+        }
 
         match status {
             "missing" => missing_count += 1,
@@ -215,7 +237,11 @@ fn apply_ssealed_repository_scaffold_plan(
     committed_plan.added_count = committed_plan.missing_count;
     committed_plan.missing_count = 0;
 
-    let manifest_content = create_ssealed_repository_apply_manifest_content(&committed_plan)?;
+    let expected_manifest = read_ssealed_repository_manifest(target_path)?;
+    let manifest_content = create_ssealed_repository_apply_manifest_content(
+        &committed_plan,
+        expected_manifest.as_deref(),
+    )?;
     let missing_files = scaffold
         .files
         .iter()
@@ -287,7 +313,11 @@ fn apply_ssealed_repository_scaffold_plan(
             }
         }
 
-        write_ssealed_repository_manifest_file(target_path, &manifest_content)
+        write_ssealed_repository_manifest_file(
+            target_path,
+            &manifest_content,
+            expected_manifest.as_deref(),
+        )
     })();
 
     if let Err(error) = apply_result {
@@ -468,7 +498,41 @@ fn validate_ssealed_scaffold_relative_path(
 
 fn create_ssealed_repository_apply_manifest_content(
     plan: &ProjectFolderSsealedScaffoldPlan,
+    existing_content: Option<&str>,
 ) -> Result<String, ProjectFolderError> {
+    if let Some(content) = existing_content {
+        let mut manifest = parse_compatible_ssealed_manifest(
+            content,
+            plan.scope,
+            plan.profile,
+            plan.density,
+            plan.runner,
+        )?;
+        let files = manifest["files"]
+            .as_array_mut()
+            .ok_or(ProjectFolderError::Conflict)?;
+        let mut paths: HashSet<String> = files
+            .iter()
+            .filter_map(|file| file["path"].as_str().map(str::to_ascii_lowercase))
+            .collect();
+        let mut changed = false;
+        for file in plan.files.iter().filter(|file| file.status == "added") {
+            if paths.insert(file.path.to_ascii_lowercase()) {
+                files.push(create_ssealed_manifest_file(
+                    &file.path,
+                    &file.kind,
+                    &file.checksum,
+                ));
+                changed = true;
+            }
+        }
+        if !changed {
+            return Ok(content.to_owned());
+        }
+        return serde_json::to_string_pretty(&manifest)
+            .map(|content| content + "\n")
+            .map_err(|_| ProjectFolderError::SsealedScaffoldFailed);
+    }
     let manifest_files: Vec<_> = plan
         .files
         .iter()
@@ -540,6 +604,7 @@ fn create_ssealed_manifest_file(path: &str, kind: &str, checksum: &str) -> serde
 fn write_ssealed_repository_manifest_file(
     target_path: &Path,
     content: &str,
+    expected_content: Option<&str>,
 ) -> Result<(), ProjectFolderError> {
     let manifest_directory = ensure_ssealed_manifest_directory(target_path)?;
     let manifest_path = manifest_directory.join("manifest.json");
@@ -547,15 +612,91 @@ fn write_ssealed_repository_manifest_file(
     match fs::symlink_metadata(&manifest_path) {
         Ok(metadata) => {
             if metadata_is_link_or_reparse(&metadata) || metadata.is_dir() {
-                return Err(ProjectFolderError::Conflict);
+                return Err(ProjectFolderError::SsealedManifestConflict);
             }
         }
         Err(error) if error.kind() == io::ErrorKind::NotFound => {}
         Err(_) => return Err(ProjectFolderError::SsealedScaffoldFailed),
     }
 
-    write_file_atomically(&manifest_path, content)
-        .map_err(|_| ProjectFolderError::SsealedScaffoldFailed)
+    if read_ssealed_repository_manifest(target_path)?.as_deref() != expected_content {
+        return Err(ProjectFolderError::SsealedManifestConflict);
+    }
+    if expected_content == Some(content) {
+        return Ok(());
+    }
+    let result = if expected_content.is_some() {
+        write_file_atomically(&manifest_path, content)
+    } else {
+        write_file_exclusively(&manifest_path, content)
+    };
+    result.map_err(|error| match error {
+        crate::atomic_file_write::AtomicFileWriteError::TargetAlreadyExists => {
+            ProjectFolderError::SsealedManifestConflict
+        }
+        _ => ProjectFolderError::SsealedScaffoldFailed,
+    })
+}
+
+fn read_ssealed_repository_manifest(
+    target_path: &Path,
+) -> Result<Option<String>, ProjectFolderError> {
+    if has_ssealed_repository_scaffold_parent_conflict(target_path, ".ssealed/manifest.json")? {
+        return Err(ProjectFolderError::SsealedManifestConflict);
+    }
+    let path = target_path.join(".ssealed/manifest.json");
+    match fs::symlink_metadata(&path) {
+        Ok(metadata) if metadata_is_link_or_reparse(&metadata) || !metadata.is_file() => {
+            Err(ProjectFolderError::SsealedManifestConflict)
+        }
+        Ok(_) => fs::read_to_string(path)
+            .map(Some)
+            .map_err(|_| ProjectFolderError::SsealedScaffoldFailed),
+        Err(error) if error.kind() == io::ErrorKind::NotFound => Ok(None),
+        Err(_) => Err(ProjectFolderError::SsealedScaffoldFailed),
+    }
+}
+
+fn parse_compatible_ssealed_manifest(
+    content: &str,
+    scope: &str,
+    profile: &str,
+    density: &str,
+    runner: &str,
+) -> Result<serde_json::Value, ProjectFolderError> {
+    let manifest: serde_json::Value =
+        serde_json::from_str(content).map_err(|_| ProjectFolderError::SsealedManifestConflict)?;
+    if manifest["tool"] != "ssealed"
+        || manifest["schemaVersion"] != 1
+        || manifest["scope"] != scope
+        || manifest["profile"] != profile
+        || manifest["density"] != density
+        || manifest["runner"] != runner
+    {
+        return Err(ProjectFolderError::SsealedManifestConflict);
+    }
+    let files = manifest["files"]
+        .as_array()
+        .ok_or(ProjectFolderError::SsealedManifestConflict)?;
+    let mut paths = HashSet::new();
+    for file in files {
+        let path = file["path"]
+            .as_str()
+            .ok_or(ProjectFolderError::SsealedManifestConflict)?;
+        validate_ssealed_scaffold_relative_path(path)
+            .map_err(|_| ProjectFolderError::SsealedManifestConflict)?;
+        if !paths.insert(path.to_ascii_lowercase())
+            || !file["kind"].is_string()
+            || !file["checksum"].as_str().is_some_and(|checksum| {
+                checksum.strip_prefix("sha256:").is_some_and(|digest| {
+                    digest.len() == 64 && digest.bytes().all(|byte| byte.is_ascii_hexdigit())
+                })
+            })
+        {
+            return Err(ProjectFolderError::SsealedManifestConflict);
+        }
+    }
+    Ok(manifest)
 }
 
 fn ensure_ssealed_manifest_directory(target_path: &Path) -> Result<PathBuf, ProjectFolderError> {

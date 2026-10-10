@@ -276,6 +276,7 @@ export const enProjectsMessages = {
 			'project-folder-name-invalid': 'Name cannot be used as a folder.',
 			'project-folder-conflict': 'Folder path is not usable.',
 			'project-folder-create-failed': 'Folder could not be created.',
+			'project-folder-ssealed-manifest-conflict': 'The existing ssealed manifest is invalid, uses different settings, or changed. Check it and use ssealed update/upgrade for configuration changes.',
 			'project-folder-ssealed-scaffold-failed': 'ssealed scaffold could not be created.',
 			'project-folder-ssealed-scaffold-locked':
 				'Another ssealed operation is running for this repository. Try again when it finishes.',

@@ -607,7 +607,7 @@
         "project registry persistence"
       ],
       "hashes": {
-        "body": "95cfa57471a0109a2e6a2a958ee1cf26c40616cf03bd1cd000a5837a05ddafed",
+        "body": "1a2bb0cb9dc42a012a2eeb3cf11a8795668607e726b11133d4eb2a6e4862e152",
         "semantic": "137d450fb766b67a65a156364fbcccb1a03ad4037c9480a313a0d39a972749b5",
         "structure": "344bc8220e1009dc8dea7f6a5ca815d89cab1dd61858c55ae012bff45809b4df"
       },
@@ -1387,7 +1387,7 @@
         "project registry persistence"
       ],
       "hashes": {
-        "body": "d35626f4e04a6b07a4c7c9e4f238922482429dde90a0495a6a987409b260e20b",
+        "body": "be1f2542d30f51889e3e55943cb5c58f667aa434e3f0de84664b08fbb6d73854",
         "semantic": "00f64b28d04c28f4f45e21dc6cb5123fcb33e952b9dd252ca0f0039d0dcda289",
         "structure": "d5446bacd6228913a6915b84e7a19c1ae28f51ea874dc5e121bdd634a1f6168b"
       },
@@ -2959,9 +2959,9 @@
         "Git operations"
       ],
       "hashes": {
-        "body": "d42852dc6d8901fb37421cc63ad4234af053a127d773043738339597df1efa91",
-        "semantic": "df1aead2db35da0917c89e9e60975fc708de6a2744da2dc68209bd655e3cece9",
-        "structure": "a202add9bebddb32cb3f06fcc0397d3eb9f8627d4ce7831479adc71d4498d13a"
+        "body": "76992f7b6e95bb3f714f9ddd89a627cbf98061b12ba208a23eb475bf89743ff5",
+        "semantic": "a260816cbd2fe851062e17496920a5d405c4534982379a51a16137fe24ebe96c",
+        "structure": "743ffc8f73015a86ffceb04b841a6efb1591ddff9c9bef250a87bf7603146e9c"
       },
       "id": "workduck.projects.scaffold-transaction",
       "imports": [
@@ -2972,13 +2972,13 @@
         "crate::windows_filename::is_windows_reserved_name",
         "sha2::{Digest, Sha256}",
         "std::os::windows::fs::MetadataExt",
-        "std::{\n    fs,\n    io::{self, Read, Write},\n    path::{Component, Path, PathBuf},\n}",
+        "std::{\n    collections::HashSet,\n    fs,\n    io::{self, Read, Write},\n    path::{Component, Path, PathBuf},\n}",
         "super::{\n    ProjectFolderError, ProjectFolderSsealedScaffoldFilePlan, ProjectFolderSsealedScaffoldPlan,\n}",
         "tests",
         "time::{OffsetDateTime, format_description::well_known::Rfc3339}"
       ],
       "invariant": [
-        "Apply writes missing files only, and cleanup verifies repository parents and recorded checksums before removing generated files."
+        "Apply preserves managed deletions and manifest ownership; cleanup verifies parents and checksums before removing files."
       ],
       "location": {
         "declarationLine": null,
@@ -5226,6 +5226,6 @@
   "generatedBy": "llmnav@0.9.7",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "d3cf8c3c046c2d2cd68895436528c36678706ad77b3724410454adaecf4fc900",
+  "sourceHash": "2b3b0811262aa058fb26613957a8deb5732c718ee45f35564af9125eeac22801",
   "specVersion": "1"
 }

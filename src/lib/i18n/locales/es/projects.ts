@@ -277,6 +277,7 @@ export const esProjectsMessages = {
 			'project-folder-name-invalid': 'El nombre no se puede usar como carpeta.',
 			'project-folder-conflict': 'La ruta de la carpeta no se puede usar.',
 			'project-folder-create-failed': 'No se pudo crear la carpeta.',
+			'project-folder-ssealed-manifest-conflict': 'El manifest de ssealed no es valido, tiene otra configuracion o ha cambiado. Reviselo y use update/upgrade de ssealed para cambiar la configuracion.',
 			'project-folder-ssealed-scaffold-failed': 'No se pudo crear el scaffold de ssealed.',
 			'project-folder-ssealed-scaffold-locked':
 				'Hay otra operación de ssealed en curso para este repositorio. Inténtalo de nuevo cuando termine.',

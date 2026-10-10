@@ -5,6 +5,120 @@ use super::super::{
 use super::*;
 
 #[test]
+fn existing_manifest_preserves_ownership_and_metadata_when_filling_missing_files() {
+    let repository = tempfile::tempdir().expect("repository");
+    let root = fs::canonicalize(repository.path()).unwrap();
+    write_ssealed_scaffold(&root, "backend", "generic")
+        .unwrap_or_else(|_| panic!("initial scaffold"));
+    let manifest_path = root.join(".ssealed/manifest.json");
+    let mut manifest: serde_json::Value =
+        serde_json::from_str(&fs::read_to_string(&manifest_path).unwrap()).unwrap();
+    manifest["generatorVersion"] = serde_json::json!("0.7.0");
+    manifest["version"] = serde_json::json!("0.7.0");
+    manifest["customMetadata"] = serde_json::json!({"owner": "user"});
+    let files = manifest["files"].as_array_mut().unwrap();
+    let agents = files
+        .iter_mut()
+        .find(|file| file["path"] == "AGENTS.md")
+        .unwrap();
+    fs::write(root.join("AGENTS.md"), "user instructions").unwrap();
+    agents["ownership"] = serde_json::json!("project-owned");
+    agents["checksum"] = serde_json::json!(sha256_checksum("user instructions"));
+    agents["acceptedChecksum"] = agents["checksum"].clone();
+    let preserved_agents = agents.clone();
+    let deleted_path = "docs/backend/01-authentication.md";
+    fs::remove_file(root.join(deleted_path)).unwrap();
+    let old_file =
+        create_ssealed_manifest_file("docs/old-note.md", "document", &sha256_checksum("old note"));
+    files.push(old_file.clone());
+    files.retain(|file| file["path"] != "docs/backend/README.md");
+    fs::remove_file(root.join("docs/backend/README.md")).unwrap();
+    let original_metadata = manifest.clone();
+    fs::write(
+        &manifest_path,
+        serde_json::to_string_pretty(&manifest).unwrap(),
+    )
+    .unwrap();
+
+    let applied = create_ssealed_repository_scaffold_plan(&root, "backend", "generic", true)
+        .unwrap_or_else(|_| panic!("fill missing files"));
+    assert_eq!(applied.added_count, 1);
+    assert!(
+        applied
+            .files
+            .iter()
+            .any(|file| file.path == deleted_path && file.status == "conflict")
+    );
+    assert!(!root.join(deleted_path).exists());
+    let result: serde_json::Value =
+        serde_json::from_str(&fs::read_to_string(&manifest_path).unwrap()).unwrap();
+    let result_files = result["files"].as_array().unwrap();
+    assert_eq!(
+        result_files.iter().find(|file| file["path"] == "AGENTS.md"),
+        Some(&preserved_agents)
+    );
+    assert!(result_files.contains(&old_file));
+    assert!(
+        result_files
+            .iter()
+            .any(|file| file["path"] == "docs/backend/README.md")
+    );
+    for (key, value) in original_metadata.as_object().unwrap() {
+        if key != "files" {
+            assert_eq!(&result[key], value, "metadata {key}");
+        }
+    }
+    let accepted = fs::read_to_string(&manifest_path).unwrap();
+    create_ssealed_repository_scaffold_plan(&root, "backend", "generic", true)
+        .unwrap_or_else(|_| panic!("repeated apply"));
+    assert_eq!(fs::read_to_string(&manifest_path).unwrap(), accepted);
+}
+
+#[test]
+fn invalid_or_incompatible_existing_manifest_blocks_preview_and_apply_without_writes() {
+    for contents in [
+        "{broken",
+        r#"{"tool":"ssealed","schemaVersion":1,"scope":"frontend","profile":"generic","density":"standard","runner":"none","files":[]}"#,
+    ] {
+        let repository = tempfile::tempdir().expect("repository");
+        let root = fs::canonicalize(repository.path()).unwrap();
+        fs::create_dir(root.join(".ssealed")).unwrap();
+        let path = root.join(".ssealed/manifest.json");
+        fs::write(&path, contents).unwrap();
+        for should_apply in [false, true] {
+            assert!(
+                create_ssealed_repository_scaffold_plan(&root, "backend", "generic", should_apply)
+                    .is_err()
+            );
+            assert_eq!(fs::read_to_string(&path).unwrap(), contents);
+            assert!(!root.join("AGENTS.md").exists());
+            assert!(!root.join(".ssealed/apply-journal.json").exists());
+        }
+    }
+}
+
+#[test]
+fn manifest_publication_preserves_a_new_or_edited_manifest() {
+    let repository = tempfile::tempdir().expect("repository");
+    let root = fs::canonicalize(repository.path()).unwrap();
+    fs::create_dir(root.join(".ssealed")).unwrap();
+    let path = root.join(".ssealed/manifest.json");
+    fs::write(&path, "another owner's manifest").unwrap();
+    assert!(matches!(
+        write_ssealed_repository_manifest_file(&root, "new manifest", None),
+        Err(ProjectFolderError::SsealedManifestConflict)
+    ));
+    assert!(matches!(
+        write_ssealed_repository_manifest_file(&root, "new manifest", Some("old manifest")),
+        Err(ProjectFolderError::SsealedManifestConflict)
+    ));
+    assert_eq!(
+        fs::read_to_string(path).unwrap(),
+        "another owner's manifest"
+    );
+}
+
+#[test]
 fn rollback_preserves_a_created_file_edited_after_creation() {
     let repository = tempfile::tempdir().expect("repository");
     let directory = repository.path().join("generated");

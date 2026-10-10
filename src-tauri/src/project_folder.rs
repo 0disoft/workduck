@@ -68,6 +68,8 @@ pub enum ProjectFolderError {
     SsealedScaffoldFailed,
     #[serde(rename = "project-folder-ssealed-scaffold-locked")]
     SsealedScaffoldLocked,
+    #[serde(rename = "project-folder-ssealed-manifest-conflict")]
+    SsealedManifestConflict,
     #[serde(rename = "project-folder-open-path-required")]
     OpenPathRequired,
     #[serde(rename = "project-folder-open-path-not-absolute")]

@@ -283,6 +283,7 @@ export const hiProjectsMessages = {
 		'project-folder-name-invalid': 'नाम का उपयोग फ़ोल्डर के रूप में नहीं किया जा सकता।',
 		'project-folder-conflict': 'फ़ोल्डर पथ उपयोग करने योग्य नहीं है।',
 		'project-folder-create-failed': 'फ़ोल्डर नहीं बनाया जा सका।',
+		'project-folder-ssealed-manifest-conflict': 'मौजूदा ssealed manifest अमान्य है, अलग सेटिंग रखता है या बदल गया है। इसकी जांच करें और सेटिंग बदलने के लिए ssealed update/upgrade का उपयोग करें।',
 		'project-folder-ssealed-scaffold-failed': 'ssealed scaffold नहीं बनाया जा सका।',
 		'project-folder-ssealed-scaffold-locked':
 			'इस रिपॉजिटरी के लिए एक अन्य ssealed कार्रवाई चल रही है। उसके पूरा होने के बाद फिर कोशिश करें।',

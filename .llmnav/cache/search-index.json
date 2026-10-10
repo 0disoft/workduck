@@ -103,7 +103,7 @@
     "workduck.workspace.sync-git-native",
     "workduck.workspace.unlock"
   ],
-  "cardSetHash": "5f8c263cfb1ce7b93595d27f784334a4a49493b9cee517c33d5c3700241b0138",
+  "cardSetHash": "1422f89196081a39971ee8ab8c64a5d1a8c5b3117ad367dc19d12d1be3d43863",
   "documentCount": 102,
   "documents": [
     [
@@ -718,13 +718,13 @@
       ]
     ],
     [
-      "c31394ef36240e424edd8befafa99fe4fd1c668afd7a433d2bb861d129a45b2d",
+      "222bb06ed54e2ab4f02891b8c47f833bfc04847a7ffa78746f55303591be657d",
       [
         "plan and apply repository scaffolds with exclusive ownership, durable journals, conflict preservation, and recovery.",
         "scaffold apply transaction",
         "recover scaffold journal",
         "preserve scaffold conflicts",
-        "apply writes missing files only, and cleanup verifies repository parents and recorded checksums before removing generated files.",
+        "apply preserves managed deletions and manifest ownership; cleanup verifies parents and checksums before removing files.",
         "scaffold selection and planning",
         "scaffold file and manifest writes",
         "scaffold locking and recovery"
@@ -9283,6 +9283,15 @@
     ],
     [
       [
+        45,
+        [
+          5,
+          1
+        ]
+      ]
+    ],
+    [
+      [
         49,
         [
           5,
@@ -12797,7 +12806,7 @@
         45,
         [
           5,
-          2
+          1
         ]
       ],
       [
@@ -13811,13 +13820,6 @@
     [
       [
         23,
-        [
-          5,
-          1
-        ]
-      ],
-      [
-        45,
         [
           5,
           1
@@ -18029,6 +18031,13 @@
         ]
       ],
       [
+        45,
+        [
+          5,
+          1
+        ]
+      ],
+      [
         94,
         [
           1,
@@ -18065,6 +18074,8 @@
         45,
         [
           3,
+          1,
+          5,
           1
         ]
       ],
@@ -18636,13 +18647,6 @@
       ],
       [
         8,
-        [
-          5,
-          1
-        ]
-      ],
-      [
-        45,
         [
           5,
           1
@@ -20741,13 +20745,6 @@
         ]
       ],
       [
-        45,
-        [
-          5,
-          1
-        ]
-      ],
-      [
         48,
         [
           5,
@@ -22153,6 +22150,8 @@
         45,
         [
           1,
+          1,
+          5,
           1
         ]
       ],
@@ -23822,6 +23821,13 @@
     [
       [
         14,
+        [
+          5,
+          1
+        ]
+      ],
+      [
+        45,
         [
           5,
           1
@@ -26435,13 +26441,6 @@
           5,
           1
         ]
-      ],
-      [
-        45,
-        [
-          5,
-          1
-        ]
       ]
     ],
     [
@@ -28332,8 +28331,6 @@
           1,
           1,
           4,
-          1,
-          5,
           1
         ]
       ],
@@ -42253,8 +42250,6 @@
         45,
         [
           3,
-          1,
-          5,
           1
         ]
       ],
@@ -42656,6 +42651,7 @@
     "delete",
     "deletes",
     "deletion",
+    "deletions",
     "dependencies",
     "dependency",
     "derive",
