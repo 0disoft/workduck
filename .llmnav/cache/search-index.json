@@ -92,7 +92,7 @@
     "workduck.workspace.sync-file-native",
     "workduck.workspace.sync-git-native"
   ],
-  "cardSetHash": "65749d926d8fac290b032eedd2e85da80374539f07322478a489ae6895627975",
+  "cardSetHash": "108642e92a132a38b378d36cfa8dfbf705d4e550fdf6e18824d2180e0e85b01c",
   "documentCount": 91,
   "documents": [
     [
@@ -337,16 +337,17 @@
       ]
     ],
     [
-      "fc0a0917bada99588d7c9b8b58713929da07bb2c69d19eb4da92dac88a57548b",
+      "7badf53ff88904a967dce575a20a5a5adfe8c8f69bc6f00ce8c1ee6b95de5b56",
       [
         "resolve git from trusted absolute path entries and run prompt-free bounded child processes with separate inspection and mutation profiles.",
         "resolve git executable",
         "bounded git output",
         "disable git prompts",
-        "git is never resolved from the current directory or a caller-supplied path, and captured output retains only bounded head and tail bytes.",
+        "git is never resolved from the current directory or a caller-supplied path; captured output retains bounded head and tail bytes, and command and pipe-drain deadlines never wait on reader threads.",
         "git executable resolution",
         "git process policy",
-        "bounded child output"
+        "bounded child output",
+        "finite pipe drain"
       ]
     ],
     [
@@ -2462,7 +2463,7 @@
           1,
           2,
           5,
-          2
+          3
         ]
       ],
       [
@@ -6244,6 +6245,13 @@
         ]
       ],
       [
+        18,
+        [
+          5,
+          1
+        ]
+      ],
+      [
         19,
         [
           1,
@@ -7747,6 +7755,15 @@
     ],
     [
       [
+        18,
+        [
+          5,
+          1
+        ]
+      ]
+    ],
+    [
+      [
         37,
         [
           1,
@@ -8861,6 +8878,17 @@
         67,
         [
           1,
+          1
+        ]
+      ]
+    ],
+    [
+      [
+        18,
+        [
+          3,
+          1,
+          5,
           1
         ]
       ]
@@ -11372,6 +11400,15 @@
     ],
     [
       [
+        18,
+        [
+          3,
+          1
+        ]
+      ]
+    ],
+    [
+      [
         63,
         [
           5,
@@ -17003,7 +17040,7 @@
         18,
         [
           5,
-          1
+          2
         ]
       ],
       [
@@ -17677,6 +17714,13 @@
         ]
       ],
       [
+        18,
+        [
+          5,
+          1
+        ]
+      ],
+      [
         35,
         [
           5,
@@ -17823,13 +17867,6 @@
       ],
       [
         17,
-        [
-          5,
-          1
-        ]
-      ],
-      [
-        18,
         [
           5,
           1
@@ -20277,6 +20314,17 @@
           2,
           1,
           3,
+          1
+        ]
+      ]
+    ],
+    [
+      [
+        18,
+        [
+          3,
+          1,
+          5,
           1
         ]
       ]
@@ -22700,6 +22748,15 @@
     ],
     [
       [
+        18,
+        [
+          5,
+          1
+        ]
+      ]
+    ],
+    [
+      [
         1,
         [
           3,
@@ -32270,6 +32327,15 @@
     ],
     [
       [
+        18,
+        [
+          5,
+          1
+        ]
+      ]
+    ],
+    [
+      [
         0,
         [
           5,
@@ -34600,6 +34666,15 @@
         67,
         [
           3,
+          1
+        ]
+      ]
+    ],
+    [
+      [
+        18,
+        [
+          5,
           1
         ]
       ]
@@ -36932,6 +37007,7 @@
     "custom",
     "data",
     "database",
+    "deadlines",
     "decisions",
     "declaration",
     "declared",
@@ -36986,6 +37062,7 @@
     "domain",
     "draft",
     "drafts",
+    "drain",
     "drive",
     "drops",
     "dtos",
@@ -37070,6 +37147,7 @@
     "filters",
     "final",
     "finishes",
+    "finite",
     "first",
     "five",
     "fixed",
@@ -37359,6 +37437,7 @@
     "persona",
     "phase",
     "picker",
+    "pipe",
     "placement",
     "plain",
     "plaintext",
@@ -37424,6 +37503,7 @@
     "read",
     "readability",
     "readable",
+    "reader",
     "reads",
     "ready",
     "receive",
@@ -37685,6 +37765,7 @@
     "their",
     "them",
     "this",
+    "threads",
     "through",
     "time",
     "timers",
@@ -37775,6 +37856,7 @@
     "visible",
     "vocabulary",
     "vote",
+    "wait",
     "was",
     "when",
     "while",

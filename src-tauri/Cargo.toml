@@ -1,6 +1,6 @@
 [package]
 name = "workduck"
-version = "1.9.80"
+version = "1.9.81"
 description = "Local-first developer workbench"
 authors = ["Workduck contributors"]
 license = "0BSD"
@@ -38,6 +38,9 @@ tauri-plugin-notification = "2"
 
 [target.'cfg(windows)'.dependencies]
 winreg = "0.56.0"
+
+[target.'cfg(unix)'.dependencies]
+libc = "0.2"
 
 [target.'cfg(any(target_os = "macos", windows, target_os = "linux"))'.dependencies]
 tauri-plugin-process = "2"

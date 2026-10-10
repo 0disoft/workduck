@@ -1273,22 +1273,26 @@
         "Git failure domain mapping"
       ],
       "hashes": {
-        "body": "78e216dfb3d528fcdc65c5189c354f6d6f768c3a54018c0d69e7de5e5317bdc1",
-        "semantic": "7d565ee031c8fc5e39a579239a4a1a6cfcff512f75c17fc4eb86ebd64264dfc2",
-        "structure": "a6e18dffbf43db85f5f7b8a8d0b38392ba87cea7eb9310320b4df9c4c100e6d3"
+        "body": "277ec93cdf1ab318dd7567e5739be7f64b187cdd422f1b7d39a671fa63923eee",
+        "semantic": "bfc456c769e6b2615d54f7eda61aa1388679cff47431bd5764c17b1a72976667",
+        "structure": "3b232512f43092b5922915da67953bd34d8204681e70ae3eb8df00a256d22c74"
       },
       "id": "workduck.git.process-boundary",
       "imports": [
         "crate::git_credential::{\n    GitCommandProfile, GitCredential, apply_git_credential, apply_safe_git_config,\n    clear_git_credential_environment,\n}",
         "crate::process_tree::ProcessTreeChild",
+        "std::io::{Write, pipe}",
+        "std::os::fd::AsRawFd",
         "std::os::unix::fs::PermissionsExt",
+        "std::os::windows::io::AsRawHandle",
         "std::os::windows::process::CommandExt",
+        "std::process::{Command, Stdio}",
         "std::{\n        env,\n        ffi::OsString,\n        fs,\n        path::{Path, PathBuf},\n        sync::Mutex,\n    }",
-        "std::{\n    collections::VecDeque,\n    env,\n    ffi::OsStr,\n    fs,\n    io::{self, Read},\n    path::{Component, Path, PathBuf},\n    process::{Command, Output, Stdio},\n    sync::OnceLock,\n    thread,\n    time::Duration,\n}",
+        "std::{\n    collections::VecDeque,\n    env,\n    ffi::OsStr,\n    fs,\n    io::{self, Read},\n    path::{Component, Path, PathBuf},\n    process::{Command, Output, Stdio},\n    sync::OnceLock,\n    thread,\n    time::{Duration, Instant},\n}",
         "tests {\n    use super::{\n        BoundedOutputBuffer, CHILD_OUTPUT_HEAD_MAX_BYTES, CHILD_OUTPUT_MAX_BYTES,\n        resolve_system_executable_from_path, validate_plain_program_name,\n    }"
       ],
       "invariant": [
-        "Git is never resolved from the current directory or a caller-supplied path, and captured output retains only bounded head and tail bytes."
+        "Git is never resolved from the current directory or a caller-supplied path; captured output retains bounded head and tail bytes, and command and pipe-drain deadlines never wait on reader threads."
       ],
       "location": {
         "declarationLine": null,
@@ -1306,7 +1310,8 @@
       "owns": [
         "Git executable resolution",
         "Git process policy",
-        "bounded child output"
+        "bounded child output",
+        "finite pipe drain"
       ],
       "role": "Resolve Git from trusted absolute PATH entries and run prompt-free bounded child processes with separate inspection and mutation profiles.",
       "scope": "module",
@@ -4637,6 +4642,6 @@
   "generatedBy": "llmnav@0.9.7",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "e292ea394d0623e53818d29f7fca0b66eb376e7554e1496d5a9c31f3b3722aa2",
+  "sourceHash": "7cabcb246b2a40bd053530e6f0bd9b86e35949b892d94dbc1a1760787a956350",
   "specVersion": "1"
 }

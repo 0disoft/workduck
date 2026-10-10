@@ -1,10 +1,10 @@
 // llmnav/1 module
 // id=workduck.git.process-boundary
 // role=Resolve Git from trusted absolute PATH entries and run prompt-free bounded child processes with separate inspection and mutation profiles.
-// owns=Git executable resolution|Git process policy|bounded child output
+// owns=Git executable resolution|Git process policy|bounded child output|finite pipe drain
 // excludes=repository operation semantics|Git failure domain mapping
 // search=resolve Git executable|bounded Git output|disable Git prompts
-// invariant=Git is never resolved from the current directory or a caller-supplied path, and captured output retains only bounded head and tail bytes.
+// invariant=Git is never resolved from the current directory or a caller-supplied path; captured output retains bounded head and tail bytes, and command and pipe-drain deadlines never wait on reader threads.
 // stability=contract
 // /llmnav
 use std::{
@@ -17,7 +17,7 @@ use std::{
     process::{Command, Output, Stdio},
     sync::OnceLock,
     thread,
-    time::Duration,
+    time::{Duration, Instant},
 };
 
 use crate::git_credential::{
@@ -35,6 +35,26 @@ const CREATE_NO_WINDOW: u32 = 0x08000000;
 const CHILD_OUTPUT_MAX_BYTES: usize = 128 * 1024;
 const CHILD_OUTPUT_HEAD_MAX_BYTES: usize = CHILD_OUTPUT_MAX_BYTES / 2;
 const CHILD_OUTPUT_TAIL_MAX_BYTES: usize = CHILD_OUTPUT_MAX_BYTES - CHILD_OUTPUT_HEAD_MAX_BYTES;
+const CHILD_OUTPUT_DRAIN_TIMEOUT: Duration = Duration::from_secs(2);
+const CHILD_OUTPUT_POLL_INTERVAL: Duration = Duration::from_millis(10);
+
+#[cfg(unix)]
+use std::os::fd::AsRawFd;
+#[cfg(windows)]
+use std::os::windows::io::AsRawHandle;
+
+#[cfg(windows)]
+trait OutputPipe: Read + AsRawHandle {}
+#[cfg(windows)]
+impl<T: Read + AsRawHandle> OutputPipe for T {}
+#[cfg(unix)]
+trait OutputPipe: Read + AsRawFd {}
+#[cfg(unix)]
+impl<T: Read + AsRawFd> OutputPipe for T {}
+#[cfg(not(any(windows, unix)))]
+trait OutputPipe: Read {}
+#[cfg(not(any(windows, unix)))]
+impl<T: Read> OutputPipe for T {}
 
 pub(crate) fn git_process_path(path: &Path) -> PathBuf {
     crate::path_display::non_verbatim_path(path)
@@ -220,61 +240,165 @@ pub(crate) fn wait_for_child_output(
     mut child: ProcessTreeChild,
     timeout: Duration,
 ) -> Result<Output, GitProcessError> {
-    let stdout_reader = child.child_mut().stdout.take().map(spawn_output_reader);
-    let stderr_reader = child.child_mut().stderr.take().map(spawn_output_reader);
+    let stdout_pipe = child.child_mut().stdout.take();
+    let stderr_pipe = child.child_mut().stderr.take();
+    wait_for_child_output_with_pipes(child, timeout, stdout_pipe, stderr_pipe)
+}
 
-    match child.wait_timeout(timeout) {
-        Ok(Some(status)) => {
-            let stdout = join_output_reader(stdout_reader);
-            let stderr = join_output_reader(stderr_reader);
+fn wait_for_child_output_with_pipes<A: OutputPipe, B: OutputPipe>(
+    mut child: ProcessTreeChild,
+    timeout: Duration,
+    mut stdout_pipe: Option<A>,
+    mut stderr_pipe: Option<B>,
+) -> Result<Output, GitProcessError> {
+    let command_deadline = Instant::now()
+        .checked_add(timeout)
+        .ok_or(GitProcessError::Failed)?;
+    if let Some(pipe) = &stdout_pipe {
+        configure_output_pipe(pipe).map_err(|_| GitProcessError::Failed)?;
+    }
+    if let Some(pipe) = &stderr_pipe {
+        configure_output_pipe(pipe).map_err(|_| GitProcessError::Failed)?;
+    }
+    let mut stdout = BoundedOutputBuffer::new();
+    let mut stderr = BoundedOutputBuffer::new();
+    let mut status = None;
+    let mut drain_deadline = None;
 
-            Ok(Output {
-                status,
-                stdout,
-                stderr,
-            })
+    loop {
+        let stdout_progress =
+            poll_output_pipe(&mut stdout_pipe, &mut stdout).map_err(|_| GitProcessError::Failed)?;
+        let stderr_progress =
+            poll_output_pipe(&mut stderr_pipe, &mut stderr).map_err(|_| GitProcessError::Failed)?;
+        if status.is_none() {
+            status = child.try_wait().map_err(|_| GitProcessError::Failed)?;
+            if status.is_some() {
+                drain_deadline = Some(Instant::now() + CHILD_OUTPUT_DRAIN_TIMEOUT);
+            }
         }
-        Ok(None) => {
+        let now = Instant::now();
+        if let Some(status) = status {
+            if stdout_pipe.is_none() && stderr_pipe.is_none() {
+                return Ok(Output {
+                    status,
+                    stdout: stdout.into_bytes(),
+                    stderr: stderr.into_bytes(),
+                });
+            }
+            if drain_deadline.is_some_and(|deadline| now >= deadline) {
+                return Err(GitProcessError::TimedOut);
+            }
+        } else if now >= command_deadline {
             let _ = child.terminate();
-            let _ = join_output_reader(stdout_reader);
-            let _ = join_output_reader(stderr_reader);
-
-            Err(GitProcessError::TimedOut)
+            return Err(GitProcessError::TimedOut);
         }
-        Err(_) => {
-            let _ = child.terminate();
-            let _ = join_output_reader(stdout_reader);
-            let _ = join_output_reader(stderr_reader);
-
-            Err(GitProcessError::Failed)
+        if !stdout_progress && !stderr_progress {
+            let deadline = drain_deadline.unwrap_or(command_deadline);
+            thread::sleep(CHILD_OUTPUT_POLL_INTERVAL.min(deadline.saturating_duration_since(now)));
         }
     }
 }
 
-fn spawn_output_reader<T>(mut reader: T) -> thread::JoinHandle<Vec<u8>>
-where
-    T: Read + Send + 'static,
-{
-    thread::spawn(move || {
-        let mut output = BoundedOutputBuffer::new();
-        let mut buffer = [0_u8; 4096];
-
-        loop {
-            match reader.read(&mut buffer) {
-                Ok(0) => break,
-                Ok(length) => output.append(&buffer[..length]),
-                Err(_) => break,
-            }
+fn poll_output_pipe<T: OutputPipe>(
+    pipe: &mut Option<T>,
+    output: &mut BoundedOutputBuffer,
+) -> io::Result<bool> {
+    let Some(reader) = pipe.as_mut() else {
+        return Ok(false);
+    };
+    let mut bytes = [0_u8; 4096];
+    match read_available_output(reader, &mut bytes) {
+        Ok(0) => {
+            *pipe = None;
+            Ok(false)
         }
-
-        output.into_bytes()
-    })
+        Ok(length) => {
+            output.append(&bytes[..length]);
+            Ok(true)
+        }
+        Err(error)
+            if matches!(
+                error.kind(),
+                io::ErrorKind::WouldBlock | io::ErrorKind::Interrupted
+            ) =>
+        {
+            Ok(false)
+        }
+        Err(error) => Err(error),
+    }
 }
 
-fn join_output_reader(reader: Option<thread::JoinHandle<Vec<u8>>>) -> Vec<u8> {
-    reader
-        .and_then(|reader| reader.join().ok())
-        .unwrap_or_default()
+#[cfg(windows)]
+fn configure_output_pipe<T: OutputPipe>(_pipe: &T) -> io::Result<()> {
+    Ok(())
+}
+
+#[cfg(windows)]
+fn read_available_output<T: OutputPipe>(pipe: &mut T, bytes: &mut [u8]) -> io::Result<usize> {
+    #[link(name = "kernel32")]
+    unsafe extern "system" {
+        fn PeekNamedPipe(
+            handle: *mut core::ffi::c_void,
+            buffer: *mut core::ffi::c_void,
+            buffer_size: u32,
+            bytes_read: *mut u32,
+            available: *mut u32,
+            message_bytes_left: *mut u32,
+        ) -> i32;
+    }
+    let mut available = 0;
+    let result = unsafe {
+        PeekNamedPipe(
+            pipe.as_raw_handle().cast(),
+            std::ptr::null_mut(),
+            0,
+            std::ptr::null_mut(),
+            &mut available,
+            std::ptr::null_mut(),
+        )
+    };
+    if result == 0 {
+        let error = io::Error::last_os_error();
+        return if matches!(error.raw_os_error(), Some(109 | 233)) {
+            Ok(0)
+        } else {
+            Err(error)
+        };
+    }
+    if available == 0 {
+        return Err(io::ErrorKind::WouldBlock.into());
+    }
+    // This loop exclusively owns the read end. Consume no more than the bytes
+    // already available, so Read cannot wait for another writer.
+    let length = bytes.len().min(available as usize);
+    pipe.read(&mut bytes[..length])
+}
+
+#[cfg(unix)]
+fn configure_output_pipe<T: OutputPipe>(pipe: &T) -> io::Result<()> {
+    let flags = unsafe { libc::fcntl(pipe.as_raw_fd(), libc::F_GETFL) };
+    if flags < 0
+        || unsafe { libc::fcntl(pipe.as_raw_fd(), libc::F_SETFL, flags | libc::O_NONBLOCK) } < 0
+    {
+        Err(io::Error::last_os_error())
+    } else {
+        Ok(())
+    }
+}
+
+#[cfg(unix)]
+fn read_available_output<T: OutputPipe>(pipe: &mut T, bytes: &mut [u8]) -> io::Result<usize> {
+    pipe.read(bytes)
+}
+
+#[cfg(not(any(windows, unix)))]
+fn configure_output_pipe<T: OutputPipe>(_pipe: &T) -> io::Result<()> {
+    Err(io::ErrorKind::Unsupported.into())
+}
+
+#[cfg(not(any(windows, unix)))]
+fn read_available_output<T: OutputPipe>(_pipe: &mut T, _bytes: &mut [u8]) -> io::Result<usize> {
+    Err(io::ErrorKind::Unsupported.into())
 }
 
 struct BoundedOutputBuffer {
@@ -340,6 +464,148 @@ mod tests {
     };
 
     static CURRENT_DIR_TEST_LOCK: Mutex<()> = Mutex::new(());
+
+    #[cfg(any(windows, unix))]
+    fn output_test_command(_windows_script: &str, _unix_script: &str) -> std::process::Command {
+        use std::process::{Command, Stdio};
+        #[cfg(windows)]
+        let mut command = {
+            use std::os::windows::process::CommandExt;
+            let powershell = PathBuf::from(env::var_os("SystemRoot").unwrap())
+                .join("System32/WindowsPowerShell/v1.0/powershell.exe");
+            let mut command = Command::new(powershell);
+            command
+                .args([
+                    "-NoLogo",
+                    "-NoProfile",
+                    "-NonInteractive",
+                    "-Command",
+                    _windows_script,
+                ])
+                .creation_flags(0x0800_0000);
+            command
+        };
+        #[cfg(unix)]
+        let mut command = {
+            let mut command = Command::new("/bin/sh");
+            command.args(["-c", _unix_script]);
+            command
+        };
+        command
+            .stdin(Stdio::null())
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped());
+        command
+    }
+
+    #[cfg(any(windows, unix))]
+    #[test]
+    fn finite_output_capture_preserves_exit_code_both_streams_and_bounded_head_tail() {
+        let mut command = output_test_command(
+            "[Console]::Out.Write('HEAD:'); [Console]::Out.Write(('x' * 139264)); [Console]::Out.Write('TAIL'); [Console]::Error.Write('ERR'); exit 7",
+            "printf HEAD:; i=0; while [ \"$i\" -lt 8192 ]; do printf xxxxxxxxxxxxxxxxx; i=$((i+1)); done; printf TAIL; printf ERR >&2; exit 7",
+        );
+        let child = crate::process_tree::ProcessTreeChild::spawn(&mut command).unwrap();
+        let output =
+            super::wait_for_child_output(child, std::time::Duration::from_secs(10)).unwrap();
+        assert_eq!(output.status.code(), Some(7));
+        assert_eq!(output.stdout.len(), CHILD_OUTPUT_MAX_BYTES);
+        assert!(output.stdout.starts_with(b"HEAD:"));
+        assert!(output.stdout.ends_with(b"TAIL"));
+        assert_eq!(output.stderr, b"ERR");
+    }
+
+    #[cfg(any(windows, unix))]
+    #[test]
+    fn quiet_open_pipes_do_not_prevent_command_timeout() {
+        let mut command = output_test_command("Start-Sleep -Seconds 30", "sleep 30");
+        let child = crate::process_tree::ProcessTreeChild::spawn(&mut command).unwrap();
+        let started = std::time::Instant::now();
+        assert!(matches!(
+            super::wait_for_child_output(child, std::time::Duration::from_millis(50)),
+            Err(super::GitProcessError::TimedOut)
+        ));
+        assert!(started.elapsed() < std::time::Duration::from_secs(4));
+    }
+
+    #[cfg(any(windows, unix))]
+    #[test]
+    fn parent_exit_has_a_shared_drain_deadline_and_closes_pipes_with_independent_writers() {
+        use std::io::{Write, pipe};
+        let (stdout, mut stdout_writer) = pipe().unwrap();
+        let (stderr, mut stderr_writer) = pipe().unwrap();
+        stdout_writer.write_all(b"before-stdout").unwrap();
+        stderr_writer.write_all(b"before-stderr").unwrap();
+        let mut command = output_test_command("exit 0", "exit 0");
+        command
+            .stdout(std::process::Stdio::null())
+            .stderr(std::process::Stdio::null());
+        let child = crate::process_tree::ProcessTreeChild::spawn(&mut command).unwrap();
+        let started = std::time::Instant::now();
+        let result = super::wait_for_child_output_with_pipes(
+            child,
+            std::time::Duration::from_secs(5),
+            Some(stdout),
+            Some(stderr),
+        );
+        assert!(matches!(result, Err(super::GitProcessError::TimedOut)));
+        assert!(started.elapsed() < std::time::Duration::from_secs(4));
+        // Both writers remain independently owned, and no reader thread keeps
+        // either read end alive after the function returns.
+        assert!(stdout_writer.write_all(b"after").is_err());
+        assert!(stderr_writer.write_all(b"after").is_err());
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn pipe_read_errors_are_reported_instead_of_returning_empty_success() {
+        let file = tempfile::tempfile().unwrap();
+        let mut pipe = Some(file);
+        let mut output = BoundedOutputBuffer::new();
+        assert!(super::poll_output_pipe(&mut pipe, &mut output).is_err());
+    }
+
+    #[cfg(any(windows, unix))]
+    #[test]
+    fn continuously_arriving_output_does_not_extend_the_command_deadline() {
+        use std::io::{Write, pipe};
+        let (reader, mut writer) = pipe().unwrap();
+        let producer = std::thread::spawn(move || {
+            let mut chunks = 0;
+            while writer.write_all(&[b'x'; 4096]).is_ok() {
+                chunks += 1;
+            }
+            chunks
+        });
+        let mut command = output_test_command("Start-Sleep -Seconds 30", "sleep 30");
+        command
+            .stdout(std::process::Stdio::null())
+            .stderr(std::process::Stdio::null());
+        let child = crate::process_tree::ProcessTreeChild::spawn(&mut command).unwrap();
+        let started = std::time::Instant::now();
+        let result = super::wait_for_child_output_with_pipes(
+            child,
+            std::time::Duration::from_millis(200),
+            Some(reader),
+            None::<std::io::PipeReader>,
+        );
+        assert!(matches!(result, Err(super::GitProcessError::TimedOut)));
+        assert!(producer.join().unwrap() > 0);
+        assert!(started.elapsed() < std::time::Duration::from_secs(4));
+    }
+
+    #[test]
+    fn actual_git_inspection_runs_through_the_finite_output_loop() {
+        let workspace = tempfile::tempdir().unwrap();
+        let output = super::run_git_inspection_process(
+            workspace.path(),
+            ["--version"],
+            std::time::Duration::from_secs(5),
+        )
+        .unwrap();
+        assert!(output.status.success());
+        assert!(output.stdout.starts_with(b"git version "));
+    }
 
     #[test]
     fn bounded_output_keeps_the_head_and_recent_tail_after_multiple_chunks() {

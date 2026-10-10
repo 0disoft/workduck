@@ -118,6 +118,13 @@ Completed owners retire their registrations so later cleanup does not reuse a
 stale process-group identity. Finite command cleanup preserves the parent's
 original exit code.
 
+Finite Git and GitHub CLI calls poll stdout, stderr, and parent exit in one
+loop without output-reader threads. Captured data keeps at most 128KiB per
+stream. The command deadline remains active while output is arriving, and
+after parent exit both pipes share a two-second drain deadline. A pipe still
+held by an independent writer returns a timeout; read errors return failure.
+Partial output is not reported as a successful command result.
+
 Brief editing, export, and run linking do not run agents or shell commands, and
 the new stores have no browser-only persistence fallback. Creating a new queue
 work order from a brief and manually approving report-based checks remain outside
