@@ -5721,7 +5721,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "33a8ba932d9c04acfba6b613cd29549fc7692c8cf4c221b8013b65b2265ad43a",
+      "contentHash": "a308c9091006301d8ddeb84c518d7148c5eb9edde14b17b28ca28a5a60ebd20a",
       "declarations": [
         null
       ],
@@ -5731,11 +5731,27 @@
       ],
       "path": "src/lib/app-state/app-state-storage.ts",
       "semanticBytes": 672,
-      "sourceBytes": 15396
+      "sourceBytes": 15504
     },
     {
       "blocks": [],
-      "contentHash": "74b2c451c4fef02fb2c9816c4c5390133c9c8406a2e316b01223f363d84727d0",
+      "contentHash": "b874dd6dc64f073667280930dace111f61413abbe54751b4e2d458f5597b577c",
+      "declarations": [],
+      "imports": [
+        "#lib/settings/appearance-settings.ts",
+        "#lib/tauri/tauri-invoke.ts",
+        "./app-state-storage",
+        "./persistent-app-state",
+        "node:assert/strict",
+        "node:test"
+      ],
+      "path": "src/lib/app-state/persistent-app-state.test.ts",
+      "semanticBytes": 0,
+      "sourceBytes": 5097
+    },
+    {
+      "blocks": [],
+      "contentHash": "541189c0c71e09d1cde1c62f6881dffdd04fdd087a9915a387db151545faee0b",
       "declarations": [],
       "imports": [
         "#lib/settings/appearance-settings.ts",
@@ -5746,7 +5762,7 @@
       ],
       "path": "src/lib/app-state/persistent-app-state.ts",
       "semanticBytes": 0,
-      "sourceBytes": 2275
+      "sourceBytes": 2744
     },
     {
       "blocks": [],

@@ -4280,7 +4280,7 @@
         "workspace project registries"
       ],
       "hashes": {
-        "body": "33a8ba932d9c04acfba6b613cd29549fc7692c8cf4c221b8013b65b2265ad43a",
+        "body": "a308c9091006301d8ddeb84c518d7148c5eb9edde14b17b28ca28a5a60ebd20a",
         "semantic": "13f63e37a971f238a534f00055f24f58aa53a7f75245a90303e319d90dd4f374",
         "structure": "1e222539a41b7ca433d629c18afe33696257ba4d1b463345be92338d6504c960"
       },
@@ -4642,6 +4642,6 @@
   "generatedBy": "llmnav@0.9.7",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "7cabcb246b2a40bd053530e6f0bd9b86e35949b892d94dbc1a1760787a956350",
+  "sourceHash": "301b33bea1fc0e3f1b7f105f0ced63f8e292a37d2500d8d5c83a772a4e0ad159",
   "specVersion": "1"
 }

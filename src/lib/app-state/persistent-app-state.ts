@@ -30,7 +30,8 @@ import {
 let initializationPromise: Promise<WorkduckAppStateInitializationResult> | null = null;
 
 export function initializePersistentAppState(): Promise<WorkduckAppStateInitializationResult> {
-	initializationPromise ??= initializeWorkduckAppState([
+	if (initializationPromise !== null) return initializationPromise;
+	const attempt = initializeWorkduckAppState([
 		{
 			key: WORKDUCK_APPEARANCE_APP_STATE_KEY,
 			legacyStorageKey: WORKDUCK_APPEARANCE_SETTINGS_STORAGE_KEY,
@@ -59,9 +60,20 @@ export function initializePersistentAppState(): Promise<WorkduckAppStateInitiali
 				parseWorkspaceRegistry(readLegacyStorageValue(WORKDUCK_WORKSPACE_REGISTRY_STORAGE_KEY))
 			)
 		}
-	]);
+	]).then((result) => {
+		if (!result.ok && initializationPromise === attempt) initializationPromise = null;
+		return result;
+	}, () => {
+		if (initializationPromise === attempt) initializationPromise = null;
+		return { ok: false, error: 'app-state-read-failed' } as const;
+	});
+	initializationPromise = attempt;
 
 	return initializationPromise;
+}
+
+export function resetPersistentAppStateInitializationForTest(): void {
+	initializationPromise = null;
 }
 
 function readLegacyStorageValue(key: string) {

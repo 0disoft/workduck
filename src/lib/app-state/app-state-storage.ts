@@ -109,6 +109,7 @@ export async function initializeWorkduckAppState(
 	const resolvedValues = new Map(
 		seeds.map((seed) => [seed.key, pendingWrites[seed.key]?.valueJson ?? seed.valueJson])
 	);
+	let failureError: WorkduckAppStateStorageError = 'app-state-read-failed';
 
 	try {
 		const response = await invoke<NativeAppStateReadResponse>('read_app_state_records', {
@@ -137,6 +138,7 @@ export async function initializeWorkduckAppState(
 		}
 
 		if (hasRecords(recordsToWrite)) {
+			failureError = 'app-state-write-failed';
 			const writeResponse = await invoke<NativeAppStateWriteResponse>('write_app_state_records', {
 				records: recordsToWrite
 			});
@@ -153,7 +155,7 @@ export async function initializeWorkduckAppState(
 		initializationError = null;
 		return { ok: true };
 	} catch {
-		return failInitialization('app-state-read-failed', resolvedValues);
+		return failInitialization(failureError, resolvedValues);
 	}
 }
 

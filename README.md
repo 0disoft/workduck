@@ -28,6 +28,9 @@ includes:
 - Workspace and project metadata import/export through encrypted sync files.
 - Optional Git pull and push for the encrypted sync file.
 - Appearance settings for language and interface font sizing.
+- Failed native settings initialization can be retried without restarting.
+  Concurrent startup requests share one attempt; failed reads or journal replay
+  preserve pending writes and block changes to fallback settings until recovery.
 - System settings for startup, tray behavior, and workspace inactivity locking.
 - Environment variable vault UI for API keys, tokens, accounts, passwords, and
   tags.
