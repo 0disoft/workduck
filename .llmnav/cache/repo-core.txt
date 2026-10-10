@@ -231,9 +231,9 @@ invariant Repository operations and favorite-save feedback stay in the captured 
 
 @workduck.app-state.storage
 role Persist application settings through a renderer crash journal, native SQLite promotion, and browser fallback.
-owns app state backend selection, legacy setting promotion, pending write journal, serialized flush, transaction cache publication
+owns app state backend selection, legacy setting promotion, pending write journal, serialized flush, transaction cache publication, focus cache refresh
 excludes setting domain validation, native SQLite implementation, workspace project registries
-invariant Native writes require successful initialization; external journal notifications must match the current durable journal and respect transaction leases; flushes publish committed values without replacing newer edits and remove only matching journals; journal I/O errors end the attempt.
+invariant Native access requires successful initialization; focus refreshes preserve journals, transaction leases, and cache revisions; external journal notifications match the current journal; flushes publish committed values without replacing newer edits; journal I/O errors end the attempt.
 
 @workduck.environment.vault-session
 role Project native environment vault sessions into workspace metadata subscriptions and coordinate explicit secret access and locking.

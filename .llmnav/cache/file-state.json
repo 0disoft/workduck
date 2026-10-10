@@ -5847,6 +5847,19 @@
     },
     {
       "blocks": [],
+      "contentHash": "535ed047c76d7ac2970ea054b573f6168e8435fc91d244167e96d6fcb2aba6a9",
+      "declarations": [],
+      "imports": [
+        "#lib/tauri/tauri-invoke.ts",
+        "./app-state-storage",
+        "bun:test"
+      ],
+      "path": "src/lib/app-state/app-state-refresh.test.ts",
+      "semanticBytes": 0,
+      "sourceBytes": 9872
+    },
+    {
+      "blocks": [],
       "contentHash": "785f5c916c42fe40ed2bd7fc6c9dbc2f04b2a75300b409189fa8e973e4bf6ab8",
       "declarations": [],
       "imports": [
@@ -5871,14 +5884,15 @@
             ],
             "id": "workduck.app-state.storage",
             "invariant": [
-              "Native writes require successful initialization; external journal notifications must match the current durable journal and respect transaction leases; flushes publish committed values without replacing newer edits and remove only matching journals; journal I/O errors end the attempt."
+              "Native access requires successful initialization; focus refreshes preserve journals, transaction leases, and cache revisions; external journal notifications match the current journal; flushes publish committed values without replacing newer edits; journal I/O errors end the attempt."
             ],
             "owns": [
               "app state backend selection",
               "legacy setting promotion",
               "pending write journal",
               "serialized flush",
-              "transaction cache publication"
+              "transaction cache publication",
+              "focus cache refresh"
             ],
             "rel": [],
             "risk": [],
@@ -5888,12 +5902,13 @@
               "app state crash journal",
               "settings SQLite promotion",
               "pending setting flush",
-              "stale foreign journal notification"
+              "stale foreign journal notification",
+              "focus settings cache refresh"
             ],
             "stability": "architecture",
             "unknown": []
           },
-          "end": 818,
+          "end": 866,
           "endLine": 9,
           "entries": [
             {
@@ -5912,7 +5927,7 @@
               "key": "owns",
               "line": 4,
               "order": 2,
-              "value": "app state backend selection|legacy setting promotion|pending write journal|serialized flush|transaction cache publication"
+              "value": "app state backend selection|legacy setting promotion|pending write journal|serialized flush|transaction cache publication|focus cache refresh"
             },
             {
               "key": "excludes",
@@ -5924,13 +5939,13 @@
               "key": "search",
               "line": 6,
               "order": 4,
-              "value": "app state crash journal|settings SQLite promotion|pending setting flush|stale foreign journal notification"
+              "value": "app state crash journal|settings SQLite promotion|pending setting flush|stale foreign journal notification|focus settings cache refresh"
             },
             {
               "key": "invariant",
               "line": 7,
               "order": 5,
-              "value": "Native writes require successful initialization; external journal notifications must match the current durable journal and respect transaction leases; flushes publish committed values without replacing newer edits and remove only matching journals; journal I/O errors end the attempt."
+              "value": "Native access requires successful initialization; focus refreshes preserve journals, transaction leases, and cache revisions; external journal notifications match the current journal; flushes publish committed values without replacing newer edits; journal I/O errors end the attempt."
             },
             {
               "key": "stability",
@@ -5943,7 +5958,7 @@
           "indent": "",
           "newline": "\n",
           "prefix": null,
-          "raw": "/* llmnav/1 module\nid=workduck.app-state.storage\nrole=Persist application settings through a renderer crash journal, native SQLite promotion, and browser fallback.\nowns=app state backend selection|legacy setting promotion|pending write journal|serialized flush|transaction cache publication\nexcludes=setting domain validation|native SQLite implementation|workspace project registries\nsearch=app state crash journal|settings SQLite promotion|pending setting flush|stale foreign journal notification\ninvariant=Native writes require successful initialization; external journal notifications must match the current durable journal and respect transaction leases; flushes publish committed values without replacing newer edits and remove only matching journals; journal I/O errors end the attempt.\nstability=architecture\n*/",
+          "raw": "/* llmnav/1 module\nid=workduck.app-state.storage\nrole=Persist application settings through a renderer crash journal, native SQLite promotion, and browser fallback.\nowns=app state backend selection|legacy setting promotion|pending write journal|serialized flush|transaction cache publication|focus cache refresh\nexcludes=setting domain validation|native SQLite implementation|workspace project registries\nsearch=app state crash journal|settings SQLite promotion|pending setting flush|stale foreign journal notification|focus settings cache refresh\ninvariant=Native access requires successful initialization; focus refreshes preserve journals, transaction leases, and cache revisions; external journal notifications match the current journal; flushes publish committed values without replacing newer edits; journal I/O errors end the attempt.\nstability=architecture\n*/",
           "scope": "module",
           "specVersion": "1",
           "start": 0,
@@ -5952,7 +5967,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "461fcaf87b5352d6b4af10f9ac1fed297cf8d33f27cbbe21e374e66c9eb922e6",
+      "contentHash": "f26e04b161e73c689e5fd8caafa69b9e430b4d33c46ff5ff981831ac39d047a0",
       "declarations": [
         null
       ],
@@ -5961,8 +5976,8 @@
         "#lib/tauri/tauri-invoke.ts"
       ],
       "path": "src/lib/app-state/app-state-storage.ts",
-      "semanticBytes": 818,
-      "sourceBytes": 19955
+      "semanticBytes": 866,
+      "sourceBytes": 22945
     },
     {
       "blocks": [],

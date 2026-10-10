@@ -1,10 +1,10 @@
 /* llmnav/1 module
 id=workduck.app-state.storage
 role=Persist application settings through a renderer crash journal, native SQLite promotion, and browser fallback.
-owns=app state backend selection|legacy setting promotion|pending write journal|serialized flush|transaction cache publication
+owns=app state backend selection|legacy setting promotion|pending write journal|serialized flush|transaction cache publication|focus cache refresh
 excludes=setting domain validation|native SQLite implementation|workspace project registries
-search=app state crash journal|settings SQLite promotion|pending setting flush|stale foreign journal notification
-invariant=Native writes require successful initialization; external journal notifications must match the current durable journal and respect transaction leases; flushes publish committed values without replacing newer edits and remove only matching journals; journal I/O errors end the attempt.
+search=app state crash journal|settings SQLite promotion|pending setting flush|stale foreign journal notification|focus settings cache refresh
+invariant=Native access requires successful initialization; focus refreshes preserve journals, transaction leases, and cache revisions; external journal notifications match the current journal; flushes publish committed values without replacing newer edits; journal I/O errors end the attempt.
 stability=architecture
 */
 import { isObjectRecord } from '#lib/shared/object-record.ts';
@@ -82,6 +82,11 @@ interface NativeAppStateWriteResponse {
 type AppStateBackend = 'uninitialized' | 'browser' | 'sqlite' | 'native-unavailable';
 
 const cachedValues = new Map<WorkduckAppStateKey, string>();
+const cacheVersions = new Map<WorkduckAppStateKey, number>();
+const refreshSequences = new Map<WorkduckAppStateKey, number>();
+const focusRefreshSubscriptions = new Set<{ key: WorkduckAppStateKey; active: boolean }>();
+let focusRefreshScheduled = false;
+let storageEpoch = 0;
 const legacyStorageKeys = new Map<WorkduckAppStateKey, string>();
 const transactionKeys = new Set<WorkduckAppStateKey>();
 let backend: AppStateBackend = 'uninitialized';
@@ -97,6 +102,7 @@ interface AppStateValueChangedDetail {
 export async function initializeWorkduckAppState(
 	seeds: readonly WorkduckAppStateSeed[]
 ): Promise<WorkduckAppStateInitializationResult> {
+	storageEpoch += 1;
 	registerSeeds(seeds);
 	const storage = getBrowserStorage();
 	const invoke = getTauriInvoke();
@@ -106,7 +112,7 @@ export async function initializeWorkduckAppState(
 		initializationError = null;
 
 		for (const seed of seeds) {
-			cachedValues.set(seed.key, readBrowserValue(storage, seed.legacyStorageKey) ?? seed.valueJson);
+			cacheAppStateValue(seed.key, readBrowserValue(storage, seed.legacyStorageKey) ?? seed.valueJson);
 		}
 
 		return { ok: true };
@@ -132,7 +138,7 @@ export async function initializeWorkduckAppState(
 			const nativeValue = nativeRecords[seed.key];
 			const valueJson = pendingWrite?.valueJson ?? nativeValue ?? seed.valueJson;
 
-			cachedValues.set(seed.key, valueJson);
+			cacheAppStateValue(seed.key, valueJson);
 			resolvedValues.set(seed.key, valueJson);
 
 			if (pendingWrite !== undefined) {
@@ -219,7 +225,7 @@ export function writeWorkduckAppStateValue(
 			};
 		}
 
-		cachedValues.set(key, valueJson);
+		cacheAppStateValue(key, valueJson);
 		return { ok: true, valueJson };
 	}
 
@@ -255,7 +261,7 @@ export function writeWorkduckAppStateValue(
 		};
 	}
 
-	cachedValues.set(key, valueJson);
+	cacheAppStateValue(key, valueJson);
 	queueMicrotask(() => {
 		void flushWorkduckAppStateWrites();
 	});
@@ -280,7 +286,7 @@ export async function commitWorkduckAppStateValueWithNativeTransaction(
 		// Writes to this key stay excluded until the committed cache is visible.
 		if (!await flushWorkduckAppStateWrites()) return failed;
 		if (!await commit(cachedValues.get(key) ?? null)) return failed;
-		cachedValues.set(key, valueJson);
+		cacheAppStateValue(key, valueJson);
 		legacyStorageKeys.set(key, legacyStorageKey);
 		return { ok: true, valueJson };
 	} catch {
@@ -290,6 +296,40 @@ export async function commitWorkduckAppStateValueWithNativeTransaction(
 	}
 }
 
+export async function refreshWorkduckAppStateValues(
+	keys: readonly WorkduckAppStateKey[] = WORKDUCK_APP_STATE_KEYS
+): Promise<boolean> {
+	const invoke = getTauriInvoke();
+	const storage = getBrowserStorage();
+	if (backend !== 'sqlite' || initializationError !== null || invoke === undefined || storage === undefined) return false;
+	const epoch = storageEpoch;
+	try {
+		const requested = [...new Set(keys)].map((key) => {
+			const sequence = (refreshSequences.get(key) ?? 0) + 1;
+			refreshSequences.set(key, sequence);
+			return { key, sequence, version: cacheVersions.get(key) };
+		}).filter(({ key }) => cachedValues.has(key) && !transactionKeys.has(key) &&
+			storage.getItem(createPendingStorageKey(key)) === null);
+		if (requested.length === 0) return true;
+		const response = await invoke<NativeAppStateReadResponse>('read_app_state_records', {
+			keys: requested.map(({ key }) => key)
+		});
+		const records = parseNativeReadResponse(response);
+		if (requested.some(({ key }) => records[key] === undefined)) return false;
+		if (epoch !== storageEpoch || backend !== 'sqlite' || initializationError !== null) return false;
+		// Read every journal before publishing, so an I/O failure cannot apply a partial snapshot.
+		const pendingKeys = new Set(requested.filter(({ key }) =>
+			storage.getItem(createPendingStorageKey(key)) !== null).map(({ key }) => key));
+		for (const { key, sequence, version } of requested) {
+			if (refreshSequences.get(key) !== sequence || cacheVersions.get(key) !== version ||
+				transactionKeys.has(key) || pendingKeys.has(key)) continue;
+			const valueJson = records[key]!;
+			if (cachedValues.get(key) !== valueJson) publishAppStateValue(key, valueJson);
+		}
+		return true;
+	} catch { return false; }
+}
+
 export function subscribeWorkduckAppStateValue(
 	key: WorkduckAppStateKey,
 	callback: (valueJson: string) => void
@@ -297,6 +337,7 @@ export function subscribeWorkduckAppStateValue(
 	if (typeof window === 'undefined') {
 		return () => undefined;
 	}
+	const subscription = { key, active: true };
 
 	function handleStorage(event: StorageEvent) {
 		if (transactionKeys.has(key)) return;
@@ -329,12 +370,28 @@ export function subscribeWorkduckAppStateValue(
 		if (detail?.key === key) callback(detail.valueJson);
 	}
 
+	function handleFocus() {
+		focusRefreshSubscriptions.add(subscription);
+		if (focusRefreshScheduled) return;
+		focusRefreshScheduled = true;
+		queueMicrotask(() => {
+			focusRefreshScheduled = false;
+			const keys = [...focusRefreshSubscriptions].filter(({ active }) => active).map(({ key }) => key);
+			focusRefreshSubscriptions.clear();
+			void refreshWorkduckAppStateValues(keys);
+		});
+	}
+
 	window.addEventListener('storage', handleStorage);
 	window.addEventListener(APP_STATE_VALUE_CHANGED_EVENT, handleValueChanged);
+	window.addEventListener('focus', handleFocus);
 
 	return () => {
+		if (!subscription.active) return;
+		subscription.active = false;
 		window.removeEventListener('storage', handleStorage);
 		window.removeEventListener(APP_STATE_VALUE_CHANGED_EVENT, handleValueChanged);
+		window.removeEventListener('focus', handleFocus);
 	};
 }
 
@@ -397,7 +454,7 @@ function registerSeeds(seeds: readonly WorkduckAppStateSeed[]) {
 		legacyStorageKeys.set(seed.key, seed.legacyStorageKey);
 
 		if (isJsonObjectText(seed.valueJson)) {
-			cachedValues.set(seed.key, seed.valueJson);
+			cacheAppStateValue(seed.key, seed.valueJson);
 		}
 	}
 }
@@ -407,7 +464,7 @@ function failInitialization(
 	fallbackValues: ReadonlyMap<WorkduckAppStateKey, string>
 ): WorkduckAppStateInitializationResult {
 	for (const [key, valueJson] of fallbackValues) {
-		cachedValues.set(key, valueJson);
+		cacheAppStateValue(key, valueJson);
 	}
 
 	backend = 'native-unavailable';
@@ -474,12 +531,17 @@ function reconcileCommittedRecords(
 		const valueJson = superseded[key] ?? request.valueJson;
 		if (cachedValues.get(key) === valueJson) continue;
 		if (notify) publishAppStateValue(key, valueJson);
-		else cachedValues.set(key, valueJson);
+		else cacheAppStateValue(key, valueJson);
 	}
 }
 
-function publishAppStateValue(key: WorkduckAppStateKey, valueJson: string) {
+function cacheAppStateValue(key: WorkduckAppStateKey, valueJson: string) {
 	cachedValues.set(key, valueJson);
+	cacheVersions.set(key, (cacheVersions.get(key) ?? 0) + 1);
+}
+
+function publishAppStateValue(key: WorkduckAppStateKey, valueJson: string) {
+	cacheAppStateValue(key, valueJson);
 	if (typeof window !== 'undefined') {
 		window.dispatchEvent(new CustomEvent<AppStateValueChangedDetail>(APP_STATE_VALUE_CHANGED_EVENT, {
 			detail: { key, valueJson }
@@ -685,7 +747,11 @@ export function setWorkduckAppStateBrowserStorageForTest(storage: BrowserStorage
 }
 
 export function resetWorkduckAppStateStorageForTest() {
+	storageEpoch += 1;
 	cachedValues.clear();
+	cacheVersions.clear();
+	refreshSequences.clear();
+	focusRefreshSubscriptions.clear();
 	legacyStorageKeys.clear();
 	transactionKeys.clear();
 	backend = 'uninitialized';
