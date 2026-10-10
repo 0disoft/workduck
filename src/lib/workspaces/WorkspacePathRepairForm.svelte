@@ -86,6 +86,8 @@
 				return messages.workspace.pathErrors.registryReadFailed;
 			case 'workspace-registry-write-failed':
 				return messages.workspace.pathErrors.registryWriteFailed;
+			case 'workspace-registry-conflict':
+				return messages.workspace.pathErrors.registryConflict;
 			case 'workspace-name-required':
 			case 'workspace-password-hash-invalid':
 				return messages.workspace.pathErrors.registryWriteFailed;
@@ -205,7 +207,7 @@
 				return;
 			}
 
-			const writeResult = writeWorkspaceRegistryToBrowser(updateResult.registry);
+			const writeResult = await writeWorkspaceRegistryToBrowser(updateResult.registry, registryResult.registry);
 
 			if (!writeResult.ok) {
 				error = writeResult.error;

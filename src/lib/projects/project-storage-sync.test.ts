@@ -3,6 +3,7 @@ import {
 	flushWorkduckAppStateWrites,
 	initializeWorkduckAppState,
 	resetWorkduckAppStateStorageForTest,
+	writeWorkduckAppStateValue,
 	WORKDUCK_APP_STATE_PENDING_STORAGE_KEY_PREFIX,
 	WORKDUCK_WORKSPACE_REGISTRY_APP_STATE_KEY
 } from '#lib/app-state/app-state-storage.ts';
@@ -125,7 +126,7 @@ test('publishes workspace and projects only after one native commit and excludes
 			registries: { demo: { registryJson: JSON.stringify(projects.demo), updatedAt: projects.demo.updatedAt } }
 		});
 		expect(readWorkspaceRegistryFromBrowser().registry).toEqual(original);
-		expect(writeWorkspaceRegistryToBrowser(workspace('Racing edit')).ok).toBe(false);
+		expect((await writeWorkspaceRegistryToBrowser(workspace('Racing edit'), original)).ok).toBe(false);
 		expect(window.localStorage.getItem(journalKey)).toBeNull();
 		expect(notifications).toEqual([]);
 		pending.resolve();
@@ -143,7 +144,7 @@ test('publishes workspace and projects only after one native commit and excludes
 for (const failure of ['conflict', 'throw'] as const) {
 	test(`keeps cache and notifications unchanged after native ${failure} and releases the edit exclusion`, async () => {
 		await initialize(async (command) => {
-			if (command === 'write_app_state_records') return { ok: true };
+			if (command === 'write_app_state_records' || command === 'compare_and_write_app_state_record') return { ok: true };
 			if (failure === 'throw') throw new Error('database unavailable');
 			return { ok: false, error: 'project-registry-revision-conflict' };
 		});
@@ -154,7 +155,7 @@ for (const failure of ['conflict', 'throw'] as const) {
 		expect(readWorkspaceRegistryFromBrowser().registry).toEqual(original);
 		expect(notifications).toEqual([]);
 		expect(window.localStorage.getItem(journalKey)).toBeNull();
-		expect(writeWorkspaceRegistryToBrowser(workspace('After failure')).ok).toBe(true);
+		expect((await writeWorkspaceRegistryToBrowser(workspace('After failure'), original)).ok).toBe(true);
 		expect(await flushWorkduckAppStateWrites()).toBe(true);
 	});
 }
@@ -170,14 +171,16 @@ for (const flushSucceeds of [true, false]) {
 			return { ok: true };
 		});
 		const edited = workspace('Pending edit');
-		expect(writeWorkspaceRegistryToBrowser(edited).ok).toBe(true);
+		// Recover journals from older versions before admitting an atomic edit/import.
+		expect(writeWorkduckAppStateValue(WORKDUCK_WORKSPACE_REGISTRY_APP_STATE_KEY,
+			WORKDUCK_WORKSPACE_REGISTRY_STORAGE_KEY, JSON.stringify(edited)).ok).toBe(true);
 		notifications.length = 0;
 		const journal = window.localStorage.getItem(journalKey);
 		const importing = writeWorkspaceSyncRegistries(imported, projects);
 		try {
 			await settle();
 			expect(calls.map((call) => call.command)).toEqual(['write_app_state_records']);
-			expect(writeWorkspaceRegistryToBrowser(workspace('Racing edit')).ok).toBe(false);
+			expect((await writeWorkspaceRegistryToBrowser(workspace('Racing edit'), edited)).ok).toBe(false);
 			pending.resolve();
 			expect((await importing).ok).toBe(flushSucceeds);
 			if (flushSucceeds) {

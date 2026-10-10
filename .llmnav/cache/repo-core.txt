@@ -269,7 +269,7 @@ invariant Large scripts use a short run-bound loader and clean up their staged s
 role Read, write, and publish workspace registry snapshots through application state without discarding damaged records.
 owns workspace storage admission, workspace change subscriptions, snapshot notification validation
 excludes workspace domain mutations, native SQLite transactions, browser journal implementation
-invariant Reads preserve stored record and lock validity; saves validate the current and incoming snapshots; failed reads and malformed notifications never publish an empty replacement.
+invariant Edits carry their original snapshot and publish only after conditional persistence; native transactions and browser locks reject stale lists; failed reads and malformed notifications never publish an empty replacement.
 
 @workduck.app-state.bootstrap
 role Coalesce renderer initialization and provide validated lazy workspace migration without reading stale browser mirrors when SQLite is authoritative.

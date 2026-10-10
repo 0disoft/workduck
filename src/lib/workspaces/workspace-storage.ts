@@ -4,7 +4,7 @@ role=Read, write, and publish workspace registry snapshots through application s
 owns=workspace storage admission|workspace change subscriptions|snapshot notification validation
 excludes=workspace domain mutations|native SQLite transactions|browser journal implementation
 search=workspace registry persistence|workspace read failure block saves|invalid workspace change notification
-invariant=Reads preserve stored record and lock validity; saves validate the current and incoming snapshots; failed reads and malformed notifications never publish an empty replacement.
+invariant=Edits carry their original snapshot and publish only after conditional persistence; native transactions and browser locks reject stale lists; failed reads and malformed notifications never publish an empty replacement.
 stability=architecture
 */
 import {
@@ -16,17 +16,21 @@ import {
 	type WorkspaceRegistry
 } from './workspace-registry';
 import {
+	commitWorkduckAppStateValueWithNativeTransaction,
 	isWorkduckAppStateBrowserStorageActive,
 	readWorkduckAppStateValue,
+	refreshWorkduckAppStateValues,
 	subscribeWorkduckAppStateValue,
 	WORKDUCK_WORKSPACE_REGISTRY_APP_STATE_KEY,
 	writeWorkduckAppStateValue
 } from '#lib/app-state/app-state-storage.ts';
+import { getTauriInvoke } from '#lib/tauri/tauri-invoke.ts';
 
 export const WORKDUCK_WORKSPACE_REGISTRY_CHANGED_EVENT = 'workduck:workspace-registry-changed';
 
 export type WorkspaceRegistryStorageError =
 	| 'workspace-registry-read-failed'
+	| 'workspace-registry-conflict'
 	| 'workspace-registry-write-failed';
 
 export type WorkspaceRegistryStorageResult =
@@ -61,27 +65,56 @@ export function readWorkspaceRegistryFromBrowser(): WorkspaceRegistryStorageResu
 			};
 }
 
-export function writeWorkspaceRegistryToBrowser(
-	registry: WorkspaceRegistry
-): WorkspaceRegistryStorageResult {
-	const current = readWorkspaceRegistryFromBrowser();
+export async function writeWorkspaceRegistryToBrowser(
+	registry: WorkspaceRegistry,
+	expectedRegistry: WorkspaceRegistry
+): Promise<WorkspaceRegistryStorageResult> {
+	const failed = (error: WorkspaceRegistryStorageError = 'workspace-registry-write-failed'): WorkspaceRegistryStorageResult =>
+		({ ok: false, registry: readWorkspaceRegistryFromBrowser().registry, error });
 	const parsed = normalizeStoredWorkspaceRegistry(registry);
-	if (!current.ok || !parsed.ok) return { ok: false, registry: current.registry, error: 'workspace-registry-write-failed' };
+	const expected = normalizeStoredWorkspaceRegistry(expectedRegistry);
+	if (!parsed.ok || !expected.ok) return failed();
 	const normalizedRegistry = parsed.registry;
-	const result = writeWorkduckAppStateValue(
-		WORKDUCK_WORKSPACE_REGISTRY_APP_STATE_KEY,
-		WORKDUCK_WORKSPACE_REGISTRY_STORAGE_KEY,
-		serializeWorkspaceRegistry(normalizedRegistry)
-	);
-
-	if (!result.ok) {
-		return {
-			ok: false,
-			registry: normalizedRegistry,
-			error: 'workspace-registry-write-failed'
-		};
+	const expectedJson = serializeWorkspaceRegistry(expected.registry);
+	const valueJson = serializeWorkspaceRegistry(normalizedRegistry);
+	if (isWorkduckAppStateBrowserStorageActive()) {
+		// localStorage read + write is not atomic across browser tabs.
+		try {
+			const locks = typeof navigator === 'undefined' ? undefined : navigator.locks;
+			if (locks === undefined) return failed();
+			return await locks.request('workduck:workspace-registry-write', () => {
+				const current = readWorkspaceRegistryFromBrowser();
+				if (!current.ok) return failed();
+				if (serializeWorkspaceRegistry(current.registry) !== expectedJson) return failed('workspace-registry-conflict');
+				const result = writeWorkduckAppStateValue(WORKDUCK_WORKSPACE_REGISTRY_APP_STATE_KEY,
+					WORKDUCK_WORKSPACE_REGISTRY_STORAGE_KEY, valueJson);
+				if (!result.ok) return failed();
+				notifyWorkspaceRegistryChanged(normalizedRegistry);
+				return { ok: true, registry: normalizedRegistry } as const;
+			});
+		} catch { return failed(); }
 	}
-
+	let conflict = false;
+	const result = await commitWorkduckAppStateValueWithNativeTransaction(
+		WORKDUCK_WORKSPACE_REGISTRY_APP_STATE_KEY, WORKDUCK_WORKSPACE_REGISTRY_STORAGE_KEY,
+		valueJson, async (expectedValueJson) => {
+			const current = parseStoredWorkspaceRegistry(expectedValueJson);
+			if (!current.ok) return false;
+			if (serializeWorkspaceRegistry(current.registry) !== expectedJson) { conflict = true; return false; }
+			const invoke = getTauriInvoke();
+			if (invoke === undefined) return false;
+			const response = await invoke<{ ok: boolean; error?: string }>('compare_and_write_app_state_record', {
+				key: WORKDUCK_WORKSPACE_REGISTRY_APP_STATE_KEY, expectedValueJson,
+				record: { valueJson, updatedAt: new Date().toISOString() }
+			});
+			conflict = response?.error === 'app-state-conflict';
+			return response?.ok === true;
+		}
+	);
+	if (!result.ok) {
+		if (conflict) await refreshWorkduckAppStateValues([WORKDUCK_WORKSPACE_REGISTRY_APP_STATE_KEY]);
+		return failed(conflict ? 'workspace-registry-conflict' : undefined);
+	}
 	notifyWorkspaceRegistryChanged(normalizedRegistry);
 	return { ok: true, registry: normalizedRegistry };
 }

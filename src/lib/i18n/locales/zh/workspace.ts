@@ -33,6 +33,7 @@ export const zhWorkspaceMessages = {
 		pathDuplicate: '该工作区路径已注册。',
 		workspaceNotFound: '未找到工作区。',
 		registryReadFailed: '无法加载工作区设置。',
+		registryConflict: '其他窗口已更改工作区列表。请查看最新列表后重试。',
 		registryWriteFailed: '无法保存工作区设置。'
 	}
 } as const;

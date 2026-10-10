@@ -7404,12 +7404,12 @@
     },
     {
       "blocks": [],
-      "contentHash": "68f358b3d4ed4690421041fa8b2e9841bebd044fc5d529229ad28fc408e16c34",
+      "contentHash": "731f4bd9ea2341d3a6c80d0d47d0d4eb06cd87d1c8385ca3790673dd22d7a535",
       "declarations": [],
       "imports": [],
       "path": "src/lib/i18n/locales/en/workspace.ts",
       "semanticBytes": 0,
-      "sourceBytes": 1834
+      "sourceBytes": 1942
     },
     {
       "blocks": [],
@@ -7555,12 +7555,12 @@
     },
     {
       "blocks": [],
-      "contentHash": "611abe13740d3aee8ae0b99c05076fcaa9e3bdb3920479d6dd3653ecfcc70ac5",
+      "contentHash": "7be5f70114e9571d89b8ccfa09e69209e689f67622046005cceb4eaf3ac71a7a",
       "declarations": [],
       "imports": [],
       "path": "src/lib/i18n/locales/es/workspace.ts",
       "semanticBytes": 0,
-      "sourceBytes": 2315
+      "sourceBytes": 2442
     },
     {
       "blocks": [],
@@ -7706,12 +7706,12 @@
     },
     {
       "blocks": [],
-      "contentHash": "d6f663f48a0fd16577a7a181c4af0646709f52da9f74cf7fb883fa4b99d3a496",
+      "contentHash": "babd671bad4f4f12cfa4b52fd4eee246d93764b9dac9102c993471750924680f",
       "declarations": [],
       "imports": [],
       "path": "src/lib/i18n/locales/fr/workspace.ts",
       "semanticBytes": 0,
-      "sourceBytes": 2453
+      "sourceBytes": 2586
     },
     {
       "blocks": [],
@@ -7857,12 +7857,12 @@
     },
     {
       "blocks": [],
-      "contentHash": "e7951814ff1fd4c8a378183eb9ad106fdf58981fbf355410f36d093324a4ce41",
+      "contentHash": "0c151d5a9e81fda9e4be08b5d2e551746227249b7770ad7026a7cd5f49c15f1a",
       "declarations": [],
       "imports": [],
       "path": "src/lib/i18n/locales/hi/workspace.ts",
       "semanticBytes": 0,
-      "sourceBytes": 3726
+      "sourceBytes": 3963
     },
     {
       "blocks": [],
@@ -8008,12 +8008,12 @@
     },
     {
       "blocks": [],
-      "contentHash": "a3884711fd28036e4d5149e8c1b22184f2b4ba26b1064b841af779a5dcb20011",
+      "contentHash": "44d2f2c6410f19ebbaedf0117365a49b53c9ccfaadee73db467f326fde6f7ea7",
       "declarations": [],
       "imports": [],
       "path": "src/lib/i18n/locales/ko/workspace.ts",
       "semanticBytes": 0,
-      "sourceBytes": 2401
+      "sourceBytes": 2546
     },
     {
       "blocks": [],
@@ -8159,12 +8159,12 @@
     },
     {
       "blocks": [],
-      "contentHash": "b8faca101ba00bea534f27f4cea5241ff45e15a7f98ff74755c38ef2eaac02ec",
+      "contentHash": "ee04d723fc4bdec6b546d7954ce4044b4347b520d659a49980616defaae9d3b8",
       "declarations": [],
       "imports": [],
       "path": "src/lib/i18n/locales/zh/workspace.ts",
       "semanticBytes": 0,
-      "sourceBytes": 1808
+      "sourceBytes": 1904
     },
     {
       "blocks": [],
@@ -10950,7 +10950,7 @@
     },
     {
       "blocks": [],
-      "contentHash": "607deead8e18b7acbcfaf6743df9874ab44b5e28eb332eee3d4956bf7854ae4e",
+      "contentHash": "34d396873902a4e8b3b096c3c0ea6327c56bb6bc9ac937c0c613c0039b8bd23e",
       "declarations": [],
       "imports": [
         "#lib/app-state/app-state-storage.ts",
@@ -10963,7 +10963,7 @@
       ],
       "path": "src/lib/projects/project-storage-sync.test.ts",
       "semanticBytes": 0,
-      "sourceBytes": 11377
+      "sourceBytes": 11690
     },
     {
       "blocks": [],
@@ -13235,7 +13235,7 @@
     },
     {
       "blocks": [],
-      "contentHash": "9ab955d78cbaab0ea829c7448e3b9cf46c9b0807c501bc4b2fb4e9e47e621735",
+      "contentHash": "25c810708ae879eb414aeecda7e99cedbbe95017998c45a5cfd83c86465f345f",
       "declarations": [],
       "imports": [
         "#lib/environment/environment-vault-session-loader.ts",
@@ -13264,7 +13264,7 @@
       ],
       "path": "src/lib/settings/WorkspaceSettingsSurface.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 35145
+      "sourceBytes": 35529
     },
     {
       "blocks": [],
@@ -13408,7 +13408,7 @@
     },
     {
       "blocks": [],
-      "contentHash": "5bf3dfe5e25cf20269f95b985cc6466c9e962fe896e3ae993c81dd61fda0ff8a",
+      "contentHash": "c8ef13d6b977c80cd0c200ee4e7842a2ac9b40ba953ac577a6c8b5460dcf2c61",
       "declarations": [],
       "imports": [
         "#lib/brand/WorkduckMark.svelte",
@@ -13439,7 +13439,7 @@
       ],
       "path": "src/lib/shell/WorkbenchShell.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 35371
+      "sourceBytes": 35553
     },
     {
       "blocks": [],
@@ -14278,7 +14278,7 @@
     },
     {
       "blocks": [],
-      "contentHash": "4a8aebb3534dc55cc33d399550527ade339093e9dd099825be01c9513e8620ff",
+      "contentHash": "5a1bff9045d295f880025b23160c9d6b9112895434bdf7fc090659df73356d9a",
       "declarations": [],
       "imports": [
         "#lib/i18n/workduck-language.ts",
@@ -14292,7 +14292,7 @@
       ],
       "path": "src/lib/workspaces/WorkspacePathRepairForm.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 8020
+      "sourceBytes": 8149
     },
     {
       "blocks": [],
@@ -14764,7 +14764,7 @@
     },
     {
       "blocks": [],
-      "contentHash": "8ffef0fb7c7f5587967cb43b99c9b4fa973cbdd5a31cd41283043379ad760128",
+      "contentHash": "7a182b5869349812e3fd2b6e650166e1683f6912493ea351cf909273d96228cd",
       "declarations": [],
       "imports": [
         "#lib/app-state/app-state-storage.ts",
@@ -14775,7 +14775,7 @@
       ],
       "path": "src/lib/workspaces/workspace-storage.test.ts",
       "semanticBytes": 0,
-      "sourceBytes": 5949
+      "sourceBytes": 12774
     },
     {
       "blocks": [
@@ -14789,7 +14789,7 @@
             ],
             "id": "workduck.workspace.storage",
             "invariant": [
-              "Reads preserve stored record and lock validity; saves validate the current and incoming snapshots; failed reads and malformed notifications never publish an empty replacement."
+              "Edits carry their original snapshot and publish only after conditional persistence; native transactions and browser locks reject stale lists; failed reads and malformed notifications never publish an empty replacement."
             ],
             "owns": [
               "workspace storage admission",
@@ -14808,7 +14808,7 @@
             "stability": "architecture",
             "unknown": []
           },
-          "end": 683,
+          "end": 726,
           "endLine": 9,
           "entries": [
             {
@@ -14845,7 +14845,7 @@
               "key": "invariant",
               "line": 7,
               "order": 5,
-              "value": "Reads preserve stored record and lock validity; saves validate the current and incoming snapshots; failed reads and malformed notifications never publish an empty replacement."
+              "value": "Edits carry their original snapshot and publish only after conditional persistence; native transactions and browser locks reject stale lists; failed reads and malformed notifications never publish an empty replacement."
             },
             {
               "key": "stability",
@@ -14858,7 +14858,7 @@
           "indent": "",
           "newline": "\n",
           "prefix": null,
-          "raw": "/* llmnav/1 module\nid=workduck.workspace.storage\nrole=Read, write, and publish workspace registry snapshots through application state without discarding damaged records.\nowns=workspace storage admission|workspace change subscriptions|snapshot notification validation\nexcludes=workspace domain mutations|native SQLite transactions|browser journal implementation\nsearch=workspace registry persistence|workspace read failure block saves|invalid workspace change notification\ninvariant=Reads preserve stored record and lock validity; saves validate the current and incoming snapshots; failed reads and malformed notifications never publish an empty replacement.\nstability=architecture\n*/",
+          "raw": "/* llmnav/1 module\nid=workduck.workspace.storage\nrole=Read, write, and publish workspace registry snapshots through application state without discarding damaged records.\nowns=workspace storage admission|workspace change subscriptions|snapshot notification validation\nexcludes=workspace domain mutations|native SQLite transactions|browser journal implementation\nsearch=workspace registry persistence|workspace read failure block saves|invalid workspace change notification\ninvariant=Edits carry their original snapshot and publish only after conditional persistence; native transactions and browser locks reject stale lists; failed reads and malformed notifications never publish an empty replacement.\nstability=architecture\n*/",
           "scope": "module",
           "specVersion": "1",
           "start": 0,
@@ -14867,17 +14867,18 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "abe63a03e1b77af2da453793a9f29db63ad9cd43716a2928b749cae802857dc8",
+      "contentHash": "f78c562b05afbc0abb79744adbca8bac405aa33d8f9d1210ffa131295ce1046f",
       "declarations": [
         null
       ],
       "imports": [
         "#lib/app-state/app-state-storage.ts",
+        "#lib/tauri/tauri-invoke.ts",
         "./workspace-registry"
       ],
       "path": "src/lib/workspaces/workspace-storage.ts",
-      "semanticBytes": 683,
-      "sourceBytes": 4869
+      "semanticBytes": 726,
+      "sourceBytes": 7038
     },
     {
       "blocks": [

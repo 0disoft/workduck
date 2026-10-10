@@ -33,6 +33,7 @@ export const frWorkspaceMessages = {
 		pathDuplicate: 'Le chemin de l\'espace de travail est déjà enregistré.',
 		workspaceNotFound: 'L\'espace de travail n\'a pas été trouvé.',
 		registryReadFailed: 'Les paramètres de l\'espace de travail n\'ont pas pu être chargés.',
+		registryConflict: 'La liste des espaces de travail a changé dans une autre fenêtre. Vérifiez la liste actuelle et réessayez.',
 		registryWriteFailed: 'Les paramètres de l\'espace de travail n\'ont pas pu être enregistrés.'
 	}
 } as const;

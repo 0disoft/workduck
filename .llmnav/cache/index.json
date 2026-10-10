@@ -4879,17 +4879,18 @@
         "browser journal implementation"
       ],
       "hashes": {
-        "body": "abe63a03e1b77af2da453793a9f29db63ad9cd43716a2928b749cae802857dc8",
-        "semantic": "183784dc2351894958b58fdd91b542f5623080864366d0de391f436ba1110615",
-        "structure": "ae76d25ca2349b90b4047ccf78ec477dea7995e88d31c022c63c53ecdcc6c16f"
+        "body": "f78c562b05afbc0abb79744adbca8bac405aa33d8f9d1210ffa131295ce1046f",
+        "semantic": "073b4774c4e63e901810c5f23588ebf58425cb5c00b9f56372f34237d3b54958",
+        "structure": "2c7ac25b3ffd3442490d40eb7e0ea6edd7b690f6758dd69b6a56f46ee36420f6"
       },
       "id": "workduck.workspace.storage",
       "imports": [
         "#lib/app-state/app-state-storage.ts",
+        "#lib/tauri/tauri-invoke.ts",
         "./workspace-registry"
       ],
       "invariant": [
-        "Reads preserve stored record and lock validity; saves validate the current and incoming snapshots; failed reads and malformed notifications never publish an empty replacement."
+        "Edits carry their original snapshot and publish only after conditional persistence; native transactions and browser locks reject stale lists; failed reads and malformed notifications never publish an empty replacement."
       ],
       "location": {
         "declarationLine": null,
@@ -4983,6 +4984,6 @@
   "generatedBy": "llmnav@0.9.7",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "65d3324f5035ecf1bec9f1bf24ed7612b6a6ea6b014558c18944436a6a164062",
+  "sourceHash": "cbc33a139a7ebcea3bce5a388f44ebc7efcf8e2ff9f9cc6f3a8313fe9e029ae4",
   "specVersion": "1"
 }

@@ -33,6 +33,7 @@ export const koWorkspaceMessages = {
 			pathDuplicate: '이미 등록된 워크스페이스 경로입니다.',
 			workspaceNotFound: '워크스페이스를 찾을 수 없습니다.',
 			registryReadFailed: '워크스페이스 설정을 불러오지 못했습니다.',
+			registryConflict: '다른 창에서 워크스페이스 목록을 변경했습니다. 최신 목록을 확인한 뒤 다시 시도하세요.',
 			registryWriteFailed: '워크스페이스 설정을 저장하지 못했습니다.'
 		}
 	} as const;

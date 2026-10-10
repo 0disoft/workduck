@@ -33,6 +33,7 @@ export const hiWorkspaceMessages = {
 		pathDuplicate: 'कार्यक्षेत्र पथ पहले से ही पंजीकृत है।',
 		workspaceNotFound: 'कार्यक्षेत्र नहीं मिला।',
 		registryReadFailed: 'कार्यक्षेत्र सेटिंग्स लोड नहीं की जा सकीं।',
+		registryConflict: 'दूसरी विंडो में कार्यक्षेत्र सूची बदल गई है। नई सूची देखें और फिर से प्रयास करें।',
 		registryWriteFailed: 'कार्यक्षेत्र सेटिंग्स सहेजी नहीं जा सकीं।'
 	}
 } as const;

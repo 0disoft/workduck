@@ -157,11 +157,12 @@
 		storageError = result.ok ? null : messages.workspace.pathErrors.registryReadFailed;
 	}
 
-	function persistRegistry(nextRegistry: WorkspaceRegistry) {
-		const result = writeWorkspaceRegistryToBrowser(nextRegistry);
+	async function persistRegistry(nextRegistry: WorkspaceRegistry, expectedRegistry: WorkspaceRegistry) {
+		const result = await writeWorkspaceRegistryToBrowser(nextRegistry, expectedRegistry);
 
 		registry = result.registry;
-		storageError = result.ok ? null : messages.workspace.pathErrors.registryWriteFailed;
+		storageError = result.ok ? null : result.error === 'workspace-registry-conflict'
+			? messages.workspace.pathErrors.registryConflict : messages.workspace.pathErrors.registryWriteFailed;
 		return result.ok;
 	}
 
@@ -574,7 +575,8 @@
 				return;
 			}
 
-			const result = addWorkspace(registry, {
+			const expectedRegistry = registry;
+			const result = addWorkspace(expectedRegistry, {
 				name: workspaceName,
 				path: pathValidation.path,
 				passwordHash: passwordHashResult.passwordHash
@@ -585,7 +587,7 @@
 				return;
 			}
 
-			if (persistRegistry(result.registry)) {
+			if (await persistRegistry(result.registry, expectedRegistry)) {
 				if (workspaceRequiresUnlock(result.workspace)) {
 					markWorkspaceUnlocked(result.workspace.id, workspacePassword);
 				}
@@ -632,16 +634,16 @@
 		switchWorkspaceById(workspaceId);
 	}
 
-	function switchWorkspaceById(workspaceId: string) {
-		const result = switchWorkspace(registry, workspaceId);
+	async function switchWorkspaceById(workspaceId: string) {
+		const expectedRegistry = registry;
+		const result = switchWorkspace(expectedRegistry, workspaceId);
 
 		if (!result.ok) {
 			formError = result.error;
 			return;
 		}
 
-		persistRegistry(result.registry);
-		clearWorkspaceUnlockRequest();
+		if (await persistRegistry(result.registry, expectedRegistry)) clearWorkspaceUnlockRequest();
 	}
 
 	function handleWorkspaceRemove(workspaceId: string) {
@@ -890,7 +892,8 @@
 	}
 
 	async function removeWorkspaceById(workspaceId: string) {
-		const result = removeWorkspace(registry, workspaceId);
+		const expectedRegistry = registry;
+		const result = removeWorkspace(expectedRegistry, workspaceId);
 
 		if (!result.ok) {
 			formError = result.error;
@@ -901,7 +904,7 @@
 			return;
 		}
 
-		if (persistRegistry(result.registry)) {
+		if (await persistRegistry(result.registry, expectedRegistry)) {
 
 			if (workspaceUnlockId === workspaceId) {
 				clearWorkspaceUnlockRequest();

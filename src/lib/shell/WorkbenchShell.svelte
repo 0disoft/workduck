@@ -503,23 +503,25 @@
 		switchWorkspaceById(workspaceId);
 	}
 
-	function switchWorkspaceById(workspaceId: string) {
+	async function switchWorkspaceById(workspaceId: string) {
 		if (appIsLocked) {
 			return;
 		}
 
-		const result = switchWorkspace(workspaceRegistry, workspaceId);
+		const expectedRegistry = workspaceRegistry;
+		const result = switchWorkspace(expectedRegistry, workspaceId);
 
 		if (!result.ok) {
 			workspaceSwitchError = 'Workspace was not found.';
 			return;
 		}
 
-		const writeResult = writeWorkspaceRegistryToBrowser(result.registry);
+		const writeResult = await writeWorkspaceRegistryToBrowser(result.registry, expectedRegistry);
 		workspaceRegistry = writeResult.registry;
 
 		if (!writeResult.ok) {
-			workspaceSwitchError = 'Workspace switch could not be saved.';
+			workspaceSwitchError = writeResult.error === 'workspace-registry-conflict'
+				? messages.workspace.pathErrors.registryConflict : 'Workspace switch could not be saved.';
 			isWorkspaceMenuOpen = true;
 			return;
 		}

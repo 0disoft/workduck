@@ -33,6 +33,7 @@ export const enWorkspaceMessages = {
 			pathDuplicate: 'Workspace path is already registered.',
 			workspaceNotFound: 'Workspace was not found.',
 			registryReadFailed: 'Workspace settings could not be loaded.',
+			registryConflict: 'The workspace list changed in another window. Review the latest list and try again.',
 			registryWriteFailed: 'Workspace settings could not be saved.'
 		}
 	} as const;
