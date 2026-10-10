@@ -9859,7 +9859,7 @@
     },
     {
       "blocks": [],
-      "contentHash": "c87e6c8bc6afbd409e19499851bd51e43f3fc7f04f1b9f6e577c75ce1c9e702e",
+      "contentHash": "8dfc31b88ff9b85768c40d8337eb8c954f5f2f43917862a1942fa6e24075c929",
       "declarations": [],
       "imports": [
         "#lib/environment/environment-vault-session.ts",
@@ -9877,7 +9877,7 @@
       ],
       "path": "src/lib/projects/project-board-workspace-lifecycle.test.ts",
       "semanticBytes": 0,
-      "sourceBytes": 11181
+      "sourceBytes": 12252
     },
     {
       "blocks": [],
@@ -10839,7 +10839,7 @@
     },
     {
       "blocks": [],
-      "contentHash": "4368c03e8be32cfbf8d7298caf8513a10f4efff4ecc1f3f65cbff2ee1b2694af",
+      "contentHash": "79bc09ab1039f02def19f226f0791248a5d6927587571b01746fb4211a1ec703",
       "declarations": [],
       "imports": [
         "#lib/tauri/tauri-invoke.ts",
@@ -10849,7 +10849,7 @@
       ],
       "path": "src/lib/projects/project-storage.test.ts",
       "semanticBytes": 0,
-      "sourceBytes": 22743
+      "sourceBytes": 24695
     },
     {
       "blocks": [
@@ -10862,7 +10862,7 @@
             ],
             "id": "workduck.projects.storage",
             "invariant": [
-              "Stored SQLite rows are independent of the legacy cache; invalid legacy data blocks fallback saves; bulk fallback reads share one snapshot per attempt; writes stay ordered, imports publish only after commit, and legacy promotion guards missing rows."
+              "Stored SQLite rows are independent of the legacy cache; invalid snapshots cannot publish changes or cancel pending reads; invalid legacy data blocks fallback saves; bulk fallback reads share one snapshot per attempt; writes stay ordered, imports publish only after commit, and legacy promotion guards missing rows."
             ],
             "owns": [
               "project registry persistence",
@@ -10879,12 +10879,13 @@
               "project registry storage",
               "sqlite registry migration",
               "atomic workspace sync import",
-              "corrupt legacy project data"
+              "corrupt legacy project data",
+              "invalid project change notification"
             ],
             "stability": "architecture",
             "unknown": []
           },
-          "end": 783,
+          "end": 885,
           "endLine": 9,
           "entries": [
             {
@@ -10915,13 +10916,13 @@
               "key": "search",
               "line": 6,
               "order": 4,
-              "value": "project registry storage|sqlite registry migration|atomic workspace sync import|corrupt legacy project data"
+              "value": "project registry storage|sqlite registry migration|atomic workspace sync import|corrupt legacy project data|invalid project change notification"
             },
             {
               "key": "invariant",
               "line": 7,
               "order": 5,
-              "value": "Stored SQLite rows are independent of the legacy cache; invalid legacy data blocks fallback saves; bulk fallback reads share one snapshot per attempt; writes stay ordered, imports publish only after commit, and legacy promotion guards missing rows."
+              "value": "Stored SQLite rows are independent of the legacy cache; invalid snapshots cannot publish changes or cancel pending reads; invalid legacy data blocks fallback saves; bulk fallback reads share one snapshot per attempt; writes stay ordered, imports publish only after commit, and legacy promotion guards missing rows."
             },
             {
               "key": "stability",
@@ -10934,7 +10935,7 @@
           "indent": "",
           "newline": "\n",
           "prefix": null,
-          "raw": "/* llmnav/1 module\nid=workduck.projects.storage\nrole=Persist ordered project registry writes, atomically import workspace sync data in SQLite, and migrate browser legacy registries.\nowns=project registry persistence|legacy registry promotion|registry change notifications|workspace operation ordering|atomic sync import\nexcludes=project domain normalization|repository Git operations\nsearch=project registry storage|sqlite registry migration|atomic workspace sync import|corrupt legacy project data\ninvariant=Stored SQLite rows are independent of the legacy cache; invalid legacy data blocks fallback saves; bulk fallback reads share one snapshot per attempt; writes stay ordered, imports publish only after commit, and legacy promotion guards missing rows.\nstability=architecture\n*/",
+          "raw": "/* llmnav/1 module\nid=workduck.projects.storage\nrole=Persist ordered project registry writes, atomically import workspace sync data in SQLite, and migrate browser legacy registries.\nowns=project registry persistence|legacy registry promotion|registry change notifications|workspace operation ordering|atomic sync import\nexcludes=project domain normalization|repository Git operations\nsearch=project registry storage|sqlite registry migration|atomic workspace sync import|corrupt legacy project data|invalid project change notification\ninvariant=Stored SQLite rows are independent of the legacy cache; invalid snapshots cannot publish changes or cancel pending reads; invalid legacy data blocks fallback saves; bulk fallback reads share one snapshot per attempt; writes stay ordered, imports publish only after commit, and legacy promotion guards missing rows.\nstability=architecture\n*/",
           "scope": "module",
           "specVersion": "1",
           "start": 0,
@@ -10943,7 +10944,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "406ff983aeea45c6bf71e86af17a5ae25e598cd5e17f96da52406e3bbf3b5ce5",
+      "contentHash": "0c3647a00c6d0ef46d865d9b43966173bc1d41fa99e30997d408c7231dfb56c3",
       "declarations": [
         null
       ],
@@ -10956,8 +10957,8 @@
         "./project-registry"
       ],
       "path": "src/lib/projects/project-storage.ts",
-      "semanticBytes": 783,
-      "sourceBytes": 28762
+      "semanticBytes": 885,
+      "sourceBytes": 29053
     },
     {
       "blocks": [],

@@ -372,8 +372,8 @@
         "repository Git operations"
       ],
       "hashes": {
-        "body": "406ff983aeea45c6bf71e86af17a5ae25e598cd5e17f96da52406e3bbf3b5ce5",
-        "semantic": "b89e4370db4b7acd9b49a6824e46378d19668e6940f393c4b58a859e996830bd",
+        "body": "0c3647a00c6d0ef46d865d9b43966173bc1d41fa99e30997d408c7231dfb56c3",
+        "semantic": "ce837f9a31c42c403cf5fff63ffca9a33d3448871202c009d951b7e898284d34",
         "structure": "7ab1eb51dec38106979f5838522610a962153dc8ade2e1592b6783b9757d18b7"
       },
       "id": "workduck.projects.storage",
@@ -386,7 +386,7 @@
         "./project-registry"
       ],
       "invariant": [
-        "Stored SQLite rows are independent of the legacy cache; invalid legacy data blocks fallback saves; bulk fallback reads share one snapshot per attempt; writes stay ordered, imports publish only after commit, and legacy promotion guards missing rows."
+        "Stored SQLite rows are independent of the legacy cache; invalid snapshots cannot publish changes or cancel pending reads; invalid legacy data blocks fallback saves; bulk fallback reads share one snapshot per attempt; writes stay ordered, imports publish only after commit, and legacy promotion guards missing rows."
       ],
       "location": {
         "declarationLine": null,
@@ -414,7 +414,8 @@
         "project registry storage",
         "sqlite registry migration",
         "atomic workspace sync import",
-        "corrupt legacy project data"
+        "corrupt legacy project data",
+        "invalid project change notification"
       ],
       "stability": "architecture"
     },
@@ -4823,6 +4824,6 @@
   "generatedBy": "llmnav@0.9.7",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "b7223ffbd24b21814b8de6f825dc2bfaea1ce4b9fa01136054d0a594f9f59f83",
+  "sourceHash": "8948c8d2546e8fb02e1b60d0b98d1c94ecca8e83c9d872aa4b21366e3c5e94f3",
   "specVersion": "1"
 }

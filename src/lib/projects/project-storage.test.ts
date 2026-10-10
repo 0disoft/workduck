@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 import { setTauriInvokeForTest } from '#lib/tauri/tauri-invoke.ts';
 import { addProjectNode, createEmptyProjectRegistry, type ProjectRegistry } from './project-registry';
-import { readProjectRegistries, readProjectRegistry, subscribeProjectRegistry, writeProjectRegistries, writeProjectRegistry } from './project-storage';
+import { readProjectRegistries, readProjectRegistry, subscribeProjectRegistry, writeProjectRegistries, writeProjectRegistry, WORKDUCK_PROJECT_REGISTRY_CHANGED_EVENT } from './project-storage';
 
 function registry(workspaceId: string, revision: number) {
 	return { ...createEmptyProjectRegistry(workspaceId), updatedAt: `2026-10-04T00:00:0${revision}.000Z` };
@@ -302,6 +302,49 @@ describe('project registry storage write ordering', () => {
 			dispatchLegacyStorageChange();
 			await settle();
 			expect(notifications).toEqual([]);
+		} finally { unsubscribe(); }
+	});
+
+	for (const [name, invalidRegistry] of [
+		['missing payload', undefined],
+		['unsupported version', { ...registry('demo', 2), version: 999 }],
+		['missing nodes', { version: 1, workspaceId: 'demo' }],
+		['discarded node', { ...registry('demo', 2), nodes: [null] }],
+		['discarded repository', { ...root.registry, nodes: root.registry.nodes.map((node) => ({ ...node, repositories: [null] })) }],
+		['wrong workspace', registry('other', 2)]
+	] as const) {
+		test(`ignores a ${name} notification without canceling the pending valid read`, async () => {
+			const pending = deferred();
+			const notifications: ProjectRegistry[] = [];
+			setTauriInvokeForTest(async <T>() => {
+				await pending.promise;
+				return { ok: true, registryJson: JSON.stringify(registry('demo', 1)) } as T;
+			});
+			const unsubscribe = subscribeProjectRegistry('demo', (value) => notifications.push(value));
+			try {
+				dispatchLegacyStorageChange();
+				window.dispatchEvent(new CustomEvent(WORKDUCK_PROJECT_REGISTRY_CHANGED_EVENT, {
+					detail: { workspaceId: 'demo', registry: invalidRegistry }
+				}));
+				expect(notifications).toEqual([]);
+				pending.resolve();
+				await settle();
+				expect(notifications).toEqual([registry('demo', 1)]);
+			} finally { pending.resolve(); await settle(); unsubscribe(); }
+		});
+	}
+
+	test('reloads the browser registry after another window clears local storage', async () => {
+		seedLegacyRegistry();
+		const notifications: ProjectRegistry[] = [];
+		const unsubscribe = subscribeProjectRegistry('demo', (value) => notifications.push(value));
+		try {
+			window.localStorage.clear();
+			window.dispatchEvent(Object.assign(new Event('storage'), { storageArea: window.localStorage, key: null }));
+			await settle();
+			expect(notifications).toHaveLength(1);
+			expect(notifications[0]?.workspaceId).toBe('demo');
+			expect(notifications[0]?.nodes).toEqual([]);
 		} finally { unsubscribe(); }
 	});
 

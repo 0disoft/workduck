@@ -3,8 +3,8 @@ id=workduck.projects.storage
 role=Persist ordered project registry writes, atomically import workspace sync data in SQLite, and migrate browser legacy registries.
 owns=project registry persistence|legacy registry promotion|registry change notifications|workspace operation ordering|atomic sync import
 excludes=project domain normalization|repository Git operations
-search=project registry storage|sqlite registry migration|atomic workspace sync import|corrupt legacy project data
-invariant=Stored SQLite rows are independent of the legacy cache; invalid legacy data blocks fallback saves; bulk fallback reads share one snapshot per attempt; writes stay ordered, imports publish only after commit, and legacy promotion guards missing rows.
+search=project registry storage|sqlite registry migration|atomic workspace sync import|corrupt legacy project data|invalid project change notification
+invariant=Stored SQLite rows are independent of the legacy cache; invalid snapshots cannot publish changes or cancel pending reads; invalid legacy data blocks fallback saves; bulk fallback reads share one snapshot per attempt; writes stay ordered, imports publish only after commit, and legacy promotion guards missing rows.
 stability=architecture
 */
 
@@ -481,18 +481,21 @@ export function subscribeProjectRegistry(
 	function handleRegistryChanged(event: Event) {
 		const detail = (event as CustomEvent<ProjectRegistryChangedDetail>).detail;
 
-		if (detail?.workspaceId !== workspaceId) {
+		if (!isActive || detail?.workspaceId !== workspaceId ||
+			!isObjectRecord(detail.registry) || detail.registry.workspaceId !== workspaceId) {
 			return;
 		}
 
+		const result = normalizeStoredProjectRegistry(detail.registry, workspaceId);
+		if (!result.ok) return;
 		readGeneration += 1;
-		callback(normalizeProjectRegistry(detail.registry, workspaceId));
+		callback(result.registry);
 	}
 
 	function handleStorageChanged(event: StorageEvent) {
 		if (
 			event.storageArea !== window.localStorage ||
-			event.key !== LEGACY_PROJECT_REGISTRIES_STORAGE_KEY
+			(event.key !== null && event.key !== LEGACY_PROJECT_REGISTRIES_STORAGE_KEY)
 		) {
 			return;
 		}
