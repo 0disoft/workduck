@@ -94,3 +94,4 @@
 {"query":"atomic workspace and project registry sync import SQLite rollback","expected":["workduck.projects.storage-native"]}
 {"query":"atomic workspace sync import ordered project registry storage","expected":["workduck.projects.storage"]}
 {"query":"app state journal flush reconcile superseded values without replacing newer edits","expected":["workduck.app-state.storage"]}
+{"query":"app state pending journal read deletion failure stop flush retry","expected":["workduck.app-state.storage"]}

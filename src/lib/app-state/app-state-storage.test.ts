@@ -347,6 +347,95 @@ describe('persistent app state storage', () => {
 		}
 	});
 
+	test('stops after one native commit when journal deletion fails and retries cleanup later', async () => {
+		const storage = new MemoryStorage();
+		setWorkduckAppStateBrowserStorageForTest(storage);
+		let canRemove = false;
+		let writes = 0;
+		const removeItem = storage.removeItem.bind(storage);
+		storage.removeItem = (key) => {
+			if (key === pendingStorageKey(WORKDUCK_SYSTEM_APP_STATE_KEY) && !canRemove) throw new Error('storage denied');
+			removeItem(key);
+		};
+		setTauriInvokeForTest(async <T>(command: string) => response<T>(command === 'read_app_state_records'
+			? { ok: true, records: { [WORKDUCK_SYSTEM_APP_STATE_KEY]: SYSTEM_DEFAULT_VALUE } }
+			// The second rejection bounds the unfixed loop so this regression cannot hang.
+			: { ok: ++writes === 1 || canRemove }));
+		assert.equal((await initializeWorkduckAppState(seeds.filter((seed) => seed.key === WORKDUCK_SYSTEM_APP_STATE_KEY))).ok, true);
+		writeWorkduckAppStateValue(WORKDUCK_SYSTEM_APP_STATE_KEY, SYSTEM_LEGACY_KEY, SYSTEM_PENDING_VALUE);
+		const journal = storage.getItem(pendingStorageKey(WORKDUCK_SYSTEM_APP_STATE_KEY));
+		assert.equal(await flushWorkduckAppStateWrites(), false);
+		assert.equal(writes, 1);
+		assert.equal(storage.getItem(pendingStorageKey(WORKDUCK_SYSTEM_APP_STATE_KEY)), journal);
+		canRemove = true;
+		assert.equal(await flushWorkduckAppStateWrites(), true);
+		assert.equal(writes, 2);
+		assert.equal(storage.getItem(pendingStorageKey(WORKDUCK_SYSTEM_APP_STATE_KEY)), null);
+	});
+
+	test('keeps initialization closed when replay commits but journal cleanup fails', async () => {
+		const storage = new MemoryStorage();
+		setWorkduckAppStateBrowserStorageForTest(storage);
+		const key = pendingStorageKey(WORKDUCK_SYSTEM_APP_STATE_KEY);
+		const journal = JSON.stringify({ valueJson: SYSTEM_PENDING_VALUE, updatedAt: '2026-10-10T00:00:00.000Z' });
+		storage.setItem(key, journal);
+		let canRemove = false;
+		const removeItem = storage.removeItem.bind(storage);
+		storage.removeItem = (storageKey) => {
+			if (storageKey === key && !canRemove) throw new Error('storage denied');
+			removeItem(storageKey);
+		};
+		setTauriInvokeForTest(async <T>(command: string) => response<T>(command === 'read_app_state_records'
+			? { ok: true, records: { [WORKDUCK_SYSTEM_APP_STATE_KEY]: SYSTEM_DEFAULT_VALUE } }
+			: { ok: true }));
+		const systemSeeds = seeds.filter((seed) => seed.key === WORKDUCK_SYSTEM_APP_STATE_KEY);
+		assert.deepEqual(await initializeWorkduckAppState(systemSeeds), { ok: false, error: 'app-state-write-failed' });
+		assert.equal(writeWorkduckAppStateValue(WORKDUCK_SYSTEM_APP_STATE_KEY, SYSTEM_LEGACY_KEY, SYSTEM_LATEST_VALUE).ok, false);
+		assert.equal(storage.getItem(key), journal);
+		canRemove = true;
+		assert.equal((await initializeWorkduckAppState(systemSeeds)).ok, true);
+		assert.equal(storage.getItem(key), null);
+		assert.equal(readWorkduckAppStateValue(WORKDUCK_SYSTEM_APP_STATE_KEY, SYSTEM_LEGACY_KEY).valueJson, SYSTEM_PENDING_VALUE);
+	});
+
+	for (const phase of ['initialization', 'flush'] as const) {
+		test(`preserves unreadable journals and reports failure during ${phase}`, async () => {
+			const storage = new MemoryStorage();
+			setWorkduckAppStateBrowserStorageForTest(storage);
+			const journal = JSON.stringify({ valueJson: SYSTEM_PENDING_VALUE, updatedAt: '2026-10-10T00:00:00.000Z' });
+			storage.setItem(pendingStorageKey(WORKDUCK_SYSTEM_APP_STATE_KEY), journal);
+			let canRead = phase === 'flush';
+			const getItem = storage.getItem.bind(storage);
+			storage.getItem = (key) => {
+				if (key === pendingStorageKey(WORKDUCK_SYSTEM_APP_STATE_KEY) && !canRead) throw new Error('storage denied');
+				return getItem(key);
+			};
+			const commands: string[] = [];
+			setTauriInvokeForTest(async <T>(command: string) => {
+				commands.push(command);
+				return response<T>(command === 'read_app_state_records'
+					? { ok: true, records: { [WORKDUCK_SYSTEM_APP_STATE_KEY]: SYSTEM_DEFAULT_VALUE } }
+					: { ok: true });
+			});
+			const systemSeeds = seeds.filter((seed) => seed.key === WORKDUCK_SYSTEM_APP_STATE_KEY);
+			if (phase === 'initialization') {
+				assert.deepEqual(await initializeWorkduckAppState(systemSeeds), { ok: false, error: 'app-state-read-failed' });
+			} else {
+				await initializeWorkduckAppState(systemSeeds);
+				writeWorkduckAppStateValue(WORKDUCK_SYSTEM_APP_STATE_KEY, SYSTEM_LEGACY_KEY, SYSTEM_LATEST_VALUE);
+				canRead = false;
+				commands.length = 0;
+				assert.equal(await flushWorkduckAppStateWrites(), false);
+			}
+			assert.deepEqual(commands, []);
+			assert.notEqual(storage.values.get(pendingStorageKey(WORKDUCK_SYSTEM_APP_STATE_KEY)), undefined);
+			canRead = true;
+			if (phase === 'initialization') assert.equal((await initializeWorkduckAppState(systemSeeds)).ok, true);
+			else assert.equal(await flushWorkduckAppStateWrites(), true);
+			assert.equal(storage.getItem(pendingStorageKey(WORKDUCK_SYSTEM_APP_STATE_KEY)), null);
+		});
+	}
+
 	test('blocks fallback writes after a failed native read until initialization succeeds', async () => {
 		const storage = new MemoryStorage();
 		const commands: string[] = [];

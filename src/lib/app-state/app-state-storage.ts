@@ -4,7 +4,7 @@ role=Persist application settings through a renderer crash journal, native SQLit
 owns=app state backend selection|legacy setting promotion|pending write journal|serialized flush|transaction cache publication
 excludes=setting domain validation|native SQLite implementation|workspace project registries
 search=app state crash journal|settings SQLite promotion|pending setting flush
-invariant=Native writes require successful initialization; flushes reconcile superseded values without replacing newer edits and remove only matching journals; external transactions drain pending writes and publish cache changes only after commit.
+invariant=Native writes require successful initialization; journal I/O errors end the attempt; flushes reconcile superseded values without replacing newer edits and remove only matching journals; external transactions publish cache changes only after commit.
 stability=architecture
 */
 import { isObjectRecord } from '#lib/shared/object-record.ts';
@@ -112,13 +112,14 @@ export async function initializeWorkduckAppState(
 		return { ok: true };
 	}
 
-	const pendingWrites = readPendingWrites(storage);
-	const resolvedValues = new Map(
-		seeds.map((seed) => [seed.key, pendingWrites[seed.key]?.valueJson ?? seed.valueJson])
-	);
+	const resolvedValues = new Map(seeds.map((seed) => [seed.key, seed.valueJson]));
 	let failureError: WorkduckAppStateStorageError = 'app-state-read-failed';
 
 	try {
+		const pendingWrites = readPendingWrites(storage);
+		for (const seed of seeds) {
+			resolvedValues.set(seed.key, pendingWrites[seed.key]?.valueJson ?? seed.valueJson);
+		}
 		const response = await invoke<NativeAppStateReadResponse>('read_app_state_records', {
 			keys: seeds.map((seed) => seed.key)
 		});
@@ -362,13 +363,11 @@ async function flushPendingWrites(): Promise<boolean> {
 	}
 
 	while (true) {
-		const pendingWrites = readPendingWrites(storage);
-
-		if (!hasRecords(pendingWrites)) {
-			return true;
-		}
-
 		try {
+			const pendingWrites = readPendingWrites(storage);
+			if (!hasRecords(pendingWrites)) {
+				return true;
+			}
 			const response = await invoke<NativeAppStateWriteResponse>('write_app_state_records', {
 				records: pendingWrites
 			});
@@ -503,11 +502,9 @@ function readPendingWrite(
 	storage: BrowserStorage,
 	key: WorkduckAppStateKey
 ): PendingAppStateWrite | null {
-	try {
-		return parsePendingWrite(storage.getItem(createPendingStorageKey(key)));
-	} catch {
-		return null;
-	}
+	// An unreadable journal is not an absent one. Initialization and flush own
+	// the failure boundary so recoverable edits are never acknowledged as empty.
+	return parsePendingWrite(storage.getItem(createPendingStorageKey(key)));
 }
 
 function parsePendingWrite(serializedWrite: string | null): PendingAppStateWrite | null {
@@ -574,11 +571,9 @@ function removeFlushedPendingWrites(
 			continue;
 		}
 
-		try {
-			storage.removeItem(createPendingStorageKey(key));
-		} catch {
-			continue;
-		}
+		// Cleanup failure ends this attempt; retrying the same committed snapshot
+		// inside the flush loop would issue native writes indefinitely.
+		storage.removeItem(createPendingStorageKey(key));
 	}
 }
 

@@ -5845,7 +5845,7 @@
     },
     {
       "blocks": [],
-      "contentHash": "c372de67029d3f2c424f0660dc6e5fc06b57998d14644f4e9fd3de89b920d032",
+      "contentHash": "50f846a1694adea1604c16e9f101bcccda65a8da5886232f208be2fce1df7c5f",
       "declarations": [],
       "imports": [
         "#lib/tauri/tauri-invoke.ts",
@@ -5855,7 +5855,7 @@
       ],
       "path": "src/lib/app-state/app-state-storage.test.ts",
       "semanticBytes": 0,
-      "sourceBytes": 16336
+      "sourceBytes": 21242
     },
     {
       "blocks": [
@@ -5869,7 +5869,7 @@
             ],
             "id": "workduck.app-state.storage",
             "invariant": [
-              "Native writes require successful initialization; flushes reconcile superseded values without replacing newer edits and remove only matching journals; external transactions drain pending writes and publish cache changes only after commit."
+              "Native writes require successful initialization; journal I/O errors end the attempt; flushes reconcile superseded values without replacing newer edits and remove only matching journals; external transactions publish cache changes only after commit."
             ],
             "owns": [
               "app state backend selection",
@@ -5890,7 +5890,7 @@
             "stability": "architecture",
             "unknown": []
           },
-          "end": 736,
+          "end": 747,
           "endLine": 9,
           "entries": [
             {
@@ -5927,7 +5927,7 @@
               "key": "invariant",
               "line": 7,
               "order": 5,
-              "value": "Native writes require successful initialization; flushes reconcile superseded values without replacing newer edits and remove only matching journals; external transactions drain pending writes and publish cache changes only after commit."
+              "value": "Native writes require successful initialization; journal I/O errors end the attempt; flushes reconcile superseded values without replacing newer edits and remove only matching journals; external transactions publish cache changes only after commit."
             },
             {
               "key": "stability",
@@ -5940,7 +5940,7 @@
           "indent": "",
           "newline": "\n",
           "prefix": null,
-          "raw": "/* llmnav/1 module\nid=workduck.app-state.storage\nrole=Persist application settings through a renderer crash journal, native SQLite promotion, and browser fallback.\nowns=app state backend selection|legacy setting promotion|pending write journal|serialized flush|transaction cache publication\nexcludes=setting domain validation|native SQLite implementation|workspace project registries\nsearch=app state crash journal|settings SQLite promotion|pending setting flush\ninvariant=Native writes require successful initialization; flushes reconcile superseded values without replacing newer edits and remove only matching journals; external transactions drain pending writes and publish cache changes only after commit.\nstability=architecture\n*/",
+          "raw": "/* llmnav/1 module\nid=workduck.app-state.storage\nrole=Persist application settings through a renderer crash journal, native SQLite promotion, and browser fallback.\nowns=app state backend selection|legacy setting promotion|pending write journal|serialized flush|transaction cache publication\nexcludes=setting domain validation|native SQLite implementation|workspace project registries\nsearch=app state crash journal|settings SQLite promotion|pending setting flush\ninvariant=Native writes require successful initialization; journal I/O errors end the attempt; flushes reconcile superseded values without replacing newer edits and remove only matching journals; external transactions publish cache changes only after commit.\nstability=architecture\n*/",
           "scope": "module",
           "specVersion": "1",
           "start": 0,
@@ -5949,7 +5949,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "132376ccb33231935bc6f94f582a09e583517208cb617351ee8751c724560177",
+      "contentHash": "e91237140b5c54651721cef4bce36108615a4806bc470e60a115264b0e53853a",
       "declarations": [
         null
       ],
@@ -5958,8 +5958,8 @@
         "#lib/tauri/tauri-invoke.ts"
       ],
       "path": "src/lib/app-state/app-state-storage.ts",
-      "semanticBytes": 736,
-      "sourceBytes": 19181
+      "semanticBytes": 747,
+      "sourceBytes": 19498
     },
     {
       "blocks": [],

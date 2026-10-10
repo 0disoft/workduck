@@ -4291,8 +4291,8 @@
         "workspace project registries"
       ],
       "hashes": {
-        "body": "132376ccb33231935bc6f94f582a09e583517208cb617351ee8751c724560177",
-        "semantic": "22420f1b6e2a820ba2b4ea7e45b0afdb33e3f6159544b365f21934bcfcb16248",
+        "body": "e91237140b5c54651721cef4bce36108615a4806bc470e60a115264b0e53853a",
+        "semantic": "4d4885846ca51616b30c7153c87e006a9f3a9bb507d3e31777cf33c158a0119c",
         "structure": "1e222539a41b7ca433d629c18afe33696257ba4d1b463345be92338d6504c960"
       },
       "id": "workduck.app-state.storage",
@@ -4301,7 +4301,7 @@
         "#lib/tauri/tauri-invoke.ts"
       ],
       "invariant": [
-        "Native writes require successful initialization; flushes reconcile superseded values without replacing newer edits and remove only matching journals; external transactions drain pending writes and publish cache changes only after commit."
+        "Native writes require successful initialization; journal I/O errors end the attempt; flushes reconcile superseded values without replacing newer edits and remove only matching journals; external transactions publish cache changes only after commit."
       ],
       "location": {
         "declarationLine": null,
@@ -4820,6 +4820,6 @@
   "generatedBy": "llmnav@0.9.7",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "946c229eb8e48b602e317b0b4c8f96fd4a02065c61fcc3cd749280c3eab1ff9c",
+  "sourceHash": "3924f5faa1bf6585309d7701c0f918a6439a65977fc0484cc7a2fb65336c4f75",
   "specVersion": "1"
 }
