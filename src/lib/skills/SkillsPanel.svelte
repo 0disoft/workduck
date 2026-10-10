@@ -645,6 +645,7 @@
 			case 'skill-registry-storage-read-failed':
 				return messages.skills.errors.readFailed;
 			case 'skill-registry-storage-write-failed':
+			case 'workspace-data-revision-conflict':
 				return messages.skills.errors.saveFailed;
 			default:
 				return nextError.includes('write') || nextError.includes('too-large')

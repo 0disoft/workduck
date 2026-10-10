@@ -4931,7 +4931,7 @@
             ],
             "id": "workduck.workspace.data-files",
             "invariant": [
-              "Generic writes cannot bypass registry revisions, paired agent and persona updates commit under one lock, and secrets sync first enforces ignore policy."
+              "Editable registries reject stale revisions and generic overwrites, paired agent and persona updates commit under one lock, and secrets sync first enforces ignore policy."
             ],
             "owns": [
               "workspace data allowlist",
@@ -4950,7 +4950,7 @@
             "stability": "contract",
             "unknown": []
           },
-          "end": 631,
+          "end": 649,
           "endLine": 9,
           "entries": [
             {
@@ -4987,7 +4987,7 @@
               "key": "invariant",
               "line": 7,
               "order": 5,
-              "value": "Generic writes cannot bypass registry revisions, paired agent and persona updates commit under one lock, and secrets sync first enforces ignore policy."
+              "value": "Editable registries reject stale revisions and generic overwrites, paired agent and persona updates commit under one lock, and secrets sync first enforces ignore policy."
             },
             {
               "key": "stability",
@@ -5000,7 +5000,7 @@
           "indent": "",
           "newline": "\n",
           "prefix": "//",
-          "raw": "// llmnav/1 module\n// id=workduck.workspace.data-files\n// role=Read and atomically update allowlisted workspace data files with registry revision checks, paired commits, and crash recovery.\n// owns=workspace data allowlist|registry compare-and-swap|registry transaction recovery\n// excludes=encrypted sync envelope|project registry SQLite storage\n// search=workspace data file|registry revision conflict|recover registry transaction\n// invariant=Generic writes cannot bypass registry revisions, paired agent and persona updates commit under one lock, and secrets sync first enforces ignore policy.\n// stability=contract\n// /llmnav\n",
+          "raw": "// llmnav/1 module\n// id=workduck.workspace.data-files\n// role=Read and atomically update allowlisted workspace data files with registry revision checks, paired commits, and crash recovery.\n// owns=workspace data allowlist|registry compare-and-swap|registry transaction recovery\n// excludes=encrypted sync envelope|project registry SQLite storage\n// search=workspace data file|registry revision conflict|recover registry transaction\n// invariant=Editable registries reject stale revisions and generic overwrites, paired agent and persona updates commit under one lock, and secrets sync first enforces ignore policy.\n// stability=contract\n// /llmnav\n",
           "scope": "module",
           "specVersion": "1",
           "start": 0,
@@ -5009,21 +5009,21 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "e557859cce000801384ca07f6b3df1b315eac33a3403e522a0e7c6d0965e0dbb",
+      "contentHash": "b55dbaf760885cf0b9f45a076d65c05b95c83d063093cb4474d0ef1b2902a381",
       "declarations": [
         null
       ],
       "imports": [
-        "crate::atomic_file_write::{write_file_atomically, AtomicFileWriteError}",
-        "crate::workspace_path::{validate_absolute_directory_path, WorkspacePathValidationError}",
+        "crate::atomic_file_write::{AtomicFileWriteError, write_file_atomically}",
+        "crate::workspace_path::{WorkspacePathValidationError, validate_absolute_directory_path}",
         "crate::workspace_registry_lock::acquire_workspace_registry_lock",
         "crate::workspace_repository_gitignore::ensure_secrets_sync_gitignore_policy",
-        "std::{\n    fs,\n    io,\n    path::{Path, PathBuf},\n}",
+        "std::{\n    fs, io,\n    path::{Path, PathBuf},\n}",
         "tests {\n    use super::*"
       ],
       "path": "src-tauri/src/workspace_data_file.rs",
-      "semanticBytes": 631,
-      "sourceBytes": 29848
+      "semanticBytes": 649,
+      "sourceBytes": 32517
     },
     {
       "blocks": [],
@@ -12393,7 +12393,7 @@
     },
     {
       "blocks": [],
-      "contentHash": "0d5f9d121985e4b7514b8776e8cc630db2c374dd82c3a80db7e983e8214bd598",
+      "contentHash": "0a4f965678a0d92c838a68c81979f425604b038a41712639d9afe9d5e087996e",
       "declarations": [],
       "imports": [
         "#lib/i18n/workduck-language.ts",
@@ -12411,11 +12411,11 @@
       ],
       "path": "src/lib/references/ReferencesPanel.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 27957
+      "sourceBytes": 28001
     },
     {
       "blocks": [],
-      "contentHash": "96e05729607e29202aaaad35c79492c57249351d6fb1743783cc75215b96b668",
+      "contentHash": "70409eef7078eeaaae5143e9ba4b36baf633e881df8039d526ff3b03e7993c8e",
       "declarations": [],
       "imports": [
         "#lib/shared/object-record.ts",
@@ -12424,18 +12424,109 @@
       ],
       "path": "src/lib/references/reference-registry-storage.ts",
       "semanticBytes": 0,
-      "sourceBytes": 6651
+      "sourceBytes": 6871
     },
     {
-      "blocks": [],
-      "contentHash": "5164674c4730db905c746547a01e0d808208ed6cb5d77a63597975670d54af43",
-      "declarations": [],
+      "blocks": [
+        {
+          "card": {
+            "effect": [],
+            "excludes": [
+              "filesystem persistence",
+              "reference panel lifetime",
+              "project registry ownership"
+            ],
+            "id": "workduck.references.registry",
+            "invariant": [
+              "Stored references require a matching workspace and collection, legacy revisions start at zero, and mutations retain the loaded revision for stale-write rejection."
+            ],
+            "owns": [
+              "reference registry schema",
+              "workspace and revision validation",
+              "reference mutations",
+              "reference identity and title uniqueness"
+            ],
+            "rel": [],
+            "risk": [],
+            "role": "Validate and mutate workspace reference registries while retaining their persistence revision.",
+            "scope": "module",
+            "search": [
+              "reference registry validation",
+              "reference edit revision",
+              "reference title conflict"
+            ],
+            "stability": "contract",
+            "unknown": []
+          },
+          "end": 640,
+          "endLine": 9,
+          "entries": [
+            {
+              "key": "id",
+              "line": 2,
+              "order": 0,
+              "value": "workduck.references.registry"
+            },
+            {
+              "key": "role",
+              "line": 3,
+              "order": 1,
+              "value": "Validate and mutate workspace reference registries while retaining their persistence revision."
+            },
+            {
+              "key": "owns",
+              "line": 4,
+              "order": 2,
+              "value": "reference registry schema|workspace and revision validation|reference mutations|reference identity and title uniqueness"
+            },
+            {
+              "key": "excludes",
+              "line": 5,
+              "order": 3,
+              "value": "filesystem persistence|reference panel lifetime|project registry ownership"
+            },
+            {
+              "key": "search",
+              "line": 6,
+              "order": 4,
+              "value": "reference registry validation|reference edit revision|reference title conflict"
+            },
+            {
+              "key": "invariant",
+              "line": 7,
+              "order": 5,
+              "value": "Stored references require a matching workspace and collection, legacy revisions start at zero, and mutations retain the loaded revision for stale-write rejection."
+            },
+            {
+              "key": "stability",
+              "line": 8,
+              "order": 6,
+              "value": "contract"
+            }
+          ],
+          "filePath": "src/lib/references/reference-registry.ts",
+          "indent": "",
+          "newline": "\n",
+          "prefix": null,
+          "raw": "/* llmnav/1 module\nid=workduck.references.registry\nrole=Validate and mutate workspace reference registries while retaining their persistence revision.\nowns=reference registry schema|workspace and revision validation|reference mutations|reference identity and title uniqueness\nexcludes=filesystem persistence|reference panel lifetime|project registry ownership\nsearch=reference registry validation|reference edit revision|reference title conflict\ninvariant=Stored references require a matching workspace and collection, legacy revisions start at zero, and mutations retain the loaded revision for stale-write rejection.\nstability=contract\n*/",
+          "scope": "module",
+          "specVersion": "1",
+          "start": 0,
+          "startLine": 1,
+          "style": "block",
+          "syntaxErrors": []
+        }
+      ],
+      "contentHash": "9b107acf879305ff3ad3ed4189f87d1b3f241dbca9414f68d4b15abd4d80a8f9",
+      "declarations": [
+        null
+      ],
       "imports": [
         "#lib/shared/object-record.ts"
       ],
       "path": "src/lib/references/reference-registry.ts",
-      "semanticBytes": 0,
-      "sourceBytes": 12035
+      "semanticBytes": 640,
+      "sourceBytes": 12906
     },
     {
       "blocks": [],
@@ -12492,7 +12583,7 @@
     },
     {
       "blocks": [],
-      "contentHash": "dd96c305019a0cd0efaec51c882ebec064597bb59bd20ab5eba1fa68a8dd7539",
+      "contentHash": "556f3df50072f12b046a1095ffed05c7f9961a082569c88256b6c6721e674c60",
       "declarations": [],
       "imports": [
         "#lib/agents/agent-evaluation.ts",
@@ -12502,7 +12593,7 @@
       ],
       "path": "src/lib/search/command-palette-index.test.ts",
       "semanticBytes": 0,
-      "sourceBytes": 5099
+      "sourceBytes": 5116
     },
     {
       "blocks": [],
@@ -12873,7 +12964,7 @@
     },
     {
       "blocks": [],
-      "contentHash": "0455cd6910e69187ded550749c3c38145923aa0966249249eb500e838fd99aea",
+      "contentHash": "0dfcc3bbbf343769c5c91d55649f345d2409482abb41926a9c1fb9ede2ebf829",
       "declarations": [],
       "imports": [
         "#lib/i18n/workduck-language.ts",
@@ -12890,7 +12981,7 @@
       ],
       "path": "src/lib/skills/SkillsPanel.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 32950
+      "sourceBytes": 32994
     },
     {
       "blocks": [
@@ -12996,7 +13087,7 @@
     },
     {
       "blocks": [],
-      "contentHash": "8eb1d87e2d93eeedd907de984a75590e9b5080a2e86069c35bee6ac057d9475d",
+      "contentHash": "69e79acc6643ad21a5ced2ed66b1373e21bc493daeb285809837b65b586ef56c",
       "declarations": [],
       "imports": [
         "#lib/shared/object-record.ts",
@@ -13005,7 +13096,7 @@
       ],
       "path": "src/lib/skills/skill-registry-storage.ts",
       "semanticBytes": 0,
-      "sourceBytes": 6388
+      "sourceBytes": 6600
     },
     {
       "blocks": [
@@ -13019,7 +13110,7 @@
             ],
             "id": "workduck.skills.registry",
             "invariant": [
-              "Stored registries require a supported version, matching workspace, and skill collection; legacy registries receive version-appropriate defaults, current removals persist, and invalid mutations preserve the registry."
+              "Stored registries require a supported version, matching workspace, skill collection, and valid revision; legacy revisions start at zero, mutations retain the loaded revision, version-appropriate defaults are migrated, and current removals persist."
             ],
             "owns": [
               "skill registry normalization",
@@ -13039,7 +13130,7 @@
             "stability": "architecture",
             "unknown": []
           },
-          "end": 646,
+          "end": 678,
           "endLine": 9,
           "entries": [
             {
@@ -13076,7 +13167,7 @@
               "key": "invariant",
               "line": 7,
               "order": 5,
-              "value": "Stored registries require a supported version, matching workspace, and skill collection; legacy registries receive version-appropriate defaults, current removals persist, and invalid mutations preserve the registry."
+              "value": "Stored registries require a supported version, matching workspace, skill collection, and valid revision; legacy revisions start at zero, mutations retain the loaded revision, version-appropriate defaults are migrated, and current removals persist."
             },
             {
               "key": "stability",
@@ -13089,7 +13180,7 @@
           "indent": "",
           "newline": "\n",
           "prefix": null,
-          "raw": "/* llmnav/1 module\nid=workduck.skills.registry\nrole=Normalize and migrate workspace skill registries while preserving custom skills and built-in overrides.\nowns=skill registry normalization|legacy skill migration|skill mutations|built-in override detection\nexcludes=default prompt authoring|skill persistence|queue execution\nsearch=skill registry migration|custom skill validation|skill editing\ninvariant=Stored registries require a supported version, matching workspace, and skill collection; legacy registries receive version-appropriate defaults, current removals persist, and invalid mutations preserve the registry.\nstability=architecture\n*/",
+          "raw": "/* llmnav/1 module\nid=workduck.skills.registry\nrole=Normalize and migrate workspace skill registries while preserving custom skills and built-in overrides.\nowns=skill registry normalization|legacy skill migration|skill mutations|built-in override detection\nexcludes=default prompt authoring|skill persistence|queue execution\nsearch=skill registry migration|custom skill validation|skill editing\ninvariant=Stored registries require a supported version, matching workspace, skill collection, and valid revision; legacy revisions start at zero, mutations retain the loaded revision, version-appropriate defaults are migrated, and current removals persist.\nstability=architecture\n*/",
           "scope": "module",
           "specVersion": "1",
           "start": 0,
@@ -13098,7 +13189,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "0e19783718c6e36e189e853a32fdab7a43c5a9563f138cb96a060ce316cfa4a6",
+      "contentHash": "443d25ade5faaf16d76bf3aff095215b5eb98b366918aa513bb1b660c0cbe3d3",
       "declarations": [
         null
       ],
@@ -13108,8 +13199,8 @@
         "./skill-schema"
       ],
       "path": "src/lib/skills/skill-registry.ts",
-      "semanticBytes": 646,
-      "sourceBytes": 14866
+      "semanticBytes": 678,
+      "sourceBytes": 15194
     },
     {
       "blocks": [
@@ -13202,14 +13293,14 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "14c7f330c7fd67d6082d570ed44a4c67bd6f667ae1e57b3be91e6502785e58d5",
+      "contentHash": "5b273124d47c8e97fd88e7014c7f032d3a8cfed0e75d8d2e1ec705c7fa44190b",
       "declarations": [
         null
       ],
       "imports": [],
       "path": "src/lib/skills/skill-schema.ts",
       "semanticBytes": 507,
-      "sourceBytes": 3819
+      "sourceBytes": 3847
     },
     {
       "blocks": [],
@@ -13778,7 +13869,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "187660d35bb8af3192244b57a02e9d0f061443072ab5e0e4c99fa4fb25f98206",
+      "contentHash": "611dd70ef460a7d90f07b57eaa1aa54179a044b5678578f7d6ca4e29646f24dc",
       "declarations": [
         null
       ],
@@ -13787,7 +13878,7 @@
       ],
       "path": "src/lib/workspaces/workspace-data-file.ts",
       "semanticBytes": 535,
-      "sourceBytes": 7027
+      "sourceBytes": 7063
     },
     {
       "blocks": [],
@@ -13962,18 +14053,20 @@
     },
     {
       "blocks": [],
-      "contentHash": "379a0d2ff72a004a0258b9b1f93aceaa5f9b7ed1cc6e2dd994c0bb001c597369",
+      "contentHash": "299d81ba5dcf21f09ff3d80daf1133f9bbf6dd1810a49fe89687c41f495eed7b",
       "declarations": [],
       "imports": [
         "#lib/references/reference-registry-storage.ts",
+        "#lib/references/reference-registry.ts",
         "#lib/skills/skill-registry-storage.ts",
+        "#lib/skills/skill-registry.ts",
         "#lib/tauri/tauri-invoke.ts",
         "node:assert/strict",
         "node:test"
       ],
       "path": "src/lib/workspaces/workspace-registry-read.test.ts",
       "semanticBytes": 0,
-      "sourceBytes": 2894
+      "sourceBytes": 5315
     },
     {
       "blocks": [],

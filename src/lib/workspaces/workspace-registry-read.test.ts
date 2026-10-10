@@ -2,8 +2,10 @@ import assert from 'node:assert/strict';
 import { afterEach, beforeEach, describe, test } from 'node:test';
 
 import { setTauriInvokeForTest } from '#lib/tauri/tauri-invoke.ts';
-import { readReferenceRegistry } from '#lib/references/reference-registry-storage.ts';
-import { readSkillRegistry } from '#lib/skills/skill-registry-storage.ts';
+import { readReferenceRegistry, writeReferenceRegistry } from '#lib/references/reference-registry-storage.ts';
+import { readSkillRegistry, writeSkillRegistry } from '#lib/skills/skill-registry-storage.ts';
+import type { ReferenceRegistry } from '#lib/references/reference-registry.ts';
+import type { SkillRegistry } from '#lib/skills/skill-registry.ts';
 
 const originalWindow = Object.getOwnPropertyDescriptor(globalThis, 'window');
 
@@ -36,7 +38,10 @@ for (const registry of [
 				'{}',
 				JSON.stringify({ version: registry.version, workspaceId: 'other', [registry.name]: [] }),
 				JSON.stringify({ version: 999, workspaceId: 'workspace', [registry.name]: [] }),
-				JSON.stringify({ version: registry.version, workspaceId: 'workspace' })
+				JSON.stringify({ version: registry.version, workspaceId: 'workspace' }),
+				...[null, -1, Number.MAX_SAFE_INTEGER + 1].map((revision) => JSON.stringify({
+					version: registry.version, workspaceId: 'workspace', [registry.name]: [], revision
+				}))
 			]) {
 				const commands: string[] = [];
 				setTauriInvokeForTest(async <T>(command: string) => {
@@ -61,12 +66,55 @@ for (const registry of [
 		});
 
 		test('allows a genuinely missing registry to initialize normally', async () => {
-			setTauriInvokeForTest(async <T>(command: string) =>
-				(command === 'read_workspace_data_file' ? { ok: true, content: null } : { ok: true }) as T
+			setTauriInvokeForTest(async <T>(command: string, args?: Record<string, unknown>) =>
+				(command === 'read_workspace_data_file' ? { ok: true, content: null } : {
+					ok: true, content: JSON.stringify({ ...JSON.parse(args?.content as string), revision: 1 })
+				}) as T
 			);
 			const result = await registry.read('workspace', 'C:/workspace');
 			assert.equal(result.ok, true);
 			assert.equal(result.registry.workspaceId, 'workspace');
+		});
+
+		test('retains the persisted revision and refuses stale edits without publishing them', async () => {
+			let content = JSON.stringify({
+				version: registry.version, workspaceId: 'workspace', [registry.name]: [], updatedAt: ''
+			});
+			let revision = 0;
+			let events = 0;
+			const eventName = `workduck:${registry.name === 'references' ? 'reference' : 'skill'}-registry-changed`;
+			window.addEventListener(eventName, () => { events += 1; });
+			setTauriInvokeForTest(async <T>(command: string, args?: Record<string, unknown>) => {
+				if (command === 'read_workspace_data_file') return { ok: true, content } as T;
+				assert.equal(command, 'write_workspace_registry_file');
+				assert.equal(args?.fileName, `${registry.name}.json`);
+				if (args?.expectedRevision !== revision) {
+					return { ok: false, error: 'workspace-data-revision-conflict' } as T;
+				}
+				const value = JSON.parse(args.content as string);
+				assert.equal(value.revision, revision);
+				revision += 1;
+				content = JSON.stringify({ ...value, revision });
+				return { ok: true, content } as T;
+			});
+			const original = await registry.read('workspace', 'C:/workspace');
+			assert.equal(original.ok, true);
+			assert.equal(original.registry.revision, 0);
+			const save = (value: ReferenceRegistry | SkillRegistry) => registry.name === 'references'
+				? writeReferenceRegistry(value as ReferenceRegistry, 'C:/workspace')
+				: writeSkillRegistry(value as SkillRegistry, 'C:/workspace');
+			const saved = await save(original.registry);
+			assert.equal(saved.ok, true);
+			assert.equal(saved.registry.revision, 1);
+			const persisted = content;
+			const stale = await save(original.registry);
+			assert.equal(stale.ok, false);
+			assert.equal(content, persisted);
+			assert.equal(events, 1);
+			const next = await save(saved.registry);
+			assert.equal(next.ok, true);
+			assert.equal(next.registry.revision, 2);
+			assert.equal(events, 2);
 		});
 	});
 }

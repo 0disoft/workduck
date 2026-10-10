@@ -1722,21 +1722,21 @@
         "project registry SQLite storage"
       ],
       "hashes": {
-        "body": "e557859cce000801384ca07f6b3df1b315eac33a3403e522a0e7c6d0965e0dbb",
-        "semantic": "7832a5772cd4cbae8eb46bdfb3a0dfccbb2f7cc6dc87348ef54b5c51124c667e",
-        "structure": "cdf138d81bba4e11f120b6fe663d8abcd7ff5628887792a39641f01e4024eb70"
+        "body": "b55dbaf760885cf0b9f45a076d65c05b95c83d063093cb4474d0ef1b2902a381",
+        "semantic": "e66003c0222702187608b3848295ffc4ab9e407e16e60cc78f63f209b2b4e99d",
+        "structure": "a49bfe48ed4a8cdc4bdf8015a91f764a2208146b727b05964df01608dd6b52b1"
       },
       "id": "workduck.workspace.data-files",
       "imports": [
-        "crate::atomic_file_write::{write_file_atomically, AtomicFileWriteError}",
-        "crate::workspace_path::{validate_absolute_directory_path, WorkspacePathValidationError}",
+        "crate::atomic_file_write::{AtomicFileWriteError, write_file_atomically}",
+        "crate::workspace_path::{WorkspacePathValidationError, validate_absolute_directory_path}",
         "crate::workspace_registry_lock::acquire_workspace_registry_lock",
         "crate::workspace_repository_gitignore::ensure_secrets_sync_gitignore_policy",
-        "std::{\n    fs,\n    io,\n    path::{Path, PathBuf},\n}",
+        "std::{\n    fs, io,\n    path::{Path, PathBuf},\n}",
         "tests {\n    use super::*"
       ],
       "invariant": [
-        "Generic writes cannot bypass registry revisions, paired agent and persona updates commit under one lock, and secrets sync first enforces ignore policy."
+        "Editable registries reject stale revisions and generic overwrites, paired agent and persona updates commit under one lock, and secrets sync first enforces ignore policy."
       ],
       "location": {
         "declarationLine": null,
@@ -2394,7 +2394,7 @@
         "atomic commit recovery"
       ],
       "hashes": {
-        "body": "187660d35bb8af3192244b57a02e9d0f061443072ab5e0e4c99fa4fb25f98206",
+        "body": "611dd70ef460a7d90f07b57eaa1aa54179a044b5678578f7d6ca4e29646f24dc",
         "semantic": "5ee03f0983caaa670ae07f672874d81bf3803f4ae72dd687206de8835f038d91",
         "structure": "60ab096fc22e922f6c8b66b8503e65633901c4dffa681f55cec7971a8a472232"
       },
@@ -3588,8 +3588,8 @@
         "queue execution"
       ],
       "hashes": {
-        "body": "0e19783718c6e36e189e853a32fdab7a43c5a9563f138cb96a060ce316cfa4a6",
-        "semantic": "0178ada10223d0deadba5ba5018adc8eff95d7f612090309a05e2e11f7dc0b77",
+        "body": "443d25ade5faaf16d76bf3aff095215b5eb98b366918aa513bb1b660c0cbe3d3",
+        "semantic": "699f9dd21d3b83c175bc89ea32afc7ba7a30af0b813d79505601e377901e83c4",
         "structure": "77591be811f60b3304209bb8a35d3284da601dbd65a3cc02037bc7f5e7ee58fb"
       },
       "id": "workduck.skills.registry",
@@ -3599,7 +3599,7 @@
         "./skill-schema"
       ],
       "invariant": [
-        "Stored registries require a supported version, matching workspace, and skill collection; legacy registries receive version-appropriate defaults, current removals persist, and invalid mutations preserve the registry."
+        "Stored registries require a supported version, matching workspace, skill collection, and valid revision; legacy revisions start at zero, mutations retain the loaded revision, version-appropriate defaults are migrated, and current removals persist."
       ],
       "location": {
         "declarationLine": null,
@@ -3637,7 +3637,7 @@
         "skill persistence"
       ],
       "hashes": {
-        "body": "14c7f330c7fd67d6082d570ed44a4c67bd6f667ae1e57b3be91e6502785e58d5",
+        "body": "5b273124d47c8e97fd88e7014c7f032d3a8cfed0e75d8d2e1ec705c7fa44190b",
         "semantic": "5204edddbf916b6efaf22fb90725255d0f699d572802c7da62220d5ebf77e50a",
         "structure": "7a859a44de00fb6c6fc797d802e5ef34b463333a2282c7e6f551794dda4d2a4b"
       },
@@ -4519,11 +4519,58 @@
         "Windows drive root and Unix backslash matching"
       ],
       "stability": "contract"
+    },
+    {
+      "boundaries": [],
+      "excludes": [
+        "filesystem persistence",
+        "reference panel lifetime",
+        "project registry ownership"
+      ],
+      "hashes": {
+        "body": "9b107acf879305ff3ad3ed4189f87d1b3f241dbca9414f68d4b15abd4d80a8f9",
+        "semantic": "6ec6fde15dc9a30fc75900282bfd0c352670602234bd348c2aa27929b7f21e8d",
+        "structure": "199fc8812ba503a326856c3c81aed6b11a2230aa421754a4b806e63baff977dc"
+      },
+      "id": "workduck.references.registry",
+      "imports": [
+        "#lib/shared/object-record.ts"
+      ],
+      "invariant": [
+        "Stored references require a matching workspace and collection, legacy revisions start at zero, and mutations retain the loaded revision for stale-write rejection."
+      ],
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src/lib/references/reference-registry.ts",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "owns": [
+        "reference registry schema",
+        "workspace and revision validation",
+        "reference mutations",
+        "reference identity and title uniqueness"
+      ],
+      "role": "Validate and mutate workspace reference registries while retaining their persistence revision.",
+      "scope": "module",
+      "search": [
+        "reference registry validation",
+        "reference edit revision",
+        "reference title conflict"
+      ],
+      "stability": "contract"
     }
   ],
   "contractFingerprints": {
     "configuration": {
-      "sha256": "2ab458f8f64f8cafb89ba723ccc27194e8575c0c962023f379d3fcb5a8132c3b"
+      "sha256": "de7f0fd0cc3551628e3846229c3e4ea51d1b98e9dc2bcbef607fb96bc057f1fd"
     },
     "exportedApi": {
       "count": 0,
@@ -4534,6 +4581,6 @@
   "generatedBy": "llmnav@0.9.7",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "ef78c83096d21d757958e6bbd639d515e678c804563dc8544ba05232af07683e",
+  "sourceHash": "58a9cf3a0fd53ebccdd678f31dd3c932ddefd220a86aadb0c877ab4135eb0486",
   "specVersion": "1"
 }

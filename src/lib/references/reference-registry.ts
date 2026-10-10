@@ -1,3 +1,12 @@
+/* llmnav/1 module
+id=workduck.references.registry
+role=Validate and mutate workspace reference registries while retaining their persistence revision.
+owns=reference registry schema|workspace and revision validation|reference mutations|reference identity and title uniqueness
+excludes=filesystem persistence|reference panel lifetime|project registry ownership
+search=reference registry validation|reference edit revision|reference title conflict
+invariant=Stored references require a matching workspace and collection, legacy revisions start at zero, and mutations retain the loaded revision for stale-write rejection.
+stability=contract
+*/
 import { isObjectRecord } from '#lib/shared/object-record.ts';
 export const REFERENCE_REGISTRY_VERSION = 1;
 export const REFERENCE_TITLE_MAX_LENGTH = 180;
@@ -31,6 +40,7 @@ export interface ReferenceRecord {
 
 export interface ReferenceRegistry {
 	readonly version: typeof REFERENCE_REGISTRY_VERSION;
+	readonly revision: number;
 	readonly workspaceId: string;
 	readonly references: readonly ReferenceRecord[];
 	readonly updatedAt: string;
@@ -63,6 +73,7 @@ export function createEmptyReferenceRegistry(
 ): ReferenceRegistry {
 	return {
 		version: REFERENCE_REGISTRY_VERSION,
+		revision: 0,
 		workspaceId,
 		references: [],
 		updatedAt: now.toISOString()
@@ -192,6 +203,10 @@ function normalizeReferenceRegistry(value: unknown, workspaceId: string): Refere
 	if (typeof value.workspaceId !== 'string' || value.workspaceId !== workspaceId || !Array.isArray(value.references)) {
 		return null;
 	}
+	const revision = value.revision === undefined ? 0 : value.revision;
+	if (typeof revision !== 'number' || !Number.isSafeInteger(revision) || revision < 0) {
+		return null;
+	}
 
 	const rawReferences = Array.isArray(value.references) ? value.references : [];
 	const seenReferenceIds = new Set<string>();
@@ -218,6 +233,7 @@ function normalizeReferenceRegistry(value: unknown, workspaceId: string): Refere
 
 	return {
 		version: REFERENCE_REGISTRY_VERSION,
+		revision,
 		workspaceId,
 		references: sortReferences(references),
 		updatedAt: readTrimmedString(value.updatedAt)

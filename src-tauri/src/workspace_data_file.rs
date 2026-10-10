@@ -4,23 +4,29 @@
 // owns=workspace data allowlist|registry compare-and-swap|registry transaction recovery
 // excludes=encrypted sync envelope|project registry SQLite storage
 // search=workspace data file|registry revision conflict|recover registry transaction
-// invariant=Generic writes cannot bypass registry revisions, paired agent and persona updates commit under one lock, and secrets sync first enforces ignore policy.
+// invariant=Editable registries reject stale revisions and generic overwrites, paired agent and persona updates commit under one lock, and secrets sync first enforces ignore policy.
 // stability=contract
 // /llmnav
 use std::{
-    fs,
-    io,
+    fs, io,
     path::{Path, PathBuf},
 };
 
-use crate::atomic_file_write::{write_file_atomically, AtomicFileWriteError};
-use crate::workspace_path::{validate_absolute_directory_path, WorkspacePathValidationError};
+use crate::atomic_file_write::{AtomicFileWriteError, write_file_atomically};
+use crate::workspace_path::{WorkspacePathValidationError, validate_absolute_directory_path};
 use crate::workspace_registry_lock::acquire_workspace_registry_lock;
 use crate::workspace_repository_gitignore::ensure_secrets_sync_gitignore_policy;
 
 const WORKDUCK_DIRECTORY_NAME: &str = ".workduck";
 const SECRETS_SYNC_FILE_NAME: &str = "secrets.sync.json";
-const REGISTRY_FILE_NAMES: &[&str] = &["agents.json", "personas.json", "briefs.json", "brief-runs.json"];
+const REGISTRY_FILE_NAMES: &[&str] = &[
+    "agents.json",
+    "personas.json",
+    "briefs.json",
+    "brief-runs.json",
+    "references.json",
+    "skills.json",
+];
 const REGISTRY_TRANSACTION_FILE_NAME: &str = ".registry-transaction.json";
 const WORKSPACE_DATA_FILE_MAX_BYTES: u64 = 1_048_576;
 const ALLOWED_WORKSPACE_DATA_FILES: &[&str] = &[
@@ -181,14 +187,11 @@ pub fn write_workspace_data_file(
         return invalid_write(WorkspaceDataFileError::FileWriteFailed);
     }
 
-    let file_path = match resolve_workspace_data_file_path(
-        &workspace_root,
-        &normalized_file_name,
-        true,
-    ) {
-        Ok(file_path) => file_path,
-        Err(error) => return invalid_write(error),
-    };
+    let file_path =
+        match resolve_workspace_data_file_path(&workspace_root, &normalized_file_name, true) {
+            Ok(file_path) => file_path,
+            Err(error) => return invalid_write(error),
+        };
 
     let write_result = write_file_atomically(&file_path, &content).map_err(map_atomic_write_error);
     if let Err(error) = write_result {
@@ -229,14 +232,11 @@ pub fn write_workspace_registry_file(
     if let Err(error) = recover_workspace_registry_transaction_under_lock(&workspace_root) {
         return invalid_write(error);
     }
-    let file_path = match resolve_workspace_data_file_path(
-        &workspace_root,
-        normalized_file_name,
-        true,
-    ) {
-        Ok(file_path) => file_path,
-        Err(error) => return invalid_write(error),
-    };
+    let file_path =
+        match resolve_workspace_data_file_path(&workspace_root, normalized_file_name, true) {
+            Ok(file_path) => file_path,
+            Err(error) => return invalid_write(error),
+        };
 
     let current_revision = match read_registry_revision(&file_path) {
         Ok(revision) => revision,
@@ -330,20 +330,16 @@ pub fn write_workspace_registry_pair(
         return invalid_pair_write(WorkspaceDataFileError::RevisionConflict);
     }
 
-    let persisted_agents_content = match prepare_registry_content(
-        &agents_content,
-        agents_expected_revision,
-    ) {
-        Ok(content) => content,
-        Err(error) => return invalid_pair_write(error),
-    };
-    let persisted_personas_content = match prepare_registry_content(
-        &personas_content,
-        personas_expected_revision,
-    ) {
-        Ok(content) => content,
-        Err(error) => return invalid_pair_write(error),
-    };
+    let persisted_agents_content =
+        match prepare_registry_content(&agents_content, agents_expected_revision) {
+            Ok(content) => content,
+            Err(error) => return invalid_pair_write(error),
+        };
+    let persisted_personas_content =
+        match prepare_registry_content(&personas_content, personas_expected_revision) {
+            Ok(content) => content,
+            Err(error) => return invalid_pair_write(error),
+        };
 
     if let Err(error) = commit_workspace_registry_pair_under_lock(
         &workspace_root,
@@ -477,6 +473,9 @@ fn read_registry_revision(file_path: &Path) -> Result<u64, WorkspaceDataFileErro
         Ok(content) => {
             let value: serde_json::Value =
                 serde_json::from_str(&content).map_err(|_| WorkspaceDataFileError::FileInvalid)?;
+            if !value.is_object() {
+                return Err(WorkspaceDataFileError::FileInvalid);
+            }
             value
                 .get("revision")
                 .map(|revision| revision.as_u64().ok_or(WorkspaceDataFileError::FileInvalid))
@@ -636,11 +635,13 @@ mod tests {
 
         assert!(!result.ok);
         assert_eq!(result.error, Some(WorkspaceDataFileError::FileWriteFailed));
-        assert!(!workspace
-            .path()
-            .join(WORKDUCK_DIRECTORY_NAME)
-            .join(SECRETS_SYNC_FILE_NAME)
-            .exists());
+        assert!(
+            !workspace
+                .path()
+                .join(WORKDUCK_DIRECTORY_NAME)
+                .join(SECRETS_SYNC_FILE_NAME)
+                .exists()
+        );
     }
 
     #[test]
@@ -694,23 +695,69 @@ mod tests {
     #[test]
     fn brief_registry_roundtrip_rejects_stale_and_generic_writes() {
         for name in ["briefs.json", "brief-runs.json"] {
-        let workspace = tempfile::tempdir().expect("workspace");
-        let path = workspace.path().to_string_lossy().into_owned();
-        let content = r#"{"version":1,"workspaceId":"workspace-1","revision":0,"briefs":[{"id":"brief-1","instructions":"Keep this draft"}]}"#;
-        let saved = write_workspace_registry_file(
-            path.clone(), name.into(), 0, content.into(),
-        );
-        assert!(saved.ok);
-        let read = read_workspace_data_file(path.clone(), name.into());
-        assert!(read.ok);
-        assert_eq!(read.content, saved.content);
-        let stale = write_workspace_registry_file(
-            path.clone(), name.into(), 0, content.into(),
-        );
-        assert_eq!(stale.error, Some(WorkspaceDataFileError::RevisionConflict));
-        let generic = write_workspace_data_file(path.clone(), name.into(), "{}".into());
-        assert_eq!(generic.error, Some(WorkspaceDataFileError::FileInvalid));
-        assert_eq!(read_workspace_data_file(path, name.into()).content, saved.content);
+            let workspace = tempfile::tempdir().expect("workspace");
+            let path = workspace.path().to_string_lossy().into_owned();
+            let content = r#"{"version":1,"workspaceId":"workspace-1","revision":0,"briefs":[{"id":"brief-1","instructions":"Keep this draft"}]}"#;
+            let saved = write_workspace_registry_file(path.clone(), name.into(), 0, content.into());
+            assert!(saved.ok);
+            let read = read_workspace_data_file(path.clone(), name.into());
+            assert!(read.ok);
+            assert_eq!(read.content, saved.content);
+            let stale = write_workspace_registry_file(path.clone(), name.into(), 0, content.into());
+            assert_eq!(stale.error, Some(WorkspaceDataFileError::RevisionConflict));
+            let generic = write_workspace_data_file(path.clone(), name.into(), "{}".into());
+            assert_eq!(generic.error, Some(WorkspaceDataFileError::FileInvalid));
+            assert_eq!(
+                read_workspace_data_file(path, name.into()).content,
+                saved.content
+            );
+        }
+    }
+
+    #[test]
+    fn reference_and_skill_writes_upgrade_legacy_revisions_and_preserve_newer_data() {
+        for name in ["references.json", "skills.json"] {
+            let workspace = tempfile::tempdir().unwrap();
+            let root = workspace.path().join(WORKDUCK_DIRECTORY_NAME);
+            fs::create_dir_all(&root).unwrap();
+            let file = root.join(name);
+            let legacy = r#"{"version":1,"workspaceId":"workspace-1","items":["original"]}"#;
+            fs::write(&file, legacy).unwrap();
+            let path = workspace.path().to_string_lossy().into_owned();
+            let first = write_workspace_registry_file(path.clone(), name.into(), 0, legacy.into());
+            assert!(first.ok);
+            let saved = fs::read(&file).unwrap();
+            let value: serde_json::Value = serde_json::from_slice(&saved).unwrap();
+            assert_eq!(value["revision"], 1);
+            assert_eq!(value["items"][0], "original");
+            let stale = write_workspace_registry_file(path.clone(), name.into(), 0, legacy.into());
+            assert_eq!(stale.error, Some(WorkspaceDataFileError::RevisionConflict));
+            let generic = write_workspace_data_file(path.clone(), name.into(), legacy.into());
+            assert_eq!(generic.error, Some(WorkspaceDataFileError::FileInvalid));
+            assert_eq!(fs::read(&file).unwrap(), saved);
+            let next = write_workspace_registry_file(path, name.into(), 1, first.content.unwrap());
+            assert!(next.ok);
+        }
+    }
+
+    #[test]
+    fn reference_and_skill_writes_preserve_corrupt_original_files() {
+        for name in ["references.json", "skills.json"] {
+            let workspace = tempfile::tempdir().unwrap();
+            let root = workspace.path().join(WORKDUCK_DIRECTORY_NAME);
+            fs::create_dir_all(&root).unwrap();
+            let file = root.join(name);
+            for corrupt in ["{", "[]", r#"{"revision":null}"#] {
+                fs::write(&file, corrupt).unwrap();
+                let result = write_workspace_registry_file(
+                    workspace.path().to_string_lossy().into_owned(),
+                    name.into(),
+                    0,
+                    "{}".into(),
+                );
+                assert_eq!(result.error, Some(WorkspaceDataFileError::FileInvalid));
+                assert_eq!(fs::read_to_string(&file).unwrap(), corrupt);
+            }
         }
     }
 

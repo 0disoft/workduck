@@ -2189,6 +2189,28 @@
     {
       "definitions": [],
       "external": false,
+      "key": "workduck/workduck.references.registry",
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src/lib/references/reference-registry.ts",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "repositoryId": "workduck",
+      "role": "Validate and mutate workspace reference registries while retaining their persistence revision.",
+      "semanticId": "workduck.references.registry",
+      "unresolved": false
+    },
+    {
+      "definitions": [],
+      "external": false,
       "key": "workduck/workduck.repository.inspection",
       "location": {
         "declarationLine": null,
@@ -2673,11 +2695,11 @@
   ],
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "a00a5514003b96e7146ac5f67a085a01371bfb0efa4bedb16cfa440009c4eaef",
+  "sourceHash": "5d3a4a50d88daf3ed9f5d4c21e54fdf2e54412e3f96f24adc94732291ee0b2c8",
   "stats": {
     "edgeCount": 49,
     "importedIndexCount": 0,
-    "nodeCount": 89,
+    "nodeCount": 90,
     "unresolvedNodeCount": 0
   }
 }

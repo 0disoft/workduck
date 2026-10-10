@@ -75,6 +75,9 @@ includes:
   browser-stored project metadata promoted on first read.
 - Skills menu for workspace-local Workduck skills, including a built-in
   proposal-writing skill.
+- Reference and skill editing requires a successful registry load. Native saves
+  check revisions so stale edits cannot replace newer workspace files; failed
+  saves keep the editor draft and do not replace the displayed registry.
 - Agents menu with workspace-local agent cards that reference `llm` API keys
   from the Environment vault without copying secret values.
 - Custom title bar, sidebar resizing, and tray integration.

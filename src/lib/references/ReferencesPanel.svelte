@@ -576,6 +576,7 @@
 			case 'reference-registry-storage-read-failed':
 				return messages.references.errors.readFailed;
 			case 'reference-registry-storage-write-failed':
+			case 'workspace-data-revision-conflict':
 				return messages.references.errors.saveFailed;
 			default:
 				return nextError.includes('write') || nextError.includes('too-large')

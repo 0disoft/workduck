@@ -1,4 +1,5 @@
 {"id":"workduck.contract.schemas","state":"active"}
+{"id":"workduck.references.registry","state":"active"}
 {"id":"workduck.cli.launcher","state":"active"}
 {"id":"workduck.cli.execution","state":"active"}
 {"id":"workduck.desktop.commands","state":"active"}
