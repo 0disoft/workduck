@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 import { setTauriInvokeForTest } from '#lib/tauri/tauri-invoke.ts';
 import { addProjectNode, createEmptyProjectRegistry, type ProjectRegistry } from './project-registry';
-import { readProjectRegistry, subscribeProjectRegistry, writeProjectRegistries, writeProjectRegistry } from './project-storage';
+import { readProjectRegistries, readProjectRegistry, subscribeProjectRegistry, writeProjectRegistries, writeProjectRegistry } from './project-storage';
 
 function registry(workspaceId: string, revision: number) {
 	return { ...createEmptyProjectRegistry(workspaceId), updatedAt: `2026-10-04T00:00:0${revision}.000Z` };
@@ -11,6 +11,17 @@ function deferred() {
 	let resolve!: () => void;
 	const promise = new Promise<void>((next) => { resolve = next; });
 	return { promise, resolve };
+}
+
+function seedLegacyRegistry() {
+	const added = addProjectNode(createEmptyProjectRegistry('demo'), {
+		kind: 'project', name: 'Legacy', path: 'projects/legacy'
+	});
+	if (!added.ok) throw new Error(added.error);
+	window.localStorage.setItem('workduck.projectRegistries.v1', JSON.stringify({
+		version: added.registry.version, registries: { demo: added.registry }
+	}));
+	return added.registry;
 }
 
 async function settle() { await new Promise((resolve) => setTimeout(resolve, 0)); }
@@ -50,6 +61,72 @@ afterEach(() => {
 });
 
 describe('project registry storage write ordering', () => {
+	for (const bulk of [false, true]) {
+		test(`preserves an empty SQLite registry without a browser migration marker, bulk=${bulk}`, async () => {
+			seedLegacyRegistry();
+			const empty = registry('demo', 9);
+			let writes = 0;
+			setTauriInvokeForTest(async <T>(command: string) => {
+				if (command === 'read_project_registry') return { ok: true, registryJson: JSON.stringify(empty) } as T;
+				if (command === 'read_project_registries') return { ok: true, registries: { demo: JSON.stringify(empty) } } as T;
+				writes += 1;
+				return { ok: true } as T;
+			});
+			const result = bulk ? await readProjectRegistries(['demo']) : await readProjectRegistry('demo');
+			expect(result.ok).toBe(true);
+			expect('registries' in result ? result.registries.demo : result.registry).toEqual(empty);
+			expect(writes).toBe(0);
+		});
+
+		for (const competingWrite of [false, true]) {
+			test(`guards legacy promotion against a row created after reading, bulk=${bulk}, competing=${competingWrite}`, async () => {
+				const legacy = seedLegacyRegistry();
+				const competing = registry('demo', 9);
+				let persisted: ProjectRegistry | null = null;
+				let writeGuard: unknown;
+				setTauriInvokeForTest(async <T>(command: string, args?: Record<string, unknown>) => {
+					if (command === 'read_project_registry') return { ok: true, registryJson: null } as T;
+					if (command === 'read_project_registries') return { ok: true, registries: {} } as T;
+					const expected = command === 'write_project_registry' ? args?.expectedRegistryJson
+						: (args?.registries as Record<string, { expectedRegistryJson?: string }>).demo?.expectedRegistryJson;
+					writeGuard = expected;
+					if (competingWrite) persisted = competing;
+					if (expected === 'null' && persisted !== null) {
+						return { ok: false, error: 'project-registry-revision-conflict' } as T;
+					}
+					persisted = writtenRegistries(command, args).demo ?? null;
+					return { ok: true } as T;
+				});
+				const result = bulk ? await readProjectRegistries(['demo']) : await readProjectRegistry('demo');
+				expect(writeGuard).toBe('null');
+				expect(result.ok).toBe(!competingWrite);
+				if (!result.ok) expect(result.error).toBe('project-registry-revision-conflict');
+				expect(persisted as ProjectRegistry | null).toEqual(competingWrite ? competing : legacy);
+			});
+		}
+	}
+
+	test('bulk promotion creates only missing rows and retains existing empty registries', async () => {
+		const legacy = seedLegacyRegistry();
+		const missing = { ...legacy, workspaceId: 'missing' };
+		window.localStorage.setItem('workduck.projectRegistries.v1', JSON.stringify({
+			version: legacy.version, registries: { demo: legacy, missing }
+		}));
+		const empty = registry('demo', 9);
+		let written: Record<string, unknown> | undefined;
+		setTauriInvokeForTest(async <T>(command: string, args?: Record<string, unknown>) => {
+			if (command === 'read_project_registries') return { ok: true, registries: { demo: JSON.stringify(empty) } } as T;
+			written = args?.registries as Record<string, unknown>;
+			return { ok: true } as T;
+		});
+		const result = await readProjectRegistries(['demo', 'missing']);
+		expect(result.ok).toBe(true);
+		expect(result.registries).toEqual({ demo: empty, missing });
+		expect(written).toEqual({ missing: {
+			registryJson: JSON.stringify(missing), updatedAt: missing.updatedAt, expectedRegistryJson: 'null'
+		} });
+	});
+
 	for (const supersededBy of ['write', 'storage', 'unsubscribe'] as const) {
 		test(`ignores a pending subscription read superseded by ${supersededBy}`, async () => {
 			const pending = deferred();

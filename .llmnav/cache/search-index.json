@@ -95,7 +95,7 @@
     "workduck.workspace.sync-file-native",
     "workduck.workspace.sync-git-native"
   ],
-  "cardSetHash": "ec22e401c1362bafdfde5bd2f2ef9cdb9a603d4355e862a889f40f409ed26497",
+  "cardSetHash": "2264d097c8e1e869b601994093c5d27dde972f2f95a22d4d3197b45813fa81cb",
   "documentCount": 94,
   "documents": [
     [
@@ -713,13 +713,13 @@
       ]
     ],
     [
-      "d193dfb5aa068729a94a25d29077219b879be87bf0cf3c45c7372f157d884ea3",
+      "4f2514ce7e06efd7568c4db72cc3dd49b7a5a43ff0c8ca930f0a50f4915a1ffd",
       [
         "persist ordered project registry writes, atomically import workspace sync data in sqlite, and migrate browser legacy registries.",
         "project registry storage",
         "sqlite registry migration",
         "atomic workspace sync import",
-        "overlapping writes run in request order; sync imports publish workspace and project changes only after one native commit; legacy promotion rechecks sqlite and active subscriptions publish only current results.",
+        "overlapping writes run in request order; sync imports publish only after one native commit; legacy promotion requires a missing sqlite row and guards its creation; stored empty registries remain authoritative and subscriptions publish only current results.",
         "project registry persistence",
         "legacy registry promotion",
         "registry change notifications",
@@ -1499,6 +1499,13 @@
         ]
       ],
       [
+        46,
+        [
+          5,
+          1
+        ]
+      ],
+      [
         47,
         [
           1,
@@ -1845,13 +1852,6 @@
         28,
         [
           3,
-          1
-        ]
-      ],
-      [
-        46,
-        [
-          5,
           1
         ]
       ],
@@ -4146,6 +4146,15 @@
     ],
     [
       [
+        46,
+        [
+          5,
+          1
+        ]
+      ]
+    ],
+    [
+      [
         0,
         [
           1,
@@ -5756,13 +5765,6 @@
     [
       [
         4,
-        [
-          5,
-          1
-        ]
-      ],
-      [
-        46,
         [
           5,
           1
@@ -7853,6 +7855,13 @@
     ],
     [
       [
+        46,
+        [
+          5,
+          1
+        ]
+      ],
+      [
         59,
         [
           1,
@@ -9595,6 +9604,13 @@
       ]
     ],
     [
+      [
+        46,
+        [
+          5,
+          1
+        ]
+      ],
       [
         88,
         [
@@ -13112,6 +13128,13 @@
         ]
       ],
       [
+        46,
+        [
+          5,
+          1
+        ]
+      ],
+      [
         47,
         [
           1,
@@ -14572,6 +14595,13 @@
       ],
       [
         43,
+        [
+          5,
+          1
+        ]
+      ],
+      [
+        46,
         [
           5,
           1
@@ -17016,6 +17046,13 @@
       ],
       [
         44,
+        [
+          5,
+          1
+        ]
+      ],
+      [
+        46,
         [
           5,
           1
@@ -22294,8 +22331,6 @@
           1,
           4,
           1,
-          5,
-          1,
           9,
           1
         ]
@@ -23983,13 +24018,6 @@
           5,
           1
         ]
-      ],
-      [
-        46,
-        [
-          5,
-          1
-        ]
       ]
     ],
     [
@@ -24601,6 +24629,8 @@
         46,
         [
           1,
+          1,
+          5,
           1
         ]
       ],
@@ -25108,6 +25138,13 @@
         ]
       ],
       [
+        46,
+        [
+          5,
+          1
+        ]
+      ],
+      [
         52,
         [
           5,
@@ -26149,6 +26186,13 @@
         ]
       ],
       [
+        46,
+        [
+          5,
+          1
+        ]
+      ],
+      [
         58,
         [
           5,
@@ -27197,6 +27241,13 @@
         [
           1,
           1,
+          5,
+          1
+        ]
+      ],
+      [
+        46,
+        [
           5,
           1
         ]
@@ -31614,6 +31665,13 @@
       ],
       [
         26,
+        [
+          5,
+          1
+        ]
+      ],
+      [
+        46,
         [
           5,
           1
@@ -37970,8 +38028,6 @@
           2,
           1,
           3,
-          1,
-          5,
           1
         ]
       ],
@@ -38677,6 +38733,7 @@
     "author",
     "authored",
     "authoring",
+    "authoritative",
     "authority",
     "autolaunch",
     "autostart",

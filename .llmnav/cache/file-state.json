@@ -10837,7 +10837,7 @@
     },
     {
       "blocks": [],
-      "contentHash": "a462e70496b3d376313c691837c7394784387e977400785e095ec76b801dea67",
+      "contentHash": "6087464b6209034e7ce1206d0dc9806d0989a1c9d78616a49ba69ed53e695a59",
       "declarations": [],
       "imports": [
         "#lib/tauri/tauri-invoke.ts",
@@ -10847,7 +10847,7 @@
       ],
       "path": "src/lib/projects/project-storage.test.ts",
       "semanticBytes": 0,
-      "sourceBytes": 11377
+      "sourceBytes": 15174
     },
     {
       "blocks": [
@@ -10860,7 +10860,7 @@
             ],
             "id": "workduck.projects.storage",
             "invariant": [
-              "Overlapping writes run in request order; sync imports publish workspace and project changes only after one native commit; legacy promotion rechecks SQLite and active subscriptions publish only current results."
+              "Overlapping writes run in request order; sync imports publish only after one native commit; legacy promotion requires a missing SQLite row and guards its creation; stored empty registries remain authoritative and subscriptions publish only current results."
             ],
             "owns": [
               "project registry persistence",
@@ -10881,7 +10881,7 @@
             "stability": "architecture",
             "unknown": []
           },
-          "end": 716,
+          "end": 763,
           "endLine": 9,
           "entries": [
             {
@@ -10918,7 +10918,7 @@
               "key": "invariant",
               "line": 7,
               "order": 5,
-              "value": "Overlapping writes run in request order; sync imports publish workspace and project changes only after one native commit; legacy promotion rechecks SQLite and active subscriptions publish only current results."
+              "value": "Overlapping writes run in request order; sync imports publish only after one native commit; legacy promotion requires a missing SQLite row and guards its creation; stored empty registries remain authoritative and subscriptions publish only current results."
             },
             {
               "key": "stability",
@@ -10931,7 +10931,7 @@
           "indent": "",
           "newline": "\n",
           "prefix": null,
-          "raw": "/* llmnav/1 module\nid=workduck.projects.storage\nrole=Persist ordered project registry writes, atomically import workspace sync data in SQLite, and migrate browser legacy registries.\nowns=project registry persistence|legacy registry promotion|registry change notifications|workspace operation ordering|atomic sync import\nexcludes=project domain normalization|repository Git operations\nsearch=project registry storage|sqlite registry migration|atomic workspace sync import\ninvariant=Overlapping writes run in request order; sync imports publish workspace and project changes only after one native commit; legacy promotion rechecks SQLite and active subscriptions publish only current results.\nstability=architecture\n*/",
+          "raw": "/* llmnav/1 module\nid=workduck.projects.storage\nrole=Persist ordered project registry writes, atomically import workspace sync data in SQLite, and migrate browser legacy registries.\nowns=project registry persistence|legacy registry promotion|registry change notifications|workspace operation ordering|atomic sync import\nexcludes=project domain normalization|repository Git operations\nsearch=project registry storage|sqlite registry migration|atomic workspace sync import\ninvariant=Overlapping writes run in request order; sync imports publish only after one native commit; legacy promotion requires a missing SQLite row and guards its creation; stored empty registries remain authoritative and subscriptions publish only current results.\nstability=architecture\n*/",
           "scope": "module",
           "specVersion": "1",
           "start": 0,
@@ -10940,7 +10940,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "adff874632bb0c6d6cc64260b1ab6087e68073aa7508e3de0a429d590e3696b4",
+      "contentHash": "7ffa98962b81ae36a53e0ac556d38c2e9b43378ce2434d9d03d5b049a6421677",
       "declarations": [
         null
       ],
@@ -10953,8 +10953,8 @@
         "./project-registry"
       ],
       "path": "src/lib/projects/project-storage.ts",
-      "semanticBytes": 716,
-      "sourceBytes": 26497
+      "semanticBytes": 763,
+      "sourceBytes": 26944
     },
     {
       "blocks": [],

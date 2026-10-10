@@ -4,7 +4,7 @@ role=Persist ordered project registry writes, atomically import workspace sync d
 owns=project registry persistence|legacy registry promotion|registry change notifications|workspace operation ordering|atomic sync import
 excludes=project domain normalization|repository Git operations
 search=project registry storage|sqlite registry migration|atomic workspace sync import
-invariant=Overlapping writes run in request order; sync imports publish workspace and project changes only after one native commit; legacy promotion rechecks SQLite and active subscriptions publish only current results.
+invariant=Overlapping writes run in request order; sync imports publish only after one native commit; legacy promotion requires a missing SQLite row and guards its creation; stored empty registries remain authoritative and subscriptions publish only current results.
 stability=architecture
 */
 
@@ -159,11 +159,11 @@ async function readProjectRegistryNow(workspaceId: string, promotionQueued = fal
 
 	const sqliteRegistry = sqliteRegistryResult.registry;
 
-	if (shouldPromoteLegacyRegistry(workspaceId, sqliteRegistry, legacyRegistry)) {
+	if (sqliteResult.registryJson === null && shouldPromoteLegacyRegistry(workspaceId, legacyRegistry)) {
 		if (!promotionQueued) {
 			return sequenceProjectRegistryOperation([workspaceId], () => readProjectRegistryNow(workspaceId, true));
 		}
-		const writeResult = await writeProjectRegistryToSqlite(legacyRegistry);
+		const writeResult = await writeProjectRegistryToSqlite(legacyRegistry, 'null');
 
 		if (!writeResult.ok) {
 			return {
@@ -311,7 +311,7 @@ async function readProjectRegistriesNow(workspaceIds: readonly string[], promoti
 		const registry = registryResult.registry;
 		registries[workspaceId] = registry;
 
-		if (shouldPromoteLegacyRegistry(workspaceId, registry, fallbackRegistry)) {
+		if (sqliteRegistryJson === undefined && shouldPromoteLegacyRegistry(workspaceId, fallbackRegistry)) {
 			registriesToPromote[workspaceId] = fallbackRegistry;
 		}
 	}
@@ -320,7 +320,7 @@ async function readProjectRegistriesNow(workspaceIds: readonly string[], promoti
 		if (!promotionQueued) {
 			return sequenceProjectRegistryOperation(workspaceIds, () => readProjectRegistriesNow(workspaceIds, true));
 		}
-		const writeResult = await writeProjectRegistriesToSqlite(registriesToPromote);
+		const writeResult = await writeProjectRegistriesToSqlite(registriesToPromote, { expectedRegistryJson: 'null' });
 
 		if (!writeResult.ok) {
 			return {
@@ -372,8 +372,10 @@ export async function writeWorkspaceSyncRegistries(
 			valueJson,
 			async (expectedValueJson) => {
 				const write = await writeProjectRegistriesToSqlite(normalizedRegistries, {
-					valueJson, expectedValueJson: expectedValueJson ?? 'null',
-					updatedAt: new Date().toISOString()
+					workspaceRegistry: {
+						valueJson, expectedValueJson: expectedValueJson ?? 'null',
+						updatedAt: new Date().toISOString()
+					}
 				});
 				if (!write.ok) error = write.error;
 				return write.ok;
@@ -603,6 +605,7 @@ async function writeProjectRegistryToSqlite(registry: ProjectRegistry, expectedR
 	const invoke = getTauriInvoke();
 
 	if (invoke === undefined) {
+		if (expectedRegistryJson !== undefined) return { ok: false, error: 'project-registry-write-failed' } as const;
 		try {
 			writeLegacyProjectRegistries({
 				...readLegacyStorageRecord().registries,
@@ -637,12 +640,17 @@ async function writeProjectRegistryToSqlite(registry: ProjectRegistry, expectedR
 
 async function writeProjectRegistriesToSqlite(
 	registries: Record<string, ProjectRegistry>,
-	workspaceRegistry?: WorkspaceRegistryWriteInput
+	{ workspaceRegistry, expectedRegistryJson }: {
+		readonly workspaceRegistry?: WorkspaceRegistryWriteInput;
+		readonly expectedRegistryJson?: string;
+	} = {}
 ) {
 	const invoke = getTauriInvoke();
 
 	if (invoke === undefined) {
-		if (workspaceRegistry !== undefined) return { ok: false, error: 'project-registry-write-failed' } as const;
+		if (workspaceRegistry !== undefined || expectedRegistryJson !== undefined) {
+			return { ok: false, error: 'project-registry-write-failed' } as const;
+		}
 		try {
 			writeLegacyProjectRegistries({
 				...readLegacyStorageRecord().registries,
@@ -662,7 +670,8 @@ async function writeProjectRegistriesToSqlite(
 					workspaceId,
 					{
 						registryJson: serializeProjectRegistry(registry),
-						updatedAt: registry.updatedAt
+						updatedAt: registry.updatedAt,
+						...(expectedRegistryJson === undefined ? {} : { expectedRegistryJson })
 					}
 				])
 			)
@@ -683,12 +692,10 @@ async function writeProjectRegistriesToSqlite(
 
 function shouldPromoteLegacyRegistry(
 	workspaceId: string,
-	sqliteRegistry: ProjectRegistry,
 	legacyRegistry: ProjectRegistry
 ) {
 	return (
 		!workspaceRegistryWasMigrated(workspaceId) &&
-		sqliteRegistry.nodes.length === 0 &&
 		legacyRegistry.nodes.length > 0
 	);
 }
