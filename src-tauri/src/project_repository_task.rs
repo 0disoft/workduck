@@ -4,7 +4,7 @@
 // owns=native repository task launch|toolchain command discovery|task run reconciliation
 // excludes=frontend task normalization|arbitrary shell command input
 // search=native repository task|discover build command|reconcile dev server
-// invariant=Tasks are selected from a closed vocabulary, repository paths remain inside the workspace, and running records are revalidated against live process identity; launch identity updates preserve terminal-owned completion, and success requires the final command to finish.
+// invariant=Tasks are selected from a closed vocabulary, repository paths remain inside the workspace, and running records are revalidated against live process identity; cached latest and unreadable files require unchanged file metadata, launch identity updates preserve terminal-owned completion, and success requires the final command to finish.
 // stability=architecture
 // /llmnav
 use std::{
@@ -286,7 +286,7 @@ fn read_latest_cached_task_run_records(
         .lock()
         .map_err(|_| ProjectRepositoryTaskError::RecordReadFailed)?;
 
-    if workspace_cache.is_fresh(dir_len, dir_modified_at) {
+    if workspace_cache.is_fresh(record_dir, dir_len, dir_modified_at) {
         return Ok(workspace_cache.latest_records.clone());
     }
 
@@ -377,7 +377,12 @@ fn clear_cached_task_run_records(record_dir: &Path) {
 }
 
 impl WorkspaceTaskRunRecordCache {
-    fn is_fresh(&self, dir_len: u64, dir_modified_at: Option<SystemTime>) -> bool {
+    fn is_fresh(
+        &self,
+        record_dir: &Path,
+        dir_len: u64,
+        dir_modified_at: Option<SystemTime>,
+    ) -> bool {
         if dir_modified_at.is_none()
             || self.dir_len != dir_len
             || self.dir_modified_at != dir_modified_at
@@ -385,10 +390,35 @@ impl WorkspaceTaskRunRecordCache {
             return false;
         }
 
-        !self
+        if self
             .latest_records
             .iter()
             .any(|record| record.state == "running")
+        {
+            return false;
+        }
+
+        // In-place terminal writes do not update the directory's modification time.
+        // Check the latest records and failed reads without rescanning completed history.
+        let file_is_unchanged = |file_name: &str, cached: &CachedTaskRunRecordFile| {
+            fs::metadata(record_dir.join(file_name)).is_ok_and(|metadata| {
+                metadata.is_file()
+                    && cached.modified_at.is_some()
+                    && metadata.len() == cached.len
+                    && metadata.modified().ok() == cached.modified_at
+            })
+        };
+        self.latest_records.iter().all(|record| {
+            Path::new(&record.record_path)
+                .file_name()
+                .and_then(|name| name.to_str())
+                .and_then(|name| self.files.get(name).map(|cached| (name, cached)))
+                .is_some_and(|(name, cached)| file_is_unchanged(name, cached))
+        }) && self
+            .files
+            .iter()
+            .filter(|(_, cached)| cached.record.is_none())
+            .all(|(name, cached)| file_is_unchanged(name, cached))
     }
 }
 

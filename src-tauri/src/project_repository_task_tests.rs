@@ -99,7 +99,73 @@ fn stopped_record_reads_preserve_the_file_and_populate_a_stable_cache() {
     let cache = workspace_task_run_record_cache(&dir).unwrap_or_else(|_| panic!("workspace cache"));
     let cache = cache.lock().unwrap();
     let metadata = fs::metadata(&dir).unwrap();
-    assert!(cache.is_fresh(metadata.len(), metadata.modified().ok()));
+    assert!(cache.is_fresh(&dir, metadata.len(), metadata.modified().ok()));
+}
+
+#[test]
+fn cached_completed_record_changes_are_visible_without_directory_changes() {
+    let temp = tempfile::tempdir().unwrap();
+    let workspace = fs::canonicalize(temp.path()).unwrap();
+    let visible = crate::git_path::git_process_path(&workspace);
+    let dir = task_run_record_dir(&workspace);
+    fs::create_dir_all(&dir).unwrap();
+    let path = dir.join("completed.json");
+    let mut record = task_run_record(
+        "completed",
+        &visible.join("repo").to_string_lossy(),
+        "2026-10-01T00:00:00Z",
+    );
+    record.record_path = path.to_string_lossy().into_owned();
+    fs::write(&path, serde_json::to_vec(&record).unwrap()).unwrap();
+    let initial = read_latest_cached_task_run_records(&dir, &visible)
+        .unwrap_or_else(|_| panic!("read initial completed record"));
+    assert_eq!(initial[0].state, "succeeded");
+    let directory_modified = fs::metadata(&dir).unwrap().modified().unwrap();
+
+    record.state = "failed".into();
+    record.exit_code = Some(1);
+    record.output_tail = Some("updated execution result".into());
+    fs::write(&path, serde_json::to_vec(&record).unwrap()).unwrap();
+    assert_eq!(
+        fs::metadata(&dir).unwrap().modified().unwrap(),
+        directory_modified
+    );
+    let updated = read_latest_cached_task_run_records(&dir, &visible)
+        .unwrap_or_else(|_| panic!("read updated completed record"));
+    assert_eq!(updated[0].state, "failed");
+    assert_eq!(updated[0].exit_code, Some(1));
+    assert_eq!(updated[0].output_tail, record.output_tail);
+}
+
+#[test]
+fn transient_invalid_record_does_not_remain_hidden_in_the_cache() {
+    let temp = tempfile::tempdir().unwrap();
+    let workspace = fs::canonicalize(temp.path()).unwrap();
+    let visible = crate::git_path::git_process_path(&workspace);
+    let dir = task_run_record_dir(&workspace);
+    fs::create_dir_all(&dir).unwrap();
+    let path = dir.join("completed.json");
+    fs::write(&path, b"{").unwrap();
+    let initial = read_latest_cached_task_run_records(&dir, &visible)
+        .unwrap_or_else(|_| panic!("read partially written record"));
+    assert!(initial.is_empty());
+    let directory_modified = fs::metadata(&dir).unwrap().modified().unwrap();
+
+    let record = task_run_record(
+        "completed",
+        &visible.join("repo").to_string_lossy(),
+        "2026-10-01T00:00:00Z",
+    );
+    fs::write(&path, serde_json::to_vec(&record).unwrap()).unwrap();
+    assert_eq!(
+        fs::metadata(&dir).unwrap().modified().unwrap(),
+        directory_modified
+    );
+    let recovered = read_latest_cached_task_run_records(&dir, &visible)
+        .unwrap_or_else(|_| panic!("reread completed record"));
+    assert_eq!(recovered.len(), 1);
+    assert_eq!(recovered[0].id, "completed");
+    assert_eq!(recovered[0].state, "succeeded");
 }
 
 #[test]

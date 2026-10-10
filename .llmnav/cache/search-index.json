@@ -90,7 +90,7 @@
     "workduck.workspace.sync-file-native",
     "workduck.workspace.sync-git-native"
   ],
-  "cardSetHash": "ab62541d0fef0ad9c0fb91e7525c6bfc7937596cf311bf617b6807f58649e400",
+  "cardSetHash": "c5582bd98c254fe295e96bdf5727d875ca19e4c415e21b2b0b446583ac5ab6df",
   "documentCount": 89,
   "documents": [
     [
@@ -609,13 +609,13 @@
       ]
     ],
     [
-      "e75e8d9be4c32c1a266f43217a8aa0a7f821cf56d941395d5c36656b48505d80",
+      "836ab20379172225694989e4eaabaa627c5d2d958a970eebe79c00b08311c1c1",
       [
         "discover toolchain commands, launch bounded repository tasks in terminals, and persist or reconcile native task-run records.",
         "native repository task",
         "discover build command",
         "reconcile dev server",
-        "tasks are selected from a closed vocabulary, repository paths remain inside the workspace, and running records are revalidated against live process identity; launch identity updates preserve terminal-owned completion, and success requires the final command to finish.",
+        "tasks are selected from a closed vocabulary, repository paths remain inside the workspace, and running records are revalidated against live process identity; cached latest and unreadable files require unchanged file metadata, launch identity updates preserve terminal-owned completion, and success requires the final command to finish.",
         "native repository task launch",
         "toolchain command discovery",
         "task run reconciliation"
@@ -2564,7 +2564,7 @@
           1,
           1,
           5,
-          2
+          3
         ]
       ],
       [
@@ -4888,6 +4888,13 @@
       ],
       [
         16,
+        [
+          5,
+          1
+        ]
+      ],
+      [
+        39,
         [
           5,
           1
@@ -10656,6 +10663,13 @@
     ],
     [
       [
+        39,
+        [
+          5,
+          1
+        ]
+      ],
+      [
         41,
         [
           3,
@@ -10856,6 +10870,13 @@
     [
       [
         28,
+        [
+          5,
+          1
+        ]
+      ],
+      [
+        39,
         [
           5,
           1
@@ -13850,6 +13871,13 @@
         ]
       ],
       [
+        39,
+        [
+          5,
+          1
+        ]
+      ],
+      [
         43,
         [
           5,
@@ -15447,6 +15475,13 @@
           2,
           1,
           3,
+          1
+        ]
+      ],
+      [
+        39,
+        [
+          5,
           1
         ]
       ],
@@ -23854,6 +23889,13 @@
           5,
           1
         ]
+      ],
+      [
+        39,
+        [
+          5,
+          1
+        ]
       ]
     ],
     [
@@ -31943,6 +31985,13 @@
         ]
       ],
       [
+        39,
+        [
+          5,
+          1
+        ]
+      ],
+      [
         62,
         [
           5,
@@ -32123,6 +32172,13 @@
       ]
     ],
     [
+      [
+        39,
+        [
+          5,
+          1
+        ]
+      ],
       [
         82,
         [
