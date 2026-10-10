@@ -90,7 +90,7 @@
     "workduck.workspace.sync-file-native",
     "workduck.workspace.sync-git-native"
   ],
-  "cardSetHash": "c1ca37c00733531f5895aaa10b64519e8933b794941593e5ee8fc8af16ccdcc9",
+  "cardSetHash": "27650fa6635a7749de218944e78458497b53e4b38d997a0985d93aac999ad344",
   "documentCount": 89,
   "documents": [
     [
@@ -107,13 +107,13 @@
       ]
     ],
     [
-      "87f3461951772dcb64c99f6fd4ee70298515ec03557a537e419489ad4e306bc5",
+      "32455700b76383330380d94884cba3073da437d6375cfc92ae41904617977bb7",
       [
         "build a bounded read-only workspace snapshot for agents while omitting secrets, terminal input, command text, and output bodies.",
         "agent workspace snapshot",
         "read-only agent api",
         "redacted workspace summary",
-        "snapshot generation never creates missing queue state or exposes secret identifiers, encrypted payloads, commands, or output tails.",
+        "snapshot generation never creates missing queue state or exposes secret identifiers, encrypted payloads, commands, or output tails; task summaries share bounded record reads and read-only liveness projection with the desktop.",
         "agent api snapshot",
         "workspace summary redaction",
         "snapshot capability declaration"
@@ -609,13 +609,13 @@
       ]
     ],
     [
-      "05ae27dee844779218678057dcbe259bcc557d30909858922e844ecca31bc839",
+      "6abf3a84b58516caa617de248af6ea7714fa3ad54449dcf943f974878327325a",
       [
-        "discover toolchain commands, launch bounded repository tasks in terminals, and persist or reconcile native task-run records.",
+        "discover toolchain commands, launch bounded repository tasks in terminals, persist execution-owned records, and project process liveness without overwriting results.",
         "native repository task",
         "discover build command",
         "reconcile dev server",
-        "tasks are selected from a closed vocabulary and repository paths remain inside the workspace; latest records bind selectable run ids to their filenames, process identity is revalidated after bounded startup grace, tracked servers require their terminal execution and descendants, cached latest and unreadable files require unchanged metadata, terminal-owned completion survives launch updates and success requires the final command, and bounded unicode output previews keep completed history readable.",
+        "tasks are selected from a closed vocabulary and repository paths remain inside the workspace; latest records bind selectable run ids to their filenames, process identity is revalidated after bounded startup grace, tracked servers require their terminal execution and descendants, cached latest and unreadable files require unchanged metadata, terminal-owned completion survives launch updates and read-only reconciliation, success requires the final command, and bounded unicode output previews keep completed history readable.",
         "native repository task launch",
         "toolchain command discovery",
         "task run reconciliation"
@@ -702,13 +702,13 @@
       ]
     ],
     [
-      "59b81a1c261577246808bdc13ba101191ad3ac160f6a998309b1f9210db3fcab",
+      "596fcaa0f56dffdeb58cb6fe9625159ae964a62f23450ce7aa4e1be62f2212f2",
       [
         "read selected durable repository task runs by identity without reducing historical evidence to the latest run.",
         "read historical repository run",
         "saved brief execution evidence",
         "task record id lookup",
-        "requested ids resolve only to bounded workspace-owned files, completed runs retain identity, and missing records never become passing evidence.",
+        "requested ids resolve only to bounded workspace-owned files, completed runs retain identity, process reconciliation never overwrites execution-owned evidence, and missing records never become passing evidence.",
         "bounded task history lookup",
         "run identity and file binding",
         "historical running state refresh"
@@ -2243,6 +2243,8 @@
         1,
         [
           1,
+          1,
+          5,
           1
         ]
       ],
@@ -4333,6 +4335,8 @@
         1,
         [
           1,
+          1,
+          5,
           1
         ]
       ],
@@ -7925,6 +7929,13 @@
     ],
     [
       [
+        1,
+        [
+          5,
+          1
+        ]
+      ],
+      [
         9,
         [
           4,
@@ -9727,7 +9738,7 @@
           2,
           1,
           5,
-          1
+          2
         ]
       ]
     ],
@@ -9950,6 +9961,8 @@
       [
         39,
         [
+          1,
+          1,
           5,
           1
         ]
@@ -9960,6 +9973,8 @@
           2,
           1,
           4,
+          1,
+          5,
           1
         ]
       ],
@@ -14857,6 +14872,22 @@
     ],
     [
       [
+        1,
+        [
+          5,
+          1
+        ]
+      ],
+      [
+        39,
+        [
+          1,
+          1
+        ]
+      ]
+    ],
+    [
+      [
         18,
         [
           0,
@@ -16160,8 +16191,6 @@
         [
           0,
           1,
-          1,
-          1,
           2,
           1,
           3,
@@ -16527,7 +16556,7 @@
         46,
         [
           5,
-          1
+          2
         ]
       ],
       [
@@ -17245,6 +17274,8 @@
           1,
           1,
           2,
+          1,
+          5,
           1
         ]
       ],
@@ -17356,6 +17387,13 @@
       ],
       [
         34,
+        [
+          5,
+          1
+        ]
+      ],
+      [
+        39,
         [
           5,
           1
@@ -17971,13 +18009,6 @@
         ]
       ],
       [
-        39,
-        [
-          1,
-          1
-        ]
-      ],
-      [
         40,
         [
           5,
@@ -18429,6 +18460,22 @@
           5,
           1
         ]
+      ],
+      [
+        46,
+        [
+          5,
+          1
+        ]
+      ]
+    ],
+    [
+      [
+        39,
+        [
+          1,
+          1
+        ]
       ]
     ],
     [
@@ -18535,6 +18582,8 @@
       [
         39,
         [
+          1,
+          1,
           5,
           1
         ]
@@ -18543,7 +18592,7 @@
         46,
         [
           5,
-          1
+          2
         ]
       ]
     ],
@@ -20187,6 +20236,8 @@
       [
         39,
         [
+          1,
+          1,
           5,
           1
         ]
@@ -20195,6 +20246,13 @@
         45,
         [
           4,
+          1
+        ]
+      ],
+      [
+        46,
+        [
+          5,
           1
         ]
       ],
@@ -20526,6 +20584,8 @@
       [
         39,
         [
+          1,
+          1,
           9,
           1
         ]
@@ -20694,6 +20754,13 @@
       ]
     ],
     [
+      [
+        1,
+        [
+          5,
+          1
+        ]
+      ],
       [
         4,
         [
@@ -21797,6 +21864,8 @@
           1,
           1,
           2,
+          1,
+          5,
           1
         ]
       ],
@@ -21868,6 +21937,13 @@
         31,
         [
           1,
+          1
+        ]
+      ],
+      [
+        39,
+        [
+          5,
           1
         ]
       ],
@@ -22004,6 +22080,13 @@
       ]
     ],
     [
+      [
+        1,
+        [
+          5,
+          1
+        ]
+      ],
       [
         7,
         [
@@ -22158,8 +22241,6 @@
       [
         39,
         [
-          1,
-          1,
           2,
           1
         ]
@@ -22177,11 +22258,27 @@
         39,
         [
           3,
+          1,
+          5,
+          1
+        ]
+      ],
+      [
+        46,
+        [
+          5,
           1
         ]
       ]
     ],
     [
+      [
+        1,
+        [
+          5,
+          1
+        ]
+      ],
       [
         7,
         [
@@ -24620,6 +24717,13 @@
         ]
       ],
       [
+        39,
+        [
+          1,
+          1
+        ]
+      ],
+      [
         40,
         [
           5,
@@ -25347,8 +25451,6 @@
       [
         39,
         [
-          1,
-          1,
           3,
           1,
           5,
@@ -27015,6 +27117,13 @@
       ]
     ],
     [
+      [
+        1,
+        [
+          5,
+          1
+        ]
+      ],
       [
         6,
         [
@@ -29322,6 +29431,13 @@
     ],
     [
       [
+        1,
+        [
+          5,
+          1
+        ]
+      ],
+      [
         8,
         [
           1,
@@ -29852,6 +29968,13 @@
     ],
     [
       [
+        1,
+        [
+          5,
+          1
+        ]
+      ],
+      [
         5,
         [
           1,
@@ -29912,8 +30035,6 @@
         39,
         [
           0,
-          1,
-          1,
           1,
           2,
           1,
@@ -30634,6 +30755,13 @@
       ]
     ],
     [
+      [
+        1,
+        [
+          5,
+          1
+        ]
+      ],
       [
         2,
         [
@@ -33569,6 +33697,13 @@
     ],
     [
       [
+        1,
+        [
+          5,
+          1
+        ]
+      ],
+      [
         2,
         [
           1,
@@ -33755,6 +33890,13 @@
           8,
           1,
           10,
+          1
+        ]
+      ],
+      [
+        39,
+        [
+          1,
           1
         ]
       ],
@@ -35897,6 +36039,7 @@
     "listeners",
     "literal",
     "live",
+    "liveness",
     "llm",
     "load",
     "loading",
@@ -35999,6 +36142,7 @@
     "overrides",
     "overwrite",
     "overwrites",
+    "overwriting",
     "own",
     "owned",
     "owner",

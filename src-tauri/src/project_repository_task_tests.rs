@@ -27,7 +27,7 @@ fn reconciliation_cannot_write_to_a_path_supplied_inside_a_record() {
     assert_eq!(records[0].state, "stopped");
     assert_eq!(fs::read(&unrelated).unwrap(), b"preserve unrelated file");
     let stored: serde_json::Value = serde_json::from_slice(&fs::read(&path).unwrap()).unwrap();
-    assert_eq!(stored["state"], "stopped");
+    assert_eq!(stored["state"], "running");
 }
 
 #[test]
@@ -102,7 +102,7 @@ fn latest_task_records_reject_ids_that_history_cannot_select() {
 }
 
 #[test]
-fn reconciliation_writes_only_newly_stopped_records() {
+fn reconciliation_preserves_both_stored_and_projected_stopped_records() {
     let temp = tempfile::tempdir().unwrap();
     let old_path = temp.path().join("already-stopped.json");
     let new_path = temp.path().join("running.json");
@@ -119,18 +119,18 @@ fn reconciliation_writes_only_newly_stopped_records() {
     running.exit_code = None;
     running.record_path = new_path.to_string_lossy().into_owned();
     let original = serde_json::to_vec(&old).unwrap();
+    let original_running = serde_json::to_vec(&running).unwrap();
     fs::write(&old_path, &original).unwrap();
-    fs::write(&new_path, serde_json::to_vec(&running).unwrap()).unwrap();
+    fs::write(&new_path, &original_running).unwrap();
     let records = refresh_running_task_run_records(vec![old, running], || Ok(Vec::new()));
     assert!(records.iter().all(|record| record.state == "stopped"));
     assert_eq!(fs::read(old_path).unwrap(), original);
-    let updated: serde_json::Value = serde_json::from_slice(&fs::read(new_path).unwrap()).unwrap();
-    assert_eq!(updated["state"], "stopped");
-    assert!(updated["finishedAt"].is_string());
+    assert_eq!(fs::read(new_path).unwrap(), original_running);
+    assert!(records[1].finished_at.is_some());
 }
 
 #[test]
-fn stopped_record_reads_preserve_the_file_and_populate_a_stable_cache() {
+fn projected_stopped_reads_preserve_the_file_and_populate_a_stable_cache() {
     let temp = tempfile::tempdir().unwrap();
     let workspace = fs::canonicalize(temp.path()).unwrap();
     let visible = crate::git_path::git_process_path(&workspace);
@@ -142,7 +142,9 @@ fn stopped_record_reads_preserve_the_file_and_populate_a_stable_cache() {
         &visible.join("repo").to_string_lossy(),
         "2026-10-01T00:00:00Z",
     );
-    stopped.state = "stopped".into();
+    stopped.state = "running".into();
+    stopped.finished_at = None;
+    stopped.exit_code = None;
     stopped.record_path = path.to_string_lossy().into_owned();
     let original = serde_json::to_vec(&stopped).unwrap();
     fs::write(&path, &original).unwrap();
@@ -1321,17 +1323,9 @@ fn running_dependency_update_records_stop_when_process_id_was_reused() {
 }
 
 #[test]
-fn reconciled_stopped_records_are_persisted_to_disk() {
-    let unique = current_task_run_timestamp()
-        .chars()
-        .filter(|character| character.is_ascii_alphanumeric())
-        .collect::<String>();
-    let temp_dir = std::env::temp_dir().join(format!(
-        "workduck-task-run-reconcile-{}-{unique}",
-        std::process::id()
-    ));
-    fs::create_dir_all(&temp_dir).expect("create temp dir");
-    let record_path = temp_dir.join("repo_task_update.json");
+fn completion_published_during_process_enumeration_is_preserved() {
+    let temp = tempfile::tempdir().unwrap();
+    let record_path = temp.path().join("repo-a-update.json");
     let running_record = ProjectRepositoryTaskRunRecord {
         task: ProjectRepositoryTask::UpdateDependencies
             .as_str()
@@ -1348,18 +1342,27 @@ fn reconciled_stopped_records_are_persisted_to_disk() {
     };
     assert!(write_task_run_record(&record_path, &running_record).is_ok());
 
-    let stopped_record = stopped_task_run_record(&running_record);
-    persist_reconciled_task_run_records(&[stopped_record]);
+    let completed = ProjectRepositoryTaskRunRecord {
+        state: "succeeded".into(),
+        exit_code: Some(0),
+        finished_at: Some(current_task_run_timestamp()),
+        output_tail: Some("완료 ✓".into()),
+        // A reread must retain the path supplied by the original file reader.
+        record_path: "untrusted-final-path.json".into(),
+        ..running_record.clone()
+    };
+    let mut completed_bytes = vec![0xef, 0xbb, 0xbf];
+    completed_bytes.extend(serde_json::to_vec(&completed).unwrap());
+    let records = refresh_running_task_run_records(vec![running_record], || {
+        fs::write(&record_path, &completed_bytes).unwrap();
+        Ok(Vec::new())
+    });
 
-    let persisted_json = fs::read_to_string(&record_path).expect("read persisted record");
-    let persisted_record = serde_json::from_str::<ProjectRepositoryTaskRunRecord>(&persisted_json)
-        .expect("parse persisted record");
-
-    assert_eq!(persisted_record.state, "stopped");
-    assert_eq!(persisted_record.process_id, Some(42));
-    assert!(persisted_record.finished_at.is_some());
-
-    fs::remove_dir_all(temp_dir).expect("remove temp dir");
+    assert_eq!(records[0].state, "succeeded");
+    assert_eq!(records[0].exit_code, Some(0));
+    assert_eq!(records[0].output_tail, completed.output_tail);
+    assert_eq!(records[0].record_path, record_path.to_string_lossy());
+    assert_eq!(fs::read(&record_path).unwrap(), completed_bytes);
 }
 
 #[test]

@@ -4,19 +4,20 @@
 // owns=bounded task history lookup|run identity and file binding|historical running state refresh
 // excludes=command selection|execution launch|latest repository card projection
 // search=read historical repository run|saved brief execution evidence|task record ID lookup
-// invariant=Requested IDs resolve only to bounded workspace-owned files, completed runs retain identity, and missing records never become passing evidence.
+// invariant=Requested IDs resolve only to bounded workspace-owned files, completed runs retain identity, process reconciliation never overwrites execution-owned evidence, and missing records never become passing evidence.
 // stability=contract
 // /llmnav
 use std::{collections::HashSet, fs, io::Read, path::Path};
 
 use super::{
     ProjectRepositoryTaskError, ProjectRepositoryTaskRunRecord, collect_live_task_processes,
-    compare_task_run_records_descending, refresh_running_task_run_records, task_run_record_dir,
+    compare_task_run_records_descending, refresh_running_task_run_records_with_budget,
+    task_run_record_dir,
 };
 
 const MAX_SELECTED_RUNS: usize = 200;
 const MAX_RECORD_BYTES: usize = 1024 * 1024;
-const MAX_HISTORY_BYTES: usize = 8 * MAX_RECORD_BYTES;
+pub(super) const MAX_HISTORY_BYTES: usize = 8 * MAX_RECORD_BYTES;
 
 pub(super) fn read_selected_task_run_records(
     workspace_path: &Path,
@@ -36,34 +37,15 @@ pub(super) fn read_selected_task_run_records(
     let visible_workspace = crate::git_path::git_process_path(workspace_path);
     let mut seen_ids = HashSet::new();
     let mut records = Vec::new();
-    let mut total_bytes = 0;
+    let mut remaining_bytes = MAX_HISTORY_BYTES;
     for id in ids {
         if !seen_ids.insert(id) {
             continue;
         }
         let path = record_dir.join(format!("{id}.json"));
-        let metadata = match fs::symlink_metadata(&path) {
-            Ok(metadata) if metadata.is_file() && !metadata.file_type().is_symlink() => metadata,
-            Err(error) if error.kind() == std::io::ErrorKind::NotFound => continue,
-            _ => return Err(ProjectRepositoryTaskError::RecordReadFailed),
+        let Some(mut record) = read_bounded_task_run_record(&path, &mut remaining_bytes)? else {
+            continue;
         };
-        if metadata.len() > MAX_RECORD_BYTES as u64 {
-            return Err(ProjectRepositoryTaskError::RecordReadFailed);
-        }
-        let mut bytes = Vec::new();
-        fs::File::open(&path)
-            .and_then(|file| {
-                file.take((MAX_RECORD_BYTES + 1) as u64)
-                    .read_to_end(&mut bytes)
-            })
-            .map_err(|_| ProjectRepositoryTaskError::RecordReadFailed)?;
-        total_bytes += bytes.len();
-        if bytes.len() > MAX_RECORD_BYTES || total_bytes > MAX_HISTORY_BYTES {
-            return Err(ProjectRepositoryTaskError::RecordReadFailed);
-        }
-        let json_bytes = bytes.strip_prefix(&[0xef, 0xbb, 0xbf]).unwrap_or(&bytes);
-        let mut record: ProjectRepositoryTaskRunRecord = serde_json::from_slice(json_bytes)
-            .map_err(|_| ProjectRepositoryTaskError::RecordReadFailed)?;
         let repository_path = Path::new(&record.repository_path);
         if record.id != *id
             || !repository_path.starts_with(&visible_workspace)
@@ -76,15 +58,47 @@ pub(super) fn read_selected_task_run_records(
         {
             return Err(ProjectRepositoryTaskError::RecordReadFailed);
         }
-        // Reconciliation must write back to the file we read, never a path inside its JSON.
+        // Reconciliation may reread only the file we read, never a path inside its JSON.
         record.record_path = crate::git_path::git_process_path(&path)
             .to_string_lossy()
             .into_owned();
         records.push(record);
     }
-    records = refresh_running_task_run_records(records, collect_live_task_processes);
+    records = refresh_running_task_run_records_with_budget(
+        records,
+        collect_live_task_processes,
+        remaining_bytes,
+    );
     records.sort_by(compare_task_run_records_descending);
     Ok(records)
+}
+
+pub(super) fn read_bounded_task_run_record(
+    path: &Path,
+    remaining_bytes: &mut usize,
+) -> Result<Option<ProjectRepositoryTaskRunRecord>, ProjectRepositoryTaskError> {
+    let metadata = match fs::symlink_metadata(path) {
+        Ok(metadata) if metadata.is_file() && !metadata.file_type().is_symlink() => metadata,
+        Err(error) if error.kind() == std::io::ErrorKind::NotFound => return Ok(None),
+        _ => return Err(ProjectRepositoryTaskError::RecordReadFailed),
+    };
+    let byte_limit = MAX_RECORD_BYTES.min(*remaining_bytes);
+    if metadata.len() > byte_limit as u64 {
+        return Err(ProjectRepositoryTaskError::RecordReadFailed);
+    }
+    let mut bytes = Vec::new();
+    let read_result = fs::File::open(path)
+        .and_then(|file| file.take((byte_limit + 1) as u64).read_to_end(&mut bytes));
+    // Debit failed or malformed rereads too, so changed files cannot bypass the shared budget.
+    *remaining_bytes = (*remaining_bytes).saturating_sub(bytes.len());
+    read_result.map_err(|_| ProjectRepositoryTaskError::RecordReadFailed)?;
+    if bytes.len() > byte_limit {
+        return Err(ProjectRepositoryTaskError::RecordReadFailed);
+    }
+    let json_bytes = bytes.strip_prefix(&[0xef, 0xbb, 0xbf]).unwrap_or(&bytes);
+    let record = serde_json::from_slice(json_bytes)
+        .map_err(|_| ProjectRepositoryTaskError::RecordReadFailed)?;
+    Ok(Some(record))
 }
 
 pub(super) fn valid_run_id(id: &str) -> bool {

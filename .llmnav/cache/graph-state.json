@@ -46,7 +46,7 @@
           "to": "workduck/workduck.agent.snapshot.contract"
         }
       ],
-      "inputHash": "540aaaa0683e59d867fb6f79ca3213178270dedc83078d9f06625a342e721262",
+      "inputHash": "7bbebb4eb9c2bb5efc65060cd6eb23534a6cd3c2512b0c19ec8696508d89b86f",
       "key": "card:workduck/workduck.agent.snapshot",
       "nodes": [
         {
@@ -84,14 +84,14 @@
     },
     {
       "edges": [],
-      "inputHash": "670793329dcf5ae463b06b754f643e25bc6ab6df724fb6af3abc9bb8fd895494",
+      "inputHash": "7512719b7e478faa9f17db88d0338c4473f417ff6b79deef7f50bd26c15cf058",
       "key": "card:workduck/workduck.agent.snapshot.contract",
       "nodes": [
         {
           "definitions": [
             {
               "kind": "function",
-              "line": 943,
+              "line": 948,
               "path": "src-tauri/src/agent_api_snapshot.rs",
               "provenance": {
                 "generator": null,
@@ -104,15 +104,15 @@
           "external": false,
           "key": "workduck/workduck.agent.snapshot.contract",
           "location": {
-            "declarationLine": 943,
-            "endLine": 941,
+            "declarationLine": 948,
+            "endLine": 946,
             "exported": false,
             "kind": "function",
             "language": "rust",
             "path": "src-tauri/src/agent_api_snapshot.rs",
             "receiver": null,
             "signature": "fn project_registry_summary_omits_secret_ids()",
-            "startLine": 936,
+            "startLine": 941,
             "symbol": "project_registry_summary_omits_secret_ids",
             "visibility": "private"
           },
@@ -121,7 +121,7 @@
           "semanticId": "workduck.agent.snapshot.contract"
         }
       ],
-      "outputHash": "e8b12f2fbe2a4b8cd4e723f2085e2c32e43b37e57e7421e5812d54e712f34749"
+      "outputHash": "65ee383c8a4aac47df9479ebaa2864dbeb481bc243a6a500208fce768a29a04b"
     },
     {
       "edges": [],
@@ -1651,7 +1651,7 @@
     },
     {
       "edges": [],
-      "inputHash": "9b5dc3fac06fc94a508411e49b97dc7bed7a2156c2a5def40a080861755ab727",
+      "inputHash": "561160e105acfe89f76ec4c07f441fab276b3712b844d27f915706866ad40d8d",
       "key": "card:workduck/workduck.projects.repository-task-native",
       "nodes": [
         {
@@ -1672,11 +1672,11 @@
             "visibility": null
           },
           "repositoryId": "workduck",
-          "role": "Discover toolchain commands, launch bounded repository tasks in terminals, and persist or reconcile native task-run records.",
+          "role": "Discover toolchain commands, launch bounded repository tasks in terminals, persist execution-owned records, and project process liveness without overwriting results.",
           "semanticId": "workduck.projects.repository-task-native"
         }
       ],
-      "outputHash": "eeb4193c04ceafd4f40068ddf8342d189c72458bee919869eb858b570f6878df"
+      "outputHash": "a46a21c43c02c9b5cce01ac486d8c913dda4028945b70509f133c4d5684a5f4e"
     },
     {
       "edges": [
@@ -1925,7 +1925,7 @@
     },
     {
       "edges": [],
-      "inputHash": "895b1e370828638c7081f06f4bdf9ec236b5e0e3feb80a361c56847c5f4ddd6e",
+      "inputHash": "a4e868b4286a3e8e6691c535a2eae4616a37403c1ada07106a4aa5e2cc43f17c",
       "key": "card:workduck/workduck.projects.task-history",
       "nodes": [
         {

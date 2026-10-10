@@ -1,10 +1,10 @@
 // llmnav/1 module
 // id=workduck.projects.repository-task-native
-// role=Discover toolchain commands, launch bounded repository tasks in terminals, and persist or reconcile native task-run records.
+// role=Discover toolchain commands, launch bounded repository tasks in terminals, persist execution-owned records, and project process liveness without overwriting results.
 // owns=native repository task launch|toolchain command discovery|task run reconciliation
 // excludes=frontend task normalization|arbitrary shell command input
 // search=native repository task|discover build command|reconcile dev server
-// invariant=Tasks are selected from a closed vocabulary and repository paths remain inside the workspace; latest records bind selectable run IDs to their filenames, process identity is revalidated after bounded startup grace, tracked servers require their terminal execution and descendants, cached latest and unreadable files require unchanged metadata, terminal-owned completion survives launch updates and success requires the final command, and bounded Unicode output previews keep completed history readable.
+// invariant=Tasks are selected from a closed vocabulary and repository paths remain inside the workspace; latest records bind selectable run IDs to their filenames, process identity is revalidated after bounded startup grace, tracked servers require their terminal execution and descendants, cached latest and unreadable files require unchanged metadata, terminal-owned completion survives launch updates and read-only reconciliation, success requires the final command, and bounded Unicode output previews keep completed history readable.
 // stability=architecture
 // /llmnav
 use std::{
@@ -96,18 +96,18 @@ pub enum ProjectRepositoryTaskError {
 #[derive(Clone, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ProjectRepositoryTaskRunRecord {
-    id: String,
-    task: String,
-    repository_path: String,
-    command: String,
-    state: String,
+    pub(crate) id: String,
+    pub(crate) task: String,
+    pub(crate) repository_path: String,
+    pub(crate) command: String,
+    pub(crate) state: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    process_id: Option<u32>,
-    exit_code: Option<i32>,
-    started_at: String,
-    finished_at: Option<String>,
-    output_tail: Option<String>,
-    record_path: String,
+    pub(crate) process_id: Option<u32>,
+    pub(crate) exit_code: Option<i32>,
+    pub(crate) started_at: String,
+    pub(crate) finished_at: Option<String>,
+    pub(crate) output_tail: Option<String>,
+    pub(crate) record_path: String,
 }
 
 #[derive(serde::Serialize)]
@@ -341,7 +341,7 @@ fn read_latest_cached_task_run_records(
         .values()
         .filter_map(|cached| cached.record.clone())
         .collect();
-    let records = refresh_running_task_run_records(records, collect_live_task_processes);
+    let records = project_task_run_liveness(records);
     workspace_cache.dir_len = dir_len;
     workspace_cache.dir_modified_at = dir_modified_at;
     workspace_cache.latest_records = latest_task_run_records_by_repository(records);
@@ -422,13 +422,12 @@ impl WorkspaceTaskRunRecordCache {
     }
 }
 
-fn read_visible_task_run_record(
+pub(crate) fn read_visible_task_run_record(
     path: &Path,
     visible_workspace_path: &Path,
 ) -> Option<ProjectRepositoryTaskRunRecord> {
-    let record_json = fs::read_to_string(path).ok()?;
-    let record_json = record_json.strip_prefix('\u{feff}').unwrap_or(&record_json);
-    let mut record = serde_json::from_str::<ProjectRepositoryTaskRunRecord>(record_json).ok()?;
+    let mut remaining_bytes = history::MAX_HISTORY_BYTES;
+    let mut record = history::read_bounded_task_run_record(path, &mut remaining_bytes).ok()??;
     if !history::valid_run_id(&record.id)
         || path.file_stem().and_then(|stem| stem.to_str()) != Some(record.id.as_str())
     {
@@ -875,37 +874,59 @@ fn stopped_task_run_record(
     }
 }
 
+pub(crate) fn project_task_run_liveness(
+    records: Vec<ProjectRepositoryTaskRunRecord>,
+) -> Vec<ProjectRepositoryTaskRunRecord> {
+    refresh_running_task_run_records(records, collect_live_task_processes)
+}
+
 fn refresh_running_task_run_records(
     records: Vec<ProjectRepositoryTaskRunRecord>,
     collect_processes: impl FnOnce() -> Result<Vec<LiveTaskProcess>, ProjectRepositoryTaskError>,
 ) -> Vec<ProjectRepositoryTaskRunRecord> {
-    let running_ids: HashSet<_> = records
-        .iter()
-        .filter(|record| record.state == "running")
-        .map(|record| record.id.clone())
-        .collect();
-    if running_ids.is_empty() {
+    refresh_running_task_run_records_with_budget(
+        records,
+        collect_processes,
+        history::MAX_HISTORY_BYTES,
+    )
+}
+
+fn refresh_running_task_run_records_with_budget(
+    records: Vec<ProjectRepositoryTaskRunRecord>,
+    collect_processes: impl FnOnce() -> Result<Vec<LiveTaskProcess>, ProjectRepositoryTaskError>,
+    mut remaining_bytes: usize,
+) -> Vec<ProjectRepositoryTaskRunRecord> {
+    if !records.iter().any(|record| record.state == "running") {
         return records;
     }
     let live_processes = collect_processes().ok();
-    let records = reconcile_running_task_run_records(records, live_processes.as_deref());
-    persist_reconciled_task_run_records(
-        records
-            .iter()
-            .filter(|record| running_ids.contains(&record.id) && record.state == "stopped"),
-    );
-    records
+    // A terminal can publish its final result while process enumeration is in flight.
+    let records = records
+        .into_iter()
+        .map(|record| reread_running_task_run_record(record, &mut remaining_bytes))
+        .collect();
+    // Process absence is a display projection, not authority to replace terminal evidence.
+    reconcile_running_task_run_records(records, live_processes.as_deref())
 }
 
-fn persist_reconciled_task_run_records<'a>(
-    records: impl IntoIterator<Item = &'a ProjectRepositoryTaskRunRecord>,
-) {
-    for record in records
-        .into_iter()
-        .filter(|record| record.state == "stopped")
-    {
-        let _ = write_task_run_record(&PathBuf::from(&record.record_path), record);
+fn reread_running_task_run_record(
+    record: ProjectRepositoryTaskRunRecord,
+    remaining_bytes: &mut usize,
+) -> ProjectRepositoryTaskRunRecord {
+    if record.state != "running" || *remaining_bytes == 0 {
+        return record;
     }
+    let Ok(Some(mut current)) =
+        history::read_bounded_task_run_record(Path::new(&record.record_path), remaining_bytes)
+    else {
+        return record;
+    };
+    if current.id != record.id || current.repository_path != record.repository_path {
+        return record;
+    }
+    // The caller bound this path to a workspace-owned file; ignore the JSON path.
+    current.record_path = record.record_path;
+    current
 }
 
 fn normalize_process_match_text(value: &str) -> String {

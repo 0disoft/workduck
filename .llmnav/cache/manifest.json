@@ -3,14 +3,14 @@
   "fileStateSchemaVersion": 1,
   "files": {
     ".llmnav/cache/agent-context.md": "b22f4c1d47123f75b91c9f81e077994d420cb2cff1a3626d5ff59c1df1e00326",
-    ".llmnav/cache/cards.jsonl": "fcc65c2ea6b03f25a3b2080e4bfbb4c17800e261d3acdb874f8af56d816bf4fe",
-    ".llmnav/cache/file-state.json": "fbece6ed5544d4848bcf1808a282b0b878db583f25bed12118456c43a20ba783",
-    ".llmnav/cache/graph-state.json": "dd85abf0fbe0e64344defb2230d649510ed277a14a7e1f0aee136d4e21efbfda",
-    ".llmnav/cache/graph.json": "ab3080d3ea7e004ef7d34293cdf3a84d153c8746a92e72035488d95614cbe70d",
-    ".llmnav/cache/index.json": "b60ed74dbdb2717f2214b50977dacbe7bd4e1ebace60b5dad9c18690185633db",
-    ".llmnav/cache/prompt-prefix.json": "0d8c8cb1822c9dc1aea808866d342256e1dbee97c68b7d3c7ca14daee4cc9587",
-    ".llmnav/cache/repo-core.txt": "d330b1b7f5683e27d8b01ed3185d3137bab2125db616ff8ff8c1dd7211d68c90",
-    ".llmnav/cache/search-index.json": "8e167536936f2e62c41f139d371ebacbaab5f2d3c7ae5b4f0d2ff8a89bd694c6"
+    ".llmnav/cache/cards.jsonl": "f1f3d3ef76863427852f614bc5638d0b40b837c9e38227eb4721d2564ce96a38",
+    ".llmnav/cache/file-state.json": "359c255c6417c4263f6bf05682e527389c7b0699082831b1aa14cf2c1b96c1c6",
+    ".llmnav/cache/graph-state.json": "269d7045656193fca8e3b7e83167233dc6e01e30f83aa8bea20d25f6b52b2c97",
+    ".llmnav/cache/graph.json": "ca221dec51f7dbbc2909e93391d66df902de323e8602d5c03d1cd7bf004b3985",
+    ".llmnav/cache/index.json": "02b67f703b88dcb65f1bd59e44bf4f18b2db62b5cda7f12d274f39e470b7aee0",
+    ".llmnav/cache/prompt-prefix.json": "ebd94428a6228620a65a49a706ad8622d7622a85c4be2e6a8eb317fa78dcaf83",
+    ".llmnav/cache/repo-core.txt": "5135cc1180533b9147f467e0b4efc50346fe12b110623adaa99db2901ef4592f",
+    ".llmnav/cache/search-index.json": "6fe938e1f3ab4392ea773c12b979fa84cbd8315278c1024395bdf4d72ddb47de"
   },
   "graphSchemaVersion": 1,
   "graphStateSchemaVersion": 1,
@@ -18,9 +18,9 @@
   "promptBundleSchemaVersion": 1,
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "searchCardSetHash": "c1ca37c00733531f5895aaa10b64519e8933b794941593e5ee8fc8af16ccdcc9",
+  "searchCardSetHash": "27650fa6635a7749de218944e78458497b53e4b38d997a0985d93aac999ad344",
   "searchIndexSchemaVersion": 2,
   "searchShardSchemaVersion": null,
-  "sourceHash": "a3f64d65673e1501e0399ff2e28dd0595e7c7d567fc1967d5fe9bba003521c72",
+  "sourceHash": "4bfaab760f8d298db61ff77bfd05e3fa745e50ef209c8385a37b4a641d5d14e7",
   "specVersion": "1"
 }

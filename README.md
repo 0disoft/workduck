@@ -93,6 +93,11 @@ Report verification text and an archived work order cannot prove a passing check
 The gate is recalculated from the original records on refresh; it does not
 certify code correctness or authorize a release or another task.
 
+Desktop and MCP task queries refresh process liveness without rewriting
+execution-owned records. An interrupted run can remain `running` in its original
+JSON while queries report `stopped`; terminal-produced completion and output
+remain intact.
+
 Brief editing, export, and run linking do not run agents or shell commands, and
 the new stores have no browser-only persistence fallback. Creating a new queue
 work order from a brief and manually approving report-based checks remain outside

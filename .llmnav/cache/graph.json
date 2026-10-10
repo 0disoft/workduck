@@ -736,7 +736,7 @@
       "definitions": [
         {
           "kind": "function",
-          "line": 943,
+          "line": 948,
           "path": "src-tauri/src/agent_api_snapshot.rs",
           "provenance": {
             "generator": null,
@@ -749,15 +749,15 @@
       "external": false,
       "key": "workduck/workduck.agent.snapshot.contract",
       "location": {
-        "declarationLine": 943,
-        "endLine": 941,
+        "declarationLine": 948,
+        "endLine": 946,
         "exported": false,
         "kind": "function",
         "language": "rust",
         "path": "src-tauri/src/agent_api_snapshot.rs",
         "receiver": null,
         "signature": "fn project_registry_summary_omits_secret_ids()",
-        "startLine": 936,
+        "startLine": 941,
         "symbol": "project_registry_summary_omits_secret_ids",
         "visibility": "private"
       },
@@ -1588,7 +1588,7 @@
         "visibility": null
       },
       "repositoryId": "workduck",
-      "role": "Discover toolchain commands, launch bounded repository tasks in terminals, and persist or reconcile native task-run records.",
+      "role": "Discover toolchain commands, launch bounded repository tasks in terminals, persist execution-owned records, and project process liveness without overwriting results.",
       "semanticId": "workduck.projects.repository-task-native",
       "unresolved": false
     },
@@ -2673,7 +2673,7 @@
   ],
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "890cefa22cc77bb471d8fe7180dcf0c081edbc62e8251c198412fdd9d723d7ca",
+  "sourceHash": "a00a5514003b96e7146ac5f67a085a01371bfb0efa4bedb16cfa440009c4eaef",
   "stats": {
     "edgeCount": 49,
     "importedIndexCount": 0,

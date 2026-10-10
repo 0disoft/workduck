@@ -4,7 +4,7 @@
 // owns=agent API snapshot|workspace summary redaction|snapshot capability declaration
 // excludes=workspace mutation endpoints|secret decryption
 // search=agent workspace snapshot|read-only agent API|redacted workspace summary
-// invariant=Snapshot generation never creates missing Queue state or exposes secret identifiers, encrypted payloads, commands, or output tails.
+// invariant=Snapshot generation never creates missing Queue state or exposes secret identifiers, encrypted payloads, commands, or output tails; task summaries share bounded record reads and read-only liveness projection with the desktop.
 // risk=privacy
 // rel=test>workduck.agent.snapshot.contract
 // stability=contract
@@ -21,6 +21,9 @@ use time::{OffsetDateTime, format_description::well_known::Rfc3339};
 
 use crate::{
     path_display::display_path,
+    project_repository_task::{
+        ProjectRepositoryTaskRunRecord, project_task_run_liveness, read_visible_task_run_record,
+    },
     storage,
     workspace_path::{WorkspacePathValidationError, validate_absolute_directory_path},
 };
@@ -669,9 +672,10 @@ fn summarize_repository_task_runs(workspace_path: &Path) -> AgentApiRepositoryTa
             };
         }
     };
+    let visible_workspace = crate::git_path::git_process_path(workspace_path);
     let mut records = entries
         .flatten()
-        .filter_map(|entry| read_repository_task_run_record(&entry.path()))
+        .filter_map(|entry| read_repository_task_run_record(&entry.path(), &visible_workspace))
         .collect::<Vec<_>>();
 
     records.sort_by(|left, right| {
@@ -681,6 +685,23 @@ fn summarize_repository_task_runs(workspace_path: &Path) -> AgentApiRepositoryTa
             .then(right.id.cmp(&left.id))
     });
     records.truncate(REPOSITORY_TASK_RUN_LIMIT);
+    let records = project_task_run_liveness(records)
+        .into_iter()
+        .map(|record| AgentApiRepositoryTaskRunRecord {
+            id: record.id,
+            task: record.task,
+            repository_path: record.repository_path,
+            state: record.state,
+            has_command: !record.command.trim().is_empty(),
+            has_output_tail: record
+                .output_tail
+                .as_deref()
+                .is_some_and(|tail| !tail.trim().is_empty()),
+            started_at: record.started_at,
+            finished_at: record.finished_at,
+            exit_code: record.exit_code.map(i64::from),
+        })
+        .collect();
 
     AgentApiRepositoryTaskRunsSnapshot {
         ok: true,
@@ -689,27 +710,14 @@ fn summarize_repository_task_runs(workspace_path: &Path) -> AgentApiRepositoryTa
     }
 }
 
-fn read_repository_task_run_record(path: &Path) -> Option<AgentApiRepositoryTaskRunRecord> {
-    let metadata = fs::symlink_metadata(path).ok()?;
-    if metadata.file_type().is_symlink() || !metadata.is_file() {
+fn read_repository_task_run_record(
+    path: &Path,
+    visible_workspace: &Path,
+) -> Option<ProjectRepositoryTaskRunRecord> {
+    if path.extension().and_then(|extension| extension.to_str()) != Some("json") {
         return None;
     }
-
-    let value = serde_json::from_str::<serde_json::Value>(&fs::read_to_string(path).ok()?).ok()?;
-
-    Some(AgentApiRepositoryTaskRunRecord {
-        id: read_required_string(&value, "id")?,
-        task: read_required_string(&value, "task")?,
-        repository_path: read_required_string(&value, "repositoryPath")?,
-        state: read_required_string(&value, "state")?,
-        has_command: has_non_empty_string(&value, "command"),
-        has_output_tail: has_non_empty_string(&value, "outputTail"),
-        started_at: read_required_string(&value, "startedAt")?,
-        finished_at: read_optional_string(&value, "finishedAt"),
-        exit_code: value
-            .get("exitCode")
-            .and_then(serde_json::Value::as_i64),
-    })
+    read_visible_task_run_record(path, visible_workspace)
 }
 
 fn summarize_workspace_metadata(workspace_path: &Path) -> AgentApiWorkspaceMetadataSnapshot {
@@ -745,9 +753,7 @@ fn summarize_metadata_file(
     array_key: &str,
     encrypted: bool,
 ) -> AgentApiMetadataFileSnapshot {
-    let file_path = workspace_path
-        .join(WORKDUCK_DIRECTORY_NAME)
-        .join(file_name);
+    let file_path = workspace_path.join(WORKDUCK_DIRECTORY_NAME).join(file_name);
 
     match fs::symlink_metadata(&file_path) {
         Ok(metadata) if metadata.file_type().is_symlink() || metadata.is_dir() => {
@@ -876,9 +882,8 @@ fn map_workspace_path_validation_error(
         WorkspacePathValidationError::NotAbsolute => AgentApiSnapshotError::WorkspaceNotAbsolute,
         WorkspacePathValidationError::NotFound => AgentApiSnapshotError::WorkspaceNotFound,
         WorkspacePathValidationError::NotDirectory => AgentApiSnapshotError::WorkspaceNotDirectory,
-        WorkspacePathValidationError::PermissionDenied | WorkspacePathValidationError::Unreadable => {
-            AgentApiSnapshotError::WorkspaceUnreadable
-        }
+        WorkspacePathValidationError::PermissionDenied
+        | WorkspacePathValidationError::Unreadable => AgentApiSnapshotError::WorkspaceUnreadable,
     }
 }
 
@@ -1012,16 +1017,12 @@ mod tests {
         connection
             .execute(
                 "INSERT INTO project_registries (workspace_id, registry_json) VALUES (?1, ?2)",
-                params![
-                    "workspace_1",
-                    registry_json
-                ],
+                params!["workspace_1", registry_json],
             )
             .expect("registry row");
 
         assert_eq!(
-            read_project_registry_json(Some(&connection), "workspace_1")
-                .expect("registry query"),
+            read_project_registry_json(Some(&connection), "workspace_1").expect("registry query"),
             Some(registry_json.to_owned())
         );
 
@@ -1090,10 +1091,10 @@ mod tests {
         fs::create_dir_all(&run_dir).expect("run dir");
         fs::write(
             run_dir.join("repo_task_1.json"),
-            r#"{
+            serde_json::to_vec(&serde_json::json!({
                 "id": "repo_task_1",
                 "task": "build",
-                "repositoryPath": "C:/workspace/project",
+                "repositoryPath": crate::git_path::git_process_path(&workspace.join("project")),
                 "command": "echo secret_token",
                 "state": "failed",
                 "exitCode": 1,
@@ -1101,7 +1102,8 @@ mod tests {
                 "finishedAt": "2026-05-28T00:01:00Z",
                 "outputTail": "secret output",
                 "recordPath": "repo_task_1.json"
-            }"#,
+            }))
+            .unwrap(),
         )
         .expect("run record");
 
@@ -1116,6 +1118,43 @@ mod tests {
         assert!(!serialized.contains("secret output"));
 
         let _ = fs::remove_dir_all(workspace);
+    }
+
+    #[test]
+    fn repository_task_summary_projects_stopped_runs_without_changing_evidence() {
+        let temp = tempfile::tempdir().unwrap();
+        let workspace = fs::canonicalize(temp.path()).unwrap();
+        let dir = workspace
+            .join(WORKDUCK_DIRECTORY_NAME)
+            .join("repository-task-runs");
+        fs::create_dir_all(&dir).unwrap();
+        let record = serde_json::json!({
+            "id": "old-build", "task": "build", "state": "running",
+            "repositoryPath": crate::git_path::git_process_path(&workspace.join("repo")),
+            "command": "echo private-command", "outputTail": "private-output",
+            "startedAt": "2026-01-01T00:00:00Z", "finishedAt": null,
+            "exitCode": null, "recordPath": "untrusted.json"
+        });
+        let mut bytes = vec![0xef, 0xbb, 0xbf];
+        bytes.extend(serde_json::to_vec(&record).unwrap());
+        let path = dir.join("old-build.json");
+        fs::write(&path, &bytes).unwrap();
+        // Even JSON-looking terminal output must not become another execution.
+        fs::write(dir.join("old-build.json.log"), &bytes).unwrap();
+
+        let summary = summarize_repository_task_runs(&workspace);
+        assert!(summary.ok);
+        assert_eq!(summary.records.len(), 1);
+        assert_eq!(summary.records[0].state, "stopped");
+        let desktop = project_task_run_liveness(vec![
+            read_visible_task_run_record(&path, &crate::git_path::git_process_path(&workspace))
+                .unwrap(),
+        ]);
+        assert_eq!(summary.records[0].state, desktop[0].state);
+        assert_eq!(fs::read(&path).unwrap(), bytes);
+        let serialized = serde_json::to_string(&summary).unwrap();
+        assert!(!serialized.contains("private-command"));
+        assert!(!serialized.contains("private-output"));
     }
 
     fn create_test_workspace(name: &str) -> PathBuf {
