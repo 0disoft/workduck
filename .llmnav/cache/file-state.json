@@ -8979,7 +8979,7 @@
     },
     {
       "blocks": [],
-      "contentHash": "7a1a75d5b38d1440b941c1931404a3e4cc3dc992ec349165835a2186a086fcd6",
+      "contentHash": "3bf5f5ad951207763ab292039ad147c0930b65d1d6c5c71a7492211940fe8170",
       "declarations": [],
       "imports": [
         "./ProjectRepositoryCard.svelte",
@@ -8987,7 +8987,7 @@
       ],
       "path": "src/lib/projects/ProjectRepositoryInspector.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 893
+      "sourceBytes": 921
     },
     {
       "blocks": [],
