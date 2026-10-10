@@ -90,7 +90,7 @@
     "workduck.workspace.sync-file-native",
     "workduck.workspace.sync-git-native"
   ],
-  "cardSetHash": "c5582bd98c254fe295e96bdf5727d875ca19e4c415e21b2b0b446583ac5ab6df",
+  "cardSetHash": "b2de9010c12c8ade8271c87e3160b79011bdd6b761ea6ef857a5aaad821fd006",
   "documentCount": 89,
   "documents": [
     [
@@ -609,13 +609,13 @@
       ]
     ],
     [
-      "836ab20379172225694989e4eaabaa627c5d2d958a970eebe79c00b08311c1c1",
+      "22aeddde4117c63e4759bf7593b68d13da30e4fa86de41bccafd9745424eaf95",
       [
         "discover toolchain commands, launch bounded repository tasks in terminals, and persist or reconcile native task-run records.",
         "native repository task",
         "discover build command",
         "reconcile dev server",
-        "tasks are selected from a closed vocabulary, repository paths remain inside the workspace, and running records are revalidated against live process identity; cached latest and unreadable files require unchanged file metadata, launch identity updates preserve terminal-owned completion, and success requires the final command to finish.",
+        "tasks are selected from a closed vocabulary, repository paths remain inside the workspace, and running records are revalidated against live process identity after a bounded process registration grace; cached latest and unreadable files require unchanged file metadata, launch identity updates preserve terminal-owned completion, and success requires the final command to finish.",
         "native repository task launch",
         "toolchain command discovery",
         "task run reconciliation"
@@ -1405,7 +1405,7 @@
         39,
         [
           5,
-          1
+          2
         ]
       ],
       [
@@ -1838,6 +1838,13 @@
         24,
         [
           1,
+          1
+        ]
+      ],
+      [
+        39,
+        [
+          5,
           1
         ]
       ],
@@ -4411,6 +4418,8 @@
         39,
         [
           1,
+          1,
+          5,
           1
         ]
       ],
@@ -12057,6 +12066,15 @@
       ],
       [
         55,
+        [
+          5,
+          1
+        ]
+      ]
+    ],
+    [
+      [
+        39,
         [
           5,
           1
@@ -20057,7 +20075,7 @@
         39,
         [
           5,
-          1
+          2
         ]
       ],
       [
@@ -22480,6 +22498,15 @@
         48,
         [
           1,
+          1
+        ]
+      ]
+    ],
+    [
+      [
+        39,
+        [
+          5,
           1
         ]
       ]
@@ -35609,6 +35636,7 @@
     "git",
     "github",
     "global",
+    "grace",
     "granting",
     "graph",
     "group",
@@ -35937,6 +35965,7 @@
     "refresh",
     "refreshes",
     "registered",
+    "registration",
     "registries",
     "registry",
     "reject",

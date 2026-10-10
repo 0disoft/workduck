@@ -1,6 +1,6 @@
 [package]
 name = "workduck"
-version = "1.9.65"
+version = "1.9.66"
 description = "Local-first developer workbench"
 authors = ["Workduck contributors"]
 license = "0BSD"
@@ -30,7 +30,7 @@ tauri = { version = "2", features = ["tray-icon"] }
 tauri-plugin-autostart = "2"
 tauri-plugin-dialog = "2"
 tempfile = "3.27.0"
-time = { version = "0.3.55", features = ["formatting"] }
+time = { version = "0.3.55", features = ["formatting", "parsing"] }
 tokio = { version = "1", features = ["sync", "time"] }
 wait-timeout = "0.2.1"
 zeroize = "1.9"

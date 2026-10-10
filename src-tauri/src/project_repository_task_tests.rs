@@ -789,6 +789,56 @@ function Set-Content {{
 }
 
 #[test]
+fn newly_created_tasks_wait_for_process_registration_without_rewriting_the_record() {
+    for task in [
+        ProjectRepositoryTask::InstallDependencies,
+        ProjectRepositoryTask::UpdateDependencies,
+        ProjectRepositoryTask::StartDevServer,
+        ProjectRepositoryTask::Build,
+        ProjectRepositoryTask::Preview,
+    ] {
+        let temp = tempfile::tempdir().unwrap();
+        let workspace = fs::canonicalize(temp.path()).unwrap();
+        let record = create_task_run_record(&workspace, &workspace, task, "command")
+            .unwrap_or_else(|_| panic!("create task run"));
+        let original = fs::read(&record.record_path).unwrap();
+        let records = refresh_running_task_run_records(vec![record], || Ok(Vec::new()));
+        assert_eq!(records[0].state, "running", "{}", task.as_str());
+        assert_eq!(records[0].process_id, None);
+        assert_eq!(records[0].finished_at, None);
+        assert_eq!(fs::read(&records[0].record_path).unwrap(), original);
+    }
+}
+
+#[test]
+fn process_registration_grace_does_not_preserve_stale_invalid_or_tracked_runs() {
+    let now = OffsetDateTime::now_utc();
+    for (started_at, process_id) in [
+        (
+            (now - time::Duration::seconds(31))
+                .format(&Rfc3339)
+                .unwrap(),
+            None,
+        ),
+        ("invalid".into(), None),
+        (
+            (now + time::Duration::minutes(1)).format(&Rfc3339).unwrap(),
+            None,
+        ),
+        (now.format(&Rfc3339).unwrap(), Some(42)),
+    ] {
+        let mut record = task_run_record("build", "C:/workspace/repo", &started_at);
+        record.state = "running".into();
+        record.process_id = process_id;
+        record.exit_code = None;
+        record.finished_at = None;
+        let records = reconcile_running_task_run_records(vec![record], Some(&[]));
+        assert_eq!(records[0].state, "stopped", "{started_at} {process_id:?}");
+        assert!(records[0].finished_at.is_some());
+    }
+}
+
+#[test]
 fn stale_running_dev_server_records_are_reported_as_stopped() {
     let records = reconcile_running_task_run_records(
         vec![ProjectRepositoryTaskRunRecord {

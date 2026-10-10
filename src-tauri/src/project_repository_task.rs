@@ -4,7 +4,7 @@
 // owns=native repository task launch|toolchain command discovery|task run reconciliation
 // excludes=frontend task normalization|arbitrary shell command input
 // search=native repository task|discover build command|reconcile dev server
-// invariant=Tasks are selected from a closed vocabulary, repository paths remain inside the workspace, and running records are revalidated against live process identity; cached latest and unreadable files require unchanged file metadata, launch identity updates preserve terminal-owned completion, and success requires the final command to finish.
+// invariant=Tasks are selected from a closed vocabulary, repository paths remain inside the workspace, and running records are revalidated against live process identity after a bounded process registration grace; cached latest and unreadable files require unchanged file metadata, launch identity updates preserve terminal-owned completion, and success requires the final command to finish.
 // stability=architecture
 // /llmnav
 use std::{
@@ -697,7 +697,7 @@ fn is_stale_running_task_record(
     record: &ProjectRepositoryTaskRunRecord,
     live_processes: &[LiveTaskProcess],
 ) -> bool {
-    if record.state != "running" {
+    if record.state != "running" || is_task_process_starting(record, OffsetDateTime::now_utc()) {
         return false;
     }
 
@@ -710,6 +710,19 @@ fn is_stale_running_task_record(
     }
 
     false
+}
+
+fn is_task_process_starting(record: &ProjectRepositoryTaskRunRecord, now: OffsetDateTime) -> bool {
+    if record.process_id.is_some() || record.exit_code.is_some() || record.finished_at.is_some() {
+        return false;
+    }
+    let Ok(started_at) = OffsetDateTime::parse(&record.started_at, &Rfc3339) else {
+        return false;
+    };
+    // The record is published before the terminal starts and writes its own process ID.
+    // Keep this launch window bounded so abandoned records still become stopped.
+    let age = now - started_at;
+    age >= time::Duration::ZERO && age < time::Duration::seconds(30)
 }
 
 fn is_terminal_task(task: &str) -> bool {
