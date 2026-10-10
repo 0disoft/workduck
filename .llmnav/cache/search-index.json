@@ -103,7 +103,7 @@
     "workduck.workspace.sync-git-native",
     "workduck.workspace.unlock"
   ],
-  "cardSetHash": "7ec761bd3e7e99193aec1f7bd557b14e529be44ed161ae52a16321b0f0f9f229",
+  "cardSetHash": "5f8c263cfb1ce7b93595d27f784334a4a49493b9cee517c33d5c3700241b0138",
   "documentCount": 102,
   "documents": [
     [
@@ -1439,13 +1439,13 @@
       ]
     ],
     [
-      "6c6c12498f5d6b4f8da7d001334aeafa19cc4da99476f8908d24fdb4fdef5b4c",
+      "ae61cfbef07e58ea387ec9bfea78657e78117eb349fc918fbb54fd49627a0975",
       [
         "normalize workspace sync-file names and expose closed tauri read and write results to the frontend.",
         "workspace sync file client",
         "normalize sync filename",
         "read sync file",
-        "a successful client result requires an explicit normalized native path and, for reads, string content; malformed responses fail closed.",
+        "normalization preserves target identity; unusable names fail before i/o; successful results require a native path and string read content.",
         "sync file client adapter",
         "sync file name normalization",
         "sync file error mapping"
@@ -2609,13 +2609,6 @@
       ],
       [
         68,
-        [
-          5,
-          1
-        ]
-      ],
-      [
-        98,
         [
           5,
           1
@@ -4769,6 +4762,13 @@
           5,
           1
         ]
+      ],
+      [
+        98,
+        [
+          5,
+          1
+        ]
       ]
     ],
     [
@@ -6706,8 +6706,6 @@
           2,
           1,
           3,
-          1,
-          5,
           1
         ]
       ]
@@ -6887,8 +6885,6 @@
         98,
         [
           1,
-          1,
-          5,
           1
         ]
       ],
@@ -12070,13 +12066,6 @@
           5,
           1
         ]
-      ],
-      [
-        98,
-        [
-          5,
-          1
-        ]
       ]
     ],
     [
@@ -13330,13 +13319,6 @@
         ]
       ],
       [
-        98,
-        [
-          5,
-          1
-        ]
-      ],
-      [
         100,
         [
           1,
@@ -14574,6 +14556,13 @@
         ]
       ],
       [
+        98,
+        [
+          5,
+          1
+        ]
+      ],
+      [
         99,
         [
           3,
@@ -14762,6 +14751,13 @@
         93,
         [
           1,
+          1
+        ]
+      ],
+      [
+        98,
+        [
+          5,
           1
         ]
       ]
@@ -18013,13 +18009,6 @@
           5,
           1
         ]
-      ],
-      [
-        98,
-        [
-          5,
-          1
-        ]
       ]
     ],
     [
@@ -19052,6 +19041,8 @@
         98,
         [
           1,
+          1,
+          5,
           1
         ]
       ]
@@ -20035,6 +20026,8 @@
         98,
         [
           3,
+          1,
+          5,
           1
         ]
       ]
@@ -20125,13 +20118,6 @@
         95,
         [
           1,
-          1
-        ]
-      ],
-      [
-        98,
-        [
-          5,
           1
         ]
       ]
@@ -20279,6 +20265,13 @@
         83,
         [
           3,
+          1
+        ]
+      ],
+      [
+        98,
+        [
+          5,
           1
         ]
       ],
@@ -23850,6 +23843,13 @@
       ],
       [
         97,
+        [
+          5,
+          1
+        ]
+      ],
+      [
+        98,
         [
           5,
           1
@@ -26060,6 +26060,8 @@
           1,
           1,
           2,
+          1,
+          5,
           1
         ]
       ]
@@ -26203,13 +26205,6 @@
       ],
       [
         96,
-        [
-          5,
-          1
-        ]
-      ],
-      [
-        98,
         [
           5,
           1
@@ -28627,6 +28622,13 @@
           5,
           1
         ]
+      ],
+      [
+        98,
+        [
+          5,
+          1
+        ]
       ]
     ],
     [
@@ -28697,13 +28699,6 @@
       ],
       [
         97,
-        [
-          5,
-          1
-        ]
-      ],
-      [
-        98,
         [
           5,
           1
@@ -29037,13 +29032,6 @@
           5,
           1
         ]
-      ],
-      [
-        98,
-        [
-          5,
-          1
-        ]
       ]
     ],
     [
@@ -29234,13 +29222,6 @@
           3,
           1
         ]
-      ],
-      [
-        98,
-        [
-          5,
-          1
-        ]
       ]
     ],
     [
@@ -29348,6 +29329,8 @@
         98,
         [
           1,
+          1,
+          5,
           1
         ]
       ],
@@ -35649,6 +35632,13 @@
           2,
           1,
           3,
+          1
+        ]
+      ],
+      [
+        98,
+        [
+          5,
           1
         ]
       ],
@@ -38721,6 +38711,15 @@
     [
       [
         20,
+        [
+          5,
+          1
+        ]
+      ]
+    ],
+    [
+      [
+        98,
         [
           5,
           1
@@ -43528,6 +43527,7 @@
     "unsuccessful",
     "unsupported",
     "until",
+    "unusable",
     "unverified",
     "up",
     "update",

@@ -4,7 +4,7 @@ role=Normalize workspace sync-file names and expose closed Tauri read and write 
 owns=sync file client adapter|sync file name normalization|sync file error mapping
 excludes=encrypted sync envelope semantics|native filesystem containment
 search=workspace sync file client|normalize sync filename|read sync file
-invariant=A successful client result requires an explicit normalized native path and, for reads, string content; malformed responses fail closed.
+invariant=Normalization preserves target identity; unusable names fail before I/O; successful results require a native path and string read content.
 stability=contract
 */
 import { getTauriInvoke } from '#lib/tauri/tauri-invoke.ts';
@@ -68,6 +68,9 @@ export async function writeWorkspaceSyncFile(
 	fileName: string,
 	content: string
 ): Promise<WorkspaceSyncFileWriteResult> {
+	const name = normalizeWorkspaceSyncFileName(fileName);
+	if (!isWorkspaceSyncFileNameUsable(name)) return { ok: false, error: name.length === 0
+		? 'workspace-sync-file-name-required' : 'workspace-sync-file-name-invalid' };
 	const invoke = getTauriInvoke();
 
 	if (invoke === undefined) {
@@ -77,7 +80,7 @@ export async function writeWorkspaceSyncFile(
 	try {
 		const response = await invoke<WorkspaceSyncFileWriteResponse>('write_workspace_sync_file', {
 			folderPath: normalizeWorkspacePathForStorage(folderPath),
-			fileName: normalizeWorkspaceSyncFileName(fileName),
+			fileName: name,
 			content
 		});
 
@@ -103,6 +106,9 @@ export async function readWorkspaceSyncFile(
 	folderPath: string,
 	fileName: string
 ): Promise<WorkspaceSyncFileReadResult> {
+	const name = normalizeWorkspaceSyncFileName(fileName);
+	if (!isWorkspaceSyncFileNameUsable(name)) return { ok: false, error: name.length === 0
+		? 'workspace-sync-file-name-required' : 'workspace-sync-file-name-invalid' };
 	const invoke = getTauriInvoke();
 
 	if (invoke === undefined) {
@@ -112,7 +118,7 @@ export async function readWorkspaceSyncFile(
 	try {
 		const response = await invoke<WorkspaceSyncFileReadResponse>('read_workspace_sync_file', {
 			folderPath: normalizeWorkspacePathForStorage(folderPath),
-			fileName: normalizeWorkspaceSyncFileName(fileName)
+			fileName: name
 		});
 
 		if (
@@ -139,7 +145,7 @@ export async function readWorkspaceSyncFile(
 }
 
 export function normalizeWorkspaceSyncFileName(fileName: string) {
-	return fileName.trim().slice(0, WORKSPACE_SYNC_FILE_NAME_MAX_LENGTH);
+	return fileName.trim();
 }
 
 export function isWorkspaceSyncFileNameUsable(fileName: string) {
@@ -147,9 +153,10 @@ export function isWorkspaceSyncFileNameUsable(fileName: string) {
 
 	return (
 		normalizedFileName.length > 0 &&
+		Array.from(normalizedFileName).length <= WORKSPACE_SYNC_FILE_NAME_MAX_LENGTH &&
 		normalizedFileName !== '.' &&
 		normalizedFileName !== '..' &&
-		!/[/\\<>:"|?*\u0000-\u001F]/u.test(normalizedFileName)
+		!/[/\\<>:"|?*\p{Cc}]/u.test(normalizedFileName)
 	);
 }
 

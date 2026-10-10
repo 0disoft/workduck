@@ -1,9 +1,7 @@
 import { normalizeWorkspacePathForStorage } from '#lib/workspaces/workspace-path-format.ts';
-import { WORKSPACE_PATH_MAX_LENGTH } from '#lib/workspaces/workspace-registry.ts';
 import {
 	DEFAULT_WORKSPACE_SYNC_FILE_NAME,
-	normalizeWorkspaceSyncFileName,
-	WORKSPACE_SYNC_FILE_NAME_MAX_LENGTH
+	normalizeWorkspaceSyncFileName
 } from '#lib/workspaces/workspace-sync-file.ts';
 
 export const WORKDUCK_SYNC_SETTINGS_STORAGE_KEY = 'workduck.syncSettings.v1';
@@ -50,14 +48,8 @@ export function normalizeSyncSettings(value: unknown): SyncSettings {
 
 	return {
 		profileName: normalizeSyncProfileName(profileName ?? DEFAULT_SYNC_PROFILE_NAME),
-		folderPath: normalizeWorkspacePathForStorage(readString(value, 'folderPath')).slice(
-			0,
-			WORKSPACE_PATH_MAX_LENGTH
-		),
-		fileName: normalizeWorkspaceSyncFileName(fileName ?? DEFAULT_WORKSPACE_SYNC_FILE_NAME).slice(
-			0,
-			WORKSPACE_SYNC_FILE_NAME_MAX_LENGTH
-		)
+		folderPath: normalizeWorkspacePathForStorage(readString(value, 'folderPath')),
+		fileName: normalizeWorkspaceSyncFileName(fileName ?? DEFAULT_WORKSPACE_SYNC_FILE_NAME)
 	};
 }
 

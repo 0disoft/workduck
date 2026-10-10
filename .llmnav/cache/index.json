@@ -1897,8 +1897,8 @@
         "native filesystem containment"
       ],
       "hashes": {
-        "body": "7f6efad307b68a0b08e0225a2db2e97d06212199dae02cc4c9c283fb87485de3",
-        "semantic": "5342d0dca466c807024b2367e769821a8a443a34ced2fd7c52fea6eabe2e9014",
+        "body": "9195cbbd760274ac6f8387dbe363643f895447b3afe579f559be25ad9869a94e",
+        "semantic": "eb670d2c35e7a9dcf691f7191dacb42b53de35f7180917cedbfb94406a1d5d2c",
         "structure": "3db8980f4cd9892729034c45a4d39a7d0a73f2e08e43b5c40a518c2c33591391"
       },
       "id": "workduck.workspace.sync-file-client",
@@ -1907,7 +1907,7 @@
         "./workspace-path-format"
       ],
       "invariant": [
-        "A successful client result requires an explicit normalized native path and, for reads, string content; malformed responses fail closed."
+        "Normalization preserves target identity; unusable names fail before I/O; successful results require a native path and string read content."
       ],
       "location": {
         "declarationLine": null,
@@ -5226,6 +5226,6 @@
   "generatedBy": "llmnav@0.9.7",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "5a983cfd031a6143df763ea39b50b5ccfa24108c2188e8fd31ee8a70768a17a4",
+  "sourceHash": "22c014499443421aba6344727e016786695b3c028602ef67a058cc50088ceda6",
   "specVersion": "1"
 }

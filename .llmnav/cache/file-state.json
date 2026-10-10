@@ -13331,16 +13331,15 @@
     },
     {
       "blocks": [],
-      "contentHash": "af0be55d9cd47896db42bf2bc1aa4fba0b293070d07cac90e988545f48b9fef2",
+      "contentHash": "966d5e984f965fbd85e6911ee32159b7ee8bb89417f8f943a1a82cb6809b5dd8",
       "declarations": [],
       "imports": [
         "#lib/workspaces/workspace-path-format.ts",
-        "#lib/workspaces/workspace-registry.ts",
         "#lib/workspaces/workspace-sync-file.ts"
       ],
       "path": "src/lib/settings/sync-settings.ts",
       "semanticBytes": 0,
-      "sourceBytes": 2434
+      "sourceBytes": 2211
     },
     {
       "blocks": [],
@@ -15312,7 +15311,7 @@
             ],
             "id": "workduck.workspace.sync-file-client",
             "invariant": [
-              "A successful client result requires an explicit normalized native path and, for reads, string content; malformed responses fail closed."
+              "Normalization preserves target identity; unusable names fail before I/O; successful results require a native path and string read content."
             ],
             "owns": [
               "sync file client adapter",
@@ -15331,7 +15330,7 @@
             "stability": "contract",
             "unknown": []
           },
-          "end": 559,
+          "end": 562,
           "endLine": 9,
           "entries": [
             {
@@ -15368,7 +15367,7 @@
               "key": "invariant",
               "line": 7,
               "order": 5,
-              "value": "A successful client result requires an explicit normalized native path and, for reads, string content; malformed responses fail closed."
+              "value": "Normalization preserves target identity; unusable names fail before I/O; successful results require a native path and string read content."
             },
             {
               "key": "stability",
@@ -15381,7 +15380,7 @@
           "indent": "",
           "newline": "\n",
           "prefix": null,
-          "raw": "/* llmnav/1 module\nid=workduck.workspace.sync-file-client\nrole=Normalize workspace sync-file names and expose closed Tauri read and write results to the frontend.\nowns=sync file client adapter|sync file name normalization|sync file error mapping\nexcludes=encrypted sync envelope semantics|native filesystem containment\nsearch=workspace sync file client|normalize sync filename|read sync file\ninvariant=A successful client result requires an explicit normalized native path and, for reads, string content; malformed responses fail closed.\nstability=contract\n*/",
+          "raw": "/* llmnav/1 module\nid=workduck.workspace.sync-file-client\nrole=Normalize workspace sync-file names and expose closed Tauri read and write results to the frontend.\nowns=sync file client adapter|sync file name normalization|sync file error mapping\nexcludes=encrypted sync envelope semantics|native filesystem containment\nsearch=workspace sync file client|normalize sync filename|read sync file\ninvariant=Normalization preserves target identity; unusable names fail before I/O; successful results require a native path and string read content.\nstability=contract\n*/",
           "scope": "module",
           "specVersion": "1",
           "start": 0,
@@ -15390,7 +15389,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "7f6efad307b68a0b08e0225a2db2e97d06212199dae02cc4c9c283fb87485de3",
+      "contentHash": "9195cbbd760274ac6f8387dbe363643f895447b3afe579f559be25ad9869a94e",
       "declarations": [
         null
       ],
@@ -15399,8 +15398,8 @@
         "./workspace-path-format"
       ],
       "path": "src/lib/workspaces/workspace-sync-file.ts",
-      "semanticBytes": 559,
-      "sourceBytes": 5283
+      "semanticBytes": 562,
+      "sourceBytes": 5691
     },
     {
       "blocks": [],
@@ -15414,6 +15413,20 @@
       "path": "src/lib/workspaces/workspace-sync-git.ts",
       "semanticBytes": 0,
       "sourceBytes": 8438
+    },
+    {
+      "blocks": [],
+      "contentHash": "74106e1d511a286c43019ecebc564012720342eca5141b6abd87879a106c3b19",
+      "declarations": [],
+      "imports": [
+        "#lib/settings/sync-settings.ts",
+        "#lib/tauri/tauri-invoke.ts",
+        "./workspace-sync-file",
+        "bun:test"
+      ],
+      "path": "src/lib/workspaces/workspace-sync-target.test.ts",
+      "semanticBytes": 0,
+      "sourceBytes": 2640
     },
     {
       "blocks": [],
