@@ -1571,8 +1571,8 @@
         "arbitrary shell command input"
       ],
       "hashes": {
-        "body": "a217ebafd2876f3624d09553acdf4b2c2fbb024cd7794ded5ed200fa373ac557",
-        "semantic": "5c8d3a504ef2b1df8fd9e20b29d1b827daa4246674d6549695b801181b9bc559",
+        "body": "1a90f75028e9c2642865d62411cdcb3730f6f73caff2068e2a2a6934b956afc3",
+        "semantic": "ab8a83634f3548e09270abd09e6470986b9b77df49b0489208fa19ee7db133c1",
         "structure": "b5122d9939628fb569605ebee461119c8532e018d75a3a27998fab08d397a2bb"
       },
       "id": "workduck.projects.repository-task-native",
@@ -1589,7 +1589,7 @@
         "time::{OffsetDateTime, format_description::well_known::Rfc3339}"
       ],
       "invariant": [
-        "Tasks are selected from a closed vocabulary and repository paths remain inside the workspace; latest records bind selectable run IDs to their filenames, process identity is revalidated after bounded startup grace, tracked servers require their terminal execution and descendants, cached latest and unreadable files require unchanged metadata, terminal-owned completion survives launch updates and read-only reconciliation, success requires the final command, and bounded Unicode output previews keep completed history readable."
+        "Tasks are selected from a closed vocabulary and repository paths remain inside the workspace; latest records bind selectable run IDs to their filenames, process identity is revalidated after bounded startup grace, tracked servers require their terminal execution and descendants, cached latest and unreadable files require unchanged metadata, terminal-owned completion survives launch updates and read-only reconciliation, task record publication replaces synced complete files and aborts execution on failure, success requires the final command, and bounded Unicode output previews keep completed history readable."
       ],
       "location": {
         "declarationLine": null,
@@ -4695,7 +4695,7 @@
   ],
   "contractFingerprints": {
     "configuration": {
-      "sha256": "e94de394388c3e6e8aa50799a9f4cf8a23df6554878fc493ef993613522ae4b8"
+      "sha256": "d979623d0d4e64c39db08782b803b90134d51b4f1f681a36ac447b84e46fa3ab"
     },
     "exportedApi": {
       "count": 0,
@@ -4706,6 +4706,6 @@
   "generatedBy": "llmnav@0.9.7",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "16c850c665a16c97e6150b4f02b56e62a2394930cd18ee208ea48f4e39121247",
+  "sourceHash": "dc099e386449eae017690e495d792f303b40be51eabe91c6c0171b892204b7f1",
   "specVersion": "1"
 }

@@ -406,6 +406,10 @@
   "audit": {
     "dispositions": [
       {
+        "path": "src-tauri/src/project_repository_task_tests.rs",
+        "reason": "Contains repository task regression tests and fixtures only; runtime launch, record publication and reconciliation are owned by the repository task module, and historical reads by the task history module."
+      },
+      {
         "path": "src/routes/briefs/+page.svelte",
         "reason": "Route composes the existing workspace gate, appearance subscription, and BriefsPanel; brief lifecycle and storage policy are owned by the brief registry and storage adapter."
       },

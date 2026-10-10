@@ -117,6 +117,12 @@ execution-owned records. An interrupted run can remain `running` in its original
 JSON while queries report `stopped`; terminal-produced completion and output
 remain intact.
 
+Windows task terminals publish their UTF-8 JSON records through synced temporary
+files and one Windows name replacement. Sharing conflicts get up to seven 25ms
+retry delays. If publication still fails, the terminal exits before another
+command can run and the last durable record remains available. Liveness queries
+can then project that unfinished record as stopped without inventing completion.
+
 Owned command and terminal process trees are cleaned up when the parent exits,
 when termination is requested, or when their owner is dropped. Windows jobs and
 Unix process groups are terminated independently of the parent's exit status.

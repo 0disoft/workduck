@@ -93,7 +93,7 @@
     "workduck.workspace.sync-file-native",
     "workduck.workspace.sync-git-native"
   ],
-  "cardSetHash": "799c905eb25e63ab1f6fd45a0ab896cc19307d07c132ed58ee8e1c4f2fb0c825",
+  "cardSetHash": "a5585af2ed26424db0c193ed850bba940d405ad59e1758f2fe5f0ce280c83783",
   "documentCount": 92,
   "documents": [
     [
@@ -644,13 +644,13 @@
       ]
     ],
     [
-      "6abf3a84b58516caa617de248af6ea7714fa3ad54449dcf943f974878327325a",
+      "906a129eb6320c40d1319e4b89963264ce4f90fef05fe2f4beb667abdd83930c",
       [
         "discover toolchain commands, launch bounded repository tasks in terminals, persist execution-owned records, and project process liveness without overwriting results.",
         "native repository task",
         "discover build command",
         "reconcile dev server",
-        "tasks are selected from a closed vocabulary and repository paths remain inside the workspace; latest records bind selectable run ids to their filenames, process identity is revalidated after bounded startup grace, tracked servers require their terminal execution and descendants, cached latest and unreadable files require unchanged metadata, terminal-owned completion survives launch updates and read-only reconciliation, success requires the final command, and bounded unicode output previews keep completed history readable.",
+        "tasks are selected from a closed vocabulary and repository paths remain inside the workspace; latest records bind selectable run ids to their filenames, process identity is revalidated after bounded startup grace, tracked servers require their terminal execution and descendants, cached latest and unreadable files require unchanged metadata, terminal-owned completion survives launch updates and read-only reconciliation, task record publication replaces synced complete files and aborts execution on failure, success requires the final command, and bounded unicode output previews keep completed history readable.",
         "native repository task launch",
         "toolchain command discovery",
         "task run reconciliation"
@@ -1610,6 +1610,15 @@
     ],
     [
       [
+        41,
+        [
+          5,
+          1
+        ]
+      ]
+    ],
+    [
+      [
         19,
         [
           1,
@@ -2695,7 +2704,7 @@
           1,
           1,
           5,
-          5
+          6
         ]
       ],
       [
@@ -6721,6 +6730,13 @@
           5,
           1
         ]
+      ],
+      [
+        41,
+        [
+          5,
+          1
+        ]
       ]
     ],
     [
@@ -10392,7 +10408,7 @@
           1,
           1,
           5,
-          1
+          2
         ]
       ],
       [
@@ -10991,6 +11007,13 @@
         ]
       ],
       [
+        41,
+        [
+          5,
+          1
+        ]
+      ],
+      [
         81,
         [
           3,
@@ -11402,7 +11425,7 @@
         41,
         [
           5,
-          1
+          2
         ]
       ],
       [
@@ -17958,6 +17981,13 @@
       ],
       [
         36,
+        [
+          5,
+          1
+        ]
+      ],
+      [
+        41,
         [
           5,
           1
@@ -22271,6 +22301,13 @@
           3,
           1
         ]
+      ],
+      [
+        41,
+        [
+          5,
+          1
+        ]
       ]
     ],
     [
@@ -23229,6 +23266,13 @@
         40,
         [
           3,
+          1
+        ]
+      ],
+      [
+        41,
+        [
+          5,
           1
         ]
       ],
@@ -24517,6 +24561,13 @@
           1,
           1
         ]
+      ],
+      [
+        41,
+        [
+          5,
+          1
+        ]
       ]
     ],
     [
@@ -31225,6 +31276,13 @@
     ],
     [
       [
+        41,
+        [
+          5,
+          1
+        ]
+      ],
+      [
         77,
         [
           1,
@@ -31440,6 +31498,8 @@
           3,
           2,
           4,
+          1,
+          5,
           1,
           9,
           1
@@ -37217,6 +37277,7 @@
     "2020",
     "a",
     "aad",
+    "aborts",
     "absolute",
     "accept",
     "accepted",

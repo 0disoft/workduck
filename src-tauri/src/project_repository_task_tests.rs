@@ -722,6 +722,228 @@ fn powershell_task_failures_stop_following_commands_and_keep_native_exit_codes()
 
 #[cfg(target_os = "windows")]
 #[test]
+fn powershell_task_record_write_failure_prevents_execution() {
+    use std::os::windows::fs::OpenOptionsExt;
+
+    for shell in ["powershell.exe", "pwsh.exe"] {
+        if shell == "pwsh.exe" && Command::new(shell).arg("-Version").output().is_err() {
+            continue;
+        }
+        let repository = tempfile::tempdir().unwrap();
+        let record_path = repository.path().join("run.json");
+        let marker_path = repository.path().join("executed.txt");
+        let record = ProjectRepositoryTaskRunRecord {
+            record_path: record_path.to_string_lossy().into_owned(),
+            ..task_run_record(
+                "run",
+                &repository.path().to_string_lossy(),
+                "2026-10-10T00:00:00Z",
+            )
+        };
+        assert!(write_task_run_record(&record_path, &record).is_ok());
+        let original = fs::read(&record_path).unwrap();
+        // Deny writes and replacement while allowing history readers.
+        let locked = fs::OpenOptions::new()
+            .read(true)
+            .share_mode(1)
+            .open(&record_path)
+            .unwrap();
+        let script = create_powershell_script(
+            repository.path(),
+            Some("[System.IO.File]::WriteAllText('executed.txt', 'ran')"),
+            Some(&record),
+        );
+        let output = Command::new(shell)
+            .current_dir(repository.path())
+            .args([
+                "-NoLogo",
+                "-NoProfile",
+                "-NonInteractive",
+                "-Command",
+                &script,
+            ])
+            .output()
+            .unwrap();
+        drop(locked);
+        assert!(
+            !marker_path.exists(),
+            "{shell}: task ran without a durable running record"
+        );
+        assert!(
+            !output.status.success(),
+            "{shell}: write failure was ignored"
+        );
+        assert!(
+            String::from_utf8_lossy(&output.stderr)
+                .contains("Workduck could not save task history"),
+            "{shell}: {}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+        assert_eq!(fs::read(&record_path).unwrap(), original);
+        assert_eq!(
+            fs::read_dir(repository.path()).unwrap().count(),
+            1,
+            "{shell}: temporary file leaked"
+        );
+    }
+}
+
+#[cfg(target_os = "windows")]
+#[test]
+fn powershell_task_record_completion_failure_stops_following_commands() {
+    for shell in ["powershell.exe", "pwsh.exe"] {
+        if shell == "pwsh.exe" && Command::new(shell).arg("-Version").output().is_err() {
+            continue;
+        }
+        let repository = tempfile::tempdir().unwrap();
+        let record_path = repository.path().join("run.json");
+        let command = "[System.IO.File]::WriteAllText('first.txt', 'ran'); $workduckTestLock = [System.IO.File]::Open($workduckRecordPath, [System.IO.FileMode]::Open, [System.IO.FileAccess]::Read, [System.IO.FileShare]::Read)\n[System.IO.File]::WriteAllText('following.txt', 'ran')";
+        let record = ProjectRepositoryTaskRunRecord {
+            command: command.into(),
+            record_path: record_path.to_string_lossy().into_owned(),
+            ..task_run_record(
+                "run",
+                &repository.path().to_string_lossy(),
+                "2026-10-10T00:00:00Z",
+            )
+        };
+        let script = create_powershell_script(repository.path(), Some(command), Some(&record));
+        let output = Command::new(shell)
+            .current_dir(repository.path())
+            .args([
+                "-NoLogo",
+                "-NoProfile",
+                "-NonInteractive",
+                "-Command",
+                &script,
+            ])
+            .output()
+            .unwrap();
+        assert!(repository.path().join("first.txt").exists(), "{shell}");
+        assert!(
+            !repository.path().join("following.txt").exists(),
+            "{shell}: continued after failed completion write"
+        );
+        assert!(!output.status.success(), "{shell}");
+        let stored: ProjectRepositoryTaskRunRecord =
+            serde_json::from_slice(&fs::read(&record_path).unwrap()).unwrap();
+        assert_eq!(
+            stored.state, "running",
+            "{shell}: replaced the last durable state"
+        );
+        assert_eq!(stored.exit_code, None, "{shell}");
+        assert!(
+            fs::read_dir(repository.path()).unwrap().all(|entry| !entry
+                .unwrap()
+                .file_name()
+                .to_string_lossy()
+                .starts_with(".workduck-task-record.")),
+            "{shell}: temporary file leaked"
+        );
+    }
+}
+
+#[cfg(target_os = "windows")]
+#[test]
+fn powershell_task_record_publication_keeps_concurrent_reads_complete() {
+    for shell in ["powershell.exe", "pwsh.exe"] {
+        if shell == "pwsh.exe" && Command::new(shell).arg("-Version").output().is_err() {
+            continue;
+        }
+        let repository = tempfile::tempdir().unwrap();
+        let record_path = repository.path().join("run.json");
+        let record = ProjectRepositoryTaskRunRecord {
+            record_path: record_path.to_string_lossy().into_owned(),
+            ..task_run_record(
+                "run",
+                &repository.path().to_string_lossy(),
+                "2026-10-10T00:00:00Z",
+            )
+        };
+        assert!(write_task_run_record(&record_path, &record).is_ok());
+        let script = create_powershell_task_record_writer(&record)
+            + r#";
+for ($i = 0; $i -lt 80; $i++) {
+    Write-WorkduckTaskRunRecord -State 'running' -ExitCode $null -OutputTail ('phase ' + $i + ' ' + ('🙂' * 4096));
+}
+Write-WorkduckTaskRunRecord -State 'succeeded' -ExitCode 0 -OutputTail 'completed ✓🙂';
+"#;
+        let mut child = Command::new(shell)
+            .current_dir(repository.path())
+            .args([
+                "-NoLogo",
+                "-NoProfile",
+                "-NonInteractive",
+                "-Command",
+                &script,
+            ])
+            .stdout(std::process::Stdio::null())
+            .stderr(std::process::Stdio::piped())
+            .spawn()
+            .unwrap();
+        let deadline = std::time::Instant::now() + std::time::Duration::from_secs(15);
+        let mut observed_updates = 0;
+        let mut invalid_reads = 0;
+        let mut first_read_error = None;
+        let mut last_tail = None;
+        while child.try_wait().unwrap().is_none() {
+            if std::time::Instant::now() > deadline {
+                child.kill().ok();
+                child.wait().ok();
+                panic!("{shell}: record writer did not finish");
+            }
+            match fs::read(&record_path)
+                .map_err(|error| format!("I/O: {error}"))
+                .and_then(|bytes| {
+                    serde_json::from_slice::<ProjectRepositoryTaskRunRecord>(&bytes)
+                        .map_err(|error| format!("JSON: {error}, size={}", bytes.len()))
+                }) {
+                Ok(current) => {
+                    assert_eq!(current.id, "run", "{shell}");
+                    if current.output_tail != last_tail {
+                        observed_updates += 1;
+                        last_tail = current.output_tail;
+                    }
+                }
+                Err(error) => {
+                    invalid_reads += 1;
+                    first_read_error.get_or_insert(error);
+                }
+            }
+            std::thread::yield_now();
+        }
+        let output = child.wait_with_output().unwrap();
+        assert!(
+            output.status.success(),
+            "{shell}: {}; reader error: {first_read_error:?}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+        assert!(
+            observed_updates >= 2,
+            "{shell}: did not observe concurrent publication"
+        );
+        assert_eq!(
+            invalid_reads, 0,
+            "{shell}: history contained a partial or missing record: {first_read_error:?}"
+        );
+        let stored: ProjectRepositoryTaskRunRecord =
+            serde_json::from_slice(&fs::read(&record_path).unwrap()).unwrap();
+        assert_eq!(stored.state, "succeeded", "{shell}");
+        assert_eq!(
+            stored.output_tail.as_deref(),
+            Some("completed ✓🙂"),
+            "{shell}"
+        );
+        assert_eq!(
+            fs::read_dir(repository.path()).unwrap().count(),
+            1,
+            "{shell}: temporary file leaked"
+        );
+    }
+}
+
+#[cfg(target_os = "windows")]
+#[test]
 fn powershell_task_large_output_keeps_history_readable_and_preserves_the_full_log() {
     for encoding in ["utf16", "utf8"] {
         let repository = tempfile::tempdir().unwrap();
@@ -901,19 +1123,21 @@ fn multi_command_task_records_stay_running_until_the_last_command_finishes() {
         // Observe every durable state transition through the real PowerShell writer.
         let observer = format!(
             r#"
-function Set-Content {{
-    param([Parameter(ValueFromPipeline=$true)]$Value, [string]$LiteralPath, [string]$Encoding)
-    process {{
-        Microsoft.PowerShell.Management\Set-Content -LiteralPath $LiteralPath -Value $Value -Encoding $Encoding;
-        $compact = $Value | ConvertFrom-Json | ConvertTo-Json -Compress;
-        [System.IO.File]::AppendAllText('{trace_path}', $compact + [Environment]::NewLine);
-    }}
+function Write-WorkduckTaskRunRecord {{
+    param([string]$State, [Nullable[int]]$ExitCode, [string]$OutputTail)
+    Write-WorkduckTaskRunRecordOriginal -State $State -ExitCode $ExitCode -OutputTail $OutputTail;
+    $compact = [System.IO.File]::ReadAllText($workduckRecordPath) | ConvertFrom-Json | ConvertTo-Json -Compress;
+    [System.IO.File]::AppendAllText('{trace_path}', $compact + [Environment]::NewLine);
 }}
 "#,
             trace_path = escape_powershell_single_quoted(&trace_path.to_string_lossy())
         );
-        let script =
-            observer + &create_powershell_script(repository.path(), Some(command), Some(&record));
+        let script = observer
+            + &create_powershell_script(repository.path(), Some(command), Some(&record)).replacen(
+                "function Write-WorkduckTaskRunRecord {",
+                "function Write-WorkduckTaskRunRecordOriginal {",
+                1,
+            );
         let output = Command::new("powershell.exe")
             .args([
                 "-NoLogo",
