@@ -2959,7 +2959,7 @@
         "Git operations"
       ],
       "hashes": {
-        "body": "c5daa8b309ab195bbdf7cdf4ceba902fd4b0828fcd1f370b78739cbfa8a0b053",
+        "body": "d42852dc6d8901fb37421cc63ad4234af053a127d773043738339597df1efa91",
         "semantic": "df1aead2db35da0917c89e9e60975fc708de6a2744da2dc68209bd655e3cece9",
         "structure": "a202add9bebddb32cb3f06fcc0397d3eb9f8627d4ce7831479adc71d4498d13a"
       },
@@ -5226,6 +5226,6 @@
   "generatedBy": "llmnav@0.9.7",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "22c014499443421aba6344727e016786695b3c028602ef67a058cc50088ceda6",
+  "sourceHash": "d3cf8c3c046c2d2cd68895436528c36678706ad77b3724410454adaecf4fc900",
   "specVersion": "1"
 }

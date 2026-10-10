@@ -136,7 +136,12 @@ fn write_ssealed_scaffold_file(
 
     create_ssealed_scaffold_parent_directories(target_path, relative_path)?;
 
-    fs::write(file_path, content).map_err(|_| ProjectFolderError::SsealedScaffoldFailed)
+    write_file_exclusively(&file_path, content).map_err(|error| match error {
+        crate::atomic_file_write::AtomicFileWriteError::TargetAlreadyExists => {
+            ProjectFolderError::Conflict
+        }
+        _ => ProjectFolderError::SsealedScaffoldFailed,
+    })
 }
 
 pub(super) fn create_ssealed_repository_scaffold_plan(

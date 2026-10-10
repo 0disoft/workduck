@@ -2993,7 +2993,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "c5daa8b309ab195bbdf7cdf4ceba902fd4b0828fcd1f370b78739cbfa8a0b053",
+      "contentHash": "d42852dc6d8901fb37421cc63ad4234af053a127d773043738339597df1efa91",
       "declarations": [
         null
       ],
@@ -3012,7 +3012,7 @@
       ],
       "path": "src-tauri/src/project_folder_scaffold.rs",
       "semanticBytes": 650,
-      "sourceBytes": 31235
+      "sourceBytes": 31419
     },
     {
       "blocks": [],
