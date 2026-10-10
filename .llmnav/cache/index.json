@@ -1798,18 +1798,19 @@
         "workspace registry persistence"
       ],
       "hashes": {
-        "body": "6a9b12d0efb3f101c3381057a1e3ee80c7a44f283fae3180cda1400a76e562e2",
-        "semantic": "e9e0d143c67d2660f6eff2de252fcf859fe452604ff7aa44588608d106a0d640",
-        "structure": "628815e897067b5f64704c9a510a5b8e685d5a470d9c5e634e0508c6460c1fd5"
+        "body": "4189fd4cffc8adfed5c90ff9e4b31e35a517f2339d5d311a0d0e6de86b4fabaa",
+        "semantic": "b35fc5bdb9cc039a79626f118327e85cf2831c206177077587c7f43ee087fa50",
+        "structure": "560747bde45267688035944ac57844ba6e4a70be877be985a04100132a964992"
       },
       "id": "workduck.workspace.path-client",
       "imports": [
         "#lib/tauri/tauri-invoke.ts",
         "./workspace-path-format",
+        "./workspace-registry",
         "@tauri-apps/plugin-dialog"
       ],
       "invariant": [
-        "Validation succeeds only when the native boundary returns a non-empty normalized path; unavailable or malformed responses fail closed."
+        "Validation succeeds only for non-empty paths within registry storage limits, including native canonical results; unavailable or malformed responses fail closed."
       ],
       "location": {
         "declarationLine": null,
@@ -4829,8 +4830,8 @@
         "unlock sessions"
       ],
       "hashes": {
-        "body": "2500b2fa963bbd7a340bd256b464f272e345f3f872d08c85bc54ab7ef62fce98",
-        "semantic": "9a2e862eb356bb660ea2d04b9f78d496326b0262f1d6cee592dc1d8b565d20b2",
+        "body": "7ee012fb51cf4b416631d11fee259e600b3b1d527eec89130765cc8e38430e49",
+        "semantic": "ec8310b29dbdd566c60c857325dad74ac9c4d3ac6d1b535dba3cfc35f3ddec30",
         "structure": "621946cb60957e2f274aaf7484564e0780f37f4eaeeec58f5f5dfbcc3de64398"
       },
       "id": "workduck.workspace.registry",
@@ -4839,7 +4840,7 @@
         "./workspace-path-format"
       ],
       "invariant": [
-        "Stored reads reject unsupported versions, discarded records, and invalid locks; explicit in-memory mutations retain the existing normalization rules."
+        "Stored reads reject unsupported versions, discarded records, and invalid locks; new workspace paths and password hashes must fit storage limits without truncation."
       ],
       "location": {
         "declarationLine": null,
@@ -4982,6 +4983,6 @@
   "generatedBy": "llmnav@0.9.7",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "ae4cda9e80a7bd71cfb10998ad1e807ed0dfd5a15b063232c23e7809f79e11ee",
+  "sourceHash": "ad9b59cdf5d197db2a1fead85f1a24a8e400271a68753d0b0e42ea1b2926af49",
   "specVersion": "1"
 }

@@ -4,6 +4,8 @@ export function getWorkspacePathErrorMessage(error: WorkspacePathError | Workspa
 	switch (error) {
 		case 'workspace-path-required':
 			return 'Workspace path is required.';
+		case 'workspace-path-too-long':
+			return 'Workspace path is too long. Choose a shorter folder path.';
 		case 'workspace-path-not-absolute':
 			return 'Workspace path must be an absolute folder path.';
 		case 'workspace-path-not-found':

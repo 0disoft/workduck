@@ -96,6 +96,8 @@
 		switch (nextError) {
 			case 'workspace-path-required':
 				return messages.workspace.pathErrors.pathRequired;
+			case 'workspace-path-too-long':
+				return messages.workspace.pathErrors.pathTooLong;
 			case 'workspace-path-not-absolute':
 				return messages.workspace.pathErrors.pathNotAbsolute;
 			case 'workspace-path-not-found':
@@ -118,6 +120,7 @@
 	function isWorkspacePathError(nextError: WorkspacePathRepairError): nextError is WorkspacePathError {
 		return (
 			nextError === 'workspace-path-required' ||
+			nextError === 'workspace-path-too-long' ||
 			nextError === 'workspace-path-not-absolute' ||
 			nextError === 'workspace-path-not-found' ||
 			nextError === 'workspace-path-not-directory' ||

@@ -21,6 +21,7 @@ export const hiWorkspaceMessages = {
 	},
 	pathErrors: {
 		pathRequired: 'कार्यक्षेत्र पथ आवश्यक है।',
+		pathTooLong: 'कार्यक्षेत्र पथ बहुत लंबा है। छोटा फ़ोल्डर पथ चुनें।',
 		pathNotAbsolute: 'कार्यक्षेत्र पथ एक पूर्ण फ़ोल्डर पथ होना चाहिए।',
 		pathNotFound: 'कार्यक्षेत्र पथ मौजूद नहीं है।',
 		pathNotDirectory: 'कार्यक्षेत्र पथ एक फ़ोल्डर होना चाहिए।',

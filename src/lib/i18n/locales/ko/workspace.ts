@@ -21,6 +21,7 @@ export const koWorkspaceMessages = {
 		},
 		pathErrors: {
 			pathRequired: '워크스페이스 경로를 입력하세요.',
+			pathTooLong: '워크스페이스 경로가 너무 깁니다. 더 짧은 폴더 경로를 선택하세요.',
 			pathNotAbsolute: '워크스페이스 경로는 절대 폴더 경로여야 합니다.',
 			pathNotFound: '워크스페이스 경로가 없습니다.',
 			pathNotDirectory: '워크스페이스 경로는 폴더여야 합니다.',

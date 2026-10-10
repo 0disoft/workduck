@@ -7404,12 +7404,12 @@
     },
     {
       "blocks": [],
-      "contentHash": "f37bb87232aa04d4ab32c480c2136f5c5220f3be5cc36f81d743a68730c5dd9c",
+      "contentHash": "68f358b3d4ed4690421041fa8b2e9841bebd044fc5d529229ad28fc408e16c34",
       "declarations": [],
       "imports": [],
       "path": "src/lib/i18n/locales/en/workspace.ts",
       "semanticBytes": 0,
-      "sourceBytes": 1757
+      "sourceBytes": 1834
     },
     {
       "blocks": [],
@@ -7555,12 +7555,12 @@
     },
     {
       "blocks": [],
-      "contentHash": "f6aabc0333835728e3aa8a4480aa28ff1abe4136cf3b1f1da2f8324b1657575f",
+      "contentHash": "611abe13740d3aee8ae0b99c05076fcaa9e3bdb3920479d6dd3653ecfcc70ac5",
       "declarations": [],
       "imports": [],
       "path": "src/lib/i18n/locales/es/workspace.ts",
       "semanticBytes": 0,
-      "sourceBytes": 2207
+      "sourceBytes": 2315
     },
     {
       "blocks": [],
@@ -7706,12 +7706,12 @@
     },
     {
       "blocks": [],
-      "contentHash": "5cbe4a048ee92dfacc7ff1c6272d5dddb3a54bef1f46e0edaefd5b83f86b4e6a",
+      "contentHash": "d6f663f48a0fd16577a7a181c4af0646709f52da9f74cf7fb883fa4b99d3a496",
       "declarations": [],
       "imports": [],
       "path": "src/lib/i18n/locales/fr/workspace.ts",
       "semanticBytes": 0,
-      "sourceBytes": 2342
+      "sourceBytes": 2453
     },
     {
       "blocks": [],
@@ -7857,12 +7857,12 @@
     },
     {
       "blocks": [],
-      "contentHash": "b25137f53be2f373684f5642f85c08cdaa0658b7e70887f778156fc3e62aed93",
+      "contentHash": "e7951814ff1fd4c8a378183eb9ad106fdf58981fbf355410f36d093324a4ce41",
       "declarations": [],
       "imports": [],
       "path": "src/lib/i18n/locales/hi/workspace.ts",
       "semanticBytes": 0,
-      "sourceBytes": 3567
+      "sourceBytes": 3726
     },
     {
       "blocks": [],
@@ -8008,12 +8008,12 @@
     },
     {
       "blocks": [],
-      "contentHash": "cd1a9a40dcf39dbfa01c767321b13aae5cc99e52272d48acc42caa599771731c",
+      "contentHash": "a3884711fd28036e4d5149e8c1b22184f2b4ba26b1064b841af779a5dcb20011",
       "declarations": [],
       "imports": [],
       "path": "src/lib/i18n/locales/ko/workspace.ts",
       "semanticBytes": 0,
-      "sourceBytes": 2290
+      "sourceBytes": 2401
     },
     {
       "blocks": [],
@@ -8159,12 +8159,12 @@
     },
     {
       "blocks": [],
-      "contentHash": "7ff053fbe416ddaf5ac6e4d8abfe3d396a807e99c891fbfc44c8c02a4a6a440e",
+      "contentHash": "b8faca101ba00bea534f27f4cea5241ff45e15a7f98ff74755c38ef2eaac02ec",
       "declarations": [],
       "imports": [],
       "path": "src/lib/i18n/locales/zh/workspace.ts",
       "semanticBytes": 0,
-      "sourceBytes": 1729
+      "sourceBytes": 1808
     },
     {
       "blocks": [],
@@ -13367,7 +13367,7 @@
     },
     {
       "blocks": [],
-      "contentHash": "d70b4e1f1b0b768eecf2d4275b3869d914f4b70ea88b6a93c5a563115fd6f357",
+      "contentHash": "50d9a51bdb4c5a233b6d56ddd3d959dafe828afdc4a1e5a43b080bd7cbfbfb6c",
       "declarations": [],
       "imports": [
         "#lib/i18n/workduck-message-contract.ts",
@@ -13378,7 +13378,7 @@
       ],
       "path": "src/lib/settings/workspace-settings-errors.ts",
       "semanticBytes": 0,
-      "sourceBytes": 9310
+      "sourceBytes": 9431
     },
     {
       "blocks": [],
@@ -14255,7 +14255,7 @@
     },
     {
       "blocks": [],
-      "contentHash": "d79c3b560a91fbbd335b5aaaf752f741d38a6928af611c08ac2350a0e4b0009b",
+      "contentHash": "fd9e542920859b7a2fb098602745b19fdd32fdc15461abc50afa1419999c4aa7",
       "declarations": [],
       "imports": [
         "#lib/i18n/workduck-language.ts",
@@ -14274,11 +14274,11 @@
       ],
       "path": "src/lib/workspaces/WorkspaceGate.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 7655
+      "sourceBytes": 7744
     },
     {
       "blocks": [],
-      "contentHash": "cb3a5ba0b1d2d5c91c87ec3bfcccd30edb2316d43b00db869e8a28a89ad5d562",
+      "contentHash": "4a8aebb3534dc55cc33d399550527ade339093e9dd099825be01c9513e8620ff",
       "declarations": [],
       "imports": [
         "#lib/i18n/workduck-language.ts",
@@ -14292,7 +14292,7 @@
       ],
       "path": "src/lib/workspaces/WorkspacePathRepairForm.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 7885
+      "sourceBytes": 8020
     },
     {
       "blocks": [],
@@ -14412,6 +14412,20 @@
     },
     {
       "blocks": [],
+      "contentHash": "f89f28eb057187b77db3cb961b78ee94da1c0e8dedbb7c5260ad5453c1284f1e",
+      "declarations": [],
+      "imports": [
+        "#lib/tauri/tauri-invoke.ts",
+        "./workspace-path",
+        "./workspace-registry",
+        "bun:test"
+      ],
+      "path": "src/lib/workspaces/workspace-input.test.ts",
+      "semanticBytes": 0,
+      "sourceBytes": 3270
+    },
+    {
+      "blocks": [],
       "contentHash": "fad25dd8f89bda73685f2e8cb817527d1e388be95ef17ef775a4c98bf555c448",
       "declarations": [],
       "imports": [
@@ -14432,14 +14446,14 @@
     },
     {
       "blocks": [],
-      "contentHash": "e876c46f887feb6073c2d8705552fc1c521e56cc13dc28834834c326c33b3724",
+      "contentHash": "a1519a79ff4f4d81bfdffc9671f1e397536977e6162f7330efa2867f1a2d6e12",
       "declarations": [],
       "imports": [
         "./workspace-path"
       ],
       "path": "src/lib/workspaces/workspace-path-messages.ts",
       "semanticBytes": 0,
-      "sourceBytes": 1042
+      "sourceBytes": 1147
     },
     {
       "blocks": [
@@ -14452,7 +14466,7 @@
             ],
             "id": "workduck.workspace.path-client",
             "invariant": [
-              "Validation succeeds only when the native boundary returns a non-empty normalized path; unavailable or malformed responses fail closed."
+              "Validation succeeds only for non-empty paths within registry storage limits, including native canonical results; unavailable or malformed responses fail closed."
             ],
             "owns": [
               "workspace directory picker",
@@ -14471,7 +14485,7 @@
             "stability": "contract",
             "unknown": []
           },
-          "end": 553,
+          "end": 579,
           "endLine": 9,
           "entries": [
             {
@@ -14508,7 +14522,7 @@
               "key": "invariant",
               "line": 7,
               "order": 5,
-              "value": "Validation succeeds only when the native boundary returns a non-empty normalized path; unavailable or malformed responses fail closed."
+              "value": "Validation succeeds only for non-empty paths within registry storage limits, including native canonical results; unavailable or malformed responses fail closed."
             },
             {
               "key": "stability",
@@ -14521,7 +14535,7 @@
           "indent": "",
           "newline": "\n",
           "prefix": null,
-          "raw": "/* llmnav/1 module\nid=workduck.workspace.path-client\nrole=Select a workspace directory and normalize closed native validation responses for frontend callers.\nowns=workspace directory picker|workspace validation client|path validation errors\nexcludes=native filesystem validation|workspace registry persistence\nsearch=select workspace directory|validate workspace client|workspace picker\ninvariant=Validation succeeds only when the native boundary returns a non-empty normalized path; unavailable or malformed responses fail closed.\nstability=contract\n*/",
+          "raw": "/* llmnav/1 module\nid=workduck.workspace.path-client\nrole=Select a workspace directory and normalize closed native validation responses for frontend callers.\nowns=workspace directory picker|workspace validation client|path validation errors\nexcludes=native filesystem validation|workspace registry persistence\nsearch=select workspace directory|validate workspace client|workspace picker\ninvariant=Validation succeeds only for non-empty paths within registry storage limits, including native canonical results; unavailable or malformed responses fail closed.\nstability=contract\n*/",
           "scope": "module",
           "specVersion": "1",
           "start": 0,
@@ -14530,18 +14544,19 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "6a9b12d0efb3f101c3381057a1e3ee80c7a44f283fae3180cda1400a76e562e2",
+      "contentHash": "4189fd4cffc8adfed5c90ff9e4b31e35a517f2339d5d311a0d0e6de86b4fabaa",
       "declarations": [
         null
       ],
       "imports": [
         "#lib/tauri/tauri-invoke.ts",
         "./workspace-path-format",
+        "./workspace-registry",
         "@tauri-apps/plugin-dialog"
       ],
       "path": "src/lib/workspaces/workspace-path.ts",
-      "semanticBytes": 553,
-      "sourceBytes": 3895
+      "semanticBytes": 579,
+      "sourceBytes": 4334
     },
     {
       "blocks": [],
@@ -14610,7 +14625,7 @@
             ],
             "id": "workduck.workspace.registry",
             "invariant": [
-              "Stored reads reject unsupported versions, discarded records, and invalid locks; explicit in-memory mutations retain the existing normalization rules."
+              "Stored reads reject unsupported versions, discarded records, and invalid locks; new workspace paths and password hashes must fit storage limits without truncation."
             ],
             "owns": [
               "workspace records",
@@ -14631,7 +14646,7 @@
             "stability": "contract",
             "unknown": []
           },
-          "end": 627,
+          "end": 641,
           "endLine": 9,
           "entries": [
             {
@@ -14668,7 +14683,7 @@
               "key": "invariant",
               "line": 7,
               "order": 5,
-              "value": "Stored reads reject unsupported versions, discarded records, and invalid locks; explicit in-memory mutations retain the existing normalization rules."
+              "value": "Stored reads reject unsupported versions, discarded records, and invalid locks; new workspace paths and password hashes must fit storage limits without truncation."
             },
             {
               "key": "stability",
@@ -14681,7 +14696,7 @@
           "indent": "",
           "newline": "\n",
           "prefix": null,
-          "raw": "/* llmnav/1 module\nid=workduck.workspace.registry\nrole=Define workspace identity, immutable mutations, and lossless validation of stored workspace lists and locks.\nowns=workspace records|active workspace selection|workspace mutations|stored workspace validation\nexcludes=storage transport|workspace directory operations|unlock sessions\nsearch=workspace registry model|strict stored workspace registry|damaged workspace lock|workspace record loss\ninvariant=Stored reads reject unsupported versions, discarded records, and invalid locks; explicit in-memory mutations retain the existing normalization rules.\nstability=contract\n*/",
+          "raw": "/* llmnav/1 module\nid=workduck.workspace.registry\nrole=Define workspace identity, immutable mutations, and lossless validation of stored workspace lists and locks.\nowns=workspace records|active workspace selection|workspace mutations|stored workspace validation\nexcludes=storage transport|workspace directory operations|unlock sessions\nsearch=workspace registry model|strict stored workspace registry|damaged workspace lock|workspace record loss\ninvariant=Stored reads reject unsupported versions, discarded records, and invalid locks; new workspace paths and password hashes must fit storage limits without truncation.\nstability=contract\n*/",
           "scope": "module",
           "specVersion": "1",
           "start": 0,
@@ -14690,7 +14705,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "2500b2fa963bbd7a340bd256b464f272e345f3f872d08c85bc54ab7ef62fce98",
+      "contentHash": "7ee012fb51cf4b416631d11fee259e600b3b1d527eec89130765cc8e38430e49",
       "declarations": [
         null
       ],
@@ -14699,8 +14714,8 @@
         "./workspace-path-format"
       ],
       "path": "src/lib/workspaces/workspace-registry.ts",
-      "semanticBytes": 627,
-      "sourceBytes": 12106
+      "semanticBytes": 641,
+      "sourceBytes": 12657
     },
     {
       "blocks": [],

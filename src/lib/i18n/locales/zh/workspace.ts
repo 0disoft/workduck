@@ -21,6 +21,7 @@ export const zhWorkspaceMessages = {
 	},
 	pathErrors: {
 		pathRequired: '工作区路径为必填项。',
+		pathTooLong: '工作区路径过长。请选择较短的文件夹路径。',
 		pathNotAbsolute: '工作区路径必须是绝对文件夹路径。',
 		pathNotFound: '工作区路径不存在。',
 		pathNotDirectory: '工作区路径必须是一个文件夹。',

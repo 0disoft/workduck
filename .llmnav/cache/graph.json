@@ -702,6 +702,20 @@
     },
     {
       "confidence": 0.85,
+      "from": "workduck/workduck.workspace.path-client",
+      "id": "47a2d1c519c244c8db246007c51df0b42d58f42d043348980c63fe6b3deeb9f9",
+      "kind": "imports",
+      "provenance": {
+        "generator": "llmnav",
+        "line": null,
+        "path": "src/lib/workspaces/workspace-path.ts",
+        "source": "src/lib/workspaces/workspace-path.ts",
+        "type": "local-import"
+      },
+      "to": "workduck/workduck.workspace.registry"
+    },
+    {
+      "confidence": 0.85,
       "from": "workduck/workduck.workspace.storage",
       "id": "9eca143af544cc19eb37a661de725d3a2729ac02cd7f19a9969886e2183f7765",
       "kind": "imports",
@@ -2891,9 +2905,9 @@
   ],
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "1bae1c4526edcad22b3c3cc75219d839a1e89656a033cbd68efe6888cde1a08b",
+  "sourceHash": "660d6ccce4160481041e5b37a32aeedfee9f107f7f62326b315c0612c2812677",
   "stats": {
-    "edgeCount": 52,
+    "edgeCount": 53,
     "importedIndexCount": 0,
     "nodeCount": 97,
     "unresolvedNodeCount": 0

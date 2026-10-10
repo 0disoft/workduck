@@ -3784,8 +3784,23 @@
       "outputHash": "5d2f786c9ec61d831e5d3ab71f5e645f9adf4abdbc9079f1e327fb95caf8ab9b"
     },
     {
-      "edges": [],
-      "inputHash": "324f577fa37dd7d5426a44a1bb3cef6b7a9c4e2c8743ca3f5f091875021ad162",
+      "edges": [
+        {
+          "confidence": 0.85,
+          "from": "workduck/workduck.workspace.path-client",
+          "id": "47a2d1c519c244c8db246007c51df0b42d58f42d043348980c63fe6b3deeb9f9",
+          "kind": "imports",
+          "provenance": {
+            "generator": "llmnav",
+            "line": null,
+            "path": "src/lib/workspaces/workspace-path.ts",
+            "source": "src/lib/workspaces/workspace-path.ts",
+            "type": "local-import"
+          },
+          "to": "workduck/workduck.workspace.registry"
+        }
+      ],
+      "inputHash": "d00ff20f643a98742abc52a2980aa9709ad11dbb5fcf4b5bca96dddc5b0fe6e0",
       "key": "card:workduck/workduck.workspace.path-client",
       "nodes": [
         {
@@ -3808,9 +3823,18 @@
           "repositoryId": "workduck",
           "role": "Select a workspace directory and normalize closed native validation responses for frontend callers.",
           "semanticId": "workduck.workspace.path-client"
+        },
+        {
+          "definitions": [],
+          "external": false,
+          "key": "workduck/workduck.workspace.registry",
+          "location": null,
+          "repositoryId": "workduck",
+          "role": null,
+          "semanticId": "workduck.workspace.registry"
         }
       ],
-      "outputHash": "489a85669f0db14b443d072ced8daac3ab07351bbe2120d7cfc14dcaf1c9c627"
+      "outputHash": "7008b6cfc46540df87a856891534222a12e419ce3b7b88e1803e8b842984d2ed"
     },
     {
       "edges": [],

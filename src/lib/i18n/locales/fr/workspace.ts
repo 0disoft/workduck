@@ -21,6 +21,7 @@ export const frWorkspaceMessages = {
 	},
 	pathErrors: {
 		pathRequired: 'Le chemin de l\'espace de travail est obligatoire.',
+		pathTooLong: 'Le chemin de l\'espace de travail est trop long. Choisissez un chemin de dossier plus court.',
 		pathNotAbsolute: 'Le chemin de l\'espace de travail doit être un chemin absolu de dossier.',
 		pathNotFound: 'Le chemin de l\'espace de travail n\'existe pas.',
 		pathNotDirectory: 'Le chemin de l\'espace de travail doit être un dossier.',

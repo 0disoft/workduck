@@ -98,7 +98,7 @@
     "workduck.workspace.sync-file-native",
     "workduck.workspace.sync-git-native"
   ],
-  "cardSetHash": "85153d4b83fb9843dbeb26084d2dfd1b3c00166752c626d7a06beae94175fda6",
+  "cardSetHash": "2659e6dd238901521606a9733f5f497a2ad915025adc6450af315fe76e7fd41e",
   "documentCount": 97,
   "documents": [
     [
@@ -1313,27 +1313,27 @@
       ]
     ],
     [
-      "fdcfce971b93a8dd07eed340167a590a7ca1adcf9186a4c7ccf36e159138452c",
+      "9a82cc5d2abba3158c1a7a753209865207bec7fef5b97ef4d1a1ef9d52baed7f",
       [
         "select a workspace directory and normalize closed native validation responses for frontend callers.",
         "select workspace directory",
         "validate workspace client",
         "workspace picker",
-        "validation succeeds only when the native boundary returns a non-empty normalized path; unavailable or malformed responses fail closed.",
+        "validation succeeds only for non-empty paths within registry storage limits, including native canonical results; unavailable or malformed responses fail closed.",
         "workspace directory picker",
         "workspace validation client",
         "path validation errors"
       ]
     ],
     [
-      "19dc7ded410a8d44f4e1f1646681347a4045c2c0c53b3e0956958a6863a29e0d",
+      "60e63b4c5a080ab43f334f7b4c109a78af2c3527801d80b5659a3304efb3be8f",
       [
         "define workspace identity, immutable mutations, and lossless validation of stored workspace lists and locks.",
         "workspace registry model",
         "strict stored workspace registry",
         "damaged workspace lock",
         "workspace record loss",
-        "stored reads reject unsupported versions, discarded records, and invalid locks; explicit in-memory mutations retain the existing normalization rules.",
+        "stored reads reject unsupported versions, discarded records, and invalid locks; new workspace paths and password hashes must fit storage limits without truncation.",
         "workspace records",
         "active workspace selection",
         "workspace mutations",
@@ -1669,8 +1669,6 @@
         89,
         [
           1,
-          1,
-          5,
           1
         ]
       ],
@@ -3295,7 +3293,7 @@
           1,
           2,
           5,
-          1
+          2
         ]
       ],
       [
@@ -4891,13 +4889,6 @@
           3,
           1
         ]
-      ],
-      [
-        89,
-        [
-          5,
-          1
-        ]
       ]
     ],
     [
@@ -5747,6 +5738,13 @@
           1,
           1,
           2,
+          1
+        ]
+      ],
+      [
+        89,
+        [
+          5,
           1
         ]
       ]
@@ -11369,13 +11367,6 @@
         ]
       ],
       [
-        90,
-        [
-          5,
-          1
-        ]
-      ],
-      [
         95,
         [
           5,
@@ -11520,13 +11511,6 @@
       ],
       [
         85,
-        [
-          5,
-          1
-        ]
-      ],
-      [
-        90,
         [
           5,
           1
@@ -12416,6 +12400,15 @@
     ],
     [
       [
+        90,
+        [
+          5,
+          1
+        ]
+      ]
+    ],
+    [
+      [
         95,
         [
           5,
@@ -12734,6 +12727,8 @@
         89,
         [
           1,
+          1,
+          5,
           1
         ]
       ],
@@ -13672,6 +13667,15 @@
     [
       [
         27,
+        [
+          5,
+          1
+        ]
+      ]
+    ],
+    [
+      [
+        90,
         [
           5,
           1
@@ -14348,18 +14352,18 @@
           3,
           1
         ]
-      ],
-      [
-        90,
-        [
-          5,
-          1
-        ]
       ]
     ],
     [
       [
         48,
+        [
+          5,
+          1
+        ]
+      ],
+      [
+        89,
         [
           5,
           1
@@ -16535,6 +16539,20 @@
       ],
       [
         83,
+        [
+          5,
+          1
+        ]
+      ],
+      [
+        89,
+        [
+          5,
+          1
+        ]
+      ],
+      [
+        90,
         [
           5,
           1
@@ -17608,13 +17626,6 @@
           3,
           1
         ]
-      ],
-      [
-        90,
-        [
-          5,
-          1
-        ]
       ]
     ],
     [
@@ -17960,6 +17971,15 @@
     ],
     [
       [
+        90,
+        [
+          5,
+          1
+        ]
+      ]
+    ],
+    [
+      [
         30,
         [
           5,
@@ -18155,8 +18175,6 @@
           1,
           1,
           3,
-          1,
-          5,
           1
         ]
       ],
@@ -18826,6 +18844,13 @@
           4,
           1
         ]
+      ],
+      [
+        90,
+        [
+          5,
+          1
+        ]
       ]
     ],
     [
@@ -19108,13 +19133,6 @@
         ]
       ],
       [
-        90,
-        [
-          5,
-          1
-        ]
-      ],
-      [
         93,
         [
           3,
@@ -19208,13 +19226,6 @@
       ],
       [
         88,
-        [
-          5,
-          1
-        ]
-      ],
-      [
-        89,
         [
           5,
           1
@@ -21566,6 +21577,13 @@
           4,
           1
         ]
+      ],
+      [
+        90,
+        [
+          5,
+          1
+        ]
       ]
     ],
     [
@@ -21670,8 +21688,6 @@
           1,
           3,
           1,
-          5,
-          1,
           9,
           1
         ]
@@ -21725,6 +21741,20 @@
         [
           1,
           2
+        ]
+      ],
+      [
+        89,
+        [
+          5,
+          1
+        ]
+      ],
+      [
+        90,
+        [
+          5,
+          1
         ]
       ]
     ],
@@ -26106,6 +26136,8 @@
         89,
         [
           4,
+          1,
+          5,
           1
         ]
       ],
@@ -27930,6 +27962,13 @@
         ]
       ],
       [
+        89,
+        [
+          5,
+          1
+        ]
+      ],
+      [
         94,
         [
           1,
@@ -28003,13 +28042,6 @@
       ],
       [
         78,
-        [
-          5,
-          1
-        ]
-      ],
-      [
-        90,
         [
           5,
           1
@@ -28142,15 +28174,6 @@
     [
       [
         36,
-        [
-          5,
-          1
-        ]
-      ]
-    ],
-    [
-      [
-        89,
         [
           5,
           1
@@ -28739,13 +28762,6 @@
       ],
       [
         71,
-        [
-          5,
-          1
-        ]
-      ],
-      [
-        90,
         [
           5,
           1
@@ -32994,9 +33010,18 @@
         ]
       ],
       [
+        89,
+        [
+          5,
+          1
+        ]
+      ],
+      [
         90,
         [
           4,
+          1,
+          5,
           1
         ]
       ],
@@ -35326,20 +35351,6 @@
         ]
       ],
       [
-        89,
-        [
-          5,
-          1
-        ]
-      ],
-      [
-        90,
-        [
-          5,
-          1
-        ]
-      ],
-      [
         92,
         [
           5,
@@ -36157,6 +36168,13 @@
     [
       [
         51,
+        [
+          5,
+          1
+        ]
+      ],
+      [
+        90,
         [
           5,
           1
@@ -38173,13 +38191,6 @@
           5,
           1
         ]
-      ],
-      [
-        89,
-        [
-          5,
-          1
-        ]
       ]
     ],
     [
@@ -38531,6 +38542,13 @@
           5,
           1
         ]
+      ],
+      [
+        89,
+        [
+          5,
+          1
+        ]
       ]
     ],
     [
@@ -38582,6 +38600,13 @@
         50,
         [
           1,
+          1
+        ]
+      ],
+      [
+        90,
+        [
+          5,
           1
         ]
       ],
@@ -39942,6 +39967,8 @@
           3,
           4,
           4,
+          1,
+          5,
           1,
           9,
           1
@@ -40785,6 +40812,7 @@
     "finishes",
     "finite",
     "first",
+    "fit",
     "five",
     "fixed",
     "flags",
@@ -40832,6 +40860,7 @@
     "handler",
     "handling",
     "has",
+    "hashes",
     "have",
     "head",
     "helpers",
@@ -40990,6 +41019,7 @@
     "modern",
     "most",
     "multi",
+    "must",
     "mutate",
     "mutates",
     "mutation",
@@ -41244,7 +41274,6 @@
     "return",
     "returned",
     "returning",
-    "returns",
     "reuse",
     "revalidated",
     "revalidation",

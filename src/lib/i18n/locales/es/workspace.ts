@@ -21,6 +21,7 @@ export const esWorkspaceMessages = {
 		},
 		pathErrors: {
 			pathRequired: 'Se requiere la ruta del espacio de trabajo.',
+			pathTooLong: 'La ruta del espacio de trabajo es demasiado larga. Elige una ruta de carpeta más corta.',
 			pathNotAbsolute: 'La ruta del espacio de trabajo debe ser una ruta de carpeta absoluta.',
 			pathNotFound: 'La ruta del espacio de trabajo no existe.',
 			pathNotDirectory: 'La ruta del espacio de trabajo debe ser una carpeta.',
