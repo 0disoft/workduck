@@ -325,6 +325,13 @@ paths, and duplicates. Builds also check version, selection, and checksums and s
 if the embedded files are stale. The full check above regenerates all combinations to
 compare their contents. For reproducible installs, use `bun install --frozen-lockfile`.
 
+If the installed ssealed metadata or CLI is damaged, reinstall with
+`bun install --force --frozen-lockfile --backend copyfile --cache-dir <new-empty-directory>`,
+replacing the placeholder with a fresh cache directory outside the checkout.
+Bun's default hardlinks can share damaged files with its cache, so forcing an
+install against that same cache may not repair them. This recovery keeps the
+locked dependency versions and installs independent copies from the fresh cache.
+
 Scaffold synchronization checks the CLI's generated manifest against the installed
 version, requested settings, file inventory, and file checksums before embedding.
 Outputs are staged before replacement; ordinary publication failures restore prior

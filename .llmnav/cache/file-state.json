@@ -600,7 +600,7 @@
     },
     {
       "blocks": [],
-      "contentHash": "73827f6f1665abb6f4fd7861dbe75e435a9c7caec1b869576dee2652073a1137",
+      "contentHash": "63b3039c6dcbe0629ea294411fdc45a6585a0329abc3a5a94dae26ea5ca450ba",
       "declarations": [],
       "imports": [
         "node:fs/promises",
@@ -608,11 +608,11 @@
       ],
       "path": "scripts/ssealed-installation.mjs",
       "semanticBytes": 0,
-      "sourceBytes": 1007
+      "sourceBytes": 1515
     },
     {
       "blocks": [],
-      "contentHash": "2a65dff185afbe66fc277a632fdeb2d2c209ccf6b36bd062f2a74a0f4f6428a8",
+      "contentHash": "16ee34524efebb36efcae477f105d8716051e4fe2778a96b514cca2d7c9b4e15",
       "declarations": [],
       "imports": [
         "./ssealed-installation.mjs",
@@ -624,7 +624,7 @@
       ],
       "path": "scripts/ssealed-installation.test.mjs",
       "semanticBytes": 0,
-      "sourceBytes": 2365
+      "sourceBytes": 3108
     },
     {
       "blocks": [],

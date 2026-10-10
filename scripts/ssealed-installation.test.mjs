@@ -10,7 +10,7 @@ async function withInstallation(metadata, run) {
 	try {
 		const packageRoot = join(root, 'node_modules', 'ssealed');
 		await mkdir(join(packageRoot, 'dist'), { recursive: true });
-		await writeFile(join(packageRoot, 'package.json'), JSON.stringify(metadata));
+		await writeFile(join(packageRoot, 'package.json'), JSON.stringify(metadata === null ? null : { name: 'ssealed', ...metadata }));
 		await writeFile(join(packageRoot, 'dist', 'cli.js'),
 			'console.log(JSON.stringify(process.argv.slice(2)));');
 		await mkdir(join(root, 'node_modules', '.bin'));
@@ -49,5 +49,19 @@ describe('installed ssealed CLI', () => {
 		await withInstallation({ version: '0.7.79', bin: { ssealed: '../another/cli.js' } }, async (root) => {
 			await expect(readSsealedInstallation(root)).rejects.toThrow('inside its package');
 		});
+	});
+
+	test('rejects a directory masquerading as the CLI entrypoint', async () => {
+		await withInstallation({ version: '0.7.79', bin: { ssealed: 'dist' } }, async (root) => {
+			await expect(readSsealedInstallation(root)).rejects.toThrow('regular file');
+		});
+	});
+
+	test('reports an actionable reinstall command for damaged metadata', async () => {
+		for (const metadata of [null, { name: 'another-package', version: '0.7.79', bin: { ssealed: 'dist/cli.js' } }]) {
+			await withInstallation(metadata, async (root) => {
+				await expect(readSsealedInstallation(root)).rejects.toThrow('bun install --force --frozen-lockfile --backend copyfile --cache-dir <new-empty-directory>');
+			});
+		}
 	});
 });
