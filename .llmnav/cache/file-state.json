@@ -8379,7 +8379,7 @@
     },
     {
       "blocks": [],
-      "contentHash": "839d0284c3300457898171eb4115d8d7c0b24dea93ef90f6013d668899b0e7e0",
+      "contentHash": "ec90f5174e0e85c3bacab56dc81abc23683cb73353b3f0baac21069193601e62",
       "declarations": [],
       "imports": [
         "#lib/environment/environment-vault.ts",
@@ -8423,7 +8423,7 @@
       ],
       "path": "src/lib/projects/ProjectBoardSurface.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 40709
+      "sourceBytes": 41301
     },
     {
       "blocks": [
@@ -8437,7 +8437,7 @@
             ],
             "id": "workduck.projects.workspace-lifecycle",
             "invariant": [
-              "Initial reads yield to newer published and live state; only the active workspace lifetime updates the board, and metadata changes preserve selections."
+              "Initial reads yield to newer published and live state; only successful reads or published snapshots admit editing for the current workspace ID and path, and metadata changes preserve selections."
             ],
             "owns": [
               "workspace view reset",
@@ -8457,7 +8457,7 @@
             "stability": "architecture",
             "unknown": []
           },
-          "end": 653,
+          "end": 697,
           "endLine": 10,
           "entries": [
             {
@@ -8494,7 +8494,7 @@
               "key": "invariant",
               "line": 8,
               "order": 5,
-              "value": "Initial reads yield to newer published and live state; only the active workspace lifetime updates the board, and metadata changes preserve selections."
+              "value": "Initial reads yield to newer published and live state; only successful reads or published snapshots admit editing for the current workspace ID and path, and metadata changes preserve selections."
             },
             {
               "key": "stability",
@@ -8507,7 +8507,7 @@
           "indent": "\t",
           "newline": "\n",
           "prefix": null,
-          "raw": "\t/* llmnav/1 module\n\tid=workduck.projects.workspace-lifecycle\n\trole=Load project board registries, operation history, and vault views within the active workspace lifetime.\n\towns=workspace view reset|initial read ownership|workspace subscriptions|board resource teardown\n\texcludes=repository mutations|native vault operations|project selection rules\n\tsearch=project board workspace switch|late project registry read|workspace board subscriptions\n\tinvariant=Initial reads yield to newer published and live state; only the active workspace lifetime updates the board, and metadata changes preserve selections.\n\tstability=architecture\n\t*/",
+          "raw": "\t/* llmnav/1 module\n\tid=workduck.projects.workspace-lifecycle\n\trole=Load project board registries, operation history, and vault views within the active workspace lifetime.\n\towns=workspace view reset|initial read ownership|workspace subscriptions|board resource teardown\n\texcludes=repository mutations|native vault operations|project selection rules\n\tsearch=project board workspace switch|late project registry read|workspace board subscriptions\n\tinvariant=Initial reads yield to newer published and live state; only successful reads or published snapshots admit editing for the current workspace ID and path, and metadata changes preserve selections.\n\tstability=architecture\n\t*/",
           "scope": "module",
           "specVersion": "1",
           "start": 19,
@@ -8516,7 +8516,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "4e835d09d8b7f434bfde4711a21116f5dd106cb5dc5d63c88157f13ed32b0072",
+      "contentHash": "eda243752ee26e1d471ee6c5519f341df836538bc16e596aba18ee63a85e4e78",
       "declarations": [
         null
       ],
@@ -8535,8 +8535,8 @@
         "./project-storage"
       ],
       "path": "src/lib/projects/ProjectBoardWorkspaceLifecycle.svelte",
-      "semanticBytes": 634,
-      "sourceBytes": 5938
+      "semanticBytes": 678,
+      "sourceBytes": 6251
     },
     {
       "blocks": [],
@@ -9057,7 +9057,7 @@
     },
     {
       "blocks": [],
-      "contentHash": "c5c4792020a4e6fab05e6cfd39ffdb571935d8cb686a180305001b08c0a4c824",
+      "contentHash": "89964bd1f3da0eb261ecd636af9d0bf8aeb0ea668ad3851e4694b3aac8a0124b",
       "declarations": [],
       "imports": [
         "#lib/workspaces/workspace-registry.ts",
@@ -9067,7 +9067,7 @@
       ],
       "path": "src/lib/projects/project-board-registry-writer-harness.svelte.ts",
       "semanticBytes": 0,
-      "sourceBytes": 1432
+      "sourceBytes": 1733
     },
     {
       "blocks": [
@@ -9081,7 +9081,7 @@
             ],
             "id": "workduck.projects.registry-writer",
             "invariant": [
-              "Edits build on the latest draft, writes compare the last accepted snapshot, conflicts require reload, and only the live initiating view receives feedback."
+              "Only a successfully read workspace admits edits; edits build on the latest draft, writes compare the last accepted snapshot, conflicts require reload, and only the live initiating view receives feedback."
             ],
             "owns": [
               "registry write admission",
@@ -9098,12 +9098,13 @@
               "project registry save",
               "late registry write response",
               "workspace save ownership",
-              "concurrent project field edits"
+              "concurrent project field edits",
+              "project read failure write admission"
             ],
             "stability": "architecture",
             "unknown": []
           },
-          "end": 675,
+          "end": 761,
           "endLine": 9,
           "entries": [
             {
@@ -9134,13 +9135,13 @@
               "key": "search",
               "line": 6,
               "order": 4,
-              "value": "project registry save|late registry write response|workspace save ownership|concurrent project field edits"
+              "value": "project registry save|late registry write response|workspace save ownership|concurrent project field edits|project read failure write admission"
             },
             {
               "key": "invariant",
               "line": 7,
               "order": 5,
-              "value": "Edits build on the latest draft, writes compare the last accepted snapshot, conflicts require reload, and only the live initiating view receives feedback."
+              "value": "Only a successfully read workspace admits edits; edits build on the latest draft, writes compare the last accepted snapshot, conflicts require reload, and only the live initiating view receives feedback."
             },
             {
               "key": "stability",
@@ -9153,7 +9154,7 @@
           "indent": "",
           "newline": "\n",
           "prefix": null,
-          "raw": "/* llmnav/1 module\nid=workduck.projects.registry-writer\nrole=Own pending project registry edits and save feedback within the initiating workspace view lifetime.\nowns=registry write admission|pending and failed registry drafts|save result ownership|workspace view lifetime|conflict recovery\nexcludes=registry storage implementation|dialog busy state|repository operations\nsearch=project registry save|late registry write response|workspace save ownership|concurrent project field edits\ninvariant=Edits build on the latest draft, writes compare the last accepted snapshot, conflicts require reload, and only the live initiating view receives feedback.\nstability=architecture\n*/",
+          "raw": "/* llmnav/1 module\nid=workduck.projects.registry-writer\nrole=Own pending project registry edits and save feedback within the initiating workspace view lifetime.\nowns=registry write admission|pending and failed registry drafts|save result ownership|workspace view lifetime|conflict recovery\nexcludes=registry storage implementation|dialog busy state|repository operations\nsearch=project registry save|late registry write response|workspace save ownership|concurrent project field edits|project read failure write admission\ninvariant=Only a successfully read workspace admits edits; edits build on the latest draft, writes compare the last accepted snapshot, conflicts require reload, and only the live initiating view receives feedback.\nstability=architecture\n*/",
           "scope": "module",
           "specVersion": "1",
           "start": 0,
@@ -9162,7 +9163,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "8e113a973967f10898261ae13bccff917c72ed312d2918c95bfd7da06f13f74c",
+      "contentHash": "784c8e12fa32d3979943d756d47eef61f27fb429ef2988bc36ace94e28ae944e",
       "declarations": [
         null
       ],
@@ -9173,12 +9174,12 @@
         "./project-storage"
       ],
       "path": "src/lib/projects/project-board-registry-writer.svelte.ts",
-      "semanticBytes": 675,
-      "sourceBytes": 7099
+      "semanticBytes": 761,
+      "sourceBytes": 7345
     },
     {
       "blocks": [],
-      "contentHash": "a2f75416f0e4a7424cd833bb553b7737750879a1c5624f68c8c9a3008329619f",
+      "contentHash": "81c20f4f5835204f4d78b41bc92842ef2e0692dac880d3169bb2b444790472a5",
       "declarations": [],
       "imports": [
         "#lib/tauri/tauri-invoke.ts",
@@ -9192,7 +9193,7 @@
       ],
       "path": "src/lib/projects/project-board-registry-writer.test.ts",
       "semanticBytes": 0,
-      "sourceBytes": 15437
+      "sourceBytes": 17787
     },
     {
       "blocks": [],
@@ -9839,7 +9840,7 @@
     },
     {
       "blocks": [],
-      "contentHash": "4c3117066d334e97ab34a8be23aa7d78b6f2f45360cb8883d386813469716f8b",
+      "contentHash": "3e25f50c9a8c19411d6d7f2628db7f8d9b2ace9109fa215c2991927f2950c44b",
       "declarations": [],
       "imports": [
         "#lib/environment/environment-vault.ts",
@@ -9854,11 +9855,11 @@
       ],
       "path": "src/lib/projects/project-board-workspace-lifecycle-harness.svelte.ts",
       "semanticBytes": 0,
-      "sourceBytes": 2098
+      "sourceBytes": 2142
     },
     {
       "blocks": [],
-      "contentHash": "fcd3da49281cb49f2a41c0671cc2d7049e3a19f154e4ce89560bb5a8464b9856",
+      "contentHash": "c87e6c8bc6afbd409e19499851bd51e43f3fc7f04f1b9f6e577c75ce1c9e702e",
       "declarations": [],
       "imports": [
         "#lib/environment/environment-vault-session.ts",
@@ -9876,7 +9877,7 @@
       ],
       "path": "src/lib/projects/project-board-workspace-lifecycle.test.ts",
       "semanticBytes": 0,
-      "sourceBytes": 9569
+      "sourceBytes": 11181
     },
     {
       "blocks": [],

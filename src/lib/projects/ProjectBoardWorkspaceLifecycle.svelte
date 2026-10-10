@@ -5,7 +5,7 @@
 	owns=workspace view reset|initial read ownership|workspace subscriptions|board resource teardown
 	excludes=repository mutations|native vault operations|project selection rules
 	search=project board workspace switch|late project registry read|workspace board subscriptions
-	invariant=Initial reads yield to newer published and live state; only the active workspace lifetime updates the board, and metadata changes preserve selections.
+	invariant=Initial reads yield to newer published and live state; only successful reads or published snapshots admit editing for the current workspace ID and path, and metadata changes preserve selections.
 	stability=architecture
 	*/
 	import type { EnvironmentVault } from '#lib/environment/environment-vault.ts';
@@ -36,6 +36,7 @@
 	interface Props {
 		readonly workspace: WorkspaceRecord;
 		registry: ProjectRegistry;
+		registryReadScope: string | null;
 		storageError: ProjectRegistryStorageError | null;
 		operationStorageError: ProjectRepositoryOperationStorageError | null;
 		folderRepairError: ProjectFolderError | null;
@@ -52,6 +53,7 @@
 	let {
 		workspace,
 		registry = $bindable(createEmptyProjectRegistry('')),
+		registryReadScope = $bindable(),
 		storageError = $bindable(),
 		operationStorageError = $bindable(),
 		folderRepairError = $bindable(),
@@ -72,6 +74,7 @@
 	$effect(() => {
 		const workspaceId = workspaceIdentityId;
 		const workspacePath = workspaceIdentityPath;
+		const readScope = JSON.stringify([workspaceId, workspacePath]);
 		let isCurrentWorkspace = true;
 		let hasPublishedRegistry = false;
 		let hasPublishedVaultEnvelope = false;
@@ -80,6 +83,7 @@
 
 		folderRepairError = null;
 		registry = createEmptyProjectRegistry(workspaceId);
+		registryReadScope = null;
 		repositoryOperationById = {};
 		storageError = null;
 		operationStorageError = null;
@@ -102,6 +106,7 @@
 			if (!isCurrentWorkspace || hasPublishedRegistry) return;
 			registry = next.registry;
 			storageError = next.storageError;
+			registryReadScope = next.storageError === null ? readScope : null;
 		});
 		void readProjectRepositoryOperationRecordsForBoard(workspaceId, (next) => {
 			if (!isCurrentWorkspace) return;
@@ -128,6 +133,7 @@
 			hasPublishedRegistry = true;
 			registry = nextRegistry;
 			storageError = null;
+			registryReadScope = readScope;
 		});
 		const unsubscribeEnvironmentVaultSession = subscribeEnvironmentVaultSession(
 			workspaceId,

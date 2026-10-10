@@ -3304,8 +3304,8 @@
         "project selection rules"
       ],
       "hashes": {
-        "body": "4e835d09d8b7f434bfde4711a21116f5dd106cb5dc5d63c88157f13ed32b0072",
-        "semantic": "734a24c879ea87b61bf6e300670488a38e7c847cf2328bcc88ae3aed8df6a9a8",
+        "body": "eda243752ee26e1d471ee6c5519f341df836538bc16e596aba18ee63a85e4e78",
+        "semantic": "87415504b1aed862f68b4ad0cfbbd5db3a2a6dbf89ca609560ba2fcfc25dc8c5",
         "structure": "8fc948220e679d809cc4625e719da4300653fc4291f7b5d03a308c8c591aec36"
       },
       "id": "workduck.projects.workspace-lifecycle",
@@ -3324,7 +3324,7 @@
         "./project-storage"
       ],
       "invariant": [
-        "Initial reads yield to newer published and live state; only the active workspace lifetime updates the board, and metadata changes preserve selections."
+        "Initial reads yield to newer published and live state; only successful reads or published snapshots admit editing for the current workspace ID and path, and metadata changes preserve selections."
       ],
       "location": {
         "declarationLine": null,
@@ -3463,8 +3463,8 @@
         "repository operations"
       ],
       "hashes": {
-        "body": "8e113a973967f10898261ae13bccff917c72ed312d2918c95bfd7da06f13f74c",
-        "semantic": "92066aafc434970189b7e3eab404800b4c08beb735b0589cd95689e0bd13d06b",
+        "body": "784c8e12fa32d3979943d756d47eef61f27fb429ef2988bc36ace94e28ae944e",
+        "semantic": "b4f9e31cf108a9bdf61510190c15c4c8d67c9109d1e1c81dbd2027d117ba657b",
         "structure": "74113e8fed36d5b327ad167efdf5acc71e446d7c0dc18ef751dde4194107b8f4"
       },
       "id": "workduck.projects.registry-writer",
@@ -3475,7 +3475,7 @@
         "./project-storage"
       ],
       "invariant": [
-        "Edits build on the latest draft, writes compare the last accepted snapshot, conflicts require reload, and only the live initiating view receives feedback."
+        "Only a successfully read workspace admits edits; edits build on the latest draft, writes compare the last accepted snapshot, conflicts require reload, and only the live initiating view receives feedback."
       ],
       "location": {
         "declarationLine": null,
@@ -3503,7 +3503,8 @@
         "project registry save",
         "late registry write response",
         "workspace save ownership",
-        "concurrent project field edits"
+        "concurrent project field edits",
+        "project read failure write admission"
       ],
       "stability": "architecture"
     },
@@ -4822,6 +4823,6 @@
   "generatedBy": "llmnav@0.9.7",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "7a759df705091cfa696e5765c5c12f25462d735c28f25e16894d48e0ee746a9b",
+  "sourceHash": "b7223ffbd24b21814b8de6f825dc2bfaea1ce4b9fa01136054d0a594f9f59f83",
   "specVersion": "1"
 }

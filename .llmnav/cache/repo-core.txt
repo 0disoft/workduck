@@ -155,7 +155,7 @@ invariant Preview and apply commands use the opening workspace; only the live di
 role Load project board registries, operation history, and vault views within the active workspace lifetime.
 owns workspace view reset, initial read ownership, workspace subscriptions, board resource teardown
 excludes repository mutations, native vault operations, project selection rules
-invariant Initial reads yield to newer published and live state; only the active workspace lifetime updates the board, and metadata changes preserve selections.
+invariant Initial reads yield to newer published and live state; only successful reads or published snapshots admit editing for the current workspace ID and path, and metadata changes preserve selections.
 
 @workduck.projects.task-run-lifecycle
 role Poll repository task run history within a workspace and repository mapping lifetime.
@@ -167,7 +167,7 @@ invariant Scope changes clear foreign run state while retaining matching reposit
 role Own pending project registry edits and save feedback within the initiating workspace view lifetime.
 owns registry write admission, pending and failed registry drafts, save result ownership, workspace view lifetime, conflict recovery
 excludes registry storage implementation, dialog busy state, repository operations
-invariant Edits build on the latest draft, writes compare the last accepted snapshot, conflicts require reload, and only the live initiating view receives feedback.
+invariant Only a successfully read workspace admits edits; edits build on the latest draft, writes compare the last accepted snapshot, conflicts require reload, and only the live initiating view receives feedback.
 
 @workduck.skills.registry
 role Normalize and migrate workspace skill registries while preserving custom skills and built-in overrides.
