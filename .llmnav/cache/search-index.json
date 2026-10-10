@@ -90,7 +90,7 @@
     "workduck.workspace.sync-file-native",
     "workduck.workspace.sync-git-native"
   ],
-  "cardSetHash": "65f9bb995583e5fbcfcc5111d970e788b79a15fdaf7e9f5757a87f6dbd4cbf27",
+  "cardSetHash": "b945c9aed00d5ce1d685b5254ec32aafe8e2f0bd5ac212712dc35c2ee5a4206e",
   "documentCount": 89,
   "documents": [
     [
@@ -1051,13 +1051,13 @@
       ]
     ],
     [
-      "9b02af74204671ab0a4b2af25d3745f0fb8b586c68ed038acccac775ea5a881d",
+      "a816a4f51156c6f09ddcec3968ba7ed0ecbc28d9965312469d9b95a66f087315",
       [
         "normalize and migrate workspace skill registries while preserving custom skills and built-in overrides.",
         "skill registry migration",
         "custom skill validation",
         "skill editing",
-        "legacy registries receive version-appropriate defaults, current removals persist, and invalid mutations preserve the registry.",
+        "stored registries require a supported version, matching workspace, and skill collection; legacy registries receive version-appropriate defaults, current removals persist, and invalid mutations preserve the registry.",
         "skill registry normalization",
         "legacy skill migration",
         "skill mutations",
@@ -1441,6 +1441,13 @@
         [
           1,
           1,
+          5,
+          1
+        ]
+      ],
+      [
+        72,
+        [
           5,
           1
         ]
@@ -2888,7 +2895,7 @@
           1,
           2,
           5,
-          1
+          2
         ]
       ],
       [
@@ -5998,6 +6005,15 @@
           1,
           1,
           2,
+          1
+        ]
+      ]
+    ],
+    [
+      [
+        72,
+        [
+          5,
           1
         ]
       ]
@@ -15503,6 +15519,13 @@
       ],
       [
         70,
+        [
+          5,
+          1
+        ]
+      ],
+      [
+        72,
         [
           5,
           1
@@ -22811,7 +22834,7 @@
           1,
           1,
           5,
-          1
+          2
         ]
       ]
     ],
@@ -24174,6 +24197,13 @@
           5,
           2
         ]
+      ],
+      [
+        72,
+        [
+          5,
+          1
+        ]
       ]
     ],
     [
@@ -27407,6 +27437,8 @@
           3,
           4,
           1,
+          5,
+          1,
           9,
           1
         ]
@@ -29181,6 +29213,13 @@
           5,
           1
         ]
+      ],
+      [
+        72,
+        [
+          5,
+          1
+        ]
       ]
     ],
     [
@@ -29607,6 +29646,13 @@
         45,
         [
           1,
+          1
+        ]
+      ],
+      [
+        72,
+        [
+          5,
           1
         ]
       ]
@@ -33350,7 +33396,7 @@
         72,
         [
           5,
-          1
+          2
         ]
       ]
     ],
@@ -35110,6 +35156,8 @@
         72,
         [
           1,
+          1,
+          5,
           1
         ]
       ],
@@ -35767,6 +35815,7 @@
     "codes",
     "codex",
     "coding",
+    "collection",
     "collision",
     "combined",
     "command",

@@ -189,7 +189,7 @@ function normalizeReferenceRegistry(value: unknown, workspaceId: string): Refere
 		return null;
 	}
 
-	if (typeof value.workspaceId !== 'string' || value.workspaceId !== workspaceId) {
+	if (typeof value.workspaceId !== 'string' || value.workspaceId !== workspaceId || !Array.isArray(value.references)) {
 		return null;
 	}
 

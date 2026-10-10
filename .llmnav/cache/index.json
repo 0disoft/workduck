@@ -3588,8 +3588,8 @@
         "queue execution"
       ],
       "hashes": {
-        "body": "f7fef5df96f0a411addc1a6eabbbd4d1998561b7422601da7b6185d490371101",
-        "semantic": "951a103d89635d332c04e5088d8144f5e9c0f89308dd79109747b4a70a4c78d5",
+        "body": "0e19783718c6e36e189e853a32fdab7a43c5a9563f138cb96a060ce316cfa4a6",
+        "semantic": "0178ada10223d0deadba5ba5018adc8eff95d7f612090309a05e2e11f7dc0b77",
         "structure": "77591be811f60b3304209bb8a35d3284da601dbd65a3cc02037bc7f5e7ee58fb"
       },
       "id": "workduck.skills.registry",
@@ -3599,7 +3599,7 @@
         "./skill-schema"
       ],
       "invariant": [
-        "Legacy registries receive version-appropriate defaults, current removals persist, and invalid mutations preserve the registry."
+        "Stored registries require a supported version, matching workspace, and skill collection; legacy registries receive version-appropriate defaults, current removals persist, and invalid mutations preserve the registry."
       ],
       "location": {
         "declarationLine": null,
@@ -4534,6 +4534,6 @@
   "generatedBy": "llmnav@0.9.7",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "11447e6e5448ae286b584a2e4adffeff7c65f3456b9026f46ae4ba9a117c0926",
+  "sourceHash": "ef78c83096d21d757958e6bbd639d515e678c804563dc8544ba05232af07683e",
   "specVersion": "1"
 }

@@ -71,6 +71,8 @@
 	let isRemovingReference = $state(false);
 	let isCopyingReference = $state(false);
 	let referenceError = $state<ReferenceRegistryError | ReferenceRegistryStorageError | null>(null);
+	let referenceReadError = $state<ReferenceRegistryStorageError | null>(null);
+	let isReferenceRegistryReady = $state(false);
 	let referenceActionErrorMessage = $state<string | null>(null);
 	let statusMessage = $state<string | null>(null);
 	let messages = $derived(getWorkduckMessages(appearanceSettings.languageId));
@@ -106,7 +108,8 @@
 	let referenceTagValidationError = $derived(createReferenceTagValidationError(referenceTags));
 	let referenceContentIsTooLong = $derived(referenceContent.trim().length > REFERENCE_CONTENT_MAX_LENGTH);
 	let canSaveReference = $derived(
-		referenceTitle.trim().length > 0 &&
+		isReferenceRegistryReady &&
+			referenceTitle.trim().length > 0 &&
 			(referenceSourceUrl.trim().length > 0 || referenceContent.trim().length > 0) &&
 			referenceTagValidationError === null &&
 			!referenceContentIsTooLong &&
@@ -129,6 +132,8 @@
 		return untrack(() => {
 			const scope = { workspaceId, workspacePath };
 			registry = createEmptyReferenceRegistry(workspaceId);
+			isReferenceRegistryReady = false;
+			referenceReadError = null;
 			projectRegistry = createEmptyProjectRegistry(workspaceId);
 			selectedReferenceId = null;
 			editingReferenceId = null;
@@ -152,6 +157,8 @@
 			const unsubscribeRegistry = subscribeReferenceRegistry(workspaceId, (nextRegistry) => {
 				referenceRegistryResource.invalidate(scope);
 				registry = nextRegistry;
+				isReferenceRegistryReady = true;
+				referenceReadError = null;
 				selectedReferenceId = resolveSelectedReferenceId(selectedReferenceId, nextRegistry.references);
 			});
 			const unsubscribeProjectRegistry = subscribeProjectRegistry(workspaceId, (nextRegistry) => {
@@ -185,7 +192,8 @@
 
 	function applyReferenceRegistryRead(result: Awaited<ReturnType<typeof readReferenceRegistry>>) {
 		registry = result.registry;
-		referenceError = result.ok ? null : result.error;
+		isReferenceRegistryReady = result.ok;
+		referenceReadError = result.ok ? null : result.error;
 		selectedReferenceId = resolveSelectedReferenceId(selectedReferenceId, result.registry.references);
 	}
 
@@ -197,12 +205,13 @@
 	}
 
 	function openNewReferenceForm() {
+		if (!isReferenceRegistryReady) return;
 		clearReferenceForm();
 		isReferenceFormOpen = true;
 	}
 
 	function editSelectedReference() {
-		if (selectedReference === null) {
+		if (!isReferenceRegistryReady || selectedReference === null) {
 			return;
 		}
 
@@ -265,12 +274,12 @@
 
 			const writeResult = await writeReferenceRegistry(mutation.registry, workspace.path);
 
-			registry = writeResult.registry;
 			referenceError = writeResult.ok ? null : writeResult.error;
 
 			if (!writeResult.ok) {
 				return;
 			}
+			registry = writeResult.registry;
 
 			selectedReferenceId = null;
 			clearReferenceForm();
@@ -281,7 +290,7 @@
 	}
 
 	async function handleRemoveSelectedReference() {
-		if (selectedReference === null || isRemovingReference) {
+		if (!isReferenceRegistryReady || selectedReference === null || isRemovingReference) {
 			return;
 		}
 
@@ -309,12 +318,12 @@
 
 			const writeResult = await writeReferenceRegistry(mutation.registry, workspace.path);
 
-			registry = writeResult.registry;
 			referenceError = writeResult.ok ? null : writeResult.error;
 
 			if (!writeResult.ok) {
 				return;
 			}
+			registry = writeResult.registry;
 
 			selectedReferenceId = null;
 			clearReferenceForm();
@@ -578,7 +587,7 @@
 
 <EntityWorkbench label={messages.references.title} sidebarLabel={messages.references.list} detailLabel={messages.references.details}>
 	{#snippet sidebar()}
-		<button class="workduck-list-add-card" type="button" onclick={openNewReferenceForm}>
+		<button class="workduck-list-add-card" type="button" disabled={!isReferenceRegistryReady} onclick={openNewReferenceForm}>
 			{messages.references.newReference}
 		</button>
 
@@ -671,13 +680,14 @@
 						class="workduck-button workduck-button-secondary"
 						type="button"
 						onclick={editSelectedReference}
+						disabled={!isReferenceRegistryReady}
 					>
 						{messages.common.edit}
 					</button>
 					<button
 						class="workduck-button workduck-button-danger"
 						type="button"
-						disabled={isRemovingReference}
+						disabled={!isReferenceRegistryReady || isRemovingReference}
 						onclick={() => void handleRemoveSelectedReference()}
 					>
 						{messages.common.remove}
@@ -688,6 +698,9 @@
 	{/snippet}
 
 	{#snippet status()}
+		{#if referenceReadError !== null}
+			<p class="workduck-inline-error" aria-live="polite">{createReferenceErrorMessage(referenceReadError)}</p>
+		{/if}
 		{#if referenceError !== null}
 			<p class="workduck-inline-error" aria-live="polite">{createReferenceErrorMessage(referenceError)}</p>
 		{/if}

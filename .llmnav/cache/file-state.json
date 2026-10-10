@@ -12393,7 +12393,7 @@
     },
     {
       "blocks": [],
-      "contentHash": "0ac46908c79790cc48b0ef208680a79bab4175df02c16eecb0746ad5457f0e85",
+      "contentHash": "0d5f9d121985e4b7514b8776e8cc630db2c374dd82c3a80db7e983e8214bd598",
       "declarations": [],
       "imports": [
         "#lib/i18n/workduck-language.ts",
@@ -12411,7 +12411,7 @@
       ],
       "path": "src/lib/references/ReferencesPanel.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 27261
+      "sourceBytes": 27957
     },
     {
       "blocks": [],
@@ -12428,14 +12428,14 @@
     },
     {
       "blocks": [],
-      "contentHash": "92a276233393f50ccab753f44d471208ee8cbd434a6551bdcf1f9add826cc179",
+      "contentHash": "5164674c4730db905c746547a01e0d808208ed6cb5d77a63597975670d54af43",
       "declarations": [],
       "imports": [
         "#lib/shared/object-record.ts"
       ],
       "path": "src/lib/references/reference-registry.ts",
       "semanticBytes": 0,
-      "sourceBytes": 11999
+      "sourceBytes": 12035
     },
     {
       "blocks": [],
@@ -12873,7 +12873,7 @@
     },
     {
       "blocks": [],
-      "contentHash": "0c96c3001f7c9358dbe64b468a4db6ae8bea080971afedf68a2d78d6f1998c1b",
+      "contentHash": "0455cd6910e69187ded550749c3c38145923aa0966249249eb500e838fd99aea",
       "declarations": [],
       "imports": [
         "#lib/i18n/workduck-language.ts",
@@ -12883,13 +12883,14 @@
         "#lib/settings/appearance-storage.ts",
         "#lib/ui/index.ts",
         "#lib/workspaces/workspace-registry.ts",
+        "#lib/workspaces/workspace-scoped-resource.ts",
         "./skill-registry",
         "./skill-registry-storage",
         "svelte"
       ],
       "path": "src/lib/skills/SkillsPanel.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 31897
+      "sourceBytes": 32950
     },
     {
       "blocks": [
@@ -13018,7 +13019,7 @@
             ],
             "id": "workduck.skills.registry",
             "invariant": [
-              "Legacy registries receive version-appropriate defaults, current removals persist, and invalid mutations preserve the registry."
+              "Stored registries require a supported version, matching workspace, and skill collection; legacy registries receive version-appropriate defaults, current removals persist, and invalid mutations preserve the registry."
             ],
             "owns": [
               "skill registry normalization",
@@ -13038,7 +13039,7 @@
             "stability": "architecture",
             "unknown": []
           },
-          "end": 557,
+          "end": 646,
           "endLine": 9,
           "entries": [
             {
@@ -13075,7 +13076,7 @@
               "key": "invariant",
               "line": 7,
               "order": 5,
-              "value": "Legacy registries receive version-appropriate defaults, current removals persist, and invalid mutations preserve the registry."
+              "value": "Stored registries require a supported version, matching workspace, and skill collection; legacy registries receive version-appropriate defaults, current removals persist, and invalid mutations preserve the registry."
             },
             {
               "key": "stability",
@@ -13088,7 +13089,7 @@
           "indent": "",
           "newline": "\n",
           "prefix": null,
-          "raw": "/* llmnav/1 module\nid=workduck.skills.registry\nrole=Normalize and migrate workspace skill registries while preserving custom skills and built-in overrides.\nowns=skill registry normalization|legacy skill migration|skill mutations|built-in override detection\nexcludes=default prompt authoring|skill persistence|queue execution\nsearch=skill registry migration|custom skill validation|skill editing\ninvariant=Legacy registries receive version-appropriate defaults, current removals persist, and invalid mutations preserve the registry.\nstability=architecture\n*/",
+          "raw": "/* llmnav/1 module\nid=workduck.skills.registry\nrole=Normalize and migrate workspace skill registries while preserving custom skills and built-in overrides.\nowns=skill registry normalization|legacy skill migration|skill mutations|built-in override detection\nexcludes=default prompt authoring|skill persistence|queue execution\nsearch=skill registry migration|custom skill validation|skill editing\ninvariant=Stored registries require a supported version, matching workspace, and skill collection; legacy registries receive version-appropriate defaults, current removals persist, and invalid mutations preserve the registry.\nstability=architecture\n*/",
           "scope": "module",
           "specVersion": "1",
           "start": 0,
@@ -13097,7 +13098,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "f7fef5df96f0a411addc1a6eabbbd4d1998561b7422601da7b6185d490371101",
+      "contentHash": "0e19783718c6e36e189e853a32fdab7a43c5a9563f138cb96a060ce316cfa4a6",
       "declarations": [
         null
       ],
@@ -13107,8 +13108,8 @@
         "./skill-schema"
       ],
       "path": "src/lib/skills/skill-registry.ts",
-      "semanticBytes": 557,
-      "sourceBytes": 14557
+      "semanticBytes": 646,
+      "sourceBytes": 14866
     },
     {
       "blocks": [
@@ -13958,6 +13959,21 @@
       "path": "src/lib/workspaces/workspace-registry-pair-storage.ts",
       "semanticBytes": 0,
       "sourceBytes": 2843
+    },
+    {
+      "blocks": [],
+      "contentHash": "379a0d2ff72a004a0258b9b1f93aceaa5f9b7ed1cc6e2dd994c0bb001c597369",
+      "declarations": [],
+      "imports": [
+        "#lib/references/reference-registry-storage.ts",
+        "#lib/skills/skill-registry-storage.ts",
+        "#lib/tauri/tauri-invoke.ts",
+        "node:assert/strict",
+        "node:test"
+      ],
+      "path": "src/lib/workspaces/workspace-registry-read.test.ts",
+      "semanticBytes": 0,
+      "sourceBytes": 2894
     },
     {
       "blocks": [],

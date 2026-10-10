@@ -11,6 +11,7 @@
 		subscribeAppearanceSettings
 	} from '#lib/settings/appearance-storage.ts';
 	import type { WorkspaceRecord } from '#lib/workspaces/workspace-registry.ts';
+	import { createWorkspaceScopedResourceStore } from '#lib/workspaces/workspace-scoped-resource.ts';
 	import { DetailCard, EntityCard, EntityWorkbench, StatusToast } from '#lib/ui/index.ts';
 
 	import {
@@ -74,6 +75,7 @@
 	};
 
 	let { workspace, onSkillCountChange }: Props = $props();
+	const skillRegistryResource = createWorkspaceScopedResourceStore();
 
 	let appearanceSettings = $state<AppearanceSettings>(createDefaultAppearanceSettings());
 	let registry = $state<SkillRegistry>(createEmptySkillRegistry(''));
@@ -89,6 +91,8 @@
 	let isRemovingSkill = $state(false);
 	let pendingRemoveSkillId = $state<string | null>(null);
 	let skillError = $state<SkillRegistryError | SkillRegistryStorageError | null>(null);
+	let skillReadError = $state<SkillRegistryStorageError | null>(null);
+	let isSkillRegistryReady = $state(false);
 	let statusMessage = $state<string | null>(null);
 	let messages = $derived(getWorkduckMessages(appearanceSettings.languageId));
 
@@ -104,7 +108,8 @@
 	);
 	let skillFormValidationErrors = $derived(createSkillFormValidationErrors());
 	let canSaveSkill = $derived(
-		skillName.trim().length > 0 &&
+		isSkillRegistryReady &&
+			skillName.trim().length > 0 &&
 			skillOutputTypes.length > 0 &&
 			skillInstructions.trim().length > 0 &&
 			skillFormValidationErrors.length === 0 &&
@@ -122,20 +127,34 @@
 
 	$effect(() => {
 		const workspaceId = workspace.id;
+		const workspacePath = workspace.path;
 
 		return untrack(() => {
+			const scope = { workspaceId, workspacePath };
 			registry = createEmptySkillRegistry(workspaceId);
+			isSkillRegistryReady = false;
+			skillReadError = null;
 			selectedSkillId = null;
 			editingSkillId = null;
 			clearSkillForm();
-			void readRegistryFromStorage(workspaceId, workspace.path);
+			const cancelRead = skillRegistryResource.load({
+				scope,
+				load: () => readSkillRegistry(workspaceId, workspacePath),
+				apply: applySkillRegistryRead
+			});
 
 			const unsubscribeRegistry = subscribeSkillRegistry(workspaceId, (nextRegistry) => {
+				skillRegistryResource.invalidate(scope);
 				registry = nextRegistry;
+				isSkillRegistryReady = true;
+				skillReadError = null;
 				selectedSkillId = resolveSelectedSkillId(selectedSkillId, getAllSkills(nextRegistry));
 			});
 
-			return unsubscribeRegistry;
+			return () => {
+				cancelRead();
+				unsubscribeRegistry();
+			};
 		});
 	});
 
@@ -143,11 +162,10 @@
 		onSkillCountChange?.(allSkills.length);
 	});
 
-	async function readRegistryFromStorage(workspaceId: string, workspacePath: string) {
-		const result = await readSkillRegistry(workspaceId, workspacePath);
-
+	function applySkillRegistryRead(result: Awaited<ReturnType<typeof readSkillRegistry>>) {
 		registry = result.registry;
-		skillError = result.ok ? null : result.error;
+		isSkillRegistryReady = result.ok;
+		skillReadError = result.ok ? null : result.error;
 		selectedSkillId = resolveSelectedSkillId(selectedSkillId, getAllSkills(result.registry));
 	}
 
@@ -175,6 +193,7 @@
 	}
 
 	function openSkillFormFromRecord(skill: WorkduckSkillRecord, asCopy: boolean) {
+		if (!isSkillRegistryReady) return;
 		isSkillFormOpen = true;
 		editingSkillId = asCopy ? null : skill.id;
 		skillName = asCopy ? createCopiedSkillName(getSkillDisplayName(skill)) : skill.name;
@@ -200,6 +219,7 @@
 	}
 
 	function openNewSkillForm() {
+		if (!isSkillRegistryReady) return;
 		clearSkillForm();
 		isSkillFormOpen = true;
 	}
@@ -232,12 +252,12 @@
 
 			const writeResult = await writeSkillRegistry(mutation.registry, workspace.path);
 
-			registry = writeResult.registry;
 			skillError = writeResult.ok ? null : writeResult.error;
 
 			if (!writeResult.ok) {
 				return;
 			}
+			registry = writeResult.registry;
 
 			selectedSkillId = null;
 			clearSkillForm();
@@ -248,7 +268,7 @@
 	}
 
 	async function handleRemoveSelectedSkill() {
-		if (selectedSkill === null || isRemovingSkill) {
+		if (!isSkillRegistryReady || selectedSkill === null || isRemovingSkill) {
 			return;
 		}
 
@@ -278,12 +298,12 @@
 
 			const writeResult = await writeSkillRegistry(mutation.registry, workspace.path);
 
-			registry = writeResult.registry;
 			skillError = writeResult.ok ? null : writeResult.error;
 
 			if (!writeResult.ok) {
 				return;
 			}
+			registry = writeResult.registry;
 
 			selectedSkillId = null;
 			pendingRemoveSkillId = null;
@@ -636,7 +656,7 @@
 
 <EntityWorkbench label={messages.skills.title} sidebarLabel={messages.skills.list} detailLabel={messages.skills.details}>
 	{#snippet sidebar()}
-		<button class="workduck-list-add-card" type="button" onclick={openNewSkillForm}>
+		<button class="workduck-list-add-card" type="button" disabled={!isSkillRegistryReady} onclick={openNewSkillForm}>
 			{messages.skills.newSkill}
 		</button>
 
@@ -701,6 +721,7 @@
 						class="workduck-button workduck-button-secondary"
 						type="button"
 						onclick={copySelectedSkillForEditing}
+						disabled={!isSkillRegistryReady}
 					>
 						{messages.skills.copySkill}
 					</button>
@@ -708,13 +729,14 @@
 						class="workduck-button workduck-button-secondary"
 						type="button"
 						onclick={editSelectedSkill}
+						disabled={!isSkillRegistryReady}
 					>
 						{messages.common.edit}
 					</button>
 					<button
 						class="workduck-button workduck-button-danger"
 						type="button"
-						disabled={isRemovingSkill}
+						disabled={!isSkillRegistryReady || isRemovingSkill}
 						onclick={() => void handleRemoveSelectedSkill()}
 					>
 						{messages.common.remove}
@@ -725,6 +747,9 @@
 	{/snippet}
 
 	{#snippet status()}
+		{#if skillReadError !== null}
+			<p class="workduck-inline-error" aria-live="polite">{createSkillErrorMessage(skillReadError)}</p>
+		{/if}
 		{#if skillError !== null}
 			<p class="workduck-inline-error" aria-live="polite">{createSkillErrorMessage(skillError)}</p>
 		{/if}
