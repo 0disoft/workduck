@@ -1,10 +1,11 @@
 import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
-import { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
-import { dirname, join, relative, resolve, sep } from 'node:path';
+import { dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { readSsealedInstallation } from './ssealed-installation.mjs';
+import { collectGeneratedSsealedScaffold } from './ssealed-generated-scaffold.mjs';
 import {
 	archiveSchemaVersion, scaffoldDensity, scaffoldRunner, assertCurrentArtifact,
 	renderGeneratedRust, renderGeneratedTypeScript, verifyEmbeddedSsealedArtifacts, validateSsealedArchive
@@ -29,17 +30,6 @@ if ([checkOnly, checkEmbedded, writeOutput].filter(Boolean).length !== 1) {
 	throw new Error('Choose exactly one mode: --check, --check-embedded, or --write.');
 }
 
-const rustKeywordKinds = new Set([
-	'agent',
-	'checklist',
-	'contract',
-	'diagram',
-	'document',
-	'github',
-	'hygiene',
-	'validation'
-]);
-
 async function readSsealedOptionList(name) {
 	const typesPath = resolve(repositoryRoot, 'node_modules', 'ssealed', 'dist', 'core', 'types.js');
 	const typesModule = await import(pathToFileURL(typesPath).href);
@@ -52,41 +42,6 @@ async function readSsealedOptionList(name) {
 		throw new Error(`Unable to read ssealed ${name}.`);
 	}
 	return [...values];
-}
-
-async function collectFiles(rootPath) {
-	const entries = [];
-	async function visit(directoryPath) {
-		for (const entry of await readdir(directoryPath, { withFileTypes: true })) {
-			const absolutePath = join(directoryPath, entry.name);
-			if (entry.isDirectory()) {
-				await visit(absolutePath);
-			} else if (entry.isFile()) {
-				const relativePath = relative(rootPath, absolutePath).split(sep).join('/');
-				if (relativePath !== '.ssealed/manifest.json') entries.push({ path: relativePath, absolutePath });
-			}
-		}
-	}
-
-	await visit(rootPath);
-	return entries.sort((left, right) => left.path.localeCompare(right.path));
-}
-
-function normalizeKind(value) {
-	return typeof value === 'string' && rustKeywordKinds.has(value) ? value : 'document';
-}
-
-async function readManifestKindMap(scaffoldPath) {
-	const manifest = JSON.parse(await readFile(join(scaffoldPath, '.ssealed', 'manifest.json'), 'utf8'));
-	const kindsByPath = new Map();
-	if (!Array.isArray(manifest.files)) return kindsByPath;
-
-	for (const file of manifest.files) {
-		if (typeof file?.path === 'string' && !kindsByPath.has(file.path)) {
-			kindsByPath.set(file.path, normalizeKind(file.kind));
-		}
-	}
-	return kindsByPath;
 }
 
 async function runSsealedInit(cliPath, temporaryRoot, scope, profile) {
@@ -159,15 +114,7 @@ async function main() {
 			const scaffoldPath = join(temporaryRoot, 'scaffold');
 			try {
 				await runSsealedInit(cliPath, temporaryRoot, scope, profile);
-				const kindsByPath = await readManifestKindMap(scaffoldPath);
-				const files = [];
-				for (const file of await collectFiles(scaffoldPath)) {
-					files.push({
-						path: file.path,
-						kind: kindsByPath.get(file.path) ?? 'document',
-						content: await readFile(file.absolutePath, 'utf8')
-					});
-				}
+				const files = await collectGeneratedSsealedScaffold(scaffoldPath, { version, scope, profile });
 				scaffolds.push({ scope, profile, files });
 			} finally {
 				await rm(temporaryRoot, { recursive: true, force: true });

@@ -543,6 +543,36 @@
     },
     {
       "blocks": [],
+      "contentHash": "ed5d4872b82415be7e59d8d22ad0c35447e185d1d1b66d8ec56da62baea1c463",
+      "declarations": [],
+      "imports": [
+        "./ssealed-scaffold-artifacts.mjs",
+        "node:crypto",
+        "node:fs/promises",
+        "node:path"
+      ],
+      "path": "scripts/ssealed-generated-scaffold.mjs",
+      "semanticBytes": 0,
+      "sourceBytes": 2758
+    },
+    {
+      "blocks": [],
+      "contentHash": "cbfbbc0caf395f244285579b030312b7d18d702f1449ce5c3247f1cb722acca3",
+      "declarations": [],
+      "imports": [
+        "./ssealed-generated-scaffold.mjs",
+        "bun:test",
+        "node:crypto",
+        "node:fs/promises",
+        "node:os",
+        "node:path"
+      ],
+      "path": "scripts/ssealed-generated-scaffold.test.mjs",
+      "semanticBytes": 0,
+      "sourceBytes": 3691
+    },
+    {
+      "blocks": [],
       "contentHash": "73827f6f1665abb6f4fd7861dbe75e435a9c7caec1b869576dee2652073a1137",
       "declarations": [],
       "imports": [
@@ -600,9 +630,10 @@
     },
     {
       "blocks": [],
-      "contentHash": "f2df2ed1defb6f446c3c9f478fed76b50e2a08d9ba68e1a54bcbf28e24e34170",
+      "contentHash": "cc09e93353c61263fc40ff449132e22003f93709f9b28d5fba0c048f3148d6b4",
       "declarations": [],
       "imports": [
+        "./ssealed-generated-scaffold.mjs",
         "./ssealed-installation.mjs",
         "./ssealed-scaffold-artifacts.mjs",
         "node:child_process",
@@ -614,7 +645,7 @@
       ],
       "path": "scripts/sync-ssealed-scaffold.mjs",
       "semanticBytes": 0,
-      "sourceBytes": 7167
+      "sourceBytes": 5684
     },
     {
       "blocks": [],
