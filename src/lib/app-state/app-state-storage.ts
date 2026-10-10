@@ -1,16 +1,17 @@
 /* llmnav/1 module
 id=workduck.app-state.storage
 role=Persist application settings through a renderer crash journal, native SQLite promotion, and browser fallback.
-owns=app state backend selection|legacy setting promotion|pending write journal|serialized flush|transaction cache publication|focus cache refresh
+owns=app state backend selection|legacy setting promotion|pending write journal|serialized flush|transaction cache publication|shared native subscription|deferred cache refresh
 excludes=setting domain validation|native SQLite implementation|workspace project registries
-search=app state crash journal|settings SQLite promotion|pending setting flush|stale foreign journal notification|focus settings cache refresh
-invariant=Native access requires successful initialization; focus refreshes preserve journals, transaction leases, and cache revisions; external journal notifications match the current journal; flushes publish committed values without replacing newer edits; journal I/O errors end the attempt.
+search=app state crash journal|settings SQLite promotion|pending setting flush|stale foreign journal notification|focus settings cache refresh|native setting commit subscription
+invariant=Background refreshes require initialization; one live native subscription refreshes committed keys; journals and transaction leases defer refreshes until completion; cache revisions reject older responses; journal notifications match current storage and I/O errors end the attempt.
 stability=architecture
 */
 import { isObjectRecord } from '#lib/shared/object-record.ts';
-import { getTauriInvoke } from '#lib/tauri/tauri-invoke.ts';
+import { getTauriInvoke, getTauriListen } from '#lib/tauri/tauri-invoke.ts';
 
 export const WORKDUCK_APP_STATE_PENDING_STORAGE_KEY_PREFIX = 'workduck.appState.pending.v1';
+export const WORKDUCK_APP_STATE_COMMITTED_EVENT = 'workduck:app-state-committed';
 export const WORKDUCK_APP_STATE_KEYS = [
 	'appearance-settings',
 	'sync-settings',
@@ -84,8 +85,12 @@ type AppStateBackend = 'uninitialized' | 'browser' | 'sqlite' | 'native-unavaila
 const cachedValues = new Map<WorkduckAppStateKey, string>();
 const cacheVersions = new Map<WorkduckAppStateKey, number>();
 const refreshSequences = new Map<WorkduckAppStateKey, number>();
-const focusRefreshSubscriptions = new Set<{ key: WorkduckAppStateKey; active: boolean }>();
-let focusRefreshScheduled = false;
+interface AppStateSubscription { readonly key: WorkduckAppStateKey; active: boolean; }
+const activeSubscriptions = new Set<AppStateSubscription>();
+const queuedRefreshSubscriptions = new Set<AppStateSubscription>();
+const deferredRefreshKeys = new Set<WorkduckAppStateKey>();
+let nativeSubscriptionScope: { unlisten?: () => void } | null = null;
+let refreshScheduled = false;
 let storageEpoch = 0;
 const legacyStorageKeys = new Map<WorkduckAppStateKey, string>();
 const transactionKeys = new Set<WorkduckAppStateKey>();
@@ -165,6 +170,7 @@ export async function initializeWorkduckAppState(
 		removeLegacyValues(storage, seeds);
 		backend = 'sqlite';
 		initializationError = null;
+		if (nativeSubscriptionScope?.unlisten !== undefined) queueAppStateRefresh(activeSubscriptions);
 		return { ok: true };
 	} catch {
 		return failInitialization(failureError, resolvedValues);
@@ -293,6 +299,7 @@ export async function commitWorkduckAppStateValueWithNativeTransaction(
 		return failed;
 	} finally {
 		transactionKeys.delete(key);
+		retryDeferredRefreshes();
 	}
 }
 
@@ -308,8 +315,15 @@ export async function refreshWorkduckAppStateValues(
 			const sequence = (refreshSequences.get(key) ?? 0) + 1;
 			refreshSequences.set(key, sequence);
 			return { key, sequence, version: cacheVersions.get(key) };
-		}).filter(({ key }) => cachedValues.has(key) && !transactionKeys.has(key) &&
-			storage.getItem(createPendingStorageKey(key)) === null);
+		}).filter(({ key }) => {
+			if (!cachedValues.has(key)) return false;
+			if (transactionKeys.has(key) || storage.getItem(createPendingStorageKey(key)) !== null) {
+				deferredRefreshKeys.add(key);
+				return false;
+			}
+			deferredRefreshKeys.delete(key);
+			return true;
+		});
 		if (requested.length === 0) return true;
 		const response = await invoke<NativeAppStateReadResponse>('read_app_state_records', {
 			keys: requested.map(({ key }) => key)
@@ -321,13 +335,58 @@ export async function refreshWorkduckAppStateValues(
 		const pendingKeys = new Set(requested.filter(({ key }) =>
 			storage.getItem(createPendingStorageKey(key)) !== null).map(({ key }) => key));
 		for (const { key, sequence, version } of requested) {
-			if (refreshSequences.get(key) !== sequence || cacheVersions.get(key) !== version ||
-				transactionKeys.has(key) || pendingKeys.has(key)) continue;
+			if (transactionKeys.has(key) || pendingKeys.has(key)) { deferredRefreshKeys.add(key); continue; }
+			if (refreshSequences.get(key) !== sequence || cacheVersions.get(key) !== version) continue;
 			const valueJson = records[key]!;
 			if (cachedValues.get(key) !== valueJson) publishAppStateValue(key, valueJson);
 		}
 		return true;
 	} catch { return false; }
+}
+
+function queueAppStateRefresh(subscriptions: Iterable<AppStateSubscription>) {
+	for (const subscription of subscriptions) {
+		if (subscription.active) queuedRefreshSubscriptions.add(subscription);
+	}
+	if (refreshScheduled || queuedRefreshSubscriptions.size === 0) return;
+	refreshScheduled = true;
+	queueMicrotask(() => {
+		refreshScheduled = false;
+		const keys = [...queuedRefreshSubscriptions].filter(({ active }) => active).map(({ key }) => key);
+		queuedRefreshSubscriptions.clear();
+		void refreshWorkduckAppStateValues(keys);
+	});
+}
+
+function retryDeferredRefreshes() {
+	if (deferredRefreshKeys.size === 0) return;
+	const keys = [...deferredRefreshKeys];
+	deferredRefreshKeys.clear();
+	queueMicrotask(() => { void refreshWorkduckAppStateValues(keys); });
+}
+
+function ensureNativeAppStateSubscription() {
+	const listen = getTauriListen();
+	if (nativeSubscriptionScope !== null || activeSubscriptions.size === 0 || listen === undefined) return;
+	const scope: { unlisten?: () => void } = {};
+	nativeSubscriptionScope = scope;
+	void listen<unknown>(WORKDUCK_APP_STATE_COMMITTED_EVENT, ({ payload }) => {
+		if (nativeSubscriptionScope !== scope || !Array.isArray(payload) ||
+			!payload.every((key) => WORKDUCK_APP_STATE_KEYS.includes(key))) return;
+		queueAppStateRefresh([...activeSubscriptions].filter(({ key }) => payload.includes(key)));
+	}).then((unlisten) => {
+		if (nativeSubscriptionScope !== scope) { unlisten(); return; }
+		scope.unlisten = unlisten;
+		queueAppStateRefresh(activeSubscriptions);
+	}).catch(() => {
+		if (nativeSubscriptionScope === scope) nativeSubscriptionScope = null;
+	});
+}
+
+function stopNativeAppStateSubscription() {
+	const scope = nativeSubscriptionScope;
+	nativeSubscriptionScope = null;
+	scope?.unlisten?.();
 }
 
 export function subscribeWorkduckAppStateValue(
@@ -338,6 +397,7 @@ export function subscribeWorkduckAppStateValue(
 		return () => undefined;
 	}
 	const subscription = { key, active: true };
+	activeSubscriptions.add(subscription);
 
 	function handleStorage(event: StorageEvent) {
 		if (transactionKeys.has(key)) return;
@@ -371,24 +431,20 @@ export function subscribeWorkduckAppStateValue(
 	}
 
 	function handleFocus() {
-		focusRefreshSubscriptions.add(subscription);
-		if (focusRefreshScheduled) return;
-		focusRefreshScheduled = true;
-		queueMicrotask(() => {
-			focusRefreshScheduled = false;
-			const keys = [...focusRefreshSubscriptions].filter(({ active }) => active).map(({ key }) => key);
-			focusRefreshSubscriptions.clear();
-			void refreshWorkduckAppStateValues(keys);
-		});
+		ensureNativeAppStateSubscription();
+		queueAppStateRefresh([subscription]);
 	}
 
 	window.addEventListener('storage', handleStorage);
 	window.addEventListener(APP_STATE_VALUE_CHANGED_EVENT, handleValueChanged);
 	window.addEventListener('focus', handleFocus);
+	ensureNativeAppStateSubscription();
 
 	return () => {
 		if (!subscription.active) return;
 		subscription.active = false;
+		activeSubscriptions.delete(subscription);
+		if (activeSubscriptions.size === 0) stopNativeAppStateSubscription();
 		window.removeEventListener('storage', handleStorage);
 		window.removeEventListener(APP_STATE_VALUE_CHANGED_EVENT, handleValueChanged);
 		window.removeEventListener('focus', handleFocus);
@@ -402,6 +458,7 @@ export async function flushWorkduckAppStateWrites(): Promise<boolean> {
 
 	pendingFlush = flushPendingWrites().finally(() => {
 		pendingFlush = null;
+		retryDeferredRefreshes();
 	});
 
 	return pendingFlush;
@@ -748,10 +805,13 @@ export function setWorkduckAppStateBrowserStorageForTest(storage: BrowserStorage
 
 export function resetWorkduckAppStateStorageForTest() {
 	storageEpoch += 1;
+	stopNativeAppStateSubscription();
+	activeSubscriptions.clear();
+	deferredRefreshKeys.clear();
 	cachedValues.clear();
 	cacheVersions.clear();
 	refreshSequences.clear();
-	focusRefreshSubscriptions.clear();
+	queuedRefreshSubscriptions.clear();
 	legacyStorageKeys.clear();
 	transactionKeys.clear();
 	backend = 'uninitialized';

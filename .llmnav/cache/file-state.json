@@ -5849,7 +5849,21 @@
     },
     {
       "blocks": [],
-      "contentHash": "535ed047c76d7ac2970ea054b573f6168e8435fc91d244167e96d6fcb2aba6a9",
+      "contentHash": "5bedabb4fd1e74ba3f523667bb8bbfaa7e90fd61bfb6987e9922392ecf783981",
+      "declarations": [],
+      "imports": [
+        "#lib/tauri/tauri-invoke.ts",
+        "./app-state-storage",
+        "@tauri-apps/api/event",
+        "bun:test"
+      ],
+      "path": "src/lib/app-state/app-state-native-events.test.ts",
+      "semanticBytes": 0,
+      "sourceBytes": 9050
+    },
+    {
+      "blocks": [],
+      "contentHash": "a0556605e8c05c9dbc124fa6ed110b345de2d6061f88486cacd0d5166eb67e4f",
       "declarations": [],
       "imports": [
         "#lib/tauri/tauri-invoke.ts",
@@ -5858,7 +5872,7 @@
       ],
       "path": "src/lib/app-state/app-state-refresh.test.ts",
       "semanticBytes": 0,
-      "sourceBytes": 9872
+      "sourceBytes": 9961
     },
     {
       "blocks": [],
@@ -5886,7 +5900,7 @@
             ],
             "id": "workduck.app-state.storage",
             "invariant": [
-              "Native access requires successful initialization; focus refreshes preserve journals, transaction leases, and cache revisions; external journal notifications match the current journal; flushes publish committed values without replacing newer edits; journal I/O errors end the attempt."
+              "Background refreshes require initialization; one live native subscription refreshes committed keys; journals and transaction leases defer refreshes until completion; cache revisions reject older responses; journal notifications match current storage and I/O errors end the attempt."
             ],
             "owns": [
               "app state backend selection",
@@ -5894,7 +5908,8 @@
               "pending write journal",
               "serialized flush",
               "transaction cache publication",
-              "focus cache refresh"
+              "shared native subscription",
+              "deferred cache refresh"
             ],
             "rel": [],
             "risk": [],
@@ -5905,12 +5920,13 @@
               "settings SQLite promotion",
               "pending setting flush",
               "stale foreign journal notification",
-              "focus settings cache refresh"
+              "focus settings cache refresh",
+              "native setting commit subscription"
             ],
             "stability": "architecture",
             "unknown": []
           },
-          "end": 866,
+          "end": 929,
           "endLine": 9,
           "entries": [
             {
@@ -5929,7 +5945,7 @@
               "key": "owns",
               "line": 4,
               "order": 2,
-              "value": "app state backend selection|legacy setting promotion|pending write journal|serialized flush|transaction cache publication|focus cache refresh"
+              "value": "app state backend selection|legacy setting promotion|pending write journal|serialized flush|transaction cache publication|shared native subscription|deferred cache refresh"
             },
             {
               "key": "excludes",
@@ -5941,13 +5957,13 @@
               "key": "search",
               "line": 6,
               "order": 4,
-              "value": "app state crash journal|settings SQLite promotion|pending setting flush|stale foreign journal notification|focus settings cache refresh"
+              "value": "app state crash journal|settings SQLite promotion|pending setting flush|stale foreign journal notification|focus settings cache refresh|native setting commit subscription"
             },
             {
               "key": "invariant",
               "line": 7,
               "order": 5,
-              "value": "Native access requires successful initialization; focus refreshes preserve journals, transaction leases, and cache revisions; external journal notifications match the current journal; flushes publish committed values without replacing newer edits; journal I/O errors end the attempt."
+              "value": "Background refreshes require initialization; one live native subscription refreshes committed keys; journals and transaction leases defer refreshes until completion; cache revisions reject older responses; journal notifications match current storage and I/O errors end the attempt."
             },
             {
               "key": "stability",
@@ -5960,7 +5976,7 @@
           "indent": "",
           "newline": "\n",
           "prefix": null,
-          "raw": "/* llmnav/1 module\nid=workduck.app-state.storage\nrole=Persist application settings through a renderer crash journal, native SQLite promotion, and browser fallback.\nowns=app state backend selection|legacy setting promotion|pending write journal|serialized flush|transaction cache publication|focus cache refresh\nexcludes=setting domain validation|native SQLite implementation|workspace project registries\nsearch=app state crash journal|settings SQLite promotion|pending setting flush|stale foreign journal notification|focus settings cache refresh\ninvariant=Native access requires successful initialization; focus refreshes preserve journals, transaction leases, and cache revisions; external journal notifications match the current journal; flushes publish committed values without replacing newer edits; journal I/O errors end the attempt.\nstability=architecture\n*/",
+          "raw": "/* llmnav/1 module\nid=workduck.app-state.storage\nrole=Persist application settings through a renderer crash journal, native SQLite promotion, and browser fallback.\nowns=app state backend selection|legacy setting promotion|pending write journal|serialized flush|transaction cache publication|shared native subscription|deferred cache refresh\nexcludes=setting domain validation|native SQLite implementation|workspace project registries\nsearch=app state crash journal|settings SQLite promotion|pending setting flush|stale foreign journal notification|focus settings cache refresh|native setting commit subscription\ninvariant=Background refreshes require initialization; one live native subscription refreshes committed keys; journals and transaction leases defer refreshes until completion; cache revisions reject older responses; journal notifications match current storage and I/O errors end the attempt.\nstability=architecture\n*/",
           "scope": "module",
           "specVersion": "1",
           "start": 0,
@@ -5969,7 +5985,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "f26e04b161e73c689e5fd8caafa69b9e430b4d33c46ff5ff981831ac39d047a0",
+      "contentHash": "d50a76eea892350c60bba69b2abac03070ea1976ef3e9b4e494f1583ddb6ee9e",
       "declarations": [
         null
       ],
@@ -5978,8 +5994,8 @@
         "#lib/tauri/tauri-invoke.ts"
       ],
       "path": "src/lib/app-state/app-state-storage.ts",
-      "semanticBytes": 866,
-      "sourceBytes": 22945
+      "semanticBytes": 929,
+      "sourceBytes": 25447
     },
     {
       "blocks": [],

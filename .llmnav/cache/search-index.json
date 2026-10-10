@@ -95,7 +95,7 @@
     "workduck.workspace.sync-file-native",
     "workduck.workspace.sync-git-native"
   ],
-  "cardSetHash": "004309ec9d993e2157821e6f6e0840501e3fc5dbc0b8089d6cfb48c42f72dae3",
+  "cardSetHash": "423d43443de09bac0797368ea7386a410b7fe86a88e42d09747da8c20f371b1f",
   "documentCount": 94,
   "documents": [
     [
@@ -149,7 +149,7 @@
       ]
     ],
     [
-      "89ae73b38291cfe8154eabafccdb76c58d5666ab2b69c526e04ed02dad19dcf9",
+      "70faf018d991386787598f8296af61cb8e8c2e1efbeea2e59c0edb5c860a37b0",
       [
         "persist application settings through a renderer crash journal, native sqlite promotion, and browser fallback.",
         "app state crash journal",
@@ -157,13 +157,15 @@
         "pending setting flush",
         "stale foreign journal notification",
         "focus settings cache refresh",
-        "native access requires successful initialization; focus refreshes preserve journals, transaction leases, and cache revisions; external journal notifications match the current journal; flushes publish committed values without replacing newer edits; journal i/o errors end the attempt.",
+        "native setting commit subscription",
+        "background refreshes require initialization; one live native subscription refreshes committed keys; journals and transaction leases defer refreshes until completion; cache revisions reject older responses; journal notifications match current storage and i/o errors end the attempt.",
         "app state backend selection",
         "legacy setting promotion",
         "pending write journal",
         "serialized flush",
         "transaction cache publication",
-        "focus cache refresh"
+        "shared native subscription",
+        "deferred cache refresh"
       ]
     ],
     [
@@ -1758,13 +1760,6 @@
     ],
     [
       [
-        4,
-        [
-          5,
-          1
-        ]
-      ],
-      [
         19,
         [
           1,
@@ -2468,7 +2463,7 @@
           1,
           1,
           5,
-          1
+          2
         ]
       ],
       [
@@ -4265,6 +4260,15 @@
     ],
     [
       [
+        4,
+        [
+          5,
+          1
+        ]
+      ]
+    ],
+    [
+      [
         9,
         [
           2,
@@ -6901,6 +6905,13 @@
     ],
     [
       [
+        4,
+        [
+          2,
+          1
+        ]
+      ],
+      [
         5,
         [
           2,
@@ -7135,6 +7146,13 @@
       ]
     ],
     [
+      [
+        4,
+        [
+          5,
+          1
+        ]
+      ],
       [
         6,
         [
@@ -8436,6 +8454,24 @@
     ],
     [
       [
+        4,
+        [
+          5,
+          1
+        ]
+      ]
+    ],
+    [
+      [
+        4,
+        [
+          3,
+          1
+        ]
+      ]
+    ],
+    [
+      [
         17,
         [
           1,
@@ -9700,13 +9736,6 @@
       ]
     ],
     [
-      [
-        4,
-        [
-          5,
-          1
-        ]
-      ],
       [
         8,
         [
@@ -11342,15 +11371,6 @@
     ],
     [
       [
-        4,
-        [
-          5,
-          1
-        ]
-      ]
-    ],
-    [
-      [
         27,
         [
           5,
@@ -12159,15 +12179,6 @@
     ],
     [
       [
-        4,
-        [
-          5,
-          1
-        ]
-      ]
-    ],
-    [
-      [
         2,
         [
           10,
@@ -12187,10 +12198,6 @@
         4,
         [
           2,
-          1,
-          3,
-          1,
-          5,
           1
         ]
       ],
@@ -14908,7 +14915,7 @@
           3,
           1,
           5,
-          3
+          1
         ]
       ],
       [
@@ -15079,6 +15086,13 @@
       ]
     ],
     [
+      [
+        4,
+        [
+          5,
+          1
+        ]
+      ],
       [
         5,
         [
@@ -16212,6 +16226,13 @@
     ],
     [
       [
+        4,
+        [
+          5,
+          1
+        ]
+      ],
+      [
         37,
         [
           5,
@@ -17652,6 +17673,10 @@
         4,
         [
           1,
+          1,
+          2,
+          1,
+          3,
           1,
           4,
           1,
@@ -18247,13 +18272,6 @@
     ],
     [
       [
-        4,
-        [
-          5,
-          1
-        ]
-      ],
-      [
         5,
         [
           5,
@@ -18856,6 +18874,13 @@
     ],
     [
       [
+        4,
+        [
+          5,
+          1
+        ]
+      ],
+      [
         5,
         [
           5,
@@ -18955,6 +18980,13 @@
     [
       [
         3,
+        [
+          5,
+          1
+        ]
+      ],
+      [
+        4,
         [
           5,
           1
@@ -21908,13 +21940,6 @@
       ]
     ],
     [
-      [
-        4,
-        [
-          5,
-          1
-        ]
-      ],
       [
         8,
         [
@@ -23423,13 +23448,6 @@
     ],
     [
       [
-        4,
-        [
-          5,
-          1
-        ]
-      ],
-      [
         15,
         [
           1,
@@ -24888,7 +24906,7 @@
         4,
         [
           5,
-          1
+          3
         ]
       ],
       [
@@ -25379,6 +25397,13 @@
     ],
     [
       [
+        4,
+        [
+          5,
+          1
+        ]
+      ],
+      [
         15,
         [
           5,
@@ -25762,13 +25787,6 @@
     ],
     [
       [
-        4,
-        [
-          5,
-          1
-        ]
-      ],
-      [
         82,
         [
           5,
@@ -26412,6 +26430,13 @@
     ],
     [
       [
+        4,
+        [
+          5,
+          1
+        ]
+      ],
+      [
         9,
         [
           5,
@@ -26478,13 +26503,6 @@
       ]
     ],
     [
-      [
-        4,
-        [
-          5,
-          1
-        ]
-      ],
       [
         9,
         [
@@ -26789,6 +26807,13 @@
       ]
     ],
     [
+      [
+        4,
+        [
+          5,
+          1
+        ]
+      ],
       [
         18,
         [
@@ -29673,7 +29698,7 @@
         4,
         [
           2,
-          1,
+          2,
           3,
           1,
           4,
@@ -29838,6 +29863,13 @@
       ]
     ],
     [
+      [
+        4,
+        [
+          3,
+          1
+        ]
+      ],
       [
         17,
         [
@@ -31880,6 +31912,8 @@
         [
           0,
           1,
+          5,
+          1,
           9,
           1
         ]
@@ -32178,6 +32212,17 @@
     ],
     [
       [
+        4,
+        [
+          2,
+          1,
+          3,
+          1,
+          5,
+          1
+        ]
+      ],
+      [
         46,
         [
           5,
@@ -32293,13 +32338,6 @@
         3,
         [
           1,
-          1
-        ]
-      ],
-      [
-        4,
-        [
-          5,
           1
         ]
       ],
@@ -33881,7 +33919,7 @@
         4,
         [
           5,
-          2
+          1
         ]
       ],
       [
@@ -35844,6 +35882,13 @@
     ],
     [
       [
+        4,
+        [
+          5,
+          1
+        ]
+      ],
+      [
         19,
         [
           5,
@@ -36431,13 +36476,6 @@
       ]
     ],
     [
-      [
-        4,
-        [
-          5,
-          1
-        ]
-      ],
       [
         17,
         [
@@ -37335,13 +37373,6 @@
         0,
         [
           1,
-          1
-        ]
-      ],
-      [
-        4,
-        [
-          5,
           1
         ]
       ],
@@ -39169,6 +39200,7 @@
     "avoid",
     "back",
     "backend",
+    "background",
     "backslash",
     "backslashes",
     "ballot",
@@ -39345,6 +39377,8 @@
     "deduplication",
     "default",
     "defaults",
+    "defer",
+    "deferred",
     "define",
     "delegation",
     "delete",
@@ -39457,7 +39491,6 @@
     "exports",
     "expose",
     "exposes",
-    "external",
     "facts",
     "fail",
     "failed",
@@ -39486,7 +39519,6 @@
     "flight",
     "flow",
     "flush",
-    "flushes",
     "fn",
     "focus",
     "folder",

@@ -147,6 +147,7 @@ test('a refresh cannot update a key while its native transaction is in progress'
 		expect(await refreshing).toBe(true);
 		expect(cached(key)).toBe(original);
 		pendingCommit.resolve(true);
+		setTauriInvokeForTest(async <T>() => ({ ok: true, records: { [key]: edited } }) as T);
 		expect((await committing).ok).toBe(true);
 		expect(cached(key)).toBe(edited);
 	} finally { pendingRead.resolve({ ok: false }); pendingCommit.resolve(false); await refreshing; await committing; }

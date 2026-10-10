@@ -4299,8 +4299,8 @@
         "workspace project registries"
       ],
       "hashes": {
-        "body": "f26e04b161e73c689e5fd8caafa69b9e430b4d33c46ff5ff981831ac39d047a0",
-        "semantic": "1dfeceb707609cf2db28233e5ae269f71a0d015fe82656354f217ebf65ebe368",
+        "body": "d50a76eea892350c60bba69b2abac03070ea1976ef3e9b4e494f1583ddb6ee9e",
+        "semantic": "25b0e501b6f3dca0e6f8b85bbf2b201f049d92f82f153eb5c4e773993fac04cb",
         "structure": "1e222539a41b7ca433d629c18afe33696257ba4d1b463345be92338d6504c960"
       },
       "id": "workduck.app-state.storage",
@@ -4309,7 +4309,7 @@
         "#lib/tauri/tauri-invoke.ts"
       ],
       "invariant": [
-        "Native access requires successful initialization; focus refreshes preserve journals, transaction leases, and cache revisions; external journal notifications match the current journal; flushes publish committed values without replacing newer edits; journal I/O errors end the attempt."
+        "Background refreshes require initialization; one live native subscription refreshes committed keys; journals and transaction leases defer refreshes until completion; cache revisions reject older responses; journal notifications match current storage and I/O errors end the attempt."
       ],
       "location": {
         "declarationLine": null,
@@ -4330,7 +4330,8 @@
         "pending write journal",
         "serialized flush",
         "transaction cache publication",
-        "focus cache refresh"
+        "shared native subscription",
+        "deferred cache refresh"
       ],
       "role": "Persist application settings through a renderer crash journal, native SQLite promotion, and browser fallback.",
       "scope": "module",
@@ -4339,7 +4340,8 @@
         "settings SQLite promotion",
         "pending setting flush",
         "stale foreign journal notification",
-        "focus settings cache refresh"
+        "focus settings cache refresh",
+        "native setting commit subscription"
       ],
       "stability": "architecture"
     },
@@ -4833,6 +4835,6 @@
   "generatedBy": "llmnav@0.9.7",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "da8b593d37a1b6b67a0a8f292bc843988811f324e0dc457af0adc11187d9d182",
+  "sourceHash": "38eb86cd7c1e0b5741556b706a768b08a044ab559490a59988214c0472b446e0",
   "specVersion": "1"
 }
