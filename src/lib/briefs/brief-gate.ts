@@ -12,12 +12,13 @@ import type { GateRef } from '@workduck/core';
 import type { BriefRunLink } from './brief-run-registry';
 import { findLinkedReports, findLinkedTask, findLinkedWorkOrder, type BriefRunEvidence } from './brief-run-evidence';
 
-export type BriefGateReason = 'buildPassed' | 'executionFailed' | 'executionStopped' | 'running' | 'unverified' | 'missing' | 'reportNeedsReview';
+export type BriefGateReason = 'buildPassed' | 'executionFailed' | 'executionStopped' | 'running' | 'unverified' | 'missing' | 'reportNeedsReview' | 'unavailable';
 
 export function deriveBriefGate(link: BriefRunLink, workspacePath: string, evidence: BriefRunEvidence) {
 	const gate: GateRef = { kind: 'gate', id: `gate_${link.id}`, label: 'Execution evidence' };
 	let checks: readonly WorkbenchGateCheckInput[] = [];
-	let reason: BriefGateReason = 'missing';
+	let reason: BriefGateReason = link.sourceKind === 'queue-work-order' && evidence.unresolvedQueueIds?.includes(link.sourceId)
+		? 'unavailable' : 'missing';
 	const task = findLinkedTask(link, workspacePath, evidence);
 	if (task) {
 		if (task.state === 'failed' || (task.state === 'succeeded' && task.exitCode !== null && task.exitCode !== 0)) {

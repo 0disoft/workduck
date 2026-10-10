@@ -2785,7 +2785,7 @@
         "report author claims"
       ],
       "hashes": {
-        "body": "b7992774d7349421dcb97af6f1dd51ecf1715b2f8a29a7bd002ef085c9a8c663",
+        "body": "1f84dd7a32d941fea19725019da3d1aaec898d8ec060cc075597030d8b3895ac",
         "semantic": "a3f5501eb67b420ef93e0d152446d5821b27a95d93b53028beba9e09b867812b",
         "structure": "b520645bb2777e85f2cf06b1e4a0186e5ef4075c8db98f91c34fabf0c203350e"
       },
@@ -4476,8 +4476,8 @@
         "brief link persistence"
       ],
       "hashes": {
-        "body": "e33403437837508cc476908f05e1c99cf76f04c1a1fa7088147ced9edc2e1752",
-        "semantic": "a5c0b4dda588632ebe34ea7c335d3e36135785df71d44d91822a9629fce0106b",
+        "body": "411cfa3a7d1c9ff11af48f71924907a804d341f95d39427328e422b9df383b57",
+        "semantic": "ecaafbf818817a894a0f2754329f6b58de3fa75c666fb6868dd2597891a5027b",
         "structure": "58a8214fbff0cad60dc95004acffa8fee5c9fb7f7314c87ba10afa89a31b466e"
       },
       "id": "workduck.briefs.run-evidence",
@@ -4491,7 +4491,7 @@
         "./brief-run-registry"
       ],
       "invariant": [
-        "Linked evidence requires unique source identity and the same workspace-owned repository; Windows spellings share a key while Unix case and literal backslashes remain distinct."
+        "Saved queue links bypass the discovery limit and require a complete identity lookup; linked evidence requires unique source identity and the same workspace-owned repository; Windows spellings share a key while Unix case and literal backslashes remain distinct."
       ],
       "location": {
         "declarationLine": null,
@@ -4508,10 +4508,11 @@
       },
       "owns": [
         "brief evidence loading",
+        "saved queue identity lookup",
         "execution identity matching",
         "workspace repository path containment"
       ],
-      "role": "Read bounded execution evidence and resolve saved brief links to their exact repository tasks, work orders, and reports.",
+      "role": "Read execution evidence with bounded concurrency and resolve saved brief links to their exact repository tasks, work orders, and reports.",
       "scope": "module",
       "search": [
         "brief execution evidence",
@@ -4628,6 +4629,6 @@
   "generatedBy": "llmnav@0.9.7",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "22a65700fa2cb2f72f144862322f62628089605b6dfb3a9a288ee5b7e22c861b",
+  "sourceHash": "f1707f6eb54d19df72a405567f9c1e736cfae9efe8969ba5aec4b289e8434bff",
   "specVersion": "1"
 }

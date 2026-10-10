@@ -5747,7 +5747,7 @@
     },
     {
       "blocks": [],
-      "contentHash": "c943642a905673091897326301316fb2db2cb940ad4d0981d3370703ac79def4",
+      "contentHash": "c4ed0ef98d6b3768c76f7bf3db79cb500b9679a8e1e21eb92c7ca37e9c5823b7",
       "declarations": [],
       "imports": [
         "#lib/i18n/workduck-language-options.ts",
@@ -5764,7 +5764,7 @@
       ],
       "path": "src/lib/briefs/BriefRunsPanel.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 7221
+      "sourceBytes": 7539
     },
     {
       "blocks": [],
@@ -5906,7 +5906,7 @@
     },
     {
       "blocks": [],
-      "contentHash": "3d287c870624e14a5d2c7d27a4f09543aa4a8c3b16de20e85c1f899d4ea5e50d",
+      "contentHash": "2f8fae6c0a993fed4c3eacc4ae16949693e3e5bf508767af193c3a3a07e39392",
       "declarations": [],
       "imports": [
         "#lib/i18n/workduck-language-options.ts",
@@ -5914,7 +5914,7 @@
       ],
       "path": "src/lib/briefs/brief-gate-messages.ts",
       "semanticBytes": 0,
-      "sourceBytes": 5416
+      "sourceBytes": 5933
     },
     {
       "blocks": [
@@ -6006,7 +6006,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "b7992774d7349421dcb97af6f1dd51ecf1715b2f8a29a7bd002ef085c9a8c663",
+      "contentHash": "1f84dd7a32d941fea19725019da3d1aaec898d8ec060cc075597030d8b3895ac",
       "declarations": [
         null
       ],
@@ -6018,7 +6018,7 @@
       ],
       "path": "src/lib/briefs/brief-gate.ts",
       "semanticBytes": 510,
-      "sourceBytes": 2999
+      "sourceBytes": 3130
     },
     {
       "blocks": [],
@@ -6163,16 +6163,17 @@
             ],
             "id": "workduck.briefs.run-evidence",
             "invariant": [
-              "Linked evidence requires unique source identity and the same workspace-owned repository; Windows spellings share a key while Unix case and literal backslashes remain distinct."
+              "Saved queue links bypass the discovery limit and require a complete identity lookup; linked evidence requires unique source identity and the same workspace-owned repository; Windows spellings share a key while Unix case and literal backslashes remain distinct."
             ],
             "owns": [
               "brief evidence loading",
+              "saved queue identity lookup",
               "execution identity matching",
               "workspace repository path containment"
             ],
             "rel": [],
             "risk": [],
-            "role": "Read bounded execution evidence and resolve saved brief links to their exact repository tasks, work orders, and reports.",
+            "role": "Read execution evidence with bounded concurrency and resolve saved brief links to their exact repository tasks, work orders, and reports.",
             "scope": "module",
             "search": [
               "brief execution evidence",
@@ -6182,7 +6183,7 @@
             "stability": "contract",
             "unknown": []
           },
-          "end": 651,
+          "end": 781,
           "endLine": 9,
           "entries": [
             {
@@ -6195,13 +6196,13 @@
               "key": "role",
               "line": 3,
               "order": 1,
-              "value": "Read bounded execution evidence and resolve saved brief links to their exact repository tasks, work orders, and reports."
+              "value": "Read execution evidence with bounded concurrency and resolve saved brief links to their exact repository tasks, work orders, and reports."
             },
             {
               "key": "owns",
               "line": 4,
               "order": 2,
-              "value": "brief evidence loading|execution identity matching|workspace repository path containment"
+              "value": "brief evidence loading|saved queue identity lookup|execution identity matching|workspace repository path containment"
             },
             {
               "key": "excludes",
@@ -6219,7 +6220,7 @@
               "key": "invariant",
               "line": 7,
               "order": 5,
-              "value": "Linked evidence requires unique source identity and the same workspace-owned repository; Windows spellings share a key while Unix case and literal backslashes remain distinct."
+              "value": "Saved queue links bypass the discovery limit and require a complete identity lookup; linked evidence requires unique source identity and the same workspace-owned repository; Windows spellings share a key while Unix case and literal backslashes remain distinct."
             },
             {
               "key": "stability",
@@ -6232,7 +6233,7 @@
           "indent": "",
           "newline": "\n",
           "prefix": null,
-          "raw": "/* llmnav/1 module\nid=workduck.briefs.run-evidence\nrole=Read bounded execution evidence and resolve saved brief links to their exact repository tasks, work orders, and reports.\nowns=brief evidence loading|execution identity matching|workspace repository path containment\nexcludes=execution launch|gate evaluation|brief link persistence\nsearch=brief execution evidence|linked task repository paths|Windows drive root and Unix backslash matching\ninvariant=Linked evidence requires unique source identity and the same workspace-owned repository; Windows spellings share a key while Unix case and literal backslashes remain distinct.\nstability=contract\n*/",
+          "raw": "/* llmnav/1 module\nid=workduck.briefs.run-evidence\nrole=Read execution evidence with bounded concurrency and resolve saved brief links to their exact repository tasks, work orders, and reports.\nowns=brief evidence loading|saved queue identity lookup|execution identity matching|workspace repository path containment\nexcludes=execution launch|gate evaluation|brief link persistence\nsearch=brief execution evidence|linked task repository paths|Windows drive root and Unix backslash matching\ninvariant=Saved queue links bypass the discovery limit and require a complete identity lookup; linked evidence requires unique source identity and the same workspace-owned repository; Windows spellings share a key while Unix case and literal backslashes remain distinct.\nstability=contract\n*/",
           "scope": "module",
           "specVersion": "1",
           "start": 0,
@@ -6241,7 +6242,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "e33403437837508cc476908f05e1c99cf76f04c1a1fa7088147ced9edc2e1752",
+      "contentHash": "411cfa3a7d1c9ff11af48f71924907a804d341f95d39427328e422b9df383b57",
       "declarations": [
         null
       ],
@@ -6255,19 +6256,19 @@
         "./brief-run-registry"
       ],
       "path": "src/lib/briefs/brief-run-evidence.ts",
-      "semanticBytes": 651,
-      "sourceBytes": 6902
+      "semanticBytes": 781,
+      "sourceBytes": 8276
     },
     {
       "blocks": [],
-      "contentHash": "17e0dc3ce124ec50e80d6942e0986f6c3b22427698aacb75c366bb36a6d3d560",
+      "contentHash": "fb59af2bc7254a5c522fc863f40454f277e06aa29cbc72f705a0c3a15dc9aefd",
       "declarations": [],
       "imports": [
         "#lib/i18n/workduck-language-options.ts"
       ],
       "path": "src/lib/briefs/brief-run-messages.ts",
       "semanticBytes": 0,
-      "sourceBytes": 8335
+      "sourceBytes": 9010
     },
     {
       "blocks": [
@@ -6385,7 +6386,7 @@
     },
     {
       "blocks": [],
-      "contentHash": "983e9f81a977458c2a8da2f70c3feef551df3b4361f8b429158df46e5883ae7e",
+      "contentHash": "30cb0b5961cf2409ffac67172759ca414dea97ad78d9c2409dbf4742effb207b",
       "declarations": [],
       "imports": [
         "#lib/projects/project-repository-task.ts",
@@ -6402,7 +6403,7 @@
       ],
       "path": "src/lib/briefs/brief-run.test.ts",
       "semanticBytes": 0,
-      "sourceBytes": 14161
+      "sourceBytes": 19672
     },
     {
       "blocks": [],

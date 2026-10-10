@@ -872,7 +872,7 @@
         "visibility": null
       },
       "repositoryId": "workduck",
-      "role": "Read bounded execution evidence and resolve saved brief links to their exact repository tasks, work orders, and reports.",
+      "role": "Read execution evidence with bounded concurrency and resolve saved brief links to their exact repository tasks, work orders, and reports.",
       "semanticId": "workduck.briefs.run-evidence",
       "unresolved": false
     },
@@ -2717,7 +2717,7 @@
   ],
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "b8fcd72d2e08f67c7e1345b86c184e05fa8cb4aef0bcebe510a240eaaafd3fbc",
+  "sourceHash": "09a8326c998806d65a81650a1bacb25a1ef8fd0cb1ee599ac6a19841cd23c3a0",
   "stats": {
     "edgeCount": 49,
     "importedIndexCount": 0,

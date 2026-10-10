@@ -39,9 +39,10 @@
 		const stored = await readBriefRunRegistry(workspace.id, workspace.path);
 		if (disposed || controller.signal.aborted) return;
 		if (!stored.ok) { loading = false; error = messages.loadFailed; return; }
-		const linkedTaskIds = stored.registry.links.filter((link) =>
-			link.brief.id === brief.id && link.sourceKind === 'repository-task').map((link) => link.sourceId);
-		const loaded = await readBriefRunEvidence(workspace.path, controller.signal, linkedTaskIds);
+		const storedLinks = stored.registry.links.filter((link) => link.brief.id === brief.id);
+		const linkedTaskIds = storedLinks.filter((link) => link.sourceKind === 'repository-task').map((link) => link.sourceId);
+		const linkedQueueIds = storedLinks.filter((link) => link.sourceKind === 'queue-work-order').map((link) => link.sourceId);
+		const loaded = await readBriefRunEvidence(workspace.path, controller.signal, linkedTaskIds, linkedQueueIds);
 		if (disposed || controller.signal.aborted) return;
 		loading = false;
 		registry = stored.registry; evidence = loaded; ready = true; candidateKey = '';
@@ -79,6 +80,7 @@
 		if (task) return ({ running: messages.stateRunning, succeeded: messages.stateSucceeded, failed: messages.stateFailed, stopped: messages.stateStopped })[task.state];
 		const order = findLinkedWorkOrder(link, evidence);
 		if (order) return order.status === 'archived' ? messages.stateArchived : order.status === 'running' ? messages.stateRunning : order.status === 'failed' ? messages.stateFailed : messages.statePending;
+		if (link.sourceKind === 'queue-work-order' && evidence.unresolvedQueueIds?.includes(link.sourceId)) return messages.unavailable;
 		return messages.missing;
 	}
 </script>

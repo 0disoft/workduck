@@ -91,8 +91,13 @@ Saved briefs can link existing repository task runs and queue work orders that
 explicitly reference the same repository ID. Run links preserve the instructions
 at link time in `.workduck/brief-runs.json`; result reports are matched through
 their `sourceWorkOrder` ID, not their titles. Refresh reloads the original records,
-and unlinking removes only the association. Queue scans are bounded to 200 files
-and four concurrent reads; partial scans disable new queue associations.
+and unlinking removes only the association. Discovery of new queue associations
+is limited to 200 files; partial discovery disables new queue associations.
+Saved queue IDs are resolved independently across the complete file listing,
+including renamed files and reports beyond that limit. Reads run four at a time
+and stop when the panel closes. Unrelated bodies outside discovery are discarded,
+while duplicate source/report IDs are rejected. A failed or cancelled lookup is
+shown as unavailable rather than missing and leaves its gate unverified.
 
 Each linked run has a derived gate: a completed native build with exit code 0
 passes, failed or stopped executions block, and missing or prose-only evidence

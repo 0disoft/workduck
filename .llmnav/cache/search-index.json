@@ -92,7 +92,7 @@
     "workduck.workspace.sync-file-native",
     "workduck.workspace.sync-git-native"
   ],
-  "cardSetHash": "87cbe42aa8b22d4d1ff4af98f1ad4fc0344554d60dca22dcd34a9416ffabf8fc",
+  "cardSetHash": "4e056ff0ccceb6e770318fc2d00519ce5985686af5b4449e5731365c0f9527ab",
   "documentCount": 91,
   "documents": [
     [
@@ -187,14 +187,15 @@
       ]
     ],
     [
-      "8bd15fc70249177dd95b26ff16a84f508ade350cb03632731166501737beb13c",
+      "c1bad260e6a1fb8eb5f3878e8c42fd61cfc7adcc94ba1ceb3a98fc80c73e4275",
       [
-        "read bounded execution evidence and resolve saved brief links to their exact repository tasks, work orders, and reports.",
+        "read execution evidence with bounded concurrency and resolve saved brief links to their exact repository tasks, work orders, and reports.",
         "brief execution evidence",
         "linked task repository paths",
         "windows drive root and unix backslash matching",
-        "linked evidence requires unique source identity and the same workspace-owned repository; windows spellings share a key while unix case and literal backslashes remain distinct.",
+        "saved queue links bypass the discovery limit and require a complete identity lookup; linked evidence requires unique source identity and the same workspace-owned repository; windows spellings share a key while unix case and literal backslashes remain distinct.",
         "brief evidence loading",
+        "saved queue identity lookup",
         "execution identity matching",
         "workspace repository path containment"
       ]
@@ -1377,7 +1378,7 @@
         7,
         [
           5,
-          1
+          2
         ]
       ],
       [
@@ -2362,7 +2363,7 @@
           2,
           1,
           5,
-          2
+          3
         ]
       ],
       [
@@ -4988,6 +4989,15 @@
     ],
     [
       [
+        7,
+        [
+          5,
+          1
+        ]
+      ]
+    ],
+    [
+      [
         79,
         [
           5,
@@ -6593,6 +6603,13 @@
     ],
     [
       [
+        7,
+        [
+          5,
+          1
+        ]
+      ],
+      [
         32,
         [
           5,
@@ -6669,6 +6686,15 @@
         51,
         [
           3,
+          1
+        ]
+      ]
+    ],
+    [
+      [
+        7,
+        [
+          1,
           1
         ]
       ]
@@ -8434,6 +8460,13 @@
       ]
     ],
     [
+      [
+        7,
+        [
+          5,
+          1
+        ]
+      ],
       [
         9,
         [
@@ -12795,9 +12828,9 @@
         7,
         [
           3,
-          1,
+          2,
           5,
-          1
+          2
         ]
       ],
       [
@@ -14990,6 +15023,15 @@
     ],
     [
       [
+        7,
+        [
+          5,
+          1
+        ]
+      ]
+    ],
+    [
+      [
         43,
         [
           1,
@@ -15092,6 +15134,8 @@
         7,
         [
           1,
+          1,
+          5,
           1
         ]
       ],
@@ -15485,6 +15529,15 @@
       ]
     ],
     [
+      [
+        7,
+        [
+          3,
+          1,
+          5,
+          1
+        ]
+      ],
       [
         12,
         [
@@ -22013,6 +22066,15 @@
         ]
       ],
       [
+        7,
+        [
+          3,
+          1,
+          5,
+          1
+        ]
+      ],
+      [
         8,
         [
           1,
@@ -24717,6 +24779,13 @@
         ]
       ],
       [
+        7,
+        [
+          5,
+          1
+        ]
+      ],
+      [
         27,
         [
           5,
@@ -26499,6 +26568,10 @@
         7,
         [
           1,
+          1,
+          3,
+          1,
+          5,
           1
         ]
       ],
@@ -31593,7 +31666,7 @@
         7,
         [
           5,
-          1
+          2
         ]
       ],
       [
@@ -34649,6 +34722,13 @@
         5,
         [
           5,
+          1
+        ]
+      ],
+      [
+        7,
+        [
+          1,
           1
         ]
       ],
@@ -36639,6 +36719,7 @@
     "busy",
     "but",
     "by",
+    "bypass",
     "byte",
     "bytes",
     "cache",
@@ -36712,6 +36793,7 @@
     "completion",
     "completions",
     "composition",
+    "concurrency",
     "concurrent",
     "configuration",
     "confirm",
@@ -37028,6 +37110,7 @@
     "lifecycle",
     "lifetime",
     "lifetimes",
+    "limit",
     "limits",
     "line",
     "link",

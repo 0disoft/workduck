@@ -1,5 +1,6 @@
 import type { WorkduckLanguageId } from '#lib/i18n/workduck-language-options.ts';
 const en = {
+	unavailable: 'The linked source could not be fully checked. Refresh to retry.',
 	title: 'Linked runs', link: 'Link existing run', choose: 'Choose a repository task or work order', empty: 'No linked runs yet.',
 	noCandidates: 'Only runs from this repository and work orders with its repository ID are eligible.',
 	partial: 'Some execution sources could not be read or exceed the 200-file scan limit. Queue linking is unavailable until the complete source can be read.',
@@ -13,6 +14,7 @@ type Messages = { readonly [K in keyof typeof en]: string };
 export const briefRunMessages: Record<WorkduckLanguageId, Messages> = {
 	en,
 	ko: {
+		unavailable: '연결된 원본을 끝까지 확인하지 못했어요. 새로고침해서 다시 시도해 주세요.',
 		title: '연결된 실행', link: '기존 실행 연결', choose: '저장소 작업 또는 대기열 작업 선택', empty: '연결된 실행이 없어요.',
 		noCandidates: '이 저장소의 실행 기록과 저장소 ID가 지정된 대기열 작업만 연결할 수 있어요.',
 		partial: '일부 실행 자료를 읽지 못했거나 검색 한도인 200개 파일을 넘었어요. 전체 자료를 읽을 수 있을 때 대기열 작업을 연결할 수 있어요.',
@@ -23,6 +25,7 @@ export const briefRunMessages: Record<WorkduckLanguageId, Messages> = {
 		stateRunning: '실행 중', stateSucceeded: '성공', stateFailed: '실패', stateStopped: '중단됨', statePending: '대기 중', stateArchived: '보관됨'
 	},
 	es: {
+		unavailable: 'No se pudo comprobar completamente el origen vinculado. Actualiza para reintentar.',
 		title: 'Ejecuciones vinculadas', link: 'Vincular ejecución existente', choose: 'Elige una tarea del repositorio o una orden', empty: 'No hay ejecuciones vinculadas.',
 		noCandidates: 'Solo se admiten ejecuciones de este repositorio y órdenes con su ID.', partial: 'No se pudieron leer algunas fuentes o se superó el límite de 200 archivos. La vinculación de órdenes requiere una lectura completa.',
 		loadFailed: 'No se pudieron cargar los vínculos. No se modificaron los existentes.', saveFailed: 'No se pudo guardar el vínculo. Actualiza y reintenta.',
@@ -31,6 +34,7 @@ export const briefRunMessages: Record<WorkduckLanguageId, Messages> = {
 		stateRunning: 'En curso', stateSucceeded: 'Correcta', stateFailed: 'Fallida', stateStopped: 'Detenida', statePending: 'Pendiente', stateArchived: 'Archivada'
 	},
 	fr: {
+		unavailable: 'La source associée n’a pas pu être entièrement vérifiée. Actualisez pour réessayer.',
 		title: 'Exécutions associées', link: 'Associer une exécution', choose: 'Choisir une tâche du dépôt ou un ordre de travail', empty: 'Aucune exécution associée.',
 		noCandidates: 'Seules les exécutions de ce dépôt et les tâches portant son identifiant sont proposées.', partial: 'Certaines sources sont illisibles ou dépassent la limite de 200 fichiers. Une lecture complète est requise pour associer des ordres de travail.',
 		loadFailed: 'Impossible de charger les liens. Les liens existants sont inchangés.', saveFailed: 'Impossible d’enregistrer le lien. Actualisez puis réessayez.',
@@ -39,6 +43,7 @@ export const briefRunMessages: Record<WorkduckLanguageId, Messages> = {
 		stateRunning: 'En cours', stateSucceeded: 'Réussie', stateFailed: 'Échouée', stateStopped: 'Arrêtée', statePending: 'En attente', stateArchived: 'Archivée'
 	},
 	zh: {
+		unavailable: '无法完整检查关联来源，请刷新后重试。',
 		title: '关联运行', link: '关联现有运行', choose: '选择仓库任务或工作单', empty: '尚未关联运行。',
 		noCandidates: '仅可关联此仓库的运行记录及指定了此仓库 ID 的工作单。', partial: '部分来源无法读取或超过 200 个文件的扫描上限。完整读取后才能关联工作单。',
 		loadFailed: '无法加载关联，现有关联未更改。', saveFailed: '无法保存关联，请刷新后重试。',
@@ -47,6 +52,7 @@ export const briefRunMessages: Record<WorkduckLanguageId, Messages> = {
 		stateRunning: '运行中', stateSucceeded: '成功', stateFailed: '失败', stateStopped: '已停止', statePending: '待处理', stateArchived: '已归档'
 	},
 	hi: {
+		unavailable: 'जुड़े स्रोत की पूरी जाँच नहीं हो सकी। फिर से लोड करके कोशिश करें।',
 		title: 'जुड़े निष्पादन', link: 'मौजूदा निष्पादन जोड़ें', choose: 'रिपॉज़िटरी कार्य या कार्य आदेश चुनें', empty: 'अभी कोई निष्पादन जुड़ा नहीं है।',
 		noCandidates: 'केवल इस रिपॉज़िटरी के निष्पादन और इसके ID वाले कार्य आदेश जोड़े जा सकते हैं।', partial: 'कुछ स्रोत पढ़े नहीं गए या 200 फ़ाइलों की सीमा पार हो गई। कार्य आदेश जोड़ने के लिए पूरी जानकारी पढ़ना ज़रूरी है।',
 		loadFailed: 'लिंक लोड नहीं हुए। मौजूदा लिंक नहीं बदले गए।', saveFailed: 'लिंक सहेजा नहीं गया। दोबारा लोड करके कोशिश करें।',

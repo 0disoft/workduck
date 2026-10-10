@@ -317,7 +317,7 @@
           "to": "workduck/workduck.briefs.runs"
         }
       ],
-      "inputHash": "974feeff104d0eadde129268fc69f836cb6973a51a6bedce3f557cb0b6118e01",
+      "inputHash": "311a5913cca91c0fb59941df20b233c4c8f1b02f87c3c1ecb0074d1d82dfe8d8",
       "key": "card:workduck/workduck.briefs.run-evidence",
       "nodes": [
         {
@@ -347,7 +347,7 @@
             "visibility": null
           },
           "repositoryId": "workduck",
-          "role": "Read bounded execution evidence and resolve saved brief links to their exact repository tasks, work orders, and reports.",
+          "role": "Read execution evidence with bounded concurrency and resolve saved brief links to their exact repository tasks, work orders, and reports.",
           "semanticId": "workduck.briefs.run-evidence"
         },
         {
@@ -360,7 +360,7 @@
           "semanticId": "workduck.briefs.runs"
         }
       ],
-      "outputHash": "e43ad6b221a24d90309f7e1b5c0b03b61a8a2ee56750e4a088a6ef40ecabe939"
+      "outputHash": "865a03c15468ce6acb812428a1055f149e64f6c1951a130927351a743c23b6da"
     },
     {
       "edges": [

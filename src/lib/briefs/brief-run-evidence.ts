@@ -1,10 +1,10 @@
 /* llmnav/1 module
 id=workduck.briefs.run-evidence
-role=Read bounded execution evidence and resolve saved brief links to their exact repository tasks, work orders, and reports.
-owns=brief evidence loading|execution identity matching|workspace repository path containment
+role=Read execution evidence with bounded concurrency and resolve saved brief links to their exact repository tasks, work orders, and reports.
+owns=brief evidence loading|saved queue identity lookup|execution identity matching|workspace repository path containment
 excludes=execution launch|gate evaluation|brief link persistence
 search=brief execution evidence|linked task repository paths|Windows drive root and Unix backslash matching
-invariant=Linked evidence requires unique source identity and the same workspace-owned repository; Windows spellings share a key while Unix case and literal backslashes remain distinct.
+invariant=Saved queue links bypass the discovery limit and require a complete identity lookup; linked evidence requires unique source identity and the same workspace-owned repository; Windows spellings share a key while Unix case and literal backslashes remain distinct.
 stability=contract
 */
 import { readProjectRepositoryTaskRunRecords, type ProjectRepositoryTaskRunRecord } from '#lib/projects/project-repository-task.ts';
@@ -20,6 +20,7 @@ export interface BriefRunEvidence {
 	readonly workOrders: readonly WorkduckQueueWorkOrder[];
 	readonly reports: readonly WorkduckQueueResultReport[];
 	readonly incomplete: boolean;
+	readonly unresolvedQueueIds?: readonly string[];
 }
 export interface BriefRunCandidate {
 	readonly kind: BriefRunSourceKind;
@@ -27,36 +28,53 @@ export interface BriefRunCandidate {
 	readonly label: string;
 }
 
-export async function readBriefRunEvidence(workspacePath: string, signal?: AbortSignal, linkedTaskIds: readonly string[] = []): Promise<BriefRunEvidence> {
+export async function readBriefRunEvidence(
+	workspacePath: string, signal?: AbortSignal, linkedTaskIds: readonly string[] = [], linkedQueueIds: readonly string[] = []
+): Promise<BriefRunEvidence> {
 	const selectedIds = new Set(linkedTaskIds);
+	const selectedQueueIds = new Set(linkedQueueIds);
 	const [tasks, queue, selectedTasks] = await Promise.all([
 		readProjectRepositoryTaskRunRecords(workspacePath), listQueueFiles(workspacePath),
 		selectedIds.size === 0 ? null : readProjectRepositoryTaskRunRecords(workspacePath, [...selectedIds])
 	]);
 	const allFiles = queue.ok ? queue.files.filter((file) => file.kind === 'work-order' || file.kind === 'result-report') : [];
-	const files = allFiles.slice(0, 200);
+	const discoveryFiles = allFiles.slice(0, 200);
+	// Queue IDs live in file bodies, so a saved link needs the whole listing to
+	// resolve renamed files and reject duplicate IDs outside the discovery window.
+	const files = selectedQueueIds.size === 0 ? discoveryFiles : allFiles;
 	const workOrders: WorkduckQueueWorkOrder[] = [];
 	const reports: WorkduckQueueResultReport[] = [];
-	let incomplete = !tasks.ok || !queue.ok || selectedTasks?.ok === false || allFiles.length > files.length;
+	const reportIdCounts = new Map<string, number>();
+	let queueLookupIncomplete = !queue.ok;
+	let incomplete = !tasks.ok || !queue.ok || selectedTasks?.ok === false || allFiles.length > discoveryFiles.length;
 	for (let index = 0; index < files.length; index += 4) {
-		if (signal?.aborted) { incomplete = true; break; }
-		await Promise.all(files.slice(index, index + 4).map(async (file) => {
+		if (signal?.aborted) { incomplete = true; queueLookupIncomplete = true; break; }
+		await Promise.all(files.slice(index, index + 4).map(async (file, offset) => {
 			const result = await readQueueFile(workspacePath, file.relativePath);
-			if (!result.ok) { incomplete = true; return; }
+			if (!result.ok) { incomplete = true; queueLookupIncomplete = true; return; }
+			const discovery = index + offset < discoveryFiles.length;
 			if (file.kind === 'work-order') {
 				const parsed = parseQueueWorkOrder(result.content);
-				if (parsed.ok) workOrders.push(parsed.workOrder); else incomplete = true;
+				if (!parsed.ok) { incomplete = true; queueLookupIncomplete = true; return; }
+				if (discovery || selectedQueueIds.has(parsed.workOrder.ref.id)) workOrders.push(parsed.workOrder);
 			} else {
 				const parsed = parseQueueResultReport(result.content);
-				if (parsed.ok) reports.push(parsed.report); else incomplete = true;
+				if (!parsed.ok) { incomplete = true; queueLookupIncomplete = true; return; }
+				const report = parsed.report;
+				reportIdCounts.set(report.ref.id, (reportIdCounts.get(report.ref.id) ?? 0) + 1);
+				if (discovery || (report.sourceWorkOrder && selectedQueueIds.has(report.sourceWorkOrder.id))) reports.push(report);
 			}
 		}));
 	}
+	if (signal?.aborted) { incomplete = true; queueLookupIncomplete = true; }
 	const taskRuns = [
 		...(tasks.ok ? tasks.records.filter((record) => !selectedIds.has(record.id)) : []),
 		...(selectedTasks?.ok ? selectedTasks.records : [])
 	];
-	return { taskRuns, workOrders, reports, incomplete };
+	return {
+		taskRuns, workOrders, reports: reports.filter((report) => reportIdCounts.get(report.ref.id) === 1), incomplete,
+		unresolvedQueueIds: queueLookupIncomplete ? [...selectedQueueIds] : []
+	};
 }
 
 export function listBriefRunCandidates(brief: BriefRecord, workspacePath: string, evidence: BriefRunEvidence): readonly BriefRunCandidate[] {
@@ -80,7 +98,7 @@ export function findLinkedTask(link: BriefRunLink, workspacePath: string, eviden
 }
 
 export function findLinkedWorkOrder(link: BriefRunLink, evidence: BriefRunEvidence): WorkduckQueueWorkOrder | null {
-	if (link.sourceKind !== 'queue-work-order') return null;
+	if (link.sourceKind !== 'queue-work-order' || evidence.unresolvedQueueIds?.includes(link.sourceId)) return null;
 	const matches = evidence.workOrders.filter((order) => order.ref.id === link.sourceId);
 	const order = matches.length === 1 ? matches[0]! : null;
 	return order?.tasks.some((task) => task.repositoryIds?.includes(link.brief.repository.id)) ? order : null;
