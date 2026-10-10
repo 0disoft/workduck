@@ -22,8 +22,7 @@ use time::{OffsetDateTime, format_description::well_known::Rfc3339};
 use crate::{
     path_display::display_path,
     project_repository_task::{
-        ProjectRepositoryTaskRunRecord, project_task_run_liveness_with_budget,
-        read_visible_task_run_record_with_budget,
+        project_task_run_liveness_with_budget, read_visible_task_run_record_with_budget,
     },
     storage,
     workspace_path::{WorkspacePathValidationError, validate_absolute_directory_path},

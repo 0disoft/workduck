@@ -920,17 +920,6 @@ pub(crate) fn project_task_run_liveness_with_budget(
     )
 }
 
-fn refresh_running_task_run_records(
-    records: Vec<ProjectRepositoryTaskRunRecord>,
-    collect_processes: impl FnOnce() -> Result<Vec<LiveTaskProcess>, ProjectRepositoryTaskError>,
-) -> Vec<ProjectRepositoryTaskRunRecord> {
-    refresh_running_task_run_records_with_budget(
-        records,
-        collect_processes,
-        history::MAX_HISTORY_BYTES,
-    )
-}
-
 fn refresh_running_task_run_records_with_budget(
     records: Vec<ProjectRepositoryTaskRunRecord>,
     collect_processes: impl FnOnce() -> Result<Vec<LiveTaskProcess>, ProjectRepositoryTaskError>,

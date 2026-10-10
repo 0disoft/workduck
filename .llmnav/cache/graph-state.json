@@ -46,7 +46,7 @@
           "to": "workduck/workduck.agent.snapshot.contract"
         }
       ],
-      "inputHash": "3b2b7e1a6d6a189c92ad9e4b1a93b46abd7a863386c417a0ca62cc90dabc3701",
+      "inputHash": "2b2eaff7c1663d1d9fae7589083e967083afe0f0ebd62f5059ba6c537862dee1",
       "key": "card:workduck/workduck.agent.snapshot",
       "nodes": [
         {
@@ -84,14 +84,14 @@
     },
     {
       "edges": [],
-      "inputHash": "ae9f916574f0862f538c879386352b5c3118e2828a6b4c130aec7a696d3e0872",
+      "inputHash": "68867be0672b53cdcf327b4571fe38435f92fe85b7a8fdadb5d3303fbabc1083",
       "key": "card:workduck/workduck.agent.snapshot.contract",
       "nodes": [
         {
           "definitions": [
             {
               "kind": "function",
-              "line": 1089,
+              "line": 1088,
               "path": "src-tauri/src/agent_api_snapshot.rs",
               "provenance": {
                 "generator": null,
@@ -104,15 +104,15 @@
           "external": false,
           "key": "workduck/workduck.agent.snapshot.contract",
           "location": {
-            "declarationLine": 1089,
-            "endLine": 1087,
+            "declarationLine": 1088,
+            "endLine": 1086,
             "exported": false,
             "kind": "function",
             "language": "rust",
             "path": "src-tauri/src/agent_api_snapshot.rs",
             "receiver": null,
             "signature": "fn project_registry_summary_omits_secret_ids()",
-            "startLine": 1082,
+            "startLine": 1081,
             "symbol": "project_registry_summary_omits_secret_ids",
             "visibility": "private"
           },
@@ -121,7 +121,7 @@
           "semanticId": "workduck.agent.snapshot.contract"
         }
       ],
-      "outputHash": "9d03c357b0c4b0b5c63036fd8ac0680233598ef07cc5d713ba46c519d0fc8a78"
+      "outputHash": "1f5edf15ac777f005b43b59eb0b176cf89ee947d5a1201b3ece2d1d0d174675d"
     },
     {
       "edges": [],

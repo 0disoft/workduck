@@ -1179,14 +1179,14 @@
         "secret decryption"
       ],
       "hashes": {
-        "body": "3def643946a4f679db5715a8ebcadcd39aa204d910b67cab298c53a6000c7fdd",
+        "body": "076127bc5dadd5b32d4b42755567d751b38fbdd8ea94904d5ce2b25a62b4aa25",
         "semantic": "93dd5ea4ac4030973e07ef8703289cfef40ee06b8901f1b2f5f92953dad33fbd",
-        "structure": "3ebc772bcb37cfad547439f5e4be89ebadde20991d8f3fa804827f78e491f887"
+        "structure": "2e5d36f8d8f55e9cc7c405c01449e50786fd171dbe05b7a73d20bc8d71b1694c"
       },
       "id": "workduck.agent.snapshot",
       "imports": [
         "crate::project_repository_task::{project_task_run_liveness, read_visible_task_run_record}",
-        "crate::{\n    path_display::display_path,\n    project_repository_task::{\n        ProjectRepositoryTaskRunRecord, project_task_run_liveness_with_budget,\n        read_visible_task_run_record_with_budget,\n    },\n    storage,\n    workspace_path::{WorkspacePathValidationError, validate_absolute_directory_path},\n}",
+        "crate::{\n    path_display::display_path,\n    project_repository_task::{\n        project_task_run_liveness_with_budget, read_visible_task_run_record_with_budget,\n    },\n    storage,\n    workspace_path::{WorkspacePathValidationError, validate_absolute_directory_path},\n}",
         "rusqlite::{Connection, OptionalExtension, params}",
         "std::time::{SystemTime, UNIX_EPOCH}",
         "std::{\n    collections::BTreeMap,\n    fs, io,\n    path::{Path, PathBuf},\n}",
@@ -1236,12 +1236,12 @@
       "hashes": {
         "body": "01bf2716df9736badddd55953f58939db2ff51968d8bf051f07f9f8c97947ea6",
         "semantic": "dca8511a86306e0fcef981f2ff3c9ed6068234a0e7c673b7ad048296d48df326",
-        "structure": "33de3ca27cbebf853f5cef00e4730b2f06c91d9d4b538e947456f9a0123f3ed8"
+        "structure": "43e4980b03ab27a062133615bc72b30210632203801e4f7d2825f0948c9cb86f"
       },
       "id": "workduck.agent.snapshot.contract",
       "imports": [
         "crate::project_repository_task::{project_task_run_liveness, read_visible_task_run_record}",
-        "crate::{\n    path_display::display_path,\n    project_repository_task::{\n        ProjectRepositoryTaskRunRecord, project_task_run_liveness_with_budget,\n        read_visible_task_run_record_with_budget,\n    },\n    storage,\n    workspace_path::{WorkspacePathValidationError, validate_absolute_directory_path},\n}",
+        "crate::{\n    path_display::display_path,\n    project_repository_task::{\n        project_task_run_liveness_with_budget, read_visible_task_run_record_with_budget,\n    },\n    storage,\n    workspace_path::{WorkspacePathValidationError, validate_absolute_directory_path},\n}",
         "rusqlite::{Connection, OptionalExtension, params}",
         "std::time::{SystemTime, UNIX_EPOCH}",
         "std::{\n    collections::BTreeMap,\n    fs, io,\n    path::{Path, PathBuf},\n}",
@@ -1250,15 +1250,15 @@
         "time::{OffsetDateTime, format_description::well_known::Rfc3339}"
       ],
       "location": {
-        "declarationLine": 1089,
-        "endLine": 1087,
+        "declarationLine": 1088,
+        "endLine": 1086,
         "exported": false,
         "kind": "function",
         "language": "rust",
         "path": "src-tauri/src/agent_api_snapshot.rs",
         "receiver": null,
         "signature": "fn project_registry_summary_omits_secret_ids()",
-        "startLine": 1082,
+        "startLine": 1081,
         "symbol": "project_registry_summary_omits_secret_ids",
         "visibility": "private"
       },
@@ -1576,7 +1576,7 @@
         "arbitrary shell command input"
       ],
       "hashes": {
-        "body": "319dcf23cdd8c9e272126b3035ba97030d898ee9997b7b5e596000d1ab7a421d",
+        "body": "6e8de9826190207f7baacc09cc4a9e3a3f68a5d0313962ca6a0f02327faa5091",
         "semantic": "ab8a83634f3548e09270abd09e6470986b9b77df49b0489208fa19ee7db133c1",
         "structure": "9e9cd19daa2114ce2806d4f4160987d4f420da4684e1d720d9356280963b61d0"
       },
@@ -4820,6 +4820,6 @@
   "generatedBy": "llmnav@0.9.7",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "3924f5faa1bf6585309d7701c0f918a6439a65977fc0484cc7a2fb65336c4f75",
+  "sourceHash": "a9ec01a178f86abf7a0c6d65aafc2c271188f600790fbe6fe26be32b3cad6219",
   "specVersion": "1"
 }

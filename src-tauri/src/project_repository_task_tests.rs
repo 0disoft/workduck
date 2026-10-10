@@ -4,6 +4,17 @@ use super::commands::{
 };
 use super::*;
 
+fn refresh_running_task_run_records(
+    records: Vec<ProjectRepositoryTaskRunRecord>,
+    collect_processes: impl FnOnce() -> Result<Vec<LiveTaskProcess>, ProjectRepositoryTaskError>,
+) -> Vec<ProjectRepositoryTaskRunRecord> {
+    refresh_running_task_run_records_with_budget(
+        records,
+        collect_processes,
+        history::MAX_HISTORY_BYTES,
+    )
+}
+
 #[test]
 fn oversized_task_record_writes_preserve_the_last_readable_record() {
     let directory = tempfile::tempdir().unwrap();
