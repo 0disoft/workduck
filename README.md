@@ -153,6 +153,10 @@ this first local loop.
 Encrypted sync includes project, group, and repository metadata. Repository
 local paths are stored relative to the workspace when possible, not as raw
 absolute paths.
+Import rejects missing or misbound modern project snapshots, unsupported versions,
+and registry input whose normalization would discard workspaces, nodes, or
+repositories. Invalid lock metadata is rejected instead of becoming an unlocked
+workspace. Explicit empty snapshots and legacy workspace-only exports remain supported.
 
 When a workspace is used as its own repository, Workduck keeps
 `<workspace>/projects/` ignored so nested project repositories are managed

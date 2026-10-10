@@ -1125,8 +1125,8 @@
         "sync file transport"
       ],
       "hashes": {
-        "body": "97a80592f39794fdd2247500f99e25dd89933c6553ea8533da5a1b037f573f39",
-        "semantic": "48fadb054a73ad79cdaf1a22e022e5922dadac755784925fb727208b57c497af",
+        "body": "2feda5248fff66a851a124e7a66cc5fddaa2da9ee2b90629cbd144978915e8a6",
+        "semantic": "bf9c20fe5652fc9ed717f5d046c3186cfe59050e89a20933aa239f7ae41ad18b",
         "structure": "8b2fa2db99275d210e1a4ee36366c74ebbbe00f028c5d7cbaa4d1ba9b7e6e2e5"
       },
       "id": "workduck.workspace.sync",
@@ -1138,7 +1138,7 @@
         "./workspace-registry"
       ],
       "invariant": [
-        "Decrypted data is accepted only when envelope algorithms, versions, and normalized registry payloads match the closed sync contract."
+        "Decrypted data requires supported formats and versions, one project snapshot per modern workspace, and normalization that preserves every workspace, node, and repository; malformed lock metadata cannot silently unlock a workspace."
       ],
       "location": {
         "declarationLine": null,
@@ -1163,7 +1163,8 @@
       "search": [
         "encrypt workspace sync",
         "decrypt registry envelope",
-        "workspace sync payload"
+        "workspace sync payload",
+        "sync import validation"
       ],
       "stability": "contract"
     },
@@ -4763,6 +4764,6 @@
   "generatedBy": "llmnav@0.9.7",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "5d03c9d50756b38cd595d10b2edaa08ec5bd31f47a65df271e2d61e3cc071da8",
+  "sourceHash": "2edf5b91199c867aa247e92d34a1788904c5d1e21d4e4c16d124f28a7f3fc49d",
   "specVersion": "1"
 }

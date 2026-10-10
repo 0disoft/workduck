@@ -89,3 +89,4 @@
 {"query":"retry failed app settings initialization without opening workspace content","expected":["workduck.app-state.boot-gate"]}
 {"query":"Windows PowerShell task script atomic record publication Unicode log tail","expected":["workduck.projects.task-powershell"]}
 {"query":"PowerShell large command line task loader temporary script source cleanup","expected":["workduck.projects.task-powershell"]}
+{"query":"reject incomplete workspace sync import and project snapshots without dropping records","expected":["workduck.workspace.sync"]}

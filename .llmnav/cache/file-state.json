@@ -14533,6 +14533,20 @@
       "sourceBytes": 8438
     },
     {
+      "blocks": [],
+      "contentHash": "b4229f30d4489c7f83c944c40f7928bb20ef2970a40aebef51e16242ae2b3bee",
+      "declarations": [],
+      "imports": [
+        "#lib/tauri/tauri-invoke.ts",
+        "./workspace-sync",
+        "node:assert/strict",
+        "node:test"
+      ],
+      "path": "src/lib/workspaces/workspace-sync.test.ts",
+      "semanticBytes": 0,
+      "sourceBytes": 6170
+    },
+    {
       "blocks": [
         {
           "card": {
@@ -14543,7 +14557,7 @@
             ],
             "id": "workduck.workspace.sync",
             "invariant": [
-              "Decrypted data is accepted only when envelope algorithms, versions, and normalized registry payloads match the closed sync contract."
+              "Decrypted data requires supported formats and versions, one project snapshot per modern workspace, and normalization that preserves every workspace, node, and repository; malformed lock metadata cannot silently unlock a workspace."
             ],
             "owns": [
               "workspace sync format",
@@ -14557,12 +14571,13 @@
             "search": [
               "encrypt workspace sync",
               "decrypt registry envelope",
-              "workspace sync payload"
+              "workspace sync payload",
+              "sync import validation"
             ],
             "stability": "contract",
             "unknown": []
           },
-          "end": 543,
+          "end": 664,
           "endLine": 9,
           "entries": [
             {
@@ -14593,13 +14608,13 @@
               "key": "search",
               "line": 6,
               "order": 4,
-              "value": "encrypt workspace sync|decrypt registry envelope|workspace sync payload"
+              "value": "encrypt workspace sync|decrypt registry envelope|workspace sync payload|sync import validation"
             },
             {
               "key": "invariant",
               "line": 7,
               "order": 5,
-              "value": "Decrypted data is accepted only when envelope algorithms, versions, and normalized registry payloads match the closed sync contract."
+              "value": "Decrypted data requires supported formats and versions, one project snapshot per modern workspace, and normalization that preserves every workspace, node, and repository; malformed lock metadata cannot silently unlock a workspace."
             },
             {
               "key": "stability",
@@ -14612,7 +14627,7 @@
           "indent": "",
           "newline": "\n",
           "prefix": null,
-          "raw": "/* llmnav/1 module\nid=workduck.workspace.sync\nrole=Serialize, encrypt, parse, decrypt, and normalize versioned workspace and project-registry synchronization envelopes.\nowns=workspace sync format|encrypted sync envelope|registry payload normalization\nexcludes=Git synchronization|sync file transport\nsearch=encrypt workspace sync|decrypt registry envelope|workspace sync payload\ninvariant=Decrypted data is accepted only when envelope algorithms, versions, and normalized registry payloads match the closed sync contract.\nstability=contract\n*/",
+          "raw": "/* llmnav/1 module\nid=workduck.workspace.sync\nrole=Serialize, encrypt, parse, decrypt, and normalize versioned workspace and project-registry synchronization envelopes.\nowns=workspace sync format|encrypted sync envelope|registry payload normalization\nexcludes=Git synchronization|sync file transport\nsearch=encrypt workspace sync|decrypt registry envelope|workspace sync payload|sync import validation\ninvariant=Decrypted data requires supported formats and versions, one project snapshot per modern workspace, and normalization that preserves every workspace, node, and repository; malformed lock metadata cannot silently unlock a workspace.\nstability=contract\n*/",
           "scope": "module",
           "specVersion": "1",
           "start": 0,
@@ -14621,7 +14636,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "97a80592f39794fdd2247500f99e25dd89933c6553ea8533da5a1b037f573f39",
+      "contentHash": "2feda5248fff66a851a124e7a66cc5fddaa2da9ee2b90629cbd144978915e8a6",
       "declarations": [
         null
       ],
@@ -14633,8 +14648,8 @@
         "./workspace-registry"
       ],
       "path": "src/lib/workspaces/workspace-sync.ts",
-      "semanticBytes": 543,
-      "sourceBytes": 14645
+      "semanticBytes": 664,
+      "sourceBytes": 16552
     },
     {
       "blocks": [],

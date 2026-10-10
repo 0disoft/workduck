@@ -3,8 +3,8 @@ id=workduck.workspace.sync
 role=Serialize, encrypt, parse, decrypt, and normalize versioned workspace and project-registry synchronization envelopes.
 owns=workspace sync format|encrypted sync envelope|registry payload normalization
 excludes=Git synchronization|sync file transport
-search=encrypt workspace sync|decrypt registry envelope|workspace sync payload
-invariant=Decrypted data is accepted only when envelope algorithms, versions, and normalized registry payloads match the closed sync contract.
+search=encrypt workspace sync|decrypt registry envelope|workspace sync payload|sync import validation
+invariant=Decrypted data requires supported formats and versions, one project snapshot per modern workspace, and normalization that preserves every workspace, node, and repository; malformed lock metadata cannot silently unlock a workspace.
 stability=contract
 */
 import { isObjectRecord } from '#lib/shared/object-record.ts';
@@ -16,7 +16,6 @@ import {
 } from '#lib/projects/project-registry.ts';
 import {
 	normalizeWorkspaceRegistry,
-	parseWorkspaceRegistry,
 	serializeWorkspaceRegistry,
 	type WorkspaceRegistry
 } from './workspace-registry';
@@ -139,11 +138,10 @@ export async function decryptWorkspaceRegistryFromSync(
 		return result;
 	}
 
-	if (!looksLikeWorkspaceRegistryPlaintext(result.plaintext)) {
+	const registry = parseLegacyWorkspaceRegistryPlaintext(result.plaintext);
+	if (registry === null) {
 		return { ok: false, error: 'workspace-sync-registry-invalid' };
 	}
-
-	const registry = parseWorkspaceRegistry(result.plaintext);
 
 	return { ok: true, registry };
 }
@@ -204,8 +202,9 @@ function parseWorkspaceSyncData(plaintext: string): WorkspaceSyncData | null {
 	try {
 		const value: unknown = JSON.parse(plaintext);
 
-		if (looksLikeWorkspaceRegistryValue(value)) {
-			const workspaceRegistry = normalizeWorkspaceRegistry(value);
+		if (isLegacyWorkspaceRegistryValue(value)) {
+			const workspaceRegistry = normalizeSyncWorkspaceRegistry(value);
+			if (workspaceRegistry === null) return null;
 
 			return {
 				format: WORKSPACE_SYNC_PAYLOAD_FORMAT,
@@ -225,20 +224,25 @@ function parseWorkspaceSyncData(plaintext: string): WorkspaceSyncData | null {
 		}
 
 		const projectRegistrySnapshots = value.projectRegistries;
-		const workspaceRegistry = normalizeWorkspaceRegistry(value.workspaceRegistry);
-		const workspacePathById = new Map(
-			workspaceRegistry.workspaces.map((workspace) => [workspace.id, workspace.path])
-		);
-		const projectRegistries = Object.fromEntries(
-			workspaceRegistry.workspaces.map((workspace) => [
+		const workspaceRegistry = normalizeSyncWorkspaceRegistry(value.workspaceRegistry);
+		if (
+			workspaceRegistry === null ||
+			Object.keys(projectRegistrySnapshots).length !== workspaceRegistry.workspaces.length
+		) {
+			return null;
+		}
+		const entries: [string, ProjectRegistry][] = [];
+		for (const workspace of workspaceRegistry.workspaces) {
+			if (!Object.hasOwn(projectRegistrySnapshots, workspace.id)) return null;
+			const registry = restoreProjectRegistrySyncSnapshot(
+				projectRegistrySnapshots[workspace.id],
 				workspace.id,
-				restoreProjectRegistrySyncSnapshot(
-					projectRegistrySnapshots[workspace.id],
-					workspace.id,
-					workspacePathById.get(workspace.id) ?? ''
-				)
-			])
-		);
+				workspace.path
+			);
+			if (registry === null) return null;
+			entries.push([workspace.id, registry]);
+		}
+		const projectRegistries = Object.fromEntries(entries);
 
 		return {
 			format: WORKSPACE_SYNC_PAYLOAD_FORMAT,
@@ -273,10 +277,17 @@ function restoreProjectRegistrySyncSnapshot(
 	value: unknown,
 	workspaceId: string,
 	workspacePath: string
-) {
-	if (!isObjectRecord(value)) {
-		return normalizeProjectRegistry(null, workspaceId);
+): ProjectRegistry | null {
+	if (
+		!isObjectRecord(value) ||
+		value.version !== WORKDUCK_PROJECT_REGISTRY_VERSION ||
+		value.workspaceId !== workspaceId ||
+		!Array.isArray(value.nodes)
+	) {
+		return null;
 	}
+	const rawNodes = value.nodes;
+	if (rawNodes.some((node) => !isObjectRecord(node) || !Array.isArray(node.repositories))) return null;
 
 	const nodes = Array.isArray(value.nodes)
 		? value.nodes.map((node) => {
@@ -310,7 +321,7 @@ function restoreProjectRegistrySyncSnapshot(
 			})
 		: [];
 
-	return normalizeProjectRegistry(
+	const registry = normalizeProjectRegistry(
 		{
 			...value,
 			version: WORKDUCK_PROJECT_REGISTRY_VERSION,
@@ -319,6 +330,18 @@ function restoreProjectRegistrySyncSnapshot(
 		},
 		workspaceId
 	);
+	if (registry.nodes.length !== rawNodes.length) return null;
+	const nodesById = new Map(registry.nodes.map((node) => [node.id, node]));
+	for (const rawNode of rawNodes) {
+		if (
+			!isObjectRecord(rawNode) ||
+			typeof rawNode.id !== 'string' ||
+			!Array.isArray(rawNode.repositories)
+		) return null;
+		const node = nodesById.get(rawNode.id.trim());
+		if (node === undefined || node.repositories.length !== rawNode.repositories.length) return null;
+	}
+	return registry;
 }
 
 function createWorkspaceRelativePath(workspacePath: string, childPath: string) {
@@ -494,18 +517,37 @@ function isWorkspaceSyncCryptoError(value: unknown): value is WorkspaceSyncCrypt
 	);
 }
 
-function looksLikeWorkspaceRegistryPlaintext(plaintext: string) {
+function parseLegacyWorkspaceRegistryPlaintext(plaintext: string): WorkspaceRegistry | null {
 	try {
 		const value: unknown = JSON.parse(plaintext);
 
-		return looksLikeWorkspaceRegistryValue(value);
+		return isLegacyWorkspaceRegistryValue(value) ? normalizeSyncWorkspaceRegistry(value) : null;
 	} catch {
-		return false;
+		return null;
 	}
 }
 
-function looksLikeWorkspaceRegistryValue(value: unknown) {
-	return isObjectRecord(value) && Array.isArray(value.workspaces);
+function isLegacyWorkspaceRegistryValue(value: unknown) {
+	return (
+		isObjectRecord(value) &&
+		!Object.hasOwn(value, 'format') &&
+		!Object.hasOwn(value, 'version') &&
+		!Object.hasOwn(value, 'workspaceRegistry') &&
+		!Object.hasOwn(value, 'projectRegistries') &&
+		Array.isArray(value.workspaces)
+	);
+}
+
+function normalizeSyncWorkspaceRegistry(value: unknown): WorkspaceRegistry | null {
+	if (!isObjectRecord(value) || !Array.isArray(value.workspaces)) return null;
+	const registry = normalizeWorkspaceRegistry(value);
+	if (registry.workspaces.length !== value.workspaces.length) return null;
+	for (let index = 0; index < value.workspaces.length; index += 1) {
+		const rawWorkspace: unknown = value.workspaces[index];
+		if (!isObjectRecord(rawWorkspace)) return null;
+		if (rawWorkspace.lock != null && registry.workspaces[index]?.lock === null) return null;
+	}
+	return registry;
 }
 
 function readOptionalString(value: unknown) {
