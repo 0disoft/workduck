@@ -4,7 +4,7 @@ role=Track renderer workspace unlock sessions, password verification attempts, c
 owns=renderer unlock sessions|unlock attempt cooldown|unlock change notifications|session idle timestamps
 excludes=native vault revocation|password hashing|workspace registry storage
 search=workspace unlock password session|workspace unlock cooldown|idle workspace locking
-invariant=Password-protected records need a renderer unlock session; session changes notify subscribers and idle checks use recent activity; native vault revocation remains the caller's responsibility.
+invariant=Only a live current verification can update a session or attempts; locking, trusted session replacement, and owner cancellation invalidate older results; native vault revocation remains the caller's responsibility.
 stability=architecture
 */
 import type { WorkspaceRecord } from './workspace-registry';
@@ -21,6 +21,7 @@ export type WorkspaceUnlockError =
 	| 'workspace-unlock-rate-limited'
 	| 'workspace-unlock-invalid-password'
 	| 'workspace-unlock-unavailable'
+	| 'workspace-unlock-cancelled'
 	| 'workspace-unlock-invalid-hash';
 
 export type WorkspaceUnlockResult =
@@ -53,6 +54,7 @@ interface WorkspaceUnlockSession {
 }
 
 const unlockedWorkspaceSessions = new Map<string, WorkspaceUnlockSession>();
+const pendingWorkspaceVerifications = new Map<string, symbol>();
 
 export function workspaceRequiresUnlock(workspace: WorkspaceRecord | null | undefined) {
 	return workspace?.lock !== null && workspace?.lock !== undefined;
@@ -71,6 +73,7 @@ export function isWorkspaceUnlocked(workspace: WorkspaceRecord | null | undefine
 }
 
 export function markWorkspaceUnlocked(workspaceId: string, password: string | null = null) {
+	pendingWorkspaceVerifications.delete(workspaceId);
 	unlockedWorkspaceSessions.set(workspaceId, {
 		password,
 		lastActiveAt: Date.now()
@@ -79,6 +82,7 @@ export function markWorkspaceUnlocked(workspaceId: string, password: string | nu
 }
 
 export function markWorkspaceLocked(workspaceId: string) {
+	pendingWorkspaceVerifications.delete(workspaceId);
 	unlockedWorkspaceSessions.delete(workspaceId);
 	dispatchWorkspaceUnlockChanged();
 }
@@ -106,8 +110,15 @@ export function readIdleWorkspaceSessionIds(idleTimeoutMs: number, nowMs = Date.
 export async function unlockWorkspace(
 	workspace: WorkspaceRecord,
 	password: string,
-	nowMs = Date.now()
+	nowMs = Date.now(),
+	signal?: AbortSignal
 ): Promise<WorkspaceUnlockResult> {
+	const cancelled = (): WorkspaceUnlockResult => {
+		const current = getWorkspaceUnlockLockout(workspace.id, nowMs);
+		return { ok: false, error: 'workspace-unlock-cancelled',
+			attemptsRemaining: current.attemptsRemaining, lockedUntil: current.lockedUntil };
+	};
+	if (signal?.aborted) return cancelled();
 	if (!workspaceRequiresUnlock(workspace)) {
 		markWorkspaceUnlocked(workspace.id);
 		return { ok: true };
@@ -133,24 +144,29 @@ export async function unlockWorkspace(
 		};
 	}
 
-	const verification = await verifyWorkspacePassword(password, workspace.lock?.passwordHash ?? '');
-
-	if (!verification.ok) {
-		return {
-			ok: false,
-			error: mapPasswordErrorToUnlockError(verification.error),
-			attemptsRemaining: lockout.attemptsRemaining,
-			lockedUntil: null
-		};
+	const attempt = Symbol('workspace verification');
+	pendingWorkspaceVerifications.set(workspace.id, attempt);
+	const abort = () => {
+		if (pendingWorkspaceVerifications.get(workspace.id) === attempt) pendingWorkspaceVerifications.delete(workspace.id);
+	};
+	signal?.addEventListener('abort', abort, { once: true });
+	try {
+		const verification = await verifyWorkspacePassword(password, workspace.lock?.passwordHash ?? '');
+		if (signal?.aborted || pendingWorkspaceVerifications.get(workspace.id) !== attempt) return cancelled();
+		if (!verification.ok) {
+			return { ok: false, error: mapPasswordErrorToUnlockError(verification.error),
+				attemptsRemaining: lockout.attemptsRemaining, lockedUntil: null };
+		}
+		if (verification.matched) {
+			clearWorkspaceUnlockAttempt(workspace.id);
+			markWorkspaceUnlocked(workspace.id, password);
+			return { ok: true };
+		}
+		return recordWorkspaceUnlockFailure(workspace.id, nowMs);
+	} finally {
+		signal?.removeEventListener('abort', abort);
+		if (pendingWorkspaceVerifications.get(workspace.id) === attempt) pendingWorkspaceVerifications.delete(workspace.id);
 	}
-
-	if (verification.matched) {
-		clearWorkspaceUnlockAttempt(workspace.id);
-		markWorkspaceUnlocked(workspace.id, password);
-		return { ok: true };
-	}
-
-	return recordWorkspaceUnlockFailure(workspace.id, nowMs);
 }
 
 export function getWorkspaceUnlockLockout(

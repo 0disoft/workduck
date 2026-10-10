@@ -14296,7 +14296,7 @@
     },
     {
       "blocks": [],
-      "contentHash": "8401778dbe49c22920ea73aa06bbf1d5d767bf8e464b3a6a105306f720908839",
+      "contentHash": "5f77c09e6684b625ccb0bb6dab14540938675d6c2b6e7b38486453a92323364e",
       "declarations": [],
       "imports": [
         "#lib/i18n/workduck-language.ts",
@@ -14308,7 +14308,7 @@
       ],
       "path": "src/lib/workspaces/WorkspaceUnlockForm.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 5694
+      "sourceBytes": 6698
     },
     {
       "blocks": [
@@ -15416,6 +15416,20 @@
       "sourceBytes": 15805
     },
     {
+      "blocks": [],
+      "contentHash": "84ec0686be4e808c574123d7b46caede4acde66cc8af789b34f8eea39091b269",
+      "declarations": [],
+      "imports": [
+        "#lib/tauri/tauri-invoke.ts",
+        "./workspace-registry",
+        "./workspace-unlock",
+        "bun:test"
+      ],
+      "path": "src/lib/workspaces/workspace-unlock.test.ts",
+      "semanticBytes": 0,
+      "sourceBytes": 5326
+    },
+    {
       "blocks": [
         {
           "card": {
@@ -15427,7 +15441,7 @@
             ],
             "id": "workduck.workspace.unlock",
             "invariant": [
-              "Password-protected records need a renderer unlock session; session changes notify subscribers and idle checks use recent activity; native vault revocation remains the caller's responsibility."
+              "Only a live current verification can update a session or attempts; locking, trusted session replacement, and owner cancellation invalidate older results; native vault revocation remains the caller's responsibility."
             ],
             "owns": [
               "renderer unlock sessions",
@@ -15447,7 +15461,7 @@
             "stability": "architecture",
             "unknown": []
           },
-          "end": 657,
+          "end": 680,
           "endLine": 9,
           "entries": [
             {
@@ -15484,7 +15498,7 @@
               "key": "invariant",
               "line": 7,
               "order": 5,
-              "value": "Password-protected records need a renderer unlock session; session changes notify subscribers and idle checks use recent activity; native vault revocation remains the caller's responsibility."
+              "value": "Only a live current verification can update a session or attempts; locking, trusted session replacement, and owner cancellation invalidate older results; native vault revocation remains the caller's responsibility."
             },
             {
               "key": "stability",
@@ -15497,7 +15511,7 @@
           "indent": "",
           "newline": "\n",
           "prefix": null,
-          "raw": "/* llmnav/1 module\nid=workduck.workspace.unlock\nrole=Track renderer workspace unlock sessions, password verification attempts, cooldowns, and idle activity.\nowns=renderer unlock sessions|unlock attempt cooldown|unlock change notifications|session idle timestamps\nexcludes=native vault revocation|password hashing|workspace registry storage\nsearch=workspace unlock password session|workspace unlock cooldown|idle workspace locking\ninvariant=Password-protected records need a renderer unlock session; session changes notify subscribers and idle checks use recent activity; native vault revocation remains the caller's responsibility.\nstability=architecture\n*/",
+          "raw": "/* llmnav/1 module\nid=workduck.workspace.unlock\nrole=Track renderer workspace unlock sessions, password verification attempts, cooldowns, and idle activity.\nowns=renderer unlock sessions|unlock attempt cooldown|unlock change notifications|session idle timestamps\nexcludes=native vault revocation|password hashing|workspace registry storage\nsearch=workspace unlock password session|workspace unlock cooldown|idle workspace locking\ninvariant=Only a live current verification can update a session or attempts; locking, trusted session replacement, and owner cancellation invalidate older results; native vault revocation remains the caller's responsibility.\nstability=architecture\n*/",
           "scope": "module",
           "specVersion": "1",
           "start": 0,
@@ -15506,7 +15520,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "bc4809a48b40b00f231ddb3e3a67e0de6d70213e9f552c2c1319070e880ab373",
+      "contentHash": "a2dabdb695f031162a6b00088148cd43040f857c5733d8f4f5aa231f53a272dc",
       "declarations": [
         null
       ],
@@ -15515,8 +15529,8 @@
         "./workspace-registry"
       ],
       "path": "src/lib/workspaces/workspace-unlock.ts",
-      "semanticBytes": 657,
-      "sourceBytes": 9354
+      "semanticBytes": 680,
+      "sourceBytes": 10514
     },
     {
       "blocks": [

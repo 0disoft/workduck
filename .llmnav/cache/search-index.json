@@ -102,7 +102,7 @@
     "workduck.workspace.sync-git-native",
     "workduck.workspace.unlock"
   ],
-  "cardSetHash": "72045a7e115ec25b59a6b471f25b2e72309943b3a7d3c28bbc14251799949312",
+  "cardSetHash": "9bd7ec49009b6a4a9da8450d4678835ba8ccda307c1449bdc7db89d7e8b98908",
   "documentCount": 101,
   "documents": [
     [
@@ -1463,13 +1463,13 @@
       ]
     ],
     [
-      "c5dd25e39dd2659f46b6f254173e90961cefbf687f1a3fe449ed69786dffadfe",
+      "4b78773cac7c0a010ca0e1f92311b45cf007973735d5d301e05e51b0ac4f2fd9",
       [
         "track renderer workspace unlock sessions, password verification attempts, cooldowns, and idle activity.",
         "workspace unlock password session",
         "workspace unlock cooldown",
         "idle workspace locking",
-        "password-protected records need a renderer unlock session; session changes notify subscribers and idle checks use recent activity; native vault revocation remains the caller's responsibility.",
+        "only a live current verification can update a session or attempts; locking, trusted session replacement, and owner cancellation invalidate older results; native vault revocation remains the caller's responsibility.",
         "renderer unlock sessions",
         "unlock attempt cooldown",
         "unlock change notifications",
@@ -1795,7 +1795,7 @@
         100,
         [
           5,
-          1
+          2
         ]
       ]
     ],
@@ -2027,8 +2027,6 @@
         100,
         [
           1,
-          1,
-          5,
           1
         ]
       ]
@@ -4427,6 +4425,8 @@
         100,
         [
           1,
+          1,
+          5,
           1
         ]
       ]
@@ -5858,6 +5858,13 @@
           5,
           1
         ]
+      ],
+      [
+        100,
+        [
+          5,
+          1
+        ]
       ]
     ],
     [
@@ -5904,6 +5911,13 @@
         61,
         [
           4,
+          1
+        ]
+      ],
+      [
+        100,
+        [
+          5,
           1
         ]
       ]
@@ -6295,13 +6309,6 @@
           5,
           1
         ]
-      ],
-      [
-        100,
-        [
-          5,
-          1
-        ]
       ]
     ],
     [
@@ -6403,13 +6410,6 @@
         86,
         [
           1,
-          1
-        ]
-      ],
-      [
-        100,
-        [
-          5,
           1
         ]
       ]
@@ -8722,6 +8722,13 @@
       ],
       [
         78,
+        [
+          5,
+          1
+        ]
+      ],
+      [
+        100,
         [
           5,
           1
@@ -14672,8 +14679,6 @@
           2,
           1,
           3,
-          1,
-          5,
           1
         ]
       ]
@@ -15592,6 +15597,15 @@
         95,
         [
           2,
+          1
+        ]
+      ]
+    ],
+    [
+      [
+        100,
+        [
+          5,
           1
         ]
       ]
@@ -17406,6 +17420,13 @@
           5,
           1
         ]
+      ],
+      [
+        100,
+        [
+          5,
+          1
+        ]
       ]
     ],
     [
@@ -17724,6 +17745,8 @@
         100,
         [
           2,
+          1,
+          5,
           1
         ]
       ]
@@ -19371,15 +19394,6 @@
     ],
     [
       [
-        100,
-        [
-          5,
-          1
-        ]
-      ]
-    ],
-    [
-      [
         49,
         [
           2,
@@ -20127,13 +20141,6 @@
           5,
           1
         ]
-      ],
-      [
-        100,
-        [
-          5,
-          1
-        ]
       ]
     ],
     [
@@ -20261,6 +20268,13 @@
     [
       [
         6,
+        [
+          5,
+          1
+        ]
+      ],
+      [
+        100,
         [
           5,
           1
@@ -20765,6 +20779,13 @@
       ],
       [
         95,
+        [
+          5,
+          1
+        ]
+      ],
+      [
+        100,
         [
           5,
           1
@@ -21384,6 +21405,13 @@
           5,
           1
         ]
+      ],
+      [
+        100,
+        [
+          5,
+          1
+        ]
       ]
     ],
     [
@@ -21983,6 +22011,13 @@
           5,
           1
         ]
+      ],
+      [
+        100,
+        [
+          5,
+          1
+        ]
       ]
     ],
     [
@@ -22502,8 +22537,6 @@
           2,
           1,
           4,
-          1,
-          5,
           1
         ]
       ]
@@ -24925,15 +24958,6 @@
     ],
     [
       [
-        100,
-        [
-          5,
-          1
-        ]
-      ]
-    ],
-    [
-      [
         3,
         [
           2,
@@ -26105,13 +26129,6 @@
           3,
           1
         ]
-      ],
-      [
-        100,
-        [
-          5,
-          1
-        ]
       ]
     ],
     [
@@ -26392,13 +26409,6 @@
         95,
         [
           1,
-          1
-        ]
-      ],
-      [
-        100,
-        [
-          5,
           1
         ]
       ]
@@ -27599,8 +27609,6 @@
           1,
           1,
           3,
-          1,
-          5,
           1
         ]
       ]
@@ -27702,6 +27710,13 @@
       ],
       [
         95,
+        [
+          5,
+          1
+        ]
+      ],
+      [
+        100,
         [
           5,
           1
@@ -29163,6 +29178,13 @@
         97,
         [
           1,
+          1
+        ]
+      ],
+      [
+        100,
+        [
+          5,
           1
         ]
       ]
@@ -34584,13 +34606,6 @@
         [
           1,
           1,
-          5,
-          1
-        ]
-      ],
-      [
-        100,
-        [
           5,
           1
         ]
@@ -37629,6 +37644,13 @@
           1,
           1
         ]
+      ],
+      [
+        100,
+        [
+          5,
+          1
+        ]
       ]
     ],
     [
@@ -38376,8 +38398,6 @@
           2,
           3,
           3,
-          5,
-          1,
           9,
           1
         ]
@@ -38583,6 +38603,13 @@
           1,
           1
         ]
+      ],
+      [
+        100,
+        [
+          5,
+          1
+        ]
       ]
     ],
     [
@@ -38680,13 +38707,6 @@
       ],
       [
         91,
-        [
-          5,
-          1
-        ]
-      ],
-      [
-        100,
         [
           5,
           1
@@ -39389,6 +39409,8 @@
         100,
         [
           1,
+          1,
+          5,
           1
         ]
       ]
@@ -42616,6 +42638,7 @@
     "interval",
     "into",
     "invalid",
+    "invalidate",
     "invalidates",
     "inventory",
     "invocation",
@@ -42733,7 +42756,6 @@
     "names",
     "native",
     "navigation",
-    "need",
     "nested",
     "network",
     "never",
@@ -42879,7 +42901,6 @@
     "properties",
     "proposals",
     "prose",
-    "protected",
     "protection",
     "protocol",
     "provide",

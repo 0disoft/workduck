@@ -5123,8 +5123,8 @@
         "workspace registry storage"
       ],
       "hashes": {
-        "body": "bc4809a48b40b00f231ddb3e3a67e0de6d70213e9f552c2c1319070e880ab373",
-        "semantic": "bda318bda28a459acea2ba029a9e52712f4ea52744e7f2e0bd3381c4ae8d3b1f",
+        "body": "a2dabdb695f031162a6b00088148cd43040f857c5733d8f4f5aa231f53a272dc",
+        "semantic": "7ea6206cf04d3cf6bf71faa30e8831d9c960557d505afa6ef7f13e31a1c46e73",
         "structure": "b827ef9d94f2bba745ef8253d89caf9ca0960907dbe93489491aab3f0862b212"
       },
       "id": "workduck.workspace.unlock",
@@ -5133,7 +5133,7 @@
         "./workspace-registry"
       ],
       "invariant": [
-        "Password-protected records need a renderer unlock session; session changes notify subscribers and idle checks use recent activity; native vault revocation remains the caller's responsibility."
+        "Only a live current verification can update a session or attempts; locking, trusted session replacement, and owner cancellation invalidate older results; native vault revocation remains the caller's responsibility."
       ],
       "location": {
         "declarationLine": null,
@@ -5177,6 +5177,6 @@
   "generatedBy": "llmnav@0.9.7",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "e1e1eb85d96a4ccb6784bb261c6cf1d20b747a6616fdbb1a724e989c57c41c9d",
+  "sourceHash": "a26793d66b388c8270cc0c5afed27e6f8769b795b41cc0ff9118f83e052072f0",
   "specVersion": "1"
 }

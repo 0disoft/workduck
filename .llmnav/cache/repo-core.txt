@@ -287,4 +287,4 @@ invariant All registration stages use the same submitted password and options; f
 role Track renderer workspace unlock sessions, password verification attempts, cooldowns, and idle activity.
 owns renderer unlock sessions, unlock attempt cooldown, unlock change notifications, session idle timestamps
 excludes native vault revocation, password hashing, workspace registry storage
-invariant Password-protected records need a renderer unlock session; session changes notify subscribers and idle checks use recent activity; native vault revocation remains the caller's responsibility.
+invariant Only a live current verification can update a session or attempts; locking, trusted session replacement, and owner cancellation invalidate older results; native vault revocation remains the caller's responsibility.
