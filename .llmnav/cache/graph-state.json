@@ -1916,7 +1916,7 @@
           "to": "workduck/workduck.projects.registry-domain"
         }
       ],
-      "inputHash": "3314e7349b92c49046ed32bbc059c92d0da2f646cb311829ee2c0fb4b81c68a8",
+      "inputHash": "94e192dea99b649ac72ca8d2503462e5dce9d4168efc187e1699bf4aa1186983",
       "key": "card:workduck/workduck.projects.storage",
       "nodes": [
         {
@@ -1946,11 +1946,11 @@
             "visibility": null
           },
           "repositoryId": "workduck",
-          "role": "Persist workspace project registries through Tauri SQLite while migrating and preserving the browser legacy fallback.",
+          "role": "Persist ordered project registry writes, atomically import workspace sync data in SQLite, and migrate browser legacy registries.",
           "semanticId": "workduck.projects.storage"
         }
       ],
-      "outputHash": "b87ca51cf29ea4dbd4f102a5afa66c5375745b367d22b26feba5e119a1728a75"
+      "outputHash": "226def90d86475b09ad9bb38bb2f06dcb54c0d2c8ccc3c55e73311098445aa47"
     },
     {
       "edges": [],

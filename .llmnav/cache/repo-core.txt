@@ -20,10 +20,10 @@ excludes task command selection, terminal output buffering
 invariant Parent exit never exempts owned descendants from termination; completed owners retire their registrations and cannot signal their process group again.
 
 @workduck.projects.storage
-role Persist workspace project registries through Tauri SQLite while migrating and preserving the browser legacy fallback.
-owns project registry persistence, legacy registry promotion, registry change notifications, workspace operation ordering
+role Persist ordered project registry writes, atomically import workspace sync data in SQLite, and migrate browser legacy registries.
+owns project registry persistence, legacy registry promotion, registry change notifications, workspace operation ordering, atomic sync import
 excludes project domain normalization, repository Git operations
-invariant Overlapping writes run in request order, legacy promotion rechecks SQLite before writing, and subscriptions publish only the latest successful result while still active.
+invariant Overlapping writes run in request order; sync imports publish workspace and project changes only after one native commit; legacy promotion rechecks SQLite and active subscriptions publish only current results.
 
 @workduck.projects.folder
 role Create, open, and delete bounded project folders and preview or apply ssealed scaffolds through Tauri commands.
@@ -231,9 +231,9 @@ invariant Repository operations and favorite-save feedback stay in the captured 
 
 @workduck.app-state.storage
 role Persist application settings through a renderer crash journal, native SQLite promotion, and browser fallback.
-owns app state backend selection, legacy setting promotion, pending write journal, serialized flush, cached setting values
+owns app state backend selection, legacy setting promotion, pending write journal, serialized flush, transaction cache publication
 excludes setting domain validation, native SQLite implementation, workspace project registries
-invariant Native writes require successful initialization; renderer writes acknowledge journaling before persistence, and a flush removes only journal entries matching its committed snapshot.
+invariant Native writes require successful initialization; flushes remove only matching journals; external transactions drain pending writes, exclude edits to their key, and publish cache changes only after commit.
 
 @workduck.environment.vault-session
 role Project native environment vault sessions into workspace metadata subscriptions and coordinate explicit secret access and locking.

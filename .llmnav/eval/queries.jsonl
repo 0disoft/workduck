@@ -92,3 +92,4 @@
 {"query":"reject incomplete workspace sync import and project snapshots without dropping records","expected":["workduck.workspace.sync"]}
 {"query":"native app state SQLite transaction bounded JSON UTC revision ordering","expected":["workduck.app-state.storage-native"]}
 {"query":"atomic workspace and project registry sync import SQLite rollback","expected":["workduck.projects.storage-native"]}
+{"query":"atomic workspace sync import ordered project registry storage","expected":["workduck.projects.storage"]}

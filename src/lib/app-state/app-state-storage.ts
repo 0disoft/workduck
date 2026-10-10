@@ -1,10 +1,10 @@
 /* llmnav/1 module
 id=workduck.app-state.storage
 role=Persist application settings through a renderer crash journal, native SQLite promotion, and browser fallback.
-owns=app state backend selection|legacy setting promotion|pending write journal|serialized flush|cached setting values
+owns=app state backend selection|legacy setting promotion|pending write journal|serialized flush|transaction cache publication
 excludes=setting domain validation|native SQLite implementation|workspace project registries
 search=app state crash journal|settings SQLite promotion|pending setting flush
-invariant=Native writes require successful initialization; renderer writes acknowledge journaling before persistence, and a flush removes only journal entries matching its committed snapshot.
+invariant=Native writes require successful initialization; flushes remove only matching journals; external transactions drain pending writes, exclude edits to their key, and publish cache changes only after commit.
 stability=architecture
 */
 import { isObjectRecord } from '#lib/shared/object-record.ts';
@@ -82,6 +82,7 @@ type AppStateBackend = 'uninitialized' | 'browser' | 'sqlite' | 'native-unavaila
 
 const cachedValues = new Map<WorkduckAppStateKey, string>();
 const legacyStorageKeys = new Map<WorkduckAppStateKey, string>();
+const transactionKeys = new Set<WorkduckAppStateKey>();
 let backend: AppStateBackend = 'uninitialized';
 let initializationError: WorkduckAppStateStorageError | null = null;
 let pendingFlush: Promise<boolean> | null = null;
@@ -193,7 +194,7 @@ export function writeWorkduckAppStateValue(
 ): WorkduckAppStateValueWriteResult {
 	legacyStorageKeys.set(key, legacyStorageKey);
 
-	if (!isJsonObjectText(valueJson)) {
+	if (transactionKeys.has(key) || !isJsonObjectText(valueJson)) {
 		return {
 			ok: false,
 			valueJson,
@@ -254,6 +255,34 @@ export function writeWorkduckAppStateValue(
 		void flushWorkduckAppStateWrites();
 	});
 	return { ok: true, valueJson };
+}
+
+export async function commitWorkduckAppStateValueWithNativeTransaction(
+	key: WorkduckAppStateKey,
+	legacyStorageKey: string,
+	valueJson: string,
+	commit: (expectedValueJson: string | null) => Promise<boolean>
+): Promise<WorkduckAppStateValueWriteResult> {
+	const failed = { ok: false, valueJson, error: 'app-state-write-failed' } as const;
+	if (
+		backend !== 'sqlite' || initializationError !== null ||
+		getTauriInvoke() === undefined || transactionKeys.has(key) || !isJsonObjectText(valueJson)
+	) return failed;
+
+	transactionKeys.add(key);
+	try {
+		// Older journal writes must settle before the transaction checks its snapshot.
+		// Writes to this key stay excluded until the committed cache is visible.
+		if (!await flushWorkduckAppStateWrites()) return failed;
+		if (!await commit(cachedValues.get(key) ?? null)) return failed;
+		cachedValues.set(key, valueJson);
+		legacyStorageKeys.set(key, legacyStorageKey);
+		return { ok: true, valueJson };
+	} catch {
+		return failed;
+	} finally {
+		transactionKeys.delete(key);
+	}
 }
 
 export function subscribeWorkduckAppStateValue(
@@ -605,6 +634,7 @@ export function setWorkduckAppStateBrowserStorageForTest(storage: BrowserStorage
 export function resetWorkduckAppStateStorageForTest() {
 	cachedValues.clear();
 	legacyStorageKeys.clear();
+	transactionKeys.clear();
 	backend = 'uninitialized';
 	initializationError = null;
 	pendingFlush = null;

@@ -68,17 +68,20 @@ export function writeWorkspaceRegistryToBrowser(
 		};
 	}
 
+	notifyWorkspaceRegistryChanged(normalizedRegistry);
+	return { ok: true, registry: normalizedRegistry };
+}
+
+export function notifyWorkspaceRegistryChanged(registry: WorkspaceRegistry) {
 	if (typeof window !== 'undefined') {
 		window.dispatchEvent(
 			new CustomEvent<WorkspaceRegistryChangedDetail>(WORKDUCK_WORKSPACE_REGISTRY_CHANGED_EVENT, {
 				detail: {
-					registry: normalizedRegistry
+					registry
 				}
 			})
 		);
 	}
-
-	return { ok: true, registry: normalizedRegistry };
 }
 
 export function subscribeWorkspaceRegistry(

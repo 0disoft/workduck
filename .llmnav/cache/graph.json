@@ -1742,7 +1742,7 @@
         "visibility": null
       },
       "repositoryId": "workduck",
-      "role": "Persist workspace project registries through Tauri SQLite while migrating and preserving the browser legacy fallback.",
+      "role": "Persist ordered project registry writes, atomically import workspace sync data in SQLite, and migrate browser legacy registries.",
       "semanticId": "workduck.projects.storage",
       "unresolved": false
     },
@@ -2783,7 +2783,7 @@
   ],
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "36e7b07536bd15e6f02ef9e7ec051d95489a0e6c67e88b0a6bd4016385be1a16",
+  "sourceHash": "ceff87b8b9af470fea52d9715f59e26fa7febe8d0d7525706dbc25d539d268d5",
   "stats": {
     "edgeCount": 49,
     "importedIndexCount": 0,

@@ -372,18 +372,21 @@
         "repository Git operations"
       ],
       "hashes": {
-        "body": "4a4c7be3cf7e5f0d8616cfac82e136c8c20c6dbd4ee794cc2c7787df8427a63a",
-        "semantic": "d0551193e6b9ebda803177c523a575ed4bc3134bbf476c7f431eacde59cc4bf4",
-        "structure": "6f6256f66daa5025ebca5d499e7e432b3a7c7493036fdb4605216d014e1f4b64"
+        "body": "adff874632bb0c6d6cc64260b1ab6087e68073aa7508e3de0a429d590e3696b4",
+        "semantic": "0c187f0c15ecdf11cb66206f3e8467d91ad0126f2076334711e54a67b48e9539",
+        "structure": "7ab1eb51dec38106979f5838522610a962153dc8ade2e1592b6783b9757d18b7"
       },
       "id": "workduck.projects.storage",
       "imports": [
+        "#lib/app-state/app-state-storage.ts",
         "#lib/shared/object-record.ts",
         "#lib/tauri/tauri-invoke.ts",
+        "#lib/workspaces/workspace-registry.ts",
+        "#lib/workspaces/workspace-storage.ts",
         "./project-registry"
       ],
       "invariant": [
-        "Overlapping writes run in request order, legacy promotion rechecks SQLite before writing, and subscriptions publish only the latest successful result while still active."
+        "Overlapping writes run in request order; sync imports publish workspace and project changes only after one native commit; legacy promotion rechecks SQLite and active subscriptions publish only current results."
       ],
       "location": {
         "declarationLine": null,
@@ -402,14 +405,15 @@
         "project registry persistence",
         "legacy registry promotion",
         "registry change notifications",
-        "workspace operation ordering"
+        "workspace operation ordering",
+        "atomic sync import"
       ],
-      "role": "Persist workspace project registries through Tauri SQLite while migrating and preserving the browser legacy fallback.",
+      "role": "Persist ordered project registry writes, atomically import workspace sync data in SQLite, and migrate browser legacy registries.",
       "scope": "module",
       "search": [
         "project registry storage",
         "sqlite registry migration",
-        "legacy project registry"
+        "atomic workspace sync import"
       ],
       "stability": "architecture"
     },
@@ -4287,8 +4291,8 @@
         "workspace project registries"
       ],
       "hashes": {
-        "body": "a308c9091006301d8ddeb84c518d7148c5eb9edde14b17b28ca28a5a60ebd20a",
-        "semantic": "13f63e37a971f238a534f00055f24f58aa53a7f75245a90303e319d90dd4f374",
+        "body": "f9a5e0ca763f0ca707b3c3c7612ddec26d83151d91aa44dbdf7c2a6762b8a055",
+        "semantic": "e01fcfcb4384e967427e802d748a896774f7468ace6542d2be3a057fcefc4121",
         "structure": "1e222539a41b7ca433d629c18afe33696257ba4d1b463345be92338d6504c960"
       },
       "id": "workduck.app-state.storage",
@@ -4297,7 +4301,7 @@
         "#lib/tauri/tauri-invoke.ts"
       ],
       "invariant": [
-        "Native writes require successful initialization; renderer writes acknowledge journaling before persistence, and a flush removes only journal entries matching its committed snapshot."
+        "Native writes require successful initialization; flushes remove only matching journals; external transactions drain pending writes, exclude edits to their key, and publish cache changes only after commit."
       ],
       "location": {
         "declarationLine": null,
@@ -4317,7 +4321,7 @@
         "legacy setting promotion",
         "pending write journal",
         "serialized flush",
-        "cached setting values"
+        "transaction cache publication"
       ],
       "role": "Persist application settings through a renderer crash journal, native SQLite promotion, and browser fallback.",
       "scope": "module",
@@ -4816,6 +4820,6 @@
   "generatedBy": "llmnav@0.9.7",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "e631d94fa4999e8e0d2b6cfb2ec3f4b5ab9da328173936e655392bac92f61f65",
+  "sourceHash": "f7a2463393ce4dd15be3fc19e263dd00655f887797597064d0d447fcb8250a23",
   "specVersion": "1"
 }
