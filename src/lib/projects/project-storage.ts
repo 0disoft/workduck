@@ -3,8 +3,8 @@ id=workduck.projects.storage
 role=Persist ordered project registry writes, atomically import workspace sync data in SQLite, and migrate browser legacy registries.
 owns=project registry persistence|legacy registry promotion|registry change notifications|workspace operation ordering|atomic sync import
 excludes=project domain normalization|repository Git operations
-search=project registry storage|sqlite registry migration|atomic workspace sync import
-invariant=Stored SQLite rows are independent of the legacy cache; bulk fallback reads share one snapshot per attempt; writes stay ordered and sync imports publish only after commit; legacy promotion guards missing rows and subscriptions publish only current results.
+search=project registry storage|sqlite registry migration|atomic workspace sync import|corrupt legacy project data
+invariant=Stored SQLite rows are independent of the legacy cache; invalid legacy data blocks fallback saves; bulk fallback reads share one snapshot per attempt; writes stay ordered, imports publish only after commit, and legacy promotion guards missing rows.
 stability=architecture
 */
 
@@ -118,11 +118,18 @@ interface WorkspaceRegistryWriteInput {
 	readonly updatedAt: string;
 }
 
+class LegacyProjectRegistryReadError extends Error {
+	constructor(readonly storageError: ProjectRegistryStorageError) {
+		super(storageError);
+	}
+}
+
 export async function readProjectRegistry(workspaceId: string): Promise<ProjectRegistryStorageResult> {
 	try {
 		return await readProjectRegistryNow(workspaceId);
-	} catch {
-		return { ok: false, registry: createEmptyProjectRegistry(workspaceId), error: 'project-registry-read-failed' };
+	} catch (error) {
+		return { ok: false, registry: createEmptyProjectRegistry(workspaceId),
+			error: error instanceof LegacyProjectRegistryReadError ? error.storageError : 'project-registry-read-failed' };
 	}
 }
 
@@ -269,8 +276,9 @@ export async function readProjectRegistries(
 	const ids = [...workspaceIds];
 	try {
 		return await readProjectRegistriesNow(ids);
-	} catch {
-		return { ok: false, registries: Object.fromEntries(ids.map((id) => [id, createEmptyProjectRegistry(id)])), error: 'project-registry-read-failed' };
+	} catch (error) {
+		return { ok: false, registries: Object.fromEntries(ids.map((id) => [id, createEmptyProjectRegistry(id)])),
+			error: error instanceof LegacyProjectRegistryReadError ? error.storageError : 'project-registry-read-failed' };
 	}
 }
 
@@ -737,24 +745,45 @@ function readLegacyStorageRecord(): ProjectRegistryStorageRecord {
 	try {
 		const value: unknown = JSON.parse(serializedStorage);
 
-		if (!isObjectRecord(value) || value.version !== WORKDUCK_PROJECT_REGISTRY_VERSION) {
-			return createEmptyLegacyStorageRecord();
+		if (!isObjectRecord(value) || !isObjectRecord(value.registries)) {
+			throw new LegacyProjectRegistryReadError('project-registry-read-failed');
+		}
+		if (value.version !== WORKDUCK_PROJECT_REGISTRY_VERSION) {
+			throw new LegacyProjectRegistryReadError('project-registry-version-unsupported');
 		}
 
-		const rawRegistries = isObjectRecord(value.registries) ? value.registries : {};
+		const rawRegistries = value.registries;
 		const registries = Object.fromEntries(
-			Object.entries(rawRegistries).map(([workspaceId, registry]) => [
-				workspaceId,
-				normalizeProjectRegistry(registry, workspaceId)
-			])
+			Object.entries(rawRegistries).map(([workspaceId, registry]) => {
+				if (!isObjectRecord(registry) || !Array.isArray(registry.nodes)) {
+					throw new LegacyProjectRegistryReadError('project-registry-read-failed');
+				}
+				if (registry.version !== WORKDUCK_PROJECT_REGISTRY_VERSION) {
+					throw new LegacyProjectRegistryReadError('project-registry-version-unsupported');
+				}
+				const normalized = normalizeProjectRegistry(registry, workspaceId);
+				if (normalized.nodes.length !== registry.nodes.length) {
+					throw new LegacyProjectRegistryReadError('project-registry-read-failed');
+				}
+				const nodesById = new Map(normalized.nodes.map((node) => [node.id, node]));
+				for (const node of registry.nodes) {
+					if (!isObjectRecord(node) || typeof node.id !== 'string' ||
+						(node.repositories !== undefined && !Array.isArray(node.repositories)) ||
+						(Array.isArray(node.repositories) && nodesById.get(node.id.trim())?.repositories.length !== node.repositories.length)) {
+						throw new LegacyProjectRegistryReadError('project-registry-read-failed');
+					}
+				}
+				return [workspaceId, normalized];
+			})
 		);
 
 		return {
 			version: WORKDUCK_PROJECT_REGISTRY_VERSION,
 			registries
 		};
-	} catch {
-		return createEmptyLegacyStorageRecord();
+	} catch (error) {
+		if (error instanceof LegacyProjectRegistryReadError) throw error;
+		throw new LegacyProjectRegistryReadError('project-registry-read-failed');
 	}
 }
 

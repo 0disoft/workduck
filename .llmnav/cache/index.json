@@ -372,8 +372,8 @@
         "repository Git operations"
       ],
       "hashes": {
-        "body": "d17779b6f7b9486be8914d1103314537216083247a6da9b9edc71e1b74cd9f9a",
-        "semantic": "9027a884c3344e3ef92ea55946d6725f5cfcfb3b7427982ed8bb2890dbef1aa2",
+        "body": "231ebb5370c36ba28d6c0bf5d7d4bf2722f96995ac2558fec006a3451aca8883",
+        "semantic": "b89e4370db4b7acd9b49a6824e46378d19668e6940f393c4b58a859e996830bd",
         "structure": "7ab1eb51dec38106979f5838522610a962153dc8ade2e1592b6783b9757d18b7"
       },
       "id": "workduck.projects.storage",
@@ -386,7 +386,7 @@
         "./project-registry"
       ],
       "invariant": [
-        "Stored SQLite rows are independent of the legacy cache; bulk fallback reads share one snapshot per attempt; writes stay ordered and sync imports publish only after commit; legacy promotion guards missing rows and subscriptions publish only current results."
+        "Stored SQLite rows are independent of the legacy cache; invalid legacy data blocks fallback saves; bulk fallback reads share one snapshot per attempt; writes stay ordered, imports publish only after commit, and legacy promotion guards missing rows."
       ],
       "location": {
         "declarationLine": null,
@@ -413,7 +413,8 @@
       "search": [
         "project registry storage",
         "sqlite registry migration",
-        "atomic workspace sync import"
+        "atomic workspace sync import",
+        "corrupt legacy project data"
       ],
       "stability": "architecture"
     },
@@ -4820,6 +4821,6 @@
   "generatedBy": "llmnav@0.9.7",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "dffb8d09dbbcb5980774479ec2895a903621c6a91a9500183f69df199c9de435",
+  "sourceHash": "4d5cb640168e6dd66b6d2c47787670728b458a60c6743b55ad7f92dfb0bc836f",
   "specVersion": "1"
 }

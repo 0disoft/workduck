@@ -61,6 +61,50 @@ afterEach(() => {
 });
 
 describe('project registry storage write ordering', () => {
+	const validLegacy = { ...createEmptyProjectRegistry('demo'), updatedAt: '2026-10-04T00:00:00.000Z' };
+	const root = addProjectNode(validLegacy, { kind: 'project', name: 'Legacy', path: 'projects/legacy' });
+	if (!root.ok) throw new Error(root.error);
+	for (const [label, stored, error] of [
+		['broken JSON', '{', 'project-registry-read-failed'],
+		['missing collection', JSON.stringify({ version: 1 }), 'project-registry-read-failed'],
+		['future envelope', JSON.stringify({ version: 99, registries: {} }), 'project-registry-version-unsupported'],
+		['future registry', JSON.stringify({ version: 1, registries: { demo: { ...validLegacy, version: 99 } } }), 'project-registry-version-unsupported'],
+		['discarded node', JSON.stringify({ version: 1, registries: { demo: { ...validLegacy, nodes: [null] } } }), 'project-registry-read-failed'],
+		['discarded repository', JSON.stringify({ version: 1, registries: { demo: {
+			...root.registry, nodes: root.registry.nodes.map((node) => ({ ...node, repositories: [null] }))
+		} } }), 'project-registry-read-failed']
+	] as const) {
+		test(`rejects ${label} without overwriting the legacy browser record`, async () => {
+			window.localStorage.setItem('workduck.projectRegistries.v1', stored);
+			let notifications = 0;
+			window.addEventListener('workduck:project-registry-changed', () => { notifications += 1; });
+			const reads = [await readProjectRegistry('demo'), await readProjectRegistries(['demo'])];
+			for (const result of reads) {
+				expect(result.ok).toBe(false);
+				if (!result.ok) expect(result.error).toBe(error);
+			}
+			expect((await writeProjectRegistry(registry('demo', 1))).ok).toBe(false);
+			expect((await writeProjectRegistries({ demo: registry('demo', 1) })).ok).toBe(false);
+			expect(window.localStorage.getItem('workduck.projectRegistries.v1')).toBe(stored);
+			expect(notifications).toBe(0);
+		});
+	}
+
+	test('does not migrate a damaged browser registry into a missing SQLite row', async () => {
+		window.localStorage.setItem('workduck.projectRegistries.v1', '{');
+		let writes = 0;
+		setTauriInvokeForTest(async <T>(command: string) => {
+			if (command === 'read_project_registry') return { ok: true, registryJson: null } as T;
+			if (command === 'read_project_registries') return { ok: true, registries: {} } as T;
+			writes += 1;
+			return { ok: true } as T;
+		});
+		expect((await readProjectRegistry('demo')).ok).toBe(false);
+		expect((await readProjectRegistries(['demo'])).ok).toBe(false);
+		expect(writes).toBe(0);
+		expect(window.localStorage.getItem('workduck.projectRegistries.v1')).toBe('{');
+	});
+
 	for (const native of [false, true]) {
 		test(`reads one legacy snapshot per bulk request and batches migration markers, native=${native}`, async () => {
 			const ids = Array.from({ length: 10 }, (_, index) => `workspace-${index}`);

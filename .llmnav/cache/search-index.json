@@ -95,7 +95,7 @@
     "workduck.workspace.sync-file-native",
     "workduck.workspace.sync-git-native"
   ],
-  "cardSetHash": "4d9b12bbadc69df54e00e37c946f91c2a27c08efbb7685d52cb856b988fa619f",
+  "cardSetHash": "00dd7321ec9e864952f774c3143de720ad729b794f48a364c51673743b0d3b93",
   "documentCount": 94,
   "documents": [
     [
@@ -713,13 +713,14 @@
       ]
     ],
     [
-      "e55dd14a76e05eb87d588b49123dcfb631e13b59654fb896b4f820c777a066b5",
+      "e3fb91609d569dc79854b107fbdd50bcbef786ddca3c71afcddc1e9c22e31899",
       [
         "persist ordered project registry writes, atomically import workspace sync data in sqlite, and migrate browser legacy registries.",
         "project registry storage",
         "sqlite registry migration",
         "atomic workspace sync import",
-        "stored sqlite rows are independent of the legacy cache; bulk fallback reads share one snapshot per attempt; writes stay ordered and sync imports publish only after commit; legacy promotion guards missing rows and subscriptions publish only current results.",
+        "corrupt legacy project data",
+        "stored sqlite rows are independent of the legacy cache; invalid legacy data blocks fallback saves; bulk fallback reads share one snapshot per attempt; writes stay ordered, imports publish only after commit, and legacy promotion guards missing rows.",
         "project registry persistence",
         "legacy registry promotion",
         "registry change notifications",
@@ -2817,7 +2818,7 @@
           1,
           1,
           5,
-          2
+          1
         ]
       ],
       [
@@ -4504,6 +4505,13 @@
     [
       [
         19,
+        [
+          5,
+          1
+        ]
+      ],
+      [
+        46,
         [
           5,
           1
@@ -7753,6 +7761,15 @@
     ],
     [
       [
+        46,
+        [
+          2,
+          1
+        ]
+      ]
+    ],
+    [
+      [
         57,
         [
           5,
@@ -8016,13 +8033,6 @@
         ]
       ],
       [
-        46,
-        [
-          5,
-          1
-        ]
-      ],
-      [
         61,
         [
           5,
@@ -8092,6 +8102,10 @@
         46,
         [
           1,
+          1,
+          2,
+          1,
+          5,
           1
         ]
       ],
@@ -11423,7 +11437,7 @@
         46,
         [
           5,
-          1
+          2
         ]
       ],
       [
@@ -14380,6 +14394,13 @@
           5,
           1
         ]
+      ],
+      [
+        46,
+        [
+          5,
+          1
+        ]
       ]
     ],
     [
@@ -15266,10 +15287,12 @@
         [
           1,
           1,
+          2,
+          1,
           3,
           1,
           5,
-          2
+          3
         ]
       ],
       [
@@ -18916,7 +18939,7 @@
         46,
         [
           5,
-          2
+          1
         ]
       ],
       [
@@ -22322,7 +22345,7 @@
           1,
           1,
           2,
-          1,
+          2,
           3,
           1,
           4,
@@ -23153,7 +23176,7 @@
         46,
         [
           5,
-          2
+          1
         ]
       ],
       [
@@ -26744,13 +26767,6 @@
         ]
       ],
       [
-        46,
-        [
-          5,
-          1
-        ]
-      ],
-      [
         61,
         [
           5,
@@ -28033,6 +28049,15 @@
         49,
         [
           2,
+          1
+        ]
+      ]
+    ],
+    [
+      [
+        46,
+        [
+          5,
           1
         ]
       ]
@@ -31798,13 +31823,6 @@
         ]
       ],
       [
-        46,
-        [
-          5,
-          1
-        ]
-      ],
-      [
         53,
         [
           2,
@@ -32344,8 +32362,6 @@
           2,
           1,
           3,
-          1,
-          5,
           1
         ]
       ],
@@ -38887,6 +38903,7 @@
     "coordination",
     "copy",
     "core",
+    "corrupt",
     "count",
     "counts",
     "crash",
@@ -39523,6 +39540,7 @@
     "same",
     "save",
     "saved",
+    "saves",
     "saving",
     "scaffold",
     "scaffolding",
