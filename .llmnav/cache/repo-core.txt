@@ -83,7 +83,7 @@ invariant Inspections avoid credentials and optional locks, while mutations use 
 role Discover toolchain commands, launch bounded repository tasks in terminals, and persist or reconcile native task-run records.
 owns native repository task launch, toolchain command discovery, task run reconciliation
 excludes frontend task normalization, arbitrary shell command input
-invariant Tasks are selected from a closed vocabulary, repository paths remain inside the workspace, and running records are revalidated against live process identity after a bounded process registration grace; cached latest and unreadable files require unchanged file metadata, launch identity updates preserve terminal-owned completion, and success requires the final command to finish.
+invariant Tasks are selected from a closed vocabulary, repository paths remain inside the workspace, and running records are revalidated after a bounded process registration grace; tracked servers require the same terminal execution and live descendants, cached latest and unreadable files require unchanged file metadata, launch identity updates preserve terminal-owned completion, and success requires the final command to finish.
 
 @workduck.queue.execution-native
 role Validate and coordinate native multi-agent Queue execution, secret resolution, cancellation, confirmation, and exclusive result-report creation.

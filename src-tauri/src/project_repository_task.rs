@@ -4,7 +4,7 @@
 // owns=native repository task launch|toolchain command discovery|task run reconciliation
 // excludes=frontend task normalization|arbitrary shell command input
 // search=native repository task|discover build command|reconcile dev server
-// invariant=Tasks are selected from a closed vocabulary, repository paths remain inside the workspace, and running records are revalidated against live process identity after a bounded process registration grace; cached latest and unreadable files require unchanged file metadata, launch identity updates preserve terminal-owned completion, and success requires the final command to finish.
+// invariant=Tasks are selected from a closed vocabulary, repository paths remain inside the workspace, and running records are revalidated after a bounded process registration grace; tracked servers require the same terminal execution and live descendants, cached latest and unreadable files require unchanged file metadata, launch identity updates preserve terminal-owned completion, and success requires the final command to finish.
 // stability=architecture
 // /llmnav
 use std::{
@@ -755,9 +755,8 @@ fn is_long_running_task_process_alive(
     live_processes: &[LiveTaskProcess],
 ) -> bool {
     if let Some(process_id) = record.process_id {
-        if has_live_descendant_task_process(process_id, live_processes) {
-            return true;
-        }
+        return is_tracked_task_process_alive(record, live_processes)
+            && has_live_descendant_task_process(process_id, live_processes);
     }
 
     let repository_path = normalize_process_match_text(&record.repository_path);
@@ -831,6 +830,16 @@ fn live_process_matches_task_record(
     process: &LiveTaskProcess,
     record: &ProjectRepositoryTaskRunRecord,
 ) -> bool {
+    if let Some(script) = decode_powershell_encoded_command(&process.command_line)
+        && script.contains("function Write-WorkduckTaskRunRecord")
+    {
+        // Current terminal scripts carry the run ID, so a reused PID must not match
+        // another execution of the same command in the same repository.
+        return script.contains(&format!(
+            "id = '{}';",
+            escape_powershell_single_quoted(&record.id)
+        ));
+    }
     let command_line = normalize_process_match_text(&process.command_line);
     let repository_path = normalize_process_match_text(&record.repository_path);
 

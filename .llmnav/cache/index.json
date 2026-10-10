@@ -1559,8 +1559,8 @@
         "arbitrary shell command input"
       ],
       "hashes": {
-        "body": "230edfa3a73a23dadc327f93d1c8b60d2c465eeb362e7d4fa8c8e49705ed7bf8",
-        "semantic": "4ee7472b8804c87ce1a7c9a987c58bdae2813d3376b0384b59410931ea9281f1",
+        "body": "10fcbba5157de4aea46f916f91cd3f129e85824aec2d861f2ef07dbb6113b0a2",
+        "semantic": "79e7042cb4cf8ea0bc241cc149b4c66fb044ae47c9de25975367c7b629649b1c",
         "structure": "b5122d9939628fb569605ebee461119c8532e018d75a3a27998fab08d397a2bb"
       },
       "id": "workduck.projects.repository-task-native",
@@ -1577,7 +1577,7 @@
         "time::{OffsetDateTime, format_description::well_known::Rfc3339}"
       ],
       "invariant": [
-        "Tasks are selected from a closed vocabulary, repository paths remain inside the workspace, and running records are revalidated against live process identity after a bounded process registration grace; cached latest and unreadable files require unchanged file metadata, launch identity updates preserve terminal-owned completion, and success requires the final command to finish."
+        "Tasks are selected from a closed vocabulary, repository paths remain inside the workspace, and running records are revalidated after a bounded process registration grace; tracked servers require the same terminal execution and live descendants, cached latest and unreadable files require unchanged file metadata, launch identity updates preserve terminal-owned completion, and success requires the final command to finish."
       ],
       "location": {
         "declarationLine": null,
@@ -4534,6 +4534,6 @@
   "generatedBy": "llmnav@0.9.7",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "f6e8ba680e00f05def310e6ebb379be053ae7e92eeb1360552920cf835fe11fa",
+  "sourceHash": "86e16e8ad985e1d660bab346898009180e60414d6caa18d5424540244f48f775",
   "specVersion": "1"
 }

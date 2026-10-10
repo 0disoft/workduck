@@ -869,6 +869,98 @@ fn running_dev_server_records_stop_when_process_id_was_reused() {
     assert!(records[0].finished_at.is_some());
 }
 
+#[cfg(target_os = "windows")]
+#[test]
+fn running_dev_server_records_stop_when_other_processes_replace_the_tracked_run() {
+    let record = ProjectRepositoryTaskRunRecord {
+        task: "start-dev-server".into(),
+        state: "running".into(),
+        process_id: Some(42),
+        command: "bun run dev".into(),
+        exit_code: None,
+        finished_at: None,
+        ..task_run_record(
+            "original-run",
+            "C:/workspace/repo-a",
+            "2026-05-23T01:00:00Z",
+        )
+    };
+    let original_terminal = encoded_powershell_command_line(&create_powershell_script(
+        Path::new(&record.repository_path),
+        Some(&record.command),
+        Some(&record),
+    ));
+    let replacement = ProjectRepositoryTaskRunRecord {
+        id: "replacement-run".into(),
+        ..record.clone()
+    };
+    let replacement_terminal = encoded_powershell_command_line(&create_powershell_script(
+        Path::new(&replacement.repository_path),
+        Some(&replacement.command),
+        Some(&replacement),
+    ));
+    for processes in [
+        vec![
+            live_task_process(42, None, "powershell"),
+            live_task_process(43, Some(42), "node unrelated.js"),
+        ],
+        vec![
+            live_task_process(42, None, &replacement_terminal),
+            live_task_process(43, Some(42), "bun run dev"),
+        ],
+        vec![live_task_process(
+            99,
+            None,
+            "node C:/workspace/repo-a/node_modules/vite/bin/vite.js",
+        )],
+        vec![
+            live_task_process(42, None, &original_terminal),
+            live_task_process(
+                99,
+                None,
+                "node C:/workspace/repo-a/node_modules/vite/bin/vite.js",
+            ),
+        ],
+    ] {
+        let records = reconcile_running_task_run_records(vec![record.clone()], Some(&processes));
+        assert_eq!(records[0].state, "stopped");
+        assert!(records[0].finished_at.is_some());
+    }
+}
+
+#[cfg(target_os = "windows")]
+#[test]
+fn running_dev_server_records_match_their_run_id_and_nested_children() {
+    let record = ProjectRepositoryTaskRunRecord {
+        task: "start-dev-server".into(),
+        state: "running".into(),
+        process_id: Some(42),
+        command: "bun run dev".into(),
+        exit_code: None,
+        finished_at: None,
+        ..task_run_record(
+            "original-run",
+            "C:/workspace/repo-a",
+            "2026-05-23T01:00:00Z",
+        )
+    };
+    let terminal = encoded_powershell_command_line(&create_powershell_script(
+        Path::new(&record.repository_path),
+        Some(&record.command),
+        Some(&record),
+    ));
+    let records = reconcile_running_task_run_records(
+        vec![record],
+        Some(&[
+            live_task_process(42, None, &terminal),
+            live_task_process(43, Some(42), "cmd.exe /c bun run dev"),
+            live_task_process(44, Some(43), "node server.js"),
+        ]),
+    );
+    assert_eq!(records[0].state, "running");
+    assert_eq!(records[0].finished_at, None);
+}
+
 #[test]
 fn running_dev_server_records_stay_running_when_process_id_matches_task_command() {
     let records = reconcile_running_task_run_records(
@@ -1007,6 +1099,46 @@ fn running_dependency_update_records_stay_running_when_encoded_terminal_matches_
     );
 
     assert_eq!(records[0].state, "running");
+}
+
+#[test]
+#[cfg(target_os = "windows")]
+fn running_dependency_update_records_require_their_own_embedded_run_id() {
+    for (task, command) in [
+        ("install-dependencies", "bun install"),
+        ("update-dependencies", "bun update"),
+        ("build", "bun run build"),
+    ] {
+        let record = ProjectRepositoryTaskRunRecord {
+            task: task.into(),
+            state: "running".into(),
+            process_id: Some(42),
+            command: command.into(),
+            exit_code: None,
+            finished_at: None,
+            ..task_run_record(
+                "original-run",
+                "C:/workspace/repo-a",
+                "2026-05-23T01:00:00Z",
+            )
+        };
+        for (id, expected) in [("original-run", "running"), ("replacement-run", "stopped")] {
+            let launched = ProjectRepositoryTaskRunRecord {
+                id: id.into(),
+                ..record.clone()
+            };
+            let terminal = encoded_powershell_command_line(&create_powershell_script(
+                Path::new(&launched.repository_path),
+                Some(&launched.command),
+                Some(&launched),
+            ));
+            let records = reconcile_running_task_run_records(
+                vec![record.clone()],
+                Some(&[live_task_process(42, None, &terminal)]),
+            );
+            assert_eq!(records[0].state, expected, "{task}: {id}");
+        }
+    }
 }
 
 #[test]
