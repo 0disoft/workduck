@@ -1,10 +1,10 @@
 import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
-import { existsSync } from 'node:fs';
-import { mkdir, mkdtemp, readFile, readdir, rm, stat, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { readSsealedInstallation } from './ssealed-installation.mjs';
 
 const scriptDirectory = dirname(fileURLToPath(import.meta.url));
 const repositoryRoot = dirname(scriptDirectory);
@@ -37,30 +37,6 @@ const rustKeywordKinds = new Set([
 	'hygiene',
 	'validation'
 ]);
-
-function localBinary(name) {
-	const binaryDirectory = resolve(repositoryRoot, 'node_modules', '.bin');
-	const candidates =
-		process.platform === 'win32'
-			? [`${name}.exe`, `${name}.cmd`, `${name}.bunx`, name]
-			: [name, `${name}.bunx`];
-
-	for (const candidate of candidates) {
-		const candidatePath = resolve(binaryDirectory, candidate);
-		if (existsSync(candidatePath)) return candidatePath;
-	}
-
-	return resolve(binaryDirectory, candidates[0]);
-}
-
-async function readSsealedPackageVersion() {
-	const packageJsonPath = resolve(repositoryRoot, 'node_modules', 'ssealed', 'package.json');
-	const packageJson = JSON.parse(await readFile(packageJsonPath, 'utf8'));
-	if (typeof packageJson.version !== 'string' || packageJson.version.length === 0) {
-		throw new Error('Unable to read ssealed package version.');
-	}
-	return packageJson.version;
-}
 
 async function readSsealedOptionList(name) {
 	const typesPath = resolve(repositoryRoot, 'node_modules', 'ssealed', 'dist', 'core', 'types.js');
@@ -135,9 +111,10 @@ function renderGeneratedTypeScript({ scopes, profiles }) {
 	].join('\n');
 }
 
-async function runSsealedInit(temporaryRoot, scope, profile) {
+async function runSsealedInit(cliPath, temporaryRoot, scope, profile) {
 	const verbose = process.env.SSEALED_SYNC_VERBOSE === '1';
-	const result = spawnSync(localBinary('ssealed'), [
+	const result = spawnSync(process.execPath, [
+		cliPath,
 		'init', 'scaffold', '--scope', scope, '--profile', profile,
 		'--density', scaffoldDensity, '--runner', scaffoldRunner, '--yes'
 	], {
@@ -198,8 +175,7 @@ async function assertCurrent(path, expected) {
 }
 
 async function main() {
-	await stat(localBinary('ssealed'));
-	const version = await readSsealedPackageVersion();
+	const { version, cliPath } = await readSsealedInstallation(repositoryRoot);
 	const scaffoldScopes = await readSsealedOptionList('scopes');
 	const scaffoldProfiles = await readSsealedOptionList('profiles');
 	const scaffolds = [];
@@ -209,7 +185,7 @@ async function main() {
 			const temporaryRoot = await mkdtemp(join(tmpdir(), 'workduck-ssealed-sync-'));
 			const scaffoldPath = join(temporaryRoot, 'scaffold');
 			try {
-				await runSsealedInit(temporaryRoot, scope, profile);
+				await runSsealedInit(cliPath, temporaryRoot, scope, profile);
 				const kindsByPath = await readManifestKindMap(scaffoldPath);
 				const files = [];
 				for (const file of await collectFiles(scaffoldPath)) {
