@@ -2,6 +2,12 @@
   "$schema": "./schema/config.schema.json",
   "coverageRules": [
     {
+      "match": ["src/lib/workspaces/workspace-path-repair.ts"],
+      "name": "workspace path repair identity and cancellation",
+      "requiredFields": ["owns", "invariant"],
+      "scope": "module"
+    },
+    {
       "match": ["src/lib/workspaces/workspace-password.ts", "src/lib/workspaces/workspace-repository-setup.ts", "src/lib/workspaces/workspace-unlock.ts"],
       "name": "workspace password adapters and renderer unlock lifetime",
       "requiredFields": ["owns", "invariant"],

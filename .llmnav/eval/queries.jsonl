@@ -107,3 +107,4 @@
 {"query":"workspace password hash client verify workspace password password minimum length","expected":["workduck.workspace.password-client"]}
 {"query":"workspace repository setup client initialize workspace git install workspace gitignore","expected":["workduck.workspace.repository-setup-client"]}
 {"query":"workspace unlock password session workspace unlock cooldown idle workspace locking","expected":["workduck.workspace.unlock"]}
+{"query":"workspace path repair target reconnect workspace directory cancel pending path repair","expected":["workduck.workspace.path-repair"]}

@@ -266,10 +266,10 @@ excludes command selection, terminal discovery, process liveness
 invariant Large scripts use a short run-bound loader and clean up their staged source; only the final command can publish success; publication aborts on failure and never exceeds the history read limit; preview truncation preserves Unicode boundaries.
 
 @workduck.workspace.storage
-role Read, write, and publish workspace registry snapshots through application state without discarding damaged records.
-owns workspace storage admission, workspace change subscriptions, snapshot notification validation
-excludes workspace domain mutations, native SQLite transactions, browser journal implementation
-invariant Edits carry their original snapshot and publish only after conditional persistence; native transactions and browser locks reject stale lists; failed reads and malformed notifications never publish an empty replacement.
+role Read, conditionally save, and publish valid workspace registries.
+owns registry read/write admission, change subscriptions, notification validation
+excludes domain mutations, native SQLite, browser journals
+invariant Cancellation stops before dispatch; commits compare original snapshots; reads and events reject damaged data; only confirmed saves publish.
 
 @workduck.app-state.bootstrap
 role Coalesce renderer initialization and provide validated lazy workspace migration without reading stale browser mirrors when SQLite is authoritative.
@@ -288,3 +288,9 @@ role Track renderer workspace unlock sessions, password verification attempts, c
 owns renderer unlock sessions, unlock attempt cooldown, unlock change notifications, session idle timestamps
 excludes native vault revocation, password hashing, workspace registry storage
 invariant Only a live current verification can update a session or attempts; locking, trusted session replacement, and owner cancellation invalidate older results; native vault revocation remains the caller's responsibility.
+
+@workduck.workspace.path-repair
+role Validate and save replacement directories for the initiating workspace.
+owns repair target, validation, cancellation, path conflicts
+excludes picker rendering, native validation, storage transport
+invariant Keeps the initial workspace and path; cancelled validation never writes; path changes conflict; persistence compares the accepted snapshot.

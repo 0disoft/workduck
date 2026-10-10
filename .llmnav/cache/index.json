@@ -4874,13 +4874,13 @@
     {
       "boundaries": [],
       "excludes": [
-        "workspace domain mutations",
-        "native SQLite transactions",
-        "browser journal implementation"
+        "domain mutations",
+        "native SQLite",
+        "browser journals"
       ],
       "hashes": {
-        "body": "f78c562b05afbc0abb79744adbca8bac405aa33d8f9d1210ffa131295ce1046f",
-        "semantic": "073b4774c4e63e901810c5f23588ebf58425cb5c00b9f56372f34237d3b54958",
+        "body": "0b82f36359be997dacc0f03afbea7618591a586df657eee59572cc07ec8adc00",
+        "semantic": "696e1ca401065f79018612940fca09594ae00793859a74cb6d581be4e316edc7",
         "structure": "2c7ac25b3ffd3442490d40eb7e0ea6edd7b690f6758dd69b6a56f46ee36420f6"
       },
       "id": "workduck.workspace.storage",
@@ -4890,7 +4890,7 @@
         "./workspace-registry"
       ],
       "invariant": [
-        "Edits carry their original snapshot and publish only after conditional persistence; native transactions and browser locks reject stale lists; failed reads and malformed notifications never publish an empty replacement."
+        "Cancellation stops before dispatch; commits compare original snapshots; reads and events reject damaged data; only confirmed saves publish."
       ],
       "location": {
         "declarationLine": null,
@@ -4906,11 +4906,11 @@
         "visibility": null
       },
       "owns": [
-        "workspace storage admission",
-        "workspace change subscriptions",
-        "snapshot notification validation"
+        "registry read/write admission",
+        "change subscriptions",
+        "notification validation"
       ],
-      "role": "Read, write, and publish workspace registry snapshots through application state without discarding damaged records.",
+      "role": "Read, conditionally save, and publish valid workspace registries.",
       "scope": "module",
       "search": [
         "workspace registry persistence",
@@ -5162,11 +5162,60 @@
         "idle workspace locking"
       ],
       "stability": "architecture"
+    },
+    {
+      "boundaries": [],
+      "excludes": [
+        "picker rendering",
+        "native validation",
+        "storage transport"
+      ],
+      "hashes": {
+        "body": "f1d40798c319cd672fec7215499ae08ef44b295fbc616cc74a16fbd875284b94",
+        "semantic": "098e3b7617af692eb4f16782d932d3ba426a17fc041bb17f7aa02d7da46f2532",
+        "structure": "99708d0335040cf96b46c6f9753b2a86e52d3cbc0147bae439cbad928dbaddac"
+      },
+      "id": "workduck.workspace.path-repair",
+      "imports": [
+        "./workspace-path",
+        "./workspace-registry",
+        "./workspace-storage"
+      ],
+      "invariant": [
+        "Keeps the initial workspace and path; cancelled validation never writes; path changes conflict; persistence compares the accepted snapshot."
+      ],
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src/lib/workspaces/workspace-path-repair.ts",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "owns": [
+        "repair target",
+        "validation",
+        "cancellation",
+        "path conflicts"
+      ],
+      "role": "Validate and save replacement directories for the initiating workspace.",
+      "scope": "module",
+      "search": [
+        "workspace path repair target",
+        "reconnect workspace directory",
+        "cancel pending path repair"
+      ],
+      "stability": "architecture"
     }
   ],
   "contractFingerprints": {
     "configuration": {
-      "sha256": "c066b6151270806f4c1c9aabc8e9e3f512ea1b8dceab5ff539f85cf52587dec2"
+      "sha256": "1578fc91debf887134ef21d43db27668c33cba018b666e6b9cb3d6faf01a68ee"
     },
     "exportedApi": {
       "count": 0,
@@ -5177,6 +5226,6 @@
   "generatedBy": "llmnav@0.9.7",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "a26793d66b388c8270cc0c5afed27e6f8769b795b41cc0ff9118f83e052072f0",
+  "sourceHash": "5a983cfd031a6143df763ea39b50b5ccfa24108c2188e8fd31ee8a70768a17a4",
   "specVersion": "1"
 }

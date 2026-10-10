@@ -2,7 +2,7 @@
   "partitions": [
     {
       "edges": [],
-      "inputHash": "366ae9b9697af0001e158d82d77d1eb99dd0ff33cc2b5eec8ed5e7af3cf9dbc1",
+      "inputHash": "29d5ef9e236a0728b5bf7e2d4944326d766398f095cb079ffd4e5a4599385e3d",
       "key": "card:workduck/workduck.agent.adapters",
       "nodes": [
         {
@@ -46,7 +46,7 @@
           "to": "workduck/workduck.agent.snapshot.contract"
         }
       ],
-      "inputHash": "fdc1fef7bb19edad237a81347d05456508590f81f4460c93baa36c25e675e50d",
+      "inputHash": "ef84a8dfa039e94d3043b1ad1f287456d70b3adcaf40d6c14e21db7b8984cf5b",
       "key": "card:workduck/workduck.agent.snapshot",
       "nodes": [
         {
@@ -84,7 +84,7 @@
     },
     {
       "edges": [],
-      "inputHash": "e424ae1c4b5bafa02ab9b4c7c81db34f666c5b25694a7dc92ad4f6981ba172bb",
+      "inputHash": "8aa4eb1d3adf932d5a87159f3e561ffd0f7805821a7a371781376c293c61a89d",
       "key": "card:workduck/workduck.agent.snapshot.contract",
       "nodes": [
         {
@@ -125,7 +125,7 @@
     },
     {
       "edges": [],
-      "inputHash": "004d2788878a171b74505bd7a695fb3286eedef3b8889e2f6d5928ad5a3886cb",
+      "inputHash": "11e5b86b0e3a783b22dc4c06421066fcf7e6e10f0c2774f23d39125d19b70290",
       "key": "card:workduck/workduck.app-state.boot-gate",
       "nodes": [
         {
@@ -169,7 +169,7 @@
           "to": "workduck/workduck.app-state.storage"
         }
       ],
-      "inputHash": "8ff9e15056090898c29b09d9d6c08cd1730e56811c7e3293ba578135478209a9",
+      "inputHash": "9f7284e48897070ef2b740cc054b990e0dbc998dc326a425e51df1f6e2de6a52",
       "key": "card:workduck/workduck.app-state.bootstrap",
       "nodes": [
         {
@@ -207,7 +207,7 @@
     },
     {
       "edges": [],
-      "inputHash": "545118d65bc42a5d5d46af08384054af1615bfe3d99c100d26b873956cc4b8c3",
+      "inputHash": "7b923100c278ddf54b7b0d14b48b9a83cdd9ce4d339d38431bef933f664afd9a",
       "key": "card:workduck/workduck.app-state.storage",
       "nodes": [
         {
@@ -236,7 +236,7 @@
     },
     {
       "edges": [],
-      "inputHash": "192d3600bb6232dabd51433351aa9a9171b2e6f57bad5c8d57cf1356c3320f1b",
+      "inputHash": "28450994211ec278df2cf4fe7a33e4b0fef1af363c2207897c8c2af36873ef53",
       "key": "card:workduck/workduck.app-state.storage-native",
       "nodes": [
         {
@@ -265,7 +265,7 @@
     },
     {
       "edges": [],
-      "inputHash": "174a7c1ad2cec55f6f6b7e101b0a4a252c80fe4de2272130842757dda6f34660",
+      "inputHash": "dc7253089a78c7b45d11b2a47ed7ce493180b85947b7c5a4f977d0361e4eb2ac",
       "key": "card:workduck/workduck.briefs.editor-drafts",
       "nodes": [
         {
@@ -323,7 +323,7 @@
           "to": "workduck/workduck.briefs.runs"
         }
       ],
-      "inputHash": "ad2032b2b1c3122bf90e73fa9ff5570945b6836da58ec062f77e80170f225193",
+      "inputHash": "c57bfc21fc9ba81202b45275c823552870dc537b243e5c73bd5443df42a50cad",
       "key": "card:workduck/workduck.briefs.gate",
       "nodes": [
         {
@@ -370,7 +370,7 @@
     },
     {
       "edges": [],
-      "inputHash": "bb14b32d0195f534d6d8bccbdac70ec7f6fd38199cd9ca6b325a08ca54d5373b",
+      "inputHash": "48471ab5f71a9701e1250a74396cdb48b8a22a55ef076dcdc2c5137219bea6fa",
       "key": "card:workduck/workduck.briefs.registry",
       "nodes": [
         {
@@ -428,7 +428,7 @@
           "to": "workduck/workduck.briefs.runs"
         }
       ],
-      "inputHash": "2357facc80d9397f034bd6dc2ffe4a0659b472609d67ce4040f6b788fe79137f",
+      "inputHash": "35233ac51f5cff530b22b65d94a9f4edff24066bbcdae1f26acc079c1f2c5bcd",
       "key": "card:workduck/workduck.briefs.run-evidence",
       "nodes": [
         {
@@ -490,7 +490,7 @@
           "to": "workduck/workduck.briefs.registry"
         }
       ],
-      "inputHash": "1a02bbb3c4a149d644b5b8a481ff37cc344a9b3b9a10041f5d049018e0c375e7",
+      "inputHash": "3fd78baa7ad6cc6ce7534a168ca143eb02df8e06d15650a6a11d4775804c28fa",
       "key": "card:workduck/workduck.briefs.runs",
       "nodes": [
         {
@@ -528,7 +528,7 @@
     },
     {
       "edges": [],
-      "inputHash": "efc2a35062bdff01d0c18cc5708347393b0ad39e59c37113b3ca1c709428fb96",
+      "inputHash": "0a2016efc60e9a0e48c50f21796427532c3841fe06200d3ad523ffe14091d893",
       "key": "card:workduck/workduck.cli.agent-evaluation",
       "nodes": [
         {
@@ -557,7 +557,7 @@
     },
     {
       "edges": [],
-      "inputHash": "010d6db4a1ad6e842135baaba0fefc2ac165d8b446fbc43446a869bd58dd77ac",
+      "inputHash": "7c12567dcf667f0253d1d8ddcdc3302afc563c02a8f3ba12bd654537ae70e495",
       "key": "card:workduck/workduck.cli.execution",
       "nodes": [
         {
@@ -586,7 +586,7 @@
     },
     {
       "edges": [],
-      "inputHash": "17a2d847b257ecabec340153e2022cf3afdc9916a85184170098461ca3444c46",
+      "inputHash": "369031ed2e9d2b0c50af36fd2da02a100a4464f87e65aae05e97b0940f50ec91",
       "key": "card:workduck/workduck.cli.launcher",
       "nodes": [
         {
@@ -615,7 +615,7 @@
     },
     {
       "edges": [],
-      "inputHash": "9418a9ba48147552b7ec70f6c631790e388bd4e2da323bcad7e87c0a054fce69",
+      "inputHash": "252d4059d67bf824478adf057c8c48c245042bd0362680f16134ccb55da82055",
       "key": "card:workduck/workduck.command-palette.search",
       "nodes": [
         {
@@ -644,7 +644,7 @@
     },
     {
       "edges": [],
-      "inputHash": "650ebb1746ec203e8657e41baf0cb6071dc52f6bed7362205d902cb95d03c44e",
+      "inputHash": "4a9393627e17781f1e5cb190d31fc26ab7c1993d97892cd579f8bedbc23d3535",
       "key": "card:workduck/workduck.contract.schemas",
       "nodes": [
         {
@@ -673,7 +673,7 @@
     },
     {
       "edges": [],
-      "inputHash": "0cd70e81f0a954b0eb04165d997fe705e3d29d16a622fffe70c4485b266f2cbf",
+      "inputHash": "48f6ac42d486d6ef7147813336846a5e316f9333f5e13b1338bbf89ce731b3d7",
       "key": "card:workduck/workduck.desktop.commands",
       "nodes": [
         {
@@ -702,7 +702,7 @@
     },
     {
       "edges": [],
-      "inputHash": "5fda6519789f2168845c1b926f36be909f87b31f30f4aa04cf6b591557d6a9f5",
+      "inputHash": "789a2a78f5a2350fbc9ff703a4a12f5143b9dc638e2d00540f00877a443eb33a",
       "key": "card:workduck/workduck.domain.core",
       "nodes": [
         {
@@ -731,7 +731,7 @@
     },
     {
       "edges": [],
-      "inputHash": "6361b2afc12d146c8ea0ce783676346d114d555b91fa26593bab04bb27858629",
+      "inputHash": "4ae62b839efb538ba2d0c65362291ae536e036667aacef5872cfeb44326786ef",
       "key": "card:workduck/workduck.environment.cli",
       "nodes": [
         {
@@ -775,7 +775,7 @@
           "to": "workduck/workduck.secret-vault.crypto"
         }
       ],
-      "inputHash": "d7e15336e02c6dbf9bc15f826cd5aa6c8b516095130e0cf1b98ede785ff9f6a0",
+      "inputHash": "6e2bbabcf58b10622136eaea99826d68ceaaedc254d191287bbe5c0ea67bf7ca",
       "key": "card:workduck/workduck.environment.vault-session",
       "nodes": [
         {
@@ -813,7 +813,7 @@
     },
     {
       "edges": [],
-      "inputHash": "56cc534f78b61b1721b78bb361b778d2655d1f789da703e5c323c537ed5fd9e8",
+      "inputHash": "410957a081a30e441596a62d15e35ea2b7388a6109442706aaf58ba23ce6a949",
       "key": "card:workduck/workduck.git.process-boundary",
       "nodes": [
         {
@@ -842,7 +842,7 @@
     },
     {
       "edges": [],
-      "inputHash": "7731c27205e70ec632ff250674b729193e55ba526354be220ac0e2a00a91487e",
+      "inputHash": "4ae98c5f92badef72fd3bb3fdae8156a1034fa2137a677ea749b8a2ee833232a",
       "key": "card:workduck/workduck.llm.chat-native",
       "nodes": [
         {
@@ -871,7 +871,7 @@
     },
     {
       "edges": [],
-      "inputHash": "8047e18f3ffd50570ea396101f17ec422f71ccd55646f15df8b4d8286fbc05b0",
+      "inputHash": "9656dced1d585454030d5af54ffe83bf527e9ff7c8b041b8eb2f1992ea4aa3e6",
       "key": "card:workduck/workduck.mcp.cli",
       "nodes": [
         {
@@ -900,7 +900,7 @@
     },
     {
       "edges": [],
-      "inputHash": "3cf5bbd31b3d972556b1fb9ecf89fffca3705445303cbafd8dee0d98e0a2aae9",
+      "inputHash": "1b63cf4191255e116aaa865d358925e9d7707234be10e894554270aa18c246a7",
       "key": "card:workduck/workduck.mcp.launcher",
       "nodes": [
         {
@@ -944,7 +944,7 @@
           "to": "workduck/workduck.mcp.server.contract"
         }
       ],
-      "inputHash": "b724366515390e7bf6d37e34ed739b4a255bb9ffb09bc7bea262997c17391aa6",
+      "inputHash": "7f1061e30f2452de1bc21983cf26f60c6c0091e13ce3667efd93f0924123a227",
       "key": "card:workduck/workduck.mcp.server",
       "nodes": [
         {
@@ -982,7 +982,7 @@
     },
     {
       "edges": [],
-      "inputHash": "6a969078c217ac848ad20693f62bd7fa24f0cc727727bfa2ba509eb66fd00f52",
+      "inputHash": "cb61f0ea607d1aee3108652ca1afb9a0831990e94b85fa1623355690cd656506",
       "key": "card:workduck/workduck.mcp.server.contract",
       "nodes": [
         {
@@ -1023,7 +1023,7 @@
     },
     {
       "edges": [],
-      "inputHash": "c4624b2837af9bcb467cb0e4761b5c234ab724397a79f89434f9b9490699beed",
+      "inputHash": "d8d5d06be0892dfa2ba8284caa0d12d6c099c8a006d85d3d18e0d056eadfabb7",
       "key": "card:workduck/workduck.migration.project-registries",
       "nodes": [
         {
@@ -1052,7 +1052,7 @@
     },
     {
       "edges": [],
-      "inputHash": "f5b2ebaa8f682381121627f1cea51b9303b838e797ab957a3e9da8f6876b2f72",
+      "inputHash": "0453afa0acf4a95000dd9fbf6cddaf773aa3f0482cd66823bfdba9190cf8ca75",
       "key": "card:workduck/workduck.process.developer-control",
       "nodes": [
         {
@@ -1081,7 +1081,7 @@
     },
     {
       "edges": [],
-      "inputHash": "25b159cee4324129eef4aa545830e572c556adfc5107f3fd2c401753a1c6e4ca",
+      "inputHash": "ac607c0deaa4f39cb826e2ffd83026de9556e5b328ec7426fb3cc5d4ee1d0ad1",
       "key": "card:workduck/workduck.process.tree",
       "nodes": [
         {
@@ -1139,7 +1139,7 @@
           "to": "workduck/workduck.projects.repository"
         }
       ],
-      "inputHash": "75caad86cc5a75d138e6ca68035e1dbc2cca2c3973081e40e1e1d410d190e0e4",
+      "inputHash": "a9a824dad06e5779f600aa3e2ad027dd6f00d825d873da7d9d219dc1068581ac",
       "key": "card:workduck/workduck.projects.board-selection",
       "nodes": [
         {
@@ -1186,7 +1186,7 @@
     },
     {
       "edges": [],
-      "inputHash": "2fbff9a1037233529f2db60113c84d9e123f2d2ad56dc7f3ed9f6151b4be9449",
+      "inputHash": "f9440f2b9804c05265cbcf71850d409f2dbc75e9c8e907aabc126387d8cff285",
       "key": "card:workduck/workduck.projects.folder",
       "nodes": [
         {
@@ -1215,7 +1215,7 @@
     },
     {
       "edges": [],
-      "inputHash": "95876ad16f7ccdc8dc15c242a2b5448faf99eba37c57983f0dc7768547cab8f5",
+      "inputHash": "446b3d71bc004cc0f332887e6387da53d645c634eb29ed75ae41542664970024",
       "key": "card:workduck/workduck.projects.folder-native",
       "nodes": [
         {
@@ -1244,7 +1244,7 @@
     },
     {
       "edges": [],
-      "inputHash": "c260ceb17dd3397f7e3b87299fbd01960dae028d6d7dadc2930fc4aeff1c8188",
+      "inputHash": "3a9b713123ef7201b71e441c2a0eb8cd143a2c7850ef2a98925c31759fe98009",
       "key": "card:workduck/workduck.projects.git-inspection",
       "nodes": [
         {
@@ -1273,7 +1273,7 @@
     },
     {
       "edges": [],
-      "inputHash": "21ab50270d720e3beab94d12bba652a4b0469ab80346bfa3b708a0a55a7050aa",
+      "inputHash": "26ffd53a05f5a90bb0af450740993ab42ca9bbc7c4af6527dcdac622d92141af",
       "key": "card:workduck/workduck.projects.import-attempt-store",
       "nodes": [
         {
@@ -1302,7 +1302,7 @@
     },
     {
       "edges": [],
-      "inputHash": "86bb5737417fd5c5cb34de234b38dd1cc57047a015707b22c3dd19014f9d52b8",
+      "inputHash": "88c90275037db8963362637eea9bd60ab107159a3798b5d3562655dd0e81d6ba",
       "key": "card:workduck/workduck.projects.operation-storage",
       "nodes": [
         {
@@ -1360,7 +1360,7 @@
           "to": "workduck/workduck.projects.schema"
         }
       ],
-      "inputHash": "57d4d5203858477e310a0710164f00df415e865eb85e55f6828dfbe7338fe563",
+      "inputHash": "503d3c910f3a3417ab6e5bd1a98b2d6ecef285036fe189e1e7c902481d1270aa",
       "key": "card:workduck/workduck.projects.registry-domain",
       "nodes": [
         {
@@ -1422,7 +1422,7 @@
           "to": "workduck/workduck.projects.schema"
         }
       ],
-      "inputHash": "6de57abe6851921869449524737d06a4393983c206c7328d016232936f4a0557",
+      "inputHash": "0654730e7a1173ad2fd5a67359c7218aacca902684fb5f320b1efdd621fb3bf5",
       "key": "card:workduck/workduck.projects.registry-normalization",
       "nodes": [
         {
@@ -1489,7 +1489,7 @@
           "to": "workduck/workduck.projects.storage"
         }
       ],
-      "inputHash": "9039b028c2c429c9db34cb0818b002990239893b890598f10ff3fb2924963fec",
+      "inputHash": "2cca414f87746675c96f3d7a7dbad8aded4122d8face21c531c554594302385c",
       "key": "card:workduck/workduck.projects.registry-writer",
       "nodes": [
         {
@@ -1536,7 +1536,7 @@
     },
     {
       "edges": [],
-      "inputHash": "dbd5c2c3d2a47f6e5e81213473d9b0894c9d341beb8286c8f662080c835611da",
+      "inputHash": "cc73d7aa72118d9a7eefdfdfd5053bddf2f325c7c8036003e8b806644425edb0",
       "key": "card:workduck/workduck.projects.repository",
       "nodes": [
         {
@@ -1650,7 +1650,7 @@
           "to": "workduck/workduck.projects.task-run-mapping"
         }
       ],
-      "inputHash": "2b567c4237257b8662bf8f06ef268e8b9d8ccc760c87e620d482baebd4dab0d5",
+      "inputHash": "23c89812e836be8a67c274ff335bf89c5f1429b451fb89fe18644ab885c5a045",
       "key": "card:workduck/workduck.projects.repository-controller",
       "nodes": [
         {
@@ -1733,7 +1733,7 @@
     },
     {
       "edges": [],
-      "inputHash": "fad3d2bd9d709938fd6245e83241d349a013006bfd9dd94904d83163890882a4",
+      "inputHash": "168145650a7986883341de2753620628a895fb08279f9b13ea02b4c1236cdccb",
       "key": "card:workduck/workduck.projects.repository-native",
       "nodes": [
         {
@@ -1762,7 +1762,7 @@
     },
     {
       "edges": [],
-      "inputHash": "74a4b46a2bae98446933b09015102c75c4573f1570fcef538bd12569a8984fe8",
+      "inputHash": "6e740f6c8b5e56f85e340250a92fadd85e23df9fd30abbd2beda73b7478eb962",
       "key": "card:workduck/workduck.projects.repository-task",
       "nodes": [
         {
@@ -1791,7 +1791,7 @@
     },
     {
       "edges": [],
-      "inputHash": "b05d51271746e8814ee09eae4265fbaa05a0721346c3385e182870b940b54112",
+      "inputHash": "2b97c00fff81c65e78f61a183ab96255c9393828f697686aec63e28f5dd6f79f",
       "key": "card:workduck/workduck.projects.repository-task-native",
       "nodes": [
         {
@@ -1849,7 +1849,7 @@
           "to": "workduck/workduck.projects.registry-domain"
         }
       ],
-      "inputHash": "83a0862e54435fb0ff4833310e9b6381bd94a0e60ac9a35e99bb59799a69f702",
+      "inputHash": "0b829d5ee1a88c137226c6a64fa0796481fdf9cb3e5e84b18b5caf3c2ff30a7d",
       "key": "card:workduck/workduck.projects.scaffold-dialog",
       "nodes": [
         {
@@ -1896,7 +1896,7 @@
     },
     {
       "edges": [],
-      "inputHash": "584f32137bdf88913df5a00d417f643f6803efa476111e44049579e4512acca9",
+      "inputHash": "330d1e29af1248c8a3158964b6194aecdfb344cc884de37c2cfec8826efd7c21",
       "key": "card:workduck/workduck.projects.scaffold-transaction",
       "nodes": [
         {
@@ -1925,7 +1925,7 @@
     },
     {
       "edges": [],
-      "inputHash": "a2d1be0b9417844141b7fd1fd14cceb7b4dedc33562815173180de9a74cba8e2",
+      "inputHash": "cd70ab976c3f5d06f488173b8c815cc139476aca4548a5261275dcab11667ceb",
       "key": "card:workduck/workduck.projects.schema",
       "nodes": [
         {
@@ -1969,7 +1969,7 @@
           "to": "workduck/workduck.projects.registry-domain"
         }
       ],
-      "inputHash": "bdb15ec76f1a612d86301b711c7a0eecc90d2a85c8492856cda0511256bb38de",
+      "inputHash": "80a5987533a4f4ab2906f4b241d0d2a2ae37f8ca756b95bd1afdb903b7af1f4e",
       "key": "card:workduck/workduck.projects.storage",
       "nodes": [
         {
@@ -2007,7 +2007,7 @@
     },
     {
       "edges": [],
-      "inputHash": "f2ad9761b7b48f7ea97f4fb7c9fa49464e74f2ed32f78c0cc20ac94447cd9ab4",
+      "inputHash": "8d4454d6602246e342fa7e25ddab8c6535837a55b9f9b92329c1531fc5eb590b",
       "key": "card:workduck/workduck.projects.storage-native",
       "nodes": [
         {
@@ -2036,7 +2036,7 @@
     },
     {
       "edges": [],
-      "inputHash": "79ec6383f06ca94932423e5554b583db47352fd128b27c7a3a9385fcf0cfca7e",
+      "inputHash": "7111a1f830b3ae917ce20b8726ac9309ea553d6f34b5c84277eefd6839dddbb1",
       "key": "card:workduck/workduck.projects.task-commands",
       "nodes": [
         {
@@ -2065,7 +2065,7 @@
     },
     {
       "edges": [],
-      "inputHash": "c287ecad2e2b56cf6cb5bf27b868936fd9d7614eb44526b630d35a847bc8cce8",
+      "inputHash": "9465c919963623ed43a1aa9c4a3eee22fa7f73bfa313cbefbe88afbd5fa86e2d",
       "key": "card:workduck/workduck.projects.task-history",
       "nodes": [
         {
@@ -2094,7 +2094,7 @@
     },
     {
       "edges": [],
-      "inputHash": "5e66dd313234ff2dc01b6e486e31f3ffd7a99e0bd3e57aca807da862c836ccea",
+      "inputHash": "76ad9222f7a332adcda2f94ca0fc2027bc44d6e913c57cfdf964377bfd938058",
       "key": "card:workduck/workduck.projects.task-powershell",
       "nodes": [
         {
@@ -2166,7 +2166,7 @@
           "to": "workduck/workduck.projects.task-run-mapping"
         }
       ],
-      "inputHash": "00f13525ad7262942c0e3e419418e3ab663f33d333f4bcb0fb307522d725623e",
+      "inputHash": "ef094e0ef58a1c0ea98632d83dfb78cba310ec3091b25bf6bdbe27eb2ecbaeef",
       "key": "card:workduck/workduck.projects.task-run-lifecycle",
       "nodes": [
         {
@@ -2251,7 +2251,7 @@
           "to": "workduck/workduck.projects.repository-task"
         }
       ],
-      "inputHash": "675ef42e7a218aab56e60e3cc396929f3f3d1873d2cb038e33dfae00bed5468a",
+      "inputHash": "802a3933286ad5b00d9916799bc75d2b5a1ad11173646442535c84097835ae90",
       "key": "card:workduck/workduck.projects.task-run-mapping",
       "nodes": [
         {
@@ -2355,7 +2355,7 @@
           "to": "workduck/workduck.projects.storage"
         }
       ],
-      "inputHash": "0daa04b30a78fdf91f3f0b06768c4c0804c4e0153671bf66ba2c86667f2b8a82",
+      "inputHash": "432f52c0eab5380d7aea907755e1d26d05da0ebf3e2699414f826167cbc64ec5",
       "key": "card:workduck/workduck.projects.workspace-lifecycle",
       "nodes": [
         {
@@ -2420,7 +2420,7 @@
     },
     {
       "edges": [],
-      "inputHash": "7d2bfee78084fe396bc8a424c755f4df55822ab0b29b5a5bcc02444a42fdf082",
+      "inputHash": "9d3c8ff67c4bea53051abcfb46e2385cadab5b9ea0ce03f2e87d7459f18187ea",
       "key": "card:workduck/workduck.prompt.compiler",
       "nodes": [
         {
@@ -2449,7 +2449,7 @@
     },
     {
       "edges": [],
-      "inputHash": "d5e7c493e7f4a06aa30faba8ef0627ecc7509edd691b99109da224e29f6b84c9",
+      "inputHash": "ffa413598ad7d4e176df6bbcb423c6e104e2fb093e9b3c0a2abcb5e9b742423d",
       "key": "card:workduck/workduck.queue.artifacts",
       "nodes": [
         {
@@ -2493,7 +2493,7 @@
           "to": "workduck/workduck.queue.artifacts"
         }
       ],
-      "inputHash": "0981d6f51d60f0bd1e72d0de13388ebde8add80d2b9975539e5902bc8a32e1f2",
+      "inputHash": "8330aedee30e88150aee26de82fbc9367007207aead06da81cf2ee2ae60e2f15",
       "key": "card:workduck/workduck.queue.evaluation-controller",
       "nodes": [
         {
@@ -2531,7 +2531,7 @@
     },
     {
       "edges": [],
-      "inputHash": "1c5e1c22d3c8ff4f2f09a33d94068e15fa946a8db55471ed3a6e6b3041f8294b",
+      "inputHash": "275cdc51ba6cc7bd1a6645293a344448d8f929dea4dd5f726dc526efbb672109",
       "key": "card:workduck/workduck.queue.evaluation-delegation-native",
       "nodes": [
         {
@@ -2575,7 +2575,7 @@
           "to": "workduck/workduck.queue.artifacts"
         }
       ],
-      "inputHash": "b76b2cf776ea5fbed42fc5b5a902d63eb4dd4264f5fb48cd5bb4d26ebcdb2673",
+      "inputHash": "490e348f0dc2548399cc226b2a7993649fe15d22c4134cc1e872ff4fa126fc60",
       "key": "card:workduck/workduck.queue.execution",
       "nodes": [
         {
@@ -2613,7 +2613,7 @@
     },
     {
       "edges": [],
-      "inputHash": "3f7f73a8c9cdb83d9d713c141517a371c7a03405de62d82e59ac67822c442c66",
+      "inputHash": "b24c96db080d2bf7c9adebb4f2ffd5b2cd9c1be7f8252f505f6190ee44a8f800",
       "key": "card:workduck/workduck.queue.execution-native",
       "nodes": [
         {
@@ -2642,7 +2642,7 @@
     },
     {
       "edges": [],
-      "inputHash": "e6f2364b4b1cd3caceeb4250a4fe92346049cd4a3c10f3851a486c5cfb44e29e",
+      "inputHash": "fa2a6526b1893d49fed0fe47dc3d97d4495aaf1725683171eb89b3c8e6871295",
       "key": "card:workduck/workduck.queue.execution-planning",
       "nodes": [
         {
@@ -2700,7 +2700,7 @@
           "to": "workduck/workduck.queue.read-state"
         }
       ],
-      "inputHash": "60f633958124cb193a8225c6f5b889562e68378bc07ea738d71efb0cdf031bfc",
+      "inputHash": "0290446f886348676651f83a057bf73ccf9ea97871ccb873168535f6279309f3",
       "key": "card:workduck/workduck.queue.file-actions",
       "nodes": [
         {
@@ -2747,7 +2747,7 @@
     },
     {
       "edges": [],
-      "inputHash": "88c829bbd5e6d81b5f887a495adb05c5e968a99d6637e25f3ede989ea200ee28",
+      "inputHash": "959972a2795f77c796e8fb8d907e91138f925649c61bffc81f9750a08a910973",
       "key": "card:workduck/workduck.queue.folder",
       "nodes": [
         {
@@ -2776,7 +2776,7 @@
     },
     {
       "edges": [],
-      "inputHash": "11b3a8db21da2930637c225fd653eccfb4a691548a096478b02965b74330f744",
+      "inputHash": "6ed72e8b52c314c854a239e5062beec8826252bbd309c7037f4a75a639c97153",
       "key": "card:workduck/workduck.queue.folder-contracts",
       "nodes": [
         {
@@ -2805,7 +2805,7 @@
     },
     {
       "edges": [],
-      "inputHash": "e0073fc396c93c9e257338fb0f0d4ac9d66a819b8dd654e53dfa0f24cebcf22e",
+      "inputHash": "d7be4964e55702671da6fbb8f1d5c17b0f74274820edf13b81630ed185d5873f",
       "key": "card:workduck/workduck.queue.folder-native",
       "nodes": [
         {
@@ -2877,7 +2877,7 @@
           "to": "workduck/workduck.queue.read-state"
         }
       ],
-      "inputHash": "3f13c34356c88020bc2007c52152c81feb6e75f976126e6f9c3586b2e17df26c",
+      "inputHash": "684a5ef0f1612a002f291c61aa10b95a46712c5bd2440032bcc85347f4b9728e",
       "key": "card:workduck/workduck.queue.panel-controller",
       "nodes": [
         {
@@ -2948,7 +2948,7 @@
           "to": "workduck/workduck.queue.artifacts"
         }
       ],
-      "inputHash": "bed7a657c0b065d242220eccae802e74c7ffa1c1de197d29f7ed1e4e37e52d05",
+      "inputHash": "38fdb286405f32efbad31c7aa79b8df2818f971adf694e850648447f59f11c50",
       "key": "card:workduck/workduck.queue.presentation",
       "nodes": [
         {
@@ -3015,7 +3015,7 @@
           "to": "workduck/workduck.queue.execution"
         }
       ],
-      "inputHash": "343ec6e692d974bb5c9f7b520e20a79a73b8745dfaefcd551f3a27874c49c2de",
+      "inputHash": "5ca70ecc03b7fdaa9a30f7afa599189b5a980a3cb479e6a7e486d4a3334fadde",
       "key": "card:workduck/workduck.queue.prompt-preview-controller",
       "nodes": [
         {
@@ -3077,7 +3077,7 @@
           "to": "workduck/workduck.queue.folder"
         }
       ],
-      "inputHash": "76756be2f4014d985d002f49bef4067606a665aee95c104dd9614a623ac2bb2e",
+      "inputHash": "c1d3727a57926356eec6ea49c7d64b5cb5fa68fe130b443110156a40459ddab7",
       "key": "card:workduck/workduck.queue.read-state",
       "nodes": [
         {
@@ -3115,7 +3115,7 @@
     },
     {
       "edges": [],
-      "inputHash": "58b78971e0bab61422a8cb8a95c542288be73762b151829491feabc327813b10",
+      "inputHash": "b8e8b316b1a243576b392c4214801784438b12b95ecd9ceed3e0c3888fbfe311",
       "key": "card:workduck/workduck.queue.response-parser",
       "nodes": [
         {
@@ -3159,7 +3159,7 @@
           "to": "workduck/workduck.queue.artifacts"
         }
       ],
-      "inputHash": "7db8531d08788003af31bbb22a947cb2b14ee2d8ed6b55baa7b1f1e1677e4001",
+      "inputHash": "1217349513df764fd0026a147fc092d1e9955cb2772ab81c6fb98d027cd9dec6",
       "key": "card:workduck/workduck.queue.work-order-editor",
       "nodes": [
         {
@@ -3197,7 +3197,7 @@
     },
     {
       "edges": [],
-      "inputHash": "aa39358b5d99e8d13f8f608bd3be3140d040e487493db20e8c9d2e2e863d5b90",
+      "inputHash": "b1f17598d5f347ea227706a70d79d15dc9dac22dfce7e0f568c3ced9a2c31274",
       "key": "card:workduck/workduck.references.registry",
       "nodes": [
         {
@@ -3226,7 +3226,7 @@
     },
     {
       "edges": [],
-      "inputHash": "4fcac14ce178af1597267a6073c848105e51d746de412c55442371e88e105601",
+      "inputHash": "c8195f014688d5b881b5ec0abf3e084d27abf5b98e2b5e81b98b1f1e121f45e6",
       "key": "card:workduck/workduck.repository.inspection",
       "nodes": [
         {
@@ -3255,7 +3255,7 @@
     },
     {
       "edges": [],
-      "inputHash": "286d9a468cc0899c1a3dd18658046a44885f6e369571903cd79f76fdbcdf8269",
+      "inputHash": "6eb3c9043de9d395e3ee053c0d7799317b460f3fdfb0df8b3a3f933e808f2039",
       "key": "card:workduck/workduck.secret-vault.crypto",
       "nodes": [
         {
@@ -3284,7 +3284,7 @@
     },
     {
       "edges": [],
-      "inputHash": "e493404791cedd09b15ef450ccfd605ed6fa9d4965cea91a746443b04dc623f3",
+      "inputHash": "053f4dbe2408ef8fdae7c4d99902e069669466abfac23adac966074c241f4f09",
       "key": "card:workduck/workduck.secret-vault.crypto-native",
       "nodes": [
         {
@@ -3313,7 +3313,7 @@
     },
     {
       "edges": [],
-      "inputHash": "722abfae5608f8f543b357257d4d1eeef2083b2fae118f424fa327546cea4ee7",
+      "inputHash": "66d411d83552c5ad6a07180658f7c859ac18a47b0bbd31d90a5100424cab46c2",
       "key": "card:workduck/workduck.secret-vault.session-native",
       "nodes": [
         {
@@ -3357,7 +3357,7 @@
           "to": "workduck/workduck.skills.schema"
         }
       ],
-      "inputHash": "8e90ae21d25044d0180d5d04905062899448d91170cf775468b86842fe08cf32",
+      "inputHash": "ba515408bcecb48a1faf03cddc0c4eccf0f2d12cda9dded098acb81adc423cb1",
       "key": "card:workduck/workduck.skills.defaults",
       "nodes": [
         {
@@ -3424,7 +3424,7 @@
           "to": "workduck/workduck.skills.schema"
         }
       ],
-      "inputHash": "0c4ca32ac32e8f85ccb59ef0e3a5cf276715669973f6a533d67cfb441ff2988d",
+      "inputHash": "3444c2290b5eb7ec7b1a89e71a986fec87fb6ac8d7330bbbb497bb5a10380c38",
       "key": "card:workduck/workduck.skills.registry",
       "nodes": [
         {
@@ -3471,7 +3471,7 @@
     },
     {
       "edges": [],
-      "inputHash": "ef71e41ff6634814adba37ff3ef21bb9ce003a6b39b4cc690a11d8050c88a0b6",
+      "inputHash": "2e52c34c3f0e764d8b024c8fac58f32601ab6c15cca678fa95b456b506ad1182",
       "key": "card:workduck/workduck.skills.schema",
       "nodes": [
         {
@@ -3500,7 +3500,7 @@
     },
     {
       "edges": [],
-      "inputHash": "a82b2d5ea97b639db087206a7cda269aab49f001eabe4d6ef9d60bfc92aa1ed2",
+      "inputHash": "108eb076ce8e710adec04da666066124fe32fa20f2318ae7a1f351a6fa51eab3",
       "key": "card:workduck/workduck.storage.atomic-file-write",
       "nodes": [
         {
@@ -3529,7 +3529,7 @@
     },
     {
       "edges": [],
-      "inputHash": "204c59d382dfc96e2e3c427b9a97095afa9c51b8c7063c7ed8aaf3ad1166b9a5",
+      "inputHash": "44c34f48aa1b4c84745369116977f44fb49270846506c99fe0f730d6f997985a",
       "key": "card:workduck/workduck.system.autostart-native",
       "nodes": [
         {
@@ -3573,7 +3573,7 @@
           "to": "workduck/workduck.terminal.session-client"
         }
       ],
-      "inputHash": "fbb3eded4a6bd0c9b2748b11519654ecd5240895d1898d0e5629c95cdd82e6da",
+      "inputHash": "cba690ab132425b120b3c39449bd4248ad38fd3bd0a4b4db9f12e3e53f8e3e68",
       "key": "card:workduck/workduck.terminal.panel",
       "nodes": [
         {
@@ -3611,7 +3611,7 @@
     },
     {
       "edges": [],
-      "inputHash": "174f7919de775722046dd5e0a5ab16c19d0d3e7d80ac301ae5d9172d46aa4c4c",
+      "inputHash": "536061e47c7e35f7836a050cf26b8695f25de71328d287149acdb0dadb17d717",
       "key": "card:workduck/workduck.terminal.process",
       "nodes": [
         {
@@ -3640,7 +3640,7 @@
     },
     {
       "edges": [],
-      "inputHash": "e5fcdeff24b3417f13726c3d3d436996f155c710332c487a0eb591b912d72390",
+      "inputHash": "b77047fe7ef5fd927a1d4289ae8e538edcfbe1031b6e8b770b4e347e757bdc1b",
       "key": "card:workduck/workduck.terminal.session-client",
       "nodes": [
         {
@@ -3669,7 +3669,7 @@
     },
     {
       "edges": [],
-      "inputHash": "28d5460851c08f2db162fbfab56e7d6b1b9c741b4d024be879e0b88f5b5123be",
+      "inputHash": "15737e973f49f94100adbb96359610ec084f08f24757a26579f932e722001f86",
       "key": "card:workduck/workduck.workbench.engine",
       "nodes": [
         {
@@ -3698,7 +3698,7 @@
     },
     {
       "edges": [],
-      "inputHash": "7f7163ee8104ad30548d326acb7d8c10c74e71172511095d9e71d67343599c6f",
+      "inputHash": "60358b74f6ae81f2d5506d8967ddaf7e994d6072ead23142830710f92edb5abb",
       "key": "card:workduck/workduck.workspace.data-files",
       "nodes": [
         {
@@ -3727,7 +3727,7 @@
     },
     {
       "edges": [],
-      "inputHash": "6b7861f25fbbdae7ee19785aa89ddbb7214144833fd2e0785179eed1e12cc2f0",
+      "inputHash": "6e5c12a9c485d1c9b27e00f7c36d32b7fbd9b60344513beec92e632f4095c998",
       "key": "card:workduck/workduck.workspace.data-files-client",
       "nodes": [
         {
@@ -3756,7 +3756,7 @@
     },
     {
       "edges": [],
-      "inputHash": "b68532b4ec75ba9d75e65df761159a61d9a78a0b4a934091900661544a1abe2b",
+      "inputHash": "f0a8adc294fcd5009144531d5320d8b845c806cb17d3b2099ab18f3adedcc270",
       "key": "card:workduck/workduck.workspace.password-client",
       "nodes": [
         {
@@ -3785,7 +3785,7 @@
     },
     {
       "edges": [],
-      "inputHash": "62f12fad4b9fe80c7c10f0803c9c4d2a7905047b6f89843f875022701ca22021",
+      "inputHash": "e8359f4cb352446c95f8d8557ce832a7da6775c055af6173cc0d61e63744b9f6",
       "key": "card:workduck/workduck.workspace.path",
       "nodes": [
         {
@@ -3829,7 +3829,7 @@
           "to": "workduck/workduck.workspace.registry"
         }
       ],
-      "inputHash": "7fa22cbb9d4dafdd6c872b38ac88fdb3bac1be681c1e1a1f5f0d2d2a13bdcfc4",
+      "inputHash": "5bef6a4af3b23b05662a2ae8af9227e7e99ab1cd843c548c27fa3b241f84137c",
       "key": "card:workduck/workduck.workspace.path-client",
       "nodes": [
         {
@@ -3864,6 +3864,105 @@
         }
       ],
       "outputHash": "7008b6cfc46540df87a856891534222a12e419ce3b7b88e1803e8b842984d2ed"
+    },
+    {
+      "edges": [
+        {
+          "confidence": 0.85,
+          "from": "workduck/workduck.workspace.path-repair",
+          "id": "0d3699dbc66b2816f9c5189ed31fad459b30b46cb1c353f53ecc6d07fbea6704",
+          "kind": "imports",
+          "provenance": {
+            "generator": "llmnav",
+            "line": null,
+            "path": "src/lib/workspaces/workspace-path-repair.ts",
+            "source": "src/lib/workspaces/workspace-path-repair.ts",
+            "type": "local-import"
+          },
+          "to": "workduck/workduck.workspace.path-client"
+        },
+        {
+          "confidence": 0.85,
+          "from": "workduck/workduck.workspace.path-repair",
+          "id": "cb24adfb7b9bb72b9790d27ea6f77921f2044b1b98528745cebe63329c62118e",
+          "kind": "imports",
+          "provenance": {
+            "generator": "llmnav",
+            "line": null,
+            "path": "src/lib/workspaces/workspace-path-repair.ts",
+            "source": "src/lib/workspaces/workspace-path-repair.ts",
+            "type": "local-import"
+          },
+          "to": "workduck/workduck.workspace.registry"
+        },
+        {
+          "confidence": 0.85,
+          "from": "workduck/workduck.workspace.path-repair",
+          "id": "04f4a1bb902cd931a3580a9844c71614bd73d682991d5376d785848f17313811",
+          "kind": "imports",
+          "provenance": {
+            "generator": "llmnav",
+            "line": null,
+            "path": "src/lib/workspaces/workspace-path-repair.ts",
+            "source": "src/lib/workspaces/workspace-path-repair.ts",
+            "type": "local-import"
+          },
+          "to": "workduck/workduck.workspace.storage"
+        }
+      ],
+      "inputHash": "06b074afc17fa0714a0349e50124f7558f144b4109f01492a2ec85b652c1e39b",
+      "key": "card:workduck/workduck.workspace.path-repair",
+      "nodes": [
+        {
+          "definitions": [],
+          "external": false,
+          "key": "workduck/workduck.workspace.path-client",
+          "location": null,
+          "repositoryId": "workduck",
+          "role": null,
+          "semanticId": "workduck.workspace.path-client"
+        },
+        {
+          "definitions": [],
+          "external": false,
+          "key": "workduck/workduck.workspace.path-repair",
+          "location": {
+            "declarationLine": null,
+            "endLine": 9,
+            "exported": null,
+            "kind": null,
+            "language": null,
+            "path": "src/lib/workspaces/workspace-path-repair.ts",
+            "receiver": null,
+            "signature": null,
+            "startLine": 1,
+            "symbol": null,
+            "visibility": null
+          },
+          "repositoryId": "workduck",
+          "role": "Validate and save replacement directories for the initiating workspace.",
+          "semanticId": "workduck.workspace.path-repair"
+        },
+        {
+          "definitions": [],
+          "external": false,
+          "key": "workduck/workduck.workspace.registry",
+          "location": null,
+          "repositoryId": "workduck",
+          "role": null,
+          "semanticId": "workduck.workspace.registry"
+        },
+        {
+          "definitions": [],
+          "external": false,
+          "key": "workduck/workduck.workspace.storage",
+          "location": null,
+          "repositoryId": "workduck",
+          "role": null,
+          "semanticId": "workduck.workspace.storage"
+        }
+      ],
+      "outputHash": "111e4d12f68bc065c51dd9787a85e79f0985ca01595c609337af6c190b071dbf"
     },
     {
       "edges": [
@@ -3938,7 +4037,7 @@
           "to": "workduck/workduck.workspace.unlock"
         }
       ],
-      "inputHash": "bc8ec025f614f64d0a05519c9b47ebe0cb7abed293bcd80c895f947df454db96",
+      "inputHash": "d584a7f143482025d03ed4d31b45536b54959980ac2e942cafd9dad275947c43",
       "key": "card:workduck/workduck.workspace.registration",
       "nodes": [
         {
@@ -4012,7 +4111,7 @@
     },
     {
       "edges": [],
-      "inputHash": "fe4d9b7b01a7874eced1880640027a38ecb5f9f1ffec059cb89a521b73e88b36",
+      "inputHash": "ea91f77e544112f0a8e3efb7a8a230b47a5cf8e801ab5ae6e26507329c127f04",
       "key": "card:workduck/workduck.workspace.registry",
       "nodes": [
         {
@@ -4041,7 +4140,7 @@
     },
     {
       "edges": [],
-      "inputHash": "acbbfff0e2daa6d3a1ec3eb29626e1bc7e80e535d91d21f45943e29226bce5a9",
+      "inputHash": "743ab92a54d2925c9aa4bdca7a1b75c35429ea8e67906b45cc04d0dadff1827b",
       "key": "card:workduck/workduck.workspace.repository-setup",
       "nodes": [
         {
@@ -4070,7 +4169,7 @@
     },
     {
       "edges": [],
-      "inputHash": "6e2c4c1cd4fcadced73028e7684882edc5c501e5cf1c9a042981c276d92b6191",
+      "inputHash": "fd4a9709bda12c26efd39b3238760920ac91dcfe83a3a6fb1bbe8f6e90a56760",
       "key": "card:workduck/workduck.workspace.repository-setup-client",
       "nodes": [
         {
@@ -4114,7 +4213,7 @@
           "to": "workduck/workduck.workspace.registry"
         }
       ],
-      "inputHash": "fcee0358f0eaea60c8adfa9b76408b54988840eb986d6f00832e970c5404d338",
+      "inputHash": "0131dd2a7c3f6f88f8f6b51d36ddd38edca97afd0f3dccca37bb8c858600c67e",
       "key": "card:workduck/workduck.workspace.storage",
       "nodes": [
         {
@@ -4144,11 +4243,11 @@
             "visibility": null
           },
           "repositoryId": "workduck",
-          "role": "Read, write, and publish workspace registry snapshots through application state without discarding damaged records.",
+          "role": "Read, conditionally save, and publish valid workspace registries.",
           "semanticId": "workduck.workspace.storage"
         }
       ],
-      "outputHash": "5bde3fe6e0343364bb0a2b608d962fc05eb38270616311dbf7f390974b69f533"
+      "outputHash": "b1891725b56ac67c4bb0ee3cfc3aeb8640d33a135123a56165f4bde870f2034e"
     },
     {
       "edges": [
@@ -4167,7 +4266,7 @@
           "to": "workduck/workduck.workspace.registry"
         }
       ],
-      "inputHash": "e9ec19be496afea079682f1e64801aed22f7d9620037bf99dcf6e20499890b49",
+      "inputHash": "c14c84b00e730c770aa756689cbfabbb430ddafef34aed5e0f14e06d13fe2933",
       "key": "card:workduck/workduck.workspace.sync",
       "nodes": [
         {
@@ -4205,7 +4304,7 @@
     },
     {
       "edges": [],
-      "inputHash": "ac10482ee4ae9731c36e8d817c7f516a5f4a1328587363e798137b72db3aa4b4",
+      "inputHash": "6cb4a7a9c67c3370a085c7cfb78b9a7c85708193a32b85a8ea33fef8958e8b8f",
       "key": "card:workduck/workduck.workspace.sync-file-client",
       "nodes": [
         {
@@ -4234,7 +4333,7 @@
     },
     {
       "edges": [],
-      "inputHash": "6351bfe95a0189913b5e2680c0c350c6eb5aadcffc58ee3ad6f47f6e2cae63eb",
+      "inputHash": "b8c5164396c639da8aca6c2519bd814df16c1ef94f2befa3cf33fddcd7b2287b",
       "key": "card:workduck/workduck.workspace.sync-file-native",
       "nodes": [
         {
@@ -4263,7 +4362,7 @@
     },
     {
       "edges": [],
-      "inputHash": "b3a621ed679053288274d640c080c5406c8d8fbd50dd70ae7c2cbb9fc4ce4530",
+      "inputHash": "95e85f47f756e9922c92c1f2054604bd88d3c7631ddf5cb973145a3c02400482",
       "key": "card:workduck/workduck.workspace.sync-git-native",
       "nodes": [
         {
@@ -4321,7 +4420,7 @@
           "to": "workduck/workduck.workspace.registry"
         }
       ],
-      "inputHash": "c878cd06a2d82d3ba3ac993133fb2a4a5c04f7a3728d005408109d4dcb4b76b5",
+      "inputHash": "c876fd0e896c75b196fe920950d798b87fd34ad1f66a59b2e8abb8ed1562b2c2",
       "key": "card:workduck/workduck.workspace.unlock",
       "nodes": [
         {
@@ -4368,6 +4467,6 @@
     }
   ],
   "repositoryId": "workduck",
-  "resolutionHash": "202a13615f1c7c732d9bb87b5baf670429ca60ebbb9f73e37914c8c473523066",
+  "resolutionHash": "475a1e075721821a225a6cbc643e0e3e13866f17c4c8bf3954a8c3964c50c755",
   "schemaVersion": 1
 }

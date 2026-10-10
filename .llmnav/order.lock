@@ -99,3 +99,4 @@ workduck.workspace.registration
 workduck.workspace.password-client
 workduck.workspace.repository-setup-client
 workduck.workspace.unlock
+workduck.workspace.path-repair

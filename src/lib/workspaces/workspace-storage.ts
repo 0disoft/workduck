@@ -1,10 +1,10 @@
 /* llmnav/1 module
 id=workduck.workspace.storage
-role=Read, write, and publish workspace registry snapshots through application state without discarding damaged records.
-owns=workspace storage admission|workspace change subscriptions|snapshot notification validation
-excludes=workspace domain mutations|native SQLite transactions|browser journal implementation
+role=Read, conditionally save, and publish valid workspace registries.
+owns=registry read/write admission|change subscriptions|notification validation
+excludes=domain mutations|native SQLite|browser journals
 search=workspace registry persistence|workspace read failure block saves|invalid workspace change notification
-invariant=Edits carry their original snapshot and publish only after conditional persistence; native transactions and browser locks reject stale lists; failed reads and malformed notifications never publish an empty replacement.
+invariant=Cancellation stops before dispatch; commits compare original snapshots; reads and events reject damaged data; only confirmed saves publish.
 stability=architecture
 */
 import {
@@ -67,10 +67,12 @@ export function readWorkspaceRegistryFromBrowser(): WorkspaceRegistryStorageResu
 
 export async function writeWorkspaceRegistryToBrowser(
 	registry: WorkspaceRegistry,
-	expectedRegistry: WorkspaceRegistry
+	expectedRegistry: WorkspaceRegistry,
+	signal?: AbortSignal
 ): Promise<WorkspaceRegistryStorageResult> {
 	const failed = (error: WorkspaceRegistryStorageError = 'workspace-registry-write-failed'): WorkspaceRegistryStorageResult =>
 		({ ok: false, registry: readWorkspaceRegistryFromBrowser().registry, error });
+	if (signal?.aborted) return failed();
 	const parsed = normalizeStoredWorkspaceRegistry(registry);
 	const expected = normalizeStoredWorkspaceRegistry(expectedRegistry);
 	if (!parsed.ok || !expected.ok) return failed();
@@ -83,6 +85,7 @@ export async function writeWorkspaceRegistryToBrowser(
 			const locks = typeof navigator === 'undefined' ? undefined : navigator.locks;
 			if (locks === undefined) return failed();
 			return await locks.request('workduck:workspace-registry-write', () => {
+				if (signal?.aborted) return failed();
 				const current = readWorkspaceRegistryFromBrowser();
 				if (!current.ok) return failed();
 				if (serializeWorkspaceRegistry(current.registry) !== expectedJson) return failed('workspace-registry-conflict');
@@ -98,6 +101,7 @@ export async function writeWorkspaceRegistryToBrowser(
 	const result = await commitWorkduckAppStateValueWithNativeTransaction(
 		WORKDUCK_WORKSPACE_REGISTRY_APP_STATE_KEY, WORKDUCK_WORKSPACE_REGISTRY_STORAGE_KEY,
 		valueJson, async (expectedValueJson) => {
+			if (signal?.aborted) return false;
 			const current = parseStoredWorkspaceRegistry(expectedValueJson);
 			if (!current.ok) return false;
 			if (serializeWorkspaceRegistry(current.registry) !== expectedJson) { conflict = true; return false; }

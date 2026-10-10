@@ -716,6 +716,48 @@
     },
     {
       "confidence": 0.85,
+      "from": "workduck/workduck.workspace.path-repair",
+      "id": "0d3699dbc66b2816f9c5189ed31fad459b30b46cb1c353f53ecc6d07fbea6704",
+      "kind": "imports",
+      "provenance": {
+        "generator": "llmnav",
+        "line": null,
+        "path": "src/lib/workspaces/workspace-path-repair.ts",
+        "source": "src/lib/workspaces/workspace-path-repair.ts",
+        "type": "local-import"
+      },
+      "to": "workduck/workduck.workspace.path-client"
+    },
+    {
+      "confidence": 0.85,
+      "from": "workduck/workduck.workspace.path-repair",
+      "id": "cb24adfb7b9bb72b9790d27ea6f77921f2044b1b98528745cebe63329c62118e",
+      "kind": "imports",
+      "provenance": {
+        "generator": "llmnav",
+        "line": null,
+        "path": "src/lib/workspaces/workspace-path-repair.ts",
+        "source": "src/lib/workspaces/workspace-path-repair.ts",
+        "type": "local-import"
+      },
+      "to": "workduck/workduck.workspace.registry"
+    },
+    {
+      "confidence": 0.85,
+      "from": "workduck/workduck.workspace.path-repair",
+      "id": "04f4a1bb902cd931a3580a9844c71614bd73d682991d5376d785848f17313811",
+      "kind": "imports",
+      "provenance": {
+        "generator": "llmnav",
+        "line": null,
+        "path": "src/lib/workspaces/workspace-path-repair.ts",
+        "source": "src/lib/workspaces/workspace-path-repair.ts",
+        "type": "local-import"
+      },
+      "to": "workduck/workduck.workspace.storage"
+    },
+    {
+      "confidence": 0.85,
       "from": "workduck/workduck.workspace.registration",
       "id": "75a0a71ef51144a94e33d7aedd2e66383da4863a82ea2eadb45781ab817dd1ce",
       "kind": "imports",
@@ -2871,6 +2913,28 @@
     {
       "definitions": [],
       "external": false,
+      "key": "workduck/workduck.workspace.path-repair",
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src/lib/workspaces/workspace-path-repair.ts",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "repositoryId": "workduck",
+      "role": "Validate and save replacement directories for the initiating workspace.",
+      "semanticId": "workduck.workspace.path-repair",
+      "unresolved": false
+    },
+    {
+      "definitions": [],
+      "external": false,
       "key": "workduck/workduck.workspace.registration",
       "location": {
         "declarationLine": null,
@@ -2974,7 +3038,7 @@
         "visibility": null
       },
       "repositoryId": "workduck",
-      "role": "Read, write, and publish workspace registry snapshots through application state without discarding damaged records.",
+      "role": "Read, conditionally save, and publish valid workspace registries.",
       "semanticId": "workduck.workspace.storage",
       "unresolved": false
     },
@@ -3091,11 +3155,11 @@
   ],
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "477d2308fac948d679823073ef5b45b1cb02dab311ca7c976ad2e273f90723dd",
+  "sourceHash": "8f38bd8c5b1325c238ef342289cad13ca03cca7f33c6510e4472c16d8d8e18c6",
   "stats": {
-    "edgeCount": 60,
+    "edgeCount": 63,
     "importedIndexCount": 0,
-    "nodeCount": 101,
+    "nodeCount": 102,
     "unresolvedNodeCount": 0
   }
 }

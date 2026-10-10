@@ -139,6 +139,21 @@ test('browser saves compare the original snapshot after acquiring the shared loc
 	expect(draft.workspaces[0]?.name).toBe('My draft');
 });
 
+test('cancellation while waiting for a browser lock prevents persistence', async () => {
+	values.set(WORKDUCK_WORKSPACE_REGISTRY_STORAGE_KEY, JSON.stringify(registry));
+	let enter!: () => void;
+	const waiting = new Promise<void>((resolve) => { enter = resolve; });
+	Object.defineProperty(globalThis, 'navigator', { configurable: true, value: {
+		locks: { request: async (_name: string, callback: () => unknown) => { await waiting; return callback(); } }
+	} });
+	const owner = new AbortController();
+	const saving = writeWorkspaceRegistryToBrowser(renamed('Cancelled'), registry, owner.signal);
+	owner.abort();
+	enter();
+	expect((await saving).ok).toBe(false);
+	expect(JSON.parse(values.get(WORKDUCK_WORKSPACE_REGISTRY_STORAGE_KEY)!)).toEqual(registry);
+});
+
 test('browser saves fail without atomic locking instead of permitting unsafe tab writes', async () => {
 	Object.defineProperty(globalThis, 'navigator', { configurable: true, value: {} });
 	values.set(WORKDUCK_WORKSPACE_REGISTRY_STORAGE_KEY, JSON.stringify(registry));
@@ -225,6 +240,34 @@ test('journal recovery cannot silently change the baseline of a new conditional 
 	expect(conditionalWrites).toBe(0);
 	expect(JSON.parse(stored)).toEqual(recovered);
 	expect(values.size).toBe(0);
+});
+
+test('cancellation while older journals flush cannot dispatch a new native edit', async () => {
+	const recovered = renamed('Recovered');
+	let stored = JSON.stringify(registry);
+	let release!: () => void;
+	const waiting = new Promise<void>((resolve) => { release = resolve; });
+	let conditionalWrites = 0;
+	setTauriInvokeForTest(async <T>(command: string, args?: Record<string, unknown>) => {
+		if (command === 'read_app_state_records') return { ok: true, records: { [WORKDUCK_WORKSPACE_REGISTRY_APP_STATE_KEY]: stored } } as T;
+		if (command === 'write_app_state_records') {
+			await waiting;
+			stored = (args?.records as Record<string, { valueJson: string }>)[WORKDUCK_WORKSPACE_REGISTRY_APP_STATE_KEY]!.valueJson;
+			return { ok: true } as T;
+		}
+		conditionalWrites += 1;
+		return { ok: true } as T;
+	});
+	await initializeNativeWorkspace();
+	writeWorkduckAppStateValue(WORKDUCK_WORKSPACE_REGISTRY_APP_STATE_KEY,
+		WORKDUCK_WORKSPACE_REGISTRY_STORAGE_KEY, JSON.stringify(recovered));
+	const owner = new AbortController();
+	const saving = writeWorkspaceRegistryToBrowser(renamed('Cancelled'), recovered, owner.signal);
+	owner.abort();
+	release();
+	expect((await saving).ok).toBe(false);
+	expect(conditionalWrites).toBe(0);
+	expect(JSON.parse(stored)).toEqual(recovered);
 });
 
 for (const failure of ['throw', 'false', 'malformed'] as const) {

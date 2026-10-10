@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { onMount, untrack } from 'svelte';
 
 	import { getWorkduckMessages } from '#lib/i18n/workduck-language.ts';
 	import {
@@ -12,22 +12,15 @@
 	} from '#lib/settings/appearance-storage.ts';
 
 	import {
-		updateWorkspacePath,
 		WORKSPACE_PATH_MAX_LENGTH,
-		type WorkspaceRecord,
-		type WorkspaceRegistryError
+		type WorkspaceRecord
 	} from './workspace-registry';
 	import {
 		selectWorkspacePath,
-		validateWorkspacePath,
 		type WorkspacePathError
 	} from './workspace-path';
 	import { formatWorkspacePathForDisplay } from './workspace-path-format';
-	import {
-		readWorkspaceRegistryFromBrowser,
-		writeWorkspaceRegistryToBrowser,
-		type WorkspaceRegistryStorageError
-	} from './workspace-storage';
+	import { repairWorkspacePath, type WorkspacePathRepairError } from './workspace-path-repair';
 
 	interface Props {
 		readonly workspace: WorkspaceRecord;
@@ -35,11 +28,6 @@
 		readonly onRepaired?: (path: string) => void;
 		readonly onCancel?: () => void;
 	}
-
-	type WorkspacePathRepairError =
-		| WorkspacePathError
-		| WorkspaceRegistryError
-		| WorkspaceRegistryStorageError;
 
 	let {
 		workspace,
@@ -54,7 +42,9 @@
 	let error = $state<WorkspacePathRepairError | null>(null);
 	let isSelectingPath = $state(false);
 	let isSavingPath = $state(false);
-	let lastWorkspaceKey = $state('');
+	let currentSave: AbortController | null = null;
+	let currentSelection: AbortController | null = null;
+	let workspaceScope = $derived(JSON.stringify([workspace.id, workspace.lock?.passwordHash ?? null]));
 
 	let canSelectPath = $derived(!isSelectingPath && !isSavingPath);
 	let canSavePath = $derived(path.trim().length > 0 && !isSelectingPath && !isSavingPath);
@@ -67,7 +57,7 @@
 			appearanceSettings = nextSettings;
 		});
 
-		return unsubscribeAppearanceSettings;
+		return () => { cancelPendingRequests(); unsubscribeAppearanceSettings(); };
 	});
 
 	function getRepairErrorMessage(nextError: WorkspacePathRepairError) {
@@ -80,6 +70,8 @@
 		}
 
 		switch (nextError) {
+			case 'workspace-path-repair-cancelled':
+				return null;
 			case 'workspace-not-found':
 				return messages.workspace.pathErrors.workspaceNotFound;
 			case 'workspace-registry-read-failed':
@@ -147,15 +139,20 @@
 	}
 
 	async function handlePathSelect() {
-		if (isSelectingPath) {
+		if (isSelectingPath || isSavingPath) {
 			return;
 		}
 
 		error = null;
 		isSelectingPath = true;
+		const selection = new AbortController();
+		const scope = workspaceScope;
+		const submittedPath = path;
+		currentSelection = selection;
 
 		try {
-			const result = await selectWorkspacePath(path);
+			const result = await selectWorkspacePath(submittedPath);
+			if (selection.signal.aborted || currentSelection !== selection || scope !== workspaceScope || path !== submittedPath) return;
 
 			if (!result.ok) {
 				error = result.error;
@@ -167,72 +164,63 @@
 				pathDisplay = formatWorkspacePathForDisplay(result.path);
 			}
 		} finally {
-			isSelectingPath = false;
+			if (currentSelection === selection) { currentSelection = null; isSelectingPath = false; }
 		}
 	}
 
 	async function handleSubmit(event: SubmitEvent) {
 		event.preventDefault();
 
-		if (isSavingPath) {
+		if (isSavingPath || isSelectingPath) {
 			return;
 		}
 
 		error = null;
 		isSavingPath = true;
+		const saving = new AbortController();
+		const scope = workspaceScope;
+		const submittedPath = path;
+		currentSave = saving;
 
 		try {
-			const pathValidation = await validateWorkspacePath(path);
-
-			if (!pathValidation.ok) {
-				error = pathValidation.error;
+			const result = await repairWorkspacePath(workspace, submittedPath, saving.signal);
+			if (saving.signal.aborted || currentSave !== saving || scope !== workspaceScope) return;
+			if (!result.ok) {
+				if (path === submittedPath) error = result.error;
 				return;
 			}
 
-			const registryResult = readWorkspaceRegistryFromBrowser();
-
-			if (!registryResult.ok) {
-				error = registryResult.error;
-				return;
+			if (path === submittedPath) {
+				path = result.path;
+				pathDisplay = formatWorkspacePathForDisplay(result.path);
+				onRepaired?.(result.path);
 			}
-
-			const updateResult = updateWorkspacePath(
-				registryResult.registry,
-				workspace.id,
-				pathValidation.path
-			);
-
-			if (!updateResult.ok) {
-				error = updateResult.error;
-				return;
-			}
-
-			const writeResult = await writeWorkspaceRegistryToBrowser(updateResult.registry, registryResult.registry);
-
-			if (!writeResult.ok) {
-				error = writeResult.error;
-				return;
-			}
-
-			path = pathValidation.path;
-			pathDisplay = formatWorkspacePathForDisplay(pathValidation.path);
-			onRepaired?.(pathValidation.path);
 		} finally {
-			isSavingPath = false;
+			if (currentSave === saving) { currentSave = null; isSavingPath = false; }
 		}
 	}
 
+	function cancelPendingRequests() {
+		currentSave?.abort();
+		currentSelection?.abort();
+		currentSave = null;
+		currentSelection = null;
+		isSavingPath = false;
+		isSelectingPath = false;
+	}
+
+	function handleCancel() {
+		cancelPendingRequests();
+		onCancel?.();
+	}
+
 	$effect(() => {
-		const nextWorkspaceKey = `${workspace.id}:${workspace.path}`;
-
-		if (nextWorkspaceKey === lastWorkspaceKey) {
-			return;
-		}
-
-		lastWorkspaceKey = nextWorkspaceKey;
-		path = workspace.path;
-		pathDisplay = formatWorkspacePathForDisplay(workspace.path);
+		workspaceScope;
+		const initialPath = untrack(() => workspace.path);
+		path = initialPath;
+		pathDisplay = formatWorkspacePathForDisplay(initialPath);
 		error = null;
+		return cancelPendingRequests;
 	});
 </script>
 
@@ -277,8 +265,7 @@
 			<button
 				class="workduck-button workduck-button-secondary"
 				type="button"
-				disabled={isSavingPath || isSelectingPath}
-				onclick={onCancel}
+				onclick={handleCancel}
 			>
 				{messages.common.cancel}
 			</button>
