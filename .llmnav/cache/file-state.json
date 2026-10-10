@@ -1146,7 +1146,7 @@
             ],
             "id": "workduck.app-state.storage-native",
             "invariant": [
-              "Only allowed keys and bounded JSON objects are stored; invalid rows roll back the batch and older UTC revisions cannot replace newer values."
+              "Only allowed keys and bounded JSON objects are stored; invalid rows roll back the batch; older UTC revisions retain the newer value and return it for renderer reconciliation."
             ],
             "owns": [
               "app state SQLite transactions",
@@ -1166,7 +1166,7 @@
             "stability": "contract",
             "unknown": []
           },
-          "end": 757,
+          "end": 791,
           "endLine": 16,
           "entries": [
             {
@@ -1203,7 +1203,7 @@
               "key": "invariant",
               "line": 14,
               "order": 5,
-              "value": "Only allowed keys and bounded JSON objects are stored; invalid rows roll back the batch and older UTC revisions cannot replace newer values."
+              "value": "Only allowed keys and bounded JSON objects are stored; invalid rows roll back the batch; older UTC revisions retain the newer value and return it for renderer reconciliation."
             },
             {
               "key": "stability",
@@ -1216,7 +1216,7 @@
           "indent": "",
           "newline": "\n",
           "prefix": null,
-          "raw": "/* llmnav/1 module\nid=workduck.app-state.storage-native\nrole=Read and transactionally persist allowed application settings in SQLite with bounded JSON and ordered UTC revisions.\nowns=app state SQLite transactions|setting key allowlist|JSON size validation|UTC revision ordering\nexcludes=renderer crash journal|setting domain normalization|sync payload assembly\nsearch=app state SQLite transaction|setting JSON size limit|UTC setting revision\ninvariant=Only allowed keys and bounded JSON objects are stored; invalid rows roll back the batch and older UTC revisions cannot replace newer values.\nstability=contract\n*/",
+          "raw": "/* llmnav/1 module\nid=workduck.app-state.storage-native\nrole=Read and transactionally persist allowed application settings in SQLite with bounded JSON and ordered UTC revisions.\nowns=app state SQLite transactions|setting key allowlist|JSON size validation|UTC revision ordering\nexcludes=renderer crash journal|setting domain normalization|sync payload assembly\nsearch=app state SQLite transaction|setting JSON size limit|UTC setting revision\ninvariant=Only allowed keys and bounded JSON objects are stored; invalid rows roll back the batch; older UTC revisions retain the newer value and return it for renderer reconciliation.\nstability=contract\n*/",
           "scope": "module",
           "specVersion": "1",
           "start": 143,
@@ -1225,7 +1225,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "5cca2bb177be723569db914f1193d0e3e30fe16429e385582e754f17411dff8d",
+      "contentHash": "b6d725796646c7d2fa851251537533aa56125a9d5b576d4cf9e926d6aceaec3c",
       "declarations": [
         null
       ],
@@ -1237,8 +1237,8 @@
         "tests {\n    use super::*"
       ],
       "path": "src-tauri/src/app_state_store.rs",
-      "semanticBytes": 614,
-      "sourceBytes": 12552
+      "semanticBytes": 648,
+      "sourceBytes": 16490
     },
     {
       "blocks": [],
@@ -5845,7 +5845,7 @@
     },
     {
       "blocks": [],
-      "contentHash": "a5eda38036ad49e605d55f8102f2bf37c9bb7673ba2d494cf2df238fb1a2cb39",
+      "contentHash": "c372de67029d3f2c424f0660dc6e5fc06b57998d14644f4e9fd3de89b920d032",
       "declarations": [],
       "imports": [
         "#lib/tauri/tauri-invoke.ts",
@@ -5855,7 +5855,7 @@
       ],
       "path": "src/lib/app-state/app-state-storage.test.ts",
       "semanticBytes": 0,
-      "sourceBytes": 11302
+      "sourceBytes": 16336
     },
     {
       "blocks": [
@@ -5869,7 +5869,7 @@
             ],
             "id": "workduck.app-state.storage",
             "invariant": [
-              "Native writes require successful initialization; flushes remove only matching journals; external transactions drain pending writes, exclude edits to their key, and publish cache changes only after commit."
+              "Native writes require successful initialization; flushes reconcile superseded values without replacing newer edits and remove only matching journals; external transactions drain pending writes and publish cache changes only after commit."
             ],
             "owns": [
               "app state backend selection",
@@ -5890,7 +5890,7 @@
             "stability": "architecture",
             "unknown": []
           },
-          "end": 703,
+          "end": 736,
           "endLine": 9,
           "entries": [
             {
@@ -5927,7 +5927,7 @@
               "key": "invariant",
               "line": 7,
               "order": 5,
-              "value": "Native writes require successful initialization; flushes remove only matching journals; external transactions drain pending writes, exclude edits to their key, and publish cache changes only after commit."
+              "value": "Native writes require successful initialization; flushes reconcile superseded values without replacing newer edits and remove only matching journals; external transactions drain pending writes and publish cache changes only after commit."
             },
             {
               "key": "stability",
@@ -5940,7 +5940,7 @@
           "indent": "",
           "newline": "\n",
           "prefix": null,
-          "raw": "/* llmnav/1 module\nid=workduck.app-state.storage\nrole=Persist application settings through a renderer crash journal, native SQLite promotion, and browser fallback.\nowns=app state backend selection|legacy setting promotion|pending write journal|serialized flush|transaction cache publication\nexcludes=setting domain validation|native SQLite implementation|workspace project registries\nsearch=app state crash journal|settings SQLite promotion|pending setting flush\ninvariant=Native writes require successful initialization; flushes remove only matching journals; external transactions drain pending writes, exclude edits to their key, and publish cache changes only after commit.\nstability=architecture\n*/",
+          "raw": "/* llmnav/1 module\nid=workduck.app-state.storage\nrole=Persist application settings through a renderer crash journal, native SQLite promotion, and browser fallback.\nowns=app state backend selection|legacy setting promotion|pending write journal|serialized flush|transaction cache publication\nexcludes=setting domain validation|native SQLite implementation|workspace project registries\nsearch=app state crash journal|settings SQLite promotion|pending setting flush\ninvariant=Native writes require successful initialization; flushes reconcile superseded values without replacing newer edits and remove only matching journals; external transactions drain pending writes and publish cache changes only after commit.\nstability=architecture\n*/",
           "scope": "module",
           "specVersion": "1",
           "start": 0,
@@ -5949,7 +5949,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "f9a5e0ca763f0ca707b3c3c7612ddec26d83151d91aa44dbdf7c2a6762b8a055",
+      "contentHash": "132376ccb33231935bc6f94f582a09e583517208cb617351ee8751c724560177",
       "declarations": [
         null
       ],
@@ -5958,8 +5958,8 @@
         "#lib/tauri/tauri-invoke.ts"
       ],
       "path": "src/lib/app-state/app-state-storage.ts",
-      "semanticBytes": 703,
-      "sourceBytes": 16676
+      "semanticBytes": 736,
+      "sourceBytes": 19181
     },
     {
       "blocks": [],

@@ -11,7 +11,7 @@ role=Read and transactionally persist allowed application settings in SQLite wit
 owns=app state SQLite transactions|setting key allowlist|JSON size validation|UTC revision ordering
 excludes=renderer crash journal|setting domain normalization|sync payload assembly
 search=app state SQLite transaction|setting JSON size limit|UTC setting revision
-invariant=Only allowed keys and bounded JSON objects are stored; invalid rows roll back the batch and older UTC revisions cannot replace newer values.
+invariant=Only allowed keys and bounded JSON objects are stored; invalid rows roll back the batch; older UTC revisions retain the newer value and return it for renderer reconciliation.
 stability=contract
 */
 
@@ -59,6 +59,8 @@ pub struct AppStateRecordsRead {
 pub struct AppStateRecordsWrite {
     ok: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
+    superseded_records: Option<BTreeMap<String, String>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     error: Option<AppStateStoreError>,
 }
 
@@ -94,8 +96,9 @@ pub fn write_app_state_records(
     };
 
     match write_records_to_connection(&mut connection, records) {
-        Ok(()) => AppStateRecordsWrite {
+        Ok(superseded_records) => AppStateRecordsWrite {
             ok: true,
+            superseded_records: (!superseded_records.is_empty()).then_some(superseded_records),
             error: None,
         },
         Err(error) => invalid_write(error),
@@ -140,14 +143,15 @@ fn read_records_from_connection(
 fn write_records_to_connection(
     connection: &mut Connection,
     records: BTreeMap<String, AppStateWriteInput>,
-) -> Result<(), AppStateStoreError> {
+) -> Result<BTreeMap<String, String>, AppStateStoreError> {
     let records = validate_records(records)?;
     let transaction = connection
         .transaction()
         .map_err(|_| AppStateStoreError::WriteFailed)?;
 
+    let mut superseded_records = BTreeMap::new();
     for (key, record) in records {
-        transaction
+        let written = transaction
             .execute(
                 "INSERT INTO app_state_records (
                   state_key,
@@ -163,11 +167,25 @@ fn write_records_to_connection(
                 params![key, record.value_json, record.updated_at],
             )
             .map_err(|_| AppStateStoreError::WriteFailed)?;
+        if written == 0 {
+            let value_json: String = transaction
+                .query_row(
+                    "SELECT value_json FROM app_state_records WHERE state_key = ?1",
+                    [&key],
+                    |row| row.get(0),
+                )
+                .map_err(|_| AppStateStoreError::WriteFailed)?;
+            // Return the authoritative value from this same transaction; callers
+            // cannot treat an ignored timestamp as persistence of their payload.
+            validate_value_json(&value_json)?;
+            superseded_records.insert(key, value_json);
+        }
     }
 
     transaction
         .commit()
-        .map_err(|_| AppStateStoreError::WriteFailed)
+        .map_err(|_| AppStateStoreError::WriteFailed)?;
+    Ok(superseded_records)
 }
 
 fn validate_records(
@@ -257,6 +275,7 @@ fn invalid_read(error: AppStateStoreError) -> AppStateRecordsRead {
 fn invalid_write(error: AppStateStoreError) -> AppStateRecordsWrite {
     AppStateRecordsWrite {
         ok: false,
+        superseded_records: None,
         error: Some(error),
     }
 }
@@ -359,7 +378,7 @@ mod tests {
     fn older_timestamp_cannot_overwrite_a_newer_record() {
         let mut connection = test_connection();
 
-        write_records_to_connection(
+        let superseded = write_records_to_connection(
             &mut connection,
             BTreeMap::from([(
                 "appearance-settings".to_string(),
@@ -370,7 +389,8 @@ mod tests {
             )]),
         )
         .expect("newer app state write");
-        write_records_to_connection(
+        assert!(superseded.is_empty());
+        let superseded = write_records_to_connection(
             &mut connection,
             BTreeMap::from([(
                 "appearance-settings".to_string(),
@@ -381,6 +401,10 @@ mod tests {
             )]),
         )
         .expect("stale app state write is ignored");
+        assert_eq!(
+            superseded.get("appearance-settings").map(String::as_str),
+            Some(r#"{"languageId":"ko"}"#)
+        );
 
         let records =
             read_records_from_connection(&connection, &["appearance-settings".to_string()])
@@ -389,6 +413,82 @@ mod tests {
         assert_eq!(
             records.get("appearance-settings").map(String::as_str),
             Some(r#"{"languageId":"ko"}"#)
+        );
+    }
+
+    #[test]
+    fn mixed_batch_returns_only_superseded_values_after_commit() {
+        let mut connection = test_connection();
+        let input = |value: &str, time: &str| AppStateWriteInput {
+            value_json: value.into(),
+            updated_at: time.into(),
+        };
+        write_records_to_connection(
+            &mut connection,
+            BTreeMap::from([(
+                "system-settings".into(),
+                input(r#"{"value":"durable"}"#, "2026-10-10T00:00:01.000Z"),
+            )]),
+        )
+        .unwrap();
+        let superseded = write_records_to_connection(
+            &mut connection,
+            BTreeMap::from([
+                (
+                    "appearance-settings".into(),
+                    input("{}", "2026-10-10T00:00:00.000Z"),
+                ),
+                (
+                    "system-settings".into(),
+                    input(r#"{"value":"older"}"#, "2026-10-10T00:00:00.000Z"),
+                ),
+            ]),
+        )
+        .unwrap();
+        assert_eq!(
+            superseded,
+            BTreeMap::from([("system-settings".into(), r#"{"value":"durable"}"#.into())])
+        );
+        let response = serde_json::to_value(AppStateRecordsWrite {
+            ok: true,
+            superseded_records: Some(superseded),
+            error: None,
+        })
+        .unwrap();
+        assert_eq!(
+            response["supersededRecords"]["system-settings"],
+            r#"{"value":"durable"}"#
+        );
+        assert_eq!(
+            read_records_from_connection(&connection, &["appearance-settings".into()]).unwrap()["appearance-settings"],
+            "{}"
+        );
+    }
+
+    #[test]
+    fn later_database_failure_rolls_back_earlier_writes() {
+        let mut connection = test_connection();
+        connection.execute_batch("CREATE TRIGGER reject_setting BEFORE INSERT ON app_state_records WHEN NEW.state_key = 'system-settings' BEGIN SELECT RAISE(ABORT, 'test failure'); END;").unwrap();
+        let records = ["appearance-settings", "system-settings"]
+            .into_iter()
+            .map(|key| {
+                (
+                    key.into(),
+                    AppStateWriteInput {
+                        value_json: "{}".into(),
+                        updated_at: "2026-10-10T00:00:00.000Z".into(),
+                    },
+                )
+            })
+            .collect();
+        assert_eq!(
+            write_records_to_connection(&mut connection, records),
+            Err(AppStateStoreError::WriteFailed)
+        );
+        assert!(
+            read_records_from_connection(&connection, &["appearance-settings".into()])
+                .unwrap()
+                .is_empty()
         );
     }
 

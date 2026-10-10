@@ -95,7 +95,7 @@
     "workduck.workspace.sync-file-native",
     "workduck.workspace.sync-git-native"
   ],
-  "cardSetHash": "8122b87af2610bfbd0d38a206601b356a5499d1c81b789fee217a0c65dc48e18",
+  "cardSetHash": "f6991543ab728393f49bc0da0d43d6950ef5abed8438a5dd9f585665958265af",
   "documentCount": 94,
   "documents": [
     [
@@ -149,13 +149,13 @@
       ]
     ],
     [
-      "370ca1dd471b5ce6f693e964aa1dc851412d1b616681fb086d3c38ae633f9fc1",
+      "8617aabc90274a83b325a11efc73007f639466c2184788437607fdee3c196cf4",
       [
         "persist application settings through a renderer crash journal, native sqlite promotion, and browser fallback.",
         "app state crash journal",
         "settings sqlite promotion",
         "pending setting flush",
-        "native writes require successful initialization; flushes remove only matching journals; external transactions drain pending writes, exclude edits to their key, and publish cache changes only after commit.",
+        "native writes require successful initialization; flushes reconcile superseded values without replacing newer edits and remove only matching journals; external transactions drain pending writes and publish cache changes only after commit.",
         "app state backend selection",
         "legacy setting promotion",
         "pending write journal",
@@ -164,13 +164,13 @@
       ]
     ],
     [
-      "b5321c3609f15a113f906494952233117a72cefabf71c98a19131fbb9458a283",
+      "fc419e6a0621b594e0a20e4e20edad517ddf580574b3e40ff43460199b322fca",
       [
         "read and transactionally persist allowed application settings in sqlite with bounded json and ordered utc revisions.",
         "app state sqlite transaction",
         "setting json size limit",
         "utc setting revision",
-        "only allowed keys and bounded json objects are stored; invalid rows roll back the batch and older utc revisions cannot replace newer values.",
+        "only allowed keys and bounded json objects are stored; invalid rows roll back the batch; older utc revisions retain the newer value and return it for renderer reconciliation.",
         "app state sqlite transactions",
         "setting key allowlist",
         "json size validation",
@@ -2450,7 +2450,7 @@
           1,
           1,
           5,
-          1
+          2
         ]
       ],
       [
@@ -5465,13 +5465,6 @@
         ]
       ],
       [
-        5,
-        [
-          5,
-          1
-        ]
-      ],
-      [
         24,
         [
           5,
@@ -10490,15 +10483,6 @@
     ],
     [
       [
-        4,
-        [
-          5,
-          1
-        ]
-      ]
-    ],
-    [
-      [
         57,
         [
           3,
@@ -12129,6 +12113,13 @@
         1,
         [
           1,
+          1
+        ]
+      ],
+      [
+        5,
+        [
+          5,
           1
         ]
       ],
@@ -14511,6 +14502,15 @@
     ],
     [
       [
+        5,
+        [
+          5,
+          1
+        ]
+      ]
+    ],
+    [
+      [
         0,
         [
           5,
@@ -14786,13 +14786,6 @@
       ]
     ],
     [
-      [
-        4,
-        [
-          5,
-          1
-        ]
-      ],
       [
         5,
         [
@@ -17954,6 +17947,13 @@
       ]
     ],
     [
+      [
+        4,
+        [
+          5,
+          1
+        ]
+      ],
       [
         5,
         [
@@ -23973,6 +23973,13 @@
     ],
     [
       [
+        4,
+        [
+          5,
+          1
+        ]
+      ],
+      [
         42,
         [
           2,
@@ -23981,6 +23988,13 @@
       ]
     ],
     [
+      [
+        5,
+        [
+          5,
+          1
+        ]
+      ],
       [
         27,
         [
@@ -25249,6 +25263,8 @@
         5,
         [
           4,
+          1,
+          5,
           1
         ]
       ],
@@ -25315,13 +25331,6 @@
     ],
     [
       [
-        5,
-        [
-          5,
-          1
-        ]
-      ],
-      [
         47,
         [
           1,
@@ -25366,6 +25375,13 @@
       ]
     ],
     [
+      [
+        4,
+        [
+          5,
+          1
+        ]
+      ],
       [
         82,
         [
@@ -26741,6 +26757,13 @@
         ]
       ],
       [
+        5,
+        [
+          5,
+          1
+        ]
+      ],
+      [
         6,
         [
           1,
@@ -26852,6 +26875,13 @@
       ]
     ],
     [
+      [
+        5,
+        [
+          5,
+          1
+        ]
+      ],
       [
         14,
         [
@@ -31963,6 +31993,15 @@
     ],
     [
       [
+        4,
+        [
+          5,
+          1
+        ]
+      ]
+    ],
+    [
+      [
         20,
         [
           5,
@@ -33334,7 +33373,7 @@
         5,
         [
           5,
-          1
+          2
         ]
       ],
       [
@@ -33766,13 +33805,6 @@
         ]
       ],
       [
-        4,
-        [
-          5,
-          1
-        ]
-      ],
-      [
         9,
         [
           1,
@@ -34078,13 +34110,6 @@
       ]
     ],
     [
-      [
-        4,
-        [
-          5,
-          1
-        ]
-      ],
       [
         9,
         [
@@ -35885,6 +35910,13 @@
     ],
     [
       [
+        5,
+        [
+          5,
+          1
+        ]
+      ],
+      [
         19,
         [
           2,
@@ -35894,7 +35926,7 @@
     ],
     [
       [
-        5,
+        4,
         [
           5,
           1
@@ -36781,6 +36813,13 @@
         0,
         [
           1,
+          1
+        ]
+      ],
+      [
+        4,
+        [
+          5,
           1
         ]
       ],
@@ -38873,7 +38912,6 @@
     "evidence",
     "exact",
     "exceeds",
-    "exclude",
     "exclusion",
     "exclusive",
     "executable",
@@ -39016,6 +39054,7 @@
     "invoke",
     "is",
     "isolated",
+    "it",
     "its",
     "job",
     "jobs",
@@ -39514,6 +39553,7 @@
     "summarize",
     "summary",
     "supersede",
+    "superseded",
     "supplied",
     "supported",
     "surface",

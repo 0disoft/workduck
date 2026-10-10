@@ -4291,8 +4291,8 @@
         "workspace project registries"
       ],
       "hashes": {
-        "body": "f9a5e0ca763f0ca707b3c3c7612ddec26d83151d91aa44dbdf7c2a6762b8a055",
-        "semantic": "e01fcfcb4384e967427e802d748a896774f7468ace6542d2be3a057fcefc4121",
+        "body": "132376ccb33231935bc6f94f582a09e583517208cb617351ee8751c724560177",
+        "semantic": "22420f1b6e2a820ba2b4ea7e45b0afdb33e3f6159544b365f21934bcfcb16248",
         "structure": "1e222539a41b7ca433d629c18afe33696257ba4d1b463345be92338d6504c960"
       },
       "id": "workduck.app-state.storage",
@@ -4301,7 +4301,7 @@
         "#lib/tauri/tauri-invoke.ts"
       ],
       "invariant": [
-        "Native writes require successful initialization; flushes remove only matching journals; external transactions drain pending writes, exclude edits to their key, and publish cache changes only after commit."
+        "Native writes require successful initialization; flushes reconcile superseded values without replacing newer edits and remove only matching journals; external transactions drain pending writes and publish cache changes only after commit."
       ],
       "location": {
         "declarationLine": null,
@@ -4763,8 +4763,8 @@
         "sync payload assembly"
       ],
       "hashes": {
-        "body": "5cca2bb177be723569db914f1193d0e3e30fe16429e385582e754f17411dff8d",
-        "semantic": "c8ce2d1adfb73e2752ddf6ae7c1b89e76e8f633851e698a75576a1ce66590cd3",
+        "body": "b6d725796646c7d2fa851251537533aa56125a9d5b576d4cf9e926d6aceaec3c",
+        "semantic": "cd3552daf27eecb15f694f5aaf781965b4eb7b911f7bf4c81a24165c7cf71c6d",
         "structure": "cee1b3fdc02b7fad3215887b7aec970feab65f2d361d331ce679ec398e468c44"
       },
       "id": "workduck.app-state.storage-native",
@@ -4776,7 +4776,7 @@
         "tests {\n    use super::*"
       ],
       "invariant": [
-        "Only allowed keys and bounded JSON objects are stored; invalid rows roll back the batch and older UTC revisions cannot replace newer values."
+        "Only allowed keys and bounded JSON objects are stored; invalid rows roll back the batch; older UTC revisions retain the newer value and return it for renderer reconciliation."
       ],
       "location": {
         "declarationLine": null,
@@ -4820,6 +4820,6 @@
   "generatedBy": "llmnav@0.9.7",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "f7a2463393ce4dd15be3fc19e263dd00655f887797597064d0d447fcb8250a23",
+  "sourceHash": "946c229eb8e48b602e317b0b4c8f96fd4a02065c61fcc3cd749280c3eab1ff9c",
   "specVersion": "1"
 }

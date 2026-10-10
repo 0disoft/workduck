@@ -4,7 +4,7 @@ role=Persist application settings through a renderer crash journal, native SQLit
 owns=app state backend selection|legacy setting promotion|pending write journal|serialized flush|transaction cache publication
 excludes=setting domain validation|native SQLite implementation|workspace project registries
 search=app state crash journal|settings SQLite promotion|pending setting flush
-invariant=Native writes require successful initialization; flushes remove only matching journals; external transactions drain pending writes, exclude edits to their key, and publish cache changes only after commit.
+invariant=Native writes require successful initialization; flushes reconcile superseded values without replacing newer edits and remove only matching journals; external transactions drain pending writes and publish cache changes only after commit.
 stability=architecture
 */
 import { isObjectRecord } from '#lib/shared/object-record.ts';
@@ -75,6 +75,7 @@ interface NativeAppStateReadResponse {
 
 interface NativeAppStateWriteResponse {
 	readonly ok: boolean;
+	readonly supersededRecords?: Record<string, string>;
 	readonly error?: string | null;
 }
 
@@ -87,6 +88,11 @@ let backend: AppStateBackend = 'uninitialized';
 let initializationError: WorkduckAppStateStorageError | null = null;
 let pendingFlush: Promise<boolean> | null = null;
 let browserStorageForTest: BrowserStorage | undefined;
+const APP_STATE_VALUE_CHANGED_EVENT = 'workduck:app-state-value-changed';
+interface AppStateValueChangedDetail {
+	readonly key: WorkduckAppStateKey;
+	readonly valueJson: string;
+}
 
 export async function initializeWorkduckAppState(
 	seeds: readonly WorkduckAppStateSeed[]
@@ -144,10 +150,8 @@ export async function initializeWorkduckAppState(
 				records: recordsToWrite
 			});
 
-			if (!isSuccessfulNativeWriteResponse(writeResponse)) {
-				return failInitialization('app-state-write-failed', resolvedValues);
-			}
-
+			const superseded = parseNativeWriteResponse(writeResponse, recordsToWrite);
+			reconcileSupersededRecords(storage, recordsToWrite, superseded, false);
 			removeFlushedPendingWrites(storage, recordsToWrite);
 		}
 
@@ -308,14 +312,20 @@ export function subscribeWorkduckAppStateValue(
 			return;
 		}
 
-		cachedValues.set(key, pendingWrite.valueJson);
-		callback(pendingWrite.valueJson);
+		publishAppStateValue(key, pendingWrite.valueJson);
+	}
+
+	function handleValueChanged(event: Event) {
+		const detail = (event as CustomEvent<AppStateValueChangedDetail>).detail;
+		if (detail?.key === key) callback(detail.valueJson);
 	}
 
 	window.addEventListener('storage', handleStorage);
+	window.addEventListener(APP_STATE_VALUE_CHANGED_EVENT, handleValueChanged);
 
 	return () => {
 		window.removeEventListener('storage', handleStorage);
+		window.removeEventListener(APP_STATE_VALUE_CHANGED_EVENT, handleValueChanged);
 	};
 }
 
@@ -363,10 +373,8 @@ async function flushPendingWrites(): Promise<boolean> {
 				records: pendingWrites
 			});
 
-			if (!isSuccessfulNativeWriteResponse(response)) {
-				return false;
-			}
-
+			const superseded = parseNativeWriteResponse(response, pendingWrites);
+			reconcileSupersededRecords(storage, pendingWrites, superseded, true);
 			removeFlushedPendingWrites(storage, pendingWrites);
 			removeLegacyValuesForRecords(storage, pendingWrites);
 			backend = 'sqlite';
@@ -426,8 +434,49 @@ function parseNativeReadResponse(
 	return records;
 }
 
-function isSuccessfulNativeWriteResponse(response: NativeAppStateWriteResponse) {
-	return response.ok === true;
+function parseNativeWriteResponse(
+	response: NativeAppStateWriteResponse,
+	requested: Partial<Record<WorkduckAppStateKey, PendingAppStateWrite>>
+): Partial<Record<WorkduckAppStateKey, string>> {
+	if (response.ok !== true) throw new Error('app state write failed');
+	// Successful responses from older native builds omit this additive field.
+	if (response.supersededRecords === undefined) return {};
+	if (!isObjectRecord(response.supersededRecords)) throw new Error('invalid superseded app state');
+	for (const [key, value] of Object.entries(response.supersededRecords)) {
+		if (
+			!WORKDUCK_APP_STATE_KEYS.some((allowed) => allowed === key) ||
+			requested[key as WorkduckAppStateKey] === undefined ||
+			typeof value !== 'string' || !isJsonObjectText(value)
+		) throw new Error('invalid superseded app state');
+	}
+	return response.supersededRecords;
+}
+
+function reconcileSupersededRecords(
+	storage: BrowserStorage | undefined,
+	requested: Partial<Record<WorkduckAppStateKey, PendingAppStateWrite>>,
+	superseded: Partial<Record<WorkduckAppStateKey, string>>,
+	notify: boolean
+) {
+	for (const key of WORKDUCK_APP_STATE_KEYS) {
+		const valueJson = superseded[key];
+		const request = requested[key];
+		if (valueJson === undefined || request === undefined || cachedValues.get(key) !== request.valueJson) continue;
+		const current = storage === undefined ? null : readPendingWrite(storage, key);
+		if (current !== null && (current.valueJson !== request.valueJson || current.updatedAt !== request.updatedAt)) continue;
+		if (cachedValues.get(key) === valueJson) continue;
+		if (notify) publishAppStateValue(key, valueJson);
+		else cachedValues.set(key, valueJson);
+	}
+}
+
+function publishAppStateValue(key: WorkduckAppStateKey, valueJson: string) {
+	cachedValues.set(key, valueJson);
+	if (typeof window !== 'undefined') {
+		window.dispatchEvent(new CustomEvent<AppStateValueChangedDetail>(APP_STATE_VALUE_CHANGED_EVENT, {
+			detail: { key, valueJson }
+		}));
+	}
 }
 
 function readPendingWrites(
