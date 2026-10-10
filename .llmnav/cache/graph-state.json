@@ -1954,7 +1954,7 @@
     },
     {
       "edges": [],
-      "inputHash": "a32bd9fa20676d7848bb8e4bb63870c82f4832432588721e036141e741cdcc3c",
+      "inputHash": "d319b4eb03d15f86365c03d76b368612c9ee74e478413a4ba649bc91ef91c179",
       "key": "card:workduck/workduck.projects.storage-native",
       "nodes": [
         {
@@ -1963,14 +1963,14 @@
           "key": "workduck/workduck.projects.storage-native",
           "location": {
             "declarationLine": null,
-            "endLine": 16,
+            "endLine": 18,
             "exported": null,
             "kind": null,
             "language": null,
             "path": "src-tauri/src/project_registry_store.rs",
             "receiver": null,
             "signature": null,
-            "startLine": 8,
+            "startLine": 10,
             "symbol": null,
             "visibility": null
           },
@@ -1979,7 +1979,7 @@
           "semanticId": "workduck.projects.storage-native"
         }
       ],
-      "outputHash": "ae7cb76b69dfb0cabc700c89b492459dc0eb1a6399a8e66f351a0e03eb753656"
+      "outputHash": "358079195a569d657986783fa5f74d4fa600cde1c2838e8065cf59748f8b7df7"
     },
     {
       "edges": [],

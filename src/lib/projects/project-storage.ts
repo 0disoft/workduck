@@ -1,15 +1,15 @@
 /* llmnav/1 module
 id=workduck.projects.storage
 role=Persist ordered project registry writes, atomically import workspace sync data in SQLite, and migrate browser legacy registries.
-owns=project registry persistence|legacy registry promotion|registry change notifications|workspace operation ordering|atomic sync import
+owns=project registry persistence|legacy registry promotion|registry change notifications|native commit subscriptions|workspace operation ordering|atomic sync import
 excludes=project domain normalization|repository Git operations
-search=project registry storage|sqlite registry migration|atomic workspace sync import|corrupt legacy project data|invalid project change notification
-invariant=Stored SQLite rows are independent of the legacy cache; invalid snapshots cannot publish changes or cancel pending reads; invalid legacy data blocks fallback saves; bulk fallback reads share one snapshot per attempt; writes stay ordered, imports publish only after commit, and legacy promotion guards missing rows.
+search=project registry storage|sqlite registry migration|atomic workspace sync import|corrupt legacy project data|invalid project change notification|cross window project refresh
+invariant=Native commit and focus notifications reread SQLite within the live subscription; invalid snapshots cannot publish changes or cancel pending reads; invalid legacy data blocks fallback saves; bulk reads share one legacy snapshot per attempt; writes stay ordered, imports publish after commit, and promotion guards missing rows.
 stability=architecture
 */
 
 import { isObjectRecord } from '#lib/shared/object-record.ts';
-import { getTauriInvoke } from '#lib/tauri/tauri-invoke.ts';
+import { getTauriInvoke, getTauriListen } from '#lib/tauri/tauri-invoke.ts';
 import {
 	commitWorkduckAppStateValueWithNativeTransaction,
 	WORKDUCK_WORKSPACE_REGISTRY_APP_STATE_KEY
@@ -37,6 +37,7 @@ const PROJECT_REGISTRY_SQLITE_MIGRATION_STORAGE_KEY = 'workduck.projectRegistrie
 const PROJECT_REGISTRY_SQLITE_RETRY_ATTEMPTS = 3;
 const PROJECT_REGISTRY_SQLITE_RETRY_DELAY_MS = 150;
 export const WORKDUCK_PROJECT_REGISTRY_CHANGED_EVENT = 'workduck:project-registry-changed';
+export const WORKDUCK_PROJECT_REGISTRIES_COMMITTED_EVENT = 'workduck:project-registries-committed';
 const workspaceOperationTails = new Map<string, Promise<void>>();
 const migratedWorkspaceIdsByStorage = new WeakMap<Storage, Set<string>>();
 
@@ -477,6 +478,15 @@ export function subscribeProjectRegistry(
 	}
 	let isActive = true;
 	let readGeneration = 0;
+	let unlistenNative: (() => void) | undefined;
+
+	function reloadRegistry() {
+		if (!isActive) return;
+		const generation = ++readGeneration;
+		void readProjectRegistry(workspaceId).then((result) => {
+			if (isActive && generation === readGeneration && result.ok) callback(result.registry);
+		});
+	}
 
 	function handleRegistryChanged(event: Event) {
 		const detail = (event as CustomEvent<ProjectRegistryChangedDetail>).detail;
@@ -500,19 +510,33 @@ export function subscribeProjectRegistry(
 			return;
 		}
 
-		const generation = ++readGeneration;
-		void readProjectRegistry(workspaceId).then((result) => {
-			if (isActive && generation === readGeneration && result.ok) callback(result.registry);
-		});
+		reloadRegistry();
 	}
 
 	window.addEventListener(WORKDUCK_PROJECT_REGISTRY_CHANGED_EVENT, handleRegistryChanged);
 	window.addEventListener('storage', handleStorageChanged);
+	const nativeListen = getTauriListen();
+	if (nativeListen !== undefined) {
+		window.addEventListener('focus', reloadRegistry);
+		void nativeListen<unknown>(WORKDUCK_PROJECT_REGISTRIES_COMMITTED_EVENT, ({ payload }) => {
+			if (Array.isArray(payload) && payload.every((id) => typeof id === 'string') && payload.includes(workspaceId)) {
+				reloadRegistry();
+			}
+		}).then((unlisten) => {
+			if (!isActive) { unlisten(); return; }
+			unlistenNative = unlisten;
+			// Catch changes committed before the asynchronous listener finished registering.
+			reloadRegistry();
+		}).catch(() => { /* Focus refresh remains available when event registration fails. */ });
+	}
 
 	return () => {
+		if (!isActive) return;
 		isActive = false;
 		window.removeEventListener(WORKDUCK_PROJECT_REGISTRY_CHANGED_EVENT, handleRegistryChanged);
 		window.removeEventListener('storage', handleStorageChanged);
+		window.removeEventListener('focus', reloadRegistry);
+		unlistenNative?.();
 	};
 }
 

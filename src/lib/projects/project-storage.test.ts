@@ -1,7 +1,8 @@
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
-import { setTauriInvokeForTest } from '#lib/tauri/tauri-invoke.ts';
+import { setTauriInvokeForTest, setTauriListenForTest } from '#lib/tauri/tauri-invoke.ts';
+import type { EventCallback } from '@tauri-apps/api/event';
 import { addProjectNode, createEmptyProjectRegistry, type ProjectRegistry } from './project-registry';
-import { readProjectRegistries, readProjectRegistry, subscribeProjectRegistry, writeProjectRegistries, writeProjectRegistry, WORKDUCK_PROJECT_REGISTRY_CHANGED_EVENT } from './project-storage';
+import { readProjectRegistries, readProjectRegistry, subscribeProjectRegistry, writeProjectRegistries, writeProjectRegistry, WORKDUCK_PROJECT_REGISTRY_CHANGED_EVENT, WORKDUCK_PROJECT_REGISTRIES_COMMITTED_EVENT } from './project-storage';
 
 function registry(workspaceId: string, revision: number) {
 	return { ...createEmptyProjectRegistry(workspaceId), updatedAt: `2026-10-04T00:00:0${revision}.000Z` };
@@ -56,11 +57,105 @@ beforeEach(() => {
 });
 afterEach(() => {
 	setTauriInvokeForTest(undefined);
+	setTauriListenForTest(undefined);
 	if (windowDescriptor) Object.defineProperty(globalThis, 'window', windowDescriptor);
 	else Reflect.deleteProperty(globalThis, 'window');
 });
 
 describe('project registry storage write ordering', () => {
+	test('catches commits during native listener registration and reads the latest matching workspace', async () => {
+		const registering = deferred();
+		let notify!: (payload: unknown) => void;
+		let stored = registry('demo', 1);
+		let reads = 0;
+		let unlistens = 0;
+		setTauriInvokeForTest(async <T>() => {
+			reads += 1;
+			return { ok: true, registryJson: JSON.stringify(stored) } as T;
+		});
+		setTauriListenForTest(async <T>(event: string, handler: EventCallback<T>) => {
+			expect(event).toBe(WORKDUCK_PROJECT_REGISTRIES_COMMITTED_EVENT);
+			notify = (payload) => handler({ event, id: 1, payload: payload as T });
+			await registering.promise;
+			return () => { unlistens += 1; };
+		});
+		const notifications: ProjectRegistry[] = [];
+		const unsubscribe = subscribeProjectRegistry('demo', (value) => notifications.push(value));
+		try {
+			stored = registry('demo', 2);
+			registering.resolve();
+			await settle();
+			expect(notifications).toEqual([stored]);
+			for (const payload of [null, {}, ['other'], ['demo', null]]) notify(payload);
+			await settle();
+			expect(reads).toBe(1);
+			stored = registry('demo', 3);
+			notify(['demo', 'other']);
+			await settle();
+			expect(notifications).toEqual([registry('demo', 2), stored]);
+			unsubscribe();
+			unsubscribe();
+			notify(['demo']);
+			window.dispatchEvent(new Event('focus'));
+			await settle();
+			expect(reads).toBe(2);
+			expect(unlistens).toBe(1);
+		} finally { registering.resolve(); await settle(); unsubscribe(); }
+	});
+
+	test('removes a native listener that finishes registering after unsubscribe', async () => {
+		const registering = deferred();
+		let unlistens = 0;
+		let reads = 0;
+		setTauriInvokeForTest(async <T>() => { reads += 1; return { ok: true, registryJson: null } as T; });
+		setTauriListenForTest(async () => { await registering.promise; return () => { unlistens += 1; }; });
+		const unsubscribe = subscribeProjectRegistry('demo', () => { throw new Error('disposed subscriber'); });
+		try {
+			unsubscribe();
+			registering.resolve();
+			await settle();
+			expect(unlistens).toBe(1);
+			expect(reads).toBe(0);
+		} finally { registering.resolve(); await settle(); unsubscribe(); }
+	});
+
+	test('refreshes on focus when native event registration fails', async () => {
+		let reads = 0;
+		setTauriInvokeForTest(async <T>() => {
+			reads += 1;
+			return { ok: true, registryJson: JSON.stringify(registry('demo', reads)) } as T;
+		});
+		setTauriListenForTest(async () => { throw new Error('event registration unavailable'); });
+		const notifications: ProjectRegistry[] = [];
+		const unsubscribe = subscribeProjectRegistry('demo', (value) => notifications.push(value));
+		try {
+			await settle();
+			window.dispatchEvent(new Event('focus'));
+			await settle();
+			expect(notifications).toEqual([registry('demo', 1)]);
+		} finally { unsubscribe(); }
+	});
+
+	test('a local committed snapshot supersedes an older pending native refresh', async () => {
+		const pending = deferred();
+		setTauriListenForTest(async () => () => {});
+		setTauriInvokeForTest(async <T>() => {
+			await pending.promise;
+			return { ok: true, registryJson: JSON.stringify(registry('demo', 1)) } as T;
+		});
+		const notifications: ProjectRegistry[] = [];
+		const unsubscribe = subscribeProjectRegistry('demo', (value) => notifications.push(value));
+		try {
+			await settle();
+			window.dispatchEvent(new CustomEvent(WORKDUCK_PROJECT_REGISTRY_CHANGED_EVENT, {
+				detail: { workspaceId: 'demo', registry: registry('demo', 2) }
+			}));
+			pending.resolve();
+			await settle();
+			expect(notifications).toEqual([registry('demo', 2)]);
+		} finally { pending.resolve(); await settle(); unsubscribe(); }
+	});
+
 	test('rejects incomplete SQLite snapshots and protects them when an editor attempts a guarded save', async () => {
 		let stored = JSON.stringify({ ...registry('demo', 1), nodes: [null] });
 		const original = stored;

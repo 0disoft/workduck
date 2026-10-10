@@ -1752,14 +1752,14 @@
       "key": "workduck/workduck.projects.storage-native",
       "location": {
         "declarationLine": null,
-        "endLine": 16,
+        "endLine": 18,
         "exported": null,
         "kind": null,
         "language": null,
         "path": "src-tauri/src/project_registry_store.rs",
         "receiver": null,
         "signature": null,
-        "startLine": 8,
+        "startLine": 10,
         "symbol": null,
         "visibility": null
       },
@@ -2783,7 +2783,7 @@
   ],
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "ad6f734e43c8c3feac3c659d685ba41c9bcc49488d593591db6c5e9a64cfad7d",
+  "sourceHash": "a58d672c8762623d94c3419ada12d49fcb44cf6a1402f28ece3819d2880caf6c",
   "stats": {
     "edgeCount": 49,
     "importedIndexCount": 0,

@@ -372,8 +372,8 @@
         "repository Git operations"
       ],
       "hashes": {
-        "body": "0c3647a00c6d0ef46d865d9b43966173bc1d41fa99e30997d408c7231dfb56c3",
-        "semantic": "ce837f9a31c42c403cf5fff63ffca9a33d3448871202c009d951b7e898284d34",
+        "body": "89ca478e64bc23edd9928c3ff13a4aa4620f2e768be73521d18e4a045fe73195",
+        "semantic": "c5250b284050385538a61d5dbdcb76e2d4e8c3257c6093f8dac23b9a51ae22f3",
         "structure": "7ab1eb51dec38106979f5838522610a962153dc8ade2e1592b6783b9757d18b7"
       },
       "id": "workduck.projects.storage",
@@ -386,7 +386,7 @@
         "./project-registry"
       ],
       "invariant": [
-        "Stored SQLite rows are independent of the legacy cache; invalid snapshots cannot publish changes or cancel pending reads; invalid legacy data blocks fallback saves; bulk fallback reads share one snapshot per attempt; writes stay ordered, imports publish only after commit, and legacy promotion guards missing rows."
+        "Native commit and focus notifications reread SQLite within the live subscription; invalid snapshots cannot publish changes or cancel pending reads; invalid legacy data blocks fallback saves; bulk reads share one legacy snapshot per attempt; writes stay ordered, imports publish after commit, and promotion guards missing rows."
       ],
       "location": {
         "declarationLine": null,
@@ -405,6 +405,7 @@
         "project registry persistence",
         "legacy registry promotion",
         "registry change notifications",
+        "native commit subscriptions",
         "workspace operation ordering",
         "atomic sync import"
       ],
@@ -415,7 +416,8 @@
         "sqlite registry migration",
         "atomic workspace sync import",
         "corrupt legacy project data",
-        "invalid project change notification"
+        "invalid project change notification",
+        "cross window project refresh"
       ],
       "stability": "architecture"
     },
@@ -3517,9 +3519,9 @@
         "editor draft ownership"
       ],
       "hashes": {
-        "body": "9aef00464464a7d17075152d469254332fc4702b27acbaaa2c6d3be66d83c01f",
-        "semantic": "74c37f8a124cfd71a1987ab118dc7c40cd3abd65a66dc008d53c270d55c02f9d",
-        "structure": "d5090f8dc00bafaea5cc358ad029dfac98357943333995d2f2f134179abfe9b5"
+        "body": "09232f01afecf954c5ff9fda6a7bbfac9ef13568761d95024ada0a15d69083e4",
+        "semantic": "e64e99d74c97bc3203e0707885022504def7e1555ce36419c4101f959329ff4f",
+        "structure": "6b93ea468e76ace8d446b7347639d69f4606c92429a55526a575e58e6f431955"
       },
       "id": "workduck.projects.storage-native",
       "imports": [
@@ -3527,36 +3529,38 @@
         "crate::storage",
         "rusqlite::{OptionalExtension, params, params_from_iter}",
         "std::collections::BTreeMap",
-        "tauri::AppHandle",
+        "tauri::{AppHandle, Emitter}",
         "tests {\n    use super::*"
       ],
       "invariant": [
-        "Guarded writes require the expected snapshot; sync checkpoints also preserve UTC ordering, and a conflict or failed row rolls back workspace and project changes together."
+        "Guarded writes require the expected snapshot; sync checkpoints preserve UTC ordering, failed rows roll back the batch, and only successful commits notify windows of changed workspace IDs."
       ],
       "location": {
         "declarationLine": null,
-        "endLine": 16,
+        "endLine": 18,
         "exported": null,
         "kind": null,
         "language": null,
         "path": "src-tauri/src/project_registry_store.rs",
         "receiver": null,
         "signature": null,
-        "startLine": 8,
+        "startLine": 10,
         "symbol": null,
         "visibility": null
       },
       "owns": [
         "project registry SQLite reads",
         "snapshot write guards",
-        "atomic registry and workspace replacement"
+        "atomic registry and workspace replacement",
+        "committed workspace ID notifications"
       ],
       "role": "Read and atomically replace SQLite project registries with optional snapshot guards and a workspace sync checkpoint.",
       "scope": "module",
       "search": [
         "project registry SQLite write",
         "stale registry snapshot",
-        "atomic project bulk write"
+        "atomic project bulk write",
+        "native project commit event"
       ],
       "stability": "contract"
     },
@@ -4824,6 +4828,6 @@
   "generatedBy": "llmnav@0.9.7",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "8948c8d2546e8fb02e1b60d0b98d1c94ecca8e83c9d872aa4b21366e3c5e94f3",
+  "sourceHash": "6206005334fae36506cd15fc16167bade038dccd65d1d8e396e2d9b432f6c237",
   "specVersion": "1"
 }

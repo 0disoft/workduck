@@ -2978,12 +2978,13 @@
             ],
             "id": "workduck.projects.storage-native",
             "invariant": [
-              "Guarded writes require the expected snapshot; sync checkpoints also preserve UTC ordering, and a conflict or failed row rolls back workspace and project changes together."
+              "Guarded writes require the expected snapshot; sync checkpoints preserve UTC ordering, failed rows roll back the batch, and only successful commits notify windows of changed workspace IDs."
             ],
             "owns": [
               "project registry SQLite reads",
               "snapshot write guards",
-              "atomic registry and workspace replacement"
+              "atomic registry and workspace replacement",
+              "committed workspace ID notifications"
             ],
             "rel": [],
             "risk": [],
@@ -2992,53 +2993,54 @@
             "search": [
               "project registry SQLite write",
               "stale registry snapshot",
-              "atomic project bulk write"
+              "atomic project bulk write",
+              "native project commit event"
             ],
             "stability": "contract",
             "unknown": []
           },
-          "end": 797,
-          "endLine": 16,
+          "end": 981,
+          "endLine": 18,
           "entries": [
             {
               "key": "id",
-              "line": 9,
+              "line": 11,
               "order": 0,
               "value": "workduck.projects.storage-native"
             },
             {
               "key": "role",
-              "line": 10,
+              "line": 12,
               "order": 1,
               "value": "Read and atomically replace SQLite project registries with optional snapshot guards and a workspace sync checkpoint."
             },
             {
               "key": "owns",
-              "line": 11,
+              "line": 13,
               "order": 2,
-              "value": "project registry SQLite reads|snapshot write guards|atomic registry and workspace replacement"
+              "value": "project registry SQLite reads|snapshot write guards|atomic registry and workspace replacement|committed workspace ID notifications"
             },
             {
               "key": "excludes",
-              "line": 12,
+              "line": 14,
               "order": 3,
               "value": "registry domain normalization|workspace sync payload assembly|editor draft ownership"
             },
             {
               "key": "search",
-              "line": 13,
+              "line": 15,
               "order": 4,
-              "value": "project registry SQLite write|stale registry snapshot|atomic project bulk write"
+              "value": "project registry SQLite write|stale registry snapshot|atomic project bulk write|native project commit event"
             },
             {
               "key": "invariant",
-              "line": 14,
+              "line": 16,
               "order": 5,
-              "value": "Guarded writes require the expected snapshot; sync checkpoints also preserve UTC ordering, and a conflict or failed row rolls back workspace and project changes together."
+              "value": "Guarded writes require the expected snapshot; sync checkpoints preserve UTC ordering, failed rows roll back the batch, and only successful commits notify windows of changed workspace IDs."
             },
             {
               "key": "stability",
-              "line": 15,
+              "line": 17,
               "order": 6,
               "value": "contract"
             }
@@ -3047,16 +3049,16 @@
           "indent": "",
           "newline": "\n",
           "prefix": null,
-          "raw": "/* llmnav/1 module\nid=workduck.projects.storage-native\nrole=Read and atomically replace SQLite project registries with optional snapshot guards and a workspace sync checkpoint.\nowns=project registry SQLite reads|snapshot write guards|atomic registry and workspace replacement\nexcludes=registry domain normalization|workspace sync payload assembly|editor draft ownership\nsearch=project registry SQLite write|stale registry snapshot|atomic project bulk write\ninvariant=Guarded writes require the expected snapshot; sync checkpoints also preserve UTC ordering, and a conflict or failed row rolls back workspace and project changes together.\nstability=contract\n*/",
+          "raw": "/* llmnav/1 module\nid=workduck.projects.storage-native\nrole=Read and atomically replace SQLite project registries with optional snapshot guards and a workspace sync checkpoint.\nowns=project registry SQLite reads|snapshot write guards|atomic registry and workspace replacement|committed workspace ID notifications\nexcludes=registry domain normalization|workspace sync payload assembly|editor draft ownership\nsearch=project registry SQLite write|stale registry snapshot|atomic project bulk write|native project commit event\ninvariant=Guarded writes require the expected snapshot; sync checkpoints preserve UTC ordering, failed rows roll back the batch, and only successful commits notify windows of changed workspace IDs.\nstability=contract\n*/",
           "scope": "module",
           "specVersion": "1",
-          "start": 138,
-          "startLine": 8,
+          "start": 240,
+          "startLine": 10,
           "style": "block",
           "syntaxErrors": []
         }
       ],
-      "contentHash": "9aef00464464a7d17075152d469254332fc4702b27acbaaa2c6d3be66d83c01f",
+      "contentHash": "09232f01afecf954c5ff9fda6a7bbfac9ef13568761d95024ada0a15d69083e4",
       "declarations": [
         null
       ],
@@ -3065,12 +3067,12 @@
         "crate::storage",
         "rusqlite::{OptionalExtension, params, params_from_iter}",
         "std::collections::BTreeMap",
-        "tauri::AppHandle",
+        "tauri::{AppHandle, Emitter}",
         "tests {\n    use super::*"
       ],
       "path": "src-tauri/src/project_registry_store.rs",
-      "semanticBytes": 659,
-      "sourceBytes": 21731
+      "semanticBytes": 741,
+      "sourceBytes": 26808
     },
     {
       "blocks": [
@@ -10839,17 +10841,18 @@
     },
     {
       "blocks": [],
-      "contentHash": "79bc09ab1039f02def19f226f0791248a5d6927587571b01746fb4211a1ec703",
+      "contentHash": "a312efe22c04f0590dd259ea95ac672a8bc2d90b5fc4c003c85a5719d8fc9800",
       "declarations": [],
       "imports": [
         "#lib/tauri/tauri-invoke.ts",
         "./project-registry",
         "./project-storage",
+        "@tauri-apps/api/event",
         "bun:test"
       ],
       "path": "src/lib/projects/project-storage.test.ts",
       "semanticBytes": 0,
-      "sourceBytes": 24695
+      "sourceBytes": 28508
     },
     {
       "blocks": [
@@ -10862,12 +10865,13 @@
             ],
             "id": "workduck.projects.storage",
             "invariant": [
-              "Stored SQLite rows are independent of the legacy cache; invalid snapshots cannot publish changes or cancel pending reads; invalid legacy data blocks fallback saves; bulk fallback reads share one snapshot per attempt; writes stay ordered, imports publish only after commit, and legacy promotion guards missing rows."
+              "Native commit and focus notifications reread SQLite within the live subscription; invalid snapshots cannot publish changes or cancel pending reads; invalid legacy data blocks fallback saves; bulk reads share one legacy snapshot per attempt; writes stay ordered, imports publish after commit, and promotion guards missing rows."
             ],
             "owns": [
               "project registry persistence",
               "legacy registry promotion",
               "registry change notifications",
+              "native commit subscriptions",
               "workspace operation ordering",
               "atomic sync import"
             ],
@@ -10880,12 +10884,13 @@
               "sqlite registry migration",
               "atomic workspace sync import",
               "corrupt legacy project data",
-              "invalid project change notification"
+              "invalid project change notification",
+              "cross window project refresh"
             ],
             "stability": "architecture",
             "unknown": []
           },
-          "end": 885,
+          "end": 954,
           "endLine": 9,
           "entries": [
             {
@@ -10904,7 +10909,7 @@
               "key": "owns",
               "line": 4,
               "order": 2,
-              "value": "project registry persistence|legacy registry promotion|registry change notifications|workspace operation ordering|atomic sync import"
+              "value": "project registry persistence|legacy registry promotion|registry change notifications|native commit subscriptions|workspace operation ordering|atomic sync import"
             },
             {
               "key": "excludes",
@@ -10916,13 +10921,13 @@
               "key": "search",
               "line": 6,
               "order": 4,
-              "value": "project registry storage|sqlite registry migration|atomic workspace sync import|corrupt legacy project data|invalid project change notification"
+              "value": "project registry storage|sqlite registry migration|atomic workspace sync import|corrupt legacy project data|invalid project change notification|cross window project refresh"
             },
             {
               "key": "invariant",
               "line": 7,
               "order": 5,
-              "value": "Stored SQLite rows are independent of the legacy cache; invalid snapshots cannot publish changes or cancel pending reads; invalid legacy data blocks fallback saves; bulk fallback reads share one snapshot per attempt; writes stay ordered, imports publish only after commit, and legacy promotion guards missing rows."
+              "value": "Native commit and focus notifications reread SQLite within the live subscription; invalid snapshots cannot publish changes or cancel pending reads; invalid legacy data blocks fallback saves; bulk reads share one legacy snapshot per attempt; writes stay ordered, imports publish after commit, and promotion guards missing rows."
             },
             {
               "key": "stability",
@@ -10935,7 +10940,7 @@
           "indent": "",
           "newline": "\n",
           "prefix": null,
-          "raw": "/* llmnav/1 module\nid=workduck.projects.storage\nrole=Persist ordered project registry writes, atomically import workspace sync data in SQLite, and migrate browser legacy registries.\nowns=project registry persistence|legacy registry promotion|registry change notifications|workspace operation ordering|atomic sync import\nexcludes=project domain normalization|repository Git operations\nsearch=project registry storage|sqlite registry migration|atomic workspace sync import|corrupt legacy project data|invalid project change notification\ninvariant=Stored SQLite rows are independent of the legacy cache; invalid snapshots cannot publish changes or cancel pending reads; invalid legacy data blocks fallback saves; bulk fallback reads share one snapshot per attempt; writes stay ordered, imports publish only after commit, and legacy promotion guards missing rows.\nstability=architecture\n*/",
+          "raw": "/* llmnav/1 module\nid=workduck.projects.storage\nrole=Persist ordered project registry writes, atomically import workspace sync data in SQLite, and migrate browser legacy registries.\nowns=project registry persistence|legacy registry promotion|registry change notifications|native commit subscriptions|workspace operation ordering|atomic sync import\nexcludes=project domain normalization|repository Git operations\nsearch=project registry storage|sqlite registry migration|atomic workspace sync import|corrupt legacy project data|invalid project change notification|cross window project refresh\ninvariant=Native commit and focus notifications reread SQLite within the live subscription; invalid snapshots cannot publish changes or cancel pending reads; invalid legacy data blocks fallback saves; bulk reads share one legacy snapshot per attempt; writes stay ordered, imports publish after commit, and promotion guards missing rows.\nstability=architecture\n*/",
           "scope": "module",
           "specVersion": "1",
           "start": 0,
@@ -10944,7 +10949,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "0c3647a00c6d0ef46d865d9b43966173bc1d41fa99e30997d408c7231dfb56c3",
+      "contentHash": "89ca478e64bc23edd9928c3ff13a4aa4620f2e768be73521d18e4a045fe73195",
       "declarations": [
         null
       ],
@@ -10957,8 +10962,8 @@
         "./project-registry"
       ],
       "path": "src/lib/projects/project-storage.ts",
-      "semanticBytes": 885,
-      "sourceBytes": 29053
+      "semanticBytes": 954,
+      "sourceBytes": 30126
     },
     {
       "blocks": [],
@@ -13740,14 +13745,15 @@
     },
     {
       "blocks": [],
-      "contentHash": "e7f2ec7c9826513c2af0e7d620ff505a626a2b8e46efb36c085f18db479ce68a",
+      "contentHash": "f7fbc7dfe7075ed2f73f955b3966b7e5d323e65b7c13d15015797398e6ad0e5f",
       "declarations": [],
       "imports": [
-        "@tauri-apps/api/core"
+        "@tauri-apps/api/core",
+        "@tauri-apps/api/event"
       ],
       "path": "src/lib/tauri/tauri-invoke.ts",
       "semanticBytes": 0,
-      "sourceBytes": 631
+      "sourceBytes": 1040
     },
     {
       "blocks": [

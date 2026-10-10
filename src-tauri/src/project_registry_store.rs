@@ -1,17 +1,19 @@
 use std::collections::BTreeMap;
 
 use rusqlite::{OptionalExtension, params, params_from_iter};
-use tauri::AppHandle;
+use tauri::{AppHandle, Emitter};
 
 use crate::storage;
+
+const PROJECT_REGISTRIES_COMMITTED_EVENT: &str = "workduck:project-registries-committed";
 
 /* llmnav/1 module
 id=workduck.projects.storage-native
 role=Read and atomically replace SQLite project registries with optional snapshot guards and a workspace sync checkpoint.
-owns=project registry SQLite reads|snapshot write guards|atomic registry and workspace replacement
+owns=project registry SQLite reads|snapshot write guards|atomic registry and workspace replacement|committed workspace ID notifications
 excludes=registry domain normalization|workspace sync payload assembly|editor draft ownership
-search=project registry SQLite write|stale registry snapshot|atomic project bulk write
-invariant=Guarded writes require the expected snapshot; sync checkpoints also preserve UTC ordering, and a conflict or failed row rolls back workspace and project changes together.
+search=project registry SQLite write|stale registry snapshot|atomic project bulk write|native project commit event
+invariant=Guarded writes require the expected snapshot; sync checkpoints preserve UTC ordering, failed rows roll back the batch, and only successful commits notify windows of changed workspace IDs.
 stability=contract
 */
 
@@ -191,7 +193,31 @@ pub fn write_project_registries(
         Ok(connection) => connection,
         Err(_) => return invalid_write(ProjectRegistryStoreError::WriteFailed),
     };
-    write_project_registries_to_connection(&mut connection, registries, workspace_registry)
+    write_project_registries_with_notification(
+        &mut connection,
+        registries,
+        workspace_registry,
+        |workspace_ids| {
+            // Notification failure cannot undo a committed transaction.
+            let _ = app.emit(PROJECT_REGISTRIES_COMMITTED_EVENT, workspace_ids);
+        },
+    )
+}
+
+fn write_project_registries_with_notification(
+    connection: &mut rusqlite::Connection,
+    registries: BTreeMap<String, ProjectRegistryWriteInput>,
+    workspace_registry: Option<WorkspaceRegistryWriteInput>,
+    notify: impl FnOnce(Vec<String>),
+) -> ProjectRegistryWrite {
+    let mut workspace_ids: Vec<String> = registries.keys().map(|id| id.trim().to_owned()).collect();
+    workspace_ids.sort();
+    workspace_ids.dedup();
+    let result = write_project_registries_to_connection(connection, registries, workspace_registry);
+    if result.ok && !workspace_ids.is_empty() {
+        notify(workspace_ids);
+    }
+    result
 }
 
 fn write_project_registries_to_connection(
@@ -400,6 +426,104 @@ fn invalid_write(error: ProjectRegistryStoreError) -> ProjectRegistryWrite {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn notifies_only_after_the_committed_rows_are_visible_to_another_connection() {
+        let uri = format!(
+            "file:workduck-project-notify-{}?mode=memory&cache=shared",
+            std::process::id()
+        );
+        let flags = rusqlite::OpenFlags::SQLITE_OPEN_READ_WRITE
+            | rusqlite::OpenFlags::SQLITE_OPEN_CREATE
+            | rusqlite::OpenFlags::SQLITE_OPEN_URI;
+        let mut connection = rusqlite::Connection::open_with_flags(&uri, flags).unwrap();
+        let observer = rusqlite::Connection::open_with_flags(&uri, flags).unwrap();
+        connection
+            .execute_batch(include_str!("../migrations/004_project_registries.sql"))
+            .unwrap();
+        let mut notified = false;
+        let result = write_project_registries_with_notification(
+            &mut connection,
+            BTreeMap::from([
+                (" first ".into(), input(r#"{"value":1}"#, None)),
+                ("last".into(), input(r#"{"value":2}"#, None)),
+            ]),
+            None,
+            |workspace_ids| {
+                assert_eq!(workspace_ids, ["first", "last"]);
+                assert_eq!(
+                    stored(&observer, "first").as_deref(),
+                    Some(r#"{"value":1}"#)
+                );
+                assert_eq!(stored(&observer, "last").as_deref(), Some(r#"{"value":2}"#));
+                notified = true;
+            },
+        );
+        assert!(result.ok);
+        assert!(notified);
+    }
+
+    #[test]
+    fn does_not_notify_for_a_conflict_or_a_failed_statement_or_commit() {
+        for failure in ["conflict", "validation", "statement", "commit"] {
+            let mut connection = connection();
+            assert!(write(&mut connection, "first", r#"{"value":1}"#, None).ok);
+            if failure == "statement" {
+                connection.execute_batch("CREATE TRIGGER reject_last BEFORE INSERT ON project_registries WHEN NEW.workspace_id = 'last' BEGIN SELECT RAISE(ABORT, 'test failure'); END;").unwrap();
+            }
+            if failure == "commit" {
+                connection.execute_batch("PRAGMA foreign_keys = ON;
+                    CREATE TABLE parent (id INTEGER PRIMARY KEY);
+                    CREATE TABLE child (id INTEGER REFERENCES parent(id) DEFERRABLE INITIALLY DEFERRED);
+                    CREATE TRIGGER deferred_failure AFTER INSERT ON project_registries WHEN NEW.workspace_id = 'last' BEGIN INSERT INTO child VALUES (1); END;").unwrap();
+            }
+            let mut notified = false;
+            let result = write_project_registries_with_notification(
+                &mut connection,
+                BTreeMap::from([
+                    ("first".into(), input(r#"{"value":2}"#, None)),
+                    (
+                        "last".into(),
+                        input(
+                            if failure == "validation" { "[" } else { "{}" },
+                            if failure == "conflict" {
+                                Some("{}")
+                            } else {
+                                None
+                            },
+                        ),
+                    ),
+                ]),
+                None,
+                |_| {
+                    notified = true;
+                },
+            );
+            assert!(!result.ok, "{failure}");
+            assert!(!notified, "{failure}");
+            assert_eq!(
+                stored(&connection, "first").as_deref(),
+                Some(r#"{"value":1}"#)
+            );
+            assert!(stored(&connection, "last").is_none());
+        }
+    }
+
+    #[test]
+    fn an_empty_project_batch_does_not_publish_a_project_change() {
+        let mut connection = connection();
+        assert!(
+            write_project_registries_with_notification(
+                &mut connection,
+                BTreeMap::new(),
+                None,
+                |_| {
+                    panic!("empty batch has no changed project registries");
+                },
+            )
+            .ok
+        );
+    }
 
     fn sync_input(expected: &str) -> WorkspaceRegistryWriteInput {
         WorkspaceRegistryWriteInput {
