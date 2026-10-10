@@ -571,10 +571,40 @@
     },
     {
       "blocks": [],
-      "contentHash": "73cf93cad163af7ad298dab00a3ca5904752763f3f4f2ef1c6b99d5d2b9170c0",
+      "contentHash": "72f963acc08545dd4b17cd5ca19b1aff4b77a6928a8e220e8445becda5e8ca7e",
+      "declarations": [],
+      "imports": [
+        "node:crypto",
+        "node:fs/promises",
+        "node:path"
+      ],
+      "path": "scripts/ssealed-scaffold-artifacts.mjs",
+      "semanticBytes": 0,
+      "sourceBytes": 3317
+    },
+    {
+      "blocks": [],
+      "contentHash": "c306c3cba2568c621130a0016ca2d7bcb7c83c8e93d01f9d25c4c368beeb9602",
+      "declarations": [],
+      "imports": [
+        "./ssealed-scaffold-artifacts.mjs",
+        "bun:test",
+        "node:crypto",
+        "node:fs/promises",
+        "node:os",
+        "node:path"
+      ],
+      "path": "scripts/ssealed-scaffold-artifacts.test.mjs",
+      "semanticBytes": 0,
+      "sourceBytes": 3970
+    },
+    {
+      "blocks": [],
+      "contentHash": "7228d88cdc6a80dd5f8446474b6afe32f779bbf32c3c6f0611df9cd948ee4f62",
       "declarations": [],
       "imports": [
         "./ssealed-installation.mjs",
+        "./ssealed-scaffold-artifacts.mjs",
         "node:child_process",
         "node:crypto",
         "node:fs/promises",
@@ -584,7 +614,7 @@
       ],
       "path": "scripts/sync-ssealed-scaffold.mjs",
       "semanticBytes": 0,
-      "sourceBytes": 7830
+      "sourceBytes": 7029
     },
     {
       "blocks": [],

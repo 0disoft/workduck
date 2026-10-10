@@ -22,7 +22,7 @@
   "scripts": {
     "dev": "node ./node_modules/vite/bin/vite.js dev --host 127.0.0.1 --port 5173 --strictPort",
     "dev:tauri": "bun ./scripts/tauri-dev-server.mjs",
-    "build": "vite build && bun ./scripts/apply-csp-to-build.mjs",
+    "build": "bun run check:ssealed-embedded && vite build && bun ./scripts/apply-csp-to-build.mjs",
     "desktop:dev": "tauri dev",
     "desktop:preview": "bun run build && tauri dev --no-watch --config src-tauri/tauri.preview.conf.json",
     "desktop:build": "tauri build",
@@ -32,6 +32,7 @@
     "prepare": "bun ./scripts/prepare-workduck.mjs",
     "sync:ssealed-scaffold": "bun ./scripts/sync-ssealed-scaffold.mjs --write",
     "check:ssealed-scaffold": "bun ./scripts/sync-ssealed-scaffold.mjs --check",
+    "check:ssealed-embedded": "bun ./scripts/sync-ssealed-scaffold.mjs --check-embedded",
     "check": "svelte-kit sync && svelte-check --tsgo --tsconfig ./tsconfig.json && bun run check:packages && bun run check:ssealed-scaffold",
     "check:packages": "node node_modules/@typescript/native/bin/tsc -p packages/core/tsconfig.json --noEmit && node node_modules/@typescript/native/bin/tsc -p packages/schemas/tsconfig.json --noEmit && node node_modules/@typescript/native/bin/tsc -p packages/prompts/tsconfig.json --noEmit && node node_modules/@typescript/native/bin/tsc -p packages/agents/tsconfig.json --noEmit && node node_modules/@typescript/native/bin/tsc -p packages/workbench-engine/tsconfig.json --noEmit",
     "check:packages:tsc": "node node_modules/typescript/bin/tsc -p packages/core/tsconfig.json --noEmit && node node_modules/typescript/bin/tsc -p packages/schemas/tsconfig.json --noEmit && node node_modules/typescript/bin/tsc -p packages/prompts/tsconfig.json --noEmit && node node_modules/typescript/bin/tsc -p packages/agents/tsconfig.json --noEmit && node node_modules/typescript/bin/tsc -p packages/workbench-engine/tsconfig.json --noEmit",

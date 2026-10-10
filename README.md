@@ -307,6 +307,19 @@ Install dependencies:
 bun install
 ```
 
+Workduck embeds ssealed templates in the desktop binary; installed apps do not
+require a separate ssealed, Node.js, or Bun installation for scaffolding.
+After updating the development dependency, regenerate and verify the embedded files:
+
+```sh
+bun run sync:ssealed-scaffold
+bun run check:ssealed-scaffold
+```
+
+Builds perform a quick version, selection, and checksum check and stop if the
+embedded files are stale. The full check above regenerates all combinations to
+compare their contents. For reproducible installs, use `bun install --frozen-lockfile`.
+
 Run the desktop app during development:
 
 ```sh
