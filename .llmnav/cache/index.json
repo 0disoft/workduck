@@ -372,7 +372,7 @@
         "repository Git operations"
       ],
       "hashes": {
-        "body": "231ebb5370c36ba28d6c0bf5d7d4bf2722f96995ac2558fec006a3451aca8883",
+        "body": "406ff983aeea45c6bf71e86af17a5ae25e598cd5e17f96da52406e3bbf3b5ce5",
         "semantic": "b89e4370db4b7acd9b49a6824e46378d19668e6940f393c4b58a859e996830bd",
         "structure": "7ab1eb51dec38106979f5838522610a962153dc8ade2e1592b6783b9757d18b7"
       },
@@ -1130,7 +1130,7 @@
         "sync file transport"
       ],
       "hashes": {
-        "body": "2feda5248fff66a851a124e7a66cc5fddaa2da9ee2b90629cbd144978915e8a6",
+        "body": "cac859edddf8c3816e07b67404cad253a0fe2bcb74dc104ae0a5de6783c42966",
         "semantic": "bf9c20fe5652fc9ed717f5d046c3186cfe59050e89a20933aa239f7ae41ad18b",
         "structure": "8b2fa2db99275d210e1a4ee36366c74ebbbe00f028c5d7cbaa4d1ba9b7e6e2e5"
       },
@@ -3873,8 +3873,8 @@
         "Git operations"
       ],
       "hashes": {
-        "body": "797d5e62e50b4f72e17f645a5b5971cdaf2ae3f945bc548d969a18a046d95226",
-        "semantic": "0641b7d28978b8259c413dc6a5054c49fcb80131da3b30e549a34bde5d7ceabc",
+        "body": "a5d322956da1df7b0a1384c82f24e3806eb9217e452d79ed1be5403efbbd5c76",
+        "semantic": "00960907b004fd8362786ac914054135caf9d8c193fe639babd1621ddce50df8",
         "structure": "aaa5eec04740325fa1cdc4023d9ed250e62ba8476983ce80bdf5839dfc2b59b9"
       },
       "id": "workduck.projects.registry-normalization",
@@ -3885,7 +3885,7 @@
         "./project-schema"
       ],
       "invariant": [
-        "Strict storage parsing rejects unsupported versions; canonicalization accepts only reachable unique nodes and repository sources."
+        "Strict storage parsing rejects unsupported versions and normalization that discards nodes or repositories; explicit canonicalization accepts only reachable unique nodes and repository sources."
       ],
       "location": {
         "declarationLine": null,
@@ -3906,13 +3906,14 @@
         "repository deduplication",
         "shared field normalization"
       ],
-      "role": "Parse and canonicalize project registries while preserving hierarchy eligibility and collision precedence.",
+      "role": "Validate stored project snapshots without discarding nodes or repositories and canonicalize project hierarchies with deterministic collision precedence.",
       "scope": "module",
       "search": [
         "project registry parsing",
         "hierarchy canonicalization",
         "repository deduplication",
-        "shared field normalization"
+        "shared field normalization",
+        "strict stored project registry"
       ],
       "stability": "architecture"
     },
@@ -4821,6 +4822,6 @@
   "generatedBy": "llmnav@0.9.7",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "4d5cb640168e6dd66b6d2c47787670728b458a60c6743b55ad7f92dfb0bc836f",
+  "sourceHash": "7a759df705091cfa696e5765c5c12f25462d735c28f25e16894d48e0ee746a9b",
   "specVersion": "1"
 }

@@ -61,6 +61,28 @@ afterEach(() => {
 });
 
 describe('project registry storage write ordering', () => {
+	test('rejects incomplete SQLite snapshots and protects them when an editor attempts a guarded save', async () => {
+		let stored = JSON.stringify({ ...registry('demo', 1), nodes: [null] });
+		const original = stored;
+		let writes = 0;
+		setTauriInvokeForTest(async <T>(command: string, args?: Record<string, unknown>) => {
+			if (command === 'read_project_registry') return { ok: true, registryJson: stored } as T;
+			if (command === 'read_project_registries') return { ok: true, registries: { demo: stored } } as T;
+			writes += 1;
+			stored = args?.registryJson as string;
+			return { ok: true } as T;
+		});
+		const read = await readProjectRegistry('demo');
+		const bulk = await readProjectRegistries(['demo']);
+		const saved = await writeProjectRegistry(registry('demo', 2), async () => read.registry);
+		for (const result of [read, bulk, saved]) {
+			expect(result.ok).toBe(false);
+			if (!result.ok) expect(result.error).toBe('project-registry-read-failed');
+		}
+		expect(writes).toBe(0);
+		expect(stored).toBe(original);
+	});
+
 	const validLegacy = { ...createEmptyProjectRegistry('demo'), updatedAt: '2026-10-04T00:00:00.000Z' };
 	const root = addProjectNode(validLegacy, { kind: 'project', name: 'Legacy', path: 'projects/legacy' });
 	if (!root.ok) throw new Error(root.error);

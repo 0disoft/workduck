@@ -1,10 +1,10 @@
 /* llmnav/1 module
 id=workduck.projects.registry-normalization
-role=Parse and canonicalize project registries while preserving hierarchy eligibility and collision precedence.
+role=Validate stored project snapshots without discarding nodes or repositories and canonicalize project hierarchies with deterministic collision precedence.
 owns=project registry parsing|hierarchy canonicalization|repository deduplication|shared field normalization
 excludes=registry mutation intents|registry persistence|Git operations
-search=project registry parsing|hierarchy canonicalization|repository deduplication|shared field normalization
-invariant=Strict storage parsing rejects unsupported versions; canonicalization accepts only reachable unique nodes and repository sources.
+search=project registry parsing|hierarchy canonicalization|repository deduplication|shared field normalization|strict stored project registry
+invariant=Strict storage parsing rejects unsupported versions and normalization that discards nodes or repositories; explicit canonicalization accepts only reachable unique nodes and repository sources.
 stability=architecture
 */
 import {
@@ -73,8 +73,20 @@ export function normalizeStoredProjectRegistry(
 	const version = readProjectRegistryVersion(value.version);
 
 	switch (version) {
-		case WORKDUCK_PROJECT_REGISTRY_VERSION:
-			return { ok: true, registry: normalizeProjectRegistry(value, workspaceId) };
+		case WORKDUCK_PROJECT_REGISTRY_VERSION: {
+			if (!Array.isArray(value.nodes)) return { ok: false, error: 'project-registry-json-invalid' };
+			const registry = normalizeProjectRegistry(value, workspaceId);
+			if (registry.nodes.length !== value.nodes.length) return { ok: false, error: 'project-registry-json-invalid' };
+			const nodesById = new Map(registry.nodes.map((node) => [node.id, node]));
+			for (const node of value.nodes) {
+				if (!isObjectRecord(node) || typeof node.id !== 'string' ||
+					(node.repositories !== undefined && !Array.isArray(node.repositories)) ||
+					(Array.isArray(node.repositories) && nodesById.get(node.id.trim())?.repositories.length !== node.repositories.length)) {
+					return { ok: false, error: 'project-registry-json-invalid' };
+				}
+			}
+			return { ok: true, registry };
+		}
 		default:
 			return { ok: false, error: 'project-registry-version-unsupported' };
 	}

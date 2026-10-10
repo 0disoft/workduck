@@ -1369,7 +1369,7 @@
           "to": "workduck/workduck.projects.schema"
         }
       ],
-      "inputHash": "bc7f2c212adc90921fe7b4b5d2b7bc8c088f1a7971b7337f141cb4fe6d28f5e5",
+      "inputHash": "370d600ab2fee73a00915324b5759368db252db16ef0f87d8753e52f3cd013f1",
       "key": "card:workduck/workduck.projects.registry-normalization",
       "nodes": [
         {
@@ -1390,7 +1390,7 @@
             "visibility": null
           },
           "repositoryId": "workduck",
-          "role": "Parse and canonicalize project registries while preserving hierarchy eligibility and collision precedence.",
+          "role": "Validate stored project snapshots without discarding nodes or repositories and canonicalize project hierarchies with deterministic collision precedence.",
           "semanticId": "workduck.projects.registry-normalization"
         },
         {
@@ -1403,7 +1403,7 @@
           "semanticId": "workduck.projects.schema"
         }
       ],
-      "outputHash": "232be4c9ea3fa0c734a0d0f131f4a53506cd963243183e7808e5c8363299a1f2"
+      "outputHash": "4914012f739ddf749bf990922eb48c10a93245a8b9ba5ab21fda3b7c95221122"
     },
     {
       "edges": [

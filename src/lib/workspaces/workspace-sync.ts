@@ -11,6 +11,7 @@ import { isObjectRecord } from '#lib/shared/object-record.ts';
 import { getTauriInvoke } from '#lib/tauri/tauri-invoke.ts';
 import {
 	normalizeProjectRegistry,
+	normalizeStoredProjectRegistry,
 	WORKDUCK_PROJECT_REGISTRY_VERSION,
 	type ProjectRegistry
 } from '#lib/projects/project-registry.ts';
@@ -321,7 +322,7 @@ function restoreProjectRegistrySyncSnapshot(
 			})
 		: [];
 
-	const registry = normalizeProjectRegistry(
+	const parsed = normalizeStoredProjectRegistry(
 		{
 			...value,
 			version: WORKDUCK_PROJECT_REGISTRY_VERSION,
@@ -330,18 +331,7 @@ function restoreProjectRegistrySyncSnapshot(
 		},
 		workspaceId
 	);
-	if (registry.nodes.length !== rawNodes.length) return null;
-	const nodesById = new Map(registry.nodes.map((node) => [node.id, node]));
-	for (const rawNode of rawNodes) {
-		if (
-			!isObjectRecord(rawNode) ||
-			typeof rawNode.id !== 'string' ||
-			!Array.isArray(rawNode.repositories)
-		) return null;
-		const node = nodesById.get(rawNode.id.trim());
-		if (node === undefined || node.repositories.length !== rawNode.repositories.length) return null;
-	}
-	return registry;
+	return parsed.ok ? parsed.registry : null;
 }
 
 function createWorkspaceRelativePath(workspacePath: string, childPath: string) {

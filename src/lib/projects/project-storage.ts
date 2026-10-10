@@ -24,6 +24,7 @@ import { notifyWorkspaceRegistryChanged } from '#lib/workspaces/workspace-storag
 import {
 	createEmptyProjectRegistry,
 	normalizeProjectRegistry,
+	normalizeStoredProjectRegistry,
 	parseStoredProjectRegistry,
 	serializeProjectRegistry,
 	WORKDUCK_PROJECT_REGISTRY_VERSION,
@@ -755,25 +756,9 @@ function readLegacyStorageRecord(): ProjectRegistryStorageRecord {
 		const rawRegistries = value.registries;
 		const registries = Object.fromEntries(
 			Object.entries(rawRegistries).map(([workspaceId, registry]) => {
-				if (!isObjectRecord(registry) || !Array.isArray(registry.nodes)) {
-					throw new LegacyProjectRegistryReadError('project-registry-read-failed');
-				}
-				if (registry.version !== WORKDUCK_PROJECT_REGISTRY_VERSION) {
-					throw new LegacyProjectRegistryReadError('project-registry-version-unsupported');
-				}
-				const normalized = normalizeProjectRegistry(registry, workspaceId);
-				if (normalized.nodes.length !== registry.nodes.length) {
-					throw new LegacyProjectRegistryReadError('project-registry-read-failed');
-				}
-				const nodesById = new Map(normalized.nodes.map((node) => [node.id, node]));
-				for (const node of registry.nodes) {
-					if (!isObjectRecord(node) || typeof node.id !== 'string' ||
-						(node.repositories !== undefined && !Array.isArray(node.repositories)) ||
-						(Array.isArray(node.repositories) && nodesById.get(node.id.trim())?.repositories.length !== node.repositories.length)) {
-						throw new LegacyProjectRegistryReadError('project-registry-read-failed');
-					}
-				}
-				return [workspaceId, normalized];
+				const parsed = normalizeStoredProjectRegistry(registry, workspaceId);
+				if (!parsed.ok) throw new LegacyProjectRegistryReadError(mapProjectRegistryParseError(parsed.error));
+				return [workspaceId, parsed.registry];
 			})
 		);
 

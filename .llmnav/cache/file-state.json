@@ -10113,7 +10113,7 @@
             ],
             "id": "workduck.projects.registry-normalization",
             "invariant": [
-              "Strict storage parsing rejects unsupported versions; canonicalization accepts only reachable unique nodes and repository sources."
+              "Strict storage parsing rejects unsupported versions and normalization that discards nodes or repositories; explicit canonicalization accepts only reachable unique nodes and repository sources."
             ],
             "owns": [
               "project registry parsing",
@@ -10123,18 +10123,19 @@
             ],
             "rel": [],
             "risk": [],
-            "role": "Parse and canonicalize project registries while preserving hierarchy eligibility and collision precedence.",
+            "role": "Validate stored project snapshots without discarding nodes or repositories and canonicalize project hierarchies with deterministic collision precedence.",
             "scope": "module",
             "search": [
               "project registry parsing",
               "hierarchy canonicalization",
               "repository deduplication",
-              "shared field normalization"
+              "shared field normalization",
+              "strict stored project registry"
             ],
             "stability": "architecture",
             "unknown": []
           },
-          "end": 631,
+          "end": 771,
           "endLine": 9,
           "entries": [
             {
@@ -10147,7 +10148,7 @@
               "key": "role",
               "line": 3,
               "order": 1,
-              "value": "Parse and canonicalize project registries while preserving hierarchy eligibility and collision precedence."
+              "value": "Validate stored project snapshots without discarding nodes or repositories and canonicalize project hierarchies with deterministic collision precedence."
             },
             {
               "key": "owns",
@@ -10165,13 +10166,13 @@
               "key": "search",
               "line": 6,
               "order": 4,
-              "value": "project registry parsing|hierarchy canonicalization|repository deduplication|shared field normalization"
+              "value": "project registry parsing|hierarchy canonicalization|repository deduplication|shared field normalization|strict stored project registry"
             },
             {
               "key": "invariant",
               "line": 7,
               "order": 5,
-              "value": "Strict storage parsing rejects unsupported versions; canonicalization accepts only reachable unique nodes and repository sources."
+              "value": "Strict storage parsing rejects unsupported versions and normalization that discards nodes or repositories; explicit canonicalization accepts only reachable unique nodes and repository sources."
             },
             {
               "key": "stability",
@@ -10184,7 +10185,7 @@
           "indent": "",
           "newline": "\n",
           "prefix": null,
-          "raw": "/* llmnav/1 module\nid=workduck.projects.registry-normalization\nrole=Parse and canonicalize project registries while preserving hierarchy eligibility and collision precedence.\nowns=project registry parsing|hierarchy canonicalization|repository deduplication|shared field normalization\nexcludes=registry mutation intents|registry persistence|Git operations\nsearch=project registry parsing|hierarchy canonicalization|repository deduplication|shared field normalization\ninvariant=Strict storage parsing rejects unsupported versions; canonicalization accepts only reachable unique nodes and repository sources.\nstability=architecture\n*/",
+          "raw": "/* llmnav/1 module\nid=workduck.projects.registry-normalization\nrole=Validate stored project snapshots without discarding nodes or repositories and canonicalize project hierarchies with deterministic collision precedence.\nowns=project registry parsing|hierarchy canonicalization|repository deduplication|shared field normalization\nexcludes=registry mutation intents|registry persistence|Git operations\nsearch=project registry parsing|hierarchy canonicalization|repository deduplication|shared field normalization|strict stored project registry\ninvariant=Strict storage parsing rejects unsupported versions and normalization that discards nodes or repositories; explicit canonicalization accepts only reachable unique nodes and repository sources.\nstability=architecture\n*/",
           "scope": "module",
           "specVersion": "1",
           "start": 0,
@@ -10193,7 +10194,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "797d5e62e50b4f72e17f645a5b5971cdaf2ae3f945bc548d969a18a046d95226",
+      "contentHash": "a5d322956da1df7b0a1384c82f24e3806eb9217e452d79ed1be5403efbbd5c76",
       "declarations": [
         null
       ],
@@ -10204,12 +10205,12 @@
         "./project-schema"
       ],
       "path": "src/lib/projects/project-registry-normalization.ts",
-      "semanticBytes": 631,
-      "sourceBytes": 16954
+      "semanticBytes": 771,
+      "sourceBytes": 17794
     },
     {
       "blocks": [],
-      "contentHash": "e2e108ba61c89e77434bb8fc95bd63b7a1ed8685face2103892ae1dfdc0c3002",
+      "contentHash": "85ef4da754f44ae1ef42c9313aebdbf842b5ac95e3d694f6af23cd6832074599",
       "declarations": [],
       "imports": [
         "./project-registry",
@@ -10218,7 +10219,7 @@
       ],
       "path": "src/lib/projects/project-registry.test.ts",
       "semanticBytes": 0,
-      "sourceBytes": 11156
+      "sourceBytes": 12209
     },
     {
       "blocks": [
@@ -10837,7 +10838,7 @@
     },
     {
       "blocks": [],
-      "contentHash": "e46e83c7c3901e4c5a120d0f040f4f659d0f1b3348981010317d0fbca913ff82",
+      "contentHash": "4368c03e8be32cfbf8d7298caf8513a10f4efff4ecc1f3f65cbff2ee1b2694af",
       "declarations": [],
       "imports": [
         "#lib/tauri/tauri-invoke.ts",
@@ -10847,7 +10848,7 @@
       ],
       "path": "src/lib/projects/project-storage.test.ts",
       "semanticBytes": 0,
-      "sourceBytes": 21710
+      "sourceBytes": 22743
     },
     {
       "blocks": [
@@ -10941,7 +10942,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "231ebb5370c36ba28d6c0bf5d7d4bf2722f96995ac2558fec006a3451aca8883",
+      "contentHash": "406ff983aeea45c6bf71e86af17a5ae25e598cd5e17f96da52406e3bbf3b5ce5",
       "declarations": [
         null
       ],
@@ -10955,7 +10956,7 @@
       ],
       "path": "src/lib/projects/project-storage.ts",
       "semanticBytes": 783,
-      "sourceBytes": 29563
+      "sourceBytes": 28762
     },
     {
       "blocks": [],
@@ -14750,7 +14751,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "2feda5248fff66a851a124e7a66cc5fddaa2da9ee2b90629cbd144978915e8a6",
+      "contentHash": "cac859edddf8c3816e07b67404cad253a0fe2bcb74dc104ae0a5de6783c42966",
       "declarations": [
         null
       ],
@@ -14763,7 +14764,7 @@
       ],
       "path": "src/lib/workspaces/workspace-sync.ts",
       "semanticBytes": 664,
-      "sourceBytes": 16552
+      "sourceBytes": 16161
     },
     {
       "blocks": [],

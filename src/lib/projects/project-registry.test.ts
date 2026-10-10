@@ -109,7 +109,29 @@ describe('project registry canonicalization', () => {
 		assert.equal(parsed.nodes[1]?.parentId, 'root');
 	});
 
-	test('keeps strict storage errors distinct from the forgiving browser parser', () => {
+	test('rejects stored registries when normalization would discard nodes or repositories', () => {
+		const root = fixtureNode('root', null);
+		for (const value of [
+			{ version: 1 },
+			{ version: 1, nodes: 'invalid' },
+			{ version: 1, nodes: [null] },
+			{ version: 1, nodes: [root, root] },
+			{ version: 1, nodes: [fixtureNode('orphan', 'missing')] },
+			{ version: 1, nodes: [{ ...root, repositories: [null] }] },
+			{ version: 1, nodes: [{ ...root, repositories: {} }] }
+		]) {
+			assert.deepEqual(parseStoredProjectRegistry(JSON.stringify(value), 'workspace-test'), {
+				ok: false, error: 'project-registry-json-invalid'
+			});
+		}
+		const supported = { version: 1, nodes: [root], updatedAt: fixtureTimestamp };
+		const accepted = parseStoredProjectRegistry(JSON.stringify(supported), 'workspace-test');
+		assert.equal(accepted.ok, true);
+		if (accepted.ok) assert.equal(accepted.registry.nodes.length, 1);
+		assert.equal(parseStoredProjectRegistry(JSON.stringify(createEmptyProjectRegistry('workspace-test')), 'workspace-test').ok, true);
+	});
+
+	test('keeps strict storage errors distinct from the forgiving domain parser', () => {
 		assert.deepEqual(parseStoredProjectRegistry('{', 'workspace-test'), { ok: false, error: 'project-registry-json-invalid' });
 		assert.deepEqual(parseStoredProjectRegistry('{"version":2}', 'workspace-test'), { ok: false, error: 'project-registry-version-unsupported' });
 		assert.deepEqual(parseProjectRegistry('{', 'workspace-test').nodes, []);

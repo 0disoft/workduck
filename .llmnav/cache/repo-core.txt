@@ -188,10 +188,10 @@ excludes registry persistence, artifact selection, workspace registry state
 invariant Saving captures its workspace and report selection, and late feedback never changes a newer selection.
 
 @workduck.projects.registry-normalization
-role Parse and canonicalize project registries while preserving hierarchy eligibility and collision precedence.
+role Validate stored project snapshots without discarding nodes or repositories and canonicalize project hierarchies with deterministic collision precedence.
 owns project registry parsing, hierarchy canonicalization, repository deduplication, shared field normalization
 excludes registry mutation intents, registry persistence, Git operations
-invariant Strict storage parsing rejects unsupported versions; canonicalization accepts only reachable unique nodes and repository sources.
+invariant Strict storage parsing rejects unsupported versions and normalization that discards nodes or repositories; explicit canonicalization accepts only reachable unique nodes and repository sources.
 
 @workduck.queue.evaluation-delegation-native
 role Recognize evaluator work orders and reject a second delegation for the same source report.

@@ -99,3 +99,4 @@
 {"query":"project registry bulk reads one legacy snapshot batch browser migration markers","expected":["workduck.projects.storage"]}
 {"query":"project registry SQLite read independent of inaccessible legacy cache","expected":["workduck.projects.storage"]}
 {"query":"corrupt legacy project data block fallback saves preserve browser record","expected":["workduck.projects.storage"]}
+{"query":"strict stored project registry reject node repository loss unsupported version","expected":["workduck.projects.registry-normalization"]}
