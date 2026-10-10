@@ -94,7 +94,7 @@
     "workduck.workspace.sync-file-native",
     "workduck.workspace.sync-git-native"
   ],
-  "cardSetHash": "60a5c67d2cfd596ce0fa113dde8fd6845ec42bd929c69c893d1756692e9cddc1",
+  "cardSetHash": "09734b2a583ec6850f677c9cac6663662192c1f76737533e19b4714b518506d4",
   "documentCount": 93,
   "documents": [
     [
@@ -751,15 +751,17 @@
       ]
     ],
     [
-      "43a9db474e304636c916d9485893558711ba930702dfb6f8ab47a30f04102de2",
+      "0085daab96284233ee665f5207dd6969b4902f4f03b55ca217a313d728c4cce4",
       [
-        "generate powershell task scripts with execution-owned run records, bounded output previews, and atomic publication.",
+        "generate, stage, and launch powershell task scripts with execution-owned atomic run records and bounded output previews.",
         "powershell tracking script",
+        "large command line task loader",
         "atomic task record publication",
         "bounded unicode log tail",
-        "only the final command can publish success; record publication exposes synced complete json and aborts execution on failure; preview truncation preserves unicode boundaries.",
+        "large scripts use a short run-bound loader and clean up their staged source; only the final command can publish success; publication aborts on failure and never exceeds the history read limit; preview truncation preserves unicode boundaries.",
         "tracked task script generation",
-        "powershell command encoding",
+        "staged script lifetime",
+        "terminal launch",
         "task record publication",
         "unicode output tail"
       ]
@@ -1483,6 +1485,13 @@
       ],
       [
         46,
+        [
+          5,
+          1
+        ]
+      ],
+      [
+        49,
         [
           5,
           1
@@ -2800,9 +2809,9 @@
         49,
         [
           1,
-          1,
+          2,
           5,
-          1
+          2
         ]
       ],
       [
@@ -4502,6 +4511,13 @@
         ]
       ],
       [
+        49,
+        [
+          5,
+          1
+        ]
+      ],
+      [
         64,
         [
           5,
@@ -5795,6 +5811,13 @@
       ]
     ],
     [
+      [
+        49,
+        [
+          5,
+          1
+        ]
+      ],
       [
         78,
         [
@@ -6516,7 +6539,7 @@
       [
         49,
         [
-          3,
+          2,
           1,
           4,
           1,
@@ -6807,13 +6830,6 @@
       ],
       [
         41,
-        [
-          5,
-          1
-        ]
-      ],
-      [
-        49,
         [
           5,
           1
@@ -9405,15 +9421,6 @@
     ],
     [
       [
-        49,
-        [
-          3,
-          1
-        ]
-      ]
-    ],
-    [
-      [
         72,
         [
           5,
@@ -10294,6 +10301,15 @@
     ],
     [
       [
+        49,
+        [
+          5,
+          1
+        ]
+      ]
+    ],
+    [
+      [
         56,
         [
           3,
@@ -10523,8 +10539,6 @@
         49,
         [
           1,
-          1,
-          5,
           1
         ]
       ],
@@ -10968,13 +10982,6 @@
         ]
       ],
       [
-        49,
-        [
-          5,
-          1
-        ]
-      ],
-      [
         58,
         [
           5,
@@ -13033,6 +13040,13 @@
         ]
       ],
       [
+        49,
+        [
+          5,
+          1
+        ]
+      ],
+      [
         50,
         [
           1,
@@ -14482,13 +14496,6 @@
         ]
       ],
       [
-        49,
-        [
-          5,
-          1
-        ]
-      ],
-      [
         68,
         [
           1,
@@ -14645,6 +14652,17 @@
         65,
         [
           1,
+          1,
+          5,
+          1
+        ]
+      ]
+    ],
+    [
+      [
+        49,
+        [
+          2,
           1,
           5,
           1
@@ -14835,6 +14853,15 @@
         48,
         [
           4,
+          1
+        ]
+      ],
+      [
+        49,
+        [
+          1,
+          1,
+          3,
           1
         ]
       ]
@@ -15388,6 +15415,13 @@
         ]
       ],
       [
+        49,
+        [
+          3,
+          1
+        ]
+      ],
+      [
         50,
         [
           1,
@@ -15459,6 +15493,13 @@
           5,
           1
         ]
+      ],
+      [
+        49,
+        [
+          5,
+          1
+        ]
       ]
     ],
     [
@@ -15513,6 +15554,13 @@
         11,
         [
           1,
+          1
+        ]
+      ],
+      [
+        49,
+        [
+          2,
           1
         ]
       ]
@@ -15730,6 +15778,17 @@
     ],
     [
       [
+        49,
+        [
+          2,
+          1,
+          5,
+          1
+        ]
+      ]
+    ],
+    [
+      [
         8,
         [
           3,
@@ -17511,6 +17570,13 @@
         ]
       ],
       [
+        49,
+        [
+          5,
+          1
+        ]
+      ],
+      [
         55,
         [
           5,
@@ -21025,8 +21091,6 @@
           1,
           1,
           2,
-          1,
-          3,
           1,
           9,
           1
@@ -22567,8 +22631,6 @@
       [
         49,
         [
-          1,
-          1,
           2,
           1,
           3,
@@ -23202,6 +23264,13 @@
         ]
       ],
       [
+        49,
+        [
+          5,
+          1
+        ]
+      ],
+      [
         52,
         [
           2,
@@ -23575,8 +23644,6 @@
           2,
           1,
           3,
-          1,
-          5,
           1
         ]
       ],
@@ -27020,6 +27087,8 @@
         49,
         [
           1,
+          1,
+          5,
           1
         ]
       ],
@@ -27785,7 +27854,7 @@
           2,
           1,
           3,
-          1
+          2
         ]
       ]
     ],
@@ -27819,6 +27888,8 @@
         49,
         [
           1,
+          1,
+          5,
           1
         ]
       ]
@@ -28896,6 +28967,15 @@
     ],
     [
       [
+        49,
+        [
+          5,
+          1
+        ]
+      ]
+    ],
+    [
+      [
         27,
         [
           2,
@@ -29270,6 +29350,13 @@
       ],
       [
         32,
+        [
+          5,
+          1
+        ]
+      ],
+      [
+        49,
         [
           5,
           1
@@ -30149,6 +30236,26 @@
     ],
     [
       [
+        49,
+        [
+          1,
+          1
+        ]
+      ]
+    ],
+    [
+      [
+        49,
+        [
+          3,
+          1,
+          5,
+          1
+        ]
+      ]
+    ],
+    [
+      [
         46,
         [
           1,
@@ -31634,13 +31741,6 @@
         ]
       ],
       [
-        49,
-        [
-          5,
-          1
-        ]
-      ],
-      [
         78,
         [
           1,
@@ -31910,7 +32010,7 @@
           1,
           1,
           2,
-          1,
+          2,
           3,
           2,
           9,
@@ -32430,6 +32530,8 @@
       [
         49,
         [
+          3,
+          1,
           4,
           1
         ]
@@ -32849,7 +32951,7 @@
         49,
         [
           5,
-          1
+          2
         ]
       ],
       [
@@ -33112,6 +33214,13 @@
         [
           5,
           2
+        ]
+      ],
+      [
+        49,
+        [
+          5,
+          1
         ]
       ],
       [
@@ -34572,6 +34681,13 @@
     ],
     [
       [
+        49,
+        [
+          5,
+          1
+        ]
+      ],
+      [
         78,
         [
           5,
@@ -34706,6 +34822,13 @@
       ],
       [
         42,
+        [
+          5,
+          1
+        ]
+      ],
+      [
+        49,
         [
           5,
           1
@@ -38032,7 +38155,6 @@
     "edits",
     "eligibility",
     "empty",
-    "encoding",
     "encrypt",
     "encrypted",
     "encryption",
@@ -38065,6 +38187,7 @@
     "every",
     "evidence",
     "exact",
+    "exceeds",
     "exclusion",
     "exclusive",
     "executable",
@@ -38223,6 +38346,7 @@
     "labeled",
     "labels",
     "language",
+    "large",
     "last",
     "late",
     "latest",
@@ -38251,6 +38375,7 @@
     "llm",
     "load",
     "loaded",
+    "loader",
     "loading",
     "local",
     "localized",
@@ -38628,6 +38753,7 @@
     "shared",
     "shell",
     "shim",
+    "short",
     "shutdown",
     "signal",
     "single",
@@ -38651,6 +38777,8 @@
     "src",
     "ssealed",
     "stable",
+    "stage",
+    "staged",
     "stale",
     "start",
     "startup",

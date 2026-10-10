@@ -1709,7 +1709,7 @@
     },
     {
       "edges": [],
-      "inputHash": "a972ef055455ad1fd30f78694aaf67c6f94fcbf2fc3f18b252bacdd0931230d4",
+      "inputHash": "2e1fba13bce40f6e229ebb3111d41b1a2d711cdd759b90c2a361cc3d5cea79ca",
       "key": "card:workduck/workduck.projects.repository-task-native",
       "nodes": [
         {
@@ -2012,7 +2012,7 @@
     },
     {
       "edges": [],
-      "inputHash": "d4018254012ebc4280e9fe95b69a9c9a8218b541c840f8c6982478be7360d6fe",
+      "inputHash": "37d8892b7445c2b3e2cd04bfce0386c1e9496fe2e20332f6e12b78a443db98ff",
       "key": "card:workduck/workduck.projects.task-powershell",
       "nodes": [
         {
@@ -2033,11 +2033,11 @@
             "visibility": null
           },
           "repositoryId": "workduck",
-          "role": "Generate PowerShell task scripts with execution-owned run records, bounded output previews, and atomic publication.",
+          "role": "Generate, stage, and launch PowerShell task scripts with execution-owned atomic run records and bounded output previews.",
           "semanticId": "workduck.projects.task-powershell"
         }
       ],
-      "outputHash": "9afbb16ae4790108568843c528ed3d45bc0e8e126a79086489897aa543ecef89"
+      "outputHash": "2209f680dae3aa5964f3dffacf49d62021c7e9684e0787f3093fb662f1943bad"
     },
     {
       "edges": [

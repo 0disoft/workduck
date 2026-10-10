@@ -5,6 +5,60 @@ use super::commands::{
 use super::*;
 
 #[test]
+fn oversized_task_record_writes_preserve_the_last_readable_record() {
+    let directory = tempfile::tempdir().unwrap();
+    let path = directory.path().join("run.json");
+    let record = ProjectRepositoryTaskRunRecord {
+        record_path: path.to_string_lossy().into_owned(),
+        ..task_run_record(
+            "run",
+            &directory.path().to_string_lossy(),
+            "2026-10-10T00:00:00Z",
+        )
+    };
+    assert!(write_task_run_record(&path, &record).is_ok());
+    let original = fs::read(&path).unwrap();
+    let oversized = ProjectRepositoryTaskRunRecord {
+        output_tail: Some("\u{0001}".repeat(200_000)),
+        ..record
+    };
+    assert!(matches!(
+        write_task_run_record(&path, &oversized),
+        Err(ProjectRepositoryTaskError::RecordWriteFailed)
+    ));
+    assert_eq!(fs::read(&path).unwrap(), original);
+}
+
+#[cfg(target_os = "windows")]
+#[test]
+fn staged_powershell_process_identity_rejects_reused_pids_and_malformed_loaders() {
+    let record = task_run_record("run-original", "C:/workspace/repo", "2026-10-10T00:00:00Z");
+    let path = Path::new("C:/workspace/repo/script.tmp");
+    let loader = create_powershell_script_loader(path, &record.id);
+    let process = live_task_process(42, None, &encoded_powershell_command_line(&loader));
+    assert!(live_process_matches_task_record(&process, &record));
+    let replacement = ProjectRepositoryTaskRunRecord {
+        id: "run-replacement".into(),
+        ..record.clone()
+    };
+    assert!(!live_process_matches_task_record(&process, &replacement));
+    let malformed = live_task_process(
+        42,
+        None,
+        &encoded_powershell_command_line(
+            "$workduckTaskRunId = 'run-original'; Write-Output 'C:/workspace/repo';",
+        ),
+    );
+    assert!(!live_process_matches_task_record(&malformed, &record));
+    let quoted_path = Path::new("C:/workspace/$workduckTaskRunId = 'quoted'");
+    let direct = create_powershell_script(quoted_path, Some("Write-Output 'ok'"), Some(&record));
+    assert!(live_process_matches_task_record(
+        &live_task_process(42, None, &encoded_powershell_command_line(&direct)),
+        &record
+    ));
+}
+
+#[test]
 fn reconciliation_cannot_write_to_a_path_supplied_inside_a_record() {
     let temp = tempfile::tempdir().unwrap();
     let workspace = fs::canonicalize(temp.path()).unwrap();

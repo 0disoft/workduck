@@ -1571,9 +1571,9 @@
         "arbitrary shell command input"
       ],
       "hashes": {
-        "body": "4d16722f3a2c093cc5944f41e7e9f7b843c7d9ee996c7d6c5843a6e9df9458b3",
+        "body": "319dcf23cdd8c9e272126b3035ba97030d898ee9997b7b5e596000d1ab7a421d",
         "semantic": "ab8a83634f3548e09270abd09e6470986b9b77df49b0489208fa19ee7db133c1",
-        "structure": "fc0a4ca52e260f844973b2e475a2e360aef643ff1d8300ad6c6b45f363b31178"
+        "structure": "9e9cd19daa2114ce2806d4f4160987d4f420da4684e1d720d9356280963b61d0"
       },
       "id": "workduck.projects.repository-task-native",
       "imports": [
@@ -1584,9 +1584,9 @@
         "crate::workspace_path::{\n    WorkspacePathValidationError, validate_absolute_directory_path,\n    validate_workspace_directory_path,\n}",
         "history",
         "powershell",
-        "powershell::create_powershell_task_record_writer",
         "powershell::escape_powershell_single_quoted",
-        "powershell::{create_powershell_script, encode_powershell_command}",
+        "powershell::launch_repository_terminal",
+        "powershell::{\n    create_powershell_script, create_powershell_script_loader,\n    create_powershell_task_record_writer, encode_powershell_command, prepare_powershell_command,\n}",
         "powershell_tests",
         "std::os::windows::process::CommandExt",
         "std::{\n    collections::{HashMap, HashSet},\n    fs,\n    path::{Path, PathBuf},\n    process::{Command, Stdio},\n    sync::{Arc, Mutex, OnceLock},\n    time::SystemTime,\n}",
@@ -2901,7 +2901,7 @@
         "latest repository card projection"
       ],
       "hashes": {
-        "body": "64c933c6c4f35a48e1858fb087a00d92264d7f28ebde0fd191b800706f3bcea8",
+        "body": "8a939bed7bc6069fdb2a4c6724c15b8ffc26bb7bd806f1b86eb35c8d5d43860b",
         "semantic": "ae6a47232b46862e840b796aedfb46615a9317c2444f36f63974b82cea5263fd",
         "structure": "16c37603e3afaf7318dae2fa572473b84454350657ac4c85c13cee95952358b3"
       },
@@ -4705,18 +4705,19 @@
         "process liveness"
       ],
       "hashes": {
-        "body": "d2d50475f914a66b4d46c6f1be69c88f5c2bc52d671e7500a9dd1a80d1a1dc2d",
-        "semantic": "9c327a026b0c1e54a859b322f9c3def240a88d3174e464c3ad9c8b8adf4ebc15",
-        "structure": "66c0b9373e7a1d85acd91c1adbe746532fcdc544342bace530362307b4af7b7c"
+        "body": "05dc060380a91d5715c22bb3ed667dec95c23dd7a3f06bd14536d4fcc47018a6",
+        "semantic": "a1bdd4edccf7f2a5d8e546a39ba08b60add151aa6c440e8aacd8b3dc7798f811",
+        "structure": "f529b439d716ac4657faa50f8ac12e53a66696f14d979a822890897fae4e6048"
       },
       "id": "workduck.projects.task-powershell",
       "imports": [
         "base64::{Engine as _, engine::general_purpose}",
-        "std::path::Path",
-        "super::ProjectRepositoryTaskRunRecord"
+        "std::os::windows::process::CommandExt",
+        "std::{\n    fs,\n    io::Write,\n    path::{Path, PathBuf},\n}",
+        "super::{ProjectRepositoryTaskError, ProjectRepositoryTaskRunRecord}"
       ],
       "invariant": [
-        "Only the final command can publish success; record publication exposes synced complete JSON and aborts execution on failure; preview truncation preserves Unicode boundaries."
+        "Large scripts use a short run-bound loader and clean up their staged source; only the final command can publish success; publication aborts on failure and never exceeds the history read limit; preview truncation preserves Unicode boundaries."
       ],
       "location": {
         "declarationLine": null,
@@ -4733,14 +4734,16 @@
       },
       "owns": [
         "tracked task script generation",
-        "PowerShell command encoding",
+        "staged script lifetime",
+        "terminal launch",
         "task record publication",
         "Unicode output tail"
       ],
-      "role": "Generate PowerShell task scripts with execution-owned run records, bounded output previews, and atomic publication.",
+      "role": "Generate, stage, and launch PowerShell task scripts with execution-owned atomic run records and bounded output previews.",
       "scope": "module",
       "search": [
         "PowerShell tracking script",
+        "large command line task loader",
         "atomic task record publication",
         "bounded Unicode log tail"
       ],
@@ -4760,6 +4763,6 @@
   "generatedBy": "llmnav@0.9.7",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "2b3885b84be43cd9925c47244fb0b6005ec905bb831399d088633f26ab2dc8b0",
+  "sourceHash": "5d03c9d50756b38cd595d10b2edaa08ec5bd31f47a65df271e2d61e3cc071da8",
   "specVersion": "1"
 }

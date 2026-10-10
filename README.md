@@ -123,6 +123,14 @@ retry delays. If publication still fails, the terminal exits before another
 command can run and the last durable record remains available. Liveness queries
 can then project that unfinished record as stopped without inventing completion.
 
+Large task scripts use a short encoded loader and a synced temporary UTF-8
+source file, avoiding the Windows process argument limit for multi-command
+workspaces. The loader reads and parses the file, removes it, and executes in
+the original scope so native exit codes remain intact. Failed process starts
+also clean up their staged source. Process liveness binds both direct scripts
+and loaders to their run IDs. Native records cannot exceed the history read
+limit; terminal previews shrink to fit without dropping execution metadata.
+
 Owned command and terminal process trees are cleaned up when the parent exits,
 when termination is requested, or when their owner is dropped. Windows jobs and
 Unix process groups are terminated independently of the parent's exit status.

@@ -88,3 +88,4 @@
 {"query":"restore unsaved brief draft after workspace locking without resurrecting a completed save","expected":["workduck.briefs.editor-drafts"]}
 {"query":"retry failed app settings initialization without opening workspace content","expected":["workduck.app-state.boot-gate"]}
 {"query":"Windows PowerShell task script atomic record publication Unicode log tail","expected":["workduck.projects.task-powershell"]}
+{"query":"PowerShell large command line task loader temporary script source cleanup","expected":["workduck.projects.task-powershell"]}

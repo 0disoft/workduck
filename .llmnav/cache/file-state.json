@@ -3422,7 +3422,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "4d16722f3a2c093cc5944f41e7e9f7b843c7d9ee996c7d6c5843a6e9df9458b3",
+      "contentHash": "319dcf23cdd8c9e272126b3035ba97030d898ee9997b7b5e596000d1ab7a421d",
       "declarations": [
         null
       ],
@@ -3434,9 +3434,9 @@
         "crate::workspace_path::{\n    WorkspacePathValidationError, validate_absolute_directory_path,\n    validate_workspace_directory_path,\n}",
         "history",
         "powershell",
-        "powershell::create_powershell_task_record_writer",
         "powershell::escape_powershell_single_quoted",
-        "powershell::{create_powershell_script, encode_powershell_command}",
+        "powershell::launch_repository_terminal",
+        "powershell::{\n    create_powershell_script, create_powershell_script_loader,\n    create_powershell_task_record_writer, encode_powershell_command, prepare_powershell_command,\n}",
         "powershell_tests",
         "std::os::windows::process::CommandExt",
         "std::{\n    collections::{HashMap, HashSet},\n    fs,\n    path::{Path, PathBuf},\n    process::{Command, Stdio},\n    sync::{Arc, Mutex, OnceLock},\n    time::SystemTime,\n}",
@@ -3445,7 +3445,7 @@
       ],
       "path": "src-tauri/src/project_repository_task.rs",
       "semanticBytes": 1143,
-      "sourceBytes": 40405
+      "sourceBytes": 39685
     },
     {
       "blocks": [
@@ -3641,7 +3641,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "64c933c6c4f35a48e1858fb087a00d92264d7f28ebde0fd191b800706f3bcea8",
+      "contentHash": "8a939bed7bc6069fdb2a4c6724c15b8ffc26bb7bd806f1b86eb35c8d5d43860b",
       "declarations": [
         null
       ],
@@ -3652,7 +3652,7 @@
       ],
       "path": "src-tauri/src/project_repository_task_history.rs",
       "semanticBytes": 705,
-      "sourceBytes": 10792
+      "sourceBytes": 10803
     },
     {
       "blocks": [
@@ -3666,27 +3666,29 @@
             ],
             "id": "workduck.projects.task-powershell",
             "invariant": [
-              "Only the final command can publish success; record publication exposes synced complete JSON and aborts execution on failure; preview truncation preserves Unicode boundaries."
+              "Large scripts use a short run-bound loader and clean up their staged source; only the final command can publish success; publication aborts on failure and never exceeds the history read limit; preview truncation preserves Unicode boundaries."
             ],
             "owns": [
               "tracked task script generation",
-              "PowerShell command encoding",
+              "staged script lifetime",
+              "terminal launch",
               "task record publication",
               "Unicode output tail"
             ],
             "rel": [],
             "risk": [],
-            "role": "Generate PowerShell task scripts with execution-owned run records, bounded output previews, and atomic publication.",
+            "role": "Generate, stage, and launch PowerShell task scripts with execution-owned atomic run records and bounded output previews.",
             "scope": "module",
             "search": [
               "PowerShell tracking script",
+              "large command line task loader",
               "atomic task record publication",
               "bounded Unicode log tail"
             ],
             "stability": "architecture",
             "unknown": []
           },
-          "end": 677,
+          "end": 792,
           "endLine": 9,
           "entries": [
             {
@@ -3699,13 +3701,13 @@
               "key": "role",
               "line": 3,
               "order": 1,
-              "value": "Generate PowerShell task scripts with execution-owned run records, bounded output previews, and atomic publication."
+              "value": "Generate, stage, and launch PowerShell task scripts with execution-owned atomic run records and bounded output previews."
             },
             {
               "key": "owns",
               "line": 4,
               "order": 2,
-              "value": "tracked task script generation|PowerShell command encoding|task record publication|Unicode output tail"
+              "value": "tracked task script generation|staged script lifetime|terminal launch|task record publication|Unicode output tail"
             },
             {
               "key": "excludes",
@@ -3717,13 +3719,13 @@
               "key": "search",
               "line": 6,
               "order": 4,
-              "value": "PowerShell tracking script|atomic task record publication|bounded Unicode log tail"
+              "value": "PowerShell tracking script|large command line task loader|atomic task record publication|bounded Unicode log tail"
             },
             {
               "key": "invariant",
               "line": 7,
               "order": 5,
-              "value": "Only the final command can publish success; record publication exposes synced complete JSON and aborts execution on failure; preview truncation preserves Unicode boundaries."
+              "value": "Large scripts use a short run-bound loader and clean up their staged source; only the final command can publish success; publication aborts on failure and never exceeds the history read limit; preview truncation preserves Unicode boundaries."
             },
             {
               "key": "stability",
@@ -3736,7 +3738,7 @@
           "indent": "",
           "newline": "\n",
           "prefix": "//",
-          "raw": "// llmnav/1 module\n// id=workduck.projects.task-powershell\n// role=Generate PowerShell task scripts with execution-owned run records, bounded output previews, and atomic publication.\n// owns=tracked task script generation|PowerShell command encoding|task record publication|Unicode output tail\n// excludes=command selection|terminal discovery|process liveness\n// search=PowerShell tracking script|atomic task record publication|bounded Unicode log tail\n// invariant=Only the final command can publish success; record publication exposes synced complete JSON and aborts execution on failure; preview truncation preserves Unicode boundaries.\n// stability=architecture\n// /llmnav\n",
+          "raw": "// llmnav/1 module\n// id=workduck.projects.task-powershell\n// role=Generate, stage, and launch PowerShell task scripts with execution-owned atomic run records and bounded output previews.\n// owns=tracked task script generation|staged script lifetime|terminal launch|task record publication|Unicode output tail\n// excludes=command selection|terminal discovery|process liveness\n// search=PowerShell tracking script|large command line task loader|atomic task record publication|bounded Unicode log tail\n// invariant=Large scripts use a short run-bound loader and clean up their staged source; only the final command can publish success; publication aborts on failure and never exceeds the history read limit; preview truncation preserves Unicode boundaries.\n// stability=architecture\n// /llmnav\n",
           "scope": "module",
           "specVersion": "1",
           "start": 0,
@@ -3745,22 +3747,23 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "d2d50475f914a66b4d46c6f1be69c88f5c2bc52d671e7500a9dd1a80d1a1dc2d",
+      "contentHash": "05dc060380a91d5715c22bb3ed667dec95c23dd7a3f06bd14536d4fcc47018a6",
       "declarations": [
         null
       ],
       "imports": [
         "base64::{Engine as _, engine::general_purpose}",
-        "std::path::Path",
-        "super::ProjectRepositoryTaskRunRecord"
+        "std::os::windows::process::CommandExt",
+        "std::{\n    fs,\n    io::Write,\n    path::{Path, PathBuf},\n}",
+        "super::{ProjectRepositoryTaskError, ProjectRepositoryTaskRunRecord}"
       ],
       "path": "src-tauri/src/project_repository_task_powershell.rs",
-      "semanticBytes": 677,
-      "sourceBytes": 9833
+      "semanticBytes": 792,
+      "sourceBytes": 15077
     },
     {
       "blocks": [],
-      "contentHash": "309bbc8644e8b596882680ffe94d8d2fb133a92d8d53d2056c8b1b895707c29a",
+      "contentHash": "4899955ad2b82323874f863da5ab612e9fb624cf74353f32b5bea309c671219c",
       "declarations": [],
       "imports": [
         "std::os::windows::fs::OpenOptionsExt",
@@ -3769,11 +3772,11 @@
       ],
       "path": "src-tauri/src/project_repository_task_powershell_tests.rs",
       "semanticBytes": 0,
-      "sourceBytes": 21602
+      "sourceBytes": 29790
     },
     {
       "blocks": [],
-      "contentHash": "66383e57aba5f1ac1dd43147199ea387758ab2f6395562e005b7754f262e081f",
+      "contentHash": "76cb7571e83558a5de49798605619463f1fdf989c92a58149d894c12a2c2b5bb",
       "declarations": [],
       "imports": [
         "super::*",
@@ -3781,7 +3784,7 @@
       ],
       "path": "src-tauri/src/project_repository_task_tests.rs",
       "semanticBytes": 0,
-      "sourceBytes": 38750
+      "sourceBytes": 40922
     },
     {
       "blocks": [],

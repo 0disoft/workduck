@@ -1,6 +1,220 @@
 use super::tests::task_run_record;
 use super::*;
 
+#[test]
+fn powershell_large_metadata_and_escaped_output_remain_readable_in_history() {
+    for shell in ["powershell.exe", "pwsh.exe"] {
+        if shell == "pwsh.exe" && Command::new(shell).arg("-Version").output().is_err() {
+            continue;
+        }
+        let repository = tempfile::tempdir().unwrap();
+        let path = repository.path().join("run.json");
+        let record = ProjectRepositoryTaskRunRecord {
+            command: "m".repeat(980_000),
+            record_path: path.to_string_lossy().into_owned(),
+            ..task_run_record(
+                "run",
+                &repository.path().to_string_lossy(),
+                "2026-10-10T00:00:00Z",
+            )
+        };
+        assert!(write_task_run_record(&path, &record).is_ok());
+        let script = create_powershell_task_record_writer(&record)
+            + "; Write-WorkduckTaskRunRecord -State 'succeeded' -ExitCode 0 -OutputTail (([string][char]1) * 16000 + ' completed ✓🙂')";
+        let prepared = prepare_powershell_command(&script, Some(&record))
+            .unwrap_or_else(|_| panic!("{shell}: preparation failed"));
+        let output = Command::new(shell)
+            .current_dir(repository.path())
+            .args([
+                "-NoLogo",
+                "-NoProfile",
+                "-NonInteractive",
+                "-EncodedCommand",
+                &prepared.encoded_command,
+            ])
+            .output()
+            .unwrap();
+        assert!(
+            output.status.success(),
+            "{shell}: {}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+        assert!(fs::metadata(&path).unwrap().len() <= history::MAX_RECORD_BYTES as u64);
+        let stored = read_visible_task_run_record(&path, repository.path()).unwrap();
+        assert_eq!(stored.command, record.command, "{shell}");
+        assert_eq!(stored.state, "succeeded", "{shell}");
+        assert_eq!(stored.exit_code, Some(0), "{shell}");
+        assert!(
+            stored
+                .output_tail
+                .as_deref()
+                .unwrap()
+                .ends_with("completed ✓🙂"),
+            "{shell}"
+        );
+    }
+}
+
+#[test]
+fn powershell_large_task_scripts_use_a_short_loader_and_remove_the_staged_source() {
+    for shell in ["powershell.exe", "pwsh.exe"] {
+        if shell == "pwsh.exe" && Command::new(shell).arg("-Version").output().is_err() {
+            continue;
+        }
+        for fail_at in [None, Some(5)] {
+            let repository = tempfile::tempdir().unwrap();
+            let command = (0..14)
+                .map(|index| {
+                    if fail_at == Some(index) {
+                        "& $env:ComSpec /d /c 'exit 7'"
+                    } else {
+                        "[System.IO.File]::AppendAllText('completed.txt', 'x')"
+                    }
+                })
+                .collect::<Vec<_>>()
+                .join("\n");
+            let record_path = repository.path().join("run.json");
+            let record = ProjectRepositoryTaskRunRecord {
+                command: command.clone(),
+                record_path: record_path.to_string_lossy().into_owned(),
+                ..task_run_record(
+                    "run",
+                    &repository.path().to_string_lossy(),
+                    "2026-10-10T00:00:00Z",
+                )
+            };
+            let script = create_powershell_script(repository.path(), Some(&command), Some(&record));
+            assert!(encode_powershell_command(&script).len() > 32_767);
+            let mut prepared = prepare_powershell_command(&script, Some(&record))
+                .unwrap_or_else(|_| panic!("{shell}: preparation failed"));
+            let staged_path = prepared.staged_script_path.clone().unwrap();
+            assert!(staged_path.exists());
+            assert!(prepared.encoded_command.len() < 24_000);
+            let child = Command::new(shell)
+                .current_dir(repository.path())
+                .args([
+                    "-NoLogo",
+                    "-NoProfile",
+                    "-NonInteractive",
+                    "-EncodedCommand",
+                    &prepared.encoded_command,
+                ])
+                .stdout(std::process::Stdio::piped())
+                .stderr(std::process::Stdio::piped())
+                .spawn()
+                .unwrap();
+            prepared.transfer_script_to_shell();
+            let output = child.wait_with_output().unwrap();
+            assert!(
+                output.status.success() || fail_at.is_some(),
+                "{shell}: {}",
+                String::from_utf8_lossy(&output.stderr)
+            );
+            assert!(!staged_path.exists(), "{shell}: staged source was retained");
+            assert_eq!(
+                fs::read_to_string(repository.path().join("completed.txt")).unwrap(),
+                "x".repeat(fail_at.unwrap_or(14))
+            );
+            let stored: ProjectRepositoryTaskRunRecord =
+                serde_json::from_slice(&fs::read(record_path).unwrap()).unwrap();
+            assert_eq!(stored.command, command, "{shell}");
+            assert_eq!(
+                stored.state,
+                if fail_at.is_some() {
+                    "failed"
+                } else {
+                    "succeeded"
+                },
+                "{shell}"
+            );
+            assert_eq!(
+                stored.exit_code,
+                Some(if fail_at.is_some() { 7 } else { 0 }),
+                "{shell}"
+            );
+        }
+    }
+}
+
+#[test]
+fn powershell_staged_source_is_removed_on_spawn_or_parse_failure() {
+    let script = "# padding\n".repeat(4000) + "if (";
+    let prepared =
+        prepare_powershell_command(&script, None).unwrap_or_else(|_| panic!("preparation failed"));
+    let path = prepared.staged_script_path.clone().unwrap();
+    assert!(
+        Command::new("workduck-test-missing-shell-815c9ea1.exe")
+            .spawn()
+            .is_err()
+    );
+    drop(prepared);
+    assert!(!path.exists());
+    for shell in ["powershell.exe", "pwsh.exe"] {
+        if shell == "pwsh.exe" && Command::new(shell).arg("-Version").output().is_err() {
+            continue;
+        }
+        let prepared = prepare_powershell_command(&script, None)
+            .unwrap_or_else(|_| panic!("{shell}: preparation failed"));
+        let path = prepared.staged_script_path.clone().unwrap();
+        let output = Command::new(shell)
+            .args([
+                "-NoLogo",
+                "-NoProfile",
+                "-NonInteractive",
+                "-EncodedCommand",
+                &prepared.encoded_command,
+            ])
+            .output()
+            .unwrap();
+        assert!(
+            !output.status.success(),
+            "{shell}: malformed script was accepted"
+        );
+        assert!(
+            !path.exists(),
+            "{shell}: malformed staged source was retained"
+        );
+    }
+}
+
+#[test]
+fn powershell_script_loader_preserves_quoted_unicode_paths_and_source() {
+    for shell in ["powershell.exe", "pwsh.exe"] {
+        if shell == "pwsh.exe" && Command::new(shell).arg("-Version").output().is_err() {
+            continue;
+        }
+        let repository = tempfile::tempdir().unwrap();
+        let path = repository.path().join("script'한글🙂.tmp");
+        fs::write(
+            &path,
+            "[System.IO.File]::WriteAllText('result.txt', '한글 ✓🙂')",
+        )
+        .unwrap();
+        let loader = create_powershell_script_loader(&path, "quoted-run");
+        let output = Command::new(shell)
+            .current_dir(repository.path())
+            .args([
+                "-NoLogo",
+                "-NoProfile",
+                "-NonInteractive",
+                "-EncodedCommand",
+                &encode_powershell_command(&loader),
+            ])
+            .output()
+            .unwrap();
+        assert!(
+            output.status.success(),
+            "{shell}: {}",
+            String::from_utf8_lossy(&output.stderr)
+        );
+        assert_eq!(
+            fs::read_to_string(repository.path().join("result.txt")).unwrap(),
+            "한글 ✓🙂"
+        );
+        assert!(!path.exists(), "{shell}");
+    }
+}
+
 #[cfg(target_os = "windows")]
 #[test]
 fn powershell_task_failures_stop_following_commands_and_keep_native_exit_codes() {

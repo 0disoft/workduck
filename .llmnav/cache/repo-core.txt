@@ -260,7 +260,7 @@ excludes native settings storage, setting domain validation, workspace content r
 invariant Failed initialization keeps workspace content unmounted; one boot attempt runs at a time and disposed layouts cannot apply late results.
 
 @workduck.projects.task-powershell
-role Generate PowerShell task scripts with execution-owned run records, bounded output previews, and atomic publication.
-owns tracked task script generation, PowerShell command encoding, task record publication, Unicode output tail
+role Generate, stage, and launch PowerShell task scripts with execution-owned atomic run records and bounded output previews.
+owns tracked task script generation, staged script lifetime, terminal launch, task record publication, Unicode output tail
 excludes command selection, terminal discovery, process liveness
-invariant Only the final command can publish success; record publication exposes synced complete JSON and aborts execution on failure; preview truncation preserves Unicode boundaries.
+invariant Large scripts use a short run-bound loader and clean up their staged source; only the final command can publish success; publication aborts on failure and never exceeds the history read limit; preview truncation preserves Unicode boundaries.

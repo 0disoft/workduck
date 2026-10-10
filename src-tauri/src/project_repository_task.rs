@@ -34,11 +34,14 @@ mod history;
 
 #[path = "project_repository_task_powershell.rs"]
 mod powershell;
-#[cfg(all(test, target_os = "windows"))]
-use powershell::create_powershell_task_record_writer;
 use powershell::escape_powershell_single_quoted;
 #[cfg(target_os = "windows")]
-use powershell::{create_powershell_script, encode_powershell_command};
+use powershell::launch_repository_terminal;
+#[cfg(all(test, target_os = "windows"))]
+use powershell::{
+    create_powershell_script, create_powershell_script_loader,
+    create_powershell_task_record_writer, encode_powershell_command, prepare_powershell_command,
+};
 
 #[derive(serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -652,6 +655,9 @@ fn write_task_run_record(
     fs::create_dir_all(parent).map_err(|_| ProjectRepositoryTaskError::RecordWriteFailed)?;
     let record_json = serde_json::to_string_pretty(record)
         .map_err(|_| ProjectRepositoryTaskError::RecordWriteFailed)?;
+    if record_json.len() > history::MAX_RECORD_BYTES {
+        return Err(ProjectRepositoryTaskError::RecordWriteFailed);
+    }
 
     write_file_atomically(record_path, &record_json)
         .map_err(|_| ProjectRepositoryTaskError::RecordWriteFailed)
@@ -850,15 +856,22 @@ fn live_process_matches_task_record(
     process: &LiveTaskProcess,
     record: &ProjectRepositoryTaskRunRecord,
 ) -> bool {
-    if let Some(script) = decode_powershell_encoded_command(&process.command_line)
-        && script.contains("function Write-WorkduckTaskRunRecord")
-    {
-        // Current terminal scripts carry the run ID, so a reused PID must not match
-        // another execution of the same command in the same repository.
-        return script.contains(&format!(
-            "id = '{}';",
-            escape_powershell_single_quoted(&record.id)
-        ));
+    if let Some(script) = decode_powershell_encoded_command(&process.command_line) {
+        if script.starts_with("$workduckTaskRunId = '") {
+            return script.starts_with(&format!(
+                "$workduckTaskRunId = '{}';",
+                escape_powershell_single_quoted(&record.id)
+            )) && script.contains("$workduckTaskScriptPath = '")
+                && script.contains("[ScriptBlock]::Create");
+        }
+        if script.contains("function Write-WorkduckTaskRunRecord") {
+            // Current terminal scripts carry the run ID, so a reused PID must not match
+            // another execution of the same command in the same repository.
+            return script.contains(&format!(
+                "id = '{}';",
+                escape_powershell_single_quoted(&record.id)
+            ));
+        }
     }
     let command_line = normalize_process_match_text(&process.command_line);
     let repository_path = normalize_process_match_text(&record.repository_path);
@@ -1139,42 +1152,6 @@ mod tests;
 #[cfg(all(test, target_os = "windows"))]
 #[path = "project_repository_task_powershell_tests.rs"]
 mod powershell_tests;
-
-#[cfg(target_os = "windows")]
-fn launch_repository_terminal(
-    repository_path: &Path,
-    command: Option<&str>,
-    run_record: Option<&ProjectRepositoryTaskRunRecord>,
-) -> Result<Option<u32>, ProjectRepositoryTaskError> {
-    use std::os::windows::process::CommandExt;
-
-    const CREATE_NEW_CONSOLE: u32 = 0x00000010;
-
-    let terminal = crate::terminal_catalog::find_available_terminal_entry("powershell-core")
-        .or_else(|| crate::terminal_catalog::find_available_terminal_entry("windows-powershell"))
-        .ok_or(ProjectRepositoryTaskError::TerminalUnavailable)?;
-    let executable = terminal
-        .executable_path
-        .as_deref()
-        .unwrap_or(terminal.command);
-    let shell_repository_path = crate::git_path::git_process_path(repository_path);
-    let script = create_powershell_script(&shell_repository_path, command, run_record);
-    let encoded_script = encode_powershell_command(&script);
-
-    Command::new(executable)
-        .args([
-            "-NoLogo",
-            "-NoProfile",
-            "-NoExit",
-            "-EncodedCommand",
-            &encoded_script,
-        ])
-        .current_dir(&shell_repository_path)
-        .creation_flags(CREATE_NEW_CONSOLE)
-        .spawn()
-        .map(|child| Some(child.id()))
-        .map_err(|_| ProjectRepositoryTaskError::LaunchFailed)
-}
 
 #[cfg(not(target_os = "windows"))]
 fn launch_repository_terminal(

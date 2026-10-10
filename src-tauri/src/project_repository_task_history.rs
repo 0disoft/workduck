@@ -16,7 +16,7 @@ use super::{
 };
 
 const MAX_SELECTED_RUNS: usize = 200;
-const MAX_RECORD_BYTES: usize = 1024 * 1024;
+pub(super) const MAX_RECORD_BYTES: usize = 1024 * 1024;
 pub(super) const MAX_HISTORY_BYTES: usize = 8 * MAX_RECORD_BYTES;
 
 pub(super) fn read_selected_task_run_records(

@@ -1808,7 +1808,7 @@
         "visibility": null
       },
       "repositoryId": "workduck",
-      "role": "Generate PowerShell task scripts with execution-owned run records, bounded output previews, and atomic publication.",
+      "role": "Generate, stage, and launch PowerShell task scripts with execution-owned atomic run records and bounded output previews.",
       "semanticId": "workduck.projects.task-powershell",
       "unresolved": false
     },
@@ -2761,7 +2761,7 @@
   ],
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "79ddf4ceee280c342e61ba0648672743085be01e0733eb1c1db1cf05dfdc840d",
+  "sourceHash": "e98ad1985014efdeeae930f2a2f362c310d867fe1fe259811ec30879477fc729",
   "stats": {
     "edgeCount": 49,
     "importedIndexCount": 0,
