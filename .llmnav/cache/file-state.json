@@ -3422,7 +3422,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "1a90f75028e9c2642865d62411cdcb3730f6f73caff2068e2a2a6934b956afc3",
+      "contentHash": "4d16722f3a2c093cc5944f41e7e9f7b843c7d9ee996c7d6c5843a6e9df9458b3",
       "declarations": [
         null
       ],
@@ -3433,6 +3433,11 @@
         "crate::atomic_file_write::write_file_atomically",
         "crate::workspace_path::{\n    WorkspacePathValidationError, validate_absolute_directory_path,\n    validate_workspace_directory_path,\n}",
         "history",
+        "powershell",
+        "powershell::create_powershell_task_record_writer",
+        "powershell::escape_powershell_single_quoted",
+        "powershell::{create_powershell_script, encode_powershell_command}",
+        "powershell_tests",
         "std::os::windows::process::CommandExt",
         "std::{\n    collections::{HashMap, HashSet},\n    fs,\n    path::{Path, PathBuf},\n    process::{Command, Stdio},\n    sync::{Arc, Mutex, OnceLock},\n    time::SystemTime,\n}",
         "tests",
@@ -3440,7 +3445,7 @@
       ],
       "path": "src-tauri/src/project_repository_task.rs",
       "semanticBytes": 1143,
-      "sourceBytes": 48872
+      "sourceBytes": 40405
     },
     {
       "blocks": [
@@ -3650,17 +3655,133 @@
       "sourceBytes": 10792
     },
     {
+      "blocks": [
+        {
+          "card": {
+            "effect": [],
+            "excludes": [
+              "command selection",
+              "terminal discovery",
+              "process liveness"
+            ],
+            "id": "workduck.projects.task-powershell",
+            "invariant": [
+              "Only the final command can publish success; record publication exposes synced complete JSON and aborts execution on failure; preview truncation preserves Unicode boundaries."
+            ],
+            "owns": [
+              "tracked task script generation",
+              "PowerShell command encoding",
+              "task record publication",
+              "Unicode output tail"
+            ],
+            "rel": [],
+            "risk": [],
+            "role": "Generate PowerShell task scripts with execution-owned run records, bounded output previews, and atomic publication.",
+            "scope": "module",
+            "search": [
+              "PowerShell tracking script",
+              "atomic task record publication",
+              "bounded Unicode log tail"
+            ],
+            "stability": "architecture",
+            "unknown": []
+          },
+          "end": 677,
+          "endLine": 9,
+          "entries": [
+            {
+              "key": "id",
+              "line": 2,
+              "order": 0,
+              "value": "workduck.projects.task-powershell"
+            },
+            {
+              "key": "role",
+              "line": 3,
+              "order": 1,
+              "value": "Generate PowerShell task scripts with execution-owned run records, bounded output previews, and atomic publication."
+            },
+            {
+              "key": "owns",
+              "line": 4,
+              "order": 2,
+              "value": "tracked task script generation|PowerShell command encoding|task record publication|Unicode output tail"
+            },
+            {
+              "key": "excludes",
+              "line": 5,
+              "order": 3,
+              "value": "command selection|terminal discovery|process liveness"
+            },
+            {
+              "key": "search",
+              "line": 6,
+              "order": 4,
+              "value": "PowerShell tracking script|atomic task record publication|bounded Unicode log tail"
+            },
+            {
+              "key": "invariant",
+              "line": 7,
+              "order": 5,
+              "value": "Only the final command can publish success; record publication exposes synced complete JSON and aborts execution on failure; preview truncation preserves Unicode boundaries."
+            },
+            {
+              "key": "stability",
+              "line": 8,
+              "order": 6,
+              "value": "architecture"
+            }
+          ],
+          "filePath": "src-tauri/src/project_repository_task_powershell.rs",
+          "indent": "",
+          "newline": "\n",
+          "prefix": "//",
+          "raw": "// llmnav/1 module\n// id=workduck.projects.task-powershell\n// role=Generate PowerShell task scripts with execution-owned run records, bounded output previews, and atomic publication.\n// owns=tracked task script generation|PowerShell command encoding|task record publication|Unicode output tail\n// excludes=command selection|terminal discovery|process liveness\n// search=PowerShell tracking script|atomic task record publication|bounded Unicode log tail\n// invariant=Only the final command can publish success; record publication exposes synced complete JSON and aborts execution on failure; preview truncation preserves Unicode boundaries.\n// stability=architecture\n// /llmnav\n",
+          "scope": "module",
+          "specVersion": "1",
+          "start": 0,
+          "startLine": 1,
+          "style": "line",
+          "syntaxErrors": []
+        }
+      ],
+      "contentHash": "d2d50475f914a66b4d46c6f1be69c88f5c2bc52d671e7500a9dd1a80d1a1dc2d",
+      "declarations": [
+        null
+      ],
+      "imports": [
+        "base64::{Engine as _, engine::general_purpose}",
+        "std::path::Path",
+        "super::ProjectRepositoryTaskRunRecord"
+      ],
+      "path": "src-tauri/src/project_repository_task_powershell.rs",
+      "semanticBytes": 677,
+      "sourceBytes": 9833
+    },
+    {
       "blocks": [],
-      "contentHash": "a5cd6ac38062e10f18f6557148d0bc7bf1ee541e081a16b373dd04ba3026932e",
+      "contentHash": "309bbc8644e8b596882680ffe94d8d2fb133a92d8d53d2056c8b1b895707c29a",
       "declarations": [],
       "imports": [
         "std::os::windows::fs::OpenOptionsExt",
+        "super::*",
+        "super::tests::task_run_record"
+      ],
+      "path": "src-tauri/src/project_repository_task_powershell_tests.rs",
+      "semanticBytes": 0,
+      "sourceBytes": 21602
+    },
+    {
+      "blocks": [],
+      "contentHash": "66383e57aba5f1ac1dd43147199ea387758ab2f6395562e005b7754f262e081f",
+      "declarations": [],
+      "imports": [
         "super::*",
         "super::commands::{\n    PackageManager, PackageProject, resolve_package_dev_server_command,\n    resolve_package_task_command,\n}"
       ],
       "path": "src-tauri/src/project_repository_task_tests.rs",
       "semanticBytes": 0,
-      "sourceBytes": 60292
+      "sourceBytes": 38750
     },
     {
       "blocks": [],

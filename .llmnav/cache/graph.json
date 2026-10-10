@@ -1793,6 +1793,28 @@
     {
       "definitions": [],
       "external": false,
+      "key": "workduck/workduck.projects.task-powershell",
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src-tauri/src/project_repository_task_powershell.rs",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "repositoryId": "workduck",
+      "role": "Generate PowerShell task scripts with execution-owned run records, bounded output previews, and atomic publication.",
+      "semanticId": "workduck.projects.task-powershell",
+      "unresolved": false
+    },
+    {
+      "definitions": [],
+      "external": false,
       "key": "workduck/workduck.projects.task-run-lifecycle",
       "location": {
         "declarationLine": null,
@@ -2739,11 +2761,11 @@
   ],
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "addf4e60a7a10a6d716be3532319b2850e96de6cb398d2891c36862f3c6dc779",
+  "sourceHash": "79ddf4ceee280c342e61ba0648672743085be01e0733eb1c1db1cf05dfdc840d",
   "stats": {
     "edgeCount": 49,
     "importedIndexCount": 0,
-    "nodeCount": 92,
+    "nodeCount": 93,
     "unresolvedNodeCount": 0
   }
 }

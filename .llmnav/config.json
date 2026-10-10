@@ -2,6 +2,12 @@
   "$schema": "./schema/config.schema.json",
   "coverageRules": [
     {
+      "match": ["src-tauri/src/project_repository_task_powershell.rs"],
+      "name": "PowerShell task tracking and record publication",
+      "requiredFields": ["owns", "invariant"],
+      "scope": "module"
+    },
+    {
       "match": ["src/routes/+layout.svelte"],
       "name": "renderer startup recovery gate",
       "requiredFields": ["owns", "invariant"],
@@ -405,6 +411,10 @@
   ],
   "audit": {
     "dispositions": [
+      {
+        "path": "src-tauri/src/project_repository_task_powershell_tests.rs",
+        "reason": "Contains real PowerShell execution regressions only; script generation, record publication and output preview policy are owned by the task PowerShell module."
+      },
       {
         "path": "src-tauri/src/project_repository_task_tests.rs",
         "reason": "Contains repository task regression tests and fixtures only; runtime launch, record publication and reconciliation are owned by the repository task module, and historical reads by the task history module."

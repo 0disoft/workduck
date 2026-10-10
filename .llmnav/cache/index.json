@@ -1571,9 +1571,9 @@
         "arbitrary shell command input"
       ],
       "hashes": {
-        "body": "1a90f75028e9c2642865d62411cdcb3730f6f73caff2068e2a2a6934b956afc3",
+        "body": "4d16722f3a2c093cc5944f41e7e9f7b843c7d9ee996c7d6c5843a6e9df9458b3",
         "semantic": "ab8a83634f3548e09270abd09e6470986b9b77df49b0489208fa19ee7db133c1",
-        "structure": "b5122d9939628fb569605ebee461119c8532e018d75a3a27998fab08d397a2bb"
+        "structure": "fc0a4ca52e260f844973b2e475a2e360aef643ff1d8300ad6c6b45f363b31178"
       },
       "id": "workduck.projects.repository-task-native",
       "imports": [
@@ -1583,6 +1583,11 @@
         "crate::atomic_file_write::write_file_atomically",
         "crate::workspace_path::{\n    WorkspacePathValidationError, validate_absolute_directory_path,\n    validate_workspace_directory_path,\n}",
         "history",
+        "powershell",
+        "powershell::create_powershell_task_record_writer",
+        "powershell::escape_powershell_single_quoted",
+        "powershell::{create_powershell_script, encode_powershell_command}",
+        "powershell_tests",
         "std::os::windows::process::CommandExt",
         "std::{\n    collections::{HashMap, HashSet},\n    fs,\n    path::{Path, PathBuf},\n    process::{Command, Stdio},\n    sync::{Arc, Mutex, OnceLock},\n    time::SystemTime,\n}",
         "tests",
@@ -4691,11 +4696,60 @@
         "startup data protection"
       ],
       "stability": "architecture"
+    },
+    {
+      "boundaries": [],
+      "excludes": [
+        "command selection",
+        "terminal discovery",
+        "process liveness"
+      ],
+      "hashes": {
+        "body": "d2d50475f914a66b4d46c6f1be69c88f5c2bc52d671e7500a9dd1a80d1a1dc2d",
+        "semantic": "9c327a026b0c1e54a859b322f9c3def240a88d3174e464c3ad9c8b8adf4ebc15",
+        "structure": "66c0b9373e7a1d85acd91c1adbe746532fcdc544342bace530362307b4af7b7c"
+      },
+      "id": "workduck.projects.task-powershell",
+      "imports": [
+        "base64::{Engine as _, engine::general_purpose}",
+        "std::path::Path",
+        "super::ProjectRepositoryTaskRunRecord"
+      ],
+      "invariant": [
+        "Only the final command can publish success; record publication exposes synced complete JSON and aborts execution on failure; preview truncation preserves Unicode boundaries."
+      ],
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src-tauri/src/project_repository_task_powershell.rs",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "owns": [
+        "tracked task script generation",
+        "PowerShell command encoding",
+        "task record publication",
+        "Unicode output tail"
+      ],
+      "role": "Generate PowerShell task scripts with execution-owned run records, bounded output previews, and atomic publication.",
+      "scope": "module",
+      "search": [
+        "PowerShell tracking script",
+        "atomic task record publication",
+        "bounded Unicode log tail"
+      ],
+      "stability": "architecture"
     }
   ],
   "contractFingerprints": {
     "configuration": {
-      "sha256": "d979623d0d4e64c39db08782b803b90134d51b4f1f681a36ac447b84e46fa3ab"
+      "sha256": "0539910322934176c0f7e5b9dbaaee3b2beeb3c02bd3b2b45f89493c1a7a42bc"
     },
     "exportedApi": {
       "count": 0,
@@ -4706,6 +4760,6 @@
   "generatedBy": "llmnav@0.9.7",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "dc099e386449eae017690e495d792f303b40be51eabe91c6c0171b892204b7f1",
+  "sourceHash": "2b3885b84be43cd9925c47244fb0b6005ec905bb831399d088633f26ab2dc8b0",
   "specVersion": "1"
 }

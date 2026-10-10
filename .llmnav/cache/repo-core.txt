@@ -258,3 +258,9 @@ role Gate renderer startup on persistent settings recovery and load the desktop 
 owns startup visibility, initialization retry UI, interface load recovery, boot attempt lifetime
 excludes native settings storage, setting domain validation, workspace content rendering
 invariant Failed initialization keeps workspace content unmounted; one boot attempt runs at a time and disposed layouts cannot apply late results.
+
+@workduck.projects.task-powershell
+role Generate PowerShell task scripts with execution-owned run records, bounded output previews, and atomic publication.
+owns tracked task script generation, PowerShell command encoding, task record publication, Unicode output tail
+excludes command selection, terminal discovery, process liveness
+invariant Only the final command can publish success; record publication exposes synced complete JSON and aborts execution on failure; preview truncation preserves Unicode boundaries.
