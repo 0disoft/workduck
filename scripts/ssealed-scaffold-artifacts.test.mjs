@@ -90,4 +90,25 @@ describe('embedded ssealed build guard', () => {
 			await expect(verifyEmbeddedSsealedArtifacts(root, installation)).rejects.toThrow('is missing');
 		});
 	});
+
+	test('rejects unusable archives even when their checksum and indexes match', async () => {
+		const mutations = [
+			(archive) => { archive.contents = [42]; },
+			(archive) => { archive.scaffolds[0].files[0].content = 99; },
+			(archive) => { archive.scaffolds[0].files[0].content = -1; },
+			(archive) => { archive.scaffolds[0].files[0].kind = 42; },
+			(archive) => { archive.scaffolds[0].files.push({ ...archive.scaffolds[0].files[0] }); },
+			(archive) => { archive.scaffolds[0].files.push({ ...archive.scaffolds[0].files[0], path: 'agents.md' }); },
+			(archive) => { archive.scaffolds[0].files[0].path = '../outside.md'; },
+			(archive) => { archive.scaffolds[0].files[0].path = 'docs/CON.md'; },
+			(archive) => { archive.scaffolds[0].files[0].path = '.ssealed/manifest.json'; },
+			(archive) => { archive.unknownField = true; }
+		];
+		await withArtifacts(async (root) => {
+			for (const mutate of mutations) {
+				await writeArtifacts(root, mutate);
+				await expect(verifyEmbeddedSsealedArtifacts(root, installation)).rejects.toThrow();
+			}
+		});
+	});
 });

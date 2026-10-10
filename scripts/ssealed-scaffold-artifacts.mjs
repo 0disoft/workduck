@@ -42,11 +42,29 @@ export async function assertCurrentArtifact(repositoryRoot, path, expected) {
 	}
 }
 
-export async function verifyEmbeddedSsealedArtifacts(repositoryRoot, { version, scopes, profiles }) {
-	const archivePath = resolve(repositoryRoot, 'src-tauri/resources/ssealed-scaffolds-v1.json');
-	const rawArchive = await readFile(archivePath, 'utf8');
-	const archive = JSON.parse(rawArchive);
+function hasExactKeys(value, keys) {
+	return value !== null && typeof value === 'object' && !Array.isArray(value) &&
+		Object.keys(value).length === keys.length && keys.every((key) => Object.hasOwn(value, key));
+}
+
+function isPortableScaffoldPath(path) {
+	if (typeof path !== 'string' || !path || /[<>:"\\|?*\p{Cc}]/u.test(path)) return false;
+	const folded = path.toLowerCase();
+	if (folded === '.ssealed' || folded.startsWith('.ssealed/') || folded === '.ssealed-init.lock') return false;
+	return path.split('/').every((segment) => {
+		const stem = segment.split('.')[0].replace(/[ .]+$/, '');
+		return segment && segment !== '.' && segment !== '..' && !/[ .]$/.test(segment) &&
+			!/^(CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])$/i.test(stem);
+	});
+}
+
+export function validateSsealedArchive(archive, { version, scopes, profiles }) {
 	const repair = 'Run bun run sync:ssealed-scaffold.';
+	if (!hasExactKeys(archive, ['schemaVersion', 'toolVersion', 'density', 'runner', 'contents', 'scaffolds']) ||
+		!Array.isArray(archive.contents) || archive.contents.length === 0 ||
+		archive.contents.some((content) => typeof content !== 'string')) {
+		throw new Error(`Embedded ssealed archive structure is invalid. ${repair}`);
+	}
 	if (archive.schemaVersion !== archiveSchemaVersion || archive.toolVersion !== version ||
 		archive.density !== scaffoldDensity || archive.runner !== scaffoldRunner) {
 		throw new Error(`Embedded ssealed scaffold metadata does not match installed ssealed ${version}. ${repair}`);
@@ -56,11 +74,29 @@ export async function verifyEmbeddedSsealedArtifacts(repositoryRoot, { version, 
 		throw new Error(`Embedded ssealed scaffold selections are incomplete. ${repair}`);
 	}
 	for (const scaffold of archive.scaffolds) {
-		if (!expected.delete(`${scaffold.scope}\0${scaffold.profile}`) ||
+		if (!hasExactKeys(scaffold, ['scope', 'profile', 'files']) ||
+			!expected.delete(`${scaffold.scope}\0${scaffold.profile}`) ||
 			!Array.isArray(scaffold.files) || scaffold.files.length === 0) {
 			throw new Error(`Embedded ssealed scaffold selections are invalid. ${repair}`);
 		}
+		const paths = new Set();
+		for (const file of scaffold.files) {
+			if (!hasExactKeys(file, ['path', 'kind', 'content']) || !isPortableScaffoldPath(file.path) ||
+				typeof file.kind !== 'string' || !file.kind ||
+				!Number.isSafeInteger(file.content) || file.content < 0 || file.content >= archive.contents.length ||
+				paths.has(file.path.toLowerCase())) {
+				throw new Error(`Embedded ssealed scaffold file is invalid or duplicated. ${repair}`);
+			}
+			paths.add(file.path.toLowerCase());
+		}
 	}
+}
+
+export async function verifyEmbeddedSsealedArtifacts(repositoryRoot, installation) {
+	const archivePath = resolve(repositoryRoot, 'src-tauri/resources/ssealed-scaffolds-v1.json');
+	const rawArchive = await readFile(archivePath, 'utf8');
+	validateSsealedArchive(JSON.parse(rawArchive), installation);
+	const { version, scopes, profiles } = installation;
 	const archiveChecksum = createHash('sha256').update(rawArchive).digest('hex');
 	await assertCurrentArtifact(repositoryRoot, resolve(repositoryRoot, 'src-tauri/src/ssealed_scaffold_generated.rs'),
 		renderGeneratedRust({ version, archiveChecksum }));

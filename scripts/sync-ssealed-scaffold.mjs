@@ -7,7 +7,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { readSsealedInstallation } from './ssealed-installation.mjs';
 import {
 	archiveSchemaVersion, scaffoldDensity, scaffoldRunner, assertCurrentArtifact,
-	renderGeneratedRust, renderGeneratedTypeScript, verifyEmbeddedSsealedArtifacts
+	renderGeneratedRust, renderGeneratedTypeScript, verifyEmbeddedSsealedArtifacts, validateSsealedArchive
 } from './ssealed-scaffold-artifacts.mjs';
 
 const scriptDirectory = dirname(fileURLToPath(import.meta.url));
@@ -176,6 +176,9 @@ async function main() {
 	}
 
 	const archive = buildArchive(version, scaffolds);
+	validateSsealedArchive(JSON.parse(archive), {
+		version, scopes: scaffoldScopes, profiles: scaffoldProfiles
+	});
 	const archiveChecksum = createHash('sha256').update(archive).digest('hex');
 	const rustIndex = renderGeneratedRust({ version, archiveChecksum });
 	const typeScriptIndex = renderGeneratedTypeScript({ scopes: scaffoldScopes, profiles: scaffoldProfiles });

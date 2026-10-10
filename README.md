@@ -320,8 +320,9 @@ bun run sync:ssealed-scaffold
 bun run check:ssealed-scaffold
 ```
 
-Builds perform a quick version, selection, and checksum check and stop if the
-embedded files are stale. The full check above regenerates all combinations to
+Generation and builds verify archive structure, content references, portable file
+paths, and duplicates. Builds also check version, selection, and checksums and stop
+if the embedded files are stale. The full check above regenerates all combinations to
 compare their contents. For reproducible installs, use `bun install --frozen-lockfile`.
 
 Run the desktop app during development:
