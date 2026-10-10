@@ -86,14 +86,31 @@ describe('project registry storage write ordering', () => {
 			const result = await readProjectRegistries(ids);
 			expect(result.ok).toBe(true);
 			expect(result.registries).toEqual(native ? current : legacy);
-			expect(legacyReads).toBe(1);
+			expect(legacyReads).toBe(native ? 0 : 1);
 			expect(markerWrites).toBe(native ? 1 : 0);
 			// A second request must see newly stored data without repeating unchanged markers.
 			const newer = Object.fromEntries(ids.map((id) => [id, registry(id, 3)]));
 			storage.setItem('workduck.projectRegistries.v1', JSON.stringify({ version: 1, registries: newer }));
 			expect((await readProjectRegistries(ids)).registries).toEqual(native ? current : newer);
-			expect(legacyReads).toBe(2);
+			expect(legacyReads).toBe(native ? 0 : 2);
 			expect(markerWrites).toBe(native ? 1 : 0);
+		});
+	}
+
+	for (const bulk of [false, true]) {
+		test(`reads authoritative SQLite data when the legacy cache is inaccessible, bulk=${bulk}`, async () => {
+			const stored = registry('demo', 9);
+			const getItem = window.localStorage.getItem.bind(window.localStorage);
+			window.localStorage.getItem = (key) => {
+				if (key === 'workduck.projectRegistries.v1') throw new Error('legacy cache unavailable');
+				return getItem(key);
+			};
+			setTauriInvokeForTest(async <T>() => (bulk
+				? { ok: true, registries: { demo: JSON.stringify(stored) } }
+				: { ok: true, registryJson: JSON.stringify(stored) }) as T);
+			const result = bulk ? await readProjectRegistries(['demo']) : await readProjectRegistry('demo');
+			expect(result.ok).toBe(true);
+			expect('registries' in result ? result.registries.demo : result.registry).toEqual(stored);
 		});
 	}
 

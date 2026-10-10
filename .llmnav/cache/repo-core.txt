@@ -23,7 +23,7 @@ invariant Parent exit never exempts owned descendants from termination; complete
 role Persist ordered project registry writes, atomically import workspace sync data in SQLite, and migrate browser legacy registries.
 owns project registry persistence, legacy registry promotion, registry change notifications, workspace operation ordering, atomic sync import
 excludes project domain normalization, repository Git operations
-invariant Bulk reads share one legacy snapshot per attempt; overlapping writes run in order; sync imports publish only after one native commit; legacy promotion guards missing rows, stored empty registries stay authoritative, and subscriptions publish only current results.
+invariant Stored SQLite rows are independent of the legacy cache; bulk fallback reads share one snapshot per attempt; writes stay ordered and sync imports publish only after commit; legacy promotion guards missing rows and subscriptions publish only current results.
 
 @workduck.projects.folder
 role Create, open, and delete bounded project folders and preview or apply ssealed scaffolds through Tauri commands.

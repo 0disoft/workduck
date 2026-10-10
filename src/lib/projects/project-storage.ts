@@ -4,7 +4,7 @@ role=Persist ordered project registry writes, atomically import workspace sync d
 owns=project registry persistence|legacy registry promotion|registry change notifications|workspace operation ordering|atomic sync import
 excludes=project domain normalization|repository Git operations
 search=project registry storage|sqlite registry migration|atomic workspace sync import
-invariant=Bulk reads share one legacy snapshot per attempt; overlapping writes run in order; sync imports publish only after one native commit; legacy promotion guards missing rows, stored empty registries stay authoritative, and subscriptions publish only current results.
+invariant=Stored SQLite rows are independent of the legacy cache; bulk fallback reads share one snapshot per attempt; writes stay ordered and sync imports publish only after commit; legacy promotion guards missing rows and subscriptions publish only current results.
 stability=architecture
 */
 
@@ -119,22 +119,26 @@ interface WorkspaceRegistryWriteInput {
 }
 
 export async function readProjectRegistry(workspaceId: string): Promise<ProjectRegistryStorageResult> {
-	return readProjectRegistryNow(workspaceId);
+	try {
+		return await readProjectRegistryNow(workspaceId);
+	} catch {
+		return { ok: false, registry: createEmptyProjectRegistry(workspaceId), error: 'project-registry-read-failed' };
+	}
 }
 
 async function readProjectRegistryNow(workspaceId: string, promotionQueued = false): Promise<ProjectRegistryStorageResult> {
 	const emptyRegistry = createEmptyProjectRegistry(workspaceId);
-	const legacyRegistry = readLegacyProjectRegistry(workspaceId);
 
 	if (typeof window === 'undefined') {
 		return { ok: true, registry: emptyRegistry };
 	}
 
-	if (getTauriInvoke() === undefined) {
+	const sqliteResult = getTauriInvoke() === undefined ? undefined : await readProjectRegistryFromSqlite(workspaceId);
+	const legacyRegistry = sqliteResult === undefined || !sqliteResult.ok || sqliteResult.registryJson === null
+		? readLegacyProjectRegistry(workspaceId) : emptyRegistry;
+	if (sqliteResult === undefined) {
 		return { ok: true, registry: legacyRegistry };
 	}
-
-	const sqliteResult = await readProjectRegistryFromSqlite(workspaceId);
 
 	if (!sqliteResult.ok) {
 		return {
@@ -263,24 +267,26 @@ export async function readProjectRegistries(
 	workspaceIds: readonly string[]
 ): Promise<ProjectRegistriesStorageResult> {
 	const ids = [...workspaceIds];
-	return readProjectRegistriesNow(ids);
+	try {
+		return await readProjectRegistriesNow(ids);
+	} catch {
+		return { ok: false, registries: Object.fromEntries(ids.map((id) => [id, createEmptyProjectRegistry(id)])), error: 'project-registry-read-failed' };
+	}
 }
 
 async function readProjectRegistriesNow(workspaceIds: readonly string[], promotionQueued = false): Promise<ProjectRegistriesStorageResult> {
-	const legacyStorage = readLegacyStorageRecord();
+	const sqliteResult = typeof window === 'undefined' || getTauriInvoke() === undefined
+		? undefined : await readProjectRegistriesFromSqlite(workspaceIds);
+	const needsLegacy = sqliteResult === undefined || !sqliteResult.ok ||
+		workspaceIds.some((id) => sqliteResult.registries[id] === undefined);
+	const legacyStorage = needsLegacy ? readLegacyStorageRecord() : createEmptyLegacyStorageRecord();
 	const fallbackRegistries: Record<string, ProjectRegistry> = Object.fromEntries(
 		workspaceIds.map((workspaceId) => [workspaceId, readLegacyProjectRegistry(workspaceId, legacyStorage)])
 	);
 
-	if (typeof window === 'undefined') {
+	if (sqliteResult === undefined) {
 		return { ok: true, registries: fallbackRegistries };
 	}
-
-	if (getTauriInvoke() === undefined) {
-		return { ok: true, registries: fallbackRegistries };
-	}
-
-	const sqliteResult = await readProjectRegistriesFromSqlite(workspaceIds);
 
 	if (!sqliteResult.ok) {
 		return {
