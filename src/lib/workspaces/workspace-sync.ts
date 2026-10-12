@@ -4,7 +4,7 @@ role=Serialize, encrypt, parse, decrypt, and normalize versioned workspace and p
 owns=workspace sync format|encrypted sync envelope|registry payload normalization
 excludes=Git synchronization|sync file transport
 search=encrypt workspace sync|decrypt registry envelope|workspace sync payload
-invariant=Decrypted data is accepted only when envelope algorithms, versions, and normalized registry payloads match the closed sync contract.
+invariant=Decrypted data is accepted only when versions and workspace mappings match the sync contract and normalization preserves every workspace, project, repository, and password lock.
 stability=contract
 */
 import { isObjectRecord } from '#lib/shared/object-record.ts';
@@ -16,7 +16,6 @@ import {
 } from '#lib/projects/project-registry.ts';
 import {
 	normalizeWorkspaceRegistry,
-	parseWorkspaceRegistry,
 	serializeWorkspaceRegistry,
 	type WorkspaceRegistry
 } from './workspace-registry';
@@ -143,7 +142,8 @@ export async function decryptWorkspaceRegistryFromSync(
 		return { ok: false, error: 'workspace-sync-registry-invalid' };
 	}
 
-	const registry = parseWorkspaceRegistry(result.plaintext);
+	const registry = normalizeImportedWorkspaceRegistry(JSON.parse(result.plaintext));
+	if (registry === null) return { ok: false, error: 'workspace-sync-registry-invalid' };
 
 	return { ok: true, registry };
 }
@@ -205,7 +205,8 @@ function parseWorkspaceSyncData(plaintext: string): WorkspaceSyncData | null {
 		const value: unknown = JSON.parse(plaintext);
 
 		if (looksLikeWorkspaceRegistryValue(value)) {
-			const workspaceRegistry = normalizeWorkspaceRegistry(value);
+			const workspaceRegistry = normalizeImportedWorkspaceRegistry(value);
+			if (workspaceRegistry === null) return null;
 
 			return {
 				format: WORKSPACE_SYNC_PAYLOAD_FORMAT,
@@ -225,7 +226,11 @@ function parseWorkspaceSyncData(plaintext: string): WorkspaceSyncData | null {
 		}
 
 		const projectRegistrySnapshots = value.projectRegistries;
-		const workspaceRegistry = normalizeWorkspaceRegistry(value.workspaceRegistry);
+		const workspaceRegistry = normalizeImportedWorkspaceRegistry(value.workspaceRegistry);
+		if (workspaceRegistry === null) return null;
+		const workspaceIds = new Set(workspaceRegistry.workspaces.map(workspace => workspace.id));
+		if (Object.keys(projectRegistrySnapshots).length !== workspaceIds.size ||
+			Object.keys(projectRegistrySnapshots).some(id => !workspaceIds.has(id))) return null;
 		const workspacePathById = new Map(
 			workspaceRegistry.workspaces.map((workspace) => [workspace.id, workspace.path])
 		);
@@ -239,12 +244,13 @@ function parseWorkspaceSyncData(plaintext: string): WorkspaceSyncData | null {
 				)
 			])
 		);
+		if (Object.values(projectRegistries).some(registry => registry === null)) return null;
 
 		return {
 			format: WORKSPACE_SYNC_PAYLOAD_FORMAT,
 			version: WORKSPACE_SYNC_PAYLOAD_VERSION,
 			workspaceRegistry,
-			projectRegistries
+			projectRegistries: projectRegistries as Record<string, ProjectRegistry>
 		};
 	} catch {
 		return null;
@@ -274,9 +280,8 @@ function restoreProjectRegistrySyncSnapshot(
 	workspaceId: string,
 	workspacePath: string
 ) {
-	if (!isObjectRecord(value)) {
-		return normalizeProjectRegistry(null, workspaceId);
-	}
+	if (!isObjectRecord(value) || value.version !== WORKDUCK_PROJECT_REGISTRY_VERSION ||
+		value.workspaceId !== workspaceId || !Array.isArray(value.nodes)) return null;
 
 	const nodes = Array.isArray(value.nodes)
 		? value.nodes.map((node) => {
@@ -310,7 +315,7 @@ function restoreProjectRegistrySyncSnapshot(
 			})
 		: [];
 
-	return normalizeProjectRegistry(
+	const registry = normalizeProjectRegistry(
 		{
 			...value,
 			version: WORKDUCK_PROJECT_REGISTRY_VERSION,
@@ -319,6 +324,33 @@ function restoreProjectRegistrySyncSnapshot(
 		},
 		workspaceId
 	);
+	if (!retainsRecordIds(value.nodes, registry.nodes)) return null;
+	const rawNodesById = new Map(value.nodes.filter(isObjectRecord).map(raw => [raw.id, raw]));
+	for (const node of registry.nodes) {
+		const raw = rawNodesById.get(node.id);
+		if (!isObjectRecord(raw) || !Array.isArray(raw.repositories) ||
+			!retainsRecordIds(raw.repositories, node.repositories)) return null;
+	}
+	return registry;
+}
+
+// Import admission must reject data loss; ordinary local normalization stays permissive.
+function normalizeImportedWorkspaceRegistry(value: unknown): WorkspaceRegistry | null {
+	if (!isObjectRecord(value) || !Array.isArray(value.workspaces)) return null;
+	const registry = normalizeWorkspaceRegistry(value);
+	if (!retainsRecordIds(value.workspaces, registry.workspaces)) return null;
+	const rawWorkspacesById = new Map(value.workspaces.filter(isObjectRecord).map(raw => [raw.id, raw]));
+	for (const workspace of registry.workspaces) {
+		const raw = rawWorkspacesById.get(workspace.id);
+		if (isObjectRecord(raw) && raw.lock != null && workspace.lock === null) return null;
+	}
+	return registry;
+}
+
+function retainsRecordIds(raw: unknown[], normalized: readonly { readonly id: string }[]): boolean {
+	const ids = new Set(normalized.map(record => record.id));
+	return raw.length === normalized.length && raw.every(record =>
+		isObjectRecord(record) && typeof record.id === 'string' && ids.has(record.id));
 }
 
 function createWorkspaceRelativePath(workspacePath: string, childPath: string) {
@@ -505,7 +537,7 @@ function looksLikeWorkspaceRegistryPlaintext(plaintext: string) {
 }
 
 function looksLikeWorkspaceRegistryValue(value: unknown) {
-	return isObjectRecord(value) && Array.isArray(value.workspaces);
+	return isObjectRecord(value) && value.format === undefined && value.version === undefined && Array.isArray(value.workspaces);
 }
 
 function readOptionalString(value: unknown) {
