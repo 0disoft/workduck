@@ -186,6 +186,14 @@ Workduck uses two different Git-backed storage paths:
   repository history. They are cloned, fetched, pulled, and pushed through their
   own Git remotes.
 
+Encrypted sync import restores the workspace list and every project snapshot
+through one guarded SQLite commit: the screen stays busy from decrypt until the
+commit finishes, a failed import leaves no partial change, and a lost native
+reply is confirmed by reading the committed rows back instead of resending the
+write. Any pending browser crash journal is flushed before the native commit.
+In a browser-only run the encrypted sync commands are unavailable because they
+require the Tauri backend.
+
 Workspace-level Workduck metadata is split by ownership:
 
 - `<workspace>/.workduck/agents.json`, `personas.json`, and `skills.json` are
