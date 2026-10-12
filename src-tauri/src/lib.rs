@@ -192,6 +192,7 @@ pub fn run() {
             project_registry_store::read_project_registry,
             project_registry_store::write_project_registries,
             project_registry_store::write_project_registry,
+            project_registry_store::restore_workspace_sync,
             project_folder::create_project_folder,
             project_folder::create_project_group_folder,
             project_folder::apply_ssealed_scaffold_to_repository,
