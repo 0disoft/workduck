@@ -1,0 +1,39 @@
+{
+  "schemaVersion": "workduck.native-sync-verification/v1",
+  "sourceVersion": "1.9.49",
+  "completedAtUtc": "2026-10-12T02:03:52.107Z",
+  "runnerSha256": "f4409a1bb5867b82f934a58f8ff3d1781857ce7a332fb3e3d32bef769e3680ba",
+  "command": "bun run verify:sync-native",
+  "platform": "windows-webview2",
+  "frontend": "vite-development-ui",
+  "evidence": "dist/native-sync-smoke/5972097d-8ab3-452c-b569-06fad551ed74/report.json",
+  "result": {
+    "sourceVersion": "1.9.49",
+    "runnerSha256": "f4409a1bb5867b82f934a58f8ff3d1781857ce7a332fb3e3d32bef769e3680ba",
+    "completedAtUtc": "2026-10-12T02:03:52.107Z",
+    "verified": true,
+    "nativeIpc": true,
+    "realEncryption": true,
+    "realSyncFile": true,
+    "isolatedSqlite": true,
+    "wrongPasswordRejected": true,
+    "staleRestoreRejected": true,
+    "concurrentDataPreserved": true,
+    "conflictMessageShown": true,
+    "workspaceAndProjectRestored": true,
+    "workspaceCacheMatchesSqlite": true,
+    "survivedRestart": true,
+    "passwordNotPersisted": true,
+    "webviewVersion": "154.0.4258.62",
+    "pageErrors": 0
+  },
+  "conflictInjection": "native write_app_state_records with unchanged renderer cache",
+  "notVerified": [
+    "process-kill-during-transaction",
+    "power-loss",
+    "concurrent-renderers",
+    "remote-git-sync",
+    "other-operating-systems",
+    "installed-production-build"
+  ]
+}

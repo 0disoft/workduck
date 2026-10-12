@@ -101,6 +101,7 @@ try {
       sendConfirmation: copy.settings.sync.confirmations.sendSync.confirmText,
       receiveConfirmation: copy.settings.sync.confirmations.receiveSync.confirmText,
       wrongPasswordMessage: copy.settings.sync.errors.passwordMismatch,
+      conflictMessage: copy.projects.errors['project-registry-revision-conflict'],
       imported: copy.settings.sync.statuses.received };
   }, resolve(run, 'workspace'));
   assert.ok(resolve(fixture.dbPath).startsWith(resolve(run, 'app-data') + '\\'));
@@ -138,6 +139,40 @@ try {
   assert.equal(await page.locator('.workduck-inline-error').textContent(), fixture.wrongPasswordMessage);
   const unchanged = await snapshots(page, fixture.projects.workspaceId);
   assert.equal(unchanged.workspace.workspaces.length, 0); assert.equal(unchanged.projects.nodes.length, 0);
+  step('conflict');
+  // A native-only write leaves this renderer's expected workspace snapshot stale.
+  // This tests the actual SQLite guard, without substituting an IPC response.
+  const concurrentJson = await page.evaluate(async original => {
+    const { serializeWorkspaceRegistry } = await import('/src/lib/workspaces/workspace-registry.ts');
+    const { getTauriInvoke } = await import('/src/lib/tauri/tauri-invoke.ts');
+    const concurrent = structuredClone(original);
+    concurrent.workspaces[0].name = 'Changed outside this renderer';
+    const valueJson = serializeWorkspaceRegistry(concurrent);
+    const result = await getTauriInvoke()('write_app_state_records', { records: {
+      'workspace-registry': { valueJson, updatedAt: new Date().toISOString() },
+    } });
+    if (!result.ok) throw Error('concurrent fixture write');
+    return valueJson;
+  }, fixture.workspace);
+  await page.locator('#sync-password').fill(password);
+  await importFromUi(page, fixture.receiveConfirmation);
+  await page.locator('.workduck-inline-error').waitFor();
+  assert.equal(await page.locator('.workduck-inline-error').textContent(), fixture.conflictMessage);
+  const conflictState = await page.evaluate(async workspaceId => {
+    const { getTauriInvoke } = await import('/src/lib/tauri/tauri-invoke.ts');
+    const { readWorkspaceRegistryFromBrowser } = await import('/src/lib/workspaces/workspace-storage.ts');
+    const { readProjectRegistry } = await import('/src/lib/projects/project-storage.ts');
+    const native = await getTauriInvoke()('read_app_state_records', { keys: ['workspace-registry'] });
+    const projects = await readProjectRegistry(workspaceId);
+    if (!native.ok || !projects.ok) throw Error('conflict state read');
+    return { workspaceJson: native.records['workspace-registry'],
+      workspaceCache: readWorkspaceRegistryFromBrowser().registry, projects: projects.registry };
+  }, fixture.projects.workspaceId);
+  assert.equal(conflictState.workspaceJson, concurrentJson);
+  assert.deepEqual(conflictState.workspaceCache, unchanged.workspace);
+  assert.deepEqual(conflictState.projects, unchanged.projects);
+  // Refresh reads the newer authority before an explicit, newly confirmed retry.
+  await page.reload(); await page.locator('#sync-password').waitFor();
   step('restore');
   await page.locator('#sync-password').fill(password);
   await importFromUi(page, fixture.receiveConfirmation);
@@ -166,6 +201,7 @@ try {
   await writeFile(resolve(run, 'report.json'), JSON.stringify({ sourceVersion, runnerSha256,
     completedAtUtc: new Date().toISOString(), verified: true, nativeIpc: true,
     realEncryption: true, realSyncFile: true, isolatedSqlite: true, wrongPasswordRejected: true,
+    staleRestoreRejected: true, concurrentDataPreserved: true, conflictMessageShown: true,
     workspaceAndProjectRestored: true, workspaceCacheMatchesSqlite: true, survivedRestart: true,
     passwordNotPersisted: true, webviewVersion, pageErrors: errors.length }, null, 2));
   console.log(JSON.stringify({ verified: true, report: resolve(run, 'report.json') }));

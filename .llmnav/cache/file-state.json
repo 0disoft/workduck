@@ -660,7 +660,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "6c15819f3374f76e227b2da313b1a0661a9f461cf9287e8efc5433ca2ce7ea93",
+      "contentHash": "f4409a1bb5867b82f934a58f8ff3d1781857ce7a332fb3e3d32bef769e3680ba",
       "declarations": [
         null
       ],
@@ -685,7 +685,7 @@
       ],
       "path": "scripts/verify-workspace-sync-native.mjs",
       "semanticBytes": 612,
-      "sourceBytes": 15503
+      "sourceBytes": 17965
     },
     {
       "blocks": [
@@ -12555,7 +12555,7 @@
     },
     {
       "blocks": [],
-      "contentHash": "7afb20f6d75fe125f644c0aa4e02dc1c3d491217ef2eb59cb047d87d21dd18c1",
+      "contentHash": "45c80816dc7ae588550ff5e628528e922aef2a94f671298f56fca7dafe0c0162",
       "declarations": [],
       "imports": [
         "#lib/environment/environment-vault-session-loader.ts",
@@ -12581,7 +12581,7 @@
       ],
       "path": "src/lib/settings/SyncSettingsPanel.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 37785
+      "sourceBytes": 37883
     },
     {
       "blocks": [],

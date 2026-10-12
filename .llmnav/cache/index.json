@@ -4785,7 +4785,7 @@
         "power loss recovery"
       ],
       "hashes": {
-        "body": "6c15819f3374f76e227b2da313b1a0661a9f461cf9287e8efc5433ca2ce7ea93",
+        "body": "f4409a1bb5867b82f934a58f8ff3d1781857ce7a332fb3e3d32bef769e3680ba",
         "semantic": "94f66b92bb6d9a441f5b4ce2b3e27b432787e05864d7bbb0aeec076d8c009072",
         "structure": "1aa9c6bdbc96dab300139325afbfe346c089624419aac28994d5dd32396234be"
       },
@@ -4853,6 +4853,6 @@
   "generatedBy": "llmnav@0.9.7",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "f54eeabbb8fc9c3e08e00b4247459778b93b3474435778f57209e74c6683b89b",
+  "sourceHash": "f2be59824cc076d111b556761e504209b6f73b06362583d4a57c8be4f8744925",
   "specVersion": "1"
 }

@@ -159,7 +159,7 @@
 			.replaceAll('{folderPath}', formatWorkspacePathForDisplay(syncSettings.folderPath));
 	}
 
-	function getSyncErrorMessage(error: SyncPanelError) {
+	function getSyncErrorMessage(error: SyncPanelError): string {
 		switch (error) {
 			case 'workspace-sync-git-action-invalid':
 				return syncMessages.errors.gitActionInvalid;
@@ -249,6 +249,8 @@
 				return syncMessages.errors.projectReadFailed;
 			case 'project-registry-write-failed':
 				return syncMessages.errors.projectWriteFailed;
+			case 'project-registry-revision-conflict':
+				return messages.projects.errors[error];
 			case 'workspace-sync-unavailable':
 				return syncMessages.errors.encryptionUnavailable;
 			case 'sync-settings-storage-unavailable':
