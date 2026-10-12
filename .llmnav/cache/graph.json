@@ -2353,6 +2353,28 @@
     {
       "definitions": [],
       "external": false,
+      "key": "workduck/workduck.verification.native-sync",
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "scripts/verify-workspace-sync-native.mjs",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "repositoryId": "workduck",
+      "role": "Verify encrypted workspace sync through an isolated Windows desktop application and durable SQLite restart.",
+      "semanticId": "workduck.verification.native-sync",
+      "unresolved": false
+    },
+    {
+      "definitions": [],
+      "external": false,
       "key": "workduck/workduck.workbench.engine",
       "location": {
         "declarationLine": null,
@@ -2573,11 +2595,11 @@
   ],
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "2dc0fe2ff3efe56c54e6e68f2e8528d832d4006c1b2e3d50d32863cb1c0952fd",
+  "sourceHash": "69a2e3abc175d6684f088e466e216ff693e6c41f8507a81c2aacaa8c2ce981e2",
   "stats": {
     "edgeCount": 45,
     "importedIndexCount": 0,
-    "nodeCount": 87,
+    "nodeCount": 88,
     "unresolvedNodeCount": 0
   }
 }

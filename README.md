@@ -278,6 +278,9 @@ Run the complete local verification sequence:
 bun run verify
 ```
 
+The opt-in `bun run verify:sync-native` desktop verification is documented in
+[docs/verification/workspace-sync-native.md](docs/verification/workspace-sync-native.md).
+
 ## Current Priorities
 
 The next product work should keep the daily workbench path tight:

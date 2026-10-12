@@ -246,3 +246,9 @@ role Own native workspace vault sessions, secret mutation, and generation-bound 
 owns native vault session lifetime, zeroized secret payloads, secret metadata views, opaque reference generations, explicit secret reads
 excludes encrypted envelope format, vault disk persistence, renderer workspace lock policy
 invariant Metadata views serialize opaque references; reserved references resolve only in the matching live session generation, and closing drops the zeroized session payload.
+
+@workduck.verification.native-sync
+role Verify encrypted workspace sync through an isolated Windows desktop application and durable SQLite restart.
+owns native sync verification lifecycle, isolated verification data, verification evidence
+excludes production profiles, remote synchronization, power loss recovery
+invariant Fixture writes and restoration run only after the native database is confirmed inside a unique verification directory, and owned processes are cleaned up.

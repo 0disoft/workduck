@@ -44,7 +44,8 @@
     "llmnav:generate": "llmnav generate",
     "llmnav:eval": "llmnav eval",
     "verify": "bun run check && bun run test && bun run build && bun run test:rust",
-    "test:environment": "bun test src/lib/environment/cli-environment-variables.test.ts"
+    "test:environment": "bun test src/lib/environment/cli-environment-variables.test.ts",
+    "verify:sync-native": "node ./scripts/verify-workspace-sync-native.mjs"
   },
   "devDependencies": {
     "@sveltejs/adapter-static": "^4.0.0",

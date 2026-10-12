@@ -4776,11 +4776,73 @@
         "native secret mutation"
       ],
       "stability": "architecture"
+    },
+    {
+      "boundaries": [],
+      "excludes": [
+        "production profiles",
+        "remote synchronization",
+        "power loss recovery"
+      ],
+      "hashes": {
+        "body": "6c15819f3374f76e227b2da313b1a0661a9f461cf9287e8efc5433ca2ce7ea93",
+        "semantic": "94f66b92bb6d9a441f5b4ce2b3e27b432787e05864d7bbb0aeec076d8c009072",
+        "structure": "1aa9c6bdbc96dab300139325afbfe346c089624419aac28994d5dd32396234be"
+      },
+      "id": "workduck.verification.native-sync",
+      "imports": [
+        "/src/lib/app-state/app-state-storage.ts",
+        "/src/lib/i18n/workduck-language.ts",
+        "/src/lib/projects/project-registry.ts",
+        "/src/lib/projects/project-storage.ts",
+        "/src/lib/settings/appearance-storage.ts",
+        "/src/lib/tauri/tauri-invoke.ts",
+        "/src/lib/workspaces/workspace-registry.ts",
+        "/src/lib/workspaces/workspace-storage.ts",
+        "node:assert/strict",
+        "node:child_process",
+        "node:crypto",
+        "node:fs/promises",
+        "node:net",
+        "node:path",
+        "node:timers/promises",
+        "node:url",
+        "vite"
+      ],
+      "invariant": [
+        "Fixture writes and restoration run only after the native database is confirmed inside a unique verification directory, and owned processes are cleaned up."
+      ],
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "scripts/verify-workspace-sync-native.mjs",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "owns": [
+        "native sync verification lifecycle",
+        "isolated verification data",
+        "verification evidence"
+      ],
+      "role": "Verify encrypted workspace sync through an isolated Windows desktop application and durable SQLite restart.",
+      "scope": "module",
+      "search": [
+        "verify native workspace sync",
+        "encrypted restore desktop smoke",
+        "isolated SQLite restart"
+      ],
+      "stability": "architecture"
     }
   ],
   "contractFingerprints": {
     "configuration": {
-      "sha256": "363c77283797537e6a4c8478572455c8c7b6ab30552168fc7fe5a1c5b046c74c"
+      "sha256": "75dd0e73d61ee069b88b10066caf5cc9bbc5008dcec49c4d45e936ce4aff7c91"
     },
     "exportedApi": {
       "count": 0,
@@ -4791,6 +4853,6 @@
   "generatedBy": "llmnav@0.9.7",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "5b0ed3cc1b072deec2aae3c8eafca114b5c38879d82ff4d67dd7999c42b0c277",
+  "sourceHash": "f54eeabbb8fc9c3e08e00b4247459778b93b3474435778f57209e74c6683b89b",
   "specVersion": "1"
 }

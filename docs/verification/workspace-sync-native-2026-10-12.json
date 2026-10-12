@@ -1,0 +1,35 @@
+{
+  "schemaVersion": "workduck.native-sync-verification/v1",
+  "sourceVersion": "1.9.48",
+  "completedAtUtc": "2026-10-12T01:48:24.696Z",
+  "runnerSha256": "6c15819f3374f76e227b2da313b1a0661a9f461cf9287e8efc5433ca2ce7ea93",
+  "command": "bun run verify:sync-native",
+  "platform": "windows-webview2",
+  "frontend": "vite-development-ui",
+  "evidence": "dist/native-sync-smoke/457940f1-e86b-4e50-8646-bc612c7cd5c0/report.json",
+  "result": {
+    "sourceVersion": "1.9.48",
+    "runnerSha256": "6c15819f3374f76e227b2da313b1a0661a9f461cf9287e8efc5433ca2ce7ea93",
+    "completedAtUtc": "2026-10-12T01:48:24.696Z",
+    "verified": true,
+    "nativeIpc": true,
+    "realEncryption": true,
+    "realSyncFile": true,
+    "isolatedSqlite": true,
+    "wrongPasswordRejected": true,
+    "workspaceAndProjectRestored": true,
+    "workspaceCacheMatchesSqlite": true,
+    "survivedRestart": true,
+    "passwordNotPersisted": true,
+    "webviewVersion": "154.0.4258.62",
+    "pageErrors": 0
+  },
+  "notVerified": [
+    "process-kill-during-transaction",
+    "power-loss",
+    "concurrent-renderers",
+    "remote-git-sync",
+    "other-operating-systems",
+    "installed-production-build"
+  ]
+}
