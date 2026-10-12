@@ -4,6 +4,7 @@ import { afterEach, describe, test } from 'node:test';
 import { setTauriInvokeForTest } from '#lib/tauri/tauri-invoke.ts';
 import {
 	flushWorkduckAppStateWrites,
+	commitWorkduckAppStateValue,
 	initializeWorkduckAppState,
 	readWorkduckAppStateValue,
 	resetWorkduckAppStateStorageForTest,
@@ -225,6 +226,52 @@ describe('persistent app state storage', () => {
 			readWorkduckAppStateValue(WORKDUCK_SYSTEM_APP_STATE_KEY, SYSTEM_LEGACY_KEY).valueJson,
 			SYSTEM_LATEST_VALUE
 		);
+	});
+
+	test('atomic commit drains an older journal, rejects overlapping edits, and only then updates the cache', async () => {
+		const storage = new MemoryStorage();
+		setWorkduckAppStateBrowserStorageForTest(storage);
+		let releaseFlush!: () => void;
+		let releaseCommit!: () => void;
+		let flushing = false, committing = false;
+		setTauriInvokeForTest(async <T>(command: string) => {
+			if (command === 'read_app_state_records') return { ok: true, records: {
+				[WORKDUCK_SYSTEM_APP_STATE_KEY]: SYSTEM_DEFAULT_VALUE,
+				[WORKDUCK_APPEARANCE_APP_STATE_KEY]: APPEARANCE_SQLITE_VALUE
+			} } as T;
+			assert.equal(command, 'write_app_state_records'); flushing = true;
+			await new Promise<void>(resolve => { releaseFlush = resolve; }); return { ok: true } as T;
+		});
+		await initializeWorkduckAppState(seeds);
+		writeWorkduckAppStateValue(WORKDUCK_SYSTEM_APP_STATE_KEY, SYSTEM_LEGACY_KEY, SYSTEM_PENDING_VALUE);
+		await waitFor(() => flushing);
+		const restoring = commitWorkduckAppStateValue(WORKDUCK_SYSTEM_APP_STATE_KEY, SYSTEM_LATEST_VALUE, async expected => {
+			assert.equal(expected, SYSTEM_PENDING_VALUE); committing = true;
+			assert.equal(storage.getItem(pendingStorageKey(WORKDUCK_SYSTEM_APP_STATE_KEY)), null);
+			await new Promise<void>(resolve => { releaseCommit = resolve; }); return { ok: true } as const;
+		});
+		assert.equal(writeWorkduckAppStateValue(WORKDUCK_SYSTEM_APP_STATE_KEY, SYSTEM_LEGACY_KEY, SYSTEM_DEFAULT_VALUE).ok, false);
+		releaseFlush(); await waitFor(() => committing);
+		assert.equal(readWorkduckAppStateValue(WORKDUCK_SYSTEM_APP_STATE_KEY, SYSTEM_LEGACY_KEY).valueJson, SYSTEM_PENDING_VALUE);
+		releaseCommit(); assert.deepEqual(await restoring, { ok: true });
+		assert.equal(readWorkduckAppStateValue(WORKDUCK_SYSTEM_APP_STATE_KEY, SYSTEM_LEGACY_KEY).valueJson, SYSTEM_LATEST_VALUE);
+		assert.equal(storage.values.size, 0);
+	});
+
+	test('atomic commit refuses native writes when the older journal cannot be removed', async () => {
+		const storage = new MemoryStorage();
+		setWorkduckAppStateBrowserStorageForTest(storage);
+		setTauriInvokeForTest(async <T>(command: string) => response<T>(command === 'read_app_state_records'
+			? { ok: true, records: { [WORKDUCK_SYSTEM_APP_STATE_KEY]: SYSTEM_DEFAULT_VALUE, [WORKDUCK_APPEARANCE_APP_STATE_KEY]: APPEARANCE_SQLITE_VALUE } }
+			: { ok: true }));
+		await initializeWorkduckAppState(seeds);
+		storage.removeItem = () => { throw Error('synthetic storage failure'); };
+		storage.setItem(pendingStorageKey(WORKDUCK_SYSTEM_APP_STATE_KEY), JSON.stringify({ valueJson: SYSTEM_DEFAULT_VALUE, updatedAt: new Date().toISOString() }));
+		let commits = 0;
+		// Exercise one successful flush without looping forever on an undeletable journal.
+		const result = await commitWorkduckAppStateValue(WORKDUCK_SYSTEM_APP_STATE_KEY, SYSTEM_LATEST_VALUE,
+			async () => { commits++; return { ok: true } as const; });
+		assert.equal(result.ok, false); assert.equal(commits, 0);
 	});
 
 	test('retains the crash journal when SQLite rejects a write', async () => {

@@ -4,7 +4,7 @@ role=Persist application settings through a renderer crash journal, native SQLit
 owns=app state backend selection|legacy setting promotion|pending write journal|serialized flush|cached setting values
 excludes=setting domain validation|native SQLite implementation|workspace project registries
 search=app state crash journal|settings SQLite promotion|pending setting flush
-invariant=Renderer writes acknowledge journaling before native persistence; a successful flush removes only journal entries that still match the committed snapshot.
+invariant=Renderer writes acknowledge journaling before native persistence; a successful flush removes only matching journal entries, and a native atomic commit drains older writes and publishes cached state only after success.
 stability=architecture
 */
 import { isObjectRecord } from '#lib/shared/object-record.ts';
@@ -85,6 +85,7 @@ const legacyStorageKeys = new Map<WorkduckAppStateKey, string>();
 let backend: AppStateBackend = 'uninitialized';
 let initializationError: WorkduckAppStateStorageError | null = null;
 let pendingFlush: Promise<boolean> | null = null;
+const committingKeys = new Set<WorkduckAppStateKey>();
 let browserStorageForTest: BrowserStorage | undefined;
 
 export async function initializeWorkduckAppState(
@@ -189,6 +190,7 @@ export function writeWorkduckAppStateValue(
 	legacyStorageKey: string,
 	valueJson: string
 ): WorkduckAppStateValueWriteResult {
+	if (committingKeys.has(key)) return { ok: false, valueJson, error: 'app-state-write-failed' };
 	legacyStorageKeys.set(key, legacyStorageKey);
 
 	if (!isJsonObjectText(valueJson)) {
@@ -241,6 +243,33 @@ export function writeWorkduckAppStateValue(
 		void flushWorkduckAppStateWrites();
 	});
 	return { ok: true, valueJson };
+}
+
+/** Commit with another SQLite table without publishing a speculative cache or crash journal. */
+export async function commitWorkduckAppStateValue<T extends { readonly ok: boolean }>(
+	key: WorkduckAppStateKey,
+	valueJson: string,
+	commit: (expectedValueJson: string) => Promise<T>
+): Promise<T | { readonly ok: false; readonly error: WorkduckAppStateStorageError }> {
+	if (committingKeys.has(key) || backend !== 'sqlite' || getTauriInvoke() === undefined || !isJsonObjectText(valueJson)) {
+		return { ok: false, error: 'app-state-write-failed' };
+	}
+	committingKeys.add(key);
+	try {
+		// A leftover journal must not replay the pre-import workspace after a restart.
+		if (!await flushWorkduckAppStateWrites()) return { ok: false, error: 'app-state-write-failed' };
+		const storage = getBrowserStorage();
+		if (storage === undefined || storage.getItem(createPendingStorageKey(key)) !== null) {
+			return { ok: false, error: 'app-state-write-failed' };
+		}
+		const result = await commit(cachedValues.get(key) ?? 'null');
+		if (result.ok) cachedValues.set(key, valueJson);
+		return result;
+	} catch {
+		return { ok: false, error: 'app-state-write-failed' };
+	} finally {
+		committingKeys.delete(key);
+	}
 }
 
 export function subscribeWorkduckAppStateValue(
@@ -320,6 +349,10 @@ async function flushPendingWrites(): Promise<boolean> {
 			}
 
 			removeFlushedPendingWrites(storage, pendingWrites);
+			const remaining = readPendingWrites(storage);
+			if (WORKDUCK_APP_STATE_KEYS.some(key => remaining[key] !== undefined &&
+				remaining[key]?.valueJson === pendingWrites[key]?.valueJson &&
+				remaining[key]?.updatedAt === pendingWrites[key]?.updatedAt)) return false;
 			removeLegacyValuesForRecords(storage, pendingWrites);
 			backend = 'sqlite';
 			initializationError = null;
@@ -584,6 +617,7 @@ export function setWorkduckAppStateBrowserStorageForTest(storage: BrowserStorage
 }
 
 export function resetWorkduckAppStateStorageForTest() {
+	committingKeys.clear();
 	cachedValues.clear();
 	legacyStorageKeys.clear();
 	backend = 'uninitialized';

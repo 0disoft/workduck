@@ -10,12 +10,11 @@
 		getQueueFolderLocalizedError
 	} from '#lib/queue/queue-panel-errors.ts';
 	import {
-		readWorkspaceRegistryFromBrowser,
-		writeWorkspaceRegistryToBrowser
+		readWorkspaceRegistryFromBrowser
 	} from '#lib/workspaces/workspace-storage.ts';
 	import {
 		readProjectRegistries,
-		writeProjectRegistries,
+		restoreWorkspaceSyncData,
 		type ProjectRegistryStorageError
 	} from '#lib/projects/project-storage.ts';
 	import {
@@ -534,30 +533,15 @@
 		syncError = null;
 		syncStatus = null;
 
-		const result = await decryptWorkspaceDataFromSync(envelope, syncPassword);
-
-		isBusy = false;
-
-		if (!result.ok) {
-			syncError = result.error;
-			return false;
+		try {
+			const result = await decryptWorkspaceDataFromSync(envelope, syncPassword);
+			if (!result.ok) { syncError = result.error; return false; }
+			const restored = await restoreWorkspaceSyncData(result.data.workspaceRegistry, result.data.projectRegistries);
+			if (!restored.ok) { syncError = restored.error; return false; }
+			return true;
+		} finally {
+			isBusy = false;
 		}
-
-		const writeResult = writeWorkspaceRegistryToBrowser(result.data.workspaceRegistry);
-
-		if (!writeResult.ok) {
-			syncError = 'workspace-sync-registry-invalid';
-			return false;
-		}
-
-		const projectWriteResult = await writeProjectRegistries(result.data.projectRegistries);
-
-		if (!projectWriteResult.ok) {
-			syncError = projectWriteResult.error;
-			return false;
-		}
-
-		return true;
 	}
 
 	function handleExport() {

@@ -68,17 +68,22 @@ export function writeWorkspaceRegistryToBrowser(
 		};
 	}
 
+	notifyWorkspaceRegistryCommitted(normalizedRegistry);
+	return { ok: true, registry: normalizedRegistry };
+}
+
+/** Publish only a workspace list that its persistence owner has already committed. */
+export function notifyWorkspaceRegistryCommitted(registry: WorkspaceRegistry): void {
 	if (typeof window !== 'undefined') {
 		window.dispatchEvent(
 			new CustomEvent<WorkspaceRegistryChangedDetail>(WORKDUCK_WORKSPACE_REGISTRY_CHANGED_EVENT, {
 				detail: {
-					registry: normalizedRegistry
+					registry
 				}
 			})
 		);
 	}
 
-	return { ok: true, registry: normalizedRegistry };
 }
 
 export function subscribeWorkspaceRegistry(

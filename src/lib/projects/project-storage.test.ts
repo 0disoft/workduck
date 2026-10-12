@@ -1,7 +1,10 @@
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
 import { setTauriInvokeForTest } from '#lib/tauri/tauri-invoke.ts';
 import { addProjectNode, createEmptyProjectRegistry, type ProjectRegistry } from './project-registry';
-import { readProjectRegistry, subscribeProjectRegistry, writeProjectRegistries, writeProjectRegistry } from './project-storage';
+import { readProjectRegistry, readProjectRegistries, restoreWorkspaceSyncData, subscribeProjectRegistry, writeProjectRegistries, writeProjectRegistry } from './project-storage';
+import { initializeWorkduckAppState, resetWorkduckAppStateStorageForTest, WORKDUCK_WORKSPACE_REGISTRY_APP_STATE_KEY } from '#lib/app-state/app-state-storage.ts';
+import { createEmptyWorkspaceRegistry, addWorkspace, serializeWorkspaceRegistry, WORKDUCK_WORKSPACE_REGISTRY_STORAGE_KEY } from '#lib/workspaces/workspace-registry.ts';
+import { readWorkspaceRegistryFromBrowser, subscribeWorkspaceRegistry, writeWorkspaceRegistryToBrowser } from '#lib/workspaces/workspace-storage.ts';
 
 function registry(workspaceId: string, revision: number) {
 	return { ...createEmptyProjectRegistry(workspaceId), updatedAt: `2026-10-04T00:00:0${revision}.000Z` };
@@ -37,9 +40,102 @@ beforeEach(() => {
 		value: Object.assign(new EventTarget(), { localStorage }) });
 });
 afterEach(() => {
+	resetWorkduckAppStateStorageForTest();
 	setTauriInvokeForTest(undefined);
 	if (windowDescriptor) Object.defineProperty(globalThis, 'window', windowDescriptor);
 	else Reflect.deleteProperty(globalThis, 'window');
+});
+
+test('sync restore failures do not publish either registry or journal a speculative workspace list', async () => {
+	const before = createEmptyWorkspaceRegistry();
+	const added = addWorkspace(before, { name: 'Imported', path: 'C:\\imported' });
+	if (!added.ok) throw Error('fixture workspace');
+	const original = registry(added.workspace.id, 1), imported = registry(added.workspace.id, 2);
+	const raw = JSON.stringify(original, null, 2);
+	const seen: string[] = [];
+	let finish!: (value: unknown) => void;
+	setTauriInvokeForTest(async <T>(command: string, args?: Record<string, unknown>) => {
+		seen.push(command);
+		if (command === 'read_app_state_records') return { ok: true, records: { 'workspace-registry': serializeWorkspaceRegistry(before) } } as T;
+		if (command === 'read_project_registries') return { ok: true, registries: { [original.workspaceId]: raw } } as T;
+		expect(command).toBe('restore_workspace_sync');
+		expect(args?.expectedWorkspaceRegistryJson).toBe(serializeWorkspaceRegistry(before));
+		expect((args?.registries as any)[original.workspaceId].expectedRegistryJson).toBe(raw);
+		return new Promise<T>(resolve => { finish = value => resolve(value as T); });
+	});
+	await initializeWorkduckAppState([{ key: WORKDUCK_WORKSPACE_REGISTRY_APP_STATE_KEY,
+		legacyStorageKey: WORKDUCK_WORKSPACE_REGISTRY_STORAGE_KEY, valueJson: serializeWorkspaceRegistry(before) }]);
+	let events = 0;
+	const offWorkspace = subscribeWorkspaceRegistry(() => events++), offProject = subscribeProjectRegistry(original.workspaceId, () => events++);
+	const restoring = restoreWorkspaceSyncData(added.registry, { [original.workspaceId]: imported });
+	await settle();
+	expect(readWorkspaceRegistryFromBrowser().registry).toEqual(before);
+	expect(writeWorkspaceRegistryToBrowser(added.registry).ok).toBe(false);
+	expect(window.localStorage.length).toBe(0);
+	finish({ ok: false, error: 'project-registry-revision-conflict' });
+	expect(await restoring).toEqual({ ok: false, error: 'project-registry-revision-conflict' });
+	expect(readWorkspaceRegistryFromBrowser().registry).toEqual(before);
+	expect(events).toBe(0);
+	expect(seen).toEqual(['read_app_state_records', 'read_project_registries', 'restore_workspace_sync']);
+	offWorkspace(); offProject();
+});
+
+test('a committed sync restore publishes both registries despite optional migration-marker failure', async () => {
+	const before = createEmptyWorkspaceRegistry();
+	const added = addWorkspace(before, { name: 'Imported', path: 'C:\\imported' });
+	if (!added.ok) throw Error('fixture workspace');
+	const imported = registry(added.workspace.id, 2);
+	setTauriInvokeForTest(async <T>(command: string) => {
+		if (command === 'read_app_state_records') return { ok: true, records: { 'workspace-registry': serializeWorkspaceRegistry(before) } } as T;
+		if (command === 'read_project_registries') return { ok: true, registries: {} } as T;
+		expect(command).toBe('restore_workspace_sync'); return { ok: true } as T;
+	});
+	await initializeWorkduckAppState([{ key: WORKDUCK_WORKSPACE_REGISTRY_APP_STATE_KEY,
+		legacyStorageKey: WORKDUCK_WORKSPACE_REGISTRY_STORAGE_KEY, valueJson: serializeWorkspaceRegistry(before) }]);
+	window.localStorage.setItem = () => { throw Error('synthetic optional storage failure'); };
+	const projects: ProjectRegistry[] = [], workspaces: unknown[] = [];
+	const offProject = subscribeProjectRegistry(imported.workspaceId, value => {
+		expect(readWorkspaceRegistryFromBrowser().registry).toEqual(added.registry); projects.push(value);
+	});
+	const offWorkspace = subscribeWorkspaceRegistry(value => workspaces.push(value));
+	expect(await restoreWorkspaceSyncData(added.registry, { [imported.workspaceId]: imported })).toEqual({ ok: true });
+	expect(projects).toEqual([imported]); expect(workspaces).toEqual([added.registry]);
+	offProject(); offWorkspace();
+});
+
+test('an existing empty SQLite registry stays authoritative over legacy data when its migration marker cannot be written', async () => {
+	const old = addProjectNode(registry('demo', 1), { kind: 'project', parentId: null, name: 'Old', path: 'projects/old' });
+	if (!old.ok) throw Error('fixture project');
+	window.localStorage.setItem('workduck.projectRegistries.v1', JSON.stringify({ version: old.registry.version, registries: { demo: old.registry } }));
+	window.localStorage.setItem = () => { throw Error('synthetic marker failure'); };
+	const empty = createEmptyProjectRegistry('demo');
+	setTauriInvokeForTest(async <T>(command: string) => {
+		if (command === 'read_project_registry') return { ok: true, registryJson: JSON.stringify(empty) } as T;
+		expect(command).toBe('read_project_registries'); return { ok: true, registries: { demo: JSON.stringify(empty) } } as T;
+	});
+	expect((await readProjectRegistry('demo')).registry.nodes).toHaveLength(0);
+	expect((await readProjectRegistries(['demo'])).registries.demo?.nodes).toHaveLength(0);
+});
+
+test('sync restore recovers a lost native reply by reading both authorities without a second write', async () => {
+	const before = createEmptyWorkspaceRegistry();
+	const added = addWorkspace(before, { name: 'Imported', path: 'C:\\imported' });
+	if (!added.ok) throw Error('fixture workspace');
+	const imported = registry(added.workspace.id, 2);
+	let workspaceJson = serializeWorkspaceRegistry(before), projectJson: string | undefined, writes = 0;
+	setTauriInvokeForTest(async <T>(command: string, args?: Record<string, unknown>) => {
+		if (command === 'read_app_state_records') return { ok: true, records: { 'workspace-registry': workspaceJson } } as T;
+		if (command === 'read_project_registries') return { ok: true, registries: projectJson ? { [imported.workspaceId]: projectJson } : {} } as T;
+		expect(command).toBe('restore_workspace_sync'); writes++;
+		workspaceJson = args?.workspaceRegistryJson as string;
+		projectJson = (args?.registries as any)[imported.workspaceId].registryJson;
+		throw Error('synthetic lost reply after commit');
+	});
+	await initializeWorkduckAppState([{ key: WORKDUCK_WORKSPACE_REGISTRY_APP_STATE_KEY,
+		legacyStorageKey: WORKDUCK_WORKSPACE_REGISTRY_STORAGE_KEY, valueJson: workspaceJson }]);
+	expect(await restoreWorkspaceSyncData(added.registry, { [imported.workspaceId]: imported })).toEqual({ ok: true });
+	expect(writes).toBe(1);
+	expect(readWorkspaceRegistryFromBrowser().registry).toEqual(added.registry);
 });
 
 describe('project registry storage write ordering', () => {

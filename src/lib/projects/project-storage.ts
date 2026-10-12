@@ -4,12 +4,15 @@ role=Persist workspace project registries through Tauri SQLite while migrating a
 owns=project registry persistence|legacy registry promotion|registry change notifications|workspace operation ordering
 excludes=project domain normalization|repository Git operations
 search=project registry storage|sqlite registry migration|legacy project registry
-invariant=Overlapping writes run in request order, legacy promotion rechecks SQLite before writing, and independent reads or workspaces remain concurrent.
+invariant=Overlapping writes run in request order, legacy promotion rechecks SQLite before writing, and sync imports publish workspace and project changes only after one guarded SQLite commit.
 stability=architecture
 */
 
 import { isObjectRecord } from '#lib/shared/object-record.ts';
 import { getTauriInvoke } from '#lib/tauri/tauri-invoke.ts';
+import { commitWorkduckAppStateValue, WORKDUCK_WORKSPACE_REGISTRY_APP_STATE_KEY } from '#lib/app-state/app-state-storage.ts';
+import { serializeWorkspaceRegistry, type WorkspaceRegistry } from '#lib/workspaces/workspace-registry.ts';
+import { notifyWorkspaceRegistryCommitted } from '#lib/workspaces/workspace-storage.ts';
 import {
 	createEmptyProjectRegistry,
 	normalizeProjectRegistry,
@@ -141,7 +144,7 @@ async function readProjectRegistryNow(workspaceId: string, promotionQueued = fal
 
 	const sqliteRegistry = sqliteRegistryResult.registry;
 
-	if (shouldPromoteLegacyRegistry(workspaceId, sqliteRegistry, legacyRegistry)) {
+	if (sqliteResult.registryJson === null && shouldPromoteLegacyRegistry(workspaceId, sqliteRegistry, legacyRegistry)) {
 		if (!promotionQueued) {
 			return sequenceProjectRegistryOperation([workspaceId], () => readProjectRegistryNow(workspaceId, true));
 		}
@@ -293,7 +296,7 @@ async function readProjectRegistriesNow(workspaceIds: readonly string[], promoti
 		const registry = registryResult.registry;
 		registries[workspaceId] = registry;
 
-		if (shouldPromoteLegacyRegistry(workspaceId, registry, fallbackRegistry)) {
+		if (sqliteRegistryJson === undefined && shouldPromoteLegacyRegistry(workspaceId, registry, fallbackRegistry)) {
 			registriesToPromote[workspaceId] = fallbackRegistry;
 		}
 	}
@@ -349,6 +352,57 @@ export async function writeProjectRegistries(
 	return sequenceProjectRegistryOperation(Object.keys(normalizedRegistries), () =>
 		writeProjectRegistriesNow(normalizedRegistries)
 	);
+}
+
+/** Restore the two SQLite authorities together; the renderer cache follows the commit. */
+export async function restoreWorkspaceSyncData(
+	workspaceRegistry: WorkspaceRegistry,
+	registries: Record<string, ProjectRegistry>
+): Promise<{ readonly ok: true } | { readonly ok: false; readonly error: ProjectRegistryStorageError }> {
+	const invoke = getTauriInvoke();
+	if (invoke === undefined || typeof window === 'undefined') return { ok: false, error: 'project-registry-write-failed' };
+	return sequenceProjectRegistryOperation(Object.keys(registries), async () => {
+		const workspaceJson = serializeWorkspaceRegistry(workspaceRegistry);
+		const result = await commitWorkduckAppStateValue(WORKDUCK_WORKSPACE_REGISTRY_APP_STATE_KEY, workspaceJson,
+			async (expectedWorkspaceRegistryJson) => {
+				const current = await readProjectRegistriesFromSqliteOnce(Object.keys(registries));
+				if (!current.ok) return current;
+				try {
+					const response = await invoke<ProjectRegistryWriteResponse>('restore_workspace_sync', {
+						workspaceRegistryJson: workspaceJson, expectedWorkspaceRegistryJson,
+						updatedAt: new Date().toISOString(),
+						registries: Object.fromEntries(Object.entries(registries).map(([id, registry]) => [id, {
+							registryJson: serializeProjectRegistry(registry), updatedAt: registry.updatedAt,
+							expectedRegistryJson: current.registries[id] ?? 'null'
+						}]))
+					});
+					return response.ok === true ? { ok: true } as const : { ok: false,
+						error: isProjectRegistryStorageError(response.error) ? response.error : 'project-registry-write-failed' } as const;
+				} catch {
+					// A lost reply may follow a committed transaction. Read back, never replay the write.
+					try {
+						const workspace = await invoke<{ ok: boolean; records?: Record<string, string> }>('read_app_state_records', {
+							keys: [WORKDUCK_WORKSPACE_REGISTRY_APP_STATE_KEY]
+						});
+						const projects = await readProjectRegistriesFromSqliteOnce(Object.keys(registries));
+						if (workspace.ok === true && workspace.records?.[WORKDUCK_WORKSPACE_REGISTRY_APP_STATE_KEY] === workspaceJson &&
+							projects.ok && Object.entries(registries).every(([id, registry]) => projects.registries[id] === serializeProjectRegistry(registry))) {
+							return { ok: true } as const;
+						}
+					} catch { /* Keep the previous cache if committed data cannot be confirmed. */ }
+					return { ok: false, error: 'project-registry-write-failed' } as const;
+				}
+			});
+		if (!result.ok) return { ok: false, error: isProjectRegistryStorageError(result.error)
+			? result.error : 'project-registry-write-failed' } as const;
+		// Marker cleanup is best effort; SQLite already owns the committed records.
+		for (const registry of Object.values(registries)) {
+			markWorkspaceRegistryMigrated(registry.workspaceId);
+			dispatchProjectRegistryChanged(registry.workspaceId, registry);
+		}
+		notifyWorkspaceRegistryCommitted(workspaceRegistry);
+		return { ok: true } as const;
+	});
 }
 
 async function writeProjectRegistriesNow(normalizedRegistries: Record<string, ProjectRegistry>): Promise<ProjectRegistriesStorageResult> {
@@ -735,10 +789,9 @@ function markWorkspaceRegistryMigrated(workspaceId: string) {
 
 	const workspaceIds = readMigratedWorkspaceIds();
 	workspaceIds.add(workspaceId);
-	window.localStorage.setItem(
-		PROJECT_REGISTRY_SQLITE_MIGRATION_STORAGE_KEY,
-		JSON.stringify([...workspaceIds])
-	);
+	try {
+		window.localStorage.setItem(PROJECT_REGISTRY_SQLITE_MIGRATION_STORAGE_KEY, JSON.stringify([...workspaceIds]));
+	} catch { /* An existing SQLite row, including an empty one, is already authoritative. */ }
 }
 
 function readMigratedWorkspaceIds() {
