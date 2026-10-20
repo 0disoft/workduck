@@ -1184,23 +1184,25 @@
         "secret decryption"
       ],
       "hashes": {
-        "body": "16a82b3632f61ea11b26d054149b126fd34551dee085b2de8013da7785c89409",
-        "semantic": "93dd5ea4ac4030973e07ef8703289cfef40ee06b8901f1b2f5f92953dad33fbd",
-        "structure": "2e5d36f8d8f55e9cc7c405c01449e50786fd171dbe05b7a73d20bc8d71b1694c"
+        "body": "d7b8b5cd2d7dbdeb0f856fafb37e384d9129f63f2356da8c899be2dc82bc1c7a",
+        "semantic": "699182920d24f2ce61bb8be9bf13ac6376454a497df090d015b13db7732ebe10",
+        "structure": "54e3e4a2cf9aeb6313f762337091c2a25f386693a5b4dd073421ec61f508da5f"
       },
       "id": "workduck.agent.snapshot",
       "imports": [
         "crate::project_repository_task::{project_task_run_liveness, read_visible_task_run_record}",
-        "crate::{\n    path_display::display_path,\n    project_repository_task::{\n        project_task_run_liveness_with_budget, read_visible_task_run_record_with_budget,\n    },\n    storage,\n    workspace_path::{WorkspacePathValidationError, validate_absolute_directory_path},\n}",
+        "crate::{\n    path_display::display_path,\n    project_repository_task::{\n        ProjectRepositoryTaskRunRecord, project_task_run_liveness_with_budget,\n        read_visible_task_run_record_with_budget,\n    },\n    storage,\n    workspace_path::{WorkspacePathValidationError, validate_absolute_directory_path},\n}",
         "rusqlite::{Connection, OptionalExtension, params}",
         "std::time::{SystemTime, UNIX_EPOCH}",
-        "std::{\n    collections::BTreeMap,\n    fs, io,\n    path::{Path, PathBuf},\n}",
+        "std::{\n    collections::{BTreeMap, HashSet},\n    fs, io,\n    path::{Path, PathBuf},\n}",
+        "task_run_cache",
+        "task_run_cache::TaskRunSummaryCache",
         "tauri::AppHandle",
         "tests {\n    use super::*",
         "time::{OffsetDateTime, format_description::well_known::Rfc3339}"
       ],
       "invariant": [
-        "Snapshot generation never creates missing Queue state or exposes secret identifiers, encrypted payloads, commands, or output tails; task summaries retain only the newest twenty records, share a read budget with liveness rereads, and disclose incomplete scans."
+        "Snapshots never create Queue state or expose secrets, commands, or output tails; task summaries reuse metadata-matching completed records, order up to twenty runs by record time, cap scans, share the read budget with liveness, and report incomplete history."
       ],
       "location": {
         "declarationLine": null,
@@ -1241,29 +1243,31 @@
       "hashes": {
         "body": "01bf2716df9736badddd55953f58939db2ff51968d8bf051f07f9f8c97947ea6",
         "semantic": "dca8511a86306e0fcef981f2ff3c9ed6068234a0e7c673b7ad048296d48df326",
-        "structure": "43e4980b03ab27a062133615bc72b30210632203801e4f7d2825f0948c9cb86f"
+        "structure": "b427d04e28487e02d44800956f611ce454ed50b82dd23112141c888546c9fe39"
       },
       "id": "workduck.agent.snapshot.contract",
       "imports": [
         "crate::project_repository_task::{project_task_run_liveness, read_visible_task_run_record}",
-        "crate::{\n    path_display::display_path,\n    project_repository_task::{\n        project_task_run_liveness_with_budget, read_visible_task_run_record_with_budget,\n    },\n    storage,\n    workspace_path::{WorkspacePathValidationError, validate_absolute_directory_path},\n}",
+        "crate::{\n    path_display::display_path,\n    project_repository_task::{\n        ProjectRepositoryTaskRunRecord, project_task_run_liveness_with_budget,\n        read_visible_task_run_record_with_budget,\n    },\n    storage,\n    workspace_path::{WorkspacePathValidationError, validate_absolute_directory_path},\n}",
         "rusqlite::{Connection, OptionalExtension, params}",
         "std::time::{SystemTime, UNIX_EPOCH}",
-        "std::{\n    collections::BTreeMap,\n    fs, io,\n    path::{Path, PathBuf},\n}",
+        "std::{\n    collections::{BTreeMap, HashSet},\n    fs, io,\n    path::{Path, PathBuf},\n}",
+        "task_run_cache",
+        "task_run_cache::TaskRunSummaryCache",
         "tauri::AppHandle",
         "tests {\n    use super::*",
         "time::{OffsetDateTime, format_description::well_known::Rfc3339}"
       ],
       "location": {
-        "declarationLine": 1088,
-        "endLine": 1086,
+        "declarationLine": 1143,
+        "endLine": 1141,
         "exported": false,
         "kind": "function",
         "language": "rust",
         "path": "src-tauri/src/agent_api_snapshot.rs",
         "receiver": null,
         "signature": "fn project_registry_summary_omits_secret_ids()",
-        "startLine": 1081,
+        "startLine": 1136,
         "symbol": "project_registry_summary_omits_secret_ids",
         "visibility": "private"
       },
@@ -5278,11 +5282,56 @@
         "isolated SQLite restart"
       ],
       "stability": "architecture"
+    },
+    {
+      "boundaries": [],
+      "excludes": [
+        "task execution",
+        "history mutation"
+      ],
+      "hashes": {
+        "body": "7b883ce856880d11d43d0b430adc5943389c45e87f8f63a6d5368c5f9477b01c",
+        "semantic": "30cd6c1b3e58366cc4ad8567b4e75cfee127f5a4be0631a339c91f7d579c6612",
+        "structure": "b0a87e31e29ef16851d6b3660c2b5437a19834be788480f83ed12e57145f3227"
+      },
+      "id": "workduck.agent.task-run-cache",
+      "imports": [
+        "std::{\n    collections::{BTreeMap, HashSet, VecDeque},\n    fs::Metadata,\n    path::{Path, PathBuf},\n    sync::{Arc, Mutex, OnceLock},\n    time::SystemTime,\n}",
+        "super::AgentApiRepositoryTaskRunRecord",
+        "tests {\n    use super::*"
+      ],
+      "invariant": [
+        "Reuse only metadata-matching completed summaries; cap workspaces, entries, and retained payload."
+      ],
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src-tauri/src/agent_api_snapshot/task_run_cache.rs",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "owns": [
+        "summary caching",
+        "workspace eviction"
+      ],
+      "role": "Cache redacted completed task summaries by file metadata.",
+      "scope": "module",
+      "search": [
+        "task summary cache",
+        "run metadata"
+      ],
+      "stability": "implementation"
     }
   ],
   "contractFingerprints": {
     "configuration": {
-      "sha256": "4496ba3c9b17c19bf66980da38b6efc59cdc359f2c60dca1eafa4a50fd9d271d"
+      "sha256": "62fdb6d3dcd0737a3d5a7a340007e623ce37a9c4ace4d251ee83e7cb64c996c3"
     },
     "exportedApi": {
       "count": 0,
@@ -5293,6 +5342,6 @@
   "generatedBy": "llmnav@0.9.7",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "9368da1d6d5326c18bd089b7870feab6dba3ccb6f2de045788807344fceaf830",
+  "sourceHash": "2e4eeca5bd093dfdc7f7b113d5b415bbf68c2c61f9b473898ac97d4aa6be0b69",
   "specVersion": "1"
 }

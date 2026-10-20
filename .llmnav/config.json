@@ -2,6 +2,12 @@
   "$schema": "./schema/config.schema.json",
   "coverageRules": [
     {
+      "match": ["src-tauri/src/agent_api_snapshot/task_run_cache.rs"],
+      "name": "bounded redacted task summary reuse",
+      "requiredFields": ["owns", "invariant"],
+      "scope": "module"
+    },
+    {
       "match": ["scripts/verify-workspace-sync-native.mjs"],
       "name": "isolated native sync verification",
       "requiredFields": ["owns", "invariant"],

@@ -101,3 +101,4 @@
 {"id":"workduck.workspace.unlock","state":"active"}
 {"id":"workduck.workspace.path-repair","state":"active"}
 {"id":"workduck.verification.native-sync","state":"active"}
+{"id":"workduck.agent.task-run-cache","state":"active"}

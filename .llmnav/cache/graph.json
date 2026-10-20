@@ -946,7 +946,7 @@
       "definitions": [
         {
           "kind": "function",
-          "line": 1088,
+          "line": 1143,
           "path": "src-tauri/src/agent_api_snapshot.rs",
           "provenance": {
             "generator": null,
@@ -959,21 +959,43 @@
       "external": false,
       "key": "workduck/workduck.agent.snapshot.contract",
       "location": {
-        "declarationLine": 1088,
-        "endLine": 1086,
+        "declarationLine": 1143,
+        "endLine": 1141,
         "exported": false,
         "kind": "function",
         "language": "rust",
         "path": "src-tauri/src/agent_api_snapshot.rs",
         "receiver": null,
         "signature": "fn project_registry_summary_omits_secret_ids()",
-        "startLine": 1081,
+        "startLine": 1136,
         "symbol": "project_registry_summary_omits_secret_ids",
         "visibility": "private"
       },
       "repositoryId": "workduck",
       "role": "Verify the agent snapshot replaces credential references with presence flags and never serializes their secret identifiers.",
       "semanticId": "workduck.agent.snapshot.contract",
+      "unresolved": false
+    },
+    {
+      "definitions": [],
+      "external": false,
+      "key": "workduck/workduck.agent.task-run-cache",
+      "location": {
+        "declarationLine": null,
+        "endLine": 9,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src-tauri/src/agent_api_snapshot/task_run_cache.rs",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "repositoryId": "workduck",
+      "role": "Cache redacted completed task summaries by file metadata.",
+      "semanticId": "workduck.agent.task-run-cache",
       "unresolved": false
     },
     {
@@ -3191,11 +3213,11 @@
   ],
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "d9337b210acf0735fc40e30d133eeeef62bf644c14bfb4f53a56084959ba67e5",
+  "sourceHash": "61141bf0f6e503405a27594b86d7ddfa037d4ffc7774b8e2131b6e97ec7469cb",
   "stats": {
     "edgeCount": 64,
     "importedIndexCount": 0,
-    "nodeCount": 103,
+    "nodeCount": 104,
     "unresolvedNodeCount": 0
   }
 }

@@ -109,3 +109,4 @@
 {"query":"workspace unlock password session workspace unlock cooldown idle workspace locking","expected":["workduck.workspace.unlock"]}
 {"query":"workspace path repair target reconnect workspace directory cancel pending path repair","expected":["workduck.workspace.path-repair"]}
 {"query":"verify native workspace sync encrypted restore and isolated SQLite restart","expected":["workduck.verification.native-sync"]}
+{"query":"agent completed task summary cache metadata fingerprint bounded workspace history reuse","expected":["workduck.agent.task-run-cache"]}
