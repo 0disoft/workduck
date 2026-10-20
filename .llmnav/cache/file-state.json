@@ -3654,7 +3654,7 @@
     },
     {
       "blocks": [],
-      "contentHash": "e80ac8413a2d0685412d81369e403db3dfc4bf641f2a07f1e9e812f1a304b997",
+      "contentHash": "ed25cdc2388529e02b5251d5de3e80f619103fcb7516ccad172af3ad8d3cdcfd",
       "declarations": [],
       "imports": [
         "std::{\n    process::{Command, Stdio},\n    thread,\n}",
@@ -3663,7 +3663,7 @@
       ],
       "path": "src-tauri/src/project_repository_inspection_tests.rs",
       "semanticBytes": 0,
-      "sourceBytes": 17285
+      "sourceBytes": 17555
     },
     {
       "blocks": [],

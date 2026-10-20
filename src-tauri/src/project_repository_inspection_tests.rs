@@ -313,6 +313,8 @@ fn concurrent_repository_git_inspections_share_in_flight_result() {
     let waiter_path = repository_path.clone();
     let waiter_call_count = std::sync::Arc::clone(&call_count);
     let waiter = thread::spawn(move || {
+        // A loaded machine may not schedule the follower immediately.
+        thread::sleep(std::time::Duration::from_millis(25));
         inspect_project_repository_git_coalesced_with(waiter_path, move |_| {
             waiter_call_count.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
             invalid_git_inspection(ProjectRepositoryGitError::CommandFailed)
@@ -524,7 +526,8 @@ fn unique_test_directory(name: &str) -> PathBuf {
 }
 
 fn wait_until_git_inspection_has_waiter(repository_path: &Path) {
-    for _ in 0..1_000 {
+    let deadline = std::time::Instant::now() + std::time::Duration::from_secs(5);
+    while std::time::Instant::now() < deadline {
         let has_waiter = {
             let in_flight_by_path = git_inspection_in_flight_by_path()
                 .lock()
@@ -539,7 +542,7 @@ fn wait_until_git_inspection_has_waiter(repository_path: &Path) {
             return;
         }
 
-        thread::yield_now();
+        thread::sleep(std::time::Duration::from_millis(1));
     }
 
     panic!("repository git inspection waiter did not attach");
