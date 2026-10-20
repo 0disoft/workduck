@@ -540,7 +540,16 @@ mod tests {
         command
             .stdout(std::process::Stdio::null())
             .stderr(std::process::Stdio::null());
-        let child = crate::process_tree::ProcessTreeChild::spawn(&mut command).unwrap();
+        let mut child = crate::process_tree::ProcessTreeChild::spawn(&mut command).unwrap();
+        // Measure pipe draining independently of shell startup, which can be
+        // delayed substantially when process-heavy tests run in parallel.
+        assert!(
+            child
+                .wait_timeout(std::time::Duration::from_secs(15))
+                .unwrap()
+                .expect("test parent should exit before measuring pipe drain")
+                .success()
+        );
         let started = std::time::Instant::now();
         let result = super::wait_for_child_output_with_pipes(
             child,
@@ -549,7 +558,9 @@ mod tests {
             Some(stderr),
         );
         assert!(matches!(result, Err(super::GitProcessError::TimedOut)));
-        assert!(started.elapsed() < std::time::Duration::from_secs(4));
+        let elapsed = started.elapsed();
+        assert!(elapsed >= super::CHILD_OUTPUT_DRAIN_TIMEOUT);
+        assert!(elapsed < std::time::Duration::from_secs(4));
         // Both writers remain independently owned, and no reader thread keeps
         // either read end alive after the function returns.
         assert!(stdout_writer.write_all(b"after").is_err());
