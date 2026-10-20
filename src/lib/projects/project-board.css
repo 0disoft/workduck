@@ -57,7 +57,7 @@
 }
 
 .workduck-project-workspace-layout {
-	grid-template-columns: minmax(180px, 220px) minmax(0, 1fr);
+	grid-template-columns: minmax(220px, 260px) minmax(0, 1fr);
 	align-items: stretch;
 }
 
@@ -232,7 +232,8 @@
 	font-weight: 800;
 }
 
-.workduck-repository-favorite-button {
+.workduck-repository-favorite-button,
+.workduck-repository-open-folder-button {
 	display: inline-flex;
 	width: 24px;
 	height: 24px;
@@ -252,10 +253,17 @@
 }
 
 .workduck-repository-favorite-button:hover,
-.workduck-repository-favorite-button:focus-visible {
+.workduck-repository-favorite-button:focus-visible,
+.workduck-repository-open-folder-button:enabled:hover,
+.workduck-repository-open-folder-button:focus-visible {
 	border-color: oklch(var(--workduck-oklch-accent) / 0.82);
 	color: var(--workduck-color-accent);
 	outline: 0;
+}
+
+.workduck-repository-open-folder-button:disabled {
+	opacity: 0.45;
+	cursor: not-allowed;
 }
 
 .workduck-repository-favorite-button-active {
@@ -592,7 +600,7 @@
 	position: relative;
 	display: grid;
 	min-width: 0;
-	grid-template-columns: minmax(0, 1fr) auto;
+	grid-template-columns: minmax(0, 1fr) auto auto;
 	align-items: center;
 	gap: 8px;
 	padding-inline: 8px 6px;

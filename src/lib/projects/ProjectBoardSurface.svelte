@@ -763,6 +763,7 @@
 	{selectedGroup}
 	{selectedRepositories}
 	{repositoryGitStatusById}
+	{isOpeningFolder}
 	onBoardContextMenu={contextMenuActions.openBoardContextMenu}
 	onRepositorySyncFilterSelect={selectRepositorySyncFilter}
 	onTagFilterInput={handleTagFilterInput}
@@ -790,6 +791,7 @@
 	onPublishRepository={openPublishRepositoryDialog}
 	onQueueRepositoryCommitWorkOrder={queueRepositoryCommitWorkOrder}
 	onRepositoryFavoriteToggle={toggleRepositoryFavorite}
+	onRepositoryOpenFolder={contextMenuActions.openRepositoryFolderForTarget}
 	onGitAction={(node, repository, action) => runRepositoryGitAction({ node, repository }, action)}
 />
 {/if}

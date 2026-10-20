@@ -8689,7 +8689,7 @@
     },
     {
       "blocks": [],
-      "contentHash": "4d1de42947a22b82a4907f28d82b68fcc407e34dfb8e565a27d68d8b7ef14026",
+      "contentHash": "6976e1d370fd724bebcfd774ad220c31eb04620cf9d874cabae81b4449131746",
       "declarations": [],
       "imports": [
         "#lib/i18n/workduck-language.ts",
@@ -8705,7 +8705,7 @@
       ],
       "path": "src/lib/projects/ProjectBoardLanesBase.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 16112
+      "sourceBytes": 16421
     },
     {
       "blocks": [],
@@ -8863,7 +8863,7 @@
     },
     {
       "blocks": [],
-      "contentHash": "ec90f5174e0e85c3bacab56dc81abc23683cb73353b3f0baac21069193601e62",
+      "contentHash": "8882777912487214a52065a1671a376161a92da5ed16f4c330307c078ce4d43b",
       "declarations": [],
       "imports": [
         "#lib/environment/environment-vault.ts",
@@ -8907,7 +8907,7 @@
       ],
       "path": "src/lib/projects/ProjectBoardSurface.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 41301
+      "sourceBytes": 41395
     },
     {
       "blocks": [
@@ -9216,7 +9216,7 @@
     },
     {
       "blocks": [],
-      "contentHash": "76b09ef294ae3468e98309a6faae8108a7f326cf1f3d649349b312402bc24c85",
+      "contentHash": "7e0dc01ffb210c31f78326e442044b8510015b99cde453e49d41b8d450316326",
       "declarations": [],
       "imports": [
         "#lib/i18n/workduck-message-contract.ts",
@@ -9229,7 +9229,7 @@
       ],
       "path": "src/lib/projects/ProjectRepositoryRow.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 6284
+      "sourceBytes": 7093
     },
     {
       "blocks": [],
@@ -9302,7 +9302,7 @@
     },
     {
       "blocks": [],
-      "contentHash": "296cbe5169cbdf2330ff81f37a087dd58a5da530355fd96196e4bf3cdc78e2ee",
+      "contentHash": "a8da721d030282cf634ebbd39310244b24da4f9f8bd2ad98eb8b1b41c7d3456b",
       "declarations": [],
       "imports": [
         "#lib/i18n/workduck-message-contract.ts",
@@ -9317,7 +9317,7 @@
       ],
       "path": "src/lib/projects/project-board-context-menu-handlers.ts",
       "semanticBytes": 0,
-      "sourceBytes": 8480
+      "sourceBytes": 8770
     },
     {
       "blocks": [],

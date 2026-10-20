@@ -41,6 +41,7 @@
 		readonly selectedGroup: ProjectNodeRecord | null;
 		readonly selectedRepositories: readonly ProjectRepositoryLinkRecord[];
 		readonly repositoryGitStatusById: Readonly<Record<string, ProjectRepositoryGitStatus>>;
+		readonly isOpeningFolder: boolean;
 		readonly onBoardContextMenu: (event: MouseEvent) => void;
 		readonly onRepositorySyncFilterSelect: (filter: ProjectRepositorySyncFilter) => void;
 		readonly onTagFilterInput: (value: string) => void;
@@ -101,6 +102,10 @@
 			node: ProjectNodeRecord,
 			repository: ProjectRepositoryLinkRecord
 		) => Promise<void>;
+		readonly onRepositoryOpenFolder: (
+			node: ProjectNodeRecord,
+			repository: ProjectRepositoryLinkRecord
+		) => Promise<void>;
 		readonly onGitAction: (
 			node: ProjectNodeRecord,
 			repository: ProjectRepositoryLinkRecord,
@@ -111,7 +116,7 @@
 	let {
 		title, projectMessages, languageId, tagFilterInput, repositorySyncFilter, repositoryFilterStats,
 		selectionIndex, projectNodes, selectedProject, selectedProjectGroups, selectedGroup,
-		selectedRepositories, repositoryGitStatusById, onBoardContextMenu, onRepositorySyncFilterSelect,
+		selectedRepositories, repositoryGitStatusById, isOpeningFolder, onBoardContextMenu, onRepositorySyncFilterSelect,
 		onTagFilterInput, onOverlayIntent, onOpenDialog, onSelectProject, onSelectGroup, onProjectContextMenu,
 		onRepositoryContextMenu, getNodeGithubCredentialName, getRepositoryGithubCredentialName,
 		getRepositoryOperation, getRepositoryTaskRun, isRepositoryBusy, isRepositoryPathInsideWorkspace,
@@ -119,7 +124,7 @@
 		canPublishRepositoryToGithub, canQueueRepositoryCommitWorkOrder,
 		canRunRemoteRepositoryGitAction, isRepositoryOperationRunning,
 		onCloneRepository, onInitializeRepository, onPublishRepository,
-		onQueueRepositoryCommitWorkOrder, onRepositoryFavoriteToggle, onGitAction
+		onQueueRepositoryCommitWorkOrder, onRepositoryFavoriteToggle, onRepositoryOpenFolder, onGitAction
 	}: Props = $props();
 
 	let selectedRepositoryId = $state<string | null>(null);
@@ -297,11 +302,13 @@
 									<ProjectRepositoryRow {repository} {projectMessages}
 										{repositoryOperation} {repositoryTaskRun} {repositoryGitStatus}
 										{repositoryBusy} {repositoryPathOutsideWorkspace}
+										{isOpeningFolder}
 										canCloneRepository={canCloneRepository(repository)}
 										selected={inspectedRepository?.id === repository.id}
 										{onOverlayIntent}
 										onSelect={() => selectRepository(repository)}
 										onContextMenu={(event) => onRepositoryContextMenu(event, group, repository)}
+										onOpenFolder={() => onRepositoryOpenFolder(group, repository)}
 										onFavoriteToggle={() => onRepositoryFavoriteToggle(group, repository)} />
 								{/each}
 							</div>

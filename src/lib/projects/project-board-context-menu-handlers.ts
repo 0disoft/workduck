@@ -73,6 +73,23 @@ export function createProjectBoardContextMenuHandlers(context: {
 		context.setDescriptionEditor(null);
 	}
 
+	async function openFolderForTarget(target: ProjectContextMenuTarget | null) {
+		closeContextMenu();
+		await openProjectContextFolder(
+			{
+				workspacePath: context.getWorkspacePath(),
+				nodes: context.getRegistryNodes(),
+				target,
+				isOpening: context.getIsOpeningFolder()
+			},
+			{
+				setIsOpening: context.setIsOpeningFolder,
+				setFormError: context.setFormError,
+				setStatus: context.setStatus
+			}
+		);
+	}
+
 	return {
 		closeContextMenu,
 		openBoardContextMenu(event: MouseEvent) {
@@ -101,23 +118,10 @@ export function createProjectBoardContextMenuHandlers(context: {
 			});
 		},
 		async openContextFolder() {
-			const target = context.getContextMenuTarget();
-
-			closeContextMenu();
-
-			await openProjectContextFolder(
-				{
-					workspacePath: context.getWorkspacePath(),
-					nodes: context.getRegistryNodes(),
-					target,
-					isOpening: context.getIsOpeningFolder()
-				},
-				{
-					setIsOpening: context.setIsOpeningFolder,
-					setFormError: context.setFormError,
-					setStatus: context.setStatus
-				}
-			);
+			await openFolderForTarget(context.getContextMenuTarget());
+		},
+		async openRepositoryFolderForTarget(node: ProjectNodeRecord, repository: ProjectRepositoryLinkRecord) {
+			await openFolderForTarget({ type: 'repository', nodeId: node.id, repositoryId: repository.id });
 		},
 		openContextDeleteDialog() {
 			const result = resolveContextDeleteCandidate(

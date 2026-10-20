@@ -28,12 +28,14 @@
 		readonly repositoryTaskRun: ProjectRepositoryTaskRunRecord | null;
 		readonly repositoryGitStatus: ProjectRepositoryGitStatus | undefined;
 		readonly repositoryBusy: boolean;
+		readonly isOpeningFolder: boolean;
 		readonly repositoryPathOutsideWorkspace: boolean;
 		readonly canCloneRepository: boolean;
 		readonly selected: boolean;
 		readonly onOverlayIntent: () => void;
 		readonly onSelect: () => void;
 		readonly onFavoriteToggle: () => void;
+		readonly onOpenFolder: () => Promise<void>;
 		readonly onContextMenu: (event: MouseEvent) => void;
 	}
 
@@ -44,12 +46,14 @@
 		repositoryTaskRun,
 		repositoryGitStatus,
 		repositoryBusy,
+		isOpeningFolder,
 		repositoryPathOutsideWorkspace,
 		canCloneRepository,
 		selected,
 		onOverlayIntent,
 		onSelect,
 		onFavoriteToggle,
+		onOpenFolder,
 		onContextMenu
 	}: Props = $props();
 
@@ -195,6 +199,24 @@
 			</span>
 		{/if}
 
+	</button>
+
+	<button
+		class="workduck-repository-open-folder-button"
+		type="button"
+		aria-label={projectMessages.contextMenu.openFolder}
+		title={projectMessages.contextMenu.openFolder}
+		disabled={isOpeningFolder || repository.path === null ||
+			repositoryGitStatus?.error === 'project-repository-git-path-not-found'}
+		onfocus={onOverlayIntent}
+		onclick={() => void onOpenFolder()}
+	>
+		<svg width="16" height="16" viewBox="0 0 24 24" fill="none"
+			stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"
+			aria-hidden="true">
+			<path d="M3 10V6a2 2 0 0 1 2-2h4l2 3h8a2 2 0 0 1 2 2v1" />
+			<path d="M3 10h18l-3 10H3a1 1 0 0 1-1-1l1-9Z" />
+		</svg>
 	</button>
 
 	<button
