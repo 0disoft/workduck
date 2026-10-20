@@ -1,3 +1,12 @@
+/* llmnav/1 module
+id=workduck.workspace.registry
+role=Define workspace identity, immutable mutations, and lossless validation of stored workspace lists and locks.
+owns=workspace records|active workspace selection|workspace mutations|stored workspace validation
+excludes=storage transport|workspace directory operations|unlock sessions
+search=workspace registry model|strict stored workspace registry|damaged workspace lock|workspace record loss
+invariant=Stored reads reject unsupported versions, discarded records, and invalid locks; new workspace paths and password hashes must fit storage limits without truncation.
+stability=contract
+*/
 import { isObjectRecord } from '#lib/shared/object-record.ts';
 import { normalizeWorkspacePathForStorage } from './workspace-path-format';
 
@@ -9,6 +18,7 @@ export const WORKSPACE_PASSWORD_HASH_MAX_LENGTH = 512;
 export type WorkspaceRegistryError =
 	| 'workspace-name-required'
 	| 'workspace-path-required'
+	| 'workspace-path-too-long'
 	| 'workspace-path-duplicate'
 	| 'workspace-password-hash-invalid'
 	| 'workspace-not-found';
@@ -82,6 +92,33 @@ export function parseWorkspaceRegistry(serializedRegistry: string | null): Works
 	}
 }
 
+export type StoredWorkspaceRegistryResult =
+	| { readonly ok: true; readonly registry: WorkspaceRegistry }
+	| { readonly ok: false; readonly error: 'workspace-registry-json-invalid' | 'workspace-registry-version-unsupported' };
+
+export function parseStoredWorkspaceRegistry(serializedRegistry: string | null): StoredWorkspaceRegistryResult {
+	if (serializedRegistry === null) return { ok: true, registry: createEmptyWorkspaceRegistry() };
+	try { return normalizeStoredWorkspaceRegistry(JSON.parse(serializedRegistry)); }
+	catch { return { ok: false, error: 'workspace-registry-json-invalid' }; }
+}
+
+export function normalizeStoredWorkspaceRegistry(value: unknown): StoredWorkspaceRegistryResult {
+	const invalid = { ok: false, error: 'workspace-registry-json-invalid' } as const;
+	if (!isObjectRecord(value) || !Array.isArray(value.workspaces)) return invalid;
+	if (value.version !== undefined && value.version !== 1) return { ok: false, error: 'workspace-registry-version-unsupported' };
+	const registry = normalizeWorkspaceRegistry(value);
+	if (registry.workspaces.length !== value.workspaces.length) return invalid;
+	for (let index = 0; index < value.workspaces.length; index += 1) {
+		const rawWorkspace: unknown = value.workspaces[index];
+		if (!isObjectRecord(rawWorkspace) ||
+			(rawWorkspace.lock != null && registry.workspaces[index]?.lock === null) ||
+			readTrimmedString(rawWorkspace.name).replace(/\s+/g, ' ').length > WORKSPACE_NAME_MAX_LENGTH ||
+			normalizeWorkspacePathForStorage(readTrimmedString(rawWorkspace.path)).length > WORKSPACE_PATH_MAX_LENGTH) return invalid;
+		if (isObjectRecord(rawWorkspace.lock) && readTrimmedString(rawWorkspace.lock.passwordHash).length > WORKSPACE_PASSWORD_HASH_MAX_LENGTH) return invalid;
+	}
+	return { ok: true, registry };
+}
+
 export function serializeWorkspaceRegistry(registry: WorkspaceRegistry): string {
 	return JSON.stringify(normalizeWorkspaceRegistry(registry));
 }
@@ -93,7 +130,7 @@ export function addWorkspace(
 ): WorkspaceAddResult {
 	const normalizedRegistry = normalizeWorkspaceRegistry(registry);
 	const name = normalizeWorkspaceName(input.name);
-	const path = normalizeWorkspacePath(input.path);
+	const path = normalizeWorkspacePathForStorage(input.path);
 
 	if (name.length === 0) {
 		return { ok: false, registry: normalizedRegistry, error: 'workspace-name-required' };
@@ -101,6 +138,14 @@ export function addWorkspace(
 
 	if (path.length === 0) {
 		return { ok: false, registry: normalizedRegistry, error: 'workspace-path-required' };
+	}
+
+	if (path.length > WORKSPACE_PATH_MAX_LENGTH) {
+		return { ok: false, registry: normalizedRegistry, error: 'workspace-path-too-long' };
+	}
+
+	if (input.passwordHash != null && input.passwordHash.trim().length > WORKSPACE_PASSWORD_HASH_MAX_LENGTH) {
+		return { ok: false, registry: normalizedRegistry, error: 'workspace-password-hash-invalid' };
 	}
 
 	const passwordHash = normalizePasswordHash(input.passwordHash ?? null);
@@ -196,10 +241,14 @@ export function updateWorkspacePath(
 	now = new Date()
 ): WorkspaceRegistryResult {
 	const normalizedRegistry = normalizeWorkspaceRegistry(registry);
-	const path = normalizeWorkspacePath(nextPath);
+	const path = normalizeWorkspacePathForStorage(nextPath);
 
 	if (path.length === 0) {
 		return { ok: false, registry: normalizedRegistry, error: 'workspace-path-required' };
+	}
+
+	if (path.length > WORKSPACE_PATH_MAX_LENGTH) {
+		return { ok: false, registry: normalizedRegistry, error: 'workspace-path-too-long' };
 	}
 
 	const workspace = normalizedRegistry.workspaces.find((candidate) => candidate.id === workspaceId);

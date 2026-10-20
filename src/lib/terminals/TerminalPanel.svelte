@@ -1,4 +1,13 @@
 <script lang="ts">
+	/* llmnav/1 module
+	id=workduck.terminal.panel
+	role=Coordinate terminal selection, native session actions, output display, and workspace-scoped registry edits.
+	owns=terminal view lifetime|operation result ownership|session removal target|output polling
+	excludes=native process execution|terminal command normalization|registry serialization
+	search=terminal selection switch|late terminal response|terminal removal ownership
+	invariant=Async results update only their initiating view; removal requires successful process stop; each view admits one output read at a time and failures preserve its logs.
+	stability=architecture
+	*/
 	import { onMount, tick, untrack } from 'svelte';
 
 	import { getWorkduckMessages } from '#lib/i18n/workduck-language.ts';
@@ -72,6 +81,10 @@
 	let outputScreenElement = $state<HTMLPreElement | null>(null);
 	let shouldFollowTerminalOutput = $state(true);
 	let terminalPollingId: number | null = null;
+	let workspaceGeneration = 0;
+	let terminalRuntimeGeneration = 0;
+	let terminalReadGeneration = 0;
+	let activeTerminalRead: object | null = null;
 	let messages = $derived(getWorkduckMessages(appearanceSettings.languageId));
 
 	let availableTerminals = $derived(terminalCatalog.filter((terminal) => terminal.available));
@@ -94,7 +107,7 @@
 		selectedSession !== null &&
 			isSessionConnected &&
 			terminalInput.trim().length > 0 &&
-			!isSessionSending
+			!isSessionSending && !isSessionStarting && !isSessionStopping && !isRemovingTerminal
 	);
 
 	onMount(() => {
@@ -112,13 +125,17 @@
 
 	$effect(() => {
 		const workspaceId = workspace.id;
+		const workspacePath = workspace.path;
+		void workspacePath;
 
 		return untrack(() => {
+			workspaceGeneration += 1;
 			registry = createEmptyTerminalRegistry(workspaceId);
 			selectedSessionId = null;
 			editingSessionId = null;
 			terminalName = '';
 			selectedTerminalId = '';
+			isTerminalFormOpen = false;
 			terminalError = null;
 			sessionError = null;
 			statusMessage = null;
@@ -127,11 +144,17 @@
 			readRegistryFromStorage(workspaceId);
 
 			const unsubscribeRegistry = subscribeTerminalRegistry(workspaceId, (nextRegistry) => {
+				const previousSessionId = selectedSessionId;
 				registry = nextRegistry;
 				selectedSessionId = resolveSelectedSessionId(selectedSessionId, nextRegistry.sessions);
+				if (selectedSessionId !== previousSessionId) resetTerminalRuntimeView();
 			});
 
-			return unsubscribeRegistry;
+			return () => {
+				workspaceGeneration += 1;
+				resetTerminalRuntimeView();
+				unsubscribeRegistry();
+			};
 		});
 	});
 
@@ -255,91 +278,113 @@
 	}
 
 	async function handleRemoveSelectedTerminalSession() {
-		if (selectedSession === null || isRemovingTerminal) {
+		if (selectedSession === null || isRemovingTerminal || isSessionStarting || isSessionStopping || isSessionSending) {
 			return;
 		}
 
+		const target = captureTerminalOperationTarget();
+		const removingSessionId = selectedSession.id;
+		terminalReadGeneration += 1;
 		isRemovingTerminal = true;
 		terminalError = null;
 		sessionError = null;
 		statusMessage = null;
 
 		try {
-			await stopTerminalSession(selectedSession.id);
-			const mutation = removeTerminalSession(registry, selectedSession.id);
+			const stopResult = await stopTerminalSession(removingSessionId);
+			if (!stopResult.ok) {
+				if (target.isCurrent()) sessionError = stopResult.error;
+				return;
+			}
+			const latestRegistry = readTerminalRegistry(target.workspaceId);
+			if (!latestRegistry.ok) {
+				if (target.isCurrent()) terminalError = latestRegistry.error;
+				return;
+			}
+			const mutation = removeTerminalSession(latestRegistry.registry, removingSessionId);
 
 			if (!mutation.ok) {
-				terminalError = mutation.error;
+				if (target.isCurrent()) terminalError = mutation.error;
 				return;
 			}
 
+			const selectionWasCurrent = target.isCurrent();
 			const writeResult = writeTerminalRegistry(mutation.registry);
 
-			registry = writeResult.registry;
-			terminalError = writeResult.ok ? null : writeResult.error;
+			if (!target.isWorkspaceCurrent()) return;
+			if (writeResult.ok) registry = writeResult.registry;
+			if (selectionWasCurrent) terminalError = writeResult.ok ? null : writeResult.error;
 
 			if (!writeResult.ok) {
 				return;
 			}
 
-			selectedSessionId = null;
-			resetTerminalRuntimeView();
-			clearTerminalForm();
-			statusMessage = messages.terminals.removed;
+			if (selectionWasCurrent) {
+				selectedSessionId = null;
+				resetTerminalRuntimeView();
+				clearTerminalForm();
+				statusMessage = messages.terminals.removed;
+			}
 		} finally {
-			isRemovingTerminal = false;
+			if (target.isCurrent()) isRemovingTerminal = false;
 		}
 	}
 
 	async function handleConnectSelectedTerminalSession() {
-		if (selectedSession === null || isSessionStarting) {
+		if (selectedSession === null || isSessionStarting || isSessionStopping || isSessionSending || isRemovingTerminal) {
 			return;
 		}
 
+		const target = captureTerminalOperationTarget();
+		const terminalId = selectedSession.terminalId;
+		terminalReadGeneration += 1;
 		isSessionStarting = true;
 		sessionError = null;
 		statusMessage = null;
 
 		try {
 			const result = await startTerminalSession({
-				sessionId: selectedSession.id,
-				terminalId: selectedSession.terminalId,
-				workspacePath: workspace.path
+				sessionId: target.sessionId!,
+				terminalId,
+				workspacePath: target.workspacePath
 			});
-
-			applyTerminalSessionResult(result.snapshot, { forceScroll: true });
+			if (!target.isCurrent()) return;
 
 			if (!result.ok) {
 				sessionError = result.error;
 				return;
 			}
 
-			startTerminalPolling(selectedSession.id);
+			applyTerminalSessionResult(result.snapshot, { forceScroll: true });
+			startTerminalPolling(target.sessionId!);
 		} finally {
-			isSessionStarting = false;
+			if (target.isCurrent()) isSessionStarting = false;
 		}
 	}
 
 	async function handleDisconnectSelectedTerminalSession() {
-		if (selectedSession === null || isSessionStopping) {
+		if (selectedSession === null || isSessionStopping || isSessionStarting || isSessionSending || isRemovingTerminal) {
 			return;
 		}
 
+		const target = captureTerminalOperationTarget();
+		terminalReadGeneration += 1;
 		isSessionStopping = true;
 		sessionError = null;
 		statusMessage = null;
 
 		try {
-			const result = await stopTerminalSession(selectedSession.id);
-
-			applyTerminalSessionResult(result.snapshot, { forceScroll: true });
-			stopTerminalPolling();
+			const result = await stopTerminalSession(target.sessionId!);
+			if (!target.isCurrent()) return;
 
 			if (!result.ok) {
 				sessionError = result.error;
+				return;
 			}
+			applyTerminalSessionResult(result.snapshot, { forceScroll: true });
+			stopTerminalPolling();
 		} finally {
-			isSessionStopping = false;
+			if (target.isCurrent()) isSessionStopping = false;
 		}
 	}
 
@@ -351,6 +396,8 @@
 		}
 
 		const input = terminalInput;
+		const target = captureTerminalOperationTarget();
+		terminalReadGeneration += 1;
 
 		terminalInput = '';
 		isSessionSending = true;
@@ -359,32 +406,43 @@
 
 		try {
 			const result = await writeTerminalSessionInput({
-				sessionId: selectedSession.id,
+				sessionId: target.sessionId!,
 				input
 			});
-
-			applyTerminalSessionResult(result.snapshot, { forceScroll: true });
+			if (!target.isCurrent()) return;
 
 			if (!result.ok) {
 				sessionError = result.error;
+				if (terminalInput.length === 0) terminalInput = input;
+				return;
 			}
+			applyTerminalSessionResult(result.snapshot, { forceScroll: true });
 		} finally {
-			isSessionSending = false;
+			if (target.isCurrent()) isSessionSending = false;
 		}
 	}
 
 	async function refreshSelectedTerminalSession(sessionId: string) {
+		if (
+			selectedSessionId !== sessionId || activeTerminalRead !== null ||
+			isSessionStarting || isSessionStopping || isSessionSending || isRemovingTerminal
+		) return;
+		const target = captureTerminalOperationTarget(sessionId);
+		const read = {};
+		activeTerminalRead = read;
+		const readGeneration = terminalReadGeneration;
 		const expectedOutputCursor = terminalOutputCursor;
-		const result = await readTerminalSession(sessionId, expectedOutputCursor);
-
-		if (selectedSessionId !== sessionId) {
-			return;
-		}
-
-		applyTerminalSessionResult(result.snapshot, { expectedOutputCursor });
-
-		if (!result.ok) {
-			sessionError = result.error;
+		try {
+			const result = await readTerminalSession(sessionId, expectedOutputCursor);
+			if (!target.isCurrent() || readGeneration !== terminalReadGeneration) return;
+			if (!result.ok) {
+				sessionError = result.error;
+				return;
+			}
+			applyTerminalSessionResult(result.snapshot, { expectedOutputCursor });
+			sessionError = null;
+		} finally {
+			if (activeTerminalRead === read) activeTerminalRead = null;
 		}
 	}
 
@@ -403,12 +461,32 @@
 	}
 
 	function resetTerminalRuntimeView() {
+		terminalRuntimeGeneration += 1;
+		terminalReadGeneration += 1;
+		activeTerminalRead = null;
 		stopTerminalPolling();
 		terminalOutput = '';
 		terminalOutputCursor = 0;
 		terminalInput = '';
 		isSessionConnected = false;
+		isSessionStarting = false;
+		isSessionStopping = false;
+		isSessionSending = false;
+		isRemovingTerminal = false;
 		shouldFollowTerminalOutput = true;
+	}
+
+	function captureTerminalOperationTarget(sessionId = selectedSessionId) {
+		const workspaceId = workspace.id;
+		const workspacePath = workspace.path;
+		const scope = workspaceGeneration;
+		const generation = terminalRuntimeGeneration;
+		const isWorkspaceCurrent = () =>
+			workspaceGeneration === scope && workspace.id === workspaceId && workspace.path === workspacePath;
+		return {
+			workspaceId, workspacePath, sessionId, isWorkspaceCurrent,
+			isCurrent: () => isWorkspaceCurrent() && terminalRuntimeGeneration === generation && selectedSessionId === sessionId
+		};
 	}
 
 	function applyTerminalSessionResult(
@@ -416,7 +494,6 @@
 		options: { readonly forceScroll?: boolean; readonly expectedOutputCursor?: number } = {}
 	) {
 		if (
-			snapshot.outputReset === false &&
 			options.expectedOutputCursor !== undefined &&
 			options.expectedOutputCursor !== terminalOutputCursor
 		) {
@@ -625,7 +702,7 @@
 						<button
 							class="workduck-button workduck-button-secondary"
 							type="button"
-							disabled={isSessionStopping}
+							disabled={isSessionStopping || isSessionStarting || isSessionSending || isRemovingTerminal}
 							onclick={() => void handleDisconnectSelectedTerminalSession()}
 						>
 							{messages.terminals.disconnect}
@@ -634,7 +711,7 @@
 						<button
 							class="workduck-button workduck-button-primary"
 							type="button"
-							disabled={isSessionStarting}
+							disabled={isSessionStarting || isSessionStopping || isSessionSending || isRemovingTerminal}
 							onclick={() => void handleConnectSelectedTerminalSession()}
 						>
 							{messages.terminals.connect}
@@ -650,7 +727,7 @@
 					<button
 						class="workduck-button workduck-button-danger"
 						type="button"
-						disabled={isRemovingTerminal}
+						disabled={isRemovingTerminal || isSessionStarting || isSessionStopping || isSessionSending}
 						onclick={() => void handleRemoveSelectedTerminalSession()}
 					>
 						{messages.common.remove}

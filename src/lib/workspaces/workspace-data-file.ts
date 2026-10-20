@@ -96,7 +96,7 @@ interface WorkspaceRegistryPairWriteResponse {
 
 export async function writeWorkspaceRegistryFile(
 	workspacePath: string,
-	fileName: 'agents.json' | 'personas.json' | 'briefs.json' | 'brief-runs.json',
+	fileName: 'agents.json' | 'personas.json' | 'briefs.json' | 'brief-runs.json' | 'references.json' | 'skills.json',
 	expectedRevision: number,
 	content: string
 ): Promise<WorkspaceRegistryFileWriteResult> {

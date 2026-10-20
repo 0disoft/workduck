@@ -30,5 +30,5 @@ UI에서 암호화 파일을 내보내고, 잘못된 암호로 불러오면 비�
 한계는 정상 종료와 재시작만 다룬다는 점이에요. 트랜잭션 중 프로세스 강제 종료, 전원 손실, 동시 렌더러, 원격 sync, 다른 OS, 설치된 프로덕션 빌드는 검증하지 않았어요.
 
 확장 runner의 stale 기대값 거부 단계는 1.9.49에서 PASS했어요. 실제 native `write_app_state_records`로 다른 변경을 넣어 renderer 기대값을 stale로 만들고, UI 동기화 받기 동작에서 실제 SQLite guard가 거부하고 충돌 안내를 표시하며 외부 DB 변경·기존 project·cache가 그대로 남는 것을 확인했어요(`staleRestoreRejected`·`concurrentDataPreserved`·`conflictMessageShown` 모두 true).
-이어서 페이지를 새로고침한 뒤 새 확인을 거쳐 복원을 다시 시도했어요. 이 리포트는 `dist/native-sync-smoke/5972097d-8ab3-452c-b569-06fad551ed74/report.json`이고 완료 시각은 `2026-10-12T02:03:52.107Z`, WebView2 154.0.4258.62, `pageErrors: 0`예요. `runnerSha256`(`f4409a1b...80ba`)은 현재 runner 스크립트와 일치하고, 요약 receipt는 [workspace-sync-native-conflict-2026-10-12.json](workspace-sync-native-conflict-2026-10-12.json)이에요.
+이어서 페이지를 새로고침한 뒤 새 확인을 거쳐 복원을 다시 시도했어요. 이 리포트는 `dist/native-sync-smoke/5972097d-8ab3-452c-b569-06fad551ed74/report.json`이고 완료 시각은 `2026-10-12T02:03:52.107Z`, WebView2 154.0.4258.62, `pageErrors: 0`예요. `runnerSha256`(`f4409a1b...80ba`)은 당시 runner 스크립트와 일치하고, 요약 receipt는 [workspace-sync-native-conflict-2026-10-12.json](workspace-sync-native-conflict-2026-10-12.json)이에요.
 이 단계는 renderer 한 개에서 native 쓰기로 외부 변경을 주입한 stale guard 검사이고, 두 창이 동시에 경합하는지는 검사하지 않아요. 위 한계 목록은 그대로예요.

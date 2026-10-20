@@ -8,7 +8,9 @@
 	import PageTitleRow from '#lib/ui/PageTitleRow.svelte';
 	import BriefsPanel from '#lib/briefs/BriefsPanel.svelte';
 	import { briefMessages } from '#lib/briefs/brief-messages.ts';
+	import { createBriefEditorDraftStore } from '#lib/briefs/brief-editor-drafts.ts';
 
+	const editorDrafts = createBriefEditorDraftStore();
 	let appearance = $state(createDefaultAppearanceSettings());
 	let registry = $state(createEmptyWorkspaceRegistry());
 	let workspace = $derived(getActiveWorkspace(registry));
@@ -26,6 +28,6 @@
 <main class="workduck-page workduck-page--entity">
 	<header class="workduck-page-header"><PageTitleRow {title} /></header>
 	<WorkspaceGate>
-		{#if workspace}{#key `${workspace.id}:${workspace.path}`}<BriefsPanel {workspace} languageId={appearance.languageId} />{/key}{/if}
+		{#if workspace}{#key `${workspace.id}:${workspace.path}`}<BriefsPanel {workspace} {editorDrafts} languageId={appearance.languageId} />{/key}{/if}
 	</WorkspaceGate>
 </main>

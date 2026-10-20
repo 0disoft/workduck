@@ -4,12 +4,77 @@ use super::commands::{
 };
 use super::*;
 
+fn refresh_running_task_run_records(
+    records: Vec<ProjectRepositoryTaskRunRecord>,
+    collect_processes: impl FnOnce() -> Result<Vec<LiveTaskProcess>, ProjectRepositoryTaskError>,
+) -> Vec<ProjectRepositoryTaskRunRecord> {
+    refresh_running_task_run_records_with_budget(
+        records,
+        collect_processes,
+        history::MAX_HISTORY_BYTES,
+    )
+}
+
+#[test]
+fn oversized_task_record_writes_preserve_the_last_readable_record() {
+    let directory = tempfile::tempdir().unwrap();
+    let path = directory.path().join("run.json");
+    let record = ProjectRepositoryTaskRunRecord {
+        record_path: path.to_string_lossy().into_owned(),
+        ..task_run_record(
+            "run",
+            &directory.path().to_string_lossy(),
+            "2026-10-10T00:00:00Z",
+        )
+    };
+    assert!(write_task_run_record(&path, &record).is_ok());
+    let original = fs::read(&path).unwrap();
+    let oversized = ProjectRepositoryTaskRunRecord {
+        output_tail: Some("\u{0001}".repeat(200_000)),
+        ..record
+    };
+    assert!(matches!(
+        write_task_run_record(&path, &oversized),
+        Err(ProjectRepositoryTaskError::RecordWriteFailed)
+    ));
+    assert_eq!(fs::read(&path).unwrap(), original);
+}
+
+#[cfg(target_os = "windows")]
+#[test]
+fn staged_powershell_process_identity_rejects_reused_pids_and_malformed_loaders() {
+    let record = task_run_record("run-original", "C:/workspace/repo", "2026-10-10T00:00:00Z");
+    let path = Path::new("C:/workspace/repo/script.tmp");
+    let loader = create_powershell_script_loader(path, &record.id);
+    let process = live_task_process(42, None, &encoded_powershell_command_line(&loader));
+    assert!(live_process_matches_task_record(&process, &record));
+    let replacement = ProjectRepositoryTaskRunRecord {
+        id: "run-replacement".into(),
+        ..record.clone()
+    };
+    assert!(!live_process_matches_task_record(&process, &replacement));
+    let malformed = live_task_process(
+        42,
+        None,
+        &encoded_powershell_command_line(
+            "$workduckTaskRunId = 'run-original'; Write-Output 'C:/workspace/repo';",
+        ),
+    );
+    assert!(!live_process_matches_task_record(&malformed, &record));
+    let quoted_path = Path::new("C:/workspace/$workduckTaskRunId = 'quoted'");
+    let direct = create_powershell_script(quoted_path, Some("Write-Output 'ok'"), Some(&record));
+    assert!(live_process_matches_task_record(
+        &live_task_process(42, None, &encoded_powershell_command_line(&direct)),
+        &record
+    ));
+}
+
 #[test]
 fn reconciliation_cannot_write_to_a_path_supplied_inside_a_record() {
     let temp = tempfile::tempdir().unwrap();
     let workspace = fs::canonicalize(temp.path()).unwrap();
     let visible = crate::git_path::git_process_path(&workspace);
-    let path = workspace.join("run.json");
+    let path = workspace.join("running.json");
     let unrelated = workspace.join("unrelated.json");
     fs::write(&unrelated, b"preserve unrelated file").unwrap();
     let mut running = task_run_record(
@@ -27,7 +92,7 @@ fn reconciliation_cannot_write_to_a_path_supplied_inside_a_record() {
     assert_eq!(records[0].state, "stopped");
     assert_eq!(fs::read(&unrelated).unwrap(), b"preserve unrelated file");
     let stored: serde_json::Value = serde_json::from_slice(&fs::read(&path).unwrap()).unwrap();
-    assert_eq!(stored["state"], "stopped");
+    assert_eq!(stored["state"], "running");
 }
 
 #[test]
@@ -45,7 +110,64 @@ fn completed_records_do_not_enumerate_system_processes() {
 }
 
 #[test]
-fn reconciliation_writes_only_newly_stopped_records() {
+fn latest_task_records_ignore_copies_with_mismatched_identity() {
+    let temp = tempfile::tempdir().unwrap();
+    let workspace = fs::canonicalize(temp.path()).unwrap();
+    let visible = crate::git_path::git_process_path(&workspace);
+    let dir = task_run_record_dir(&workspace);
+    fs::create_dir_all(&dir).unwrap();
+    let completed = task_run_record(
+        "build-1",
+        &visible.join("repo").to_string_lossy(),
+        "2026-10-01T00:00:00Z",
+    );
+    fs::write(
+        dir.join("build-1.json"),
+        serde_json::to_vec(&completed).unwrap(),
+    )
+    .unwrap();
+    let mut copied = completed.clone();
+    copied.started_at = "2026-10-02T00:00:00Z".into();
+    copied.state = "failed".into();
+    copied.exit_code = Some(1);
+    let copy_path = dir.join("build-1-backup.json");
+    let copy_bytes = serde_json::to_vec(&copied).unwrap();
+    fs::write(&copy_path, &copy_bytes).unwrap();
+
+    let latest = read_latest_cached_task_run_records(&dir, &visible)
+        .unwrap_or_else(|_| panic!("read latest records"));
+    assert_eq!(latest.len(), 1);
+    assert_eq!(latest[0].started_at, completed.started_at);
+    assert_eq!(latest[0].exit_code, Some(0));
+    let selected = history::read_selected_task_run_records(&workspace, &[latest[0].id.clone()])
+        .unwrap_or_else(|_| panic!("read displayed run by identity"));
+    assert_eq!(selected[0].started_at, latest[0].started_at);
+    assert_eq!(selected[0].exit_code, latest[0].exit_code);
+    assert_eq!(fs::read(&copy_path).unwrap(), copy_bytes);
+}
+
+#[test]
+fn latest_task_records_reject_ids_that_history_cannot_select() {
+    let temp = tempfile::tempdir().unwrap();
+    let workspace = fs::canonicalize(temp.path()).unwrap();
+    let visible = crate::git_path::git_process_path(&workspace);
+    for id in ["", "실행-1", "run.with.dots"] {
+        let path = workspace.join(format!("{id}.json"));
+        let completed = task_run_record(
+            id,
+            &visible.join("repo").to_string_lossy(),
+            "2026-10-01T00:00:00Z",
+        );
+        fs::write(&path, serde_json::to_vec(&completed).unwrap()).unwrap();
+        assert!(
+            read_visible_task_run_record(&path, &visible).is_none(),
+            "unselectable run ID: {id:?}"
+        );
+    }
+}
+
+#[test]
+fn reconciliation_preserves_both_stored_and_projected_stopped_records() {
     let temp = tempfile::tempdir().unwrap();
     let old_path = temp.path().join("already-stopped.json");
     let new_path = temp.path().join("running.json");
@@ -62,18 +184,18 @@ fn reconciliation_writes_only_newly_stopped_records() {
     running.exit_code = None;
     running.record_path = new_path.to_string_lossy().into_owned();
     let original = serde_json::to_vec(&old).unwrap();
+    let original_running = serde_json::to_vec(&running).unwrap();
     fs::write(&old_path, &original).unwrap();
-    fs::write(&new_path, serde_json::to_vec(&running).unwrap()).unwrap();
+    fs::write(&new_path, &original_running).unwrap();
     let records = refresh_running_task_run_records(vec![old, running], || Ok(Vec::new()));
     assert!(records.iter().all(|record| record.state == "stopped"));
     assert_eq!(fs::read(old_path).unwrap(), original);
-    let updated: serde_json::Value = serde_json::from_slice(&fs::read(new_path).unwrap()).unwrap();
-    assert_eq!(updated["state"], "stopped");
-    assert!(updated["finishedAt"].is_string());
+    assert_eq!(fs::read(new_path).unwrap(), original_running);
+    assert!(records[1].finished_at.is_some());
 }
 
 #[test]
-fn stopped_record_reads_preserve_the_file_and_populate_a_stable_cache() {
+fn projected_stopped_reads_preserve_the_file_and_populate_a_stable_cache() {
     let temp = tempfile::tempdir().unwrap();
     let workspace = fs::canonicalize(temp.path()).unwrap();
     let visible = crate::git_path::git_process_path(&workspace);
@@ -85,7 +207,9 @@ fn stopped_record_reads_preserve_the_file_and_populate_a_stable_cache() {
         &visible.join("repo").to_string_lossy(),
         "2026-10-01T00:00:00Z",
     );
-    stopped.state = "stopped".into();
+    stopped.state = "running".into();
+    stopped.finished_at = None;
+    stopped.exit_code = None;
     stopped.record_path = path.to_string_lossy().into_owned();
     let original = serde_json::to_vec(&stopped).unwrap();
     fs::write(&path, &original).unwrap();
@@ -99,7 +223,73 @@ fn stopped_record_reads_preserve_the_file_and_populate_a_stable_cache() {
     let cache = workspace_task_run_record_cache(&dir).unwrap_or_else(|_| panic!("workspace cache"));
     let cache = cache.lock().unwrap();
     let metadata = fs::metadata(&dir).unwrap();
-    assert!(cache.is_fresh(metadata.len(), metadata.modified().ok()));
+    assert!(cache.is_fresh(&dir, metadata.len(), metadata.modified().ok()));
+}
+
+#[test]
+fn cached_completed_record_changes_are_visible_without_directory_changes() {
+    let temp = tempfile::tempdir().unwrap();
+    let workspace = fs::canonicalize(temp.path()).unwrap();
+    let visible = crate::git_path::git_process_path(&workspace);
+    let dir = task_run_record_dir(&workspace);
+    fs::create_dir_all(&dir).unwrap();
+    let path = dir.join("completed.json");
+    let mut record = task_run_record(
+        "completed",
+        &visible.join("repo").to_string_lossy(),
+        "2026-10-01T00:00:00Z",
+    );
+    record.record_path = path.to_string_lossy().into_owned();
+    fs::write(&path, serde_json::to_vec(&record).unwrap()).unwrap();
+    let initial = read_latest_cached_task_run_records(&dir, &visible)
+        .unwrap_or_else(|_| panic!("read initial completed record"));
+    assert_eq!(initial[0].state, "succeeded");
+    let directory_modified = fs::metadata(&dir).unwrap().modified().unwrap();
+
+    record.state = "failed".into();
+    record.exit_code = Some(1);
+    record.output_tail = Some("updated execution result".into());
+    fs::write(&path, serde_json::to_vec(&record).unwrap()).unwrap();
+    assert_eq!(
+        fs::metadata(&dir).unwrap().modified().unwrap(),
+        directory_modified
+    );
+    let updated = read_latest_cached_task_run_records(&dir, &visible)
+        .unwrap_or_else(|_| panic!("read updated completed record"));
+    assert_eq!(updated[0].state, "failed");
+    assert_eq!(updated[0].exit_code, Some(1));
+    assert_eq!(updated[0].output_tail, record.output_tail);
+}
+
+#[test]
+fn transient_invalid_record_does_not_remain_hidden_in_the_cache() {
+    let temp = tempfile::tempdir().unwrap();
+    let workspace = fs::canonicalize(temp.path()).unwrap();
+    let visible = crate::git_path::git_process_path(&workspace);
+    let dir = task_run_record_dir(&workspace);
+    fs::create_dir_all(&dir).unwrap();
+    let path = dir.join("completed.json");
+    fs::write(&path, b"{").unwrap();
+    let initial = read_latest_cached_task_run_records(&dir, &visible)
+        .unwrap_or_else(|_| panic!("read partially written record"));
+    assert!(initial.is_empty());
+    let directory_modified = fs::metadata(&dir).unwrap().modified().unwrap();
+
+    let record = task_run_record(
+        "completed",
+        &visible.join("repo").to_string_lossy(),
+        "2026-10-01T00:00:00Z",
+    );
+    fs::write(&path, serde_json::to_vec(&record).unwrap()).unwrap();
+    assert_eq!(
+        fs::metadata(&dir).unwrap().modified().unwrap(),
+        directory_modified
+    );
+    let recovered = read_latest_cached_task_run_records(&dir, &visible)
+        .unwrap_or_else(|_| panic!("reread completed record"));
+    assert_eq!(recovered.len(), 1);
+    assert_eq!(recovered[0].id, "completed");
+    assert_eq!(recovered[0].state, "succeeded");
 }
 
 #[test]
@@ -151,7 +341,7 @@ fn latest_task_run_records_use_id_as_timestamp_tie_breaker() {
     assert_eq!(records[0].id, "repo-a-2");
 }
 
-fn task_run_record(
+pub(super) fn task_run_record(
     id: &str,
     repository_path: &str,
     started_at: &str,
@@ -468,7 +658,7 @@ fn install_dependency_commands_skip_local_file_package_targets() {
         commands,
         vec![
             "bun install",
-            "Push-Location -LiteralPath 'apps/workbench'; bun install; Pop-Location"
+            "Push-Location -LiteralPath 'apps/workbench' -ErrorAction Stop; try { bun install } finally { Pop-Location }"
         ]
     );
 
@@ -477,33 +667,76 @@ fn install_dependency_commands_skip_local_file_package_targets() {
 
 #[cfg(target_os = "windows")]
 #[test]
-fn powershell_script_executes_each_tracked_command_line_once() {
-    let run_record = ProjectRepositoryTaskRunRecord {
-        command:
-            "bun install\nPush-Location -LiteralPath 'apps/workbench'; bun install; Pop-Location"
-                .to_owned(),
-        ..task_run_record(
-            "repo-a-install",
-            "C:/workspace/repo-a",
-            "2026-05-23T01:00:00Z",
-        )
-    };
-    let script = create_powershell_script(
-        Path::new("C:/workspace/repo-a"),
-        Some(&run_record.command),
-        Some(&run_record),
-    );
+fn attaching_task_process_identity_never_overwrites_a_completed_record() {
+    for state in ["succeeded", "failed"] {
+        let workspace = tempfile::tempdir().unwrap();
+        let path = workspace.path().join("run.json");
+        let mut completed = task_run_record("run", "C:/workspace/repo", "2026-10-10T00:00:00Z");
+        completed.state = state.into();
+        completed.exit_code = Some(if state == "failed" { 7 } else { 0 });
+        completed.record_path = path.to_string_lossy().into_owned();
+        write_task_run_record(&path, &completed).unwrap_or_else(|_| panic!("save completed run"));
+        let bytes = fs::read(&path).unwrap();
+        let mut launched = ProjectRepositoryTaskRunRecord {
+            state: "running".into(),
+            finished_at: None,
+            exit_code: None,
+            ..completed
+        };
+        attach_task_process_id(&mut launched, Some(42));
+        assert_eq!(launched.process_id, Some(42));
+        assert_eq!(fs::read(&path).unwrap(), bytes, "{state}");
+    }
+}
 
-    assert!(script.contains("Write-Host 'Workduck: bun install'"));
-    assert!(script.contains(
-        "Write-Host 'Workduck: Push-Location -LiteralPath ''apps/workbench''; bun install; Pop-Location'"
-    ));
-    assert!(script.contains("$workduckCommand = 'bun install';"));
-    assert!(script.contains(
-        "$workduckCommand = 'Push-Location -LiteralPath ''apps/workbench''; bun install; Pop-Location';"
-    ));
-    assert!(script.contains("command = $workduckRecordCommand;"));
-    assert!(!script.contains("Invoke-Expression $workduckRecordCommand"));
+#[test]
+fn newly_created_tasks_wait_for_process_registration_without_rewriting_the_record() {
+    for task in [
+        ProjectRepositoryTask::InstallDependencies,
+        ProjectRepositoryTask::UpdateDependencies,
+        ProjectRepositoryTask::StartDevServer,
+        ProjectRepositoryTask::Build,
+        ProjectRepositoryTask::Preview,
+    ] {
+        let temp = tempfile::tempdir().unwrap();
+        let workspace = fs::canonicalize(temp.path()).unwrap();
+        let record = create_task_run_record(&workspace, &workspace, task, "command")
+            .unwrap_or_else(|_| panic!("create task run"));
+        let original = fs::read(&record.record_path).unwrap();
+        let records = refresh_running_task_run_records(vec![record], || Ok(Vec::new()));
+        assert_eq!(records[0].state, "running", "{}", task.as_str());
+        assert_eq!(records[0].process_id, None);
+        assert_eq!(records[0].finished_at, None);
+        assert_eq!(fs::read(&records[0].record_path).unwrap(), original);
+    }
+}
+
+#[test]
+fn process_registration_grace_does_not_preserve_stale_invalid_or_tracked_runs() {
+    let now = OffsetDateTime::now_utc();
+    for (started_at, process_id) in [
+        (
+            (now - time::Duration::seconds(31))
+                .format(&Rfc3339)
+                .unwrap(),
+            None,
+        ),
+        ("invalid".into(), None),
+        (
+            (now + time::Duration::minutes(1)).format(&Rfc3339).unwrap(),
+            None,
+        ),
+        (now.format(&Rfc3339).unwrap(), Some(42)),
+    ] {
+        let mut record = task_run_record("build", "C:/workspace/repo", &started_at);
+        record.state = "running".into();
+        record.process_id = process_id;
+        record.exit_code = None;
+        record.finished_at = None;
+        let records = reconcile_running_task_run_records(vec![record], Some(&[]));
+        assert_eq!(records[0].state, "stopped", "{started_at} {process_id:?}");
+        assert!(records[0].finished_at.is_some());
+    }
 }
 
 #[test]
@@ -535,6 +768,98 @@ fn running_dev_server_records_stop_when_process_id_was_reused() {
 
     assert_eq!(records[0].state, "stopped");
     assert!(records[0].finished_at.is_some());
+}
+
+#[cfg(target_os = "windows")]
+#[test]
+fn running_dev_server_records_stop_when_other_processes_replace_the_tracked_run() {
+    let record = ProjectRepositoryTaskRunRecord {
+        task: "start-dev-server".into(),
+        state: "running".into(),
+        process_id: Some(42),
+        command: "bun run dev".into(),
+        exit_code: None,
+        finished_at: None,
+        ..task_run_record(
+            "original-run",
+            "C:/workspace/repo-a",
+            "2026-05-23T01:00:00Z",
+        )
+    };
+    let original_terminal = encoded_powershell_command_line(&create_powershell_script(
+        Path::new(&record.repository_path),
+        Some(&record.command),
+        Some(&record),
+    ));
+    let replacement = ProjectRepositoryTaskRunRecord {
+        id: "replacement-run".into(),
+        ..record.clone()
+    };
+    let replacement_terminal = encoded_powershell_command_line(&create_powershell_script(
+        Path::new(&replacement.repository_path),
+        Some(&replacement.command),
+        Some(&replacement),
+    ));
+    for processes in [
+        vec![
+            live_task_process(42, None, "powershell"),
+            live_task_process(43, Some(42), "node unrelated.js"),
+        ],
+        vec![
+            live_task_process(42, None, &replacement_terminal),
+            live_task_process(43, Some(42), "bun run dev"),
+        ],
+        vec![live_task_process(
+            99,
+            None,
+            "node C:/workspace/repo-a/node_modules/vite/bin/vite.js",
+        )],
+        vec![
+            live_task_process(42, None, &original_terminal),
+            live_task_process(
+                99,
+                None,
+                "node C:/workspace/repo-a/node_modules/vite/bin/vite.js",
+            ),
+        ],
+    ] {
+        let records = reconcile_running_task_run_records(vec![record.clone()], Some(&processes));
+        assert_eq!(records[0].state, "stopped");
+        assert!(records[0].finished_at.is_some());
+    }
+}
+
+#[cfg(target_os = "windows")]
+#[test]
+fn running_dev_server_records_match_their_run_id_and_nested_children() {
+    let record = ProjectRepositoryTaskRunRecord {
+        task: "start-dev-server".into(),
+        state: "running".into(),
+        process_id: Some(42),
+        command: "bun run dev".into(),
+        exit_code: None,
+        finished_at: None,
+        ..task_run_record(
+            "original-run",
+            "C:/workspace/repo-a",
+            "2026-05-23T01:00:00Z",
+        )
+    };
+    let terminal = encoded_powershell_command_line(&create_powershell_script(
+        Path::new(&record.repository_path),
+        Some(&record.command),
+        Some(&record),
+    ));
+    let records = reconcile_running_task_run_records(
+        vec![record],
+        Some(&[
+            live_task_process(42, None, &terminal),
+            live_task_process(43, Some(42), "cmd.exe /c bun run dev"),
+            live_task_process(44, Some(43), "node server.js"),
+        ]),
+    );
+    assert_eq!(records[0].state, "running");
+    assert_eq!(records[0].finished_at, None);
 }
 
 #[test]
@@ -678,6 +1003,46 @@ fn running_dependency_update_records_stay_running_when_encoded_terminal_matches_
 }
 
 #[test]
+#[cfg(target_os = "windows")]
+fn running_dependency_update_records_require_their_own_embedded_run_id() {
+    for (task, command) in [
+        ("install-dependencies", "bun install"),
+        ("update-dependencies", "bun update"),
+        ("build", "bun run build"),
+    ] {
+        let record = ProjectRepositoryTaskRunRecord {
+            task: task.into(),
+            state: "running".into(),
+            process_id: Some(42),
+            command: command.into(),
+            exit_code: None,
+            finished_at: None,
+            ..task_run_record(
+                "original-run",
+                "C:/workspace/repo-a",
+                "2026-05-23T01:00:00Z",
+            )
+        };
+        for (id, expected) in [("original-run", "running"), ("replacement-run", "stopped")] {
+            let launched = ProjectRepositoryTaskRunRecord {
+                id: id.into(),
+                ..record.clone()
+            };
+            let terminal = encoded_powershell_command_line(&create_powershell_script(
+                Path::new(&launched.repository_path),
+                Some(&launched.command),
+                Some(&launched),
+            ));
+            let records = reconcile_running_task_run_records(
+                vec![record.clone()],
+                Some(&[live_task_process(42, None, &terminal)]),
+            );
+            assert_eq!(records[0].state, expected, "{task}: {id}");
+        }
+    }
+}
+
+#[test]
 fn running_dependency_update_records_stop_when_process_id_was_reused() {
     let records = reconcile_running_task_run_records(
         vec![ProjectRepositoryTaskRunRecord {
@@ -700,17 +1065,9 @@ fn running_dependency_update_records_stop_when_process_id_was_reused() {
 }
 
 #[test]
-fn reconciled_stopped_records_are_persisted_to_disk() {
-    let unique = current_task_run_timestamp()
-        .chars()
-        .filter(|character| character.is_ascii_alphanumeric())
-        .collect::<String>();
-    let temp_dir = std::env::temp_dir().join(format!(
-        "workduck-task-run-reconcile-{}-{unique}",
-        std::process::id()
-    ));
-    fs::create_dir_all(&temp_dir).expect("create temp dir");
-    let record_path = temp_dir.join("repo_task_update.json");
+fn completion_published_during_process_enumeration_is_preserved() {
+    let temp = tempfile::tempdir().unwrap();
+    let record_path = temp.path().join("repo-a-update.json");
     let running_record = ProjectRepositoryTaskRunRecord {
         task: ProjectRepositoryTask::UpdateDependencies
             .as_str()
@@ -727,18 +1084,27 @@ fn reconciled_stopped_records_are_persisted_to_disk() {
     };
     assert!(write_task_run_record(&record_path, &running_record).is_ok());
 
-    let stopped_record = stopped_task_run_record(&running_record);
-    persist_reconciled_task_run_records(&[stopped_record]);
+    let completed = ProjectRepositoryTaskRunRecord {
+        state: "succeeded".into(),
+        exit_code: Some(0),
+        finished_at: Some(current_task_run_timestamp()),
+        output_tail: Some("완료 ✓".into()),
+        // A reread must retain the path supplied by the original file reader.
+        record_path: "untrusted-final-path.json".into(),
+        ..running_record.clone()
+    };
+    let mut completed_bytes = vec![0xef, 0xbb, 0xbf];
+    completed_bytes.extend(serde_json::to_vec(&completed).unwrap());
+    let records = refresh_running_task_run_records(vec![running_record], || {
+        fs::write(&record_path, &completed_bytes).unwrap();
+        Ok(Vec::new())
+    });
 
-    let persisted_json = fs::read_to_string(&record_path).expect("read persisted record");
-    let persisted_record = serde_json::from_str::<ProjectRepositoryTaskRunRecord>(&persisted_json)
-        .expect("parse persisted record");
-
-    assert_eq!(persisted_record.state, "stopped");
-    assert_eq!(persisted_record.process_id, Some(42));
-    assert!(persisted_record.finished_at.is_some());
-
-    fs::remove_dir_all(temp_dir).expect("remove temp dir");
+    assert_eq!(records[0].state, "succeeded");
+    assert_eq!(records[0].exit_code, Some(0));
+    assert_eq!(records[0].output_tail, completed.output_tail);
+    assert_eq!(records[0].record_path, record_path.to_string_lossy());
+    assert_eq!(fs::read(&record_path).unwrap(), completed_bytes);
 }
 
 #[test]

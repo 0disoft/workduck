@@ -2,7 +2,7 @@ import type { WorkduckQueueWorkOrder } from './queue-artifacts';
 import type { QueueFolderError } from './queue-folder';
 import type { QueueCardEntry } from './queue-panel-types';
 import type { QueueCompletedReportNotifications } from './queue-completed-report-notifications';
-import { dispatchQueueFilesChanged } from './queue-read-state';
+import { dispatchQueueFilesChanged, pruneQueueReadFilePaths } from './queue-read-state';
 import { saveQueuePanelReadFilePaths } from './queue-panel-read-state-workflow';
 import { loadQueueFilesForWorkspace } from './workflows/queue-refresh';
 
@@ -23,6 +23,8 @@ export interface QueuePanelRefreshInput {
 	readonly workspacePath: string;
 	readonly currentFiles: readonly QueueCardEntry[];
 	readonly currentReadFilePaths: readonly string[];
+	readonly readCurrentReadFilePaths: () => readonly string[];
+	readonly isCurrent: () => boolean;
 	readonly selectedWorkOrder: WorkduckQueueWorkOrder | null;
 	readonly recoverStaleRunning: boolean;
 	readonly completedReportNotifications: QueueCompletedReportNotifications;
@@ -31,7 +33,7 @@ export interface QueuePanelRefreshInput {
 
 export async function refreshQueuePanelFiles(
 	input: QueuePanelRefreshInput
-): Promise<QueuePanelRefreshResult> {
+): Promise<QueuePanelRefreshResult | null> {
 	const result = await loadQueueFilesForWorkspace({
 		workspacePath: input.workspacePath,
 		currentFiles: input.currentFiles,
@@ -39,23 +41,31 @@ export async function refreshQueuePanelFiles(
 		recoverStaleRunning: input.recoverStaleRunning
 	});
 
+	if (!input.isCurrent()) return null;
 	if (!result.ok) {
 		return result;
 	}
 
-	const readFilePaths = result.readFilePathsChanged
+	const currentReadFilePaths = input.readCurrentReadFilePaths();
+	const prunedReadFilePaths = pruneQueueReadFilePaths(currentReadFilePaths, result.files);
+	const readFilePaths = prunedReadFilePaths.length !== currentReadFilePaths.length
 		? saveQueuePanelReadFilePaths({
 				workspaceId: input.workspaceId,
-				readFilePaths: result.readFilePaths
+				readFilePaths: prunedReadFilePaths
 			})
-		: input.currentReadFilePaths;
+		: currentReadFilePaths;
+	const readFilePathSet = new Set(readFilePaths);
+	const files = result.files.map((file) => ({
+		...file,
+		isRead: readFilePathSet.has(file.relativePath)
+	}));
 	const selectedWorkOrder = applyRecoveredSelectedWorkOrder(
 		input.selectedWorkOrder,
 		result.recoveredStaleRunningWorkOrders
 	);
 
 	input.completedReportNotifications.notifyNewReports(
-		result.files,
+		files,
 		input.showCompletedReportNotification
 	);
 
@@ -65,7 +75,7 @@ export async function refreshQueuePanelFiles(
 
 	return {
 		ok: true,
-		files: result.files,
+		files,
 		readFilePaths,
 		selectedWorkOrder
 	};

@@ -4,7 +4,7 @@ import { setTauriInvokeForTest, type TauriInvoke } from '#lib/tauri/tauri-invoke
 import { readProjectRepositoryTaskRunRecords } from '#lib/projects/project-repository-task.ts';
 import { createEmptyBriefRegistry, saveBriefDraft, type BriefRecord } from './brief-registry';
 import { addBriefRunLink, createEmptyBriefRunRegistry, parseBriefRunRegistry, removeBriefRunLink, type BriefRunLink } from './brief-run-registry';
-import { findLinkedReports, findLinkedTask, listBriefRunCandidates, readBriefRunEvidence, type BriefRunEvidence } from './brief-run-evidence';
+import { findLinkedReports, findLinkedTask, findLinkedWorkOrder, listBriefRunCandidates, readBriefRunEvidence, type BriefRunEvidence } from './brief-run-evidence';
 import { readBriefRunRegistry, writeBriefRunRegistry } from './brief-run-storage';
 import { briefRunMessages } from './brief-run-messages';
 import { deriveBriefGate } from './brief-gate';
@@ -23,6 +23,33 @@ const evidence: BriefRunEvidence = {
 	reports: [{ schemaVersion: 'workduck.queue-result-report/v1', ref: { kind: 'queue-result-report', id: 'report-1', label: 'Same title' }, sourceWorkOrder: { kind: 'queue-work-order', id: 'wo-1', label: 'Same title' }, status: 'archived', createdAt: brief.createdAt, tasks: [{ id: 't-1', title: 'Same title', summary: 'Done', filesChanged: ['README.md'], verification: ['All tests passed'], risks: [] }] }]
 };
 
+function mockQueueEvidence(files: readonly { kind: 'work-order' | 'result-report'; content: string | null }[]) {
+	const reads: string[] = [];
+	setTauriInvokeForTest((async (command, args) => {
+		if (command === 'read_project_repository_task_run_records') return { ok: true, records: [] };
+		if (command === 'list_queue_files') return {
+			ok: true, path: 'C:/workspace/queue',
+			files: files.map((file, index) => ({ kind: file.kind, fileName: `${index}.json`, relativePath: `queue/${index}.json` }))
+		};
+		assert.equal(command, 'read_queue_file');
+		const path = String(args?.relativePath);
+		reads.push(path);
+		const content = files[Number(path.match(/\d+/u)?.[0])]?.content;
+		return content === null || content === undefined ? { ok: false, error: 'queue-folder-file-read-failed' }
+			: { ok: true, relativePath: path, content };
+	}) as TauriInvoke);
+	return reads;
+}
+
+function queueReports(count: number) {
+	return Array.from({ length: count }, (_, index) => ({
+		kind: 'result-report' as const,
+		content: JSON.stringify({ ...evidence.reports[0], ref: { ...evidence.reports[0]!.ref, id: `report-${index}` } })
+	}));
+}
+
+const queueLink: BriefRunLink = { ...link, sourceKind: 'queue-work-order', sourceId: 'wo-1' };
+
 describe('Brief run links', () => {
 	afterEach(() => setTauriInvokeForTest(undefined));
 	test('roundtrips immutable link-time instructions and rejects duplicate links', () => {
@@ -40,6 +67,34 @@ describe('Brief run links', () => {
 	});
 	test('does not confuse case-sensitive Unix paths', () => {
 		assert.equal(findLinkedTask(link, '/workspace', { ...evidence, taskRuns: [{ ...evidence.taskRuns[0]!, repositoryPath: '/workspace/projects/Repo' }] }), null);
+	});
+	test('matches Windows drive-root workspaces using case-insensitive path identity', () => {
+		const task = { ...evidence.taskRuns[0]!, repositoryPath: 'c:\\PROJECTS\\REPO\\' };
+		const source = { ...evidence, taskRuns: [task], workOrders: [] };
+		for (const root of ['C:/', 'C:\\', '\\\\?\\C:\\']) {
+			assert.equal(findLinkedTask(link, root, source), task);
+			assert.equal(listBriefRunCandidates(brief, root, source)[0]?.id, task.id);
+			assert.equal(deriveBriefGate(link, root, source).state, 'passed');
+		}
+	});
+	test('keeps literal Unix backslashes distinct from nested directories in evidence and gates', () => {
+		const unixBrief = { ...brief, repositoryPath: 'projects/a\\b' };
+		const unixLink = { ...link, brief: unixBrief };
+		const task = { ...evidence.taskRuns[0]!, repositoryPath: '/workspace/projects/a/b' };
+		const source = { ...evidence, taskRuns: [task], workOrders: [] };
+		assert.equal(findLinkedTask(unixLink, '/workspace', source), null);
+		assert.deepEqual(listBriefRunCandidates(unixBrief, '/workspace', source), []);
+		assert.equal(deriveBriefGate(unixLink, '/workspace', source).state, 'pending');
+		const matchingTask = { ...task, repositoryPath: '/workspace/projects/a\\b' };
+		assert.equal(findLinkedTask(unixLink, '/workspace', { ...source, taskRuns: [matchingTask] }), matchingTask);
+	});
+	test('resolves Unix root paths and rejects sibling workspaces or traversal', () => {
+		const task = { ...evidence.taskRuns[0]!, repositoryPath: '/projects/repo' };
+		assert.equal(findLinkedTask(link, '/', { ...evidence, taskRuns: [task] }), task);
+		for (const path of ['/workspace-other/projects/repo', '/workspace/projects/../repo', '/workspace/./projects/repo']) {
+			const foreign = { ...task, repositoryPath: path };
+			assert.equal(findLinkedTask(link, '/workspace', { ...evidence, taskRuns: [foreign] }), null);
+		}
 	});
 	test('requires exact repository and work-order IDs, not matching report titles', () => {
 		const queueLink: BriefRunLink = { ...link, sourceKind: 'queue-work-order', sourceId: 'wo-1' };
@@ -83,6 +138,72 @@ describe('Brief run links', () => {
 	});
 	test('keeps run messages complete across all six languages', () => {
 		for (const messages of Object.values(briefRunMessages)) assert.deepEqual(Object.keys(messages).sort(), Object.keys(briefRunMessages.en).sort());
+	});
+	test('loads a saved queue source and its reports beyond the 199/200-file boundary', async () => {
+		for (const reportCount of [199, 200, 201]) {
+			const reads = mockQueueEvidence([
+				...queueReports(reportCount), { kind: 'work-order', content: JSON.stringify(evidence.workOrders[0]) }
+			]);
+			const loaded = await readBriefRunEvidence('C:/workspace', undefined, [], ['wo-1', 'wo-1']);
+			assert.equal(reads.length, reportCount + 1);
+			assert.equal(new Set(reads).size, reads.length);
+			assert.equal(findLinkedWorkOrder(queueLink, loaded)?.ref.id, 'wo-1');
+			assert.equal(findLinkedReports(queueLink, loaded).length, reportCount);
+			const foreignLink = { ...queueLink, brief: { ...brief, repository: { ...brief.repository, id: 'another-repository' } } };
+			assert.equal(findLinkedWorkOrder(foreignLink, loaded), null);
+			assert.deepEqual(findLinkedReports(foreignLink, loaded), []);
+			assert.deepEqual(loaded.unresolvedQueueIds, []);
+			assert.equal(deriveBriefGate(queueLink, 'C:/workspace', loaded).reason, 'reportNeedsReview');
+		}
+	});
+	test('keeps discovery bounded when no saved queue source needs lookup', async () => {
+		const reads = mockQueueEvidence([
+			...queueReports(200), { kind: 'work-order', content: JSON.stringify(evidence.workOrders[0]) }
+		]);
+		const loaded = await readBriefRunEvidence('C:/workspace');
+		assert.equal(reads.length, 200);
+		assert.equal(loaded.incomplete, true);
+		assert.deepEqual(listBriefRunCandidates(brief, 'C:/workspace', loaded), []);
+	});
+	test('rejects duplicate saved work-order IDs even beyond the discovery limit', async () => {
+		mockQueueEvidence([
+			{ kind: 'work-order', content: JSON.stringify(evidence.workOrders[0]) }, ...queueReports(200),
+			{ kind: 'work-order', content: JSON.stringify({ ...evidence.workOrders[0], tasks: [{ id: 'other', title: 'Other', body: 'Other', repositoryIds: ['r-other'] }] }) }
+		]);
+		const loaded = await readBriefRunEvidence('C:/workspace', undefined, [], ['wo-1']);
+		assert.deepEqual(loaded.unresolvedQueueIds, []);
+		assert.equal(findLinkedWorkOrder(queueLink, loaded), null);
+		assert.deepEqual(findLinkedReports(queueLink, loaded), []);
+		assert.equal(deriveBriefGate(queueLink, 'C:/workspace', loaded).reason, 'missing');
+	});
+	test('rejects a linked report whose ID is reused by an unrelated source outside discovery', async () => {
+		mockQueueEvidence([
+			{ kind: 'work-order', content: JSON.stringify(evidence.workOrders[0]) },
+			{ kind: 'result-report', content: JSON.stringify(evidence.reports[0]) }, ...queueReports(200).slice(2),
+			{ kind: 'result-report', content: JSON.stringify({ ...evidence.reports[0], sourceWorkOrder: { ...evidence.workOrders[0]!.ref, id: 'other-order' } }) }
+		]);
+		const loaded = await readBriefRunEvidence('C:/workspace', undefined, [], ['wo-1']);
+		assert.equal(findLinkedWorkOrder(queueLink, loaded)?.ref.id, 'wo-1');
+		assert.equal(findLinkedReports(queueLink, loaded).some((report) => report.ref.id === 'report-1'), false);
+	});
+	test('distinguishes a failed or cancelled queue lookup from a verified absent source', async () => {
+		for (const content of [null, '{broken']) {
+			mockQueueEvidence([{ kind: 'work-order', content: JSON.stringify(evidence.workOrders[0]) }, { kind: 'work-order', content }]);
+			const loaded = await readBriefRunEvidence('C:/workspace', undefined, [], ['wo-1']);
+			assert.deepEqual(loaded.unresolvedQueueIds, ['wo-1']);
+			assert.equal(findLinkedWorkOrder(queueLink, loaded), null);
+			assert.equal(deriveBriefGate(queueLink, 'C:/workspace', loaded).reason, 'unavailable');
+		}
+		mockQueueEvidence(Array.from({ length: 8 }, () => ({ kind: 'work-order' as const, content: JSON.stringify(evidence.workOrders[0]) })));
+		const controller = new AbortController();
+		controller.abort();
+		const cancelled = await readBriefRunEvidence('C:/workspace', controller.signal, [], ['wo-1']);
+		assert.deepEqual(cancelled.unresolvedQueueIds, ['wo-1']);
+		assert.equal(deriveBriefGate(queueLink, 'C:/workspace', cancelled).reason, 'unavailable');
+		mockQueueEvidence([]);
+		const absent = await readBriefRunEvidence('C:/workspace', undefined, [], ['wo-1']);
+		assert.deepEqual(absent.unresolvedQueueIds, []);
+		assert.equal(deriveBriefGate(queueLink, 'C:/workspace', absent).reason, 'missing');
 	});
 	test('reloads an older linked build by its ID after a newer repository task appears', async () => {
 		const newest = { ...evidence.taskRuns[0]!, id: 'task-new', state: 'running', exitCode: null, finishedAt: null };

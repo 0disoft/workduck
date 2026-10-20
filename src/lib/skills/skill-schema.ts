@@ -77,6 +77,7 @@ export interface WorkduckSkillOption {
 
 export interface SkillRegistry {
 	readonly version: typeof SKILL_REGISTRY_VERSION;
+	readonly revision: number;
 	readonly workspaceId: string;
 	readonly skills: readonly WorkduckSkillRecord[];
 	readonly updatedAt: string;

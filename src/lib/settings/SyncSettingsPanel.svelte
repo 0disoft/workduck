@@ -14,7 +14,7 @@
 	} from '#lib/workspaces/workspace-storage.ts';
 	import {
 		readProjectRegistries,
-		restoreWorkspaceSyncData,
+		writeWorkspaceSyncRegistries,
 		type ProjectRegistryStorageError
 	} from '#lib/projects/project-storage.ts';
 	import {
@@ -159,7 +159,7 @@
 			.replaceAll('{folderPath}', formatWorkspacePathForDisplay(syncSettings.folderPath));
 	}
 
-	function getSyncErrorMessage(error: SyncPanelError): string {
+	function getSyncErrorMessage(error: SyncPanelError) {
 		switch (error) {
 			case 'workspace-sync-git-action-invalid':
 				return syncMessages.errors.gitActionInvalid;
@@ -250,7 +250,7 @@
 			case 'project-registry-write-failed':
 				return syncMessages.errors.projectWriteFailed;
 			case 'project-registry-revision-conflict':
-				return messages.projects.errors[error];
+				return messages.projects.errors['project-registry-revision-conflict'];
 			case 'workspace-sync-unavailable':
 				return syncMessages.errors.encryptionUnavailable;
 			case 'sync-settings-storage-unavailable':
@@ -523,6 +523,7 @@
 	}
 
 	async function importEncryptedRegistryPayload(payload: string) {
+		if (isBusy) return false;
 		const envelope = parseWorkspaceSyncEnvelope(payload);
 
 		if (envelope === null) {
@@ -537,10 +538,21 @@
 
 		try {
 			const result = await decryptWorkspaceDataFromSync(envelope, syncPassword);
-			if (!result.ok) { syncError = result.error; return false; }
-			const restored = await restoreWorkspaceSyncData(result.data.workspaceRegistry, result.data.projectRegistries);
-			if (!restored.ok) { syncError = restored.error; return false; }
+			if (!result.ok) {
+				syncError = result.error;
+				return false;
+			}
+			const writeResult = await writeWorkspaceSyncRegistries(
+				result.data.workspaceRegistry, result.data.projectRegistries
+			);
+			if (!writeResult.ok) {
+				syncError = writeResult.error;
+				return false;
+			}
 			return true;
+		} catch {
+			syncError = 'project-registry-write-failed';
+			return false;
 		} finally {
 			isBusy = false;
 		}

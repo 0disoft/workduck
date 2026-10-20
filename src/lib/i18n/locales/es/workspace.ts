@@ -21,6 +21,7 @@ export const esWorkspaceMessages = {
 		},
 		pathErrors: {
 			pathRequired: 'Se requiere la ruta del espacio de trabajo.',
+			pathTooLong: 'La ruta del espacio de trabajo es demasiado larga. Elige una ruta de carpeta más corta.',
 			pathNotAbsolute: 'La ruta del espacio de trabajo debe ser una ruta de carpeta absoluta.',
 			pathNotFound: 'La ruta del espacio de trabajo no existe.',
 			pathNotDirectory: 'La ruta del espacio de trabajo debe ser una carpeta.',
@@ -32,6 +33,7 @@ export const esWorkspaceMessages = {
 			pathDuplicate: 'La ruta del espacio de trabajo ya está registrada.',
 			workspaceNotFound: 'No se encontró el espacio de trabajo.',
 			registryReadFailed: 'No se pudo cargar la configuración del espacio de trabajo.',
+			registryConflict: 'La lista de espacios de trabajo cambió en otra ventana. Revisa la lista actual e inténtalo de nuevo.',
 			registryWriteFailed: 'No se pudo guardar la configuración del espacio de trabajo.'
 		}
 	} as const;

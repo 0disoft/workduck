@@ -42,6 +42,8 @@
 	let isUnlocking = $state(false);
 	let isPasswordVisible = $state(false);
 	let nowMs = $state(Date.now());
+	let currentVerification: AbortController | null = null;
+	let verificationTarget = $derived(JSON.stringify([workspace.id, workspace.lock?.passwordHash ?? null]));
 
 	let lockout = $derived(getWorkspaceUnlockLockout(workspace.id, nowMs));
 	let isLocked = $derived(lockout.isLocked || (lockedUntil !== null && lockedUntil > nowMs));
@@ -64,7 +66,25 @@
 			appearanceSettings = nextSettings;
 		});
 
-		return unsubscribeAppearanceSettings;
+		return () => {
+			currentVerification?.abort();
+			unsubscribeAppearanceSettings();
+		};
+	});
+
+	$effect(() => {
+		// A reused form must not finish verification for its previous workspace or lock.
+		verificationTarget;
+		password = '';
+		error = null;
+		attemptsRemaining = null;
+		lockedUntil = null;
+		isPasswordVisible = false;
+		isUnlocking = false;
+		return () => {
+			currentVerification?.abort();
+			currentVerification = null;
+		};
 	});
 
 	function getUnlockMessage() {
@@ -95,6 +115,7 @@
 					String(secondsRemaining)
 				);
 			case null:
+			case 'workspace-unlock-cancelled':
 				return null;
 		}
 	}
@@ -110,9 +131,13 @@
 		error = null;
 		attemptsRemaining = null;
 		lockedUntil = null;
+		const verification = new AbortController();
+		const target = verificationTarget;
+		currentVerification = verification;
 
 		try {
-			const result = await unlockWorkspace(workspace, password, Date.now());
+			const result = await unlockWorkspace(workspace, password, Date.now(), verification.signal);
+			if (verification.signal.aborted || currentVerification !== verification || target !== verificationTarget) return;
 
 			if (!result.ok) {
 				error = result.error;
@@ -125,11 +150,17 @@
 			isPasswordVisible = false;
 			onUnlocked?.();
 		} finally {
-			isUnlocking = false;
+			if (currentVerification === verification) {
+				currentVerification = null;
+				isUnlocking = false;
+			}
 		}
 	}
 
 	function handleCancel() {
+		currentVerification?.abort();
+		currentVerification = null;
+		isUnlocking = false;
 		password = '';
 		error = null;
 		attemptsRemaining = null;
@@ -184,7 +215,6 @@
 			<button
 				class="workduck-button workduck-button-secondary"
 				type="button"
-				disabled={isUnlocking}
 				onclick={handleCancel}
 			>
 				{effectiveCancelLabel}

@@ -11,6 +11,7 @@ import { createEmptyAgentRegistry, type AgentRegistry } from '#lib/agents/agent-
 import { createEmptyAgentEvaluationSummary } from '#lib/agents/agent-evaluation.ts';
 import { createEmptyPersonaRegistry } from '#lib/personas/persona-registry.ts';
 import type { WorkduckQueueResultReport } from './queue-artifacts';
+import { readQueueReadFilePaths, writeQueueReadFilePaths } from './queue-read-state';
 
 await plugin({
 	name: 'queue-controller-runes',
@@ -201,6 +202,57 @@ describe('Queue controller workspace ownership', () => {
 		} finally { oldRead.resolve(); harness.dispose(); }
 	});
 
+	test('preserves files marked read while a refresh is pending and prunes removed files', async () => {
+		const pendingList = deferred<void>();
+		let delayList = false;
+		setTauriInvokeForTest(async <T>(command: string) => {
+			if (command === 'list_queue_files') {
+				if (delayList) await pendingList.promise;
+				return response<T>({ ok: true, path: workspace('old').path + '/queue', files: [oldCard] });
+			}
+			if (command === 'read_queue_file') return response<T>({ ok: true, relativePath: oldCard.relativePath, content: oldContent });
+			return response<T>(command === 'read_project_registry' ? { ok: true, registryJson: null } : { ok: false });
+		});
+		writeQueueReadFilePaths('old', ['work-orders/removed.workduck-work-order.json']);
+		const harness = createQueuePanelControllerHarness(workspace('old'));
+		let refreshing: Promise<void> | undefined;
+		try {
+			await settleEffects();
+			delayList = true;
+			refreshing = harness.controller.refreshQueueFiles();
+			harness.controller.handleQueueCardClick(oldCard);
+			await settleEffects();
+			assert.deepEqual(readQueueReadFilePaths('old'), [oldCard.relativePath]);
+			pendingList.resolve();
+			await refreshing;
+			assert.deepEqual(readQueueReadFilePaths('old'), [oldCard.relativePath]);
+			assert.equal(harness.controller.files[0]?.isRead, true);
+			harness.controller.queueReadFilter = 'unread';
+			assert.equal(harness.controller.filteredFiles.length, 0);
+		} finally { pendingList.resolve(); await refreshing; harness.dispose(); }
+	});
+
+	test('does not prune read markers from an abandoned workspace refresh', async () => {
+		const oldList = deferred<void>();
+		writeQueueReadFilePaths('old', [oldCard.relativePath]);
+		setTauriInvokeForTest(async <T>(command: string, args?: Record<string, unknown>) => {
+			if (command === 'list_queue_files') {
+				if (args?.workspacePath === workspace('old').path) await oldList.promise;
+				return response<T>({ ok: true, path: String(args?.workspacePath) + '/queue', files: [] });
+			}
+			return response<T>(command === 'read_project_registry' ? { ok: true, registryJson: null } : { ok: false });
+		});
+		const harness = createQueuePanelControllerHarness(workspace('old'));
+		try {
+			await settleEffects();
+			harness.setWorkspace(workspace('new'));
+			await settleEffects();
+			oldList.resolve();
+			await settleEffects();
+			assert.deepEqual(readQueueReadFilePaths('old'), [oldCard.relativePath]);
+		} finally { oldList.resolve(); harness.dispose(); }
+	});
+
 	test('lets the new refresh proceed and keeps its busy state when the old refresh finishes', async () => {
 		const oldList = deferred<void>();
 		const newList = deferred<void>();
@@ -300,6 +352,90 @@ describe('Queue controller workspace ownership', () => {
 			assert.equal(harness.controller.isPreviewingPrompt, false);
 		} finally { previewResponse.resolve(); harness.dispose(); }
 	});
+
+	test('opens the latest clicked artifact while ignoring an earlier pending read', async () => {
+		const firstRead = deferred<void>();
+		const second = { ...oldCard, artifactId: 'work-order_second', relativePath: 'work-orders/second.workduck-work-order.json' };
+		setTauriInvokeForTest(async <T>(command: string, args?: Record<string, unknown>) => {
+			if (command === 'read_queue_file') {
+				const isFirst = args?.relativePath === oldCard.relativePath;
+				if (isFirst) await firstRead.promise;
+				const content = JSON.parse(oldContent);
+				content.ref.id = isFirst ? oldCard.artifactId : second.artifactId;
+				return response<T>({ ok: true, relativePath: args?.relativePath, content: JSON.stringify(content) });
+			}
+			return response<T>(command === 'read_project_registry' ? { ok: true, registryJson: null } : { ok: false });
+		});
+		const harness = createQueuePanelControllerHarness(workspace('old'));
+		try {
+			await settleEffects();
+			harness.controller.handleQueueCardClick(oldCard);
+			harness.controller.handleQueueCardClick(second);
+			await settleEffects();
+			assert.equal(harness.controller.selectedWorkOrder?.ref.id, second.artifactId);
+			assert.equal(harness.controller.isReading, false);
+			firstRead.resolve();
+			await settleEffects();
+			assert.equal(harness.controller.selectedWorkOrder?.ref.id, second.artifactId);
+			assert.deepEqual(readQueueReadFilePaths('old'), [second.relativePath]);
+		} finally { firstRead.resolve(); harness.dispose(); }
+	});
+
+	for (const operation of ['complete', 'cancel'] as const) {
+		for (const selection of ['same', 'another', 'clear'] as const) {
+			test(`keeps ${selection} selection when a pending ${operation} finishes`, async () => {
+				const pendingWrite = deferred<void>();
+				const second = { ...oldCard, artifactId: 'work-order_second', relativePath: 'work-orders/second.workduck-work-order.json' };
+				let writeStarted = false;
+				setTauriInvokeForTest(async <T>(command: string, args?: Record<string, unknown>) => {
+					if (command === 'read_queue_file') {
+						const content = JSON.parse(oldContent);
+						content.ref.id = args?.relativePath === second.relativePath ? second.artifactId : oldCard.artifactId;
+						content.status = operation === 'cancel' && content.ref.id === oldCard.artifactId ? 'running' : 'active';
+						return response<T>({ ok: true, relativePath: args?.relativePath, content: JSON.stringify(content) });
+					}
+					if (command === 'update_queue_work_order_file') {
+						writeStarted = true;
+						await pendingWrite.promise;
+						return response<T>({ ok: true, relativePath: args?.relativePath, content: args?.content });
+					}
+					if (command === 'list_queue_files') return response<T>({ ok: true, path: workspace('old').path + '/queue', files: [] });
+					return response<T>(command === 'read_project_registry' ? { ok: true, registryJson: null } : { ok: false });
+				});
+				const harness = createQueuePanelControllerHarness(workspace('old'));
+				let saving: Promise<void> | undefined;
+				try {
+					await settleEffects();
+					const controller = harness.controller;
+					controller.handleQueueCardClick(oldCard);
+					await settleEffects();
+					saving = operation === 'complete' ? controller.handleCompleteWorkOrder() : controller.handleCancelWorkOrderExecution();
+					await settleEffects();
+					assert.equal(writeStarted, true);
+					if (selection === 'clear') controller.handleQueueCardClick(oldCard);
+					else if (selection === 'another') controller.handleQueueCardClick(second);
+					await settleEffects();
+					pendingWrite.resolve();
+					await saving;
+					const expected = selection === 'clear' ? null : selection === 'same' ? oldCard : second;
+					assert.equal(controller.selectedWorkOrder?.ref.id ?? null, expected?.artifactId ?? null);
+					assert.equal(controller.isSelectedQueueFile(oldCard), selection === 'same');
+					assert.equal(controller.isSelectedQueueFile(second), selection === 'another');
+					if (selection === 'same') {
+						assert.equal(controller.selectedWorkOrder?.status, operation === 'complete' ? 'archived' : 'failed');
+						if (operation === 'complete') {
+							assert.equal(controller.status, controller.messages.queue.completedFile.replace('{relativePath}', oldCard.relativePath));
+							await controller.refreshQueueFiles();
+							assert.equal(controller.status, null);
+						}
+					}
+					else assert.equal(controller.status, null);
+					assert.equal(controller.isWriting, false);
+					assert.equal(controller.isCancellingExecution, false);
+				} finally { pendingWrite.resolve(); await saving; harness.dispose(); }
+			});
+		}
+	}
 
 	for (const selection of ['same-report', 'another-report', 'clear'] as const) {
 		test(`keeps ${selection} selection when a pending evaluation save finishes`, async () => {

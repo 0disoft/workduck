@@ -4,7 +4,7 @@ role=Normalize and migrate workspace skill registries while preserving custom sk
 owns=skill registry normalization|legacy skill migration|skill mutations|built-in override detection
 excludes=default prompt authoring|skill persistence|queue execution
 search=skill registry migration|custom skill validation|skill editing
-invariant=Legacy registries receive version-appropriate defaults, current removals persist, and invalid mutations preserve the registry.
+invariant=Stored registries require a supported version, matching workspace, skill collection, and valid revision; legacy revisions start at zero, mutations retain the loaded revision, version-appropriate defaults are migrated, and current removals persist.
 stability=architecture
 */
 import { isObjectRecord } from '#lib/shared/object-record.ts';
@@ -38,6 +38,7 @@ export * from './skill-schema';
 export function createEmptySkillRegistry(workspaceId: string, now = new Date()): SkillRegistry {
 	return {
 		version: SKILL_REGISTRY_VERSION,
+		revision: 0,
 		workspaceId,
 		skills: getDefaultSkills(),
 		updatedAt: now.toISOString()
@@ -79,7 +80,19 @@ export function isDefaultSkillRecord(skill: WorkduckSkillRecord) {
 
 export function parseSkillRegistry(serializedRegistry: string, workspaceId: string) {
 	try {
-		return normalizeSkillRegistry(JSON.parse(serializedRegistry), workspaceId);
+		const value: unknown = JSON.parse(serializedRegistry);
+		if (
+			!isObjectRecord(value) ||
+			!isSupportedSkillRegistryVersion(value.version) ||
+			value.workspaceId !== workspaceId ||
+			!Array.isArray(value.skills) ||
+			(value.revision !== undefined && (
+				typeof value.revision !== 'number' || !Number.isSafeInteger(value.revision) || value.revision < 0
+			))
+		) {
+			return null;
+		}
+		return normalizeSkillRegistry(value, workspaceId);
 	} catch {
 		return null;
 	}
@@ -234,6 +247,7 @@ function normalizeSkillRegistry(value: unknown, workspaceId: string): SkillRegis
 
 	return {
 		version: SKILL_REGISTRY_VERSION,
+		revision: typeof value.revision === 'number' && Number.isSafeInteger(value.revision) && value.revision >= 0 ? value.revision : 0,
 		workspaceId,
 		skills: sortSkills(skills),
 		updatedAt: readTrimmedString(value.updatedAt)

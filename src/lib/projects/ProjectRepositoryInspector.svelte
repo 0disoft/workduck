@@ -7,6 +7,7 @@
 	let { repository, repositoryGitStatus, ...cardProps }: Props = $props();
 </script>
 
+{#key repository.id}
 <aside class="workduck-project-repository-inspector" aria-label="Repository details">
 	{#if repository.path !== null || repositoryGitStatus?.branch != null}
 		<div class="workduck-repository-inspector-meta">
@@ -22,3 +23,4 @@
 	{/if}
 	<ProjectRepositoryCard {...cardProps} {repository} {repositoryGitStatus} />
 </aside>
+{/key}

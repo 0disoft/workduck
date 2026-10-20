@@ -3,8 +3,8 @@ id=workduck.projects.registry-writer
 role=Own pending project registry edits and save feedback within the initiating workspace view lifetime.
 owns=registry write admission|pending and failed registry drafts|save result ownership|workspace view lifetime|conflict recovery
 excludes=registry storage implementation|dialog busy state|repository operations
-search=project registry save|late registry write response|workspace save ownership|concurrent project field edits
-invariant=Edits build on the latest draft, writes compare the last accepted snapshot, conflicts require reload, and only the live initiating view receives feedback.
+search=project registry save|late registry write response|workspace save ownership|concurrent project field edits|project read failure write admission
+invariant=Only a successfully read workspace admits edits; edits build on the latest draft, writes compare the last accepted snapshot, conflicts require reload, and only the live initiating view receives feedback.
 stability=architecture
 */
 import type { WorkspaceRecord } from '#lib/workspaces/workspace-registry.ts';
@@ -15,6 +15,7 @@ import { writeProjectRegistryForBoard } from './project-board-storage-actions';
 interface ProjectBoardRegistryWriterInput {
 	readonly workspace: () => WorkspaceRecord;
 	readonly registry: () => ProjectRegistry;
+	readonly registryReady: () => boolean;
 	readonly update: Parameters<typeof writeProjectRegistryForBoard>[1];
 }
 
@@ -56,7 +57,7 @@ export function createProjectBoardRegistryWriter(input: ProjectBoardRegistryWrit
 			scope === null || nextRegistry.workspaceId !== scope.workspaceId ||
 			scope.workspaceId !== workspaceId || scope.workspacePath !== workspacePath
 		) return false;
-		if (reloadingScope === scope || conflictedScope === scope) return false;
+		if (!input.registryReady() || reloadingScope === scope || conflictedScope === scope) return false;
 		if (draftProjection === null) scope.acceptedRegistry = input.registry();
 		return persistRegistryInScope(scope, nextRegistry, async () => scope.acceptedRegistry!);
 	}
@@ -67,6 +68,7 @@ export function createProjectBoardRegistryWriter(input: ProjectBoardRegistryWrit
 		expectedRegistry: () => Promise<ProjectRegistry>
 	) {
 		if (nextRegistry.workspaceId !== scope.workspaceId || reloadingScope === scope || conflictedScope === scope) return false;
+		if (isCurrentScope(scope) && !input.registryReady()) return false;
 		const projection = { scope, registry: nextRegistry, error: null };
 		if (isCurrentScope(scope)) draftProjection = projection;
 		try {
@@ -88,7 +90,7 @@ export function createProjectBoardRegistryWriter(input: ProjectBoardRegistryWrit
 
 	return Object.assign(persistRegistry, {
 		capture() {
-			const scope = isCurrentScope(activeScope) ? activeScope : null;
+			const scope = isCurrentScope(activeScope) && input.registryReady() ? activeScope : null;
 			const operationWorkspaceId = scope?.workspaceId ?? workspaceId;
 			const operationWorkspacePath = scope?.workspacePath ?? workspacePath;
 			const visibleRegistry = draftProjection !== null && isCurrentScope(draftProjection.scope)

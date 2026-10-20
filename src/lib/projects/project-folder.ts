@@ -34,6 +34,7 @@ export type ProjectFolderError =
 	| 'project-folder-create-failed'
 	| 'project-folder-ssealed-scaffold-failed'
 	| 'project-folder-ssealed-scaffold-locked'
+	| 'project-folder-ssealed-manifest-conflict'
 	| 'project-folder-open-path-required'
 	| 'project-folder-open-path-not-absolute'
 	| 'project-folder-open-path-not-found'
@@ -644,6 +645,7 @@ function isProjectFolderError(value: unknown): value is ProjectFolderError {
 		value === 'project-folder-create-failed' ||
 		value === 'project-folder-ssealed-scaffold-failed' ||
 		value === 'project-folder-ssealed-scaffold-locked' ||
+		value === 'project-folder-ssealed-manifest-conflict' ||
 		value === 'project-folder-open-path-required' ||
 		value === 'project-folder-open-path-not-absolute' ||
 		value === 'project-folder-open-path-not-found' ||

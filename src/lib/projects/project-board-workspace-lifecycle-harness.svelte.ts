@@ -13,6 +13,7 @@ export function createProjectBoardWorkspaceLifecycleHarness(initialWorkspace: Wo
 	let workspace = $state(initialWorkspace);
 	const state = $state({
 		registry: createEmptyProjectRegistry(''),
+		registryReadScope: null as string | null,
 		storageError: null as ProjectRegistryStorageError | null,
 		operationStorageError: null as ProjectRepositoryOperationStorageError | null,
 		folderRepairError: null as ProjectFolderError | null,

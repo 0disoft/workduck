@@ -116,6 +116,8 @@
 		switch (error) {
 			case 'workspace-path-required':
 				return messages.workspace.pathErrors.pathRequired;
+			case 'workspace-path-too-long':
+				return messages.workspace.pathErrors.pathTooLong;
 			case 'workspace-path-not-absolute':
 				return messages.workspace.pathErrors.pathNotAbsolute;
 			case 'workspace-path-not-found':

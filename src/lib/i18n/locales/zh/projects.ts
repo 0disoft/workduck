@@ -275,6 +275,7 @@ export const zhProjectsMessages = {
 		'project-folder-name-invalid': '该名称不能用作文件夹名称。',
 		'project-folder-conflict': '文件夹路径不可用。',
 		'project-folder-create-failed': '无法创建文件夹。',
+		'project-folder-ssealed-manifest-conflict': '现有 ssealed manifest 无效、配置不同或已更改。请检查记录，并使用 ssealed update/upgrade 修改配置。',
 		'project-folder-ssealed-scaffold-failed': '无法创建 ssealed 脚手架。',
 		'project-folder-ssealed-scaffold-locked':
 			'此仓库正在运行另一个 ssealed 操作。请在其完成后重试。',

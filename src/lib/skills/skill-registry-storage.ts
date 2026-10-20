@@ -8,7 +8,7 @@ import {
 import {
 	readWorkspaceDataFile,
 	workspaceDataFilesAreAvailable,
-	writeWorkspaceDataFile,
+	writeWorkspaceRegistryFile,
 	type WorkspaceDataFileError
 } from '#lib/workspaces/workspace-data-file.ts';
 
@@ -81,7 +81,7 @@ export async function readSkillRegistry(
 		if (legacyRegistry.skills.length > 0) {
 			const writeResult = await writeSkillRegistry(legacyRegistry, workspacePath);
 
-			return writeResult.ok ? { ok: true, registry: legacyRegistry } : writeResult;
+			return writeResult;
 		}
 
 		return { ok: true, registry: emptyRegistry };
@@ -103,9 +103,10 @@ export async function writeSkillRegistry(
 	}
 
 	if (workspacePath.length > 0 && workspaceDataFilesAreAvailable()) {
-		const writeResult = await writeWorkspaceDataFile(
+		const writeResult = await writeWorkspaceRegistryFile(
 			workspacePath,
 			SKILL_REGISTRY_FILE_NAME,
+			registry.revision,
 			serializeSkillRegistry(registry)
 		);
 
@@ -117,8 +118,12 @@ export async function writeSkillRegistry(
 			};
 		}
 
-		dispatchSkillRegistryChanged(registry);
-		return { ok: true, registry };
+		const persistedRegistry = parseSkillRegistry(writeResult.content, registry.workspaceId);
+		if (persistedRegistry === null) {
+			return { ok: false, registry, error: 'skill-registry-storage-write-failed' };
+		}
+		dispatchSkillRegistryChanged(persistedRegistry);
+		return { ok: true, registry: persistedRegistry };
 	}
 
 	try {

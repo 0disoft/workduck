@@ -28,6 +28,12 @@ includes:
 - Workspace and project metadata import/export through encrypted sync files.
 - Optional Git pull and push for the encrypted sync file.
 - Appearance settings for language and interface font sizing.
+- Failed native settings initialization can be retried without restarting.
+  Concurrent startup requests share one attempt; failed reads or journal replay
+  preserve pending writes and block changes to fallback settings until recovery.
+  Until initialization succeeds, the main window shows recovery controls instead
+  of mounting workspace content. The tray remains available without initializing
+  settings. Interface loading failures offer a reload.
 - System settings for startup, tray behavior, and workspace inactivity locking.
 - Environment variable vault UI for API keys, tokens, accounts, passwords, and
   tags.
@@ -71,10 +77,18 @@ includes:
   Briefs use stable project/repository IDs and revision-checked atomic writes to
   `<workspace>/.workduck/briefs.json`. Conflicts and unreadable data are reported
   without overwriting the file; a failed save keeps the editor draft open.
+  Workspace locking hides the editor but retains its draft in page memory,
+  scoped to the workspace ID and path. Unlocking restores the original edit
+  revision; a save completed while locked clears the draft. Unsaved drafts are
+  not written to disk or browser storage and do not survive a page reload or
+  application restart.
 - Project board metadata stored in the local SQLite database, with legacy
   browser-stored project metadata promoted on first read.
 - Skills menu for workspace-local Workduck skills, including a built-in
   proposal-writing skill.
+- Reference and skill editing requires a successful registry load. Native saves
+  check revisions so stale edits cannot replace newer workspace files; failed
+  saves keep the editor draft and do not replace the displayed registry.
 - Agents menu with workspace-local agent cards that reference `llm` API keys
   from the Environment vault without copying secret values.
 - Custom title bar, sidebar resizing, and tray integration.
@@ -83,8 +97,13 @@ Saved briefs can link existing repository task runs and queue work orders that
 explicitly reference the same repository ID. Run links preserve the instructions
 at link time in `.workduck/brief-runs.json`; result reports are matched through
 their `sourceWorkOrder` ID, not their titles. Refresh reloads the original records,
-and unlinking removes only the association. Queue scans are bounded to 200 files
-and four concurrent reads; partial scans disable new queue associations.
+and unlinking removes only the association. Discovery of new queue associations
+is limited to 200 files; partial discovery disables new queue associations.
+Saved queue IDs are resolved independently across the complete file listing,
+including renamed files and reports beyond that limit. Reads run four at a time
+and stop when the panel closes. Unrelated bodies outside discovery are discarded,
+while duplicate source/report IDs are rejected. A failed or cancelled lookup is
+shown as unavailable rather than missing and leaves its gate unverified.
 
 Each linked run has a derived gate: a completed native build with exit code 0
 passes, failed or stopped executions block, and missing or prose-only evidence
@@ -92,6 +111,39 @@ remains unverified. Queue reports are scoped to the linked repository's task IDs
 Report verification text and an archived work order cannot prove a passing check.
 The gate is recalculated from the original records on refresh; it does not
 certify code correctness or authorize a release or another task.
+
+Desktop and MCP task queries refresh process liveness without rewriting
+execution-owned records. An interrupted run can remain `running` in its original
+JSON while queries report `stopped`; terminal-produced completion and output
+remain intact.
+
+Windows task terminals publish their UTF-8 JSON records through synced temporary
+files and one Windows name replacement. Sharing conflicts get up to seven 25ms
+retry delays. If publication still fails, the terminal exits before another
+command can run and the last durable record remains available. Liveness queries
+can then project that unfinished record as stopped without inventing completion.
+
+Large task scripts use a short encoded loader and a synced temporary UTF-8
+source file, avoiding the Windows process argument limit for multi-command
+workspaces. The loader reads and parses the file, removes it, and executes in
+the original scope so native exit codes remain intact. Failed process starts
+also clean up their staged source. Process liveness binds both direct scripts
+and loaders to their run IDs. Native records cannot exceed the history read
+limit; terminal previews shrink to fit without dropping execution metadata.
+
+Owned command and terminal process trees are cleaned up when the parent exits,
+when termination is requested, or when their owner is dropped. Windows jobs and
+Unix process groups are terminated independently of the parent's exit status.
+Completed owners retire their registrations so later cleanup does not reuse a
+stale process-group identity. Finite command cleanup preserves the parent's
+original exit code.
+
+Finite Git and GitHub CLI calls poll stdout, stderr, and parent exit in one
+loop without output-reader threads. Captured data keeps at most 128KiB per
+stream. The command deadline remains active while output is arriving, and
+after parent exit both pipes share a two-second drain deadline. A pipe still
+held by an independent writer returns a timeout; read errors return failure.
+Partial output is not reported as a successful command result.
 
 Brief editing, export, and run linking do not run agents or shell commands, and
 the new stores have no browser-only persistence fallback. Creating a new queue
@@ -101,6 +153,10 @@ this first local loop.
 Encrypted sync includes project, group, and repository metadata. Repository
 local paths are stored relative to the workspace when possible, not as raw
 absolute paths.
+Import rejects missing or misbound modern project snapshots, unsupported versions,
+and registry input whose normalization would discard workspaces, nodes, or
+repositories. Invalid lock metadata is rejected instead of becoming an unlocked
+workspace. Explicit empty snapshots and legacy workspace-only exports remain supported.
 
 When a workspace is used as its own repository, Workduck keeps
 `<workspace>/projects/` ignored so nested project repositories are managed
@@ -161,6 +217,18 @@ only. Tool calls cannot select paths, mutate work orders, start processes, or
 read secret values. If the local Workduck database cannot be discovered, project
 and import-attempt data are reported as unavailable; an explicit `--database`
 path can select the existing database at startup.
+Startup validates only the bound workspace identity. Each MCP call reads the
+sections it returns: projects from the registry, queue from the queue listing,
+runs from import attempts and task records, and workspace status from metadata.
+Project and queue requests do not scan execution records; unknown tool names
+are rejected before workspace reads. The desktop Agent API retains its full
+snapshot with the same redaction rules.
+Task summaries retain the newest 20 records encountered, skip output log files
+before opening them, and share an 8MiB read budget across the scan and liveness
+rereads. If the budget is exhausted or a record cannot be read, available
+records remain in the response with `ok: false`, `incomplete: true`, and an
+explicit error. Such a response cannot establish the newest 20 across the
+entire history.
 
 ### Sync Repository And Workspace Repository
 
@@ -246,6 +314,42 @@ Install dependencies:
 ```sh
 bun install
 ```
+
+Workduck embeds ssealed templates in the desktop binary; installed apps do not
+require a separate ssealed, Node.js, or Bun installation for scaffolding.
+Applying templates to a repository already managed by ssealed preserves its
+manifest metadata, ownership records, and managed file deletions. New files are
+registered without replacing existing records. Changing the existing scope,
+profile, density, or runner uses ssealed's update/upgrade workflow.
+After updating the development dependency, regenerate and verify the embedded files:
+
+```sh
+bun run sync:ssealed-scaffold
+bun run check:ssealed-scaffold
+```
+
+Generation and builds verify archive structure, content references, portable file
+paths, and duplicates. Builds also check version, selection, and checksums and stop
+if the embedded files are stale. The full check above regenerates all combinations to
+compare their contents. For reproducible installs, use `bun install --frozen-lockfile`.
+
+If the installed ssealed metadata or CLI is damaged, reinstall with
+`bun install --force --frozen-lockfile --backend copyfile --cache-dir <new-empty-directory>`,
+replacing the placeholder with a fresh cache directory outside the checkout.
+Bun's default hardlinks can share damaged files with its cache, so forcing an
+install against that same cache may not repair them. This recovery keeps the
+locked dependency versions and installs independent copies from the fresh cache.
+
+Scaffold synchronization checks the CLI's generated manifest against the installed
+version, requested settings, file inventory, and file checksums before embedding.
+Outputs are staged before replacement; ordinary publication failures restore prior
+outputs. Detected concurrent edits are preserved, and incomplete recovery reports retained
+backups. Output locks prevent simultaneous synchronization processes from overwriting
+each other's results. A process interruption can leave mismatched indexes and
+`*.workduck-ssealed-publish.lock` files. Check the host and PID recorded in each lock,
+confirm its owner has stopped, then remove only those leftover locks and rerun
+synchronization. Locks are never reclaimed automatically. The build check rejects
+mismatched indexes until synchronization finishes.
 
 Run the desktop app during development:
 

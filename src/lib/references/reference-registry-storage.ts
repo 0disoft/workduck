@@ -8,7 +8,7 @@ import {
 import {
 	readWorkspaceDataFile,
 	workspaceDataFilesAreAvailable,
-	writeWorkspaceDataFile,
+	writeWorkspaceRegistryFile,
 	type WorkspaceDataFileError
 } from '#lib/workspaces/workspace-data-file.ts';
 
@@ -81,7 +81,7 @@ export async function readReferenceRegistry(
 		if (legacyRegistry.references.length > 0) {
 			const writeResult = await writeReferenceRegistry(legacyRegistry, workspacePath);
 
-			return writeResult.ok ? { ok: true, registry: legacyRegistry } : writeResult;
+			return writeResult;
 		}
 
 		return { ok: true, registry: emptyRegistry };
@@ -103,9 +103,10 @@ export async function writeReferenceRegistry(
 	}
 
 	if (workspacePath.length > 0 && workspaceDataFilesAreAvailable()) {
-		const writeResult = await writeWorkspaceDataFile(
+		const writeResult = await writeWorkspaceRegistryFile(
 			workspacePath,
 			REFERENCE_REGISTRY_FILE_NAME,
+			registry.revision,
 			serializeReferenceRegistry(registry)
 		);
 
@@ -117,8 +118,12 @@ export async function writeReferenceRegistry(
 			};
 		}
 
-		dispatchReferenceRegistryChanged(registry);
-		return { ok: true, registry };
+		const persistedRegistry = parseReferenceRegistry(writeResult.content, registry.workspaceId);
+		if (persistedRegistry === null) {
+			return { ok: false, registry, error: 'reference-registry-storage-write-failed' };
+		}
+		dispatchReferenceRegistryChanged(persistedRegistry);
+		return { ok: true, registry: persistedRegistry };
 	}
 
 	try {

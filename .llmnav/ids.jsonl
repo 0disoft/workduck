@@ -1,4 +1,5 @@
 {"id":"workduck.contract.schemas","state":"active"}
+{"id":"workduck.references.registry","state":"active"}
 {"id":"workduck.cli.launcher","state":"active"}
 {"id":"workduck.cli.execution","state":"active"}
 {"id":"workduck.desktop.commands","state":"active"}
@@ -85,4 +86,18 @@
 {"id":"workduck.secret-vault.session-native","state":"active"}
 {"id":"workduck.app-state.storage","state":"active"}
 {"id":"workduck.environment.vault-session","state":"active"}
+{"id":"workduck.terminal.panel","state":"active"}
+{"id":"workduck.briefs.run-evidence","state":"active"}
+{"id":"workduck.briefs.editor-drafts","state":"active"}
+{"id":"workduck.app-state.boot-gate","state":"active"}
+{"id":"workduck.projects.task-powershell","state":"active"}
+{"id":"workduck.app-state.storage-native","state":"active"}
+{"id":"workduck.workspace.registry","state":"active"}
+{"id":"workduck.workspace.storage","state":"active"}
+{"id":"workduck.app-state.bootstrap","state":"active"}
+{"id":"workduck.workspace.registration","state":"active"}
+{"id":"workduck.workspace.password-client","state":"active"}
+{"id":"workduck.workspace.repository-setup-client","state":"active"}
+{"id":"workduck.workspace.unlock","state":"active"}
+{"id":"workduck.workspace.path-repair","state":"active"}
 {"id":"workduck.verification.native-sync","state":"active"}

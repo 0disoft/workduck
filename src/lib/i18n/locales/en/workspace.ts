@@ -21,6 +21,7 @@ export const enWorkspaceMessages = {
 		},
 		pathErrors: {
 			pathRequired: 'Workspace path is required.',
+			pathTooLong: 'Workspace path is too long. Choose a shorter folder path.',
 			pathNotAbsolute: 'Workspace path must be an absolute folder path.',
 			pathNotFound: 'Workspace path does not exist.',
 			pathNotDirectory: 'Workspace path must be a folder.',
@@ -32,6 +33,7 @@ export const enWorkspaceMessages = {
 			pathDuplicate: 'Workspace path is already registered.',
 			workspaceNotFound: 'Workspace was not found.',
 			registryReadFailed: 'Workspace settings could not be loaded.',
+			registryConflict: 'The workspace list changed in another window. Review the latest list and try again.',
 			registryWriteFailed: 'Workspace settings could not be saved.'
 		}
 	} as const;

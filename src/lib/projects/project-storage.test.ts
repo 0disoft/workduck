@@ -1,10 +1,8 @@
 import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
-import { setTauriInvokeForTest } from '#lib/tauri/tauri-invoke.ts';
+import { setTauriInvokeForTest, setTauriListenForTest } from '#lib/tauri/tauri-invoke.ts';
+import type { EventCallback } from '@tauri-apps/api/event';
 import { addProjectNode, createEmptyProjectRegistry, type ProjectRegistry } from './project-registry';
-import { readProjectRegistry, readProjectRegistries, restoreWorkspaceSyncData, subscribeProjectRegistry, writeProjectRegistries, writeProjectRegistry } from './project-storage';
-import { initializeWorkduckAppState, resetWorkduckAppStateStorageForTest, WORKDUCK_WORKSPACE_REGISTRY_APP_STATE_KEY } from '#lib/app-state/app-state-storage.ts';
-import { createEmptyWorkspaceRegistry, addWorkspace, serializeWorkspaceRegistry, WORKDUCK_WORKSPACE_REGISTRY_STORAGE_KEY } from '#lib/workspaces/workspace-registry.ts';
-import { readWorkspaceRegistryFromBrowser, subscribeWorkspaceRegistry, writeWorkspaceRegistryToBrowser } from '#lib/workspaces/workspace-storage.ts';
+import { readProjectRegistries, readProjectRegistry, subscribeProjectRegistry, writeProjectRegistries, writeProjectRegistry, WORKDUCK_PROJECT_REGISTRY_CHANGED_EVENT, WORKDUCK_PROJECT_REGISTRIES_COMMITTED_EVENT } from './project-storage';
 
 function registry(workspaceId: string, revision: number) {
 	return { ...createEmptyProjectRegistry(workspaceId), updatedAt: `2026-10-04T00:00:0${revision}.000Z` };
@@ -16,7 +14,25 @@ function deferred() {
 	return { promise, resolve };
 }
 
+function seedLegacyRegistry() {
+	const added = addProjectNode(createEmptyProjectRegistry('demo'), {
+		kind: 'project', name: 'Legacy', path: 'projects/legacy'
+	});
+	if (!added.ok) throw new Error(added.error);
+	window.localStorage.setItem('workduck.projectRegistries.v1', JSON.stringify({
+		version: added.registry.version, registries: { demo: added.registry }
+	}));
+	return added.registry;
+}
+
 async function settle() { await new Promise((resolve) => setTimeout(resolve, 0)); }
+
+function dispatchLegacyStorageChange() {
+	window.dispatchEvent(Object.assign(new Event('storage'), {
+		storageArea: window.localStorage,
+		key: 'workduck.projectRegistries.v1'
+	}));
+}
 
 function writtenRegistries(command: string, args?: Record<string, unknown>) {
 	expect(['write_project_registry', 'write_project_registries']).toContain(command);
@@ -40,105 +56,393 @@ beforeEach(() => {
 		value: Object.assign(new EventTarget(), { localStorage }) });
 });
 afterEach(() => {
-	resetWorkduckAppStateStorageForTest();
 	setTauriInvokeForTest(undefined);
+	setTauriListenForTest(undefined);
 	if (windowDescriptor) Object.defineProperty(globalThis, 'window', windowDescriptor);
 	else Reflect.deleteProperty(globalThis, 'window');
 });
 
-test('sync restore failures do not publish either registry or journal a speculative workspace list', async () => {
-	const before = createEmptyWorkspaceRegistry();
-	const added = addWorkspace(before, { name: 'Imported', path: 'C:\\imported' });
-	if (!added.ok) throw Error('fixture workspace');
-	const original = registry(added.workspace.id, 1), imported = registry(added.workspace.id, 2);
-	const raw = JSON.stringify(original, null, 2);
-	const seen: string[] = [];
-	let finish!: (value: unknown) => void;
-	setTauriInvokeForTest(async <T>(command: string, args?: Record<string, unknown>) => {
-		seen.push(command);
-		if (command === 'read_app_state_records') return { ok: true, records: { 'workspace-registry': serializeWorkspaceRegistry(before) } } as T;
-		if (command === 'read_project_registries') return { ok: true, registries: { [original.workspaceId]: raw } } as T;
-		expect(command).toBe('restore_workspace_sync');
-		expect(args?.expectedWorkspaceRegistryJson).toBe(serializeWorkspaceRegistry(before));
-		expect((args?.registries as any)[original.workspaceId].expectedRegistryJson).toBe(raw);
-		return new Promise<T>(resolve => { finish = value => resolve(value as T); });
-	});
-	await initializeWorkduckAppState([{ key: WORKDUCK_WORKSPACE_REGISTRY_APP_STATE_KEY,
-		legacyStorageKey: WORKDUCK_WORKSPACE_REGISTRY_STORAGE_KEY, valueJson: serializeWorkspaceRegistry(before) }]);
-	let events = 0;
-	const offWorkspace = subscribeWorkspaceRegistry(() => events++), offProject = subscribeProjectRegistry(original.workspaceId, () => events++);
-	const restoring = restoreWorkspaceSyncData(added.registry, { [original.workspaceId]: imported });
-	await settle();
-	expect(readWorkspaceRegistryFromBrowser().registry).toEqual(before);
-	expect(writeWorkspaceRegistryToBrowser(added.registry).ok).toBe(false);
-	expect(window.localStorage.length).toBe(0);
-	finish({ ok: false, error: 'project-registry-revision-conflict' });
-	expect(await restoring).toEqual({ ok: false, error: 'project-registry-revision-conflict' });
-	expect(readWorkspaceRegistryFromBrowser().registry).toEqual(before);
-	expect(events).toBe(0);
-	expect(seen).toEqual(['read_app_state_records', 'read_project_registries', 'restore_workspace_sync']);
-	offWorkspace(); offProject();
-});
-
-test('a committed sync restore publishes both registries despite optional migration-marker failure', async () => {
-	const before = createEmptyWorkspaceRegistry();
-	const added = addWorkspace(before, { name: 'Imported', path: 'C:\\imported' });
-	if (!added.ok) throw Error('fixture workspace');
-	const imported = registry(added.workspace.id, 2);
-	setTauriInvokeForTest(async <T>(command: string) => {
-		if (command === 'read_app_state_records') return { ok: true, records: { 'workspace-registry': serializeWorkspaceRegistry(before) } } as T;
-		if (command === 'read_project_registries') return { ok: true, registries: {} } as T;
-		expect(command).toBe('restore_workspace_sync'); return { ok: true } as T;
-	});
-	await initializeWorkduckAppState([{ key: WORKDUCK_WORKSPACE_REGISTRY_APP_STATE_KEY,
-		legacyStorageKey: WORKDUCK_WORKSPACE_REGISTRY_STORAGE_KEY, valueJson: serializeWorkspaceRegistry(before) }]);
-	window.localStorage.setItem = () => { throw Error('synthetic optional storage failure'); };
-	const projects: ProjectRegistry[] = [], workspaces: unknown[] = [];
-	const offProject = subscribeProjectRegistry(imported.workspaceId, value => {
-		expect(readWorkspaceRegistryFromBrowser().registry).toEqual(added.registry); projects.push(value);
-	});
-	const offWorkspace = subscribeWorkspaceRegistry(value => workspaces.push(value));
-	expect(await restoreWorkspaceSyncData(added.registry, { [imported.workspaceId]: imported })).toEqual({ ok: true });
-	expect(projects).toEqual([imported]); expect(workspaces).toEqual([added.registry]);
-	offProject(); offWorkspace();
-});
-
-test('an existing empty SQLite registry stays authoritative over legacy data when its migration marker cannot be written', async () => {
-	const old = addProjectNode(registry('demo', 1), { kind: 'project', parentId: null, name: 'Old', path: 'projects/old' });
-	if (!old.ok) throw Error('fixture project');
-	window.localStorage.setItem('workduck.projectRegistries.v1', JSON.stringify({ version: old.registry.version, registries: { demo: old.registry } }));
-	window.localStorage.setItem = () => { throw Error('synthetic marker failure'); };
-	const empty = createEmptyProjectRegistry('demo');
-	setTauriInvokeForTest(async <T>(command: string) => {
-		if (command === 'read_project_registry') return { ok: true, registryJson: JSON.stringify(empty) } as T;
-		expect(command).toBe('read_project_registries'); return { ok: true, registries: { demo: JSON.stringify(empty) } } as T;
-	});
-	expect((await readProjectRegistry('demo')).registry.nodes).toHaveLength(0);
-	expect((await readProjectRegistries(['demo'])).registries.demo?.nodes).toHaveLength(0);
-});
-
-test('sync restore recovers a lost native reply by reading both authorities without a second write', async () => {
-	const before = createEmptyWorkspaceRegistry();
-	const added = addWorkspace(before, { name: 'Imported', path: 'C:\\imported' });
-	if (!added.ok) throw Error('fixture workspace');
-	const imported = registry(added.workspace.id, 2);
-	let workspaceJson = serializeWorkspaceRegistry(before), projectJson: string | undefined, writes = 0;
-	setTauriInvokeForTest(async <T>(command: string, args?: Record<string, unknown>) => {
-		if (command === 'read_app_state_records') return { ok: true, records: { 'workspace-registry': workspaceJson } } as T;
-		if (command === 'read_project_registries') return { ok: true, registries: projectJson ? { [imported.workspaceId]: projectJson } : {} } as T;
-		expect(command).toBe('restore_workspace_sync'); writes++;
-		workspaceJson = args?.workspaceRegistryJson as string;
-		projectJson = (args?.registries as any)[imported.workspaceId].registryJson;
-		throw Error('synthetic lost reply after commit');
-	});
-	await initializeWorkduckAppState([{ key: WORKDUCK_WORKSPACE_REGISTRY_APP_STATE_KEY,
-		legacyStorageKey: WORKDUCK_WORKSPACE_REGISTRY_STORAGE_KEY, valueJson: workspaceJson }]);
-	expect(await restoreWorkspaceSyncData(added.registry, { [imported.workspaceId]: imported })).toEqual({ ok: true });
-	expect(writes).toBe(1);
-	expect(readWorkspaceRegistryFromBrowser().registry).toEqual(added.registry);
-});
-
 describe('project registry storage write ordering', () => {
+	test('catches commits during native listener registration and reads the latest matching workspace', async () => {
+		const registering = deferred();
+		let notify!: (payload: unknown) => void;
+		let stored = registry('demo', 1);
+		let reads = 0;
+		let unlistens = 0;
+		setTauriInvokeForTest(async <T>() => {
+			reads += 1;
+			return { ok: true, registryJson: JSON.stringify(stored) } as T;
+		});
+		setTauriListenForTest(async <T>(event: string, handler: EventCallback<T>) => {
+			expect(event).toBe(WORKDUCK_PROJECT_REGISTRIES_COMMITTED_EVENT);
+			notify = (payload) => handler({ event, id: 1, payload: payload as T });
+			await registering.promise;
+			return () => { unlistens += 1; };
+		});
+		const notifications: ProjectRegistry[] = [];
+		const unsubscribe = subscribeProjectRegistry('demo', (value) => notifications.push(value));
+		try {
+			stored = registry('demo', 2);
+			registering.resolve();
+			await settle();
+			expect(notifications).toEqual([stored]);
+			for (const payload of [null, {}, ['other'], ['demo', null]]) notify(payload);
+			await settle();
+			expect(reads).toBe(1);
+			stored = registry('demo', 3);
+			notify(['demo', 'other']);
+			await settle();
+			expect(notifications).toEqual([registry('demo', 2), stored]);
+			unsubscribe();
+			unsubscribe();
+			notify(['demo']);
+			window.dispatchEvent(new Event('focus'));
+			await settle();
+			expect(reads).toBe(2);
+			expect(unlistens).toBe(1);
+		} finally { registering.resolve(); await settle(); unsubscribe(); }
+	});
+
+	test('removes a native listener that finishes registering after unsubscribe', async () => {
+		const registering = deferred();
+		let unlistens = 0;
+		let reads = 0;
+		setTauriInvokeForTest(async <T>() => { reads += 1; return { ok: true, registryJson: null } as T; });
+		setTauriListenForTest(async () => { await registering.promise; return () => { unlistens += 1; }; });
+		const unsubscribe = subscribeProjectRegistry('demo', () => { throw new Error('disposed subscriber'); });
+		try {
+			unsubscribe();
+			registering.resolve();
+			await settle();
+			expect(unlistens).toBe(1);
+			expect(reads).toBe(0);
+		} finally { registering.resolve(); await settle(); unsubscribe(); }
+	});
+
+	test('refreshes on focus when native event registration fails', async () => {
+		let reads = 0;
+		setTauriInvokeForTest(async <T>() => {
+			reads += 1;
+			return { ok: true, registryJson: JSON.stringify(registry('demo', reads)) } as T;
+		});
+		setTauriListenForTest(async () => { throw new Error('event registration unavailable'); });
+		const notifications: ProjectRegistry[] = [];
+		const unsubscribe = subscribeProjectRegistry('demo', (value) => notifications.push(value));
+		try {
+			await settle();
+			window.dispatchEvent(new Event('focus'));
+			await settle();
+			expect(notifications).toEqual([registry('demo', 1)]);
+		} finally { unsubscribe(); }
+	});
+
+	test('a local committed snapshot supersedes an older pending native refresh', async () => {
+		const pending = deferred();
+		setTauriListenForTest(async () => () => {});
+		setTauriInvokeForTest(async <T>() => {
+			await pending.promise;
+			return { ok: true, registryJson: JSON.stringify(registry('demo', 1)) } as T;
+		});
+		const notifications: ProjectRegistry[] = [];
+		const unsubscribe = subscribeProjectRegistry('demo', (value) => notifications.push(value));
+		try {
+			await settle();
+			window.dispatchEvent(new CustomEvent(WORKDUCK_PROJECT_REGISTRY_CHANGED_EVENT, {
+				detail: { workspaceId: 'demo', registry: registry('demo', 2) }
+			}));
+			pending.resolve();
+			await settle();
+			expect(notifications).toEqual([registry('demo', 2)]);
+		} finally { pending.resolve(); await settle(); unsubscribe(); }
+	});
+
+	test('rejects incomplete SQLite snapshots and protects them when an editor attempts a guarded save', async () => {
+		let stored = JSON.stringify({ ...registry('demo', 1), nodes: [null] });
+		const original = stored;
+		let writes = 0;
+		setTauriInvokeForTest(async <T>(command: string, args?: Record<string, unknown>) => {
+			if (command === 'read_project_registry') return { ok: true, registryJson: stored } as T;
+			if (command === 'read_project_registries') return { ok: true, registries: { demo: stored } } as T;
+			writes += 1;
+			stored = args?.registryJson as string;
+			return { ok: true } as T;
+		});
+		const read = await readProjectRegistry('demo');
+		const bulk = await readProjectRegistries(['demo']);
+		const saved = await writeProjectRegistry(registry('demo', 2), async () => read.registry);
+		for (const result of [read, bulk, saved]) {
+			expect(result.ok).toBe(false);
+			if (!result.ok) expect(result.error).toBe('project-registry-read-failed');
+		}
+		expect(writes).toBe(0);
+		expect(stored).toBe(original);
+	});
+
+	const validLegacy = { ...createEmptyProjectRegistry('demo'), updatedAt: '2026-10-04T00:00:00.000Z' };
+	const root = addProjectNode(validLegacy, { kind: 'project', name: 'Legacy', path: 'projects/legacy' });
+	if (!root.ok) throw new Error(root.error);
+	for (const [label, stored, error] of [
+		['broken JSON', '{', 'project-registry-read-failed'],
+		['missing collection', JSON.stringify({ version: 1 }), 'project-registry-read-failed'],
+		['future envelope', JSON.stringify({ version: 99, registries: {} }), 'project-registry-version-unsupported'],
+		['future registry', JSON.stringify({ version: 1, registries: { demo: { ...validLegacy, version: 99 } } }), 'project-registry-version-unsupported'],
+		['discarded node', JSON.stringify({ version: 1, registries: { demo: { ...validLegacy, nodes: [null] } } }), 'project-registry-read-failed'],
+		['discarded repository', JSON.stringify({ version: 1, registries: { demo: {
+			...root.registry, nodes: root.registry.nodes.map((node) => ({ ...node, repositories: [null] }))
+		} } }), 'project-registry-read-failed']
+	] as const) {
+		test(`rejects ${label} without overwriting the legacy browser record`, async () => {
+			window.localStorage.setItem('workduck.projectRegistries.v1', stored);
+			let notifications = 0;
+			window.addEventListener('workduck:project-registry-changed', () => { notifications += 1; });
+			const reads = [await readProjectRegistry('demo'), await readProjectRegistries(['demo'])];
+			for (const result of reads) {
+				expect(result.ok).toBe(false);
+				if (!result.ok) expect(result.error).toBe(error);
+			}
+			expect((await writeProjectRegistry(registry('demo', 1))).ok).toBe(false);
+			expect((await writeProjectRegistries({ demo: registry('demo', 1) })).ok).toBe(false);
+			expect(window.localStorage.getItem('workduck.projectRegistries.v1')).toBe(stored);
+			expect(notifications).toBe(0);
+		});
+	}
+
+	test('does not migrate a damaged browser registry into a missing SQLite row', async () => {
+		window.localStorage.setItem('workduck.projectRegistries.v1', '{');
+		let writes = 0;
+		setTauriInvokeForTest(async <T>(command: string) => {
+			if (command === 'read_project_registry') return { ok: true, registryJson: null } as T;
+			if (command === 'read_project_registries') return { ok: true, registries: {} } as T;
+			writes += 1;
+			return { ok: true } as T;
+		});
+		expect((await readProjectRegistry('demo')).ok).toBe(false);
+		expect((await readProjectRegistries(['demo'])).ok).toBe(false);
+		expect(writes).toBe(0);
+		expect(window.localStorage.getItem('workduck.projectRegistries.v1')).toBe('{');
+	});
+
+	for (const native of [false, true]) {
+		test(`reads one legacy snapshot per bulk request and batches migration markers, native=${native}`, async () => {
+			const ids = Array.from({ length: 10 }, (_, index) => `workspace-${index}`);
+			const legacy = Object.fromEntries(ids.map((id) => [id, registry(id, 1)]));
+			window.localStorage.setItem('workduck.projectRegistries.v1', JSON.stringify({ version: 1, registries: legacy }));
+			const storage = window.localStorage;
+			const getItem = storage.getItem.bind(storage);
+			const setItem = storage.setItem.bind(storage);
+			let legacyReads = 0;
+			let markerWrites = 0;
+			storage.getItem = (key) => {
+				if (key === 'workduck.projectRegistries.v1') legacyReads += 1;
+				return getItem(key);
+			};
+			storage.setItem = (key, value) => {
+				if (key === 'workduck.projectRegistries.sqliteMigrated.v1') markerWrites += 1;
+				setItem(key, value);
+			};
+			const current = Object.fromEntries(ids.map((id) => [id, registry(id, 2)]));
+			if (native) setTauriInvokeForTest(async <T>() => ({ ok: true,
+				registries: Object.fromEntries(Object.entries(current).map(([id, value]) => [id, JSON.stringify(value)]))
+			}) as T);
+			const result = await readProjectRegistries(ids);
+			expect(result.ok).toBe(true);
+			expect(result.registries).toEqual(native ? current : legacy);
+			expect(legacyReads).toBe(native ? 0 : 1);
+			expect(markerWrites).toBe(native ? 1 : 0);
+			// A second request must see newly stored data without repeating unchanged markers.
+			const newer = Object.fromEntries(ids.map((id) => [id, registry(id, 3)]));
+			storage.setItem('workduck.projectRegistries.v1', JSON.stringify({ version: 1, registries: newer }));
+			expect((await readProjectRegistries(ids)).registries).toEqual(native ? current : newer);
+			expect(legacyReads).toBe(native ? 0 : 2);
+			expect(markerWrites).toBe(native ? 1 : 0);
+		});
+	}
+
+	for (const bulk of [false, true]) {
+		test(`reads authoritative SQLite data when the legacy cache is inaccessible, bulk=${bulk}`, async () => {
+			const stored = registry('demo', 9);
+			const getItem = window.localStorage.getItem.bind(window.localStorage);
+			window.localStorage.getItem = (key) => {
+				if (key === 'workduck.projectRegistries.v1') throw new Error('legacy cache unavailable');
+				return getItem(key);
+			};
+			setTauriInvokeForTest(async <T>() => (bulk
+				? { ok: true, registries: { demo: JSON.stringify(stored) } }
+				: { ok: true, registryJson: JSON.stringify(stored) }) as T);
+			const result = bulk ? await readProjectRegistries(['demo']) : await readProjectRegistry('demo');
+			expect(result.ok).toBe(true);
+			expect('registries' in result ? result.registries.demo : result.registry).toEqual(stored);
+		});
+	}
+
+	test('writes one merged migration marker after a successful bulk save', async () => {
+		window.localStorage.setItem('workduck.projectRegistries.sqliteMigrated.v1', JSON.stringify(['existing']));
+		const storage = window.localStorage;
+		const setItem = storage.setItem.bind(storage);
+		let markerWrites = 0;
+		storage.setItem = (key, value) => {
+			if (key === 'workduck.projectRegistries.sqliteMigrated.v1') markerWrites += 1;
+			setItem(key, value);
+		};
+		setTauriInvokeForTest(async <T>() => ({ ok: true }) as T);
+		const values = Object.fromEntries(['a', 'b', 'c'].map((id) => [id, registry(id, 1)]));
+		expect((await writeProjectRegistries(values)).ok).toBe(true);
+		expect(markerWrites).toBe(1);
+		expect(JSON.parse(storage.getItem('workduck.projectRegistries.sqliteMigrated.v1') ?? '[]')).toEqual(['existing', 'a', 'b', 'c']);
+		storage.setItem('workduck.projectRegistries.sqliteMigrated.v1', JSON.stringify(['existing', 'a', 'b', 'c', 'foreign']));
+		markerWrites = 0;
+		expect((await writeProjectRegistries({ d: registry('d', 1) })).ok).toBe(true);
+		expect(markerWrites).toBe(1);
+		expect(JSON.parse(storage.getItem('workduck.projectRegistries.sqliteMigrated.v1') ?? '[]')).toEqual(['existing', 'a', 'b', 'c', 'foreign', 'd']);
+	});
+
+	for (const bulk of [false, true]) {
+		test(`preserves an empty SQLite registry without a browser migration marker, bulk=${bulk}`, async () => {
+			seedLegacyRegistry();
+			const empty = registry('demo', 9);
+			let writes = 0;
+			setTauriInvokeForTest(async <T>(command: string) => {
+				if (command === 'read_project_registry') return { ok: true, registryJson: JSON.stringify(empty) } as T;
+				if (command === 'read_project_registries') return { ok: true, registries: { demo: JSON.stringify(empty) } } as T;
+				writes += 1;
+				return { ok: true } as T;
+			});
+			const result = bulk ? await readProjectRegistries(['demo']) : await readProjectRegistry('demo');
+			expect(result.ok).toBe(true);
+			expect('registries' in result ? result.registries.demo : result.registry).toEqual(empty);
+			expect(writes).toBe(0);
+		});
+
+		for (const competingWrite of [false, true]) {
+			test(`guards legacy promotion against a row created after reading, bulk=${bulk}, competing=${competingWrite}`, async () => {
+				const legacy = seedLegacyRegistry();
+				const competing = registry('demo', 9);
+				let persisted: ProjectRegistry | null = null;
+				let writeGuard: unknown;
+				setTauriInvokeForTest(async <T>(command: string, args?: Record<string, unknown>) => {
+					if (command === 'read_project_registry') return { ok: true, registryJson: null } as T;
+					if (command === 'read_project_registries') return { ok: true, registries: {} } as T;
+					const expected = command === 'write_project_registry' ? args?.expectedRegistryJson
+						: (args?.registries as Record<string, { expectedRegistryJson?: string }>).demo?.expectedRegistryJson;
+					writeGuard = expected;
+					if (competingWrite) persisted = competing;
+					if (expected === 'null' && persisted !== null) {
+						return { ok: false, error: 'project-registry-revision-conflict' } as T;
+					}
+					persisted = writtenRegistries(command, args).demo ?? null;
+					return { ok: true } as T;
+				});
+				const result = bulk ? await readProjectRegistries(['demo']) : await readProjectRegistry('demo');
+				expect(writeGuard).toBe('null');
+				expect(result.ok).toBe(!competingWrite);
+				if (!result.ok) expect(result.error).toBe('project-registry-revision-conflict');
+				expect(persisted as ProjectRegistry | null).toEqual(competingWrite ? competing : legacy);
+			});
+		}
+	}
+
+	test('bulk promotion creates only missing rows and retains existing empty registries', async () => {
+		const legacy = seedLegacyRegistry();
+		const missing = { ...legacy, workspaceId: 'missing' };
+		window.localStorage.setItem('workduck.projectRegistries.v1', JSON.stringify({
+			version: legacy.version, registries: { demo: legacy, missing }
+		}));
+		const empty = registry('demo', 9);
+		let written: Record<string, unknown> | undefined;
+		setTauriInvokeForTest(async <T>(command: string, args?: Record<string, unknown>) => {
+			if (command === 'read_project_registries') return { ok: true, registries: { demo: JSON.stringify(empty) } } as T;
+			written = args?.registries as Record<string, unknown>;
+			return { ok: true } as T;
+		});
+		const result = await readProjectRegistries(['demo', 'missing']);
+		expect(result.ok).toBe(true);
+		expect(result.registries).toEqual({ demo: empty, missing });
+		expect(written).toEqual({ missing: {
+			registryJson: JSON.stringify(missing), updatedAt: missing.updatedAt, expectedRegistryJson: 'null'
+		} });
+	});
+
+	for (const supersededBy of ['write', 'storage', 'unsubscribe'] as const) {
+		test(`ignores a pending subscription read superseded by ${supersededBy}`, async () => {
+			const pending = deferred();
+			let reads = 0;
+			const notifications: ProjectRegistry[] = [];
+			setTauriInvokeForTest(async <T>(command: string) => {
+				if (command !== 'read_project_registry') return { ok: true } as T;
+				const index = ++reads;
+				if (index === 1) await pending.promise;
+				return { ok: true, registryJson: JSON.stringify(registry('demo', index)) } as T;
+			});
+			const unsubscribe = subscribeProjectRegistry('demo', (value) => notifications.push(value));
+			try {
+				dispatchLegacyStorageChange();
+				expect(reads).toBe(1);
+				if (supersededBy === 'write') expect((await writeProjectRegistry(registry('demo', 2))).ok).toBe(true);
+				else if (supersededBy === 'storage') { dispatchLegacyStorageChange(); await settle(); }
+				else unsubscribe();
+				pending.resolve();
+				await settle();
+				expect(notifications.map((value) => value.updatedAt)).toEqual(
+					supersededBy === 'unsubscribe' ? [] : [registry('demo', 2).updatedAt]
+				);
+			} finally { pending.resolve(); await settle(); unsubscribe(); }
+		});
+	}
+
+	test('does not publish a failed subscription read as an empty registry', async () => {
+		const notifications: ProjectRegistry[] = [];
+		setTauriInvokeForTest(async <T>() => ({ ok: true, registryJson: '{invalid' }) as T);
+		const unsubscribe = subscribeProjectRegistry('demo', (value) => notifications.push(value));
+		try {
+			dispatchLegacyStorageChange();
+			await settle();
+			expect(notifications).toEqual([]);
+		} finally { unsubscribe(); }
+	});
+
+	for (const [name, invalidRegistry] of [
+		['missing payload', undefined],
+		['unsupported version', { ...registry('demo', 2), version: 999 }],
+		['missing nodes', { version: 1, workspaceId: 'demo' }],
+		['discarded node', { ...registry('demo', 2), nodes: [null] }],
+		['discarded repository', { ...root.registry, nodes: root.registry.nodes.map((node) => ({ ...node, repositories: [null] })) }],
+		['wrong workspace', registry('other', 2)]
+	] as const) {
+		test(`ignores a ${name} notification without canceling the pending valid read`, async () => {
+			const pending = deferred();
+			const notifications: ProjectRegistry[] = [];
+			setTauriInvokeForTest(async <T>() => {
+				await pending.promise;
+				return { ok: true, registryJson: JSON.stringify(registry('demo', 1)) } as T;
+			});
+			const unsubscribe = subscribeProjectRegistry('demo', (value) => notifications.push(value));
+			try {
+				dispatchLegacyStorageChange();
+				window.dispatchEvent(new CustomEvent(WORKDUCK_PROJECT_REGISTRY_CHANGED_EVENT, {
+					detail: { workspaceId: 'demo', registry: invalidRegistry }
+				}));
+				expect(notifications).toEqual([]);
+				pending.resolve();
+				await settle();
+				expect(notifications).toEqual([registry('demo', 1)]);
+			} finally { pending.resolve(); await settle(); unsubscribe(); }
+		});
+	}
+
+	test('reloads the browser registry after another window clears local storage', async () => {
+		seedLegacyRegistry();
+		const notifications: ProjectRegistry[] = [];
+		const unsubscribe = subscribeProjectRegistry('demo', (value) => notifications.push(value));
+		try {
+			window.localStorage.clear();
+			window.dispatchEvent(Object.assign(new Event('storage'), { storageArea: window.localStorage, key: null }));
+			await settle();
+			expect(notifications).toHaveLength(1);
+			expect(notifications[0]?.workspaceId).toBe('demo');
+			expect(notifications[0]?.nodes).toEqual([]);
+		} finally { unsubscribe(); }
+	});
+
 	test('compares SQLite snapshots and passes the raw revision into the atomic native write', async () => {
 		const original = registry('demo', 1);
 		const raw = JSON.stringify(original, null, 2);

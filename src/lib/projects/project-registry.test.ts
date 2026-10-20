@@ -4,6 +4,7 @@ import {
 	addProjectNode,
 	addProjectRepositoryLink,
 	createEmptyProjectRegistry,
+	createProjectTreeRows,
 	parseProjectRegistry,
 	parseStoredProjectRegistry,
 	serializeProjectRegistry,
@@ -29,6 +30,27 @@ function parseFixture(nodes: readonly ProjectNodeRecord[]) {
 }
 
 describe('project registry canonicalization', () => {
+	test('creates rows for deep groups without overflowing the call stack', () => {
+		const nodes = [fixtureNode('root', null)];
+		for (let index = 0; index < 12000; index += 1) {
+			nodes.push(fixtureNode(`group-${index}`, index === 0 ? 'root' : `group-${index - 1}`));
+		}
+		const rows = createProjectTreeRows(nodes.toReversed());
+		assert.equal(rows.length, nodes.length);
+		assert.deepEqual(rows.map(row => row.node.id), nodes.map(node => node.id));
+		assert.equal(rows.at(-1)?.depth, 12000);
+	});
+
+	test('preserves preorder and root order while ignoring repeated IDs and unreachable groups', () => {
+		const nodes = [fixtureNode('root-a', null), fixtureNode('root-b', null),
+			fixtureNode('first', 'root-a'), fixtureNode('second', 'root-a'),
+			fixtureNode('nested', 'first'), fixtureNode('nested', 'root-b'),
+			fixtureNode('orphan', 'missing')];
+		assert.deepEqual(createProjectTreeRows(nodes).map(row => [row.node.id, row.depth]), [
+			['root-a', 0], ['first', 1], ['nested', 2], ['second', 1], ['root-b', 0]
+		]);
+	});
+
 	test('normalizes a deep reversed hierarchy without truncation or recursion', () => {
 		const nodes = [fixtureNode('root', null)];
 		for (let index = 0; index < 6000; index += 1) {
@@ -87,7 +109,29 @@ describe('project registry canonicalization', () => {
 		assert.equal(parsed.nodes[1]?.parentId, 'root');
 	});
 
-	test('keeps strict storage errors distinct from the forgiving browser parser', () => {
+	test('rejects stored registries when normalization would discard nodes or repositories', () => {
+		const root = fixtureNode('root', null);
+		for (const value of [
+			{ version: 1 },
+			{ version: 1, nodes: 'invalid' },
+			{ version: 1, nodes: [null] },
+			{ version: 1, nodes: [root, root] },
+			{ version: 1, nodes: [fixtureNode('orphan', 'missing')] },
+			{ version: 1, nodes: [{ ...root, repositories: [null] }] },
+			{ version: 1, nodes: [{ ...root, repositories: {} }] }
+		]) {
+			assert.deepEqual(parseStoredProjectRegistry(JSON.stringify(value), 'workspace-test'), {
+				ok: false, error: 'project-registry-json-invalid'
+			});
+		}
+		const supported = { version: 1, nodes: [root], updatedAt: fixtureTimestamp };
+		const accepted = parseStoredProjectRegistry(JSON.stringify(supported), 'workspace-test');
+		assert.equal(accepted.ok, true);
+		if (accepted.ok) assert.equal(accepted.registry.nodes.length, 1);
+		assert.equal(parseStoredProjectRegistry(JSON.stringify(createEmptyProjectRegistry('workspace-test')), 'workspace-test').ok, true);
+	});
+
+	test('keeps strict storage errors distinct from the forgiving domain parser', () => {
 		assert.deepEqual(parseStoredProjectRegistry('{', 'workspace-test'), { ok: false, error: 'project-registry-json-invalid' });
 		assert.deepEqual(parseStoredProjectRegistry('{"version":2}', 'workspace-test'), { ok: false, error: 'project-registry-version-unsupported' });
 		assert.deepEqual(parseProjectRegistry('{', 'workspace-test').nodes, []);

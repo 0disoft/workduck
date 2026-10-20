@@ -1,10 +1,10 @@
 // llmnav/1 module
 // id=workduck.agent.snapshot
 // role=Build a bounded read-only workspace snapshot for agents while omitting secrets, terminal input, command text, and output bodies.
-// owns=agent API snapshot|workspace summary redaction|snapshot capability declaration
+// owns=agent API snapshot|tool-scoped snapshot reads|workspace summary redaction|snapshot capability declaration
 // excludes=workspace mutation endpoints|secret decryption
 // search=agent workspace snapshot|read-only agent API|redacted workspace summary
-// invariant=Snapshot generation never creates missing Queue state or exposes secret identifiers, encrypted payloads, commands, or output tails.
+// invariant=Snapshot generation never creates missing Queue state or exposes secret identifiers, encrypted payloads, commands, or output tails; task summaries retain only the newest twenty records, share a read budget with liveness rereads, and disclose incomplete scans.
 // risk=privacy
 // rel=test>workduck.agent.snapshot.contract
 // stability=contract
@@ -21,6 +21,9 @@ use time::{OffsetDateTime, format_description::well_known::Rfc3339};
 
 use crate::{
     path_display::display_path,
+    project_repository_task::{
+        project_task_run_liveness_with_budget, read_visible_task_run_record_with_budget,
+    },
     storage,
     workspace_path::{WorkspacePathValidationError, validate_absolute_directory_path},
 };
@@ -36,7 +39,18 @@ const PROPOSAL_FILE_SUFFIX: &str = ".workduck-proposal.json";
 const WORKDUCK_DIRECTORY_NAME: &str = ".workduck";
 const WORKSPACE_DATA_FILE_MAX_BYTES: u64 = 1_048_576;
 const REPOSITORY_TASK_RUN_LIMIT: usize = 20;
+const REPOSITORY_TASK_RUN_READ_BUDGET: usize = 8 * 1024 * 1024;
 const REPOSITORY_IMPORT_ATTEMPT_LIMIT: i64 = 20;
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub(crate) enum AgentApiSnapshotScope {
+    Full,
+    Identity,
+    WorkspaceStatus,
+    Projects,
+    Queue,
+    Runs,
+}
 
 #[derive(serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -87,11 +101,16 @@ pub struct AgentApiSnapshot {
     generated_at: String,
     capabilities: AgentApiCapabilities,
     workspace: AgentApiWorkspaceSnapshot,
-    queue: AgentApiQueueSnapshot,
-    project_registry: AgentApiProjectRegistrySnapshot,
-    repository_import_attempts: AgentApiRepositoryImportAttemptsSnapshot,
-    repository_task_runs: AgentApiRepositoryTaskRunsSnapshot,
-    workspace_metadata: AgentApiWorkspaceMetadataSnapshot,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    queue: Option<AgentApiQueueSnapshot>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    project_registry: Option<AgentApiProjectRegistrySnapshot>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    repository_import_attempts: Option<AgentApiRepositoryImportAttemptsSnapshot>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    repository_task_runs: Option<AgentApiRepositoryTaskRunsSnapshot>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    workspace_metadata: Option<AgentApiWorkspaceMetadataSnapshot>,
 }
 
 #[derive(serde::Serialize)]
@@ -216,6 +235,7 @@ struct AgentApiRepositoryImportAttemptRecord {
 struct AgentApiRepositoryTaskRunsSnapshot {
     ok: bool,
     records: Vec<AgentApiRepositoryTaskRunRecord>,
+    incomplete: bool,
     #[serde(skip_serializing_if = "Option::is_none")]
     error: Option<&'static str>,
 }
@@ -268,6 +288,14 @@ pub(crate) fn build_agent_api_snapshot(
     request: AgentApiSnapshotRequest,
     connection: Option<&Connection>,
 ) -> AgentApiSnapshotResult {
+    build_scoped_agent_api_snapshot(request, connection, AgentApiSnapshotScope::Full)
+}
+
+pub(crate) fn build_scoped_agent_api_snapshot(
+    request: AgentApiSnapshotRequest,
+    connection: Option<&Connection>,
+    scope: AgentApiSnapshotScope,
+) -> AgentApiSnapshotResult {
     let workspace_id = match validate_workspace_id(&request.workspace_id) {
         Ok(workspace_id) => workspace_id,
         Err(error) => return invalid(error),
@@ -292,14 +320,31 @@ pub(crate) fn build_agent_api_snapshot(
                 id: workspace_id.clone(),
                 path: display_path(&workspace_path),
             },
-            queue: summarize_queue(&workspace_path),
-            project_registry: summarize_project_registry(connection, &workspace_id),
-            repository_import_attempts: summarize_repository_import_attempts(
-                connection,
-                &workspace_id,
-            ),
-            repository_task_runs: summarize_repository_task_runs(&workspace_path),
-            workspace_metadata: summarize_workspace_metadata(&workspace_path),
+            queue: matches!(
+                scope,
+                AgentApiSnapshotScope::Full | AgentApiSnapshotScope::Queue
+            )
+            .then(|| summarize_queue(&workspace_path)),
+            project_registry: matches!(
+                scope,
+                AgentApiSnapshotScope::Full | AgentApiSnapshotScope::Projects
+            )
+            .then(|| summarize_project_registry(connection, &workspace_id)),
+            repository_import_attempts: matches!(
+                scope,
+                AgentApiSnapshotScope::Full | AgentApiSnapshotScope::Runs
+            )
+            .then(|| summarize_repository_import_attempts(connection, &workspace_id)),
+            repository_task_runs: matches!(
+                scope,
+                AgentApiSnapshotScope::Full | AgentApiSnapshotScope::Runs
+            )
+            .then(|| summarize_repository_task_runs(&workspace_path)),
+            workspace_metadata: matches!(
+                scope,
+                AgentApiSnapshotScope::Full | AgentApiSnapshotScope::WorkspaceStatus
+            )
+            .then(|| summarize_workspace_metadata(&workspace_path)),
         }),
         error: None,
     }
@@ -649,15 +694,38 @@ fn repository_import_attempts_read_failure() -> AgentApiRepositoryImportAttempts
 }
 
 fn summarize_repository_task_runs(workspace_path: &Path) -> AgentApiRepositoryTaskRunsSnapshot {
+    summarize_repository_task_runs_with_budget(workspace_path, REPOSITORY_TASK_RUN_READ_BUDGET)
+}
+
+fn summarize_repository_task_runs_with_budget(
+    workspace_path: &Path,
+    mut remaining_bytes: usize,
+) -> AgentApiRepositoryTaskRunsSnapshot {
     let record_dir = workspace_path
         .join(WORKDUCK_DIRECTORY_NAME)
         .join("repository-task-runs");
+    let visible_workspace = crate::git_path::git_process_path(workspace_path);
+    let invalid_record_dir = match fs::canonicalize(&record_dir) {
+        Ok(canonical_dir) => {
+            !crate::git_path::git_process_path(&canonical_dir).starts_with(&visible_workspace)
+        }
+        Err(error) => error.kind() != io::ErrorKind::NotFound,
+    };
+    if invalid_record_dir {
+        return AgentApiRepositoryTaskRunsSnapshot {
+            ok: false,
+            records: Vec::new(),
+            incomplete: true,
+            error: Some("agent-api-repository-task-runs-read-failed"),
+        };
+    }
     let entries = match fs::read_dir(&record_dir) {
         Ok(entries) => entries,
         Err(error) if error.kind() == io::ErrorKind::NotFound => {
             return AgentApiRepositoryTaskRunsSnapshot {
                 ok: true,
                 records: Vec::new(),
+                incomplete: false,
                 error: None,
             };
         }
@@ -665,51 +733,72 @@ fn summarize_repository_task_runs(workspace_path: &Path) -> AgentApiRepositoryTa
             return AgentApiRepositoryTaskRunsSnapshot {
                 ok: false,
                 records: Vec::new(),
+                incomplete: true,
                 error: Some("agent-api-repository-task-runs-read-failed"),
             };
         }
     };
-    let mut records = entries
-        .flatten()
-        .filter_map(|entry| read_repository_task_run_record(&entry.path()))
-        .collect::<Vec<_>>();
-
-    records.sort_by(|left, right| {
-        right
-            .started_at
-            .cmp(&left.started_at)
-            .then(right.id.cmp(&left.id))
-    });
-    records.truncate(REPOSITORY_TASK_RUN_LIMIT);
+    let mut records = Vec::new();
+    let mut incomplete = false;
+    for entry in entries {
+        let path = match entry {
+            Ok(entry) => entry.path(),
+            Err(_) => {
+                incomplete = true;
+                continue;
+            }
+        };
+        if path.extension().and_then(|extension| extension.to_str()) != Some("json") {
+            continue;
+        }
+        if remaining_bytes == 0 {
+            incomplete = true;
+            break;
+        }
+        let Some(record) = read_visible_task_run_record_with_budget(
+            &path,
+            &visible_workspace,
+            &mut remaining_bytes,
+        ) else {
+            incomplete = true;
+            continue;
+        };
+        records.push(record);
+        records.sort_by(|left, right| {
+            right
+                .started_at
+                .cmp(&left.started_at)
+                .then(right.id.cmp(&left.id))
+        });
+        records.truncate(REPOSITORY_TASK_RUN_LIMIT);
+    }
+    if remaining_bytes == 0 && records.iter().any(|record| record.state == "running") {
+        incomplete = true;
+    }
+    let records = project_task_run_liveness_with_budget(records, remaining_bytes)
+        .into_iter()
+        .map(|record| AgentApiRepositoryTaskRunRecord {
+            id: record.id,
+            task: record.task,
+            repository_path: record.repository_path,
+            state: record.state,
+            has_command: !record.command.trim().is_empty(),
+            has_output_tail: record
+                .output_tail
+                .as_deref()
+                .is_some_and(|tail| !tail.trim().is_empty()),
+            started_at: record.started_at,
+            finished_at: record.finished_at,
+            exit_code: record.exit_code.map(i64::from),
+        })
+        .collect();
 
     AgentApiRepositoryTaskRunsSnapshot {
-        ok: true,
+        ok: !incomplete,
         records,
-        error: None,
+        incomplete,
+        error: incomplete.then_some("agent-api-repository-task-runs-partial"),
     }
-}
-
-fn read_repository_task_run_record(path: &Path) -> Option<AgentApiRepositoryTaskRunRecord> {
-    let metadata = fs::symlink_metadata(path).ok()?;
-    if metadata.file_type().is_symlink() || !metadata.is_file() {
-        return None;
-    }
-
-    let value = serde_json::from_str::<serde_json::Value>(&fs::read_to_string(path).ok()?).ok()?;
-
-    Some(AgentApiRepositoryTaskRunRecord {
-        id: read_required_string(&value, "id")?,
-        task: read_required_string(&value, "task")?,
-        repository_path: read_required_string(&value, "repositoryPath")?,
-        state: read_required_string(&value, "state")?,
-        has_command: has_non_empty_string(&value, "command"),
-        has_output_tail: has_non_empty_string(&value, "outputTail"),
-        started_at: read_required_string(&value, "startedAt")?,
-        finished_at: read_optional_string(&value, "finishedAt"),
-        exit_code: value
-            .get("exitCode")
-            .and_then(serde_json::Value::as_i64),
-    })
 }
 
 fn summarize_workspace_metadata(workspace_path: &Path) -> AgentApiWorkspaceMetadataSnapshot {
@@ -745,9 +834,7 @@ fn summarize_metadata_file(
     array_key: &str,
     encrypted: bool,
 ) -> AgentApiMetadataFileSnapshot {
-    let file_path = workspace_path
-        .join(WORKDUCK_DIRECTORY_NAME)
-        .join(file_name);
+    let file_path = workspace_path.join(WORKDUCK_DIRECTORY_NAME).join(file_name);
 
     match fs::symlink_metadata(&file_path) {
         Ok(metadata) if metadata.file_type().is_symlink() || metadata.is_dir() => {
@@ -876,15 +963,15 @@ fn map_workspace_path_validation_error(
         WorkspacePathValidationError::NotAbsolute => AgentApiSnapshotError::WorkspaceNotAbsolute,
         WorkspacePathValidationError::NotFound => AgentApiSnapshotError::WorkspaceNotFound,
         WorkspacePathValidationError::NotDirectory => AgentApiSnapshotError::WorkspaceNotDirectory,
-        WorkspacePathValidationError::PermissionDenied | WorkspacePathValidationError::Unreadable => {
-            AgentApiSnapshotError::WorkspaceUnreadable
-        }
+        WorkspacePathValidationError::PermissionDenied
+        | WorkspacePathValidationError::Unreadable => AgentApiSnapshotError::WorkspaceUnreadable,
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::project_repository_task::{project_task_run_liveness, read_visible_task_run_record};
     use std::time::{SystemTime, UNIX_EPOCH};
 
     #[test]
@@ -931,6 +1018,64 @@ mod tests {
         assert!(!workspace.join(QUEUE_DIRECTORY_NAME).exists());
 
         let _ = fs::remove_dir_all(workspace);
+    }
+
+    #[test]
+    fn scoped_snapshots_omit_unrequested_sections_and_full_snapshot_keeps_its_contract() {
+        let workspace = tempfile::tempdir().unwrap();
+        for (scope, expected) in [
+            (AgentApiSnapshotScope::Identity, vec![]),
+            (
+                AgentApiSnapshotScope::WorkspaceStatus,
+                vec!["workspaceMetadata"],
+            ),
+            (AgentApiSnapshotScope::Projects, vec!["projectRegistry"]),
+            (AgentApiSnapshotScope::Queue, vec!["queue"]),
+            (
+                AgentApiSnapshotScope::Runs,
+                vec!["repositoryImportAttempts", "repositoryTaskRuns"],
+            ),
+            (
+                AgentApiSnapshotScope::Full,
+                vec![
+                    "queue",
+                    "projectRegistry",
+                    "repositoryImportAttempts",
+                    "repositoryTaskRuns",
+                    "workspaceMetadata",
+                ],
+            ),
+        ] {
+            let value = serde_json::to_value(build_scoped_agent_api_snapshot(
+                AgentApiSnapshotRequest::new("workspace_test", workspace.path().to_string_lossy()),
+                None,
+                scope,
+            ))
+            .unwrap();
+            assert_eq!(value["ok"], true);
+            let snapshot = value["snapshot"].as_object().unwrap();
+            for field in [
+                "queue",
+                "projectRegistry",
+                "repositoryImportAttempts",
+                "repositoryTaskRuns",
+                "workspaceMetadata",
+            ] {
+                assert_eq!(
+                    snapshot.contains_key(field),
+                    expected.contains(&field),
+                    "{field}"
+                );
+            }
+            assert_eq!(snapshot["capabilities"]["readOnly"], true);
+            assert_eq!(snapshot["workspace"]["id"], "workspace_test");
+        }
+        let full = serde_json::to_value(build_agent_api_snapshot(
+            AgentApiSnapshotRequest::new("workspace_test", workspace.path().to_string_lossy()),
+            None,
+        ))
+        .unwrap();
+        assert_eq!(full["snapshot"].as_object().unwrap().len(), 9);
     }
 
     // llmnav/1 symbol
@@ -1012,16 +1157,12 @@ mod tests {
         connection
             .execute(
                 "INSERT INTO project_registries (workspace_id, registry_json) VALUES (?1, ?2)",
-                params![
-                    "workspace_1",
-                    registry_json
-                ],
+                params!["workspace_1", registry_json],
             )
             .expect("registry row");
 
         assert_eq!(
-            read_project_registry_json(Some(&connection), "workspace_1")
-                .expect("registry query"),
+            read_project_registry_json(Some(&connection), "workspace_1").expect("registry query"),
             Some(registry_json.to_owned())
         );
 
@@ -1090,10 +1231,10 @@ mod tests {
         fs::create_dir_all(&run_dir).expect("run dir");
         fs::write(
             run_dir.join("repo_task_1.json"),
-            r#"{
+            serde_json::to_vec(&serde_json::json!({
                 "id": "repo_task_1",
                 "task": "build",
-                "repositoryPath": "C:/workspace/project",
+                "repositoryPath": crate::git_path::git_process_path(&workspace.join("project")),
                 "command": "echo secret_token",
                 "state": "failed",
                 "exitCode": 1,
@@ -1101,7 +1242,8 @@ mod tests {
                 "finishedAt": "2026-05-28T00:01:00Z",
                 "outputTail": "secret output",
                 "recordPath": "repo_task_1.json"
-            }"#,
+            }))
+            .unwrap(),
         )
         .expect("run record");
 
@@ -1118,6 +1260,128 @@ mod tests {
         let _ = fs::remove_dir_all(workspace);
     }
 
+    #[test]
+    fn repository_task_summary_projects_stopped_runs_without_changing_evidence() {
+        let temp = tempfile::tempdir().unwrap();
+        let workspace = fs::canonicalize(temp.path()).unwrap();
+        let dir = workspace
+            .join(WORKDUCK_DIRECTORY_NAME)
+            .join("repository-task-runs");
+        fs::create_dir_all(&dir).unwrap();
+        let record = serde_json::json!({
+            "id": "old-build", "task": "build", "state": "running",
+            "repositoryPath": crate::git_path::git_process_path(&workspace.join("repo")),
+            "command": "echo private-command", "outputTail": "private-output",
+            "startedAt": "2026-01-01T00:00:00Z", "finishedAt": null,
+            "exitCode": null, "recordPath": "untrusted.json"
+        });
+        let mut bytes = vec![0xef, 0xbb, 0xbf];
+        bytes.extend(serde_json::to_vec(&record).unwrap());
+        let path = dir.join("old-build.json");
+        fs::write(&path, &bytes).unwrap();
+        // Even JSON-looking terminal output must not become another execution.
+        fs::write(dir.join("old-build.json.log"), &bytes).unwrap();
+
+        let summary = summarize_repository_task_runs(&workspace);
+        assert!(summary.ok);
+        assert_eq!(summary.records.len(), 1);
+        assert_eq!(summary.records[0].state, "stopped");
+        let desktop = project_task_run_liveness(vec![
+            read_visible_task_run_record(&path, &crate::git_path::git_process_path(&workspace))
+                .unwrap(),
+        ]);
+        assert_eq!(summary.records[0].state, desktop[0].state);
+        assert_eq!(fs::read(&path).unwrap(), bytes);
+        let serialized = serde_json::to_string(&summary).unwrap();
+        assert!(!serialized.contains("private-command"));
+        assert!(!serialized.contains("private-output"));
+    }
+
+    fn write_summary_test_record(workspace: &Path, id: &str, started_at: &str) -> Vec<u8> {
+        let dir = workspace
+            .join(WORKDUCK_DIRECTORY_NAME)
+            .join("repository-task-runs");
+        fs::create_dir_all(&dir).unwrap();
+        let bytes = serde_json::to_vec(&serde_json::json!({
+            "id": id, "task": "build", "state": "succeeded",
+            "repositoryPath": crate::git_path::git_process_path(&workspace.join("repo")),
+            "command": "private-command", "outputTail": "private-output",
+            "startedAt": started_at, "finishedAt": started_at,
+            "exitCode": 0, "recordPath": "untrusted.json"
+        }))
+        .unwrap();
+        fs::write(dir.join(format!("{id}.json")), &bytes).unwrap();
+        bytes
+    }
+
+    #[test]
+    fn task_summaries_keep_the_newest_twenty_including_id_tie_breaking() {
+        let temp = tempfile::tempdir().unwrap();
+        let workspace = fs::canonicalize(temp.path()).unwrap();
+        for index in (0..31).rev() {
+            write_summary_test_record(
+                &workspace,
+                &format!("run-{index:02}"),
+                "2026-01-01T00:00:00Z",
+            );
+        }
+        write_summary_test_record(&workspace, "zz-older", "2020-01-01T00:00:00Z");
+        write_summary_test_record(&workspace, "aa-newer", "2027-01-01T00:00:00Z");
+        let summary = summarize_repository_task_runs(&workspace);
+        assert!(summary.ok);
+        assert!(!summary.incomplete);
+        assert_eq!(summary.records.len(), 20);
+        assert_eq!(summary.records.first().unwrap().id, "aa-newer");
+        assert_eq!(summary.records[1].id, "run-30");
+        assert_eq!(summary.records.last().unwrap().id, "run-12");
+        assert!(
+            summary
+                .records
+                .iter()
+                .all(|record| record.exit_code == Some(0))
+        );
+    }
+
+    #[test]
+    fn task_summary_budget_and_read_failures_are_reported_without_losing_valid_records() {
+        let temp = tempfile::tempdir().unwrap();
+        let workspace = fs::canonicalize(temp.path()).unwrap();
+        let bytes = write_summary_test_record(&workspace, "build-1", "2026-01-01T00:00:00Z");
+        let dir = workspace
+            .join(WORKDUCK_DIRECTORY_NAME)
+            .join("repository-task-runs");
+        fs::write(
+            dir.join("output.json.log"),
+            vec![b'x'; REPOSITORY_TASK_RUN_READ_BUDGET + 1],
+        )
+        .unwrap();
+        let exact = summarize_repository_task_runs_with_budget(&workspace, bytes.len());
+        assert!(exact.ok);
+        assert_eq!(exact.records.len(), 1);
+        let exhausted = summarize_repository_task_runs_with_budget(&workspace, bytes.len() - 1);
+        assert!(!exhausted.ok);
+        assert!(exhausted.incomplete);
+        assert!(exhausted.records.is_empty());
+        assert_eq!(
+            exhausted.error,
+            Some("agent-api-repository-task-runs-partial")
+        );
+        let second = write_summary_test_record(&workspace, "build-2", "2026-01-01T00:00:00Z");
+        assert_eq!(second.len(), bytes.len());
+        let shared = summarize_repository_task_runs_with_budget(&workspace, bytes.len());
+        assert!(shared.incomplete);
+        assert_eq!(shared.records.len(), 1);
+        let complete = summarize_repository_task_runs_with_budget(&workspace, bytes.len() * 2);
+        assert!(complete.ok);
+        assert_eq!(complete.records.len(), 2);
+        fs::write(dir.join("invalid.json"), b"invalid JSON").unwrap();
+        let partial = summarize_repository_task_runs(&workspace);
+        assert!(!partial.ok);
+        assert!(partial.incomplete);
+        assert_eq!(partial.records.len(), 2);
+        assert!(partial.records.iter().any(|record| record.id == "build-1"));
+    }
+
     fn create_test_workspace(name: &str) -> PathBuf {
         let unique = SystemTime::now()
             .duration_since(UNIX_EPOCH)
@@ -1125,6 +1389,7 @@ mod tests {
             .as_nanos();
         let path = std::env::temp_dir().join(format!("workduck-agent-api-{name}-{unique}"));
         fs::create_dir_all(&path).expect("workspace dir");
-        path
+        // Match the validated application boundary even when TEMP uses a Windows short name.
+        fs::canonicalize(path).expect("canonical workspace")
     }
 }

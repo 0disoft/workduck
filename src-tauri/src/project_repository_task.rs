@@ -1,10 +1,10 @@
 // llmnav/1 module
 // id=workduck.projects.repository-task-native
-// role=Discover toolchain commands, launch bounded repository tasks in terminals, and persist or reconcile native task-run records.
+// role=Discover toolchain commands, launch bounded repository tasks in terminals, persist execution-owned records, and project process liveness without overwriting results.
 // owns=native repository task launch|toolchain command discovery|task run reconciliation
 // excludes=frontend task normalization|arbitrary shell command input
 // search=native repository task|discover build command|reconcile dev server
-// invariant=Tasks are selected from a closed vocabulary, repository paths remain inside the workspace, and running records are revalidated against live process identity.
+// invariant=Tasks are selected from a closed vocabulary and repository paths remain inside the workspace; latest records bind selectable run IDs to their filenames, process identity is revalidated after bounded startup grace, tracked servers require their terminal execution and descendants, cached latest and unreadable files require unchanged metadata, terminal-owned completion survives launch updates and read-only reconciliation, task record publication replaces synced complete files and aborts execution on failure, success requires the final command, and bounded Unicode output previews keep completed history readable.
 // stability=architecture
 // /llmnav
 use std::{
@@ -31,6 +31,17 @@ use commands::resolve_repository_task_commands;
 
 #[path = "project_repository_task_history.rs"]
 mod history;
+
+#[path = "project_repository_task_powershell.rs"]
+mod powershell;
+use powershell::escape_powershell_single_quoted;
+#[cfg(target_os = "windows")]
+use powershell::launch_repository_terminal;
+#[cfg(all(test, target_os = "windows"))]
+use powershell::{
+    create_powershell_script, create_powershell_script_loader,
+    create_powershell_task_record_writer, encode_powershell_command, prepare_powershell_command,
+};
 
 #[derive(serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -96,18 +107,18 @@ pub enum ProjectRepositoryTaskError {
 #[derive(Clone, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ProjectRepositoryTaskRunRecord {
-    id: String,
-    task: String,
-    repository_path: String,
-    command: String,
-    state: String,
+    pub(crate) id: String,
+    pub(crate) task: String,
+    pub(crate) repository_path: String,
+    pub(crate) command: String,
+    pub(crate) state: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
-    process_id: Option<u32>,
-    exit_code: Option<i32>,
-    started_at: String,
-    finished_at: Option<String>,
-    output_tail: Option<String>,
-    record_path: String,
+    pub(crate) process_id: Option<u32>,
+    pub(crate) exit_code: Option<i32>,
+    pub(crate) started_at: String,
+    pub(crate) finished_at: Option<String>,
+    pub(crate) output_tail: Option<String>,
+    pub(crate) record_path: String,
 }
 
 #[derive(serde::Serialize)]
@@ -202,7 +213,7 @@ pub fn run_project_repository_task(
         };
         let launch_result =
             launch_repository_terminal(&repository_path, command.as_deref(), Some(&run_record))
-                .and_then(|process_id| attach_task_process_id(&mut run_record, process_id));
+                .map(|process_id| attach_task_process_id(&mut run_record, process_id));
 
         (launch_result, Some(run_record))
     };
@@ -286,7 +297,7 @@ fn read_latest_cached_task_run_records(
         .lock()
         .map_err(|_| ProjectRepositoryTaskError::RecordReadFailed)?;
 
-    if workspace_cache.is_fresh(dir_len, dir_modified_at) {
+    if workspace_cache.is_fresh(record_dir, dir_len, dir_modified_at) {
         return Ok(workspace_cache.latest_records.clone());
     }
 
@@ -341,7 +352,7 @@ fn read_latest_cached_task_run_records(
         .values()
         .filter_map(|cached| cached.record.clone())
         .collect();
-    let records = refresh_running_task_run_records(records, collect_live_task_processes);
+    let records = project_task_run_liveness(records);
     workspace_cache.dir_len = dir_len;
     workspace_cache.dir_modified_at = dir_modified_at;
     workspace_cache.latest_records = latest_task_run_records_by_repository(records);
@@ -377,7 +388,12 @@ fn clear_cached_task_run_records(record_dir: &Path) {
 }
 
 impl WorkspaceTaskRunRecordCache {
-    fn is_fresh(&self, dir_len: u64, dir_modified_at: Option<SystemTime>) -> bool {
+    fn is_fresh(
+        &self,
+        record_dir: &Path,
+        dir_len: u64,
+        dir_modified_at: Option<SystemTime>,
+    ) -> bool {
         if dir_modified_at.is_none()
             || self.dir_len != dir_len
             || self.dir_modified_at != dir_modified_at
@@ -385,19 +401,57 @@ impl WorkspaceTaskRunRecordCache {
             return false;
         }
 
-        !self
+        if self
             .latest_records
             .iter()
             .any(|record| record.state == "running")
+        {
+            return false;
+        }
+
+        // In-place terminal writes do not update the directory's modification time.
+        // Check the latest records and failed reads without rescanning completed history.
+        let file_is_unchanged = |file_name: &str, cached: &CachedTaskRunRecordFile| {
+            fs::metadata(record_dir.join(file_name)).is_ok_and(|metadata| {
+                metadata.is_file()
+                    && cached.modified_at.is_some()
+                    && metadata.len() == cached.len
+                    && metadata.modified().ok() == cached.modified_at
+            })
+        };
+        self.latest_records.iter().all(|record| {
+            Path::new(&record.record_path)
+                .file_name()
+                .and_then(|name| name.to_str())
+                .and_then(|name| self.files.get(name).map(|cached| (name, cached)))
+                .is_some_and(|(name, cached)| file_is_unchanged(name, cached))
+        }) && self
+            .files
+            .iter()
+            .filter(|(_, cached)| cached.record.is_none())
+            .all(|(name, cached)| file_is_unchanged(name, cached))
     }
 }
 
-fn read_visible_task_run_record(
+pub(crate) fn read_visible_task_run_record(
     path: &Path,
     visible_workspace_path: &Path,
 ) -> Option<ProjectRepositoryTaskRunRecord> {
-    let record_json = fs::read_to_string(path).ok()?;
-    let mut record = serde_json::from_str::<ProjectRepositoryTaskRunRecord>(&record_json).ok()?;
+    let mut remaining_bytes = history::MAX_HISTORY_BYTES;
+    read_visible_task_run_record_with_budget(path, visible_workspace_path, &mut remaining_bytes)
+}
+
+pub(crate) fn read_visible_task_run_record_with_budget(
+    path: &Path,
+    visible_workspace_path: &Path,
+    remaining_bytes: &mut usize,
+) -> Option<ProjectRepositoryTaskRunRecord> {
+    let mut record = history::read_bounded_task_run_record(path, remaining_bytes).ok()??;
+    if !history::valid_run_id(&record.id)
+        || path.file_stem().and_then(|stem| stem.to_str()) != Some(record.id.as_str())
+    {
+        return None;
+    }
     let repository_path = PathBuf::from(&record.repository_path);
 
     if repository_path.components().any(|component| {
@@ -539,7 +593,7 @@ fn launch_repository_task_terminals(
             create_task_run_record(workspace_path, repository_path, task, command)?;
         let process_id =
             launch_repository_terminal(repository_path, Some(command), Some(&run_record))?;
-        attach_task_process_id(&mut run_record, process_id)?;
+        attach_task_process_id(&mut run_record, process_id);
         run_records.push(run_record);
     }
 
@@ -585,16 +639,10 @@ fn create_task_run_record(
     Ok(record)
 }
 
-fn attach_task_process_id(
-    record: &mut ProjectRepositoryTaskRunRecord,
-    process_id: Option<u32>,
-) -> Result<(), ProjectRepositoryTaskError> {
-    let Some(process_id) = process_id else {
-        return Ok(());
-    };
-
-    record.process_id = Some(process_id);
-    write_task_run_record(&PathBuf::from(&record.record_path), record)
+fn attach_task_process_id(record: &mut ProjectRepositoryTaskRunRecord, process_id: Option<u32>) {
+    if let Some(process_id) = process_id {
+        record.process_id = Some(process_id);
+    }
 }
 
 fn write_task_run_record(
@@ -607,6 +655,9 @@ fn write_task_run_record(
     fs::create_dir_all(parent).map_err(|_| ProjectRepositoryTaskError::RecordWriteFailed)?;
     let record_json = serde_json::to_string_pretty(record)
         .map_err(|_| ProjectRepositoryTaskError::RecordWriteFailed)?;
+    if record_json.len() > history::MAX_RECORD_BYTES {
+        return Err(ProjectRepositoryTaskError::RecordWriteFailed);
+    }
 
     write_file_atomically(record_path, &record_json)
         .map_err(|_| ProjectRepositoryTaskError::RecordWriteFailed)
@@ -672,7 +723,7 @@ fn is_stale_running_task_record(
     record: &ProjectRepositoryTaskRunRecord,
     live_processes: &[LiveTaskProcess],
 ) -> bool {
-    if record.state != "running" {
+    if record.state != "running" || is_task_process_starting(record, OffsetDateTime::now_utc()) {
         return false;
     }
 
@@ -685,6 +736,19 @@ fn is_stale_running_task_record(
     }
 
     false
+}
+
+fn is_task_process_starting(record: &ProjectRepositoryTaskRunRecord, now: OffsetDateTime) -> bool {
+    if record.process_id.is_some() || record.exit_code.is_some() || record.finished_at.is_some() {
+        return false;
+    }
+    let Ok(started_at) = OffsetDateTime::parse(&record.started_at, &Rfc3339) else {
+        return false;
+    };
+    // The record is published before the terminal starts and writes its own process ID.
+    // Keep this launch window bounded so abandoned records still become stopped.
+    let age = now - started_at;
+    age >= time::Duration::ZERO && age < time::Duration::seconds(30)
 }
 
 fn is_terminal_task(task: &str) -> bool {
@@ -717,9 +781,8 @@ fn is_long_running_task_process_alive(
     live_processes: &[LiveTaskProcess],
 ) -> bool {
     if let Some(process_id) = record.process_id {
-        if has_live_descendant_task_process(process_id, live_processes) {
-            return true;
-        }
+        return is_tracked_task_process_alive(record, live_processes)
+            && has_live_descendant_task_process(process_id, live_processes);
     }
 
     let repository_path = normalize_process_match_text(&record.repository_path);
@@ -793,6 +856,23 @@ fn live_process_matches_task_record(
     process: &LiveTaskProcess,
     record: &ProjectRepositoryTaskRunRecord,
 ) -> bool {
+    if let Some(script) = decode_powershell_encoded_command(&process.command_line) {
+        if script.starts_with("$workduckTaskRunId = '") {
+            return script.starts_with(&format!(
+                "$workduckTaskRunId = '{}';",
+                escape_powershell_single_quoted(&record.id)
+            )) && script.contains("$workduckTaskScriptPath = '")
+                && script.contains("[ScriptBlock]::Create");
+        }
+        if script.contains("function Write-WorkduckTaskRunRecord") {
+            // Current terminal scripts carry the run ID, so a reused PID must not match
+            // another execution of the same command in the same repository.
+            return script.contains(&format!(
+                "id = '{}';",
+                escape_powershell_single_quoted(&record.id)
+            ));
+        }
+    }
     let command_line = normalize_process_match_text(&process.command_line);
     let repository_path = normalize_process_match_text(&record.repository_path);
 
@@ -823,37 +903,59 @@ fn stopped_task_run_record(
     }
 }
 
-fn refresh_running_task_run_records(
+pub(crate) fn project_task_run_liveness(
+    records: Vec<ProjectRepositoryTaskRunRecord>,
+) -> Vec<ProjectRepositoryTaskRunRecord> {
+    project_task_run_liveness_with_budget(records, history::MAX_HISTORY_BYTES)
+}
+
+pub(crate) fn project_task_run_liveness_with_budget(
+    records: Vec<ProjectRepositoryTaskRunRecord>,
+    remaining_bytes: usize,
+) -> Vec<ProjectRepositoryTaskRunRecord> {
+    refresh_running_task_run_records_with_budget(
+        records,
+        collect_live_task_processes,
+        remaining_bytes,
+    )
+}
+
+fn refresh_running_task_run_records_with_budget(
     records: Vec<ProjectRepositoryTaskRunRecord>,
     collect_processes: impl FnOnce() -> Result<Vec<LiveTaskProcess>, ProjectRepositoryTaskError>,
+    mut remaining_bytes: usize,
 ) -> Vec<ProjectRepositoryTaskRunRecord> {
-    let running_ids: HashSet<_> = records
-        .iter()
-        .filter(|record| record.state == "running")
-        .map(|record| record.id.clone())
-        .collect();
-    if running_ids.is_empty() {
+    if !records.iter().any(|record| record.state == "running") {
         return records;
     }
     let live_processes = collect_processes().ok();
-    let records = reconcile_running_task_run_records(records, live_processes.as_deref());
-    persist_reconciled_task_run_records(
-        records
-            .iter()
-            .filter(|record| running_ids.contains(&record.id) && record.state == "stopped"),
-    );
-    records
+    // A terminal can publish its final result while process enumeration is in flight.
+    let records = records
+        .into_iter()
+        .map(|record| reread_running_task_run_record(record, &mut remaining_bytes))
+        .collect();
+    // Process absence is a display projection, not authority to replace terminal evidence.
+    reconcile_running_task_run_records(records, live_processes.as_deref())
 }
 
-fn persist_reconciled_task_run_records<'a>(
-    records: impl IntoIterator<Item = &'a ProjectRepositoryTaskRunRecord>,
-) {
-    for record in records
-        .into_iter()
-        .filter(|record| record.state == "stopped")
-    {
-        let _ = write_task_run_record(&PathBuf::from(&record.record_path), record);
+fn reread_running_task_run_record(
+    record: ProjectRepositoryTaskRunRecord,
+    remaining_bytes: &mut usize,
+) -> ProjectRepositoryTaskRunRecord {
+    if record.state != "running" || *remaining_bytes == 0 {
+        return record;
     }
+    let Ok(Some(mut current)) =
+        history::read_bounded_task_run_record(Path::new(&record.record_path), remaining_bytes)
+    else {
+        return record;
+    };
+    if current.id != record.id || current.repository_path != record.repository_path {
+        return record;
+    }
+    // The caller bound this path to a workspace-owned file; ignore the JSON path.
+    current.record_path = record.record_path;
+    current
 }
 
 fn normalize_process_match_text(value: &str) -> String {
@@ -1036,41 +1138,9 @@ impl ProjectRepositoryTask {
 #[path = "project_repository_task_tests.rs"]
 mod tests;
 
-#[cfg(target_os = "windows")]
-fn launch_repository_terminal(
-    repository_path: &Path,
-    command: Option<&str>,
-    run_record: Option<&ProjectRepositoryTaskRunRecord>,
-) -> Result<Option<u32>, ProjectRepositoryTaskError> {
-    use std::os::windows::process::CommandExt;
-
-    const CREATE_NEW_CONSOLE: u32 = 0x00000010;
-
-    let terminal = crate::terminal_catalog::find_available_terminal_entry("powershell-core")
-        .or_else(|| crate::terminal_catalog::find_available_terminal_entry("windows-powershell"))
-        .ok_or(ProjectRepositoryTaskError::TerminalUnavailable)?;
-    let executable = terminal
-        .executable_path
-        .as_deref()
-        .unwrap_or(terminal.command);
-    let shell_repository_path = crate::git_path::git_process_path(repository_path);
-    let script = create_powershell_script(&shell_repository_path, command, run_record);
-    let encoded_script = encode_powershell_command(&script);
-
-    Command::new(executable)
-        .args([
-            "-NoLogo",
-            "-NoProfile",
-            "-NoExit",
-            "-EncodedCommand",
-            &encoded_script,
-        ])
-        .current_dir(&shell_repository_path)
-        .creation_flags(CREATE_NEW_CONSOLE)
-        .spawn()
-        .map(|child| Some(child.id()))
-        .map_err(|_| ProjectRepositoryTaskError::LaunchFailed)
-}
+#[cfg(all(test, target_os = "windows"))]
+#[path = "project_repository_task_powershell_tests.rs"]
+mod powershell_tests;
 
 #[cfg(not(target_os = "windows"))]
 fn launch_repository_terminal(
@@ -1079,115 +1149,6 @@ fn launch_repository_terminal(
     _run_record: Option<&ProjectRepositoryTaskRunRecord>,
 ) -> Result<Option<u32>, ProjectRepositoryTaskError> {
     Err(ProjectRepositoryTaskError::TerminalUnsupportedPlatform)
-}
-
-#[cfg(target_os = "windows")]
-fn create_powershell_script(
-    repository_path: &Path,
-    command: Option<&str>,
-    run_record: Option<&ProjectRepositoryTaskRunRecord>,
-) -> String {
-    let path = escape_powershell_single_quoted(&repository_path.to_string_lossy());
-    let mut script = format!(
-        "[Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false); Set-Location -LiteralPath '{}'",
-        path
-    );
-
-    for command in command
-        .into_iter()
-        .flat_map(|command| command.lines())
-        .map(str::trim)
-        .filter(|command| !command.is_empty())
-    {
-        let escaped_command = escape_powershell_single_quoted(command);
-
-        if let Some(run_record) = run_record {
-            script.push_str(&create_tracked_powershell_command(
-                &escaped_command,
-                run_record,
-            ));
-        } else {
-            script.push_str(&format!(
-                "; Write-Host 'Workduck: {}'; {}; if ($LASTEXITCODE -ne $null -and $LASTEXITCODE -ne 0) {{ Write-Host ('Workduck exit code: ' + $LASTEXITCODE); return }}",
-                escaped_command, command
-            ));
-        }
-    }
-
-    script
-}
-
-#[cfg(target_os = "windows")]
-fn create_tracked_powershell_command(
-    escaped_command: &str,
-    run_record: &ProjectRepositoryTaskRunRecord,
-) -> String {
-    let record_path = escape_powershell_single_quoted(&run_record.record_path);
-    let log_path = escape_powershell_single_quoted(&format!("{}.log", run_record.record_path));
-    let id = escape_powershell_single_quoted(&run_record.id);
-    let task = escape_powershell_single_quoted(&run_record.task);
-    let repository_path = escape_powershell_single_quoted(&run_record.repository_path);
-    let record_command = escape_powershell_single_quoted(&run_record.command);
-    let started_at = escape_powershell_single_quoted(&run_record.started_at);
-
-    format!(
-        r#";
-$workduckRecordPath = '{record_path}';
-$workduckLogPath = '{log_path}';
-$workduckRecordCommand = '{record_command}';
-$workduckCommand = '{escaped_command}';
-function Write-WorkduckTaskRunRecord {{
-    param([string]$State, [Nullable[int]]$ExitCode, [string]$OutputTail)
-    $record = [ordered]@{{
-        id = '{id}';
-        task = '{task}';
-        repositoryPath = '{repository_path}';
-        command = $workduckRecordCommand;
-        state = $State;
-        exitCode = $ExitCode;
-        startedAt = '{started_at}';
-        finishedAt = if ($State -eq 'running') {{ $null }} else {{ (Get-Date).ToUniversalTime().ToString('o') }};
-        outputTail = if ([string]::IsNullOrWhiteSpace($OutputTail)) {{ $null }} else {{ $OutputTail }};
-        recordPath = $workduckRecordPath
-    }};
-    $record | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath $workduckRecordPath -Encoding UTF8
-}}
-Write-Host 'Workduck: {escaped_command}';
-$workduckExitCode = 0;
-try {{
-    Invoke-Expression $workduckCommand 2>&1 | Tee-Object -FilePath $workduckLogPath -Append;
-    if ($LASTEXITCODE -ne $null) {{
-        $workduckExitCode = [int]$LASTEXITCODE;
-    }} elseif (-not $?) {{
-        $workduckExitCode = 1;
-    }}
-}} catch {{
-    $workduckExitCode = 1;
-    $_ | Out-String | Tee-Object -FilePath $workduckLogPath -Append;
-}}
-$workduckTail = if (Test-Path -LiteralPath $workduckLogPath) {{ (Get-Content -LiteralPath $workduckLogPath -Tail 40) -join [Environment]::NewLine }} else {{ '' }};
-if ($workduckExitCode -eq 0) {{
-    Write-WorkduckTaskRunRecord -State 'succeeded' -ExitCode $workduckExitCode -OutputTail $workduckTail;
-}} else {{
-    Write-WorkduckTaskRunRecord -State 'failed' -ExitCode $workduckExitCode -OutputTail $workduckTail;
-    Write-Host ('Workduck exit code: ' + $workduckExitCode);
-    return
-}}"#
-    )
-}
-
-#[cfg(target_os = "windows")]
-fn encode_powershell_command(script: &str) -> String {
-    let bytes = script
-        .encode_utf16()
-        .flat_map(u16::to_le_bytes)
-        .collect::<Vec<_>>();
-
-    general_purpose::STANDARD.encode(bytes)
-}
-
-fn escape_powershell_single_quoted(value: &str) -> String {
-    value.replace('\'', "''")
 }
 
 fn failed(error: ProjectRepositoryTaskError) -> ProjectRepositoryTaskResult {

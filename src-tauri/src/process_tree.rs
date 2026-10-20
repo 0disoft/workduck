@@ -4,7 +4,7 @@ role=Own spawned process trees and terminate their descendants across Windows jo
 owns=process tree spawning|cross-platform termination|active process registry
 excludes=task command selection|terminal output buffering
 search=process tree shutdown|descendant process termination|application shutdown|windows job object|unix process group
-invariant=Dropping an active process owner or shutting down the app cannot intentionally leave its registered descendants running.
+invariant=Parent exit never exempts owned descendants from termination; completed owners retire their registrations and cannot signal their process group again.
 stability=architecture
 */
 
@@ -12,7 +12,10 @@ use std::{
     collections::HashMap,
     io,
     process::{Child, Command, ExitStatus},
-    sync::{Mutex, MutexGuard, OnceLock, atomic::{AtomicU64, Ordering}},
+    sync::{
+        Mutex, MutexGuard, OnceLock,
+        atomic::{AtomicU64, Ordering},
+    },
     thread,
     time::Duration,
 };
@@ -31,6 +34,7 @@ pub(crate) struct ProcessTreeChild {
     #[cfg(unix)]
     process_group_id: i32,
     registration_id: u64,
+    tree_closed: bool,
 }
 
 impl ProcessTreeChild {
@@ -69,6 +73,7 @@ impl ProcessTreeChild {
             #[cfg(unix)]
             process_group_id,
             registration_id,
+            tree_closed: false,
         })
     }
 
@@ -77,25 +82,47 @@ impl ProcessTreeChild {
     }
 
     pub(crate) fn try_wait(&mut self) -> io::Result<Option<ExitStatus>> {
-        self.child.try_wait()
+        let status = self.child.try_wait()?;
+        if status.is_some() {
+            self.close_tree()?;
+        }
+        Ok(status)
     }
 
     pub(crate) fn wait_timeout(&mut self, timeout: Duration) -> io::Result<Option<ExitStatus>> {
-        self.child.wait_timeout(timeout)
+        let status = self.child.wait_timeout(timeout)?;
+        if status.is_some() {
+            self.close_tree()?;
+        }
+        Ok(status)
     }
 
     pub(crate) fn terminate(&mut self) -> io::Result<ExitStatus> {
-        if let Some(status) = self.child.try_wait()? {
+        if let Some(status) = self.try_wait()? {
             return Ok(status);
         }
 
         self.request_graceful_termination()?;
-        if let Some(status) = self.child.wait_timeout(TERMINATION_GRACE_PERIOD)? {
+        if let Some(status) = self.wait_timeout(TERMINATION_GRACE_PERIOD)? {
             return Ok(status);
         }
 
-        self.force_terminate()?;
+        self.close_tree()?;
+        if matches!(self.child.try_wait(), Ok(None)) {
+            self.child.kill()?;
+        }
         self.child.wait()
+    }
+
+    fn close_tree(&mut self) -> io::Result<()> {
+        if self.tree_closed {
+            return Ok(());
+        }
+        // Retire the identity once cleanup is attempted. In particular, a Unix
+        // group ID must never be signalled by this owner after it can be reused.
+        self.tree_closed = true;
+        unregister_process_tree(self.registration_id);
+        self.force_terminate()
     }
 
     #[cfg(windows)]
@@ -131,9 +158,11 @@ impl ProcessTreeChild {
 
 impl Drop for ProcessTreeChild {
     fn drop(&mut self) {
+        let _ = self.close_tree();
         if matches!(self.child.try_wait(), Ok(None)) {
-            let _ = self.force_terminate();
-            let _ = self.child.wait();
+            if self.child.kill().is_ok() {
+                let _ = self.child.wait();
+            }
         }
         unregister_process_tree(self.registration_id);
     }
@@ -177,9 +206,7 @@ impl ProcessTreeIdentity {
             #[cfg(windows)]
             Self::WindowsJob(handle) => terminate_windows_job(handle),
             #[cfg(unix)]
-            Self::UnixProcessGroup(process_group_id) => {
-                signal_process_group(process_group_id, 15)
-            }
+            Self::UnixProcessGroup(process_group_id) => signal_process_group(process_group_id, 15),
             #[cfg(not(any(windows, unix)))]
             Self::Unsupported => Ok(()),
         }
@@ -190,9 +217,7 @@ impl ProcessTreeIdentity {
             #[cfg(windows)]
             Self::WindowsJob(handle) => terminate_windows_job(handle),
             #[cfg(unix)]
-            Self::UnixProcessGroup(process_group_id) => {
-                signal_process_group(process_group_id, 9)
-            }
+            Self::UnixProcessGroup(process_group_id) => signal_process_group(process_group_id, 9),
             #[cfg(not(any(windows, unix)))]
             Self::Unsupported => Ok(()),
         }
@@ -337,9 +362,8 @@ impl WindowsJob {
 
     fn assign(&self, child: &Child) -> io::Result<()> {
         use std::os::windows::io::AsRawHandle;
-        let assigned = unsafe {
-            windows_ffi::AssignProcessToJobObject(self.0, child.as_raw_handle().cast())
-        };
+        let assigned =
+            unsafe { windows_ffi::AssignProcessToJobObject(self.0, child.as_raw_handle().cast()) };
         if assigned == 0 {
             Err(io::Error::last_os_error())
         } else {
@@ -463,6 +487,119 @@ mod tests {
         fn WaitForSingleObject(handle: *mut c_void, milliseconds: u32) -> u32;
     }
 
+    struct DescendantHandle(*mut c_void);
+
+    impl Drop for DescendantHandle {
+        fn drop(&mut self) {
+            unsafe {
+                windows_ffi::CloseHandle(self.0);
+            }
+        }
+    }
+
+    fn exited_parent_with_descendant() -> (ProcessTreeChild, DescendantHandle) {
+        use std::{io::Write, os::windows::process::CommandExt, sync::mpsc};
+        let powershell = std::path::PathBuf::from(std::env::var_os("SystemRoot").unwrap())
+            .join("System32/WindowsPowerShell/v1.0/powershell.exe");
+        let script = concat!(
+            "$info = New-Object System.Diagnostics.ProcessStartInfo; ",
+            "$info.FileName = $env:ComSpec; ",
+            "$info.Arguments = '/D /C ping 127.0.0.1 -n 30 >nul'; ",
+            "$info.UseShellExecute = $false; $info.CreateNoWindow = $true; ",
+            "$descendant = [System.Diagnostics.Process]::Start($info); ",
+            "[Console]::Out.WriteLine([string]$descendant.Id); [Console]::Out.Flush(); ",
+            "[Console]::In.ReadLine() | Out-Null; exit 0"
+        );
+        let mut command = Command::new(powershell);
+        command
+            .args([
+                "-NoLogo",
+                "-NoProfile",
+                "-NonInteractive",
+                "-Command",
+                script,
+            ])
+            .stdin(Stdio::piped())
+            .stdout(Stdio::piped())
+            .creation_flags(0x0800_0000);
+        let mut process = ProcessTreeChild::spawn(&mut command).unwrap();
+        let stdout = process.child_mut().stdout.take().unwrap();
+        let (sender, receiver) = mpsc::channel();
+        thread::spawn(move || {
+            let mut line = String::new();
+            let result = BufReader::new(stdout).read_line(&mut line).map(|_| line);
+            let _ = sender.send(result);
+        });
+        let pid = receiver
+            .recv_timeout(Duration::from_secs(10))
+            .unwrap()
+            .unwrap()
+            .trim()
+            .parse::<u32>()
+            .unwrap();
+        let handle = unsafe { OpenProcess(PROCESS_SYNCHRONIZE, 0, pid) };
+        assert!(!handle.is_null());
+        let handle = DescendantHandle(handle);
+        process
+            .child_mut()
+            .stdin
+            .take()
+            .unwrap()
+            .write_all(b"\n")
+            .unwrap();
+        // Reap through the raw child to exercise cleanup after an already cached exit.
+        assert!(
+            process
+                .child_mut()
+                .wait_timeout(Duration::from_secs(5))
+                .unwrap()
+                .unwrap()
+                .success()
+        );
+        assert_eq!(unsafe { WaitForSingleObject(handle.0, 0) }, 258);
+        (process, handle)
+    }
+
+    #[test]
+    fn termination_after_parent_exit_stops_owned_descendants_and_preserves_status() {
+        let (mut process, descendant) = exited_parent_with_descendant();
+        assert!(process.terminate().unwrap().success());
+        assert_eq!(
+            unsafe { WaitForSingleObject(descendant.0, 5_000) },
+            WAIT_OBJECT_0
+        );
+        assert!(process.tree_closed);
+        assert!(!lock_active_process_trees().contains_key(&process.registration_id));
+    }
+
+    #[test]
+    fn observing_parent_exit_retires_the_tree_before_the_owner_is_dropped() {
+        let (mut process, descendant) = exited_parent_with_descendant();
+        assert!(
+            process
+                .wait_timeout(Duration::ZERO)
+                .unwrap()
+                .unwrap()
+                .success()
+        );
+        assert_eq!(
+            unsafe { WaitForSingleObject(descendant.0, 5_000) },
+            WAIT_OBJECT_0
+        );
+        assert!(process.try_wait().unwrap().unwrap().success());
+        assert!(!lock_active_process_trees().contains_key(&process.registration_id));
+    }
+
+    #[test]
+    fn dropping_an_exited_parent_owner_stops_its_descendants() {
+        let (process, descendant) = exited_parent_with_descendant();
+        drop(process);
+        assert_eq!(
+            unsafe { WaitForSingleObject(descendant.0, 5_000) },
+            WAIT_OBJECT_0
+        );
+    }
+
     #[test]
     fn windows_job_termination_stops_descendant_process() {
         let powershell = std::env::var_os("SystemRoot")
@@ -481,8 +618,16 @@ mod tests {
             "Wait-Process -Id $child.Id"
         );
         let mut command = Command::new(powershell);
+        use std::os::windows::process::CommandExt;
+        command.creation_flags(0x0800_0000);
         command
-            .args(["-NoLogo", "-NoProfile", "-NonInteractive", "-Command", script])
+            .args([
+                "-NoLogo",
+                "-NoProfile",
+                "-NonInteractive",
+                "-Command",
+                script,
+            ])
             .stdout(Stdio::piped());
         let mut process = ProcessTreeChild::spawn(&mut command).expect("process tree");
         let stdout = process
@@ -494,7 +639,10 @@ mod tests {
         let bytes_read = BufReader::new(stdout)
             .read_line(&mut descendant_pid)
             .expect("descendant pid readiness signal");
-        assert!(bytes_read > 0, "descendant pid readiness signal was missing");
+        assert!(
+            bytes_read > 0,
+            "descendant pid readiness signal was missing"
+        );
         let descendant_pid = descendant_pid
             .trim()
             .parse::<u32>()
@@ -504,10 +652,74 @@ mod tests {
 
         let descendant = unsafe { OpenProcess(PROCESS_SYNCHRONIZE, 0, descendant_pid) };
         if !descendant.is_null() {
-            assert_eq!(unsafe { WaitForSingleObject(descendant, 5_000) }, WAIT_OBJECT_0);
+            assert_eq!(
+                unsafe { WaitForSingleObject(descendant, 5_000) },
+                WAIT_OBJECT_0
+            );
             unsafe {
                 windows_ffi::CloseHandle(descendant);
             }
+        }
+    }
+}
+
+#[cfg(all(test, unix))]
+mod unix_tests {
+    use super::*;
+    use std::{
+        io::{BufRead, BufReader, Read, Write},
+        process::Stdio,
+        sync::mpsc,
+    };
+
+    #[test]
+    fn exited_parent_cleanup_kills_term_ignoring_descendants_and_releases_their_pipe() {
+        for drop_owner in [false, true] {
+            let mut command = Command::new("/bin/sh");
+            command
+                .args([
+                    "-c",
+                    "trap '' TERM; sleep 30 & echo ready; read line; exit 0",
+                ])
+                .stdin(Stdio::piped())
+                .stdout(Stdio::piped());
+            let mut process = ProcessTreeChild::spawn(&mut command).unwrap();
+            let mut output = BufReader::new(process.child_mut().stdout.take().unwrap());
+            let mut ready = String::new();
+            output.read_line(&mut ready).unwrap();
+            assert_eq!(ready.trim(), "ready");
+            process
+                .child_mut()
+                .stdin
+                .take()
+                .unwrap()
+                .write_all(b"\n")
+                .unwrap();
+            assert!(
+                process
+                    .child_mut()
+                    .wait_timeout(Duration::from_secs(5))
+                    .unwrap()
+                    .unwrap()
+                    .success()
+            );
+            if drop_owner {
+                drop(process);
+            } else {
+                assert!(process.terminate().unwrap().success());
+            }
+            let (sender, receiver) = mpsc::channel();
+            thread::spawn(move || {
+                let mut bytes = Vec::new();
+                let _ = sender.send(output.read_to_end(&mut bytes));
+            });
+            assert_eq!(
+                receiver
+                    .recv_timeout(Duration::from_secs(5))
+                    .unwrap()
+                    .unwrap(),
+                0
+            );
         }
     }
 }

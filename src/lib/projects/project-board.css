@@ -67,9 +67,8 @@
 	min-width: 0;
 	min-height: 0;
 	gap: 14px;
-	align-content: start;
-	overflow-y: auto;
-	padding-inline-end: 4px;
+	grid-template-rows: minmax(0, 1fr);
+	overflow: hidden;
 }
 
 .workduck-project-lane {
@@ -552,8 +551,9 @@
 	display: grid;
 	min-width: 0;
 	grid-template-columns: minmax(0, 1fr);
+	grid-template-rows: minmax(0, 1fr);
 	gap: 14px;
-	align-items: start;
+	align-items: stretch;
 }
 
 .workduck-project-repository-lane-split {
@@ -563,6 +563,8 @@
 .workduck-repository-list-column {
 	display: grid;
 	min-width: 0;
+	min-height: 0;
+	grid-template-rows: auto minmax(0, 1fr);
 	gap: 8px;
 	align-content: start;
 }
@@ -576,10 +578,14 @@
 	container: workduck-repository-list / inline-size;
 	display: grid;
 	min-width: 0;
+	min-height: 0;
+	align-content: start;
 	border: 1px solid oklch(var(--workduck-oklch-border) / 0.5);
 	border-radius: 8px;
 	background: oklch(var(--workduck-oklch-surface) / 0.32);
-	overflow: hidden;
+	overflow-y: auto;
+	overscroll-behavior-y: contain;
+	scrollbar-gutter: stable;
 }
 
 .workduck-repository-row {
@@ -738,8 +744,12 @@
 .workduck-project-repository-inspector {
 	display: grid;
 	min-width: 0;
+	min-height: 0;
 	gap: 10px;
 	align-content: start;
+	overflow-y: auto;
+	overscroll-behavior-y: contain;
+	scrollbar-gutter: stable;
 	border-inline-start: 1px solid oklch(var(--workduck-oklch-border) / 0.4);
 	padding-inline-start: 14px;
 }
@@ -797,6 +807,7 @@
 @container workduck-repository-pane (max-width: 760px) {
 	.workduck-project-repository-lane-split {
 		grid-template-columns: minmax(0, 1fr);
+		grid-template-rows: repeat(2, minmax(0, 1fr));
 	}
 
 	.workduck-project-repository-inspector {
@@ -855,6 +866,16 @@
 	}
 
 	.workduck-project-detail-lanes {
-		overflow-y: visible;
+		grid-template-rows: auto;
+		overflow: visible;
+	}
+
+	.workduck-project-repository-lane-split {
+		grid-template-rows: auto auto;
+	}
+
+	.workduck-repository-list-column,
+	.workduck-project-repository-inspector {
+		max-height: min(45dvh, 360px);
 	}
 }

@@ -59,6 +59,50 @@ afterEach(() => {
 });
 
 describe('project board registry write ownership', () => {
+	test('blocks edits and captures until a successful read, without reviving an early capture', async () => {
+		let writes = 0;
+		installWriterInvoke(async () => { writes += 1; return { ok: true }; });
+		const harness = createProjectBoardRegistryWriterHarness(workspace('old'));
+		try {
+			harness.state.registryReady = false;
+			await settleEffects();
+			const captured = harness.persistRegistry.capture();
+			const edited = addProjectNode(captured.registry, { kind: 'project', name: 'Early', path: 'projects/early' });
+			if (!edited.ok) throw new Error(edited.error);
+			expect(await harness.persistRegistry(edited.registry)).toBe(false);
+			expect(await captured.persistRegistry(edited.registry)).toBe(false);
+			expect(harness.visibleRegistry.nodes).toEqual([]);
+			expect(writes).toBe(0);
+			expect(await harness.persistRegistry.reload()).toBe(true);
+			expect(harness.state.registryReady).toBe(true);
+			expect(await captured.persistRegistry(edited.registry)).toBe(false);
+			expect(await harness.persistRegistry(edited.registry)).toBe(true);
+			expect(writes).toBe(1);
+		} finally { harness.dispose(); }
+	});
+
+	test('a failed reload blocks prior captures and fresh edits until retry succeeds', async () => {
+		let writes = 0;
+		const harness = createProjectBoardRegistryWriterHarness(workspace('old'));
+		try {
+			await settleEffects();
+			const captured = harness.persistRegistry.capture();
+			const edited = addProjectNode(captured.registry, { kind: 'project', name: 'Draft', path: 'projects/draft' });
+			if (!edited.ok) throw new Error(edited.error);
+			setTauriInvokeForTest(async <T>() => ({ ok: false, error: 'project-registry-read-failed' }) as T);
+			expect(await harness.persistRegistry.reload()).toBe(false);
+			expect(harness.state.registryReady).toBe(false);
+			expect(await captured.persistRegistry(edited.registry)).toBe(false);
+			expect(await harness.persistRegistry(edited.registry)).toBe(false);
+			expect(harness.visibleError).toBe('project-registry-read-failed');
+			installWriterInvoke(async () => { writes += 1; return { ok: true }; });
+			expect(await harness.persistRegistry.reload()).toBe(true);
+			expect(harness.visibleError).toBeNull();
+			expect(await harness.persistRegistry(edited.registry)).toBe(true);
+			expect(writes).toBe(1);
+		} finally { harness.dispose(); }
+	});
+
 	test('a captured repository edit preserves its workspace after switching views', async () => {
 		const writtenWorkspaceIds: unknown[] = [];
 		installWriterInvoke(async (_command, args) => {
@@ -74,6 +118,7 @@ describe('project board registry write ownership', () => {
 			harness.setWorkspace(workspace('new'));
 			const current = createEmptyProjectRegistry('new');
 			harness.state.registry = current;
+			harness.state.registryReady = false;
 			await settleEffects();
 			expect(captured.isCurrent()).toBe(false);
 			expect(await captured.persistRegistry(edited.registry)).toBe(true);

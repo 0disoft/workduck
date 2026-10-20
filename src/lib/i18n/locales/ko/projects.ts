@@ -275,6 +275,7 @@ export const koProjectsMessages = {
 			'project-folder-name-invalid': '폴더 이름으로 사용할 수 없는 이름입니다.',
 			'project-folder-conflict': '폴더 경로를 사용할 수 없습니다.',
 			'project-folder-create-failed': '폴더를 만들지 못했습니다.',
+			'project-folder-ssealed-manifest-conflict': '기존 ssealed 기록이 손상되었거나 설정이 다르거나 변경되었습니다. 기록을 확인하고 설정 변경은 ssealed의 update/upgrade로 처리해 주세요.',
 			'project-folder-ssealed-scaffold-failed': 'ssealed 스캐폴드를 만들지 못했습니다.',
 			'project-folder-ssealed-scaffold-locked':
 				'이 저장소에서 다른 ssealed 작업이 실행 중입니다. 완료된 후 다시 시도하세요.',

@@ -4,7 +4,7 @@
 // owns=native Queue execution|agent run coordination|execution confirmation tokens
 // excludes=frontend execution adapter|Queue folder CRUD
 // search=native Queue execution|confirm work order run|cancel agent execution
-// invariant=Execution requires the current estimate token, respects global and provider permits, and never exposes resolved secrets through prompt previews.
+// invariant=Execution verifies the estimate token against the locked work-order snapshot before state changes, respects global and provider permits, and never exposes resolved secrets through prompt previews.
 // stability=architecture
 // /llmnav
 use std::{
@@ -494,9 +494,6 @@ pub struct AgentExecutionAttempt {
 pub async fn execute_queue_work_order(
     request: QueueExecutionRequest,
 ) -> QueueExecutionCommandResult {
-    if let Err(error) = validate_queue_execution_confirmation(&request) {
-        return queue_execution_failed(error);
-    }
     let workspace_path = match canonicalize_queue_workspace(Path::new(&request.workspace_path)) {
         Ok(workspace_path) => workspace_path,
         Err(error) => return queue_execution_failed(error),
@@ -513,6 +510,7 @@ pub async fn execute_queue_work_order(
         &workspace_path,
         &request.work_order_relative_path,
         &request.work_order.r#ref.id,
+        |work_order| validate_queue_execution_confirmation(&request, work_order),
     ) {
         Ok(execution) => execution,
         Err(error) => return queue_execution_failed(error),

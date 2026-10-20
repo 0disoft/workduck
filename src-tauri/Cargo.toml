@@ -1,6 +1,6 @@
 [package]
 name = "workduck"
-version = "1.9.49"
+version = "1.9.117"
 description = "Local-first developer workbench"
 authors = ["Workduck contributors"]
 license = "0BSD"
@@ -20,6 +20,7 @@ base64 = "0.23.1"
 chacha20poly1305 = "0.11.0"
 futures-util = "0.3.34"
 getrandom = "0.4.3"
+jsonc-parser = { version = "0.34", features = ["serde"] }
 rusqlite = { version = "0.40.2", features = ["bundled"] }
 reqwest = { version = "0.13.5", default-features = false, features = ["json", "rustls"] }
 serde = { version = "1", features = ["derive"] }
@@ -29,7 +30,7 @@ tauri = { version = "2", features = ["tray-icon"] }
 tauri-plugin-autostart = "2"
 tauri-plugin-dialog = "2"
 tempfile = "3.27.0"
-time = { version = "0.3.55", features = ["formatting"] }
+time = { version = "0.3.55", features = ["formatting", "parsing"] }
 tokio = { version = "1", features = ["sync", "time"] }
 wait-timeout = "0.2.1"
 zeroize = "1.9"
@@ -37,6 +38,9 @@ tauri-plugin-notification = "2"
 
 [target.'cfg(windows)'.dependencies]
 winreg = "0.56.0"
+
+[target.'cfg(unix)'.dependencies]
+libc = "0.2"
 
 [target.'cfg(any(target_os = "macos", windows, target_os = "linux"))'.dependencies]
 tauri-plugin-process = "2"

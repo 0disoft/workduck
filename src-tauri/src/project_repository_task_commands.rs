@@ -42,6 +42,7 @@ pub(super) fn resolve_repository_task_commands(
     match task {
         ProjectRepositoryTask::InstallDependencies => {
             add_package_task_commands(repository_path, task, &mut commands)?;
+            add_deno_dependency_commands(repository_path, task, &mut commands);
             add_cargo_task_commands(repository_path, task, &mut commands);
             add_pub_task_commands(repository_path, task, &mut commands);
             add_go_task_commands(repository_path, task, &mut commands);
@@ -73,7 +74,7 @@ pub(super) fn resolve_repository_task_commands(
         }
         ProjectRepositoryTask::UpdateDependencies => {
             add_package_task_commands(repository_path, task, &mut commands)?;
-            add_deno_dependency_update_commands(repository_path, &mut commands);
+            add_deno_dependency_commands(repository_path, task, &mut commands);
             add_cargo_task_commands(repository_path, task, &mut commands);
             add_pub_task_commands(repository_path, task, &mut commands);
             add_go_task_commands(repository_path, task, &mut commands);
@@ -311,7 +312,7 @@ fn discover_package_project_paths(
         }
     }
 
-    filter_local_dependency_package_project_paths(project_paths)
+    filter_local_dependency_package_project_paths(repository_path, project_paths)
 }
 
 fn root_project_has_task_script(
@@ -332,7 +333,10 @@ fn root_project_has_task_script(
         .is_some()
 }
 
-fn filter_local_dependency_package_project_paths(project_paths: Vec<PathBuf>) -> Vec<PathBuf> {
+fn filter_local_dependency_package_project_paths(
+    repository_path: &Path,
+    project_paths: Vec<PathBuf>,
+) -> Vec<PathBuf> {
     let local_dependency_paths = project_paths
         .iter()
         .filter_map(|project_path| read_package_project_at(project_path))
@@ -345,15 +349,9 @@ fn filter_local_dependency_package_project_paths(project_paths: Vec<PathBuf>) ->
 
     project_paths
         .into_iter()
-        .enumerate()
-        .filter_map(|(index, project_path)| {
-            if index == 0
-                || !is_local_dependency_package_project_path(&project_path, &local_dependency_paths)
-            {
-                Some(project_path)
-            } else {
-                None
-            }
+        .filter(|project_path| {
+            project_path == repository_path
+                || !is_local_dependency_package_project_path(project_path, &local_dependency_paths)
         })
         .collect()
 }
@@ -493,14 +491,23 @@ impl PackageManager {
     }
 }
 
-fn add_deno_dependency_update_commands(repository_path: &Path, commands: &mut Vec<String>) {
+fn add_deno_dependency_commands(
+    repository_path: &Path,
+    task: ProjectRepositoryTask,
+    commands: &mut Vec<String>,
+) {
+    let command = match task {
+        ProjectRepositoryTask::InstallDependencies => "deno install",
+        ProjectRepositoryTask::UpdateDependencies => "deno update",
+        _ => return,
+    };
     for project_path in unique_manifest_directories(discover_manifest_paths(
         repository_path,
         &["deno.json", "deno.jsonc", "deno.lock"],
     )) {
         push_unique_command(
             commands,
-            command_in_directory(repository_path, &project_path, "deno update"),
+            command_in_directory(repository_path, &project_path, command),
         );
     }
 }
@@ -535,10 +542,30 @@ fn add_deno_task_commands(
 }
 
 fn deno_task_exists(project_path: &Path, task_name: &str) -> bool {
-    let Ok(deno_json) = fs::read_to_string(project_path.join("deno.json")) else {
+    let primary_config = project_path.join("deno.json");
+    let config_path = if primary_config.exists() {
+        primary_config
+    } else {
+        project_path.join("deno.jsonc")
+    };
+    let Ok(deno_json) = fs::read_to_string(config_path) else {
         return false;
     };
-    let Ok(deno_json) = serde_json::from_str::<serde_json::Value>(&deno_json) else {
+    let options = jsonc_parser::ParseOptions {
+        allow_comments: true,
+        allow_trailing_commas: true,
+        allow_loose_object_property_names: false,
+        allow_missing_commas: false,
+        allow_single_quoted_strings: false,
+        allow_hexadecimal_numbers: false,
+        allow_unary_plus_numbers: false,
+        allow_bare_decimal_point_numbers: false,
+        allow_non_finite_numbers: false,
+        allow_extended_string_escapes: false,
+    };
+    let Ok(deno_json) =
+        jsonc_parser::parse_to_serde_value::<serde_json::Value>(&deno_json, &options)
+    else {
         return false;
     };
 
@@ -838,7 +865,7 @@ fn command_in_directory(repository_path: &Path, directory: &Path, command: &str)
     }
 
     format!(
-        "Push-Location -LiteralPath '{}'; {}; Pop-Location",
+        "Push-Location -LiteralPath '{}' -ErrorAction Stop; try {{ {} }} finally {{ Pop-Location }}",
         escape_powershell_single_quoted(&relative_shell_path(repository_path, directory)),
         command
     )
@@ -864,5 +891,280 @@ fn is_flutter_project(project_path: &Path) -> bool {
 fn push_unique_command(commands: &mut Vec<String>, command: String) {
     if !commands.iter().any(|candidate| candidate == &command) {
         commands.push(command);
+    }
+}
+
+#[cfg(test)]
+mod package_discovery_tests {
+    use super::*;
+
+    #[cfg(target_os = "windows")]
+    #[test]
+    fn directory_commands_stop_on_missing_paths_and_restore_location_after_failure() {
+        for (create_directory, command, caught) in [
+            (
+                false,
+                "Set-Content -LiteralPath 'marker.txt' -Value 'ran'",
+                true,
+            ),
+            (
+                true,
+                "Set-Content -LiteralPath 'marker.txt' -Value 'ran'; throw 'failure'",
+                true,
+            ),
+            (
+                true,
+                "Set-Content -LiteralPath 'marker.txt' -Value 'ran'",
+                false,
+            ),
+        ] {
+            let repository = tempfile::tempdir().unwrap();
+            let directory = repository.path().join("app's folder");
+            if create_directory {
+                fs::create_dir(&directory).unwrap();
+            }
+            let scoped_command = command_in_directory(repository.path(), &directory, command);
+            let script = format!(
+                "Set-Location -LiteralPath '{}' -ErrorAction Stop; $caught = $false; try {{ {scoped_command} }} catch {{ $caught = $true }}; @{{ caught = $caught; path = (Get-Location).Path }} | ConvertTo-Json",
+                escape_powershell_single_quoted(&repository.path().to_string_lossy())
+            );
+            let output = std::process::Command::new("powershell.exe")
+                .args([
+                    "-NoLogo",
+                    "-NoProfile",
+                    "-NonInteractive",
+                    "-Command",
+                    &script,
+                ])
+                .output()
+                .unwrap();
+            assert!(
+                output.status.success(),
+                "{}",
+                String::from_utf8_lossy(&output.stderr)
+            );
+            let result: serde_json::Value = serde_json::from_slice(&output.stdout).unwrap();
+            assert_eq!(result["caught"], caught);
+            // PowerShell can expand TEMP's short name; compare the restored directory identity.
+            assert_eq!(
+                fs::canonicalize(result["path"].as_str().unwrap()).unwrap(),
+                fs::canonicalize(repository.path()).unwrap()
+            );
+            assert!(!repository.path().join("marker.txt").exists());
+            assert_eq!(directory.join("marker.txt").exists(), create_directory);
+        }
+    }
+
+    #[test]
+    fn rootless_repository_skips_owned_packages_even_when_they_sort_first() {
+        let repository = tempfile::tempdir().unwrap();
+        for (directory, manifest) in [
+            ("packages/a-library", r#"{"name":"library"}"#),
+            ("packages/m-independent", "{}"),
+            (
+                "packages/z-app",
+                r#"{"devDependencies":{"library":"file:../a-library"}}"#,
+            ),
+        ] {
+            let project = repository.path().join(directory);
+            fs::create_dir_all(&project).unwrap();
+            fs::write(project.join("package.json"), manifest).unwrap();
+        }
+        for (task, command) in [
+            (ProjectRepositoryTask::InstallDependencies, "npm install"),
+            (ProjectRepositoryTask::UpdateDependencies, "npm update"),
+        ] {
+            let commands = resolve_repository_task_commands(task, repository.path())
+                .unwrap_or_else(|_| panic!("missing {command}"));
+            assert_eq!(
+                commands,
+                ["packages/m-independent", "packages/z-app"]
+                    .map(|path| format!(
+                        "Push-Location -LiteralPath '{path}' -ErrorAction Stop; try {{ {command} }} finally {{ Pop-Location }}"
+                    ))
+                    .to_vec()
+            );
+        }
+    }
+
+    #[test]
+    fn actual_repository_root_remains_an_installation_owner() {
+        let repository = tempfile::tempdir().unwrap();
+        let project = repository.path().join("packages/library");
+        fs::create_dir_all(&project).unwrap();
+        fs::write(repository.path().join("package.json"), "{}").unwrap();
+        fs::write(
+            project.join("package.json"),
+            r#"{"dependencies":{"root":"file:../.."}}"#,
+        )
+        .unwrap();
+        let commands = resolve_repository_task_commands(
+            ProjectRepositoryTask::InstallDependencies,
+            repository.path(),
+        )
+        .unwrap_or_else(|_| panic!("missing root install"));
+        assert_eq!(
+            commands,
+            vec![
+                "npm install",
+                "Push-Location -LiteralPath 'packages/library' -ErrorAction Stop; try { npm install } finally { Pop-Location }"
+            ]
+        );
+    }
+}
+
+#[cfg(test)]
+mod deno_tests {
+    use super::*;
+
+    #[test]
+    fn discovers_dependency_installation_from_deno_configs() {
+        for filename in ["deno.json", "deno.jsonc"] {
+            let repository = tempfile::tempdir().unwrap();
+            fs::write(repository.path().join(filename), "{}").unwrap();
+            let commands = resolve_repository_task_commands(
+                ProjectRepositoryTask::InstallDependencies,
+                repository.path(),
+            )
+            .unwrap_or_else(|_| panic!("missing install command for {filename}"));
+            assert_eq!(commands, vec!["deno install"]);
+        }
+    }
+
+    #[test]
+    fn deno_dependency_commands_are_unique_per_project() {
+        let repository = tempfile::tempdir().unwrap();
+        for filename in ["deno.json", "deno.jsonc", "deno.lock"] {
+            fs::write(repository.path().join(filename), "{}").unwrap();
+        }
+        for (task, command) in [
+            (ProjectRepositoryTask::InstallDependencies, "deno install"),
+            (ProjectRepositoryTask::UpdateDependencies, "deno update"),
+        ] {
+            let commands = resolve_repository_task_commands(task, repository.path())
+                .unwrap_or_else(|_| panic!("missing {command}"));
+            assert_eq!(commands, vec![command]);
+        }
+    }
+
+    #[test]
+    fn installs_nested_deno_projects_alongside_node_projects() {
+        let repository = tempfile::tempdir().unwrap();
+        fs::write(repository.path().join("package.json"), "{}").unwrap();
+        let project = repository.path().join("services/worker");
+        fs::create_dir_all(&project).unwrap();
+        fs::write(project.join("deno.jsonc"), "{}").unwrap();
+        fs::write(project.join("deno.lock"), "{}").unwrap();
+        let ignored_project = repository.path().join("node_modules/dependency");
+        fs::create_dir_all(&ignored_project).unwrap();
+        fs::write(ignored_project.join("deno.json"), "{}").unwrap();
+        let commands = resolve_repository_task_commands(
+            ProjectRepositoryTask::InstallDependencies,
+            repository.path(),
+        )
+        .unwrap_or_else(|_| panic!("missing mixed project installs"));
+        assert_eq!(
+            commands,
+            vec![
+                "npm install",
+                "Push-Location -LiteralPath 'services/worker' -ErrorAction Stop; try { deno install } finally { Pop-Location }"
+            ]
+        );
+    }
+
+    #[test]
+    fn discovers_deno_tasks_from_both_config_filenames() {
+        for filename in ["deno.json", "deno.jsonc"] {
+            let repository = tempfile::tempdir().unwrap();
+            fs::write(
+                repository.path().join(filename),
+                r#"{"tasks":{"dev":"deno run dev.ts","build":"deno run build.ts","preview":"deno run preview.ts"}}"#,
+            )
+            .unwrap();
+            for (task, name) in [
+                (ProjectRepositoryTask::StartDevServer, "dev"),
+                (ProjectRepositoryTask::Build, "build"),
+                (ProjectRepositoryTask::Preview, "preview"),
+            ] {
+                let commands = resolve_repository_task_commands(task, repository.path())
+                    .unwrap_or_else(|_| panic!("missing {name} in {filename}"));
+                assert_eq!(commands, vec![format!("deno task {name}")]);
+            }
+        }
+    }
+
+    #[test]
+    fn discovers_nested_jsonc_tasks_with_comments_and_trailing_commas() {
+        let repository = tempfile::tempdir().unwrap();
+        let project = repository.path().join("apps/web");
+        fs::create_dir_all(&project).unwrap();
+        fs::write(
+            project.join("deno.jsonc"),
+            r#"{
+                // Development commands
+                "tasks": {
+                    /* Preserve comment markers inside command strings. */
+                    "dev": "deno run https://example.com/dev.ts --label=\"한글/*text*/\"",
+                },
+            }"#,
+        )
+        .unwrap();
+        let commands = resolve_repository_task_commands(
+            ProjectRepositoryTask::StartDevServer,
+            repository.path(),
+        )
+        .unwrap_or_else(|_| panic!("missing nested JSONC dev task"));
+        assert_eq!(
+            commands,
+            vec![
+                "Push-Location -LiteralPath 'apps/web' -ErrorAction Stop; try { deno task dev } finally { Pop-Location }"
+            ]
+        );
+    }
+
+    #[test]
+    fn accepts_comments_and_trailing_commas_in_deno_json() {
+        let repository = tempfile::tempdir().unwrap();
+        fs::write(
+            repository.path().join("deno.json"),
+            "{ /* build */ \"tasks\": {\"build\": \"deno run build.ts\",},}",
+        )
+        .unwrap();
+        assert!(deno_task_exists(repository.path(), "build"));
+    }
+
+    #[test]
+    fn primary_deno_config_does_not_fall_back_to_conflicting_jsonc() {
+        let repository = tempfile::tempdir().unwrap();
+        fs::write(
+            repository.path().join("deno.jsonc"),
+            r#"{"tasks":{"preview":"deno run preview.ts"}}"#,
+        )
+        .unwrap();
+        for primary in [r#"{"tasks":{"build":"deno run build.ts"}}"#, "{"] {
+            fs::write(repository.path().join("deno.json"), primary).unwrap();
+            assert!(!deno_task_exists(repository.path(), "preview"));
+        }
+    }
+
+    #[test]
+    fn rejects_invalid_configs_and_does_not_invent_missing_tasks() {
+        let repository = tempfile::tempdir().unwrap();
+        for config in [
+            r#"{tasks:{"dev":"deno run dev.ts"}}"#,
+            r#"{"tasks":{'dev':'deno run dev.ts'}}"#,
+            r#"{"tasks":{"dev":"deno run dev.ts" "build":"deno run build.ts"}}"#,
+            r#"{"tasks":{"dev":"deno run dev.ts"}} /* unfinished"#,
+            r#"{"tasks":{"build":"deno run build.ts"}}"#,
+        ] {
+            fs::write(repository.path().join("deno.jsonc"), config).unwrap();
+            assert!(matches!(
+                resolve_repository_task_commands(
+                    ProjectRepositoryTask::StartDevServer,
+                    repository.path()
+                ),
+                Err(ProjectRepositoryTaskError::CommandUnavailable)
+            ));
+        }
     }
 }

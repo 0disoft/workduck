@@ -1,21 +1,31 @@
 /* llmnav/1 module
 id=workduck.projects.storage
-role=Persist workspace project registries through Tauri SQLite while migrating and preserving the browser legacy fallback.
-owns=project registry persistence|legacy registry promotion|registry change notifications|workspace operation ordering
+role=Persist ordered project registry writes, atomically import workspace sync data in SQLite, and migrate browser legacy registries.
+owns=project registry persistence|legacy registry promotion|registry change notifications|native commit subscriptions|workspace operation ordering|atomic sync import
 excludes=project domain normalization|repository Git operations
-search=project registry storage|sqlite registry migration|legacy project registry
-invariant=Overlapping writes run in request order, legacy promotion rechecks SQLite before writing, and sync imports publish workspace and project changes only after one guarded SQLite commit.
+search=project registry storage|sqlite registry migration|atomic workspace sync import|corrupt legacy project data|invalid project change notification|cross window project refresh
+invariant=Native commit and focus notifications reread SQLite within the live subscription; invalid snapshots cannot publish changes or cancel pending reads; invalid legacy data blocks fallback saves; bulk reads share one legacy snapshot per attempt; writes stay ordered, imports guard project snapshots and confirm lost replies by readback without replay, and promotion guards missing rows.
 stability=architecture
 */
 
 import { isObjectRecord } from '#lib/shared/object-record.ts';
-import { getTauriInvoke } from '#lib/tauri/tauri-invoke.ts';
-import { commitWorkduckAppStateValue, WORKDUCK_WORKSPACE_REGISTRY_APP_STATE_KEY } from '#lib/app-state/app-state-storage.ts';
-import { serializeWorkspaceRegistry, type WorkspaceRegistry } from '#lib/workspaces/workspace-registry.ts';
-import { notifyWorkspaceRegistryCommitted } from '#lib/workspaces/workspace-storage.ts';
+import { getTauriInvoke, getTauriListen } from '#lib/tauri/tauri-invoke.ts';
+import {
+	commitWorkduckAppStateValueWithNativeTransaction,
+	WORKDUCK_WORKSPACE_REGISTRY_APP_STATE_KEY
+} from '#lib/app-state/app-state-storage.ts';
+import {
+	normalizeStoredWorkspaceRegistry,
+	parseStoredWorkspaceRegistry,
+	serializeWorkspaceRegistry,
+	WORKDUCK_WORKSPACE_REGISTRY_STORAGE_KEY,
+	type WorkspaceRegistry
+} from '#lib/workspaces/workspace-registry.ts';
+import { notifyWorkspaceRegistryChanged, readWorkspaceRegistryFromBrowser } from '#lib/workspaces/workspace-storage.ts';
 import {
 	createEmptyProjectRegistry,
 	normalizeProjectRegistry,
+	normalizeStoredProjectRegistry,
 	parseStoredProjectRegistry,
 	serializeProjectRegistry,
 	WORKDUCK_PROJECT_REGISTRY_VERSION,
@@ -28,7 +38,9 @@ const PROJECT_REGISTRY_SQLITE_MIGRATION_STORAGE_KEY = 'workduck.projectRegistrie
 const PROJECT_REGISTRY_SQLITE_RETRY_ATTEMPTS = 3;
 const PROJECT_REGISTRY_SQLITE_RETRY_DELAY_MS = 150;
 export const WORKDUCK_PROJECT_REGISTRY_CHANGED_EVENT = 'workduck:project-registry-changed';
+export const WORKDUCK_PROJECT_REGISTRIES_COMMITTED_EVENT = 'workduck:project-registries-committed';
 const workspaceOperationTails = new Map<string, Promise<void>>();
+const migratedWorkspaceIdsByStorage = new WeakMap<Storage, Set<string>>();
 
 function sequenceProjectRegistryOperation<T>(workspaceIds: readonly string[], operation: () => Promise<T>) {
 	const ids = [...new Set(workspaceIds)];
@@ -103,23 +115,40 @@ interface ProjectRegistryWriteResponse {
 	readonly error?: ProjectRegistryStorageError | null;
 }
 
+interface WorkspaceRegistryWriteInput {
+	readonly valueJson: string;
+	readonly expectedValueJson: string;
+	readonly updatedAt: string;
+}
+
+class LegacyProjectRegistryReadError extends Error {
+	constructor(readonly storageError: ProjectRegistryStorageError) {
+		super(storageError);
+	}
+}
+
 export async function readProjectRegistry(workspaceId: string): Promise<ProjectRegistryStorageResult> {
-	return readProjectRegistryNow(workspaceId);
+	try {
+		return await readProjectRegistryNow(workspaceId);
+	} catch (error) {
+		return { ok: false, registry: createEmptyProjectRegistry(workspaceId),
+			error: error instanceof LegacyProjectRegistryReadError ? error.storageError : 'project-registry-read-failed' };
+	}
 }
 
 async function readProjectRegistryNow(workspaceId: string, promotionQueued = false): Promise<ProjectRegistryStorageResult> {
 	const emptyRegistry = createEmptyProjectRegistry(workspaceId);
-	const legacyRegistry = readLegacyProjectRegistry(workspaceId);
 
 	if (typeof window === 'undefined') {
 		return { ok: true, registry: emptyRegistry };
 	}
 
-	if (getTauriInvoke() === undefined) {
+	const sqliteResult = getTauriInvoke() === undefined ? undefined : await readProjectRegistryFromSqlite(workspaceId);
+	const legacyRegistry = sqliteResult === undefined || !sqliteResult.ok || sqliteResult.registryJson === null
+		? readLegacyProjectRegistry(workspaceId) : emptyRegistry;
+	if (sqliteResult === undefined) {
 		return { ok: true, registry: legacyRegistry };
 	}
-
-	const sqliteResult = await readProjectRegistryFromSqlite(workspaceId);
 
 	if (!sqliteResult.ok) {
 		return {
@@ -144,11 +173,11 @@ async function readProjectRegistryNow(workspaceId: string, promotionQueued = fal
 
 	const sqliteRegistry = sqliteRegistryResult.registry;
 
-	if (sqliteResult.registryJson === null && shouldPromoteLegacyRegistry(workspaceId, sqliteRegistry, legacyRegistry)) {
+	if (sqliteResult.registryJson === null && shouldPromoteLegacyRegistry(workspaceId, legacyRegistry)) {
 		if (!promotionQueued) {
 			return sequenceProjectRegistryOperation([workspaceId], () => readProjectRegistryNow(workspaceId, true));
 		}
-		const writeResult = await writeProjectRegistryToSqlite(legacyRegistry);
+		const writeResult = await writeProjectRegistryToSqlite(legacyRegistry, 'null');
 
 		if (!writeResult.ok) {
 			return {
@@ -248,23 +277,27 @@ export async function readProjectRegistries(
 	workspaceIds: readonly string[]
 ): Promise<ProjectRegistriesStorageResult> {
 	const ids = [...workspaceIds];
-	return readProjectRegistriesNow(ids);
+	try {
+		return await readProjectRegistriesNow(ids);
+	} catch (error) {
+		return { ok: false, registries: Object.fromEntries(ids.map((id) => [id, createEmptyProjectRegistry(id)])),
+			error: error instanceof LegacyProjectRegistryReadError ? error.storageError : 'project-registry-read-failed' };
+	}
 }
 
 async function readProjectRegistriesNow(workspaceIds: readonly string[], promotionQueued = false): Promise<ProjectRegistriesStorageResult> {
+	const sqliteResult = typeof window === 'undefined' || getTauriInvoke() === undefined
+		? undefined : await readProjectRegistriesFromSqlite(workspaceIds);
+	const needsLegacy = sqliteResult === undefined || !sqliteResult.ok ||
+		workspaceIds.some((id) => sqliteResult.registries[id] === undefined);
+	const legacyStorage = needsLegacy ? readLegacyStorageRecord() : createEmptyLegacyStorageRecord();
 	const fallbackRegistries: Record<string, ProjectRegistry> = Object.fromEntries(
-		workspaceIds.map((workspaceId) => [workspaceId, readLegacyProjectRegistry(workspaceId)])
+		workspaceIds.map((workspaceId) => [workspaceId, readLegacyProjectRegistry(workspaceId, legacyStorage)])
 	);
 
-	if (typeof window === 'undefined') {
+	if (sqliteResult === undefined) {
 		return { ok: true, registries: fallbackRegistries };
 	}
-
-	if (getTauriInvoke() === undefined) {
-		return { ok: true, registries: fallbackRegistries };
-	}
-
-	const sqliteResult = await readProjectRegistriesFromSqlite(workspaceIds);
 
 	if (!sqliteResult.ok) {
 		return {
@@ -296,7 +329,7 @@ async function readProjectRegistriesNow(workspaceIds: readonly string[], promoti
 		const registry = registryResult.registry;
 		registries[workspaceId] = registry;
 
-		if (sqliteRegistryJson === undefined && shouldPromoteLegacyRegistry(workspaceId, registry, fallbackRegistry)) {
+		if (sqliteRegistryJson === undefined && shouldPromoteLegacyRegistry(workspaceId, fallbackRegistry)) {
 			registriesToPromote[workspaceId] = fallbackRegistry;
 		}
 	}
@@ -305,7 +338,7 @@ async function readProjectRegistriesNow(workspaceIds: readonly string[], promoti
 		if (!promotionQueued) {
 			return sequenceProjectRegistryOperation(workspaceIds, () => readProjectRegistriesNow(workspaceIds, true));
 		}
-		const writeResult = await writeProjectRegistriesToSqlite(registriesToPromote);
+		const writeResult = await writeProjectRegistriesToSqlite(registriesToPromote, { expectedRegistryJson: 'null' });
 
 		if (!writeResult.ok) {
 			return {
@@ -318,9 +351,9 @@ async function readProjectRegistriesNow(workspaceIds: readonly string[], promoti
 			};
 		}
 
-		for (const workspaceId of Object.keys(registriesToPromote)) {
-			markWorkspaceRegistryMigrated(workspaceId);
-		}
+		markWorkspaceRegistriesMigrated(workspaceIds.filter((id) =>
+			sqliteResult.registries[id] !== undefined || registriesToPromote[id] !== undefined
+		));
 
 		return {
 			ok: true,
@@ -331,13 +364,62 @@ async function readProjectRegistriesNow(workspaceIds: readonly string[], promoti
 		};
 	}
 
-	for (const workspaceId of workspaceIds) {
-		if (sqliteResult.registries[workspaceId] !== undefined) {
-			markWorkspaceRegistryMigrated(workspaceId);
-		}
-	}
+	markWorkspaceRegistriesMigrated(workspaceIds.filter((id) => sqliteResult.registries[id] !== undefined));
 
 	return { ok: true, registries };
+}
+
+export async function writeWorkspaceSyncRegistries(
+	workspaceRegistry: WorkspaceRegistry,
+	registries: Record<string, ProjectRegistry>
+): Promise<ProjectRegistriesStorageResult> {
+	const parsedWorkspaceRegistry = normalizeStoredWorkspaceRegistry(workspaceRegistry);
+	const normalizedRegistries = Object.fromEntries(
+		Object.entries(registries).map(([id, registry]) => [id, normalizeProjectRegistry(registry, id)])
+	);
+	if (!parsedWorkspaceRegistry.ok || !readWorkspaceRegistryFromBrowser().ok) {
+		return { ok: false, registries: normalizedRegistries, error: 'project-registry-read-failed' };
+	}
+	const normalizedWorkspaceRegistry = parsedWorkspaceRegistry.registry;
+	return sequenceProjectRegistryOperation(Object.keys(normalizedRegistries), async () => {
+		let error: ProjectRegistryStorageError = 'project-registry-write-failed';
+		const valueJson = serializeWorkspaceRegistry(normalizedWorkspaceRegistry);
+		const result = await commitWorkduckAppStateValueWithNativeTransaction(
+			WORKDUCK_WORKSPACE_REGISTRY_APP_STATE_KEY,
+			WORKDUCK_WORKSPACE_REGISTRY_STORAGE_KEY,
+			valueJson,
+			async (expectedValueJson) => {
+				if (!parseStoredWorkspaceRegistry(expectedValueJson).ok) {
+					error = 'project-registry-read-failed';
+					return false;
+				}
+				const current = await readProjectRegistriesFromSqliteOnce(Object.keys(normalizedRegistries));
+				if (!current.ok) {
+					error = current.error;
+					return false;
+				}
+				const write = await writeProjectRegistriesToSqlite(normalizedRegistries, {
+					expectedRegistryJsonByWorkspace: Object.fromEntries(Object.keys(normalizedRegistries)
+						.map((id) => [id, current.registries[id] ?? 'null'])),
+					workspaceRegistry: {
+						valueJson, expectedValueJson: expectedValueJson ?? 'null',
+						updatedAt: new Date().toISOString()
+					}
+				});
+				if (!write.ok) error = write.error;
+				return write.ok;
+			}
+		);
+		if (!result.ok) return { ok: false, registries: normalizedRegistries, error };
+
+		// SQLite and the workspace cache are committed before either notification.
+		markWorkspaceRegistriesMigrated(Object.keys(normalizedRegistries));
+		notifyWorkspaceRegistryChanged(normalizedWorkspaceRegistry);
+		for (const registry of Object.values(normalizedRegistries)) {
+			dispatchProjectRegistryChanged(registry.workspaceId, registry);
+		}
+		return { ok: true, registries: normalizedRegistries };
+	});
 }
 
 export async function writeProjectRegistries(
@@ -352,57 +434,6 @@ export async function writeProjectRegistries(
 	return sequenceProjectRegistryOperation(Object.keys(normalizedRegistries), () =>
 		writeProjectRegistriesNow(normalizedRegistries)
 	);
-}
-
-/** Restore the two SQLite authorities together; the renderer cache follows the commit. */
-export async function restoreWorkspaceSyncData(
-	workspaceRegistry: WorkspaceRegistry,
-	registries: Record<string, ProjectRegistry>
-): Promise<{ readonly ok: true } | { readonly ok: false; readonly error: ProjectRegistryStorageError }> {
-	const invoke = getTauriInvoke();
-	if (invoke === undefined || typeof window === 'undefined') return { ok: false, error: 'project-registry-write-failed' };
-	return sequenceProjectRegistryOperation(Object.keys(registries), async () => {
-		const workspaceJson = serializeWorkspaceRegistry(workspaceRegistry);
-		const result = await commitWorkduckAppStateValue(WORKDUCK_WORKSPACE_REGISTRY_APP_STATE_KEY, workspaceJson,
-			async (expectedWorkspaceRegistryJson) => {
-				const current = await readProjectRegistriesFromSqliteOnce(Object.keys(registries));
-				if (!current.ok) return current;
-				try {
-					const response = await invoke<ProjectRegistryWriteResponse>('restore_workspace_sync', {
-						workspaceRegistryJson: workspaceJson, expectedWorkspaceRegistryJson,
-						updatedAt: new Date().toISOString(),
-						registries: Object.fromEntries(Object.entries(registries).map(([id, registry]) => [id, {
-							registryJson: serializeProjectRegistry(registry), updatedAt: registry.updatedAt,
-							expectedRegistryJson: current.registries[id] ?? 'null'
-						}]))
-					});
-					return response.ok === true ? { ok: true } as const : { ok: false,
-						error: isProjectRegistryStorageError(response.error) ? response.error : 'project-registry-write-failed' } as const;
-				} catch {
-					// A lost reply may follow a committed transaction. Read back, never replay the write.
-					try {
-						const workspace = await invoke<{ ok: boolean; records?: Record<string, string> }>('read_app_state_records', {
-							keys: [WORKDUCK_WORKSPACE_REGISTRY_APP_STATE_KEY]
-						});
-						const projects = await readProjectRegistriesFromSqliteOnce(Object.keys(registries));
-						if (workspace.ok === true && workspace.records?.[WORKDUCK_WORKSPACE_REGISTRY_APP_STATE_KEY] === workspaceJson &&
-							projects.ok && Object.entries(registries).every(([id, registry]) => projects.registries[id] === serializeProjectRegistry(registry))) {
-							return { ok: true } as const;
-						}
-					} catch { /* Keep the previous cache if committed data cannot be confirmed. */ }
-					return { ok: false, error: 'project-registry-write-failed' } as const;
-				}
-			});
-		if (!result.ok) return { ok: false, error: isProjectRegistryStorageError(result.error)
-			? result.error : 'project-registry-write-failed' } as const;
-		// Marker cleanup is best effort; SQLite already owns the committed records.
-		for (const registry of Object.values(registries)) {
-			markWorkspaceRegistryMigrated(registry.workspaceId);
-			dispatchProjectRegistryChanged(registry.workspaceId, registry);
-		}
-		notifyWorkspaceRegistryCommitted(workspaceRegistry);
-		return { ok: true } as const;
-	});
 }
 
 async function writeProjectRegistriesNow(normalizedRegistries: Record<string, ProjectRegistry>): Promise<ProjectRegistriesStorageResult> {
@@ -446,8 +477,8 @@ async function writeProjectRegistriesNow(normalizedRegistries: Record<string, Pr
 		};
 	}
 
+	markWorkspaceRegistriesMigrated(Object.keys(normalizedRegistries));
 	for (const registry of Object.values(normalizedRegistries)) {
-		markWorkspaceRegistryMigrated(registry.workspaceId);
 		dispatchProjectRegistryChanged(registry.workspaceId, registry);
 	}
 
@@ -461,36 +492,67 @@ export function subscribeProjectRegistry(
 	if (typeof window === 'undefined') {
 		return () => {};
 	}
+	let isActive = true;
+	let readGeneration = 0;
+	let unlistenNative: (() => void) | undefined;
+
+	function reloadRegistry() {
+		if (!isActive) return;
+		const generation = ++readGeneration;
+		void readProjectRegistry(workspaceId).then((result) => {
+			if (isActive && generation === readGeneration && result.ok) callback(result.registry);
+		});
+	}
 
 	function handleRegistryChanged(event: Event) {
 		const detail = (event as CustomEvent<ProjectRegistryChangedDetail>).detail;
 
-		if (detail?.workspaceId !== workspaceId) {
+		if (!isActive || detail?.workspaceId !== workspaceId ||
+			!isObjectRecord(detail.registry) || detail.registry.workspaceId !== workspaceId) {
 			return;
 		}
 
-		callback(normalizeProjectRegistry(detail.registry, workspaceId));
+		const result = normalizeStoredProjectRegistry(detail.registry, workspaceId);
+		if (!result.ok) return;
+		readGeneration += 1;
+		callback(result.registry);
 	}
 
 	function handleStorageChanged(event: StorageEvent) {
 		if (
 			event.storageArea !== window.localStorage ||
-			event.key !== LEGACY_PROJECT_REGISTRIES_STORAGE_KEY
+			(event.key !== null && event.key !== LEGACY_PROJECT_REGISTRIES_STORAGE_KEY)
 		) {
 			return;
 		}
 
-		void readProjectRegistry(workspaceId).then((result) => {
-			callback(result.registry);
-		});
+		reloadRegistry();
 	}
 
 	window.addEventListener(WORKDUCK_PROJECT_REGISTRY_CHANGED_EVENT, handleRegistryChanged);
 	window.addEventListener('storage', handleStorageChanged);
+	const nativeListen = getTauriListen();
+	if (nativeListen !== undefined) {
+		window.addEventListener('focus', reloadRegistry);
+		void nativeListen<unknown>(WORKDUCK_PROJECT_REGISTRIES_COMMITTED_EVENT, ({ payload }) => {
+			if (Array.isArray(payload) && payload.every((id) => typeof id === 'string') && payload.includes(workspaceId)) {
+				reloadRegistry();
+			}
+		}).then((unlisten) => {
+			if (!isActive) { unlisten(); return; }
+			unlistenNative = unlisten;
+			// Catch changes committed before the asynchronous listener finished registering.
+			reloadRegistry();
+		}).catch(() => { /* Focus refresh remains available when event registration fails. */ });
+	}
 
 	return () => {
+		if (!isActive) return;
+		isActive = false;
 		window.removeEventListener(WORKDUCK_PROJECT_REGISTRY_CHANGED_EVENT, handleRegistryChanged);
 		window.removeEventListener('storage', handleStorageChanged);
+		window.removeEventListener('focus', reloadRegistry);
+		unlistenNative?.();
 	};
 }
 
@@ -598,6 +660,7 @@ async function writeProjectRegistryToSqlite(registry: ProjectRegistry, expectedR
 	const invoke = getTauriInvoke();
 
 	if (invoke === undefined) {
+		if (expectedRegistryJson !== undefined) return { ok: false, error: 'project-registry-write-failed' } as const;
 		try {
 			writeLegacyProjectRegistries({
 				...readLegacyStorageRecord().registries,
@@ -630,10 +693,20 @@ async function writeProjectRegistryToSqlite(registry: ProjectRegistry, expectedR
 	}
 }
 
-async function writeProjectRegistriesToSqlite(registries: Record<string, ProjectRegistry>) {
+async function writeProjectRegistriesToSqlite(
+	registries: Record<string, ProjectRegistry>,
+	{ workspaceRegistry, expectedRegistryJson, expectedRegistryJsonByWorkspace }: {
+		readonly workspaceRegistry?: WorkspaceRegistryWriteInput;
+		readonly expectedRegistryJson?: string;
+		readonly expectedRegistryJsonByWorkspace?: Record<string, string>;
+	} = {}
+) {
 	const invoke = getTauriInvoke();
 
 	if (invoke === undefined) {
+		if (workspaceRegistry !== undefined || expectedRegistryJson !== undefined) {
+			return { ok: false, error: 'project-registry-write-failed' } as const;
+		}
 		try {
 			writeLegacyProjectRegistries({
 				...readLegacyStorageRecord().registries,
@@ -647,12 +720,15 @@ async function writeProjectRegistriesToSqlite(registries: Record<string, Project
 
 	try {
 		const response = await invoke<ProjectRegistryWriteResponse>('write_project_registries', {
+			...(workspaceRegistry === undefined ? {} : { workspaceRegistry }),
 			registries: Object.fromEntries(
 				Object.entries(registries).map(([workspaceId, registry]) => [
 					workspaceId,
 					{
 						registryJson: serializeProjectRegistry(registry),
-						updatedAt: registry.updatedAt
+						updatedAt: registry.updatedAt,
+						...(expectedRegistryJsonByWorkspace?.[workspaceId] === undefined && expectedRegistryJson === undefined
+							? {} : { expectedRegistryJson: expectedRegistryJsonByWorkspace?.[workspaceId] ?? expectedRegistryJson })
 					}
 				])
 			)
@@ -667,18 +743,29 @@ async function writeProjectRegistriesToSqlite(registries: Record<string, Project
 						: 'project-registry-write-failed'
 				} as const);
 	} catch {
+		// A lost reply may follow a committed sync transaction. Confirm it without replaying the write.
+		if (workspaceRegistry !== undefined) {
+			try {
+				const workspace = await invoke<{ ok: boolean; records?: Record<string, string> }>('read_app_state_records', {
+					keys: [WORKDUCK_WORKSPACE_REGISTRY_APP_STATE_KEY]
+				});
+				const projects = await readProjectRegistriesFromSqliteOnce(Object.keys(registries));
+				if (workspace.ok === true && workspace.records?.[WORKDUCK_WORKSPACE_REGISTRY_APP_STATE_KEY] === workspaceRegistry.valueJson &&
+					projects.ok && Object.entries(registries).every(([id, registry]) => projects.registries[id] === serializeProjectRegistry(registry))) {
+					return { ok: true } as const;
+				}
+			} catch { /* Leave the cache unchanged when committed data cannot be confirmed. */ }
+		}
 		return { ok: false, error: 'project-registry-write-failed' } as const;
 	}
 }
 
 function shouldPromoteLegacyRegistry(
 	workspaceId: string,
-	sqliteRegistry: ProjectRegistry,
 	legacyRegistry: ProjectRegistry
 ) {
 	return (
 		!workspaceRegistryWasMigrated(workspaceId) &&
-		sqliteRegistry.nodes.length === 0 &&
 		legacyRegistry.nodes.length > 0
 	);
 }
@@ -693,9 +780,7 @@ function mapProjectRegistryParseError(error: ProjectRegistryParseError): Project
 		: 'project-registry-read-failed';
 }
 
-function readLegacyProjectRegistry(workspaceId: string) {
-	const storage = readLegacyStorageRecord();
-
+function readLegacyProjectRegistry(workspaceId: string, storage = readLegacyStorageRecord()) {
 	return normalizeProjectRegistry(storage.registries[workspaceId], workspaceId);
 }
 
@@ -719,24 +804,29 @@ function readLegacyStorageRecord(): ProjectRegistryStorageRecord {
 	try {
 		const value: unknown = JSON.parse(serializedStorage);
 
-		if (!isObjectRecord(value) || value.version !== WORKDUCK_PROJECT_REGISTRY_VERSION) {
-			return createEmptyLegacyStorageRecord();
+		if (!isObjectRecord(value) || !isObjectRecord(value.registries)) {
+			throw new LegacyProjectRegistryReadError('project-registry-read-failed');
+		}
+		if (value.version !== WORKDUCK_PROJECT_REGISTRY_VERSION) {
+			throw new LegacyProjectRegistryReadError('project-registry-version-unsupported');
 		}
 
-		const rawRegistries = isObjectRecord(value.registries) ? value.registries : {};
+		const rawRegistries = value.registries;
 		const registries = Object.fromEntries(
-			Object.entries(rawRegistries).map(([workspaceId, registry]) => [
-				workspaceId,
-				normalizeProjectRegistry(registry, workspaceId)
-			])
+			Object.entries(rawRegistries).map(([workspaceId, registry]) => {
+				const parsed = normalizeStoredProjectRegistry(registry, workspaceId);
+				if (!parsed.ok) throw new LegacyProjectRegistryReadError(mapProjectRegistryParseError(parsed.error));
+				return [workspaceId, parsed.registry];
+			})
 		);
 
 		return {
 			version: WORKDUCK_PROJECT_REGISTRY_VERSION,
 			registries
 		};
-	} catch {
-		return createEmptyLegacyStorageRecord();
+	} catch (error) {
+		if (error instanceof LegacyProjectRegistryReadError) throw error;
+		throw new LegacyProjectRegistryReadError('project-registry-read-failed');
 	}
 }
 
@@ -779,29 +869,43 @@ function createEmptyLegacyStorageRecord(): ProjectRegistryStorageRecord {
 }
 
 function workspaceRegistryWasMigrated(workspaceId: string) {
+	try {
+		if (typeof window !== 'undefined' && migratedWorkspaceIdsByStorage.get(window.localStorage)?.has(workspaceId)) return true;
+	} catch { /* Persisted migration state remains available when possible. */ }
 	return readMigratedWorkspaceIds().has(workspaceId);
 }
 
 function markWorkspaceRegistryMigrated(workspaceId: string) {
-	if (typeof window === 'undefined') {
+	markWorkspaceRegistriesMigrated([workspaceId]);
+}
+
+function markWorkspaceRegistriesMigrated(workspaceIds: readonly string[]) {
+	if (typeof window === 'undefined' || workspaceIds.length === 0) {
 		return;
 	}
 
-	const workspaceIds = readMigratedWorkspaceIds();
-	workspaceIds.add(workspaceId);
 	try {
-		window.localStorage.setItem(PROJECT_REGISTRY_SQLITE_MIGRATION_STORAGE_KEY, JSON.stringify([...workspaceIds]));
-	} catch { /* An existing SQLite row, including an empty one, is already authoritative. */ }
+		const storage = window.localStorage;
+		const stored = storage.getItem(PROJECT_REGISTRY_SQLITE_MIGRATION_STORAGE_KEY);
+		const migratedIds = new Set([
+			...readMigratedWorkspaceIds(stored),
+			...(migratedWorkspaceIdsByStorage.get(storage) ?? []),
+			...workspaceIds
+		]);
+		migratedWorkspaceIdsByStorage.set(storage, migratedIds);
+		const serialized = JSON.stringify([...migratedIds]);
+		if (stored !== serialized) storage.setItem(PROJECT_REGISTRY_SQLITE_MIGRATION_STORAGE_KEY, serialized);
+	} catch { /* Marker failure cannot undo a successful native commit. */ }
 }
 
-function readMigratedWorkspaceIds() {
+function readMigratedWorkspaceIds(serialized?: string | null) {
 	if (typeof window === 'undefined') {
 		return new Set<string>();
 	}
 
 	try {
 		const value: unknown = JSON.parse(
-			window.localStorage.getItem(PROJECT_REGISTRY_SQLITE_MIGRATION_STORAGE_KEY) ?? '[]'
+			(serialized === undefined ? window.localStorage.getItem(PROJECT_REGISTRY_SQLITE_MIGRATION_STORAGE_KEY) : serialized) ?? '[]'
 		);
 
 		return new Set(

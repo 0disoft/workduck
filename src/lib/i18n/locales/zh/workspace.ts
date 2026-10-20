@@ -21,6 +21,7 @@ export const zhWorkspaceMessages = {
 	},
 	pathErrors: {
 		pathRequired: '工作区路径为必填项。',
+		pathTooLong: '工作区路径过长。请选择较短的文件夹路径。',
 		pathNotAbsolute: '工作区路径必须是绝对文件夹路径。',
 		pathNotFound: '工作区路径不存在。',
 		pathNotDirectory: '工作区路径必须是一个文件夹。',
@@ -32,6 +33,7 @@ export const zhWorkspaceMessages = {
 		pathDuplicate: '该工作区路径已注册。',
 		workspaceNotFound: '未找到工作区。',
 		registryReadFailed: '无法加载工作区设置。',
+		registryConflict: '其他窗口已更改工作区列表。请查看最新列表后重试。',
 		registryWriteFailed: '无法保存工作区设置。'
 	}
 } as const;

@@ -58,12 +58,17 @@
 	let messages = $derived(getWorkduckMessages(languageId));
 
 	let storedRegistry = $state<ProjectRegistry>(createEmptyProjectRegistry(''));
+	let registryReadScope = $state<string | null>(null);
+	let registryReady = $derived(registryReadScope === JSON.stringify([workspace.id, workspace.path]));
 	const persistRegistry = createProjectBoardRegistryWriter({
 		workspace: () => workspace,
 		registry: () => storedRegistry,
+		registryReady: () => registryReady,
 		update: (next) => {
 			storedRegistry = next.registry;
 			storedStorageError = next.storageError;
+			if (next.storageError === null) registryReadScope = JSON.stringify([workspace.id, workspace.path]);
+			else if (next.storageError === 'project-registry-read-failed' || next.storageError === 'project-registry-version-unsupported') registryReadScope = null;
 		}
 	});
 	let registry = $derived(persistRegistry.getRegistry());
@@ -703,6 +708,7 @@
 <ProjectBoardWorkspaceLifecycle
 	{workspace}
 	bind:registry={storedRegistry}
+	bind:registryReadScope
 	bind:storageError={storedStorageError}
 	bind:operationStorageError
 	bind:folderRepairError
@@ -742,6 +748,7 @@
 	onClose={closeContextMenu}
 />
 
+{#if registryReady}
 <ProjectBoardLanes
 	{title}
 	{projectMessages}
@@ -785,14 +792,15 @@
 	onRepositoryFavoriteToggle={toggleRepositoryFavorite}
 	onGitAction={(node, repository, action) => runRepositoryGitAction({ node, repository }, action)}
 />
+{/if}
 
-{#if persistRegistry.hasConflict()}
+{#if persistRegistry.hasConflict() || (!registryReady && storedStorageError !== null)}
 	<button type="button" class="workduck-button" disabled={persistRegistry.isReloading()} onclick={reloadConflictedProjects}>
 		{projectMessages.reloadProjects}
 	</button>
 {/if}
 
-{#if standaloneError !== null && dialog === null && deleteCandidate === null && tagEditor === null && descriptionEditor === null && detailsEditor === null && githubCredentialEditor === null && repositoryController.publishTarget === null && ssealedTarget === null}
+{#if standaloneError !== null && (!registryReady || (dialog === null && deleteCandidate === null && tagEditor === null && descriptionEditor === null && detailsEditor === null && githubCredentialEditor === null && repositoryController.publishTarget === null && ssealedTarget === null))}
 	<p class="workduck-inline-error" aria-live="polite">{getProjectFormErrorMessage(standaloneError, projectMessages.errors)}</p>
 {/if}
 {#if queueFolderError !== null && dialog === null && deleteCandidate === null && tagEditor === null && descriptionEditor === null && detailsEditor === null && githubCredentialEditor === null && repositoryController.publishTarget === null && ssealedTarget === null}
@@ -801,7 +809,7 @@
 	</p>
 {/if}
 
-{#if hasActiveOverlay && ProjectBoardOverlays !== null}
+{#if registryReady && hasActiveOverlay && ProjectBoardOverlays !== null}
 <ProjectBoardOverlays
 	{contextMenu}
 	{projectMessages}

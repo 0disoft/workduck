@@ -1,4 +1,5 @@
 # One JSON object per line: {"query":"...","expected":["domain.feature.action"]}
+{"query":"validate reference registry identity and preserve the revision when editing references","expected":["workduck.references.registry"]}
 {"query":"where are Workduck queue and entity JSON schemas defined","expected":["workduck.contract.schemas"]}
 {"query":"forward arguments from the Node shim into the locked Cargo workduck-cli binary","expected":["workduck.cli.launcher"]}
 {"query":"execute a queue work order from the command line","expected":["workduck.cli.execution"]}
@@ -82,4 +83,29 @@
 {"query":"settings crash journal SQLite promotion and pending native write flush","expected":["workduck.app-state.storage"]}
 {"query":"environment vault session metadata cache subscribers and idle workspace locking","expected":["workduck.environment.vault-session"]}
 {"query":"native secret vault opaque reference generations and session close","expected":["workduck.secret-vault.session-native"]}
+{"query":"terminal selection switch late terminal response and terminal removal ownership","expected":["workduck.terminal.panel"]}
+{"query":"brief execution evidence linked task repository paths Windows drive root Unix backslash","expected":["workduck.briefs.run-evidence"]}
+{"query":"restore unsaved brief draft after workspace locking without resurrecting a completed save","expected":["workduck.briefs.editor-drafts"]}
+{"query":"retry failed app settings initialization without opening workspace content","expected":["workduck.app-state.boot-gate"]}
+{"query":"Windows PowerShell task script atomic record publication Unicode log tail","expected":["workduck.projects.task-powershell"]}
+{"query":"PowerShell large command line task loader temporary script source cleanup","expected":["workduck.projects.task-powershell"]}
+{"query":"reject incomplete workspace sync import and project snapshots without dropping records","expected":["workduck.workspace.sync"]}
+{"query":"native app state SQLite transaction bounded JSON UTC revision ordering","expected":["workduck.app-state.storage-native"]}
+{"query":"atomic workspace and project registry sync import SQLite rollback","expected":["workduck.projects.storage-native"]}
+{"query":"atomic workspace sync import ordered project registry storage","expected":["workduck.projects.storage"]}
+{"query":"app state journal flush reconcile superseded values without replacing newer edits","expected":["workduck.app-state.storage"]}
+{"query":"app state pending journal read deletion failure stop flush retry","expected":["workduck.app-state.storage"]}
+{"query":"project registry legacy promotion missing SQLite row preserve stored empty registries","expected":["workduck.projects.storage"]}
+{"query":"project registry bulk reads one legacy snapshot batch browser migration markers","expected":["workduck.projects.storage"]}
+{"query":"project registry SQLite read independent of inaccessible legacy cache","expected":["workduck.projects.storage"]}
+{"query":"corrupt legacy project data block fallback saves preserve browser record","expected":["workduck.projects.storage"]}
+{"query":"strict stored project registry reject node repository loss unsupported version","expected":["workduck.projects.registry-normalization"]}
+{"query":"strict stored workspace registry reject record loss damaged lock unsupported version","expected":["workduck.workspace.registry"]}
+{"query":"workspace read failure block saves invalid workspace change notification","expected":["workduck.workspace.storage"]}
+{"query":"workspace startup migration lazy legacy workspace fallback persistent initialization retry","expected":["workduck.app-state.bootstrap"]}
+{"query":"workspace registration password race submitted workspace options registration commit before unlock","expected":["workduck.workspace.registration"]}
+{"query":"workspace password hash client verify workspace password password minimum length","expected":["workduck.workspace.password-client"]}
+{"query":"workspace repository setup client initialize workspace git install workspace gitignore","expected":["workduck.workspace.repository-setup-client"]}
+{"query":"workspace unlock password session workspace unlock cooldown idle workspace locking","expected":["workduck.workspace.unlock"]}
+{"query":"workspace path repair target reconnect workspace directory cancel pending path repair","expected":["workduck.workspace.path-repair"]}
 {"query":"verify native workspace sync encrypted restore and isolated SQLite restart","expected":["workduck.verification.native-sync"]}

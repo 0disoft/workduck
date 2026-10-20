@@ -17,13 +17,13 @@ invariant Frontend-accessible native operations are registered explicitly throug
 role Own spawned process trees and terminate their descendants across Windows jobs and Unix process groups.
 owns process tree spawning, cross-platform termination, active process registry
 excludes task command selection, terminal output buffering
-invariant Dropping an active process owner or shutting down the app cannot intentionally leave its registered descendants running.
+invariant Parent exit never exempts owned descendants from termination; completed owners retire their registrations and cannot signal their process group again.
 
 @workduck.projects.storage
-role Persist workspace project registries through Tauri SQLite while migrating and preserving the browser legacy fallback.
-owns project registry persistence, legacy registry promotion, registry change notifications, workspace operation ordering
+role Persist ordered project registry writes, atomically import workspace sync data in SQLite, and migrate browser legacy registries.
+owns project registry persistence, legacy registry promotion, registry change notifications, native commit subscriptions, workspace operation ordering, atomic sync import
 excludes project domain normalization, repository Git operations
-invariant Overlapping writes run in request order, legacy promotion rechecks SQLite before writing, and sync imports publish workspace and project changes only after one guarded SQLite commit.
+invariant Native commit and focus notifications reread SQLite within the live subscription; invalid snapshots cannot publish changes or cancel pending reads; invalid legacy data blocks fallback saves; bulk reads share one legacy snapshot per attempt; writes stay ordered, imports guard project snapshots and confirm lost replies by readback without replay, and promotion guards missing rows.
 
 @workduck.projects.folder
 role Create, open, and delete bounded project folders and preview or apply ssealed scaffolds through Tauri commands.
@@ -80,16 +80,16 @@ excludes frontend result normalization, repository task terminals
 invariant Inspections avoid credentials and optional locks, while mutations use bounded processes and return closed repository errors.
 
 @workduck.projects.repository-task-native
-role Discover toolchain commands, launch bounded repository tasks in terminals, and persist or reconcile native task-run records.
+role Discover toolchain commands, launch bounded repository tasks in terminals, persist execution-owned records, and project process liveness without overwriting results.
 owns native repository task launch, toolchain command discovery, task run reconciliation
 excludes frontend task normalization, arbitrary shell command input
-invariant Tasks are selected from a closed vocabulary, repository paths remain inside the workspace, and running records are revalidated against live process identity.
+invariant Tasks are selected from a closed vocabulary and repository paths remain inside the workspace; latest records bind selectable run IDs to their filenames, process identity is revalidated after bounded startup grace, tracked servers require their terminal execution and descendants, cached latest and unreadable files require unchanged metadata, terminal-owned completion survives launch updates and read-only reconciliation, task record publication replaces synced complete files and aborts execution on failure, success requires the final command, and bounded Unicode output previews keep completed history readable.
 
 @workduck.queue.execution-native
 role Validate and coordinate native multi-agent Queue execution, secret resolution, cancellation, confirmation, and exclusive result-report creation.
 owns native Queue execution, agent run coordination, execution confirmation tokens
 excludes frontend execution adapter, Queue folder CRUD
-invariant Execution requires the current estimate token, respects global and provider permits, and never exposes resolved secrets through prompt previews.
+invariant Execution verifies the estimate token against the locked work-order snapshot before state changes, respects global and provider permits, and never exposes resolved secrets through prompt previews.
 
 @workduck.queue.folder-native
 role Enforce native Queue directory, path, size, count, exclusive-write, update, delete, and evaluation-delegation constraints.
@@ -107,7 +107,7 @@ invariant Managed instructions remain single-copy and preserve surrounding repos
 role Precompute project-board search and filter indexes and derive visible project, group, and repository selections.
 owns project board index, search matching, repository sync filters
 excludes registry mutation, Git inspection execution
-invariant Derived sets and counts come only from supplied registry nodes and status snapshots without mutating them.
+invariant Derived sets and counts never mutate supplied snapshots; combined search and status filters require the same matching repository or a matching node containing the requested status.
 
 @workduck.projects.task-commands
 role Resolve repository tasks into commands using package scripts, local dependency ownership, and supported toolchain manifests.
@@ -119,7 +119,7 @@ invariant Only closed repository task variants select commands, discovery skips 
 role Plan and apply repository scaffolds with exclusive ownership, durable journals, conflict preservation, and recovery.
 owns scaffold selection and planning, scaffold file and manifest writes, scaffold locking and recovery
 excludes folder command DTOs, workspace and repository root validation, Git operations
-invariant Apply writes missing files only, and cleanup verifies repository parents and recorded checksums before removing generated files.
+invariant Apply preserves managed deletions and manifest ownership; cleanup verifies parents and checksums before removing files.
 
 @workduck.projects.git-inspection
 role Inspect repository status and remotes with bounded read-only Git processes, shared in-flight requests, and cache diagnostics.
@@ -131,7 +131,7 @@ invariant Inspections avoid credential helpers and index writes, and concurrent 
 role Build secret-free prompt previews and bounded execution plans, resolve run configuration, and bind execution confirmation to the reviewed prompts.
 owns agent and context selection, provider model and secret resolution, execution estimates and confirmation tokens, work order limits
 excludes provider HTTP requests, execution cancellation, report persistence
-invariant Previews never resolve API secrets, run and task caps are checked before resolution, and execution validates the current prompt estimate token.
+invariant Previews never resolve API secrets, run and task caps are checked before resolution, and confirmation validates the supplied locked work-order snapshot against the reviewed prompt estimate token.
 
 @workduck.queue.work-order-editor
 role Own reactive manual work order drafts, dialog transitions, context selections, and save-ready form values.
@@ -155,7 +155,7 @@ invariant Preview and apply commands use the opening workspace; only the live di
 role Load project board registries, operation history, and vault views within the active workspace lifetime.
 owns workspace view reset, initial read ownership, workspace subscriptions, board resource teardown
 excludes repository mutations, native vault operations, project selection rules
-invariant Initial reads yield to newer published and live state; only the active workspace lifetime updates the board, and metadata changes preserve selections.
+invariant Initial reads yield to newer published and live state; only successful reads or published snapshots admit editing for the current workspace ID and path, and metadata changes preserve selections.
 
 @workduck.projects.task-run-lifecycle
 role Poll repository task run history within a workspace and repository mapping lifetime.
@@ -167,13 +167,13 @@ invariant Scope changes clear foreign run state while retaining matching reposit
 role Own pending project registry edits and save feedback within the initiating workspace view lifetime.
 owns registry write admission, pending and failed registry drafts, save result ownership, workspace view lifetime, conflict recovery
 excludes registry storage implementation, dialog busy state, repository operations
-invariant Edits build on the latest draft, writes compare the last accepted snapshot, conflicts require reload, and only the live initiating view receives feedback.
+invariant Only a successfully read workspace admits edits; edits build on the latest draft, writes compare the last accepted snapshot, conflicts require reload, and only the live initiating view receives feedback.
 
 @workduck.skills.registry
 role Normalize and migrate workspace skill registries while preserving custom skills and built-in overrides.
 owns skill registry normalization, legacy skill migration, skill mutations, built-in override detection
 excludes default prompt authoring, skill persistence, queue execution
-invariant Legacy registries receive version-appropriate defaults, current removals persist, and invalid mutations preserve the registry.
+invariant Stored registries require a supported version, matching workspace, skill collection, and valid revision; legacy revisions start at zero, mutations retain the loaded revision, version-appropriate defaults are migrated, and current removals persist.
 
 @workduck.cli.agent-evaluation
 role Parse agent evaluation commands, update agent score history, and synchronize persona summaries under a workspace lock.
@@ -188,10 +188,10 @@ excludes registry persistence, artifact selection, workspace registry state
 invariant Saving captures its workspace and report selection, and late feedback never changes a newer selection.
 
 @workduck.projects.registry-normalization
-role Parse and canonicalize project registries while preserving hierarchy eligibility and collision precedence.
+role Validate stored project snapshots without discarding nodes or repositories and canonicalize project hierarchies with deterministic collision precedence.
 owns project registry parsing, hierarchy canonicalization, repository deduplication, shared field normalization
 excludes registry mutation intents, registry persistence, Git operations
-invariant Strict storage parsing rejects unsupported versions; canonicalization accepts only reachable unique nodes and repository sources.
+invariant Strict storage parsing rejects unsupported versions and normalization that discards nodes or repositories; explicit canonicalization accepts only reachable unique nodes and repository sources.
 
 @workduck.queue.evaluation-delegation-native
 role Recognize evaluator work orders and reject a second delegation for the same source report.
@@ -231,21 +231,69 @@ invariant Repository operations and favorite-save feedback stay in the captured 
 
 @workduck.app-state.storage
 role Persist application settings through a renderer crash journal, native SQLite promotion, and browser fallback.
-owns app state backend selection, legacy setting promotion, pending write journal, serialized flush, cached setting values
+owns app state backend selection, legacy setting promotion, pending write journal, serialized flush, transaction cache publication, shared native subscription, deferred cache refresh
 excludes setting domain validation, native SQLite implementation, workspace project registries
-invariant Renderer writes acknowledge journaling before native persistence; a successful flush removes only matching journal entries, and a native atomic commit drains older writes and publishes cached state only after success.
+invariant Initialization validates selected domain values and reads legacy fallbacks only for missing rows; invalid journals remain unacknowledged; background refreshes preserve leases and cache revisions; one live subscription refreshes committed keys.
 
 @workduck.environment.vault-session
 role Project native environment vault sessions into workspace metadata subscriptions and coordinate explicit secret access and locking.
 owns native vault metadata cache, workspace session subscriptions, vault command normalization, idle session locking
 excludes secret encryption, native session storage, environment vault disk persistence
-invariant Cached vault views accept only native managed opaque secret references; workspace lock publication waits for native session revocation to succeed.
+invariant Cached vault views accept only native managed opaque secret references; closing invalidates pending responses and blocks new requests until native revocation finishes; workspace lock publication requires successful native revocation.
 
 @workduck.secret-vault.session-native
 role Own native workspace vault sessions, secret mutation, and generation-bound opaque reference resolution.
 owns native vault session lifetime, zeroized secret payloads, secret metadata views, opaque reference generations, explicit secret reads
 excludes encrypted envelope format, vault disk persistence, renderer workspace lock policy
 invariant Metadata views serialize opaque references; reserved references resolve only in the matching live session generation, and closing drops the zeroized session payload.
+
+@workduck.terminal.panel
+role Coordinate terminal selection, native session actions, output display, and workspace-scoped registry edits.
+owns terminal view lifetime, operation result ownership, session removal target, output polling
+excludes native process execution, terminal command normalization, registry serialization
+invariant Async results update only their initiating view; removal requires successful process stop; each view admits one output read at a time and failures preserve its logs.
+
+@workduck.app-state.boot-gate
+role Gate renderer startup on persistent settings recovery and load the desktop interface after successful initialization.
+owns startup visibility, initialization retry UI, interface load recovery, boot attempt lifetime
+excludes native settings storage, setting domain validation, workspace content rendering
+invariant Failed initialization keeps workspace content unmounted; one boot attempt runs at a time and disposed layouts cannot apply late results.
+
+@workduck.projects.task-powershell
+role Generate, stage, and launch PowerShell task scripts with execution-owned atomic run records and bounded output previews.
+owns tracked task script generation, staged script lifetime, terminal launch, task record publication, Unicode output tail
+excludes command selection, terminal discovery, process liveness
+invariant Large scripts use a short run-bound loader and clean up their staged source; only the final command can publish success; publication aborts on failure and never exceeds the history read limit; preview truncation preserves Unicode boundaries.
+
+@workduck.workspace.storage
+role Read, conditionally save, and publish valid workspace registries.
+owns registry read/write admission, change subscriptions, notification validation
+excludes domain mutations, native SQLite, browser journals
+invariant Cancellation stops before dispatch; commits compare original snapshots; reads and events reject damaged data; only confirmed saves publish.
+
+@workduck.app-state.bootstrap
+role Coalesce renderer initialization and provide validated lazy workspace migration without reading stale browser mirrors when SQLite is authoritative.
+owns initialization attempt reuse, failed attempt retry, workspace fallback seed, startup domain validation
+excludes SQLite transactions, journal flushes, boot screen rendering
+invariant Workspace fallback is read only when no pending or SQLite value exists; startup rejects damaged workspace values before migration and retries failed initialization attempts.
+
+@workduck.workspace.registration
+role Register a workspace from one submitted form snapshot across directory validation, password hashing, conditional persistence, unlocking, and optional repository preparation.
+owns submitted registration snapshot, registration staging, post-commit unlock, repository option continuity
+excludes registry storage transport, password hash implementation, registration form rendering
+invariant All registration stages use the same submitted password and options; failed persistence cannot unlock or prepare a repository; later form edits survive completion.
+
+@workduck.workspace.unlock
+role Track renderer workspace unlock sessions, password verification attempts, cooldowns, and idle activity.
+owns renderer unlock sessions, unlock attempt cooldown, unlock change notifications, session idle timestamps
+excludes native vault revocation, password hashing, workspace registry storage
+invariant Only a live current verification can update a session or attempts; locking, trusted session replacement, and owner cancellation invalidate older results; native vault revocation remains the caller's responsibility.
+
+@workduck.workspace.path-repair
+role Validate and save replacement directories for the initiating workspace.
+owns repair target, validation, cancellation, path conflicts
+excludes picker rendering, native validation, storage transport
+invariant Keeps the initial workspace and path; cancelled validation never writes; path changes conflict; persistence compares the accepted snapshot.
 
 @workduck.verification.native-sync
 role Verify encrypted workspace sync through an isolated Windows desktop application and durable SQLite restart.

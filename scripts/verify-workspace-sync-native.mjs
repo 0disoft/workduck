@@ -16,6 +16,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { setTimeout as delay } from 'node:timers/promises';
 import { createServer as networkServer } from 'node:net';
 import { createServer } from 'vite';
+import { DatabaseSync } from 'node:sqlite';
 
 if (process.platform !== 'win32') throw Error('This opt-in native verification currently supports Windows/WebView2 only.');
 const playwrightModule = process.env.WORKDUCK_PLAYWRIGHT_MODULE;
@@ -90,7 +91,7 @@ try {
     if (!group.ok) throw Error('fixture group');
     const repo = projects.addProjectRepositoryLink(group.registry, { nodeId: group.registry.nodes.at(-1).id, name: 'Repository', path: `${workspacePath}\\projects\\sample\\tools\\repository` });
     if (!repo.ok) throw Error('fixture repository');
-    if (!workspaceStorage.writeWorkspaceRegistryToBrowser(added.registry).ok || !await appState.flushWorkduckAppStateWrites()) throw Error('fixture workspace write');
+    if (!(await workspaceStorage.writeWorkspaceRegistryToBrowser(added.registry, workspace.createEmptyWorkspaceRegistry())).ok || !await appState.flushWorkduckAppStateWrites()) throw Error('fixture workspace write');
     if (!(await projectStorage.writeProjectRegistries({ [added.workspace.id]: repo.registry })).ok) throw Error('fixture project write');
     const db = await getTauriInvoke()('storage_status');
     const { readAppearanceSettingsFromBrowser } = await import('/src/lib/settings/appearance-storage.ts');
@@ -125,9 +126,9 @@ try {
   step('clear');
   await page.evaluate(async fixture => {
     const workspace = await import('/src/lib/workspaces/workspace-registry.ts');
-    const { restoreWorkspaceSyncData } = await import('/src/lib/projects/project-storage.ts');
+    const { writeWorkspaceSyncRegistries } = await import('/src/lib/projects/project-storage.ts');
     const projects = await import('/src/lib/projects/project-registry.ts');
-    const result = await restoreWorkspaceSyncData(workspace.createEmptyWorkspaceRegistry(), {
+    const result = await writeWorkspaceSyncRegistries(workspace.createEmptyWorkspaceRegistry(), {
       [fixture.projects.workspaceId]: projects.createEmptyProjectRegistry(fixture.projects.workspaceId),
     });
     if (!result.ok) throw Error('fixture clear');
@@ -140,20 +141,21 @@ try {
   const unchanged = await snapshots(page, fixture.projects.workspaceId);
   assert.equal(unchanged.workspace.workspaces.length, 0); assert.equal(unchanged.projects.nodes.length, 0);
   step('conflict');
-  // A native-only write leaves this renderer's expected workspace snapshot stale.
-  // This tests the actual SQLite guard, without substituting an IPC response.
+  // An isolated SQLite write bypasses native notifications and leaves the renderer stale.
+  // This tests the actual SQLite guard without substituting an IPC response.
   const concurrentJson = await page.evaluate(async original => {
     const { serializeWorkspaceRegistry } = await import('/src/lib/workspaces/workspace-registry.ts');
-    const { getTauriInvoke } = await import('/src/lib/tauri/tauri-invoke.ts');
     const concurrent = structuredClone(original);
     concurrent.workspaces[0].name = 'Changed outside this renderer';
-    const valueJson = serializeWorkspaceRegistry(concurrent);
-    const result = await getTauriInvoke()('write_app_state_records', { records: {
-      'workspace-registry': { valueJson, updatedAt: new Date().toISOString() },
-    } });
-    if (!result.ok) throw Error('concurrent fixture write');
-    return valueJson;
+    return serializeWorkspaceRegistry(concurrent);
   }, fixture.workspace);
+  const concurrentDatabase = new DatabaseSync(dbPath);
+  try {
+    concurrentDatabase.exec('PRAGMA busy_timeout = 5000');
+    const written = concurrentDatabase.prepare("UPDATE app_state_records SET value_json = ?, updated_at = ? WHERE state_key = 'workspace-registry'")
+      .run(concurrentJson, new Date().toISOString());
+    assert.equal(written.changes, 1);
+  } finally { concurrentDatabase.close(); }
   await page.locator('#sync-password').fill(password);
   await importFromUi(page, fixture.receiveConfirmation);
   await page.locator('.workduck-inline-error').waitFor();

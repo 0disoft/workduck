@@ -8,6 +8,78 @@
       "scope": "module"
     },
     {
+      "match": ["src/lib/workspaces/workspace-path-repair.ts"],
+      "name": "workspace path repair identity and cancellation",
+      "requiredFields": ["owns", "invariant"],
+      "scope": "module"
+    },
+    {
+      "match": ["src/lib/workspaces/workspace-password.ts", "src/lib/workspaces/workspace-repository-setup.ts", "src/lib/workspaces/workspace-unlock.ts"],
+      "name": "workspace password adapters and renderer unlock lifetime",
+      "requiredFields": ["owns", "invariant"],
+      "scope": "module"
+    },
+    {
+      "match": ["src/lib/workspaces/workspace-registration.ts"],
+      "name": "submitted workspace registration staging",
+      "requiredFields": ["owns", "invariant"],
+      "scope": "module"
+    },
+    {
+      "match": ["src/lib/app-state/persistent-app-state.ts"],
+      "name": "initialization retry and validated workspace fallback",
+      "requiredFields": ["owns", "invariant"],
+      "scope": "module"
+    },
+    {
+      "match": ["src/lib/workspaces/workspace-registry.ts", "src/lib/workspaces/workspace-storage.ts"],
+      "name": "workspace identity and lossless persistence admission",
+      "requiredFields": ["owns", "invariant"],
+      "scope": "module"
+    },
+    {
+      "match": ["src-tauri/src/app_state_store.rs"],
+      "name": "native application setting persistence",
+      "requiredFields": ["owns", "invariant"],
+      "scope": "module"
+    },
+    {
+      "match": ["src-tauri/src/project_repository_task_powershell.rs"],
+      "name": "PowerShell task tracking and record publication",
+      "requiredFields": ["owns", "invariant"],
+      "scope": "module"
+    },
+    {
+      "match": ["src/routes/+layout.svelte"],
+      "name": "renderer startup recovery gate",
+      "requiredFields": ["owns", "invariant"],
+      "scope": "module"
+    },
+    {
+      "match": ["src/lib/briefs/brief-editor-drafts.ts"],
+      "name": "brief editor draft and save lifetime",
+      "requiredFields": ["owns", "invariant"],
+      "scope": "module"
+    },
+    {
+      "match": ["src/lib/references/reference-registry.ts"],
+      "name": "reference registry identity and revision contract",
+      "requiredFields": ["owns", "invariant"],
+      "scope": "module"
+    },
+    {
+      "match": ["src/lib/briefs/brief-run-evidence.ts"],
+      "name": "brief execution evidence identity",
+      "requiredFields": ["owns", "invariant"],
+      "scope": "module"
+    },
+    {
+      "match": ["src/lib/terminals/TerminalPanel.svelte"],
+      "name": "terminal panel operation lifetime",
+      "requiredFields": ["owns", "invariant"],
+      "scope": "module"
+    },
+    {
       "match": [
         "src/lib/briefs/brief-registry.ts",
         "src/lib/briefs/brief-run-registry.ts",
@@ -381,6 +453,14 @@
   ],
   "audit": {
     "dispositions": [
+      {
+        "path": "src-tauri/src/project_repository_task_powershell_tests.rs",
+        "reason": "Contains real PowerShell execution regressions only; script generation, record publication and output preview policy are owned by the task PowerShell module."
+      },
+      {
+        "path": "src-tauri/src/project_repository_task_tests.rs",
+        "reason": "Contains repository task regression tests and fixtures only; runtime launch, record publication and reconciliation are owned by the repository task module, and historical reads by the task history module."
+      },
       {
         "path": "src/routes/briefs/+page.svelte",
         "reason": "Route composes the existing workspace gate, appearance subscription, and BriefsPanel; brief lifecycle and storage policy are owned by the brief registry and storage adapter."

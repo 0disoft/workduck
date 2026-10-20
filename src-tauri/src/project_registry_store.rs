@@ -1,17 +1,19 @@
 use std::collections::BTreeMap;
 
 use rusqlite::{OptionalExtension, params, params_from_iter};
-use tauri::AppHandle;
+use tauri::{AppHandle, Emitter};
 
 use crate::storage;
 
+const PROJECT_REGISTRIES_COMMITTED_EVENT: &str = "workduck:project-registries-committed";
+
 /* llmnav/1 module
 id=workduck.projects.storage-native
-role=Read and atomically replace SQLite project registry snapshots with optional stale-write guards.
-owns=project registry SQLite reads|snapshot write guards|atomic bulk registry replacement
+role=Read and atomically replace SQLite project registries with optional snapshot guards and a workspace sync checkpoint.
+owns=project registry SQLite reads|snapshot write guards|atomic registry and workspace replacement|committed workspace ID notifications
 excludes=registry domain normalization|workspace sync payload assembly|editor draft ownership
-search=project registry SQLite write|stale registry snapshot|atomic project bulk write
-invariant=Guarded writes replace only the expected stored snapshot; workspace sync restores commit the workspace list and project snapshots together, and any conflict or invalid row rolls back the entire batch.
+search=project registry SQLite write|stale registry snapshot|atomic project bulk write|native project commit event
+invariant=Guarded writes require the expected snapshot; sync checkpoints preserve UTC ordering; failed rows roll back the batch; successful commits notify changed project IDs and workspace state, including workspace-only syncs.
 stability=contract
 */
 
@@ -36,6 +38,14 @@ pub struct ProjectRegistryWriteInput {
     updated_at: String,
     #[serde(default)]
     expected_registry_json: Option<String>,
+}
+
+#[derive(serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct WorkspaceRegistryWriteInput {
+    value_json: String,
+    expected_value_json: String,
+    updated_at: String,
 }
 
 #[derive(serde::Serialize)]
@@ -170,66 +180,95 @@ pub fn write_project_registry(
         },
     )]);
 
-    write_project_registries(app, registries)
+    write_project_registries(app, registries, None)
 }
 
 #[tauri::command]
 pub fn write_project_registries(
     app: AppHandle,
     registries: BTreeMap<String, ProjectRegistryWriteInput>,
+    workspace_registry: Option<WorkspaceRegistryWriteInput>,
 ) -> ProjectRegistryWrite {
     let mut connection = match storage::app_connection(&app) {
         Ok(connection) => connection,
         Err(_) => return invalid_write(ProjectRegistryStoreError::WriteFailed),
     };
-    write_project_registries_to_connection(&mut connection, registries)
+    write_project_registries_with_notification(
+        &mut connection,
+        registries,
+        workspace_registry,
+        |workspace_ids, workspace_changed| {
+            // Notification failure cannot undo a committed transaction.
+            if !workspace_ids.is_empty() {
+                let _ = app.emit(PROJECT_REGISTRIES_COMMITTED_EVENT, workspace_ids);
+            }
+            if workspace_changed {
+                let _ = app.emit(
+                    crate::app_state_store::APP_STATE_COMMITTED_EVENT,
+                    vec!["workspace-registry"],
+                );
+            }
+        },
+    )
+}
+
+fn write_project_registries_with_notification(
+    connection: &mut rusqlite::Connection,
+    registries: BTreeMap<String, ProjectRegistryWriteInput>,
+    workspace_registry: Option<WorkspaceRegistryWriteInput>,
+    notify: impl FnOnce(Vec<String>, bool),
+) -> ProjectRegistryWrite {
+    let workspace_changed = workspace_registry.is_some();
+    let mut workspace_ids: Vec<String> = registries.keys().map(|id| id.trim().to_owned()).collect();
+    workspace_ids.sort();
+    workspace_ids.dedup();
+    let result = write_project_registries_to_connection(connection, registries, workspace_registry);
+    if result.ok && (!workspace_ids.is_empty() || workspace_changed) {
+        notify(workspace_ids, workspace_changed);
+    }
+    result
 }
 
 fn write_project_registries_to_connection(
     connection: &mut rusqlite::Connection,
     registries: BTreeMap<String, ProjectRegistryWriteInput>,
+    workspace_registry: Option<WorkspaceRegistryWriteInput>,
 ) -> ProjectRegistryWrite {
-    let transaction = match connection.transaction() {
+    let behavior = if workspace_registry.is_some() {
+        rusqlite::TransactionBehavior::Immediate
+    } else {
+        rusqlite::TransactionBehavior::Deferred
+    };
+    let transaction = match connection.transaction_with_behavior(behavior) {
         Ok(transaction) => transaction,
         Err(_) => return invalid_write(ProjectRegistryStoreError::WriteFailed),
     };
-
-    if let Err(error) = write_project_registries_in_transaction(&transaction, registries) {
-        return invalid_write(error);
+    if let Some(workspace_registry) = workspace_registry {
+        if let Err(error) = write_sync_workspace_registry(&transaction, workspace_registry) {
+            return invalid_write(error);
+        }
     }
-    match transaction.commit() {
-        Ok(()) => ProjectRegistryWrite {
-            ok: true,
-            error: None,
-        },
-        Err(_) => invalid_write(ProjectRegistryStoreError::WriteFailed),
-    }
-}
 
-fn write_project_registries_in_transaction(
-    transaction: &rusqlite::Transaction<'_>,
-    registries: BTreeMap<String, ProjectRegistryWriteInput>,
-) -> Result<(), ProjectRegistryStoreError> {
     for (workspace_id, registry) in registries {
         let workspace_id = match validate_workspace_id(&workspace_id) {
             Ok(workspace_id) => workspace_id,
-            Err(error) => return Err(error),
+            Err(error) => return invalid_write(error),
         };
         let registry_json = match validate_registry_json(&registry.registry_json) {
             Ok(registry_json) => registry_json,
-            Err(error) => return Err(error),
+            Err(error) => return invalid_write(error),
         };
         let updated_at = registry.updated_at.trim();
 
         if updated_at.is_empty() {
-            return Err(ProjectRegistryStoreError::RegistryJsonInvalid);
+            return invalid_write(ProjectRegistryStoreError::RegistryJsonInvalid);
         }
 
         if let Some(expected) = registry.expected_registry_json.as_deref() {
             let expected = expected.trim();
             // JSON null denotes a missing row; stored registries must be objects.
             if expected != "null" && validate_registry_json(expected).is_err() {
-                return Err(ProjectRegistryStoreError::RegistryJsonInvalid);
+                return invalid_write(ProjectRegistryStoreError::RegistryJsonInvalid);
             }
             let current = match transaction
                 .query_row(
@@ -240,14 +279,14 @@ fn write_project_registries_in_transaction(
                 .optional()
             {
                 Ok(current) => current,
-                Err(_) => return Err(ProjectRegistryStoreError::WriteFailed),
+                Err(_) => return invalid_write(ProjectRegistryStoreError::WriteFailed),
             };
             let matches = match current.as_deref() {
                 Some(current) => current.trim() == expected,
                 None => expected == "null",
             };
             if !matches {
-                return Err(ProjectRegistryStoreError::RevisionConflict);
+                return invalid_write(ProjectRegistryStoreError::RevisionConflict);
             }
         }
 
@@ -267,83 +306,64 @@ fn write_project_registries_in_transaction(
             )
             .is_err()
         {
-            return Err(ProjectRegistryStoreError::WriteFailed);
+            return invalid_write(ProjectRegistryStoreError::WriteFailed);
         }
     }
 
-    Ok(())
-}
-
-#[tauri::command]
-pub fn restore_workspace_sync(
-    app: AppHandle,
-    workspace_registry_json: String,
-    expected_workspace_registry_json: String,
-    updated_at: String,
-    registries: BTreeMap<String, ProjectRegistryWriteInput>,
-) -> ProjectRegistryWrite {
-    let mut connection = match storage::app_connection(&app) {
-        Ok(connection) => connection,
-        Err(_) => return invalid_write(ProjectRegistryStoreError::WriteFailed),
-    };
-    match restore_workspace_sync_to_connection(
-        &mut connection,
-        &workspace_registry_json,
-        &expected_workspace_registry_json,
-        &updated_at,
-        registries,
-    ) {
+    match transaction.commit() {
         Ok(()) => ProjectRegistryWrite {
             ok: true,
             error: None,
         },
-        Err(error) => invalid_write(error),
+        Err(_) => invalid_write(ProjectRegistryStoreError::WriteFailed),
     }
 }
 
-fn restore_workspace_sync_to_connection(
-    connection: &mut rusqlite::Connection,
-    workspace_registry_json: &str,
-    expected_workspace_registry_json: &str,
-    updated_at: &str,
-    registries: BTreeMap<String, ProjectRegistryWriteInput>,
+fn write_sync_workspace_registry(
+    transaction: &rusqlite::Transaction<'_>,
+    input: WorkspaceRegistryWriteInput,
 ) -> Result<(), ProjectRegistryStoreError> {
-    let workspace_json = validate_registry_json(workspace_registry_json)?;
-    if workspace_json.len() > 5 * 1024 * 1024 || updated_at.trim().is_empty() {
+    use crate::app_state_store::{is_sortable_utc_timestamp, validate_value_json};
+
+    let value_json = validate_value_json(&input.value_json)
+        .map_err(|_| ProjectRegistryStoreError::RegistryJsonInvalid)?;
+    let value: serde_json::Value = serde_json::from_str(&value_json)
+        .map_err(|_| ProjectRegistryStoreError::RegistryJsonInvalid)?;
+    if !value
+        .get("workspaces")
+        .is_some_and(serde_json::Value::is_array)
+    {
         return Err(ProjectRegistryStoreError::RegistryJsonInvalid);
     }
-    let expected = expected_workspace_registry_json.trim();
-    if expected != "null" {
-        validate_registry_json(expected)?;
+    let expected = input.expected_value_json.trim();
+    if expected != "null" && validate_value_json(expected).is_err() {
+        return Err(ProjectRegistryStoreError::RegistryJsonInvalid);
     }
-    let transaction = connection
-        .transaction_with_behavior(rusqlite::TransactionBehavior::Immediate)
-        .map_err(|_| ProjectRegistryStoreError::WriteFailed)?;
-    let current: Option<String> = transaction
-        .query_row(
-            "SELECT value_json FROM app_state_records WHERE state_key = 'workspace-registry'",
-            [],
-            |row| row.get(0),
-        )
-        .optional()
-        .map_err(|_| ProjectRegistryStoreError::WriteFailed)?;
-    if current.as_deref().map(str::trim).unwrap_or("null") != expected {
+    let updated_at = input.updated_at.trim();
+    if !is_sortable_utc_timestamp(updated_at) {
+        return Err(ProjectRegistryStoreError::RegistryJsonInvalid);
+    }
+    let current: Option<(String, String)> = transaction.query_row(
+        "SELECT value_json, updated_at FROM app_state_records WHERE state_key = 'workspace-registry'",
+        [], |row| Ok((row.get(0)?, row.get(1)?)),
+    ).optional().map_err(|_| ProjectRegistryStoreError::WriteFailed)?;
+    let matches = match current.as_ref() {
+        Some((json, timestamp)) => json.trim() == expected && timestamp.as_str() <= updated_at,
+        None => expected == "null",
+    };
+    if !matches {
         return Err(ProjectRegistryStoreError::RevisionConflict);
     }
-    // The workspace list is part of the same rollback boundary as every project row.
     transaction
         .execute(
             "INSERT INTO app_state_records (state_key, value_json, updated_at)
          VALUES ('workspace-registry', ?1, ?2)
-         ON CONFLICT(state_key) DO UPDATE SET value_json=excluded.value_json,
-         updated_at=excluded.updated_at, stored_at=CURRENT_TIMESTAMP",
-            params![workspace_json, updated_at.trim()],
+         ON CONFLICT(state_key) DO UPDATE SET value_json = excluded.value_json,
+           updated_at = excluded.updated_at, stored_at = CURRENT_TIMESTAMP",
+            params![value_json, updated_at],
         )
         .map_err(|_| ProjectRegistryStoreError::WriteFailed)?;
-    write_project_registries_in_transaction(&transaction, registries)?;
-    transaction
-        .commit()
-        .map_err(|_| ProjectRegistryStoreError::WriteFailed)
+    Ok(())
 }
 
 fn validate_workspace_ids(
@@ -416,6 +436,231 @@ fn invalid_write(error: ProjectRegistryStoreError) -> ProjectRegistryWrite {
 mod tests {
     use super::*;
 
+    #[test]
+    fn notifies_only_after_the_committed_rows_are_visible_to_another_connection() {
+        let uri = format!(
+            "file:workduck-project-notify-{}?mode=memory&cache=shared",
+            std::process::id()
+        );
+        let flags = rusqlite::OpenFlags::SQLITE_OPEN_READ_WRITE
+            | rusqlite::OpenFlags::SQLITE_OPEN_CREATE
+            | rusqlite::OpenFlags::SQLITE_OPEN_URI;
+        let mut connection = rusqlite::Connection::open_with_flags(&uri, flags).unwrap();
+        let observer = rusqlite::Connection::open_with_flags(&uri, flags).unwrap();
+        connection
+            .execute_batch(include_str!("../migrations/004_project_registries.sql"))
+            .unwrap();
+        let mut notified = false;
+        let result = write_project_registries_with_notification(
+            &mut connection,
+            BTreeMap::from([
+                (" first ".into(), input(r#"{"value":1}"#, None)),
+                ("last".into(), input(r#"{"value":2}"#, None)),
+            ]),
+            None,
+            |workspace_ids, workspace_changed| {
+                assert!(!workspace_changed);
+                assert_eq!(workspace_ids, ["first", "last"]);
+                assert_eq!(
+                    stored(&observer, "first").as_deref(),
+                    Some(r#"{"value":1}"#)
+                );
+                assert_eq!(stored(&observer, "last").as_deref(), Some(r#"{"value":2}"#));
+                notified = true;
+            },
+        );
+        assert!(result.ok);
+        assert!(notified);
+    }
+
+    #[test]
+    fn does_not_notify_for_a_conflict_or_a_failed_statement_or_commit() {
+        for failure in ["conflict", "validation", "statement", "commit"] {
+            let mut connection = connection();
+            assert!(write(&mut connection, "first", r#"{"value":1}"#, None).ok);
+            if failure == "statement" {
+                connection.execute_batch("CREATE TRIGGER reject_last BEFORE INSERT ON project_registries WHEN NEW.workspace_id = 'last' BEGIN SELECT RAISE(ABORT, 'test failure'); END;").unwrap();
+            }
+            if failure == "commit" {
+                connection.execute_batch("PRAGMA foreign_keys = ON;
+                    CREATE TABLE parent (id INTEGER PRIMARY KEY);
+                    CREATE TABLE child (id INTEGER REFERENCES parent(id) DEFERRABLE INITIALLY DEFERRED);
+                    CREATE TRIGGER deferred_failure AFTER INSERT ON project_registries WHEN NEW.workspace_id = 'last' BEGIN INSERT INTO child VALUES (1); END;").unwrap();
+            }
+            let mut notified = false;
+            let result = write_project_registries_with_notification(
+                &mut connection,
+                BTreeMap::from([
+                    ("first".into(), input(r#"{"value":2}"#, None)),
+                    (
+                        "last".into(),
+                        input(
+                            if failure == "validation" { "[" } else { "{}" },
+                            if failure == "conflict" {
+                                Some("{}")
+                            } else {
+                                None
+                            },
+                        ),
+                    ),
+                ]),
+                None,
+                |_, _| {
+                    notified = true;
+                },
+            );
+            assert!(!result.ok, "{failure}");
+            assert!(!notified, "{failure}");
+            assert_eq!(
+                stored(&connection, "first").as_deref(),
+                Some(r#"{"value":1}"#)
+            );
+            assert!(stored(&connection, "last").is_none());
+        }
+    }
+
+    #[test]
+    fn an_empty_project_batch_does_not_publish_a_project_change() {
+        let mut connection = connection();
+        assert!(
+            write_project_registries_with_notification(
+                &mut connection,
+                BTreeMap::new(),
+                None,
+                |_, _| {
+                    panic!("empty batch has no changed project registries");
+                },
+            )
+            .ok
+        );
+    }
+
+    #[test]
+    fn workspace_only_sync_notifies_a_committed_workspace_checkpoint() {
+        let mut connection = connection();
+        connection
+            .execute_batch(include_str!("../migrations/007_app_state_records.sql"))
+            .unwrap();
+        let mut notified = false;
+        let result = write_project_registries_with_notification(
+            &mut connection,
+            BTreeMap::new(),
+            Some(sync_input("null")),
+            |workspace_ids, workspace_changed| {
+                assert!(workspace_ids.is_empty());
+                assert!(workspace_changed);
+                notified = true;
+            },
+        );
+        assert!(result.ok);
+        assert!(notified);
+        assert_eq!(
+            workspace_value(&connection),
+            r#"{"workspaces":[{"id":"new"}]}"#
+        );
+    }
+
+    fn sync_input(expected: &str) -> WorkspaceRegistryWriteInput {
+        WorkspaceRegistryWriteInput {
+            value_json: r#"{"workspaces":[{"id":"new"}]}"#.into(),
+            expected_value_json: expected.into(),
+            updated_at: "2026-10-10T00:00:00.000Z".into(),
+        }
+    }
+
+    fn workspace_value(connection: &rusqlite::Connection) -> String {
+        connection
+            .query_row(
+                "SELECT value_json FROM app_state_records WHERE state_key = 'workspace-registry'",
+                [],
+                |row| row.get(0),
+            )
+            .unwrap()
+    }
+
+    #[test]
+    fn sync_import_commits_workspace_and_projects_together() {
+        let mut connection = connection();
+        connection
+            .execute_batch(include_str!("../migrations/007_app_state_records.sql"))
+            .unwrap();
+        let result = write_project_registries_to_connection(
+            &mut connection,
+            BTreeMap::from([("new".into(), input(r#"{"value":2}"#, None))]),
+            Some(sync_input("null")),
+        );
+        assert!(result.ok);
+        assert_eq!(
+            workspace_value(&connection),
+            r#"{"workspaces":[{"id":"new"}]}"#
+        );
+        assert_eq!(
+            stored(&connection, "new").as_deref(),
+            Some(r#"{"value":2}"#)
+        );
+    }
+
+    #[test]
+    fn sync_import_rolls_back_workspace_and_prior_projects_when_a_later_write_fails() {
+        for database_error in [false, true] {
+            let mut connection = connection();
+            connection
+                .execute_batch(include_str!("../migrations/007_app_state_records.sql"))
+                .unwrap();
+            connection.execute(
+                "INSERT INTO app_state_records (state_key, value_json, updated_at) VALUES ('workspace-registry', ?1, ?2)",
+                params![r#"{"workspaces":[]}"#, "2026-10-09T00:00:00.000Z"],
+            ).unwrap();
+            assert!(write(&mut connection, "a", r#"{"value":1}"#, None).ok);
+            if database_error {
+                connection.execute_batch("CREATE TRIGGER reject_sync_project BEFORE INSERT ON project_registries WHEN NEW.workspace_id = 'z' BEGIN SELECT RAISE(ABORT, 'test failure'); END;").unwrap();
+            }
+            let result = write_project_registries_to_connection(
+                &mut connection,
+                BTreeMap::from([
+                    ("a".into(), input(r#"{"value":2}"#, None)),
+                    (
+                        "z".into(),
+                        input(if database_error { "{}" } else { "[" }, None),
+                    ),
+                ]),
+                Some(sync_input(r#"{"workspaces":[]}"#)),
+            );
+            assert!(!result.ok);
+            assert_eq!(workspace_value(&connection), r#"{"workspaces":[]}"#);
+            assert_eq!(stored(&connection, "a").as_deref(), Some(r#"{"value":1}"#));
+            assert!(stored(&connection, "z").is_none());
+        }
+    }
+
+    #[test]
+    fn sync_import_rejects_stale_workspace_snapshots_and_older_timestamps() {
+        for (expected, timestamp) in [
+            ("null", "2026-10-09T00:00:00.000Z"),
+            (r#"{"workspaces":[]}"#, "2026-10-11T00:00:00.000Z"),
+        ] {
+            let mut connection = connection();
+            connection
+                .execute_batch(include_str!("../migrations/007_app_state_records.sql"))
+                .unwrap();
+            connection.execute(
+                "INSERT INTO app_state_records (state_key, value_json, updated_at) VALUES ('workspace-registry', ?1, ?2)",
+                params![r#"{"workspaces":[]}"#, timestamp],
+            ).unwrap();
+            let result = write_project_registries_to_connection(
+                &mut connection,
+                BTreeMap::from([("new".into(), input("{}", None))]),
+                Some(sync_input(expected)),
+            );
+            assert!(matches!(
+                result.error,
+                Some(ProjectRegistryStoreError::RevisionConflict)
+            ));
+            assert_eq!(workspace_value(&connection), r#"{"workspaces":[]}"#);
+            assert!(stored(&connection, "new").is_none());
+        }
+    }
+
     fn connection() -> rusqlite::Connection {
         let connection = rusqlite::Connection::open_in_memory().unwrap();
         connection
@@ -441,6 +686,7 @@ mod tests {
         write_project_registries_to_connection(
             connection,
             BTreeMap::from([(id.to_owned(), input(json, expected))]),
+            None,
         )
     }
 
@@ -513,6 +759,7 @@ mod tests {
                     input(r#"{"value":4}"#, Some(r#"{"value":1}"#)),
                 ),
             ]),
+            None,
         );
         assert!(!result.ok);
         assert_eq!(
@@ -533,104 +780,5 @@ mod tests {
         let mut connection = connection();
         assert!(write(&mut connection, "demo", r#"{"value":1}"#, None).ok);
         assert!(write(&mut connection, "demo", r#"{"value":2}"#, None).ok);
-    }
-
-    fn sync_connection() -> rusqlite::Connection {
-        let connection = connection();
-        connection
-            .execute_batch(include_str!("../migrations/007_app_state_records.sql"))
-            .unwrap();
-        connection
-            .execute(
-                "INSERT INTO app_state_records(state_key,value_json,updated_at)
-            VALUES('workspace-registry','{\"workspaces\":[]}','2026-10-12T00:00:00.000Z')",
-                [],
-            )
-            .unwrap();
-        connection
-    }
-
-    fn workspace_json(connection: &rusqlite::Connection) -> String {
-        connection
-            .query_row(
-                "SELECT value_json FROM app_state_records WHERE state_key='workspace-registry'",
-                [],
-                |row| row.get(0),
-            )
-            .unwrap()
-    }
-
-    #[test]
-    fn sync_restore_commits_both_tables_and_checks_the_workspace_revision() {
-        let mut connection = sync_connection();
-        let before = workspace_json(&connection);
-        let imported = r#"{"workspaces":[{"id":"demo"}]}"#;
-        assert!(
-            restore_workspace_sync_to_connection(
-                &mut connection,
-                imported,
-                &before,
-                "2026-10-12T01:00:00.000Z",
-                BTreeMap::from([("demo".to_owned(), input("{}", Some("null")))])
-            )
-            .is_ok()
-        );
-        assert_eq!(workspace_json(&connection), imported);
-        assert_eq!(stored(&connection, "demo").as_deref(), Some("{}"));
-        assert!(matches!(
-            restore_workspace_sync_to_connection(
-                &mut connection,
-                &before,
-                &before,
-                "2026-10-12T02:00:00.000Z",
-                BTreeMap::from([("demo".to_owned(), input(r#"{"new":true}"#, None))])
-            ),
-            Err(ProjectRegistryStoreError::RevisionConflict)
-        ));
-        assert_eq!(workspace_json(&connection), imported);
-        assert_eq!(stored(&connection, "demo").as_deref(), Some("{}"));
-    }
-
-    #[test]
-    fn sync_restore_rolls_back_workspace_and_earlier_projects_when_later_rows_fail() {
-        for failure in ["conflict", "invalid", "storage"] {
-            let mut connection = sync_connection();
-            assert!(write(&mut connection, "first", "{}", None).ok);
-            assert!(write(&mut connection, "last", "{}", None).ok);
-            if failure == "storage" {
-                connection.execute_batch("CREATE TRIGGER fail_last BEFORE UPDATE ON project_registries
-                    WHEN NEW.workspace_id='last' BEGIN SELECT RAISE(ABORT,'synthetic storage failure'); END;").unwrap();
-            }
-            let before = workspace_json(&connection);
-            let last = match failure {
-                "conflict" => input(r#"{"new":true}"#, Some(r#"{"stale":true}"#)),
-                "invalid" => input("[]", None),
-                _ => input(r#"{"new":true}"#, None),
-            };
-            assert!(
-                restore_workspace_sync_to_connection(
-                    &mut connection,
-                    r#"{"workspaces":[{"id":"new"}]}"#,
-                    &before,
-                    "2026-10-12T01:00:00.000Z",
-                    BTreeMap::from([
-                        ("first".to_owned(), input(r#"{"new":true}"#, None)),
-                        ("last".to_owned(), last),
-                    ])
-                )
-                .is_err()
-            );
-            assert_eq!(workspace_json(&connection), before, "{failure}");
-            assert_eq!(
-                stored(&connection, "first").as_deref(),
-                Some("{}"),
-                "{failure}"
-            );
-            assert_eq!(
-                stored(&connection, "last").as_deref(),
-                Some("{}"),
-                "{failure}"
-            );
-        }
     }
 }

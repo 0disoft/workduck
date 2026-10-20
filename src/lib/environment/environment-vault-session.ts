@@ -4,7 +4,7 @@ role=Project native environment vault sessions into workspace metadata subscript
 owns=native vault metadata cache|workspace session subscriptions|vault command normalization|idle session locking
 excludes=secret encryption|native session storage|environment vault disk persistence
 search=environment vault session metadata|idle workspace vault lock|explicit secret value read
-invariant=Cached vault views accept only native managed opaque secret references; workspace lock publication waits for native session revocation to succeed.
+invariant=Cached vault views accept only native managed opaque secret references; closing invalidates pending responses and blocks new requests until native revocation finishes; workspace lock publication requires successful native revocation.
 stability=architecture
 */
 import { getTauriInvoke } from '#lib/tauri/tauri-invoke.ts';
@@ -22,6 +22,7 @@ import {
 import { isSecretVaultEnvelope, type SecretVaultEnvelope } from './secret-vault-crypto';
 
 const environmentVaultSessions = new Map<string, EnvironmentVault>();
+const environmentVaultSessionLifetimes = new Map<string, { closingCount: number }>();
 const environmentVaultSessionSubscribers = new Map<
 	string,
 	Set<(vault: EnvironmentVault | null) => void>
@@ -115,14 +116,17 @@ export async function lockIdleWorkspaceEnvironmentVaultSessions(
 }
 
 export async function closeEnvironmentVaultSession(workspaceId: string) {
+	const previousLifetime = environmentVaultSessionLifetimes.get(workspaceId);
+	environmentVaultSessionLifetimes.set(workspaceId, {
+		closingCount: (previousLifetime?.closingCount ?? 0) + 1
+	});
 	clearLocalEnvironmentVaultSession(workspaceId);
 
-	const invoke = getTauriInvoke();
-	if (invoke === undefined) {
-		return { ok: false, error: 'environment-vault-session-unavailable' } as const;
-	}
-
 	try {
+		const invoke = getTauriInvoke();
+		if (invoke === undefined) {
+			return { ok: false, error: 'environment-vault-session-unavailable' } as const;
+		}
 		const response = await invoke<EnvironmentVaultSessionCommandResponse>(
 			'close_environment_vault_session',
 			{ workspaceId }
@@ -133,6 +137,8 @@ export async function closeEnvironmentVaultSession(workspaceId: string) {
 			: ({ ok: false, error: normalizeEnvironmentVaultSessionError(response.error) } as const);
 	} catch {
 		return { ok: false, error: 'environment-vault-session-store-failed' } as const;
+	} finally {
+		environmentVaultSessionLifetimes.get(workspaceId)!.closingCount -= 1;
 	}
 }
 
@@ -160,6 +166,7 @@ export async function openEnvironmentVaultSession(
 	if (!response.ok) {
 		return response;
 	}
+	if (!response.isCurrent()) return { ok: false, error: 'environment-vault-session-locked' };
 
 	const vault = parseNativeManagedVault(response.response.vault, workspaceId);
 	if (vault === null) {
@@ -178,6 +185,7 @@ export async function refreshEnvironmentVaultSession(
 	if (!response.ok) {
 		return response;
 	}
+	if (!response.isCurrent()) return { ok: false, error: 'environment-vault-session-locked' };
 
 	const vault = parseNativeManagedVault(response.response.vault, workspaceId);
 	if (vault === null) {
@@ -220,6 +228,7 @@ export async function readEnvironmentVaultSessionSecretValue(
 	if (!response.ok) {
 		return response;
 	}
+	if (!response.isCurrent()) return { ok: false, error: 'environment-vault-session-locked' };
 
 	return typeof response.response.value === 'string'
 		? { ok: true, value: response.response.value }
@@ -253,6 +262,7 @@ async function invokeVaultMutation(
 	if (!response.ok) {
 		return response;
 	}
+	if (!response.isCurrent()) return { ok: false, error: 'environment-vault-session-locked' };
 
 	const vault = parseNativeManagedVault(response.response.vault, workspaceId);
 	if (vault === null || !isSecretVaultEnvelope(response.response.envelope)) {
@@ -271,18 +281,28 @@ async function invokeVaultCommand(
 	command: string,
 	args: Record<string, unknown>
 ): Promise<
-	| { readonly ok: true; readonly response: EnvironmentVaultSessionCommandResponse }
+	| { readonly ok: true; readonly response: EnvironmentVaultSessionCommandResponse; readonly isCurrent: () => boolean }
 	| { readonly ok: false; readonly error: EnvironmentVaultSessionError }
 > {
 	const invoke = getTauriInvoke();
 	if (invoke === undefined) {
 		return { ok: false, error: 'environment-vault-session-unavailable' };
 	}
+	const workspaceId = String(args.workspaceId ?? '');
+	let lifetime = environmentVaultSessionLifetimes.get(workspaceId);
+	if (lifetime === undefined) {
+		lifetime = { closingCount: 0 };
+		environmentVaultSessionLifetimes.set(workspaceId, lifetime);
+	}
+	const isCurrent = () =>
+		environmentVaultSessionLifetimes.get(workspaceId) === lifetime && lifetime.closingCount === 0;
+	if (!isCurrent()) return { ok: false, error: 'environment-vault-session-locked' };
 
 	try {
 		const response = await invoke<EnvironmentVaultSessionCommandResponse>(command, args);
+		if (!isCurrent()) return { ok: false, error: 'environment-vault-session-locked' };
 		return response.ok
-			? { ok: true, response }
+			? { ok: true, response, isCurrent }
 			: { ok: false, error: normalizeEnvironmentVaultSessionError(response.error) };
 	} catch {
 		return { ok: false, error: 'environment-vault-session-store-failed' };

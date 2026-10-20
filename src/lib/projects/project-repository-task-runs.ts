@@ -4,7 +4,7 @@ role=Match native task records to registered repositories and format task state 
 owns=task run path identity|latest record mapping|task state labels
 excludes=task history reads|poll scheduling|native process execution
 search=Windows task path matching|latest repository task mapping|task run state labels
-invariant=Windows path spellings share a comparison key while Unix names remain case-sensitive; record order selects the latest run.
+invariant=Windows path spellings share a comparison key while Unix names remain case-sensitive; record order selects the latest run and every accepted repository ID maps only to its own records.
 stability=contract
 */
 import type { WorkduckMessages } from '#lib/i18n/workduck-message-contract.ts';
@@ -38,7 +38,8 @@ export function mapLatestTaskRunsByRepositoryId(
 				repository.id
 			])
 	);
-	const nextRecords: ProjectRepositoryTaskRunRecordByRepositoryId = {};
+	// Imported IDs may coincide with Object.prototype property names.
+	const nextRecords: ProjectRepositoryTaskRunRecordByRepositoryId = Object.create(null);
 
 	for (const record of records) {
 		const repositoryId = repositoryIdByPath.get(

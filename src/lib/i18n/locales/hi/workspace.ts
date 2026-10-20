@@ -21,6 +21,7 @@ export const hiWorkspaceMessages = {
 	},
 	pathErrors: {
 		pathRequired: 'कार्यक्षेत्र पथ आवश्यक है।',
+		pathTooLong: 'कार्यक्षेत्र पथ बहुत लंबा है। छोटा फ़ोल्डर पथ चुनें।',
 		pathNotAbsolute: 'कार्यक्षेत्र पथ एक पूर्ण फ़ोल्डर पथ होना चाहिए।',
 		pathNotFound: 'कार्यक्षेत्र पथ मौजूद नहीं है।',
 		pathNotDirectory: 'कार्यक्षेत्र पथ एक फ़ोल्डर होना चाहिए।',
@@ -32,6 +33,7 @@ export const hiWorkspaceMessages = {
 		pathDuplicate: 'कार्यक्षेत्र पथ पहले से ही पंजीकृत है।',
 		workspaceNotFound: 'कार्यक्षेत्र नहीं मिला।',
 		registryReadFailed: 'कार्यक्षेत्र सेटिंग्स लोड नहीं की जा सकीं।',
+		registryConflict: 'दूसरी विंडो में कार्यक्षेत्र सूची बदल गई है। नई सूची देखें और फिर से प्रयास करें।',
 		registryWriteFailed: 'कार्यक्षेत्र सेटिंग्स सहेजी नहीं जा सकीं।'
 	}
 } as const;

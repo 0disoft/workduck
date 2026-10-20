@@ -4,16 +4,18 @@ role=Select a workspace directory and normalize closed native validation respons
 owns=workspace directory picker|workspace validation client|path validation errors
 excludes=native filesystem validation|workspace registry persistence
 search=select workspace directory|validate workspace client|workspace picker
-invariant=Validation succeeds only when the native boundary returns a non-empty normalized path; unavailable or malformed responses fail closed.
+invariant=Validation succeeds only for non-empty paths within registry storage limits, including native canonical results; unavailable or malformed responses fail closed.
 stability=contract
 */
 import { getTauriInvoke } from '#lib/tauri/tauri-invoke.ts';
 import { open } from '@tauri-apps/plugin-dialog';
 
 import { normalizeWorkspacePathForStorage } from './workspace-path-format';
+import { WORKSPACE_PATH_MAX_LENGTH } from './workspace-registry';
 
 export type WorkspacePathValidationError =
 	| 'workspace-path-required'
+	| 'workspace-path-too-long'
 	| 'workspace-path-not-absolute'
 	| 'workspace-path-not-found'
 	| 'workspace-path-not-directory'
@@ -87,6 +89,10 @@ export async function validateWorkspacePath(
 		return { ok: false, error: 'workspace-path-required' };
 	}
 
+	if (normalizeWorkspacePathForStorage(trimmedPath).length > WORKSPACE_PATH_MAX_LENGTH) {
+		return { ok: false, error: 'workspace-path-too-long' };
+	}
+
 	const invoke = getTauriInvoke();
 
 	if (invoke === undefined) {
@@ -100,6 +106,10 @@ export async function validateWorkspacePath(
 
 		if (response.ok) {
 			const normalizedPath = normalizeWorkspacePathForStorage(response.normalizedPath ?? '');
+
+			if (normalizedPath.length > WORKSPACE_PATH_MAX_LENGTH) {
+				return { ok: false, error: 'workspace-path-too-long' };
+			}
 
 			return normalizedPath.length > 0
 				? { ok: true, path: normalizedPath }
@@ -122,6 +132,7 @@ function isWorkspacePathValidationError(
 ): value is WorkspacePathValidationError {
 	return (
 		value === 'workspace-path-required' ||
+		value === 'workspace-path-too-long' ||
 		value === 'workspace-path-not-absolute' ||
 		value === 'workspace-path-not-found' ||
 		value === 'workspace-path-not-directory' ||

@@ -277,6 +277,7 @@ export const frProjectsMessages = {
 		'project-folder-name-invalid': 'Le nom ne peut pas être utilisé comme dossier.',
 		'project-folder-conflict': 'Le chemin du dossier n\'est pas utilisable.',
 		'project-folder-create-failed': 'Le dossier n\'a pas pu être créé.',
+		'project-folder-ssealed-manifest-conflict': 'Le manifest ssealed est invalide, utilise une autre configuration ou a change. Verifiez-le et utilisez update/upgrade de ssealed pour modifier la configuration.',
 		'project-folder-ssealed-scaffold-failed': 'Le scaffold ssealed n\'a pas pu être créé.',
 		'project-folder-ssealed-scaffold-locked':
 			'Une autre opération ssealed est en cours pour ce dépôt. Réessayez lorsqu\'elle sera terminée.',

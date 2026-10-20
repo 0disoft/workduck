@@ -881,31 +881,21 @@ export function createProjectTreeRows(nodes: readonly ProjectNodeRecord[]): read
 	const childNodesByParentId = groupProjectNodesByParentId(nodes);
 	const rows: ProjectTreeRow[] = [];
 	const visitedNodeIds = new Set<string>();
+	const pendingRows: ProjectTreeRow[] = rootNodes.toReversed().map(node => ({ node, depth: 0 }));
 
-	for (const node of rootNodes) {
-		appendProjectTreeRows(rows, childNodesByParentId, visitedNodeIds, node, 0);
+	while (pendingRows.length > 0) {
+		const row = pendingRows.pop()!;
+		if (visitedNodeIds.has(row.node.id)) continue;
+
+		visitedNodeIds.add(row.node.id);
+		rows.push(row);
+
+		const children = childNodesByParentId.get(row.node.id) ?? [];
+		for (let index = children.length - 1; index >= 0; index -= 1) {
+			pendingRows.push({ node: children[index]!, depth: row.depth + 1 });
+		}
 	}
-
 	return rows;
-}
-
-function appendProjectTreeRows(
-	rows: ProjectTreeRow[],
-	childNodesByParentId: ReadonlyMap<string, readonly ProjectNodeRecord[]>,
-	visitedNodeIds: Set<string>,
-	node: ProjectNodeRecord,
-	depth: number
-) {
-	if (visitedNodeIds.has(node.id)) {
-		return;
-	}
-
-	visitedNodeIds.add(node.id);
-	rows.push({ node, depth });
-
-	for (const childNode of childNodesByParentId.get(node.id) ?? []) {
-		appendProjectTreeRows(rows, childNodesByParentId, visitedNodeIds, childNode, depth + 1);
-	}
 }
 
 function groupProjectNodesByParentId(nodes: readonly ProjectNodeRecord[]) {

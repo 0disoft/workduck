@@ -65,6 +65,51 @@ afterEach(async () => {
 });
 
 describe('project board workspace lifecycle', () => {
+	for (const error of ['project-registry-read-failed', 'project-registry-version-unsupported'] as const) {
+		test(`keeps editing closed while loading and after ${error}`, async () => {
+			const pending = deferred();
+			setTauriInvokeForTest(async <T>(command: string) => {
+				if (command === 'read_project_registry') {
+					await pending.promise;
+					if (error === 'project-registry-version-unsupported') {
+						return { ok: true, registryJson: JSON.stringify({ ...registry('old', 0), version: 999 }) } as T;
+					}
+				}
+				return { ok: false, error } as T;
+			});
+			const harness = createProjectBoardWorkspaceLifecycleHarness(workspace('old'));
+			try {
+				await settleEffects();
+				expect(harness.state.registryReadScope).toBeNull();
+				pending.resolve();
+				await settleEffects();
+				expect(harness.state.storageError).toBe(error);
+				expect(harness.state.registryReadScope).toBeNull();
+			} finally { pending.resolve(); await settleEffects(); harness.dispose(); }
+		});
+	}
+
+	test('only a valid published snapshot reopens editing after the initial read fails', async () => {
+		setTauriInvokeForTest(async <T>() => ({ ok: false } as T));
+		const harness = createProjectBoardWorkspaceLifecycleHarness(workspace('old'));
+		try {
+			await settleEffects();
+			expect(harness.state.registryReadScope).toBeNull();
+			window.dispatchEvent(new CustomEvent(WORKDUCK_PROJECT_REGISTRY_CHANGED_EVENT, {
+				detail: { workspaceId: 'old', registry: { ...registry('old', 1), nodes: [null] } }
+			}));
+			expect(harness.state.registryReadScope).toBeNull();
+			expect(harness.state.storageError).toBe('project-registry-read-failed');
+			const published = registry('old', 2);
+			window.dispatchEvent(new CustomEvent(WORKDUCK_PROJECT_REGISTRY_CHANGED_EVENT, {
+				detail: { workspaceId: 'old', registry: published }
+			}));
+			expect(harness.state.registryReadScope).toBe(JSON.stringify(['old', workspace('old').path]));
+			expect(harness.state.registry).toEqual(published);
+			expect(harness.state.storageError).toBeNull();
+		} finally { harness.dispose(); }
+	});
+
 	test('preserves board selection and avoids reloading when workspace metadata changes', async () => {
 		let registryReads = 0;
 		setTauriInvokeForTest(async <T>(command: string) => {
@@ -82,6 +127,7 @@ describe('project board workspace lifecycle', () => {
 			harness.setWorkspace({ ...workspace('old'), name: 'Renamed workspace' });
 			await settleEffects();
 			expect(registryReads).toBe(1);
+			expect(harness.state.registryReadScope).toBe(JSON.stringify(['old', workspace('old').path]));
 			expect(harness.state.selectedProjectId).toBe('selected');
 			expect(harness.state.environmentVaultPassword).toBe('draft');
 		} finally { harness.dispose(); }
@@ -123,10 +169,17 @@ describe('project board workspace lifecycle', () => {
 				}
 				const currentRegistry = harness.state.registry;
 				const currentOperations = harness.state.repositoryOperationById;
+				const currentReadScope = harness.state.registryReadScope;
 				oldRead.resolve();
 				await settleEffects();
 				expect(harness.state.registry).toEqual(currentRegistry);
 				expect(harness.state.repositoryOperationById).toEqual(currentOperations);
+				expect(harness.state.registryReadScope).toBe(currentReadScope);
+				if (change !== 'dispose') {
+					const currentWorkspace = change === 'rename' ? { ...workspace('old'), path: 'C:/workspaces/renamed' }
+						: workspace(change === 'return' ? 'old' : 'new');
+					expect(currentReadScope).toBe(JSON.stringify([currentWorkspace.id, currentWorkspace.path]));
+				}
 			} finally {
 				oldRead.resolve();
 				await settleEffects();
@@ -152,6 +205,7 @@ describe('project board workspace lifecycle', () => {
 				detail: { workspaceId: 'old', registry: published }
 			}));
 			expect(harness.state.registry).toEqual(published);
+			expect(harness.state.registryReadScope).toBe(JSON.stringify(['old', workspace('old').path]));
 			pending.resolve();
 			await settleEffects();
 			expect(harness.state.registry).toEqual(published);
