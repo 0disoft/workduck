@@ -1,5 +1,7 @@
 use std::{fs, io, path::Path};
 
+use crate::atomic_file_write::{write_file_atomically_if_unchanged, write_file_exclusively};
+
 const WORKDUCK_GITIGNORE_BLOCK_MARKER: &str = "# BEGIN WORKDUCK WORKSPACE";
 const WORKDUCK_GITIGNORE_BLOCK_END_MARKER: &str = "# END WORKDUCK WORKSPACE";
 const LEGACY_WORKDUCK_SECRETS_IGNORE_RULE: &str = "/.workduck/secrets*.json";
@@ -31,16 +33,17 @@ Thumbs.db
 pub fn ensure_workduck_gitignore(workspace_root: &Path) -> io::Result<bool> {
     let gitignore_path = workspace_root.join(".gitignore");
 
-    match fs::metadata(&gitignore_path) {
-        Ok(metadata) if metadata.is_dir() => {
+    match fs::symlink_metadata(&gitignore_path) {
+        Ok(metadata) if !metadata.is_file() || metadata.file_type().is_symlink() => {
             return Err(io::Error::new(
                 io::ErrorKind::InvalidInput,
-                ".gitignore is a directory",
+                ".gitignore is not a plain file",
             ));
         }
         Ok(_) => {}
         Err(error) if error.kind() == io::ErrorKind::NotFound => {
-            fs::write(&gitignore_path, WORKDUCK_GITIGNORE_BLOCK)?;
+            write_file_exclusively(&gitignore_path, WORKDUCK_GITIGNORE_BLOCK)
+                .map_err(|_| io::Error::other("could not create .gitignore exclusively"))?;
             return Ok(true);
         }
         Err(error) => return Err(error),
@@ -53,11 +56,11 @@ pub fn ensure_workduck_gitignore(workspace_root: &Path) -> io::Result<bool> {
             return Ok(false);
         }
 
-        fs::write(&gitignore_path, next_content)?;
+        replace_gitignore(&gitignore_path, &next_content, &content)?;
         return Ok(true);
     }
 
-    let mut next_content = content;
+    let mut next_content = content.clone();
 
     if !next_content.ends_with('\n') {
         next_content.push('\n');
@@ -66,7 +69,7 @@ pub fn ensure_workduck_gitignore(workspace_root: &Path) -> io::Result<bool> {
     next_content.push('\n');
     next_content.push_str(WORKDUCK_GITIGNORE_BLOCK);
 
-    fs::write(&gitignore_path, next_content)?;
+    replace_gitignore(&gitignore_path, &next_content, &content)?;
 
     Ok(true)
 }
@@ -74,11 +77,11 @@ pub fn ensure_workduck_gitignore(workspace_root: &Path) -> io::Result<bool> {
 pub fn ensure_secrets_sync_gitignore_policy(workspace_root: &Path) -> io::Result<bool> {
     let gitignore_path = workspace_root.join(".gitignore");
 
-    match fs::metadata(&gitignore_path) {
-        Ok(metadata) if metadata.is_dir() => {
+    match fs::symlink_metadata(&gitignore_path) {
+        Ok(metadata) if !metadata.is_file() || metadata.file_type().is_symlink() => {
             return Err(io::Error::new(
                 io::ErrorKind::InvalidInput,
-                ".gitignore is a directory",
+                ".gitignore is not a plain file",
             ));
         }
         Ok(_) => {}
@@ -94,7 +97,7 @@ pub fn ensure_secrets_sync_gitignore_policy(workspace_root: &Path) -> io::Result
                 return Ok(false);
             }
 
-            fs::write(&gitignore_path, next_content)?;
+            replace_gitignore(&gitignore_path, &next_content, &content)?;
             return Ok(true);
         }
     }
@@ -108,9 +111,14 @@ pub fn ensure_secrets_sync_gitignore_policy(workspace_root: &Path) -> io::Result
         "/.workduck/secrets.local.json\n/.workduck/secrets.tmp.json",
     );
 
-    fs::write(&gitignore_path, next_content)?;
+    replace_gitignore(&gitignore_path, &next_content, &content)?;
 
     Ok(true)
+}
+
+fn replace_gitignore(path: &Path, content: &str, expected: &str) -> io::Result<()> {
+    write_file_atomically_if_unchanged(path, content, expected)
+        .map_err(|_| io::Error::other(".gitignore changed or could not be safely replaced"))
 }
 
 fn replace_workduck_gitignore_block(content: &str) -> Option<String> {
@@ -133,6 +141,27 @@ mod tests {
     const QUEUE_REPORT_IGNORE_RULE: &str = "/queue/reports/*.workduck-report.json";
     const QUEUE_WORK_ORDER_IGNORE_RULE: &str =
         "/queue/work-orders/*.workduck-work-order.json";
+
+    #[test]
+    fn gitignore_replacement_preserves_a_newer_user_snapshot() {
+        let workspace = tempfile::tempdir().unwrap();
+        let path = workspace.path().join(".gitignore");
+        fs::write(&path, "user edit\n").unwrap();
+        assert!(replace_gitignore(&path, WORKDUCK_GITIGNORE_BLOCK, "old snapshot\n").is_err());
+        assert_eq!(fs::read_to_string(path).unwrap(), "user edit\n");
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn gitignore_updates_reject_symlinks() {
+        let workspace = tempfile::tempdir().unwrap();
+        let target = workspace.path().join("user-rules");
+        fs::write(&target, "user rules\n").unwrap();
+        std::os::unix::fs::symlink(&target, workspace.path().join(".gitignore")).unwrap();
+        assert!(ensure_workduck_gitignore(workspace.path()).is_err());
+        assert!(ensure_secrets_sync_gitignore_policy(workspace.path()).is_err());
+        assert_eq!(fs::read_to_string(target).unwrap(), "user rules\n");
+    }
 
     #[test]
     fn new_workspace_gitignore_keeps_queue_artifacts_trackable() {

@@ -101,7 +101,7 @@ invariant Queue list, summary, and read commands never create directories; only 
 role Initialize a workspace repository layout, Git, managed work-order instructions, and Workduck ignore policy through bounded native steps.
 owns workspace repository bootstrap, managed AGENTS block
 excludes project repository creation, workspace registry data
-invariant Managed instructions remain single-copy and preserve surrounding repository instructions.
+invariant Managed instructions remain single-copy and preserve surrounding repository instructions; new instruction files use exclusive creation, and existing files use synced atomic replacement after a snapshot recheck.
 
 @workduck.projects.board-selection
 role Precompute project-board search and filter indexes and derive visible project, group, and repository selections.

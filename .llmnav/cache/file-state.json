@@ -1511,17 +1511,18 @@
             "excludes": [
               "workspace lock policy",
               "registry transactions",
-              "content validation"
+              "domain content validation"
             ],
             "id": "workduck.storage.atomic-file-write",
             "invariant": [
-              "Writers reject existing symlink targets, sync temporary contents before publishing, and clean up failed writes."
+              "Writers reject existing symlink targets, sync temporary contents before publishing, recheck guarded snapshots before replacement, and clean up failed writes."
             ],
             "owns": [
               "atomic file replacement",
               "exclusive file creation",
               "temporary file cleanup",
-              "file synchronization"
+              "file synchronization",
+              "snapshot recheck"
             ],
             "rel": [],
             "risk": [],
@@ -1536,7 +1537,7 @@
             "stability": "implementation",
             "unknown": []
           },
-          "end": 578,
+          "end": 648,
           "endLine": 9,
           "entries": [
             {
@@ -1555,13 +1556,13 @@
               "key": "owns",
               "line": 4,
               "order": 2,
-              "value": "atomic file replacement|exclusive file creation|temporary file cleanup|file synchronization"
+              "value": "atomic file replacement|exclusive file creation|temporary file cleanup|file synchronization|snapshot recheck"
             },
             {
               "key": "excludes",
               "line": 5,
               "order": 3,
-              "value": "workspace lock policy|registry transactions|content validation"
+              "value": "workspace lock policy|registry transactions|domain content validation"
             },
             {
               "key": "search",
@@ -1573,7 +1574,7 @@
               "key": "invariant",
               "line": 7,
               "order": 5,
-              "value": "Writers reject existing symlink targets, sync temporary contents before publishing, and clean up failed writes."
+              "value": "Writers reject existing symlink targets, sync temporary contents before publishing, recheck guarded snapshots before replacement, and clean up failed writes."
             },
             {
               "key": "stability",
@@ -1586,7 +1587,7 @@
           "indent": "",
           "newline": "\n",
           "prefix": null,
-          "raw": "/* llmnav/1 module\nid=workduck.storage.atomic-file-write\nrole=Publish native file contents through synced temporary files with atomic replacement or exclusive creation.\nowns=atomic file replacement|exclusive file creation|temporary file cleanup|file synchronization\nexcludes=workspace lock policy|registry transactions|content validation\nsearch=atomic file replacement|shared atomic writer|temporary file cleanup|file durability\ninvariant=Writers reject existing symlink targets, sync temporary contents before publishing, and clean up failed writes.\nstability=implementation\n*/",
+          "raw": "/* llmnav/1 module\nid=workduck.storage.atomic-file-write\nrole=Publish native file contents through synced temporary files with atomic replacement or exclusive creation.\nowns=atomic file replacement|exclusive file creation|temporary file cleanup|file synchronization|snapshot recheck\nexcludes=workspace lock policy|registry transactions|domain content validation\nsearch=atomic file replacement|shared atomic writer|temporary file cleanup|file durability\ninvariant=Writers reject existing symlink targets, sync temporary contents before publishing, recheck guarded snapshots before replacement, and clean up failed writes.\nstability=implementation\n*/",
           "scope": "module",
           "specVersion": "1",
           "start": 0,
@@ -1595,7 +1596,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "3dee12024c3d055c35456af2909fd430feea6168b5d9bfc4b4654c23b19f5904",
+      "contentHash": "c75087a05b2a5b3ca08cd7b204051a82296b9ada85f8edfb9052d1a7fa833a57",
       "declarations": [
         null
       ],
@@ -1605,8 +1606,8 @@
         "tests {\n    use super::*"
       ],
       "path": "src-tauri/src/atomic_file_write.rs",
-      "semanticBytes": 578,
-      "sourceBytes": 5219
+      "semanticBytes": 648,
+      "sourceBytes": 7880
     },
     {
       "blocks": [
@@ -5636,15 +5637,16 @@
     },
     {
       "blocks": [],
-      "contentHash": "9df0e7256a9911d2dd1be7254c030b1198c63d8ffd84897ff17f03803baf2be2",
+      "contentHash": "4c3f2db5bdcc328844629d4038a96cf04c31b715b2d4b0fb57d9048cad7034fd",
       "declarations": [],
       "imports": [
+        "crate::atomic_file_write::{write_file_atomically_if_unchanged, write_file_exclusively}",
         "std::{fs, io, path::Path}",
         "tests {\n    use super::*"
       ],
       "path": "src-tauri/src/workspace_repository_gitignore.rs",
       "semanticBytes": 0,
-      "sourceBytes": 5441
+      "sourceBytes": 7043
     },
     {
       "blocks": [
@@ -5657,7 +5659,7 @@
             ],
             "id": "workduck.workspace.repository-setup",
             "invariant": [
-              "Managed instructions remain single-copy and preserve surrounding repository instructions."
+              "Managed instructions remain single-copy and preserve surrounding repository instructions; new instruction files use exclusive creation, and existing files use synced atomic replacement after a snapshot recheck."
             ],
             "owns": [
               "workspace repository bootstrap",
@@ -5674,7 +5676,7 @@
             "stability": "architecture",
             "unknown": []
           },
-          "end": 539,
+          "end": 660,
           "endLine": 9,
           "entries": [
             {
@@ -5711,7 +5713,7 @@
               "key": "invariant",
               "line": 7,
               "order": 5,
-              "value": "Managed instructions remain single-copy and preserve surrounding repository instructions."
+              "value": "Managed instructions remain single-copy and preserve surrounding repository instructions; new instruction files use exclusive creation, and existing files use synced atomic replacement after a snapshot recheck."
             },
             {
               "key": "stability",
@@ -5724,7 +5726,7 @@
           "indent": "",
           "newline": "\n",
           "prefix": "//",
-          "raw": "// llmnav/1 module\n// id=workduck.workspace.repository-setup\n// role=Initialize a workspace repository layout, Git, managed work-order instructions, and Workduck ignore policy through bounded native steps.\n// owns=workspace repository bootstrap|managed AGENTS block\n// excludes=project repository creation|workspace registry data\n// search=setup workspace repository|managed work order instructions\n// invariant=Managed instructions remain single-copy and preserve surrounding repository instructions.\n// stability=architecture\n// /llmnav\n",
+          "raw": "// llmnav/1 module\n// id=workduck.workspace.repository-setup\n// role=Initialize a workspace repository layout, Git, managed work-order instructions, and Workduck ignore policy through bounded native steps.\n// owns=workspace repository bootstrap|managed AGENTS block\n// excludes=project repository creation|workspace registry data\n// search=setup workspace repository|managed work order instructions\n// invariant=Managed instructions remain single-copy and preserve surrounding repository instructions; new instruction files use exclusive creation, and existing files use synced atomic replacement after a snapshot recheck.\n// stability=architecture\n// /llmnav\n",
           "scope": "module",
           "specVersion": "1",
           "start": 0,
@@ -5733,11 +5735,12 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "0912831af046f297fa953f14ba35f7a0ab4879f3fd872f15105bbebdf315ab39",
+      "contentHash": "a4bb54e5ea2910985cf7fc1c384a3a1af58bf85786b7efa25935af76c1dbef8a",
       "declarations": [
         null
       ],
       "imports": [
+        "crate::atomic_file_write::{write_file_atomically_if_unchanged, write_file_exclusively}",
         "crate::git_path::{GitProcessError, wait_for_child_output}",
         "crate::path_display::display_path",
         "crate::process_tree::ProcessTreeChild",
@@ -5749,8 +5752,8 @@
         "tests {\n    use super::*"
       ],
       "path": "src-tauri/src/workspace_repository_setup.rs",
-      "semanticBytes": 539,
-      "sourceBytes": 21381
+      "semanticBytes": 660,
+      "sourceBytes": 21688
     },
     {
       "blocks": [],

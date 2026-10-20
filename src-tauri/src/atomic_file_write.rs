@@ -1,10 +1,10 @@
 /* llmnav/1 module
 id=workduck.storage.atomic-file-write
 role=Publish native file contents through synced temporary files with atomic replacement or exclusive creation.
-owns=atomic file replacement|exclusive file creation|temporary file cleanup|file synchronization
-excludes=workspace lock policy|registry transactions|content validation
+owns=atomic file replacement|exclusive file creation|temporary file cleanup|file synchronization|snapshot recheck
+excludes=workspace lock policy|registry transactions|domain content validation
 search=atomic file replacement|shared atomic writer|temporary file cleanup|file durability
-invariant=Writers reject existing symlink targets, sync temporary contents before publishing, and clean up failed writes.
+invariant=Writers reject existing symlink targets, sync temporary contents before publishing, recheck guarded snapshots before replacement, and clean up failed writes.
 stability=implementation
 */
 use std::{
@@ -30,20 +30,46 @@ pub fn write_file_exclusively(
     file_path: &Path,
     content: &str,
 ) -> Result<(), AtomicFileWriteError> {
-    write_file(file_path, content, AtomicFileWriteMode::ExclusiveCreate)
+    write_file(
+        file_path,
+        content,
+        AtomicFileWriteMode::ExclusiveCreate,
+        None,
+    )
 }
 
 pub fn write_file_atomically(
     file_path: &Path,
     content: &str,
 ) -> Result<(), AtomicFileWriteError> {
-    write_file(file_path, content, AtomicFileWriteMode::ReplaceOrCreate)
+    write_file(
+        file_path,
+        content,
+        AtomicFileWriteMode::ReplaceOrCreate,
+        None,
+    )
+}
+
+/// Recheck the original snapshot after staging, before publishing the replacement.
+/// Writers still need external coordination to exclude edits after this check.
+pub fn write_file_atomically_if_unchanged(
+    file_path: &Path,
+    content: &str,
+    expected_content: &str,
+) -> Result<(), AtomicFileWriteError> {
+    write_file(
+        file_path,
+        content,
+        AtomicFileWriteMode::ReplaceOrCreate,
+        Some(expected_content),
+    )
 }
 
 fn write_file(
     file_path: &Path,
     content: &str,
     mode: AtomicFileWriteMode,
+    expected_content: Option<&str>,
 ) -> Result<(), AtomicFileWriteError> {
     reject_symlink_path(file_path)?;
 
@@ -61,6 +87,14 @@ fn write_file(
         .and_then(|_| temporary_file.flush())
         .and_then(|_| temporary_file.as_file().sync_all())
         .map_err(|_| AtomicFileWriteError::WriteFailed)?;
+
+    if let Some(expected) = expected_content {
+        reject_symlink_path(file_path)?;
+        let current = fs::read_to_string(file_path).map_err(|_| AtomicFileWriteError::WriteFailed)?;
+        if current != expected {
+            return Err(AtomicFileWriteError::WriteFailed);
+        }
+    }
 
     let write_result = match mode {
         AtomicFileWriteMode::ExclusiveCreate => temporary_file
@@ -142,6 +176,45 @@ mod tests {
         assert_eq!(result, Ok(()));
         assert_eq!(content, "new content");
         assert!(temp_files.is_empty(), "temporary files left behind: {temp_files:?}");
+    }
+
+    #[test]
+    fn guarded_replacement_preserves_external_edits_and_cleans_temporary_files() {
+        let directory = tempfile::tempdir().unwrap();
+        let path = directory.path().join("AGENTS.md");
+        fs::write(&path, "original instructions").unwrap();
+        let original = fs::read_to_string(&path).unwrap();
+        fs::write(&path, "external edit").unwrap();
+        assert_eq!(
+            write_file_atomically_if_unchanged(&path, "managed update", &original),
+            Err(AtomicFileWriteError::WriteFailed)
+        );
+        assert_eq!(fs::read_to_string(&path).unwrap(), "external edit");
+        assert!(list_workduck_temp_files(directory.path()).is_empty());
+    }
+
+    #[test]
+    fn guarded_replacement_does_not_recreate_a_deleted_file() {
+        let directory = tempfile::tempdir().unwrap();
+        let path = directory.path().join(".gitignore");
+        fs::write(&path, "original").unwrap();
+        fs::remove_file(&path).unwrap();
+        assert!(write_file_atomically_if_unchanged(&path, "update", "original").is_err());
+        assert!(!path.exists());
+        assert!(list_workduck_temp_files(directory.path()).is_empty());
+    }
+
+    #[test]
+    fn guarded_replacement_publishes_a_matching_snapshot() {
+        let directory = tempfile::tempdir().unwrap();
+        let path = directory.path().join("AGENTS.md");
+        fs::write(&path, "user rules").unwrap();
+        assert_eq!(
+            write_file_atomically_if_unchanged(&path, "user rules\nmanaged rules", "user rules"),
+            Ok(())
+        );
+        assert_eq!(fs::read_to_string(path).unwrap(), "user rules\nmanaged rules");
+        assert!(list_workduck_temp_files(directory.path()).is_empty());
     }
 
     fn create_test_dir() -> std::path::PathBuf {

@@ -1847,12 +1847,13 @@
         "workspace registry data"
       ],
       "hashes": {
-        "body": "0912831af046f297fa953f14ba35f7a0ab4879f3fd872f15105bbebdf315ab39",
-        "semantic": "b1aa61ebc7a2ead11f1305b7227d5a1bf77ce1bb1d87b612b598b33d94802fb6",
-        "structure": "79bbe1b094c1f63de0b80d1f831be312f554c561061209d45321bf982927e769"
+        "body": "a4bb54e5ea2910985cf7fc1c384a3a1af58bf85786b7efa25935af76c1dbef8a",
+        "semantic": "e3f48d42b5951e7255457aede335f9ddaab8410d36e64a8088620ba17be7e260",
+        "structure": "3572d2035162eb032667d74ce40435f13580487c88ce6cf40fb404768b77b20f"
       },
       "id": "workduck.workspace.repository-setup",
       "imports": [
+        "crate::atomic_file_write::{write_file_atomically_if_unchanged, write_file_exclusively}",
         "crate::git_path::{GitProcessError, wait_for_child_output}",
         "crate::path_display::display_path",
         "crate::process_tree::ProcessTreeChild",
@@ -1864,7 +1865,7 @@
         "tests {\n    use super::*"
       ],
       "invariant": [
-        "Managed instructions remain single-copy and preserve surrounding repository instructions."
+        "Managed instructions remain single-copy and preserve surrounding repository instructions; new instruction files use exclusive creation, and existing files use synced atomic replacement after a snapshot recheck."
       ],
       "location": {
         "declarationLine": null,
@@ -3776,11 +3777,11 @@
       "excludes": [
         "workspace lock policy",
         "registry transactions",
-        "content validation"
+        "domain content validation"
       ],
       "hashes": {
-        "body": "3dee12024c3d055c35456af2909fd430feea6168b5d9bfc4b4654c23b19f5904",
-        "semantic": "33e676fdf5c98974daaaa834268047aa13c6046d65e41e05fc3d8f321b9a6563",
+        "body": "c75087a05b2a5b3ca08cd7b204051a82296b9ada85f8edfb9052d1a7fa833a57",
+        "semantic": "d10e02bcea292a6d3e459d3d74d0c44f1ea4f2c4b17090044c2fcabdb80e4740",
         "structure": "5f918d60efa6c6d7d0660864208e0bd3516f9b35800b1116ef6d92cdaaae70d5"
       },
       "id": "workduck.storage.atomic-file-write",
@@ -3790,7 +3791,7 @@
         "tests {\n    use super::*"
       ],
       "invariant": [
-        "Writers reject existing symlink targets, sync temporary contents before publishing, and clean up failed writes."
+        "Writers reject existing symlink targets, sync temporary contents before publishing, recheck guarded snapshots before replacement, and clean up failed writes."
       ],
       "location": {
         "declarationLine": null,
@@ -3809,7 +3810,8 @@
         "atomic file replacement",
         "exclusive file creation",
         "temporary file cleanup",
-        "file synchronization"
+        "file synchronization",
+        "snapshot recheck"
       ],
       "role": "Publish native file contents through synced temporary files with atomic replacement or exclusive creation.",
       "scope": "module",
@@ -5291,6 +5293,6 @@
   "generatedBy": "llmnav@0.9.7",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "91b13992bd5955a645e766f570f0e9d34bbf28b6e641c72695a19981b7d12d99",
+  "sourceHash": "9368da1d6d5326c18bd089b7870feab6dba3ccb6f2de045788807344fceaf830",
   "specVersion": "1"
 }

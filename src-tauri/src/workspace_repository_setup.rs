@@ -4,7 +4,7 @@
 // owns=workspace repository bootstrap|managed AGENTS block
 // excludes=project repository creation|workspace registry data
 // search=setup workspace repository|managed work order instructions
-// invariant=Managed instructions remain single-copy and preserve surrounding repository instructions.
+// invariant=Managed instructions remain single-copy and preserve surrounding repository instructions; new instruction files use exclusive creation, and existing files use synced atomic replacement after a snapshot recheck.
 // stability=architecture
 // /llmnav
 use std::{
@@ -17,6 +17,7 @@ use std::{
 #[cfg(target_os = "windows")]
 use std::os::windows::process::CommandExt;
 
+use crate::atomic_file_write::{write_file_atomically_if_unchanged, write_file_exclusively};
 use crate::git_path::{GitProcessError, wait_for_child_output};
 use crate::path_display::display_path;
 use crate::process_tree::ProcessTreeChild;
@@ -283,7 +284,7 @@ fn ensure_workduck_agent_instructions(
         }
         Err(error) if error.kind() == io::ErrorKind::NotFound => {
             let content = format!("# AGENTS.md\n\n{WORKDUCK_AGENT_INSTRUCTIONS_BLOCK}");
-            fs::write(&agents_path, content)
+            write_file_exclusively(&agents_path, &content)
                 .map_err(|_| WorkspaceRepositorySetupError::AgentInstructionsFailed)?;
             created_paths.push(AGENTS_FILE_NAME.to_string());
             return Ok(true);
@@ -298,13 +299,13 @@ fn ensure_workduck_agent_instructions(
             return Ok(false);
         }
 
-        fs::write(&agents_path, next_content)
+        write_file_atomically_if_unchanged(&agents_path, &next_content, &content)
             .map_err(|_| WorkspaceRepositorySetupError::AgentInstructionsFailed)?;
         created_paths.push(AGENTS_FILE_NAME.to_string());
         return Ok(true);
     }
 
-    let mut next_content = content;
+    let mut next_content = content.clone();
 
     if !next_content.ends_with('\n') {
         next_content.push('\n');
@@ -313,7 +314,7 @@ fn ensure_workduck_agent_instructions(
     next_content.push('\n');
     next_content.push_str(WORKDUCK_AGENT_INSTRUCTIONS_BLOCK);
 
-    fs::write(&agents_path, next_content)
+    write_file_atomically_if_unchanged(&agents_path, &next_content, &content)
         .map_err(|_| WorkspaceRepositorySetupError::AgentInstructionsFailed)?;
     created_paths.push(AGENTS_FILE_NAME.to_string());
 
