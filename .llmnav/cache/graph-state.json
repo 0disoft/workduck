@@ -2746,10 +2746,34 @@
       "outputHash": "d87bfed92ffc7c5bfcbe9faab811b8501a5c0daab59d68301ea267c390b5a5a4"
     },
     {
-      "edges": [],
-      "inputHash": "7c3e5d1cd6ea5990159406e672daa20b836a352fc84da3d88c6a80f7d4f6593e",
+      "edges": [
+        {
+          "confidence": 0.85,
+          "from": "workduck/workduck.queue.folder",
+          "id": "f5ab16255d99631b05bd062b96759e26b29c8b0c9641c634534c5fd1e6e0b065",
+          "kind": "imports",
+          "provenance": {
+            "generator": "llmnav",
+            "line": null,
+            "path": "src/lib/queue/queue-folder.ts",
+            "source": "src/lib/queue/queue-folder.ts",
+            "type": "local-import"
+          },
+          "to": "workduck/workduck.queue.artifacts"
+        }
+      ],
+      "inputHash": "e52c3cd8a9f2c9ba3ef547e077327e2fa5bf5483993f5ce6c07ccd46f5b9286a",
       "key": "card:workduck/workduck.queue.folder",
       "nodes": [
+        {
+          "definitions": [],
+          "external": false,
+          "key": "workduck/workduck.queue.artifacts",
+          "location": null,
+          "repositoryId": "workduck",
+          "role": null,
+          "semanticId": "workduck.queue.artifacts"
+        },
         {
           "definitions": [],
           "external": false,
@@ -2772,7 +2796,7 @@
           "semanticId": "workduck.queue.folder"
         }
       ],
-      "outputHash": "1b09a91a21f2289f21ab9211b18e8075d629f7e7754b21d12c35fc1b4205be6c"
+      "outputHash": "e920ccae3aded2b375a0aa50d3cf1dab42e432d590fdb7fdc1c6bb506655f2c3"
     },
     {
       "edges": [],

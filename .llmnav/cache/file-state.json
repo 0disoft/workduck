@@ -4416,7 +4416,7 @@
             ],
             "id": "workduck.queue.folder-native",
             "invariant": [
-              "Only known Queue child directories and file suffixes are addressable; artifact writes and deletes share the workspace lock, and create operations never overwrite an existing artifact."
+              "Only known Queue child directories and file suffixes are addressable; artifact writes and deletes share the workspace lock, work order updates compare the expected snapshot, and creates never overwrite existing artifacts."
             ],
             "owns": [
               "native Queue file I/O",
@@ -4435,7 +4435,7 @@
             "stability": "architecture",
             "unknown": []
           },
-          "end": 652,
+          "end": 690,
           "endLine": 9,
           "entries": [
             {
@@ -4472,7 +4472,7 @@
               "key": "invariant",
               "line": 7,
               "order": 5,
-              "value": "Only known Queue child directories and file suffixes are addressable; artifact writes and deletes share the workspace lock, and create operations never overwrite an existing artifact."
+              "value": "Only known Queue child directories and file suffixes are addressable; artifact writes and deletes share the workspace lock, work order updates compare the expected snapshot, and creates never overwrite existing artifacts."
             },
             {
               "key": "stability",
@@ -4485,7 +4485,7 @@
           "indent": "",
           "newline": "\n",
           "prefix": "//",
-          "raw": "// llmnav/1 module\n// id=workduck.queue.folder-native\n// role=Enforce native Queue directory, path, size, count, exclusive-write, update, delete, and evaluation-delegation constraints.\n// owns=native Queue file I/O|Queue path containment|Queue file capacity\n// excludes=Queue response contracts|evaluation delegation policy|agent execution\n// search=native Queue files|Queue path validation|exclusive work order write\n// invariant=Only known Queue child directories and file suffixes are addressable; artifact writes and deletes share the workspace lock, and create operations never overwrite an existing artifact.\n// stability=architecture\n// /llmnav\n",
+          "raw": "// llmnav/1 module\n// id=workduck.queue.folder-native\n// role=Enforce native Queue directory, path, size, count, exclusive-write, update, delete, and evaluation-delegation constraints.\n// owns=native Queue file I/O|Queue path containment|Queue file capacity\n// excludes=Queue response contracts|evaluation delegation policy|agent execution\n// search=native Queue files|Queue path validation|exclusive work order write\n// invariant=Only known Queue child directories and file suffixes are addressable; artifact writes and deletes share the workspace lock, work order updates compare the expected snapshot, and creates never overwrite existing artifacts.\n// stability=architecture\n// /llmnav\n",
           "scope": "module",
           "specVersion": "1",
           "start": 0,
@@ -4494,7 +4494,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "e28f93d675f4b73b81061366f5451c1206663bfd05d4f2e3db0af907e64b5137",
+      "contentHash": "ca4f4a4e9c54a62ad49c9fce52cac6f858c4c9ce7e0c26f4503dacdc149162f2",
       "declarations": [
         null
       ],
@@ -4513,8 +4513,8 @@
         "tests {\n    use super::*"
       ],
       "path": "src-tauri/src/queue_folder.rs",
-      "semanticBytes": 652,
-      "sourceBytes": 35939
+      "semanticBytes": 690,
+      "sourceBytes": 38650
     },
     {
       "blocks": [
@@ -4605,14 +4605,14 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "57980b2e2d6388c0c8a62e5331cb3c8ef374503748c77f94e026b0308499efa3",
+      "contentHash": "dc0d514f35e51572517d9c968a60e2d06e412e7d04435594a3a1e0b17645dccd",
       "declarations": [
         null
       ],
       "imports": [],
       "path": "src-tauri/src/queue_folder/contracts.rs",
       "semanticBytes": 554,
-      "sourceBytes": 4654
+      "sourceBytes": 4722
     },
     {
       "blocks": [
@@ -4705,7 +4705,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "59663ab615d7af3a23e026e3f178408efbc73f9afeebc921990e33fcd74aac6a",
+      "contentHash": "2aa34348e19ea900953443bbcd3f011f5e6b370faea26a72df7f9ea004e732e8",
       "declarations": [
         null
       ],
@@ -4718,7 +4718,7 @@
       ],
       "path": "src-tauri/src/queue_folder/evaluation_delegation.rs",
       "semanticBytes": 659,
-      "sourceBytes": 14697
+      "sourceBytes": 14774
     },
     {
       "blocks": [],
@@ -7600,12 +7600,12 @@
     },
     {
       "blocks": [],
-      "contentHash": "66daf22f0f10a4b9dea22b546fa69b4289415fea95fe463e3f24b0c5ebd445cd",
+      "contentHash": "3a22dc9a50529f317c9bb578c63160b465872601e56e3910b8fa7fab586f00bf",
       "declarations": [],
       "imports": [],
       "path": "src/lib/i18n/locales/en/queue.ts",
       "semanticBytes": 0,
-      "sourceBytes": 11663
+      "sourceBytes": 11736
     },
     {
       "blocks": [],
@@ -7751,12 +7751,12 @@
     },
     {
       "blocks": [],
-      "contentHash": "68a92b33314893675d41f38bbf08a18ab1ca21b368aca054f12cc12517007bea",
+      "contentHash": "d2cf95783094105477f8cbb135bc462e1fd241b99bd57d88e10f586ecb4ca57c",
       "declarations": [],
       "imports": [],
       "path": "src/lib/i18n/locales/es/queue.ts",
       "semanticBytes": 0,
-      "sourceBytes": 13097
+      "sourceBytes": 13188
     },
     {
       "blocks": [],
@@ -7902,12 +7902,12 @@
     },
     {
       "blocks": [],
-      "contentHash": "21e588cf82cba845428c40cc4a89a6f412011033d01dc5485a4637b0ade55a2e",
+      "contentHash": "ee93fdafa3851e729d73660404e4cad3ede0c53855565d1bfac86129db213276",
       "declarations": [],
       "imports": [],
       "path": "src/lib/i18n/locales/fr/queue.ts",
       "semanticBytes": 0,
-      "sourceBytes": 13342
+      "sourceBytes": 13435
     },
     {
       "blocks": [],
@@ -8053,12 +8053,12 @@
     },
     {
       "blocks": [],
-      "contentHash": "d827b3f7b17e079303f1ce1c08acbe92d1b90e70a3faf287e8976d75fbbd4be6",
+      "contentHash": "47090da373b3a7fe7e7ee3ec9ba7a3086a6b1b7dd4d0a7c062abb71329572d6c",
       "declarations": [],
       "imports": [],
       "path": "src/lib/i18n/locales/hi/queue.ts",
       "semanticBytes": 0,
-      "sourceBytes": 20396
+      "sourceBytes": 20569
     },
     {
       "blocks": [],
@@ -8204,12 +8204,12 @@
     },
     {
       "blocks": [],
-      "contentHash": "86ef08489cce273c8d9b1652f225694ef7ba6beeb124bead1f8c5cba8d9b4b42",
+      "contentHash": "d50fd2a48211aed5ab35771e70ea615bc8f6ffdcdac71397778c6b3c569dcf7d",
       "declarations": [],
       "imports": [],
       "path": "src/lib/i18n/locales/ko/queue.ts",
       "semanticBytes": 0,
-      "sourceBytes": 13327
+      "sourceBytes": 13441
     },
     {
       "blocks": [],
@@ -8355,12 +8355,12 @@
     },
     {
       "blocks": [],
-      "contentHash": "3d7e899127a737c3ca44b1529d316ba38bed0eba12975f7eb10e9aaa64348dc3",
+      "contentHash": "25b78343153c58fe5be84c8cb62df871c9e333c034d50e85c66a0b8cb3df8dda",
       "declarations": [],
       "imports": [],
       "path": "src/lib/i18n/locales/zh/queue.ts",
       "semanticBytes": 0,
-      "sourceBytes": 10998
+      "sourceBytes": 11083
     },
     {
       "blocks": [],
@@ -11882,17 +11882,18 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "6a0f01994df4bcdbfe29266650a4ad28d8d21b25fce7f72d1a6c999842cc4fb8",
+      "contentHash": "6015ae57fc24db0a266671d89a160e054cb4741dbf2c854e18cb67a3e928334c",
       "declarations": [
         null
       ],
       "imports": [
         "#lib/tauri/tauri-invoke.ts",
-        "#lib/workspaces/workspace-path-format.ts"
+        "#lib/workspaces/workspace-path-format.ts",
+        "./queue-artifacts"
       ],
       "path": "src/lib/queue/queue-folder.ts",
       "semanticBytes": 505,
-      "sourceBytes": 14913
+      "sourceBytes": 15859
     },
     {
       "blocks": [],
@@ -12009,7 +12010,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "7b8b721042702629102784526e5762c9ad58bd8d5b2f74d596722e925b775c0e",
+      "contentHash": "8c056b728eb18aa47bcfb22f0d0a3b970b10cb33607923dcc197fe48a761267f",
       "declarations": [
         null
       ],
@@ -12055,11 +12056,11 @@
       ],
       "path": "src/lib/queue/queue-panel-controller.svelte.ts",
       "semanticBytes": 618,
-      "sourceBytes": 41123
+      "sourceBytes": 41354
     },
     {
       "blocks": [],
-      "contentHash": "5d3852f43014a80a9c37c2dfdfee01029c96ddc88b8fea7e5eba08bca4c1aee6",
+      "contentHash": "ebe9a3507c4631905d36ec62ecbfd49500ac36cd7d3eb1103bed26223e30c045",
       "declarations": [],
       "imports": [
         "#lib/agents/agent-evaluation.ts",
@@ -12079,11 +12080,11 @@
       ],
       "path": "src/lib/queue/queue-panel-controller.test.ts",
       "semanticBytes": 0,
-      "sourceBytes": 26650
+      "sourceBytes": 28069
     },
     {
       "blocks": [],
-      "contentHash": "d8808228720a244535600f833b2d5f3b1e2511b8f364863c11f5d40ba496f612",
+      "contentHash": "d1054f5c9a027eb50f2b74a0e1002972561a0841545b2ec7c46a2ffc84ac4612",
       "declarations": [],
       "imports": [
         "#lib/agents/agent-execution.ts",
@@ -12093,7 +12094,7 @@
       ],
       "path": "src/lib/queue/queue-panel-errors.ts",
       "semanticBytes": 0,
-      "sourceBytes": 4892
+      "sourceBytes": 4973
     },
     {
       "blocks": [
@@ -12439,7 +12440,7 @@
     },
     {
       "blocks": [],
-      "contentHash": "a0af2d481dc4859f8b25342102f69bc5da06c222b126e029490037479f814c87",
+      "contentHash": "f264d420d634322f53f0c97741d941947cba223cb77eac8205e0e868a63dd6e9",
       "declarations": [],
       "imports": [
         "./queue-artifacts",
@@ -12448,7 +12449,7 @@
       ],
       "path": "src/lib/queue/queue-panel-manual-work-order-save-workflow.ts",
       "semanticBytes": 0,
-      "sourceBytes": 3673
+      "sourceBytes": 3700
     },
     {
       "blocks": [],
@@ -12796,7 +12797,7 @@
     },
     {
       "blocks": [],
-      "contentHash": "caf55baa69a35ff14672692948b8b2c60d53d2e8da826247e35185ec8cc96332",
+      "contentHash": "f4b8743ca5b32052d39c686802c736f14112f1e853770f7e552d36be9dab0013",
       "declarations": [],
       "imports": [
         "./queue-artifacts",
@@ -12804,7 +12805,7 @@
       ],
       "path": "src/lib/queue/queue-panel-work-order-completion-workflow.ts",
       "semanticBytes": 0,
-      "sourceBytes": 1155
+      "sourceBytes": 1182
     },
     {
       "blocks": [
@@ -13116,6 +13117,20 @@
     },
     {
       "blocks": [],
+      "contentHash": "11b8e590e505c425ff6158e953e1c65567ffe06da018a9d4c47c63c939d4550d",
+      "declarations": [],
+      "imports": [
+        "#lib/tauri/tauri-invoke.ts",
+        "./queue-artifacts",
+        "./queue-folder",
+        "bun:test"
+      ],
+      "path": "src/lib/queue/queue-work-order-update.test.ts",
+      "semanticBytes": 0,
+      "sourceBytes": 1709
+    },
+    {
+      "blocks": [],
       "contentHash": "b70beab8ddbcf62abc8a53c85b4c873a506eb1be42d89f0feb47d74beb7e0586",
       "declarations": [],
       "imports": [
@@ -13158,7 +13173,7 @@
     },
     {
       "blocks": [],
-      "contentHash": "1effc603001ded5464ed18c6859b74654c54dd78b2914d2d1d4a4b65bf096fcc",
+      "contentHash": "34caf9cc3140ef8e077fb4105caac0911fa4052aa766a85d18dfe39f81d2fc11",
       "declarations": [],
       "imports": [
         "../queue-artifacts",
@@ -13168,7 +13183,7 @@
       ],
       "path": "src/lib/queue/workflows/stale-running-recovery.ts",
       "semanticBytes": 0,
-      "sourceBytes": 2828
+      "sourceBytes": 2850
     },
     {
       "blocks": [],

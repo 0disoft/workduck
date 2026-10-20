@@ -297,6 +297,7 @@ export const frQueueMessages = {
 		fileNotFound: 'Le fichier de la file d\'attente de travail n\'a pas été trouvé.',
 		fileReadFailed: 'Le fichier de la file d\'attente de travail n\'a pas pu être lu.',
 		fileWriteFailed: 'Le fichier de la file d\'attente de travail n\'a pas pu être écrit.',
+		fileChanged: 'Ce fichier a été modifié ailleurs. Rouvrez-le avant de l’enregistrer.',
 		fileDeleteFailed: 'Le fichier de la file d\'attente de travail n\'a pas pu être supprimé.',
 		fileAlreadyExists: 'Le fichier de la file d\'attente de travail existe déjà.',
 		evaluationDelegationAlreadyExists:

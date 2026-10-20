@@ -850,14 +850,15 @@
         "agent execution"
       ],
       "hashes": {
-        "body": "6a0f01994df4bcdbfe29266650a4ad28d8d21b25fce7f72d1a6c999842cc4fb8",
+        "body": "6015ae57fc24db0a266671d89a160e054cb4741dbf2c854e18cb67a3e928334c",
         "semantic": "7b2278fd3969464a5b620176491febc7a114547f926baa9f84ad8623d769efaf",
-        "structure": "2d026c492b3ca60b43ea766d2c5df345cc91e3a18b0f2b48714652f45135d19e"
+        "structure": "0c2d8c89f0ba50048d69a021759539226f0a969660a8f606566dc6f079dcb85d"
       },
       "id": "workduck.queue.folder",
       "imports": [
         "#lib/tauri/tauri-invoke.ts",
-        "#lib/workspaces/workspace-path-format.ts"
+        "#lib/workspaces/workspace-path-format.ts",
+        "./queue-artifacts"
       ],
       "invariant": [
         "All Queue paths are workspace-relative native results and malformed responses fail with explicit Queue folder errors."
@@ -1692,8 +1693,8 @@
         "agent execution"
       ],
       "hashes": {
-        "body": "e28f93d675f4b73b81061366f5451c1206663bfd05d4f2e3db0af907e64b5137",
-        "semantic": "e49a2de326699ca4bf8576a372d49f501dd4ca1c7fd13cb3fab5423ab32cd338",
+        "body": "ca4f4a4e9c54a62ad49c9fce52cac6f858c4c9ce7e0c26f4503dacdc149162f2",
+        "semantic": "806c5aed8b9b9bbe4b5d1c50fa50d81f49359c3523872aed0f97eefbee214455",
         "structure": "2b532056ef8f2e8c04ad27eb7f472a4cccf12fb702e24121dceeeb8c0a6471d7"
       },
       "id": "workduck.queue.folder-native",
@@ -1712,7 +1713,7 @@
         "tests {\n    use super::*"
       ],
       "invariant": [
-        "Only known Queue child directories and file suffixes are addressable; artifact writes and deletes share the workspace lock, and create operations never overwrite an existing artifact."
+        "Only known Queue child directories and file suffixes are addressable; artifact writes and deletes share the workspace lock, work order updates compare the expected snapshot, and creates never overwrite existing artifacts."
       ],
       "location": {
         "declarationLine": null,
@@ -3174,7 +3175,7 @@
         "native file persistence"
       ],
       "hashes": {
-        "body": "7b8b721042702629102784526e5762c9ad58bd8d5b2f74d596722e925b775c0e",
+        "body": "8c056b728eb18aa47bcfb22f0d0a3b970b10cb33607923dcc197fe48a761267f",
         "semantic": "9cbd47679bfe44a2f915c7b13c62e8afcc2ea8de2933c67098aeefbd984a6ac2",
         "structure": "21afbc69d8480f3c06eac79a6c26bbb70859967f8479d8be49b9913e69eba3ee"
       },
@@ -3977,7 +3978,7 @@
         "agent execution"
       ],
       "hashes": {
-        "body": "59663ab615d7af3a23e026e3f178408efbc73f9afeebc921990e33fcd74aac6a",
+        "body": "2aa34348e19ea900953443bbcd3f011f5e6b370faea26a72df7f9ea004e732e8",
         "semantic": "d372c33567f00c15c5197a1049fb12c72c787a05e74c4170631664e082bc1834",
         "structure": "f9ac96d7a2a5c33243091a6d6b41dd17c593462e4ca05a0f4d36e6dba8e0239a"
       },
@@ -4027,7 +4028,7 @@
         "evaluation delegation rules"
       ],
       "hashes": {
-        "body": "57980b2e2d6388c0c8a62e5331cb3c8ef374503748c77f94e026b0308499efa3",
+        "body": "dc0d514f35e51572517d9c968a60e2d06e412e7d04435594a3a1e0b17645dccd",
         "semantic": "194e82450c6389f6049aac1183220094b9d4e9608e190887fc5edfb7fb2c9ae1",
         "structure": "ba98f19ae439a4fcbfd6b25b915d7c8ca3fd415e732ded090a0e6b8865d21ef2"
       },
@@ -5290,6 +5291,6 @@
   "generatedBy": "llmnav@0.9.7",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "d7ce6c69a0a640bd96adbbb469e01d1ff40e2c55b8757146943ca20fbc11e92c",
+  "sourceHash": "ab083d05c4271854f88dc21bd40a9617da9061bd96e39e2d9ffccc49439005f5",
   "specVersion": "1"
 }

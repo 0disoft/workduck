@@ -33,6 +33,8 @@ export function getQueueFolderLocalizedError(messages: WorkduckMessages, error: 
 			return messages.queue.errors.fileReadFailed;
 		case 'queue-folder-file-write-failed':
 			return messages.queue.errors.fileWriteFailed;
+		case 'queue-folder-file-changed':
+			return messages.queue.errors.fileChanged;
 		case 'queue-folder-file-delete-failed':
 			return messages.queue.errors.fileDeleteFailed;
 		case 'queue-folder-file-already-exists':

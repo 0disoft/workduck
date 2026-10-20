@@ -9,6 +9,7 @@ stability=architecture
 */
 import { getTauriInvoke } from '#lib/tauri/tauri-invoke.ts';
 import { normalizeWorkspacePathForStorage } from '#lib/workspaces/workspace-path-format.ts';
+import { parseQueueWorkOrder, serializeQueueArtifact, type WorkduckQueueWorkOrder } from './queue-artifacts';
 
 export type QueueFolderError =
 	| 'queue-folder-workspace-required'
@@ -25,6 +26,7 @@ export type QueueFolderError =
 	| 'queue-folder-file-not-found'
 	| 'queue-folder-file-read-failed'
 	| 'queue-folder-file-write-failed'
+	| 'queue-folder-file-changed'
 	| 'queue-folder-file-delete-failed'
 	| 'queue-folder-file-already-exists'
 	| 'queue-folder-evaluation-delegation-already-exists'
@@ -312,7 +314,8 @@ export async function writeQueueResultReportFile(
 export async function updateQueueWorkOrderFile(
 	workspacePath: string,
 	relativePath: string,
-	content: string
+	content: string,
+	expectedContent: string
 ): Promise<QueueFileReadResult> {
 	const invoke = getTauriInvoke();
 
@@ -324,7 +327,8 @@ export async function updateQueueWorkOrderFile(
 		const response = await invoke<QueueFileReadResponse>('update_queue_work_order_file', {
 			workspacePath: normalizeWorkspacePathForStorage(workspacePath),
 			relativePath,
-			content
+			content,
+			expectedContent
 		});
 
 		if (
@@ -346,6 +350,21 @@ export async function updateQueueWorkOrderFile(
 	} catch {
 		return { ok: false, error: 'queue-folder-file-write-failed' };
 	}
+}
+
+export async function updateQueueWorkOrderSnapshot(
+	workspacePath: string,
+	relativePath: string,
+	content: string,
+	expectedWorkOrder: WorkduckQueueWorkOrder
+): Promise<QueueFileReadResult> {
+	const current = await readQueueFile(workspacePath, relativePath);
+	if (!current.ok) return current;
+	const parsed = parseQueueWorkOrder(current.content);
+	if (!parsed.ok || serializeQueueArtifact(parsed.workOrder) !== serializeQueueArtifact(expectedWorkOrder)) {
+		return { ok: false, error: 'queue-folder-file-changed' };
+	}
+	return updateQueueWorkOrderFile(workspacePath, relativePath, content, current.content);
 }
 
 export async function updateQueueResultReportFile(
@@ -451,6 +470,8 @@ export function getQueueFolderErrorMessage(error: QueueFolderError) {
 			return 'Queue file could not be read.';
 		case 'queue-folder-file-write-failed':
 			return 'Queue file could not be written.';
+		case 'queue-folder-file-changed':
+			return 'This file changed elsewhere. Reopen it before saving.';
 		case 'queue-folder-file-delete-failed':
 			return 'Queue file could not be deleted.';
 		case 'queue-folder-file-already-exists':
@@ -534,6 +555,7 @@ function isQueueFolderError(value: unknown): value is QueueFolderError {
 		value === 'queue-folder-file-not-found' ||
 		value === 'queue-folder-file-read-failed' ||
 		value === 'queue-folder-file-write-failed' ||
+		value === 'queue-folder-file-changed' ||
 		value === 'queue-folder-file-delete-failed' ||
 		value === 'queue-folder-file-already-exists' ||
 		value === 'queue-folder-evaluation-delegation-already-exists' ||

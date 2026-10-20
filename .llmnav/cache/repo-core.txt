@@ -95,7 +95,7 @@ invariant Execution verifies the estimate token against the locked work-order sn
 role Enforce native Queue directory, path, size, count, exclusive-write, update, delete, and evaluation-delegation constraints.
 owns native Queue file I/O, Queue path containment, Queue file capacity
 excludes Queue response contracts, evaluation delegation policy, agent execution
-invariant Only known Queue child directories and file suffixes are addressable; artifact writes and deletes share the workspace lock, and create operations never overwrite an existing artifact.
+invariant Only known Queue child directories and file suffixes are addressable; artifact writes and deletes share the workspace lock, work order updates compare the expected snapshot, and creates never overwrite existing artifacts.
 
 @workduck.workspace.repository-setup
 role Initialize a workspace repository layout, Git, managed work-order instructions, and Workduck ignore policy through bounded native steps.

@@ -235,6 +235,7 @@ mod tests {
             workspace_path,
             format!("{WORK_ORDERS_DIRECTORY_NAME}/{target_name}"),
             evaluation_delegation_content("source"),
+            initial.to_owned(),
         );
 
         assert_eq!(result.error, Some(QueueFolderError::FileReadFailed));
@@ -334,6 +335,7 @@ mod tests {
                                 workspace_path.clone(),
                                 "work-orders/target.workduck-work-order.json".into(),
                                 content,
+                                "{}".into(),
                             )
                         } else {
                             crate::queue_folder::write_queue_work_order_file(

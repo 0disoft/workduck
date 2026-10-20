@@ -104,7 +104,7 @@
     "workduck.workspace.sync-git-native",
     "workduck.workspace.unlock"
   ],
-  "cardSetHash": "eab7c8d0a06185bcd83a53c69f5a64ceb771120ccd0f9a95662db99a21c28720",
+  "cardSetHash": "0ceac73d70125df9b72f523ac834f6f68453376718504f252247242854c2ffeb",
   "documentCount": 103,
   "documents": [
     [
@@ -996,13 +996,13 @@
       ]
     ],
     [
-      "63eddd8d912844d6e088874d9f47c3cde44a206d2fd6d58036bc894677e2d441",
+      "f64600144222f56bacaf21ad527c6c69f950e4f47f88b3746064972789120607",
       [
         "enforce native queue directory, path, size, count, exclusive-write, update, delete, and evaluation-delegation constraints.",
         "native queue files",
         "queue path validation",
         "exclusive work order write",
-        "only known queue child directories and file suffixes are addressable; artifact writes and deletes share the workspace lock, and create operations never overwrite an existing artifact.",
+        "only known queue child directories and file suffixes are addressable; artifact writes and deletes share the workspace lock, work order updates compare the expected snapshot, and creates never overwrite existing artifacts.",
         "native queue file i/o",
         "queue path containment",
         "queue file capacity"
@@ -2627,13 +2627,6 @@
         ]
       ],
       [
-        65,
-        [
-          5,
-          1
-        ]
-      ],
-      [
         68,
         [
           5,
@@ -4088,7 +4081,7 @@
         65,
         [
           5,
-          2
+          1
         ]
       ],
       [
@@ -4145,6 +4138,13 @@
           5,
           1,
           9,
+          1
+        ]
+      ],
+      [
+        65,
+        [
+          5,
           1
         ]
       ]
@@ -7642,6 +7642,13 @@
         ]
       ],
       [
+        65,
+        [
+          5,
+          1
+        ]
+      ],
+      [
         87,
         [
           3,
@@ -8701,13 +8708,6 @@
         ]
       ],
       [
-        65,
-        [
-          5,
-          1
-        ]
-      ],
-      [
         73,
         [
           5,
@@ -8718,6 +8718,13 @@
     [
       [
         1,
+        [
+          5,
+          1
+        ]
+      ],
+      [
+        65,
         [
           5,
           1
@@ -12137,6 +12144,13 @@
         ]
       ],
       [
+        65,
+        [
+          5,
+          1
+        ]
+      ],
+      [
         88,
         [
           5,
@@ -21421,13 +21435,6 @@
         ]
       ],
       [
-        65,
-        [
-          5,
-          1
-        ]
-      ],
-      [
         94,
         [
           4,
@@ -21877,6 +21884,8 @@
         65,
         [
           2,
+          1,
+          5,
           1
         ]
       ],
@@ -33043,6 +33052,13 @@
         ]
       ],
       [
+        65,
+        [
+          5,
+          1
+        ]
+      ],
+      [
         84,
         [
           5,
@@ -37297,7 +37313,7 @@
         65,
         [
           5,
-          1
+          2
         ]
       ],
       [
@@ -39321,6 +39337,13 @@
         ]
       ],
       [
+        65,
+        [
+          5,
+          1
+        ]
+      ],
+      [
         87,
         [
           5,
@@ -41044,6 +41067,8 @@
         65,
         [
           2,
+          1,
+          5,
           1
         ]
       ],

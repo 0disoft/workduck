@@ -297,6 +297,7 @@ export const koQueueMessages = {
 			fileNotFound: '작업 대기열 파일을 찾을 수 없습니다.',
 			fileReadFailed: '작업 대기열 파일을 읽지 못했습니다.',
 			fileWriteFailed: '작업 대기열 파일을 쓰지 못했습니다.',
+			fileChanged: '다른 곳에서 파일이 변경되었습니다. 파일을 다시 열고 저장해 주세요.',
 			fileDeleteFailed: '작업 대기열 파일을 삭제하지 못했습니다.',
 			fileAlreadyExists: '작업 대기열 파일이 이미 있습니다.',
 			evaluationDelegationAlreadyExists:

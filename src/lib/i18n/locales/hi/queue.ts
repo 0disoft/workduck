@@ -297,6 +297,7 @@ export const hiQueueMessages = {
 		fileNotFound: 'कार्य कतार फ़ाइल नहीं मिली।',
 		fileReadFailed: 'कार्य कतार फ़ाइल नहीं पढ़ी जा सकी।',
 		fileWriteFailed: 'कार्य कतार फ़ाइल नहीं लिखी जा सकी।',
+		fileChanged: 'यह फ़ाइल कहीं और बदल गई है। सहेजने से पहले इसे फिर से खोलें।',
 		fileDeleteFailed: 'कार्य कतार फ़ाइल नहीं हटाई जा सकी।',
 		fileAlreadyExists: 'कार्य कतार फ़ाइल पहले से मौजूद है।',
 		evaluationDelegationAlreadyExists: 'इस रिपोर्ट के लिए एक मूल्यांकन सौंपने का कार्य आदेश पहले से मौजूद है। दूसरा बनाने से पहले मौजूदा कार्य आदेश को हटा दें।',

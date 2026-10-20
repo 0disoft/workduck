@@ -297,6 +297,7 @@ export const enQueueMessages = {
 			fileNotFound: 'Work queue file was not found.',
 			fileReadFailed: 'Work queue file could not be read.',
 			fileWriteFailed: 'Work queue file could not be written.',
+			fileChanged: 'This file changed elsewhere. Reopen it before saving.',
 			fileDeleteFailed: 'Work queue file could not be deleted.',
 			fileAlreadyExists: 'Work queue file already exists.',
 			evaluationDelegationAlreadyExists:

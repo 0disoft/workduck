@@ -44,6 +44,8 @@ pub enum QueueFolderError {
     FileReadFailed,
     #[serde(rename = "queue-folder-file-write-failed")]
     FileWriteFailed,
+    #[serde(rename = "queue-folder-file-changed")]
+    FileChanged,
     #[serde(rename = "queue-folder-file-delete-failed")]
     FileDeleteFailed,
     #[serde(rename = "queue-folder-file-already-exists")]

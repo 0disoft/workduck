@@ -4,7 +4,7 @@
 // owns=native Queue file I/O|Queue path containment|Queue file capacity
 // excludes=Queue response contracts|evaluation delegation policy|agent execution
 // search=native Queue files|Queue path validation|exclusive work order write
-// invariant=Only known Queue child directories and file suffixes are addressable; artifact writes and deletes share the workspace lock, and create operations never overwrite an existing artifact.
+// invariant=Only known Queue child directories and file suffixes are addressable; artifact writes and deletes share the workspace lock, work order updates compare the expected snapshot, and creates never overwrite existing artifacts.
 // stability=architecture
 // /llmnav
 use std::{
@@ -259,6 +259,7 @@ pub fn update_queue_work_order_file(
     workspace_path: String,
     relative_path: String,
     content: String,
+    expected_content: String,
 ) -> QueueFileReadResult {
     let workspace_root = match validate_workspace_root(&workspace_path) {
         Ok(workspace_root) => workspace_root,
@@ -285,6 +286,17 @@ pub fn update_queue_work_order_file(
 
     if content.len() as u64 > QUEUE_FILE_MAX_BYTES {
         return invalid_file_read(QueueFolderError::FileWriteFailed);
+    }
+    if expected_content.len() as u64 > QUEUE_FILE_MAX_BYTES {
+        return invalid_file_read(QueueFolderError::FileWriteFailed);
+    }
+    match fs::read_to_string(&file_path) {
+        Ok(current) if current == expected_content => {}
+        Ok(_) => return invalid_file_read(QueueFolderError::FileChanged),
+        Err(error) if error.kind() == io::ErrorKind::NotFound => {
+            return invalid_file_read(QueueFolderError::FileNotFound);
+        }
+        Err(_) => return invalid_file_read(QueueFolderError::FileReadFailed),
     }
     if let Err(error) =
         ensure_unique_evaluation_delegation(&queue_root, Some(&normalized_relative_path), &content)
@@ -743,6 +755,47 @@ fn map_create_error(error: io::Error) -> QueueFolderError {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn guarded_work_order_update_preserves_external_changes_and_deleted_files() {
+        let workspace = tempfile::tempdir().unwrap();
+        let root = ensure_queue_root(&fs::canonicalize(workspace.path()).unwrap()).unwrap();
+        let relative = format!("{WORK_ORDERS_DIRECTORY_NAME}/test{WORK_ORDER_FILE_SUFFIX}");
+        let path = root.join(&relative);
+        fs::write(&path, "original").unwrap();
+        let update = |content: &str, expected: &str| update_queue_work_order_file(
+            workspace.path().to_string_lossy().into_owned(), relative.clone(),
+            content.into(), expected.into(),
+        );
+        assert!(update("newer", "original").ok);
+        assert_eq!(update("stale", "original").error, Some(QueueFolderError::FileChanged));
+        assert_eq!(fs::read_to_string(&path).unwrap(), "newer");
+        fs::remove_file(&path).unwrap();
+        assert_eq!(update("recreated", "newer").error, Some(QueueFolderError::FileNotFound));
+        assert!(!path.exists());
+    }
+
+    #[test]
+    fn concurrent_work_order_updates_accept_only_one_snapshot() {
+        let workspace = tempfile::tempdir().unwrap();
+        let root = ensure_queue_root(&fs::canonicalize(workspace.path()).unwrap()).unwrap();
+        let relative = format!("{WORK_ORDERS_DIRECTORY_NAME}/test{WORK_ORDER_FILE_SUFFIX}");
+        fs::write(root.join(&relative), "original").unwrap();
+        let barrier = std::sync::Barrier::new(2);
+        let accepted = std::thread::scope(|scope| {
+            let handles = ["first", "second"].map(|content| {
+                let barrier = &barrier;
+                let relative = relative.clone();
+                let workspace = workspace.path().to_string_lossy().into_owned();
+                scope.spawn(move || {
+                    barrier.wait();
+                    update_queue_work_order_file(workspace, relative, content.into(), "original".into()).ok
+                })
+            });
+            handles.into_iter().filter_map(|handle| handle.join().ok()).filter(|ok| *ok).count()
+        });
+        assert_eq!(accepted, 1);
+    }
 
     #[test]
     fn guarded_report_update_preserves_a_newer_snapshot() {

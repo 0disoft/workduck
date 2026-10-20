@@ -297,6 +297,7 @@ export const zhQueueMessages = {
 		fileNotFound: '未找到工作队列文件。',
 		fileReadFailed: '无法读取工作队列文件。',
 		fileWriteFailed: '无法写入工作队列文件。',
+		fileChanged: '此文件已在其他位置更改。请重新打开后再保存。',
 		fileDeleteFailed: '无法删除工作队列文件。',
 		fileAlreadyExists: '工作队列文件已存在。',
 		evaluationDelegationAlreadyExists:

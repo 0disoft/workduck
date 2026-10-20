@@ -102,7 +102,8 @@ export async function markStaleRunningWorkOrderFailed(input: {
 	const updateResult = await updateQueueWorkOrderFile(
 		input.workspacePath,
 		input.relativePath,
-		serializeQueueArtifact(failedWorkOrder)
+		serializeQueueArtifact(failedWorkOrder),
+		readResult.content
 	);
 
 	if (!updateResult.ok) {

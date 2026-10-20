@@ -381,6 +381,32 @@ describe('Queue controller workspace ownership', () => {
 		} finally { firstRead.resolve(); harness.dispose(); }
 	});
 
+	test('preserves the edit draft when the work order changes outside the dialog', async () => {
+		let content = oldContent;
+		let writes = 0;
+		setTauriInvokeForTest(async <T>(command: string, args?: Record<string, unknown>) => {
+			if (command === 'read_queue_file') return response<T>({ ok: true, relativePath: oldCard.relativePath, content });
+			if (command === 'update_queue_work_order_file') { writes++; throw new Error('stale save'); }
+			if (command === 'list_queue_files') return response<T>({ ok: true, path: workspace('old').path + '/queue', files: [] });
+			return response<T>({ ok: false });
+		});
+		const harness = createQueuePanelControllerHarness(workspace('old'));
+		try {
+			await settleEffects();
+			const controller = harness.controller;
+			controller.handleQueueCardClick(oldCard);
+			await settleEffects();
+			controller.openEditWorkOrderTaskDialog(controller.selectedWorkOrder!.tasks[0]!);
+			controller.workOrderEditor.manualWorkOrderBody = 'Local draft';
+			content = oldContent.replace('Old body', 'External edit');
+			await controller.handleCreateManualWorkOrder({ preventDefault() {} } as SubmitEvent);
+			assert.equal(controller.error, 'queue-folder-file-changed');
+			assert.equal(controller.workOrderEditor.isNewWorkOrderDialogOpen, true);
+			assert.equal(controller.workOrderEditor.manualWorkOrderBody, 'Local draft');
+			assert.equal(writes, 0);
+		} finally { harness.dispose(); }
+	});
+
 	for (const operation of ['complete', 'cancel'] as const) {
 		for (const selection of ['same', 'another', 'clear'] as const) {
 			test(`keeps ${selection} selection when a pending ${operation} finishes`, async () => {

@@ -297,6 +297,7 @@ export const esQueueMessages = {
 			fileNotFound: 'No se encontró el archivo de la cola de trabajo.',
 			fileReadFailed: 'No se pudo leer el archivo de la cola de trabajo.',
 			fileWriteFailed: 'No se pudo escribir el archivo de la cola de trabajo.',
+		fileChanged: 'Este archivo cambió en otro lugar. Vuelve a abrirlo antes de guardarlo.',
 			fileDeleteFailed: 'No se pudo eliminar el archivo de la cola de trabajo.',
 			fileAlreadyExists: 'El archivo de la cola de trabajo ya existe.',
 			evaluationDelegationAlreadyExists:

@@ -168,6 +168,7 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 	let selectedReport = $state<WorkduckQueueResultReport | null>(null);
 	let selectedReportPath = $state<string | null>(null);
 	let selectedWorkOrder = $state<WorkduckQueueWorkOrder | null>(null);
+	let editingWorkOrderSnapshot: WorkduckQueueWorkOrder | null = null;
 	let selectedWorkOrderPath = $state<string | null>(null);
 	let selectedProposal = $state<WorkduckQueueProposal | null>(null);
 	let selectedProposalPath = $state<string | null>(null);
@@ -662,6 +663,7 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 	}
 
 		workOrderEditor.openEditWorkOrderTaskDialog(task);
+		editingWorkOrderSnapshot = selectedWorkOrder;
 		error = null;
 		parseError = null;
 		status = null;
@@ -835,7 +837,9 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		if (
 			selectedWorkOrder === null ||
 			selectedWorkOrderPath === null ||
-			workOrderEditor.editingWorkOrderTaskId === null
+			workOrderEditor.editingWorkOrderTaskId === null ||
+			editingWorkOrderSnapshot === null ||
+			editingWorkOrderSnapshot.ref.id !== selectedWorkOrder.ref.id
 		) {
 			return;
 		}
@@ -843,7 +847,7 @@ export function createQueuePanelController(input: QueuePanelControllerInput) {
 		const result = await updateQueuePanelManualWorkOrder({
 			workspacePath: target.workspacePath,
 			workOrderPath: selectedWorkOrderPath,
-			workOrder: selectedWorkOrder,
+			workOrder: editingWorkOrderSnapshot,
 			taskId: workOrderEditor.editingWorkOrderTaskId,
 			draft: workOrderEditor.createManualWorkOrderSaveDraft()
 		});

@@ -3,7 +3,7 @@ import {
 	serializeQueueArtifact,
 	type WorkduckQueueWorkOrder
 } from './queue-artifacts';
-import { updateQueueWorkOrderFile, type QueueFolderError } from './queue-folder';
+import { updateQueueWorkOrderSnapshot, type QueueFolderError } from './queue-folder';
 
 export type QueuePanelWorkOrderCompletionResult =
 	| {
@@ -26,10 +26,11 @@ export async function completeQueuePanelWorkOrder(
 	input: QueuePanelWorkOrderCompletionInput
 ): Promise<QueuePanelWorkOrderCompletionResult> {
 	const archivedWorkOrder = archiveQueueWorkOrder(input.workOrder);
-	const archiveResult = await updateQueueWorkOrderFile(
+	const archiveResult = await updateQueueWorkOrderSnapshot(
 		input.workspacePath,
 		input.workOrderPath,
-		serializeQueueArtifact(archivedWorkOrder)
+		serializeQueueArtifact(archivedWorkOrder),
+		input.workOrder
 	);
 
 	if (!archiveResult.ok) {

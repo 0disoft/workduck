@@ -534,6 +534,20 @@
     },
     {
       "confidence": 0.85,
+      "from": "workduck/workduck.queue.folder",
+      "id": "f5ab16255d99631b05bd062b96759e26b29c8b0c9641c634534c5fd1e6e0b065",
+      "kind": "imports",
+      "provenance": {
+        "generator": "llmnav",
+        "line": null,
+        "path": "src/lib/queue/queue-folder.ts",
+        "source": "src/lib/queue/queue-folder.ts",
+        "type": "local-import"
+      },
+      "to": "workduck/workduck.queue.artifacts"
+    },
+    {
+      "confidence": 0.85,
       "from": "workduck/workduck.queue.panel-controller",
       "id": "a672ebf6d3ebe7dc6d2e8cde6e0ec67266a169bb1b6ec0aff94a3287a3672047",
       "kind": "imports",
@@ -3177,9 +3191,9 @@
   ],
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "0686af037ce499132d9a84c630334c0ad4ec4ed1c9801d8f3a416a94599b0d0d",
+  "sourceHash": "d9337b210acf0735fc40e30d133eeeef62bf644c14bfb4f53a56084959ba67e5",
   "stats": {
-    "edgeCount": 63,
+    "edgeCount": 64,
     "importedIndexCount": 0,
     "nodeCount": 103,
     "unresolvedNodeCount": 0

@@ -9,7 +9,7 @@ import {
 	type WorkduckQueueWorkPriority
 } from './queue-artifacts';
 import {
-	updateQueueWorkOrderFile,
+	updateQueueWorkOrderSnapshot,
 	writeQueueWorkOrderFile,
 	type QueueFolderError
 } from './queue-folder';
@@ -93,10 +93,11 @@ export async function updateQueuePanelManualWorkOrder(
 		input.taskId,
 		input.draft
 	);
-	const writeResult = await updateQueueWorkOrderFile(
+	const writeResult = await updateQueueWorkOrderSnapshot(
 		input.workspacePath,
 		input.workOrderPath,
-		serializeQueueArtifact(workOrder)
+		serializeQueueArtifact(workOrder),
+		input.workOrder
 	);
 
 	if (!writeResult.ok) {
