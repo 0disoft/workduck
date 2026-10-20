@@ -683,10 +683,48 @@ fn attaching_task_process_identity_never_overwrites_a_completed_record() {
             exit_code: None,
             ..completed
         };
-        attach_task_process_id(&mut launched, Some(42));
+        assert!(finish_task_terminal_launch(&mut launched, Ok(Some(42))).is_ok());
         assert_eq!(launched.process_id, Some(42));
         assert_eq!(fs::read(&path).unwrap(), bytes, "{state}");
     }
+}
+
+#[test]
+fn failed_terminal_launch_records_failure_without_changing_another_running_task() {
+    let temp = tempfile::tempdir().unwrap();
+    let workspace = fs::canonicalize(temp.path()).unwrap();
+    let mut started = create_task_run_record(
+        &workspace,
+        &workspace,
+        ProjectRepositoryTask::StartDevServer,
+        "server-one",
+    )
+    .unwrap_or_else(|_| panic!("create first task"));
+    assert!(finish_task_terminal_launch(&mut started, Ok(Some(42))).is_ok());
+    let first_bytes = fs::read(&started.record_path).unwrap();
+    let mut failed = create_task_run_record(
+        &workspace,
+        &workspace,
+        ProjectRepositoryTask::StartDevServer,
+        "server-two",
+    )
+    .unwrap_or_else(|_| panic!("create second task"));
+    assert!(matches!(
+        finish_task_terminal_launch(
+            &mut failed,
+            Err(ProjectRepositoryTaskError::TerminalUnavailable)
+        ),
+        Err(ProjectRepositoryTaskError::TerminalUnavailable)
+    ));
+    let stored: ProjectRepositoryTaskRunRecord =
+        serde_json::from_slice(&fs::read(&failed.record_path).unwrap()).unwrap();
+    assert_eq!(stored.id, failed.id);
+    assert_eq!(stored.command, "server-two");
+    assert_eq!(stored.state, "failed");
+    assert!(stored.finished_at.is_some());
+    assert_eq!(stored.exit_code, None);
+    assert!(stored.output_tail.unwrap().contains("Terminal launch failed"));
+    assert_eq!(fs::read(&started.record_path).unwrap(), first_bytes);
 }
 
 #[test]

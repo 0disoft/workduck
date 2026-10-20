@@ -4,7 +4,7 @@
 // owns=native repository task launch|toolchain command discovery|task run reconciliation
 // excludes=frontend task normalization|arbitrary shell command input
 // search=native repository task|discover build command|reconcile dev server
-// invariant=Tasks are selected from a closed vocabulary and repository paths remain inside the workspace; latest records bind selectable run IDs to their filenames, process identity is revalidated after bounded startup grace, tracked servers require their terminal execution and descendants, cached latest and unreadable files require unchanged metadata, terminal-owned completion survives launch updates and read-only reconciliation, task record publication replaces synced complete files and aborts execution on failure, success requires the final command, and bounded Unicode output previews keep completed history readable.
+// invariant=Tasks are selected from a closed vocabulary and repository paths remain inside the workspace; latest records bind selectable run IDs to their filenames, process identity is revalidated after bounded startup grace, tracked servers require their terminal execution and descendants, cached latest and unreadable files require unchanged metadata, terminal-owned completion survives launch updates and read-only reconciliation, all terminal launch failures persist, task record publication replaces synced complete files and aborts execution on failure, success requires the final command, and bounded Unicode output previews keep completed history readable.
 // stability=architecture
 // /llmnav
 use std::{
@@ -212,8 +212,8 @@ pub fn run_project_repository_task(
             Err(error) => return failed(error),
         };
         let launch_result =
-            launch_repository_terminal(&repository_path, command.as_deref(), Some(&run_record))
-                .map(|process_id| attach_task_process_id(&mut run_record, process_id));
+            launch_repository_terminal(&repository_path, command.as_deref(), Some(&run_record));
+        let launch_result = finish_task_terminal_launch(&mut run_record, launch_result);
 
         (launch_result, Some(run_record))
     };
@@ -225,16 +225,7 @@ pub fn run_project_repository_task(
             command,
             run_record,
         },
-        Err(error) => {
-            if let Some(record) = run_record.as_ref() {
-                let _ = write_task_run_record(
-                    &PathBuf::from(&record.record_path),
-                    &failed_launch_task_run_record(record),
-                );
-            }
-
-            failed(error)
-        }
+        Err(error) => failed(error),
     }
 }
 
@@ -591,9 +582,9 @@ fn launch_repository_task_terminals(
     for command in commands {
         let mut run_record =
             create_task_run_record(workspace_path, repository_path, task, command)?;
-        let process_id =
-            launch_repository_terminal(repository_path, Some(command), Some(&run_record))?;
-        attach_task_process_id(&mut run_record, process_id);
+        let launch_result =
+            launch_repository_terminal(repository_path, Some(command), Some(&run_record));
+        finish_task_terminal_launch(&mut run_record, launch_result)?;
         run_records.push(run_record);
     }
 
@@ -642,6 +633,25 @@ fn create_task_run_record(
 fn attach_task_process_id(record: &mut ProjectRepositoryTaskRunRecord, process_id: Option<u32>) {
     if let Some(process_id) = process_id {
         record.process_id = Some(process_id);
+    }
+}
+
+fn finish_task_terminal_launch(
+    record: &mut ProjectRepositoryTaskRunRecord,
+    result: Result<Option<u32>, ProjectRepositoryTaskError>,
+) -> Result<(), ProjectRepositoryTaskError> {
+    match result {
+        Ok(process_id) => {
+            attach_task_process_id(record, process_id);
+            Ok(())
+        }
+        Err(error) => {
+            let _ = write_task_run_record(
+                Path::new(&record.record_path),
+                &failed_launch_task_run_record(record),
+            );
+            Err(error)
+        }
     }
 }
 

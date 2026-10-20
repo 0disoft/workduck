@@ -1282,7 +1282,7 @@
         "Git failure domain mapping"
       ],
       "hashes": {
-        "body": "277ec93cdf1ab318dd7567e5739be7f64b187cdd422f1b7d39a671fa63923eee",
+        "body": "1badcca14f797986497e951ec35452b5150281323cef54deb4defb7ce16a0fdb",
         "semantic": "bfc456c769e6b2615d54f7eda61aa1388679cff47431bd5764c17b1a72976667",
         "structure": "3b232512f43092b5922915da67953bd34d8204681e70ae3eb8df00a256d22c74"
       },
@@ -1580,8 +1580,8 @@
         "arbitrary shell command input"
       ],
       "hashes": {
-        "body": "6e8de9826190207f7baacc09cc4a9e3a3f68a5d0313962ca6a0f02327faa5091",
-        "semantic": "ab8a83634f3548e09270abd09e6470986b9b77df49b0489208fa19ee7db133c1",
+        "body": "f2a978718298b900e685dacb99ebf80df06561e9f2f156327fa1af57e929573d",
+        "semantic": "e974416ff0e9bdf87938932d2887ac252315255d4269d3d07b71e38eb2352cb3",
         "structure": "9e9cd19daa2114ce2806d4f4160987d4f420da4684e1d720d9356280963b61d0"
       },
       "id": "workduck.projects.repository-task-native",
@@ -1603,7 +1603,7 @@
         "time::{OffsetDateTime, format_description::well_known::Rfc3339}"
       ],
       "invariant": [
-        "Tasks are selected from a closed vocabulary and repository paths remain inside the workspace; latest records bind selectable run IDs to their filenames, process identity is revalidated after bounded startup grace, tracked servers require their terminal execution and descendants, cached latest and unreadable files require unchanged metadata, terminal-owned completion survives launch updates and read-only reconciliation, task record publication replaces synced complete files and aborts execution on failure, success requires the final command, and bounded Unicode output previews keep completed history readable."
+        "Tasks are selected from a closed vocabulary and repository paths remain inside the workspace; latest records bind selectable run IDs to their filenames, process identity is revalidated after bounded startup grace, tracked servers require their terminal execution and descendants, cached latest and unreadable files require unchanged metadata, terminal-owned completion survives launch updates and read-only reconciliation, all terminal launch failures persist, task record publication replaces synced complete files and aborts execution on failure, success requires the final command, and bounded Unicode output previews keep completed history readable."
       ],
       "location": {
         "declarationLine": null,
@@ -5290,6 +5290,6 @@
   "generatedBy": "llmnav@0.9.7",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "d6ef2d92ead67c0aec2255257ffef734def3dfa93b9b1aea0dbcf36232be0fdd",
+  "sourceHash": "d7ce6c69a0a640bd96adbbb469e01d1ff40e2c55b8757146943ca20fbc11e92c",
   "specVersion": "1"
 }

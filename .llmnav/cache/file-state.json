@@ -2377,7 +2377,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "277ec93cdf1ab318dd7567e5739be7f64b187cdd422f1b7d39a671fa63923eee",
+      "contentHash": "1badcca14f797986497e951ec35452b5150281323cef54deb4defb7ce16a0fdb",
       "declarations": [
         null
       ],
@@ -2396,7 +2396,7 @@
       ],
       "path": "src-tauri/src/git_path.rs",
       "semanticBytes": 678,
-      "sourceBytes": 25736
+      "sourceBytes": 26231
     },
     {
       "blocks": [
@@ -3689,7 +3689,7 @@
             ],
             "id": "workduck.projects.repository-task-native",
             "invariant": [
-              "Tasks are selected from a closed vocabulary and repository paths remain inside the workspace; latest records bind selectable run IDs to their filenames, process identity is revalidated after bounded startup grace, tracked servers require their terminal execution and descendants, cached latest and unreadable files require unchanged metadata, terminal-owned completion survives launch updates and read-only reconciliation, task record publication replaces synced complete files and aborts execution on failure, success requires the final command, and bounded Unicode output previews keep completed history readable."
+              "Tasks are selected from a closed vocabulary and repository paths remain inside the workspace; latest records bind selectable run IDs to their filenames, process identity is revalidated after bounded startup grace, tracked servers require their terminal execution and descendants, cached latest and unreadable files require unchanged metadata, terminal-owned completion survives launch updates and read-only reconciliation, all terminal launch failures persist, task record publication replaces synced complete files and aborts execution on failure, success requires the final command, and bounded Unicode output previews keep completed history readable."
             ],
             "owns": [
               "native repository task launch",
@@ -3708,7 +3708,7 @@
             "stability": "architecture",
             "unknown": []
           },
-          "end": 1143,
+          "end": 1181,
           "endLine": 9,
           "entries": [
             {
@@ -3745,7 +3745,7 @@
               "key": "invariant",
               "line": 7,
               "order": 5,
-              "value": "Tasks are selected from a closed vocabulary and repository paths remain inside the workspace; latest records bind selectable run IDs to their filenames, process identity is revalidated after bounded startup grace, tracked servers require their terminal execution and descendants, cached latest and unreadable files require unchanged metadata, terminal-owned completion survives launch updates and read-only reconciliation, task record publication replaces synced complete files and aborts execution on failure, success requires the final command, and bounded Unicode output previews keep completed history readable."
+              "value": "Tasks are selected from a closed vocabulary and repository paths remain inside the workspace; latest records bind selectable run IDs to their filenames, process identity is revalidated after bounded startup grace, tracked servers require their terminal execution and descendants, cached latest and unreadable files require unchanged metadata, terminal-owned completion survives launch updates and read-only reconciliation, all terminal launch failures persist, task record publication replaces synced complete files and aborts execution on failure, success requires the final command, and bounded Unicode output previews keep completed history readable."
             },
             {
               "key": "stability",
@@ -3758,7 +3758,7 @@
           "indent": "",
           "newline": "\n",
           "prefix": "//",
-          "raw": "// llmnav/1 module\n// id=workduck.projects.repository-task-native\n// role=Discover toolchain commands, launch bounded repository tasks in terminals, persist execution-owned records, and project process liveness without overwriting results.\n// owns=native repository task launch|toolchain command discovery|task run reconciliation\n// excludes=frontend task normalization|arbitrary shell command input\n// search=native repository task|discover build command|reconcile dev server\n// invariant=Tasks are selected from a closed vocabulary and repository paths remain inside the workspace; latest records bind selectable run IDs to their filenames, process identity is revalidated after bounded startup grace, tracked servers require their terminal execution and descendants, cached latest and unreadable files require unchanged metadata, terminal-owned completion survives launch updates and read-only reconciliation, task record publication replaces synced complete files and aborts execution on failure, success requires the final command, and bounded Unicode output previews keep completed history readable.\n// stability=architecture\n// /llmnav\n",
+          "raw": "// llmnav/1 module\n// id=workduck.projects.repository-task-native\n// role=Discover toolchain commands, launch bounded repository tasks in terminals, persist execution-owned records, and project process liveness without overwriting results.\n// owns=native repository task launch|toolchain command discovery|task run reconciliation\n// excludes=frontend task normalization|arbitrary shell command input\n// search=native repository task|discover build command|reconcile dev server\n// invariant=Tasks are selected from a closed vocabulary and repository paths remain inside the workspace; latest records bind selectable run IDs to their filenames, process identity is revalidated after bounded startup grace, tracked servers require their terminal execution and descendants, cached latest and unreadable files require unchanged metadata, terminal-owned completion survives launch updates and read-only reconciliation, all terminal launch failures persist, task record publication replaces synced complete files and aborts execution on failure, success requires the final command, and bounded Unicode output previews keep completed history readable.\n// stability=architecture\n// /llmnav\n",
           "scope": "module",
           "specVersion": "1",
           "start": 0,
@@ -3767,7 +3767,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "6e8de9826190207f7baacc09cc4a9e3a3f68a5d0313962ca6a0f02327faa5091",
+      "contentHash": "f2a978718298b900e685dacb99ebf80df06561e9f2f156327fa1af57e929573d",
       "declarations": [
         null
       ],
@@ -3789,8 +3789,8 @@
         "time::{OffsetDateTime, format_description::well_known::Rfc3339}"
       ],
       "path": "src-tauri/src/project_repository_task.rs",
-      "semanticBytes": 1143,
-      "sourceBytes": 39318
+      "semanticBytes": 1181,
+      "sourceBytes": 39640
     },
     {
       "blocks": [
@@ -4121,7 +4121,7 @@
     },
     {
       "blocks": [],
-      "contentHash": "6856c7b9bc40e473d70ce63ebac2353d5e9abde2f854b7555f698bff6a23491f",
+      "contentHash": "e270ca6cd1a017ff7dcd47716a0acf27a71ff2f30f65ef1ade309d19316df589",
       "declarations": [],
       "imports": [
         "super::*",
@@ -4129,7 +4129,7 @@
       ],
       "path": "src-tauri/src/project_repository_task_tests.rs",
       "semanticBytes": 0,
-      "sourceBytes": 41289
+      "sourceBytes": 42800
     },
     {
       "blocks": [],

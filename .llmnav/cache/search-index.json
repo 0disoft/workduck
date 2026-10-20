@@ -104,7 +104,7 @@
     "workduck.workspace.sync-git-native",
     "workduck.workspace.unlock"
   ],
-  "cardSetHash": "e0116252e8767c975ce89bb60f74d5e5f105e881131fc571108d0e61445cb95f",
+  "cardSetHash": "eab7c8d0a06185bcd83a53c69f5a64ceb771120ccd0f9a95662db99a21c28720",
   "documentCount": 103,
   "documents": [
     [
@@ -692,13 +692,13 @@
       ]
     ],
     [
-      "906a129eb6320c40d1319e4b89963264ce4f90fef05fe2f4beb667abdd83930c",
+      "69329105294765f16b71977096bcf5f197ca36ed0c6b3fec2a948b752f7d6fde",
       [
         "discover toolchain commands, launch bounded repository tasks in terminals, persist execution-owned records, and project process liveness without overwriting results.",
         "native repository task",
         "discover build command",
         "reconcile dev server",
-        "tasks are selected from a closed vocabulary and repository paths remain inside the workspace; latest records bind selectable run ids to their filenames, process identity is revalidated after bounded startup grace, tracked servers require their terminal execution and descendants, cached latest and unreadable files require unchanged metadata, terminal-owned completion survives launch updates and read-only reconciliation, task record publication replaces synced complete files and aborts execution on failure, success requires the final command, and bounded unicode output previews keep completed history readable.",
+        "tasks are selected from a closed vocabulary and repository paths remain inside the workspace; latest records bind selectable run ids to their filenames, process identity is revalidated after bounded startup grace, tracked servers require their terminal execution and descendants, cached latest and unreadable files require unchanged metadata, terminal-owned completion survives launch updates and read-only reconciliation, all terminal launch failures persist, task record publication replaces synced complete files and aborts execution on failure, success requires the final command, and bounded unicode output previews keep completed history readable.",
         "native repository task launch",
         "toolchain command discovery",
         "task run reconciliation"
@@ -2518,6 +2518,13 @@
       ]
     ],
     [
+      [
+        43,
+        [
+          5,
+          1
+        ]
+      ],
       [
         63,
         [
@@ -12539,6 +12546,13 @@
         ]
       ],
       [
+        43,
+        [
+          5,
+          1
+        ]
+      ],
+      [
         82,
         [
           5,
@@ -16730,7 +16744,7 @@
           3,
           1,
           5,
-          1
+          2
         ]
       ],
       [
@@ -23336,6 +23350,8 @@
         43,
         [
           1,
+          1,
+          5,
           1
         ]
       ],
@@ -36747,7 +36763,7 @@
         43,
         [
           5,
-          2
+          3
         ]
       ],
       [
