@@ -2990,7 +2990,7 @@
             ],
             "id": "workduck.process.tree",
             "invariant": [
-              "Parent exit never exempts owned descendants from termination; completed owners retire their registrations and cannot signal their process group again."
+              "Windows background children cannot execute before job assignment; parent exit never exempts owned descendants from termination; completed owners retire their registrations and cannot signal their process group again."
             ],
             "owns": [
               "process tree spawning",
@@ -3011,7 +3011,7 @@
             "stability": "architecture",
             "unknown": []
           },
-          "end": 593,
+          "end": 659,
           "endLine": 9,
           "entries": [
             {
@@ -3048,7 +3048,7 @@
               "key": "invariant",
               "line": 7,
               "order": 5,
-              "value": "Parent exit never exempts owned descendants from termination; completed owners retire their registrations and cannot signal their process group again."
+              "value": "Windows background children cannot execute before job assignment; parent exit never exempts owned descendants from termination; completed owners retire their registrations and cannot signal their process group again."
             },
             {
               "key": "stability",
@@ -3061,7 +3061,7 @@
           "indent": "",
           "newline": "\n",
           "prefix": null,
-          "raw": "/* llmnav/1 module\nid=workduck.process.tree\nrole=Own spawned process trees and terminate their descendants across Windows jobs and Unix process groups.\nowns=process tree spawning|cross-platform termination|active process registry\nexcludes=task command selection|terminal output buffering\nsearch=process tree shutdown|descendant process termination|application shutdown|windows job object|unix process group\ninvariant=Parent exit never exempts owned descendants from termination; completed owners retire their registrations and cannot signal their process group again.\nstability=architecture\n*/",
+          "raw": "/* llmnav/1 module\nid=workduck.process.tree\nrole=Own spawned process trees and terminate their descendants across Windows jobs and Unix process groups.\nowns=process tree spawning|cross-platform termination|active process registry\nexcludes=task command selection|terminal output buffering\nsearch=process tree shutdown|descendant process termination|application shutdown|windows job object|unix process group\ninvariant=Windows background children cannot execute before job assignment; parent exit never exempts owned descendants from termination; completed owners retire their registrations and cannot signal their process group again.\nstability=architecture\n*/",
           "scope": "module",
           "specVersion": "1",
           "start": 0,
@@ -3070,7 +3070,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "8e805796b7ff6833e767930fe1eeea1f6c18ae9be2dd3b4c65df83e77c8bf261",
+      "contentHash": "2c50ccc26c8558cd7bb206743d0defc7c607d91065ba10035b0cdd50bc837b0c",
       "declarations": [
         null
       ],
@@ -3078,6 +3078,7 @@
         "core::ffi::c_void",
         "std::os::unix::process::CommandExt",
         "std::os::windows::io::AsRawHandle",
+        "std::os::windows::io::{AsRawHandle, FromRawHandle, OwnedHandle}",
         "std::os::windows::process::CommandExt",
         "std::{\n        io::{BufRead, BufReader, Read, Write},\n        process::Stdio,\n        sync::mpsc,\n    }",
         "std::{\n        io::{BufRead, BufReader},\n        process::Stdio,\n    }",
@@ -3090,8 +3091,8 @@
         "windows_ffi {\n    use core::ffi::c_void"
       ],
       "path": "src-tauri/src/process_tree.rs",
-      "semanticBytes": 593,
-      "sourceBytes": 22909
+      "semanticBytes": 659,
+      "sourceBytes": 29630
     },
     {
       "blocks": [

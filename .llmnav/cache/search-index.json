@@ -105,7 +105,7 @@
     "workduck.workspace.sync-git-native",
     "workduck.workspace.unlock"
   ],
-  "cardSetHash": "2498b94d494e3c2a250c63a91cc10481a45fc052f0798c040033c3a2a3c400b9",
+  "cardSetHash": "6fd86439d23a0040b04688d7792186734d7532d3098c44470416a577645620d1",
   "documentCount": 104,
   "documents": [
     [
@@ -512,7 +512,7 @@
       ]
     ],
     [
-      "90e6db9f84eaa423846a07c7f118bb6acf542939421b11f5d74717926c82e660",
+      "f8cbaa4424c40a481891789c5ceeb6e11d548d2a8523a77fe7b0b642251037ff",
       [
         "own spawned process trees and terminate their descendants across windows jobs and unix process groups.",
         "process tree shutdown",
@@ -520,7 +520,7 @@
         "application shutdown",
         "windows job object",
         "unix process group",
-        "parent exit never exempts owned descendants from termination; completed owners retire their registrations and cannot signal their process group again.",
+        "windows background children cannot execute before job assignment; parent exit never exempts owned descendants from termination; completed owners retire their registrations and cannot signal their process group again.",
         "process tree spawning",
         "cross-platform termination",
         "active process registry"
@@ -4270,6 +4270,15 @@
     ],
     [
       [
+        30,
+        [
+          5,
+          1
+        ]
+      ]
+    ],
+    [
+      [
         76,
         [
           1,
@@ -4688,6 +4697,13 @@
           5,
           1
         ]
+      ],
+      [
+        30,
+        [
+          5,
+          1
+        ]
       ]
     ],
     [
@@ -4808,6 +4824,13 @@
       ],
       [
         24,
+        [
+          5,
+          1
+        ]
+      ],
+      [
+        30,
         [
           5,
           1
@@ -6142,7 +6165,7 @@
         30,
         [
           5,
-          1
+          2
         ]
       ],
       [
@@ -6657,6 +6680,15 @@
       ],
       [
         66,
+        [
+          5,
+          1
+        ]
+      ]
+    ],
+    [
+      [
+        30,
         [
           5,
           1
@@ -11844,6 +11876,13 @@
         23,
         [
           1,
+          1
+        ]
+      ],
+      [
+        30,
+        [
+          5,
           1
         ]
       ],
@@ -16419,6 +16458,8 @@
         30,
         [
           2,
+          1,
+          5,
           1
         ]
       ],
@@ -41132,6 +41173,8 @@
           1,
           1,
           2,
+          1,
+          5,
           1
         ]
       ],
@@ -43496,6 +43539,7 @@
     "as",
     "assemble",
     "assembly",
+    "assignment",
     "associated",
     "association",
     "assuming",
@@ -43602,6 +43646,7 @@
     "checks",
     "checksums",
     "child",
+    "children",
     "choice",
     "claims",
     "classification",

@@ -267,15 +267,16 @@
         "terminal output buffering"
       ],
       "hashes": {
-        "body": "8e805796b7ff6833e767930fe1eeea1f6c18ae9be2dd3b4c65df83e77c8bf261",
-        "semantic": "191de7f89b783df4c88c829b11002f785fc73c54d00561ecb6c3d58b86ee9984",
-        "structure": "ae6bee9f9bd3dd14f399a1e7c667feb0938d9c3151c61f75c9c04a0e79e292d5"
+        "body": "2c50ccc26c8558cd7bb206743d0defc7c607d91065ba10035b0cdd50bc837b0c",
+        "semantic": "a65d2797dcb9a8baacdfbf7095433ff728c2e4174bc1d8b4cf0728d717b1e1cb",
+        "structure": "12cf7543f0961d9d246c9fcb3fdafdaf5ba958e8e127a6ce149b7241e2bb962a"
       },
       "id": "workduck.process.tree",
       "imports": [
         "core::ffi::c_void",
         "std::os::unix::process::CommandExt",
         "std::os::windows::io::AsRawHandle",
+        "std::os::windows::io::{AsRawHandle, FromRawHandle, OwnedHandle}",
         "std::os::windows::process::CommandExt",
         "std::{\n        io::{BufRead, BufReader, Read, Write},\n        process::Stdio,\n        sync::mpsc,\n    }",
         "std::{\n        io::{BufRead, BufReader},\n        process::Stdio,\n    }",
@@ -288,7 +289,7 @@
         "windows_ffi {\n    use core::ffi::c_void"
       ],
       "invariant": [
-        "Parent exit never exempts owned descendants from termination; completed owners retire their registrations and cannot signal their process group again."
+        "Windows background children cannot execute before job assignment; parent exit never exempts owned descendants from termination; completed owners retire their registrations and cannot signal their process group again."
       ],
       "location": {
         "declarationLine": null,
@@ -5342,6 +5343,6 @@
   "generatedBy": "llmnav@0.9.7",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "2e4eeca5bd093dfdc7f7b113d5b415bbf68c2c61f9b473898ac97d4aa6be0b69",
+  "sourceHash": "6194e92796c7b286887c2e33c3da442a2524e110110935eaeef697acd5fbf4fa",
   "specVersion": "1"
 }

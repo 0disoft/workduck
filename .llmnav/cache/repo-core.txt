@@ -17,7 +17,7 @@ invariant Frontend-accessible native operations are registered explicitly throug
 role Own spawned process trees and terminate their descendants across Windows jobs and Unix process groups.
 owns process tree spawning, cross-platform termination, active process registry
 excludes task command selection, terminal output buffering
-invariant Parent exit never exempts owned descendants from termination; completed owners retire their registrations and cannot signal their process group again.
+invariant Windows background children cannot execute before job assignment; parent exit never exempts owned descendants from termination; completed owners retire their registrations and cannot signal their process group again.
 
 @workduck.projects.storage
 role Persist ordered project registry writes, atomically import workspace sync data in SQLite, and migrate browser legacy registries.

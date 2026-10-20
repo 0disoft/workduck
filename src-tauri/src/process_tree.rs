@@ -4,7 +4,7 @@ role=Own spawned process trees and terminate their descendants across Windows jo
 owns=process tree spawning|cross-platform termination|active process registry
 excludes=task command selection|terminal output buffering
 search=process tree shutdown|descendant process termination|application shutdown|windows job object|unix process group
-invariant=Parent exit never exempts owned descendants from termination; completed owners retire their registrations and cannot signal their process group again.
+invariant=Windows background children cannot execute before job assignment; parent exit never exempts owned descendants from termination; completed owners retire their registrations and cannot signal their process group again.
 stability=architecture
 */
 
@@ -38,6 +38,8 @@ pub(crate) struct ProcessTreeChild {
 }
 
 impl ProcessTreeChild {
+    /// Spawn an owned background command. On Windows this boundary owns creation
+    /// flags, including console suppression; callers must not rely on custom flags.
     pub(crate) fn spawn(command: &mut Command) -> io::Result<Self> {
         #[cfg(unix)]
         {
@@ -47,14 +49,10 @@ impl ProcessTreeChild {
 
         #[cfg(windows)]
         let job = WindowsJob::new()?;
-        let mut child = command.spawn()?;
-
         #[cfg(windows)]
-        if let Err(error) = job.assign(&child) {
-            let _ = child.kill();
-            let _ = child.wait();
-            return Err(error);
-        }
+        let child = job.start(spawn_suspended_background_child(command)?)?;
+        #[cfg(not(windows))]
+        let child = command.spawn()?;
 
         #[cfg(unix)]
         let process_group_id = child.id() as i32;
@@ -323,6 +321,66 @@ fn windows_job_is_running(handle: usize) -> bool {
 }
 
 #[cfg(windows)]
+fn spawn_suspended_background_child(command: &mut Command) -> io::Result<Child> {
+    use std::os::windows::process::CommandExt;
+
+    // This boundary owns creation flags: all managed children are background
+    // commands. Keep consoles hidden while preventing execution before ownership.
+    command
+        .creation_flags(windows_ffi::CREATE_NO_WINDOW | windows_ffi::CREATE_SUSPENDED)
+        .spawn()
+}
+
+#[cfg(windows)]
+fn resume_suspended_child(child: &Child) -> io::Result<()> {
+    use std::os::windows::io::{AsRawHandle, FromRawHandle, OwnedHandle};
+
+    // The primary thread has not run, so it cannot create any other threads.
+    // Stable Rust does not expose its handle; locate it using documented Win32 APIs.
+    let snapshot =
+        unsafe { windows_ffi::CreateToolhelp32Snapshot(windows_ffi::TH32CS_SNAPTHREAD, 0) };
+    if snapshot as isize == -1 {
+        return Err(io::Error::last_os_error());
+    }
+    let snapshot = unsafe { OwnedHandle::from_raw_handle(snapshot) };
+    let mut entry = windows_ffi::ThreadEntry32 {
+        size: std::mem::size_of::<windows_ffi::ThreadEntry32>() as u32,
+        ..Default::default()
+    };
+    let mut found = unsafe { windows_ffi::Thread32First(snapshot.as_raw_handle(), &mut entry) };
+    while found != 0 {
+        if entry.owner_process_id == child.id() {
+            // Query rights let us reject a reused thread ID if the child was
+            // externally terminated between the snapshot and OpenThread.
+            let thread = unsafe {
+                windows_ffi::OpenThread(
+                    windows_ffi::THREAD_SUSPEND_RESUME
+                        | windows_ffi::THREAD_QUERY_LIMITED_INFORMATION,
+                    0,
+                    entry.thread_id,
+                )
+            };
+            if thread.is_null() {
+                return Err(io::Error::last_os_error());
+            }
+            let thread = unsafe { OwnedHandle::from_raw_handle(thread) };
+            if unsafe { windows_ffi::GetProcessIdOfThread(thread.as_raw_handle()) } != child.id() {
+                return Err(io::Error::other("Suspended child thread identity changed"));
+            }
+            let count = unsafe { windows_ffi::ResumeThread(thread.as_raw_handle()) };
+            return match count {
+                1 => Ok(()),
+                u32::MAX => Err(io::Error::last_os_error()),
+                _ => Err(io::Error::other("Unexpected child thread suspend count")),
+            };
+        }
+        entry.size = std::mem::size_of::<windows_ffi::ThreadEntry32>() as u32;
+        found = unsafe { windows_ffi::Thread32Next(snapshot.as_raw_handle(), &mut entry) };
+    }
+    Err(io::Error::other("Suspended child thread was not found"))
+}
+
+#[cfg(windows)]
 struct WindowsJob(*mut core::ffi::c_void);
 
 #[cfg(windows)]
@@ -330,6 +388,21 @@ unsafe impl Send for WindowsJob {}
 
 #[cfg(windows)]
 impl WindowsJob {
+    fn start(&self, mut child: Child) -> io::Result<Child> {
+        if let Err(error) = self
+            .assign(&child)
+            .and_then(|()| resume_suspended_child(&child))
+        {
+            // Assignment may have failed, so the child might not belong to the
+            // job yet. Kill it directly as well as any already-owned descendants.
+            let _ = self.terminate();
+            let _ = child.kill();
+            let _ = child.wait();
+            return Err(error);
+        }
+        Ok(child)
+    }
+
     fn new() -> io::Result<Self> {
         use std::{mem::size_of, ptr};
 
@@ -397,6 +470,23 @@ mod windows_ffi {
     pub const JOB_OBJECT_LIMIT_KILL_ON_JOB_CLOSE: u32 = 0x0000_2000;
     pub const JOB_OBJECT_BASIC_ACCOUNTING_INFORMATION_CLASS: i32 = 1;
     pub const JOB_OBJECT_EXTENDED_LIMIT_INFORMATION_CLASS: i32 = 9;
+    pub const CREATE_SUSPENDED: u32 = 0x0000_0004;
+    pub const CREATE_NO_WINDOW: u32 = 0x0800_0000;
+    pub const TH32CS_SNAPTHREAD: u32 = 0x0000_0004;
+    pub const THREAD_SUSPEND_RESUME: u32 = 0x0002;
+    pub const THREAD_QUERY_LIMITED_INFORMATION: u32 = 0x0800;
+
+    #[repr(C)]
+    #[derive(Default)]
+    pub struct ThreadEntry32 {
+        pub size: u32,
+        pub usage: u32,
+        pub thread_id: u32,
+        pub owner_process_id: u32,
+        pub base_priority: i32,
+        pub delta_priority: i32,
+        pub flags: u32,
+    }
 
     #[repr(C)]
     #[derive(Default)]
@@ -452,6 +542,12 @@ mod windows_ffi {
         pub fn AssignProcessToJobObject(job: *mut c_void, process: *mut c_void) -> i32;
         pub fn CloseHandle(object: *mut c_void) -> i32;
         pub fn CreateJobObjectW(attributes: *const c_void, name: *const u16) -> *mut c_void;
+        pub fn CreateToolhelp32Snapshot(flags: u32, process_id: u32) -> *mut c_void;
+        pub fn Thread32First(snapshot: *mut c_void, entry: *mut ThreadEntry32) -> i32;
+        pub fn Thread32Next(snapshot: *mut c_void, entry: *mut ThreadEntry32) -> i32;
+        pub fn OpenThread(access: u32, inherit_handle: i32, thread_id: u32) -> *mut c_void;
+        pub fn GetProcessIdOfThread(thread: *mut c_void) -> u32;
+        pub fn ResumeThread(thread: *mut c_void) -> u32;
         pub fn QueryInformationJobObject(
             job: *mut c_void,
             information_class: i32,
@@ -495,6 +591,56 @@ mod tests {
                 windows_ffi::CloseHandle(self.0);
             }
         }
+    }
+
+    fn marker_command(marker: &std::path::Path) -> Command {
+        let mut command = Command::new(std::env::var_os("ComSpec").unwrap());
+        command
+            .args(["/D", "/C", "echo ready>%WORKDUCK_PROCESS_TREE_MARKER%"])
+            .env(
+                "WORKDUCK_PROCESS_TREE_MARKER",
+                format!("\"{}\"", marker.display()),
+            )
+            .stdin(Stdio::null())
+            .stdout(Stdio::null())
+            .stderr(Stdio::null());
+        command
+    }
+
+    #[test]
+    fn child_cannot_execute_until_assigned_to_its_job() {
+        let directory = tempfile::tempdir().unwrap();
+        let marker = directory.path().join("started.txt");
+        let job = WindowsJob::new().unwrap();
+        let mut child = spawn_suspended_background_child(&mut marker_command(&marker)).unwrap();
+        let early_status = child.wait_timeout(Duration::from_millis(100)).unwrap();
+        let executed_before_assignment = marker.exists();
+        let mut child = job.start(child).unwrap();
+        let status = child.wait_timeout(Duration::from_secs(5)).unwrap();
+        // The job guard also kills the child on an assertion failure.
+        assert!(early_status.is_none());
+        assert!(!executed_before_assignment);
+        assert!(status.unwrap().success());
+        assert_eq!(std::fs::read_to_string(marker).unwrap().trim(), "ready");
+    }
+
+    #[test]
+    fn failed_assignment_reaps_the_child_without_executing_it() {
+        let directory = tempfile::tempdir().unwrap();
+        let marker = directory.path().join("started.txt");
+        let child = spawn_suspended_background_child(&mut marker_command(&marker)).unwrap();
+        let handle = unsafe { OpenProcess(PROCESS_SYNCHRONIZE, 0, child.id()) };
+        assert!(!handle.is_null());
+        let handle = DescendantHandle(handle);
+        // A null job deterministically rejects assignment. Never close that
+        // deliberately invalid handle, including when an assertion panics.
+        let invalid_job = std::mem::ManuallyDrop::new(WindowsJob(std::ptr::null_mut()));
+        assert!(invalid_job.start(child).is_err());
+        assert_eq!(
+            unsafe { WaitForSingleObject(handle.0, 5_000) },
+            WAIT_OBJECT_0
+        );
+        assert!(!marker.exists());
     }
 
     fn exited_parent_with_descendant() -> (ProcessTreeChild, DescendantHandle) {
