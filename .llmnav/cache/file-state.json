@@ -5778,7 +5778,7 @@
             ],
             "id": "workduck.workspace.sync-file-native",
             "invariant": [
-              "The target is a plain file under an existing absolute folder, never a symlink or directory, and reads are capped at five MiB."
+              "The target is a plain file under an existing absolute folder, never a symlink or directory; writes reject more than five MiB before changing files, and reads consume at most the limit plus one byte."
             ],
             "owns": [
               "native sync file I/O",
@@ -5787,7 +5787,7 @@
             ],
             "rel": [],
             "risk": [],
-            "role": "Resolve, validate, atomically write, and size-bound reads of a native workspace synchronization file.",
+            "role": "Resolve, validate, atomically write, and size-bound native workspace synchronization files.",
             "scope": "module",
             "search": [
               "native sync file",
@@ -5797,7 +5797,7 @@
             "stability": "contract",
             "unknown": []
           },
-          "end": 538,
+          "end": 601,
           "endLine": 9,
           "entries": [
             {
@@ -5810,7 +5810,7 @@
               "key": "role",
               "line": 3,
               "order": 1,
-              "value": "Resolve, validate, atomically write, and size-bound reads of a native workspace synchronization file."
+              "value": "Resolve, validate, atomically write, and size-bound native workspace synchronization files."
             },
             {
               "key": "owns",
@@ -5834,7 +5834,7 @@
               "key": "invariant",
               "line": 7,
               "order": 5,
-              "value": "The target is a plain file under an existing absolute folder, never a symlink or directory, and reads are capped at five MiB."
+              "value": "The target is a plain file under an existing absolute folder, never a symlink or directory; writes reject more than five MiB before changing files, and reads consume at most the limit plus one byte."
             },
             {
               "key": "stability",
@@ -5847,7 +5847,7 @@
           "indent": "",
           "newline": "\n",
           "prefix": "//",
-          "raw": "// llmnav/1 module\n// id=workduck.workspace.sync-file-native\n// role=Resolve, validate, atomically write, and size-bound reads of a native workspace synchronization file.\n// owns=native sync file I/O|sync filename validation|sync target safety\n// excludes=sync payload encryption|Git synchronization\n// search=native sync file|validate sync target|atomic sync write\n// invariant=The target is a plain file under an existing absolute folder, never a symlink or directory, and reads are capped at five MiB.\n// stability=contract\n// /llmnav\n",
+          "raw": "// llmnav/1 module\n// id=workduck.workspace.sync-file-native\n// role=Resolve, validate, atomically write, and size-bound native workspace synchronization files.\n// owns=native sync file I/O|sync filename validation|sync target safety\n// excludes=sync payload encryption|Git synchronization\n// search=native sync file|validate sync target|atomic sync write\n// invariant=The target is a plain file under an existing absolute folder, never a symlink or directory; writes reject more than five MiB before changing files, and reads consume at most the limit plus one byte.\n// stability=contract\n// /llmnav\n",
           "scope": "module",
           "specVersion": "1",
           "start": 0,
@@ -5856,19 +5856,20 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "bddeed95fa917932d4e86aaa987b0beca714aab4c5c0f45951c3122e01462e9d",
+      "contentHash": "7f1c6e40b06c2e04bbcbbead4e79c4b46c6ff34d2c1448c21d44ba5b3af79785",
       "declarations": [
         null
       ],
       "imports": [
         "crate::atomic_file_write::{AtomicFileWriteError, write_file_atomically}",
         "crate::path_display::display_path",
-        "crate::workspace_path::{validate_absolute_directory, WorkspacePathValidationError}",
-        "std::{\n    fs, io,\n    path::{Path, PathBuf},\n}"
+        "crate::workspace_path::{WorkspacePathValidationError, validate_absolute_directory}",
+        "std::{\n    fs,\n    io::{self, Read},\n    path::{Path, PathBuf},\n}",
+        "tests {\n    use super::*"
       ],
       "path": "src-tauri/src/workspace_sync_file.rs",
-      "semanticBytes": 538,
-      "sourceBytes": 8422
+      "semanticBytes": 601,
+      "sourceBytes": 11539
     },
     {
       "blocks": [

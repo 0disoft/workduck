@@ -1,20 +1,21 @@
 // llmnav/1 module
 // id=workduck.workspace.sync-file-native
-// role=Resolve, validate, atomically write, and size-bound reads of a native workspace synchronization file.
+// role=Resolve, validate, atomically write, and size-bound native workspace synchronization files.
 // owns=native sync file I/O|sync filename validation|sync target safety
 // excludes=sync payload encryption|Git synchronization
 // search=native sync file|validate sync target|atomic sync write
-// invariant=The target is a plain file under an existing absolute folder, never a symlink or directory, and reads are capped at five MiB.
+// invariant=The target is a plain file under an existing absolute folder, never a symlink or directory; writes reject more than five MiB before changing files, and reads consume at most the limit plus one byte.
 // stability=contract
 // /llmnav
 use std::{
-    fs, io,
+    fs,
+    io::{self, Read},
     path::{Path, PathBuf},
 };
 
 use crate::atomic_file_write::{AtomicFileWriteError, write_file_atomically};
 use crate::path_display::display_path;
-use crate::workspace_path::{validate_absolute_directory, WorkspacePathValidationError};
+use crate::workspace_path::{WorkspacePathValidationError, validate_absolute_directory};
 
 const WORKSPACE_SYNC_FILE_NAME_MAX_CHARS: usize = 120;
 const WORKSPACE_SYNC_FILE_MAX_BYTES: u64 = 5 * 1024 * 1024;
@@ -80,6 +81,9 @@ pub fn write_workspace_sync_file(
     if content.trim().is_empty() {
         return invalid_write(WorkspaceSyncFileError::ContentRequired);
     }
+    if content.len() as u64 > WORKSPACE_SYNC_FILE_MAX_BYTES {
+        return invalid_write(WorkspaceSyncFileError::FileTooLarge);
+    }
 
     let sync_file_path = match resolve_sync_file_path(&folder_path, &file_name) {
         Ok(sync_file_path) => sync_file_path,
@@ -111,7 +115,11 @@ pub fn read_workspace_sync_file(folder_path: String, file_name: String) -> Works
         return invalid_read(error);
     }
 
-    let metadata = match fs::metadata(&sync_file_path) {
+    let file = match fs::File::open(&sync_file_path) {
+        Ok(file) => file,
+        Err(error) => return invalid_read(map_read_error(error)),
+    };
+    let metadata = match file.metadata() {
         Ok(metadata) => metadata,
         Err(error) => return invalid_read(map_read_error(error)),
     };
@@ -120,15 +128,27 @@ pub fn read_workspace_sync_file(folder_path: String, file_name: String) -> Works
         return invalid_read(WorkspaceSyncFileError::FileTooLarge);
     }
 
-    match fs::read_to_string(&sync_file_path) {
+    match read_sync_content(file) {
         Ok(content) => WorkspaceSyncFileRead {
             ok: true,
             normalized_path: Some(display_path(&sync_file_path)),
             content: Some(content),
             error: None,
         },
-        Err(error) => invalid_read(map_read_error(error)),
+        Err(error) => invalid_read(error),
     }
+}
+
+fn read_sync_content(reader: impl Read) -> Result<String, WorkspaceSyncFileError> {
+    let mut content = Vec::new();
+    reader
+        .take(WORKSPACE_SYNC_FILE_MAX_BYTES + 1)
+        .read_to_end(&mut content)
+        .map_err(map_read_error)?;
+    if content.len() as u64 > WORKSPACE_SYNC_FILE_MAX_BYTES {
+        return Err(WorkspaceSyncFileError::FileTooLarge);
+    }
+    String::from_utf8(content).map_err(|_| WorkspaceSyncFileError::ReadFailed)
 }
 
 pub(crate) fn resolve_sync_file_path(
@@ -214,15 +234,15 @@ fn invalid_read(error: WorkspaceSyncFileError) -> WorkspaceSyncFileRead {
     }
 }
 
-fn map_folder_path_validation_error(
-    error: WorkspacePathValidationError,
-) -> WorkspaceSyncFileError {
+fn map_folder_path_validation_error(error: WorkspacePathValidationError) -> WorkspaceSyncFileError {
     match error {
         WorkspacePathValidationError::Required => WorkspaceSyncFileError::FolderRequired,
         WorkspacePathValidationError::NotAbsolute => WorkspaceSyncFileError::FolderNotAbsolute,
         WorkspacePathValidationError::NotFound => WorkspaceSyncFileError::FolderNotFound,
         WorkspacePathValidationError::NotDirectory => WorkspaceSyncFileError::FolderNotDirectory,
-        WorkspacePathValidationError::PermissionDenied => WorkspaceSyncFileError::FolderPermissionDenied,
+        WorkspacePathValidationError::PermissionDenied => {
+            WorkspaceSyncFileError::FolderPermissionDenied
+        }
         WorkspacePathValidationError::Unreadable => WorkspaceSyncFileError::ReadFailed,
     }
 }
@@ -241,5 +261,69 @@ fn map_atomic_write_error(error: AtomicFileWriteError) -> WorkspaceSyncFileError
         AtomicFileWriteError::TargetAlreadyExists | AtomicFileWriteError::WriteFailed => {
             WorkspaceSyncFileError::WriteFailed
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn oversized_utf8_write_preserves_the_previous_backup() {
+        let directory = tempfile::tempdir().expect("sync directory");
+        let path = directory.path().join("backup.json");
+        fs::write(&path, "previous backup").expect("existing backup");
+        let oversized = "한".repeat(WORKSPACE_SYNC_FILE_MAX_BYTES as usize / 3 + 1);
+        assert!(oversized.chars().count() < WORKSPACE_SYNC_FILE_MAX_BYTES as usize);
+        let result = write_workspace_sync_file(
+            display_path(directory.path()),
+            "backup.json".to_owned(),
+            oversized,
+        );
+        assert!(!result.ok);
+        assert!(matches!(
+            result.error,
+            Some(WorkspaceSyncFileError::FileTooLarge)
+        ));
+        assert_eq!(
+            fs::read_to_string(path).expect("preserved backup"),
+            "previous backup"
+        );
+    }
+
+    #[test]
+    fn backup_at_the_byte_limit_remains_readable() {
+        let directory = tempfile::tempdir().expect("sync directory");
+        let content = "x".repeat(WORKSPACE_SYNC_FILE_MAX_BYTES as usize);
+        let folder = display_path(directory.path());
+        assert!(
+            write_workspace_sync_file(folder.clone(), "backup.json".to_owned(), content.clone()).ok
+        );
+        let result = read_workspace_sync_file(folder, "backup.json".to_owned());
+        assert!(result.ok);
+        assert_eq!(result.content.as_deref(), Some(content.as_str()));
+    }
+
+    #[test]
+    fn read_stops_after_one_extra_byte_even_when_the_source_keeps_growing() {
+        let mut source = io::repeat(b'x');
+        let mut counted = 0;
+        struct Counted<'a> {
+            source: &'a mut dyn Read,
+            count: &'a mut usize,
+        }
+        impl Read for Counted<'_> {
+            fn read(&mut self, buffer: &mut [u8]) -> io::Result<usize> {
+                let read = self.source.read(buffer)?;
+                *self.count += read;
+                Ok(read)
+            }
+        }
+        let result = read_sync_content(Counted {
+            source: &mut source,
+            count: &mut counted,
+        });
+        assert!(matches!(result, Err(WorkspaceSyncFileError::FileTooLarge)));
+        assert_eq!(counted as u64, WORKSPACE_SYNC_FILE_MAX_BYTES + 1);
     }
 }

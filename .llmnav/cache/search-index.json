@@ -104,7 +104,7 @@
     "workduck.workspace.sync-git-native",
     "workduck.workspace.unlock"
   ],
-  "cardSetHash": "9c7418fd488d500f33f92e460dcce3bce1e4bef54dbf0756d1b243104abb245d",
+  "cardSetHash": "e0116252e8767c975ce89bb60f74d5e5f105e881131fc571108d0e61445cb95f",
   "documentCount": 103,
   "documents": [
     [
@@ -1466,13 +1466,13 @@
       ]
     ],
     [
-      "635dde8b2319237e93c93979729a6da7066d6d2d8e979a567b8848573d6b941b",
+      "6bbac354a2233e081e475beee991ecaa8a7e6344261a35be38b4ccc1ad61fe2d",
       [
-        "resolve, validate, atomically write, and size-bound reads of a native workspace synchronization file.",
+        "resolve, validate, atomically write, and size-bound native workspace synchronization files.",
         "native sync file",
         "validate sync target",
         "atomic sync write",
-        "the target is a plain file under an existing absolute folder, never a symlink or directory, and reads are capped at five mib.",
+        "the target is a plain file under an existing absolute folder, never a symlink or directory; writes reject more than five mib before changing files, and reads consume at most the limit plus one byte.",
         "native sync file i/o",
         "sync filename validation",
         "sync target safety"
@@ -1814,8 +1814,6 @@
       [
         100,
         [
-          1,
-          1,
           5,
           2
         ]
@@ -3966,13 +3964,6 @@
         ]
       ],
       [
-        100,
-        [
-          5,
-          1
-        ]
-      ],
-      [
         101,
         [
           5,
@@ -4816,6 +4807,13 @@
       ],
       [
         99,
+        [
+          5,
+          1
+        ]
+      ],
+      [
+        100,
         [
           5,
           1
@@ -5781,6 +5779,13 @@
           5,
           1
         ]
+      ],
+      [
+        100,
+        [
+          5,
+          1
+        ]
       ]
     ],
     [
@@ -6161,15 +6166,6 @@
     ],
     [
       [
-        100,
-        [
-          5,
-          1
-        ]
-      ]
-    ],
-    [
-      [
         61,
         [
           5,
@@ -6406,6 +6402,15 @@
       ],
       [
         92,
+        [
+          5,
+          1
+        ]
+      ]
+    ],
+    [
+      [
+        100,
         [
           5,
           1
@@ -8112,6 +8117,15 @@
         70,
         [
           4,
+          1
+        ]
+      ]
+    ],
+    [
+      [
+        100,
+        [
+          5,
           1
         ]
       ]
@@ -12872,8 +12886,6 @@
         [
           0,
           1,
-          1,
-          1,
           2,
           1,
           3,
@@ -12993,6 +13005,15 @@
         88,
         [
           0,
+          1
+        ]
+      ],
+      [
+        100,
+        [
+          1,
+          1,
+          5,
           1
         ]
       ]
@@ -17474,6 +17495,13 @@
       ],
       [
         51,
+        [
+          5,
+          1
+        ]
+      ],
+      [
+        100,
         [
           5,
           1
@@ -18973,7 +19001,23 @@
     ],
     [
       [
+        100,
+        [
+          5,
+          1
+        ]
+      ]
+    ],
+    [
+      [
         27,
+        [
+          5,
+          1
+        ]
+      ],
+      [
+        100,
         [
           5,
           1
@@ -20574,13 +20618,6 @@
           1,
           1
         ]
-      ],
-      [
-        100,
-        [
-          1,
-          1
-        ]
       ]
     ],
     [
@@ -20796,6 +20833,13 @@
       ],
       [
         98,
+        [
+          5,
+          1
+        ]
+      ],
+      [
+        100,
         [
           5,
           1
@@ -23780,6 +23824,15 @@
         17,
         [
           1,
+          1
+        ]
+      ]
+    ],
+    [
+      [
+        100,
+        [
+          5,
           1
         ]
       ]
@@ -26494,8 +26547,6 @@
       [
         100,
         [
-          1,
-          1,
           5,
           1
         ]
@@ -27736,6 +27787,13 @@
           5,
           1
         ]
+      ],
+      [
+        100,
+        [
+          5,
+          1
+        ]
       ]
     ],
     [
@@ -36856,6 +36914,13 @@
       ],
       [
         81,
+        [
+          5,
+          1
+        ]
+      ],
+      [
+        100,
         [
           5,
           1
@@ -37362,7 +37427,7 @@
         100,
         [
           5,
-          1
+          2
         ]
       ],
       [
@@ -42785,6 +42850,13 @@
       ],
       [
         92,
+        [
+          5,
+          1
+        ]
+      ],
+      [
+        100,
         [
           5,
           1
@@ -42995,7 +43067,6 @@
     "canonicalize",
     "capability",
     "capacity",
-    "capped",
     "caps",
     "captured",
     "captures",
@@ -43007,6 +43078,7 @@
     "change",
     "changed",
     "changes",
+    "changing",
     "channels",
     "chat",
     "check",
@@ -43072,6 +43144,7 @@
     "construct",
     "constructed",
     "construction",
+    "consume",
     "consumers",
     "consumption",
     "containing",
@@ -43472,6 +43545,7 @@
     "model",
     "models",
     "modern",
+    "more",
     "most",
     "multi",
     "must",
@@ -43589,6 +43663,7 @@
     "platform",
     "plugin",
     "plugins",
+    "plus",
     "policy",
     "poll",
     "polling",

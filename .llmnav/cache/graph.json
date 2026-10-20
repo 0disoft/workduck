@@ -3126,7 +3126,7 @@
         "visibility": null
       },
       "repositoryId": "workduck",
-      "role": "Resolve, validate, atomically write, and size-bound reads of a native workspace synchronization file.",
+      "role": "Resolve, validate, atomically write, and size-bound native workspace synchronization files.",
       "semanticId": "workduck.workspace.sync-file-native",
       "unresolved": false
     },
@@ -3177,7 +3177,7 @@
   ],
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "ffcecfb2a0e527295d43667cd237487d07643842f1e3389024ed7ae7e2e3e3b9",
+  "sourceHash": "0686af037ce499132d9a84c630334c0ad4ec4ed1c9801d8f3a416a94599b0d0d",
   "stats": {
     "edgeCount": 63,
     "importedIndexCount": 0,

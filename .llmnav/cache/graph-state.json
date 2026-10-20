@@ -4362,7 +4362,7 @@
     },
     {
       "edges": [],
-      "inputHash": "139e02cf181c3d7f97ac35d09b24eede9eccfc9da2da9c442d71f9c595f103b4",
+      "inputHash": "ebae3aa2aae8f06eb14c2b3e682186b6f639765f5b5703c02cb6b77d472b8a59",
       "key": "card:workduck/workduck.workspace.sync-file-native",
       "nodes": [
         {
@@ -4383,11 +4383,11 @@
             "visibility": null
           },
           "repositoryId": "workduck",
-          "role": "Resolve, validate, atomically write, and size-bound reads of a native workspace synchronization file.",
+          "role": "Resolve, validate, atomically write, and size-bound native workspace synchronization files.",
           "semanticId": "workduck.workspace.sync-file-native"
         }
       ],
-      "outputHash": "6ed4b74c8069df9663d90afb622d94d64bfdd4a1d4b53d84f56490b60f3cfcb5"
+      "outputHash": "3eb75305646b6a4dfe6bddbd0acd7482d39639797c4352917445d6c82f576772"
     },
     {
       "edges": [],

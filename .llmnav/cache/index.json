@@ -1943,19 +1943,20 @@
         "Git synchronization"
       ],
       "hashes": {
-        "body": "bddeed95fa917932d4e86aaa987b0beca714aab4c5c0f45951c3122e01462e9d",
-        "semantic": "824813bbc3c5833153e946ef47a3bbef80215312676713b4cee88e72ae296246",
-        "structure": "64df9abffcf0d5f594e695712cbebf820bbcf786a1c15d9c5208b3b874d27e5e"
+        "body": "7f1c6e40b06c2e04bbcbbead4e79c4b46c6ff34d2c1448c21d44ba5b3af79785",
+        "semantic": "0dff0f03d665c1a09922ab93710d7ce2a09570445fe99f8d1ba79cc4be5debe0",
+        "structure": "9ec9a7f222e6b40be994c8797fcc1c5650366baaf7c106ffec2448f1152ff762"
       },
       "id": "workduck.workspace.sync-file-native",
       "imports": [
         "crate::atomic_file_write::{AtomicFileWriteError, write_file_atomically}",
         "crate::path_display::display_path",
-        "crate::workspace_path::{validate_absolute_directory, WorkspacePathValidationError}",
-        "std::{\n    fs, io,\n    path::{Path, PathBuf},\n}"
+        "crate::workspace_path::{WorkspacePathValidationError, validate_absolute_directory}",
+        "std::{\n    fs,\n    io::{self, Read},\n    path::{Path, PathBuf},\n}",
+        "tests {\n    use super::*"
       ],
       "invariant": [
-        "The target is a plain file under an existing absolute folder, never a symlink or directory, and reads are capped at five MiB."
+        "The target is a plain file under an existing absolute folder, never a symlink or directory; writes reject more than five MiB before changing files, and reads consume at most the limit plus one byte."
       ],
       "location": {
         "declarationLine": null,
@@ -1975,7 +1976,7 @@
         "sync filename validation",
         "sync target safety"
       ],
-      "role": "Resolve, validate, atomically write, and size-bound reads of a native workspace synchronization file.",
+      "role": "Resolve, validate, atomically write, and size-bound native workspace synchronization files.",
       "scope": "module",
       "search": [
         "native sync file",
@@ -5289,6 +5290,6 @@
   "generatedBy": "llmnav@0.9.7",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "0e93f80048bb39af6e23ffdbd44b58bcfb34586c3d102b5765077c049a123f0e",
+  "sourceHash": "d6ef2d92ead67c0aec2255257ffef734def3dfa93b9b1aea0dbcf36232be0fdd",
   "specVersion": "1"
 }
