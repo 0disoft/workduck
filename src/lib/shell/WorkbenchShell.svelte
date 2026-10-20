@@ -749,7 +749,9 @@
 		};
 		const idleLockIntervalId = window.setInterval(() => void lockIdleSessions(), 15_000);
 		const queuePendingRefreshIntervalId = window.setInterval(
-			() => void refreshQueuePendingCount(),
+			() => {
+				if (document.visibilityState === 'visible') void refreshQueuePendingCount();
+			},
 			QUEUE_PENDING_REFRESH_INTERVAL_MS
 		);
 		const refreshWorkduckUpdate = () => void checkForAvailableWorkduckUpdate(() => shellIsMounted);
@@ -759,6 +761,7 @@
 		);
 		const handleWindowFocus = () => {
 			recordUserActivity();
+			void refreshQueuePendingCount();
 			refreshWorkduckUpdate();
 		};
 

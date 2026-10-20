@@ -1693,8 +1693,8 @@
         "agent execution"
       ],
       "hashes": {
-        "body": "ca4f4a4e9c54a62ad49c9fce52cac6f858c4c9ce7e0c26f4503dacdc149162f2",
-        "semantic": "806c5aed8b9b9bbe4b5d1c50fa50d81f49359c3523872aed0f97eefbee214455",
+        "body": "944397054cc6fa2eac29724f24eb6b74d0fe4575a255821f4967ced4a027c229",
+        "semantic": "50ee8b5fc34dc3694ece3aa7482c30425e0755ca6506a73a59949be9430cf5b9",
         "structure": "2b532056ef8f2e8c04ad27eb7f472a4cccf12fb702e24121dceeeb8c0a6471d7"
       },
       "id": "workduck.queue.folder-native",
@@ -1713,7 +1713,7 @@
         "tests {\n    use super::*"
       ],
       "invariant": [
-        "Only known Queue child directories and file suffixes are addressable; artifact writes and deletes share the workspace lock, work order updates compare the expected snapshot, and creates never overwrite existing artifacts."
+        "Queue list, summary, and read commands never create directories; only known Queue child directories and file suffixes are addressable; artifact writes and deletes share the workspace lock, work order updates compare the expected snapshot, and creates never overwrite existing artifacts."
       ],
       "location": {
         "declarationLine": null,
@@ -5291,6 +5291,6 @@
   "generatedBy": "llmnav@0.9.7",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "ab083d05c4271854f88dc21bd40a9617da9061bd96e39e2d9ffccc49439005f5",
+  "sourceHash": "91b13992bd5955a645e766f570f0e9d34bbf28b6e641c72695a19981b7d12d99",
   "specVersion": "1"
 }

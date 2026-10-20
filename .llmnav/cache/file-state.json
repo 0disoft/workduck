@@ -4416,7 +4416,7 @@
             ],
             "id": "workduck.queue.folder-native",
             "invariant": [
-              "Only known Queue child directories and file suffixes are addressable; artifact writes and deletes share the workspace lock, work order updates compare the expected snapshot, and creates never overwrite existing artifacts."
+              "Queue list, summary, and read commands never create directories; only known Queue child directories and file suffixes are addressable; artifact writes and deletes share the workspace lock, work order updates compare the expected snapshot, and creates never overwrite existing artifacts."
             ],
             "owns": [
               "native Queue file I/O",
@@ -4435,7 +4435,7 @@
             "stability": "architecture",
             "unknown": []
           },
-          "end": 690,
+          "end": 755,
           "endLine": 9,
           "entries": [
             {
@@ -4472,7 +4472,7 @@
               "key": "invariant",
               "line": 7,
               "order": 5,
-              "value": "Only known Queue child directories and file suffixes are addressable; artifact writes and deletes share the workspace lock, work order updates compare the expected snapshot, and creates never overwrite existing artifacts."
+              "value": "Queue list, summary, and read commands never create directories; only known Queue child directories and file suffixes are addressable; artifact writes and deletes share the workspace lock, work order updates compare the expected snapshot, and creates never overwrite existing artifacts."
             },
             {
               "key": "stability",
@@ -4485,7 +4485,7 @@
           "indent": "",
           "newline": "\n",
           "prefix": "//",
-          "raw": "// llmnav/1 module\n// id=workduck.queue.folder-native\n// role=Enforce native Queue directory, path, size, count, exclusive-write, update, delete, and evaluation-delegation constraints.\n// owns=native Queue file I/O|Queue path containment|Queue file capacity\n// excludes=Queue response contracts|evaluation delegation policy|agent execution\n// search=native Queue files|Queue path validation|exclusive work order write\n// invariant=Only known Queue child directories and file suffixes are addressable; artifact writes and deletes share the workspace lock, work order updates compare the expected snapshot, and creates never overwrite existing artifacts.\n// stability=architecture\n// /llmnav\n",
+          "raw": "// llmnav/1 module\n// id=workduck.queue.folder-native\n// role=Enforce native Queue directory, path, size, count, exclusive-write, update, delete, and evaluation-delegation constraints.\n// owns=native Queue file I/O|Queue path containment|Queue file capacity\n// excludes=Queue response contracts|evaluation delegation policy|agent execution\n// search=native Queue files|Queue path validation|exclusive work order write\n// invariant=Queue list, summary, and read commands never create directories; only known Queue child directories and file suffixes are addressable; artifact writes and deletes share the workspace lock, work order updates compare the expected snapshot, and creates never overwrite existing artifacts.\n// stability=architecture\n// /llmnav\n",
           "scope": "module",
           "specVersion": "1",
           "start": 0,
@@ -4494,7 +4494,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "ca4f4a4e9c54a62ad49c9fce52cac6f858c4c9ce7e0c26f4503dacdc149162f2",
+      "contentHash": "944397054cc6fa2eac29724f24eb6b74d0fe4575a255821f4967ced4a027c229",
       "declarations": [
         null
       ],
@@ -4513,8 +4513,8 @@
         "tests {\n    use super::*"
       ],
       "path": "src-tauri/src/queue_folder.rs",
-      "semanticBytes": 690,
-      "sourceBytes": 38650
+      "semanticBytes": 755,
+      "sourceBytes": 41078
     },
     {
       "blocks": [
@@ -13672,7 +13672,7 @@
     },
     {
       "blocks": [],
-      "contentHash": "c8ef13d6b977c80cd0c200ee4e7842a2ac9b40ba953ac577a6c8b5460dcf2c61",
+      "contentHash": "88afd78ea14a5933bd8d943c208343c71f428ba33a7830c9bb7db79cf44d2f67",
       "declarations": [],
       "imports": [
         "#lib/brand/WorkduckMark.svelte",
@@ -13703,7 +13703,7 @@
       ],
       "path": "src/lib/shell/WorkbenchShell.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 35553
+      "sourceBytes": 35645
     },
     {
       "blocks": [],

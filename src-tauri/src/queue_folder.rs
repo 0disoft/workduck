@@ -4,7 +4,7 @@
 // owns=native Queue file I/O|Queue path containment|Queue file capacity
 // excludes=Queue response contracts|evaluation delegation policy|agent execution
 // search=native Queue files|Queue path validation|exclusive work order write
-// invariant=Only known Queue child directories and file suffixes are addressable; artifact writes and deletes share the workspace lock, work order updates compare the expected snapshot, and creates never overwrite existing artifacts.
+// invariant=Queue list, summary, and read commands never create directories; only known Queue child directories and file suffixes are addressable; artifact writes and deletes share the workspace lock, work order updates compare the expected snapshot, and creates never overwrite existing artifacts.
 // stability=architecture
 // /llmnav
 use std::{
@@ -54,7 +54,7 @@ pub fn list_queue_files(workspace_path: String) -> QueueFileListResult {
         Ok(workspace_root) => workspace_root,
         Err(error) => return invalid_file_list(error),
     };
-    let queue_root = match ensure_queue_root(&workspace_root) {
+    let queue_root = match resolve_queue_root(&workspace_root, false) {
         Ok(queue_root) => queue_root,
         Err(error) => return invalid_file_list(error),
     };
@@ -77,7 +77,7 @@ pub fn summarize_queue_files(workspace_path: String) -> QueueFileSummaryResult {
         Ok(workspace_root) => workspace_root,
         Err(error) => return invalid_file_summary(error),
     };
-    let queue_root = match ensure_queue_root(&workspace_root) {
+    let queue_root = match resolve_queue_root(&workspace_root, false) {
         Ok(queue_root) => queue_root,
         Err(error) => return invalid_file_summary(error),
     };
@@ -135,7 +135,7 @@ pub fn read_queue_file(workspace_path: String, relative_path: String) -> QueueFi
         Ok(workspace_root) => workspace_root,
         Err(error) => return invalid_file_read(error),
     };
-    let queue_root = match ensure_queue_root(&workspace_root) {
+    let queue_root = match resolve_queue_root(&workspace_root, false) {
         Ok(queue_root) => queue_root,
         Err(error) => return invalid_file_read(error),
     };
@@ -416,6 +416,10 @@ fn map_atomic_file_write_error(error: AtomicFileWriteError) -> QueueFolderError 
 }
 
 fn ensure_queue_root(workspace_root: &Path) -> Result<PathBuf, QueueFolderError> {
+    resolve_queue_root(workspace_root, true)
+}
+
+fn resolve_queue_root(workspace_root: &Path, create: bool) -> Result<PathBuf, QueueFolderError> {
     let queue_root = workspace_root.join(QUEUE_DIRECTORY_NAME);
 
     match fs::symlink_metadata(&queue_root) {
@@ -425,6 +429,9 @@ fn ensure_queue_root(workspace_root: &Path) -> Result<PathBuf, QueueFolderError>
             }
         }
         Err(error) if error.kind() == io::ErrorKind::NotFound => {
+            if !create {
+                return Ok(queue_root);
+            }
             fs::create_dir(&queue_root).map_err(map_create_error)?;
         }
         Err(error) => return Err(map_workspace_error(error)),
@@ -437,14 +444,14 @@ fn ensure_queue_root(workspace_root: &Path) -> Result<PathBuf, QueueFolderError>
     }
 
     fs::read_dir(&normalized_queue_root).map_err(map_workspace_error)?;
-    ensure_queue_child_dir(&normalized_queue_root, REPORTS_DIRECTORY_NAME)?;
-    ensure_queue_child_dir(&normalized_queue_root, WORK_ORDERS_DIRECTORY_NAME)?;
-    ensure_queue_child_dir(&normalized_queue_root, PROPOSALS_DIRECTORY_NAME)?;
+    ensure_queue_child_dir(&normalized_queue_root, REPORTS_DIRECTORY_NAME, create)?;
+    ensure_queue_child_dir(&normalized_queue_root, WORK_ORDERS_DIRECTORY_NAME, create)?;
+    ensure_queue_child_dir(&normalized_queue_root, PROPOSALS_DIRECTORY_NAME, create)?;
 
     Ok(normalized_queue_root)
 }
 
-fn ensure_queue_child_dir(queue_root: &Path, name: &str) -> Result<(), QueueFolderError> {
+fn ensure_queue_child_dir(queue_root: &Path, name: &str, create: bool) -> Result<(), QueueFolderError> {
     let child_path = queue_root.join(name);
 
     match fs::symlink_metadata(&child_path) {
@@ -454,7 +461,9 @@ fn ensure_queue_child_dir(queue_root: &Path, name: &str) -> Result<(), QueueFold
             }
         }
         Err(error) if error.kind() == io::ErrorKind::NotFound => {
-            fs::create_dir(&child_path).map_err(map_create_error)?;
+            if create {
+                fs::create_dir(&child_path).map_err(map_create_error)?;
+            }
         }
         Err(error) => return Err(map_workspace_error(error)),
     }
@@ -487,7 +496,11 @@ fn collect_known_queue_files(
     files: &mut Vec<QueueFileEntry>,
 ) -> Result<(), QueueFolderError> {
     let dir_path = queue_root.join(child_dir);
-    let entries = fs::read_dir(&dir_path).map_err(|_| QueueFolderError::ListFailed)?;
+    let entries = match fs::read_dir(&dir_path) {
+        Ok(entries) => entries,
+        Err(error) if error.kind() == io::ErrorKind::NotFound => return Ok(()),
+        Err(_) => return Err(QueueFolderError::ListFailed),
+    };
 
     for entry in entries {
         let entry = entry.map_err(|_| QueueFolderError::ListFailed)?;
@@ -755,6 +768,41 @@ fn map_create_error(error: io::Error) -> QueueFolderError {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn queue_reads_do_not_create_a_missing_queue_or_child_directories() {
+        let workspace = tempfile::tempdir().unwrap();
+        let workspace_path = workspace.path().to_string_lossy().into_owned();
+        let queue_root = workspace.path().join(QUEUE_DIRECTORY_NAME);
+        let listed = list_queue_files(workspace_path.clone());
+        assert!(listed.ok);
+        assert!(listed.files.is_empty());
+        let summary = summarize_queue_files(workspace_path.clone());
+        assert!(summary.ok);
+        assert_eq!(summary.counts.pending, 0);
+        let read = read_queue_file(workspace_path.clone(), "work-orders/missing.workduck-work-order.json".into());
+        assert_eq!(read.error, Some(QueueFolderError::FileNotFound));
+        assert!(!queue_root.exists());
+
+        fs::create_dir(&queue_root).unwrap();
+        fs::create_dir(queue_root.join(WORK_ORDERS_DIRECTORY_NAME)).unwrap();
+        fs::write(queue_root.join(WORK_ORDERS_DIRECTORY_NAME).join("pending.workduck-work-order.json"),
+            r#"{"schemaVersion":"workduck.queue-work-order/v1","status":"active"}"#).unwrap();
+        let summary = summarize_queue_files(workspace_path);
+        assert!(summary.ok);
+        assert_eq!(summary.counts.pending, 1);
+        assert!(!queue_root.join(REPORTS_DIRECTORY_NAME).exists());
+        assert!(!queue_root.join(PROPOSALS_DIRECTORY_NAME).exists());
+    }
+
+    #[test]
+    fn queue_reads_reject_invalid_queue_roots_without_creating_children() {
+        let workspace = tempfile::tempdir().unwrap();
+        let path = workspace.path().to_string_lossy().into_owned();
+        fs::write(workspace.path().join(QUEUE_DIRECTORY_NAME), "not a directory").unwrap();
+        assert_eq!(summarize_queue_files(path.clone()).error, Some(QueueFolderError::RootInvalid));
+        assert_eq!(list_queue_files(path).error, Some(QueueFolderError::RootInvalid));
+    }
 
     #[test]
     fn guarded_work_order_update_preserves_external_changes_and_deleted_files() {
