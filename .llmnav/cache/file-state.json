@@ -5068,7 +5068,7 @@
     },
     {
       "blocks": [],
-      "contentHash": "5458afcf666d49725960579436e7946470058e56f56f89eed82177aa655bbd57",
+      "contentHash": "99c652b0a6b82d4cfb4a9c665a52448bdb95fca87d826dcdc301480de2f10434",
       "declarations": [],
       "imports": [
         "crate::queue_execution::QueueEntityRef",
@@ -5080,7 +5080,7 @@
       ],
       "path": "src-tauri/src/queue_work_order_execution.rs",
       "semanticBytes": 0,
-      "sourceBytes": 22492
+      "sourceBytes": 26491
     },
     {
       "blocks": [

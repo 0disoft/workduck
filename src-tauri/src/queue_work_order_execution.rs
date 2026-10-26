@@ -61,8 +61,13 @@ impl QueueWorkOrderExecution {
         };
         let completed_work_order = self.transition_to(next_status);
 
-        if let Err(error) = write_work_order(&self.work_order_path, &completed_work_order) {
-            let _ = fs::remove_file(&report_path);
+        if let Err(mut error) = write_work_order(&self.work_order_path, &completed_work_order) {
+            // Published execution evidence must outlive a failed status update.
+            error.message = format!(
+                "{} 결과 보고서는 보존되었습니다: {}",
+                error.message,
+                display_path(&report_path)
+            );
             return Err(error);
         }
 
@@ -578,6 +583,79 @@ mod tests {
         assert_eq!(fixture.read().status, "active");
     }
 
+    #[test]
+    fn finalization_failure_preserves_the_published_report_for_both_completion_modes() {
+        for completion in [
+            QueueWorkOrderCompletion::Archive,
+            QueueWorkOrderCompletion::KeepActive,
+        ] {
+            let fixture = WorkOrderFixture::new("active");
+            let execution = begin_queue_work_order_execution_at(
+                fixture.workspace.path(),
+                &fixture.work_order_path,
+                "wo_test",
+            )
+            .expect("execution starts");
+            let report = test_report();
+
+            // Force the real atomic state replacement to fail on every platform.
+            fs::remove_file(&fixture.work_order_path).unwrap();
+            fs::create_dir(&fixture.work_order_path).unwrap();
+            let error = match execution.complete(&report, completion) {
+                Ok(_) => panic!("state publication must fail"),
+                Err(error) => error,
+            };
+            assert_eq!(error.code, "work-order-file-write-failed");
+            assert!(fixture.work_order_path.is_dir());
+
+            let reports = fs::read_dir(fixture.workspace.path().join("queue/reports"))
+                .unwrap()
+                .map(|entry| entry.unwrap().path())
+                .collect::<Vec<_>>();
+            assert_eq!(
+                reports.len(),
+                1,
+                "a durable execution result must survive finalization failure"
+            );
+            let persisted: serde_json::Value =
+                serde_json::from_slice(&fs::read(&reports[0]).unwrap()).unwrap();
+            assert_eq!(persisted, serde_json::to_value(&report).unwrap());
+            let report_path = fs::canonicalize(&reports[0]).unwrap();
+            assert!(
+                error.message.contains(&display_path(&report_path)),
+                "the error must identify the retained report"
+            );
+            let work_order_path = fs::canonicalize(&fixture.work_order_path).unwrap();
+            let (_, interrupted) =
+                acquire_execution_lock(&work_order_path).expect("execution lock released");
+            assert!(
+                interrupted,
+                "failed state writes must retain crash recovery evidence"
+            );
+        }
+    }
+
+    #[test]
+    fn report_publication_failure_does_not_archive_the_work_order() {
+        let fixture = WorkOrderFixture::new("active");
+        let execution = begin_queue_work_order_execution_at(
+            fixture.workspace.path(),
+            &fixture.work_order_path,
+            "wo_test",
+        )
+        .expect("execution starts");
+        let reports_path = fixture.workspace.path().join("queue/reports");
+        fs::write(&reports_path, "existing file").unwrap();
+        let error = match execution.complete(&test_report(), QueueWorkOrderCompletion::Archive) {
+            Ok(_) => panic!("report publication must fail"),
+            Err(error) => error,
+        };
+
+        assert_eq!(error.code, "report-directory-create-failed");
+        assert_eq!(fixture.read().status, "failed");
+        assert_eq!(fs::read_to_string(reports_path).unwrap(), "existing file");
+    }
+
     fn test_report() -> QueueResultReport {
         QueueResultReport {
             schema_version: "workduck.queue-result-report/v1",
@@ -594,7 +672,19 @@ mod tests {
                 kind: "queue-work-order".to_string(),
                 label: "Test".to_string(),
             },
-            tasks: Vec::new(),
+            tasks: vec![crate::queue_execution::QueueResultReportTask {
+                id: "completed_task".to_string(),
+                title: "Completed task".to_string(),
+                summary: "Completed agent output: 실행 결과 보존".to_string(),
+                structured_response: None,
+                files_changed: Vec::new(),
+                verification: vec!["execution finished".to_string()],
+                risks: Vec::new(),
+                execution_attempts: Vec::new(),
+                response_language: Some("ko".to_string()),
+                response_format: None,
+                vote: None,
+            }],
         }
     }
 
