@@ -59,7 +59,7 @@ invariant The queue is capacity-bounded and duplicate subscribers do not create 
 role Own bounded interactive terminal sessions, process trees, input, output cursors, and lifecycle commands for the desktop runtime.
 owns terminal session registry, terminal process spawning, bounded terminal I/O
 excludes terminal discovery, frontend terminal rendering
-invariant Session output and input stay within byte limits and replacing or stopping a session does not intentionally orphan its process tree.
+invariant Session I/O stays within byte limits, stdin writes run on blocking workers, and stopping a session does not intentionally orphan its process tree.
 
 @workduck.workbench.engine
 role Compile agent run briefs and deterministic local run, shell, gate, and project-inventory summaries from core domain records.

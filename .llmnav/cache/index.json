@@ -991,21 +991,23 @@
         "frontend terminal rendering"
       ],
       "hashes": {
-        "body": "87cab031b665c3bbc9513858cfc017fd5c3981c04e23328cdb5c03e5934d2918",
-        "semantic": "9c2182fe01424569825939eea8693e4ba37263ca63e5026bc1cd85ec9d6601c2",
-        "structure": "a83f09ae820f88d606f5959b76cfa5b057a3bed4157a38685f3e55bec688408f"
+        "body": "a48ebe9eaac99bcdf90c925a2bbfe1b2bd6349321b03fc0f87242dbc4b72178f",
+        "semantic": "33098ec95c3cbb5bb56a025daa0f5f3b71fad1745e13d863c8cdd75ec0e09ca2",
+        "structure": "9900433cd790f4f119be1bf35b994af39ed2e5ab93ef081ccdc2aea115df762d"
       },
       "id": "workduck.terminal.process",
       "imports": [
         "crate::process_tree::ProcessTreeChild",
         "crate::terminal_catalog",
         "std::os::windows::process::CommandExt",
+        "std::{\n            future::Future,\n            io::{BufRead, BufReader},\n            pin::pin,\n            sync::mpsc,\n            task::{Context, Poll, Waker},\n            time::Duration,\n        }",
         "std::{\n    collections::HashMap,\n    io::{Read, Write},\n    path::Path,\n    process::{ChildStdin, Command, Stdio},\n    sync::{Arc, Mutex},\n    thread,\n}",
+        "super::*",
         "tauri::State",
         "tests {\n    use super::{\n        AnsiStripState, TERMINAL_INPUT_MAX_BYTES, TERMINAL_OUTPUT_MAX_BYTES, TerminalOutputBuffer,\n        create_terminal_args, normalize_terminal_input, strip_ansi_sequences,\n    }"
       ],
       "invariant": [
-        "Session output and input stay within byte limits and replacing or stopping a session does not intentionally orphan its process tree."
+        "Session I/O stays within byte limits, stdin writes run on blocking workers, and stopping a session does not intentionally orphan its process tree."
       ],
       "location": {
         "declarationLine": null,
@@ -5427,6 +5429,6 @@
   "generatedBy": "llmnav@0.9.7",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "d7e2d4610f6a3a370f08122813267238e34cb1efac0ca037697b6e5ef3114546",
+  "sourceHash": "bc55ee20d317f452263c9a1551e088ec3e1657b277f2fb65f0322eebeca48266",
   "specVersion": "1"
 }

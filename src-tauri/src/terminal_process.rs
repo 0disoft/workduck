@@ -4,7 +4,7 @@
 // owns=terminal session registry|terminal process spawning|bounded terminal I/O
 // excludes=terminal discovery|frontend terminal rendering
 // search=start terminal session|read terminal output|stop terminal process
-// invariant=Session output and input stay within byte limits and replacing or stopping a session does not intentionally orphan its process tree.
+// invariant=Session I/O stays within byte limits, stdin writes run on blocking workers, and stopping a session does not intentionally orphan its process tree.
 // stability=architecture
 // /llmnav
 use std::{
@@ -192,43 +192,55 @@ pub fn read_terminal_session(
 }
 
 #[tauri::command]
-pub fn write_terminal_session_input(
+pub async fn write_terminal_session_input(
     state: State<'_, TerminalProcessState>,
     request: TerminalSessionInputRequest,
 ) -> Result<TerminalSessionSnapshot, String> {
     let session_id = normalize_session_id(&request.session_id)?;
-    let input = normalize_terminal_input(&request.input)?;
+    let input = normalize_terminal_input(&request.input)?.to_owned();
 
     let session = find_terminal_session(&state, &session_id)?
         .ok_or_else(|| "terminal-session-not-connected".to_string())?;
-    let mut child = session
-        .child
-        .lock()
-        .map_err(|_| "terminal-state-unavailable".to_string())?;
+    write_terminal_input(&state, &session_id, session, input).await
+}
 
-    if !is_child_running(&mut child) {
-        drop(child);
-        remove_terminal_session_if_same(&state, &session_id, &session)?;
-        return Err("terminal-session-not-connected".to_string());
+async fn write_terminal_input(
+    state: &TerminalProcessState,
+    session_id: &str,
+    session: Arc<TerminalProcess>,
+    input: String,
+) -> Result<TerminalSessionSnapshot, String> {
+    {
+        let mut child = session
+            .child
+            .lock()
+            .map_err(|_| "terminal-state-unavailable".to_string())?;
+
+        if !is_child_running(&mut child) {
+            drop(child);
+            remove_terminal_session_if_same(state, session_id, &session)?;
+            return Err("terminal-session-not-connected".to_string());
+        }
     }
-    drop(child);
 
-    if is_clear_screen_command(input) {
+    if is_clear_screen_command(&input) {
         clear_process_output(&session)?;
         return Ok(create_snapshot(true, &session));
     }
 
-    {
-        let mut stdin = session
-            .stdin
+    let stdin = Arc::clone(&session.stdin);
+    tauri::async_runtime::spawn_blocking(move || {
+        let mut stdin = stdin
             .lock()
             .map_err(|_| "terminal-stdin-unavailable".to_string())?;
         stdin
             .write_all(input.as_bytes())
             .and_then(|_| stdin.write_all(b"\n"))
             .and_then(|_| stdin.flush())
-            .map_err(|_| "terminal-write-failed".to_string())?;
-    }
+            .map_err(|_| "terminal-write-failed".to_string())
+    })
+    .await
+    .map_err(|_| "terminal-write-failed".to_string())??;
 
     Ok(create_snapshot(true, &session))
 }
@@ -629,6 +641,86 @@ mod tests {
         AnsiStripState, TERMINAL_INPUT_MAX_BYTES, TERMINAL_OUTPUT_MAX_BYTES, TerminalOutputBuffer,
         create_terminal_args, normalize_terminal_input, strip_ansi_sequences,
     };
+
+    #[cfg(any(windows, unix))]
+    #[test]
+    fn blocked_terminal_input_yields_to_the_command_executor() {
+        use super::*;
+        use std::{
+            future::Future,
+            io::{BufRead, BufReader},
+            pin::pin,
+            sync::mpsc,
+            task::{Context, Poll, Waker},
+            time::Duration,
+        };
+
+        #[cfg(windows)]
+        let mut command = {
+            let mut command = Command::new(std::env::var_os("ComSpec").expect("ComSpec"));
+            command.args(["/D", "/Q", "/C", "echo ready& ping 127.0.0.1 -n 30 >nul"]);
+            command
+        };
+        #[cfg(unix)]
+        let mut command = {
+            let mut command = Command::new("/bin/sh");
+            command.args(["-c", "echo ready; sleep 30"]);
+            command
+        };
+        command
+            .stdin(Stdio::piped())
+            .stdout(Stdio::piped())
+            .stderr(Stdio::null());
+        let mut child = ProcessTreeChild::spawn(&mut command).expect("idle terminal");
+        let mut ready = String::new();
+        BufReader::new(child.child_mut().stdout.take().unwrap())
+            .read_line(&mut ready)
+            .unwrap();
+        assert_eq!(ready.trim(), "ready");
+        let stdin = child.child_mut().stdin.take().unwrap();
+        let session = Arc::new(TerminalProcess {
+            child: Mutex::new(child),
+            stdin: Arc::new(Mutex::new(stdin)),
+            output: Arc::new(Mutex::new(TerminalOutputBuffer::default())),
+        });
+        let writer_session = Arc::clone(&session);
+        let (sender, receiver) = mpsc::channel();
+        let writer = thread::spawn(move || {
+            let state = TerminalProcessState::default();
+            let mut write = pin!(write_terminal_input(
+                &state,
+                "blocked-input",
+                writer_session,
+                "x".repeat(TERMINAL_INPUT_MAX_BYTES),
+            ));
+            let first_poll = write.as_mut().poll(&mut Context::from_waker(Waker::noop()));
+            sender.send(first_poll.is_pending()).unwrap();
+            match first_poll {
+                Poll::Ready(result) => result,
+                Poll::Pending => tauri::async_runtime::block_on(write),
+            }
+        });
+        let yielded = receiver.recv_timeout(Duration::from_secs(2));
+        thread::sleep(Duration::from_millis(100));
+        let waiting_for_stdin = !writer.is_finished();
+        // Always release the pipe and join the writer, even when the old implementation blocks.
+        session
+            .child
+            .lock()
+            .unwrap()
+            .terminate()
+            .expect("stop idle terminal");
+        let _ = writer.join().expect("input writer");
+        assert_eq!(
+            yielded.ok(),
+            Some(true),
+            "a full stdin pipe blocked the calling thread"
+        );
+        assert!(
+            waiting_for_stdin,
+            "fixture did not keep the stdin write blocked"
+        );
+    }
 
     #[test]
     fn command_prompt_bootstrap_switches_to_utf8_codepage() {

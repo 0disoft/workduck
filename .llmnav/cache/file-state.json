@@ -5470,7 +5470,7 @@
             ],
             "id": "workduck.terminal.process",
             "invariant": [
-              "Session output and input stay within byte limits and replacing or stopping a session does not intentionally orphan its process tree."
+              "Session I/O stays within byte limits, stdin writes run on blocking workers, and stopping a session does not intentionally orphan its process tree."
             ],
             "owns": [
               "terminal session registry",
@@ -5489,7 +5489,7 @@
             "stability": "architecture",
             "unknown": []
           },
-          "end": 587,
+          "end": 601,
           "endLine": 9,
           "entries": [
             {
@@ -5526,7 +5526,7 @@
               "key": "invariant",
               "line": 7,
               "order": 5,
-              "value": "Session output and input stay within byte limits and replacing or stopping a session does not intentionally orphan its process tree."
+              "value": "Session I/O stays within byte limits, stdin writes run on blocking workers, and stopping a session does not intentionally orphan its process tree."
             },
             {
               "key": "stability",
@@ -5539,7 +5539,7 @@
           "indent": "",
           "newline": "\n",
           "prefix": "//",
-          "raw": "// llmnav/1 module\n// id=workduck.terminal.process\n// role=Own bounded interactive terminal sessions, process trees, input, output cursors, and lifecycle commands for the desktop runtime.\n// owns=terminal session registry|terminal process spawning|bounded terminal I/O\n// excludes=terminal discovery|frontend terminal rendering\n// search=start terminal session|read terminal output|stop terminal process\n// invariant=Session output and input stay within byte limits and replacing or stopping a session does not intentionally orphan its process tree.\n// stability=architecture\n// /llmnav\n",
+          "raw": "// llmnav/1 module\n// id=workduck.terminal.process\n// role=Own bounded interactive terminal sessions, process trees, input, output cursors, and lifecycle commands for the desktop runtime.\n// owns=terminal session registry|terminal process spawning|bounded terminal I/O\n// excludes=terminal discovery|frontend terminal rendering\n// search=start terminal session|read terminal output|stop terminal process\n// invariant=Session I/O stays within byte limits, stdin writes run on blocking workers, and stopping a session does not intentionally orphan its process tree.\n// stability=architecture\n// /llmnav\n",
           "scope": "module",
           "specVersion": "1",
           "start": 0,
@@ -5548,7 +5548,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "87cab031b665c3bbc9513858cfc017fd5c3981c04e23328cdb5c03e5934d2918",
+      "contentHash": "a48ebe9eaac99bcdf90c925a2bbfe1b2bd6349321b03fc0f87242dbc4b72178f",
       "declarations": [
         null
       ],
@@ -5556,13 +5556,15 @@
         "crate::process_tree::ProcessTreeChild",
         "crate::terminal_catalog",
         "std::os::windows::process::CommandExt",
+        "std::{\n            future::Future,\n            io::{BufRead, BufReader},\n            pin::pin,\n            sync::mpsc,\n            task::{Context, Poll, Waker},\n            time::Duration,\n        }",
         "std::{\n    collections::HashMap,\n    io::{Read, Write},\n    path::Path,\n    process::{ChildStdin, Command, Stdio},\n    sync::{Arc, Mutex},\n    thread,\n}",
+        "super::*",
         "tauri::State",
         "tests {\n    use super::{\n        AnsiStripState, TERMINAL_INPUT_MAX_BYTES, TERMINAL_OUTPUT_MAX_BYTES, TerminalOutputBuffer,\n        create_terminal_args, normalize_terminal_input, strip_ansi_sequences,\n    }"
       ],
       "path": "src-tauri/src/terminal_process.rs",
-      "semanticBytes": 587,
-      "sourceBytes": 21179
+      "semanticBytes": 601,
+      "sourceBytes": 24608
     },
     {
       "blocks": [],

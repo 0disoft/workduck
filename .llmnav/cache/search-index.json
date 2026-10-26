@@ -107,7 +107,7 @@
     "workduck.workspace.sync-git-native",
     "workduck.workspace.unlock"
   ],
-  "cardSetHash": "0fd46205494c8071ac79e3f1db6743b2a3e2b006574d964f3a841a5a6481bab2",
+  "cardSetHash": "5ea6bd7865fe67d7a3c0e6f5d8ceefe50f15b4f1ef89296ed78aba5e0ee8ef27",
   "documentCount": 106,
   "documents": [
     [
@@ -1268,13 +1268,13 @@
       ]
     ],
     [
-      "726c8f33a07c0d2682b1d67e631a525d43ff083255f213e12b1685f854c6e9b5",
+      "092b0f36ac2f5a9c552bed41d796441649f0e1894b534e5fb4cb0c36f1b7c672",
       [
         "own bounded interactive terminal sessions, process trees, input, output cursors, and lifecycle commands for the desktop runtime.",
         "start terminal session",
         "read terminal output",
         "stop terminal process",
-        "session output and input stay within byte limits and replacing or stopping a session does not intentionally orphan its process tree.",
+        "session i/o stays within byte limits, stdin writes run on blocking workers, and stopping a session does not intentionally orphan its process tree.",
         "terminal session registry",
         "terminal process spawning",
         "bounded terminal i/o"
@@ -3504,7 +3504,7 @@
           1,
           1,
           5,
-          2
+          1
         ]
       ],
       [
@@ -5134,6 +5134,15 @@
         100,
         [
           2,
+          1
+        ]
+      ]
+    ],
+    [
+      [
+        85,
+        [
+          5,
           1
         ]
       ]
@@ -15313,6 +15322,8 @@
         85,
         [
           3,
+          1,
+          5,
           1
         ]
       ],
@@ -16091,8 +16102,6 @@
         85,
         [
           1,
-          1,
-          5,
           1
         ]
       ],
@@ -21249,6 +21258,8 @@
         85,
         [
           3,
+          1,
+          5,
           1
         ]
       ],
@@ -21442,6 +21453,13 @@
       ],
       [
         84,
+        [
+          5,
+          1
+        ]
+      ],
+      [
+        85,
         [
           5,
           1
@@ -22464,13 +22482,6 @@
         ]
       ],
       [
-        85,
-        [
-          5,
-          1
-        ]
-      ],
-      [
         86,
         [
           5,
@@ -22881,8 +22892,6 @@
           1,
           1,
           2,
-          1,
-          5,
           1
         ]
       ],
@@ -29116,15 +29125,6 @@
     ],
     [
       [
-        85,
-        [
-          5,
-          1
-        ]
-      ]
-    ],
-    [
-      [
         49,
         [
           5,
@@ -31623,6 +31623,13 @@
         [
           1,
           1,
+          5,
+          1
+        ]
+      ],
+      [
+        85,
+        [
           5,
           1
         ]
@@ -35709,13 +35716,6 @@
         ]
       ],
       [
-        85,
-        [
-          5,
-          1
-        ]
-      ],
-      [
         92,
         [
           5,
@@ -35730,6 +35730,13 @@
           5,
           1
         ]
+      ],
+      [
+        85,
+        [
+          5,
+          1
+        ]
       ]
     ],
     [
@@ -35744,6 +35751,13 @@
     [
       [
         26,
+        [
+          5,
+          1
+        ]
+      ],
+      [
+        85,
         [
           5,
           1
@@ -43080,6 +43094,15 @@
     ],
     [
       [
+        85,
+        [
+          5,
+          1
+        ]
+      ]
+    ],
+    [
+      [
         19,
         [
           4,
@@ -44084,6 +44107,13 @@
       ],
       [
         82,
+        [
+          5,
+          1
+        ]
+      ],
+      [
+        85,
         [
           5,
           1
@@ -44288,6 +44318,7 @@
     "binding",
     "bindings",
     "block",
+    "blocking",
     "blocks",
     "board",
     "bodies",
@@ -45061,7 +45092,6 @@
     "replace",
     "replacement",
     "replaces",
-    "replacing",
     "replay",
     "replies",
     "report",
@@ -45421,6 +45451,7 @@
     "work",
     "workbench",
     "workduck",
+    "workers",
     "workflow",
     "workflows",
     "workspace",
