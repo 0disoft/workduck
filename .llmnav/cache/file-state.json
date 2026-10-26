@@ -5068,11 +5068,12 @@
     },
     {
       "blocks": [],
-      "contentHash": "99c652b0a6b82d4cfb4a9c665a52448bdb95fca87d826dcdc301480de2f10434",
+      "contentHash": "d8da9477bea3939aa6c05d0d4066633f00092b2125bd76946aec4eb46521b2f7",
       "declarations": [],
       "imports": [
+        "crate::atomic_file_write::write_file_atomically",
         "crate::queue_execution::QueueEntityRef",
-        "crate::{\n    atomic_file_write::{AtomicFileWriteError, write_file_atomically},\n    path_display::display_path,\n    queue_execution::{\n        QueueExecutionErrorDetail, QueueResultReport, QueueWorkOrder, validate_work_order,\n        validate_work_order_execution_limits, write_result_report,\n    },\n    queue_limits::QUEUE_FILE_MAX_BYTES,\n}",
+        "crate::{\n    atomic_file_write::{AtomicFileWriteError, write_file_atomically_if_unchanged},\n    path_display::display_path,\n    queue_execution::{\n        QueueExecutionErrorDetail, QueueResultReport, QueueWorkOrder, validate_work_order,\n        validate_work_order_execution_limits, write_result_report,\n    },\n    queue_limits::QUEUE_FILE_MAX_BYTES,\n    workspace_registry_lock::acquire_workspace_registry_lock,\n}",
         "serde::Serialize",
         "sha2::{Digest, Sha256}",
         "std::{\n    env, fs,\n    fs::{File, OpenOptions},\n    io::{self, Read, Seek, Write},\n    path::{Path, PathBuf},\n}",
@@ -5080,7 +5081,7 @@
       ],
       "path": "src-tauri/src/queue_work_order_execution.rs",
       "semanticBytes": 0,
-      "sourceBytes": 26491
+      "sourceBytes": 33353
     },
     {
       "blocks": [

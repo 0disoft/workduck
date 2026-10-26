@@ -9,14 +9,18 @@ use serde::Serialize;
 use sha2::{Digest, Sha256};
 
 use crate::{
-    atomic_file_write::{AtomicFileWriteError, write_file_atomically},
+    atomic_file_write::{AtomicFileWriteError, write_file_atomically_if_unchanged},
     path_display::display_path,
     queue_execution::{
         QueueExecutionErrorDetail, QueueResultReport, QueueWorkOrder, validate_work_order,
         validate_work_order_execution_limits, write_result_report,
     },
     queue_limits::QUEUE_FILE_MAX_BYTES,
+    workspace_registry_lock::acquire_workspace_registry_lock,
 };
+
+#[cfg(test)]
+use crate::atomic_file_write::write_file_atomically;
 
 const QUEUE_DIRECTORY_NAME: &str = "queue";
 const WORK_ORDERS_DIRECTORY_NAME: &str = "work-orders";
@@ -35,6 +39,7 @@ pub struct QueueWorkOrderExecution {
     workspace_path: PathBuf,
     work_order_path: PathBuf,
     work_order: QueueWorkOrder,
+    expected_revision: [u8; 32],
     finalized: bool,
 }
 
@@ -59,17 +64,15 @@ impl QueueWorkOrderExecution {
             QueueWorkOrderCompletion::Archive => "archived",
             QueueWorkOrderCompletion::KeepActive => "active",
         };
-        let completed_work_order = self.transition_to(next_status);
-
-        if let Err(mut error) = write_work_order(&self.work_order_path, &completed_work_order) {
+        let completed_work_order = self.persist_transition(next_status).map_err(|mut error| {
             // Published execution evidence must outlive a failed status update.
             error.message = format!(
                 "{} 결과 보고서는 보존되었습니다: {}",
                 error.message,
                 display_path(&report_path)
             );
-            return Err(error);
-        }
+            error
+        })?;
 
         self.work_order = completed_work_order.clone();
         self.finalized = true;
@@ -83,8 +86,7 @@ impl QueueWorkOrderExecution {
     }
 
     pub fn fail(mut self) -> Result<QueueWorkOrder, QueueExecutionErrorDetail> {
-        let failed_work_order = self.transition_to("failed");
-        write_work_order(&self.work_order_path, &failed_work_order)?;
+        let failed_work_order = self.persist_transition("failed")?;
         self.work_order = failed_work_order.clone();
         self.finalized = true;
         clear_lock_marker(&mut self.lock_file);
@@ -96,6 +98,20 @@ impl QueueWorkOrderExecution {
         work_order.status = status.to_string();
         work_order
     }
+
+    fn persist_transition(
+        &self,
+        status: &str,
+    ) -> Result<QueueWorkOrder, QueueExecutionErrorDetail> {
+        let work_order = self.transition_to(status);
+        write_work_order_if_unchanged(
+            &self.workspace_path,
+            &self.work_order_path,
+            &work_order,
+            &self.expected_revision,
+        )?;
+        Ok(work_order)
+    }
 }
 
 impl Drop for QueueWorkOrderExecution {
@@ -104,8 +120,7 @@ impl Drop for QueueWorkOrderExecution {
             return;
         }
 
-        let failed_work_order = self.transition_to("failed");
-        if write_work_order(&self.work_order_path, &failed_work_order).is_ok() {
+        if let Ok(failed_work_order) = self.persist_transition("failed") {
             self.work_order = failed_work_order;
             self.finalized = true;
             clear_lock_marker(&mut self.lock_file);
@@ -151,7 +166,7 @@ fn begin_queue_work_order_execution_at_with_validation(
     let workspace_path = canonicalize_queue_workspace(workspace_path)?;
     let work_order_path = canonicalize_work_order_path(&workspace_path, work_order_path)?;
     let (mut lock_file, interrupted_execution_marker) = acquire_execution_lock(&work_order_path)?;
-    let mut work_order = read_work_order(&work_order_path)?;
+    let (mut work_order, expected_revision) = read_work_order_snapshot(&work_order_path)?;
 
     match validate_work_order(&work_order, requested_id) {
         Ok(()) => {}
@@ -165,13 +180,19 @@ fn begin_queue_work_order_execution_at_with_validation(
 
     write_lock_marker(&mut lock_file, EXECUTION_LOCK_MARKER)?;
     work_order.status = "running".to_string();
-    write_work_order(&work_order_path, &work_order)?;
+    let expected_revision = write_work_order_if_unchanged(
+        &workspace_path,
+        &work_order_path,
+        &work_order,
+        &expected_revision,
+    )?;
 
     Ok(QueueWorkOrderExecution {
         lock_file,
         workspace_path,
         work_order_path,
         work_order,
+        expected_revision,
         finalized: false,
     })
 }
@@ -323,7 +344,28 @@ fn validate_canonical_work_order_path(
     Ok(())
 }
 
+#[cfg(test)]
 fn read_work_order(path: &Path) -> Result<QueueWorkOrder, QueueExecutionErrorDetail> {
+    read_work_order_snapshot(path).map(|(work_order, _)| work_order)
+}
+
+fn read_work_order_snapshot(
+    path: &Path,
+) -> Result<(QueueWorkOrder, [u8; 32]), QueueExecutionErrorDetail> {
+    let content = read_work_order_content(path)?;
+    let work_order = serde_json::from_str(&content).map_err(|_| {
+        QueueExecutionErrorDetail::new(
+            "work-order-invalid",
+            format!(
+                "작업 지시서 JSON을 해석하지 못했습니다: {}",
+                display_path(path)
+            ),
+        )
+    })?;
+    Ok((work_order, Sha256::digest(content.as_bytes()).into()))
+}
+
+fn read_work_order_content(path: &Path) -> Result<String, QueueExecutionErrorDetail> {
     let metadata = fs::metadata(path)
         .map_err(|error| execution_io_error("work-order-file-read-failed", path, error))?;
     if metadata.len() > QUEUE_FILE_MAX_BYTES {
@@ -337,32 +379,52 @@ fn read_work_order(path: &Path) -> Result<QueueWorkOrder, QueueExecutionErrorDet
         ));
     }
 
-    let content = fs::read_to_string(path)
-        .map_err(|error| execution_io_error("work-order-file-read-failed", path, error))?;
-    serde_json::from_str(&content).map_err(|_| {
-        QueueExecutionErrorDetail::new(
-            "work-order-invalid",
-            format!(
-                "작업 지시서 JSON을 해석하지 못했습니다: {}",
-                display_path(path)
-            ),
-        )
-    })
+    fs::read_to_string(path)
+        .map_err(|error| execution_io_error("work-order-file-read-failed", path, error))
 }
 
+fn write_work_order_if_unchanged(
+    workspace_path: &Path,
+    path: &Path,
+    work_order: &QueueWorkOrder,
+    expected_revision: &[u8; 32],
+) -> Result<[u8; 32], QueueExecutionErrorDetail> {
+    let content = pretty_json(work_order)?;
+    // Coordinate only the state commit with editor writes, never the agent run.
+    let _write_lock = acquire_workspace_registry_lock(workspace_path)
+        .map_err(|error| execution_io_error("work-order-file-write-failed", path, error))?;
+    reject_symlink(path)?;
+    let current = read_work_order_content(path).map_err(|mut error| {
+        error.code = "work-order-file-write-failed";
+        error
+    })?;
+    let current_revision: [u8; 32] = Sha256::digest(current.as_bytes()).into();
+    if &current_revision != expected_revision {
+        return Err(QueueExecutionErrorDetail::new(
+            "work-order-file-changed",
+            "작업 지시서가 실행 중 변경되어 이전 내용으로 덮어쓰지 않았습니다.",
+        ));
+    }
+    write_file_atomically_if_unchanged(path, &content, &current).map_err(work_order_write_error)?;
+    Ok(Sha256::digest(content.as_bytes()).into())
+}
+
+#[cfg(test)]
 fn write_work_order(
     path: &Path,
     work_order: &QueueWorkOrder,
 ) -> Result<(), QueueExecutionErrorDetail> {
     let content = pretty_json(work_order)?;
-    write_file_atomically(path, &content).map_err(|error| {
-        let message = match error {
-            AtomicFileWriteError::TargetInvalid => "작업 지시서 파일 경로가 올바르지 않습니다.",
-            AtomicFileWriteError::TargetAlreadyExists => "작업 지시서 파일을 교체하지 못했습니다.",
-            AtomicFileWriteError::WriteFailed => "작업 지시서 상태를 안전하게 저장하지 못했습니다.",
-        };
-        QueueExecutionErrorDetail::new("work-order-file-write-failed", message)
-    })
+    write_file_atomically(path, &content).map_err(work_order_write_error)
+}
+
+fn work_order_write_error(error: AtomicFileWriteError) -> QueueExecutionErrorDetail {
+    let message = match error {
+        AtomicFileWriteError::TargetInvalid => "작업 지시서 파일 경로가 올바르지 않습니다.",
+        AtomicFileWriteError::TargetAlreadyExists => "작업 지시서 파일을 교체하지 못했습니다.",
+        AtomicFileWriteError::WriteFailed => "작업 지시서 상태를 안전하게 저장하지 못했습니다.",
+    };
+    QueueExecutionErrorDetail::new("work-order-file-write-failed", message)
 }
 
 fn pretty_json<T: Serialize>(value: &T) -> Result<String, QueueExecutionErrorDetail> {
@@ -504,6 +566,110 @@ mod tests {
         drop(execution);
 
         assert_eq!(fixture.read().status, "failed");
+    }
+
+    #[test]
+    fn abandoned_execution_preserves_newer_queue_editor_changes() {
+        let fixture = WorkOrderFixture::new("active");
+        let execution = begin_queue_work_order_execution_at(
+            fixture.workspace.path(),
+            &fixture.work_order_path,
+            "wo_test",
+        )
+        .expect("execution starts");
+        let changed =
+            fixture.edit_through_queue_editor("Newer instructions saved during execution");
+
+        drop(execution);
+
+        assert_eq!(
+            fs::read_to_string(&fixture.work_order_path).unwrap(),
+            changed
+        );
+    }
+
+    #[test]
+    fn finalization_conflicts_preserve_newer_edits_and_the_result_report() {
+        for completion in [
+            QueueWorkOrderCompletion::Archive,
+            QueueWorkOrderCompletion::KeepActive,
+        ] {
+            let fixture = WorkOrderFixture::new("active");
+            let execution = begin_queue_work_order_execution_at(
+                fixture.workspace.path(),
+                &fixture.work_order_path,
+                "wo_test",
+            )
+            .expect("execution starts");
+            let changed = fixture.edit_through_queue_editor("Updated while the agent was running");
+            let report = test_report();
+            let error = match execution.complete(&report, completion) {
+                Ok(_) => panic!("a stale execution must not replace newer instructions"),
+                Err(error) => error,
+            };
+
+            assert_eq!(error.code, "work-order-file-changed");
+            assert_eq!(
+                fs::read_to_string(&fixture.work_order_path).unwrap(),
+                changed
+            );
+            let reports = fs::read_dir(fixture.workspace.path().join("queue/reports"))
+                .unwrap()
+                .map(|entry| entry.unwrap().path())
+                .collect::<Vec<_>>();
+            assert_eq!(reports.len(), 1);
+            let persisted: serde_json::Value =
+                serde_json::from_slice(&fs::read(&reports[0]).unwrap()).unwrap();
+            assert_eq!(persisted, serde_json::to_value(&report).unwrap());
+        }
+    }
+
+    #[test]
+    fn explicit_execution_failure_preserves_newer_queue_editor_changes() {
+        let fixture = WorkOrderFixture::new("active");
+        let execution = begin_queue_work_order_execution_at(
+            fixture.workspace.path(),
+            &fixture.work_order_path,
+            "wo_test",
+        )
+        .expect("execution starts");
+        let changed = fixture.edit_through_queue_editor("Updated before failure");
+        let error = match execution.fail() {
+            Ok(_) => panic!("failure must not replace newer instructions"),
+            Err(error) => error,
+        };
+
+        assert_eq!(error.code, "work-order-file-changed");
+        assert_eq!(
+            fs::read_to_string(&fixture.work_order_path).unwrap(),
+            changed
+        );
+    }
+
+    #[test]
+    fn execution_start_preserves_edits_saved_during_validation() {
+        let fixture = WorkOrderFixture::new("active");
+        let mut changed = String::new();
+        let error = match begin_queue_work_order_execution(
+            fixture.workspace.path(),
+            "work-orders/test.workduck-work-order.json",
+            "wo_test",
+            |_| {
+                changed = fixture
+                    .edit_through_queue_editor("Updated after the execution snapshot was read");
+                Ok(())
+            },
+        ) {
+            Ok(_) => panic!("a stale start snapshot must not be published"),
+            Err(error) => error,
+        };
+
+        assert_eq!(error.code, "work-order-file-changed");
+        assert_eq!(
+            fs::read_to_string(&fixture.work_order_path).unwrap(),
+            changed
+        );
+        assert_eq!(fixture.read().status, "active");
     }
 
     #[test]
@@ -719,6 +885,25 @@ mod tests {
 
         fn read(&self) -> QueueWorkOrder {
             read_work_order(&self.work_order_path).expect("work order")
+        }
+
+        fn edit_through_queue_editor(&self, label: &str) -> String {
+            let expected = fs::read_to_string(&self.work_order_path).unwrap();
+            let mut edited: serde_json::Value = serde_json::from_str(&expected).unwrap();
+            edited["ref"]["label"] = label.into();
+            let content = serde_json::to_string_pretty(&edited).unwrap();
+            let result = crate::queue_folder::update_queue_work_order_file(
+                display_path(self.workspace.path()),
+                "work-orders/test.workduck-work-order.json".to_string(),
+                content.clone(),
+                expected,
+            );
+            assert_eq!(
+                serde_json::to_value(result).unwrap()["ok"],
+                true,
+                "the current editor snapshot must save successfully"
+            );
+            content
         }
     }
 }
