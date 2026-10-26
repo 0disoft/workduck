@@ -57,7 +57,9 @@
 <main class="workduck-page">
 	<WorkspaceGate title={messages.navigation.environment}>
 		{#if activeWorkspace !== null && EnvironmentVaultPanel !== null}
-			<EnvironmentVaultPanel workspace={activeWorkspace} title={messages.navigation.environment} />
+			{#key JSON.stringify([activeWorkspace.id, activeWorkspace.path])}
+				<EnvironmentVaultPanel workspace={activeWorkspace} title={messages.navigation.environment} />
+			{/key}
 		{/if}
 	</WorkspaceGate>
 </main>

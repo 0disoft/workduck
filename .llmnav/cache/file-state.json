@@ -7256,7 +7256,7 @@
     },
     {
       "blocks": [],
-      "contentHash": "309c9db10ac4c481b025224bc838a8119e16694b6e408b9088804c357a8fdde1",
+      "contentHash": "422ceba197700e7a4db65b49d33dfe4912a9c4433b72d131eccd2483118a8cee",
       "declarations": [],
       "imports": [
         "#lib/i18n/workduck-language.ts",
@@ -7277,7 +7277,7 @@
       ],
       "path": "src/lib/environment/EnvironmentVaultPanel.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 24457
+      "sourceBytes": 24689
     },
     {
       "blocks": [],
@@ -16350,7 +16350,7 @@
     },
     {
       "blocks": [],
-      "contentHash": "d6b75a7d3bb52913adec32b2c8d6251fa5a58a67fdc26a5c25f30f45dd81c7dd",
+      "contentHash": "0f543182f313c1568b01339852adec80ac857ac272bac66bdadc2d7b0a9abef7",
       "declarations": [],
       "imports": [
         "#lib/environment/EnvironmentVaultPanel.svelte",
@@ -16364,7 +16364,7 @@
       ],
       "path": "src/routes/environment/+page.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 2212
+      "sourceBytes": 2292
     },
     {
       "blocks": [],

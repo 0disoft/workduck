@@ -56,7 +56,10 @@
 		readonly title: string;
 	}
 
-	let { workspace, title }: Props = $props();
+	let { workspace: requestedWorkspace, title }: Props = $props();
+	// The page keys this panel by workspace ID and path. Pending operations keep
+	// their original target even after the parent's reactive props have changed.
+	const workspace = untrack(() => requestedWorkspace);
 
 	let appearanceSettings = $state<AppearanceSettings>(createDefaultAppearanceSettings());
 	let vaultEnvelope = $state<SecretVaultEnvelope | null>(null);
