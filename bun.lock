@@ -28,7 +28,7 @@
         "bits-ui": "^2.20.2",
         "llmnav": "^0.9.7",
         "pretendard": "^1.3.9",
-        "ssealed": "^0.7.80",
+        "ssealed": "^0.7.81",
         "svelte": "^5.57.2",
         "svelte-check": "^4.7.7",
         "tailwindcss": "^4.3.3",
@@ -366,7 +366,7 @@
 
     "source-map-js": ["source-map-js@1.2.2", "", {}, "sha512-KGj/8Y43x35aZVDtt+J4mK1hoLGHULMYfSkODJNQjNDC3oW1PqPoxMwo0pLUsWM/UEGzON/NxeHywEfNXNP3Vw=="],
 
-    "ssealed": ["ssealed@0.7.80", "", { "bin": { "ssealed": "dist/cli.js" } }, "sha512-TyzW4iA2UdEL2dAilUZj0luo9iUD2XAXhXQbViSqE525L9MLUTrIcugabM7St0CHIJoSmkbsEoTuhwz38kz+bw=="],
+    "ssealed": ["ssealed@0.7.81", "", { "bin": { "ssealed": "dist/cli.js" } }, "sha512-lr0+gWm/pPUMvmRFfUe5FsdZ9eLKgzNa7C9m3yaheN8pZNpBCFIM4ARqOE9wmslRn/LtLd4yRDKbm8Yuip/iGA=="],
 
     "style-to-object": ["style-to-object@1.0.14", "", { "dependencies": { "inline-style-parser": "0.2.7" } }, "sha512-LIN7rULI0jBscWQYaSswptyderlarFkjQ+t79nzty8tcIAceVomEVlLzH5VP4Cmsv6MtKhs7qaAiwlcp+Mgaxw=="],
 
