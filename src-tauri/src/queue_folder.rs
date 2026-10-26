@@ -4,7 +4,7 @@
 // owns=native Queue file I/O|Queue path containment|Queue file capacity
 // excludes=Queue response contracts|evaluation delegation policy|agent execution
 // search=native Queue files|Queue path validation|exclusive work order write
-// invariant=Queue list, summary, and read commands never create directories; only known Queue child directories and file suffixes are addressable; artifact writes and deletes share the workspace lock, work order updates compare the expected snapshot, and creates never overwrite existing artifacts.
+// invariant=Queue list, summary, and read commands never create directories; only known Queue child directories and file suffixes are addressable; artifact writes and deletes share the workspace lock, work order deletes also hold the nonblocking execution lock, work order updates compare the expected snapshot, and creates never overwrite existing artifacts.
 // stability=architecture
 // /llmnav
 use std::{
@@ -388,6 +388,17 @@ pub fn delete_queue_file(workspace_path: String, relative_path: String) -> Queue
         Ok(file_path) => file_path,
         Err(error) => return invalid_file_read(error),
     };
+
+    let _execution_lock =
+        if normalized_relative_path.starts_with(&format!("{WORK_ORDERS_DIRECTORY_NAME}/")) {
+            // Never wait for an execution while holding the workspace commit lock.
+            match crate::queue_work_order_execution::acquire_execution_lock(&file_path) {
+                Ok((lock, _)) => Some(lock),
+                Err(_) => return invalid_file_read(QueueFolderError::FileDeleteFailed),
+            }
+        } else {
+            None
+        };
 
     match fs::remove_file(&file_path) {
         Ok(_) => QueueFileReadResult {

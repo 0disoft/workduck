@@ -39,7 +39,7 @@ export function createFilteredQueueFiles(
 }
 
 export function shouldBulkDeleteQueueFile(file: QueueCardEntry, includePending: boolean) {
-	if (file.kind === 'unsupported') {
+	if (file.kind === 'unsupported' || file.executionState === 'running') {
 		return false;
 	}
 

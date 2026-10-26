@@ -3,7 +3,7 @@ import type { QueueCardEntry, QueueContextMenuState } from './queue-panel-types'
 const QUEUE_CONTEXT_MENU_MARGIN_PX = 12;
 
 export function canOpenQueueContextMenu(file: QueueCardEntry, isWriting: boolean) {
-	return file.kind !== 'unsupported' && !isWriting;
+	return file.kind !== 'unsupported' && file.executionState !== 'running' && !isWriting;
 }
 
 export function createQueueContextMenuState(

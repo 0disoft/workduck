@@ -106,7 +106,7 @@
     "workduck.workspace.sync-git-native",
     "workduck.workspace.unlock"
   ],
-  "cardSetHash": "cb03473f19cf9a65fd8f0bd4abe6af72008881ca8b866bb5dd26e075d45c50eb",
+  "cardSetHash": "5c67e0ad7f9d50d27c7a294ff46783f42288e750c1c95ec57bd9fca0bfb6a900",
   "documentCount": 105,
   "documents": [
     [
@@ -1021,13 +1021,13 @@
       ]
     ],
     [
-      "aa279f7e48c8387a3f61a4bce04b7ca9c6bc1e6065e078f463ab508055873597",
+      "a3168914c69b4d19b2682a3ce5fef21d97146e3b2832b19cafd0da8682e0bc38",
       [
         "enforce native queue directory, path, size, count, exclusive-write, update, delete, and evaluation-delegation constraints.",
         "native queue files",
         "queue path validation",
         "exclusive work order write",
-        "queue list, summary, and read commands never create directories; only known queue child directories and file suffixes are addressable; artifact writes and deletes share the workspace lock, work order updates compare the expected snapshot, and creates never overwrite existing artifacts.",
+        "queue list, summary, and read commands never create directories; only known queue child directories and file suffixes are addressable; artifact writes and deletes share the workspace lock, work order deletes also hold the nonblocking execution lock, work order updates compare the expected snapshot, and creates never overwrite existing artifacts.",
         "native queue file i/o",
         "queue path containment",
         "queue file capacity"
@@ -2639,6 +2639,15 @@
         89,
         [
           1,
+          1
+        ]
+      ]
+    ],
+    [
+      [
+        67,
+        [
+          5,
           1
         ]
       ]
@@ -9696,7 +9705,7 @@
         67,
         [
           5,
-          1
+          2
         ]
       ]
     ],
@@ -12309,6 +12318,8 @@
         67,
         [
           4,
+          1,
+          5,
           1
         ]
       ],
@@ -15088,6 +15099,15 @@
         56,
         [
           1,
+          1
+        ]
+      ]
+    ],
+    [
+      [
+        67,
+        [
+          5,
           1
         ]
       ]
@@ -18438,7 +18458,7 @@
         67,
         [
           5,
-          1
+          2
         ]
       ],
       [
@@ -20643,6 +20663,15 @@
     ],
     [
       [
+        67,
+        [
+          5,
+          1
+        ]
+      ]
+    ],
+    [
+      [
         7,
         [
           4,
@@ -22418,7 +22447,7 @@
           2,
           1,
           5,
-          1
+          2
         ]
       ],
       [
@@ -38107,7 +38136,7 @@
         67,
         [
           5,
-          2
+          3
         ]
       ],
       [
@@ -41918,7 +41947,7 @@
           2,
           1,
           5,
-          1
+          2
         ]
       ],
       [
@@ -43883,6 +43912,7 @@
     "allowed",
     "allowlist",
     "allowlisted",
+    "also",
     "an",
     "and",
     "any",
@@ -44322,6 +44352,7 @@
     "hierarchy",
     "historical",
     "history",
+    "hold",
     "honor",
     "hosts",
     "http",
@@ -44497,6 +44528,7 @@
     "node",
     "nodes",
     "non",
+    "nonblocking",
     "normalization",
     "normalize",
     "normalized",

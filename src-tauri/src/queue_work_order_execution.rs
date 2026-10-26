@@ -197,7 +197,7 @@ fn begin_queue_work_order_execution_at_with_validation(
     })
 }
 
-fn acquire_execution_lock(
+pub(crate) fn acquire_execution_lock(
     work_order_path: &Path,
 ) -> Result<(File, bool), QueueExecutionErrorDetail> {
     let lock_root = env::temp_dir().join(EXECUTION_LOCK_DIRECTORY_NAME);
@@ -516,6 +516,68 @@ mod tests {
         )
         .expect("released execution can be retried");
         drop(retry);
+    }
+
+    #[test]
+    fn deletion_preserves_a_work_order_until_its_execution_finishes() {
+        let fixture = WorkOrderFixture::new("active");
+        let execution = begin_queue_work_order_execution_at(
+            fixture.workspace.path(),
+            &fixture.work_order_path,
+            "wo_test",
+        )
+        .expect("running execution");
+        let before = fs::read(&fixture.work_order_path).unwrap();
+        let delete = || {
+            serde_json::to_value(crate::queue_folder::delete_queue_file(
+                fixture.workspace.path().to_string_lossy().into_owned(),
+                "work-orders/test.workduck-work-order.json".into(),
+            ))
+            .unwrap()
+        };
+
+        let result = delete();
+        assert_eq!(
+            result["ok"], false,
+            "an executing work order must survive deletion"
+        );
+        assert_eq!(result["error"], "queue-folder-file-delete-failed");
+        assert_eq!(fs::read(&fixture.work_order_path).unwrap(), before);
+
+        execution
+            .fail()
+            .expect("finish execution normally after rejected deletion");
+        assert_eq!(delete()["ok"], true);
+        assert!(!fixture.work_order_path.exists());
+    }
+
+    #[test]
+    fn deletion_respects_execution_lock_before_running_status_is_published() {
+        let fixture = WorkOrderFixture::new("active");
+        let path = fs::canonicalize(&fixture.work_order_path).unwrap();
+        let (execution_lock, _) = acquire_execution_lock(&path).expect("admit execution");
+        let result = serde_json::to_value(crate::queue_folder::delete_queue_file(
+            fixture.workspace.path().to_string_lossy().into_owned(),
+            "work-orders/test.workduck-work-order.json".into(),
+        ))
+        .unwrap();
+        assert_eq!(
+            result["ok"], false,
+            "the lock must protect even an active snapshot"
+        );
+        assert_eq!(fixture.read().status, "active");
+
+        let other_path = fixture
+            .work_order_path
+            .with_file_name("other.workduck-work-order.json");
+        fs::write(&other_path, "malformed but not executing").unwrap();
+        let other = serde_json::to_value(crate::queue_folder::delete_queue_file(
+            fixture.workspace.path().to_string_lossy().into_owned(),
+            "work-orders/other.workduck-work-order.json".into(),
+        ))
+        .unwrap();
+        assert_eq!(other["ok"], true, "unlocked files remain removable");
+        drop(execution_lock);
     }
 
     #[test]

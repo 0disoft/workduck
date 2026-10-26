@@ -4600,7 +4600,7 @@
             ],
             "id": "workduck.queue.folder-native",
             "invariant": [
-              "Queue list, summary, and read commands never create directories; only known Queue child directories and file suffixes are addressable; artifact writes and deletes share the workspace lock, work order updates compare the expected snapshot, and creates never overwrite existing artifacts."
+              "Queue list, summary, and read commands never create directories; only known Queue child directories and file suffixes are addressable; artifact writes and deletes share the workspace lock, work order deletes also hold the nonblocking execution lock, work order updates compare the expected snapshot, and creates never overwrite existing artifacts."
             ],
             "owns": [
               "native Queue file I/O",
@@ -4619,7 +4619,7 @@
             "stability": "architecture",
             "unknown": []
           },
-          "end": 755,
+          "end": 816,
           "endLine": 9,
           "entries": [
             {
@@ -4656,7 +4656,7 @@
               "key": "invariant",
               "line": 7,
               "order": 5,
-              "value": "Queue list, summary, and read commands never create directories; only known Queue child directories and file suffixes are addressable; artifact writes and deletes share the workspace lock, work order updates compare the expected snapshot, and creates never overwrite existing artifacts."
+              "value": "Queue list, summary, and read commands never create directories; only known Queue child directories and file suffixes are addressable; artifact writes and deletes share the workspace lock, work order deletes also hold the nonblocking execution lock, work order updates compare the expected snapshot, and creates never overwrite existing artifacts."
             },
             {
               "key": "stability",
@@ -4669,7 +4669,7 @@
           "indent": "",
           "newline": "\n",
           "prefix": "//",
-          "raw": "// llmnav/1 module\n// id=workduck.queue.folder-native\n// role=Enforce native Queue directory, path, size, count, exclusive-write, update, delete, and evaluation-delegation constraints.\n// owns=native Queue file I/O|Queue path containment|Queue file capacity\n// excludes=Queue response contracts|evaluation delegation policy|agent execution\n// search=native Queue files|Queue path validation|exclusive work order write\n// invariant=Queue list, summary, and read commands never create directories; only known Queue child directories and file suffixes are addressable; artifact writes and deletes share the workspace lock, work order updates compare the expected snapshot, and creates never overwrite existing artifacts.\n// stability=architecture\n// /llmnav\n",
+          "raw": "// llmnav/1 module\n// id=workduck.queue.folder-native\n// role=Enforce native Queue directory, path, size, count, exclusive-write, update, delete, and evaluation-delegation constraints.\n// owns=native Queue file I/O|Queue path containment|Queue file capacity\n// excludes=Queue response contracts|evaluation delegation policy|agent execution\n// search=native Queue files|Queue path validation|exclusive work order write\n// invariant=Queue list, summary, and read commands never create directories; only known Queue child directories and file suffixes are addressable; artifact writes and deletes share the workspace lock, work order deletes also hold the nonblocking execution lock, work order updates compare the expected snapshot, and creates never overwrite existing artifacts.\n// stability=architecture\n// /llmnav\n",
           "scope": "module",
           "specVersion": "1",
           "start": 0,
@@ -4678,7 +4678,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "944397054cc6fa2eac29724f24eb6b74d0fe4575a255821f4967ced4a027c229",
+      "contentHash": "931f8195dfa21b72cb791a8c64ad650ab725a7024800eb5fac3249e647e01ac4",
       "declarations": [
         null
       ],
@@ -4697,8 +4697,8 @@
         "tests {\n    use super::*"
       ],
       "path": "src-tauri/src/queue_folder.rs",
-      "semanticBytes": 755,
-      "sourceBytes": 41078
+      "semanticBytes": 816,
+      "sourceBytes": 41625
     },
     {
       "blocks": [
@@ -5068,7 +5068,7 @@
     },
     {
       "blocks": [],
-      "contentHash": "d8da9477bea3939aa6c05d0d4066633f00092b2125bd76946aec4eb46521b2f7",
+      "contentHash": "b19b9b8784de7ad6d7b03c89cd423999079befdae0a044b6af43975a75c75153",
       "declarations": [],
       "imports": [
         "crate::atomic_file_write::write_file_atomically",
@@ -5081,7 +5081,7 @@
       ],
       "path": "src-tauri/src/queue_work_order_execution.rs",
       "semanticBytes": 0,
-      "sourceBytes": 33353
+      "sourceBytes": 35865
     },
     {
       "blocks": [
@@ -12100,14 +12100,14 @@
     },
     {
       "blocks": [],
-      "contentHash": "98ed7e7d83553dbda51ec61cf41bc1e9f989195cfe4842000b73ee5779a042b4",
+      "contentHash": "2a1bc8724903289fc70765b32821fc97aefa143c6efe5224d2b8ddcc95952fe5",
       "declarations": [],
       "imports": [
         "./queue-panel-types"
       ],
       "path": "src/lib/queue/queue-panel-context-menu-lifecycle.ts",
       "semanticBytes": 0,
-      "sourceBytes": 2415
+      "sourceBytes": 2452
     },
     {
       "blocks": [],
@@ -12583,7 +12583,22 @@
     },
     {
       "blocks": [],
-      "contentHash": "8e8f5bbbd806912231b2faefe2eed37c4419cc641e49672c0e46cdb8a0bbd379",
+      "contentHash": "5f4d4d62f7fb50f3723f17a4cc7452f8d426795c527257854c2e88e50ef54f82",
+      "declarations": [],
+      "imports": [
+        "./queue-panel-context-menu-lifecycle",
+        "./queue-panel-file-list",
+        "./queue-panel-types",
+        "node:assert/strict",
+        "node:test"
+      ],
+      "path": "src/lib/queue/queue-panel-file-list.test.ts",
+      "semanticBytes": 0,
+      "sourceBytes": 1811
+    },
+    {
+      "blocks": [],
+      "contentHash": "78a833f87ce6533f88581103bb30624472e8b02c25ab5edd5921ac1c59fcb4ae",
       "declarations": [],
       "imports": [
         "./queue-artifacts",
@@ -12591,7 +12606,7 @@
       ],
       "path": "src/lib/queue/queue-panel-file-list.ts",
       "semanticBytes": 0,
-      "sourceBytes": 5429
+      "sourceBytes": 5466
     },
     {
       "blocks": [],
