@@ -106,7 +106,7 @@
     "workduck.workspace.sync-git-native",
     "workduck.workspace.unlock"
   ],
-  "cardSetHash": "33573ebbeca66b9dcc3203d5642a95503f40e42d5222e70fd9f5c6daa1ace976",
+  "cardSetHash": "cb03473f19cf9a65fd8f0bd4abe6af72008881ca8b866bb5dd26e075d45c50eb",
   "documentCount": 105,
   "documents": [
     [
@@ -1253,13 +1253,13 @@
       ]
     ],
     [
-      "75970c0756517c82028033c92a259038060c9e9395c95a2fa342feb4272e15bb",
+      "023ee4a1a8d59fa52f04be5e4e79ce68af4d487c5b3793c419a3341300f17c12",
       [
         "coordinate terminal selection, native session actions, output display, and workspace-scoped registry edits.",
         "terminal selection switch",
         "late terminal response",
         "terminal removal ownership",
-        "async results update only their initiating view; removal requires successful process stop; each view admits one output read at a time and failures preserve its logs.",
+        "async results update only their initiating view; removal requires successful stop; each view admits one read at a time and preserves logs on failure; displayed output retains at most 128 kib of utf-8 without rewinding native cursors.",
         "terminal view lifetime",
         "operation result ownership",
         "session removal target",
@@ -1567,9 +1567,27 @@
     ],
     [
       [
+        84,
+        [
+          5,
+          1
+        ]
+      ]
+    ],
+    [
+      [
         18,
         [
           1,
+          1
+        ]
+      ]
+    ],
+    [
+      [
+        84,
+        [
+          5,
           1
         ]
       ]
@@ -4380,7 +4398,7 @@
         84,
         [
           5,
-          1
+          2
         ]
       ],
       [
@@ -9219,6 +9237,13 @@
     ],
     [
       [
+        84,
+        [
+          5,
+          1
+        ]
+      ],
+      [
         85,
         [
           1,
@@ -10372,6 +10397,13 @@
       ]
     ],
     [
+      [
+        84,
+        [
+          5,
+          1
+        ]
+      ],
       [
         103,
         [
@@ -12844,6 +12876,13 @@
         ]
       ],
       [
+        84,
+        [
+          5,
+          1
+        ]
+      ],
+      [
         86,
         [
           3,
@@ -12889,13 +12928,6 @@
       ],
       [
         45,
-        [
-          5,
-          1
-        ]
-      ],
-      [
-        84,
         [
           5,
           1
@@ -16581,13 +16613,6 @@
         ]
       ],
       [
-        84,
-        [
-          5,
-          1
-        ]
-      ],
-      [
         85,
         [
           5,
@@ -16883,6 +16908,15 @@
       ],
       [
         24,
+        [
+          5,
+          1
+        ]
+      ]
+    ],
+    [
+      [
+        84,
         [
           5,
           1
@@ -19503,6 +19537,13 @@
         ]
       ],
       [
+        84,
+        [
+          5,
+          1
+        ]
+      ],
+      [
         102,
         [
           5,
@@ -20110,6 +20151,8 @@
           1,
           1,
           4,
+          1,
+          5,
           1
         ]
       ],
@@ -21097,6 +21140,13 @@
         ]
       ],
       [
+        84,
+        [
+          5,
+          1
+        ]
+      ],
+      [
         91,
         [
           5,
@@ -21201,6 +21251,13 @@
       ],
       [
         53,
+        [
+          5,
+          1
+        ]
+      ],
+      [
+        84,
         [
           5,
           1
@@ -24598,13 +24655,6 @@
         ]
       ],
       [
-        84,
-        [
-          5,
-          1
-        ]
-      ],
-      [
         88,
         [
           5,
@@ -24643,6 +24693,13 @@
       ],
       [
         57,
+        [
+          5,
+          1
+        ]
+      ],
+      [
+        84,
         [
           5,
           1
@@ -24941,8 +24998,6 @@
         84,
         [
           4,
-          1,
-          5,
           1
         ]
       ],
@@ -30413,6 +30468,13 @@
           5,
           1
         ]
+      ],
+      [
+        84,
+        [
+          5,
+          1
+        ]
       ]
     ],
     [
@@ -30703,6 +30765,15 @@
         [
           4,
           1,
+          5,
+          1
+        ]
+      ]
+    ],
+    [
+      [
+        84,
+        [
           5,
           1
         ]
@@ -40275,6 +40346,15 @@
     ],
     [
       [
+        84,
+        [
+          5,
+          1
+        ]
+      ]
+    ],
+    [
+      [
         29,
         [
           5,
@@ -41736,6 +41816,13 @@
         52,
         [
           1,
+          1
+        ]
+      ],
+      [
+        84,
+        [
+          5,
           1
         ]
       ],
@@ -43760,7 +43847,9 @@
   "tokens": [
     "004",
     "12",
+    "128",
     "2020",
+    "8",
     "a",
     "aad",
     "aborts",
@@ -44296,6 +44385,7 @@
     "keeps",
     "key",
     "keys",
+    "kib",
     "kill",
     "kind",
     "kinds",
@@ -44669,6 +44759,7 @@
     "revision",
     "revisions",
     "revocation",
+    "rewinding",
     "rewrite",
     "risk",
     "roll",
@@ -44940,6 +45031,7 @@
     "uses",
     "using",
     "utc",
+    "utf",
     "valid",
     "validate",
     "validated",

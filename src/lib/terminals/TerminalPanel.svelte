@@ -5,7 +5,7 @@
 	owns=terminal view lifetime|operation result ownership|session removal target|output polling
 	excludes=native process execution|terminal command normalization|registry serialization
 	search=terminal selection switch|late terminal response|terminal removal ownership
-	invariant=Async results update only their initiating view; removal requires successful process stop; each view admits one output read at a time and failures preserve its logs.
+	invariant=Async results update only their initiating view; removal requires successful stop; each view admits one read at a time and preserves logs on failure; displayed output retains at most 128 KiB of UTF-8 without rewinding native cursors.
 	stability=architecture
 	*/
 	import { onMount, tick, untrack } from 'svelte';
@@ -49,6 +49,7 @@
 		type TerminalSessionError,
 		type TerminalSessionSnapshot
 	} from './terminal-session';
+	import { mergeTerminalOutput } from './terminal-output';
 
 	interface Props {
 		readonly workspace: WorkspaceRecord;
@@ -503,7 +504,7 @@
 		const shouldScroll =
 			options.forceScroll === true || shouldFollowTerminalOutput || isTerminalOutputNearBottom();
 
-		terminalOutput = snapshot.outputReset ? snapshot.output : `${terminalOutput}${snapshot.output}`;
+		terminalOutput = mergeTerminalOutput(terminalOutput, snapshot);
 		terminalOutputCursor = snapshot.outputCursor;
 		isSessionConnected = snapshot.connected;
 

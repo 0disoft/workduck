@@ -3655,7 +3655,7 @@
           "to": "workduck/workduck.terminal.session-client"
         }
       ],
-      "inputHash": "ba6819ff776de2204ccf5c2cbb8ead2081cc6f6f8e0ff467f9f0742a38a761ef",
+      "inputHash": "bb85eb287d9d08acb29495dace4993330828b4f351a62718a9b1f55c0f73f80f",
       "key": "card:workduck/workduck.terminal.panel",
       "nodes": [
         {

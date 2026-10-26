@@ -4468,9 +4468,9 @@
         "registry serialization"
       ],
       "hashes": {
-        "body": "0b4251e5e4bb4443b6c0f282fd0a8fd0fb92edf76364e3d98fc168a8e4050823",
-        "semantic": "814bf935354d253e564033bd04011f7d1e4f698ba0d8254654fbaa4974afacc2",
-        "structure": "373d3867704e761faab9a081b350f79dbf3600c694f57ba74dfd8708d4eb02f4"
+        "body": "e2bc0438eb2345c43c4f1b2ee12f368fc531f0aea381b15d89c7f19dd6f633ec",
+        "semantic": "8c83c0ec570db11117181f6d23b37621707b445947324d333fde22dda8b47ff5",
+        "structure": "e7f8964b23f66c2142156e65297e05d4e585558ddc318ba8984a669e8017e8d2"
       },
       "id": "workduck.terminal.panel",
       "imports": [
@@ -4480,13 +4480,14 @@
         "#lib/ui/index.ts",
         "#lib/workspaces/workspace-registry.ts",
         "./terminal-catalog",
+        "./terminal-output",
         "./terminal-registry",
         "./terminal-registry-storage",
         "./terminal-session",
         "svelte"
       ],
       "invariant": [
-        "Async results update only their initiating view; removal requires successful process stop; each view admits one output read at a time and failures preserve its logs."
+        "Async results update only their initiating view; removal requires successful stop; each view admits one read at a time and preserves logs on failure; displayed output retains at most 128 KiB of UTF-8 without rewinding native cursors."
       ],
       "location": {
         "declarationLine": null,
@@ -5388,6 +5389,6 @@
   "generatedBy": "llmnav@0.9.7",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "7a1df85c315387034236e628c8d7e084c49d5770be6830edef223ac7999315b3",
+  "sourceHash": "a7bf2c307b37199cddd71b8e978a6761c384013ced04bbbb1e346657dcdea4ab",
   "specVersion": "1"
 }

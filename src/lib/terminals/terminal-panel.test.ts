@@ -73,6 +73,27 @@ afterEach(() => {
 });
 
 describe('terminal panel operation ownership', () => {
+	test('bounds displayed output across incremental polls without rewinding the native cursor', async () => {
+		const chunk = 'x'.repeat(64 * 1024);
+		let reads = 0;
+		setTauriInvokeForTest(async <T>(command: string, args?: Record<string, unknown>) => {
+			expect(command).toBe('read_terminal_session');
+			expect((args?.request as { outputCursor: number }).outputCursor).toBe(reads * chunk.length);
+			reads += 1;
+			return { ok: true, connected: true, output: chunk, outputCursor: reads * chunk.length, outputReset: false } as T;
+		});
+		const harness = createTerminalPanelHarness(workspace());
+		try {
+			await settle();
+			const panel = harness.controller;
+			panel.selectTerminalSession(first); await settle();
+			for (let count = 1; count < 160; count++) await panel.refreshSelectedTerminalSession(first.id);
+			expect(reads * chunk.length).toBe(10 * 1024 * 1024);
+			expect(new TextEncoder().encode(panel.terminalOutput).length).toBe(128 * 1024);
+			expect(panel.terminalOutput.endsWith(chunk)).toBe(true);
+		} finally { harness.dispose(); }
+	});
+
 	for (const operation of ['connect', 'disconnect', 'send'] as const) {
 		test(`ignores a late ${operation} response after another terminal is selected`, async () => {
 			const pending = deferred();
