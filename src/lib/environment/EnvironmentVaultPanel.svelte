@@ -63,6 +63,7 @@
 
 	let appearanceSettings = $state<AppearanceSettings>(createDefaultAppearanceSettings());
 	let vaultEnvelope = $state<SecretVaultEnvelope | null>(null);
+	let vaultReadSucceeded = $state(false);
 	let vault = $state<EnvironmentVault | null>(null);
 	let vaultPassword = $state('');
 	let secretName = $state('');
@@ -136,7 +137,7 @@
 	}
 
 	async function tryOpenVaultWithWorkspaceSession(nextEnvelope: SecretVaultEnvelope | null) {
-		if (vault !== null || isBusy || autoUnlockAttempted) {
+		if (!vaultReadSucceeded || vault !== null || isBusy || autoUnlockAttempted) {
 			return;
 		}
 
@@ -178,7 +179,7 @@
 	async function handleVaultSubmit(event: SubmitEvent) {
 		event.preventDefault();
 
-		if (isBusy) {
+		if (!vaultReadSucceeded || isBusy) {
 			return;
 		}
 
@@ -238,6 +239,10 @@
 	}
 
 	async function createAndPersistVault(password: string, successStatus: string | null) {
+		if (!vaultReadSucceeded) {
+			return;
+		}
+
 		isBusy = true;
 		error = null;
 		status = null;
@@ -556,6 +561,7 @@
 		return untrack(() => {
 			let isCurrentWorkspace = true;
 
+			vaultReadSucceeded = false;
 			resetLocalVaultState(null);
 
 			async function initializeVault() {
@@ -579,16 +585,19 @@
 				}
 
 				resetLocalVaultState(initialEnvelopeResult.envelope);
+				vaultReadSucceeded = true;
 				await tryOpenVaultWithWorkspaceSession(initialEnvelopeResult.envelope);
 			}
 
 			async function reopenVault(nextEnvelope: SecretVaultEnvelope | null) {
+				vaultReadSucceeded = false;
 				await closeEnvironmentVaultSession(workspaceId);
 				if (!isCurrentWorkspace) {
 					return;
 				}
 
 				resetLocalVaultState(nextEnvelope);
+				vaultReadSucceeded = true;
 				await tryOpenVaultWithWorkspaceSession(nextEnvelope);
 			}
 
@@ -685,7 +694,7 @@
 					type="password"
 					bind:value={vaultPassword}
 					autocomplete="current-password"
-					disabled={isBusy}
+					disabled={!vaultReadSucceeded || isBusy}
 					aria-invalid={error !== null || vaultUnlockIsLocked}
 				/>
 			</label>
@@ -693,7 +702,7 @@
 			<button
 				class="workduck-button workduck-button-primary"
 				type="submit"
-				disabled={isBusy || vaultPassword.length === 0 || vaultUnlockIsLocked}
+				disabled={!vaultReadSucceeded || isBusy || vaultPassword.length === 0 || vaultUnlockIsLocked}
 			>
 				{isBusy ? messages.common.checking : unlockLabel}
 			</button>

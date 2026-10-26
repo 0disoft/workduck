@@ -7256,7 +7256,7 @@
     },
     {
       "blocks": [],
-      "contentHash": "422ceba197700e7a4db65b49d33dfe4912a9c4433b72d131eccd2483118a8cee",
+      "contentHash": "a95e5db0d4f876e7d7eddde4dfe962f065d7c8b9742cc445f43538e41655372f",
       "declarations": [],
       "imports": [
         "#lib/i18n/workduck-language.ts",
@@ -7277,7 +7277,7 @@
       ],
       "path": "src/lib/environment/EnvironmentVaultPanel.svelte",
       "semanticBytes": 0,
-      "sourceBytes": 24689
+      "sourceBytes": 24992
     },
     {
       "blocks": [],
@@ -7404,6 +7404,35 @@
       "path": "src/lib/environment/cli-environment.ts",
       "semanticBytes": 494,
       "sourceBytes": 2658
+    },
+    {
+      "blocks": [],
+      "contentHash": "7403e6a9ee3a952c98c1adc7275e54837c52e43f00e1b14d9083dae569a59b7d",
+      "declarations": [],
+      "imports": [
+        "#lib/workspaces/workspace-registry.ts",
+        "./EnvironmentVaultPanel.svelte"
+      ],
+      "path": "src/lib/environment/environment-vault-panel-read-harness.svelte.ts",
+      "semanticBytes": 0,
+      "sourceBytes": 820
+    },
+    {
+      "blocks": [],
+      "contentHash": "ab37425c69664278e8bf36961fc6215a5bf6485bb69c0fa1c63d687fc26790ca",
+      "declarations": [],
+      "imports": [
+        "#lib/tauri/tauri-invoke.ts",
+        "./environment-vault",
+        "./environment-vault-panel-read-harness.svelte",
+        "./secret-vault-crypto",
+        "bun",
+        "bun:test",
+        "svelte/compiler"
+      ],
+      "path": "src/lib/environment/environment-vault-panel-read.test.ts",
+      "semanticBytes": 0,
+      "sourceBytes": 5391
     },
     {
       "blocks": [],
