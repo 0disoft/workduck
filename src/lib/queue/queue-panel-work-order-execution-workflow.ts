@@ -64,7 +64,7 @@ export async function executeQueuePanelWorkOrder(
 		confirmationToken: input.confirmationToken
 	});
 
-	await input.onRunningWorkOrderSaved?.(startQueueWorkOrderExecution(input.workOrder));
+	void notifyRunningWorkOrder(input);
 	const executionResult = await executionPromise;
 
 	if (!executionResult.ok) {
@@ -82,6 +82,14 @@ export async function executeQueuePanelWorkOrder(
 		report: executionResult.report,
 		reportRelativePath: executionResult.reportRelativePath
 	};
+}
+
+async function notifyRunningWorkOrder(input: QueuePanelWorkOrderExecutionInput): Promise<void> {
+	try {
+		await input.onRunningWorkOrderSaved?.(startQueueWorkOrderExecution(input.workOrder));
+	} catch {
+		// Optional UI notification failures must not discard the native execution result.
+	}
 }
 
 async function readQueuePanelWorkOrderExecutionRequest(
