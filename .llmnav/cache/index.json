@@ -5328,11 +5328,55 @@
         "run metadata"
       ],
       "stability": "implementation"
+    },
+    {
+      "boundaries": [],
+      "hashes": {
+        "body": "d4ed9cf5fe986723e138f0ed0a7a83f35e108f9ae4985e2044da27b5157c2fed",
+        "semantic": "6bfdf045c8ef7d39271373caef1f05903990130700c25321874a151c2164fa15",
+        "structure": "27df1e989f85fbc5f227c3a40b4cfbeb24dc9324ab22137aa4693088c10dc503"
+      },
+      "id": "workduck.chat-completion.http",
+      "imports": [
+        "serde::Deserialize",
+        "serde_json::Value",
+        "std::{\n        io::{BufRead, BufReader, Read, Write},\n        net::{TcpListener, TcpStream},\n        sync::mpsc,\n        thread,\n    }",
+        "std::{sync::OnceLock, time::Duration}",
+        "tests {\n    use super::*"
+      ],
+      "invariant": [
+        "Body bytes are bounded before parsing, including chunked transfers."
+      ],
+      "location": {
+        "declarationLine": null,
+        "endLine": 8,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src-tauri/src/chat_completion.rs",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "owns": [
+        "HTTP client",
+        "endpoints",
+        "response limits"
+      ],
+      "role": "Bound shared provider chat HTTP responses before JSON decoding.",
+      "scope": "module",
+      "search": [
+        "chat response limit",
+        "provider JSON"
+      ],
+      "stability": "contract"
     }
   ],
   "contractFingerprints": {
     "configuration": {
-      "sha256": "62fdb6d3dcd0737a3d5a7a340007e623ce37a9c4ace4d251ee83e7cb64c996c3"
+      "sha256": "6e79ac2e6cd6fdbe69c8f3eac1268356ad108c80b0bee8a65afe45bc017cf9a3"
     },
     "exportedApi": {
       "count": 0,
@@ -5343,6 +5387,6 @@
   "generatedBy": "llmnav@0.9.7",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "6194e92796c7b286887c2e33c3da442a2524e110110935eaeef697acd5fbf4fa",
+  "sourceHash": "a02f40e031fa0783e0406a76e3f12de784cdbe5807473626bc32ab1e3eacf43f",
   "specVersion": "1"
 }

@@ -2,6 +2,12 @@
   "$schema": "./schema/config.schema.json",
   "coverageRules": [
     {
+      "match": ["src-tauri/src/chat_completion.rs"],
+      "name": "bounded shared chat completion HTTP response",
+      "requiredFields": ["owns", "invariant"],
+      "scope": "module"
+    },
+    {
       "match": ["src-tauri/src/agent_api_snapshot/task_run_cache.rs"],
       "name": "bounded redacted task summary reuse",
       "requiredFields": ["owns", "invariant"],

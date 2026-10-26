@@ -2030,18 +2030,98 @@
       "sourceBytes": 10412
     },
     {
-      "blocks": [],
-      "contentHash": "aa367e7d327e6a5a53eb0105f1d61e02762f0b21a737e128774effe91a859be6",
-      "declarations": [],
+      "blocks": [
+        {
+          "card": {
+            "effect": [],
+            "excludes": [],
+            "id": "workduck.chat-completion.http",
+            "invariant": [
+              "Body bytes are bounded before parsing, including chunked transfers."
+            ],
+            "owns": [
+              "HTTP client",
+              "endpoints",
+              "response limits"
+            ],
+            "rel": [],
+            "risk": [],
+            "role": "Bound shared provider chat HTTP responses before JSON decoding.",
+            "scope": "module",
+            "search": [
+              "chat response limit",
+              "provider JSON"
+            ],
+            "stability": "contract",
+            "unknown": []
+          },
+          "end": 331,
+          "endLine": 8,
+          "entries": [
+            {
+              "key": "id",
+              "line": 2,
+              "order": 0,
+              "value": "workduck.chat-completion.http"
+            },
+            {
+              "key": "role",
+              "line": 3,
+              "order": 1,
+              "value": "Bound shared provider chat HTTP responses before JSON decoding."
+            },
+            {
+              "key": "owns",
+              "line": 4,
+              "order": 2,
+              "value": "HTTP client|endpoints|response limits"
+            },
+            {
+              "key": "search",
+              "line": 5,
+              "order": 3,
+              "value": "chat response limit|provider JSON"
+            },
+            {
+              "key": "invariant",
+              "line": 6,
+              "order": 4,
+              "value": "Body bytes are bounded before parsing, including chunked transfers."
+            },
+            {
+              "key": "stability",
+              "line": 7,
+              "order": 5,
+              "value": "contract"
+            }
+          ],
+          "filePath": "src-tauri/src/chat_completion.rs",
+          "indent": "",
+          "newline": "\n",
+          "prefix": "//",
+          "raw": "// llmnav/1 module\n// id=workduck.chat-completion.http\n// role=Bound shared provider chat HTTP responses before JSON decoding.\n// owns=HTTP client|endpoints|response limits\n// search=chat response limit|provider JSON\n// invariant=Body bytes are bounded before parsing, including chunked transfers.\n// stability=contract\n// /llmnav\n",
+          "scope": "module",
+          "specVersion": "1",
+          "start": 0,
+          "startLine": 1,
+          "style": "line",
+          "syntaxErrors": []
+        }
+      ],
+      "contentHash": "d4ed9cf5fe986723e138f0ed0a7a83f35e108f9ae4985e2044da27b5157c2fed",
+      "declarations": [
+        null
+      ],
       "imports": [
         "serde::Deserialize",
         "serde_json::Value",
+        "std::{\n        io::{BufRead, BufReader, Read, Write},\n        net::{TcpListener, TcpStream},\n        sync::mpsc,\n        thread,\n    }",
         "std::{sync::OnceLock, time::Duration}",
         "tests {\n    use super::*"
       ],
       "path": "src-tauri/src/chat_completion.rs",
-      "semanticBytes": 0,
-      "sourceBytes": 6207
+      "semanticBytes": 331,
+      "sourceBytes": 13394
     },
     {
       "blocks": [

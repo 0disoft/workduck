@@ -1199,6 +1199,28 @@
     {
       "definitions": [],
       "external": false,
+      "key": "workduck/workduck.chat-completion.http",
+      "location": {
+        "declarationLine": null,
+        "endLine": 8,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src-tauri/src/chat_completion.rs",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "repositoryId": "workduck",
+      "role": "Bound shared provider chat HTTP responses before JSON decoding.",
+      "semanticId": "workduck.chat-completion.http",
+      "unresolved": false
+    },
+    {
+      "definitions": [],
+      "external": false,
       "key": "workduck/workduck.cli.agent-evaluation",
       "location": {
         "declarationLine": null,
@@ -3213,11 +3235,11 @@
   ],
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "61141bf0f6e503405a27594b86d7ddfa037d4ffc7774b8e2131b6e97ec7469cb",
+  "sourceHash": "248d10af04f47fc18d3efd8bc42157e31bd9550e0cd74de9506d90b86da3ca67",
   "stats": {
     "edgeCount": 64,
     "importedIndexCount": 0,
-    "nodeCount": 104,
+    "nodeCount": 105,
     "unresolvedNodeCount": 0
   }
 }

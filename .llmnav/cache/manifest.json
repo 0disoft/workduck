@@ -1,16 +1,16 @@
 {
-  "cardCount": 104,
+  "cardCount": 105,
   "fileStateSchemaVersion": 1,
   "files": {
     ".llmnav/cache/agent-context.md": "b22f4c1d47123f75b91c9f81e077994d420cb2cff1a3626d5ff59c1df1e00326",
-    ".llmnav/cache/cards.jsonl": "081012a957708c085831e9f00e0c83a1d9ca32a79773dfc36dd5c6ed50d5a8df",
-    ".llmnav/cache/file-state.json": "4487447c6ec71dab048a6c0b094f48afaab4fbf0dbac37b7d8ffe394c504e2f2",
-    ".llmnav/cache/graph-state.json": "c7d937627e647690aa3f9b4098d702d4886f1f9b5c50c7140e709d0d3130c911",
-    ".llmnav/cache/graph.json": "4874e318d2d67595007e0664103a67da4b05ad12baace9e59236a69c5a8ceb5d",
-    ".llmnav/cache/index.json": "7e5db8297cbcb3cca9a4cfc08f011501b90d4d36beb0229f510860b1b3770c03",
+    ".llmnav/cache/cards.jsonl": "254538b363f32ef53ebc355414347593289c5d4dc242530a29f9d8c83f3cf860",
+    ".llmnav/cache/file-state.json": "96d624e3053f5f4f6b54448697edafc7c2e9a92ddaa842ed50d63749eeadc548",
+    ".llmnav/cache/graph-state.json": "9b28bb0e79a60bd3ec302130a86941143db76086a3e8d140590e9ea60672debc",
+    ".llmnav/cache/graph.json": "10c70f0e913f46ef1c861e712204cd918d5dcf731bcc14488a973f7772df9c2e",
+    ".llmnav/cache/index.json": "9780d14fd5d0ba80a240e9a79243906d620ed0245305b99bb85e762fb7b765c5",
     ".llmnav/cache/prompt-prefix.json": "7f00f36ee580c5ec5ce5c1ecc9e4a183da31793478b8a29e055e44a3757aa4b4",
     ".llmnav/cache/repo-core.txt": "fcfbcbd0997539c53ba0fa90cef75b5c166269143c823ec013eab456f6751b31",
-    ".llmnav/cache/search-index.json": "a8159f5b8adf2a1605b05f3279259b095ea78660fd3176e4111b85442babe4b7"
+    ".llmnav/cache/search-index.json": "914882f67a20bfe5820b11c3d1fe4723b1ec2b79793a3a1344cf2c8e69722850"
   },
   "graphSchemaVersion": 1,
   "graphStateSchemaVersion": 1,
@@ -18,9 +18,9 @@
   "promptBundleSchemaVersion": 1,
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "searchCardSetHash": "6fd86439d23a0040b04688d7792186734d7532d3098c44470416a577645620d1",
+  "searchCardSetHash": "56bb8d494520887907f147d465886345c562312c3849d2366c9e7d01e122cf3d",
   "searchIndexSchemaVersion": 2,
   "searchShardSchemaVersion": null,
-  "sourceHash": "6194e92796c7b286887c2e33c3da442a2524e110110935eaeef697acd5fbf4fa",
+  "sourceHash": "a02f40e031fa0783e0406a76e3f12de784cdbe5807473626bc32ab1e3eacf43f",
   "specVersion": "1"
 }

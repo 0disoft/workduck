@@ -102,3 +102,4 @@ workduck.workspace.unlock
 workduck.workspace.path-repair
 workduck.verification.native-sync
 workduck.agent.task-run-cache
+workduck.chat-completion.http
