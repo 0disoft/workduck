@@ -4,7 +4,7 @@
 // owns=workspace data allowlist|registry compare-and-swap|registry transaction recovery
 // excludes=encrypted sync envelope|project registry SQLite storage
 // search=workspace data file|registry revision conflict|recover registry transaction
-// invariant=Editable registries reject stale revisions and generic overwrites, paired agent and persona updates commit under one lock, and secrets sync first enforces ignore policy.
+// invariant=Editable registries reject stale revisions and generic overwrites, paired updates hold one lock and finish recovery journal cleanup before later edits, and secrets sync first enforces ignore policy.
 // stability=contract
 // /llmnav
 use std::{
@@ -407,7 +407,7 @@ pub fn commit_workspace_registry_pair_under_lock(
     write_file_atomically(&transaction_path, &transaction).map_err(map_atomic_write_error)?;
     write_file_atomically(&agents_path, agents_content).map_err(map_atomic_write_error)?;
     write_file_atomically(&personas_path, personas_content).map_err(map_atomic_write_error)?;
-    let _ = fs::remove_file(transaction_path);
+    fs::remove_file(transaction_path).map_err(|_| WorkspaceDataFileError::FileWriteFailed)?;
     Ok(())
 }
 
@@ -433,7 +433,7 @@ pub fn recover_workspace_registry_transaction_under_lock(
         .map_err(map_atomic_write_error)?;
     write_file_atomically(&personas_path, &transaction.personas_content)
         .map_err(map_atomic_write_error)?;
-    let _ = fs::remove_file(transaction_path);
+    fs::remove_file(transaction_path).map_err(|_| WorkspaceDataFileError::FileWriteFailed)?;
     Ok(())
 }
 
@@ -800,6 +800,75 @@ mod tests {
             personas.to_string(),
         );
         assert_eq!(stale.error, Some(WorkspaceDataFileError::RevisionConflict));
+    }
+
+    #[cfg(windows)]
+    #[test]
+    fn undeletable_recovery_journal_blocks_edits_until_cleanup_succeeds() {
+        use std::os::windows::fs::OpenOptionsExt;
+
+        for file_name in ["agents.json", "personas.json"] {
+            let workspace = tempfile::tempdir().expect("workspace");
+            let workspace_path = workspace.path().to_string_lossy().into_owned();
+            let root = workspace.path().join(WORKDUCK_DIRECTORY_NAME);
+            fs::create_dir(&root).unwrap();
+            let agents = r#"{"revision":1,"agents":[{"id":"original"}]}"#;
+            let personas = r#"{"revision":1,"personas":[{"id":"original"}]}"#;
+            let journal_path = root.join(REGISTRY_TRANSACTION_FILE_NAME);
+            fs::write(
+                &journal_path,
+                serde_json::to_string(&WorkspaceRegistryTransaction {
+                    agents_content: agents.into(),
+                    personas_content: personas.into(),
+                })
+                .unwrap(),
+            )
+            .unwrap();
+            let journal_reader = fs::OpenOptions::new()
+                .read(true)
+                .share_mode(0x1 | 0x2) // Allow reads/writes, deny deletion while this handle is open.
+                .open(&journal_path)
+                .unwrap();
+            let updated = r#"{"revision":1,"items":["new instructions"]}"#;
+
+            let saved = write_workspace_registry_file(
+                workspace_path.clone(),
+                file_name.into(),
+                1,
+                updated.into(),
+            );
+            let after_save = fs::read_to_string(root.join(file_name)).unwrap();
+            let blocked_read = read_workspace_data_file(workspace_path.clone(), file_name.into());
+            let after_read = fs::read_to_string(root.join(file_name)).unwrap();
+            drop(journal_reader);
+
+            assert_eq!(
+                saved.error,
+                Some(WorkspaceDataFileError::FileWriteFailed),
+                "cleanup failure must stop edits: saved={}, after-save={after_save}, after-read={after_read}",
+                saved.ok,
+            );
+            assert_eq!(
+                blocked_read.error,
+                Some(WorkspaceDataFileError::FileReadFailed)
+            );
+            assert_eq!(after_save, after_read);
+            assert!(journal_path.exists());
+
+            let retried = write_workspace_registry_file(
+                workspace_path.clone(),
+                file_name.into(),
+                1,
+                updated.into(),
+            );
+            assert!(retried.ok);
+            assert!(!journal_path.exists());
+            for _ in 0..2 {
+                let read = read_workspace_data_file(workspace_path.clone(), file_name.into());
+                assert!(read.ok);
+                assert_eq!(read.content, retried.content);
+            }
+        }
     }
 
     #[test]
