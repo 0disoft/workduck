@@ -7543,7 +7543,22 @@
     },
     {
       "blocks": [],
-      "contentHash": "02cec3868ee1a968da817c6b7d558b8b55b9c507491e64fdbfb3c8cff1017353",
+      "contentHash": "98142170639ea64019422e35e5b136a751c606430cc07fb0da4392294c9443d5",
+      "declarations": [],
+      "imports": [
+        "#lib/tauri/tauri-invoke.ts",
+        "./environment-vault-storage",
+        "./secret-vault-crypto",
+        "node:assert/strict",
+        "node:test"
+      ],
+      "path": "src/lib/environment/environment-vault-storage.test.ts",
+      "semanticBytes": 0,
+      "sourceBytes": 5113
+    },
+    {
+      "blocks": [],
+      "contentHash": "846bd6bf891cc16e89338a16acc212bfb7535907cac097311388ba3060d0877f",
       "declarations": [],
       "imports": [
         "#lib/shared/object-record.ts",
@@ -7552,7 +7567,7 @@
       ],
       "path": "src/lib/environment/environment-vault-storage.ts",
       "semanticBytes": 0,
-      "sourceBytes": 8706
+      "sourceBytes": 8815
     },
     {
       "blocks": [],

@@ -254,24 +254,23 @@ function readStorageRecord(): EnvironmentVaultStorageRecord {
 		return createEmptyStorageRecord();
 	}
 
-	try {
-		const value: unknown = JSON.parse(serializedStorage);
-
-		if (!isObjectRecord(value) || value.version !== 1 || !isObjectRecord(value.vaults)) {
-			return createEmptyStorageRecord();
-		}
-
-		return {
-			version: 1,
-			vaults: Object.fromEntries(
-				Object.entries(value.vaults).flatMap(([workspaceId, envelope]) =>
-					isSecretVaultEnvelope(envelope) ? [[workspaceId, envelope]] : []
-				)
-			)
-		};
-	} catch {
-		return createEmptyStorageRecord();
+	const value: unknown = JSON.parse(serializedStorage);
+	if (!isObjectRecord(value) || value.version !== 1 || !isObjectRecord(value.vaults)) {
+		throw new Error('environment-vault-storage-read-failed');
 	}
+
+	// Reject the whole record so a later save cannot discard unreadable vaults.
+	return {
+		version: 1,
+		vaults: Object.fromEntries(
+			Object.entries(value.vaults).map(([workspaceId, envelope]) => {
+				if (!isSecretVaultEnvelope(envelope)) {
+					throw new Error('environment-vault-storage-read-failed');
+				}
+				return [workspaceId, envelope];
+			})
+		)
+	};
 }
 
 function writeStorageRecord(record: EnvironmentVaultStorageRecord) {
