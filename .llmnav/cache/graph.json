@@ -1214,7 +1214,7 @@
         "visibility": null
       },
       "repositoryId": "workduck",
-      "role": "Bound shared provider chat HTTP responses before JSON decoding.",
+      "role": "Read bounded provider chat responses and classify transport failures.",
       "semanticId": "workduck.chat-completion.http",
       "unresolved": false
     },
@@ -3257,7 +3257,7 @@
   ],
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "b1698c60392d1887796cb286c7b74c14575e7832d1475365d94abb0b5e80a886",
+  "sourceHash": "658ee222ecfc545478a29bb557a0e5dcb1a1cf0250526cc2125ee62442d7889b",
   "stats": {
     "edgeCount": 64,
     "importedIndexCount": 0,

@@ -1,9 +1,9 @@
 // llmnav/1 module
 // id=workduck.chat-completion.http
-// role=Bound shared provider chat HTTP responses before JSON decoding.
+// role=Read bounded provider chat responses and classify transport failures.
 // owns=HTTP client|endpoints|response limits
 // search=chat response limit|provider JSON
-// invariant=Body bytes are bounded before parsing, including chunked transfers.
+// invariant=Body bytes are bounded before parsing; transport failures preserve provider timeout/unavailable categories.
 // stability=contract
 // /llmnav
 use std::{sync::OnceLock, time::Duration};
@@ -88,13 +88,11 @@ pub(crate) async fn send_chat_completion_json(
         request = request.header("X-Title", "Workduck");
     }
 
-    let response = request.json(body).send().await.map_err(|error| {
-        if error.is_timeout() {
-            ChatCompletionError::ProviderTimeout
-        } else {
-            ChatCompletionError::ProviderUnavailable
-        }
-    })?;
+    let response = request
+        .json(body)
+        .send()
+        .await
+        .map_err(map_chat_completion_transport_error)?;
     let status = response.status();
 
     if !status.is_success() {
@@ -120,7 +118,7 @@ async fn read_chat_completion_body(
     while let Some(chunk) = response
         .chunk()
         .await
-        .map_err(|_| ChatCompletionError::ResponseInvalid)?
+        .map_err(map_chat_completion_transport_error)?
     {
         if chunk.len() > CHAT_COMPLETION_RESPONSE_MAX_BYTES - bytes.len() {
             return Err(ChatCompletionError::ResponseInvalid);
@@ -129,6 +127,14 @@ async fn read_chat_completion_body(
     }
 
     serde_json::from_slice(&bytes).map_err(|_| ChatCompletionError::ResponseInvalid)
+}
+
+fn map_chat_completion_transport_error(error: reqwest::Error) -> ChatCompletionError {
+    if error.is_timeout() {
+        ChatCompletionError::ProviderTimeout
+    } else {
+        ChatCompletionError::ProviderUnavailable
+    }
 }
 
 fn extract_chat_completion_content(
@@ -203,6 +209,14 @@ mod tests {
     }
 
     fn request_fixture(response: Vec<u8>) -> Result<String, ChatCompletionError> {
+        request_fixture_configured(response, None, false)
+    }
+
+    fn request_fixture_configured(
+        response: Vec<u8>,
+        timeout: Option<Duration>,
+        disconnect_after_write: bool,
+    ) -> Result<String, ChatCompletionError> {
         let listener = TcpListener::bind("127.0.0.1:0").unwrap();
         listener.set_nonblocking(true).unwrap();
         let endpoint = format!("http://{}/chat/completions", listener.local_addr().unwrap());
@@ -221,7 +235,9 @@ mod tests {
                         read_fixture_request(&mut stream);
                         // Oversized responses may be rejected before this write finishes.
                         let _ = stream.write_all(&response);
-                        let _ = wait_for_release.recv_timeout(Duration::from_secs(5));
+                        if !disconnect_after_write {
+                            let _ = wait_for_release.recv_timeout(Duration::from_secs(5));
+                        }
                         break;
                     }
                     Err(error) if error.kind() == std::io::ErrorKind::WouldBlock => {
@@ -235,7 +251,11 @@ mod tests {
             }
         });
         let result = tauri::async_runtime::block_on(async {
-            let client = reqwest::Client::builder().no_proxy().build().unwrap();
+            let mut builder = reqwest::Client::builder().no_proxy();
+            if let Some(timeout) = timeout {
+                builder = builder.timeout(timeout);
+            }
+            let client = builder.build().unwrap();
             tokio::time::timeout(
                 Duration::from_secs(3),
                 send_chat_completion_json(
@@ -317,6 +337,30 @@ mod tests {
                 b"HTTP/1.1 429 Too Many Requests\r\nContent-Length: 99999999\r\n\r\n".to_vec()
             ),
             Err(ChatCompletionError::RateLimited)
+        );
+    }
+
+    #[test]
+    fn interrupted_body_transfers_remain_provider_unavailable() {
+        for response in [
+            b"HTTP/1.1 200 OK\r\nContent-Length: 100\r\nConnection: close\r\n\r\n{".to_vec(),
+            b"HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\nConnection: close\r\n\r\n1\r\n{\r\n"
+                .to_vec(),
+        ] {
+            assert_eq!(
+                request_fixture_configured(response, None, true),
+                Err(ChatCompletionError::ProviderUnavailable)
+            );
+        }
+    }
+
+    #[test]
+    fn stalled_body_preserves_provider_timeout() {
+        let response =
+            b"HTTP/1.1 200 OK\r\nContent-Length: 100\r\nConnection: close\r\n\r\n{".to_vec();
+        assert_eq!(
+            request_fixture_configured(response, Some(Duration::from_millis(150)), false),
+            Err(ChatCompletionError::ProviderTimeout)
         );
     }
 

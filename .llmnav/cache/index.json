@@ -5334,8 +5334,8 @@
     {
       "boundaries": [],
       "hashes": {
-        "body": "d4ed9cf5fe986723e138f0ed0a7a83f35e108f9ae4985e2044da27b5157c2fed",
-        "semantic": "6bfdf045c8ef7d39271373caef1f05903990130700c25321874a151c2164fa15",
+        "body": "036a1e7dacd4328cc32a6330a581fa5754da3e62fc72aea085515de3ffbb2003",
+        "semantic": "cfc54cf456ba9d3f3559d48a183156eede70cd54b3e2dc96f108d7f718f9378c",
         "structure": "27df1e989f85fbc5f227c3a40b4cfbeb24dc9324ab22137aa4693088c10dc503"
       },
       "id": "workduck.chat-completion.http",
@@ -5347,7 +5347,7 @@
         "tests {\n    use super::*"
       ],
       "invariant": [
-        "Body bytes are bounded before parsing, including chunked transfers."
+        "Body bytes are bounded before parsing; transport failures preserve provider timeout/unavailable categories."
       ],
       "location": {
         "declarationLine": null,
@@ -5367,7 +5367,7 @@
         "endpoints",
         "response limits"
       ],
-      "role": "Bound shared provider chat HTTP responses before JSON decoding.",
+      "role": "Read bounded provider chat responses and classify transport failures.",
       "scope": "module",
       "search": [
         "chat response limit",
@@ -5427,6 +5427,6 @@
   "generatedBy": "llmnav@0.9.7",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "a0fed3f2bef2fcf4ca4fbe2372a77c6ecb58bd474ee755ae29c107b5c2a09cd3",
+  "sourceHash": "d7e2d4610f6a3a370f08122813267238e34cb1efac0ca037697b6e5ef3114546",
   "specVersion": "1"
 }

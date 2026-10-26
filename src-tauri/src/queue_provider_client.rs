@@ -5,7 +5,7 @@ use time::OffsetDateTime;
 
 use crate::{
     chat_completion::{
-        ChatCompletionError, CHAT_COMPLETION_MODEL_MAX_LENGTH, chat_completion_endpoint,
+        CHAT_COMPLETION_MODEL_MAX_LENGTH, ChatCompletionError, chat_completion_endpoint,
         chat_completion_http_client, create_chat_completion_http_client, send_chat_completion_json,
     },
     queue_execution::{
@@ -222,5 +222,28 @@ fn map_chat_completion_error(
             code: "agent-response-invalid",
             message: format!("에이전트 '{agent_name}' 응답을 해석하지 못했습니다."),
         },
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn body_transport_failures_use_retryable_queue_errors() {
+        for error in [
+            ChatCompletionError::ProviderTimeout,
+            ChatCompletionError::ProviderUnavailable,
+        ] {
+            let mapped = map_chat_completion_error(error, "fixture-agent");
+            assert!(is_retryable_agent_error(mapped.code), "{error:?}");
+        }
+        for error in [
+            ChatCompletionError::ResponseInvalid,
+            ChatCompletionError::ResponseEmpty,
+        ] {
+            let mapped = map_chat_completion_error(error, "fixture-agent");
+            assert!(!is_retryable_agent_error(mapped.code), "{error:?}");
+        }
     }
 }

@@ -2037,7 +2037,7 @@
             "excludes": [],
             "id": "workduck.chat-completion.http",
             "invariant": [
-              "Body bytes are bounded before parsing, including chunked transfers."
+              "Body bytes are bounded before parsing; transport failures preserve provider timeout/unavailable categories."
             ],
             "owns": [
               "HTTP client",
@@ -2046,7 +2046,7 @@
             ],
             "rel": [],
             "risk": [],
-            "role": "Bound shared provider chat HTTP responses before JSON decoding.",
+            "role": "Read bounded provider chat responses and classify transport failures.",
             "scope": "module",
             "search": [
               "chat response limit",
@@ -2055,7 +2055,7 @@
             "stability": "contract",
             "unknown": []
           },
-          "end": 331,
+          "end": 377,
           "endLine": 8,
           "entries": [
             {
@@ -2068,7 +2068,7 @@
               "key": "role",
               "line": 3,
               "order": 1,
-              "value": "Bound shared provider chat HTTP responses before JSON decoding."
+              "value": "Read bounded provider chat responses and classify transport failures."
             },
             {
               "key": "owns",
@@ -2086,7 +2086,7 @@
               "key": "invariant",
               "line": 6,
               "order": 4,
-              "value": "Body bytes are bounded before parsing, including chunked transfers."
+              "value": "Body bytes are bounded before parsing; transport failures preserve provider timeout/unavailable categories."
             },
             {
               "key": "stability",
@@ -2099,7 +2099,7 @@
           "indent": "",
           "newline": "\n",
           "prefix": "//",
-          "raw": "// llmnav/1 module\n// id=workduck.chat-completion.http\n// role=Bound shared provider chat HTTP responses before JSON decoding.\n// owns=HTTP client|endpoints|response limits\n// search=chat response limit|provider JSON\n// invariant=Body bytes are bounded before parsing, including chunked transfers.\n// stability=contract\n// /llmnav\n",
+          "raw": "// llmnav/1 module\n// id=workduck.chat-completion.http\n// role=Read bounded provider chat responses and classify transport failures.\n// owns=HTTP client|endpoints|response limits\n// search=chat response limit|provider JSON\n// invariant=Body bytes are bounded before parsing; transport failures preserve provider timeout/unavailable categories.\n// stability=contract\n// /llmnav\n",
           "scope": "module",
           "specVersion": "1",
           "start": 0,
@@ -2108,7 +2108,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "d4ed9cf5fe986723e138f0ed0a7a83f35e108f9ae4985e2044da27b5157c2fed",
+      "contentHash": "036a1e7dacd4328cc32a6330a581fa5754da3e62fc72aea085515de3ffbb2003",
       "declarations": [
         null
       ],
@@ -2120,8 +2120,8 @@
         "tests {\n    use super::*"
       ],
       "path": "src-tauri/src/chat_completion.rs",
-      "semanticBytes": 331,
-      "sourceBytes": 13394
+      "semanticBytes": 377,
+      "sourceBytes": 14925
     },
     {
       "blocks": [
@@ -4942,17 +4942,18 @@
     },
     {
       "blocks": [],
-      "contentHash": "b5e396b003ec111a39823fb161a253a03551f2723b401731ebed681ce954867f",
+      "contentHash": "fc397302d2481eb372ff9e73031871719eb517acf42914e5f701cc627584e477",
       "declarations": [],
       "imports": [
-        "crate::{\n    chat_completion::{\n        ChatCompletionError, CHAT_COMPLETION_MODEL_MAX_LENGTH, chat_completion_endpoint,\n        chat_completion_http_client, create_chat_completion_http_client, send_chat_completion_json,\n    },\n    queue_execution::{\n        AgentExecutionAttempt, AgentExecutionRun, AgentRunFailure, AgentRunOutput,\n        QueueExecutionErrorDetail,\n    },\n    queue_prompt_builder::{create_agent_prompt_plan, create_system_prompt, create_user_prompt},\n    secret_vault_session::resolve_secret_reference_or_value,\n}",
+        "crate::{\n    chat_completion::{\n        CHAT_COMPLETION_MODEL_MAX_LENGTH, ChatCompletionError, chat_completion_endpoint,\n        chat_completion_http_client, create_chat_completion_http_client, send_chat_completion_json,\n    },\n    queue_execution::{\n        AgentExecutionAttempt, AgentExecutionRun, AgentRunFailure, AgentRunOutput,\n        QueueExecutionErrorDetail,\n    },\n    queue_prompt_builder::{create_agent_prompt_plan, create_system_prompt, create_user_prompt},\n    secret_vault_session::resolve_secret_reference_or_value,\n}",
         "serde_json::Value",
         "std::time::Duration",
+        "tests {\n    use super::*",
         "time::OffsetDateTime"
       ],
       "path": "src-tauri/src/queue_provider_client.rs",
       "semanticBytes": 0,
-      "sourceBytes": 8175
+      "sourceBytes": 8893
     },
     {
       "blocks": [

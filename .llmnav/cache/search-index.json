@@ -107,7 +107,7 @@
     "workduck.workspace.sync-git-native",
     "workduck.workspace.unlock"
   ],
-  "cardSetHash": "c645f4408940246123aba6f9ca585ae90657f8f4714ece0cd76ad3a8da6886b9",
+  "cardSetHash": "0fd46205494c8071ac79e3f1db6743b2a3e2b006574d964f3a841a5a6481bab2",
   "documentCount": 106,
   "documents": [
     [
@@ -290,12 +290,12 @@
       ]
     ],
     [
-      "8f733382cccee4ef9f2d17782e5b7084c8163e7a6d1d2966bed47d57e9b5f40f",
+      "e311bc4ef739605a6a9dad936af6e149f188d2b7f804497aaf1982435ed9ab6e",
       [
-        "bound shared provider chat http responses before json decoding.",
+        "read bounded provider chat responses and classify transport failures.",
         "chat response limit",
         "provider json",
-        "body bytes are bounded before parsing, including chunked transfers.",
+        "body bytes are bounded before parsing; transport failures preserve provider timeout/unavailable categories.",
         "http client",
         "endpoints",
         "response limits"
@@ -2857,6 +2857,13 @@
         ]
       ],
       [
+        13,
+        [
+          1,
+          1
+        ]
+      ],
+      [
         14,
         [
           1,
@@ -4915,8 +4922,6 @@
       [
         13,
         [
-          1,
-          1,
           5,
           1
         ]
@@ -5283,13 +5288,6 @@
     ],
     [
       [
-        13,
-        [
-          1,
-          1
-        ]
-      ],
-      [
         27,
         [
           3,
@@ -5421,6 +5419,8 @@
       [
         13,
         [
+          1,
+          1,
           5,
           1
         ]
@@ -6612,6 +6612,15 @@
     ],
     [
       [
+        13,
+        [
+          5,
+          1
+        ]
+      ]
+    ],
+    [
+      [
         49,
         [
           2,
@@ -6892,15 +6901,6 @@
     ],
     [
       [
-        13,
-        [
-          5,
-          1
-        ]
-      ]
-    ],
-    [
-      [
         9,
         [
           4,
@@ -6913,6 +6913,15 @@
         9,
         [
           3,
+          1
+        ]
+      ]
+    ],
+    [
+      [
+        13,
+        [
+          1,
           1
         ]
       ]
@@ -9542,15 +9551,6 @@
         0,
         [
           5,
-          1
-        ]
-      ]
-    ],
-    [
-      [
-        13,
-        [
-          1,
           1
         ]
       ]
@@ -13019,6 +13019,15 @@
     ],
     [
       [
+        13,
+        [
+          1,
+          1,
+          5,
+          1
+        ]
+      ],
+      [
         15,
         [
           5,
@@ -15259,8 +15268,6 @@
         [
           0,
           1,
-          1,
-          1,
           3,
           1
         ]
@@ -15789,13 +15796,6 @@
       ]
     ],
     [
-      [
-        13,
-        [
-          5,
-          1
-        ]
-      ],
       [
         50,
         [
@@ -16917,8 +16917,6 @@
       [
         13,
         [
-          1,
-          1,
           2,
           1
         ]
@@ -24847,6 +24845,13 @@
         10,
         [
           1,
+          1
+        ]
+      ],
+      [
+        13,
+        [
+          5,
           1
         ]
       ],
@@ -26268,6 +26273,8 @@
           1,
           1,
           2,
+          1,
+          5,
           1
         ]
       ],
@@ -26976,6 +26983,13 @@
       ],
       [
         11,
+        [
+          1,
+          1
+        ]
+      ],
+      [
+        13,
         [
           1,
           1
@@ -33563,13 +33577,6 @@
         ]
       ],
       [
-        13,
-        [
-          1,
-          1
-        ]
-      ],
-      [
         20,
         [
           1,
@@ -38837,6 +38844,15 @@
     ],
     [
       [
+        13,
+        [
+          5,
+          1
+        ]
+      ]
+    ],
+    [
+      [
         54,
         [
           5,
@@ -39253,15 +39269,6 @@
     ],
     [
       [
-        13,
-        [
-          5,
-          1
-        ]
-      ]
-    ],
-    [
-      [
         58,
         [
           1,
@@ -39302,6 +39309,15 @@
       ]
     ],
     [
+      [
+        13,
+        [
+          1,
+          1,
+          5,
+          1
+        ]
+      ],
       [
         27,
         [
@@ -39919,6 +39935,13 @@
       ]
     ],
     [
+      [
+        13,
+        [
+          5,
+          1
+        ]
+      ],
       [
         21,
         [
@@ -44317,6 +44340,7 @@
     "case",
     "catalog",
     "catalogs",
+    "categories",
     "change",
     "changed",
     "changes",
@@ -44332,9 +44356,9 @@
     "child",
     "children",
     "choice",
-    "chunked",
     "claims",
     "classification",
+    "classify",
     "clean",
     "cleaned",
     "cleanup",
@@ -44436,7 +44460,6 @@
     "declaration",
     "declared",
     "declares",
-    "decoding",
     "decrypt",
     "decrypted",
     "decryption",
@@ -45285,6 +45308,7 @@
     "threads",
     "through",
     "time",
+    "timeout",
     "timers",
     "timestamp",
     "timestamps",
@@ -45303,7 +45327,6 @@
     "transactionally",
     "transactions",
     "transcript",
-    "transfers",
     "transition",
     "transitioned",
     "transitions",

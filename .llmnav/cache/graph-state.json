@@ -557,7 +557,7 @@
     },
     {
       "edges": [],
-      "inputHash": "df090961057148ae321b79964b40d8b03a4f1261bbc2819016b92b1cfef10af9",
+      "inputHash": "79ff1f0aa6d8e77ed39f411b90e42b038c1b4051b6cab08a503094bfcb391d6e",
       "key": "card:workduck/workduck.chat-completion.http",
       "nodes": [
         {
@@ -578,11 +578,11 @@
             "visibility": null
           },
           "repositoryId": "workduck",
-          "role": "Bound shared provider chat HTTP responses before JSON decoding.",
+          "role": "Read bounded provider chat responses and classify transport failures.",
           "semanticId": "workduck.chat-completion.http"
         }
       ],
-      "outputHash": "8763249a3cc9be2f09cb64ded9687e10aa6ac18c98f73b081a61da1efccc2243"
+      "outputHash": "151527040eff79c0bcd71c2b97eeb2c8d24230a8ecd6064bed062f12ddf0f951"
     },
     {
       "edges": [],
