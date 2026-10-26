@@ -4600,7 +4600,7 @@
             ],
             "id": "workduck.queue.folder-native",
             "invariant": [
-              "Queue list, summary, and read commands never create directories; only known Queue child directories and file suffixes are addressable; artifact writes and deletes share the workspace lock, work order deletes also hold the nonblocking execution lock, work order updates compare the expected snapshot, and creates never overwrite existing artifacts."
+              "Queue list, summary, and read commands never create directories; only known Queue child directories and file suffixes are addressable; artifact writes and deletes share the workspace lock, leaving running state or deleting a work order also holds the nonblocking execution lock, work order updates compare the expected snapshot, and creates never overwrite existing artifacts."
             ],
             "owns": [
               "native Queue file I/O",
@@ -4619,7 +4619,7 @@
             "stability": "architecture",
             "unknown": []
           },
-          "end": 816,
+          "end": 845,
           "endLine": 9,
           "entries": [
             {
@@ -4656,7 +4656,7 @@
               "key": "invariant",
               "line": 7,
               "order": 5,
-              "value": "Queue list, summary, and read commands never create directories; only known Queue child directories and file suffixes are addressable; artifact writes and deletes share the workspace lock, work order deletes also hold the nonblocking execution lock, work order updates compare the expected snapshot, and creates never overwrite existing artifacts."
+              "value": "Queue list, summary, and read commands never create directories; only known Queue child directories and file suffixes are addressable; artifact writes and deletes share the workspace lock, leaving running state or deleting a work order also holds the nonblocking execution lock, work order updates compare the expected snapshot, and creates never overwrite existing artifacts."
             },
             {
               "key": "stability",
@@ -4669,7 +4669,7 @@
           "indent": "",
           "newline": "\n",
           "prefix": "//",
-          "raw": "// llmnav/1 module\n// id=workduck.queue.folder-native\n// role=Enforce native Queue directory, path, size, count, exclusive-write, update, delete, and evaluation-delegation constraints.\n// owns=native Queue file I/O|Queue path containment|Queue file capacity\n// excludes=Queue response contracts|evaluation delegation policy|agent execution\n// search=native Queue files|Queue path validation|exclusive work order write\n// invariant=Queue list, summary, and read commands never create directories; only known Queue child directories and file suffixes are addressable; artifact writes and deletes share the workspace lock, work order deletes also hold the nonblocking execution lock, work order updates compare the expected snapshot, and creates never overwrite existing artifacts.\n// stability=architecture\n// /llmnav\n",
+          "raw": "// llmnav/1 module\n// id=workduck.queue.folder-native\n// role=Enforce native Queue directory, path, size, count, exclusive-write, update, delete, and evaluation-delegation constraints.\n// owns=native Queue file I/O|Queue path containment|Queue file capacity\n// excludes=Queue response contracts|evaluation delegation policy|agent execution\n// search=native Queue files|Queue path validation|exclusive work order write\n// invariant=Queue list, summary, and read commands never create directories; only known Queue child directories and file suffixes are addressable; artifact writes and deletes share the workspace lock, leaving running state or deleting a work order also holds the nonblocking execution lock, work order updates compare the expected snapshot, and creates never overwrite existing artifacts.\n// stability=architecture\n// /llmnav\n",
           "scope": "module",
           "specVersion": "1",
           "start": 0,
@@ -4678,7 +4678,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "931f8195dfa21b72cb791a8c64ad650ab725a7024800eb5fac3249e647e01ac4",
+      "contentHash": "30f9f613d84ba8c1be86ed7dee6c4afc06fde14cc6cbdaa8e07eeed06bd4d6e7",
       "declarations": [
         null
       ],
@@ -4697,8 +4697,8 @@
         "tests {\n    use super::*"
       ],
       "path": "src-tauri/src/queue_folder.rs",
-      "semanticBytes": 816,
-      "sourceBytes": 41625
+      "semanticBytes": 845,
+      "sourceBytes": 42431
     },
     {
       "blocks": [
@@ -5068,7 +5068,7 @@
     },
     {
       "blocks": [],
-      "contentHash": "b19b9b8784de7ad6d7b03c89cd423999079befdae0a044b6af43975a75c75153",
+      "contentHash": "ac51372f135865dbda4cc4f40668b064fbf7184da602c5c8bd31b1f3df300020",
       "declarations": [],
       "imports": [
         "crate::atomic_file_write::write_file_atomically",
@@ -5081,7 +5081,7 @@
       ],
       "path": "src-tauri/src/queue_work_order_execution.rs",
       "semanticBytes": 0,
-      "sourceBytes": 35865
+      "sourceBytes": 38426
     },
     {
       "blocks": [

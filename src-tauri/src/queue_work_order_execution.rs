@@ -581,6 +581,70 @@ mod tests {
     }
 
     #[test]
+    fn stale_recovery_preserves_a_live_cli_execution_outside_the_app_registry() {
+        let fixture = WorkOrderFixture::new("active");
+        let execution = begin_queue_work_order_execution_at(
+            fixture.workspace.path(),
+            &fixture.work_order_path,
+            "wo_test",
+        )
+        .expect("CLI-style execution owns only the durable lock");
+        let workspace_path = fs::canonicalize(fixture.workspace.path()).unwrap();
+        let running_ids = crate::queue_execution_registry::running_queue_work_order_ids(
+            &workspace_path,
+            &["wo_test".into()],
+        )
+        .expect("app-local execution lookup");
+        assert!(
+            running_ids.is_empty(),
+            "CLI execution is absent from the app-local registry"
+        );
+        let before = fs::read_to_string(&fixture.work_order_path).unwrap();
+        let mut failed = execution.work_order().clone();
+        failed.status = "failed".into();
+        let result = serde_json::to_value(crate::queue_folder::update_queue_work_order_file(
+            fixture.workspace.path().to_string_lossy().into_owned(),
+            "work-orders/test.workduck-work-order.json".into(),
+            pretty_json(&failed).unwrap(),
+            before.clone(),
+        ))
+        .unwrap();
+
+        assert_eq!(
+            result["ok"], false,
+            "automatic recovery must not overwrite a live CLI run"
+        );
+        assert_eq!(result["error"], "queue-folder-file-write-failed");
+        assert_eq!(
+            fs::read_to_string(&fixture.work_order_path).unwrap(),
+            before
+        );
+        execution
+            .fail()
+            .expect("the execution owner can still finalize its own snapshot");
+    }
+
+    #[test]
+    fn stale_recovery_can_update_a_running_snapshot_without_a_live_execution_lock() {
+        let fixture = WorkOrderFixture::new("running");
+        let before = fs::read_to_string(&fixture.work_order_path).unwrap();
+        let mut failed = fixture.read();
+        failed.status = "failed".into();
+        let result = serde_json::to_value(crate::queue_folder::update_queue_work_order_file(
+            fixture.workspace.path().to_string_lossy().into_owned(),
+            "work-orders/test.workduck-work-order.json".into(),
+            pretty_json(&failed).unwrap(),
+            before,
+        ))
+        .unwrap();
+        assert_eq!(
+            result["ok"], true,
+            "interrupted runs must remain recoverable"
+        );
+        assert_eq!(fixture.read().status, "failed");
+    }
+
+    #[test]
     fn canonical_work_order_parent_must_remain_inside_workspace() {
         let workspace = tempfile::tempdir().expect("workspace");
         let external = tempfile::tempdir().expect("external directory");

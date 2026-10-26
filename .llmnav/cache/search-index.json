@@ -106,7 +106,7 @@
     "workduck.workspace.sync-git-native",
     "workduck.workspace.unlock"
   ],
-  "cardSetHash": "5c67e0ad7f9d50d27c7a294ff46783f42288e750c1c95ec57bd9fca0bfb6a900",
+  "cardSetHash": "05e113a2100466b847cfff8225e04bbf22789ba4475e033eb2ec28ee84e12cd5",
   "documentCount": 105,
   "documents": [
     [
@@ -1021,13 +1021,13 @@
       ]
     ],
     [
-      "a3168914c69b4d19b2682a3ce5fef21d97146e3b2832b19cafd0da8682e0bc38",
+      "c9b1ac86cf3b3203c012d576a0994b46ce9730e4259bfff92b0f3eb380385d5c",
       [
         "enforce native queue directory, path, size, count, exclusive-write, update, delete, and evaluation-delegation constraints.",
         "native queue files",
         "queue path validation",
         "exclusive work order write",
-        "queue list, summary, and read commands never create directories; only known queue child directories and file suffixes are addressable; artifact writes and deletes share the workspace lock, work order deletes also hold the nonblocking execution lock, work order updates compare the expected snapshot, and creates never overwrite existing artifacts.",
+        "queue list, summary, and read commands never create directories; only known queue child directories and file suffixes are addressable; artifact writes and deletes share the workspace lock, leaving running state or deleting a work order also holds the nonblocking execution lock, work order updates compare the expected snapshot, and creates never overwrite existing artifacts.",
         "native queue file i/o",
         "queue path containment",
         "queue file capacity"
@@ -1742,6 +1742,13 @@
         [
           1,
           1,
+          5,
+          1
+        ]
+      ],
+      [
+        67,
+        [
           5,
           1
         ]
@@ -9705,7 +9712,16 @@
         67,
         [
           5,
-          2
+          1
+        ]
+      ]
+    ],
+    [
+      [
+        67,
+        [
+          5,
+          1
         ]
       ]
     ],
@@ -17345,6 +17361,15 @@
     ],
     [
       [
+        67,
+        [
+          5,
+          1
+        ]
+      ]
+    ],
+    [
+      [
         5,
         [
           2,
@@ -22277,6 +22302,13 @@
         64,
         [
           1,
+          1
+        ]
+      ],
+      [
+        67,
+        [
+          5,
           1
         ]
       ],
@@ -31439,6 +31471,13 @@
           3,
           1
         ]
+      ],
+      [
+        67,
+        [
+          5,
+          1
+        ]
       ]
     ],
     [
@@ -35259,6 +35298,13 @@
       ],
       [
         62,
+        [
+          5,
+          1
+        ]
+      ],
+      [
+        67,
         [
           5,
           1
@@ -44158,6 +44204,7 @@
     "delegation",
     "delete",
     "deletes",
+    "deleting",
     "deletion",
     "deletions",
     "dependencies",
@@ -44352,7 +44399,7 @@
     "hierarchy",
     "historical",
     "history",
-    "hold",
+    "holds",
     "honor",
     "hosts",
     "http",
@@ -44436,6 +44483,7 @@
     "lazy",
     "leases",
     "leaves",
+    "leaving",
     "legacy",
     "length",
     "lib",

@@ -4,7 +4,7 @@
 // owns=native Queue file I/O|Queue path containment|Queue file capacity
 // excludes=Queue response contracts|evaluation delegation policy|agent execution
 // search=native Queue files|Queue path validation|exclusive work order write
-// invariant=Queue list, summary, and read commands never create directories; only known Queue child directories and file suffixes are addressable; artifact writes and deletes share the workspace lock, work order deletes also hold the nonblocking execution lock, work order updates compare the expected snapshot, and creates never overwrite existing artifacts.
+// invariant=Queue list, summary, and read commands never create directories; only known Queue child directories and file suffixes are addressable; artifact writes and deletes share the workspace lock, leaving running state or deleting a work order also holds the nonblocking execution lock, work order updates compare the expected snapshot, and creates never overwrite existing artifacts.
 // stability=architecture
 // /llmnav
 use std::{
@@ -290,6 +290,17 @@ pub fn update_queue_work_order_file(
     if expected_content.len() as u64 > QUEUE_FILE_MAX_BYTES {
         return invalid_file_read(QueueFolderError::FileWriteFailed);
     }
+    // App-local inspection cannot identify live CLI executions; guard the write itself.
+    let _execution_lock = if work_order_status(&expected_content).as_deref() == Some("running")
+        && work_order_status(&content).as_deref() != Some("running")
+    {
+        match crate::queue_work_order_execution::acquire_execution_lock(&file_path) {
+            Ok((lock, _)) => Some(lock),
+            Err(_) => return invalid_file_read(QueueFolderError::FileWriteFailed),
+        }
+    } else {
+        None
+    };
     match fs::read_to_string(&file_path) {
         Ok(current) if current == expected_content => {}
         Ok(_) => return invalid_file_read(QueueFolderError::FileChanged),
@@ -412,6 +423,16 @@ pub fn delete_queue_file(workspace_path: String, relative_path: String) -> Queue
         }
         Err(_) => invalid_file_read(QueueFolderError::FileDeleteFailed),
     }
+}
+
+fn work_order_status(content: &str) -> Option<String> {
+    #[derive(serde::Deserialize)]
+    struct WorkOrderStatus {
+        status: String,
+    }
+    serde_json::from_str::<WorkOrderStatus>(content)
+        .ok()
+        .map(|work_order| work_order.status)
 }
 
 fn validate_workspace_root(path: &str) -> Result<PathBuf, QueueFolderError> {
