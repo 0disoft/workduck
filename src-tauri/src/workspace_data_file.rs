@@ -4,11 +4,12 @@
 // owns=workspace data allowlist|registry compare-and-swap|registry transaction recovery
 // excludes=encrypted sync envelope|project registry SQLite storage
 // search=workspace data file|registry revision conflict|recover registry transaction
-// invariant=Editable registries reject stale revisions and generic overwrites, paired updates hold one lock and finish recovery journal cleanup before later edits, and secrets sync first enforces ignore policy.
+// invariant=File reads are bounded before JSON parsing; editable registries reject stale revisions and generic overwrites, paired updates finish journal cleanup under one lock, and secrets sync first enforces ignore policy.
 // stability=contract
 // /llmnav
 use std::{
-    fs, io,
+    fs,
+    io::{self, Read},
     path::{Path, PathBuf},
 };
 
@@ -29,6 +30,8 @@ const REGISTRY_FILE_NAMES: &[&str] = &[
 ];
 const REGISTRY_TRANSACTION_FILE_NAME: &str = ".registry-transaction.json";
 const WORKSPACE_DATA_FILE_MAX_BYTES: u64 = 1_048_576;
+// Two capped strings may each expand sixfold when encoded in the JSON journal.
+const REGISTRY_TRANSACTION_MAX_BYTES: u64 = 12 * WORKSPACE_DATA_FILE_MAX_BYTES + 128;
 const ALLOWED_WORKSPACE_DATA_FILES: &[&str] = &[
     "agents.json",
     "briefs.json",
@@ -141,13 +144,13 @@ pub fn read_workspace_data_file(
             invalid_read(WorkspaceDataFileError::FileTooLarge)
         }
         Ok(metadata) if metadata.is_dir() => invalid_read(WorkspaceDataFileError::FileInvalid),
-        Ok(_) => match fs::read_to_string(&file_path) {
+        Ok(_) => match read_bounded_file(&file_path, WORKSPACE_DATA_FILE_MAX_BYTES) {
             Ok(content) => WorkspaceDataFileReadResponse {
                 ok: true,
-                content: Some(content),
+                content,
                 error: None,
             },
-            Err(_) => invalid_read(WorkspaceDataFileError::FileReadFailed),
+            Err(error) => invalid_read(error),
         },
         Err(error) if error.kind() == io::ErrorKind::NotFound => WorkspaceDataFileReadResponse {
             ok: true,
@@ -415,11 +418,10 @@ pub fn recover_workspace_registry_transaction_under_lock(
     workspace_root: &Path,
 ) -> Result<(), WorkspaceDataFileError> {
     let transaction_path = resolve_registry_transaction_path(workspace_root, false)?;
-    let transaction = match fs::read_to_string(&transaction_path) {
-        Ok(content) => serde_json::from_str::<WorkspaceRegistryTransaction>(&content)
+    let transaction = match read_bounded_file(&transaction_path, REGISTRY_TRANSACTION_MAX_BYTES)? {
+        Some(content) => serde_json::from_str::<WorkspaceRegistryTransaction>(&content)
             .map_err(|_| WorkspaceDataFileError::FileInvalid)?,
-        Err(error) if error.kind() == io::ErrorKind::NotFound => return Ok(()),
-        Err(_) => return Err(WorkspaceDataFileError::FileReadFailed),
+        None => return Ok(()),
     };
     if transaction.agents_content.len() as u64 > WORKSPACE_DATA_FILE_MAX_BYTES
         || transaction.personas_content.len() as u64 > WORKSPACE_DATA_FILE_MAX_BYTES
@@ -469,8 +471,8 @@ fn resolve_registry_transaction_path(
 }
 
 fn read_registry_revision(file_path: &Path) -> Result<u64, WorkspaceDataFileError> {
-    match fs::read_to_string(file_path) {
-        Ok(content) => {
+    match read_bounded_file(file_path, WORKSPACE_DATA_FILE_MAX_BYTES)? {
+        Some(content) => {
             let value: serde_json::Value =
                 serde_json::from_str(&content).map_err(|_| WorkspaceDataFileError::FileInvalid)?;
             if !value.is_object() {
@@ -482,9 +484,41 @@ fn read_registry_revision(file_path: &Path) -> Result<u64, WorkspaceDataFileErro
                 .transpose()
                 .map(|revision| revision.unwrap_or(0))
         }
-        Err(error) if error.kind() == io::ErrorKind::NotFound => Ok(0),
-        Err(_) => Err(WorkspaceDataFileError::FileReadFailed),
+        None => Ok(0),
     }
+}
+
+fn read_bounded_file(
+    path: &Path,
+    max_bytes: u64,
+) -> Result<Option<String>, WorkspaceDataFileError> {
+    let file = match fs::File::open(path) {
+        Ok(file) => file,
+        Err(error) if error.kind() == io::ErrorKind::NotFound => return Ok(None),
+        Err(_) => return Err(WorkspaceDataFileError::FileReadFailed),
+    };
+    let metadata = file
+        .metadata()
+        .map_err(|_| WorkspaceDataFileError::FileReadFailed)?;
+    if metadata.len() > max_bytes {
+        return Err(WorkspaceDataFileError::FileTooLarge);
+    }
+    read_bounded_content(file, max_bytes).map(Some)
+}
+
+fn read_bounded_content(
+    reader: impl Read,
+    max_bytes: u64,
+) -> Result<String, WorkspaceDataFileError> {
+    let mut content = Vec::new();
+    reader
+        .take(max_bytes + 1)
+        .read_to_end(&mut content)
+        .map_err(|_| WorkspaceDataFileError::FileReadFailed)?;
+    if content.len() as u64 > max_bytes {
+        return Err(WorkspaceDataFileError::FileTooLarge);
+    }
+    String::from_utf8(content).map_err(|_| WorkspaceDataFileError::FileReadFailed)
 }
 
 fn map_atomic_write_error(error: AtomicFileWriteError) -> WorkspaceDataFileError {
@@ -690,6 +724,121 @@ mod tests {
 
         assert!(!result.ok);
         assert_eq!(result.error, Some(WorkspaceDataFileError::FileInvalid));
+    }
+
+    #[test]
+    fn oversized_current_registries_are_rejected_without_overwriting_them() {
+        for file_name in REGISTRY_FILE_NAMES {
+            let workspace = tempfile::tempdir().unwrap();
+            let root = workspace.path().join(WORKDUCK_DIRECTORY_NAME);
+            fs::create_dir(&root).unwrap();
+            let file_path = root.join(file_name);
+            let original = format!(
+                r#"{{"revision":0,"padding":"{}"}}"#,
+                "x".repeat(WORKSPACE_DATA_FILE_MAX_BYTES as usize),
+            );
+            fs::write(&file_path, &original).unwrap();
+
+            let result = write_workspace_registry_file(
+                workspace.path().to_string_lossy().into_owned(),
+                (*file_name).into(),
+                0,
+                r#"{"revision":0}"#.into(),
+            );
+
+            assert_eq!(result.error, Some(WorkspaceDataFileError::FileTooLarge));
+            assert_eq!(fs::read_to_string(&file_path).unwrap(), original);
+            if matches!(*file_name, "agents.json" | "personas.json") {
+                let pair = write_workspace_registry_pair(
+                    workspace.path().to_string_lossy().into_owned(),
+                    0,
+                    r#"{"revision":0}"#.into(),
+                    0,
+                    r#"{"revision":0}"#.into(),
+                );
+                assert_eq!(pair.error, Some(WorkspaceDataFileError::FileTooLarge));
+                assert_eq!(fs::read_to_string(&file_path).unwrap(), original);
+            }
+        }
+    }
+
+    #[test]
+    fn bounded_registry_reads_accept_utf8_at_the_exact_byte_limit() {
+        let workspace = tempfile::tempdir().unwrap();
+        let root = workspace.path().join(WORKDUCK_DIRECTORY_NAME);
+        fs::create_dir(&root).unwrap();
+        let prefix = "{\"revision\":7,\"padding\":\"";
+        let suffix = "\"}";
+        let budget = WORKSPACE_DATA_FILE_MAX_BYTES as usize - prefix.len() - suffix.len();
+        let content = format!(
+            "{prefix}{}{suffix}",
+            "가".repeat(budget / 3) + &"x".repeat(budget % 3)
+        );
+        let file_path = root.join("agents.json");
+        fs::write(&file_path, &content).unwrap();
+
+        assert_eq!(content.len() as u64, WORKSPACE_DATA_FILE_MAX_BYTES);
+        assert_eq!(read_registry_revision(&file_path), Ok(7));
+        let read = read_workspace_data_file(
+            workspace.path().to_string_lossy().into_owned(),
+            "agents.json".into(),
+        );
+        assert_eq!(read.content.as_deref(), Some(content.as_str()));
+    }
+
+    #[test]
+    fn growing_input_stops_after_the_limit_plus_one_byte() {
+        let mut source = io::repeat(b'x').take(WORKSPACE_DATA_FILE_MAX_BYTES * 2);
+        assert_eq!(
+            read_bounded_content(&mut source, WORKSPACE_DATA_FILE_MAX_BYTES),
+            Err(WorkspaceDataFileError::FileTooLarge),
+        );
+        assert_eq!(source.limit(), WORKSPACE_DATA_FILE_MAX_BYTES - 1);
+        assert_eq!(
+            read_bounded_content(io::Cursor::new([0xff]), WORKSPACE_DATA_FILE_MAX_BYTES),
+            Err(WorkspaceDataFileError::FileReadFailed),
+        );
+    }
+
+    #[test]
+    fn oversized_recovery_journal_is_rejected_before_parsing_or_writing() {
+        let workspace = tempfile::tempdir().unwrap();
+        let workspace_root = fs::canonicalize(workspace.path()).unwrap();
+        let root = workspace.path().join(WORKDUCK_DIRECTORY_NAME);
+        fs::create_dir(&root).unwrap();
+        let journal_path = root.join(REGISTRY_TRANSACTION_FILE_NAME);
+        fs::File::create(&journal_path)
+            .unwrap()
+            .set_len(REGISTRY_TRANSACTION_MAX_BYTES + 1)
+            .unwrap();
+        let original = r#"{"revision":5}"#;
+        fs::write(root.join("agents.json"), original).unwrap();
+        fs::write(root.join("personas.json"), original).unwrap();
+
+        assert_eq!(
+            recover_workspace_registry_transaction_under_lock(&workspace_root),
+            Err(WorkspaceDataFileError::FileTooLarge),
+        );
+        for file_name in ["agents.json", "personas.json"] {
+            assert_eq!(fs::read_to_string(root.join(file_name)).unwrap(), original);
+        }
+        assert!(journal_path.exists());
+    }
+
+    #[test]
+    fn journal_read_limit_allows_worst_case_json_escaping_for_both_strings() {
+        let original = "\u{1}".repeat(WORKSPACE_DATA_FILE_MAX_BYTES as usize);
+        let encoded = serde_json::to_vec(&WorkspaceRegistryTransaction {
+            agents_content: original.clone(),
+            personas_content: original.clone(),
+        })
+        .unwrap();
+        assert!(encoded.len() as u64 <= REGISTRY_TRANSACTION_MAX_BYTES);
+        let read =
+            read_bounded_content(io::Cursor::new(encoded), REGISTRY_TRANSACTION_MAX_BYTES).unwrap();
+        let decoded: WorkspaceRegistryTransaction = serde_json::from_str(&read).unwrap();
+        assert_eq!(decoded.agents_content, original);
+        assert_eq!(decoded.personas_content, original);
     }
 
     #[test]

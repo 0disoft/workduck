@@ -1754,9 +1754,9 @@
         "project registry SQLite storage"
       ],
       "hashes": {
-        "body": "0d7b17669988b81afe7e6d414b725b7f70802b316312a05ae5264aa14684a62b",
-        "semantic": "8548903ae0c6de8687b3430240f8499b28eb364234dc3c54c02853a602a92d4c",
-        "structure": "4c059b9fdde563d3aa8d4827d7e8fc87db99554fb30559f49b76deb0084b3780"
+        "body": "be42a80e347555a679f8a493fcd86e88872ed1165ac62ad4971c9fdfd64ee26e",
+        "semantic": "19956f1d0fe3effa0b1dcc409f8f34c5cdd04cb86abf9f0a901e86870e34dc09",
+        "structure": "76147f19158d425ca00718486de5c1e10f6147499efcd9374685496498033a28"
       },
       "id": "workduck.workspace.data-files",
       "imports": [
@@ -1765,11 +1765,11 @@
         "crate::workspace_registry_lock::acquire_workspace_registry_lock",
         "crate::workspace_repository_gitignore::ensure_secrets_sync_gitignore_policy",
         "std::os::windows::fs::OpenOptionsExt",
-        "std::{\n    fs, io,\n    path::{Path, PathBuf},\n}",
+        "std::{\n    fs,\n    io::{self, Read},\n    path::{Path, PathBuf},\n}",
         "tests {\n    use super::*"
       ],
       "invariant": [
-        "Editable registries reject stale revisions and generic overwrites, paired updates hold one lock and finish recovery journal cleanup before later edits, and secrets sync first enforces ignore policy."
+        "File reads are bounded before JSON parsing; editable registries reject stale revisions and generic overwrites, paired updates finish journal cleanup under one lock, and secrets sync first enforces ignore policy."
       ],
       "location": {
         "declarationLine": null,
@@ -5388,6 +5388,6 @@
   "generatedBy": "llmnav@0.9.7",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "7056d55021675c43c5fa237d9ba3fbbe3ca8e3abc1135bed5a0b4c483371dd70",
+  "sourceHash": "7a1df85c315387034236e628c8d7e084c49d5770be6830edef223ac7999315b3",
   "specVersion": "1"
 }

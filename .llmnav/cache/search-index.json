@@ -106,7 +106,7 @@
     "workduck.workspace.sync-git-native",
     "workduck.workspace.unlock"
   ],
-  "cardSetHash": "8612716cf4aa37ebc6bc1717d026c552ebcf2831dc20873794bd9bbb047feda6",
+  "cardSetHash": "33573ebbeca66b9dcc3203d5642a95503f40e42d5222e70fd9f5c6daa1ace976",
   "documentCount": 105,
   "documents": [
     [
@@ -1319,13 +1319,13 @@
       ]
     ],
     [
-      "1675755df6dd6da49da6fdac101cdb96a1879e516f15f6e545d7e6ceb317deea",
+      "c2b3f5b772fa70ec8813f684fd58fa43c9d4723f01b14de509dd5b94d0964977",
       [
         "read and atomically update allowlisted workspace data files with registry revision checks, paired commits, and crash recovery.",
         "workspace data file",
         "registry revision conflict",
         "recover registry transaction",
-        "editable registries reject stale revisions and generic overwrites, paired updates hold one lock and finish recovery journal cleanup before later edits, and secrets sync first enforces ignore policy.",
+        "file reads are bounded before json parsing; editable registries reject stale revisions and generic overwrites, paired updates finish journal cleanup under one lock, and secrets sync first enforces ignore policy.",
         "workspace data allowlist",
         "registry compare-and-swap",
         "registry transaction recovery"
@@ -3476,7 +3476,7 @@
           3,
           1,
           5,
-          3
+          2
         ]
       ],
       [
@@ -4014,6 +4014,13 @@
       ],
       [
         87,
+        [
+          5,
+          1
+        ]
+      ],
+      [
+        89,
         [
           5,
           1
@@ -5484,6 +5491,13 @@
           1,
           1,
           3,
+          1
+        ]
+      ],
+      [
+        89,
+        [
+          5,
           1
         ]
       ],
@@ -10939,13 +10953,6 @@
         ]
       ],
       [
-        89,
-        [
-          5,
-          1
-        ]
-      ],
-      [
         95,
         [
           5,
@@ -13200,6 +13207,8 @@
         [
           2,
           1,
+          5,
+          1,
           9,
           1
         ]
@@ -15053,15 +15062,6 @@
     ],
     [
       [
-        89,
-        [
-          5,
-          1
-        ]
-      ]
-    ],
-    [
-      [
         60,
         [
           5,
@@ -16795,6 +16795,13 @@
           1,
           1
         ]
+      ],
+      [
+        89,
+        [
+          5,
+          1
+        ]
       ]
     ],
     [
@@ -17052,13 +17059,6 @@
       ]
     ],
     [
-      [
-        89,
-        [
-          5,
-          1
-        ]
-      ],
       [
         95,
         [
@@ -23306,6 +23306,13 @@
         [
           3,
           2
+        ]
+      ],
+      [
+        89,
+        [
+          5,
+          1
         ]
       ]
     ],
@@ -27040,6 +27047,13 @@
         ]
       ],
       [
+        89,
+        [
+          5,
+          1
+        ]
+      ],
+      [
         90,
         [
           1,
@@ -27486,8 +27500,6 @@
           1,
           1,
           3,
-          1,
-          5,
           1
         ]
       ],
@@ -39620,6 +39632,13 @@
         15,
         [
           1,
+          1
+        ]
+      ],
+      [
+        89,
+        [
+          5,
           1
         ]
       ],
@@ -44214,7 +44233,6 @@
     "hierarchy",
     "historical",
     "history",
-    "hold",
     "honor",
     "hosts",
     "http",

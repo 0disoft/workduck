@@ -5598,7 +5598,7 @@
             ],
             "id": "workduck.workspace.data-files",
             "invariant": [
-              "Editable registries reject stale revisions and generic overwrites, paired updates hold one lock and finish recovery journal cleanup before later edits, and secrets sync first enforces ignore policy."
+              "File reads are bounded before JSON parsing; editable registries reject stale revisions and generic overwrites, paired updates finish journal cleanup under one lock, and secrets sync first enforces ignore policy."
             ],
             "owns": [
               "workspace data allowlist",
@@ -5617,7 +5617,7 @@
             "stability": "contract",
             "unknown": []
           },
-          "end": 678,
+          "end": 691,
           "endLine": 9,
           "entries": [
             {
@@ -5654,7 +5654,7 @@
               "key": "invariant",
               "line": 7,
               "order": 5,
-              "value": "Editable registries reject stale revisions and generic overwrites, paired updates hold one lock and finish recovery journal cleanup before later edits, and secrets sync first enforces ignore policy."
+              "value": "File reads are bounded before JSON parsing; editable registries reject stale revisions and generic overwrites, paired updates finish journal cleanup under one lock, and secrets sync first enforces ignore policy."
             },
             {
               "key": "stability",
@@ -5667,7 +5667,7 @@
           "indent": "",
           "newline": "\n",
           "prefix": "//",
-          "raw": "// llmnav/1 module\n// id=workduck.workspace.data-files\n// role=Read and atomically update allowlisted workspace data files with registry revision checks, paired commits, and crash recovery.\n// owns=workspace data allowlist|registry compare-and-swap|registry transaction recovery\n// excludes=encrypted sync envelope|project registry SQLite storage\n// search=workspace data file|registry revision conflict|recover registry transaction\n// invariant=Editable registries reject stale revisions and generic overwrites, paired updates hold one lock and finish recovery journal cleanup before later edits, and secrets sync first enforces ignore policy.\n// stability=contract\n// /llmnav\n",
+          "raw": "// llmnav/1 module\n// id=workduck.workspace.data-files\n// role=Read and atomically update allowlisted workspace data files with registry revision checks, paired commits, and crash recovery.\n// owns=workspace data allowlist|registry compare-and-swap|registry transaction recovery\n// excludes=encrypted sync envelope|project registry SQLite storage\n// search=workspace data file|registry revision conflict|recover registry transaction\n// invariant=File reads are bounded before JSON parsing; editable registries reject stale revisions and generic overwrites, paired updates finish journal cleanup under one lock, and secrets sync first enforces ignore policy.\n// stability=contract\n// /llmnav\n",
           "scope": "module",
           "specVersion": "1",
           "start": 0,
@@ -5676,7 +5676,7 @@
           "syntaxErrors": []
         }
       ],
-      "contentHash": "0d7b17669988b81afe7e6d414b725b7f70802b316312a05ae5264aa14684a62b",
+      "contentHash": "be42a80e347555a679f8a493fcd86e88872ed1165ac62ad4971c9fdfd64ee26e",
       "declarations": [
         null
       ],
@@ -5686,12 +5686,12 @@
         "crate::workspace_registry_lock::acquire_workspace_registry_lock",
         "crate::workspace_repository_gitignore::ensure_secrets_sync_gitignore_policy",
         "std::os::windows::fs::OpenOptionsExt",
-        "std::{\n    fs, io,\n    path::{Path, PathBuf},\n}",
+        "std::{\n    fs,\n    io::{self, Read},\n    path::{Path, PathBuf},\n}",
         "tests {\n    use super::*"
       ],
       "path": "src-tauri/src/workspace_data_file.rs",
-      "semanticBytes": 678,
-      "sourceBytes": 35500
+      "semanticBytes": 691,
+      "sourceBytes": 41578
     },
     {
       "blocks": [],
