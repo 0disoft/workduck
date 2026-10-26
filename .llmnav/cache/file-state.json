@@ -1595,7 +1595,7 @@
     },
     {
       "blocks": [],
-      "contentHash": "31cbcb8623d3e7082c830981e9666c3db5f4de1be51bcd96a3d80eb8d2f9517c",
+      "contentHash": "2422c80a63056379d52ae5552fabac83f6df0c1cb81db42028811e87e7af8c5e",
       "declarations": [],
       "imports": [
         "argon2::{Algorithm, Argon2, Params, Version}",
@@ -1603,7 +1603,7 @@
       ],
       "path": "src-tauri/src/argon2_kdf.rs",
       "semanticBytes": 0,
-      "sourceBytes": 1916
+      "sourceBytes": 2079
     },
     {
       "blocks": [
@@ -5694,16 +5694,87 @@
       "sourceBytes": 41578
     },
     {
-      "blocks": [],
-      "contentHash": "a6aaffe89bf1380b88fddb3eb837602747d07d5d6746280489a127f2c9297ae6",
-      "declarations": [],
+      "blocks": [
+        {
+          "card": {
+            "effect": [],
+            "excludes": [],
+            "id": "workduck.workspace.password-native",
+            "invariant": [
+              "PHC costs pass shared Argon2 bounds before hashing; accepted algorithms and versions stay intact."
+            ],
+            "owns": [
+              "salted password hashes",
+              "PHC cost limits",
+              "verification errors"
+            ],
+            "rel": [],
+            "risk": [],
+            "role": "Bound Argon2 costs before native workspace password verification.",
+            "scope": "module",
+            "search": [],
+            "stability": "contract",
+            "unknown": []
+          },
+          "end": 345,
+          "endLine": 7,
+          "entries": [
+            {
+              "key": "id",
+              "line": 2,
+              "order": 0,
+              "value": "workduck.workspace.password-native"
+            },
+            {
+              "key": "role",
+              "line": 3,
+              "order": 1,
+              "value": "Bound Argon2 costs before native workspace password verification."
+            },
+            {
+              "key": "owns",
+              "line": 4,
+              "order": 2,
+              "value": "salted password hashes|PHC cost limits|verification errors"
+            },
+            {
+              "key": "invariant",
+              "line": 5,
+              "order": 3,
+              "value": "PHC costs pass shared Argon2 bounds before hashing; accepted algorithms and versions stay intact."
+            },
+            {
+              "key": "stability",
+              "line": 6,
+              "order": 4,
+              "value": "contract"
+            }
+          ],
+          "filePath": "src-tauri/src/workspace_password.rs",
+          "indent": "",
+          "newline": "\n",
+          "prefix": "//",
+          "raw": "// llmnav/1 module\n// id=workduck.workspace.password-native\n// role=Bound Argon2 costs before native workspace password verification.\n// owns=salted password hashes|PHC cost limits|verification errors\n// invariant=PHC costs pass shared Argon2 bounds before hashing; accepted algorithms and versions stay intact.\n// stability=contract\n// /llmnav\n",
+          "scope": "module",
+          "specVersion": "1",
+          "start": 0,
+          "startLine": 1,
+          "style": "line",
+          "syntaxErrors": []
+        }
+      ],
+      "contentHash": "c1c8fb8e8e6b48da6b14c8e2cc4e2d76521863494361ac98c3fa767f8787c93c",
+      "declarations": [
+        null
+      ],
       "imports": [
-        "argon2::{Argon2, PasswordHash, PasswordHasher, PasswordVerifier}",
+        "argon2::{Argon2, Params, PasswordHash, PasswordHasher, PasswordVerifier}",
+        "crate::argon2_kdf::resource_costs_are_supported",
         "tests {\n    use super::*"
       ],
       "path": "src-tauri/src/workspace_password.rs",
-      "semanticBytes": 0,
-      "sourceBytes": 4545
+      "semanticBytes": 345,
+      "sourceBytes": 6919
     },
     {
       "blocks": [

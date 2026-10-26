@@ -1,4 +1,13 @@
-use argon2::{Argon2, PasswordHash, PasswordHasher, PasswordVerifier};
+// llmnav/1 module
+// id=workduck.workspace.password-native
+// role=Bound Argon2 costs before native workspace password verification.
+// owns=salted password hashes|PHC cost limits|verification errors
+// invariant=PHC costs pass shared Argon2 bounds before hashing; accepted algorithms and versions stay intact.
+// stability=contract
+// /llmnav
+use argon2::{Argon2, Params, PasswordHash, PasswordHasher, PasswordVerifier};
+
+use crate::argon2_kdf::resource_costs_are_supported;
 
 #[derive(serde::Serialize)]
 pub enum WorkspacePasswordError {
@@ -61,7 +70,7 @@ pub fn verify_workspace_password(
         return invalid_verification(WorkspacePasswordError::Required);
     }
 
-    let parsed_hash = match PasswordHash::new(&password_hash) {
+    let parsed_hash = match parse_supported_workspace_password_hash(&password_hash) {
         Ok(parsed_hash) => parsed_hash,
         Err(_) => return invalid_verification(WorkspacePasswordError::InvalidHash),
     };
@@ -75,6 +84,20 @@ pub fn verify_workspace_password(
         ),
         error: None,
     }
+}
+
+fn parse_supported_workspace_password_hash(
+    password_hash: &str,
+) -> Result<PasswordHash, WorkspacePasswordError> {
+    let parsed_hash =
+        PasswordHash::new(password_hash).map_err(|_| WorkspacePasswordError::InvalidHash)?;
+    let params = Params::try_from(&parsed_hash).map_err(|_| WorkspacePasswordError::InvalidHash)?;
+
+    if !resource_costs_are_supported(params.m_cost(), params.t_cost(), params.p_cost()) {
+        return Err(WorkspacePasswordError::InvalidHash);
+    }
+
+    Ok(parsed_hash)
 }
 
 fn invalid_hash(error: WorkspacePasswordError) -> WorkspacePasswordHash {
@@ -131,6 +154,47 @@ mod tests {
             Some(WorkspacePasswordError::Required)
         ));
         let invalid = verify_workspace_password("fixture-password".into(), "invalid".into());
+        assert!(matches!(
+            invalid.error,
+            Some(WorkspacePasswordError::InvalidHash)
+        ));
+    }
+
+    #[test]
+    fn rejects_out_of_policy_hash_costs_before_running_argon2() {
+        for parameters in [
+            "m=262145,t=2,p=1",
+            "m=19456,t=9,p=1",
+            "m=19456,t=2,p=5",
+            "m=4294967295,t=2,p=1",
+            "m=19456,t=4294967295,p=1",
+        ] {
+            let hash = LEGACY_HASH.replace("m=19456,t=2,p=1", parameters);
+            // Parse and admit only: never allocate attacker-requested KDF memory.
+            assert!(
+                parse_supported_workspace_password_hash(&hash).is_err(),
+                "{parameters}"
+            );
+        }
+    }
+
+    #[test]
+    fn admits_legacy_and_resource_boundary_hashes_without_running_argon2() {
+        for parameters in ["m=8192,t=1,p=1", "m=19456,t=2,p=1", "m=262144,t=8,p=4"] {
+            let hash = LEGACY_HASH.replace("m=19456,t=2,p=1", parameters);
+            assert!(
+                parse_supported_workspace_password_hash(&hash).is_ok(),
+                "{parameters}"
+            );
+        }
+    }
+
+    #[test]
+    fn reports_excessive_costs_as_invalid_hash_instead_of_wrong_password() {
+        let hash = LEGACY_HASH.replace("p=1", "p=5");
+        let invalid = verify_workspace_password("fixture-password".into(), hash);
+        assert!(!invalid.ok);
+        assert_eq!(invalid.matched, None);
         assert!(matches!(
             invalid.error,
             Some(WorkspacePasswordError::InvalidHash)

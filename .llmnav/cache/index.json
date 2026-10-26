@@ -5374,11 +5374,49 @@
         "provider JSON"
       ],
       "stability": "contract"
+    },
+    {
+      "boundaries": [],
+      "hashes": {
+        "body": "c1c8fb8e8e6b48da6b14c8e2cc4e2d76521863494361ac98c3fa767f8787c93c",
+        "semantic": "a84166cada0a263a0cb11fd2d0a7c15466bdc8aae19b924cebc023147c96f9bd",
+        "structure": "2996f85be2fb505ec850a66ed53f7c5a5ab86a4f48c5875be256a8edd6329206"
+      },
+      "id": "workduck.workspace.password-native",
+      "imports": [
+        "argon2::{Argon2, Params, PasswordHash, PasswordHasher, PasswordVerifier}",
+        "crate::argon2_kdf::resource_costs_are_supported",
+        "tests {\n    use super::*"
+      ],
+      "invariant": [
+        "PHC costs pass shared Argon2 bounds before hashing; accepted algorithms and versions stay intact."
+      ],
+      "location": {
+        "declarationLine": null,
+        "endLine": 7,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src-tauri/src/workspace_password.rs",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "owns": [
+        "salted password hashes",
+        "PHC cost limits",
+        "verification errors"
+      ],
+      "role": "Bound Argon2 costs before native workspace password verification.",
+      "scope": "module",
+      "stability": "contract"
     }
   ],
   "contractFingerprints": {
     "configuration": {
-      "sha256": "6e79ac2e6cd6fdbe69c8f3eac1268356ad108c80b0bee8a65afe45bc017cf9a3"
+      "sha256": "9e2bbe5d9c43af0f9d9b88bc8384420ae06fa02c875c21763d3f0228111ab339"
     },
     "exportedApi": {
       "count": 0,
@@ -5389,6 +5427,6 @@
   "generatedBy": "llmnav@0.9.7",
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "eef09b6f07e4c57edad5be63f34a0ef5438c81c6674bebaafd8040332e18686a",
+  "sourceHash": "a0fed3f2bef2fcf4ca4fbe2372a77c6ecb58bd474ee755ae29c107b5c2a09cd3",
   "specVersion": "1"
 }

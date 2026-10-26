@@ -1,4 +1,5 @@
 # One JSON object per line: {"query":"...","expected":["domain.feature.action"]}
+{"query":"workspace password verification Argon2 PHC memory iteration resource limits","expected":["workduck.workspace.password-native"]}
 {"query":"validate reference registry identity and preserve the revision when editing references","expected":["workduck.references.registry"]}
 {"query":"where are Workduck queue and entity JSON schemas defined","expected":["workduck.contract.schemas"]}
 {"query":"forward arguments from the Node shim into the locked Cargo workduck-cli binary","expected":["workduck.cli.launcher"]}

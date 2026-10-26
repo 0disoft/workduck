@@ -2949,6 +2949,28 @@
     {
       "definitions": [],
       "external": false,
+      "key": "workduck/workduck.workspace.password-native",
+      "location": {
+        "declarationLine": null,
+        "endLine": 7,
+        "exported": null,
+        "kind": null,
+        "language": null,
+        "path": "src-tauri/src/workspace_password.rs",
+        "receiver": null,
+        "signature": null,
+        "startLine": 1,
+        "symbol": null,
+        "visibility": null
+      },
+      "repositoryId": "workduck",
+      "role": "Bound Argon2 costs before native workspace password verification.",
+      "semanticId": "workduck.workspace.password-native",
+      "unresolved": false
+    },
+    {
+      "definitions": [],
+      "external": false,
       "key": "workduck/workduck.workspace.path",
       "location": {
         "declarationLine": null,
@@ -3235,11 +3257,11 @@
   ],
   "repositoryId": "workduck",
   "schemaVersion": 1,
-  "sourceHash": "248d10af04f47fc18d3efd8bc42157e31bd9550e0cd74de9506d90b86da3ca67",
+  "sourceHash": "b1698c60392d1887796cb286c7b74c14575e7832d1475365d94abb0b5e80a886",
   "stats": {
     "edgeCount": 64,
     "importedIndexCount": 0,
-    "nodeCount": 105,
+    "nodeCount": 106,
     "unresolvedNodeCount": 0
   }
 }

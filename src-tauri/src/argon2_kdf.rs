@@ -18,8 +18,11 @@ pub fn parameters_are_supported(
     iterations: u32,
     parallelism: u32,
 ) -> bool {
-    version == ARGON2ID_VERSION
-        && (MIN_MEMORY_KIB..=MAX_MEMORY_KIB).contains(&memory_kib)
+    version == ARGON2ID_VERSION && resource_costs_are_supported(memory_kib, iterations, parallelism)
+}
+
+pub fn resource_costs_are_supported(memory_kib: u32, iterations: u32, parallelism: u32) -> bool {
+    (MIN_MEMORY_KIB..=MAX_MEMORY_KIB).contains(&memory_kib)
         && (MIN_ITERATIONS..=MAX_ITERATIONS).contains(&iterations)
         && (MIN_PARALLELISM..=MAX_PARALLELISM).contains(&parallelism)
 }

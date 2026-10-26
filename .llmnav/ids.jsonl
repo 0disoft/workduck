@@ -103,3 +103,4 @@
 {"id":"workduck.verification.native-sync","state":"active"}
 {"id":"workduck.agent.task-run-cache","state":"active"}
 {"id":"workduck.chat-completion.http","state":"active"}
+{"id":"workduck.workspace.password-native","state":"active"}
